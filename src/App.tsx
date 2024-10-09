@@ -1,0 +1,237 @@
+import React, { useEffect, useState } from 'react';
+import { Routes, Route, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { IntlProvider } from 'react-intl';
+import { CustomProvider } from 'rsuite';
+import enGB from 'rsuite/locales/en_GB';
+import locales from './locales';
+import Frame from './components/Frame';
+import Error404Page from './pages/authentication/404';
+import Error403Page from './pages/authentication/403';
+import Error500Page from './pages/authentication/500';
+import Error503Page from './pages/authentication/503';
+import SignInPage from './pages/authentication/sign-in';
+import Allergens from './pages/setup/allergens-setup';
+import { useAppDispatch, useAppSelector } from './hooks';
+import MyToast from './components/MyToast/MyToast';
+import NetworkErrorImg from './images/network-error.png';
+import PatientChart from './pages/patient/patient-chart';
+import { Icon } from '@rsuite/icons';
+import { MdDashboard } from 'react-icons/md';
+import PatientList from './pages/patient/patient-list';
+import Dashboard from './pages/dashboard';
+import { useLoadTenantQuery } from '@/services/authService';
+import config from '../app-config';
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
+import SessionExpiredBackdrop from './components/SessionExpiredBackdrop/SessionExpiredBackdrop';
+import { useLoadNavigationMapQuery } from './services/uiService';
+import Facilities from './pages/setup/facilities-setup';
+
+import AccessRoles from './pages/setup/access-roles';
+import Lov from './pages/setup/lov-setup';
+import Users from './pages/setup/users-setup';
+import UOMGroup from './pages/setup/uom-group';
+
+import Modules from './pages/setup/modules-setup';
+import * as icons from 'react-icons/fa6';
+import PatientProfile from './pages/patient/patient-profile';
+import Metadata from './pages/setup/metadata-view';
+import DVM from './pages/setup/dvm-setup';
+import { setScreenKey } from './utils/uiReducerActions';
+import EncounterRegistration from './pages/encounter/encounter-registration';
+import Practitioners from './pages/setup/practioners-setup';
+import EncounterList from './pages/encounter/encounter-list';
+import Encounter from './pages/encounter/encounter-screen';
+import Dental from './pages/encounter/dental-screen';
+import Departments from './pages/setup/departments-setup';
+import DentalActions from './pages/setup/dental-actions';
+import CDTSetup from './pages/setup/cdt-setup';
+import ServiceSetup from './pages/setup/service-setup';
+import Translate from './components/Translate';
+import { BlockUI } from 'primereact/blockui';
+import Playground from './pages/playground';
+import PrescriptionInstructions from './pages/medications/prescription_instructions';
+import ActiveIngredientsSetup from './pages/medications/active-ingredients-setup/ActiveIngredientsSetup';
+import GenericMedications from './pages/medications/generic-medications';
+import Catalog from './pages/setup/catalog-setup';
+import Diagnostics from './pages/setup/diagnostics-tests-definition';
+
+const App = () => {
+  const authSlice = useAppSelector(state => state.auth);
+  const uiSlice = useAppSelector(state => state.ui);
+  const dispatch = useAppDispatch();
+  const tenantQueryResponse = useLoadTenantQuery(config.tenantId);
+  const [navigationMap, setNavigationMap] = useState([]);
+  const {
+    data: navigationMapRawData,
+    isLoading: isLoadingNavigationMap,
+    isFetching: isFetchingNavigationMap
+  } = useLoadNavigationMapQuery(authSlice.user, { skip: !authSlice.user });
+  const [screenKeys, setScreenKeys] = useState({});
+  const location = useLocation();
+
+  useEffect(() => {
+    if (navigationMapRawData && !isLoadingNavigationMap && !isFetchingNavigationMap) {
+      // build navigation map
+      loadNavs();
+    }
+  }, [navigationMapRawData]);
+
+  useEffect(() => {
+    if (screenKeys && location) {
+      if (screenKeys[location.pathname]) {
+        dispatch(setScreenKey(screenKeys[location.pathname]));
+      }
+    }
+  }, [screenKeys]);
+
+  const loadNavs = async () => {
+    const navs = [];
+    navs.push({
+      eventKey: 'dashboard',
+      icon: <Icon as={MdDashboard} />,
+      title: 'Dashboard',
+      to: '/'
+    });
+
+    // fill screens without a module (direct links)
+    navigationMapRawData.screens.map(screenWithoutModule => {
+      navs.push({
+        eventKey: screenWithoutModule.key,
+        icon: <Icon as={icons[screenWithoutModule?.iconImagePath ?? 'FaCircle']} />,
+        title: screenWithoutModule.name,
+        to: '/'.concat(screenWithoutModule.navPath)
+      });
+    });
+
+    const _screenKeys = {};
+
+    // fill screens without a module (direct links)
+    navigationMapRawData.modules.map(module => {
+      const childrenScreens = module.screens;
+      const chidlrenNavs = [];
+
+      childrenScreens.map(screen => {
+        chidlrenNavs.push({
+          eventKey: screen.key,
+          icon: <Icon as={icons[screen?.iconImagePath ?? 'FaCircle']} />,
+          title: screen.name,
+          to: '/'.concat(screen.navPath)
+        });
+
+        _screenKeys['/'.concat(screen.navPath)] = screen.key;
+      });
+
+      navs.push({
+        eventKey: module.key,
+        icon: <Icon as={icons[module?.iconImagePath ?? 'FaBox']} />,
+        title: module.name,
+        children: chidlrenNavs
+      });
+    });
+
+    setScreenKeys(_screenKeys);
+
+    setNavigationMap(navs);
+  };
+
+  return (
+    <IntlProvider locale="en" messages={locales.en}>
+      <div style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}>
+        @ {authSlice.tenant ? authSlice.tenant.tenantName : 'No-Tenant'}
+      </div>
+
+      <div
+        id="blocker-error"
+        style={{
+          position: 'fixed',
+          left: '0%',
+          bottom: '0%',
+          zIndex: 1001,
+          background: 'rgba(0,0,0,0.95)',
+          width: '100%',
+          height: '100%',
+          display: 'none'
+        }}
+      >
+        <h3 style={{ textAlign: 'center', margin: '20vw' }}>
+          <div id="blocker-error-msg" style={{ margin: '20px', color: 'rgb(150,30,40)' }}>
+            System Error
+          </div>
+          <img src={NetworkErrorImg} width={200} />
+        </h3>
+      </div>
+
+      <MyToast />
+      <SessionExpiredBackdrop />
+      <CustomProvider locale={enGB}>
+        <Routes>
+          <Route
+            element={
+              <ProtectedRoute>
+                <BlockUI
+                  template={
+                    <h3
+                      style={{
+                        textAlign: 'center',
+                        color: 'white',
+                        top: '10%',
+                        position: 'absolute'
+                      }}
+                    >
+                      <Translate>Loading</Translate>...
+                    </h3>
+                  }
+                  blocked={uiSlice.loading}
+                >
+                  <Outlet />
+                </BlockUI>
+              </ProtectedRoute>
+            }
+          >
+            {/* {/* protected routes (needs authintication) */}
+            {/* TODO load them dynamically based on user authorization matrix */}
+            <Route path="/" element={<Frame navs={navigationMap} />}>
+              <Route index element={<Dashboard />} />
+              <Route path="patient-profile" element={<PatientProfile />} />
+              <Route path="patient-chart" element={<PatientChart />} />
+              <Route path="patient-list" element={<PatientList />} />
+              <Route path="encounter-registration" element={<EncounterRegistration />} />
+              <Route path="encounter" element={<Encounter />} />
+              <Route path="encounter-list" element={<EncounterList />} />
+              <Route path="facilities" element={<Facilities />} />
+              <Route path="access-roles" element={<AccessRoles />} />
+              <Route path="lov-setup" element={<Lov />} />
+              <Route path="modules-setup" element={<Modules />} />
+              <Route path="users" element={<Users />} />
+              <Route path="uom-group" element={<UOMGroup />} />
+
+              <Route path="metadata" element={<Metadata />} />
+              <Route path="dvm" element={<DVM />} />
+              <Route path="practitioners" element={<Practitioners />} />
+              <Route path="departments" element={<Departments />} />
+              <Route path="diagnostics-test" element={<Diagnostics />} />
+              <Route path="catalog" element={<Catalog />} />
+              <Route path="allergens" element={<Allergens />} />
+              <Route path="active-ingredients" element={<ActiveIngredientsSetup />} />
+              <Route path="prescription-instructions" element={<PrescriptionInstructions />} />
+              <Route path="generic-medications" element={<GenericMedications />} />
+              <Route path="dental-actions" element={<DentalActions />} />
+              <Route path="cdt-setup" element={<CDTSetup />} />
+              <Route path="services-setup" element={<ServiceSetup />} />
+              <Route path="error-404" element={<Error404Page />} />
+              <Route path="error-403" element={<Error403Page />} />
+              <Route path="error-500" element={<Error500Page />} />
+              <Route path="error-503" element={<Error503Page />} />
+              <Route path="playground" element={<Playground />} />
+            </Route>
+          </Route>
+
+          <Route path="login" element={<SignInPage />} />
+          <Route path="*" element={<Error404Page />} />
+        </Routes>
+      </CustomProvider>
+    </IntlProvider>
+  );
+};
+
+export default App;

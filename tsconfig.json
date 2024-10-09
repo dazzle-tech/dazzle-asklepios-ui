@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "types": ["dotenv"],
+    "strict": false,
+    "declaration": false,
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "noImplicitAny": false,
+    "noUnusedParameters": false,
+    "noUnusedLocals": false,
+    "sourceMap": true,
+    "moduleResolution": "node",
+    "target": "esnext",
+    "module": "esnext",
+    "jsx": "react",
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "exclude": ["node_modules"],
+  "include": ["./src/**/*.ts", "./src/**/*.tsx", "src/components/MyToast/MyToast.tsc"]
+}

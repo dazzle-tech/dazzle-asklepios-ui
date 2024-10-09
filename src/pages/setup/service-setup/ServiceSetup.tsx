@@ -1,0 +1,416 @@
+import Translate from '@/components/Translate';
+import { initialListRequest, ListRequest } from '@/types/types';
+import React, { useState, useEffect } from 'react';
+import { Drawer, Input, Modal, Pagination, Panel, SelectPicker, Table } from 'rsuite';
+const { Column, HeaderCell, Cell } = Table;
+import {
+  useGetServicesQuery,
+  useSaveServiceMutation,
+  useGetCdtsQuery,
+  useLinkCdtServiceMutation,
+  useUnlinkCdtServiceMutation,
+  useGetLovValuesByCodeQuery
+} from '@/services/setupService';
+import { Button, ButtonToolbar, IconButton } from 'rsuite';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import EditIcon from '@rsuite/icons/Edit';
+import TrashIcon from '@rsuite/icons/Trash';
+import { ApService } from '@/types/model-types';
+import { newApServiceCdt, newApService } from '@/types/model-types-constructor';
+import { Form, Stack, Divider } from 'rsuite';
+import MyInput from '@/components/MyInput';
+import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
+import { Check, Trash } from '@rsuite/icons';
+
+const ServiceSetup = () => {
+  const [service, setService] = useState<ApService>({ ...newApService });
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [proceduresOpen, setProceduresOpen] = useState(false);
+  const [cdtMap, setCdtMap] = useState({});
+
+  const [selectedCdtKey, setSelectedCdtKey] = useState('');
+
+  const [listRequest, setListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    pageSize: 15
+  });
+
+  const [saveService, saveServiceMutation] = useSaveServiceMutation();
+  const [linkCdtService, linkCdtServiceMutation] = useLinkCdtServiceMutation();
+  const [unlinkCdtService, unlinkCdtServiceMutation] = useUnlinkCdtServiceMutation();
+
+  const { data: serviceListResponse } = useGetServicesQuery(listRequest);
+  const { data: cdtListResponse } = useGetCdtsQuery({
+    ...initialListRequest,
+    pageSize: 1000,
+    skipDetails: true
+  });
+
+  const { data: serviceTypeLovQueryResponse } = useGetLovValuesByCodeQuery('SERVICE_TYPE');
+  const { data: serviceCategoryLovQueryResponse } = useGetLovValuesByCodeQuery('SERVICE_CATEGORY');
+  const { data: currencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
+
+  useEffect(() => {
+    if (cdtListResponse && cdtListResponse.object) {
+      let map = {};
+      cdtListResponse.object.forEach(item => {
+        map[item.key] = item.description;
+      });
+      setCdtMap(map);
+    }
+  }, [cdtListResponse]);
+
+  const handleNew = () => {
+    setService({ ...newApService });
+    setPopupOpen(true);
+  };
+
+  const handleSave = () => {
+    setPopupOpen(false);
+    saveService(service).unwrap();
+  };
+
+  useEffect(() => {
+    if (saveServiceMutation.data) {
+      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+    }
+  }, [saveServiceMutation.data]);
+
+  useEffect(() => {
+    if (linkCdtServiceMutation.data) {
+      // add the new linked procedure to selected action procedure list
+      let currentProcedureList = [...service['linkedProcedures']];
+      currentProcedureList.push(linkCdtServiceMutation.data);
+      let clone = { ...service };
+      clone['linkedProcedures'] = currentProcedureList;
+      setService({ ...clone });
+    }
+  }, [linkCdtServiceMutation.data]);
+
+  useEffect(() => {
+    if (unlinkCdtServiceMutation.data) {
+      // remove the unlinked procedure from selected action procedure list
+      const cdtKeyToRemove = unlinkCdtServiceMutation.data.cdtKey;
+      // Filter out the procedure with the matching cdtKey
+      const updatedProcedureList = service['linkedProcedures'].filter(
+        procedure => procedure.cdtKey !== cdtKeyToRemove
+      );
+      let clone = { ...service };
+      clone['linkedProcedures'] = updatedProcedureList;
+      setService({ ...clone });
+    }
+  }, [unlinkCdtServiceMutation.data]);
+
+  const isSelected = rowData => {
+    if (rowData && service && rowData.key === service.key) {
+      return 'selected-row';
+    } else return '';
+  };
+
+  const handleFilterChange = (fieldName, value) => {
+    if (value) {
+      setListRequest(
+        addFilterToListRequest(
+          fromCamelCaseToDBName(fieldName),
+          'startsWithIgnoreCase',
+          value,
+          listRequest
+        )
+      );
+    } else {
+      setListRequest({ ...listRequest, filters: [] });
+    }
+  };
+
+  return (
+    <Panel
+      header={
+        <h3 className="title">
+          <Translate>Services</Translate>
+        </h3>
+      }
+    >
+      <ButtonToolbar>
+        <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
+          Add New
+        </IconButton>
+        <IconButton
+          disabled={!service.key}
+          appearance="primary"
+          onClick={() => setPopupOpen(true)}
+          color="green"
+          icon={<EditIcon />}
+        >
+          Edit Selected
+        </IconButton>
+        <IconButton
+          disabled={true || !service.key}
+          appearance="primary"
+          color="red"
+          icon={<TrashIcon />}
+        >
+          Delete Selected
+        </IconButton>
+        <IconButton
+          disabled={!service.key}
+          appearance="primary"
+          onClick={() => setProceduresOpen(true)}
+          color="cyan"
+          icon={<EditIcon />}
+        >
+          Linked Procedures
+        </IconButton>
+      </ButtonToolbar>
+      <hr />
+      <Table
+        height={550}
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortColumn={(sortBy, sortType) => {
+          if (sortBy)
+            setListRequest({
+              ...listRequest,
+              sortBy,
+              sortType
+            });
+        }}
+        headerHeight={80}
+        rowHeight={60}
+        bordered
+        cellBordered
+        data={serviceListResponse?.object ?? []}
+        onRowClick={rowData => {
+          setService(rowData);
+        }}
+        rowClassName={isSelected}
+      >
+        <Column sortable flexGrow={2}>
+          <HeaderCell align="center">
+            <Input onChange={e => handleFilterChange('typeLkey', e)} />
+            <Translate>Type</Translate>
+          </HeaderCell>
+          <Cell>
+            {rowData => (rowData.typeLvalue ? rowData.typeLvalue.lovDisplayVale : rowData.typeLkey)}
+          </Cell>
+        </Column>
+        <Column sortable flexGrow={2}>
+          <HeaderCell align="center">
+            <Input onChange={e => handleFilterChange('name', e)} />
+            <Translate>Service Name</Translate>
+          </HeaderCell>
+          <Cell dataKey="name" />
+        </Column>
+        <Column sortable flexGrow={2}>
+          <HeaderCell align="center">
+            <Input onChange={e => handleFilterChange('abbreviation', e)} />
+            <Translate>Abbreviation</Translate>
+          </HeaderCell>
+          <Cell dataKey="abbreviation" />
+        </Column>
+        <Column sortable flexGrow={1}>
+          <HeaderCell align="center">
+            <Input onChange={e => handleFilterChange('code', e)} />
+            <Translate>Code</Translate>
+          </HeaderCell>
+          <Cell dataKey="code" />
+        </Column>
+        <Column sortable flexGrow={2}>
+          <HeaderCell align="center">
+            <Input onChange={e => handleFilterChange('categoryLkey', e)} />
+            <Translate>Category</Translate>
+          </HeaderCell>
+          <Cell>
+            {rowData =>
+              rowData.categoryLvalue ? rowData.categoryLvalue.lovDisplayVale : rowData.categoryLkey
+            }
+          </Cell>
+        </Column>
+        <Column sortable flexGrow={1}>
+          <HeaderCell align="center">
+            <Input onChange={e => handleFilterChange('price', e)} />
+            <Translate>Price</Translate>
+          </HeaderCell>
+          <Cell dataKey="price" />
+        </Column>
+        <Column sortable flexGrow={1}>
+          <HeaderCell align="center">
+            <Input onChange={e => handleFilterChange('currencyLkey', e)} />
+            <Translate>Currency</Translate>
+          </HeaderCell>
+          <Cell>
+            {rowData =>
+              rowData.currencyLvalue ? rowData.currencyLvalue.lovDisplayVale : rowData.currencyLkey
+            }
+          </Cell>
+        </Column>
+      </Table>
+      <div style={{ padding: 20 }}>
+        <Pagination
+          prev
+          next
+          first
+          last
+          ellipsis
+          boundaryLinks
+          maxButtons={5}
+          size="xs"
+          layout={['limit', '|', 'pager']}
+          limitOptions={[5, 15, 30]}
+          limit={listRequest.pageSize}
+          activePage={listRequest.pageNumber}
+          onChangePage={pageNumber => {
+            setListRequest({ ...listRequest, pageNumber });
+          }}
+          onChangeLimit={pageSize => {
+            setListRequest({ ...listRequest, pageSize });
+          }}
+          total={serviceListResponse?.extraNumeric ?? 0}
+        />
+      </div>
+
+      <Modal open={popupOpen} overflow>
+        <Modal.Title>
+          <Translate>New/Edit Service</Translate>
+        </Modal.Title>
+        <Modal.Body>
+          <Form fluid>
+            <MyInput
+              fieldName="typeLkey"
+              fieldType="select"
+              selectData={serviceTypeLovQueryResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              record={service}
+              setRecord={setService}
+            />
+            <MyInput fieldName="name" record={service} setRecord={setService} />
+            <MyInput fieldName="abbreviation" record={service} setRecord={setService} />
+            <MyInput fieldName="code" record={service} setRecord={setService} />
+            <MyInput
+              fieldName="categoryLkey"
+              fieldType="select"
+              selectData={serviceCategoryLovQueryResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              record={service}
+              setRecord={setService}
+            />
+            <MyInput fieldName="price" fieldType="number" record={service} setRecord={setService} />
+            <MyInput
+              fieldName="currencyLkey"
+              fieldType="select"
+              selectData={currencyLovQueryResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              record={service}
+              setRecord={setService}
+            />
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Stack spacing={2} divider={<Divider vertical />}>
+            <Button appearance="primary" onClick={handleSave}>
+              Save
+            </Button>
+            <Button appearance="primary" color="red" onClick={() => setPopupOpen(false)}>
+              Cancel
+            </Button>
+          </Stack>
+        </Modal.Footer>
+      </Modal>
+
+      <Drawer
+        size="lg"
+        onEsc={() => setProceduresOpen(false)}
+        onClose={() => setProceduresOpen(false)}
+        open={proceduresOpen}
+      >
+        <Drawer.Header>
+          <Translate>Service Linked Procedures</Translate>
+        </Drawer.Header>
+        <Drawer.Body>
+          <Stack justifyContent={'space-between'} style={{ marginBottom: '10px' }}>
+            <Stack.Item>
+              <SelectPicker
+                placeholder="Select Procedure"
+                data={cdtListResponse?.object ?? []}
+                labelKey={'description'}
+                valueKey="key"
+                style={{ width: '300px' }}
+                value={selectedCdtKey}
+                onChange={e => {
+                  if (e) setSelectedCdtKey(e);
+                  else setSelectedCdtKey('');
+                }}
+              />
+            </Stack.Item>
+            <Stack.Item>
+              <IconButton
+                appearance="primary"
+                icon={<Check />}
+                onClick={() => {
+                  linkCdtService({
+                    ...newApServiceCdt,
+                    serviceKey: service.key,
+                    cdtKey: selectedCdtKey
+                  }).unwrap();
+                }}
+              >
+                Link CDT Procedure to Service
+              </IconButton>
+            </Stack.Item>
+          </Stack>
+
+          <Table
+            height={550}
+            headerHeight={80}
+            rowHeight={60}
+            bordered
+            cellBordered
+            data={service['linkedProcedures']}
+          >
+            <Column sortable flexGrow={2}>
+              <HeaderCell align="center">
+                <Translate>Procedure Key</Translate>
+              </HeaderCell>
+              <Cell>{rowData => rowData.cdtKey}</Cell>
+            </Column>
+            <Column sortable flexGrow={5}>
+              <HeaderCell align="center">
+                <Translate>Description</Translate>
+              </HeaderCell>
+              <Cell>
+                {rowData =>
+                  cdtMap[rowData.cdtKey] ? cdtMap[rowData.cdtKey] : 'Error fetching description'
+                }
+              </Cell>
+            </Column>
+            <Column sortable flexGrow={1}>
+              <HeaderCell align="center">
+                <Translate>Remove</Translate>
+              </HeaderCell>
+              <Cell>
+                {rowData => (
+                  <IconButton
+                    onClick={() => {
+                      unlinkCdtService({
+                        ...newApServiceCdt,
+                        serviceKey: rowData.serviceKey,
+                        cdtKey: rowData.cdtKey
+                      }).unwrap();
+                    }}
+                    color="red"
+                    appearance="ghost"
+                    icon={<Trash />}
+                  />
+                )}
+              </Cell>
+            </Column>
+          </Table>
+        </Drawer.Body>
+      </Drawer>
+    </Panel>
+  );
+};
+
+export default ServiceSetup;
