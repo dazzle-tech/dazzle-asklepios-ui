@@ -104,6 +104,17 @@ export const setupService = createApi({
         return response.object;
       }
     }),
+    saveDiagnosticsTestSpecialPopulation: builder.mutation<void, { queryParams: { diagnosticTestId: string }, body: ApDiagnosticTestSpecialPopulation }>({
+      query: ({ queryParams, body }) => ({
+        url: '/setup/save-diagnostic-test-special-population',
+        method: 'POST',
+        params: queryParams,
+        body: body,
+      }),onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
     getLovs: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/lov-list?${fromListRequestToQueryParams(listRequest)}`
@@ -654,6 +665,6 @@ export const {
   useGetCatalogDiagnosticsTestListQuery,
   useSaveDiagnosticfsTestSpecialPopulationMutation,
   useGetDiagnosticsTestNotSelectedListQuery,
-  useRemoveCatalogDiagnosticTestMutation
+  useRemoveCatalogDiagnosticTestMutation,
   useRemoveUserMutation
 } = setupService;

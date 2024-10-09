@@ -14,6 +14,7 @@ import {
   useGetLicenseQuery,
   useGetUsersQuery,
   useSaveUserMutation,
+  useGetDepartmentsQuery,
   useSaveUserMidicalLicenseMutation,
   useRemoveUserMidicalLicenseMutation
 } from '@/services/setupService';
@@ -58,6 +59,21 @@ const Users = () => {
 
   useEffect(() => {
     console.log(selectedFacility)
+    if (selectedFacility) {
+      console.log(selectedFacility)
+      console.log(departmentsListResponse?.object)
+
+      const selectedFacilities = selectedFacility?.key
+
+      const filtered = departmentsListResponse?.object?.filter(department =>
+        selectedFacilities.includes(department.facilityKey)
+      ) ?? [];
+
+      console.log(filtered)
+      setFilteredDepartments(filtered);
+    }
+
+
   }, [selectedFacility])
 
   const [saveUserMidicalLicense, setSaveUserMidicalLicense] = useSaveUserMidicalLicenseMutation();
@@ -89,11 +105,23 @@ const Users = () => {
     ...initialListRequest,
     pageSize: 1000
   });
+  const { data: departmentsListResponse } = useGetDepartmentsQuery({
+    ...initialListRequest,
+    pageSize
+      : 1000
+  });
+
   const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
   const [detailsPanle, setDetailsPanle] = useState(false);
   const [editing, setEditing] = useState();
   const [filteredFacilities, setFilteredFacilities] = useState([]);
+  const [filteredDepartments, setFilteredDepartments] = useState([]);
+
+  useEffect(() => {
+    console.log(filteredDepartments)
+  }, [filteredDepartments])
+
   useEffect(() => {
     const filterKeys = user._facilitiesInput || [];
     const filtered = facilityListResponse?.object?.filter(facility =>
@@ -134,16 +162,20 @@ const Users = () => {
     setSelectedLicense(newApUserMedicalLicense)
   }
 
-const [newDepartmentPopupOpen,setNewDepartmentPopupOpen] = useState(false)
+  const [newDepartmentPopupOpen, setNewDepartmentPopupOpen] = useState(false)
 
   const handleSave = () => {
-    setPopupOpen(false);
-    saveUser(user).unwrap().then(() => {
+    saveUser({ ...user, selectedDepartmentsFacilityKey: selectedFacility?.key }).unwrap().then(() => {
       setEditing(false)
       refetchUsers()
+      setSelectedFacility(null)
+      setUser({ ...user, _depratmentsInput: [] })
+      setNewDepartmentPopupOpen(false)
+
     })
     if (!detailsPanle) {
       setUser(newApUser)
+
     }
     console.log(user)
 
@@ -430,7 +462,7 @@ const [newDepartmentPopupOpen,setNewDepartmentPopupOpen] = useState(false)
                   <hr />
                   <ButtonToolbar>
                     <IconButton appearance="primary" icon={<AddOutlineIcon />} disabled={!selectedFacility?.key}
-                    onClick={() => setNewDepartmentPopupOpen(true)}
+                      onClick={() => setNewDepartmentPopupOpen(true)}
                     >
                       New Department
                     </IconButton>
@@ -808,22 +840,27 @@ const [newDepartmentPopupOpen,setNewDepartmentPopupOpen] = useState(false)
               required
               width={300}
               column
-              fieldLabel="Gender"
-              fieldType="select"
+              fieldLabel="Departments"
+              fieldType="multyPicker"
               fieldName="genderLkey"
-              selectData={
-                // genderLovQueryResponse?.object ?? 
-                []}
+              selectData={filteredDepartments}
               selectDataLabel="lovDisplayVale"
               selectDataValue="key"
-              // record={localPatient}
-              // setRecord={setLocalPatient}
+              selectDataLabel="name"
+              fieldName="_depratmentsInput"
+              record={user}
+              setRecord={setUser}
             />
           </Form>
         </Modal.Body>
         <Modal.Footer>
           <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="primary" 
+            <Button appearance="primary"
+              onClick={() => {
+                handleSave(),
+                  console.log({ ...user, selectedDepartmentsFacilityKey: selectedFacility?.key })
+
+              }}
             >
               Save
             </Button>
