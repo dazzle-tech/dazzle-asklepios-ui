@@ -16,7 +16,9 @@ import {
   useSaveUserMutation,
   useGetDepartmentsQuery,
   useSaveUserMidicalLicenseMutation,
-  useRemoveUserMidicalLicenseMutation
+  useRemoveUserMidicalLicenseMutation,
+  useGetUserDepartmentsQuery,
+  useResetUserPasswordMutation
 } from '@/services/setupService';
 import { Button, ButtonToolbar, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -39,6 +41,7 @@ import {
 import { first } from 'lodash';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
+import MyToast from '@/components/MyToast/MyToast';
 
 const Users = () => {
   // const [facilities, setFacilities] = useState([])
@@ -78,7 +81,7 @@ const Users = () => {
 
   const [saveUserMidicalLicense, setSaveUserMidicalLicense] = useSaveUserMidicalLicenseMutation();
   const [removeUserMidicalLicense, setRemoveUserMidicalLicense] = useRemoveUserMidicalLicenseMutation();
-
+  const [resetUserPassword,setResetUserPassword] = useResetUserPasswordMutation()
 
 
   const [popupOpen, setPopupOpen] = useState(false);
@@ -105,11 +108,17 @@ const Users = () => {
     ...initialListRequest,
     pageSize: 1000
   });
-  const { data: departmentsListResponse } = useGetDepartmentsQuery({
+  const { data: departmentsListResponse, refetch: refetchDepartments } = useGetDepartmentsQuery({
     ...initialListRequest,
     pageSize
       : 1000
   });
+
+  const { data: userDepartmentsResponse, refetch: refetchUserDepartments } = useGetUserDepartmentsQuery(user?.key);
+
+  useEffect(() => {
+    console.log(userDepartmentsResponse)
+  }, [userDepartmentsResponse])
 
   const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
@@ -171,6 +180,7 @@ const Users = () => {
       setSelectedFacility(null)
       setUser({ ...user, _depratmentsInput: [] })
       setNewDepartmentPopupOpen(false)
+      refetchDepartments()
 
     })
     if (!detailsPanle) {
@@ -183,6 +193,11 @@ const Users = () => {
 
   const handleResetPassword = () => {
     console.log(resetVia)
+    resetUserPassword(user).then(()=>{
+      console.log(`${user.firstName}'s password was successfully changed`)
+    }).then(()=>{
+      setResetPasswordPopupOpen(false)
+    })
 
   };
 
@@ -234,6 +249,8 @@ const Users = () => {
       console.error('Error removing user:', error);
     }
   };
+
+
 
   const InputForms = (editing) => {
     return (
@@ -476,7 +493,48 @@ const Users = () => {
                     bordered>
                     {filteredFacilities.map((facility, index) => (
                       <Panel onSelect={() => { setSelectedFacility(facility) }} key={facility.key} header={"Facility : " + facility.facilityName} eventKey={index + 1}>
-                        <p style={{ height: "100px" }}>{facility.facilityNameOtherLang || "No additional info"}</p>
+
+                        <Table
+                          height={200}
+                          // sortColumn={patientRelationListRequest.sortBy}
+                          // sortType={patientRelationListRequest.sortType}
+                          onSortColumn={(sortBy, sortType) => {
+                            if (sortBy)
+                              setListRequest({
+                                ...listRequest,
+                                sortBy,
+                                sortType
+                              });
+                          }}
+                          // onRowClick={(rowData) => { setSelectedLicense(rowData), console.log((rowData)) }}
+                          headerHeight={40}
+                          rowHeight={50}
+                          bordered
+                          cellBordered
+                          data={
+                            selectedFacility && userDepartmentsResponse?.object
+                              ? userDepartmentsResponse.object.filter(department => 
+                                  department.facilitiyKey === selectedFacility.key // Match facility
+                                )
+                              : []
+                          }
+                        >
+                          <Column sortable flexGrow={4}>
+                            <HeaderCell>
+                              <Translate>Facility Name</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="facilityName" />
+                          </Column>
+
+                          <Column sortable flexGrow={4}>
+                            <HeaderCell>
+                              <Translate>Department Name</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="departmentName" />
+                          </Column>
+
+
+                        </Table>
                       </Panel>
                     ))}
                   </PanelGroup>

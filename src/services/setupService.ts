@@ -176,6 +176,18 @@ export const setupService = createApi({
         return response.object;
       }
     }),
+    resetUserPassword: builder.mutation({
+      query: (user: ApUser) => ({
+        url: `/setup/user-password-reset`,  
+        method: 'POST',
+        body: user,  
+       
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;  
+      },
+    }),
     getModules: builder.query({  
       query: (listRequest: ListRequest) => ({
         url: `/setup/module-list?${fromListRequestToQueryParams(listRequest)}`
@@ -306,6 +318,13 @@ export const setupService = createApi({
       query: (listRequest: ListRequest) => ({
         url: `/setup/department-list?${fromListRequestToQueryParams(listRequest)}`
       }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    getUserDepartments: builder.query({
+      query: (key) => {
+        return { url: `/setup/user-departments?key=${key}` };
+      },
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
@@ -666,5 +685,7 @@ export const {
   useSaveDiagnosticfsTestSpecialPopulationMutation,
   useGetDiagnosticsTestNotSelectedListQuery,
   useRemoveCatalogDiagnosticTestMutation,
-  useRemoveUserMutation
+  useRemoveUserMutation,
+  useGetUserDepartmentsQuery,
+  useResetUserPasswordMutation
 } = setupService;
