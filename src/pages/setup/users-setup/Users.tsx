@@ -207,7 +207,7 @@ const Users = () => {
       console.error('Save failed', error);
     });
 
-    console.log(facilityData); // Debugging info
+    console.log(facilityData); 
 
 
   };
