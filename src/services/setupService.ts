@@ -75,6 +75,17 @@ export const setupService = createApi({
         return response.object;
       }
     }),
+    saveFacilityDepartment: builder.mutation({
+      query: (facility: ApFacility) => ({
+        url: `/setup/save-facility-department`,
+        method: 'POST',
+        body: facility
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
     removeFacility: builder.mutation<void, ApFacility>({
       query: (facility: ApFacility) => ({
         url: `/setup/remove-facility`,
@@ -687,5 +698,6 @@ export const {
   useRemoveCatalogDiagnosticTestMutation,
   useRemoveUserMutation,
   useGetUserDepartmentsQuery,
-  useResetUserPasswordMutation
+  useResetUserPasswordMutation,
+  useSaveFacilityDepartmentMutation
 } = setupService;

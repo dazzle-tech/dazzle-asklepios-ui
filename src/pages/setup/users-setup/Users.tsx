@@ -18,7 +18,8 @@ import {
   useSaveUserMidicalLicenseMutation,
   useRemoveUserMidicalLicenseMutation,
   useGetUserDepartmentsQuery,
-  useResetUserPasswordMutation
+  useResetUserPasswordMutation,
+  useSaveFacilityDepartmentMutation
 } from '@/services/setupService';
 import { Button, ButtonToolbar, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -81,7 +82,7 @@ const Users = () => {
 
   const [saveUserMidicalLicense, setSaveUserMidicalLicense] = useSaveUserMidicalLicenseMutation();
   const [removeUserMidicalLicense, setRemoveUserMidicalLicense] = useRemoveUserMidicalLicenseMutation();
-  const [resetUserPassword,setResetUserPassword] = useResetUserPasswordMutation()
+  const [resetUserPassword, setResetUserPassword] = useResetUserPasswordMutation()
 
 
   const [popupOpen, setPopupOpen] = useState(false);
@@ -98,13 +99,14 @@ const Users = () => {
   const { data: licenseListResponse, refetch: refetchLicense } = useGetLicenseQuery(listRequest);
 
   const [saveUser, saveUserMutation] = useSaveUserMutation();
+  const [saveDepartment,saveDepartmentMutation] =useSaveFacilityDepartmentMutation();
 
   const { data: userListResponse, refetch: refetchUsers } = useGetUsersQuery(listRequest);
   const { data: accessRoleListResponse } = useGetAccessRolesQuery({
     ...initialListRequest,
     pageSize: 1000
   });
-  const { data: facilityListResponse } = useGetFacilitiesQuery({
+  const { data: facilityListResponse, refetch: refetchFacility } = useGetFacilitiesQuery({
     ...initialListRequest,
     pageSize: 1000
   });
@@ -140,14 +142,13 @@ const Users = () => {
   }, [facilityListResponse?.object, user._facilitiesInput]);
 
   const [removeUser, { isLoading, isSuccess, isError }] = useRemoveUserMutation();
+  const [selectedFacilityDepartment, setSelectedFacilityDepartment] = useState()
 
+  useEffect(() => {
+    console.log(selectedFacilityDepartment)
+  }, [selectedFacilityDepartment])
 
   const handleSaveLicense = () => {
-
-
-    console.log(licenseListResponse)
-    console.log(userLicense)
-
     saveUserMidicalLicense({
       ...userLicense,
       userKey: user.key
@@ -177,25 +178,45 @@ const Users = () => {
     saveUser({ ...user, selectedDepartmentsFacilityKey: selectedFacility?.key }).unwrap().then(() => {
       setEditing(false)
       refetchUsers()
-      setSelectedFacility(null)
+      refetchFacility()
       setUser({ ...user, _depratmentsInput: [] })
       setNewDepartmentPopupOpen(false)
       refetchDepartments()
 
     })
-    if (!detailsPanle) {
-      setUser(newApUser)
+    // if (!detailsPanle) {
+    //   setUser(newApUser)
 
-    }
+    // }
     console.log(user)
+
+  };
+
+  const handleFacilityDepartmentSave = () => {
+    const facilityData = {
+      facilityKey: selectedFacility?.key,
+      departmentKey: selectedFacilityDepartment?.key
+    };
+
+    saveDepartment(facilityData)
+    .unwrap()
+    .then((result) => {
+      console.log('Save successful', result);
+    })
+    .catch((error) => {
+      console.error('Save failed', error);
+    });
+
+    console.log(facilityData); // Debugging info
+
 
   };
 
   const handleResetPassword = () => {
     console.log(resetVia)
-    resetUserPassword(user).then(()=>{
+    resetUserPassword(user).then(() => {
       console.log(`${user.firstName}'s password was successfully changed`)
-    }).then(()=>{
+    }).then(() => {
       setResetPasswordPopupOpen(false)
     })
 
@@ -513,9 +534,9 @@ const Users = () => {
                           cellBordered
                           data={
                             selectedFacility && userDepartmentsResponse?.object
-                              ? userDepartmentsResponse.object.filter(department => 
-                                  department.facilitiyKey === selectedFacility.key // Match facility
-                                )
+                              ? userDepartmentsResponse.object.filter(department =>
+                                department.facilitiyKey === selectedFacility.key // Match facility
+                              )
                               : []
                           }
                         >
@@ -833,7 +854,7 @@ const Users = () => {
           <span>How would you like to reset the password?</span>
           <RadioGroup onChange={(e) => setResetVia(e)} name="radio-group-inline" defaultValue="email">
             <Radio value="email">Email</Radio>
-            <Radio value="phone">Phone Number</Radio>
+            <Radio disabled value="phone">Phone Number</Radio>
           </RadioGroup>
 
         </Modal.Body>
@@ -895,28 +916,25 @@ const Users = () => {
         <Modal.Body>
           <Form fluid layout='inline'>
             <MyInput
-              required
-              width={300}
               column
-              fieldLabel="Departments"
-              fieldType="multyPicker"
-              fieldName="genderLkey"
-              selectData={filteredDepartments}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
+              fieldLabel={`${selectedFacility.facilityName} Departments`}
+              fieldType="select"
+              fieldName="key"
+              selectData={filteredDepartments ?? []}
               selectDataLabel="name"
-              fieldName="_depratmentsInput"
-              record={user}
-              setRecord={setUser}
+              selectDataValue="key"
+              record={selectedFacilityDepartment}
+              setRecord={setSelectedFacilityDepartment}
             />
+
+
           </Form>
         </Modal.Body>
         <Modal.Footer>
           <Stack spacing={2} divider={<Divider vertical />}>
             <Button appearance="primary"
               onClick={() => {
-                handleSave(),
-                  console.log({ ...user, selectedDepartmentsFacilityKey: selectedFacility?.key })
+                handleFacilityDepartmentSave()
 
               }}
             >
