@@ -16,7 +16,10 @@ import {
   useSaveUserMutation,
   useGetDepartmentsQuery,
   useSaveUserMidicalLicenseMutation,
-  useRemoveUserMidicalLicenseMutation
+  useRemoveUserMidicalLicenseMutation,
+  useGetUserDepartmentsQuery,
+  useResetUserPasswordMutation,
+  useSaveFacilityDepartmentMutation
 } from '@/services/setupService';
 import { Button, ButtonToolbar, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -39,6 +42,7 @@ import {
 import { first } from 'lodash';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
+import MyToast from '@/components/MyToast/MyToast';
 
 const Users = () => {
   // const [facilities, setFacilities] = useState([])
@@ -78,7 +82,7 @@ const Users = () => {
 
   const [saveUserMidicalLicense, setSaveUserMidicalLicense] = useSaveUserMidicalLicenseMutation();
   const [removeUserMidicalLicense, setRemoveUserMidicalLicense] = useRemoveUserMidicalLicenseMutation();
-
+  const [resetUserPassword, setResetUserPassword] = useResetUserPasswordMutation()
 
 
   const [popupOpen, setPopupOpen] = useState(false);
@@ -95,21 +99,28 @@ const Users = () => {
   const { data: licenseListResponse, refetch: refetchLicense } = useGetLicenseQuery(listRequest);
 
   const [saveUser, saveUserMutation] = useSaveUserMutation();
+  const [saveDepartment,saveDepartmentMutation] =useSaveFacilityDepartmentMutation();
 
   const { data: userListResponse, refetch: refetchUsers } = useGetUsersQuery(listRequest);
   const { data: accessRoleListResponse } = useGetAccessRolesQuery({
     ...initialListRequest,
     pageSize: 1000
   });
-  const { data: facilityListResponse } = useGetFacilitiesQuery({
+  const { data: facilityListResponse, refetch: refetchFacility } = useGetFacilitiesQuery({
     ...initialListRequest,
     pageSize: 1000
   });
-  const { data: departmentsListResponse } = useGetDepartmentsQuery({
+  const { data: departmentsListResponse, refetch: refetchDepartments } = useGetDepartmentsQuery({
     ...initialListRequest,
     pageSize
       : 1000
   });
+
+  const { data: userDepartmentsResponse, refetch: refetchUserDepartments } = useGetUserDepartmentsQuery(user?.key);
+
+  useEffect(() => {
+    console.log(userDepartmentsResponse)
+  }, [userDepartmentsResponse])
 
   const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
@@ -131,14 +142,13 @@ const Users = () => {
   }, [facilityListResponse?.object, user._facilitiesInput]);
 
   const [removeUser, { isLoading, isSuccess, isError }] = useRemoveUserMutation();
+  const [selectedFacilityDepartment, setSelectedFacilityDepartment] = useState()
 
+  useEffect(() => {
+    console.log(selectedFacilityDepartment)
+  }, [selectedFacilityDepartment])
 
   const handleSaveLicense = () => {
-
-
-    console.log(licenseListResponse)
-    console.log(userLicense)
-
     saveUserMidicalLicense({
       ...userLicense,
       userKey: user.key
@@ -168,21 +178,47 @@ const Users = () => {
     saveUser({ ...user, selectedDepartmentsFacilityKey: selectedFacility?.key }).unwrap().then(() => {
       setEditing(false)
       refetchUsers()
-      setSelectedFacility(null)
+      refetchFacility()
       setUser({ ...user, _depratmentsInput: [] })
       setNewDepartmentPopupOpen(false)
+      refetchDepartments()
 
     })
-    if (!detailsPanle) {
-      setUser(newApUser)
+    // if (!detailsPanle) {
+    //   setUser(newApUser)
 
-    }
+    // }
     console.log(user)
+
+  };
+
+  const handleFacilityDepartmentSave = () => {
+    const facilityData = {
+      facilityKey: selectedFacility?.key,
+      departmentKey: selectedFacilityDepartment?.key
+    };
+
+    saveDepartment(facilityData)
+    .unwrap()
+    .then((result) => {
+      console.log('Save successful', result);
+    })
+    .catch((error) => {
+      console.error('Save failed', error);
+    });
+
+    console.log(facilityData); 
+
 
   };
 
   const handleResetPassword = () => {
     console.log(resetVia)
+    resetUserPassword(user).then(() => {
+      console.log(`${user.firstName}'s password was successfully changed`)
+    }).then(() => {
+      setResetPasswordPopupOpen(false)
+    })
 
   };
 
@@ -234,6 +270,8 @@ const Users = () => {
       console.error('Error removing user:', error);
     }
   };
+
+
 
   const InputForms = (editing) => {
     return (
@@ -476,7 +514,48 @@ const Users = () => {
                     bordered>
                     {filteredFacilities.map((facility, index) => (
                       <Panel onSelect={() => { setSelectedFacility(facility) }} key={facility.key} header={"Facility : " + facility.facilityName} eventKey={index + 1}>
-                        <p style={{ height: "100px" }}>{facility.facilityNameOtherLang || "No additional info"}</p>
+
+                        <Table
+                          height={200}
+                          // sortColumn={patientRelationListRequest.sortBy}
+                          // sortType={patientRelationListRequest.sortType}
+                          onSortColumn={(sortBy, sortType) => {
+                            if (sortBy)
+                              setListRequest({
+                                ...listRequest,
+                                sortBy,
+                                sortType
+                              });
+                          }}
+                          // onRowClick={(rowData) => { setSelectedLicense(rowData), console.log((rowData)) }}
+                          headerHeight={40}
+                          rowHeight={50}
+                          bordered
+                          cellBordered
+                          data={
+                            selectedFacility && userDepartmentsResponse?.object
+                              ? userDepartmentsResponse.object.filter(department =>
+                                department.facilitiyKey === selectedFacility.key // Match facility
+                              )
+                              : []
+                          }
+                        >
+                          <Column sortable flexGrow={4}>
+                            <HeaderCell>
+                              <Translate>Facility Name</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="facilityName" />
+                          </Column>
+
+                          <Column sortable flexGrow={4}>
+                            <HeaderCell>
+                              <Translate>Department Name</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="departmentName" />
+                          </Column>
+
+
+                        </Table>
                       </Panel>
                     ))}
                   </PanelGroup>
@@ -775,7 +854,7 @@ const Users = () => {
           <span>How would you like to reset the password?</span>
           <RadioGroup onChange={(e) => setResetVia(e)} name="radio-group-inline" defaultValue="email">
             <Radio value="email">Email</Radio>
-            <Radio value="phone">Phone Number</Radio>
+            <Radio disabled value="phone">Phone Number</Radio>
           </RadioGroup>
 
         </Modal.Body>
@@ -837,28 +916,25 @@ const Users = () => {
         <Modal.Body>
           <Form fluid layout='inline'>
             <MyInput
-              required
-              width={300}
               column
-              fieldLabel="Departments"
-              fieldType="multyPicker"
-              fieldName="genderLkey"
-              selectData={filteredDepartments}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
+              fieldLabel={`${selectedFacility.facilityName} Departments`}
+              fieldType="select"
+              fieldName="key"
+              selectData={filteredDepartments ?? []}
               selectDataLabel="name"
-              fieldName="_depratmentsInput"
-              record={user}
-              setRecord={setUser}
+              selectDataValue="key"
+              record={selectedFacilityDepartment}
+              setRecord={setSelectedFacilityDepartment}
             />
+
+
           </Form>
         </Modal.Body>
         <Modal.Footer>
           <Stack spacing={2} divider={<Divider vertical />}>
             <Button appearance="primary"
               onClick={() => {
-                handleSave(),
-                  console.log({ ...user, selectedDepartmentsFacilityKey: selectedFacility?.key })
+                handleFacilityDepartmentSave()
 
               }}
             >

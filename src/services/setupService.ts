@@ -75,6 +75,17 @@ export const setupService = createApi({
         return response.object;
       }
     }),
+    saveFacilityDepartment: builder.mutation({
+      query: (facility: ApFacility) => ({
+        url: `/setup/save-facility-department`,
+        method: 'POST',
+        body: facility
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
     removeFacility: builder.mutation<void, ApFacility>({
       query: (facility: ApFacility) => ({
         url: `/setup/remove-facility`,
@@ -175,6 +186,18 @@ export const setupService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       }
+    }),
+    resetUserPassword: builder.mutation({
+      query: (user: ApUser) => ({
+        url: `/setup/user-password-reset`,  
+        method: 'POST',
+        body: user,  
+       
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;  
+      },
     }),
     getModules: builder.query({  
       query: (listRequest: ListRequest) => ({
@@ -306,6 +329,13 @@ export const setupService = createApi({
       query: (listRequest: ListRequest) => ({
         url: `/setup/department-list?${fromListRequestToQueryParams(listRequest)}`
       }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    getUserDepartments: builder.query({
+      query: (key) => {
+        return { url: `/setup/user-departments?key=${key}` };
+      },
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
@@ -666,5 +696,8 @@ export const {
   useSaveDiagnosticfsTestSpecialPopulationMutation,
   useGetDiagnosticsTestNotSelectedListQuery,
   useRemoveCatalogDiagnosticTestMutation,
-  useRemoveUserMutation
+  useRemoveUserMutation,
+  useGetUserDepartmentsQuery,
+  useResetUserPasswordMutation,
+  useSaveFacilityDepartmentMutation
 } = setupService;
