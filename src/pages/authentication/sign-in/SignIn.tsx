@@ -48,6 +48,14 @@ const SignIn = () => {
     login(credentials).unwrap();
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();  // Prevent default form submission behavior
+      handleLogin();
+    }
+  };
+
+
   useEffect(() => {
     // if there is a user, navigate to dashboard
     if (authSlice.user && localStorage.getItem('access_token') && !authSlice.user?.mustChangePassword) {
@@ -125,15 +133,14 @@ const SignIn = () => {
       <br />
 
       {!resetPasswordView && (
-        <Panel bordered style={{ background: '#fff', width: 400 }} header={<h3>Sign In</h3>}>
+        <Panel bordered style={{ background: '#fff', width: 400, padding: 20 }}
+          header={<h3>Sign In</h3>}>
           {!authSlice.tenant && (
             <Message type="warning" showIcon>
               <Translate>No Tenant Configured</Translate>
             </Message>
           )}
-
-
-          <Form fluid>
+          <Form fluid onKeyPress={handleKeyPress}>
             <Form.Group>
               <Form.ControlLabel>Organization</Form.ControlLabel>
               <Form.Control

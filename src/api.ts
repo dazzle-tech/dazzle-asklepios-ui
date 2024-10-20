@@ -9,7 +9,7 @@ export const baseQuery = fetchBaseQuery({
   baseUrl: config.backendBaseURL ? config.backendBaseURL : 'http://localhost:8080', // TODO change from config file to env variable
   prepareHeaders: (headers: Headers, { endpoint, type, getState }) => {
     if (endpoint === 'loadTenant' && type === 'query') {
-      headers.set('access_token', `${config.tenantSecurityToken}`); // TODO change from config file to secure secrets storing/loading
+      headers.set('access_token', `${config.tenantSecurityToken ? config.tenantSecurityToken : '4994'}`); // TODO change from config file to secure secrets storing/loading
     } else {
       const token = localStorage.getItem('access_token');
       if (token) {

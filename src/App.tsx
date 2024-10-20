@@ -70,6 +70,12 @@ const App = () => {
   const location = useLocation();
 
   useEffect(() => {
+    console.log('config from file');
+    console.log(config.backendBaseURL);
+    console.log(config.tenantId);
+  }, [])
+
+  useEffect(() => {
     if (navigationMapRawData && !isLoadingNavigationMap && !isFetchingNavigationMap) {
       // build navigation map
       loadNavs();
