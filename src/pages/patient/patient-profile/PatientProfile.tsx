@@ -861,7 +861,7 @@ const PatientProfile = () => {
               icon={<PageIcon />}
               onClick={handleNewVisit}
             >
-              <Translate>New Visit</Translate>
+              <Translate>Quick Appointment</Translate>
             </IconButton>
 
             <IconButton
