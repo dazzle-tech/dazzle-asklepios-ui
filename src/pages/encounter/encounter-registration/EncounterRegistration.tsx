@@ -98,8 +98,6 @@ const EncounterRegistration = () => {
     // dispatch(setEncounter(null));
   };
 
-
- 
   useEffect(() => {
     if (!patientSlice.patient && !localStorage.getItem('patient') && !localEncounter.patientKey) {
       navigate('/patient-profile');
@@ -149,26 +147,37 @@ const EncounterRegistration = () => {
         <Panel
           header={
             <h3 className="title">
-              <Translate>{encounter?"Visit Registration":"New Visit Registration"}</Translate>
+              <Translate>{encounter ? ' Quick Appointment' : 'New Quick Appointment'}</Translate>
             </h3>
           }
         >
           <Panel bordered>
             <ButtonToolbar>
-              <IconButton   appearance="primary" color="red" icon={<Block />} onClick={handleCancel}>
+              <IconButton appearance="primary" color="red" icon={<Block />} onClick={handleCancel}>
                 <Translate>Cancel</Translate>
               </IconButton>
-              <IconButton disabled={encounter} appearance="primary" color="green" icon={<Check />} onClick={handleSave}>
+              <IconButton
+                disabled={encounter}
+                appearance="primary"
+                color="green"
+                icon={<Check />}
+                onClick={handleSave}
+              >
                 <Translate>Save</Translate>
               </IconButton>
               <Divider vertical />
-              <IconButton  disabled={encounter} appearance="primary" color="orange" icon={<icons.Danger />}>
+              <IconButton
+                disabled={encounter}
+                appearance="primary"
+                color="orange"
+                icon={<icons.Danger />}
+              >
                 <Translate>Warnings</Translate>
               </IconButton>
               <IconButton disabled={encounter} appearance="primary" icon={<icons.PublicOpinion />}>
                 <Translate>Medical Notes</Translate>
               </IconButton>
-              <IconButton  
+              <IconButton
                 appearance="ghost"
                 color="violet"
                 icon={<icons.Reload />}
@@ -256,7 +265,7 @@ const EncounterRegistration = () => {
                     column
                     disabled={!editing || encounter}
                     fieldName="visitId"
-                    record={encounter?encounter:localEncounter}
+                    record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
                   />
 
@@ -267,7 +276,16 @@ const EncounterRegistration = () => {
                     fieldLabel="Date"
                     fieldType="date"
                     fieldName="plannedStartDate"
-                    record={encounter?encounter:localEncounter}
+                    record={
+                      encounter
+                        ? encounter
+                        : {
+                            ...localEncounter,
+                            plannedStartDate:
+                              localEncounter?.plannedStartDate ||
+                              new Date().toISOString().split('T')[0]
+                          }
+                    }
                     setRecord={setLocalEncounter}
                   />
 
@@ -276,12 +294,12 @@ const EncounterRegistration = () => {
                     column
                     disabled={!editing || encounter}
                     fieldType="select"
-                    fieldLabel='Visit Type'
+                    fieldLabel="Visit Type"
                     fieldName="encounterTypeLkey"
                     selectData={encounterTypeLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
-                    record={encounter?encounter:localEncounter}
+                    record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
                   />
                   <MyInput
@@ -293,7 +311,7 @@ const EncounterRegistration = () => {
                     selectData={departmentListResponse?.object ?? []}
                     selectDataLabel="name"
                     selectDataValue="key"
-                    record={encounter?encounter:localEncounter}
+                    record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
                   />
 
@@ -307,7 +325,7 @@ const EncounterRegistration = () => {
                     selectData={practitionerListResponse?.object ?? []}
                     selectDataLabel="practitionerFullName"
                     selectDataValue="key"
-                    record={encounter?encounter:localEncounter}
+                    record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
                   />
                   <br />
@@ -329,16 +347,15 @@ const EncounterRegistration = () => {
                     column
                     disabled={!editing || encounter}
                     fieldType="select"
-                    fieldLabel='Priority'
+                    fieldLabel="Priority"
                     fieldName="encounterPriorityLkey"
                     selectData={encounterPriorityLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
-                    record={encounter?encounter:localEncounter}
+                    record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
                   />
                   <MyInput
-                  
                     vr={validationResult}
                     column
                     disabled={!editing || encounter}
@@ -347,7 +364,7 @@ const EncounterRegistration = () => {
                     selectData={encounterReasonLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
-                    record={encounter?encounter:localEncounter}
+                    record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
                   />
                 </Form>
@@ -355,206 +372,208 @@ const EncounterRegistration = () => {
             </Stack>
           </Panel>
           {/* <br /> */}
-          {false && <Panel
-            bordered
-            header={
-              <h5 className="title">
-                <Translate>Secondary Information</Translate>
-              </h5>
-            }
-          >
-            <Stack>
-              <Stack.Item grow={4}>
-                <Form layout="inline" fluid>
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || encounter}
-                    fieldType="select"
-                    fieldName="basedOnLkey"
-                    selectData={encounterBasedOnLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={encounter?encounter:localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || encounter}
-                    fieldType="select"
-                    fieldLabel="Based On Detail"
-                    fieldName="basedOnKey"
-                    selectData={[]}
-                    selectDataLabel=""
-                    selectDataValue="key"
-                    record={encounter?encounter:localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
+          {false && (
+            <Panel
+              bordered
+              header={
+                <h5 className="title">
+                  <Translate>Secondary Information</Translate>
+                </h5>
+              }
+            >
+              <Stack>
+                <Stack.Item grow={4}>
+                  <Form layout="inline" fluid>
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      disabled={!editing || encounter}
+                      fieldType="select"
+                      fieldName="basedOnLkey"
+                      selectData={encounterBasedOnLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={encounter ? encounter : localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      disabled={!editing || encounter}
+                      fieldType="select"
+                      fieldLabel="Based On Detail"
+                      fieldName="basedOnKey"
+                      selectData={[]}
+                      selectDataLabel=""
+                      selectDataValue="key"
+                      record={encounter ? encounter : localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
 
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || encounter}
-                    fieldType="select"
-                    fieldName="episodeCareKey"
-                    selectData={[]}
-                    selectDataLabel=""
-                    selectDataValue="key"
-                    record={encounter?encounter:localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
-                  <br />
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || encounter}
-                    fieldType="select"
-                    fieldName="serviceTypeLkey"
-                    selectData={serviceTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={encounter?encounter:localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || encounter}
-                    fieldType="checkbox"
-                    fieldName="virtualService"
-                    record={encounter?encounter:localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
-                  <br />
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || encounter}
-                    fieldType="select"
-                    fieldName="dietPreferenceLkey"
-                    selectData={dietPreferenceLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={encounter?encounter:localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      disabled={!editing || encounter}
+                      fieldType="select"
+                      fieldName="episodeCareKey"
+                      selectData={[]}
+                      selectDataLabel=""
+                      selectDataValue="key"
+                      record={encounter ? encounter : localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
+                    <br />
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      disabled={!editing || encounter}
+                      fieldType="select"
+                      fieldName="serviceTypeLkey"
+                      selectData={serviceTypeLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={encounter ? encounter : localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      disabled={!editing || encounter}
+                      fieldType="checkbox"
+                      fieldName="virtualService"
+                      record={encounter ? encounter : localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
+                    <br />
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      disabled={!editing || encounter}
+                      fieldType="select"
+                      fieldName="dietPreferenceLkey"
+                      selectData={dietPreferenceLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={encounter ? encounter : localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
 
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || !localEncounter.dietPreferenceLkey || encounter}
-                    fieldType="textarea"
-                    fieldName="dietPreferenceText"
-                    record={encounter?encounter:localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
-                  <br />
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      disabled={!editing || !localEncounter.dietPreferenceLkey || encounter}
+                      fieldType="textarea"
+                      fieldName="dietPreferenceText"
+                      record={encounter ? encounter : localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
+                    <br />
 
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || encounter}
-                    fieldType="select"
-                    fieldName="specialArrangementLkey"
-                    selectData={specialArrangementLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={encounter?encounter:localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      disabled={!editing || encounter}
+                      fieldType="select"
+                      fieldName="specialArrangementLkey"
+                      selectData={specialArrangementLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={encounter ? encounter : localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
 
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || !localEncounter.specialArrangementLkey || encounter}
-                    fieldType="textarea"
-                    fieldName="specialArrangementText"
-                    record={encounter?encounter:localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
-                  <br />
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || encounter}
-                    fieldType="textarea"
-                    fieldName="valuableItemsText"
-                    record={encounter?encounter:localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
-                  <br />
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || encounter}
-                    fieldType="select"
-                    fieldName="specialCourtesyLkey"
-                    selectData={specialCourtesyLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={encounter?encounter:localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      disabled={!editing || !localEncounter.specialArrangementLkey || encounter}
+                      fieldType="textarea"
+                      fieldName="specialArrangementText"
+                      record={encounter ? encounter : localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
+                    <br />
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      disabled={!editing || encounter}
+                      fieldType="textarea"
+                      fieldName="valuableItemsText"
+                      record={encounter ? encounter : localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
+                    <br />
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      disabled={!editing || encounter}
+                      fieldType="select"
+                      fieldName="specialCourtesyLkey"
+                      selectData={specialCourtesyLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={encounter ? encounter : localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
 
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || encounter}
-                    fieldName="adminssionOrigin"
-                    record={encounter?encounter:localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      disabled={!editing || encounter}
+                      fieldName="adminssionOrigin"
+                      record={encounter ? encounter : localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
 
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || encounter}
-                    fieldName="adminssionSource"
-                    record={encounter?encounter:localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      disabled={!editing || encounter}
+                      fieldName="adminssionSource"
+                      record={encounter ? encounter : localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
 
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || encounter}
-                    fieldType="checkbox"
-                    fieldName="readminssion"
-                    record={encounter?encounter:localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      disabled={!editing || encounter}
+                      fieldType="checkbox"
+                      fieldName="readminssion"
+                      record={encounter ? encounter : localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
 
-                  <br />
+                    <br />
 
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || encounter}
-                    fieldType="select"
-                    fieldName="locationTypeLkey"
-                    selectData={locationTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={encounter?encounter:localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || encounter}
-                    fieldType="select"
-                    fieldName="locationKey"
-                    selectData={[]}
-                    selectDataLabel=""
-                    selectDataValue="key"
-                    record={encounter?encounter:localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
-                </Form>
-              </Stack.Item>
-            </Stack>
-          </Panel>}
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      disabled={!editing || encounter}
+                      fieldType="select"
+                      fieldName="locationTypeLkey"
+                      selectData={locationTypeLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={encounter ? encounter : localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      disabled={!editing || encounter}
+                      fieldType="select"
+                      fieldName="locationKey"
+                      selectData={[]}
+                      selectDataLabel=""
+                      selectDataValue="key"
+                      record={encounter ? encounter : localEncounter}
+                      setRecord={setLocalEncounter}
+                    />
+                  </Form>
+                </Stack.Item>
+              </Stack>
+            </Panel>
+          )}
           <br />
           <Panel
             bordered
@@ -583,7 +602,7 @@ const EncounterRegistration = () => {
                   <MyInput
                     vr={validationResult}
                     column
-                    disabled={!editing || encounter }
+                    disabled={!editing || encounter}
                     fieldType="select"
                     fieldName="paymentTypeLkey"
                     selectData={paymentTypeLovQueryResponse?.object ?? []}
