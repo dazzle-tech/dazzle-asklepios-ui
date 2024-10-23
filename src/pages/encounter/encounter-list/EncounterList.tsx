@@ -122,7 +122,7 @@ const EncounterList = () => {
       <Panel
         header={
           <h3 className="title">
-            <Translate>Visit List</Translate>
+            <Translate>Patients Visit List</Translate>
           </h3>
         }
       >
@@ -130,7 +130,7 @@ const EncounterList = () => {
           <ButtonToolbar>
             <IconButton
               appearance="primary"
-              color="green"
+              color="cyan"
               disabled={!encounter.key}
               onClick={goToVisit}
               icon={<icons.ArrowRight />}
