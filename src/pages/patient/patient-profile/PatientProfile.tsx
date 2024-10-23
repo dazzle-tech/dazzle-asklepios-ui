@@ -801,8 +801,8 @@ const PatientProfile = () => {
             {conjurePatientSearchBar('primary')}
             <Divider vertical />
             <IconButton
+              color="violet" 
               appearance="primary"
-              color="cyan"
               icon={<PlusRound />}
               disabled={editing || localPatient.key !== undefined}
               onClick={startRegistration}
@@ -812,8 +812,8 @@ const PatientProfile = () => {
 
             <div>
               <Button
-                appearance="primary"
-                style={{ backgroundColor: '#8034ff' }}
+                appearance="ghost"
+                style={{ border: '1px solid rgb(130, 95, 196)',color:'rgb(130, 95, 196)' }}
                 disabled={editing || localPatient.key !== undefined}
                 onClick={() => setQuickPatientModalOpen(true)}
               >
@@ -831,7 +831,7 @@ const PatientProfile = () => {
             <IconButton
               disabled={editing || !localPatient.key}
               appearance="primary"
-              color="orange"
+              color="cyan"
               icon={<Edit />}
               onClick={enableEdit}
             >
@@ -840,7 +840,7 @@ const PatientProfile = () => {
 
             <IconButton
               appearance="primary"
-              color="green"
+              color="violet"
               disabled={!editing}
               icon={<Check />}
               onClick={handleSave}
@@ -848,7 +848,7 @@ const PatientProfile = () => {
               <Translate>Save</Translate>
             </IconButton>
 
-            <IconButton appearance="primary" color="red" icon={<Block />} onClick={handleClear}>
+            <IconButton appearance="primary" color="blue" icon={<Block />} onClick={handleClear}>
               <Translate>Clear</Translate>
             </IconButton>
 
@@ -865,7 +865,7 @@ const PatientProfile = () => {
             </IconButton>
 
             <IconButton
-              appearance="primary"
+              appearance="ghost"
               color="cyan"
               disabled={editing || localPatient.key === undefined}
               icon={<History />}
@@ -873,8 +873,8 @@ const PatientProfile = () => {
             >
               <Translate>Visit History</Translate>
             </IconButton>
-
-            <IconButton
+          
+            {/* <IconButton
               appearance="primary"
               color="yellow"
               disabled={editing || !localPatient.key}
@@ -884,7 +884,7 @@ const PatientProfile = () => {
               }}
             >
               <Translate>Patient Chart</Translate>
-            </IconButton>
+            </IconButton> */}
           </ButtonToolbar>
         </Panel>
 

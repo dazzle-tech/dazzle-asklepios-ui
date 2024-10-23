@@ -130,7 +130,7 @@ const EncounterList = () => {
           <ButtonToolbar>
             <IconButton
               appearance="primary"
-              color="green"
+              color="cyan"
               disabled={!encounter.key}
               onClick={goToVisit}
               icon={<icons.ArrowRight />}
