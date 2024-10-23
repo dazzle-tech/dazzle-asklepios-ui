@@ -24,6 +24,7 @@ import {
   ApService,
   ApServiceCdt,
   ApUser,
+  ApUserFacilitiyDepartments,
   ApUserMedicalLicense
 
 } from '@/types/model-types';
@@ -76,10 +77,10 @@ export const setupService = createApi({
       }
     }),
     saveFacilityDepartment: builder.mutation({
-      query: (facility: ApFacility) => ({
+      query: (facilityDepartment: ApUserFacilitiyDepartments) => ({
         url: `/setup/save-facility-department`,
         method: 'POST',
-        body: facility
+        body: facilityDepartment
       }),
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
@@ -637,7 +638,19 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    removeUserFacilityDepartment: builder.mutation({
+      query: (facilityDepartment: ApUserFacilitiyDepartments) => ({
+        url: `/setup/remove-user-facility-department`,
+        method: 'POST',
+        body: facilityDepartment,  
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+    })
   })
+
 });
 
 export const {
@@ -699,5 +712,6 @@ export const {
   useRemoveUserMutation,
   useGetUserDepartmentsQuery,
   useResetUserPasswordMutation,
-  useSaveFacilityDepartmentMutation
+  useSaveFacilityDepartmentMutation,
+  useRemoveUserFacilityDepartmentMutation,
 } = setupService;

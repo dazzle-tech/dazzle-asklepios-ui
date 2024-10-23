@@ -7,6 +7,7 @@ import PageEndIcon from '@rsuite/icons/PageEnd';
 import { Block, Check, DocPass, Edit, History, Icon, PlusRound, Detail } from '@rsuite/icons';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import ReloadIcon from '@rsuite/icons/Reload';
+import GearIcon from '@rsuite/icons/Gear';
 
 import {
   useGetAccessRolesQuery,
@@ -19,7 +20,8 @@ import {
   useRemoveUserMidicalLicenseMutation,
   useGetUserDepartmentsQuery,
   useResetUserPasswordMutation,
-  useSaveFacilityDepartmentMutation
+  useSaveFacilityDepartmentMutation,
+  useRemoveUserFacilityDepartmentMutation
 } from '@/services/setupService';
 import { Button, ButtonToolbar, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -93,13 +95,17 @@ const Users = () => {
   const [userBrowsing, setUserBrowsing] = useState(false);
   const [resetVia, setResetVia] = useState('email')
 
+  const [selectedDepartmentFromTable, setSelectedDepartmentFromTable] = useState()
+
 
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
 
   const { data: licenseListResponse, refetch: refetchLicense } = useGetLicenseQuery(listRequest);
 
   const [saveUser, saveUserMutation] = useSaveUserMutation();
-  const [saveDepartment,saveDepartmentMutation] =useSaveFacilityDepartmentMutation();
+  const [saveDepartment, saveDepartmentMutation] = useSaveFacilityDepartmentMutation();
+
+  const [removeUserFacilityDepartment, removeUserFacilityDepartmentMutation] = useRemoveUserFacilityDepartmentMutation();
 
   const { data: userListResponse, refetch: refetchUsers } = useGetUsersQuery(listRequest);
   const { data: accessRoleListResponse } = useGetAccessRolesQuery({
@@ -118,9 +124,6 @@ const Users = () => {
 
   const { data: userDepartmentsResponse, refetch: refetchUserDepartments } = useGetUserDepartmentsQuery(user?.key);
 
-  useEffect(() => {
-    console.log(userDepartmentsResponse)
-  }, [userDepartmentsResponse])
 
   const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
@@ -133,6 +136,8 @@ const Users = () => {
     console.log(filteredDepartments)
   }, [filteredDepartments])
 
+
+
   useEffect(() => {
     const filterKeys = user._facilitiesInput || [];
     const filtered = facilityListResponse?.object?.filter(facility =>
@@ -144,9 +149,7 @@ const Users = () => {
   const [removeUser, { isLoading, isSuccess, isError }] = useRemoveUserMutation();
   const [selectedFacilityDepartment, setSelectedFacilityDepartment] = useState()
 
-  useEffect(() => {
-    console.log(selectedFacilityDepartment)
-  }, [selectedFacilityDepartment])
+ 
 
   const handleSaveLicense = () => {
     saveUserMidicalLicense({
@@ -193,21 +196,26 @@ const Users = () => {
   };
 
   const handleFacilityDepartmentSave = () => {
-    const facilityData = {
-      facilityKey: selectedFacility?.key,
-      departmentKey: selectedFacilityDepartment?.key
+    const facilityDepartment = {
+      userKey: user?.key,
+      departmentKey: selectedFacilityDepartment?.key,
+      facilitiyKey: selectedFacility?.key
+
     };
 
-    saveDepartment(facilityData)
-    .unwrap()
-    .then((result) => {
-      console.log('Save successful', result);
-    })
-    .catch((error) => {
-      console.error('Save failed', error);
-    });
+    saveDepartment(facilityDepartment)
+      .unwrap()
+      .then((result) => {
+        console.log('Save successful', result);
+        refetchUserDepartments()
+        setNewDepartmentPopupOpen(false)
+        setSelectedFacilityDepartment(null)
+      })
+      .catch((error) => {
+        console.error('Save failed', error);
+      });
 
-    console.log(facilityData); 
+    console.log(facilityDepartment);
 
 
   };
@@ -271,6 +279,17 @@ const Users = () => {
     }
   };
 
+  const handleRemoveUserFacilityDepartment = () => {
+    if (selectedDepartmentFromTable) {
+      removeUserFacilityDepartment(selectedDepartmentFromTable).unwrap().then(() => {
+        refetchUserDepartments()
+        setSelectedDepartmentFromTable(null)
+
+      })
+
+    }
+
+  }
 
 
   const InputForms = (editing) => {
@@ -505,6 +524,13 @@ const Users = () => {
                       New Department
                     </IconButton>
 
+                    <IconButton appearance="primary" color='red' icon={<TrashIcon />} disabled={!selectedDepartmentFromTable?.key}
+                      onClick={() => handleRemoveUserFacilityDepartment()}
+                    >
+                      Delete Department
+                    </IconButton>
+
+
 
                   </ButtonToolbar>
                   <br />
@@ -517,17 +543,9 @@ const Users = () => {
 
                         <Table
                           height={200}
-                          // sortColumn={patientRelationListRequest.sortBy}
-                          // sortType={patientRelationListRequest.sortType}
-                          onSortColumn={(sortBy, sortType) => {
-                            if (sortBy)
-                              setListRequest({
-                                ...listRequest,
-                                sortBy,
-                                sortType
-                              });
-                          }}
-                          // onRowClick={(rowData) => { setSelectedLicense(rowData), console.log((rowData)) }}
+
+                          onRowClick={(rowData) => { setSelectedDepartmentFromTable(rowData) }}
+
                           headerHeight={40}
                           rowHeight={50}
                           bordered
@@ -540,19 +558,20 @@ const Users = () => {
                               : []
                           }
                         >
-                          <Column sortable flexGrow={4}>
+                          <Column flexGrow={4}>
                             <HeaderCell>
                               <Translate>Facility Name</Translate>
                             </HeaderCell>
                             <Cell dataKey="facilityName" />
                           </Column>
 
-                          <Column sortable flexGrow={4}>
+                          <Column flexGrow={4}>
                             <HeaderCell>
                               <Translate>Department Name</Translate>
                             </HeaderCell>
                             <Cell dataKey="departmentName" />
                           </Column>
+
 
 
                         </Table>
