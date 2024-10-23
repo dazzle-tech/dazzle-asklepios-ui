@@ -1194,9 +1194,9 @@ const PatientProfile = () => {
               <Tab>
                 <Translate>Insurance</Translate>
               </Tab>
-              <Tab>
+              {/* <Tab>
                 <Translate>Allergies</Translate>
-              </Tab>
+              </Tab> */}
               <Tab>
                 <Translate>Privacy & Security</Translate>
               </Tab>
@@ -1723,7 +1723,7 @@ const PatientProfile = () => {
             </TabPanel>
 
             {/* Allergies */}
-            <TabPanel>
+            {/* <TabPanel>
               <Table
                 height={600}
                 sortColumn={patientRelationListRequest.sortBy}
@@ -1763,7 +1763,7 @@ const PatientProfile = () => {
                   <Cell dataKey="allergenType" />
                 </Column>
               </Table>
-            </TabPanel>
+            </TabPanel> */}
 
             {/* Privacy & Security */}
             <TabPanel>
