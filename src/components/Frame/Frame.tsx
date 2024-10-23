@@ -209,7 +209,7 @@ const Frame = (props: FrameProps) => {
             {patientSlice.encounter && (
               <StackItem>
                 <small>
-                  <b>Encounter ID</b>
+                  <b>Visit ID</b>
                 </small>
                 <div>
                   <a
