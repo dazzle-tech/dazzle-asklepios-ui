@@ -328,7 +328,7 @@ const EncounterRegistration = () => {
                     record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
                   />
-                  <br />
+                  
                   {/* <MyInput
                     vr={validationResult}
                     column
@@ -355,6 +355,7 @@ const EncounterRegistration = () => {
                     record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
                   />
+                  <br />
                   <MyInput
                     vr={validationResult}
                     column
