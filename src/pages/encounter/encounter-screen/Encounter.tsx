@@ -109,7 +109,7 @@ const Encounter = () => {
               <ButtonToolbar>
                 <IconButton
                   appearance="primary"
-                  color="red"
+                  color="violet"
                   icon={<icons.ArrowLeft />}
                   onClick={handleGoBack}
                 >
