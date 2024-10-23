@@ -153,13 +153,13 @@ const EncounterRegistration = () => {
         >
           <Panel bordered>
             <ButtonToolbar>
-              <IconButton appearance="primary" color="red" icon={<Block />} onClick={handleCancel}>
+              <IconButton appearance="primary" color="blue" icon={<Block />} onClick={handleCancel}>
                 <Translate>Cancel</Translate>
               </IconButton>
               <IconButton
                 disabled={encounter}
                 appearance="primary"
-                color="green"
+                color="violet"
                 icon={<Check />}
                 onClick={handleSave}
               >
@@ -174,7 +174,7 @@ const EncounterRegistration = () => {
               >
                 <Translate>Warnings</Translate>
               </IconButton>
-              <IconButton disabled={encounter} appearance="primary" icon={<icons.PublicOpinion />}>
+              <IconButton disabled={encounter} appearance="primary" color='cyan' icon={<icons.PublicOpinion />}>
                 <Translate>Medical Notes</Translate>
               </IconButton>
               <IconButton
