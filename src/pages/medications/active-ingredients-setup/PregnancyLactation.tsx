@@ -24,23 +24,25 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetActiveIngredientQuery, useSaveActiveIngredientMutation } from '@/services/medicationsSetupService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
-  const PregnancyLactation = () => {
+  const PregnancyLactation = ({activeIngredients, isEdit}) => {
   
     const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({ ...newApActiveIngredient });
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientMutation();
     const { data: activeIngredientListResponse } = useGetActiveIngredientQuery(listRequest);
-    const [selectedActiveIngredient, setSelectedActiveIngredient] = useState<ApActiveIngredient>({
-      ...newApActiveIngredient
-    });
     const [isActive, setIsActive] = useState(false);
     const { data: pregnancyCategoriesLovQueryResponseData } = useGetLovValuesByCodeQuery('PREGNANCY_CATEGORIES');
     const { data: breastfeedingCategoriesLovQueryResponseData } = useGetLovValuesByCodeQuery('FR_MED_CATEGORIES');
 
+    useEffect(() => {
+      if (activeIngredients) {
+        setActiveIngredient(activeIngredients)
+      }
+    }, [activeIngredients]);
 
     const save = () => {
       saveActiveIngredient({
-        ...selectedActiveIngredient, 
+        ...activeIngredient, 
         createdBy: 'Administrator'
       }).unwrap();
         
@@ -59,7 +61,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
             <Col xs={6}></Col>
             <Col xs={6}></Col>
             <Col xs={6}>
-            <ButtonToolbar style={{ margin: '2px' }}>
+           { isEdit && <ButtonToolbar style={{ margin: '2px' }}>
               <IconButton
                   size="xs"
                   appearance="primary"
@@ -76,13 +78,13 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
                   icon={<MdSave />}
                 />
                 <IconButton
-                    disabled={!selectedActiveIngredient.key}
+                    disabled={!activeIngredient.key}
                     size="xs"
                     appearance="primary"
                     color="orange"
                     icon={<InfoRound />}
                   />
-                  </ButtonToolbar>
+                  </ButtonToolbar> }
               </Col>
             </Row>
             <Row gutter={15}>
@@ -92,10 +94,10 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
                 disabled={!isActive}
                 placeholder="Pregnancy Catagory"
                 data={pregnancyCategoriesLovQueryResponseData?.object ?? []}
-                value={selectedActiveIngredient.pregnancyCategoryLkey}
+                value={activeIngredient.pregnancyCategoryLkey}
                 onChange={e =>
-                  setSelectedActiveIngredient({
-                    ...selectedActiveIngredient,
+                  setActiveIngredient({
+                    ...activeIngredient,
                     pregnancyCategoryLkey: String(e)
                   })
                 }
@@ -110,11 +112,11 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
                 disabled={!isActive}
                 placeholder="Breastfeeding Category"
                 data={breastfeedingCategoriesLovQueryResponseData?.object ?? []}
-                value={selectedActiveIngredient.lactationRiskLkey}
+                value={activeIngredient.lactationRiskLkey}
                 onChange={e =>
-                  setSelectedActiveIngredient({
-                    ...selectedActiveIngredient,
-                    pregnancyCategoryLkey: String(e)
+                  setActiveIngredient({
+                    ...activeIngredient,
+                    lactationRiskLkey: String(e)
                   })
                 }
                 labelKey="lovDisplayVale"
@@ -125,10 +127,30 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
           </Row>
           <Row gutter={15}>
           <Col xs={12}>
-          <Input as="textarea"  disabled={!isActive}  rows={9}  />
+          <Input as="textarea"
+                     disabled={!isActive}
+                     rows={9}  
+                     value={activeIngredient.pregnancyNotes}
+                     onChange={e =>
+                       setActiveIngredient({
+                         ...activeIngredient,
+                         pregnancyNotes: String(e)
+                       })
+                     }
+                     />
           </Col> 
           <Col xs={12}>
-          <Input as="textarea"  disabled={!isActive} rows={9}  />
+          <Input as="textarea"
+                     disabled={!isActive}
+                     rows={9}  
+                     value={activeIngredient.lactationRiskNotes}
+                     onChange={e =>
+                       setActiveIngredient({
+                         ...activeIngredient,
+                         lactationRiskNotes: String(e)
+                       })
+                     }
+                     />
           </Col> 
           </Row>
            

@@ -18,16 +18,11 @@ import {
   useSaveActiveIngredientMutation
      } from '@/services/medicationsSetupService';
 
-  const MOA = () => {
+  const MOA = ({activeIngredients, isEdit}) => {
     const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({ ...newApActiveIngredient });
-    const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [isActive, setIsActive] = useState(false);
     const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientMutation();
-    const { data: activeIngredientListResponse } = useGetActiveIngredientQuery(listRequest);
-    const [selectedActiveIngredient, setSelectedActiveIngredient] = useState<ApActiveIngredient>({
-      ...newApActiveIngredient
-    });
-
+   
     const handleSave = () => {
       setIsActive(true); 
       saveActiveIngredient(activeIngredient).unwrap();
@@ -35,11 +30,19 @@ import {
 
     const save = () => {
       saveActiveIngredient({
-        ...selectedActiveIngredient,
+        ...activeIngredient,
         createdBy: 'Administrator'
       }).unwrap();
   
     };
+
+  
+    useEffect(() => {
+      if (activeIngredients) {
+        setActiveIngredient(activeIngredients)
+      }
+    }, [activeIngredients]);
+  
 
     return (
       <>
@@ -50,7 +53,7 @@ import {
           </Col>
           <Col xs={6}></Col>
           <Col xs={5}>
-              <ButtonToolbar style={{ margin: '2px' }}>
+             {isEdit && <ButtonToolbar style={{ margin: '2px' }}>
               <IconButton
                 size="xs"
                 appearance="primary"
@@ -67,14 +70,14 @@ import {
                 icon={<MdSave />}
               />
               <IconButton
-                disabled={!selectedActiveIngredient.key}
+                disabled={!activeIngredient.key}
                 size="xs"
                 appearance="primary"
                 color="orange"
                 // onClick={handleOpenPopup}
                 icon={<InfoRound />}
               />
-                  </ButtonToolbar>
+                  </ButtonToolbar>}
               </Col> 
           </Row>
           <Row gutter={25}>
@@ -82,10 +85,10 @@ import {
               <Input as="textarea"
                 disabled={!isActive}
                 rows={9}
-                value={selectedActiveIngredient.mechanismOfAction}
+                value={activeIngredient.mechanismOfAction}
                 onChange={e =>
-                  setSelectedActiveIngredient({
-                    ...selectedActiveIngredient,
+                  setActiveIngredient({
+                    ...activeIngredient,
                     mechanismOfAction: String(e)
                   })
                 }

@@ -18,7 +18,7 @@ import { ApActiveIngredientSpecialPopulation } from '@/types/model-types';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetActiveIngredientSpecialPopulationQuery, useRemoveActiveIngredientSpecialPopulationMutation, useSaveActiveIngredientSpecialPopulationMutation } from '@/services/medicationsSetupService';
 
-  const SpecialPopulation = () => { 
+  const SpecialPopulation = ({activeIngredients , isEdit}) => { 
   
     const [activeIngredientSpecialPopulation, setActiveIngredientSpecialPopulation] = useState<ApActiveIngredientSpecialPopulation>({ ...newApActiveIngredientSpecialPopulation });
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
@@ -35,7 +35,7 @@ import { useGetActiveIngredientSpecialPopulationQuery, useRemoveActiveIngredient
     };
     const [removeActiveIngredientSpecialPopulation, removeActiveIngredientSpecialPopulationMutation] =useRemoveActiveIngredientSpecialPopulationMutation();
     const [saveActiveIngredientSpecialPopulation, saveActiveIngredientSpecialPopulationMutation] = useSaveActiveIngredientSpecialPopulationMutation();
-   const { data: specialPopulationListResponseData } = useGetActiveIngredientSpecialPopulationQuery(listRequest);
+    const { data: specialPopulationListResponseData } = useGetActiveIngredientSpecialPopulationQuery(listRequest);
     const [isActive, setIsActive] = useState(false);
 
     const handleNew = () => {
@@ -51,13 +51,66 @@ import { useGetActiveIngredientSpecialPopulationQuery, useRemoveActiveIngredient
       }
     };
 
+
     const save = () => {
       saveActiveIngredientSpecialPopulation({
-        ...selectedActiveIngredientSpecialPopulation,
+        ...selectedActiveIngredientSpecialPopulation, 
+        activeIngredientKey: activeIngredients.key , 
         createdBy: 'Administrator'
       }).unwrap();
-  
+      setActiveIngredientSpecialPopulation({ ...newApActiveIngredientSpecialPopulation });
+      setIsActive(false);
     };
+    useEffect(() => {
+      const updatedFilters =[
+        {
+          fieldName: 'active_ingredient_key',
+          operator: 'match',
+          value: activeIngredients.key || undefined
+        },
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        }
+      ];
+      setListRequest((prevRequest) => ({
+        ...prevRequest,
+        filters: updatedFilters,
+      }));
+    }, [activeIngredients.key]);
+  
+  
+    useEffect(() => {
+      if (activeIngredients) {
+        setActiveIngredientSpecialPopulation(prevState => ({
+          ...prevState,
+          activeIngredientKey: activeIngredients.key
+        }));
+      }
+    }, [activeIngredients]);
+
+    useEffect(() => {
+      if (saveActiveIngredientSpecialPopulationMutation.isSuccess) {
+        setListRequest({
+          ...listRequest,
+          timestamp: new Date().getTime()
+        });
+  
+        setActiveIngredientSpecialPopulation({ ...newApActiveIngredientSpecialPopulation });
+      }
+    }, [saveActiveIngredientSpecialPopulationMutation]);
+  
+    useEffect(() => {
+      if (removeActiveIngredientSpecialPopulationMutation.isSuccess) {
+        setListRequest({
+          ...listRequest,
+          timestamp: new Date().getTime()
+        });
+  
+        setActiveIngredientSpecialPopulation({ ...newApActiveIngredientSpecialPopulation });
+      }
+    }, [removeActiveIngredientSpecialPopulationMutation]);
 
 
     return (
@@ -86,7 +139,7 @@ import { useGetActiveIngredientSpecialPopulationQuery, useRemoveActiveIngredient
             </Col>
             <Col xs={5}></Col>
             <Col xs={5}>
-            <ButtonToolbar style={{ margin: '2px' }}>
+           {isEdit && <ButtonToolbar style={{ margin: '2px' }} >
               <IconButton
                   size="xs"
                   appearance="primary"
@@ -117,7 +170,7 @@ import { useGetActiveIngredientSpecialPopulationQuery, useRemoveActiveIngredient
                     color="orange"
                     icon={<InfoRound />}
                   />
-                  </ButtonToolbar>
+                  </ButtonToolbar>}
               </Col>
           </Row>
           <Row gutter={15}>
