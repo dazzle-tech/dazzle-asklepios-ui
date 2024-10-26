@@ -1,0 +1,32 @@
+name: Build and Push Docker Image to DOCR
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to DigitalOcean Container Registry
+        env:
+          DOCKER_USERNAME: "alaa.banifadel@curamet.se"
+          DOCKER_PASSWORD: ${{ secrets.DOCR_ACCESS_TOKEN }}
+        run: |
+          echo "$DOCKER_PASSWORD" | docker login ${{ secrets.DOCR_REGISTRY_URL }} -u "$DOCKER_USERNAME" --password-stdin
+
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCR_REGISTRY_URL }}/asklepios-ui:${{ github.sha }} .
+
+      - name: Push Docker Image to DOCR
+        run: |
+          docker push ${{ secrets.DOCR_REGISTRY_URL }}/asklepios-ui:${{ github.sha }}
+
+      - name: Logout of DigitalOcean Container Registry
+        run: docker logout ${{ secrets.DOCR_REGISTRY_URL }}
