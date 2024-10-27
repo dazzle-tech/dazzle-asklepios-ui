@@ -31,6 +31,11 @@ jobs:
       - name: Logout of DigitalOcean Container Registry
         run: docker logout ${{ secrets.DOCR_REGISTRY_URL }}
 
+      - name: Install doctl
+        run: |
+          curl -sL https://github.com/digitalocean/doctl/releases/latest/download/doctl-$(uname -s)-$(uname -m).tar.gz | tar -xzv
+          sudo mv doctl /usr/local/bin
+
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
         with:
