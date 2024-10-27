@@ -1,4 +1,4 @@
-name: Build and Push Docker Image to DOCR
+name: Build and Push Docker Image to DOCR & Deploy
 
 on:
   push:
@@ -30,3 +30,19 @@ jobs:
 
       - name: Logout of DigitalOcean Container Registry
         run: docker logout ${{ secrets.DOCR_REGISTRY_URL }}
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+
+      - name: Configure DigitalOcean kubeconfig
+        env:
+          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DOCR_ACCESS_TOKEN }}
+        run: |
+          doctl auth init -t $DIGITALOCEAN_ACCESS_TOKEN
+          doctl kubernetes cluster kubeconfig save k8s-1-31-1-do-3-fra1-1730027205220
+
+      - name: Update Kubernetes Deployment with New Image
+        run: |
+          kubectl set image deployment/asklepios-ui asklepios-ui=${{ secrets.DOCR_REGISTRY_URL }}/asklepios-ui:${{ github.sha }} -n asklepios-sandbox
