@@ -32,21 +32,17 @@ jobs:
         run: docker logout ${{ secrets.DOCR_REGISTRY_URL }}
 
       - name: Install doctl
-        run: |
-          curl -sL https://github.com/digitalocean/doctl/releases/latest/download/doctl-$(uname -s)-$(uname -m).tar.gz | tar -xzv
-          sudo mv doctl /usr/local/bin
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DOCR_ACCESS_TOKEN }}
+        
+      - name: Save DigitalOcean kubeconfig with short-lived credentials
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 k8s-1-31-1-do-3-fra1-1730027205220
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
         with:
           version: 'latest'
-
-      - name: Configure DigitalOcean kubeconfig
-        env:
-          DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DOCR_ACCESS_TOKEN }}
-        run: |
-          doctl auth init -t $DIGITALOCEAN_ACCESS_TOKEN
-          doctl kubernetes cluster kubeconfig save k8s-1-31-1-do-3-fra1-1730027205220
 
       - name: Update Kubernetes Deployment with New Image
         run: |
