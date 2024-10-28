@@ -2,12 +2,14 @@ import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
+import Details from './Details';
 const { Column, HeaderCell, Cell } = Table;
 import {
   useGetDepartmentsQuery,
   useGetFacilitiesQuery,
   useGetPractitionersQuery,
-  useSavePractitionerMutation
+  useSavePractitionerMutation,
+  useDeactiveActivePractitionerMutation
 } from '@/services/setupService';
 import { Button, ButtonToolbar, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -18,6 +20,9 @@ import { newApPractitioner } from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
+import AdminIcon from '@rsuite/icons/Admin';
+import { notify } from '@/utils/uiReducerActions';
+import ReloadIcon from '@rsuite/icons/Reload';
 
 const Practitioners = () => {
   const [practitioner, setPractitioner] = useState<ApPractitioner>({ ...newApPractitioner });
@@ -33,10 +38,12 @@ const Practitioners = () => {
   });
 
   const [savePractitioner, savePractitionerMutation] = useSavePractitionerMutation();
+  const [dactivePractitioner, dactivePractitionerMutation] = useDeactiveActivePractitionerMutation();
+
 
   const { data: facilityListResponse } = useGetFacilitiesQuery(facilityListRequest);
   const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
-  const { data: practitionerListResponse } = useGetPractitionersQuery(listRequest);
+  const { data: practitionerListResponse, refetch: refetchPractitioners } = useGetPractitionersQuery(listRequest);
 
   const handleNew = () => {
     setPopupOpen(true);
@@ -85,8 +92,21 @@ const Practitioners = () => {
     }
   };
 
+  const handleDeactive = () => {
+    console.log(practitioner)
+    dactivePractitioner(practitioner).unwrap().then(() => {
+      refetchPractitioners()
+      setPractitioner(newApPractitioner)
+    })
+  };
+
   return (
-    <Panel
+    <div>
+
+  
+    {
+      false?
+      <Panel
       header={
         <h3 className="title">
           <Translate>Practitioners</Translate>
@@ -106,6 +126,8 @@ const Practitioners = () => {
         >
           Edit Selected
         </IconButton>
+
+
         <IconButton
           disabled={true || !practitioner.key}
           appearance="primary"
@@ -114,6 +136,35 @@ const Practitioners = () => {
         >
           Delete Selected
         </IconButton>
+        {
+          practitioner.isValid || practitioner.key == null  ?
+            <IconButton
+              disabled={!practitioner.key}
+              appearance="primary"
+              color="orange"
+              icon={<TrashIcon />}
+              onClick={() => {
+                handleDeactive()
+              }}
+            >
+              Deactivate Selected
+            </IconButton>
+            :
+            <IconButton
+              disabled={!practitioner.key}
+              appearance="primary"
+              color="green"
+              icon={<ReloadIcon />}
+              onClick={() => {
+                handleDeactive()
+              }}
+            >
+              Activate
+            </IconButton>
+
+        }
+
+
       </ButtonToolbar>
       <hr />
       <Table
@@ -138,28 +189,60 @@ const Practitioners = () => {
         }}
         rowClassName={isSelected}
       >
-        <Column sortable flexGrow={1}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('primaryFacilityKey', e)} />
-            <Translate>Primary Facility</Translate>
-          </HeaderCell>
-          <Cell dataKey="primaryFacilityKey" />
-        </Column>
-        <Column sortable flexGrow={1}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('departmentKey', e)} />
-            <Translate>Department</Translate>
-          </HeaderCell>
-          <Cell dataKey="departmentKey" />
-        </Column>
+
         <Column sortable flexGrow={4}>
           <HeaderCell>
             <Input onChange={e => handleFilterChange('practitionerFullName', e)} />
             <Translate>Practitioner Name</Translate>
           </HeaderCell>
           <Cell dataKey="practitionerFullName" />
-        </Column> 
+        </Column>
+
+        <Column sortable flexGrow={3}>
+          <HeaderCell>
+            <Input onChange={e => handleFilterChange('linkedUser', e)} />
+            <Translate>Linked User Name</Translate>
+          </HeaderCell>
+          <Cell dataKey="linkedUser" />
+        </Column>
+
+        {/* ============================ Practitioner Name ============================ */}
+
+        <Column sortable flexGrow={3}>
+          <HeaderCell>
+            <Input onChange={e => handleFilterChange('specialty', e)} />
+            <Translate>Specialty</Translate>
+          </HeaderCell>
+          <Cell dataKey="specialty" />
+        </Column>
+
+        <Column sortable flexGrow={2}>
+          <HeaderCell>
+            <Input onChange={e => handleFilterChange('jobRole', e)} />
+            <Translate>Job Role</Translate>
+          </HeaderCell>
+          <Cell dataKey="jobRole" />
+        </Column>
+
+        <Column sortable flexGrow={2}>
+          <HeaderCell>
+            <Input onChange={e => {
+              handleFilterChange('isValid', e);
+              console.log(e)
+            }} />
+
+            <Translate>Status</Translate>
+          </HeaderCell>
+          <Cell>
+            {rowData => (rowData.isValid ? <span style={{ color: "green" }}>Valid
+
+            </span> : <span style={{ color: "red" }}>Invalid
+
+            </span>)}
+          </Cell>
+        </Column>
       </Table>
+
       <div style={{ padding: 20 }}>
         <Pagination
           prev
@@ -184,7 +267,9 @@ const Practitioners = () => {
         />
       </div>
 
-      <Modal open={popupOpen} overflow>
+
+
+      {/* <Modal open={popupOpen} overflow>
         <Modal.Title>
           <Translate>New/Edit Practitioner</Translate>
         </Modal.Title>
@@ -204,7 +289,7 @@ const Practitioners = () => {
               record={practitioner}
               setRecord={setPractitioner}
             />
-            <MyInput 
+            <MyInput
               fieldName="departmentKey"
               fieldType="select"
               selectData={departmentListResponse?.object ?? []}
@@ -225,8 +310,12 @@ const Practitioners = () => {
             </Button>
           </Stack>
         </Modal.Footer>
-      </Modal>
+      </Modal> */}
     </Panel>
+      :
+      <Details practitioner/>
+    }
+      </div>
   );
 };
 

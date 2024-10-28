@@ -102,6 +102,13 @@ export const newApActiveIngredient:modelTypes.ApActiveIngredient = {
 	pharmaProteinBinding:'',
 	pharmaClearance:'',
 	pharmaMetabolism:'',
+	doseAdjPugA:'',
+	doseAdjPugB:'',
+	doseAdjPugC:'',
+	doseAdjRenalOne:'',
+	doseAdjRenalTwo:'',
+	doseAdjRenalThree:'',
+	doseAdjRenalFour:'',
 } 
 
 export const newApActiveIngredientAdverseEffect:modelTypes.ApActiveIngredientAdverseEffect = { 
@@ -568,6 +575,15 @@ export const newApDiagnosticTestRadiology:modelTypes.ApDiagnosticTestRadiology =
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	labCatalogLkey:undefined,
+	propertyLkey:undefined,
+	systemLkey:undefined,
+	scaleLkey:undefined,
+	reagentsLkey:undefined,
+	methodLkey:undefined,
+	timingLkey:undefined,
+	resultType:'',
+	resultUnitLkey:undefined,
 } 
 
 export const newApDiagnosticTestSpecialPopulation:modelTypes.ApDiagnosticTestSpecialPopulation = { 
@@ -1367,6 +1383,22 @@ export const newApPractitioner:modelTypes.ApPractitioner = {
 	deletedAt:undefined,
 	isValid:undefined,
 	departmentKey:undefined,
+	practitionerFirstName:'',
+	practitionerLastName:'',
+	practitionerEmail:'',
+	practitionerPhoneNumber:'',
+	jobRole:'',
+	specialtyLkey:undefined,
+	subSpecialtyLkey:undefined,
+	defaultMedicalLicense:'',
+	secondaryMedicalLicense:'',
+	educationalLevelLkey:undefined,
+	professionalMembershipAndCertification:'',
+	appointable:undefined,
+	linkedUser:'',
+	defaultLicenseValidUntil:null,
+	secondaryLicenseValidUntil:null,
+	dob:null,
 } 
 
 export const newApPrescriptionInstruction:modelTypes.ApPrescriptionInstruction = { 
@@ -1376,6 +1408,21 @@ export const newApPrescriptionInstruction:modelTypes.ApPrescriptionInstruction =
 	unitLkey:undefined,
 	routLkey:undefined,
 	frequencyLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApResources:modelTypes.ApResources = { 
+	key:undefined,
+	facilityKey:undefined,
+	resourceTypeLkey:undefined,
+	resourceKey:undefined,
+	isAllowParallel:undefined,
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',

@@ -648,6 +648,17 @@ export const setupService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       },
+    }),
+    deactiveActivePractitioner: builder.mutation({
+      query: (practitioner: ApPractitioner) => ({
+        url: `/setup/deactive-avtice-practitioner`,
+        method: 'POST',
+        body: practitioner,  
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
     })
   })
 
@@ -714,4 +725,5 @@ export const {
   useResetUserPasswordMutation,
   useSaveFacilityDepartmentMutation,
   useRemoveUserFacilityDepartmentMutation,
+  useDeactiveActivePractitionerMutation
 } = setupService;

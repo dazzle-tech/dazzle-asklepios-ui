@@ -101,6 +101,13 @@ export interface ApActiveIngredient {
 	pharmaProteinBinding:string;
 	pharmaClearance:string;
 	pharmaMetabolism:string;
+	doseAdjPugA:string;
+	doseAdjPugB:string;
+	doseAdjPugC:string;
+	doseAdjRenalOne:string;
+	doseAdjRenalTwo:string;
+	doseAdjRenalThree:string;
+	doseAdjRenalFour:string;
 } 
 
 export interface ApActiveIngredientAdverseEffect { 
@@ -567,6 +574,15 @@ export interface ApDiagnosticTestRadiology {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	labCatalogLkey:string;
+	propertyLkey:string;
+	systemLkey:string;
+	scaleLkey:string;
+	reagentsLkey:string;
+	methodLkey:string;
+	timingLkey:string;
+	resultType:string;
+	resultUnitLkey:string;
 } 
 
 export interface ApDiagnosticTestSpecialPopulation { 
@@ -1366,6 +1382,22 @@ export interface ApPractitioner {
 	deletedAt:number;
 	isValid:boolean;
 	departmentKey:string;
+	practitionerFirstName:string;
+	practitionerLastName:string;
+	practitionerEmail:string;
+	practitionerPhoneNumber:string;
+	jobRole:string;
+	specialtyLkey:string;
+	subSpecialtyLkey:string;
+	defaultMedicalLicense:string;
+	secondaryMedicalLicense:string;
+	educationalLevelLkey:string;
+	professionalMembershipAndCertification:string;
+	appointable:boolean;
+	linkedUser:string;
+	defaultLicenseValidUntil:Date;
+	secondaryLicenseValidUntil:Date;
+	dob:Date;
 } 
 
 export interface ApPrescriptionInstruction { 
@@ -1375,6 +1407,21 @@ export interface ApPrescriptionInstruction {
 	unitLkey:string;
 	routLkey:string;
 	frequencyLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApResources { 
+	key:string;
+	facilityKey:string;
+	resourceTypeLkey:string;
+	resourceKey:string;
+	isAllowParallel:boolean;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
