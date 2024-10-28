@@ -15,6 +15,7 @@ import { useAppDispatch, useAppSelector } from './hooks';
 import MyToast from './components/MyToast/MyToast';
 import NetworkErrorImg from './images/network-error.png';
 import PatientChart from './pages/patient/patient-chart';
+import PatientAppointmentView from './pages/patientAppointmentView';
 import { Icon } from '@rsuite/icons';
 import { MdDashboard } from 'react-icons/md';
 import PatientList from './pages/patient/patient-list';
@@ -202,6 +203,7 @@ const App = () => {
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
+              <Route path="patient-appointment-view" element={<PatientAppointmentView />} />
               <Route path="encounter" element={<Encounter />} />
               <Route path="encounter-list" element={<EncounterList />} />
               <Route path="facilities" element={<Facilities />} />
@@ -210,7 +212,6 @@ const App = () => {
               <Route path="modules-setup" element={<Modules />} />
               <Route path="users" element={<Users />} />
               <Route path="uom-group" element={<UOMGroup />} />
-
               <Route path="metadata" element={<Metadata />} />
               <Route path="dvm" element={<DVM />} />
               <Route path="practitioners" element={<Practitioners />} />
@@ -232,7 +233,7 @@ const App = () => {
             </Route>
           </Route>
 
-          <Route path="login" element={<SignInPage />} />
+          <Route path="login" element={<SignInPage/>} />
           <Route path="*" element={<Error404Page />} />
         </Routes>
       </CustomProvider>
