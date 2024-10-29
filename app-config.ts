@@ -1,5 +1,5 @@
 const config = {
-    backendBaseURL:'https://asklepiosapi.nereuscloud.de',
+    backendBaseURL:'http://asklepiosapi.nereuscloud.de',
     tenantId: '1',
     tenantSecurityToken: '4994'
   };
