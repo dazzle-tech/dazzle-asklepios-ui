@@ -150,20 +150,22 @@ const SignIn = () => {
         <Panel style={{ width: 550 }}>
         <img
           src={authSlice.tenant && authSlice.tenant.tenantLogoPath ? authSlice.tenant.tenantLogoPath : Logo}
-          width={400}
+          width={470}
           alt="Tenant Logo"
         />
       </Panel>
   
       {/* Sign In Panel */}
       {!resetPasswordView && (
-        <Panel bordered style={{    backgroundColor: 'rgba(250, 250, 250, 0.5)', width: 450, padding: 40, borderRadius: '10px'  }}>
-        
+        <Panel bordered style={{    backgroundColor: 'rgba(250, 250, 250, 0.5)', width: 430, padding: 30, borderRadius: '10px'  }}>
+  <div style={{width:"100%" ,  display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',}}>
         <img
     src={UserLogo}
     alt="Header Background"
     style={{
-      marginLeft:"98px",
+      
       top: 50, // يمكنك تعديل هذا لتغيير موضع الصورة
       left: 50, // يمكنك تعديل هذا لتغيير موضع الصورة
       width: '127px', // ضبط عرض الصورة
@@ -171,7 +173,7 @@ const SignIn = () => {
      // الحفاظ على نسبة العرض إلى الارتفاع
        // يجب أن تكون الصورة أعلى من المحتوى
     }}
-  />
+  /></div>
  
   <h3 style={{ textAlign: 'center', fontFamily: 'Arial, sans-serif', zIndex: 2 }}>
     Sign In
