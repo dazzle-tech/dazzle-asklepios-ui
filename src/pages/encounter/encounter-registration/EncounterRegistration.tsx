@@ -94,7 +94,7 @@ const EncounterRegistration = () => {
   const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
-  const { data: bookingstatusLovQueryResponse } = useGetLovValuesByCodeQuery('BOOKING_STATUS');
+  const { data: bookingstatusLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_STATUS');
   const { data: practitionerListResponse } = useGetPractitionersQuery({ ...initialListRequest });
   const { data: facilityListResponse } = useGetFacilitiesQuery({ ...initialListRequest });
   const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
@@ -504,7 +504,7 @@ const EncounterRegistration = () => {
                     record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
                   />
-                   {/* <MyInput
+                   <MyInput
                     vr={validationResult}
                     column
                     disabled={true}
@@ -512,7 +512,7 @@ const EncounterRegistration = () => {
                     fieldName="encounterStatusLkey"
                     record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
-                  /> */}
+                  />
                    <MyInput
                  
                  vr={validationResult}
@@ -946,13 +946,13 @@ const EncounterRegistration = () => {
           </Button>
         </Modal.Footer>
       </Modal>
-      <Modal open={openModelAppointmentView}  onClose={handleCloseAppointmentViewModel}>
+      <Modal open={openModelAppointmentView}  style={{ width: '82%' }}  onClose={handleCloseAppointmentViewModel}>
         <Modal.Header>
           <Modal.Title>Patient's Appointment</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           
-        <div style={{ padding: '20px' }}>
+        <div style={{ padding: '10px',height:"100%"  }}>
             <PanelGroup>
                 {/* First Panel with a title on the border */}
                 <fieldset style={{ border: '2px solid #38d3e8',  marginBottom: '10px' }}>
@@ -1117,11 +1117,11 @@ const EncounterRegistration = () => {
                     </Panel>
                 </fieldset>
             </PanelGroup>
-        </div>ll
+        </div>
         </Modal.Body>
         <Modal.Footer>
          
-          <Button onClick={handleCloseAppointmentViewModel} appearance="subtle">
+          <Button style={{padding:"5px",marginTop:"10px",fontSize:"16px"}} onClick={handleCloseAppointmentViewModel} appearance="subtle">
              Cancle
           </Button>
         </Modal.Footer>
