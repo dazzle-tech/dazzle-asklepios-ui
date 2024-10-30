@@ -140,7 +140,7 @@ const SignIn = () => {
       {!resetPasswordView && (
         <Panel bordered  className='sign-in-panel '>
 
-  <div className='reset-password-div' >
+  <div className='image-header-div'>
         <img
     src={UserLogo}
     alt="Header Background"
