@@ -54,6 +54,7 @@ import ActiveIngredientsSetup from './pages/medications/active-ingredients-setup
 import GenericMedications from './pages/medications/generic-medications';
 import Catalog from './pages/setup/catalog-setup';
 import Diagnostics from './pages/setup/diagnostics-tests-definition';
+import Resources from './pages/appointment/resources';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -215,6 +216,7 @@ const App = () => {
               <Route path="dvm" element={<DVM />} />
               <Route path="practitioners" element={<Practitioners />} />
               <Route path="departments" element={<Departments />} />
+              <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="allergens" element={<Allergens />} />
