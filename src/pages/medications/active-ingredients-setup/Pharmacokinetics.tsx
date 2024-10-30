@@ -16,15 +16,31 @@ import { ApActiveIngredient } from '@/types/model-types';
 import { useGetActiveIngredientQuery, useSaveActiveIngredientMutation } from '@/services/medicationsSetupService';
 import { initialListRequest, ListRequest } from '@/types/types';
 
-  const Pharmacokinetics = () => {
+  const Pharmacokinetics = ({activeIngredients, isEdit}) => {
   
     const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({ ...newApActiveIngredient });
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientMutation();
     const { data: activeIngredientListResponse } = useGetActiveIngredientQuery(listRequest);
-    const [selectedActiveIngredient, setSelectedActiveIngredient] = useState<ApActiveIngredient>({
-      ...newApActiveIngredient
-    });
+    const [isActive, setIsActive] = useState(false);
+
+    useEffect(() => {
+      if (activeIngredients) {
+        setActiveIngredient(activeIngredients)
+      }
+    }, [activeIngredients]);
+
+    const save = () => {
+      saveActiveIngredient({
+        ...activeIngredient, 
+        createdBy: 'Administrator'
+      }).unwrap();
+        
+    };
+
+    const handleNew = () => {
+      setIsActive(true);
+     };
 
 
     return (
@@ -37,32 +53,30 @@ import { initialListRequest, ListRequest } from '@/types/types';
             </Col>
             <Col xs={5}></Col>
             <Col xs={5}>
-              <ButtonToolbar style={{ margin: '2px' }}>
+            {isEdit && <ButtonToolbar style={{ margin: '2px' }}>
               <IconButton
                   size="xs"
                   appearance="primary"
-                  color="green"
-                  icon={<MdSave />}
+                  color="blue"
+                  onClick={handleNew}
+                  icon={<Plus />}
                 />
               <IconButton
-                    size="xs"
-                    appearance="primary"
-                    color="blue"
-                    icon={<Reload />}
-                  />
-                   <IconButton
-                    size="xs"
-                    appearance="primary"
-                    color="red"
-                    icon={<Trash />}
-                  />
-                  <IconButton
+                  disabled={!isActive}
+                  size="xs"
+                  appearance="primary"
+                  color="green"
+                  onClick={save}
+                  icon={<MdSave />}
+                />
+                <IconButton
+                    disabled={!activeIngredient.key}
                     size="xs"
                     appearance="primary"
                     color="orange"
                     icon={<InfoRound />}
                   />
-                  </ButtonToolbar>
+                  </ButtonToolbar>}
               </Col>
           </Row>
           <Row gutter={15}>
@@ -70,10 +84,11 @@ import { initialListRequest, ListRequest } from '@/types/types';
           <Text>Absorption</Text>
           <Input as="textarea" 
                  rows={3} 
-                 value={selectedActiveIngredient.pharmaAbsorption}
+                 disabled={!isActive}
+                 value={activeIngredient.pharmaAbsorption}
                  onChange={e =>
-                   setSelectedActiveIngredient({
-                     ...selectedActiveIngredient,
+                   setActiveIngredient({
+                     ...activeIngredient,
                      pharmaAbsorption: String(e)
                    }) }
                    />
@@ -81,11 +96,12 @@ import { initialListRequest, ListRequest } from '@/types/types';
           <Col xs={12}>
           <Text>Rout Of Elimination</Text>
           <Input as="textarea"
+           disabled={!isActive}
                   rows={3}
-                  value={selectedActiveIngredient.pharmaRouteOfElimination}
+                  value={activeIngredient.pharmaRouteOfElimination}
                   onChange={e =>
-                    setSelectedActiveIngredient({
-                      ...selectedActiveIngredient,
+                    setActiveIngredient({
+                      ...activeIngredient,
                       pharmaRouteOfElimination: String(e)
                     }) }
                   />
@@ -96,11 +112,12 @@ import { initialListRequest, ListRequest } from '@/types/types';
           <Text>Volume Of Distribution</Text>
           <Input as="textarea"
                  rows={3} 
-                 value={selectedActiveIngredient.pharmaVolumeOfDistribution}
+                 disabled={!isActive}
+                 value={activeIngredient.pharmaVolumeOfDistribution}
                   onChange={e =>
-                    setSelectedActiveIngredient({
-                      ...selectedActiveIngredient,
-                      pharmaRouteOfElimination: String(e)
+                    setActiveIngredient({
+                      ...activeIngredient,
+                      pharmaVolumeOfDistribution: String(e)
                     }) }
                  />
           </Col> 
@@ -108,10 +125,11 @@ import { initialListRequest, ListRequest } from '@/types/types';
           <Text>Half-Life</Text>
           <Input as="textarea"
                  rows={3}  
-                 value={selectedActiveIngredient.pharmaHalfLife}
+                 disabled={!isActive}
+                 value={activeIngredient.pharmaHalfLife}
                   onChange={e =>
-                    setSelectedActiveIngredient({
-                      ...selectedActiveIngredient,
+                    setActiveIngredient({
+                      ...activeIngredient,
                       pharmaHalfLife: String(e)
                     }) }
                  />
@@ -122,10 +140,11 @@ import { initialListRequest, ListRequest } from '@/types/types';
           <Text>Protein Binding</Text>
           <Input as="textarea" 
                  rows={3} 
-                 value={selectedActiveIngredient.pharmaProteinBinding}
+                 disabled={!isActive}
+                 value={activeIngredient.pharmaProteinBinding}
                   onChange={e =>
-                    setSelectedActiveIngredient({
-                      ...selectedActiveIngredient,
+                    setActiveIngredient({
+                      ...activeIngredient,
                       pharmaProteinBinding: String(e)
                     }) }
                      />
@@ -134,10 +153,11 @@ import { initialListRequest, ListRequest } from '@/types/types';
           <Text>Clearance</Text>
           <Input as="textarea" 
                  rows={3} 
-                 value={selectedActiveIngredient.pharmaClearance}
+                 disabled={!isActive}
+                 value={activeIngredient.pharmaClearance}
                   onChange={e =>
-                    setSelectedActiveIngredient({
-                      ...selectedActiveIngredient,
+                    setActiveIngredient({
+                      ...activeIngredient,
                       pharmaClearance: String(e)
                     }) }
                  />
@@ -148,10 +168,11 @@ import { initialListRequest, ListRequest } from '@/types/types';
           <Text>Metabolism</Text>
           <Input as="textarea" 
                  rows={3} 
-                 value={selectedActiveIngredient.pharmaMetabolism}
+                 disabled={!isActive}
+                 value={activeIngredient.pharmaMetabolism}
                   onChange={e =>
-                    setSelectedActiveIngredient({
-                      ...selectedActiveIngredient,
+                    setActiveIngredient({
+                      ...activeIngredient,
                       pharmaMetabolism: String(e)
                     }) }
                  />

@@ -30,8 +30,9 @@ import {
 import {
   useGetLovValuesByCodeQuery,
 } from '@/services/setupService';
+import { conjureValueBasedOnKeyFromList } from '@/utils';
 
-const RecommendedDosage = () => {
+const RecommendedDosage = ({activeIngredients, isEdit}) => {
 
   const [ApActiveIngredientRecommendedDosage, setActiveIngredientRecommendedDosage] = useState<ApActiveIngredientRecommendedDosage>({ ...newApActiveIngredientRecommendedDosage });
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
@@ -49,7 +50,7 @@ const RecommendedDosage = () => {
   });
   const [isActive , setIsActive] = useState(false);
 
-  const { data: activeIngredientIndicationListResponseData} = useGetActiveIngredientIndicationQuery(activeIngredientsIndicationListRequest);
+  const { data: activeIngredientIndicationListResponseData} = useGetActiveIngredientRecommededDosageQuery(activeIngredientsIndicationListRequest);
   const { data: recommendedDosageListResponseData } = useGetActiveIngredientRecommededDosageQuery(listRequest);
   const { data: valueUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
   const handleFoodsNew = () => {
@@ -59,19 +60,47 @@ const RecommendedDosage = () => {
   const save = () => {
     saveActiveIngredientRecommendedDosage({
       ...selectedActiveIngredientRecommendedDosage, 
+      activeIngredientKey: activeIngredients.key , 
       createdBy: 'Administrator'
     }).unwrap();
       
   };
   
+  useEffect(() => {
+    const updatedFilters =[
+      {
+        fieldName: 'active_ingredient_key',
+        operator: 'match',
+        value: activeIngredients.key || undefined
+      },
+      {
+        fieldName: 'deleted_at',
+        operator: 'isNull',
+        value: undefined
+      }
+    ];
+    setListRequest((prevRequest) => ({
+      ...prevRequest,
+      filters: updatedFilters,
+    }));
+  }, [activeIngredients.key]);
 
+
+  useEffect(() => {
+    if (activeIngredients) {
+      setActiveIngredientRecommendedDosage(prevState => ({
+        ...prevState,
+        activeIngredientKey: activeIngredients.key
+      }));
+    }
+  }, [activeIngredients]);
 
   return (
     <>
       <Grid fluid>
         <Row gutter={15}>
           <Col xs={6}>
-            <Text>Add Indication</Text>
+            <Text>Indication</Text>
             <InputPicker
                 disabled={!isActive}
                 placeholder="Select "
@@ -122,7 +151,7 @@ const RecommendedDosage = () => {
                 </Col>
           <Col xs={5}>
 
-            <ButtonToolbar style={{ margin: '2px' }}>
+            {isEdit && <ButtonToolbar style={{ margin: '2px' }}>
               <IconButton
                 size="xs"
                 appearance="primary"
@@ -152,7 +181,7 @@ const RecommendedDosage = () => {
                 color="orange"
                 icon={<InfoRound />}
               />
-            </ButtonToolbar>
+            </ButtonToolbar>}
           </Col>
         </Row>
 
@@ -166,22 +195,31 @@ const RecommendedDosage = () => {
               rowClassName={isSelected}
               data={recommendedDosageListResponseData?.object ?? []}
             >
-              <Table.Column flexGrow={1}>
-                <Table.HeaderCell>Unit</Table.HeaderCell>
-                <Table.Cell>
-                  {rowData => <Text>{rowData.variableLvalue ? rowData.variableLvalue.lovDisplayVale : rowData.variableLkey}</Text>}
-                </Table.Cell>
-              </Table.Column>
+             
               <Table.Column flexGrow={1}>
                 <Table.HeaderCell>Indication</Table.HeaderCell>
                 <Table.Cell>
-                  {rowData => <Text>{rowData.indicationLvalue ? rowData.indicationLvalue.lovDisplayVale : rowData.indicationLkey}</Text>}
+               {rowData => (
+                      <span>
+                        {conjureValueBasedOnKeyFromList(
+                          activeIngredientIndicationListResponseData?.object ?? [],
+                          rowData.indicationLkey,
+                          'indication'
+                        )}
+                      </span>
+                    )}
                 </Table.Cell>
               </Table.Column>
               <Table.Column flexGrow={1}>
                 <Table.HeaderCell>Dosage</Table.HeaderCell>
                 <Table.Cell>
                   {rowData => <Text>{rowData.dosage}</Text>}
+                </Table.Cell>
+              </Table.Column>
+              <Table.Column flexGrow={1}>
+                <Table.HeaderCell>Unit</Table.HeaderCell>
+                <Table.Cell>
+                  {rowData => <Text>{rowData.variableLvalue ? rowData.variableLvalue.lovDisplayVale : rowData.variableLkey}</Text>}
                 </Table.Cell>
               </Table.Column>
             </Table>

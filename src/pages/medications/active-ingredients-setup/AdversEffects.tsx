@@ -26,11 +26,12 @@ import { newApActiveIngredientAdverseEffect } from '@/types/model-types-construc
 import { ApActiveIngredientAdverseEffect } from '@/types/model-types';
 import { initialListRequest, ListRequest } from '@/types/types';
 
-const AdversEffects = () => {
+const AdversEffects = ({activeIngredients , isEdit}) => {
 
   const [selectedActiveIngredientAdverseEffect, setSelectedActiveIngredientAdverseEffect] = useState<ApActiveIngredientAdverseEffect>({
     ...newApActiveIngredientAdverseEffect
   });
+
 
   const { data: AdversEffectsLovQueryResponseData } = useGetLovValuesByCodeQuery('MED_ADVERS_EFFECTS');
   const [activeIngredientAdverseEffect, setActiveIngredientAdverseEffect] = useState<ApActiveIngredientAdverseEffect>({ ...newApActiveIngredientAdverseEffect });
@@ -51,7 +52,7 @@ const AdversEffects = () => {
   const [saveActiveIngredientAdverseEffect, saveActiveIngredientAdverseEffectMutation] = useSaveActiveIngredientAdverseEffectMutation();
   const [removeActiveIngredientAdverseEffect, removeActiveIngredientAdverseEffectMutation] = useRemoveActiveIngredientAdverseEffectMutation();
   const [isActive, setIsActive] = useState(false);
-
+  
   const { data: AdverseListResponseData } = useGetActiveIngredientAdverseEffectQuery(listRequest);
   const isSelected = rowData => {
     if (rowData && rowData.key === selectedActiveIngredientAdverseEffect.key) {
@@ -62,12 +63,13 @@ const AdversEffects = () => {
   const save = () => {
     saveActiveIngredientAdverseEffect({
       ...selectedActiveIngredientAdverseEffect,
+      activeIngredientKey: activeIngredients.key , 
       createdBy: 'Administrator'
     }).unwrap();
 
   };
 
-  const handleFoodsNew = () => {
+  const handleAdverseEffectNew = () => {
     setIsActive(true);
     setActiveIngredientAdverseEffect({ ...newApActiveIngredientAdverseEffect });
   };
@@ -78,6 +80,13 @@ const AdversEffects = () => {
         ...selectedActiveIngredientAdverseEffect,
       }).unwrap();
     }
+  };
+
+  const handleChange = (e) => {
+    setSelectedActiveIngredientAdverseEffect({
+      ...selectedActiveIngredientAdverseEffect,
+      isOther: e.target.checked, // This will set isOther to true or false based on the checkbox state
+    });
   };
 
   useEffect(() => {
@@ -102,6 +111,35 @@ const AdversEffects = () => {
     }
   }, [removeActiveIngredientAdverseEffectMutation]);
 
+  useEffect(() => {
+    const updatedFilters =[
+      {
+        fieldName: 'active_ingredient_key',
+        operator: 'match',
+        value: activeIngredients.key || undefined
+      },
+      {
+        fieldName: 'deleted_at',
+        operator: 'isNull',
+        value: undefined
+      }
+    ];
+    setListRequest((prevRequest) => ({
+      ...prevRequest,
+      filters: updatedFilters,
+    }));
+  }, [activeIngredients.key]);
+
+
+  useEffect(() => {
+    if (activeIngredients) {
+      setActiveIngredientAdverseEffect(prevState => ({
+        ...prevState,
+        activeIngredientKey: activeIngredients.key
+      }));
+    }
+  }, [activeIngredients]);
+
   return (
     <>
       <Grid fluid>
@@ -110,12 +148,12 @@ const AdversEffects = () => {
           <Col xs={6}></Col>
           <Col xs={6}></Col>
           <Col xs={5}>
-            <ButtonToolbar style={{ margin: '2px' }}>
+           {isEdit && <ButtonToolbar style={{ margin: '2px' }}>
               <IconButton
                 size="xs"
                 appearance="primary"
                 color="blue"
-                onClick={handleFoodsNew}
+                onClick={handleAdverseEffectNew}
                 icon={<Plus />}
               />
               <IconButton
@@ -141,7 +179,7 @@ const AdversEffects = () => {
                 color="orange"
                 icon={<InfoRound />}
               />
-            </ButtonToolbar>
+            </ButtonToolbar>}
           </Col>
         </Row>
         <Row gutter={15}>
@@ -156,7 +194,7 @@ const AdversEffects = () => {
               onChange={e =>
                 setSelectedActiveIngredientAdverseEffect({
                   ...selectedActiveIngredientAdverseEffect,
-                  activeIngredientKey: String(e)
+                  adverseEffectLkey: String(e)
                 })
               }
               labelKey="lovDisplayVale"
@@ -165,20 +203,24 @@ const AdversEffects = () => {
             />
           </Col>
           <Col xs={3}>
-            <Checkbox onClick={() => setIsActive(!isActive)} 
-               disabled={!isActive}
-              checked={selectedActiveIngredientAdverseEffect.isOther}
-              onChange={e => {
-                setSelectedActiveIngredientAdverseEffect({
-                  ...selectedActiveIngredientAdverseEffect,
-                  isOther: Boolean(e)
-                });
+            <Checkbox
+            //  onClick={() => setIsActive(!isActive)} 
+              //  disabled={!isActive}
+              // checked={selectedActiveIngredientAdverseEffect.isOther? true : false}
+              // onChange={e => {
+              //   setSelectedActiveIngredientAdverseEffect({
+              //     ...selectedActiveIngredientAdverseEffect,
+              //     isOther: Boolean(e)
+              //   });
 
-              }}
+              // }}
+              disabled={!isActive}
+              checked={selectedActiveIngredientAdverseEffect.isOther || false} // Ensure it defaults to false if undefined
+              onChange={handleChange}
               >Other</Checkbox>
           </Col>
           <Col xs={4}>
-            {isActive && <Input
+            {selectedActiveIngredientAdverseEffect.isOther && <Input
               style={{ width: '300px' }}
               type="text"
               value={selectedActiveIngredientAdverseEffect.otherDescription}
@@ -206,7 +248,9 @@ const AdversEffects = () => {
               <Table.Column flexGrow={1}>
                 <Table.HeaderCell>Advers Effects</Table.HeaderCell>
                 <Table.Cell>
-                  {rowData => <Text>{rowData.adverseEffectLkey}</Text>}
+                  {rowData =>
+                    rowData.adverseEffectLvalue ? rowData.adverseEffectLvalue.lovDisplayVale : rowData.adverseEffectLkey
+                        }
                 </Table.Cell>
               </Table.Column>
               <Table.Column flexGrow={1}>

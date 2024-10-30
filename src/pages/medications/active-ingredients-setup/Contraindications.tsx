@@ -23,7 +23,7 @@ import {
 } from '@/services/medicationsSetupService';
 
 
-  const Contraindications = ({activeIngredients}) => {
+  const Contraindications = ({activeIngredients, isEdit}) => {
 
 
     const [isActive , setIsActive] = useState(false);
@@ -53,7 +53,35 @@ import {
   const [removeActiveIngredientContraindication, removeActiveIngredientContraindicationMutation] =
     useRemoveActiveIngredientContraindicationMutation();
     
-    
+    useEffect(() => {
+      const updatedFilters =[
+        {
+          fieldName: 'active_ingredient_key',
+          operator: 'match',
+          value: activeIngredients.key || undefined
+        },
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        }
+      ];
+      setListRequest((prevRequest) => ({
+        ...prevRequest,
+        filters: updatedFilters,
+      }));
+    }, [activeIngredients.key]);
+
+
+    useEffect(() => {
+      if (activeIngredients) {
+        setActiveIngredientContraindication(prevState => ({
+          ...prevState,
+          activeIngredientKey: activeIngredients.key
+        }));
+      }
+    }, [activeIngredients]);
+
     const save = () => {
       saveActiveIngredientContraindication({
         ...selectedActiveIngredientContraindication,
@@ -134,7 +162,7 @@ import {
               </Col>
               <Col xs={6}></Col>
               <Col xs={5}>
-              <ButtonToolbar style={{ margin: '1px' }}>
+              {isEdit && <ButtonToolbar style={{ margin: '1px' }}>
               <IconButton
                   size="xs"
                   appearance="primary"
@@ -165,7 +193,7 @@ import {
                    
                     icon={<InfoRound />}
                   />
-                  </ButtonToolbar>
+                  </ButtonToolbar>}
               </Col>
             </Row>
             <Row gutter={15}>

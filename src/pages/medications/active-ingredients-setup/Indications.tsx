@@ -25,7 +25,7 @@ import { MdSave } from 'react-icons/md';
 import { ApActiveIngredient, ApActiveIngredientIndication } from '@/types/model-types';
 import LogDialog from '@/components/Log';
 
-const Indications = ({ selectedActiveIngredients}) => {
+const Indications = ({ selectedActiveIngredients, isEdit}) => {
   const exampleData = {
     object: [
       { createdAt: '2024-07-31', createdBy: 'User A' },
@@ -45,7 +45,7 @@ const Indications = ({ selectedActiveIngredients}) => {
       {
         fieldName: 'active_ingredient_key',
         operator: 'match',
-        value: selectedActiveIngredients.key
+        value: undefined
       },
       {
         fieldName: 'deleted_at',
@@ -56,10 +56,31 @@ const Indications = ({ selectedActiveIngredients}) => {
   }
 );
 
+useEffect(() => {
+  const updatedFilters =[
+    {
+      fieldName: 'active_ingredient_key',
+      operator: 'match',
+      value: selectedActiveIngredients.key || undefined
+    },
+    {
+      fieldName: 'deleted_at',
+      operator: 'isNull',
+      value: undefined
+    }
+  ];
+  setListRequest((prevRequest) => ({
+    ...prevRequest,
+    filters: updatedFilters,
+  }));
+}, [selectedActiveIngredients.key]);
+
+
   const { data: indicationListResponseData } = useGetActiveIngredientIndicationQuery(listRequest);
   const [removeActiveIngredientIndication, removeActiveIngredientIndicationMutation] = useRemoveActiveIngredientIndicationMutation();
   const [saveActiveIngredientIndication, saveActiveIngredientIndicationMutation] = useSaveActiveIngredientIndicationMutation();
   const [isActive, setIsActive] = useState(false);
+
 
   const save = () => {
     saveActiveIngredientIndication({
@@ -91,18 +112,6 @@ const Indications = ({ selectedActiveIngredients}) => {
       }));
     }
   }, [selectedActiveIngredients]);
-
-  // useEffect(() => {
-  
-  //   if (selectedActiveIngredients) {
-  //     console.log('the active ingredient is not null '  + activeIngredient)
-  //     setActiveIngredient(selectedActiveIngredients);
-  //   } else {
-  //     console.log('the active ingredient is null ' )
-  //     setActiveIngredient(newApActiveIngredient);
-  //   }
-  //     console.log('the active ingredient key ' + activeIngredient )
-  // }, [selectedActiveIngredients]);
 
   useEffect(() => {
     if (saveActiveIngredientIndicationMutation.isSuccess) {
@@ -175,7 +184,7 @@ const Indications = ({ selectedActiveIngredients}) => {
           </Col>
           <Col xs={6}></Col>
           <Col xs={5}>
-            <ButtonToolbar style={{ margin: '2px' }}>
+          {isEdit && <ButtonToolbar style={{ margin: '2px' }}>
               <IconButton
                 size="xs"
                 appearance="primary"
@@ -213,7 +222,7 @@ const Indications = ({ selectedActiveIngredients}) => {
                 popupOpen={popupOpen}
                 setPopupOpen={setPopupOpen}
               />
-            </ButtonToolbar>
+            </ButtonToolbar>}
           </Col>
         </Row>
         <Row gutter={15}>

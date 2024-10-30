@@ -18,6 +18,19 @@ import { ApActiveIngredient } from '@/types/model-types';
 import { newApActiveIngredient } from '@/types/model-types-constructor';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import NewActiveIngredients from './NewActiveIngredients';
+import Indications from './Indications';
+import Contraindications from './Contraindications';
+import DrugDrugInteractions from './DrugDrugInteractions';
+import DrugFoodInteractions from './DrugFoodInteractions';
+import AdversEffects from './AdversEffects';
+import RecommendedDosage from './RecommendedDosage';
+import MOA from './MOA';
+import Toxicity from './Toxicity';
+import PregnancyLactation from './PregnancyLactation';
+import SpecialPopulation from './SpecialPopulation';
+import DoseAdjustment from './DoseAdjustment';
+import Pharmacokinetics from './Pharmacokinetics';
+
 
 const ActiveIngredientsSetup = () => {
   const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({ ...newApActiveIngredient });
@@ -217,30 +230,34 @@ const ActiveIngredientsSetup = () => {
         />
       </div>
 
-    </Panel>
-    {/* <Panel>
-    <Container>
+     { activeIngredient.key && <Panel
+      header={
+        <h3 className="title">
+          <Translate>Details</Translate>
+        </h3>
+      }>
+      <Container>
             <Row>
                 <Col xs={24} md={12}>
                 <Panel>
                 <Accordion bordered>
                   <Accordion.Panel header="Indications" >
-                    <Indications/>
+                    <Indications selectedActiveIngredients={activeIngredient} isEdit={false}/>
                   </Accordion.Panel>
                   <Accordion.Panel header="Contraindications" >
-                 <Contraindications />
+                 <Contraindications   activeIngredients={activeIngredient} isEdit={false}/>
                   </Accordion.Panel>
                   <Accordion.Panel header="Drug-Drug Interactions " >
-                    <DrugDrugInteractions />
+                    <DrugDrugInteractions activeIngredients={activeIngredient} isEdit={false}/>
                   </Accordion.Panel>
                   <Accordion.Panel header="Drug-Food Interactions " >
-                    <DrugFoodInteractions />
+                    <DrugFoodInteractions activeIngredients={activeIngredient} isEdit={false} />
                   </Accordion.Panel>
                   <Accordion.Panel header="Advers Effects " >
-                    <AdversEffects />
+                    <AdversEffects activeIngredients={activeIngredient} isEdit={false} />
                   </Accordion.Panel>
                   <Accordion.Panel header="Recommended Dosage " >
-                    <RecommendedDosage />
+                    <RecommendedDosage activeIngredients={activeIngredient} isEdit={false} />
                   </Accordion.Panel>
                 </Accordion>
         </Panel>
@@ -249,29 +266,36 @@ const ActiveIngredientsSetup = () => {
                 <Panel>
                 <Accordion bordered>
                   <Accordion.Panel header="MOA"  >
-                    <MOA />
+                    <MOA activeIngredients={activeIngredient}  isEdit={false}/>
                   </Accordion.Panel>
                   <Accordion.Panel header="Toxicity" >
-                    <Toxicity />
+                    <Toxicity activeIngredients={activeIngredient} isEdit={false}/>
                   </Accordion.Panel>
                   <Accordion.Panel header="Pregnancy & Lactation" >
-                    <PregnancyLactation />
+                    <PregnancyLactation activeIngredients={activeIngredient} isEdit={false}/>
                   </Accordion.Panel>
                   <Accordion.Panel header="Special Population" >
-                    <SpecialPopulation />
+                    <SpecialPopulation activeIngredients={activeIngredient} isEdit={false}/>
                   </Accordion.Panel>
                   <Accordion.Panel header="Dose Adjustment" >
-                    <DoseAdjustment />
+                    <DoseAdjustment activeIngredients={activeIngredient} isEdit={false}/>
                   </Accordion.Panel>
                   <Accordion.Panel header="Pharmacokinetics"  >
-                    <Pharmacokinetics/>
+                    <Pharmacokinetics activeIngredients={activeIngredient} isEdit={false}/>
                   </Accordion.Panel>
                 </Accordion>
         </Panel>
                 </Col>
             </Row>
         </Container>
-        </Panel> */}
+    </Panel>}
+    </Panel>  
+   
+
+    
+   
+        
+  
     <NewActiveIngredients
         selectedactiveIngredient={activeIngredient}
         goBack={() => {
