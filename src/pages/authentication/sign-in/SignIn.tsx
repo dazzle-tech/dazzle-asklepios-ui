@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import Logo from '../../../images/ASK_LOGO_SVG copy.svg';
 import Background from '../../../images/ASK_WALLPAPER.svg';
 import UserLogo from '../../../images/Login_ICon.svg';
+import './styles.less';
 import Translate from '@/components/Translate';
 import { useLoginMutation } from "@/services/authService";
 import { useNavigate } from "react-router-dom";
@@ -119,35 +120,15 @@ const SignIn = () => {
 
     <Panel
     bordered
-    style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      flexDirection: 'column',
-      height: '100vh',
-      borderRadius: '10px',
-      padding: '20px',
-      position: 'relative',
-     
-     overflow: 'hidden'
-    }}
+   className="panel"
   >
      <img 
     src={Background}
     alt="Background" 
-    style={{
-      position: 'absolute', // لجعل الصورة في الخلفية
-      top: 0,
-      left: 0,
-      opacity: 0.6 ,
-      width: '100%', // لتغطية العرض بالكامل
-      height: '100%', // لتغطية الارتفاع بالكامل
-      objectFit: 'cover', // لجعل الصورة تغطي كامل الـ Panel
-      zIndex: -1 // لجعل الصورة خلف المحتوى
-    }} 
+   className="background-image"
   />
         {/* Logo Panel */}
-        <Panel style={{ width: 550 }}>
+        <Panel className="logo-panel">
         <img
           src={authSlice.tenant && authSlice.tenant.tenantLogoPath ? authSlice.tenant.tenantLogoPath : Logo}
           width={470}
@@ -157,25 +138,17 @@ const SignIn = () => {
   
       {/* Sign In Panel */}
       {!resetPasswordView && (
-        <Panel bordered style={{    backgroundColor: 'rgba(250, 250, 250, 0.5)', width: 430, padding: 30, borderRadius: '10px'  }}>
-  <div style={{width:"100%" ,  display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',}}>
+        <Panel bordered  className='sign-in-panel '>
+
+  <div className='reset-password-div' >
         <img
     src={UserLogo}
     alt="Header Background"
-    style={{
-      
-      top: 50, // يمكنك تعديل هذا لتغيير موضع الصورة
-      left: 50, // يمكنك تعديل هذا لتغيير موضع الصورة
-      width: '127px', // ضبط عرض الصورة
-      height: '110px',
-     // الحفاظ على نسبة العرض إلى الارتفاع
-       // يجب أن تكون الصورة أعلى من المحتوى
-    }}
+    className='header-image '
+   
   /></div>
  
-  <h3 style={{ textAlign: 'center', fontFamily: 'Arial, sans-serif', zIndex: 2 }}>
+  <h3 className='title'>
     Sign In
   </h3>
           {!authSlice.tenant && (
@@ -213,7 +186,7 @@ const SignIn = () => {
             <Form.Group>
               <Form.ControlLabel>
                 <span>Password</span>
-                <a style={{ float: 'right' }}>Forgot password?</a>
+                <a  className="forgot-password" >Forgot password?</a>
               </Form.ControlLabel>
               <Form.Control
                 disabled={!authSlice.tenant}
@@ -225,13 +198,8 @@ const SignIn = () => {
             </Form.Group>
   
             <Form.Group>
-              <Button color="cyan" appearance="primary" onClick={handleLogin} disabled={!authSlice.tenant}  style={{ 
-      borderRadius: '25px', 
-      padding: '15px 20px', // تغيير حجم الزر
-      fontSize: '16px',
-      width:"100%" // حجم الخط
-       // لون الخلفية
-    }} >
+              <Button color="cyan" appearance="primary" onClick={handleLogin} disabled={!authSlice.tenant} 
+          className='submit-button' >
                 Sign in
               </Button>
             </Form.Group>
@@ -241,7 +209,7 @@ const SignIn = () => {
   
       {/* Reset Password Panel */}
       {resetPasswordView && (
-        <Panel bordered style={{ background: '#fff', width: 400, padding: 40, borderRadius: '8px' }} header={<h3>Sign In</h3>}>
+        <Panel bordered className='reset-password-panel'  header={<h3>Sign In</h3>}>
           <Form fluid>
             <Form.Group>
               <Form.ControlLabel>Organization</Form.ControlLabel>
@@ -279,7 +247,7 @@ const SignIn = () => {
     {/* Modal for Password Change */}
     <Modal backdrop="static" role="alertdialog" open={changePasswordView} size="xs">
       <Modal.Body>
-        <RemindIcon style={{ color: '#ffb300', fontSize: 24 }} />
+        <RemindIcon className='remind-icon'/>
         {'New password required!'}
   
         <Form fluid>
@@ -300,7 +268,7 @@ const SignIn = () => {
             />
           </Form.Group>
         </Form>
-        <p style={{ color: "red" }}> {errText}</p>
+        <p className='error-text'> {errText}</p>
       </Modal.Body>
       <Modal.Footer>
         <Button onClick={handleSaveNewPassword} appearance="primary">Ok</Button>
