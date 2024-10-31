@@ -186,13 +186,13 @@ const EncounterList = () => {
             </HeaderCell>
             <Cell dataKey="queueNumber" />
           </Column>
-          <Column sortable flexGrow={4}>
+          {/* <Column sortable flexGrow={4}>
             <HeaderCell>
               <Input onChange={e => handleFilterChange('patientKey', e)} />
               <Translate>Patient Key</Translate>
             </HeaderCell>
             <Cell dataKey="patientKey" />
-          </Column>
+          </Column> */}
           <Column sortable flexGrow={4}>
             <HeaderCell>
               <Input onChange={e => handleFilterChange('patientFullName', e)} />
@@ -202,10 +202,24 @@ const EncounterList = () => {
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
+              <Input onChange={e => handleFilterChange('patientMrn', e)} />
+              <Translate>MRN</Translate>
+            </HeaderCell>
+            <Cell dataKey="patientMrn" />
+          </Column>
+          <Column sortable flexGrow={4}>
+            <HeaderCell>
               <Input onChange={e => handleFilterChange('patientAge', e)} />
               <Translate>Patient Age</Translate>
             </HeaderCell>
             <Cell dataKey="patientAge" />
+          </Column>
+          <Column sortable flexGrow={4}>
+            <HeaderCell>
+              <Input onChange={e => handleFilterChange('type', e)} />
+              <Translate>Visit Type</Translate>
+            </HeaderCell>
+            <Cell dataKey="type" />
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>

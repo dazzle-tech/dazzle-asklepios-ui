@@ -102,6 +102,13 @@ export const newApActiveIngredient:modelTypes.ApActiveIngredient = {
 	pharmaProteinBinding:'',
 	pharmaClearance:'',
 	pharmaMetabolism:'',
+	doseAdjPugA:'',
+	doseAdjPugB:'',
+	doseAdjPugC:'',
+	doseAdjRenalOne:'',
+	doseAdjRenalTwo:'',
+	doseAdjRenalThree:'',
+	doseAdjRenalFour:'',
 } 
 
 export const newApActiveIngredientAdverseEffect:modelTypes.ApActiveIngredientAdverseEffect = { 
@@ -274,6 +281,7 @@ export const newApAttachment:modelTypes.ApAttachment = {
 	deletedAt:undefined,
 	isValid:undefined,
 	details:'',
+	accessTypeLkey:undefined,
 } 
 
 export const newApCatalogDiagnosticTest:modelTypes.ApCatalogDiagnosticTest = { 
@@ -568,6 +576,15 @@ export const newApDiagnosticTestRadiology:modelTypes.ApDiagnosticTestRadiology =
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	labCatalogLkey:undefined,
+	propertyLkey:undefined,
+	systemLkey:undefined,
+	scaleLkey:undefined,
+	reagentsLkey:undefined,
+	methodLkey:undefined,
+	timingLkey:undefined,
+	resultType:'',
+	resultUnitLkey:undefined,
 } 
 
 export const newApDiagnosticTestSpecialPopulation:modelTypes.ApDiagnosticTestSpecialPopulation = { 
@@ -1080,6 +1097,25 @@ export const newApPatientAddresses:modelTypes.ApPatientAddresses = {
 	isValid:undefined,
 } 
 
+export const newApPatientAdministrativeWarnings:modelTypes.ApPatientAdministrativeWarnings = { 
+	key:undefined,
+	patientKey:undefined,
+	warningTypeLkey:undefined,
+	description:'',
+	resolutionStatusLkey:undefined,
+	dateResolved:null,
+	resolvedBy:'',
+	resolutionUndoDate:null,
+	resolvedUndoBy:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApPatientAlerts:modelTypes.ApPatientAlerts = { 
 	key:undefined,
 	patientKey:undefined,
@@ -1318,6 +1354,7 @@ export const newApPatientRelation:modelTypes.ApPatientRelation = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	categoryTypeLkey:undefined,
 } 
 
 export const newApPatientSecondaryDocuments:modelTypes.ApPatientSecondaryDocuments = { 
@@ -1367,6 +1404,22 @@ export const newApPractitioner:modelTypes.ApPractitioner = {
 	deletedAt:undefined,
 	isValid:undefined,
 	departmentKey:undefined,
+	practitionerFirstName:'',
+	practitionerLastName:'',
+	practitionerEmail:'',
+	practitionerPhoneNumber:'',
+	jobRole:'',
+	specialtyLkey:undefined,
+	subSpecialtyLkey:undefined,
+	defaultMedicalLicense:'',
+	secondaryMedicalLicense:'',
+	educationalLevelLkey:undefined,
+	professionalMembershipAndCertification:'',
+	appointable:undefined,
+	linkedUser:'',
+	defaultLicenseValidUntil:null,
+	secondaryLicenseValidUntil:null,
+	dob:null,
 } 
 
 export const newApPrescriptionInstruction:modelTypes.ApPrescriptionInstruction = { 
@@ -1376,6 +1429,21 @@ export const newApPrescriptionInstruction:modelTypes.ApPrescriptionInstruction =
 	unitLkey:undefined,
 	routLkey:undefined,
 	frequencyLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApResources:modelTypes.ApResources = { 
+	key:undefined,
+	facilityKey:undefined,
+	resourceTypeLkey:undefined,
+	resourceKey:undefined,
+	isAllowParallel:undefined,
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',

@@ -2,7 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApPatient, ApPatientAllergies, ApPatientRelation, ApPatientSecondaryDocuments, ApPatientInsurance, ApPatientInsuranceCoverage } from '@/types/model-types';
+import { ApPatient, ApPatientAllergies, ApPatientRelation, ApPatientSecondaryDocuments, ApPatientInsurance, ApPatientInsuranceCoverage, ApPatientAdministrativeWarnings } from '@/types/model-types';
 
 export const patientService = createApi({
   reducerPath: 'patientApi',
@@ -250,9 +250,56 @@ export const patientService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       }
-    })
+    }),
+    savePatientAdministrativeWarnings: builder.mutation({
+      query: (patientAdministrativeWarnings: ApPatientAdministrativeWarnings) => ({
+        url: `/pas/save-patient-administrativeWarnings`,
+        method: 'POST',
+        body: patientAdministrativeWarnings
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getPatientAdministrativeWarnings: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/pas/fetch-patient-administrativeWarnings?${fromListRequestToQueryParams(listRequest)}`,
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    updatePatientAdministrativeWarnings: builder.mutation({
+      query: (patientAdministrativeWarnings: ApPatientAdministrativeWarnings) => ({
+        url: `/pas/update-patient-administrative-warning`, 
+        method: 'POST',
+        body: patientAdministrativeWarnings,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;   
+      }
+    }),
+    deletePatientAdministrativeWarnings: builder.mutation({
+      query: (patientAdministrativeWarnings: ApPatientAdministrativeWarnings) => ({
+        url: `/pas/delete-patient-administrative-warning`, 
+        method: 'POST',
+        body: patientAdministrativeWarnings,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;   
+      }
+    }),
+    
+    
   })
 });
+
+
+  
+
+
 
 export const {
   useGetPatientsQuery,
@@ -274,5 +321,9 @@ export const {
   useDeletePatientRelationMutation,
   useGetPatientInsuranceCovgQuery,
   useSavePatientInsuranceCovgMutation,
-  useDeletePatientInsuranceCovgMutation
+  useDeletePatientInsuranceCovgMutation,
+  useSavePatientAdministrativeWarningsMutation,
+  useGetPatientAdministrativeWarningsQuery,
+  useUpdatePatientAdministrativeWarningsMutation,
+  useDeletePatientAdministrativeWarningsMutation,
 } = patientService;

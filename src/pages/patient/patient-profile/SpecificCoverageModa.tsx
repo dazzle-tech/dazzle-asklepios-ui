@@ -150,7 +150,7 @@ const SpecificCoverageModa = ({ open, onClose, insurance }) => {
 
                         <IconButton 
                         onClick={()=>{handleDeleteInsurance()}}
-                        appearance="primary" color="red" icon={<TrashIcon />}  >
+                        appearance="primary" color="blue" icon={<TrashIcon />}  >
                             <Translate>Delete</Translate>
                         </IconButton>
 
