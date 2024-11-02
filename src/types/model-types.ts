@@ -101,13 +101,6 @@ export interface ApActiveIngredient {
 	pharmaProteinBinding:string;
 	pharmaClearance:string;
 	pharmaMetabolism:string;
-	doseAdjPugA:string;
-	doseAdjPugB:string;
-	doseAdjPugC:string;
-	doseAdjRenalOne:string;
-	doseAdjRenalTwo:string;
-	doseAdjRenalThree:string;
-	doseAdjRenalFour:string;
 } 
 
 export interface ApActiveIngredientAdverseEffect { 
@@ -279,7 +272,6 @@ export interface ApAttachment {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
-	details:string;
 } 
 
 export interface ApCatalogDiagnosticTest { 
@@ -504,8 +496,6 @@ export interface ApDiagnosticTestCatalogHeader {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
-	testKey:string;
-	catalogKey:string;
 } 
 
 export interface ApDiagnosticTestEyeExam { 
@@ -562,11 +552,18 @@ export interface ApDiagnosticTestPathology {
 export interface ApDiagnosticTestRadiology { 
 	key:string;
 	testKey:string;
+	labCatalogLkey:string;
 	internationalCodingTypeLkey:string;
 	childCodeLkey:string;
-	radCategoryLkey:string;
-	imageDuration:string;
+	propertyLkey:string;
+	systemLkey:string;
+	scaleLkey:string;
+	reagentsLkey:string;
+	methodLkey:string;
+	timingLkey:string;
 	timeUnitLkey:string;
+	resultType:string;
+	resultUnitLkey:string;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
@@ -574,15 +571,8 @@ export interface ApDiagnosticTestRadiology {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
-	labCatalogLkey:string;
-	propertyLkey:string;
-	systemLkey:string;
-	scaleLkey:string;
-	reagentsLkey:string;
-	methodLkey:string;
-	timingLkey:string;
-	resultType:string;
-	resultUnitLkey:string;
+	radCategoryLkey:string;
+	imageDuration:string;
 } 
 
 export interface ApDiagnosticTestSpecialPopulation { 
@@ -724,9 +714,11 @@ export interface ApFacility {
 	facilityName:string;
 	facilityNameOtherLang:string;
 	tenantId:string;
+	facilityType:string;
 	facilityRegistrationDate:Date;
 	facilityEmailAddress:string;
 	facilityBriefDesc:string;
+	facilityAddress:string;
 	facilityAddressOtherLang:string;
 	facilityLogoFile:string;
 	createdBy:string;
@@ -736,13 +728,11 @@ export interface ApFacility {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	facilityTypeLkey:string;
+	facilityAddressId:string;
 	facilityPhone1:string;
 	facilityPhone2:string;
 	facilityFax:string;
-	facilityAddressId:string;
-	facilityTypeLkey:string;
-	facilityType:string;
-	facilityAddress:string;
 } 
 
 export interface ApGenericMedication { 
@@ -816,6 +806,20 @@ export interface ApIcdCode {
 	linkedWithGender:string;
 	linkedWithDisease:string;
 	moreSpecification:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApImagesAndAttachments { 
+	key:string;
+	type:string;
+	patientKey:string;
+	value:string;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
@@ -1045,6 +1049,7 @@ export interface ApPatient {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	districtLkey:string;
 	patientClassLkey:string;
 	privatePatient:boolean;
 	verificationOtp:string;
@@ -1386,18 +1391,18 @@ export interface ApPractitioner {
 	practitionerLastName:string;
 	practitionerEmail:string;
 	practitionerPhoneNumber:string;
+	dob:Date;
 	jobRole:string;
 	specialtyLkey:string;
 	subSpecialtyLkey:string;
 	defaultMedicalLicense:string;
+	defaultLicenseValidUntil:Date;
 	secondaryMedicalLicense:string;
+	secondaryLicenseValidUntil:Date;
 	educationalLevelLkey:string;
 	professionalMembershipAndCertification:string;
 	appointable:boolean;
 	linkedUser:string;
-	defaultLicenseValidUntil:Date;
-	secondaryLicenseValidUntil:Date;
-	dob:Date;
 } 
 
 export interface ApPrescriptionInstruction { 
@@ -1407,21 +1412,6 @@ export interface ApPrescriptionInstruction {
 	unitLkey:string;
 	routLkey:string;
 	frequencyLkey:string;
-	createdBy:string;
-	updatedBy:string;
-	deletedBy:string;
-	createdAt:number;
-	updatedAt:number;
-	deletedAt:number;
-	isValid:boolean;
-} 
-
-export interface ApResources { 
-	key:string;
-	facilityKey:string;
-	resourceTypeLkey:string;
-	resourceKey:string;
-	isAllowParallel:boolean;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
@@ -1649,6 +1639,20 @@ export interface ApUomGroups {
 	isValid:boolean;
 } 
 
+export interface ApUploads { 
+	key:string;
+	type:string;
+	patientKey:string;
+	value:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApUser { 
 	key:string;
 	username:string;
@@ -1672,12 +1676,11 @@ export interface ApUser {
 	firstName:string;
 	secondName:string;
 	lastName:string;
-	dob:Date;
-	sexAtBirthLkey:string;
 	phoneNumber:number;
-	jobDescription:string;
-	jobRoleLkey:string;
+	sexAtBirthLkey:string;
+	dob:Date;
 	jobRoleKey:string;
+	jobDescription:string;
 	mustChangePassword:boolean;
 } 
 
@@ -1692,8 +1695,6 @@ export interface ApUserFacilities {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
-	userKey:string;
-	facilityKey:string;
 } 
 
 export interface ApUserFacilitiyDepartments { 
@@ -1712,6 +1713,7 @@ export interface ApUserFacilitiyDepartments {
 
 export interface ApUserMedicalLicense { 
 	key:string;
+	userKey:string;
 	licenseName:string;
 	licenseNumber:string;
 	validTo:Date;
@@ -1722,6 +1724,5 @@ export interface ApUserMedicalLicense {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
-	userKey:string;
 } 
 
