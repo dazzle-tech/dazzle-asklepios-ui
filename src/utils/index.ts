@@ -88,7 +88,10 @@ export const conjureValueBasedOnKeyFromList = (
   preferredField: any
 ) => {
   let displayValue = currentKey;
+  console.log("list",list)
+
   list.map(record => {
+
     if (record['key'] === currentKey) {
       displayValue = record[preferredField];
     }

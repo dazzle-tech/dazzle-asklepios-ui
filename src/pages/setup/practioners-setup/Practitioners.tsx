@@ -11,7 +11,8 @@ import {
   useSavePractitionerMutation,
   useDeactiveActivePractitionerMutation,
   useRemovePractitionerMutation,
-  useGetUserRecordQuery
+  useGetUserRecordQuery,
+  useGetUsersQuery
 } from '@/services/setupService';
 import { Button, ButtonToolbar, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -21,7 +22,7 @@ import { ApPractitioner } from '@/types/model-types';
 import { newApPractitioner } from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
+import { addFilterToListRequest, conjureValueBasedOnKeyFromList, fromCamelCaseToDBName } from '@/utils';
 import AdminIcon from '@rsuite/icons/Admin';
 import { notify } from '@/utils/uiReducerActions';
 import ReloadIcon from '@rsuite/icons/Reload';
@@ -32,6 +33,8 @@ const Practitioners = () => {
   const [newPrac, setnewPrac] = useState(false);
 
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  const { data: userListResponse, refetch: refetchUsers } = useGetUsersQuery(listRequest);
+
   const [facilityListRequest, setFacilityListRequest] = useState<ListRequest>({
     ...initialListRequest
   });
@@ -47,28 +50,31 @@ const Practitioners = () => {
     setnewPrac(false)
 
   }
+  const check = () => {
+  console.log(userListResponse.object)
 
+  }
 
-
+  
 
 
   const [dactivePractitioner, dactivePractitionerMutation] = useDeactiveActivePractitionerMutation();
   const [removePractitioner, removePractitionerMutation] = useRemovePractitionerMutation();
   const { data: getOneUser } = useGetUserRecordQuery(
     { userId: practitioner.linkedUser },
-    { skip: !practitioner.linkedUser } 
+    { skip: !practitioner.linkedUser }
   );
 
   useEffect(() => {
-    if (getOneUser) { 
+    if (getOneUser) {
       setPractitioner({
         ...practitioner,
-        practitionerFullName: getOneUser.fullName ,
-        practitionerFirstName:getOneUser.firstName,
-        practitionerLastName:getOneUser.lastName,
-        practitionerEmail:getOneUser.email,
-        genderLkey:getOneUser.sexAtBirthLkey,
-        practitionerPhoneNumber:getOneUser.phoneNumber
+        practitionerFullName: getOneUser.fullName,
+        practitionerFirstName: getOneUser.firstName,
+        practitionerLastName: getOneUser.lastName,
+        practitionerEmail: getOneUser.email,
+        genderLkey: getOneUser.sexAtBirthLkey,
+        practitionerPhoneNumber: getOneUser.phoneNumber
 
       });
     }
@@ -248,14 +254,25 @@ const Practitioners = () => {
                 <Cell dataKey="practitionerFullName" />
               </Column>
 
-              <Column sortable flexGrow={3}>
+              <Column sortable flexGrow={4} >
                 <HeaderCell>
                   <Input onChange={e => handleFilterChange('linkedUser', e)} />
-                  <Translate>Linked User Name</Translate>
+                  <Translate>inked User</Translate>
                 </HeaderCell>
-                <Cell dataKey="linkedUser" />
+                <Cell onClick={()=>{
+                  check()
+                }}>
+                  {rowData => (
+                    <span>
+                      {conjureValueBasedOnKeyFromList(
+                        userListResponse?.object ?? [],
+                        rowData.linkedUser,
+                        'fullName'
+                      )}
+                    </span>
+                  )}
+                </Cell>
               </Column>
-
               {/* ============================ Practitioner Name ============================ */}
 
               <Column sortable flexGrow={3}>
