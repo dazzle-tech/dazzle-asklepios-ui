@@ -79,7 +79,7 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         record={encounter}
       />
       <MyInput
-        width={200}
+        width={150}
         column
         fieldType="select"
         fieldName="departmentKey"

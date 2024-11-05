@@ -36,7 +36,7 @@ import { useNavigate } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
 import { notify } from '@/utils/uiReducerActions';
-
+import PageEndIcon from '@rsuite/icons/PageEnd';
 const EncounterList = () => {
   const patientSlice = useAppSelector(state => state.patient);
   const dispatch = useAppDispatch();
@@ -116,6 +116,13 @@ const EncounterList = () => {
       navigate('/encounter');
     }
   };
+  const goToPreVisitObservations = () => {
+    if (encounter && encounter.key) {
+      dispatch(setEncounter(encounter));
+      dispatch(setPatient(encounter['patientObject']));
+      navigate('/encounter-pre-observations');
+    }
+  };
 
   return (
     <>
@@ -155,6 +162,19 @@ const EncounterList = () => {
             <IconButton appearance="primary" icon={<icons.Search />} onClick={handleManualSearch}>
               <Translate>Search</Translate>
             </IconButton>
+           <div style={{marginLeft:'auto'}}>
+           <IconButton
+              appearance="primary"
+              color="violet"
+              disabled={!encounter.key}
+              onClick={goToPreVisitObservations}
+              icon={<PageEndIcon/>}
+            >
+              <Translate>Pre-Visit Observations</Translate>
+            </IconButton>
+           </div>
+           
+
           </ButtonToolbar>
         </Panel>
         <Table
