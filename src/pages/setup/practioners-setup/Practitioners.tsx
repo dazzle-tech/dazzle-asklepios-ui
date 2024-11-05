@@ -47,16 +47,11 @@ const Practitioners = () => {
   const handleBack = () => {
     setEdit_new(false)
     setPractitioner(newApPractitioner)
+    refetchPractitioners()
+
     setnewPrac(false)
 
   }
-  const check = () => {
-  console.log(userListResponse.object)
-
-  }
-
-  
-
 
   const [dactivePractitioner, dactivePractitionerMutation] = useDeactiveActivePractitionerMutation();
   const [removePractitioner, removePractitionerMutation] = useRemovePractitionerMutation();
@@ -95,10 +90,7 @@ const Practitioners = () => {
 
   };
 
-  // const handleSave = () => {
-  //   setPopupOpen(false);
-  //   savePractitioner(practitioner).unwrap();
-  // };
+
 
   useEffect(() => {
     if (practitioner.primaryFacilityKey) {
@@ -259,7 +251,7 @@ const Practitioners = () => {
                   <Input onChange={e => handleFilterChange('linkedUser', e)} />
                   <Translate>inked User</Translate>
                 </HeaderCell>
-                <Cell onClick={()=>{
+                <Cell onClick={() => {
                   check()
                 }}>
                   {rowData => (

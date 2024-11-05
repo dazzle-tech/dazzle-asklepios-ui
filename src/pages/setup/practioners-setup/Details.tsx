@@ -20,7 +20,8 @@ import {
   useGetUsersQuery,
   useGetLovValuesByCodeQuery,
   useRemoveUserMutation,
-  useSavePractitionerMutation
+  useSavePractitionerMutation,
+  useGetUserRecordQuery
 
 } from '@/services/setupService';
 import PageIcon from '@rsuite/icons/Page';
@@ -33,7 +34,7 @@ import { conjureValueBasedOnKeyFromList } from "@/utils";
 
 
 const Details = (props) => {
-  const [editing, setEditing] = useState(true);
+  const [editing, setEditing] = useState(false);
 
   const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const { data: eduLvlLovQueryResponse } = useGetLovValuesByCodeQuery('EDU_LEVEL');
@@ -44,7 +45,6 @@ const Details = (props) => {
 
   const [searchKeyword, setSearchKeyword] = useState('');
 
-
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest
     ,
@@ -52,6 +52,16 @@ const Details = (props) => {
       || searchKeyword.length < 3
   });
   const [practitioner, setPractitioner] = useState<ApPractitioner>({ ...newApPractitioner });
+  const { data: getOneUser } = useGetUserRecordQuery(
+    { userId: practitioner?.linkedUser },
+    { skip: !practitioner?.linkedUser }
+  );
+
+
+  useEffect(() => {
+    console.log(getOneUser)
+  }, [getOneUser])
+
   const [savePractitioner, savePractitionerMutation] = useSavePractitionerMutation();
   const { data: userListResponse } = useGetUsersQuery(initialListRequest);
   const [linkedUserName, setLinkedUserName] = useState('');
@@ -70,9 +80,14 @@ const Details = (props) => {
 
 
   const handleSave = () => {
-    savePractitioner(practitioner).unwrap().then(() => {
 
-    }).then(props.refetchPractitioners);
+
+    savePractitioner(practitioner).unwrap().then(() => {
+      console.log(getOneUser)
+
+    }).then(props.refetchPractitioners).then(() => {
+      setEditing(false)
+    });
   };
 
   useEffect(() => {
@@ -119,7 +134,7 @@ const Details = (props) => {
   const handleSelectLinkedUser = (userData) => {
     setPractitioner({ ...practitioner, linkedUser: userData.key })
     console.log({ ...practitioner, linkedUser: userData.key })
-    
+
   }
 
 
@@ -303,7 +318,7 @@ const Details = (props) => {
     <div style={{ height: "900px" }}>
       <Panel style={{ background: 'white' }}
         header={
-          <p className="title">
+          <p className="title" style={{ marginBottom: "10px" }}>
             <Translate>practitioner Details</Translate>
           </p>
         }
@@ -319,7 +334,7 @@ const Details = (props) => {
             appearance="primary"
             color="orange"
             icon={<Edit />}
-          //   onClick={() => setEditing(true)}
+            onClick={() => setEditing(true)}
           >
             <Translate>Edit</Translate>
           </IconButton>
@@ -336,27 +351,30 @@ const Details = (props) => {
 
           {
             practitioner?.linkedUser ?
-              <InputGroup inside style={{ width: '350px', direction: 'ltr' }}>
-                <Input
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      search();
-                    }
-                  }}
-                  placeholder={'Search Users to link '}
-                  value={practitioner?.linkedUser ?
-                    linkedUserName
-                    : searchKeyword}
-                  onChange={e => setSearchKeyword(e)}
-                />
-                <InputGroup.Button onClick={() =>
-                  changeLinkedUser()
-                } >
-                  <UserChangeIcon />
-                </InputGroup.Button>
-              </InputGroup>
+              <div style={{ marginBottom: '10px' }}>
+                <label htmlFor="searchInput" style={{ display: 'block', marginBottom: '7px', fontWeight: 'bold' }} >
+                  Linked Users
+                </label>
+                <InputGroup inside style={{ width: '350px', direction: 'ltr' }}>
+                  <Input
+                    id="searchInput"
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        search();
+                      }
+                    }}
+                    placeholder="Search Users to link"
+                    value={practitioner?.linkedUser ? linkedUserName : searchKeyword}
+                    onChange={e => setSearchKeyword(e)}
+                  />
+                  <InputGroup.Button onClick={() => changeLinkedUser()}>
+                    <UserChangeIcon style={{ scale: "1.2" }} />
+                  </InputGroup.Button>
+                </InputGroup>
+              </div>
 
               :
+
               <InputGroup inside style={{ width: '350px', direction: 'ltr' }}>
                 <Input
                   onKeyDown={e => {
@@ -413,7 +431,19 @@ const Details = (props) => {
               cellBordered
               onRowClick={rowData => {
                 handleSelectLinkedUser(rowData);
-
+                setSearchResultVisible(false);
+                setPractitioner({
+                  ...practitioner,
+                  practitionerFirstName: rowData?.firstName,
+                  practitionerLastName: rowData?.lastName,
+                  practitionerFullName: rowData?.fullName,
+                  practitionerPhoneNumber: rowData?.phoneNumber,
+                  practitionerEmail: rowData?.email,
+                  linkedUser: rowData?.key,
+                  genderLkey: rowData.sexAtBirthLkey,
+                  jobRole: rowData.jobRoleKey,
+                  dob: rowData.dob
+                })
               }}
               data=
               {userListResponse?.object ??
