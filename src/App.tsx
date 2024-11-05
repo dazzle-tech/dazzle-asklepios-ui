@@ -203,6 +203,7 @@ const App = () => {
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
+             
               <Route path="encounter" element={<Encounter />} />
               <Route path="encounter-list" element={<EncounterList />} />
               <Route path="facilities" element={<Facilities />} />
@@ -211,7 +212,6 @@ const App = () => {
               <Route path="modules-setup" element={<Modules />} />
               <Route path="users" element={<Users />} />
               <Route path="uom-group" element={<UOMGroup />} />
-
               <Route path="metadata" element={<Metadata />} />
               <Route path="dvm" element={<DVM />} />
               <Route path="practitioners" element={<Practitioners />} />
@@ -234,7 +234,7 @@ const App = () => {
             </Route>
           </Route>
 
-          <Route path="login" element={<SignInPage />} />
+          <Route path="login" element={<SignInPage/>} />
           <Route path="*" element={<Error404Page />} />
         </Routes>
       </CustomProvider>
