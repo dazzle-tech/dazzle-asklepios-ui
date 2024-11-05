@@ -65,7 +65,7 @@ const Encounter = () => {
   const [startEncounter, startEncounterMutation] = useStartEncounterMutation();
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [activeContent, setActiveContent] = useState(<PatientSummary/>);
+  const [activeContent, setActiveContent] = useState(<PatientSummary patient={patientSlice.patient} encounter={patientSlice.encounter}/>);
   const handleMenuItemClick = (content) => {
     setActiveContent(content);
     setIsDrawerOpen(false); // Optionally close the drawer after selection
@@ -170,7 +170,7 @@ const Encounter = () => {
                 </Drawer.Header>
                 <Drawer.Body style={{ padding:'10px'}}>
                 <List hover style={{ width: '100%', margin: 0 }}>
-      <List.Item onClick={() => handleMenuItemClick(<PatientSummary/>)}>
+      <List.Item onClick={() => handleMenuItemClick(<PatientSummary patient={patientSlice.patient} encounter={patientSlice.encounter}/>)}>
         <Translate>Patient Summary</Translate>
       </List.Item>
       <List.Item onClick={() => handleMenuItemClick(<SOAP/>) }>
