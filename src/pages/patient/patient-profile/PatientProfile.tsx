@@ -825,12 +825,23 @@ const PatientProfile = () => {
         addFilterToListRequest(
           fromCamelCaseToDBName(fieldName),
           'containsIgnoreCase',
-          value,
+           String(value),
           warningsAdmistritiveListRequest
         )
       );
     } else {
-      setWarningsAdmistritiveListRequest({ ...warningsAdmistritiveListRequest, filters: [] });
+      setWarningsAdmistritiveListRequest({ ...warningsAdmistritiveListRequest,  filters: [
+        {
+          fieldName: 'patient_key',
+          operator: 'match',
+          value: localPatient.key || undefined
+        },
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        }
+      ]});
     }
   };
 
@@ -1229,7 +1240,7 @@ const PatientProfile = () => {
                           className="deleteButton"
                           style={{
                             color: selectedRowId === rowData.key ? 'black' : 'gray',
-
+                            background: "transparent",
                             cursor: selectedRowId === rowData.key ? 'pointer' : 'not-allowed'
                           }}
                           disabled={selectedRowId !== rowData.key}
