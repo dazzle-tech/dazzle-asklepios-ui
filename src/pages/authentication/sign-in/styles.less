@@ -1,103 +1,156 @@
 .background-image {
-    position: absolute;
-    top: 0;
-    left: 0;
-    opacity: 0.6;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: -1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0.6;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+}
+
+.panel {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  height: 100%;
+  border-radius: 10px;
+
+  position: relative;
+  overflow: hidden;
+}
+
+.logo-panel {
+  width: 105%;
+}
+
+.sign-in-panel {
+  background-color: rgba(250, 250, 250, 0.5);
+  width: 100%;
+  max-width: 410px;
+  padding: 20px;
+  border-radius: 10px;
+  margin: auto;
+
+  .header-image {
+    width: 100px;
+    height: 90px;
   }
-  .panel {
+
+  .title {
+    text-align: center;
+    font-family: Arial, sans-serif;
+    font-size: 1.5em;
+  }
+
+  .forgot-password {
+    float: right;
+  }
+
+  .image-header-div {
+    width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-direction: column;
-    height: 100vh;
-    border-radius: 10px;
-    padding: 20px;
-    position: relative;
-    overflow: hidden;
   }
-  .logo-panel {
-    width: 550px;
+
+  .submit-button {
+    border-radius: 25px;
+    padding: 12px 18px;
+    font-size: 16px;
+    width: 100%;
   }
+}
+
+/* Responsive adjustments for small screens */
+@media (max-width: 768px) {
   .sign-in-panel {
-    background-color: rgba(250, 250, 250, 0.5);
-    width: 430px;
-    padding: 30px;
-    border-radius: 10px;
-  
-    .header-image {
-      width: 127px;
-      height: 110px;
-      top: 50; // يمكنك تعديل هذا لتغيير موضع الصورة
-      left: 50; // يمكنك تعديل هذا لتغيير موضع الصورة
-     
-    }
-  
-  
-    .title {
-      text-align: center;
-      font-family: Arial, sans-serif;
-      z-index: 2;
-    }
-  
-    .forgot-password {
-      float: right;
-    }
-
-    .image-header-div{
-        width:100%; 
-         display:flex;
-        justify-content:center;
-     align-items:center
-    }
-  
-    .submit-button {
-      border-radius: 25px;
-      padding: 15px 20px;
-      font-size: 16px;
-      width: 100%;
-    }
- 
+    width: 90%;
+    padding: 15px;
   }
-  
-  // Reset Password Panel Styles
+
+  .header-image {
+    width: 80px;
+    height: 70px;
+  }
+
+  .title {
+    font-size: 1.2em;
+  }
+
+  .submit-button {
+    font-size: 14px;
+    padding: 10px 15px;
+  }
+
   .reset-password-panel {
-    background: #fff;
-    width: 400px;
-    padding: 40px;
-    border-radius: 8px;
-  
-    .header {
-      h3 {
-        margin: 0;
-      }
-    }
-    
+    width: 90%;
+    padding: 20px;
   }
-  
-  // Modal Styles
-  .password-change-modal {
-    .modal-body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-  
-      .remind-icon {
-        color: #ffb300;
-        font-size: 24px;
-      }
-  
-      .error-text {
-        color: red;
-      }
+}
+
+/* Responsive adjustments for extra-small screens (mobile devices) */
+@media (max-width: 375px) {
+  .sign-in-panel {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .header-image {
+    width: 60px;
+    height: 55px;
+  }
+
+  .title {
+    font-size: 1em;
+  }
+
+  .submit-button {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .reset-password-panel {
+    width: 90%;
+    padding: 15px;
+  }
+}
+
+/* Reset Password Panel Responsive */
+.reset-password-panel {
+  background: #fff;
+  width: 400px;
+  max-width: 90%; /* for responsiveness */
+  padding: 40px;
+  border-radius: 8px;
+
+  .header {
+    h3 {
+      margin: 0;
     }
-  
-    .modal-footer {
-      display: flex;
-      justify-content: space-between;
+  }
+}
+
+/* Modal Styles Responsive */
+.password-change-modal {
+  .modal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .remind-icon {
+      color: #ffb300;
+      font-size: 24px;
+    }
+
+    .error-text {
+      color: red;
     }
   }
 
+  .modal-footer {
+    display: flex;
+    justify-content: space-between;
+  }
+}
