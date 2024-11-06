@@ -31,7 +31,7 @@ const PatientSummary = ({ patient, encounter }) => {
 
     const [patientVisitListRequest, setPatientVisitListReques] = useState<ListRequest>({
       ...initialListRequest,
-
+     
       sortBy:'plannedStartDate',
       filters: [
         {
@@ -47,7 +47,7 @@ const PatientSummary = ({ patient, encounter }) => {
     const {data:encounterPatientList}=useGetEncountersQuery({...patientVisitListRequest});
     const [LastPatientVisit, setLastPatientVisit] = useState<ApEncounter>({ ...newApEncounter});
     const [chartModelIsOpen, setChartModelIsOpen] = useState(false);
-    const getNextObjectByPlannedStartDate = (targetDate) => {
+    const getPrevObjectByPlannedStartDate = (targetDate) => {
         // الوصول إلى المصفوفة داخل خاصية "object"
         const list = encounterPatientList?.object;
     
@@ -62,8 +62,8 @@ const PatientSummary = ({ patient, encounter }) => {
         );
     
         // التأكد من أن هناك عنصرًا تاليًا
-        if (index !== -1 && index + 1 < list.length) {
-            return list[index + 1]; // إعادة العنصر التالي
+        if (index !== -1 && index -1 < list.length) {
+            return list[index - 1]; // إعادة العنصر التالي
         }
     
         return null; // إذا لم يوجد عنصر تالي أو التاريخ غير موجود
@@ -77,7 +77,7 @@ const PatientSummary = ({ patient, encounter }) => {
     };
     console.log(patientVisitListRequest);
     console.log( encounterPatientList?.object);
-    console.log(getNextObjectByPlannedStartDate(encounter.plannedStartDate));
+    console.log(getPrevObjectByPlannedStartDate(encounter.plannedStartDate));
     console.log(encounterPatientList); // تحقق من هيكل encounterPatientList
 
     return (<>
@@ -98,7 +98,7 @@ const PatientSummary = ({ patient, encounter }) => {
                                 fieldLabel="Visit Date"
                                 fieldType="date"
                                 fieldName="plannedStartDate"
-                                record={getNextObjectByPlannedStartDate(encounter.plannedStartDate) || {}}
+                                record={getPrevObjectByPlannedStartDate(encounter.plannedStartDate) || {}}
                             />
                             <MyInput
                                 column
@@ -109,7 +109,7 @@ const PatientSummary = ({ patient, encounter }) => {
                                 selectData={encounterTypeLovQueryResponse?.object ?? []}
                                 selectDataLabel="lovDisplayVale"
                                 selectDataValue="key"
-                                record={getNextObjectByPlannedStartDate(encounter.plannedStartDate) || {}}
+                                record={getPrevObjectByPlannedStartDate(encounter.plannedStartDate) || {}}
                             />
                             <MyInput
                                 width={130}
@@ -120,7 +120,7 @@ const PatientSummary = ({ patient, encounter }) => {
                                 selectData={encounterReasonLovQueryResponse?.object ?? []}
                                 selectDataLabel="lovDisplayVale"
                                 selectDataValue="key"
-                                record={getNextObjectByPlannedStartDate(encounter.plannedStartDate) || {}}
+                                record={getPrevObjectByPlannedStartDate(encounter.plannedStartDate) || {}}
                             />
                         </Form>
 
