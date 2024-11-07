@@ -8,7 +8,6 @@
   object-fit: cover;
   z-index: -1;
 }
-
 .panel {
   display: flex;
   justify-content: center;
@@ -16,112 +15,71 @@
   flex-direction: column;
   height: 100%;
   border-radius: 10px;
-
+  padding: 20px;
   position: relative;
   overflow: hidden;
 }
-
 .logo-panel {
-  width: 105%;
-}
+display:flex;
+align-items: center;
+justify-content: center;
+width: 100%;
 
+}
+.bodySignInDiv{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.logo-panel img {
+  width:470px;
+}
 .sign-in-panel {
   background-color: rgba(250, 250, 250, 0.5);
-  width: 100%;
-  max-width: 410px;
-  padding: 20px;
+  width: 430px;
+  padding: 30px;
   border-radius: 10px;
-  margin: auto;
 
   .header-image {
-    width: 100px;
-    height: 90px;
+    width: 127px;
+    height: 110px;
+    top: 50; // يمكنك تعديل هذا لتغيير موضع الصورة
+    left: 50; // يمكنك تعديل هذا لتغيير موضع الصورة
+   
   }
+
 
   .title {
     text-align: center;
     font-family: Arial, sans-serif;
-    font-size: 1.5em;
+    z-index: 2;
   }
 
   .forgot-password {
     float: right;
   }
 
-  .image-header-div {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  .image-header-div{
+      width:100%;
+       display:flex;
+      justify-content:center;
+   align-items:center
   }
 
   .submit-button {
     border-radius: 25px;
-    padding: 12px 18px;
+    padding: 15px 20px;
     font-size: 16px;
     width: 100%;
   }
+
 }
 
-/* Responsive adjustments for small screens */
-@media (max-width: 768px) {
-  .sign-in-panel {
-    width: 90%;
-    padding: 15px;
-  }
-
-  .header-image {
-    width: 80px;
-    height: 70px;
-  }
-
-  .title {
-    font-size: 1.2em;
-  }
-
-  .submit-button {
-    font-size: 14px;
-    padding: 10px 15px;
-  }
-
-  .reset-password-panel {
-    width: 90%;
-    padding: 20px;
-  }
-}
-
-/* Responsive adjustments for extra-small screens (mobile devices) */
-@media (max-width: 375px) {
-  .sign-in-panel {
-    width: 100%;
-    padding: 10px;
-  }
-
-  .header-image {
-    width: 60px;
-    height: 55px;
-  }
-
-  .title {
-    font-size: 1em;
-  }
-
-  .submit-button {
-    font-size: 12px;
-    padding: 8px 10px;
-  }
-
-  .reset-password-panel {
-    width: 90%;
-    padding: 15px;
-  }
-}
-
-/* Reset Password Panel Responsive */
+// Reset Password Panel Styles
 .reset-password-panel {
   background: #fff;
   width: 400px;
-  max-width: 90%; /* for responsiveness */
   padding: 40px;
   border-radius: 8px;
 
@@ -130,9 +88,10 @@
       margin: 0;
     }
   }
+ 
 }
 
-/* Modal Styles Responsive */
+// Modal Styles
 .password-change-modal {
   .modal-body {
     display: flex;
@@ -153,4 +112,49 @@
     display: flex;
     justify-content: space-between;
   }
+}
+
+@media (max-width: 890px) {
+  .logo-panel {
+    width:450px;
+  }
+  .sign-in-panel {
+    background-color: rgba(250, 250, 250, 0.5);
+    width:380px;
+    padding:15px;
+    border-radius: 10px;
+ 
+    .header-image {
+      width: 100px;
+      height: 90px;
+     
+    }
+ 
+  }  
+  .logo-panel img {
+    width:390px;
+  }
+ 
+}
+@media (max-width: 450px) {
+  .logo-panel {
+    width:400px;
+  }
+  .sign-in-panel {
+    background-color: rgba(250, 250, 250, 0.5);
+    width:300px;
+    padding:15px;
+    border-radius: 10px;
+ 
+    .header-image {
+      width: 90px;
+      height:75px;
+     
+    }
+ 
+  }  
+  .logo-panel img {
+    width:320px;
+  }
+ 
 }
