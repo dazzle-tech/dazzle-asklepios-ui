@@ -7,7 +7,8 @@ import {
   useGetLovValuesByCodeQuery,
   useGetServicesQuery,
   useSaveDiagnosticsTestMutation,
-  useGetDiagnosticsTestListQuery
+  useGetDiagnosticsTestListQuery,
+  useGetDiagnosticsTestTypeQuery
 } from '@/services/setupService';
 import { ButtonToolbar, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -17,6 +18,10 @@ import { ApDiagnosticTest } from '@/types/model-types';
 import { newApDiagnosticTest } from '@/types/model-types-constructor';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import NewDiagnosticsTest from './NewDiagnosticsTest';
+import Genetics from './Genetics';
+import Pathology from './Pathology';
+import Radiology from './Radiology';
+import Laboratory from './Laboratory';
 
 const DiagnosticsTest = () => {
  const [diagnosticsTest, setDiagnosticsTest] = useState<ApDiagnosticTest>({...newApDiagnosticTest});
@@ -198,6 +203,7 @@ const DiagnosticsTest = () => {
 
     
     </Panel>
+
     <NewDiagnosticsTest 
     selectedDiagnosticsTest={diagnosticsTest}
         goBack={() => {
@@ -207,6 +213,8 @@ const DiagnosticsTest = () => {
        
       />
     </Carousel>
+    
+   
   );
 };
 

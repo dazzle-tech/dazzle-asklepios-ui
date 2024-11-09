@@ -564,7 +564,7 @@ export const setupService = createApi({
       keepUnusedDataFor: 5
     }),
     saveDiagnosticsRadiologyTest: builder.mutation({
-      query: (diagnosticTestRadiology: ApDiagnosticTestRadiology) => ({
+      query: (diagnosticTestRadiology: ApDiagnosticTestRadiology ) => ({
         url: `/setup/save-diagnostic-test-radiology`,
         method: 'POST',
         body: diagnosticTestRadiology,
@@ -745,8 +745,13 @@ export const {
   useSaveDiagnosticsTestCatalogHeaderMutation,
   useGetDiagnosticsTestCatalogHeaderListQuery,
   useSaveCatalogDiagnosticsTestMutation,
+  useGetDiagnosticsTestRadiologyListQuery,
+  useSaveDiagnosticsRadiologyTestMutation,
+  useGetDiagnosticsTestSpecialPopulationListQuery,
   useGetCatalogDiagnosticsTestListQuery,
-  useSaveDiagnosticfsTestSpecialPopulationMutation,
+  useSaveDiagnosticsTestSpecialPopulationMutation,
+  useGetDiagnosticsTestGeneticsListQuery,
+  useSaveDiagnosticsTestGeneticsMutation,
   useGetDiagnosticsTestNotSelectedListQuery,
   useRemoveCatalogDiagnosticTestMutation,
   useRemoveUserMutation,
