@@ -56,6 +56,7 @@ import {
   SelectPicker,
   Badge
 } from 'rsuite';
+
 const { Column, HeaderCell, Cell } = Table;
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
