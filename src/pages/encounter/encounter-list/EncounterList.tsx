@@ -1,11 +1,12 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { setEncounter, setLocalEncounter, setPatient } from '@/reducers/patientSlice';
+import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import { ApPatient } from '@/types/model-types';
 import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import { Block, Check, DocPass, Edit, Icon, PlusRound } from '@rsuite/icons';
 import React, { useEffect, useState } from 'react';
+
 import {
   InputGroup,
   ButtonToolbar,
@@ -32,11 +33,15 @@ import {
   useGetLovValuesByCodeQuery,
   useGetPractitionersQuery
 } from '@/services/setupService';
+import {
+  useGetPatientsQuery,
+} from '@/services/patientService';
 import { useNavigate } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
 import { notify } from '@/utils/uiReducerActions';
-
+import PageEndIcon from '@rsuite/icons/PageEnd';
+import { timeStamp } from 'console';
 const EncounterList = () => {
   const patientSlice = useAppSelector(state => state.patient);
   const dispatch = useAppDispatch();
@@ -48,11 +53,27 @@ const EncounterList = () => {
     ...initialListRequest,
     ignore: true
   });
-  
+
+  const [patientListRequest, setPatientListRequest] =
+    useState<ListRequest>({
+      ...initialListRequest,
+      sortBy: 'createdAt',
+      sortType: 'desc',
+      filters: [
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        }
+      ]
+    });
+  const { data: getPatients } = useGetPatientsQuery({ ...patientListRequest });
+  console.log(getPatients?.object);
+  const [dateClickToVisit, setDateClickToVisit] = useState('');
   const { data: encounterListResponse } = useGetEncountersQuery(listRequest);
 
   const [dateFilter, setDateFilter] = useState({
-    fromDate: undefined,//new Date(),
+    fromDate: new Date(),//new Date(),
     toDate: new Date()
   });
 
@@ -115,6 +136,15 @@ const EncounterList = () => {
       dispatch(setPatient(encounter['patientObject']));
       navigate('/encounter');
     }
+    const currentDateTime = new Date().toLocaleString();
+    setDateClickToVisit(currentDateTime);
+  };
+  const goToPreVisitObservations = () => {
+    if (encounter && encounter.key) {
+      dispatch(setEncounter(encounter));
+      dispatch(setPatient(encounter['patientObject']));
+      navigate('/encounter-pre-observations');
+    }
   };
 
   return (
@@ -155,6 +185,19 @@ const EncounterList = () => {
             <IconButton appearance="primary" icon={<icons.Search />} onClick={handleManualSearch}>
               <Translate>Search</Translate>
             </IconButton>
+            <div style={{ marginLeft: 'auto' }}>
+              <IconButton
+                appearance="primary"
+                color="violet"
+                disabled={!encounter.key}
+                onClick={goToPreVisitObservations}
+                icon={<PageEndIcon />}
+              >
+                <Translate>Pre-Visit Observations</Translate>
+              </IconButton>
+            </div>
+
+
           </ButtonToolbar>
         </Panel>
         <Table
@@ -186,13 +229,13 @@ const EncounterList = () => {
             </HeaderCell>
             <Cell dataKey="queueNumber" />
           </Column>
-          <Column sortable flexGrow={4}>
+          {/* <Column sortable flexGrow={4}>
             <HeaderCell>
               <Input onChange={e => handleFilterChange('patientKey', e)} />
               <Translate>Patient Key</Translate>
             </HeaderCell>
             <Cell dataKey="patientKey" />
-          </Column>
+          </Column> */}
           <Column sortable flexGrow={4}>
             <HeaderCell>
               <Input onChange={e => handleFilterChange('patientFullName', e)} />
@@ -202,10 +245,62 @@ const EncounterList = () => {
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
+              <Input
+                onChange={(e) => handleFilterChange('patientKey', e)}
+              />
+              <Translate>MRN</Translate>
+            </HeaderCell>
+            <Cell>
+              {(rowData) => {
+
+                const matchingPatient = getPatients?.object?.find(
+                  (item) => item.key === rowData.patientKey
+                );
+
+                return matchingPatient?.patientMrn || 'N/A';
+              }}
+            </Cell>
+          </Column>
+
+
+          <Column sortable flexGrow={4}>
+            <HeaderCell>
               <Input onChange={e => handleFilterChange('patientAge', e)} />
-              <Translate>Patient Age</Translate>
+              <Translate>Age</Translate>
             </HeaderCell>
             <Cell dataKey="patientAge" />
+          </Column>
+
+          <Column sortable flexGrow={4}>
+            <HeaderCell>
+              <Input onChange={e => handleFilterChange('type', e)} />
+              <Translate>Visit Type</Translate>
+            </HeaderCell>
+            <Cell dataKey="type" />
+          </Column>
+          <Column sortable flexGrow={4}>
+            <HeaderCell>
+              <Input />
+              <Translate>Clinic</Translate>
+            </HeaderCell>
+            <Cell
+            />
+          </Column>
+          <Column sortable flexGrow={4}>
+            <HeaderCell>
+              <Input />
+              <Translate>Physician</Translate>
+            </HeaderCell>
+            <Cell
+            />
+          </Column>
+          <Column sortable flexGrow={4}>
+            <HeaderCell>
+              <Input />
+              <Translate>Booking date, Time</Translate>
+            </HeaderCell>
+            <Cell
+            />
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
@@ -244,6 +339,15 @@ const EncounterList = () => {
                   ? rowData.encounterStatusLvalue.lovDisplayVale
                   : rowData.encounterStatusLkey
               }
+            </Cell>
+          </Column>
+          <Column sortable flexGrow={4}>
+            <HeaderCell>
+              <Input />
+              <Translate>Visit start date time</Translate>
+            </HeaderCell>
+            <Cell>
+
             </Cell>
           </Column>
         </Table>

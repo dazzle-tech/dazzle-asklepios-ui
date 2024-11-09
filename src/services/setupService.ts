@@ -52,7 +52,7 @@ export const setupService = createApi({
       }
     }),
     removeUserMidicalLicense: builder.mutation({
-      query: ( userMedicalLicense : ApUserMedicalLicense) => ({
+      query: (userMedicalLicense: ApUserMedicalLicense) => ({
         url: `/setup/remove-user-midical-license`,
         method: 'POST',
         body: userMedicalLicense,
@@ -91,7 +91,7 @@ export const setupService = createApi({
       query: (facility: ApFacility) => ({
         url: `/setup/remove-facility`,
         method: 'POST',
-        body: facility,  
+        body: facility,
       }),
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
@@ -112,6 +112,17 @@ export const setupService = createApi({
         body: facility
       }),
       onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    saveDiagnosticsTestSpecialPopulation: builder.mutation<void, { queryParams: { diagnosticTestId: string }, body: ApDiagnosticTestSpecialPopulation }>({
+      query: ({ queryParams, body }) => ({
+        url: '/setup/save-diagnostic-test-special-population',
+        method: 'POST',
+        params: queryParams,
+        body: body,
+      }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.object;
       }
@@ -151,7 +162,7 @@ export const setupService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       }
-    }), 
+    }),
     removeUser: builder.mutation({
       query: ({ user }) => ({
         url: `/setup/remove-user`,
@@ -166,6 +177,20 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+
+    getUserRecord: builder.query({
+      query: (data: { userId: string }) => ({
+        url: `/setup/get-user-record`,
+        headers: {
+          userId: data.userId, 
+        },
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    
     saveUser: builder.mutation({
       query: (user: ApUser) => ({
         url: `/setup/save-user`,
@@ -179,24 +204,24 @@ export const setupService = createApi({
     }),
     resetUserPassword: builder.mutation({
       query: (user: ApUser) => ({
-        url: `/setup/user-password-reset`,  
+        url: `/setup/user-password-reset`,
         method: 'POST',
-        body: user,  
-       
+        body: user,
+
       }),
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
-        return response.object;  
+        return response.object;
       },
     }),
-    getModules: builder.query({  
+    getModules: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/module-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-    getUomGroups: builder.query({  
+    getUomGroups: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/uom-groups-list?${fromListRequestToQueryParams(listRequest)}`
       }),
@@ -211,7 +236,7 @@ export const setupService = createApi({
       }),
       onQueryStarted: onQueryStarted,
     }),
-    saveModule: builder.mutation({  
+    saveModule: builder.mutation({
       query: (module: ApModule) => ({
         url: `/setup/save-module`,
         method: 'POST',
@@ -222,7 +247,7 @@ export const setupService = createApi({
         return response.object;
       }
     }),
-    saveUomGroup: builder.mutation({  
+    saveUomGroup: builder.mutation({
       query: (uomGroups: ApUomGroups) => ({
         url: `/setup/save-uom-groups`,
         method: 'POST',
@@ -482,27 +507,27 @@ export const setupService = createApi({
     }),
     getDiagnosticsTestType: builder.query({
       query: (testTypeKey: string) => ({
-      headers: {
-        testTypeKey
-      },
-      url: `/setup/diagnostic-test-type`
-    }),
-    onQueryStarted: onQueryStarted,
-    keepUnusedDataFor: 5
+        headers: {
+          testTypeKey
+        },
+        url: `/setup/diagnostic-test-type`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
     }),
     saveDiagnosticsTest: builder.mutation({
       query: (diagnosticTest: ApDiagnosticTest) => ({
         url: `/setup/save-diagnostic-test`,
         method: 'POST',
-        body: diagnosticTest ,
-      }),onQueryStarted: onQueryStarted,
+        body: diagnosticTest,
+      }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.data;
       }
     }),
     removeCatalogDiagnosticTest: builder.mutation({
-      query: (data: { diagnosticTest: ApDiagnosticTest; catalogKey: string}) => ({
-       url: `/setup/remove-catalog-diagnostic-test`,
+      query: (data: { diagnosticTest: ApDiagnosticTest; catalogKey: string }) => ({
+        url: `/setup/remove-catalog-diagnostic-test`,
         method: 'POST',
         body: data.diagnosticTest,
         headers: {
@@ -525,8 +550,8 @@ export const setupService = createApi({
       query: (diagnosticTestGenetics: ApDiagnosticTestGenetics) => ({
         url: `/setup/save-diagnostic-test-genetics`,
         method: 'POST',
-        body: diagnosticTestGenetics ,
-      }),onQueryStarted: onQueryStarted,
+        body: diagnosticTestGenetics,
+      }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.data;
       }
@@ -542,8 +567,8 @@ export const setupService = createApi({
       query: (diagnosticTestRadiology: ApDiagnosticTestRadiology ) => ({
         url: `/setup/save-diagnostic-test-radiology`,
         method: 'POST',
-        body: diagnosticTestRadiology 
-      }),onQueryStarted: onQueryStarted,
+        body: diagnosticTestRadiology,
+      }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.data;
       }
@@ -560,7 +585,7 @@ export const setupService = createApi({
         url: `/setup/save-diagnostic-test-catalog-header`,
         method: 'POST',
         body: diagnosticTest
-      }),onQueryStarted: onQueryStarted,
+      }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.object;
       }
@@ -577,11 +602,11 @@ export const setupService = createApi({
       }
     }),
     getDiagnosticsTestSpecialPopulationList: builder.query({
-    query: (listRequest: ListRequest) =>({
-      url: `/setup/diagnostic-test-special-population-list?${fromListRequestToQueryParams(listRequest)}`
-    }),
-    onQueryStarted: onQueryStarted,
-    keepUnusedDataFor: 5
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/diagnostic-test-special-population-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
     }),
     saveDiagnosticsTestSpecialPopulation: builder.mutation<void, { queryParams: { diagnosticTestId: string }, body: ApDiagnosticTestSpecialPopulation }>({
       query: ({ queryParams, body }) => ({
@@ -589,7 +614,7 @@ export const setupService = createApi({
         method: 'POST',
         params: queryParams,
         body: body,
-      }),onQueryStarted: onQueryStarted,
+      }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.object;
       }
@@ -614,13 +639,13 @@ export const setupService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       }
-      
+
     }),
     getDiagnosticsTestNotSelectedList: builder.query({
-      query: (data: { catalogKey: string, type: string}) => ({
+      query: (data: { catalogKey: string, type: string }) => ({
         headers: {
-          catalogKey:data.catalogKey,
-          type:data.type
+          catalogKey: data.catalogKey,
+          type: data.type
         },
         url: `/setup/diagnostic-test-no-catalog-list`
       }),
@@ -631,13 +656,37 @@ export const setupService = createApi({
       query: (facilityDepartment: ApUserFacilitiyDepartments) => ({
         url: `/setup/remove-user-facility-department`,
         method: 'POST',
-        body: facilityDepartment,  
+        body: facilityDepartment,
       }),
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.object;
       },
-    })
+    }),
+
+    removePractitioner: builder.mutation({
+      query: (practitioner: ApPractitioner) => ({
+        url: `/setup/remove-practitioner`,
+        method: 'POST',
+        body: practitioner,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+    }),
+
+    deactiveActivePractitioner: builder.mutation({
+      query: (practitioner: ApPractitioner) => ({
+        url: `/setup/deactive-avtice-practitioner`,
+        method: 'POST',
+        body: practitioner,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+    }),
   })
 
 });
@@ -672,6 +721,8 @@ export const {
   useGetMetadataFieldsQuery,
   useGetPractitionersQuery,
   useSavePractitionerMutation,
+  useRemovePractitionerMutation,
+  useDeactiveActivePractitionerMutation,
   useGetDepartmentsQuery,
   useSaveDepartmentMutation,
   useGetAllergensQuery,
@@ -708,4 +759,5 @@ export const {
   useResetUserPasswordMutation,
   useSaveFacilityDepartmentMutation,
   useRemoveUserFacilityDepartmentMutation,
+  useGetUserRecordQuery,
 } = setupService;

@@ -22,20 +22,19 @@ import { newApActiveIngredient } from '@/types/model-types-constructor';
 import { useGetActiveIngredientQuery, useSaveActiveIngredientMutation } from '@/services/medicationsSetupService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { ApActiveIngredient } from '@/types/model-types';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 
-  const Toxicity = () => {
+  const Toxicity = ({activeIngredients, isEdit}) => {
   
     const [isActive, setIsActive] = useState(false);
     const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({ ...newApActiveIngredient });
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientMutation();
+    const { data: valueUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
     const { data: activeIngredientListResponse } = useGetActiveIngredientQuery(listRequest);
-    const [selectedActiveIngredient, setSelectedActiveIngredient] = useState<ApActiveIngredient>({
-      ...newApActiveIngredient
-    });
      const save = () => {
     saveActiveIngredient({
-      ...selectedActiveIngredient,
+      ...activeIngredient,
       createdBy: 'Administrator'
     }).unwrap();
 
@@ -44,6 +43,12 @@ import { ApActiveIngredient } from '@/types/model-types';
   const handleNew = () => {
     setIsActive(true);
    };
+
+   useEffect(() => {
+    if (activeIngredients) {
+      setActiveIngredient(activeIngredients)
+    }
+  }, [activeIngredients]);
 
     return (
       <>
@@ -55,10 +60,10 @@ import { ApActiveIngredient } from '@/types/model-types';
                  disabled={!isActive}
                  style={{ width: '180px' }}
                   type="text"
-                  value={selectedActiveIngredient.toxicityMaximumDose}
+                  value={activeIngredient.toxicityMaximumDose}
                   onChange={e =>
-                    setSelectedActiveIngredient({
-                      ...selectedActiveIngredient,
+                    setActiveIngredient({
+                      ...activeIngredient,
                       toxicityMaximumDose: String(e)
                     })
                   }
@@ -69,22 +74,22 @@ import { ApActiveIngredient } from '@/types/model-types';
               <InputPicker
                 disabled={!isActive}
                 placeholder="per"
-                data={activeIngredientListResponse?.object ?? []}
-                value={selectedActiveIngredient.toxicityMaximumDosePerUnitLkey}
+                data={valueUnitLovQueryResponse?.object ?? []}
+                value={activeIngredient.toxicityMaximumDosePerUnitLkey}
                 onChange={e =>
-                  setSelectedActiveIngredient({
-                    ...selectedActiveIngredient,
+                  setActiveIngredient({
+                    ...activeIngredient,
                     toxicityMaximumDosePerUnitLkey: String(e)
                   })
                 }
-                labelKey="name"
-                valueKey="key"
+               labelKey="lovDisplayVale" 
+               valueKey="key"
                 style={{ width: 224 }}
               />
             </Col>
             <Col xs={5}></Col>
             <Col xs={5}>
-              <ButtonToolbar style={{ margin: '2px' }}>
+             {isEdit && <ButtonToolbar style={{ margin: '2px' }}>
               <IconButton
                   size="xs"
                   appearance="primary"
@@ -101,7 +106,7 @@ import { ApActiveIngredient } from '@/types/model-types';
                 icon={<MdSave />}
               />
               <IconButton
-                disabled={!selectedActiveIngredient.key}
+                disabled={!activeIngredient.key}
                 size="xs"
                 appearance="primary"
                 color="orange"
@@ -110,11 +115,11 @@ import { ApActiveIngredient } from '@/types/model-types';
               />
 {/* 
               <LogDialog
-                ObjectListResponseData={selectedActiveIngredientIndication}
+                ObjectListResponseData={activeIngredientIndication}
                 popupOpen={popupOpen}
                 setPopupOpen={setPopupOpen}
               /> */}
-                  </ButtonToolbar>
+                  </ButtonToolbar>}
               </Col>
           </Row>
             <Row gutter={15}>
@@ -123,10 +128,10 @@ import { ApActiveIngredient } from '@/types/model-types';
               <Input as="textarea"
                      disabled={!isActive}
                      rows={9}  
-                     value={selectedActiveIngredient.toxicityDetails}
+                     value={activeIngredient.toxicityDetails}
                      onChange={e =>
-                       setSelectedActiveIngredient({
-                         ...selectedActiveIngredient,
+                       setActiveIngredient({
+                         ...activeIngredient,
                          toxicityDetails: String(e)
                        })
                      }

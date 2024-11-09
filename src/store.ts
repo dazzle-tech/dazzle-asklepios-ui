@@ -12,6 +12,7 @@ import { dentalService } from '@/services/dentalService';
 import { observationService } from '@/services/observationService';
 import { medicationsSetupService } from './services/medicationsSetupService';
 import { attachmentService } from '@/services/attachmentService';
+import { appointmentService } from './services/appointmentService';
 
 export const store = configureStore({
   reducer: {
@@ -30,8 +31,11 @@ export const store = configureStore({
     //setup
     [setupService.reducerPath]: setupService.reducer,
 
-     //medication
-     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
+    //medication
+    [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
+
+    //medication
+    [appointmentService.reducerPath]: appointmentService.reducer,
 
     //dvm
     [dvmService.reducerPath]: dvmService.reducer,
@@ -57,6 +61,7 @@ export const store = configureStore({
       patientService.middleware,
       setupService.middleware,
       medicationsSetupService.middleware,
+      appointmentService.middleware,
       dvmService.middleware,
       encounterService.middleware,
       dentalService.middleware,

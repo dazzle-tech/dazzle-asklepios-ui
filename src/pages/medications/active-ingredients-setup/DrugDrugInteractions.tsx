@@ -32,14 +32,15 @@ import {
 import { ApActiveIngredientDrugInteraction } from '@/types/model-types';
 import { newApActiveIngredientDrugInteraction} from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
+import { conjureValueBasedOnKeyFromList } from '@/utils';
 
-  const DrugDrugInteractions = () => {
+  const DrugDrugInteractions = ({activeIngredients, isEdit}) => {
   
     const [selectedActiveIngredientDrugInteraction, setSelectedActiveIngredientDrugInteraction] = useState<ApActiveIngredientDrugInteraction>({
       ...newApActiveIngredientDrugInteraction
     });
   
-    const [activeIngredientIndication, setActiveIngredientIndication] = useState<ApActiveIngredientDrugInteraction>({ ...newApActiveIngredientDrugInteraction});
+    const [activeIngredientDrugInteraction, setActiveIngredientDrugInteraction] = useState<ApActiveIngredientDrugInteraction>({ ...newApActiveIngredientDrugInteraction});
     const [listRequest, setListRequest] = useState({
       ...initialListRequest,
       pageSize: 100,
@@ -75,14 +76,15 @@ import { initialListRequest, ListRequest } from '@/types/types';
     const save = () => {
       saveActiveIngredientDrugInteraction({
         ...selectedActiveIngredientDrugInteraction, 
+        activeIngredientKey: activeIngredients.key , 
         createdBy: 'Administrator'
       }).unwrap();
-        
+  
     };
 
     const handleDrugsNew = () => {
       setIsActive(true);
-      setActiveIngredientIndication({ ...newApActiveIngredientDrugInteraction });
+      setActiveIngredientDrugInteraction({ ...newApActiveIngredientDrugInteraction });
     };
 
     const remove = () => {
@@ -92,6 +94,25 @@ import { initialListRequest, ListRequest } from '@/types/types';
         }).unwrap();
       }
     };
+
+    useEffect(() => {
+      const updatedFilters =[
+        {
+          fieldName: 'active_ingredient_key',
+          operator: 'match',
+          value: activeIngredients.key || undefined
+        },
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        }
+      ];
+      setListRequest((prevRequest) => ({
+        ...prevRequest,
+        filters: updatedFilters,
+      }));
+    }, [activeIngredients.key]);
 
     useEffect(() => {
       if (saveActiveIngredientDrugInteractionMutation.isSuccess) {
@@ -126,11 +147,11 @@ import { initialListRequest, ListRequest } from '@/types/types';
                 disabled={!isActive}
                 placeholder="Select A.I"
                 data={activeIngredientListResponseData?.object ?? []}
-                value={selectedActiveIngredientDrugInteraction.activeIngredientKey}
+                value={selectedActiveIngredientDrugInteraction.interactedActiveIngredientKey}
                 onChange={e =>
                   setSelectedActiveIngredientDrugInteraction({
                     ...selectedActiveIngredientDrugInteraction,
-                    activeIngredientKey: String(e)
+                    interactedActiveIngredientKey: String(e)
                   })
                 }
                 labelKey="name"
@@ -158,7 +179,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
             </Col>
             <Col xs={5}></Col>
             <Col xs={5}>
-              <ButtonToolbar style={{ margin: '2px' }}>
+            {isEdit && <ButtonToolbar style={{ margin: '2px' }}>
               <IconButton
                   size="xs"
                   appearance="primary"
@@ -189,7 +210,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
                     color="orange"
                     icon={<InfoRound />}
                   />
-                  </ButtonToolbar>
+                  </ButtonToolbar>}
               </Col>
           </Row>
           <Row gutter={15}>
@@ -223,13 +244,23 @@ import { initialListRequest, ListRequest } from '@/types/types';
                   <Table.Column flexGrow={1}>
                     <Table.HeaderCell>Active Ingredients</Table.HeaderCell>
                     <Table.Cell>
-                    {rowData => <Text>{rowData.interactedActiveIngredientKey}</Text>}
+                    {rowData => (
+                      <span>
+                        {conjureValueBasedOnKeyFromList(
+                          activeIngredientListResponseData?.object ?? [],
+                          rowData.interactedActiveIngredientKey,
+                          'name'
+                        )}
+                      </span>
+                    )}
                     </Table.Cell>
                   </Table.Column>
                   <Table.Column flexGrow={1}>
                     <Table.HeaderCell>Severity</Table.HeaderCell>
                     <Table.Cell>
-                    {rowData => <Text>{rowData.severityLkey}</Text>}
+                    {rowData =>
+                    rowData.severityLvalue ? rowData.severityLvalue.lovDisplayVale : rowData.severityLkey
+                        }
                     </Table.Cell>
                   </Table.Column>
                   <Table.Column flexGrow={1}>

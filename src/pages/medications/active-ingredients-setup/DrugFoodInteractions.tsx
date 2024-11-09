@@ -32,7 +32,7 @@ import {
 
 
 
-  const DrugFoodInteractions = () => {
+  const DrugFoodInteractions = ({activeIngredients , isEdit}) => {
   
 
     const [selectedActiveIngredientFoodInteraction, setSelectedActiveIngredientFoodInteraction] = useState<ApActiveIngredientFoodInteraction>({
@@ -71,6 +71,7 @@ import {
     const save = () => {
       saveActiveIngredientFoodInteraction({
         ...selectedActiveIngredientFoodInteraction, 
+        activeIngredientKey: activeIngredients.key , 
         createdBy: 'Administrator'
       }).unwrap();
         
@@ -99,6 +100,26 @@ import {
         setSelectedActiveIngredientFoodInteraction({ ...newApActiveIngredientFoodInteraction });
       }
     }, [saveActiveIngredientFoodInteractionMutation]);
+
+    useEffect(() => {
+      const updatedFilters =[
+        {
+          fieldName: 'active_ingredient_key',
+          operator: 'match',
+          value: activeIngredients.key || undefined
+        },
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        }
+      ];
+      setListRequest((prevRequest) => ({
+        ...prevRequest,
+        filters: updatedFilters,
+      }));
+    }, [activeIngredients.key]);
+
   
     useEffect(() => {
       if (removeActiveIngredientFoodInteractionMutation.isSuccess) {
@@ -111,21 +132,29 @@ import {
       }
     }, [removeActiveIngredientFoodInteractionMutation]);
 
-  
+    useEffect(() => {
+      if (activeIngredients) {
+        setActiveIngredientFoodInteraction(prevState => ({
+          ...prevState,
+          activeIngredientKey: activeIngredients.key
+        }));
+      }
+    }, [activeIngredients]);
+
     return (
       <>
           <Grid fluid>
             <Row gutter={15}>
             <Col xs={6}>
-              <Text>Food</Text>
+              <Text>Severity</Text>
               < InputPicker
               disabled={!isActive}
                data={severityLovQueryResponseData?.object ?? []}
-               value={selectedActiveIngredientFoodInteraction.activeIngredientKey}
+               value={selectedActiveIngredientFoodInteraction.severityLkey}
                onChange={e =>
                  setSelectedActiveIngredientFoodInteraction({
                    ...selectedActiveIngredientFoodInteraction,
-                   activeIngredientKey: String(e)
+                   severityLkey: String(e)
                  })
                }
                labelKey="lovDisplayVale" 
@@ -143,7 +172,7 @@ import {
              <Col xs={1}>
              </Col>
             <Col xs={5}>
-              <ButtonToolbar style={{ margin: '2px' }}>
+            {isEdit && <ButtonToolbar style={{ margin: '2px' }}>
               <IconButton
                   size="xs"
                   appearance="primary"
@@ -174,7 +203,7 @@ import {
                     color="orange"
                     icon={<InfoRound />}
                   />
-                  </ButtonToolbar>
+                  </ButtonToolbar>}
               </Col>
           </Row>
           <Row gutter={15}>
@@ -205,15 +234,17 @@ import {
                    data={foodListResponseData?.object ?? []}
                 >
                   <Table.Column flexGrow={1}>
-                    <Table.HeaderCell>Active Ingredients</Table.HeaderCell>
+                    <Table.HeaderCell>food</Table.HeaderCell>
                     <Table.Cell>
-                    {rowData => <Text>{rowData.activeIngredientLvalue ? rowData.activeIngredientLvalue.lovDisplayVale : rowData.activeIngredientKey }</Text>}
+                    {rowData => <Text>{rowData.foodDescription }</Text>}
                     </Table.Cell>
                   </Table.Column>
                   <Table.Column flexGrow={1}>
-                    <Table.HeaderCell>Food</Table.HeaderCell>
+                    <Table.HeaderCell>Severity</Table.HeaderCell>
                     <Table.Cell>
-                    {rowData => <Text>{rowData.foodDescription}</Text>}
+                    {rowData =>
+                    rowData.severityLvalue ? rowData.severityLvalue.lovDisplayVale : rowData.severityLkey
+                        }
                     </Table.Cell>
                   </Table.Column>
                   <Table.Column flexGrow={1}>

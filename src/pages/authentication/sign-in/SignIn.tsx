@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Button, Panel, SelectPicker, Stack, Divider, Message, Modal, ButtonToolbar } from 'rsuite';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import Logo from '../../../images/ASK_LOGO.svg';
+import Logo from '../../../images/ASK_LOGO_SVG copy.svg';
+import Background from '../../../images/ASK_WALLPAPER.svg';
+import UserLogo from '../../../images/Login_ICon.svg';
+import './styles.less';
 import Translate from '@/components/Translate';
 import { useLoginMutation } from "@/services/authService";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +22,7 @@ import {
 import { Input, InputGroup } from 'rsuite';
 import EyeCloseIcon from '@rsuite/icons/EyeClose';
 import VisibleIcon from '@rsuite/icons/Visible';
-
+ 
 const SignIn = () => {
   const [login, { isLoading: isLoggingIn, data: loginResult, error: loginError }] = useLoginMutation()
   const authSlice = useAppSelector(state => state.auth);
@@ -29,7 +32,7 @@ const SignIn = () => {
   const [newPasswordConfirm, setNewPasswordConfirm] = useState();
   const [errText, setErrText] = useState(" ")
   const [resetPasswordView, setResetPasswordView] = useState(false);
-
+ 
   const [credentials, setCredentials] = useState({
     username: '',
     password: '',
@@ -37,25 +40,25 @@ const SignIn = () => {
   });
   const navigate = useNavigate();
   const [saveUser, saveUserMutation] = useSaveUserMutation();
-
+ 
   const {
     data: facilityListResponse,
     isLoading: isGettingFacilities,
     isFetching: isFetchingFacilities
   } = useGetFacilitiesQuery({ ...initialListRequest });
-
+ 
   const handleLogin = () => {
     login(credentials).unwrap();
   };
-
+ 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();  // Prevent default form submission behavior
       handleLogin();
     }
   };
-
-
+ 
+ 
   useEffect(() => {
     // if there is a user, navigate to dashboard
     if (authSlice.user && localStorage.getItem('access_token') && !authSlice.user?.mustChangePassword) {
@@ -63,83 +66,99 @@ const SignIn = () => {
     } else if (authSlice.user && localStorage.getItem('access_token') && authSlice.user?.mustChangePassword) {
       console.log(authSlice.user?.mustChangePassword)
       setChangePasswordView(true)
-
+ 
     }
-
+ 
   }, [authSlice.user]);
-
+ 
   useEffect(() => {
     console.log(changePasswordView)
   }, [changePasswordView])
-
-
+ 
+ 
   const [user, setUser] = useState<ApUser>({
     ...newApUser
   });
-
-
+ 
+ 
   const resetUserPasswordModal = () => {
     return (
       <h3>test</h3>
     )
   }
-
+ 
   useEffect(() => {
     console.log(newPassword)
     console.log(newPasswordConfirm)
     setErrText(" ")
-
+ 
   }, [newPassword, newPasswordConfirm])
-
+ 
   const handleSaveNewPassword = () => {
     if (changePasswordView) {
-
+ 
       if (!newPassword || newPassword === '') {
         setErrText('Please ensure both fields are filled.')
-      }else  {
-             
-      if (newPassword === newPasswordConfirm) {
-        console.log('Passwords  Matched')
-        saveUser({ ...authSlice?.user, password: newPassword, mustChangePassword: false }).unwrap().then(() => {
-          navigate('/')
-        })
-
-
-      } else (
-        setErrText('Please ensure both fields have the same password.')
-      )
+      } else {
+ 
+        if (newPassword === newPasswordConfirm) {
+          console.log('Passwords  Matched')
+          saveUser({ ...authSlice?.user, password: newPassword, mustChangePassword: false }).unwrap().then(() => {
+            navigate('/')
+          })
+ 
+ 
+        } else (
+          setErrText('Please ensure both fields have the same password.')
+        )
       }
  
     }
   }
-
+ 
   return (
-    <Stack
-      justifyContent="center"
-      alignItems="center"
-      direction="column"
-      style={{
-        height: '100vh'
-      }}
+ 
+    <Panel
+      bordered
+      className="panel"
     >
       <img
-        src={
-          authSlice.tenant && authSlice.tenant.tenantLogoPath
-            ? authSlice.tenant.tenantLogoPath
-            : Logo
-        }
-        width={300}
+        src={Background}
+        alt="Background"
+        className="background-image"
       />
-      <br />
-
+      <div className='bodySignInDiv'>
+ 
+ 
+          {/* Logo Panel */}
+      <Panel className="logo-panel">
+        <img
+          src={authSlice.tenant && authSlice.tenant.tenantLogoPath ? authSlice.tenant.tenantLogoPath : Logo}
+          alt="Tenant Logo"
+        />
+      </Panel>
+ 
+      {/* Sign In Panel */}
       {!resetPasswordView && (
-        <Panel bordered style={{ background: '#fff', width: 400, padding: 20 }}
-          header={<h3>Sign In</h3>}>
+        <Panel bordered className='sign-in-panel '>
+ 
+          <div className='image-header-div'>
+            <img
+              src={UserLogo}
+              alt="Header Background"
+              className='header-image'
+ 
+            /></div>
+ 
+          <h3 className='title'>
+            Sign In
+          </h3>
           {!authSlice.tenant && (
             <Message type="warning" showIcon>
               <Translate>No Tenant Configured</Translate>
             </Message>
           )}
+ 
           <Form fluid onKeyPress={handleKeyPress}>
             <Form.Group>
               <Form.ControlLabel>Organization</Form.ControlLabel>
@@ -152,57 +171,49 @@ const SignIn = () => {
                 labelKey='facilityName'
                 valueKey='key'
                 value={credentials.orgKey}
-                onChange={e => {
-                  setCredentials({ ...credentials, orgKey: e });
-                }}
+                onChange={e => setCredentials({ ...credentials, orgKey: e })}
               />
             </Form.Group>
-
+ 
             <Form.Group>
               <Form.ControlLabel>Username</Form.ControlLabel>
               <Form.Control
                 disabled={!authSlice.tenant}
                 name="username"
                 value={credentials.username}
-                onChange={e => {
-                  setCredentials({ ...credentials, username: e });
-                }}
+                onChange={e => setCredentials({ ...credentials, username: e })}
               />
             </Form.Group>
-
+ 
             <Form.Group>
               <Form.ControlLabel>
                 <span>Password</span>
-                <a style={{ float: 'right' }}>Forgot password?</a>
+                <a className="forgot-password" >Forgot password?</a>
               </Form.ControlLabel>
               <Form.Control
                 disabled={!authSlice.tenant}
-                name="passowrd"
+                name="password"
                 type="password"
                 value={credentials.password}
-                onChange={e => {
-                  setCredentials({ ...credentials, password: e });
-                }}
+                onChange={e => setCredentials({ ...credentials, password: e })}
               />
             </Form.Group>
+ 
             <Form.Group>
-              <Stack spacing={6} divider={<Divider vertical />}>
-                <Button appearance="primary" onClick={
-                  handleLogin
-
-                } disabled={!authSlice.tenant}>
-                  Sign in
-                </Button>
-              </Stack>
+              <Button color="cyan" appearance="primary" onClick={handleLogin} disabled={!authSlice.tenant}
+                className='submit-button' >
+                Sign in
+              </Button>
             </Form.Group>
           </Form>
-
-
         </Panel>
       )}
-
+ 
+      </div>
+   
+      {/* Reset Password Panel */}
       {resetPasswordView && (
-        <Panel bordered style={{ background: '#fff', width: 400 }} header={<h3>Sign In</h3>}>
+        <Panel bordered className='reset-password-panel' header={<h3>Sign In</h3>}>
           <Form fluid>
             <Form.Group>
               <Form.ControlLabel>Organization</Form.ControlLabel>
@@ -212,53 +223,44 @@ const SignIn = () => {
                 name="organization"
                 data={organizations}
                 value={credentials.orgKey}
-                onChange={e => {
-                  setCredentials({ ...credentials, orgKey: e });
-                }}
+                onChange={e => setCredentials({ ...credentials, orgKey: e })}
               />
             </Form.Group>
-
+ 
             <Form.Group>
               <Form.ControlLabel>Username</Form.ControlLabel>
               <Form.Control
                 name="username"
                 value={credentials.username}
-                onChange={e => {
-                  setCredentials({ ...credentials, username: e });
-                }}
+                onChange={e => setCredentials({ ...credentials, username: e })}
               />
             </Form.Group>
+ 
             <Form.Group>
-              <Stack spacing={6} divider={<Divider vertical />}>
-                <Button appearance="primary" onClick={handleLogin}>
-                  Send OTP
-                </Button>
-              </Stack>
+              <Button appearance="primary" onClick={handleLogin}>
+                Send OTP
+              </Button>
             </Form.Group>
           </Form>
         </Panel>
       )}
-
-
-
-      <Modal backdrop="static" role="alertdialog" open={changePasswordView}
-        // onClose={handleClose}
-        size="xs">
+ 
+ 
+ 
+ 
+      {/* Modal for Password Change */}
+      <Modal backdrop="static" role="alertdialog" open={changePasswordView} size="xs">
         <Modal.Body>
-          <RemindIcon style={{ color: '#ffb300', fontSize: 24 }} />
-          {'new password required!'}
-
-
+          <RemindIcon className='remind-icon' />
+          {'New password required!'}
+ 
           <Form fluid>
-
             <Form.Group>
               <Form.ControlLabel>New Password</Form.ControlLabel>
               <Form.Control
                 name="New Password"
                 value={newPassword}
-                onChange={e => {
-                  setNewPassword(e)
-                }}
+                onChange={e => setNewPassword(e)}
               />
             </Form.Group>
             <Form.Group>
@@ -266,31 +268,21 @@ const SignIn = () => {
               <Form.Control
                 name="Password Confirm"
                 value={newPasswordConfirm}
-                onChange={e => {
-                  setNewPasswordConfirm(e)
-                }}
+                onChange={e => setNewPasswordConfirm(e)}
               />
             </Form.Group>
           </Form>
-          <p style={{ color: "red" }}> {errText}</p>
+          <p className='error-text'> {errText}</p>
         </Modal.Body>
         <Modal.Footer>
-          <Button
-            onClick={handleSaveNewPassword}
-            appearance="primary">
-            Ok
-          </Button>
-          <Button
-            // onClick={handleClose}
-            appearance="subtle">
-            Cancel
-          </Button>
+          <Button onClick={handleSaveNewPassword} appearance="primary">Ok</Button>
+          <Button appearance="subtle">Cancel</Button>
         </Modal.Footer>
       </Modal>
-    </Stack>
-
-
+    </Panel>
+ 
+ 
   );
 };
-
+ 
 export default SignIn;

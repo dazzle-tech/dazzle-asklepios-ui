@@ -54,7 +54,8 @@ import ActiveIngredientsSetup from './pages/medications/active-ingredients-setup
 import GenericMedications from './pages/medications/generic-medications';
 import Catalog from './pages/setup/catalog-setup';
 import Diagnostics from './pages/setup/diagnostics-tests-definition';
-
+import Resources from './pages/appointment/resources';
+import EncounterPreObservations from './pages/encounter/encounter-pre-observations/EncounterPreObservations';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -202,19 +203,22 @@ const App = () => {
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
+             
               <Route path="encounter" element={<Encounter />} />
               <Route path="encounter-list" element={<EncounterList />} />
+              <Route path="encounter-pre-observations" element={<EncounterPreObservations />} />
               <Route path="facilities" element={<Facilities />} />
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />
               <Route path="modules-setup" element={<Modules />} />
               <Route path="users" element={<Users />} />
               <Route path="uom-group" element={<UOMGroup />} />
-
+              <Route path="encounter-pre-observations" element={<EncounterPreObservations />} />
               <Route path="metadata" element={<Metadata />} />
               <Route path="dvm" element={<DVM />} />
               <Route path="practitioners" element={<Practitioners />} />
               <Route path="departments" element={<Departments />} />
+              <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="allergens" element={<Allergens />} />
@@ -232,7 +236,7 @@ const App = () => {
             </Route>
           </Route>
 
-          <Route path="login" element={<SignInPage />} />
+          <Route path="login" element={<SignInPage/>} />
           <Route path="*" element={<Error404Page />} />
         </Routes>
       </CustomProvider>
