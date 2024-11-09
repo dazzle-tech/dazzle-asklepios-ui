@@ -17,7 +17,7 @@ import NavToggle from './NavToggle';
 import Header from '../Header';
 import NavLink from '../NavLink';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import Logo from '../../images/ASK_LOGO.svg';
+import Logo from '../../images/ASK_LOGO_SVG copy.svg';
 import { Breadcrumb } from 'rsuite';
 import Translate from '../Translate';
 import StackItem from 'rsuite/esm/Stack/StackItem';

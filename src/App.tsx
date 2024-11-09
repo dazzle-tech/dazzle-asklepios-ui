@@ -203,6 +203,7 @@ const App = () => {
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
+             
               <Route path="encounter" element={<Encounter />} />
               <Route path="encounter-list" element={<EncounterList />} />
               <Route path="encounter-pre-observations" element={<EncounterPreObservations />} />
@@ -235,7 +236,7 @@ const App = () => {
             </Route>
           </Route>
 
-          <Route path="login" element={<SignInPage />} />
+          <Route path="login" element={<SignInPage/>} />
           <Route path="*" element={<Error404Page />} />
         </Routes>
       </CustomProvider>

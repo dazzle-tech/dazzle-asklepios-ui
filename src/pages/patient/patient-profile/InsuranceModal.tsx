@@ -15,6 +15,7 @@ import { ApPatientInsurance } from '@/types/model-types';
 import { useSavePatientInsuranceMutation } from '@/services/patientService';
 import { notify } from '@/utils/uiReducerActions';
 import { newApPatientInsurance } from '@/types/model-types-constructor';
+
 const InsuranceModal = ({ open, onClose, patientKey, refetchInsurance, editing, insuranceBrowsing, relations }) => {
   const [isUnknown, setIsUnknown] = useState(false);
   const [validationResult, setValidationResult] = useState({});
