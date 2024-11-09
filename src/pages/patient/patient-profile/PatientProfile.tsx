@@ -2,21 +2,29 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import { ApAttachment, ApPatient, ApPatientRelation, ApPatientSecondaryDocuments } from '@/types/model-types';
+import {
+  ApAttachment,
+  ApPatient,
+  ApPatientRelation,
+  ApPatientSecondaryDocuments,
+  ApPatientAdministrativeWarnings
+} from '@/types/model-types';
+import CloseIcon from '@rsuite/icons/Close';
 import FileDownloadIcon from '@rsuite/icons/FileDownload';
 import TrashIcon from '@rsuite/icons/Trash';
 import DetailIcon from '@rsuite/icons/Detail';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useSelector } from 'react-redux';
 import QuickPatient from './quickPatient';
-
+import * as icons from '@rsuite/icons';
 import { faBolt } from '@fortawesome/free-solid-svg-icons';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { faLock } from '@fortawesome/free-solid-svg-icons';
-
+import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
 import InsuranceModal from './InsuranceModal';
-import SpecificCoverageModa from './SpecificCoverageModa';
 
+import SpecificCoverageModa from './SpecificCoverageModa';
+import ReloadIcon from '@rsuite/icons/Reload';
 
 import { saveAs } from 'file-saver';
 import {
@@ -24,7 +32,8 @@ import {
   newApPatient,
   newApPatientInsurance,
   newApPatientRelation,
-  newApPatientSecondaryDocuments
+  newApPatientSecondaryDocuments,
+  newApPatientAdministrativeWarnings
 } from '@/types/model-types-constructor';
 import { Block, Check, DocPass, Edit, History, Icon, PlusRound, Detail } from '@rsuite/icons';
 import React, { useEffect, useRef, useState } from 'react';
@@ -70,7 +79,11 @@ import {
   useGetPatientInsuranceQuery,
   useDeletePatientInsuranceMutation,
   useDeletePatientRelationMutation,
-  useDeletePatientSecondaryDocumentMutation
+  useDeletePatientSecondaryDocumentMutation,
+  useSavePatientAdministrativeWarningsMutation,
+  useGetPatientAdministrativeWarningsQuery,
+  useUpdatePatientAdministrativeWarningsMutation,
+  useDeletePatientAdministrativeWarningsMutation
 } from '@/services/patientService';
 import { FaClock, FaPencil, FaPlus, FaQuestion } from 'react-icons/fa6';
 import { VscGitPullRequestGoToChanges } from 'react-icons/vsc';
@@ -89,10 +102,9 @@ import {
   useFetchAttachmentByKeyQuery,
   useUploadMutation,
   useDeleteAttachmentMutation,
-  useUpdateAttachmentDetailsMutation,
+  useUpdateAttachmentDetailsMutation
 } from '@/services/attachmentService';
 import { notify } from '@/utils/uiReducerActions';
-
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
   const byteNumbers = new Array(byteCharacters.length);
@@ -113,14 +125,10 @@ const handleDownload = attachment => {
   window.URL.revokeObjectURL(url);
 };
 
-
-
 const PatientProfile = () => {
   const patientSlice = useAppSelector(state => state.patient);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-
-
 
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [editing, setEditing] = useState(false);
@@ -129,18 +137,38 @@ const PatientProfile = () => {
   const [patientAttachments, setPatientAttachments] = useState([]);
   const [selectedCriterion, setSelectedCriterion] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [selectedAttachType, setSelectedAttachType] = useState('');
+  const [warningsAdmistritiveListRequest, setWarningsAdmistritiveListRequest] =
+    useState<ListRequest>({
+      ...initialListRequest,
+      filters: [
+        {
+          fieldName: 'patient_key',
+          operator: 'match',
+          value: localPatient.key || undefined
+        },
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        }
+      ]
+    });
+
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     ignore: !searchKeyword || searchKeyword.length < 3
   });
-
+  //Administrative Warning
+  const [patientAdministrativeWarnings, setPatientAdministrativeWarnings] =
+    useState<ApPatientAdministrativeWarnings>({ ...newApPatientAdministrativeWarnings });
   const searchCriteriaOptions = [
     { label: 'MRN', value: 'patientMrn' },
     { label: 'Document Number', value: 'documentNo' },
     { label: 'Full Name', value: 'fullName' },
     { label: 'Archiving Number', value: 'archivingNumber' },
     { label: 'Primary Phone Number', value: 'mobileNumber' },
-    { label: 'Date of Birth', value: 'dob' },
+    { label: 'Date of Birth', value: 'dob' }
   ];
 
   const {
@@ -154,47 +182,66 @@ const PatientProfile = () => {
     ...initialListRequest,
     pageSize: 1000
   });
-  const { data: patientRelationsResponse, refetch: patientRelationsRefetch } = useGetPatientRelationsQuery(
-    {
-      listRequest: patientRelationListRequest,
-      key: localPatient?.key
-    },
-    { skip: !localPatient.key }
-  );
 
+  const { data: patientRelationsResponse, refetch: patientRelationsRefetch } =
+    useGetPatientRelationsQuery(
+      {
+        listRequest: patientRelationListRequest,
+        key: localPatient?.key
+      },
+      { skip: !localPatient.key }
+    );
+  const patientKey = localPatient?.key?.toString(); // تأكيد أن القيمة هي نص
+  const { data: warnings, refetch: warningsRefetch } = useGetPatientAdministrativeWarningsQuery(
+    warningsAdmistritiveListRequest
+  );
+  console.log(localPatient.key);
+  console.log(warnings);
   const patientSecondaryDocumentsResponse = useGetPatientSecondaryDocumentsQuery(
     { key: localPatient?.key },
     { skip: !localPatient?.key }
   );
 
+  useEffect(() => {
+    console.log(patientSecondaryDocumentsResponse);
+  }, [patientSecondaryDocumentsResponse]);
 
   useEffect(() => {
-    console.log(patientSecondaryDocumentsResponse)
-  }, [patientSecondaryDocumentsResponse])
+    const updatedFilters = [
+      {
+        fieldName: 'patient_key',
+        operator: 'match',
+        value: localPatient.key || undefined
+      },
+      {
+        fieldName: 'deleted_at',
+        operator: 'isNull',
+        value: undefined
+      }
+    ];
+    setWarningsAdmistritiveListRequest(prevRequest => ({
+      ...prevRequest,
+      filters: updatedFilters
+    }));
+  }, [localPatient.key]);
 
   const handleSaveSecondaryDocument = () => {
-
-
     const handleCleareSecondaryDocument = () => {
       setSecondaryDocumentModalOpen(false);
       setSecondaryDocument(newApPatientSecondaryDocuments);
-
     };
     console.log({
       ...selectedSecondaryDocument,
       patientKey: localPatient.key
-
-    })
+    });
     console.log({
       ...secondaryDocument,
       patientKey: localPatient.key
-
-    })
+    });
 
     saveSecondaryDocument({
       ...secondaryDocument,
       patientKey: localPatient.key
-
     })
       .unwrap()
       .then(() => {
@@ -207,7 +254,11 @@ const PatientProfile = () => {
   const [selectedPatientRelation, setSelectedPatientRelation] = useState<any>({
     ...newApPatientRelation
   });
-
+  const [selectedPatientAdministrativeWarnings, setSelectedPatientAdministrativeWarnings] =
+    useState<any>({
+      ...newApPatientAdministrativeWarnings
+    });
+  console.log(selectedPatientAdministrativeWarnings);
   const [selectedSecondaryDocument, setSelectedSecondaryDocument] = useState<any>({
     ...newApPatientSecondaryDocuments
   });
@@ -222,6 +273,7 @@ const PatientProfile = () => {
   const [savePatientRelation, savePatientRelationMutation] = useSavePatientRelationMutation();
   const [relationModalOpen, setRelationModalOpen] = useState(false);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  const [administrativeWarningsModalOpen, setAdministrativeWarningsModalOpen] = useState(false);
   const [secondaryDocumentModalOpen, setSecondaryDocumentModalOpen] = useState(false);
 
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
@@ -240,6 +292,10 @@ const PatientProfile = () => {
   const { data: ethnicityLovQueryResponse } = useGetLovValuesByCodeQuery('ETH');
   const { data: occupationLovQueryResponse } = useGetLovValuesByCodeQuery('OCCP');
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
+  const { data: categoryLovQueryResponse } = useGetLovValuesByCodeQuery('FAMILY_MMBR_CAT');
+  const { data: attachmentsLovQueryResponse } = useGetLovValuesByCodeQuery('ATTACH_TYPE');
+  const { data: administrativeWarningsLovQueryResponse } =
+    useGetLovValuesByCodeQuery('ADMIN_WARNINGS');
 
   const [attachmentType, setAttachmnetType] = useState();
 
@@ -253,15 +309,22 @@ const PatientProfile = () => {
 
   const [savePatient, savePatientMutation] = useSavePatientMutation();
   const [saveSecondaryDocument, setSaveSecondaryDocument] = useSaveNewSecondaryDocumentMutation();
+  const [savePatientAdministrativeWarnings, setSavePatientAdministrativeWarnings] =
+    useSavePatientAdministrativeWarningsMutation();
+
+  const [updatePatientAdministrativeWarnings, setUpdatePatientAdministrativeWarnings] =
+    useUpdatePatientAdministrativeWarningsMutation();
+  const [deletePatientAdministrativeWarnings, setDeletePatientAdministrativeWarnings] =
+    useDeletePatientAdministrativeWarningsMutation();
   const [sendOtp, sendOtpMutation] = useSendVerificationOtpMutation();
   const [verifyOtp, verifyOtpMutation] = useVerifyVerificationOtpMutation();
   const [upload, uploadMutation] = useUploadMutation();
   const [deleteAttachment, deleteAttachmentMutation] = useDeleteAttachmentMutation();
-  const [deleteInsurance, deleteInsuranceMutation] = useDeletePatientInsuranceMutation()
-  const [deleteSecondaryDocument, deleteSecondaryDocumentMutation] = useDeletePatientSecondaryDocumentMutation()
+  const [deleteInsurance, deleteInsuranceMutation] = useDeletePatientInsuranceMutation();
+  const [deleteSecondaryDocument, deleteSecondaryDocumentMutation] =
+    useDeletePatientSecondaryDocumentMutation();
 
-  const [deleteRelation, deleteRelationMutation] = useDeletePatientRelationMutation()
-
+  const [deleteRelation, deleteRelationMutation] = useDeletePatientRelationMutation();
 
   const [Update, UpdateMutation] = useUpdateAttachmentDetailsMutation();
   const [validationResult, setValidationResult] = useState({});
@@ -272,12 +335,14 @@ const PatientProfile = () => {
   const [InsuranceModalOpen, setInsuranceModalOpen] = useState(false);
 
   const [selectedInsurance, setSelectedInsurance] = useState();
-  const [insuranceBrowsing, setInsuranceBrowsing] = useState(false)
+  const [insuranceBrowsing, setInsuranceBrowsing] = useState(false);
+  //Administrative Details
+  const [administrativeWarningDetails, setAdministrativeWarningDetails] = useState('');
 
   const handleShowInsuranceDetails = () => {
-    setInsuranceModalOpen(true)
-    setInsuranceBrowsing(true)
-  }
+    setInsuranceModalOpen(true);
+    setInsuranceBrowsing(true);
+  };
 
   const [encounterHistoryListRequest, setEncounterHistoryListRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -296,6 +361,7 @@ const PatientProfile = () => {
     { skip: !localPatient.key }
   );
 
+  console.log(fetchPatientImageResponse);
   const {
     data: patientAllergiesViewResponse,
     error: allergiesError,
@@ -307,23 +373,17 @@ const PatientProfile = () => {
     patientKey: localPatient.key
   });
 
-
-
-
   useEffect(() => {
     console.log(encounterHistoryResponse);
   }, [encounterHistoryResponse]);
 
-
   useEffect(() => {
-    console.log(secondaryDocument)
-    console.log(selectedSecondaryDocument)
+    console.log(secondaryDocument);
+    console.log(selectedSecondaryDocument);
     if (selectedSecondaryDocument) {
-      setSecondaryDocument(selectedSecondaryDocument)
+      setSecondaryDocument(selectedSecondaryDocument);
     }
-  }, [selectedSecondaryDocument])
-
-
+  }, [selectedSecondaryDocument]);
 
   useEffect(() => {
     if (isSuccessAllergies && patientAllergiesViewResponse) {
@@ -339,11 +399,11 @@ const PatientProfile = () => {
 
   const [skipQuery, setSkipQuery] = useState(true);
   const [actionType, setActionType] = useState(null); // 'view' or 'download'
-  const [visit, setVisit] = useState()
+  const [visit, setVisit] = useState();
 
   useEffect(() => {
-    console.log(visit)
-  }, [visit])
+    console.log(visit);
+  }, [visit]);
 
   const {
     data: fetchAttachmentByKeyResponce,
@@ -390,6 +450,7 @@ const PatientProfile = () => {
         setAttachmentsModalOpen(true);
         setSelectedPatientAttacment(fetchAttachmentByKeyResponce);
         setNewAttachmentDetails(fetchAttachmentByKeyResponce.extraDetails);
+        setNewAttachmentDetails(fetchAttachmentByKeyResponce.accessTypeLkey);
       }
     }
   }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
@@ -425,7 +486,15 @@ const PatientProfile = () => {
       setLocalPatient(patientSlice.patient);
     }
   }, [patientSlice]);
-
+  const isSelected = rowData => {
+    if (
+      rowData &&
+      selectedPatientAdministrativeWarnings &&
+      rowData.key === selectedPatientAdministrativeWarnings.key
+    ) {
+      return 'selected-row';
+    } else return '';
+  };
   useEffect(() => {
     if (fetchPatintAttachmentsResponce)
       if (fetchPatintAttachmentsResponce && localPatient.key) {
@@ -479,6 +548,7 @@ const PatientProfile = () => {
       } else {
         upload({
           formData: formData,
+
           type: 'PATIENT_PROFILE_PICTURE',
           refKey: patientSlice.patient.key,
           details: `Profile Picture for ${patientSlice.patient.fullName}`
@@ -489,12 +559,12 @@ const PatientProfile = () => {
     }
   };
 
-  const [secondaryDocument, setSecondaryDocument] = useState(newApPatientSecondaryDocuments)
+  const [secondaryDocument, setSecondaryDocument] = useState(newApPatientSecondaryDocuments);
   useEffect(() => {
-    console.log({ "SecondaryDocument": secondaryDocument })
-
+    console.log({ SecondaryDocument: secondaryDocument });
   }, [secondaryDocument]);
-
+  const [selectedRowId, setSelectedRowId] = useState(null);
+  console.log(selectedRowId);
   const [newAttachmentSrc, setNewAttachmentSrc] = useState(null);
   const [newAttachmentType, setNewAttachmentType] = useState();
   const [newAttachmentDetails, setNewAttachmentDetails] = useState('');
@@ -559,6 +629,8 @@ const PatientProfile = () => {
     savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false }).unwrap();
   };
 
+  const handleReslvePatientsWarnings = () => {};
+
   const handleDeletaAttachment = attachment => {
     deleteAttachment({
       key: attachment.key
@@ -581,7 +653,7 @@ const PatientProfile = () => {
         setSelectedInsurance(null)
       )
     );
-  }
+  };
 
   const handleDeleteSecondaryDocument = () => {
     deleteSecondaryDocument({
@@ -593,10 +665,10 @@ const PatientProfile = () => {
         setSelectedInsurance(null)
       )
     );
-  }
+  };
 
   const handleDeleteRelation = () => {
-    console.log("required to delete relation" + selectedPatientRelation.key)
+    console.log('required to delete relation' + selectedPatientRelation.key);
 
     deleteRelation({
       key: selectedPatientRelation.key
@@ -607,8 +679,72 @@ const PatientProfile = () => {
         setSelectedPatientRelation(newApPatientRelation)
       )
     );
-  }
+  };
+  console.log(selectedPatientAdministrativeWarnings);
 
+  const handleUpdateAdministrativeWarningsUnDoResolved = () => {
+    updatePatientAdministrativeWarnings({
+      ...selectedPatientAdministrativeWarnings,
+      resolutionUndoDate: new Date().toISOString(),
+      resolvedUndoBy: 'keyForCurrentUser',
+      isValid: true
+    })
+      .unwrap()
+      .then(() => {
+        warningsRefetch();
+        dispatch(notify('Activeted Successfly '));
+        setSelectedPatientAdministrativeWarnings({ ...newApPatientAdministrativeWarnings });
+      });
+  };
+  const handleUpdateAdministrativeWarningsResolved = () => {
+    updatePatientAdministrativeWarnings({
+      ...selectedPatientAdministrativeWarnings,
+      dateResolved: new Date().toISOString(),
+      resolvedBy: 'keyForCurrentUser',
+      isValid: false
+    })
+      .unwrap()
+      .then(() => {
+        warningsRefetch();
+        dispatch(notify('Resolved Successfly '));
+        setSelectedPatientAdministrativeWarnings({ ...newApPatientAdministrativeWarnings });
+      });
+  };
+
+  const handleSavePatientAdministrativeWarnings = () => {
+    savePatientAdministrativeWarnings({
+      ...patientAdministrativeWarnings,
+      description: administrativeWarningDetails,
+      patientKey: localPatient.key
+    })
+      .unwrap()
+      .then(() => {
+        setPatientAdministrativeWarnings({
+          ...patientAdministrativeWarnings,
+          description: '',
+          warningTypeLkey: undefined
+        });
+        setAdministrativeWarningDetails('');
+        warningsRefetch();
+        dispatch(notify('Activated Successfully'));
+        setPatientAdministrativeWarnings({ ...newApPatientAdministrativeWarnings });
+      });
+  };
+
+  console.log(selectedPatientAdministrativeWarnings);
+  const handleDeletePatientAdministrativeWarnings = () => {
+    deletePatientAdministrativeWarnings({
+      ...selectedPatientAdministrativeWarnings
+    })
+      .unwrap()
+      .then(() => {
+        console.log(selectedPatientAdministrativeWarnings);
+
+        warningsRefetch();
+        dispatch(notify('Deleted Successfly '));
+        setSelectedPatientAdministrativeWarnings({ ...newApPatientAdministrativeWarnings });
+      });
+  };
   const handleUpdateAttachmentDetails = () => {
     Update({
       key: selectedPatientAttacment.key,
@@ -630,7 +766,7 @@ const PatientProfile = () => {
     setPatientAttachments([]);
     setActionType(null);
     setPatientAllergies(null);
-    setSelectedCriterion('')
+    setSelectedCriterion('');
   };
 
   useEffect(() => {
@@ -683,6 +819,32 @@ const PatientProfile = () => {
     }
   };
 
+  const handleFilterChangeInWarning = (fieldName, value) => {
+    if (value) {
+      setWarningsAdmistritiveListRequest(
+        addFilterToListRequest(
+          fromCamelCaseToDBName(fieldName),
+          'containsIgnoreCase',
+           String(value),
+          warningsAdmistritiveListRequest
+        )
+      );
+    } else {
+      setWarningsAdmistritiveListRequest({ ...warningsAdmistritiveListRequest,  filters: [
+        {
+          fieldName: 'patient_key',
+          operator: 'match',
+          value: localPatient.key || undefined
+        },
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        }
+      ]});
+    }
+  };
+
   const search = target => {
     setPatientSearchTarget(target);
     setSearchResultVisible(true);
@@ -695,8 +857,8 @@ const PatientProfile = () => {
           {
             fieldName: fromCamelCaseToDBName(selectedCriterion),
             operator: 'containsIgnoreCase',
-            value: searchKeyword,
-          },
+            value: searchKeyword
+          }
         ]
       });
     }
@@ -720,15 +882,21 @@ const PatientProfile = () => {
   };
 
   useEffect(() => {
-    setSearchKeyword('')
-  }, [selectedCriterion])
+    setSearchKeyword('');
+  }, [selectedCriterion]);
 
   const conjurePatientSearchBar = target => {
     return (
       <Panel>
-
         <ButtonToolbar>
-          <SelectPicker label="Search Criteria" data={searchCriteriaOptions} onChange={(e) => { setSelectedCriterion(e) }} style={{ width: 250 }} />
+          <SelectPicker
+            label="Search Criteria"
+            data={searchCriteriaOptions}
+            onChange={e => {
+              setSelectedCriterion(e);
+            }}
+            style={{ width: 250 }}
+          />
 
           <InputGroup inside style={{ width: '350px', direction: 'ltr' }}>
             <Input
@@ -741,16 +909,15 @@ const PatientProfile = () => {
               value={searchKeyword}
               onChange={e => setSearchKeyword(e)}
             />
-            <InputGroup.Button onClick={() => search(target)} >
+            <InputGroup.Button onClick={() => search(target)}>
               <SearchIcon />
             </InputGroup.Button>
           </InputGroup>
         </ButtonToolbar>
       </Panel>
-
     );
   };
-
+  console.log(selectedPatientAdministrativeWarnings);
   const handleNewVisit = () => {
     navigate('/encounter-registration');
   };
@@ -780,9 +947,8 @@ const PatientProfile = () => {
   };
 
   useEffect(() => {
-    console.log({ "selectedInsurance": selectedInsurance?.key })
-
-  }, [selectedInsurance])
+    console.log({ selectedInsurance: selectedInsurance?.key });
+  }, [selectedInsurance]);
 
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
   const [specificCoverageModalOpen, setSpecificCoverageModalOpen] = useState(false);
@@ -801,7 +967,7 @@ const PatientProfile = () => {
             {conjurePatientSearchBar('primary')}
             <Divider vertical />
             <IconButton
-              color="violet" 
+              color="violet"
               appearance="primary"
               icon={<PlusRound />}
               disabled={editing || localPatient.key !== undefined}
@@ -813,7 +979,7 @@ const PatientProfile = () => {
             <div>
               <Button
                 appearance="ghost"
-                style={{ border: '1px solid rgb(130, 95, 196)',color:'rgb(130, 95, 196)' }}
+                style={{ border: '1px solid rgb(130, 95, 196)', color: 'rgb(130, 95, 196)' }}
                 disabled={editing || localPatient.key !== undefined}
                 onClick={() => setQuickPatientModalOpen(true)}
               >
@@ -873,7 +1039,18 @@ const PatientProfile = () => {
             >
               <Translate>Visit History</Translate>
             </IconButton>
-          
+            <IconButton
+              onClick={() => {
+                setAdministrativeWarningsModalOpen(true);
+              }}
+              disabled={editing || !localPatient.key}
+              appearance="primary"
+              color="orange"
+              icon={<icons.Danger />}
+            >
+              <Translate>Administrative Warnings</Translate>
+            </IconButton>
+
             {/* <IconButton
               appearance="primary"
               color="yellow"
@@ -888,6 +1065,225 @@ const PatientProfile = () => {
           </ButtonToolbar>
         </Panel>
 
+        {/* Administrative Warnings */}
+        <Modal
+          size="lg"
+          open={administrativeWarningsModalOpen}
+          onClose={() => setAdministrativeWarningsModalOpen(false)}
+        >
+          <Modal.Header>
+            <Modal.Title>Administrative Warnings</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form fluid>
+              <MyInput
+                vr={validationResult}
+                required
+                fieldLabel="Warning Type"
+                fieldType="select"
+                fieldName="warningTypeLkey"
+                selectData={administrativeWarningsLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={patientAdministrativeWarnings}
+                setRecord={setPatientAdministrativeWarnings}
+              />
+
+              <Input
+                // value={newAttachmentDetails || ''}
+                onChange={setAdministrativeWarningDetails}
+                as="textarea"
+                rows={3}
+                placeholder="Details"
+                style={{ width: 357 }}
+              />
+            </Form>
+            <br />
+            <ButtonToolbar>
+              <IconButton
+                appearance="primary"
+                color="violet"
+                icon={<Check />}
+                onClick={handleSavePatientAdministrativeWarnings}
+              >
+                <Translate>Add</Translate>
+              </IconButton>
+
+              <IconButton
+                appearance="primary"
+                color="cyan"
+                disabled={!selectedPatientAdministrativeWarnings.isValid}
+                icon={<CheckOutlineIcon />}
+                onClick={handleUpdateAdministrativeWarningsResolved}
+              >
+                <Translate>Resolve</Translate>
+              </IconButton>
+              <IconButton
+                appearance="primary"
+                disabled={
+                  selectedPatientAdministrativeWarnings.isValid == undefined ||
+                  selectedPatientAdministrativeWarnings.isValid
+                }
+                icon={<ReloadIcon />}
+                onClick={handleUpdateAdministrativeWarningsUnDoResolved}
+              >
+                <Translate>Undo Resolve</Translate>
+              </IconButton>
+            </ButtonToolbar>
+            <br />
+            <Panel>
+              <Table
+                height={310}
+                sortColumn={warningsAdmistritiveListRequest.sortBy}
+                sortType={warningsAdmistritiveListRequest.sortType}
+                onSortColumn={(sortBy, sortType) => {
+                  if (sortBy)
+                    setWarningsAdmistritiveListRequest({
+                      ...warningsAdmistritiveListRequest,
+                      sortBy,
+                      sortType
+                    });
+                }}
+                headerHeight={80}
+                rowHeight={50}
+                bordered
+                cellBordered
+                onRowClick={rowData => {
+                  setSelectedPatientAdministrativeWarnings(rowData);
+                  setSelectedRowId(rowData.key);
+                }}
+                rowClassName={isSelected}
+                data={warnings?.object ?? []}
+              >
+                <Column sortable flexGrow={3}>
+                  <HeaderCell>
+                    <Input
+                      onChange={e =>
+                        handleFilterChangeInWarning('warningTypeLvalue.lovDisplayVale', e)
+                      }
+                    />
+                    <Translate>Warning Type</Translate>
+                  </HeaderCell>
+
+                  <Cell dataKey="warningTypeLvalue.lovDisplayVale" />
+                </Column>
+                <Column sortable flexGrow={3}>
+                  <HeaderCell>
+                    <Input onChange={e => handleFilterChangeInWarning('description', e)} />
+                    <Translate>Description</Translate>
+                  </HeaderCell>
+                  <Cell dataKey="description" />
+                </Column>
+                <Column sortable flexGrow={4}>
+                  <HeaderCell>
+                    <Input onChange={e => handleFilterChangeInWarning('createdAt', e)} />
+                    <Translate> Addition Date</Translate>
+                  </HeaderCell>
+                  <Cell dataKey="createdAt" />
+                </Column>
+                <Column sortable flexGrow={3}>
+                  <HeaderCell>
+                    <Input onChange={e => handleFilterChangeInWarning('createdBy', e)} />
+                    <Translate> Added By</Translate>
+                  </HeaderCell>
+                  <Cell dataKey="createdBy" />
+                </Column>
+                <Column sortable flexGrow={3}>
+                  <HeaderCell>
+                    <Translate> Status </Translate>
+                  </HeaderCell>
+
+                  <Cell dataKey="isValid">
+                    {rowData => (rowData.isValid ? 'Active' : 'Resolved')}
+                  </Cell>
+                </Column>
+                <Column sortable flexGrow={4}>
+                  <HeaderCell>
+                    <Input onChange={e => handleFilterChangeInWarning('dateResolved', e)} />
+                    <Translate> Resolution Date</Translate>
+                  </HeaderCell>
+                  <Cell dataKey="dateResolved" />
+                </Column>
+                <Column sortable flexGrow={3}>
+                  <HeaderCell>
+                    <Input onChange={e => handleFilterChangeInWarning('resolvedBy', e)} />
+                    <Translate> Resolved By </Translate>
+                  </HeaderCell>
+                  <Cell dataKey="resolvedBy" />
+                </Column>
+                <Column sortable flexGrow={4}>
+                  <HeaderCell>
+                    <Input onChange={e => handleFilterChangeInWarning('resolutionUndoDate', e)} />
+                    <Translate> Resolution Undo Date</Translate>
+                  </HeaderCell>
+                  <Cell dataKey="resolutionUndoDate" />
+                </Column>
+                <Column sortable flexGrow={4}>
+                  <HeaderCell>
+                    <Input onChange={e => handleFilterChangeInWarning('resolvedUndoBy', e)} />
+                    <Translate>Resolution Undo By</Translate>
+                  </HeaderCell>
+                  <Cell dataKey="resolvedUndoBy" />
+                </Column>
+                <Column sortable flexGrow={2}>
+                  <HeaderCell>
+                    <Translate>Delete</Translate>
+                  </HeaderCell>
+                  <Cell>
+                    {rowData => (
+                      <div className="deleteButton">
+                        <button
+                          onClick={() => {
+                            setSelectedPatientAdministrativeWarnings(rowData);
+                            handleDeletePatientAdministrativeWarnings();
+                          }}
+                          className="deleteButton"
+                          style={{
+                            color: selectedRowId === rowData.key ? 'black' : 'gray',
+                            background: "transparent",
+                            cursor: selectedRowId === rowData.key ? 'pointer' : 'not-allowed'
+                          }}
+                          disabled={selectedRowId !== rowData.key}
+                        >
+                          <CloseIcon />
+                        </button>
+                      </div>
+                    )}
+                  </Cell>
+                </Column>
+              </Table>
+              <div style={{ padding: 20 }}>
+                <Pagination
+                  prev
+                  next
+                  first
+                  last
+                  ellipsis
+                  boundaryLinks
+                  maxButtons={5}
+                  size="xs"
+                  layout={['limit', '|', 'pager']}
+                  limitOptions={[5, 15, 30]}
+                  limit={warningsAdmistritiveListRequest.pageSize}
+                  activePage={warningsAdmistritiveListRequest.pageNumber}
+                  onChangePage={pageNumber => {
+                    setWarningsAdmistritiveListRequest({
+                      ...warningsAdmistritiveListRequest,
+                      pageNumber
+                    });
+                  }}
+                  onChangeLimit={pageSize => {
+                    setWarningsAdmistritiveListRequest({
+                      ...warningsAdmistritiveListRequest,
+                      pageSize
+                    });
+                  }}
+                  total={warnings?.extraNumeric ?? 0}
+                />
+              </div>
+            </Panel>
+          </Modal.Body>
+        </Modal>
         <br />
 
         <Panel
@@ -1600,7 +1996,7 @@ const PatientProfile = () => {
                   // disabled={editing || localPatient.key !== undefined}
                   onClick={() => {
                     setInsuranceModalOpen(true);
-                    setSelectedInsurance(newApPatientInsurance)
+                    setSelectedInsurance(newApPatientInsurance);
                   }}
                 >
                   <Translate>New Inusrance</Translate>
@@ -1609,7 +2005,7 @@ const PatientProfile = () => {
                 <IconButton
                   disabled={!selectedInsurance?.key}
                   appearance="primary"
-                  color="orange"
+                  color="cyan"
                   icon={<Edit />}
                   onClick={handleEditModal}
                 >
@@ -1618,8 +2014,11 @@ const PatientProfile = () => {
 
                 <IconButton
                   disabled={!selectedInsurance?.key}
-
-                  appearance="primary" color="red" icon={<TrashIcon />} onClick={handleDeleteInsurance}>
+                  appearance="primary"
+                  color="blue"
+                  icon={<TrashIcon />}
+                  onClick={handleDeleteInsurance}
+                >
                   <Translate>Delete</Translate>
                 </IconButton>
 
@@ -1643,13 +2042,10 @@ const PatientProfile = () => {
                 patientKey={localPatient ?? localPatient.key}
                 open={InsuranceModalOpen}
                 insuranceBrowsing={insuranceBrowsing}
-
-
                 onClose={() => {
                   setInsuranceModalOpen(false);
                   setInsuranceBrowsing(false);
-                  setSelectedInsurance(newApAttachment)
-
+                  setSelectedInsurance(newApAttachment);
                 }}
               />
 
@@ -1670,20 +2066,21 @@ const PatientProfile = () => {
                 onRowClick={setSelectedInsurance}
                 data={patientInsuranceResponse?.data ?? []}
               >
-
                 <Column flexGrow={4}>
                   <HeaderCell>Insurance Provider </HeaderCell>
-                  <Cell dataKey="insuranceProvider" >
+                  <Cell dataKey="insuranceProvider">
                     {rowData =>
-                      rowData.primaryInsurance ? <div>
-                        <Badge color="blue" content={"Primary"}><p>{rowData.insuranceProvider}</p></Badge>
-                      </div>
-                        : <p>{rowData.insuranceProvider}</p>
+                      rowData.primaryInsurance ? (
+                        <div>
+                          <Badge color="blue" content={'Primary'}>
+                            <p>{rowData.insuranceProvider}</p>
+                          </Badge>
+                        </div>
+                      ) : (
+                        <p>{rowData.insuranceProvider}</p>
+                      )
                     }
-
-
                   </Cell>
-
                 </Column>
 
                 <Column flexGrow={4}>
@@ -1706,20 +2103,20 @@ const PatientProfile = () => {
                   <Cell dataKey="expirationDate" />
                 </Column>
 
-
                 <Column flexGrow={4}>
                   <HeaderCell>Details</HeaderCell>
                   <Cell>
                     <Button
-                      onClick={() => { handleShowInsuranceDetails() }}
-                      appearance='subtle'
+                      onClick={() => {
+                        handleShowInsuranceDetails();
+                      }}
+                      appearance="subtle"
                     >
                       <FontAwesomeIcon icon={faEllipsis} style={{ marginRight: '8px' }} />
                     </Button>
                   </Cell>
                 </Column>
               </Table>
-
             </TabPanel>
 
             {/* Allergies */}
@@ -1929,6 +2326,18 @@ const PatientProfile = () => {
                       record={selectedPatientRelation}
                       setRecord={setSelectedPatientRelation}
                     />
+                    <MyInput
+                      vr={validationResult}
+                      required
+                      fieldLabel="Category"
+                      fieldType="select"
+                      fieldName="categoryTypeLkey"
+                      selectData={categoryLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={selectedPatientRelation}
+                      setRecord={setSelectedPatientRelation}
+                    />
                     <Form.Group>
                       <InputGroup inside style={{ width: 300, direction: 'ltr' }}>
                         <Input
@@ -1982,7 +2391,7 @@ const PatientProfile = () => {
                     setRelationModalOpen(true);
                   }}
                   appearance="primary"
-                  color="orange"
+                  color="cyan"
                 >
                   <Translate>Edit</Translate>
                 </IconButton>
@@ -1991,8 +2400,11 @@ const PatientProfile = () => {
 
                 <IconButton
                   disabled={!selectedPatientRelation?.key}
-
-                  appearance="primary" color="red" icon={<TrashIcon />} onClick={handleDeleteRelation}>
+                  appearance="primary"
+                  color="blue"
+                  icon={<TrashIcon />}
+                  onClick={handleDeleteRelation}
+                >
                   <Translate>Delete</Translate>
                 </IconButton>
               </ButtonToolbar>
@@ -2032,6 +2444,12 @@ const PatientProfile = () => {
                   </HeaderCell>
                   <Cell dataKey="relativePatientObject.fullName" />
                 </Column>
+                <Column sortable flexGrow={4}>
+                  <HeaderCell>
+                    <Translate>Relation Category</Translate>
+                  </HeaderCell>
+                  <Cell dataKey="categoryTypeLvalue.lovDisplayVale" />
+                </Column>
               </Table>
             </TabPanel>
 
@@ -2057,7 +2475,7 @@ const PatientProfile = () => {
                   icon={<PlusRound />}
                   onClick={() => {
                     setSecondaryDocumentModalOpen(true);
-                    setSelectedSecondaryDocument(newApPatientSecondaryDocuments)
+                    setSelectedSecondaryDocument(newApPatientSecondaryDocuments);
                   }}
                   disabled={!editing}
                   appearance="primary"
@@ -2068,7 +2486,7 @@ const PatientProfile = () => {
                 <IconButton
                   disabled={!selectedSecondaryDocument?.key}
                   appearance="primary"
-                  color="orange"
+                  color="cyan"
                   icon={<Edit />}
                   onClick={handleEditSecondaryDocument}
                 >
@@ -2077,12 +2495,14 @@ const PatientProfile = () => {
 
                 <IconButton
                   disabled={!selectedSecondaryDocument?.key}
-                  appearance="primary" color="red" icon={<TrashIcon />} onClick={handleDeleteSecondaryDocument}>
+                  appearance="primary"
+                  color="blue"
+                  icon={<TrashIcon />}
+                  onClick={handleDeleteSecondaryDocument}
+                >
                   <Translate>Delete</Translate>
                 </IconButton>
-
               </ButtonToolbar>
-
 
               <br />
               <Form layout="inline" fluid>
@@ -2141,10 +2561,12 @@ const PatientProfile = () => {
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
                     record={secondaryDocument}
-                    setRecord={(newRecord) => setSecondaryDocument({
-                      ...secondaryDocument,
-                      ...newRecord,
-                    })}
+                    setRecord={newRecord =>
+                      setSecondaryDocument({
+                        ...secondaryDocument,
+                        ...newRecord
+                      })
+                    }
                   />
 
                   <MyInput
@@ -2158,10 +2580,12 @@ const PatientProfile = () => {
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
                     record={secondaryDocument}
-                    setRecord={(newRecord) => setSecondaryDocument({
-                      ...secondaryDocument,
-                      ...newRecord,
-                    })}
+                    setRecord={newRecord =>
+                      setSecondaryDocument({
+                        ...secondaryDocument,
+                        ...newRecord
+                      })
+                    }
                   />
                   <MyInput
                     required
@@ -2170,10 +2594,12 @@ const PatientProfile = () => {
                     fieldLabel="Document Number"
                     fieldName="documentNo"
                     record={secondaryDocument}
-                    setRecord={(newRecord) => setSecondaryDocument({
-                      ...secondaryDocument,
-                      ...newRecord,
-                    })}
+                    setRecord={newRecord =>
+                      setSecondaryDocument({
+                        ...secondaryDocument,
+                        ...newRecord
+                      })
+                    }
                     disabled={localPatient.documentTypeLkey === 'NO_DOC'}
                   />
                 </Form>
@@ -2271,7 +2697,25 @@ const PatientProfile = () => {
                       />
                     )}
                   </div>
+
                   <br />
+                  <Form fluid>
+                    <Form.Group>
+                      <Form.ControlLabel>Type</Form.ControlLabel>
+                      <Input
+                        as="select"
+                        required
+                        value={selectedAttachType || ''}
+                        onChange={value => setSelectedAttachType(value)}
+                      >
+                        {attachmentsLovQueryResponse?.object?.map(item => (
+                          <option key={item.key} value={item.key}>
+                            {item.lovDisplayVale}
+                          </option>
+                        ))}
+                      </Input>
+                    </Form.Group>
+                  </Form>
 
                   <br />
                   <Input
@@ -2293,9 +2737,13 @@ const PatientProfile = () => {
                       console.log(uploadedAttachmentOpject);
                       actionType === 'view'
                         ? handleUpdateAttachmentDetails()
-                        : upload({ ...uploadedAttachmentOpject, details: newAttachmentDetails })
-                          .unwrap()
-                          .then(() => handleFinishUploading());
+                        : upload({
+                            ...uploadedAttachmentOpject,
+                            details: newAttachmentDetails,
+                            accessType: selectedAttachType
+                          })
+                            .unwrap()
+                            .then(() => handleFinishUploading());
                     }}
                     appearance="primary"
                   >
@@ -2360,6 +2808,12 @@ const PatientProfile = () => {
                   </HeaderCell>
                   <Cell dataKey="extraDetails" />
                 </Column>
+                <Column sortable flexGrow={4}>
+                  <HeaderCell>
+                    <Translate>Source</Translate>
+                  </HeaderCell>
+                  <Cell dataKey="accessTypeLkey" />
+                </Column>
 
                 <Column sortable flexGrow={4}>
                   <HeaderCell>
@@ -2416,7 +2870,9 @@ const PatientProfile = () => {
         size="lg"
         placement={'left'}
         open={searchResultVisible}
-        onClose={() => { setSearchResultVisible(false) }}
+        onClose={() => {
+          setSearchResultVisible(false);
+        }}
       >
         <Drawer.Header>
           <Drawer.Title>Patient List - Search Results</Drawer.Title>
@@ -2444,7 +2900,7 @@ const PatientProfile = () => {
             cellBordered
             onRowClick={rowData => {
               handleSelectPatient(rowData);
-              setSearchKeyword(null)
+              setSearchKeyword(null);
             }}
             data={patientListResponse?.object ?? []}
           >
