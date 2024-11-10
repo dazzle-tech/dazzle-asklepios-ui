@@ -5,7 +5,6 @@ import { fromListRequestToQueryParams } from '@/utils';
 import {
   ApAccessRole,
   ApAccessRoleScreen,
-  ApAgeGroup,
   ApAllergens,
   ApCatalogDiagnosticTest,
   ApCdt,
@@ -565,7 +564,7 @@ export const setupService = createApi({
       keepUnusedDataFor: 5
     }),
     saveDiagnosticsRadiologyTest: builder.mutation({
-      query: (diagnosticTestRadiology: ApDiagnosticTestRadiology ) => ({
+      query: (diagnosticTestRadiology: ApDiagnosticTestRadiology) => ({
         url: `/setup/save-diagnostic-test-radiology`,
         method: 'POST',
         body: diagnosticTestRadiology,
@@ -664,12 +663,7 @@ export const setupService = createApi({
         return response.object;
       },
     }),
-    saveAgeGroup: builder.mutation({
-      query: (agegroup: ApAgeGroup) => ({
-        url: `/setup/save-age-group`,
-        method: 'POST',
-        body:agegroup,
-      }),
+
     removePractitioner: builder.mutation({
       query: (practitioner: ApPractitioner) => ({
         url: `/setup/remove-practitioner`,
@@ -679,14 +673,6 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.object;
-      }
-    }),
-    getAgeGroup: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/setup/age-group-list?${fromListRequestToQueryParams(listRequest)}`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
       },
     }),
 
@@ -759,13 +745,8 @@ export const {
   useSaveDiagnosticsTestCatalogHeaderMutation,
   useGetDiagnosticsTestCatalogHeaderListQuery,
   useSaveCatalogDiagnosticsTestMutation,
-  useGetDiagnosticsTestRadiologyListQuery,
-  useSaveDiagnosticsRadiologyTestMutation,
-  useGetDiagnosticsTestSpecialPopulationListQuery,
   useGetCatalogDiagnosticsTestListQuery,
-  useSaveDiagnosticsTestSpecialPopulationMutation,
-  useGetDiagnosticsTestGeneticsListQuery,
-  useSaveDiagnosticsTestGeneticsMutation,
+  useSaveDiagnosticfsTestSpecialPopulationMutation,
   useGetDiagnosticsTestNotSelectedListQuery,
   useRemoveCatalogDiagnosticTestMutation,
   useRemoveUserMutation,
@@ -773,7 +754,5 @@ export const {
   useResetUserPasswordMutation,
   useSaveFacilityDepartmentMutation,
   useRemoveUserFacilityDepartmentMutation,
-  useSaveAgeGroupMutation,
-  useGetAgeGroupQuery,
   useGetUserRecordQuery,
 } = setupService;
