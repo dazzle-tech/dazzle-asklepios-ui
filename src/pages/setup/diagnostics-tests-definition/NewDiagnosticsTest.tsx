@@ -22,19 +22,18 @@ import MyInput from '@/components/MyInput';
 import { useNavigate } from 'react-router-dom';
 import ArowBackIcon from '@rsuite/icons/ArowBack';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-// import DiagnosticsTest from './DiagnosticsTest';
-import Laboratory from './DiagnosticsTest';
-import Pathology from './DiagnosticsTest';
-import Radiology from './DiagnosticsTest';
-import Genetics from './DiagnosticsTest';
-import EyeExam from './DiagnosticsTest';
+import Laboratory from './Laboratory';
+import Pathology from './Pathology';
+import Radiology from './Radiology';
+import Genetics from './Genetics';
+// import EyeExam from './EyeExam';
 import { isNil } from 'lodash';
 
 const { Column, HeaderCell, Cell } = Table;
 
 const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
   const navigate = useNavigate();
-
+     const [basicDataSaved, setBasicDataSaved] = useState(false);
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const [diagnosticsTest, setDiagnosticsTest] = useState<ApDiagnosticTest>({ ...newApDiagnosticTest });
   const [saveDiagnosticsTest, saveDiagnosticsTestMutation] = useSaveDiagnosticsTestMutation();
@@ -105,7 +104,6 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
     navigate('/DiagnosticsTest');
   };
 
- 
 
   useEffect(() => {
     if (saveDiagnosticsTestMutation.data) {
@@ -116,6 +114,7 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
   useEffect(() => {
     if (selectedDiagnosticsTest) {
       setDiagnosticsTest(selectedDiagnosticsTest);
+      setBasicDataSaved(true);
     } else {
       setDiagnosticsTest(newApDiagnosticTest);
     }
@@ -143,98 +142,69 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
     }
   };
 
-  const [isLab, setIsLab] = useState(false);
-  const [isPath, setIsPath] = useState(false);
-  const [isRad, setIsRad] = useState(false);
-  const [isGenetics, setIsGenetics] = useState(false);
-  const [isEyeExam, setIsEyeEcam] = useState(false);
-
 
   const handleSaveBasicInfo = () => {
    saveDiagnosticsTest(diagnosticsTest).unwrap();
+         setBasicDataSaved(true);
     if (diagnosticsTest.testTypeLkey === null) {
       return null;
     }
-
-    // const matchingItem =   diagnosticsTestTypes.find(testType => testType.key === String(diagnosticsTest.testTypeLkey));
+  };
   
+  const handleShowComponent = () => {
+    
+    console.log(matchingItem.data?.object);
     switch (matchingItem.data?.object) {
       case 'Laboratory':
-        setIsLab(true);
-        setIsRad(false);
-        setIsPath(false);
-        setIsGenetics(false);
-        setIsEyeEcam(false);
-        console.log("I am lab" + isLab)
-        break;
+        console.log("lab");
+       return <Laboratory diagnosticsTest={diagnosticsTest} />;
       case 'Radiology':
-       setIsRad(true);
-       setIsLab(false);
-       setIsPath(false);
-       setIsGenetics(false);
-       setIsEyeEcam(false);
-       console.log("I am rad" + isRad)
-        break;
+        console.log("Rad");
+        return <Radiology diagnosticsTest={diagnosticsTest}/>;
         case 'Pathology':
-         setIsPath(true);
-         setIsLab(false);
-         setIsRad(false);
-         setIsGenetics(false);
-         setIsEyeEcam(false);
-          break;
+          console.log("Path");
+          return <Pathology/>;
           case 'Genetics':
-          setIsGenetics(true);
-          setIsLab(false);
-          setIsRad(false);
-          setIsPath(false);
-          setIsEyeEcam(false);
-            break;
-            case 'Eye Exam':
-              setIsEyeEcam(true);
-              setIsLab(false);
-              setIsRad(false);
-              setIsPath(false);
-              setIsGenetics(false);
-              break;
+            console.log("Gen");
+            return <Genetics/>;
+            // case 'Eye Exam':
+            //   console.log("Ete");
+            //   return <EyeExam/>;
+              default:
+            return <div>No component available</div> ;
     }
+
+  }
+
+  // const handleShowComponent = () => {
+  //   let component;
   
-  };
-
-
-  const handleSaveButton = () => {
-  };
-
-  const handleAgeDetails = () => {
-    setAgeDetails(!ageDetails);
-  };
-
-  const handleGenderDetails = () => {
-    setGenderDetails(!genderDetails)
-  };
-
-  const handleSpecialPopulationDetails = () => {
-    setSpecialPopulationDetails(!specialPopulationDetails)
-  };
-
-  const handleAgeGroupSpecificDetails = () => {
-    setAgeGroupSpecificDetailsDetails(!ageGroupSpecificDetails)
-  };
-
-  const handlePopup = () => {
-    setPopupOpen(!false);
-  };
-
-  const [data, setData] = useState([
-    { id: 1, name: 'John', age: 25 },
-    { id: 2, name: 'Jane', age: 28 },
-  ]);
-
-  const handleAddRow = () => {
-    const newRow = { id: data.length + 1, name: '', age: 0 };
-    setData([...data, newRow]);
-  };
-
-
+  //   const componentType = matchingItem.data?.object;
+  //   console.log(componentType);
+  //   switch (componentType) {
+  //     case 'Laboratory':
+  //       component = <Laboratory />;
+  //       break;
+  //     case 'Radiology':
+  //       component = <Radiology />;
+  //       break;
+  //     case 'Pathology':
+  //       component = <Pathology />;
+  //       break;
+  //     case 'Genetics':
+  //       component = <Genetics />;
+  //       break;
+  //     case 'Eye Exam':
+  //       component = <EyeExam />;
+  //       break;
+  //     default:
+  //       component = <div>No component available</div>;
+  //   }
+  
+  //   console.log("Returning component:", component);
+  //   return component;
+  // };
+  
   return (
     <Panel
       header={
@@ -248,6 +218,16 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
           Go Back
         </IconButton>
         <Divider vertical />
+
+        
+        <IconButton
+                onClick={handleSaveBasicInfo}
+                appearance="primary"
+                color="green"
+                icon={<Check />}
+              >
+                <Translate> {"Save"} </Translate>
+              </IconButton>
 
         <IconButton appearance="primary" color="red" icon={<Block />}>
           <Translate>Clear</Translate>
@@ -383,96 +363,26 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
                 }
               <br />
 
-              <IconButton
-                onClick={handleSaveBasicInfo}
-                appearance="primary"
-                color="green"
-                icon={<Check />}
-              >
-                <Translate> {"Save"} </Translate>
-              </IconButton>
 
             </Form>
           </Stack.Item>
         </Stack>
-        <Container>
-          <Row>
-            <Col xs={24} md={24}>
-              {/* {<Panel>
-                <Form layout="inline" fluid>
-                  <MyInput
-                    width={250}
-                    column
-                    fieldName="labCatalog"
-                    fieldType="select"
-                    selectData={CurrencyLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={diagnosticsTest}
-                    setRecord={setDiagnosticsTest}
-                  />
-                  <MyInput width={250}
-                   column 
-                   fileLabel="internationalCodeType"
-                    fieldName="internationalCodeType"  
-                    fieldType="select"
-                    selectData={CurrencyLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={diagnosticsTest}
-                    setRecord={setDiagnosticsTest}/>
-                  <MyInput width={250} column fieldName="code" record={diagnosticsTest} setRecord={setDiagnosticsTest} />
-                  <MyInput width={250} column fieldName="loincCode" record={diagnosticsTest} setRecord={setDiagnosticsTest} />
-                  <MyInput width={250} column fieldName="property" record={diagnosticsTest} setRecord={setDiagnosticsTest} />
-                  <MyInput width={250} column fieldName="timing" record={diagnosticsTest} setRecord={setDiagnosticsTest} />
-                  <MyInput width={250} column fieldName="system" record={diagnosticsTest} setRecord={setDiagnosticsTest} />
-                  <MyInput width={250} column fieldName="scale" record={diagnosticsTest} setRecord={setDiagnosticsTest} />
-                  <MyInput width={250} column fieldName="method" record={diagnosticsTest} setRecord={setDiagnosticsTest} />
-                  <MyInput
-                    width={250}
-                    column
-                    fieldName="reagents"
-                    fieldType="select"
-                    selectData={LabReagentsLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={diagnosticsTest}
-                    setRecord={setDiagnosticsTest}
-                  />
-                  <MyInput width={250} column fieldName="testDurationTime" record={diagnosticsTest} setRecord={setDiagnosticsTest} />
-                  <MyInput width={250} column fieldName="unit" record={diagnosticsTest} setRecord={setDiagnosticsTest} />
-                  <MyInput width={250} column fieldName="resultUnit" record={diagnosticsTest} setRecord={setDiagnosticsTest} />
-                  <MyInput width={250} column fieldName="method" record={diagnosticsTest} setRecord={setDiagnosticsTest} />
-                  <Checkbox value="K" onCheckboxClick={handlePopup}>Gender Specific</Checkbox>
-                </Form>
-              </Panel>}  */}
-              <Panel
-        bordered
-        header={
-          <h5 className="title">
-            <Translate>Details</Translate>
-          </h5>
-        }
-      >
-        {isLab && <Laboratory/>}
-        {isPath && <Pathology/>}
-        {isRad && <Radiology/>}
-        {isGenetics && <Genetics/>}
-        {isEyeExam && <EyeExam/>}
-
+   
       </Panel>
-            </Col>
-            <Col xs={24} md={12}>
-              <Panel>
-              </Panel>
-            </Col>
-          </Row>
-        </Container>
-
-      </Panel>
+      {basicDataSaved && (
+        <Panel>
+           {console.log("the value is " + handleShowComponent() + basicDataSaved)}
+           {handleShowComponent()} 
+        </Panel>
+)}
     </Panel>
-
+   
   );
+
+ 
+  
 };
 
 export default NewDiagnosticsTest;
+
+

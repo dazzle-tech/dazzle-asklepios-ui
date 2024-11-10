@@ -22,9 +22,10 @@ import { ApActiveIngredient} from '@/types/model-types';
 import { newApActiveIngredient } from '@/types/model-types-constructor';
 import { BlockUI } from 'primereact/blockui';
 import { Check, Trash } from '@rsuite/icons';
+import { Console } from 'console';
 
 
-const Laboratory = () => {
+const Laboratory = ({diagnosticsTest}) => {
    
     const [popupOpen, setPopupOpen] = useState(false);
     const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({ ...newApActiveIngredient });
@@ -49,6 +50,7 @@ const Laboratory = () => {
         setPopupOpen(!false);
       };
       
+    console.log("Hellllllllo I am in LAB")
   
     return (
       
