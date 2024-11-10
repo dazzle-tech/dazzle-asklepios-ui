@@ -250,6 +250,22 @@ export const newApAddresses:modelTypes.ApAddresses = {
 	isValid:undefined,
 } 
 
+export const newApAgeGroup:modelTypes.ApAgeGroup = { 
+	key:undefined,
+	ageGroupLkey:undefined,
+	fromAge:0,
+	toAge:0,
+	fromAgeUnitLkey:undefined,
+	toAgeUnitLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApAllergens:modelTypes.ApAllergens = { 
 	key:undefined,
 	allergenCode:'',
@@ -700,6 +716,8 @@ export const newApEncounter:modelTypes.ApEncounter = {
 	dischargeNote:'',
 	dischargeSummery:'',
 	visitId:'',
+	encounterNotes:'',
+	sourceName:'',
 } 
 
 export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService = { 

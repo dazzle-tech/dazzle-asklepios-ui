@@ -249,6 +249,22 @@ export interface ApAddresses {
 	isValid:boolean;
 } 
 
+export interface ApAgeGroup { 
+	key:string;
+	ageGroupLkey:string;
+	fromAge:number;
+	toAge:number;
+	fromAgeUnitLkey:string;
+	toAgeUnitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApAllergens { 
 	key:string;
 	allergenCode:string;
@@ -699,6 +715,8 @@ export interface ApEncounter {
 	dischargeNote:string;
 	dischargeSummery:string;
 	visitId:string;
+	encounterNotes:string;
+	sourceName:string;
 } 
 
 export interface ApEncounterAppliedService { 
@@ -1749,4 +1767,3 @@ export interface ApUserMedicalLicense {
 	isValid:boolean;
 	userKey:string;
 } 
-
