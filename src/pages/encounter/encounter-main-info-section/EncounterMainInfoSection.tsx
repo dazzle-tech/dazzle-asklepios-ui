@@ -42,29 +42,7 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
   });
   const {data:patirntObservationlist}=useGetObservationSummariesQuery(patientObservationSummaryListRequest);
   console.log("Patient Observation List:", patirntObservationlist?.data);
-//  useEffect(() => {
-//     if (patient) {
-//       setPatientObservationSummaryListRequest({
-//         ...patientObservationSummaryListRequest,
-//         filters: [
-//           {
-//             fieldName: 'patient_key',
-//             operator: 'match',
-//             value:patient.key
-//           }
-//         ,
 
-//           {
-//             fieldName: 'visit_key',
-//             operator: 'match',
-//             value:encounter.key
-//           }
-//         ],
-        
-//       });
-//     }
-//     console.log("Patient Observation List:", patirntObservationlist);
-//   }, []);
   return (
     <Form disabled style={{ zoom: 0.85 }} layout="inline" fluid>
       <MyInput width={150} column fieldLabel="MRN" fieldName={'patientMrn'} record={patient} />
@@ -103,13 +81,7 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
        <MyInput width={150} column fieldLabel="BMI" fieldName={'latestbmi'} record={PatientObservationSummary} />
        <MyInput width={150} column fieldLabel="BSI" fieldName={'patientFullName'} record={encounter} />
        <MyInput width={150} column fieldLabel="Blood Group" fieldName={'patientFullName'} record={encounter} />
-      {/* <MyInput
-        width={100}
-        column
-        fieldLabel="Sex at Birth"
-        fieldName={patient.genderLvalue ? 'lovDisplayVale' : 'genderLkey'}
-        record={patient.genderLvalue ? patient.genderLvalue : patient}
-      /> */}
+     
       <br/>
       <MyInput
         column
@@ -119,18 +91,8 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         fieldName="plannedStartDate"
         record={encounter}
       />
-      {/* <MyInput
-        width={150}
-        column
-        fieldType="select"
-        fieldLabel="Status"
-        fieldName="encounterStatusLkey"
-        selectData={encounterStatusLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
-        record={encounter}
-      /> */} 
-      {//when add booking date field in data base add it here
+    
+      {//when add booking date field in database add it here
       }
           <MyInput
         column
@@ -192,16 +154,7 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         selectDataValue="key"
         record={encounter}
       />
-      {/* <MyInput
-        width={200}
-        column
-        fieldType="select"
-        fieldName="departmentKey"
-        selectData={departmentListResponse?.object ?? []}
-        selectDataLabel="name"
-        selectDataValue="key"
-        record={encounter}
-      /> */}
+     
     </Form>
   );
 };
