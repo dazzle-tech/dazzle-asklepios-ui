@@ -1,31 +1,88 @@
 import MyInput from '@/components/MyInput';
 import { useAppSelector } from '@/hooks';
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import {ApPatientObservationSummary } from '@/types/model-types';
+import { initialListRequest, ListRequest } from '@/types/types';
+import {useGetObservationSummariesQuery} from '../../../services/observationService'
+import {
+  newApPatientObservationSummary
+} from '@/types/model-types-constructor';
 import { Form } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
-import { initialListRequest } from '@/types/types';
+
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 
 const EncounterMainInfoSection = ({ patient, encounter }) => {
+  const [PatientObservationSummary, setPatientObservationSummary] = useState<ApPatientObservationSummary>({ ... newApPatientObservationSummary,latestweight:null,latestheight:null ,latestheadcircumference:null,latestbmi:null});
   const { data: encounterStatusLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_STATUS');
   const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
   const { data: encounterReasonLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_REASON');
+  const { data: encounterPymentMethodLovQueryResponse } = useGetLovValuesByCodeQuery('PAY_TYPS');
   const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
+  const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
+  const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
+  const [patientObservationSummaryListRequest, setPatientObservationSummaryListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    filters: [
+      {
+        fieldName: 'patient_key',
+        operator: 'match',
+        value:patient.key
+      }
+    ,
+
+      {
+        fieldName: 'visit_key',
+        operator: 'match',
+        value:encounter.key
+      }
+    ],
+   
+  });
+  const {data:patirntObservationlist}=useGetObservationSummariesQuery(patientObservationSummaryListRequest);
+  console.log("Patient Observation List:", patirntObservationlist?.data);
 
   return (
     <Form disabled style={{ zoom: 0.85 }} layout="inline" fluid>
-      <MyInput width={100} column fieldLabel="MRN" fieldName={'patientMrn'} record={patient} />
-      <MyInput column fieldLabel="Patient Name" fieldName={'patientFullName'} record={encounter} />
+      <MyInput width={150} column fieldLabel="MRN" fieldName={'patientMrn'} record={patient} />
+      <MyInput width={150} column fieldLabel="Patient Name" fieldName={'patientFullName'} record={encounter} />
       <MyInput width={150} column fieldName={'documentNo'} record={patient} />
-      <MyInput width={60} column fieldLabel="Age" fieldName={'patientAge'} record={encounter} />
       <MyInput
-        width={100}
+      width={150}
         column
-        fieldLabel="Gender"
-        fieldName={patient.genderLvalue ? 'lovDisplayVale' : 'genderLkey'}
-        record={patient.genderLvalue ? patient.genderLvalue : patient}
+        fieldLabel="Document Type"
+        fieldType="select"
+        fieldName="documentTypeLkey"
+        selectData={docTypeLovQueryResponse?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        selectDataValue="key"
+        record={patient}
+       
+        disabled={true}
       />
+      <MyInput width={150} column fieldLabel="Age" fieldName={'patientAge'} record={encounter} />
+      <MyInput
+      width={150}
+        column
+        fieldLabel="Sex at Birth"
+        fieldType="select"
+        fieldName="genderLkey"
+        selectData={genderLovQueryResponse?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        selectDataValue="key"
+        record={patient}
+       
+        disabled={true}
+      />
+       <MyInput width={150} column fieldLabel="Weight" fieldName={'latestweight'} record={PatientObservationSummary} />
+       <MyInput width={150} column fieldLabel="Height" fieldName={'latestheight'} record={PatientObservationSummary} />
+       <MyInput width={150} column fieldLabel="H.C" fieldName={'latestheadcircumference'} record={PatientObservationSummary} />
+       <MyInput width={150} column fieldLabel="BMI" fieldName={'latestbmi'} record={PatientObservationSummary} />
+       <MyInput width={150} column fieldLabel="BSI" fieldName={'patientFullName'} record={encounter} />
+       <MyInput width={150} column fieldLabel="Blood Group" fieldName={'patientFullName'} record={encounter} />
+     
+      <br/>
       <MyInput
         column
         width={150}
@@ -34,17 +91,25 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         fieldName="plannedStartDate"
         record={encounter}
       />
-      <MyInput
-        width={150}
+    
+      {//when add booking date field in database add it here
+      }
+          <MyInput
         column
-        fieldType="select"
-        fieldLabel="Status"
-        fieldName="encounterStatusLkey"
-        selectData={encounterStatusLovQueryResponse?.object ?? []}
-        selectDataLabel="lovDisplayVale"
-        selectDataValue="key"
+        width={150}
+        fieldLabel="Booking source"
+        fieldName="bookingsource"
+        record={encounter}
+      />  
+       <MyInput
+        column
+        width={150}
+        fieldLabel="Booking Date"
+        fieldType="date"
+        fieldName="plannedStartDate"
         record={encounter}
       />
+
       <MyInput
         column
         width={150}
@@ -78,16 +143,18 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         selectDataValue="key"
         record={encounter}
       />
-      <MyInput
-        width={200}
+          <MyInput
+        width={150}
         column
         fieldType="select"
-        fieldName="departmentKey"
-        selectData={departmentListResponse?.object ?? []}
-        selectDataLabel="name"
+        fieldLabel="Payment Type"
+        fieldName="paymentTypeLkey"
+        selectData={encounterPymentMethodLovQueryResponse?.object ?? []}
+        selectDataLabel="lovDisplayVale"
         selectDataValue="key"
         record={encounter}
       />
+     
     </Form>
   );
 };
