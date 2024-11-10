@@ -5,6 +5,7 @@ import { fromListRequestToQueryParams } from '@/utils';
 import {
   ApAccessRole,
   ApAccessRoleScreen,
+  ApAgeGroup,
   ApAllergens,
   ApCatalogDiagnosticTest,
   ApCdt,
@@ -648,7 +649,25 @@ export const setupService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       },
-    })
+    }),
+    saveAgeGroup: builder.mutation({
+      query: (agegroup: ApAgeGroup) => ({
+        url: `/setup/save-age-group`,
+        method: 'POST',
+        body:agegroup
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getAgeGroup: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/age-group-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 
 });
@@ -714,4 +733,6 @@ export const {
   useResetUserPasswordMutation,
   useSaveFacilityDepartmentMutation,
   useRemoveUserFacilityDepartmentMutation,
+  useSaveAgeGroupMutation,
+  useGetAgeGroupQuery
 } = setupService;

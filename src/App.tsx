@@ -55,7 +55,7 @@ import GenericMedications from './pages/medications/generic-medications';
 import Catalog from './pages/setup/catalog-setup';
 import Diagnostics from './pages/setup/diagnostics-tests-definition';
 import Resources from './pages/appointment/resources';
-
+import  AgeGroup from './pages/setup/age-group';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -216,6 +216,7 @@ const App = () => {
               <Route path="dvm" element={<DVM />} />
               <Route path="practitioners" element={<Practitioners />} />
               <Route path="departments" element={<Departments />} />
+              <Route path="AgeGroup" element={<AgeGroup/>} />
               <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
