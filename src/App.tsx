@@ -218,7 +218,6 @@ const App = () => {
               <Route path="dvm" element={<DVM />} />
               <Route path="practitioners" element={<Practitioners />} />
               <Route path="departments" element={<Departments />} />
-              <Route path="AgeGroup" element={<AgeGroup/>} />
               <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
