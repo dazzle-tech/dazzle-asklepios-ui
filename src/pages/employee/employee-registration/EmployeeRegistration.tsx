@@ -421,8 +421,8 @@ const EmployeeRegistration = () => {
               appearance="primary"
               color="cyan"
               icon={<PageIcon />}
-            // disabled={editing || !localEmployee.key}
-           onClick={()=>handleGoToVisitRegistration()}
+              // disabled={editing || !localEmployee.key}
+              onClick={() => handleGoToVisitRegistration()}
             >
               <Translate>Visit Registration</Translate>
             </IconButton>
@@ -431,7 +431,7 @@ const EmployeeRegistration = () => {
               color="cyan"
               icon={<History />}
             // disabled={editing || localEmployee.key === undefined}
-               // onClick={()=>handleGoToVisitRegistration()}
+            // onClick={()=>handleGoToVisitRegistration()}
             >
               <Translate>Visit History</Translate>
             </IconButton>
@@ -537,7 +537,7 @@ const EmployeeRegistration = () => {
               </div>
               <Form layout="inline" fluid>
                 <MyInput
-                   width={130}
+                  width={130}
                   vr={validationResult}
                   column
                   fieldLabel="MRN"
@@ -878,7 +878,7 @@ const EmployeeRegistration = () => {
                   fieldLabel="Primary Mobile Number"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
                 <MyInput
                   vr={validationResult}
@@ -889,7 +889,7 @@ const EmployeeRegistration = () => {
                   fieldLabel="Receive SMS"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
                 <MyInput
                   vr={validationResult}
@@ -899,7 +899,7 @@ const EmployeeRegistration = () => {
                   fieldName="secondaryMobileNumber"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
                 <MyInput
                   vr={validationResult}
@@ -908,7 +908,7 @@ const EmployeeRegistration = () => {
                   fieldName="Whatsapp Number"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
                 <MyInput
                   vr={validationResult}
@@ -917,7 +917,7 @@ const EmployeeRegistration = () => {
                   fieldName="Viber Number"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
                 <MyInput
                   vr={validationResult}
@@ -931,7 +931,7 @@ const EmployeeRegistration = () => {
                   selectDataValue="key"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
                 <MyInput
                   vr={validationResult}
@@ -945,7 +945,7 @@ const EmployeeRegistration = () => {
                   selectDataValue="key"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
                 <br />
                 <MyInput
@@ -957,7 +957,7 @@ const EmployeeRegistration = () => {
                   fieldName="email"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
                 <MyInput
                   vr={validationResult}
@@ -968,7 +968,7 @@ const EmployeeRegistration = () => {
                   fieldLabel="Receive Email"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
 
                 <MyInput
@@ -979,7 +979,7 @@ const EmployeeRegistration = () => {
                   fieldName="email"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
                 <MyInput
                   vr={validationResult}
@@ -989,7 +989,7 @@ const EmployeeRegistration = () => {
                   fieldName="email"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
                 <br />
                 <MyInput
@@ -999,7 +999,7 @@ const EmployeeRegistration = () => {
                   fieldName="emergencyContactName"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
                 <MyInput
                   vr={validationResult}
@@ -1013,7 +1013,7 @@ const EmployeeRegistration = () => {
                   selectDataValue="key"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
                 <MyInput
                   vr={validationResult}
@@ -1022,7 +1022,7 @@ const EmployeeRegistration = () => {
                   fieldName="emergencyContactPhone"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
               </Form>
             </TabPanel>
@@ -1042,7 +1042,7 @@ const EmployeeRegistration = () => {
                   selectDataValue="key"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
                 <MyInput
                   vr={validationResult}
@@ -1056,7 +1056,7 @@ const EmployeeRegistration = () => {
                   selectDataValue="key"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
                 <MyInput
                   vr={validationResult}
@@ -1070,7 +1070,7 @@ const EmployeeRegistration = () => {
                   selectDataValue="key"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
                 <MyInput
                   vr={validationResult}
@@ -1084,7 +1084,7 @@ const EmployeeRegistration = () => {
                   selectDataValue="key"
                   record={""}
                   setRecord={""}
-                  disabled={!editing}
+
                 />
                 <MyInput
                   width={200}
@@ -1095,7 +1095,7 @@ const EmployeeRegistration = () => {
                   fieldName="streetName"
                   record={""}
                   setRecord={""}
-                //  disabled={!editing}
+
                 />
                 <br />
                 <MyInput
@@ -1107,7 +1107,7 @@ const EmployeeRegistration = () => {
                   fieldName="houseApartmentNo"
                   record={""}
                   setRecord={""}
-                //  disabled={!editing}
+
                 />
                 <MyInput
                   width={200}
@@ -1118,7 +1118,7 @@ const EmployeeRegistration = () => {
                   fieldName="zipCode"
                   record={""}
                   setRecord={""}
-                //  disabled={!editing}
+
                 />
                 <MyInput
                   width={200}
@@ -1129,7 +1129,7 @@ const EmployeeRegistration = () => {
                   fieldName="addressLine"
                   record={""}
                   setRecord={""}
-                //  disabled={!editing}
+
                 />
 
               </Form>

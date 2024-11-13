@@ -18,11 +18,11 @@ import {
     SelectPicker,
     Grid,
     Row,
-    Col, 
+    Col,
     Text,
     DatePicker
 } from 'rsuite';
-
+import { Plus, Trash } from '@rsuite/icons';
 import {
     useGetPatientRelationsQuery,
     useGetPatientsQuery,
@@ -31,6 +31,7 @@ import {
 } from '@/services/patientService';
 import ChangeListIcon from '@rsuite/icons/ChangeList';
 import { useNavigate } from 'react-router-dom';
+import { MdSave } from 'react-icons/md';
 import DetailIcon from '@rsuite/icons/Detail';
 import TrashIcon from '@rsuite/icons/Trash';
 import FileDownloadIcon from '@rsuite/icons/FileDownload';
@@ -477,6 +478,7 @@ const VisitRegistration = () => {
                             appearance="primary"
                             color="violet"
                             icon={<Check />}
+                            style={{ marginTop: 30, marginLeft: 5 }}
                         // onClick={handleSave}
                         // disabled={!editing}
                         >
@@ -494,102 +496,167 @@ const VisitRegistration = () => {
                     <h4 className="title">
                         <Translate>
                             Packages
-                            <span style={{ fontSize: 12, color: 'blue', marginLeft: 15 ,fontStyle: 'italic' }}>
+                            <span style={{ fontSize: 12, color: 'blue', marginLeft: 15, fontStyle: 'italic' }}>
                                 Save Visit Information to Add Package
                             </span>
                         </Translate></h4>
                 }>
 
-<Grid fluid>
-          <Row gutter={15}>
-          <Col xs={10}>
-          
-          <Form layout="inline" fluid>
-            
-                        {/*Change to Package List*/}
-                        <MyInput
-                            width={145}
-                            vr={validationResult}
-                            column
-                            fieldLabel="Package "
-                            fieldType="select"
-                            fieldName="positionCategoryLkey"
-                            selectData={positionCateLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            record={""}
-                            setRecord={""}
-                        />
-                        <MyInput
-                            width={145}
-                            column
-                            fieldLabel="Quantity"
-                            fieldType="number"
-                            fieldName="quantity"
-                            record={""}
-                            setRecord={""}
-                        />
-                      <MyInput
-                            width={145}
-                            vr={validationResult}
-                            column
-                            disabled
-                            fieldLabel="Total Price"
-                         
-                            fieldName="totalPrice"
-                          
-                            record={""}
-                            setRecord={""}
-                        />
-                        <br />
-                  
-                        <MyInput
-                  vr={validationResult}
-                  width={145}
-                  column
-                  fieldType="checkbox"
-                  fieldName="receiveSms"
-                  fieldLabel="Charge Patient"
-                  record={""}
-                  setRecord={""}
-               
-                />
-                
-                        {/*Change to Package Additional Item */}
-                        <MyInput
-                            width={145}
-                            vr={validationResult}
-                            column
-                            fieldLabel="Additional Item "
-                            fieldType="select"
-                            fieldName="positionCategoryLkey"
-                            selectData={positionCateLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            record={""}
-                            setRecord={""}
-                        />
-                    </Form>
-          
-          
-          
-          
-          
-          
-          </Col>
-            
-            <Col xs={13}>
-            
-            
-            
-            
-            </Col>
-        
-             
-          </Row>
+                    <Grid fluid>
+                        <Row gutter={15}>
+                            <Col xs={10}>
+
+                                <Form layout="inline" fluid>
+
+                                    {/*Change to Package List*/}
+                                    <MyInput
+                                        width={145}
+                                        vr={validationResult}
+                                        column
+                                        fieldLabel="Package "
+                                        fieldType="select"
+                                        fieldName="positionCategoryLkey"
+                                        selectData={positionCateLovQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        record={""}
+                                        setRecord={""}
+                                    />
+                                    <MyInput
+                                        width={145}
+                                        column
+                                        fieldLabel="Quantity"
+                                        fieldType="number"
+                                        fieldName="quantity"
+                                        record={""}
+                                        setRecord={""}
+                                    />
+                                    <MyInput
+                                        width={145}
+                                        vr={validationResult}
+                                        column
+                                        disabled
+                                        fieldLabel="Total Price"
+
+                                        fieldName="totalPrice"
+
+                                        record={""}
+                                        setRecord={""}
+                                    />
+                                    <br />
+
+                                    <MyInput
+                                        vr={validationResult}
+                                        width={145}
+                                        column
+                                        fieldType="checkbox"
+                                        fieldName="receiveSms"
+                                        fieldLabel="Charge Patient"
+                                        record={""}
+                                        setRecord={""}
+
+                                    />
+
+                                    {/*Change to Package Additional Item */}
+                                    <MyInput
+                                        width={145}
+                                        vr={validationResult}
+                                        column
+                                        fieldLabel="Additional Item "
+                                        fieldType="select"
+                                        fieldName="positionCategoryLkey"
+                                        selectData={positionCateLovQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        record={""}
+                                        setRecord={""}
+                                    />
+                                </Form>
+                            </Col>
+
+                            <Col xs={13}>
+
+                                <Grid fluid>
+                                    <Row gutter={15} style={{ border: '1px solid #e1e1e1' }}>
+                                        <Col xs={3}>
+                                            <ButtonToolbar style={{ margin: '6px' }}>
+                                                <IconButton
+                                                    size="xs"
+                                                    appearance="primary"
+                                                    color="cyan"
+                                                    //   onClick={() =>
+                                                    //     setSelectedObservationSummary({ ...newApPatientObservationSummary })
+                                                    //   }
+                                                    icon={<Plus />}
+                                                />
+                                            </ButtonToolbar>
+                                        </Col>
+                                        <Col xs={18}></Col>
+                                        <Col xs={3}>
+                                            <ButtonToolbar style={{ margin: '6px' }}>
+                                                <IconButton
+                                                    size="xs"
+                                                    //onClick={save}
+                                                    appearance="primary"
+                                                    color="violet"
+                                                    icon={<MdSave />}
+                                                />
+                                                <IconButton
+                                                    //disabled={!selectedObservationSummary.key}
+                                                    size="xs"
+                                                    appearance="primary"
+                                                    // onClick={remove}
+                                                    color="blue"
+                                                    icon={<Trash />}
+                                                />
+                                            </ButtonToolbar>
+                                        </Col>
+                                    </Row>
+                                    <Row gutter={18}>
+                                        <Col xs={24}>
+                                            <Table
+                                                bordered
+                                                onRowClick={rowData => {
+
+                                                }}
+                                            // rowClassName={isSelected}
+                                            // data={observationListResponseData?.object ?? []}
+                                            >
+                                                <Table.Column flexGrow={1}>
+                                                    <Table.HeaderCell>Package/Item</Table.HeaderCell>
+                                                    <Table.Cell>
+                                                        <Text></Text>
+                                                    </Table.Cell>
+                                                </Table.Column>
+                                                <Table.Column flexGrow={1}>
+                                                    <Table.HeaderCell>Quantity</Table.HeaderCell>
+                                                    <Table.Cell>{rowData => <Text></Text>}</Table.Cell>
+                                                </Table.Column>
+                                                <Table.Column flexGrow={1}>
+                                                    <Table.HeaderCell>Total Price</Table.HeaderCell>
+                                                    <Table.Cell>{rowData => <Text></Text>}</Table.Cell>
+                                                </Table.Column>
+                                                <Table.Column flexGrow={1}>
+                                                    <Table.HeaderCell>Charge Patient</Table.HeaderCell>
+                                                    <Table.Cell><Text></Text></Table.Cell>
+                                                </Table.Column>
+                                                <Table.Column flexGrow={1}>
+                                                    <Table.HeaderCell>Details</Table.HeaderCell>
+                                                    <Table.Cell><Text></Text></Table.Cell>
+                                                </Table.Column>
+                                            </Table>
+                                        </Col>
+                                    </Row>
+                                </Grid>
 
 
-        </Grid>
+                            </Col>
+
+
+                        </Row>
+
+
+                    </Grid>
 
 
 
