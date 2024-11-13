@@ -10,7 +10,7 @@ import ArowBackIcon from '@rsuite/icons/ArowBack';
 import {
   addFilterToListRequest,
   conjureValueBasedOnKeyFromList,
- 
+
 } from '@/utils';
 import {
   useGetUsersQuery
@@ -21,7 +21,7 @@ const { Column, HeaderCell, Cell } = Table;
 
 import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import { Block, Check, DocPass, Edit, Icon, PlusRound } from '@rsuite/icons';
-import { Modal, Placeholder,PanelGroup } from 'rsuite';
+import { Modal, Placeholder, PanelGroup } from 'rsuite';
 import React, { useEffect, useState } from 'react';
 import {
   InputGroup,
@@ -36,10 +36,9 @@ import {
   Drawer,
   Table,
   Pagination,
-  SelectPicker,
   Button
 } from 'rsuite';
-import SearchIcon from '@rsuite/icons/Search';
+
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
 import { calculateAge, fromCamelCaseToDBName } from '@/utils';
@@ -59,15 +58,7 @@ import {
   useCompleteEncounterRegistrationMutation
 } from '@/services/encounterService';
 import { notify } from '@/utils/uiReducerActions';
-import {
-  useGetPatientRelationsQuery,
-  useGetPatientsQuery
- 
-} from '@/services/patientService';
-import {
-  
-  newApPatientRelation
-} from '@/types/model-types-constructor';
+
 const EncounterRegistration = () => {
   const encounter = useSelector((state: RootState) => state.patient.encounter);
 
@@ -75,15 +66,15 @@ const EncounterRegistration = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [openModelVisitNote, setOpenModelVisitNote] = React.useState(false);
-  const [openModelCompanionCard,setOpenModelCompanionCard]= React.useState(false);
-  const [openModelAppointmentView,setOpenModelAppointmentView]= React.useState(false);
+  const [openModelCompanionCard, setOpenModelCompanionCard] = React.useState(false);
+  const [openModelAppointmentView, setOpenModelAppointmentView] = React.useState(false);
   const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter });
   const [editing, setEditing] = useState(false);
   const [validationResult, setValidationResult] = useState({});
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const { data: userListResponse, refetch: refetchUsers } = useGetUsersQuery(listRequest);
   const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
-  
+
   /* load page LOV */
   const { data: encounterStatusLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_STATUS');
   const { data: encounterClassLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_CLASS');
@@ -107,16 +98,6 @@ const EncounterRegistration = () => {
   const { data: practitionerListResponse } = useGetPractitionersQuery({ ...initialListRequest });
   const { data: facilityListResponse } = useGetFacilitiesQuery({ ...initialListRequest });
   const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
-  const [selectedCriterion, setSelectedCriterion] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [patientSearchTarget, setPatientSearchTarget] = useState('primary'); 
-  const [searchResultVisible, setSearchResultVisible] = useState(false);
-  const {
-    data: patientListResponse,
-    isLoading: isGettingPatients,
-    isFetching: isFetchingPatients,
-    refetch: refetchPatients
-  } = useGetPatientsQuery({ ...listRequest, filterLogic: 'or' });
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -138,7 +119,8 @@ const EncounterRegistration = () => {
         patientKey: patientSlice.patient.key,
         patientFullName: patientSlice.patient.fullName,
         patientAge: patientSlice.patient.dob ? calculateAge(patientSlice.patient.dob) + '' : '',
-        encounterStatusLkey: '91063195286200' //change this to be loaded from cache lov values by code
+        encounterStatusLkey: '91063195286200',//change this to be loaded from cache lov values by code
+        plannedStartDate: new Date()
       });
     } else if (localStorage.getItem('patient')) {
       const cachedPatient = JSON.parse(localStorage.getItem('patient'));
@@ -171,18 +153,18 @@ const EncounterRegistration = () => {
   const handleGoToPatientAppointment = () => {
     navigate('/patient-appointment-view');
   };
-  const handleGoBack=()=>{
+  const handleGoBack = () => {
     navigate(-1);
   };
   const handleOpenCompanionCardModel = () => setOpenModelCompanionCard(true);
   const handleCloseCompanionCardModel = () => setOpenModelCompanionCard(false);
-  const handleSaveCompanionCard=()=>{
+  const handleSaveCompanionCard = () => {
     //add logic to cave note
     setOpenModelCompanionCard(false);
   };
   const handleOpenNoteModel = () => setOpenModelVisitNote(true);
   const handleCloseNoteModel = () => setOpenModelVisitNote(false);
-  const handleSaveNote=()=>{
+  const handleSaveNote = () => {
     //add logic to cave note
     setOpenModelVisitNote(false);
   };
@@ -215,87 +197,7 @@ const EncounterRegistration = () => {
     setLocalEncounter({ ...newApEncounter });
     navigate('/patient-profile');
   };
-  const searchCriteriaOptions = [
-    { label: 'MRN', value: 'patientMrn' },
-    { label: 'Document Number', value: 'documentNo' },
-    { label: 'Full Name', value: 'fullName' },
-    { label: 'Archiving Number', value: 'archivingNumber' },
-    { label: 'Primary Phone Number', value: 'mobileNumber' },
-    { label: 'Date of Birth', value: 'dob' },
-  ];
-  const [selectedPatientRelation, setSelectedPatientRelation] = useState<any>({
-    ...newApPatientRelation
-  });
-  const handleSelectPatient = data => {
-    if (patientSearchTarget === 'primary') {
-      // selecteing primary patient (localPatient)
-      
-      dispatch(setPatient(data));
-    } else if (patientSearchTarget === 'relation') {
-      // selecting patient for relation patient key
-      setSelectedPatientRelation({
-        ...selectedPatientRelation,
-        relativePatientKey: data.key,
-        relativePatientObject: data
-      });
-    }
-    refetchPatients({ ...listRequest, clearResults: true });
-    setSearchResultVisible(false);
-  };
 
-  const search = target => {
-    setPatientSearchTarget(target);
-    setSearchResultVisible(true);
-
-    if (searchKeyword && searchKeyword.length >= 3 && selectedCriterion) {
-      setListRequest({
-        ...listRequest,
-        ignore: false,
-        filters: [
-          {
-            fieldName: fromCamelCaseToDBName(selectedCriterion),
-            operator: 'containsIgnoreCase',
-            value: searchKeyword,
-          },
-        ]
-      });
-    }
-    console.log("kw"+searchKeyword);
-    console.log("PatientSearchTarget"+patientSearchTarget);
-    console.log("kw"+searchKeyword);
-  };
-
-  // useEffect(() => {
-  //   setSearchKeyword('')
-  // }, [selectedCriterion]);
-
-  const conjurePatientSearchBar = target => {
-    return (
-      <Panel>
-
-        <ButtonToolbar>
-          <SelectPicker label="Search Criteria" data={searchCriteriaOptions} onChange={(e) => { setSelectedCriterion(e) }} style={{ width: 250 }} />
-
-          <InputGroup inside style={{ width: '350px', direction: 'ltr' }}>
-            <Input
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  search(target);
-                }
-              }}
-              placeholder={'Search Patients '}
-              value={searchKeyword}
-              onChange={e => setSearchKeyword(e)}
-            />
-            <InputGroup.Button onClick={() => search(target)} >
-              <SearchIcon />
-            </InputGroup.Button>
-          </InputGroup>
-        </ButtonToolbar>
-      </Panel>
-
-    );
-  };
   return (
     <>
       {patientSlice.patient && (
@@ -308,7 +210,7 @@ const EncounterRegistration = () => {
         >
           <Panel bordered>
             <ButtonToolbar>
-            <IconButton
+              <IconButton
                 disabled={encounter}
                 appearance="primary"
                 color="violet"
@@ -338,11 +240,11 @@ const EncounterRegistration = () => {
               >
                 <Translate>Administrative Warnings</Translate>
               </IconButton>
-              <IconButton appearance="primary" color='cyan'  onClick={()=>handleOpenAppointmentViewModel()}  icon={<ChangeListIcon />} >
+              <IconButton appearance="primary" color='cyan' onClick={() => handleOpenAppointmentViewModel()} icon={<ChangeListIcon />} >
                 <Translate>Patient Appointment</Translate>
               </IconButton>
 
-              <IconButton disabled={encounter}  onClick={()=>handleOpenNoteModel()}  appearance="primary" color='cyan' icon={<icons.PublicOpinion />}>
+              <IconButton disabled={encounter} onClick={() => handleOpenNoteModel()} appearance="primary" color='cyan' icon={<icons.PublicOpinion />}>
                 <Translate>Visit Note</Translate>
               </IconButton>
               <IconButton
@@ -354,13 +256,13 @@ const EncounterRegistration = () => {
                 <Translate>Change Patient</Translate>
               </IconButton>
             </ButtonToolbar>
-            <Modal open={openModelVisitNote}  onClose={handleCloseNoteModel}>
-        <Modal.Header>
-          <Modal.Title>Visit Note</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          
-          <Form layout="inline" fluid>
+            <Modal open={openModelVisitNote} onClose={handleCloseNoteModel}>
+              <Modal.Header>
+                <Modal.Title>Visit Note</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+
+                <Form layout="inline" fluid>
                   <MyInput
                     width={250}
                     column
@@ -371,25 +273,21 @@ const EncounterRegistration = () => {
                     setRecord={setLocalEncounter}
                     vr={validationResult}
                     record={encounter ? encounter : localEncounter}
-                   
+
                   />
-                  </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={handleSaveNote} appearance="primary">
-             Save
-          </Button>
-          <Button onClick={handleCloseNoteModel} appearance="subtle">
-             Cancle
-          </Button>
-        </Modal.Footer>
-      </Modal>
+                </Form>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button onClick={handleSaveNote} appearance="primary">
+                  Save
+                </Button>
+                <Button onClick={handleCloseNoteModel} appearance="subtle">
+                  Cancle
+                </Button>
+              </Modal.Footer>
+            </Modal>
           </Panel>
           <br />
-          <Panel bordered>
-          {conjurePatientSearchBar('primary')}
-            </Panel>
-          <br/>
           <Panel
             bordered
             header={
@@ -401,8 +299,8 @@ const EncounterRegistration = () => {
             <Stack>
               <Stack.Item grow={4}>
                 <Form layout="inline" fluid>
-                <MyInput
-                    width={130}
+                  <MyInput
+                    width={150}
                     column
                     disabled={true}
                     fieldLabel="MRN"
@@ -412,37 +310,36 @@ const EncounterRegistration = () => {
                   />
                   <MyInput
                     column
-                    width={130}
                     disabled={true}
                     fieldName={'patientFullName'}
                     record={localEncounter}
                     setRecord={undefined}
                   />
                   <MyInput
-                  width={130}
+                    width={200}
                     column
                     disabled={true}
                     fieldName={'documentNo'}
                     record={patientSlice.patient}
                     setRecord={undefined}
                   />
-                   
+
                   <MyInput
-                 width={130}
-                  vr={validationResult}
-                  column
-                  fieldLabel="Document Type"
-                  fieldType="select"
-                  fieldName="documentTypeLkey"
-                  selectData={docTypeLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  record={patientSlice.patient}
-                  setRecord={undefined}
-                  disabled={true}
-                          />
+
+                    vr={validationResult}
+                    column
+                    fieldLabel="Document Type"
+                    fieldType="select"
+                    fieldName="documentTypeLkey"
+                    selectData={docTypeLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={patientSlice.patient}
+                    setRecord={undefined}
+                    disabled={true}
+                  />
                   <MyInput
-                    width={130}
+                    width={100}
                     column
                     disabled={true}
                     fieldName={'patientAge'}
@@ -450,7 +347,7 @@ const EncounterRegistration = () => {
                     setRecord={undefined}
                   />
                   <MyInput
-                  width={130}
+                    width={150}
                     column
                     disabled={true}
                     fieldLabel="Gender"
@@ -495,16 +392,7 @@ const EncounterRegistration = () => {
                     fieldLabel="Date"
                     fieldType="date"
                     fieldName="plannedStartDate"
-                    record={
-                      encounter
-                        ? encounter
-                        : {
-                            ...localEncounter,
-                            plannedStartDate:
-                              localEncounter?.plannedStartDate ||
-                              new Date().toISOString().split('T')[0]
-                          }
-                    }
+                    record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
                   />
 
@@ -547,7 +435,7 @@ const EncounterRegistration = () => {
                     record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
                   />
-                  
+
                   {/* <MyInput
                     vr={validationResult}
                     column
@@ -599,16 +487,16 @@ const EncounterRegistration = () => {
                     record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
                   />
-                   <MyInput
+                  <MyInput
                     vr={validationResult}
                     column
-                    
+
                     fieldLabel="Source Name"
                     fieldName="source"
                     record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
                   />
-                   {/* <MyInput
+                  <MyInput
                     vr={validationResult}
                     column
                     disabled={true}
@@ -616,21 +504,21 @@ const EncounterRegistration = () => {
                     fieldName="encounterStatusLkey"
                     record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
-                  /> */}
-                   <MyInput
-                 
-                 vr={validationResult}
-                 column
-                 fieldLabel="Booking Status"
-                 fieldType="select"
-                 fieldName="encounterStatusLkey"
-                 selectData={bookingstatusLovQueryResponse?.object ?? []}
-                 selectDataLabel="lovDisplayVale"
-                 selectDataValue="key"
-                 record={encounter ? encounter : localEncounter}
-                 setRecord={setLocalEncounter}
-                 disabled={true}
-                         />
+                  />
+                  <MyInput
+
+                    vr={validationResult}
+                    column
+                    fieldLabel="Booking Status"
+                    fieldType="select"
+                    fieldName="encounterStatusLkey"
+                    selectData={bookingstatusLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={encounter ? encounter : localEncounter}
+                    setRecord={setLocalEncounter}
+                    disabled={true}
+                  />
                 </Form>
               </Stack.Item>
             </Stack>
@@ -932,8 +820,8 @@ const EncounterRegistration = () => {
               </Stack.Item>
             </Stack>
           </Panel>
-          <br/>
-            <Panel
+          <br />
+          <Panel
             bordered
             header={
               <h5 className="title">
@@ -941,7 +829,7 @@ const EncounterRegistration = () => {
               </h5>
             }
           >
-             <ButtonToolbar>
+            <ButtonToolbar>
               <IconButton appearance="primary" color='cyan' icon={<DocPassIcon />} >
                 <Translate>Patient wrist band</Translate>
               </IconButton>
@@ -952,7 +840,7 @@ const EncounterRegistration = () => {
                 disabled={encounter}
                 appearance="primary"
                 color="violet"
-                icon={<DocPassIcon/>}
+                icon={<DocPassIcon />}
               >
                 <Translate>Patient label</Translate>
               </IconButton>
@@ -974,8 +862,8 @@ const EncounterRegistration = () => {
               </IconButton>
 
               <Divider vertical />
-              
-              <IconButton appearance="primary" color='cyan' icon={<DocPassIcon/>} >
+
+              <IconButton appearance="primary" color='cyan' icon={<DocPassIcon />} >
                 <Translate>Visit Finance Report</Translate>
               </IconButton>
 
@@ -991,27 +879,27 @@ const EncounterRegistration = () => {
                 <Translate>Companion Card</Translate>
               </IconButton>
             </ButtonToolbar>
-            <Modal open={openModelCompanionCard}  onClose={handleCloseCompanionCardModel}>
-        <Modal.Header>
-          <Modal.Title>Companion Card</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          
-          <Form layout="inline" fluid>
+            <Modal open={openModelCompanionCard} onClose={handleCloseCompanionCardModel}>
+              <Modal.Header>
+                <Modal.Title>Companion Card</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+
+                <Form layout="inline" fluid>
                   <MyInput
                     width={250}
                     column
                     disabled={false}
-                    
+
                     fieldLabel="Companion Name"
                     fieldName={'VisitNote'}
                     setRecord={setLocalEncounter}
                     vr={validationResult}
                     record={encounter ? encounter : localEncounter}
-                   
+
                   />
-                  <br/>
-                    <MyInput
+                  <br />
+                  <MyInput
                     width={250}
                     column
                     disabled={false}
@@ -1021,9 +909,9 @@ const EncounterRegistration = () => {
                     setRecord={setLocalEncounter}
                     vr={validationResult}
                     record={encounter ? encounter : localEncounter}
-                   
+
                   />
-                  <br/>
+                  <br />
                   {//relation
                   }
                   <MyInput
@@ -1039,308 +927,197 @@ const EncounterRegistration = () => {
                     record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
                   />
-                  </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={handleSaveCompanionCard} appearance="primary">
-             Save
-          </Button>
-          <Button onClick={handleCloseCompanionCardModel} appearance="subtle">
-             Cancle
-          </Button>
-        </Modal.Footer>
-      </Modal>
-      <Modal open={openModelAppointmentView}  style={{ width: '90%' ,marginLeft:'80px' }}  onClose={handleCloseAppointmentViewModel}>
-        <Modal.Header>
-          <Modal.Title>Patient's Appointment</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          
-        <div style={{ padding: '10px',height:"100%"  }}>
-            <PanelGroup>
-                {/* First Panel with a title on the border */}
-                <fieldset style={{ border: '2px solid #a0a3a8',  marginBottom: '10px' }}>
-                    <legend style={{ padding: '10px', fontWeight: 'bold', fontSize:"20px"  }}>Search</legend>
-                    <Panel style={{ height: '130px', display: 'flex', alignItems: 'center' }}>
-            <label htmlFor="fromDate" style={{ margin: '0 5px', fontWeight: 'bold' ,fontSize:"17px" }}>From Date</label>
-            <DatePicker id="fromDate" style={{ width: '240px' }} format="MM/dd/yyyy" />
-             
-            <label htmlFor="toDate" style={{ margin: '0 5px', fontWeight: 'bold',fontSize:"17px" }}>To Date</label>
-            <DatePicker id="toDate" style={{ width: '240px' }} format="MM/dd/yyyy" />
-                    </Panel>
-                </fieldset>
+                </Form>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button onClick={handleSaveCompanionCard} appearance="primary">
+                  Save
+                </Button>
+                <Button onClick={handleCloseCompanionCardModel} appearance="subtle">
+                  Cancle
+                </Button>
+              </Modal.Footer>
+            </Modal>
+            <Modal open={openModelAppointmentView} style={{ width: '82%' }} onClose={handleCloseAppointmentViewModel}>
+              <Modal.Header>
+                <Modal.Title>Patient's Appointment</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
 
-                {/* Second Panel with a title on the border */}
-                <fieldset style={{ border: '2px solid #a0a3a8',  marginBottom: '10px' }}>
-                    <legend  style={{ padding: '10px', fontWeight: 'bold', fontSize:"20px"  }}>Patient's Appointment</legend>
-                    <Panel>
-                    <Table
-                height={400}
-                sortColumn={listRequest.sortBy}
-                sortType={listRequest.sortType}
-                onSortColumn={(sortBy, sortType) => {
-                  if (sortBy)
-                    setListRequest({
-                      ...listRequest,
-                      sortBy,
-                      sortType
-                    });
-                }}
-                headerHeight={80}
-                rowHeight={60}
-                bordered
-                cellBordered
-                data={userListResponse?.object ?? []}
-              
-              
-              >
+                <div style={{ padding: '10px', height: "100%" }}>
+                  <PanelGroup>
+                    {/* First Panel with a title on the border */}
+                    <fieldset style={{ border: '2px solid #38d3e8', marginBottom: '10px' }}>
+                      <legend style={{ padding: '10px', fontWeight: 'bold', color: '#ffffff', fontSize: "20px", backgroundColor: "#38d3e8" }}>Search</legend>
+                      <Panel style={{ height: '130px', display: 'flex', alignItems: 'center' }}>
+                        <label htmlFor="fromDate" style={{ margin: '0 5px', fontWeight: 'bold', fontSize: "17px" }}>From Date</label>
+                        <DatePicker id="fromDate" style={{ width: '240px' }} format="MM/dd/yyyy" />
 
-                <Column sortable flexGrow={4}>
-                  <HeaderCell>
-                  <Input onChange={e => handleFilterChange('AppointmentDate', e)} />
-                    <Translate>Appointment Date</Translate>
-                  </HeaderCell>
-                  <Cell dataKey="AppointmentDate " />
-                </Column>
+                        <label htmlFor="toDate" style={{ margin: '0 5px', fontWeight: 'bold', fontSize: "17px" }}>To Date</label>
+                        <DatePicker id="toDate" style={{ width: '240px' }} format="MM/dd/yyyy" />
+                      </Panel>
+                    </fieldset>
 
-                <Column sortable flexGrow={3}>
-                  <HeaderCell align="center">
-                  <Input onChange={e => handleFilterChange('Status', e)} />
-                    <Translate>Status</Translate>
-                  </HeaderCell>
-                  <Cell dataKey="Status" />
-                </Column>
+                    {/* Second Panel with a title on the border */}
+                    <fieldset style={{ border: '2px solid #38d3e8', marginBottom: '10px' }}>
+                      <legend style={{ padding: '10px', fontWeight: 'bold', color: '#ffffff', fontSize: "20px", backgroundColor: "#38d3e8" }}>Patient's Appointment</legend>
+                      <Panel>
+                        <Table
+                          height={400}
+                          sortColumn={listRequest.sortBy}
+                          sortType={listRequest.sortType}
+                          onSortColumn={(sortBy, sortType) => {
+                            if (sortBy)
+                              setListRequest({
+                                ...listRequest,
+                                sortBy,
+                                sortType
+                              });
+                          }}
+                          headerHeight={80}
+                          rowHeight={60}
+                          bordered
+                          cellBordered
+                          data={userListResponse?.object ?? []}
 
-                <Column sortable flexGrow={4}>
-                  <HeaderCell>
-                  <Input onChange={e => handleFilterChange('Department', e)} />
-                    <Translate>Department</Translate>
-                  </HeaderCell>
-                  <Cell dataKey="Department" />
-                </Column>
-                <Column sortable flexGrow={4}>
-                  <HeaderCell>
-                  <Input onChange={e => handleFilterChange('Physician', e)} />
-                    <Translate>Physician</Translate>
-                    
-                  </HeaderCell>
-                  <Cell dataKey="Physician" />
-                </Column>
 
-                <Column sortable flexGrow={4}>
-                  <HeaderCell>
-                  <Input onChange={e => handleFilterChange('BookingSource', e)} />
-                    <Translate>Booking Source</Translate>
-                    
-                  </HeaderCell>
-                  <Cell dataKey="BookingSource" />
-                </Column>
-                 <Column sortable flexGrow={4}>
-                  <HeaderCell>
-                    
-                    
-                    <Input onChange={e => handleFilterChange('Follow-up', e)} />
-                    <Translate>Follow-up</Translate>
-                  </HeaderCell>
-                  <Cell dataKey="Follow-up" />
-                </Column>
-                 <Column sortable flexGrow={4}>
-                  <HeaderCell>
-                    
-                    
-                    <Input onChange={e => handleFilterChange('Bookingdate', e)} />
-                    <Translate>Booking date</Translate>
-                  </HeaderCell>
-                  <Cell dataKey="Bookingdate" />
-                </Column> 
-                <Column sortable flexGrow={4}>
-                  <HeaderCell>
-                  <Input onChange={e => handleFilterChange('CompleteDate', e)} />
-                    <Translate>Complete Date</Translate>
-                    
-                  </HeaderCell>
-                  <Cell dataKey="CompleteDate" />
-                </Column> 
-                <Column sortable flexGrow={4}>
-                  <HeaderCell>
-                  <Input onChange={e => handleFilterChange('CancelDate', e)} />
-                    <Translate>Cancel Date </Translate>
-                    
-                  </HeaderCell>
-                  <Cell dataKey="CancelDate" />
-                </Column> 
-                <Column sortable flexGrow={4}>
-                  <HeaderCell>
-                  <Input onChange={e => handleFilterChange('CancellationReason', e)} />
-                    <Translate>Cancellation Reason</Translate>
-                    
-                  </HeaderCell>
-                  <Cell dataKey="CancellationReason" />
-                </Column> 
-                <Column sortable flexGrow={4}>
-                  <HeaderCell>
-                  <Input onChange={e => handleFilterChange('BookedBy', e)} />
-                    <Translate>Booked By</Translate>
-                    
-                  </HeaderCell>
-                  <Cell dataKey="BookedBy" />
-                </Column> 
-                <Column sortable flexGrow={4}>
-                  <HeaderCell>
-                  <Input onChange={e => handleFilterChange('CancelledBy ', e)} />
-                    <Translate>Cancelled By </Translate>
-                    
-                  </HeaderCell>
-                  <Cell dataKey="CancelledBy " />
-                </Column> 
+                        >
 
-              </Table>
-              <div style={{ padding: 20 }}>
-                <Pagination
-                  prev
-                  next
-                  first
-                  last
-                  ellipsis
-                  boundaryLinks
-                  maxButtons={5}
-                  size="xs"
-                  layout={['limit', '|', 'pager']}
-                  limitOptions={[5, 15, 30]}
-                  limit={listRequest.pageSize}
-                  activePage={listRequest.pageNumber}
-                  onChangePage={pageNumber => {
-                    setListRequest({ ...listRequest, pageNumber });
-                  }}
-                  onChangeLimit={pageSize => {
-                    setListRequest({ ...listRequest, pageSize });
-                  }}
-                  total={userListResponse?.extraNumeric ?? 0}
-                />
-              </div>
-                    </Panel>
-                </fieldset>
-            </PanelGroup>
-        </div>
-        </Modal.Body>
-        <Modal.Footer>
-         
-          <Button style={{padding:"5px",marginTop:"10px",fontSize:"16px"}} onClick={handleCloseAppointmentViewModel} appearance="subtle">
-             Cancle
-          </Button>
-        </Modal.Footer>
-      </Modal>
-      <Drawer
-        size="lg"
-        placement={'left'}
-        open={searchResultVisible}
-        onClose={() => { setSearchResultVisible(false) }}
-      >
-        <Drawer.Header>
-          <Drawer.Title>Patient List - Search Results</Drawer.Title>
-          <Drawer.Actions>{conjurePatientSearchBar(patientSearchTarget)}</Drawer.Actions>
-        </Drawer.Header>
-        <Drawer.Body>
-          <small>
-            * <Translate>Click to select patient</Translate>
-          </small>
-          <Table
-            height={600}
-            sortColumn={listRequest.sortBy}
-            sortType={listRequest.sortType}
-            onSortColumn={(sortBy, sortType) => {
-              if (sortBy)
-                setListRequest({
-                  ...listRequest,
-                  sortBy,
-                  sortType
-                });
-            }}
-            headerHeight={80}
-            rowHeight={60}
-            bordered
-            cellBordered
-            onRowClick={rowData => {
-              handleSelectPatient(rowData);
-              setSearchKeyword(null)
-            }}
-            data={patientListResponse?.object ?? []}
-          >
-            <Column sortable flexGrow={3}>
-              <HeaderCell>
-                <Input onChange={e => handleFilterChange('fullName', e)} />
-                <Translate>Patient Name</Translate>
-              </HeaderCell>
-              <Cell dataKey="fullName" />
-            </Column>
-            <Column sortable flexGrow={3}>
-              <HeaderCell>
-                <Input onChange={e => handleFilterChange('mobileNumber', e)} />
-                <Translate>Mobile Number</Translate>
-              </HeaderCell>
-              <Cell dataKey="mobileNumber" />
-            </Column>
-            <Column sortable flexGrow={2}>
-              <HeaderCell>
-                <Input onChange={e => handleFilterChange('genderLkey', e)} />
-                <Translate>Gender</Translate>
-              </HeaderCell>
-              <Cell dataKey="genderLvalue.lovDisplayVale" />
-            </Column>
-            <Column sortable flexGrow={2}>
-              <HeaderCell>
-                <Input onChange={e => handleFilterChange('patientMrn', e)} />
-                <Translate>Mrn</Translate>
-              </HeaderCell>
-              <Cell dataKey="patientMrn" />
-            </Column>
-            <Column sortable flexGrow={3}>
-              <HeaderCell>
-                <Input onChange={e => handleFilterChange('documentNo', e)} />
-                <Translate>Document No</Translate>
-              </HeaderCell>
-              <Cell dataKey="documentNo" />
-            </Column>
-            <Column sortable flexGrow={3}>
-              <HeaderCell>
-                <Input onChange={e => handleFilterChange('archivingNumber', e)} />
-                <Translate>Archiving Number</Translate>
-              </HeaderCell>
-              <Cell dataKey="archivingNumber" />
-            </Column>
-            <Column sortable flexGrow={3}>
-              <HeaderCell>
-                <Input onChange={e => handleFilterChange('dob', e)} />
-                <Translate>Date of Birth</Translate>
-              </HeaderCell>
-              <Cell dataKey="dob" />
-            </Column>
-          </Table>
-          <div style={{ padding: 20 }}>
-            <Pagination
-              prev
-              next
-              first
-              last
-              ellipsis
-              boundaryLinks
-              maxButtons={5}
-              size="xs"
-              layout={['limit', '|', 'pager']}
-              limitOptions={[5, 15, 30]}
-              limit={listRequest.pageSize}
-              activePage={listRequest.pageNumber}
-              onChangePage={pageNumber => {
-                setListRequest({ ...listRequest, pageNumber });
-              }}
-              onChangeLimit={pageSize => {
-                setListRequest({ ...listRequest, pageSize });
-              }}
-              total={patientListResponse?.extraNumeric ?? 0}
-            />
-          </div>
-        </Drawer.Body>
-      </Drawer>
+                          <Column sortable flexGrow={4}>
+                            <HeaderCell>
+                              <Input onChange={e => handleFilterChange('AppointmentDate', e)} />
+                              <Translate>Appointment Date</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="AppointmentDate " />
+                          </Column>
+
+                          <Column sortable flexGrow={3}>
+                            <HeaderCell align="center">
+                              <Input onChange={e => handleFilterChange('Status', e)} />
+                              <Translate>Status</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="Status" />
+                          </Column>
+
+                          <Column sortable flexGrow={4}>
+                            <HeaderCell>
+                              <Input onChange={e => handleFilterChange('Department', e)} />
+                              <Translate>Department</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="Department" />
+                          </Column>
+                          <Column sortable flexGrow={4}>
+                            <HeaderCell>
+                              <Input onChange={e => handleFilterChange('Physician', e)} />
+                              <Translate>Physician</Translate>
+
+                            </HeaderCell>
+                            <Cell dataKey="Physician" />
+                          </Column>
+
+                          <Column sortable flexGrow={4}>
+                            <HeaderCell>
+                              <Input onChange={e => handleFilterChange('BookingSource', e)} />
+                              <Translate>Booking Source</Translate>
+
+                            </HeaderCell>
+                            <Cell dataKey="BookingSource" />
+                          </Column>
+                          <Column sortable flexGrow={4}>
+                            <HeaderCell>
+
+
+                              <Input onChange={e => handleFilterChange('Follow-up', e)} />
+                              <Translate>Follow-up</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="Follow-up" />
+                          </Column>
+                          <Column sortable flexGrow={4}>
+                            <HeaderCell>
+
+
+                              <Input onChange={e => handleFilterChange('Bookingdate', e)} />
+                              <Translate>Booking date</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="Bookingdate" />
+                          </Column>
+                          <Column sortable flexGrow={4}>
+                            <HeaderCell>
+                              <Input onChange={e => handleFilterChange('CompleteDate', e)} />
+                              <Translate>Complete Date</Translate>
+
+                            </HeaderCell>
+                            <Cell dataKey="CompleteDate" />
+                          </Column>
+                          <Column sortable flexGrow={4}>
+                            <HeaderCell>
+                              <Input onChange={e => handleFilterChange('CancelDate', e)} />
+                              <Translate>Cancel Date </Translate>
+
+                            </HeaderCell>
+                            <Cell dataKey="CancelDate" />
+                          </Column>
+                          <Column sortable flexGrow={4}>
+                            <HeaderCell>
+                              <Input onChange={e => handleFilterChange('CancellationReason', e)} />
+                              <Translate>Cancellation Reason</Translate>
+
+                            </HeaderCell>
+                            <Cell dataKey="CancellationReason" />
+                          </Column>
+                          <Column sortable flexGrow={4}>
+                            <HeaderCell>
+                              <Input onChange={e => handleFilterChange('BookedBy', e)} />
+                              <Translate>Booked By</Translate>
+
+                            </HeaderCell>
+                            <Cell dataKey="BookedBy" />
+                          </Column>
+                          <Column sortable flexGrow={4}>
+                            <HeaderCell>
+                              <Input onChange={e => handleFilterChange('CancelledBy ', e)} />
+                              <Translate>Cancelled By </Translate>
+
+                            </HeaderCell>
+                            <Cell dataKey="CancelledBy " />
+                          </Column>
+
+                        </Table>
+                        <div style={{ padding: 20 }}>
+                          <Pagination
+                            prev
+                            next
+                            first
+                            last
+                            ellipsis
+                            boundaryLinks
+                            maxButtons={5}
+                            size="xs"
+                            layout={['limit', '|', 'pager']}
+                            limitOptions={[5, 15, 30]}
+                            limit={listRequest.pageSize}
+                            activePage={listRequest.pageNumber}
+                            onChangePage={pageNumber => {
+                              setListRequest({ ...listRequest, pageNumber });
+                            }}
+                            onChangeLimit={pageSize => {
+                              setListRequest({ ...listRequest, pageSize });
+                            }}
+                            total={userListResponse?.extraNumeric ?? 0}
+                          />
+                        </div>
+                      </Panel>
+                    </fieldset>
+                  </PanelGroup>
+                </div>
+              </Modal.Body>
+              <Modal.Footer>
+
+                <Button style={{ padding: "5px", marginTop: "10px", fontSize: "16px" }} onClick={handleCloseAppointmentViewModel} appearance="subtle">
+                  Cancle
+                </Button>
+              </Modal.Footer>
+            </Modal>
           </Panel>
         </Panel>
       )}
