@@ -119,7 +119,8 @@ const EncounterRegistration = () => {
         patientKey: patientSlice.patient.key,
         patientFullName: patientSlice.patient.fullName,
         patientAge: patientSlice.patient.dob ? calculateAge(patientSlice.patient.dob) + '' : '',
-        encounterStatusLkey: '91063195286200' //change this to be loaded from cache lov values by code
+        encounterStatusLkey: '91063195286200',//change this to be loaded from cache lov values by code
+        plannedStartDate:new Date()
       });
     } else if (localStorage.getItem('patient')) {
       const cachedPatient = JSON.parse(localStorage.getItem('patient'));
@@ -391,16 +392,7 @@ const EncounterRegistration = () => {
                     fieldLabel="Date"
                     fieldType="date"
                     fieldName="plannedStartDate"
-                    record={
-                      encounter
-                        ? encounter
-                        : {
-                            ...localEncounter,
-                            plannedStartDate:
-                              localEncounter?.plannedStartDate ||
-                              new Date().toISOString().split('T')[0]
-                          }
-                    }
+                    record={encounter ? encounter : localEncounter}
                     setRecord={setLocalEncounter}
                   />
 

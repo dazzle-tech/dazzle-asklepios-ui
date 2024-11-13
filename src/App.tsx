@@ -55,7 +55,9 @@ import GenericMedications from './pages/medications/generic-medications';
 import Catalog from './pages/setup/catalog-setup';
 import Diagnostics from './pages/setup/diagnostics-tests-definition';
 import Resources from './pages/appointment/resources';
-
+import EmployeeRegistration from './pages/employee/employee-registration/EmployeeRegistration';
+import VisitRegistration from './pages/employee/visit-registration/VisitRegistration';
+import EmployeeMainInfoScreen from './pages/employee/employee-registration/EmployeeMainInfoScreen';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -203,7 +205,8 @@ const App = () => {
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
-             
+              <Route path="visit-registration" element={<VisitRegistration />} />
+              <Route path="employee-registration" element={<EmployeeRegistration />} />
               <Route path="encounter" element={<Encounter />} />
               <Route path="encounter-list" element={<EncounterList />} />
               <Route path="facilities" element={<Facilities />} />
