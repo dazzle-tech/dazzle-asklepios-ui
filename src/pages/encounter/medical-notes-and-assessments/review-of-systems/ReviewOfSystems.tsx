@@ -3,7 +3,7 @@ import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import React, { useEffect, useState } from 'react';
-import { FlexboxGrid, IconButton, Input, Panel, Table, Grid, Row, Col, Checkbox } from 'rsuite';
+import { FlexboxGrid, IconButton, Input, Panel, Table, Grid, Row, Col, Checkbox, InputGroup } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
 import { useNavigate } from 'react-router-dom';
@@ -74,14 +74,33 @@ const ReviewOfSystems = () => {
 
   return (
     <>
-      <Panel bordered style={{ padding: '10px', margin: '5px' }} header="Review of Systems">
+      <Panel bordered style={{ padding: '5px', margin: '5px' }} >
         <Grid fluid>
           <Row gutter={15}>
-            <Col xs={8}>
+            
+            <InputGroup>
+              <InputGroup.Addon>
+                {<icons.CheckRound color="green"  />}
+              </InputGroup.Addon>
+              <Input
+
+
+                value={""}
+              // onChange={e => setLocalEncounter({ ...localEncounter, progressNote: e })}
+              // onBlur={progressNoteIsChanged() ? saveChanges : undefined}
+              />
+              <InputGroup.Addon>
+              <IconButton icon={<icons.List style={{fontSize:"10px" }} />}>Summary</IconButton> {/* استبدلها بالأيقونة التي ترغب بإضافتها */}
+              </InputGroup.Addon>
+            </InputGroup>
+          </Row>
+          <Row gutter={15}>
+            <div style={{ display: "flex", gap: "3px" }}>
               <Table
+                style={{ flex: "1" }}
                 bordered
                 data={bodySystemsLovQueryResponse?.object ?? []}
-                height={350}
+                height={298}
                 onRowClick={rowData => {
                   setSelectedSystem(rowData);
                 }}
@@ -92,13 +111,14 @@ const ReviewOfSystems = () => {
                   <Table.Cell dataKey="lovDisplayVale" />
                 </Table.Column>
               </Table>
-            </Col>
-            <Col xs={16}>
+
+
               <Table
                 bordered
                 data={bodySystemsDetailLovQueryResponse?.object ?? []}
-                height={350}
-                rowHeight={60}
+                height={298}
+                rowHeight={50}
+                style={{ flex: "3" }}
               >
                 <Table.Column flexGrow={1}>
                   <Table.HeaderCell>Checked</Table.HeaderCell>
@@ -161,13 +181,9 @@ const ReviewOfSystems = () => {
                   </Table.Cell>
                 </Table.Column>
               </Table>
-            </Col>
+            </div>
           </Row>
-          <Row gutter={15}>
-            <Col xs={2}>
-              <IconButton icon={<icons.List />}>Summary</IconButton>
-            </Col>
-          </Row>
+
         </Grid>
       </Panel>
     </>
