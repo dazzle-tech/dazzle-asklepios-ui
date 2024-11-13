@@ -56,6 +56,7 @@ import Catalog from './pages/setup/catalog-setup';
 import Diagnostics from './pages/setup/diagnostics-tests-definition';
 import Resources from './pages/appointment/resources';
 import EncounterPreObservations from './pages/encounter/encounter-pre-observations/EncounterPreObservations';
+import AgeGroup from './pages/setup/age-group';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -223,6 +224,7 @@ const App = () => {
               <Route path="catalog" element={<Catalog />} />
               <Route path="allergens" element={<Allergens />} />
               <Route path="active-ingredients" element={<ActiveIngredientsSetup />} />
+              <Route path="age-group" element={<AgeGroup/>} />
               <Route path="prescription-instructions" element={<PrescriptionInstructions />} />
               <Route path="generic-medications" element={<GenericMedications />} />
               <Route path="dental-actions" element={<DentalActions />} />

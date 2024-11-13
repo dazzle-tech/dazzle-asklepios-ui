@@ -608,17 +608,6 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-    saveDiagnosticsTestSpecialPopulation: builder.mutation<void, { queryParams: { diagnosticTestId: string }, body: ApDiagnosticTestSpecialPopulation }>({
-      query: ({ queryParams, body }) => ({
-        url: '/setup/save-diagnostic-test-special-population',
-        method: 'POST',
-        params: queryParams,
-        body: body,
-      }), onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
     getCatalogDiagnosticsTestList: builder.query({
       query: (catalogKey: string) => ({
         headers: {
@@ -686,6 +675,24 @@ export const setupService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       },
+    }),
+    saveAgeGroup: builder.mutation({
+      query: (agegroup: ApAgeGroup) => ({
+        url: `/setup/save-age-group`,
+        method: 'POST',
+        body:agegroup,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+    }),
+    getAgeGroup: builder.query({
+      query: (listRequest: ListRequest) => ({
+         url: `/setup/age-group-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
     }),
   })
 
@@ -755,4 +762,6 @@ export const {
   useSaveFacilityDepartmentMutation,
   useRemoveUserFacilityDepartmentMutation,
   useGetUserRecordQuery,
+  useSaveAgeGroupMutation,
+  useGetAgeGroupQuery
 } = setupService;
