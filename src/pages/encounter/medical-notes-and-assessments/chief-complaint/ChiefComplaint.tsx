@@ -75,7 +75,7 @@ const ChiefComplaint = () => {
       await saveEncounterChanges(localEncounter).unwrap();
       dispatch(notify('saved chiefComplain Successfully'));
     } catch (error) {
-      // معالجة الخطأ هنا
+      
       console.error("Encounter save failed:", error);
       dispatch(notify('saved chiefComplain fill'));
     }

@@ -134,7 +134,7 @@ const ReviewOfSystems = () => {
               <InputGroup.Addon>
                 <IconButton 
                 onClick={() => setOpenModel(true)}
-                icon={<icons.List style={{ fontSize: "10px" }} />}>Summary</IconButton> {/* استبدلها بالأيقونة التي ترغب بإضافتها */}
+                icon={<icons.List style={{ fontSize: "10px" }} />}>Summary</IconButton> 
               </InputGroup.Addon>
             </InputGroup>
           </Row>
