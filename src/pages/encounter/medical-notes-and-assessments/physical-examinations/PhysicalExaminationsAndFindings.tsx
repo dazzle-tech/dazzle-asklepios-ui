@@ -3,7 +3,7 @@ import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import React, { useEffect, useState } from 'react';
-import { FlexboxGrid, IconButton, Input, Panel, Table, Grid, Row, Col, Checkbox } from 'rsuite';
+import { FlexboxGrid, IconButton, Input, Panel, Table, Grid, Row, Col, Checkbox, InputGroup } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
 import { useNavigate } from 'react-router-dom';
@@ -74,14 +74,32 @@ const PhysicalExaminationsAndFindings = () => {
 
   return (
     <>
-      <Panel bordered style={{ padding: '10px', margin: '5px' }} header="Physical Examinations & Findings">
+      <Panel bordered style={{ padding: '5px', margin: '5px' }} >
         <Grid fluid>
+
           <Row gutter={15}>
-            <Col xs={8}>
-              <Table
+            <InputGroup>
+              <InputGroup.Addon>
+                {<icons.CheckRound color="green" />}
+
+
+              </InputGroup.Addon>
+              <Input
+
+
+                value={""}
+              // onChange={e => setLocalEncounter({ ...localEncounter, progressNote: e })}
+              // onBlur={progressNoteIsChanged() ? saveChanges : undefined}
+              />
+            </InputGroup>
+          </Row>
+          <Row gutter={15}>
+            <div style={{display:"flex" ,gap:"3px"}}>
+              <Table 
+              style={{flex:"1"}}
                 bordered
                 data={physicalExamAreasLovQueryResponse?.object ?? []}
-                height={350}
+                height={300}
                 onRowClick={rowData => {
                   setSelectedArea(rowData);
                 }}
@@ -92,15 +110,15 @@ const PhysicalExaminationsAndFindings = () => {
                   <Table.Cell dataKey="lovDisplayVale" />
                 </Table.Column>
               </Table>
-            </Col>
-            <Col xs={16}>
+            
               <Table
                 bordered
                 data={physicalExamAreasDetailsLovQueryResponse?.object ?? []}
-                height={350}
-                rowHeight={60}
+                height={300}
+                rowHeight={50}
+                style={{flex:"3"}}
               >
-                <Table.Column flexGrow={1}>
+                <Table.Column flexGrow={2}>
                   <Table.HeaderCell>Checked</Table.HeaderCell>
                   <Table.Cell>
                     {rowData => (
@@ -161,13 +179,9 @@ const PhysicalExaminationsAndFindings = () => {
                   </Table.Cell>
                 </Table.Column>
               </Table>
-            </Col>
+           </div>
           </Row>
-          <Row gutter={15}>
-            <Col xs={2}>
-              <IconButton icon={<icons.List />}>Summary</IconButton>
-            </Col>
-          </Row>
+
         </Grid>
       </Panel>
     </>
