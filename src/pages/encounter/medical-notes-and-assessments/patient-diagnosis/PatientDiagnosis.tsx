@@ -1,8 +1,10 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
+import * as icons from '@rsuite/icons';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import React, { useEffect, useState } from 'react';
+import { Toggle } from 'rsuite';
 import {
   FlexboxGrid,
   IconButton,
@@ -65,7 +67,7 @@ const PatientDiagnosis = () => {
     pageSize: 100
   });
 
-  const { data: sourceOfInfoLovResponseData } = useGetLovValuesByCodeQuery('SOURCE_OF_INFO');
+  const { data: sourceOfInfoLovResponseData } = useGetLovValuesByCodeQuery('DIAGNOSIS_TYPE');
   const { data: resolutionStatusLovResponseData } =
     useGetLovValuesByCodeQuery('ALLERGY_RES_STATUS');
 
@@ -129,166 +131,82 @@ const PatientDiagnosis = () => {
   };
   return (
     <>
-      <Panel bordered style={{ padding: '10px', margin: '5px' }} header="Patient Diagnosis">
+      <Panel  >
         <Grid fluid>
-          <Row gutter={15} style={{ border: '1px solid #e1e1e1' }}>
-            <Col xs={3}>
-              <ButtonToolbar style={{ margin: '6px' }}>
-                <IconButton
-                  size="xs"
-                  appearance="primary"
-                  color="blue"
-                  onClick={() => setSelectedDiagnose({ ...newApPatientDiagnose })}
-                  icon={<Plus />}
-                />
-              </ButtonToolbar>
-            </Col>
-            <Col xs={18}></Col>
-            <Col xs={3}>
-              <ButtonToolbar style={{ margin: '6px' }}>
-                <IconButton
-                  size="xs"
-                  onClick={save}
-                  appearance="primary"
-                  color="green"
-                  icon={<MdSave />}
-                />
-                <IconButton
-                  disabled={!selectedDiagnose.key}
-                  size="xs"
-                  appearance="primary"
-                  onClick={remove}
-                  color="red"
-                  icon={<Trash />}
-                />
-              </ButtonToolbar>
-            </Col>
-          </Row>
           <Row gutter={15}>
-            <Col xs={6}>
-              <Text>Diagnose Date</Text>
-              <DatePicker
-                placeholder="Date of Diagnosis"
-                value={selectedDiagnose.dateDiagnosed}
-                onChange={e =>
-                  setSelectedDiagnose({
-                    ...selectedDiagnose,
-                    dateDiagnosed: e
-                  })
-                }
-              />
+            <Col xs={14} >
+              <Row >
+                <Text>Diagnose</Text>
+                <SelectPicker
+                  style={{ width: '100%' }}
+                  data={icdListResponseData?.object ?? []}
+                  labelKey="description"
+                  valueKey="key"
+                  placeholder="ICD"
+                  value={selectedDiagnose.diagnoseCode}
+                  onChange={e =>
+                    setSelectedDiagnose({
+                      ...selectedDiagnose,
+                      diagnoseCode: e
+                    })
+                  }
+                />
+              </Row>
+              <Row >
+                Additional Description
+                <InputGroup>
+                  <InputGroup.Addon>
+                    {<icons.CheckRound color="green" />}
+
+
+                  </InputGroup.Addon>
+                  <Input
+
+
+                    value={""}
+                  // onChange={e => setLocalEncounter({ ...localEncounter, progressNote: e })}
+                  // onBlur={progressNoteIsChanged() ? saveChanges : undefined}
+                  />
+                </InputGroup>
+              </Row>
+
             </Col>
-            <Col xs={6}>
-              <Text>Diagnose</Text>
-              <SelectPicker
-                style={{ width: '100%' }}
-                data={icdListResponseData?.object ?? []}
-                labelKey="description"
-                valueKey="key"
-                placeholder="ICD"
-                value={selectedDiagnose.diagnoseCode}
-                onChange={e =>
-                  setSelectedDiagnose({
-                    ...selectedDiagnose,
-                    diagnoseCode: e
-                  })
-                }
-              />
-            </Col>
-            <Col xs={6}>
-              <Text>Type</Text>
-              <SelectPicker
-                style={{ width: '100%' }}
-                data={sourceOfInfoLovResponseData?.object ?? []}
-                labelKey="lovDisplayVale"
-                valueKey="key"
-                placeholder="Source of Info"
-                value={selectedDiagnose.diagnoseTypeLkey}
-                onChange={e =>
-                  setSelectedDiagnose({
-                    ...selectedDiagnose,
-                    diagnoseTypeLkey: e
-                  })
-                }
-              />
+            <Col xs={7} >
+
+              <Row gutter={5}>
+                <div style={{ display: "flex", gap: "2px" }}>
+
+                  <div style={{ display: "flex", flexDirection: "column", flex: "1" }}><Text >Syspected</Text><Toggle checkedChildren="Yes" unCheckedChildren="No" defaultChecked /></div>
+
+                  <div style={{ display: "flex", flexDirection: "column", flex: "1" }}><Text>Major</Text><Toggle checkedChildren="Yes" unCheckedChildren="No" defaultChecked /></div>
+                </div>
+              </Row>
+              <Row >
+                <Text>Type</Text>
+                <SelectPicker
+                  style={{ width: '100%' }}
+                  data={sourceOfInfoLovResponseData?.object ?? []}
+                  labelKey="lovDisplayVale"
+                  valueKey="key"
+                  placeholder="DIAGNOSIS TYPE"
+                  value={selectedDiagnose.diagnoseTypeLkey}
+                  onChange={e =>
+                    setSelectedDiagnose({
+                      ...selectedDiagnose,
+                      diagnoseTypeLkey: e
+                    })
+                  }
+                />
+              </Row>
             </Col>
 
-            <Col xs={6}>
-              <Text>Status</Text>
-              <SelectPicker
-                style={{ width: '100%' }}
-                data={resolutionStatusLovResponseData?.object ?? []}
-                labelKey="lovDisplayVale"
-                valueKey="key"
-                placeholder="Resolution Status"
-                value={selectedDiagnose.diagnoseStatusLkey}
-                onChange={e =>
-                  setSelectedDiagnose({
-                    ...selectedDiagnose,
-                    diagnoseStatusLkey: e
-                  })
-                }
-              />
-            </Col>
-          </Row>
 
-          <Row gutter={15}>
-            <Col xs={24}>
-              <Table
-                rowClassName={isSelected}
-                onRowClick={rowData => {
-                  setSelectedDiagnose(rowData);
-                }}
-                bordered
-                data={patientDiagnoseListResponse.data?.object ?? []}
-              >
-                <Table.Column flexGrow={1}>
-                  <Table.HeaderCell>Diagnosed Date</Table.HeaderCell>
-                  <Table.Cell>
-                    {rowData => <Text>{formatDate(rowData.dateDiagnosed)}</Text>}
-                  </Table.Cell>
-                </Table.Column>
-                <Table.Column flexGrow={1}>
-                  <Table.HeaderCell>Diagnose Type</Table.HeaderCell>
-                  <Table.Cell>
-                    {rowData => (
-                      <Text>
-                        {rowData.diagnoseTypeLvalue
-                          ? rowData.diagnoseTypeLvalue.lovDisplayVale
-                          : rowData.diagnoseTypeLkey}
-                      </Text>
-                    )}
-                  </Table.Cell>
-                </Table.Column>
-                <Table.Column flexGrow={2}>
-                  <Table.HeaderCell>ICD-10 Diagnosis</Table.HeaderCell>
-                  <Table.Cell>
-                    {rowData => (
-                      <Text>
-                        {rowData.diagnosisObject
-                          ? rowData.diagnosisObject.description
-                          : rowData.diagnoseCode}
-                      </Text>
-                    )}
-                  </Table.Cell>
-                </Table.Column>
-                <Table.Column flexGrow={1}>
-                  <Table.HeaderCell>Status</Table.HeaderCell>
-                  <Table.Cell>
-                    {rowData => (
-                      <Text>
-                        {rowData.diagnoseStatusLvalue
-                          ? rowData.diagnoseStatusLvalue.lovDisplayVale
-                          : rowData.diagnoseStatusLkey}
-                      </Text>
-                    )}
-                  </Table.Cell>
-                </Table.Column>
-              </Table>
-            </Col>
           </Row>
+          
         </Grid>
+
       </Panel>
+
     </>
   );
 };

@@ -44,7 +44,7 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
   console.log("Patient Observation List:", patirntObservationlist?.data);
 
   return (
-    <Form disabled style={{ zoom: 0.85 }} layout="inline" fluid>
+    <Form disabled style={{ zoom: 0.70 }} layout="inline" fluid>
       <MyInput width={150} column fieldLabel="MRN" fieldName={'patientMrn'} record={patient} />
       <MyInput width={150} column fieldLabel="Patient Name" fieldName={'patientFullName'} record={encounter} />
       <MyInput width={150} column fieldName={'documentNo'} record={patient} />
