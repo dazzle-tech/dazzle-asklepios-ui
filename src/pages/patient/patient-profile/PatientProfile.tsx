@@ -1453,7 +1453,7 @@ const PatientProfile = () => {
                   width={165}
                   vr={validationResult}
                   column
-                  fieldLabel="Gender"
+                  fieldLabel="Sex at Birth"
                   fieldType="select"
                   fieldName="genderLkey"
                   selectData={genderLovQueryResponse?.object ?? []}
