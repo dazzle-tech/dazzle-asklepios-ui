@@ -64,13 +64,8 @@ const Users = () => {
   const [selectedFacility, setSelectedFacility] = useState(newApFacility);
 
   useEffect(() => {
-    console.log(selectedFacility)
     if (selectedFacility) {
-      console.log(selectedFacility)
-      console.log(departmentsListResponse?.object)
-
       const selectedFacilities = selectedFacility?.key
-
       const filtered = departmentsListResponse?.object?.filter(department =>
         selectedFacilities.includes(department.facilityKey)
       ) ?? [];
@@ -99,8 +94,10 @@ const Users = () => {
 
 
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  const [licenseListRequest, setLicenseListRequest] = useState<ListRequest>({ ...initialListRequest });
 
-  const { data: licenseListResponse, refetch: refetchLicense } = useGetLicenseQuery(listRequest);
+
+  const { data: licenseListResponse, refetch: refetchLicense } = useGetLicenseQuery(licenseListRequest);
 
   const [saveUser, saveUserMutation] = useSaveUserMutation();
   const [saveDepartment, saveDepartmentMutation] = useSaveFacilityDepartmentMutation();
@@ -257,6 +254,8 @@ const Users = () => {
     }
   };
 
+
+  
   const handleAddNew = () => {
     setPopupOpen(true);
     setReadyUser(newApUser)
@@ -624,13 +623,13 @@ const Users = () => {
                     // sortType={patientRelationListRequest.sortType}
                     onSortColumn={(sortBy, sortType) => {
                       if (sortBy)
-                        setListRequest({
-                          ...listRequest,
+                        setLicenseListRequest({
+                          ...licenseListRequest,
                           sortBy,
                           sortType
                         });
                     }}
-                    onRowClick={(rowData) => { setSelectedLicense(rowData), console.log((rowData)) }}
+                    onRowClick={(rowData) => { setSelectedLicense(rowData) }}
                     headerHeight={40}
                     rowHeight={50}
                     bordered

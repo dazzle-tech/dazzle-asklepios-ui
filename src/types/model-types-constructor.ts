@@ -102,13 +102,6 @@ export const newApActiveIngredient:modelTypes.ApActiveIngredient = {
 	pharmaProteinBinding:'',
 	pharmaClearance:'',
 	pharmaMetabolism:'',
-	doseAdjPugA:'',
-	doseAdjPugB:'',
-	doseAdjPugC:'',
-	doseAdjRenalOne:'',
-	doseAdjRenalTwo:'',
-	doseAdjRenalThree:'',
-	doseAdjRenalFour:'',
 } 
 
 export const newApActiveIngredientAdverseEffect:modelTypes.ApActiveIngredientAdverseEffect = { 
@@ -250,22 +243,6 @@ export const newApAddresses:modelTypes.ApAddresses = {
 	isValid:undefined,
 } 
 
-export const newApAgeGroup:modelTypes.ApAgeGroup = { 
-	key:undefined,
-	ageGroupLkey:undefined,
-	fromAge:0,
-	toAge:0,
-	fromAgeUnitLkey:undefined,
-	toAgeUnitLkey:undefined,
-	createdBy:'',
-	updatedBy:'',
-	deletedBy:'',
-	createdAt:undefined,
-	updatedAt:undefined,
-	deletedAt:undefined,
-	isValid:undefined,
-} 
-
 export const newApAllergens:modelTypes.ApAllergens = { 
 	key:undefined,
 	allergenCode:'',
@@ -296,8 +273,6 @@ export const newApAttachment:modelTypes.ApAttachment = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
-	details:'',
-	accessTypeLkey:undefined,
 } 
 
 export const newApCatalogDiagnosticTest:modelTypes.ApCatalogDiagnosticTest = { 
@@ -522,8 +497,6 @@ export const newApDiagnosticTestCatalogHeader:modelTypes.ApDiagnosticTestCatalog
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
-	testKey:undefined,
-	catalogKey:undefined,
 } 
 
 export const newApDiagnosticTestEyeExam:modelTypes.ApDiagnosticTestEyeExam = { 
@@ -580,11 +553,18 @@ export const newApDiagnosticTestPathology:modelTypes.ApDiagnosticTestPathology =
 export const newApDiagnosticTestRadiology:modelTypes.ApDiagnosticTestRadiology = { 
 	key:undefined,
 	testKey:undefined,
+	labCatalogLkey:undefined,
 	internationalCodingTypeLkey:undefined,
 	childCodeLkey:undefined,
-	radCategoryLkey:undefined,
-	imageDuration:'',
+	propertyLkey:undefined,
+	systemLkey:undefined,
+	scaleLkey:undefined,
+	reagentsLkey:undefined,
+	methodLkey:undefined,
+	timingLkey:undefined,
 	timeUnitLkey:undefined,
+	resultType:'',
+	resultUnitLkey:undefined,
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',
@@ -592,15 +572,8 @@ export const newApDiagnosticTestRadiology:modelTypes.ApDiagnosticTestRadiology =
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
-	labCatalogLkey:undefined,
-	propertyLkey:undefined,
-	systemLkey:undefined,
-	scaleLkey:undefined,
-	reagentsLkey:undefined,
-	methodLkey:undefined,
-	timingLkey:undefined,
-	resultType:'',
-	resultUnitLkey:undefined,
+	radCategoryLkey:undefined,
+	imageDuration:'',
 } 
 
 export const newApDiagnosticTestSpecialPopulation:modelTypes.ApDiagnosticTestSpecialPopulation = { 
@@ -716,8 +689,6 @@ export const newApEncounter:modelTypes.ApEncounter = {
 	dischargeNote:'',
 	dischargeSummery:'',
 	visitId:'',
-	encounterNotes:'',
-	sourceName:'',
 } 
 
 export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService = { 
@@ -744,9 +715,11 @@ export const newApFacility:modelTypes.ApFacility = {
 	facilityName:'',
 	facilityNameOtherLang:'',
 	tenantId:'',
+	facilityType:'',
 	facilityRegistrationDate:null,
 	facilityEmailAddress:'',
 	facilityBriefDesc:'',
+	facilityAddress:'',
 	facilityAddressOtherLang:'',
 	facilityLogoFile:'',
 	createdBy:'',
@@ -756,13 +729,11 @@ export const newApFacility:modelTypes.ApFacility = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	facilityTypeLkey:undefined,
+	facilityAddressId:'',
 	facilityPhone1:'',
 	facilityPhone2:'',
 	facilityFax:'',
-	facilityAddressId:'',
-	facilityTypeLkey:undefined,
-	facilityType:'',
-	facilityAddress:'',
 } 
 
 export const newApGenericMedication:modelTypes.ApGenericMedication = { 
@@ -836,6 +807,20 @@ export const newApIcdCode:modelTypes.ApIcdCode = {
 	linkedWithGender:'',
 	linkedWithDisease:'',
 	moreSpecification:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApImagesAndAttachments:modelTypes.ApImagesAndAttachments = { 
+	key:undefined,
+	type:'',
+	patientKey:undefined,
+	value:'',
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',
@@ -1065,6 +1050,7 @@ export const newApPatient:modelTypes.ApPatient = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	districtLkey:undefined,
 	patientClassLkey:undefined,
 	privatePatient:undefined,
 	verificationOtp:'',
@@ -1106,25 +1092,6 @@ export const newApPatientAddresses:modelTypes.ApPatientAddresses = {
 	latitude:0,
 	longitude:'',
 	isActive:'',
-	createdBy:'',
-	updatedBy:'',
-	deletedBy:'',
-	createdAt:undefined,
-	updatedAt:undefined,
-	deletedAt:undefined,
-	isValid:undefined,
-} 
-
-export const newApPatientAdministrativeWarnings:modelTypes.ApPatientAdministrativeWarnings = { 
-	key:undefined,
-	patientKey:undefined,
-	warningTypeLkey:undefined,
-	description:'',
-	resolutionStatusLkey:undefined,
-	dateResolved:null,
-	resolvedBy:'',
-	resolutionUndoDate:null,
-	resolvedUndoBy:'',
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',
@@ -1302,7 +1269,7 @@ export const newApPatientObservationSummary:modelTypes.ApPatientObservationSumma
 	latestrespiratoryrate:0,
 	latestoxygensaturation:0,
 	latestglucoselevel:0,
-	latestpainlevelLkey:undefined,
+	latestpainlevel:0,
 	latestweight:0,
 	latestheight:0,
 	latestheadcircumference:0,
@@ -1318,7 +1285,7 @@ export const newApPatientObservationSummary:modelTypes.ApPatientObservationSumma
 	platestrespiratoryrate:0,
 	platestoxygensaturation:0,
 	platestglucoselevel:0,
-	platestpainlevelLkey:undefined,
+	platestpainlevel:0,
 	platestweight:0,
 	platestheight:0,
 	platestheadcircumference:0,
@@ -1332,10 +1299,6 @@ export const newApPatientObservationSummary:modelTypes.ApPatientObservationSumma
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
-	latestnotes:'',
-	platestnotes:'',
-	latestpaindescription:'',
-	platestpaindescription:'',
 } 
 
 export const newApPatientProblem:modelTypes.ApPatientProblem = { 
@@ -1376,7 +1339,6 @@ export const newApPatientRelation:modelTypes.ApPatientRelation = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
-	categoryTypeLkey:undefined,
 } 
 
 export const newApPatientSecondaryDocuments:modelTypes.ApPatientSecondaryDocuments = { 
@@ -1430,18 +1392,18 @@ export const newApPractitioner:modelTypes.ApPractitioner = {
 	practitionerLastName:'',
 	practitionerEmail:'',
 	practitionerPhoneNumber:'',
+	dob:null,
 	jobRole:'',
 	specialtyLkey:undefined,
 	subSpecialtyLkey:undefined,
 	defaultMedicalLicense:'',
+	defaultLicenseValidUntil:null,
 	secondaryMedicalLicense:'',
+	secondaryLicenseValidUntil:null,
 	educationalLevelLkey:undefined,
 	professionalMembershipAndCertification:'',
 	appointable:undefined,
 	linkedUser:'',
-	defaultLicenseValidUntil:null,
-	secondaryLicenseValidUntil:null,
-	dob:null,
 } 
 
 export const newApPrescriptionInstruction:modelTypes.ApPrescriptionInstruction = { 
@@ -1451,21 +1413,6 @@ export const newApPrescriptionInstruction:modelTypes.ApPrescriptionInstruction =
 	unitLkey:undefined,
 	routLkey:undefined,
 	frequencyLkey:undefined,
-	createdBy:'',
-	updatedBy:'',
-	deletedBy:'',
-	createdAt:undefined,
-	updatedAt:undefined,
-	deletedAt:undefined,
-	isValid:undefined,
-} 
-
-export const newApResources:modelTypes.ApResources = { 
-	key:undefined,
-	facilityKey:undefined,
-	resourceTypeLkey:undefined,
-	resourceKey:undefined,
-	isAllowParallel:undefined,
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',
@@ -1693,6 +1640,20 @@ export const newApUomGroups:modelTypes.ApUomGroups = {
 	isValid:undefined,
 } 
 
+export const newApUploads:modelTypes.ApUploads = { 
+	key:undefined,
+	type:'',
+	patientKey:undefined,
+	value:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApUser:modelTypes.ApUser = { 
 	key:undefined,
 	username:'',
@@ -1716,12 +1677,11 @@ export const newApUser:modelTypes.ApUser = {
 	firstName:'',
 	secondName:'',
 	lastName:'',
-	dob:null,
-	sexAtBirthLkey:undefined,
 	phoneNumber:0,
-	jobDescription:'',
-	jobRoleLkey:undefined,
+	sexAtBirthLkey:undefined,
+	dob:null,
 	jobRoleKey:undefined,
+	jobDescription:'',
 	mustChangePassword:undefined,
 } 
 
@@ -1736,8 +1696,6 @@ export const newApUserFacilities:modelTypes.ApUserFacilities = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
-	userKey:undefined,
-	facilityKey:undefined,
 } 
 
 export const newApUserFacilitiyDepartments:modelTypes.ApUserFacilitiyDepartments = { 
@@ -1756,6 +1714,7 @@ export const newApUserFacilitiyDepartments:modelTypes.ApUserFacilitiyDepartments
 
 export const newApUserMedicalLicense:modelTypes.ApUserMedicalLicense = { 
 	key:undefined,
+	userKey:undefined,
 	licenseName:'',
 	licenseNumber:'',
 	validTo:null,
@@ -1766,6 +1725,5 @@ export const newApUserMedicalLicense:modelTypes.ApUserMedicalLicense = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
-	userKey:undefined,
 } 
 
