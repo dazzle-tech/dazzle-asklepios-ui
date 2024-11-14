@@ -304,10 +304,10 @@ const EncounterList = () => {
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('departmentKey', e)} />
-              <Translate>Department</Translate>
+              <Input/>
+              <Translate>Waiting time</Translate>
             </HeaderCell>
-            <Cell dataKey="departmentKey" />
+            <Cell dataKey="" />
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
