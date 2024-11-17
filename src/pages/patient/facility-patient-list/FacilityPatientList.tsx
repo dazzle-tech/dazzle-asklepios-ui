@@ -18,12 +18,14 @@ import {
     Pagination,
     Form
 } from 'rsuite';
+import { DatePicker } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import MyInput from '@/components/MyInput';
 import SearchPeopleIcon from '@rsuite/icons/SearchPeople';
 import MyLabel from '@/components/MyLabel';
 import {
     ApPatient,
+    ApPatientInsurance
 } from '@/types/model-types';
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
@@ -33,26 +35,116 @@ import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { addFilterToListRequest, calculateAge, formatDate, fromCamelCaseToDBName } from '@/utils';
 import { useGetEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
-import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
+import { newApEncounter, newApPatient, newApPatientInsurance } from '@/types/model-types-constructor';
+import FileDownloadIcon from '@rsuite/icons/FileDownload';
+import IdMappingIcon from '@rsuite/icons/IdMapping';
 const FacilityPatientList = () => {
 
     const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
     const { data: documentTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
     const { data: primaryInsuranceProviderLovQueryResponse } = useGetLovValuesByCodeQuery('INS_PROVIDER');
-    const [searchPatient, setSearchPatient] = useState<ApPatient>({ ...newApPatient });
+    const [searchPatient, setSearchPatient] = useState<ApPatient>({
+        ...newApPatient,
+        // Ensures dob is an empty string
+    });
+    const [insurancePatient, setInsurancePatient] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
     const [dateRange, setDateRange] = useState([null, null]);
-
-    const handleDateChange = (value) => {
-        setDateRange(value);
-        const [startDate, endDate] = value;
-        console.log("Start Date:", startDate);
-        console.log("End Date:", endDate);
-    };
-
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
-        ignore: true
+        ignore: true,
+        filters: [
+
+            {
+                fieldName: 'gender_lkey',
+                operator: 'match',
+                value: searchPatient.genderLkey
+            },
+            {
+                fieldName: 'document_type_lkey',
+                operator: 'match',
+                value: searchPatient.documentTypeLkey
+            },
+            {
+                fieldName: 'insurance_provider_lkey',
+                operator: 'match',
+                value: insurancePatient.insuranceProviderLkey
+            },
+
+        ]
+
     });
+
+    const [dateFilter, setDateFilter] = useState({
+        fromDate: new Date(), //new Date(),
+        toDate: new Date(),
+    });
+
+    const handleDateChange = (value) => {
+        const [startDate, endDate] = value;
+        setDateFilter((prev) => ({
+            ...prev,
+            fromDate: startDate,
+            toDate: endDate,
+        }));
+
+        handleManualSearch();
+    };
+
+
+    const handleManualSearch = () => {
+        if (dateFilter.fromDate && dateFilter.toDate) {
+            const formattedFromDate = formatDate(dateFilter.fromDate);
+            const formattedToDate = formatDate(dateFilter.toDate);
+            setListRequest(
+                addFilterToListRequest(
+                    'created_at',
+                    'between',
+                    formattedFromDate + '_' + formattedToDate,
+                    listRequest
+                )
+            );
+        } else if (dateFilter.fromDate) {
+            const formattedFromDate = formatDate(dateFilter.fromDate);
+            setListRequest(
+                addFilterToListRequest('created_at', 'gte', formattedFromDate, listRequest)
+            );
+        } else if (dateFilter.toDate) {
+            const formattedToDate = formatDate(dateFilter.toDate);
+            setListRequest(
+                addFilterToListRequest('created_at', 'lte', formattedToDate, listRequest)
+            );
+        } else {
+            setListRequest({ ...listRequest });
+        }
+    };
+    const handleDOFSearch = (value) => {
+        console.log(value);
+        const dob = formatDate(value);
+        console.log(value);
+        setListRequest(
+            addFilterToListRequest(
+                'dob',
+                'match',
+                dob,
+                listRequest
+            )
+        );
+
+    };
+    console.log(listRequest);
+    useEffect(() => {
+        // init list
+        handleManualSearch();
+    }, []);
+
+    useEffect(() => {
+        setListRequest(prevState => ({
+            ...prevState,
+            filters: [
+                ...prevState.filters,
+            ]
+        }));
+    }, [searchPatient.genderLkey, searchPatient.documentTypeLkey, insurancePatient.insuranceProviderLkey]);
     const { data: encounterListResponse } = useGetEncountersQuery(listRequest);
 
     const isSelected = rowData => {
@@ -75,7 +167,6 @@ const FacilityPatientList = () => {
             setListRequest({ ...listRequest, filters: [] });
         }
     };
-
     return (
         <>
             <Panel>
@@ -110,16 +201,11 @@ const FacilityPatientList = () => {
                                         />
                                     </Stack>
 
-                                    <MyInput
+                                    <Stack spacing={10} direction="column" alignItems="flex-start">
+                                        <MyLabel label="Date of Birth " />
+                                        <DatePicker format="MM/dd/yyyy" onChange={handleDOFSearch} />
 
-                                        width={165}
-                                        column
-                                        fieldLabel="DOB"
-                                        fieldType="date"
-                                        fieldName="dob"
-                                        record={searchPatient}
-                                        setRecord={setSearchPatient}
-                                    />
+                                    </Stack >
                                     <MyInput
 
                                         width={165}
@@ -153,12 +239,12 @@ const FacilityPatientList = () => {
                                         column
                                         fieldLabel="Primary Insurance Provider"
                                         fieldType="select"
-                                        fieldName="primaryInsuranceProviderLkey"
+                                        fieldName="insuranceProviderLkey"
                                         selectData={primaryInsuranceProviderLovQueryResponse?.object ?? []}
                                         selectDataLabel="lovDisplayVale"
                                         selectDataValue="key"
-                                        record={""}
-                                        setRecord={""}
+                                        record={insurancePatient}
+                                        setRecord={setInsurancePatient}
                                     />
                                 </div>
                                 <br />
@@ -169,17 +255,16 @@ const FacilityPatientList = () => {
                                     <IconButton
                                         appearance="primary"
                                         color="blue"
-                                        style={{ fontSize: "12px", justifyContent: "flex-start" }}
-                                        icon={<FontAwesomeIcon icon={faBroom} style={{ marginRight: 'auto' }} />}
+                                        icon={<IdMappingIcon />}
                                     >
                                         Clear
                                     </IconButton>
 
                                     <IconButton
-                                        icon={<FontAwesomeIcon icon={faFileExport} style={{ marginRight: 'auto' }} />}
+                                        icon={<FileDownloadIcon />}
                                         appearance="primary"
                                         color="cyan"
-                                        style={{ justifyContent: "flex-start" }}
+
                                     >
                                         Export to Xsl
                                     </IconButton>
@@ -231,10 +316,10 @@ const FacilityPatientList = () => {
                             >
                                 <Column sortable flexGrow={2}>
                                     <HeaderCell>
-                                        <Input onChange={e => handleFilterChange('queueNumber', e)} />
+                                        <Input />
                                         <Translate># </Translate>
                                     </HeaderCell>
-                                    <Cell dataKey="queueNumber" />
+                                    <Cell>  {(rowData, rowIndex) => rowIndex + 1}</Cell>
                                 </Column>
 
                                 <Column sortable flexGrow={4}>

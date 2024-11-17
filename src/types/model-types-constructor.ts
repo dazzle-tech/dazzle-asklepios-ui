@@ -718,6 +718,7 @@ export const newApEncounter:modelTypes.ApEncounter = {
 	visitId:'',
 	encounterNotes:'',
 	sourceName:'',
+	physicalExamNote:'',
 } 
 
 export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService = { 
@@ -1205,6 +1206,8 @@ export const newApPatientDiagnose:modelTypes.ApPatientDiagnose = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	isMajor:undefined,
+	isSuspected:undefined,
 } 
 
 export const newApPatientIds:modelTypes.ApPatientIds = { 
@@ -1338,6 +1341,23 @@ export const newApPatientObservationSummary:modelTypes.ApPatientObservationSumma
 	platestpaindescription:'',
 } 
 
+export const newApPatientPlan:modelTypes.ApPatientPlan = { 
+	key:undefined,
+	patientKey:undefined,
+	visitKey:undefined,
+	physicianRecommendations:'',
+	patientEducations:'',
+	lifestyleModifications:'',
+	generalInstructions:null,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApPatientProblem:modelTypes.ApPatientProblem = { 
 	key:undefined,
 	patientKey:undefined,
@@ -1466,6 +1486,26 @@ export const newApResources:modelTypes.ApResources = {
 	resourceTypeLkey:undefined,
 	resourceKey:undefined,
 	isAllowParallel:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApResourcesAvailabilityTime:modelTypes.ApResourcesAvailabilityTime = { 
+	key:undefined,
+	resourceKey:undefined,
+	facilityKey:undefined,
+	departmentKey:undefined,
+	dayLkey:undefined,
+	startTime:0,
+	endTime:0,
+	isHasBreak:undefined,
+	breakFrom:0,
+	breakTo:0,
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',

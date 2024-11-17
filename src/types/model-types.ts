@@ -717,6 +717,7 @@ export interface ApEncounter {
 	visitId:string;
 	encounterNotes:string;
 	sourceName:string;
+	physicalExamNote:string;
 } 
 
 export interface ApEncounterAppliedService { 
@@ -1204,6 +1205,8 @@ export interface ApPatientDiagnose {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	isMajor:boolean;
+	isSuspected:boolean;
 } 
 
 export interface ApPatientIds { 
@@ -1337,6 +1340,23 @@ export interface ApPatientObservationSummary {
 	platestpaindescription:string;
 } 
 
+export interface ApPatientPlan { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	physicianRecommendations:string;
+	patientEducations:string;
+	lifestyleModifications:string;
+	generalInstructions:Date;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApPatientProblem { 
 	key:string;
 	patientKey:string;
@@ -1465,6 +1485,26 @@ export interface ApResources {
 	resourceTypeLkey:string;
 	resourceKey:string;
 	isAllowParallel:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApResourcesAvailabilityTime { 
+	key:string;
+	resourceKey:string;
+	facilityKey:string;
+	departmentKey:string;
+	dayLkey:string;
+	startTime:number;
+	endTime:number;
+	isHasBreak:boolean;
+	breakFrom:number;
+	breakTo:number;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
@@ -1767,3 +1807,4 @@ export interface ApUserMedicalLicense {
 	isValid:boolean;
 	userKey:string;
 } 
+
