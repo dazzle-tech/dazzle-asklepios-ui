@@ -7,7 +7,7 @@ const EmployeeMainInfoScreen = () => {
 
     return (
         <Form disabled style={{ zoom: 0.85 }} layout="inline" fluid>
-            <MyInput width={200} column fieldLabel="EI" fieldName={'employeetHmi'} record={""} />
+            <MyInput width={200} column fieldLabel="Person ID" fieldName={'employeetHmi'} record={""} />
             <MyInput width={200} column fieldLabel="Employee Name" fieldName={'employeeFullName'} record={""} />
             <MyInput width={200} column fieldLabel="Date of Birth"fieldName={'dob'} record={""} />
             <MyInput width={200} column fieldLabel="Employee Age" fieldName={'employeeAge'} record={""} />

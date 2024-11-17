@@ -540,7 +540,7 @@ const EmployeeRegistration = () => {
                   width={130}
                   vr={validationResult}
                   column
-                  fieldLabel="MRN"
+                  fieldLabel="Person ID"
                   fieldName="patientMrn"
                   record={localEmployee}
                   setRecord={setLocalEmployee}
