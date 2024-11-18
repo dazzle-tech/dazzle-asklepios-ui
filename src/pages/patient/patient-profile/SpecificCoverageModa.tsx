@@ -29,8 +29,8 @@ import { initialListRequest, ListRequest } from '@/types/types';
 const SpecificCoverageModa = ({ open, onClose, insurance }) => {
     const [isUnknown, setIsUnknown] = useState(false);
     const [validationResult, setValidationResult] = useState({});
-    const { data: isnuranceCovgTypResponse } = useGetLovValuesByCodeQuery('INS_COVG_TYP');
-    const { data: isnuranceCovgItemsResponse } = useGetLovValuesByCodeQuery('COVERAGE_ITEMS');
+    const { data: isnuranceCovgTypResponse } = useGetLovValuesByCodeQuery('COVERAGE_ITEMS');
+    const { data: isnuranceCovgItemsResponse } = useGetLovValuesByCodeQuery('INS_COVG_TYP');
 
     const [patientInsuranceCovgListRequest, setPatientInsuranceCovgListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -93,7 +93,7 @@ const SpecificCoverageModa = ({ open, onClose, insurance }) => {
                 open={open} onClose={handleClearModal}
             >
                 <Drawer.Header>
-                    <Drawer.Title>Patient List - Search Results</Drawer.Title>
+                    <Drawer.Title>Coverage List</Drawer.Title>
                     {/* <Drawer.Actions>{conjurePatientSearchBar(patientSearchTarget)}</Drawer.Actions> */}
 
                 </Drawer.Header>
