@@ -24,8 +24,10 @@ import 'react-tabs/style/react-tabs.css';
 import { initialListRequest } from '@/types/types';
 
 import { newApPatientDiagnose } from '@/types/model-types-constructor';
-import { Plus, Trash } from '@rsuite/icons';
+import { Plus, Trash} from '@rsuite/icons';
+
 import { MdSave } from 'react-icons/md';
+import { notify } from '@/utils/uiReducerActions';
 import {
   useGetPatientDiagnosisQuery,
   useRemovePatientDiagnoseMutation,
@@ -35,10 +37,8 @@ import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from '@/services/setup
 import { ApPatientDiagnose } from '@/types/model-types';
 const PatientDiagnosis = () => {
   const patientSlice = useAppSelector(state => state.patient);
+  const dispatch = useAppDispatch();
 
-  const [selectedDiagnose, setSelectedDiagnose] = useState<ApPatientDiagnose>({
-    ...newApPatientDiagnose
-  });
 
   const [listRequest, setListRequest] = useState({
     ...initialListRequest,
@@ -53,10 +53,11 @@ const PatientDiagnosis = () => {
         value: patientSlice.patient.key
       },
       {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
+        fieldName: 'visit_key',
+        operator: 'match',
+        value: patientSlice.encounter.key
       }
+      
     ]
   });
 
@@ -73,14 +74,39 @@ const PatientDiagnosis = () => {
 
   const [savePatientDiagnose, savePatientDiagnoseMutation] = useSavePatientDiagnoseMutation();
   const [removePatientDiagnose, removePatientDiagnoseMutation] = useRemovePatientDiagnoseMutation();
-
-  const save = () => {
-    savePatientDiagnose({
-      ...selectedDiagnose,
-      visitKey: patientSlice.encounter.key,
+  const existingDiagnoseKey ="";
+  const [selectedDiagnose, setSelectedDiagnose] = useState<ApPatientDiagnose>({
+    ...newApPatientDiagnose,
+    visitKey: patientSlice.encounter.key,
       patientKey: patientSlice.patient.key,
       createdBy: 'Administrator'
-    }).unwrap();
+     
+
+  });
+  
+ const key=patientDiagnoseListResponse.data?.object?.[0].key??"";
+ console.log(key);
+ useEffect(() => {
+  if (patientDiagnoseListResponse.data?.object?.length > 0) {
+    setSelectedDiagnose(patientDiagnoseListResponse.data.object[0]);
+  }
+}, [patientDiagnoseListResponse.data]);
+
+console.log(selectedDiagnose);
+  const save = () => {
+   
+    try{
+    savePatientDiagnose({
+      ...selectedDiagnose
+     
+      
+    }).unwrap();  
+      dispatch(notify('saved  Successfully'));
+  } catch (error) {
+    // معالجة الخطأ هنا
+    console.error("Encounter save failed:", error);
+    dispatch(notify('saved  fill'));
+  }
   };
 
   const remove = () => {
@@ -131,14 +157,15 @@ const PatientDiagnosis = () => {
   };
   return (
     <>
-      <Panel  >
+      <Panel   >
         <Grid fluid>
           <Row gutter={15}>
-            <Col xs={14} >
+            <Col xs={11} >
               <Row >
-                <Text>Diagnose</Text>
+                <Text  style={{ zoom:0.80}}>Diagnose</Text>
                 <SelectPicker
-                  style={{ width: '100%' }}
+                  disabled={patientSlice.encounter.encounterStatusLkey=='91109811181900'?true:false}
+                  style={{ width: '100%' ,zoom:0.80}}
                   data={icdListResponseData?.object ?? []}
                   labelKey="description"
                   valueKey="key"
@@ -153,7 +180,8 @@ const PatientDiagnosis = () => {
                 />
               </Row>
               <Row >
-                Additional Description
+                
+                <Text  style={{ zoom:0.80}}>Additional Description</Text>
                 <InputGroup>
                   <InputGroup.Addon>
                     {<icons.CheckRound color="green" />}
@@ -161,30 +189,49 @@ const PatientDiagnosis = () => {
 
                   </InputGroup.Addon>
                   <Input
-
-
-                    value={""}
-                  // onChange={e => setLocalEncounter({ ...localEncounter, progressNote: e })}
-                  // onBlur={progressNoteIsChanged() ? saveChanges : undefined}
+                    disabled={patientSlice.encounter.encounterStatusLkey=='91109811181900'?true:false}
+                    style={{zoom:0.80 }}
+                    value={selectedDiagnose.description}
+                  onChange={e => setSelectedDiagnose({ ...selectedDiagnose, description: e })}
+                 
                   />
                 </InputGroup>
               </Row>
 
             </Col>
-            <Col xs={7} >
+            <Col xs={10} >
 
               <Row gutter={5}>
                 <div style={{ display: "flex", gap: "2px" }}>
 
-                  <div style={{ display: "flex", flexDirection: "column", flex: "1" }}><Text >Syspected</Text><Toggle checkedChildren="Yes" unCheckedChildren="No" defaultChecked /></div>
+                  <div style={{ display: "flex", flexDirection: "column", flex: "1" }}><Text style={{marginRight:"2px"}} >Syspected</Text><Toggle  
+                  onChange={e =>
+                    setSelectedDiagnose({
+                      ...selectedDiagnose,
+                      isSuspected: e
+                    })
+                  } checkedChildren="Yes" unCheckedChildren="No"  
+                  defaultChecked ={selectedDiagnose.isSuspected}
+                  disabled={patientSlice.encounter.encounterStatusLkey=='91109811181900'?true:false}
+                  /></div>
 
-                  <div style={{ display: "flex", flexDirection: "column", flex: "1" }}><Text>Major</Text><Toggle checkedChildren="Yes" unCheckedChildren="No" defaultChecked /></div>
+                  <div style={{ display: "flex", flexDirection: "column", flex: "1" }}><Text>Major</Text>
+                  <Toggle 
+                   onChange={e =>
+                    setSelectedDiagnose({
+                      ...selectedDiagnose,
+                      isMajor: e
+                    })}
+                    disabled={patientSlice.encounter.encounterStatusLkey=='91109811181900'?true:false}
+                  checkedChildren="Yes" unCheckedChildren="No" defaultChecked={selectedDiagnose.isMajor} /></div>
                 </div>
               </Row>
-              <Row >
-                <Text>Type</Text>
+              <Row style={{display:"flex"}} >
+              <div style={{display:'flex',flexDirection:"column"}}>
+              <Text  style={{ zoom:0.80}}>Type </Text>
                 <SelectPicker
-                  style={{ width: '100%' }}
+                disabled={patientSlice.encounter.encounterStatusLkey=='91109811181900'?true:false}
+                  style={{ width: '100%',zoom:0.80 }}
                   data={sourceOfInfoLovResponseData?.object ?? []}
                   labelKey="lovDisplayVale"
                   valueKey="key"
@@ -197,6 +244,10 @@ const PatientDiagnosis = () => {
                     })
                   }
                 />
+                </div>
+               
+                 <IconButton style={{zoom:0.90 ,color: "green"}}  icon={<MdSave/>} onClick={save} disabled={patientSlice.encounter.encounterStatusLkey=='91109811181900'?true:false}/>
+              
               </Row>
             </Col>
 
