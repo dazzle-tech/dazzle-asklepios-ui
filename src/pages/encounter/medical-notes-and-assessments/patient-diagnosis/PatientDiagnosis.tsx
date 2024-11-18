@@ -227,7 +227,7 @@ console.log(selectedDiagnose);
                 </div>
               </Row>
               <Row style={{display:"flex"}} >
-              <div style={{display:'flex',flexDirection:"column"}}>
+              <div style={{display:'flex',flexDirection:'column'}}>
               <Text  style={{ zoom:0.80}}>Type </Text>
                 <SelectPicker
                 disabled={patientSlice.encounter.encounterStatusLkey=='91109811181900'?true:false}
