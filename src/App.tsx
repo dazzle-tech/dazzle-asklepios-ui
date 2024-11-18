@@ -57,6 +57,7 @@ import Diagnostics from './pages/setup/diagnostics-tests-definition';
 import Resources from './pages/appointment/resources';
 import EncounterPreObservations from './pages/encounter/encounter-pre-observations/EncounterPreObservations';
 import AgeGroup from './pages/setup/age-group';
+import FacilityPatientList from './pages/patient/facility-patient-list/FacilityPatientList'
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -204,7 +205,7 @@ const App = () => {
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
-             
+              <Route path="facility-patient-list" element={<FacilityPatientList />} />
               <Route path="encounter" element={<Encounter />} />
               <Route path="encounter-list" element={<EncounterList />} />
               <Route path="encounter-pre-observations" element={<EncounterPreObservations />} />
