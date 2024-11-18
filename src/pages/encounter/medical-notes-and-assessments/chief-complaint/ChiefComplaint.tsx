@@ -1,36 +1,86 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import React, { useEffect, useState } from 'react';
-import { IconButton, Input, Panel, Grid, Row, Col, InputGroup, Modal, Button } from 'rsuite';
+import {
+  useGetLovValuesByCodeAndParentQuery,
+  useGetLovValuesByCodeQuery
+} from '@/services/setupService';
+import { notify } from '@/utils/uiReducerActions';
+import { IconButton, Input, Panel, Grid, Row, Col, InputGroup, Modal, Button, Toggle, Form } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
 import { newApEncounter } from '@/types/model-types-constructor';
 import { useSaveEncounterChangesMutation } from '@/services/encounterService';
 import VoiceCitation from '@/components/VoiceCitation';
+import './styles.less';
 const ChiefComplaint = () => {
   const patientSlice = useAppSelector(state => state.patient);
   const dispatch = useAppDispatch();
-
+  const { data: painPatternLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_PATTERN');
+  const { data: timeUnitsLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
+  const { data: bodyPartsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
   const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter });
-
   const [saveEncounterChanges, saveEncounterChangesMutation] = useSaveEncounterChangesMutation();
 
   const [chiefComplaintTextAreaOpen, setChiefComplaintTextAreaOpen] = useState(false);
   const [hpiSummaryTextAreaOpen, setHpiSummaryTextAreaOpen] = useState(false);
   const [pastMedicalHistoryTextAreaOpen, setPastMedicalHistoryTextAreaOpen] = useState(false);
   const [progressNoteTextAreaOpen, setProgressNoteTextAreaOpen] = useState(false);
+  const [openModal, setOpenModal] = useState(null);
+  const [val, setVal] = useState('');
+  const [val2, setVal2] = useState('');
+  const [val3, setVal3] = useState('');
+  const [result, setResult] = useState('');
+  const closeModal = () => setOpenModal(null);
+  const [toggleChecked, setToggleChecked] = useState(false); // State for Toggle
+
+  const openSpecificModal = (modalId) => setOpenModal(modalId);
+  const handleNext = () => {
+    if (openModal === 'first') {
+      //  setVal((selectValue||otherValue)+","+textAreaValue)
+      setOpenModal('second');
+    } else if (openModal === 'second') {
+      // setVal2(selectSecValue || otherSecValue); // Save value for the second modal
+      setOpenModal('third');
+    }
+  };
+  const handleSave = () => {
+    //     const combine=val+","+val2+","+val3;
+    //    setAddChiefComplement({...addChiefComplement, result:combine}) ;
+    //     setResult(combine); // Set the result to a combined value
+    closeModal();
+
+  };
+  const handleSkip = () => {
+    if (openModal === 'first') {
+      setOpenModal('second');
+    } else if (openModal === 'second') {
+      setOpenModal('third');
+    }
+  };
 
   useEffect(() => {
     if (patientSlice.encounter && patientSlice.encounter.key) {
       setLocalEncounter(patientSlice.encounter);
+      console.log("this is my note:" + patientSlice.encounter.progressNote);
     } else {
     }
   }, []);
 
-  const saveChanges = () => {
-    saveEncounterChanges(localEncounter).unwrap();
+  const saveChanges =async () => {
+    try {
+      await saveEncounterChanges(localEncounter).unwrap();
+      dispatch(notify('saved chiefComplain Successfully'));
+    } catch (error) {
+
+      // معالجة الخطأ هنا
+
+      console.error("Encounter save failed:", error);
+      dispatch(notify('saved chiefComplain fill'));
+    }
   };
 
   useEffect(() => {
@@ -153,126 +203,191 @@ const ChiefComplaint = () => {
         </Modal.Footer>
       </Modal>
 
-      <Panel bordered style={{ padding: '10px', margin: '5px' }}>
-        <Grid fluid>
-          <Row gutter={15}>
-            <Col xs={4}>
-              <label>
-                <Translate>Chief Complaint</Translate>
-              </label>
-            </Col>
-            <Col xs={16}>
-              <InputGroup>
-                <InputGroup.Addon>
-                  {!chiefComplaintIsChanged() && <icons.CheckRound color="green" />}
-                  {chiefComplaintIsChanged() && <icons.Gear spin />}
-                </InputGroup.Addon>
-                <Input
-                  value={localEncounter.chiefComplaint}
-                  onChange={e => setLocalEncounter({ ...localEncounter, chiefComplaint: e })}
-                  onBlur={chiefComplaintIsChanged() ? saveChanges : undefined}
+      <Panel bordered style={{ padding: '5px', margin: '5px' }}>
+
+        <Row gutter={15}>
+          <IconButton
+            style={{ margin: "3px" }} appearance="primary" size="sm"
+            onClick={() => openSpecificModal('first')}
+            icon={<icons.Search style={{ fontSize: '11px' }} />} >
+            <Translate>use   Questionnair</Translate>
+          </IconButton>
+
+
+
+          <InputGroup>
+            <InputGroup.Addon>
+              {!progressNoteIsChanged() && <icons.CheckRound color="green" />}
+              {progressNoteIsChanged() && <icons.Gear spin />}
+            </InputGroup.Addon>
+            <Input
+              as={'textarea'}
+              rows={4}
+              style={{ fontSize: '12px', maxHeight: '150px', overflowY: 'auto', resize: 'vertical' }}
+              value={localEncounter.progressNote}
+              onChange={e => setLocalEncounter({ ...localEncounter, progressNote: e })}
+              onBlur={progressNoteIsChanged() ? saveChanges : undefined}
+            />
+          </InputGroup>
+
+
+        </Row>
+        {/* First Modal */}
+        <Modal open={openModal === 'first'} onClose={closeModal}>
+          <Modal.Header>
+            <Modal.Title>Chief Complain</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p>Since when do you have pain?</p>
+            <Form fluid>
+            
+                
+                  <MyInput
+                    // disabled={true}
+                    width={180}
+                    row
+                    fieldLabel="time Units"
+                    fieldType="select"
+                    fieldName="latestpainlevelLkey"
+                    selectData={timeUnitsLovQueryResponse ?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={{}}
+                    setRecord={{}}
+                  />
+              
+                <input
+                  type="text"
+                  placeholder="other"
+                  // onChange={handleFirstOtherInputChange}
+                  // disabled={durationOtherDisabled}
+                  style={{ flex: '1', borderRadius: '4px' }}
                 />
-              </InputGroup>
-            </Col>
-            <Col xs={2}>
-              <IconButton disabled icon={<icons.List />} />
-            </Col>
-            <Col xs={2}>
-              <IconButton
-                onClick={() => setChiefComplaintTextAreaOpen(true)}
-                icon={<icons.Others />}
-              />
-            </Col>
-          </Row>
-          <Row gutter={15}>
-            <Col xs={4}>
-              <label>
-                <Translate>HPI</Translate>
-              </label>
-            </Col>
-            <Col xs={16}>
-              <InputGroup>
-                <InputGroup.Addon>
-                  {!hpiSummaryIsChanged() && <icons.CheckRound color="green" />}
-                  {hpiSummaryIsChanged() && <icons.Gear spin />}
-                </InputGroup.Addon>
-                <Input
-                  value={localEncounter.hpiSummery}
-                  onChange={e => setLocalEncounter({ ...localEncounter, hpiSummery: e })}
-                  onBlur={hpiSummaryIsChanged() ? saveChanges : undefined}
+             <MyInput
+             fieldType="textarea"
+            fieldName="duration"
+             record={{}}
+             setRecord={{}}
+             ></MyInput>
+             
+            </Form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button style={{ backgroundColor: '#ffcc00' }} appearance="subtle" onClick={handleSkip}>
+              Skip
+            </Button>
+            <Button appearance="primary" onClick={handleNext}>
+              Next
+            </Button>
+            <Button appearance="default" onClick={closeModal}>
+              Cancel
+            </Button>
+          </Modal.Footer>
+        </Modal>
+
+        {/* Second Modal */}
+        <Modal open={openModal === 'second'} onClose={closeModal}>
+          <Modal.Header>
+            <Modal.Title>Chief Complain</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p>How do you describe your pain pattern?</p>
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              width: "370px",
+              height: "250px",
+              backgroundColor: "#f7f7fa"
+            }}>
+              <div style={{ display: "flex", gap: "5px", marginBottom: "7px" }}>
+              <Form>
+                  <MyInput
+                    // disabled={true}
+                    width={180}
+                    row
+                    fieldLabel="Pain Pattern"
+                    fieldType="select"
+                    fieldName="latestpainlevelLkey"
+                    selectData={painPatternLovQueryResponse ?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={{}}
+                    setRecord={{}}
+                  />
+                </Form>
+                <input
+                  type="text"
+                  placeholder="other"
+                  // onChange={handleSecondOtherInputChange}
+                  // disabled={durationSecOtherDisabled}
+                  style={{ flex: "1", borderRadius: "4px" }}
                 />
-              </InputGroup>
-            </Col>
-            <Col xs={2}>
-              <IconButton icon={<icons.List />} />
-            </Col>
-            <Col xs={2}>
-              <IconButton onClick={() => setHpiSummaryTextAreaOpen(true)} icon={<icons.Others />} />
-            </Col>
-          </Row>
-          <Row gutter={15}>
-            <Col xs={4}>
-              <label>
-                <Translate>History</Translate>
-              </label>
-            </Col>
-            <Col xs={16}>
-              <InputGroup>
-                <InputGroup.Addon>
-                  {!pastMedicalHistoryIsChanged() && <icons.CheckRound color="green" />}
-                  {pastMedicalHistoryIsChanged() && <icons.Gear spin />}
-                </InputGroup.Addon>
-                <Input
-                  value={localEncounter.pastMedicalHistorySummery}
-                  onChange={e =>
-                    setLocalEncounter({ ...localEncounter, pastMedicalHistorySummery: e })
-                  }
-                  onBlur={pastMedicalHistoryIsChanged() ? saveChanges : undefined}
+              </div>
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button style={{ backgroundColor: '#ffcc00' }} appearance="subtle" onClick={handleSkip}>
+              Skip
+            </Button>
+            <Button appearance="primary" onClick={handleNext}>
+              Next
+            </Button>
+            <Button appearance="default" onClick={closeModal}>
+              Cancel
+            </Button>
+          </Modal.Footer>
+        </Modal>
+
+        {/* Third Modal */}
+        <Modal open={openModal === 'third'} onClose={closeModal}>
+          <Modal.Header>
+            <Modal.Title>Chief Complain</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p>Do you want to add a specific note to your complaint?</p>
+            <div style={{
+              display: "flex",
+              flexDirection: "column",
+              width: "370px",
+              height: "250px",
+              backgroundColor: "#f7f7fa"
+            }}>
+              <div style={{ display: "flex", gap: "5px", marginBottom: "7px" }}>
+                <Toggle
+                  checkedChildren="Yes"
+                  unCheckedChildren="No"
+                  // checked={toggleChecked}
+                  // onChange={handleToggleChange}
+                  style={{ marginBottom: '10px' }}
                 />
-              </InputGroup>
-            </Col>
-            <Col xs={2}>
-              <IconButton icon={<icons.List />} />
-            </Col>
-            <Col xs={2}>
-              <IconButton
-                onClick={() => setPastMedicalHistoryTextAreaOpen(true)}
-                icon={<icons.Others />}
-              />
-            </Col>
-          </Row>
-          <Row gutter={15}>
-            <Col xs={4}>
-              <label>
-                <Translate>Progress Note</Translate>
-              </label>
-            </Col>
-            <Col xs={16}>
-              <InputGroup>
-                <InputGroup.Addon>
-                  {!progressNoteIsChanged() && <icons.CheckRound color="green" />}
-                  {progressNoteIsChanged() && <icons.Gear spin />}
-                </InputGroup.Addon>
-                <Input
-                  as={'textarea'}
-                  rows={8}
-                  value={localEncounter.progressNote}
-                  onChange={e => setLocalEncounter({ ...localEncounter, progressNote: e })}
-                  onBlur={progressNoteIsChanged() ? saveChanges : undefined}
-                />
-              </InputGroup>
-            </Col>
-            <Col xs={2}>
-              <IconButton icon={<icons.List />} />
-            </Col>
-            <Col xs={2}>
-              <IconButton
-                onClick={() => setProgressNoteTextAreaOpen(true)}
-                icon={<icons.Others />}
-              />
-            </Col>
-          </Row>
-        </Grid>
+               <Form>
+                  <MyInput
+                    // disabled={true}
+                    width={180}
+                    row
+                    fieldLabel="Body Parts"
+                    fieldType="select"
+                    fieldName="latestpainlevelLkey"
+                    selectData={bodyPartsLovQueryResponse ?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={{}}
+                    setRecord={{}}
+                  />
+                </Form> </div></div>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button style={{ backgroundColor: '#ffcc00' }} appearance="subtle" onClick={handleSkip}>
+              Skip
+            </Button>
+            <Button appearance="primary" onClick={handleSave}>
+              Save
+            </Button>
+            <Button appearance="default" onClick={closeModal}>
+              Cancel
+            </Button>
+          </Modal.Footer>
+        </Modal>
       </Panel>
     </>
   );

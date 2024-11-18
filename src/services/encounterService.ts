@@ -2,7 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApEncounter, ApPatientDiagnose, ApReviewOfSystem } from '@/types/model-types';
+import { ApEncounter, ApPatientDiagnose, ApPatientPlan, ApReviewOfSystem } from '@/types/model-types';
 
 export const encounterService = createApi({
   reducerPath: 'encounterApi',
@@ -158,7 +158,25 @@ export const encounterService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       }
-    })
+    }),
+    savePatientPlan: builder.mutation({
+      query: (patPlan: ApPatientPlan) => ({
+        url: `/encounter/save-patient-plan`,
+        method: 'POST',
+        body: patPlan
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getPatientPlans: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/patient-plan-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 });
 
@@ -177,5 +195,7 @@ export const {
   useRemovePhysicalExamAreaMutation,
   useGetPatientDiagnosisQuery,
   useSavePatientDiagnoseMutation,
-  useRemovePatientDiagnoseMutation
+  useRemovePatientDiagnoseMutation,
+  useSavePatientPlanMutation,
+  useGetPatientPlansQuery
 } = encounterService;

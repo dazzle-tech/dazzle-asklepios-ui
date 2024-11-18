@@ -25,7 +25,7 @@ const AgeGroup=()=>{
     const { data: agegroupsLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_GROUPS');
     const { data: ageunitsLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_UNITS');
     const [saveAgeGroups, saveAgeGroupsMutation] = useSaveAgeGroupMutation();
-  const { data: ageGroupsListResponse } = useGetAgeGroupQuery(listRequest);
+    const { data: ageGroupsListResponse } = useGetAgeGroupQuery(listRequest);
 
   const isSelected = rowData => {
     if (rowData && agegroups  && rowData.key === agegroups .key) {

@@ -1,8 +1,10 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
+import * as icons from '@rsuite/icons';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import React, { useEffect, useState } from 'react';
+import { Toggle } from 'rsuite';
 import {
   FlexboxGrid,
   IconButton,
@@ -22,8 +24,10 @@ import 'react-tabs/style/react-tabs.css';
 import { initialListRequest } from '@/types/types';
 
 import { newApPatientDiagnose } from '@/types/model-types-constructor';
-import { Plus, Trash } from '@rsuite/icons';
+import { Plus, Trash} from '@rsuite/icons';
+
 import { MdSave } from 'react-icons/md';
+import { notify } from '@/utils/uiReducerActions';
 import {
   useGetPatientDiagnosisQuery,
   useRemovePatientDiagnoseMutation,
@@ -33,10 +37,8 @@ import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from '@/services/setup
 import { ApPatientDiagnose } from '@/types/model-types';
 const PatientDiagnosis = () => {
   const patientSlice = useAppSelector(state => state.patient);
+  const dispatch = useAppDispatch();
 
-  const [selectedDiagnose, setSelectedDiagnose] = useState<ApPatientDiagnose>({
-    ...newApPatientDiagnose
-  });
 
   const [listRequest, setListRequest] = useState({
     ...initialListRequest,
@@ -51,10 +53,11 @@ const PatientDiagnosis = () => {
         value: patientSlice.patient.key
       },
       {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
+        fieldName: 'visit_key',
+        operator: 'match',
+        value: patientSlice.encounter.key
       }
+      
     ]
   });
 
@@ -65,20 +68,45 @@ const PatientDiagnosis = () => {
     pageSize: 100
   });
 
-  const { data: sourceOfInfoLovResponseData } = useGetLovValuesByCodeQuery('SOURCE_OF_INFO');
+  const { data: sourceOfInfoLovResponseData } = useGetLovValuesByCodeQuery('DIAGNOSIS_TYPE');
   const { data: resolutionStatusLovResponseData } =
     useGetLovValuesByCodeQuery('ALLERGY_RES_STATUS');
 
   const [savePatientDiagnose, savePatientDiagnoseMutation] = useSavePatientDiagnoseMutation();
   const [removePatientDiagnose, removePatientDiagnoseMutation] = useRemovePatientDiagnoseMutation();
-
-  const save = () => {
-    savePatientDiagnose({
-      ...selectedDiagnose,
-      visitKey: patientSlice.encounter.key,
+  const existingDiagnoseKey ="";
+  const [selectedDiagnose, setSelectedDiagnose] = useState<ApPatientDiagnose>({
+    ...newApPatientDiagnose,
+    visitKey: patientSlice.encounter.key,
       patientKey: patientSlice.patient.key,
       createdBy: 'Administrator'
-    }).unwrap();
+     
+
+  });
+  
+ const key=patientDiagnoseListResponse.data?.object?.[0].key??"";
+ console.log(key);
+ useEffect(() => {
+  if (patientDiagnoseListResponse.data?.object?.length > 0) {
+    setSelectedDiagnose(patientDiagnoseListResponse.data.object[0]);
+  }
+}, [patientDiagnoseListResponse.data]);
+
+console.log(selectedDiagnose);
+  const save = () => {
+   
+    try{
+    savePatientDiagnose({
+      ...selectedDiagnose
+     
+      
+    }).unwrap();  
+      dispatch(notify('saved  Successfully'));
+  } catch (error) {
+
+    console.error("Encounter save failed:", error);
+    dispatch(notify('saved  fill'));
+  }
   };
 
   const remove = () => {
@@ -129,166 +157,107 @@ const PatientDiagnosis = () => {
   };
   return (
     <>
-      <Panel bordered style={{ padding: '10px', margin: '5px' }} header="Patient Diagnosis">
+      <Panel   >
         <Grid fluid>
-          <Row gutter={15} style={{ border: '1px solid #e1e1e1' }}>
-            <Col xs={3}>
-              <ButtonToolbar style={{ margin: '6px' }}>
-                <IconButton
-                  size="xs"
-                  appearance="primary"
-                  color="blue"
-                  onClick={() => setSelectedDiagnose({ ...newApPatientDiagnose })}
-                  icon={<Plus />}
-                />
-              </ButtonToolbar>
-            </Col>
-            <Col xs={18}></Col>
-            <Col xs={3}>
-              <ButtonToolbar style={{ margin: '6px' }}>
-                <IconButton
-                  size="xs"
-                  onClick={save}
-                  appearance="primary"
-                  color="green"
-                  icon={<MdSave />}
-                />
-                <IconButton
-                  disabled={!selectedDiagnose.key}
-                  size="xs"
-                  appearance="primary"
-                  onClick={remove}
-                  color="red"
-                  icon={<Trash />}
-                />
-              </ButtonToolbar>
-            </Col>
-          </Row>
           <Row gutter={15}>
-            <Col xs={6}>
-              <Text>Diagnose Date</Text>
-              <DatePicker
-                placeholder="Date of Diagnosis"
-                value={selectedDiagnose.dateDiagnosed}
-                onChange={e =>
-                  setSelectedDiagnose({
-                    ...selectedDiagnose,
-                    dateDiagnosed: e
-                  })
-                }
-              />
+            <Col xs={11} >
+              <Row >
+                <Text  style={{ zoom:0.80}}>Diagnose</Text>
+                <SelectPicker
+                  disabled={patientSlice.encounter.encounterStatusLkey=='91109811181900'?true:false}
+                  style={{ width: '100%' ,zoom:0.80}}
+                  data={icdListResponseData?.object ?? []}
+                  labelKey="description"
+                  valueKey="key"
+                  placeholder="ICD"
+                  value={selectedDiagnose.diagnoseCode}
+                  onChange={e =>
+                    setSelectedDiagnose({
+                      ...selectedDiagnose,
+                      diagnoseCode: e
+                    })
+                  }
+                />
+              </Row>
+              <Row >
+                
+                <Text  style={{ zoom:0.80}}>Additional Description</Text>
+                <InputGroup>
+                  <InputGroup.Addon>
+                    {<icons.CheckRound color="green" />}
+
+
+                  </InputGroup.Addon>
+                  <Input
+                    disabled={patientSlice.encounter.encounterStatusLkey=='91109811181900'?true:false}
+                    style={{zoom:0.80 }}
+                    value={selectedDiagnose.description}
+                  onChange={e => setSelectedDiagnose({ ...selectedDiagnose, description: e })}
+                 
+                  />
+                </InputGroup>
+              </Row>
+
             </Col>
-            <Col xs={6}>
-              <Text>Diagnose</Text>
-              <SelectPicker
-                style={{ width: '100%' }}
-                data={icdListResponseData?.object ?? []}
-                labelKey="description"
-                valueKey="key"
-                placeholder="ICD"
-                value={selectedDiagnose.diagnoseCode}
-                onChange={e =>
-                  setSelectedDiagnose({
-                    ...selectedDiagnose,
-                    diagnoseCode: e
-                  })
-                }
-              />
-            </Col>
-            <Col xs={6}>
-              <Text>Type</Text>
-              <SelectPicker
-                style={{ width: '100%' }}
-                data={sourceOfInfoLovResponseData?.object ?? []}
-                labelKey="lovDisplayVale"
-                valueKey="key"
-                placeholder="Source of Info"
-                value={selectedDiagnose.diagnoseTypeLkey}
-                onChange={e =>
-                  setSelectedDiagnose({
-                    ...selectedDiagnose,
-                    diagnoseTypeLkey: e
-                  })
-                }
-              />
+            <Col xs={10} >
+
+              <Row gutter={5}>
+                <div style={{ display: "flex", gap: "2px" }}>
+
+                  <div style={{ display: "flex", flexDirection: "column", flex: "1" }}><Text style={{marginRight:"2px"}} >Syspected</Text><Toggle  
+                  onChange={e =>
+                    setSelectedDiagnose({
+                      ...selectedDiagnose,
+                      isSuspected: e
+                    })
+                  } checkedChildren="Yes" unCheckedChildren="No"  
+                  defaultChecked ={selectedDiagnose.isSuspected}
+                  disabled={patientSlice.encounter.encounterStatusLkey=='91109811181900'?true:false}
+                  /></div>
+
+                  <div style={{ display: "flex", flexDirection: "column", flex: "1" }}><Text>Major</Text>
+                  <Toggle 
+                   onChange={e =>
+                    setSelectedDiagnose({
+                      ...selectedDiagnose,
+                      isMajor: e
+                    })}
+                    disabled={patientSlice.encounter.encounterStatusLkey=='91109811181900'?true:false}
+                  checkedChildren="Yes" unCheckedChildren="No" defaultChecked={selectedDiagnose.isMajor} /></div>
+                </div>
+              </Row>
+              <Row style={{display:"flex"}} >
+              <div style={{display:'flex',flexDirection:'column'}}>
+              <Text  style={{ zoom:0.80}}>Type </Text>
+                <SelectPicker
+                disabled={patientSlice.encounter.encounterStatusLkey=='91109811181900'?true:false}
+                  style={{ width: '100%',zoom:0.80 }}
+                  data={sourceOfInfoLovResponseData?.object ?? []}
+                  labelKey="lovDisplayVale"
+                  valueKey="key"
+                  placeholder="DIAGNOSIS TYPE"
+                  value={selectedDiagnose.diagnoseTypeLkey}
+                  onChange={e =>
+                    setSelectedDiagnose({
+                      ...selectedDiagnose,
+                      diagnoseTypeLkey: e
+                    })
+                  }
+                />
+                </div>
+               
+                 <IconButton style={{zoom:0.90 ,color: "green"}}  icon={<MdSave/>} onClick={save} disabled={patientSlice.encounter.encounterStatusLkey=='91109811181900'?true:false}/>
+              
+              </Row>
             </Col>
 
-            <Col xs={6}>
-              <Text>Status</Text>
-              <SelectPicker
-                style={{ width: '100%' }}
-                data={resolutionStatusLovResponseData?.object ?? []}
-                labelKey="lovDisplayVale"
-                valueKey="key"
-                placeholder="Resolution Status"
-                value={selectedDiagnose.diagnoseStatusLkey}
-                onChange={e =>
-                  setSelectedDiagnose({
-                    ...selectedDiagnose,
-                    diagnoseStatusLkey: e
-                  })
-                }
-              />
-            </Col>
-          </Row>
 
-          <Row gutter={15}>
-            <Col xs={24}>
-              <Table
-                rowClassName={isSelected}
-                onRowClick={rowData => {
-                  setSelectedDiagnose(rowData);
-                }}
-                bordered
-                data={patientDiagnoseListResponse.data?.object ?? []}
-              >
-                <Table.Column flexGrow={1}>
-                  <Table.HeaderCell>Diagnosed Date</Table.HeaderCell>
-                  <Table.Cell>
-                    {rowData => <Text>{formatDate(rowData.dateDiagnosed)}</Text>}
-                  </Table.Cell>
-                </Table.Column>
-                <Table.Column flexGrow={1}>
-                  <Table.HeaderCell>Diagnose Type</Table.HeaderCell>
-                  <Table.Cell>
-                    {rowData => (
-                      <Text>
-                        {rowData.diagnoseTypeLvalue
-                          ? rowData.diagnoseTypeLvalue.lovDisplayVale
-                          : rowData.diagnoseTypeLkey}
-                      </Text>
-                    )}
-                  </Table.Cell>
-                </Table.Column>
-                <Table.Column flexGrow={2}>
-                  <Table.HeaderCell>ICD-10 Diagnosis</Table.HeaderCell>
-                  <Table.Cell>
-                    {rowData => (
-                      <Text>
-                        {rowData.diagnosisObject
-                          ? rowData.diagnosisObject.description
-                          : rowData.diagnoseCode}
-                      </Text>
-                    )}
-                  </Table.Cell>
-                </Table.Column>
-                <Table.Column flexGrow={1}>
-                  <Table.HeaderCell>Status</Table.HeaderCell>
-                  <Table.Cell>
-                    {rowData => (
-                      <Text>
-                        {rowData.diagnoseStatusLvalue
-                          ? rowData.diagnoseStatusLvalue.lovDisplayVale
-                          : rowData.diagnoseStatusLkey}
-                      </Text>
-                    )}
-                  </Table.Cell>
-                </Table.Column>
-              </Table>
-            </Col>
           </Row>
+          
         </Grid>
+
       </Panel>
+
     </>
   );
 };
