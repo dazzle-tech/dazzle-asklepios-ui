@@ -117,15 +117,13 @@ const SignIn = () => {
   }
  
   useEffect(() => {
-    // تعيين الصورة الخلفية للجسم
     document.body.style.backgroundImage = `url(${Background})`;
     document.body.style.backgroundSize = 'cover';
     document.body.style.backgroundPosition = 'center';
     document.body.style.backgroundRepeat = 'no-repeat';
 
-    // تنظيف عند إلغاء التثبيت أو تغيير الصورة الخلفية
     return () => {
-      document.body.style.backgroundImage = ''; // إعادة تعيين الصورة الخلفية عند التنظيف
+      document.body.style.backgroundImage = ''; 
     };
   }, [Background]); 
   return (

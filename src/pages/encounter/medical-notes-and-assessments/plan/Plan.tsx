@@ -59,7 +59,7 @@ const Plan = () => {
             await savePlan({...localPlan}).unwrap();
             dispatch(notify('saved  Successfully'));
         } catch (error) {
-            // معالجة الخطأ هنا
+           
             console.error("Encounter save failed:", error);
             dispatch(notify('saved  fill'));
         }
