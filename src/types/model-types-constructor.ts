@@ -689,6 +689,9 @@ export const newApEncounter:modelTypes.ApEncounter = {
 	dischargeNote:'',
 	dischargeSummery:'',
 	visitId:'',
+	encounterNotes:'',
+	sourceName:'',
+	physicalExamNote:''
 } 
 
 export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService = { 
@@ -1172,6 +1175,8 @@ export const newApPatientDiagnose:modelTypes.ApPatientDiagnose = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	isMajor:undefined,
+	isSuspected:undefined,
 } 
 
 export const newApPatientIds:modelTypes.ApPatientIds = { 
@@ -1299,6 +1304,27 @@ export const newApPatientObservationSummary:modelTypes.ApPatientObservationSumma
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	latestnotes:'',
+	platestnotes:'',
+	latestpaindescription:'',
+	platestpaindescription:'',
+} 
+
+export const newApPatientPlan:modelTypes.ApPatientPlan = { 
+	key:undefined,
+	patientKey:undefined,
+	visitKey:undefined,
+	physicianRecommendations:'',
+	patientEducations:'',
+	lifestyleModifications:'',
+	generalInstructions:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined
 } 
 
 export const newApPatientProblem:modelTypes.ApPatientProblem = { 
@@ -1413,6 +1439,41 @@ export const newApPrescriptionInstruction:modelTypes.ApPrescriptionInstruction =
 	unitLkey:undefined,
 	routLkey:undefined,
 	frequencyLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApResources:modelTypes.ApResources = { 
+	key:undefined,
+	facilityKey:undefined,
+	resourceTypeLkey:undefined,
+	resourceKey:undefined,
+	isAllowParallel:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApResourcesAvailabilityTime:modelTypes.ApResourcesAvailabilityTime = { 
+	key:undefined,
+	resourceKey:undefined,
+	facilityKey:undefined,
+	departmentKey:undefined,
+	dayLkey:undefined,
+	startTime:0,
+	endTime:0,
+	isHasBreak:undefined,
+	breakFrom:0,
+	breakTo:0,
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',

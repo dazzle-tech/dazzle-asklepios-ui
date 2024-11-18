@@ -116,22 +116,30 @@ const SignIn = () => {
     }
   }
  
+  useEffect(() => {
+    // تعيين الصورة الخلفية للجسم
+    document.body.style.backgroundImage = `url(${Background})`;
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    document.body.style.backgroundRepeat = 'no-repeat';
+
+    // تنظيف عند إلغاء التثبيت أو تغيير الصورة الخلفية
+    return () => {
+      document.body.style.backgroundImage = ''; // إعادة تعيين الصورة الخلفية عند التنظيف
+    };
+  }, [Background]); 
   return (
  
     <Panel
       bordered
       className="panel"
     >
-      <img
-        src={Background}
-        alt="Background"
-        className="background-image"
-      />
+    
       <div className='bodySignInDiv'>
  
  
           {/* Logo Panel */}
-      <Panel className="logo-panel">
+      <Panel style={{ zoom: 0.86 }} className="logo-panel">
         <img
           src={authSlice.tenant && authSlice.tenant.tenantLogoPath ? authSlice.tenant.tenantLogoPath : Logo}
           alt="Tenant Logo"
@@ -140,17 +148,18 @@ const SignIn = () => {
  
       {/* Sign In Panel */}
       {!resetPasswordView && (
-        <Panel bordered className='sign-in-panel '>
+        <Panel  bordered className='sign-in-panel '>
  
           <div className='image-header-div'>
             <img
+            style={{ zoom: 0.86 }}
               src={UserLogo}
               alt="Header Background"
               className='header-image'
  
             /></div>
  
-          <h3 className='title'>
+          <h3 style={{ zoom: 0.82 }}  className='title'>
             Sign In
           </h3>
           {!authSlice.tenant && (
@@ -159,7 +168,7 @@ const SignIn = () => {
             </Message>
           )}
  
-          <Form fluid onKeyPress={handleKeyPress}>
+          <Form fluid style={{ zoom: 0.85 }} onKeyPress={handleKeyPress}>
             <Form.Group>
               <Form.ControlLabel>Organization</Form.ControlLabel>
               <Form.Control

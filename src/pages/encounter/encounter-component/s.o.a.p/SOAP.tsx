@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { TagInput, Panel } from 'rsuite';
 import './styles.less';
 import MyInput from '@/components/MyInput';
+import EncounterPreObservations from '../../encounter-pre-observations/EncounterPreObservations';
 import { faBolt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import VoiceCitation from '@/components/VoiceCitation';
@@ -24,6 +25,7 @@ import {
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import ChiefComplaint from '../../medical-notes-and-assessments/chief-complaint';
+import Plan from '../../medical-notes-and-assessments/plan';
 import PatientDiagnosis from '../../medical-notes-and-assessments/patient-diagnosis';
 import ReviewOfSystems from '../../medical-notes-and-assessments/review-of-systems';
 import {
@@ -32,18 +34,102 @@ import {
 } from '@/services/setupService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { addFilterToListRequest, calculateAge, formatDate, fromCamelCaseToDBName } from '@/utils';
+import { useAppSelector, useAppDispatch } from '@/hooks';
+import {
+    useGetObservationSummariesQuery,
+    
+  } from '@/services/observationService';
+  import {
+    ApPatientObservationSummary
+  } from '@/types/model-types';
+  import {
+    newApPatientObservationSummary
+  } from '@/types/model-types-constructor';
 const SOAP = () => {
+    const patientSlice = useAppSelector(state => state.patient);
+
+    const dispatch = useAppDispatch();
     const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         ignore: true
       });
 
-    
+      const [patientLastVisitObservationsListRequest, setPatientLastVisitObservationsListRequest] =
+      useState<ListRequest>({
+        ...initialListRequest,
+        sortBy: 'createdAt',
+        sortType: 'desc',
+        filters: [
+          {
+            fieldName: 'patient_key',
+            operator: 'match',
+            value: patientSlice.patient.key
+          }
+        ]
+      });
+      const [patientObservationsListRequest, setPatientObservationsListRequest] =
+      useState<ListRequest>({
+        ...initialListRequest,
+        timestamp: new Date().getMilliseconds(),
+        filters: [
+          {
+            fieldName: 'patient_key',
+            operator: 'match',
+            value: patientSlice.patient.key
+          }
+          ,
+          {
+            fieldName: 'visit_key',
+            operator: 'match',
+            value: patientSlice.encounter.key
+          }
+        ]
+      });
+      const { data: getCurrenttObservationSummaries } = useGetObservationSummariesQuery({
+        ...patientObservationsListRequest,
+      });
+      const currentObservationSummary = getCurrenttObservationSummaries?.object?.length > 0 ? getCurrenttObservationSummaries.object[0] : null;
+      const [patientObservationSummary, setPatientObservationSummary] = useState<ApPatientObservationSummary>({
+        ...newApPatientObservationSummary,
+        latesttemperature: null,
+        latestbpSystolic: null,
+        latestbpDiastolic: null,
+        latestheartrate: null,
+        latestrespiratoryrate: null,
+        latestoxygensaturation: null,
+        latestglucoselevel: null,
+        latestweight: null,
+        latestheight: null,
+        latestheadcircumference: null,
+        latestpainlevelLkey: null
+      });
+      
+  useEffect(() => {
+    setPatientObservationSummary((prevSummary) => ({
+      ...prevSummary,
+      latesttemperature: currentObservationSummary?.latesttemperature,
+      latestbpSystolic: currentObservationSummary?.latestbpSystolic,
+      latestbpDiastolic: currentObservationSummary?.latestbpDiastolic,
+      latestheartrate: currentObservationSummary?.latestheartrate,
+      latestrespiratoryrate: currentObservationSummary?.latestrespiratoryrate,
+      latestglucoselevel: currentObservationSummary?.latestglucoselevel,
+      latestoxygensaturation: currentObservationSummary?.latestoxygensaturation,
+      latestweight: currentObservationSummary?.latestweight,
+      latestheight: currentObservationSummary?.latestheight,
+      latestheadcircumference: currentObservationSummary?.latestheadcircumference,
+      latestpainlevelLkey: currentObservationSummary?.latestpainlevelLkey,
+      latestnotes: currentObservationSummary?.latestnotes,
+      latestpaindescription: currentObservationSummary?.latestpaindescription,
+      key: currentObservationSummary?.key,
+
+    }));
+  }, [currentObservationSummary]);
+  console.log(patientObservationSummary.latestweight);
     return (<>
         <h5>S.O.A.P</h5>
         <div className="soap-container">
-            <div style={{ flex: "2" }} className="column-container">
+            <div  className="column-container">
 
                 <fieldset style={{ flex: "2" }} className="box-container">
                     <legend>Chief Complain</legend>
@@ -98,31 +184,19 @@ const SOAP = () => {
                         <Grid fluid>
                             <Row gutter={15}>
                                 <Col xs={2}><h6 style={{ textAlign: 'left', fontSize: "12px" }}>BP</h6></Col>
-                                <Col xs={4}><Input
+                                <Col xs={4}>
+                                <Input
                                     disabled={true}
-                                    // isEncounterStatusClosed}
                                     type="number"
-                                    value={""}
-                                // patientObservationSummary.latestbpSystolic}
-                                //   onChange={e =>
-                                //     setPatientObservationSummary({
-                                //       ...patientObservationSummary,
-                                //       latestbpSystolic: Number(e)
-                                //     })}
+                                    value={patientObservationSummary.latestbpSystolic}
                                 /></Col>
                                 <Col xs={1}><h6 style={{ textAlign: 'center' }}>/</h6></Col>
-                                <Col xs={4}><Input
+                                <Col xs={4}>
+                                <Input
                                     disabled={true}
-                                    // isEncounterStatusClosed}
                                     type="number"
-                                    value={""}
-                                // patientObservationSummary.latestbpDiastolic}
-
-                                //   onChange={e =>
-                                //     setPatientObservationSummary({
-                                //       ...patientObservationSummary,
-                                //       latestbpDiastolic: Number(e)
-                                //     })} 
+                                    value={patientObservationSummary.latestbpDiastolic}
+                                 
                                 /></Col>
                                 <Col xs={1}><h6 style={{ textAlign: 'center', fontSize: "12px" }}>mmHg</h6></Col>
                                 <Col xs={6}></Col>
@@ -133,9 +207,9 @@ const SOAP = () => {
                                         disabled
 
                                         value={
-                                            //   patientObservationSummary.latestbpDiastolic != null && patientObservationSummary.latestbpSystolic != null
-                                            //     ? ((2 * patientObservationSummary.latestbpDiastolic + patientObservationSummary.latestbpSystolic) / 3).toFixed(2)
-                                            //     : 
+                                              patientObservationSummary.latestbpDiastolic != null && patientObservationSummary.latestbpSystolic != null
+                                                ? ((2 * patientObservationSummary.latestbpDiastolic + patientObservationSummary.latestbpSystolic) / 3).toFixed(2)
+                                                : 
                                             ''
                                         }
                                     />
@@ -150,15 +224,10 @@ const SOAP = () => {
                                     <InputGroup>
                                         <Input
                                             disabled={true}
-                                            // isEncounterStatusClosed}
+                                           
                                             type="number"
-                                            value={""}
-                                        // patientObservationSummary.latestheartrate}
-                                        //   onChange={e =>
-                                        //     setPatientObservationSummary({
-                                        //       ...patientObservationSummary,
-                                        //       latestheartrate: Number(e)
-                                        //     })} 
+                                            value={patientObservationSummary.latestheartrate}
+                                      
                                         />
                                         <InputGroup.Addon><Text >bpm</Text></InputGroup.Addon>
                                     </InputGroup>
@@ -171,14 +240,7 @@ const SOAP = () => {
                                         <Input
                                             type="number"
                                             disabled={true}
-                                            // isEncounterStatusClosed}
-                                            value={""}
-                                        // patientObservationSummary.latestrespiratoryrate}
-                                        //   onChange={e =>
-                                        //     setPatientObservationSummary({
-                                        //       ...patientObservationSummary,
-                                        //       latestrespiratoryrate: Number(e)
-                                        //     })} 
+                                            value={patientObservationSummary.latestrespiratoryrate}
                                         />
                                         <InputGroup.Addon><Text>bpm</Text></InputGroup.Addon>
                                     </InputGroup>
@@ -193,14 +255,7 @@ const SOAP = () => {
                                     <InputGroup>
                                         <Input type="number"
                                             disabled={true}
-                                            // isEncounterStatusClosed}
-                                            value={""}
-                                        //   patientObservationSummary.latestoxygensaturation}
-                                        //   onChange={e =>
-                                        //     setPatientObservationSummary({
-                                        //       ...patientObservationSummary,
-                                        //       latestoxygensaturation: Number(e)
-                                        //     })} 
+                                            value={patientObservationSummary.latestoxygensaturation}
                                         />
 
                                         <InputGroup.Addon><Text>%</Text></InputGroup.Addon>
@@ -215,14 +270,8 @@ const SOAP = () => {
                                     <InputGroup>
                                         <Input type="number"
                                             disabled={true}
-                                            // isEncounterStatusClosed}
-                                            value={""}
-                                        //   patientObservationSummary.latesttemperature}
-                                        //   onChange={e =>
-                                        //     setPatientObservationSummary({
-                                        //       ...patientObservationSummary,
-                                        //       latesttemperature: Number(e)
-                                        //     })} 
+                                            value={patientObservationSummary.latesttemperature}
+                                       
                                         />
 
                                         <InputGroup.Addon><Text>°C</Text></InputGroup.Addon>
@@ -240,14 +289,8 @@ const SOAP = () => {
                                     as="textarea"
                                     rows={1}
                                     style={{ width: 400 }}
-                                    value={""}
-                                // patientObservationSummary.latestnotes}
-                                //   onChange={e =>
-                                //     setPatientObservationSummary({
-                                //       ...patientObservationSummary,
-                                //       latestnotes: String(e),
-                                //     })
-                                //   }
+                                    value={patientObservationSummary.latestnotes}
+                                
                                 /></Col>
                             </Row>
 
@@ -262,82 +305,23 @@ const SOAP = () => {
                 <fieldset style={{ flex: "2" }} className="box-container">
                     <legend>Plan</legend>
             
-                    <Grid fluid >
-                        <Row gutter={15} style={{ height: '70px' }}>
-                            <Col xs={12} >
-                           <div style={{marginBottom:"8px",marginTop:"7px"}}> Physician Recommendations</div>
-                                <VoiceCitation
-                                    originalRecord={""}
-                                    record={""}
-                                    setRecord={{}}
-                                    fieldName="progressNote"
-                                    saveMethod={""}
-                                    rows={4}
-                                />
-                            </Col>
-
-                            <Col xs={12}>
-                        <div style={{marginBottom:"8px",marginTop:"7px"}}>   Patient Education</div>
-                                <VoiceCitation
-                                    originalRecord={""}
-                                    record={""}
-                                    setRecord={{}}
-                                    fieldName="progressNote"
-                                    saveMethod={""}
-                                    rows={4}
-                                />
-                            </Col>
-                        </Row>
-
-                        <Row gutter={15} style={{ height: '70px' }}>
-                            <Col xs={12}>
-                           <div style={{marginBottom:"10px",marginTop:"10px"}}> Lifestyle Modification</div>
-                                <VoiceCitation
-                                    originalRecord={""}
-                                    record={""}
-                                    setRecord={{}}
-                                    fieldName="progressNote"
-                                    saveMethod={""}
-                                    rows={4}
-                                />
-                            </Col>
-
-                            <Col xs={12}>
-                            <div style={{marginBottom:"10px",marginTop:"10px"}}>General Instructions</div>
-                                <VoiceCitation
-                                    originalRecord={""}
-                                    record={""}
-                                    setRecord={{}}
-                                    fieldName="progressNote"
-                                    saveMethod={""}
-                                    rows={4}
-                                />
-                            </Col>
-                        </Row>
-                      
-                    </Grid>
+                     <Plan/>
                 </fieldset>
             </div>
             <div className="column-container">
                 <fieldset style={{ flex: "2" }} className="box-container">
                     <legend> Body Measurements</legend>
-                    <Panel style={{ padding: '5px' }} >
+                    <Panel style={{ padding: '5px', zoom: 0.80  }} >
                         <Grid fluid>
                           <Row gutter={15}>
-                            <Col xs={6}><h6 style={{ textAlign: 'left',fontSize:"13px" }}>Weight</h6></Col>
+                            <Col xs={6}><h6 style={{ textAlign: 'left',fontSize:"13px"}}>Weight</h6></Col>
                             <Col xs={7}>
                               <InputGroup>
                                 <Input
                                   type="number"
                                   disabled={true}
-                                  value={""}
-                                    // patientObservationSummary.latestweight}
-                                //   onChange={e =>
-                                //     setPatientObservationSummary({
-                                //       ...patientObservationSummary,
-                                //       latestweight: Number(e),
-                                //     })
-                                //   }
+                                  value={patientObservationSummary.latestweight}
+                                  
                                 />
                                 <InputGroup.Addon><Text>kg</Text></InputGroup.Addon>
                               </InputGroup>
@@ -345,7 +329,9 @@ const SOAP = () => {
                             <Col xs={3}></Col>
                             <Col xs={1}><h6 style={{ textAlign: 'left' ,fontSize:"13px" }}>BMI</h6></Col>
                             <Col xs={1}></Col>
-                            <Col xs={4}><Input disabled value={""} /></Col>
+                            <Col xs={4}>
+                            <Input disabled
+                             value={(patientObservationSummary.latestweight / ((patientObservationSummary.latestheight / 100) ** 2)).toFixed(2)} /></Col>
                           </Row>
                           <Row gutter={15}>
                             <Col xs={6}><h6 style={{ textAlign: 'left', fontSize:"13px" }}>Height</h6></Col>
@@ -354,14 +340,8 @@ const SOAP = () => {
                                 <Input
                                   type="number"
                                   disabled={true}
-                                  value={""}
-                                    // patientObservationSummary.latestheight}
-                                //   onChange={e =>
-                                //     setPatientObservationSummary({
-                                //       ...patientObservationSummary,
-                                //       latestheight: Number(e),
-                                //     })
-                                //   }
+                                  value={patientObservationSummary.latestheight}
+                               
                                 />
                                 <InputGroup.Addon><Text>cm</Text></InputGroup.Addon>
                               </InputGroup>
@@ -369,7 +349,9 @@ const SOAP = () => {
                             <Col xs={3}></Col>
                             <Col xs={1}><h6 style={{ textAlign: 'left',fontSize:"13px" }}>BSA</h6></Col>
                             <Col xs={1}></Col>
-                            <Col xs={4}><Input disabled value={""} /></Col>
+                            <Col xs={4}>
+                            <Input disabled 
+                            value={Math.sqrt((patientObservationSummary.latestweight  * patientObservationSummary.latestheight) / 3600).toFixed(2)} /></Col>
                           </Row>
                           <Row gutter={15}></Row>
                           <Row gutter={15}></Row>
@@ -379,13 +361,7 @@ const SOAP = () => {
                               <InputGroup>
                                 <Input type="number"
                                   disabled={true}
-                                  value={""}
-                                    // patientObservationSummary.latestheadcircumference}
-                                //   onChange={e =>
-                                //     setPatientObservationSummary({
-                                //       ...patientObservationSummary,
-                                //       latestheadcircumference: Number(e)
-                                //     })} 
+                                  value={ patientObservationSummary.latestheadcircumference} 
                                     />
                                 <InputGroup.Addon><Text>cm</Text></InputGroup.Addon>
                               </InputGroup>
@@ -397,14 +373,14 @@ const SOAP = () => {
                 </fieldset>
                 <fieldset className="box-container">
                     <legend> Pain Level</legend>
-                    <Panel style={{ padding: '5px' }} >
+                    <Panel style={{ padding: '5px', zoom: 0.79 }} >
                         <Grid fluid>
                           <Row gutter={15}>
                             <Col xs={6}>
                               <Form fluid>
                               <MyInput
                                   disabled={true}
-                                  width={180}
+                                  width={190}
                                   row
                                   fieldLabel="Pain Degree"
                                   fieldType="select"
@@ -412,8 +388,8 @@ const SOAP = () => {
                                   selectData={painDegreesLovQueryResponse?.object ?? []}
                                   selectDataLabel="lovDisplayVale"
                                   selectDataValue="key"
-                                  record={{}}
-                                  setRecord={{}}
+                                  record={patientObservationSummary}
+                                  setRecord={setPatientObservationSummary}
                                 />
                               </Form>
                         </Col>
@@ -423,15 +399,8 @@ const SOAP = () => {
                               disabled={true}
                               as="textarea"
                               rows={1}
-                              value={''}
-                                // patientObservationSummary.latestpaindescription}
-                              style={{ width: 270 }}
-                            //   onChange={e =>
-                            //     setPatientObservationSummary({
-                            //       ...patientObservationSummary,
-                            //       latestpaindescription: String(e),
-                            //     })
-                            //   }
+                              value={patientObservationSummary.latestpaindescription}
+                              style={{ width: 255 }}
                             />
                             </Col>
                           </Row>

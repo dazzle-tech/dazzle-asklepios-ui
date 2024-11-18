@@ -8,6 +8,7 @@ import {
   useGetLovValuesByCodeAndParentQuery,
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
+import { notify } from '@/utils/uiReducerActions';
 import { IconButton, Input, Panel, Grid, Row, Col, InputGroup, Modal, Button, Toggle, Form } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
@@ -22,7 +23,6 @@ const ChiefComplaint = () => {
   const { data: timeUnitsLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
   const { data: bodyPartsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
   const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter });
-
   const [saveEncounterChanges, saveEncounterChangesMutation] = useSaveEncounterChangesMutation();
 
   const [chiefComplaintTextAreaOpen, setChiefComplaintTextAreaOpen] = useState(false);
@@ -65,12 +65,20 @@ const ChiefComplaint = () => {
   useEffect(() => {
     if (patientSlice.encounter && patientSlice.encounter.key) {
       setLocalEncounter(patientSlice.encounter);
+      console.log("this is my note:" + patientSlice.encounter.progressNote);
     } else {
     }
   }, []);
 
-  const saveChanges = () => {
-    saveEncounterChanges(localEncounter).unwrap();
+  const saveChanges =async () => {
+    try {
+      await saveEncounterChanges(localEncounter).unwrap();
+      dispatch(notify('saved chiefComplain Successfully'));
+    } catch (error) {
+      // معالجة الخطأ هنا
+      console.error("Encounter save failed:", error);
+      dispatch(notify('saved chiefComplain fill'));
+    }
   };
 
   useEffect(() => {
