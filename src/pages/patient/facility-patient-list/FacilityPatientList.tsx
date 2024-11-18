@@ -1,18 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import { Panel } from 'rsuite';
 import {
-    FlexboxGrid,
     IconButton,
     Input,
     Table,
-    Grid,
-    Row,
-    Col,
     ButtonToolbar,
-    Text,
-    InputGroup,
-    SelectPicker,
     DateRangePicker,
     Stack,
     Pagination,
@@ -27,14 +19,14 @@ import {
     ApPatient,
     ApPatientInsurance
 } from '@/types/model-types';
-import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { faBroom } from '@fortawesome/free-solid-svg-icons';
-import { faFileExport } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { addFilterToListRequest, calculateAge, formatDate, fromCamelCaseToDBName } from '@/utils';
-import { useGetEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
+import { addFilterToListRequest, formatDate, fromCamelCaseToDBName } from '@/utils';
+import {
+    useGetPatientsQuery,
+} from '@/services/patientService';
+import './styles.less'
 import { newApEncounter, newApPatient, newApPatientInsurance } from '@/types/model-types-constructor';
 import FileDownloadIcon from '@rsuite/icons/FileDownload';
 import IdMappingIcon from '@rsuite/icons/IdMapping';
@@ -43,53 +35,31 @@ const FacilityPatientList = () => {
     const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
     const { data: documentTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
     const { data: primaryInsuranceProviderLovQueryResponse } = useGetLovValuesByCodeQuery('INS_PROVIDER');
-    const [searchPatient, setSearchPatient] = useState<ApPatient>({
-        ...newApPatient,
-        // Ensures dob is an empty string
-    });
+    const [searchPatient, setSearchPatient] = useState<ApPatient>({ ...newApPatient });
     const [insurancePatient, setInsurancePatient] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
-    const [dateRange, setDateRange] = useState([null, null]);
+    const [dateFilter, setDateFilter] = useState({
+        fromDate: '',
+        toDate: '',
+    });
+    const [patient, setLocalPatient] = useState({ ...newApEncounter });
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         ignore: true,
-        filters: [
-
-            {
-                fieldName: 'gender_lkey',
-                operator: 'match',
-                value: searchPatient.genderLkey
-            },
-            {
-                fieldName: 'document_type_lkey',
-                operator: 'match',
-                value: searchPatient.documentTypeLkey
-            },
-            {
-                fieldName: 'insurance_provider_lkey',
-                operator: 'match',
-                value: insurancePatient.insuranceProviderLkey
-            },
-
-        ]
-
+        filters: [],
     });
 
-    const [dateFilter, setDateFilter] = useState({
-        fromDate: new Date(), //new Date(),
-        toDate: new Date(),
-    });
+    const {
+        data: patientListResponse,
+        refetch: refetchPatients
+    } = useGetPatientsQuery({ ...listRequest, filterLogic: 'or' }); //replace to newList 
 
     const handleDateChange = (value) => {
         const [startDate, endDate] = value;
-        setDateFilter((prev) => ({
-            ...prev,
+        setDateFilter({
             fromDate: startDate,
             toDate: endDate,
-        }));
-
-        handleManualSearch();
+        });
     };
-
 
     const handleManualSearch = () => {
         if (dateFilter.fromDate && dateFilter.toDate) {
@@ -114,13 +84,13 @@ const FacilityPatientList = () => {
                 addFilterToListRequest('created_at', 'lte', formattedToDate, listRequest)
             );
         } else {
-            setListRequest({ ...listRequest });
+            setListRequest({ ...listRequest, filters: [] });
         }
     };
+
+
     const handleDOFSearch = (value) => {
-        console.log(value);
         const dob = formatDate(value);
-        console.log(value);
         setListRequest(
             addFilterToListRequest(
                 'dob',
@@ -131,28 +101,13 @@ const FacilityPatientList = () => {
         );
 
     };
-    console.log(listRequest);
-    useEffect(() => {
-        // init list
-        handleManualSearch();
-    }, []);
-
-    useEffect(() => {
-        setListRequest(prevState => ({
-            ...prevState,
-            filters: [
-                ...prevState.filters,
-            ]
-        }));
-    }, [searchPatient.genderLkey, searchPatient.documentTypeLkey, insurancePatient.insuranceProviderLkey]);
-    const { data: encounterListResponse } = useGetEncountersQuery(listRequest);
 
     const isSelected = rowData => {
-        if (rowData && encounter && rowData.key === encounter.key) {
+        if (rowData && patient && rowData.key === patient.key) {
             return 'selected-row';
         } else return '';
     };
-    const [encounter, setLocalEncounter] = useState({ ...newApEncounter });
+
     const handleFilterChange = (fieldName, value) => {
         if (value) {
             setListRequest(
@@ -167,31 +122,55 @@ const FacilityPatientList = () => {
             setListRequest({ ...listRequest, filters: [] });
         }
     };
+
+
+    useEffect(() => {
+        handleManualSearch();
+    }, []);
+    useEffect(() => {
+        setListRequest((prevState) => ({
+            ...prevState,
+            filters: [
+                ...prevState.filters.filter(
+                    (filter) =>
+                        !['gender_lkey', 'document_type_lkey', 'insurance_provider_lkey'].includes(
+                            filter.fieldName
+                        )
+                ),
+                searchPatient.genderLkey && {
+                    fieldName: 'gender_lkey',
+                    operator: 'match',
+                    value: searchPatient.genderLkey,
+                },
+                searchPatient.documentTypeLkey && {
+                    fieldName: 'document_type_lkey',
+                    operator: 'match',
+                    value: searchPatient.documentTypeLkey,
+                },
+                insurancePatient.insuranceProviderLkey && {
+                    fieldName: 'insurance_provider_lkey',
+                    operator: 'match',
+                    value: insurancePatient.insuranceProviderLkey,
+                },
+            ].filter(Boolean),
+        }));
+    }, [searchPatient.genderLkey, searchPatient.documentTypeLkey, insurancePatient.insuranceProviderLkey]);
+
+    useEffect(() => {
+        handleManualSearch();
+    }, [dateFilter]);
     return (
         <>
             <Panel>
                 <h4>Facility Patients List</h4>
                 <div>
                     <div className='resDivPart'>
-                        <fieldset
-                            style={{
-                                padding: '5px',
-                                margin: '5px',
-                                border: '1px solid #ccc',
-                                borderRadius: '5px'
-                            }}
-                        >
-                            <legend
-                                style={{
-                                    padding: '0 5px',
-                                    fontWeight: 'bold',
-                                    backgroundColor: '#f9f9f9'
-                                }}
-                            >
+                        <fieldset className='fieldSetStyle'>
+                            <legend className='legendStyle'>
                                 <h5>Search</h5>
                             </legend>
                             <Form layout="inline" fluid >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                                <div className='divContainFiledSearch'>
                                     <Stack spacing={5} direction="column" alignItems="flex-start">
                                         <MyLabel label="Registration Date " />
                                         <DateRangePicker
@@ -275,20 +254,9 @@ const FacilityPatientList = () => {
                     </div>
 
                     <div className='resDivPart'>
-                        <fieldset
-                            style={{
-                                padding: '5px',
-                                margin: '5px',
-                                border: '1px solid #ccc',
-                                borderRadius: '5px'
-                            }}
+                        <fieldset className='fieldSetStyle'
                         >
-                            <legend
-                                style={{
-                                    padding: '0 5px',
-                                    fontWeight: 'bold',
-                                    backgroundColor: '#f9f9f9'
-                                }}
+                            <legend className='legendStyle'
                             >
                                 <h5>Patients List</h5>
                             </legend>
@@ -308,9 +276,9 @@ const FacilityPatientList = () => {
                                 rowHeight={60}
                                 bordered
                                 cellBordered
-                                data={encounterListResponse?.object ?? []}
+                                data={patientListResponse?.object ?? []}
                                 onRowClick={rowData => {
-                                    setLocalEncounter(rowData);
+                                    setLocalPatient(rowData);
                                 }}
                                 rowClassName={isSelected}
                             >
@@ -324,89 +292,90 @@ const FacilityPatientList = () => {
 
                                 <Column sortable flexGrow={4}>
                                     <HeaderCell>
-                                        <Input onChange={e => handleFilterChange('patientFullName', e)} />
+                                        <Input onChange={e => handleFilterChange('created_at', e)} />
                                         <Translate>Registration Date</Translate>
                                     </HeaderCell>
-                                    <Cell dataKey="patientFullName" />
+                                    <Cell dataKey="created_at" />
                                 </Column>
                                 <Column sortable flexGrow={4}>
                                     <HeaderCell>
                                         <Input
-                                            onChange={(e) => handleFilterChange('patientKey', e)}
+                                            onChange={(e) => handleFilterChange('patientMrn', e)}
                                         />
                                         <Translate>MRN</Translate>
                                     </HeaderCell>
-                                    <Cell>
-
-                                    </Cell>
+                                    <Cell dataKey="patientMrn" />
                                 </Column>
 
 
                                 <Column sortable flexGrow={4}>
                                     <HeaderCell>
-                                        <Input onChange={e => handleFilterChange('patientAge', e)} />
+                                        <Input onChange={e => handleFilterChange('fullName', e)} />
                                         <Translate>Full Name </Translate>
                                     </HeaderCell>
-                                    <Cell dataKey="patientAge" />
+                                    <Cell dataKey="fullName" />
                                 </Column>
 
                                 <Column sortable flexGrow={4}>
                                     <HeaderCell>
-                                        <Input onChange={e => handleFilterChange('type', e)} />
+                                        <Input onChange={e => handleFilterChange('genderLkey', e)} />
                                         <Translate> Sex at Birth</Translate>
-                                    </HeaderCell>
-                                    <Cell dataKey="type" />
-                                </Column>
-                                <Column sortable flexGrow={4}>
-                                    <HeaderCell>
-                                        <Input />
-                                        <Translate>DOB </Translate>
-                                    </HeaderCell>
-                                    <Cell
-                                    />
-                                </Column>
-                                <Column sortable flexGrow={4}>
-                                    <HeaderCell>
-                                        <Input />
-                                        <Translate> Document Type</Translate>
-                                    </HeaderCell>
-                                    <Cell
-                                    />
-                                </Column>
-                                <Column sortable flexGrow={4}>
-                                    <HeaderCell>
-                                        <Input />
-                                        <Translate>Document Number</Translate>
-                                    </HeaderCell>
-                                    <Cell
-                                    />
-                                </Column>
-                                <Column sortable flexGrow={4}>
-                                    <HeaderCell>
-                                        <Input onChange={e => handleFilterChange('departmentKey', e)} />
-                                        <Translate>Primary Phone Number</Translate>
-                                    </HeaderCell>
-                                    <Cell dataKey="departmentKey" />
-                                </Column>
-                                <Column sortable flexGrow={4}>
-                                    <HeaderCell>
-                                        <Input onChange={e => handleFilterChange('encounterPriorityLkey', e)} />
-                                        <Translate>Primary Insurance Provider</Translate>
                                     </HeaderCell>
                                     <Cell>
                                         {rowData =>
-                                            rowData.encounterPriorityLvalue
-                                                ? rowData.encounterPriorityLvalue.lovDisplayVale
-                                                : rowData.encounterPriorityLkey
+                                            rowData.encounterStatusLvalue
+                                                ? rowData.genderLvalue.lovDisplayVale
+                                                : rowData.genderLkey
                                         }
                                     </Cell>
                                 </Column>
                                 <Column sortable flexGrow={4}>
                                     <HeaderCell>
-                                        <Input onChange={e => handleFilterChange('encounterPriorityLkey', e)} />
+                                        <Input onChange={e => handleFilterChange('dob', e)} />
+                                        <Translate >DOB </Translate>
+                                    </HeaderCell>
+                                    <Cell dataKey="dob" />
+                                </Column>
+                                <Column sortable flexGrow={4}>
+                                    <HeaderCell>
+                                        <Input onChange={e => handleFilterChange('documentTypeLkey', e)} />
+                                        <Translate> Document Type</Translate>
+                                    </HeaderCell>
+                                    <Cell>
+                                        {rowData =>
+                                            rowData.encounterStatusLvalue
+                                                ? rowData.documentTypeLvalue.lovDisplayVale
+                                                : rowData.documentTypeLkey
+                                        }
+                                    </Cell>
+                                </Column>
+                                <Column sortable flexGrow={4}>
+                                    <HeaderCell>
+                                        <Input onChange={e => handleFilterChange('documentNo', e)} />
+                                        <Translate>Document Number</Translate>
+                                    </HeaderCell>
+                                    <Cell dataKey="documentNo" />
+                                </Column>
+                                <Column sortable flexGrow={4}>
+                                    <HeaderCell>
+                                        <Input />
+                                        <Translate>Primary Phone Number</Translate>
+                                    </HeaderCell>
+                                    <Cell dataKey="" />
+                                </Column>
+                                <Column sortable flexGrow={4}>
+                                    <HeaderCell>
+                                        <Input />
+                                        <Translate>Primary Insurance Provider</Translate>
+                                    </HeaderCell>
+                                    <Cell dataKey="" />
+                                </Column>
+                                <Column sortable flexGrow={4}>
+                                    <HeaderCell>
+                                        <Input onChange={e => handleFilterChange('', e)} />
                                         <Translate>Plan</Translate>
                                     </HeaderCell>
-                                    <Cell dataKey="plannedStartDate" />
+                                    <Cell dataKey="" />
                                 </Column>
 
                             </Table>
@@ -430,7 +399,7 @@ const FacilityPatientList = () => {
                                     onChangeLimit={pageSize => {
                                         setListRequest({ ...listRequest, pageSize });
                                     }}
-                                    total={encounterListResponse?.extraNumeric ?? 0}
+                                    total={patientListResponse?.extraNumeric ?? 0}
                                 />
                             </div>
                         </fieldset>
