@@ -117,6 +117,7 @@ const SignIn = () => {
   }
  
   useEffect(() => {
+
     document.body.style.backgroundImage = `url(${Background})`;
     document.body.style.backgroundSize = 'cover';
     document.body.style.backgroundPosition = 'center';
@@ -124,6 +125,8 @@ const SignIn = () => {
 
     return () => {
       document.body.style.backgroundImage = ''; 
+
+
     };
   }, [Background]); 
   return (

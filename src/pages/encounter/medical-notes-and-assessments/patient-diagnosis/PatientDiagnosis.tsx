@@ -103,7 +103,7 @@ console.log(selectedDiagnose);
     }).unwrap();  
       dispatch(notify('saved  Successfully'));
   } catch (error) {
-    
+
     console.error("Encounter save failed:", error);
     dispatch(notify('saved  fill'));
   }
