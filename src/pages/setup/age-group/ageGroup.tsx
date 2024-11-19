@@ -47,7 +47,7 @@ const AgeGroup=()=>{
         }
       };
       
-  const handleNew = () => {
+  const handleNew = () => { 
   setAgeGroups({ ...newApAgeGroup,fromAge:null,toAge:null });
     setPopupOpen(true);
   };
@@ -60,6 +60,7 @@ const AgeGroup=()=>{
       setListRequest({ ...listRequest, timestamp: new Date().getTime() });
     }
   }, [saveAgeGroupsMutation.data]);
+ 
     return(<> 
      <Panel
       header={
@@ -122,7 +123,10 @@ const AgeGroup=()=>{
             <Input onChange={e => handleFilterChange('ageGroupLkey', e)} />
             <Translate>Age Group</Translate>
           </HeaderCell>
-          <Cell dataKey="ageGroupLkey" />
+          <Cell>
+          {rowData => ` ${rowData.ageGroupLvalue? rowData.ageGroupLvalue.lovDisplayVale
+                  : rowData.ageGroupLkey}`}
+          </Cell  >
         </Column>
         <Column sortable flexGrow={2}>
           <HeaderCell  align="center">

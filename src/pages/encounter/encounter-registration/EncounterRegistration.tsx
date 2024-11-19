@@ -7,6 +7,9 @@ import { ApPatient } from '@/types/model-types';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import ChangeListIcon from '@rsuite/icons/ChangeList';
 import ArowBackIcon from '@rsuite/icons/ArowBack';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import ReloadIcon from '@rsuite/icons/Reload';
+
 import {
   addFilterToListRequest,
   conjureValueBasedOnKeyFromList,
@@ -18,10 +21,10 @@ import {
 import { DatePicker } from 'rsuite';
 
 const { Column, HeaderCell, Cell } = Table;
-
+import { faBolt } from '@fortawesome/free-solid-svg-icons';
 import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import { Block, Check, DocPass, Edit, Icon, PlusRound } from '@rsuite/icons';
-import { Modal, Placeholder, PanelGroup } from 'rsuite';
+import { Modal, Placeholder, PanelGroup, Checkbox } from 'rsuite';
 import React, { useEffect, useState } from 'react';
 import {
   InputGroup,
@@ -44,7 +47,7 @@ import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
 import { calculateAge, fromCamelCaseToDBName } from '@/utils';
 import { useSelector } from 'react-redux';
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   useGetDepartmentsQuery,
   useGetFacilitiesQuery,
@@ -75,6 +78,7 @@ const EncounterRegistration = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [openModelVisitNote, setOpenModelVisitNote] = React.useState(false);
+  const [openModelPayment, setOpenModelPayment] = React.useState(false);
   const [openModelCompanionCard, setOpenModelCompanionCard] = React.useState(false);
   const [openModelAppointmentView, setOpenModelAppointmentView] = React.useState(false);
   const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter });
@@ -98,7 +102,11 @@ const EncounterRegistration = () => {
     useGetLovValuesByCodeQuery('ENC_SPECIAL_ARNG');
   const { data: specialCourtesyLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_SPECIAL_COURT');
   const { data: locationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('LOCATION_TYPE');
-  const { data: paymentTypeLovQueryResponse } = useGetLovValuesByCodeQuery('PAYMENT_TYPE');
+  const { data: paymentTypeLovQueryResponse } = useGetLovValuesByCodeQuery('PAY_TYPS');
+  const { data: paymentMethodLovQueryResponse } = useGetLovValuesByCodeQuery('PAY_METHOD');
+  const { data: currencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
+  const { data: InsurancePlanTypeLovQueryResponse } = useGetLovValuesByCodeQuery('INS_PLAN_TYPS');
+  const { data: InsuranceProviderLovQueryResponse } = useGetLovValuesByCodeQuery('INS_PROVIDER');
   const { data: payerTypeLovQueryResponse } = useGetLovValuesByCodeQuery('PAYER_TYPE');
   const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
@@ -116,7 +124,15 @@ const EncounterRegistration = () => {
     isLoading: isGettingPatients,
     isFetching: isFetchingPatients,
     refetch: refetchPatients
-  } = useGetPatientsQuery({ ...listRequest, filterLogic: 'or' });
+  } = useGetPatientsQuery({ ...listRequest, filters: [
+    {
+      fieldName: fromCamelCaseToDBName(selectedCriterion),
+      operator: 'containsIgnoreCase',
+      value: searchKeyword,
+    },
+
+  ]});
+  const [paymentMethodSelected, setPaymentMethodSelected] = useState(null);
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -131,6 +147,7 @@ const EncounterRegistration = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
+
   const initEncounterFromPatient = () => {
     if (patientSlice.patient) {
       setLocalEncounter({
@@ -141,23 +158,17 @@ const EncounterRegistration = () => {
         encounterStatusLkey: '91063195286200',//change this to be loaded from cache lov values by code
         plannedStartDate: new Date()
       });
-    } else if (localStorage.getItem('patient')) {
-      const cachedPatient = JSON.parse(localStorage.getItem('patient'));
-      dispatch(setPatient(cachedPatient));
-      setLocalEncounter({
-        ...newApEncounter,
-        patientKey: cachedPatient.key,
-        patientFullName: cachedPatient.fullName,
-        patientAge: cachedPatient.dob ? calculateAge(cachedPatient.dob) + '' : ''
-      });
+    } else {
+      console.warn('No patient found in state');
     }
+  }
 
-    // dispatch(setEncounter(null));
-  };
-
+  // dispatch(setPatient(cachedPatient));
   useEffect(() => {
-    if (!patientSlice.patient && !localStorage.getItem('patient') && !localEncounter.patientKey) {
-      navigate('/patient-profile');
+    if (!patientSlice.patient && !localEncounter.patientKey) {
+      dispatch(setPatient({ ...newApPatient }));
+      dispatch(setEncounter({ ...newApEncounter }));
+      // navigate('/patient-profile');
     } else {
       setEditing(true);
       initEncounterFromPatient();
@@ -167,7 +178,7 @@ const EncounterRegistration = () => {
   const handleCancel = () => {
     dispatch(setEncounter(null));
     setLocalEncounter({ ...newApEncounter });
-    navigate('/patient-profile');
+    // navigate('/patient-profile');
   };
   const handleGoToPatientAppointment = () => {
     navigate('/patient-appointment-view');
@@ -186,6 +197,12 @@ const EncounterRegistration = () => {
   const handleSaveNote = () => {
     //add logic to cave note
     setOpenModelVisitNote(false);
+  };
+  const handleOpenPaymentModel = () => setOpenModelPayment(true);
+  const handleClosePaymentModel = () => setOpenModelPayment(false);
+  const handleSavePayment = () => {
+    //add logic to cave note
+    setOpenModelPayment(false);
   };
   const handleOpenAppointmentViewModel = () => setOpenModelAppointmentView(true);
   const handleCloseAppointmentViewModel = () => setOpenModelAppointmentView(false);
@@ -222,7 +239,7 @@ const EncounterRegistration = () => {
     { label: 'Full Name', value: 'fullName' },
     { label: 'Archiving Number', value: 'archivingNumber' },
     { label: 'Primary Phone Number', value: 'mobileNumber' },
-    { label: 'Date of Birth', value: 'dob' },
+    { label: 'Date of Birth', value: 'dob' }
   ];
   const [selectedPatientRelation, setSelectedPatientRelation] = useState<any>({
     ...newApPatientRelation
@@ -230,8 +247,9 @@ const EncounterRegistration = () => {
   const handleSelectPatient = data => {
     if (patientSearchTarget === 'primary') {
       // selecteing primary patient (localPatient)
-
+       console.log(data);
       dispatch(setPatient(data));
+      
     } else if (patientSearchTarget === 'relation') {
       // selecting patient for relation patient key
       setSelectedPatientRelation({
@@ -245,10 +263,12 @@ const EncounterRegistration = () => {
   };
 
   const search = target => {
+    console.log(target);
     setPatientSearchTarget(target);
     setSearchResultVisible(true);
-
+    console.log(patientSearchTarget);
     if (searchKeyword && searchKeyword.length >= 3 && selectedCriterion) {
+    
       setListRequest({
         ...listRequest,
         ignore: false,
@@ -262,13 +282,17 @@ const EncounterRegistration = () => {
       });
     }
     console.log("kw" + searchKeyword);
-    console.log("PatientSearchTarget" + patientSearchTarget);
-    console.log("kw" + searchKeyword);
+    console.log("PatientSearchTarget" + patientListResponse?.object);
+    console.log(listRequest);
+   
   };
 
-  // useEffect(() => {
-  //   setSearchKeyword('')
-  // }, [selectedCriterion]);
+  useEffect(() => {
+    //3623962430163299
+  }, [paymentMethodSelected]);
+  useEffect(() => {
+    
+  }, [searchKeyword]);
 
   const conjurePatientSearchBar = target => {
     return (
@@ -288,7 +312,7 @@ const EncounterRegistration = () => {
               value={searchKeyword}
               onChange={e => setSearchKeyword(e)}
             />
-            <InputGroup.Button onClick={() => search(target)} >
+            <InputGroup.Button onClick={() => search(target) } >
               <SearchIcon />
             </InputGroup.Button>
           </InputGroup>
@@ -385,6 +409,240 @@ const EncounterRegistration = () => {
                 </Button>
               </Modal.Footer>
             </Modal>
+            <Modal open={openModelPayment} onClose={handleClosePaymentModel} size="lg">
+              <Modal.Header>
+                <Modal.Title>payment</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                <Form layout="inline" fluid>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <MyInput
+                      vr={validationResult}
+                      column
+                      width={180}
+                      fieldType="select"
+                      fieldName="PaymentMethod"
+                      selectData={paymentMethodLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={{}}
+                      setRecord={(newValue) => {
+                        console.log("Selected Payment Method:", newValue.PaymentMethod);
+                        setPaymentMethodSelected(newValue.PaymentMethod);
+                      }}
+                    />
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginTop: "5px" }}>
+                      <MyInput
+                        column
+                        width={180}
+                        fieldLabel="Amount"
+                        fieldName={'Amount'}
+                        record={{}}
+                        setRecord={""}
+                      />
+                      <div style={{ marginTop: "5px", display: "flex", alignItems: "center" }}>
+                        <input
+                          type="checkbox"
+                          id="addFreeBalance"
+                          name="addFreeBalance"
+                          style={{ marginRight: "8px" }}
+                        />
+                        <label htmlFor="addFreeBalance" style={{ fontSize: "12px" }}>
+                          Add to Free Balance
+                        </label>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                      <p>refresh</p>
+                      <IconButton size="xs" icon={<ReloadIcon />} appearance="ghost" />
+                    </div>
+                    <MyInput
+                      vr={validationResult}
+                      width={180}
+                      column
+                      fieldType="select"
+                      fieldName="Currency"
+                      selectData={currencyLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      selectDataValue="key"
+                      record={{}}
+                      setRecord={""}
+                    />
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "20px" }}>
+                      <Button
+                        appearance="ghost"
+                        style={{ border: '1px solid rgb(130, 95, 196)', color: 'rgb(130, 95, 196)' }}
+
+                      >
+                        <FontAwesomeIcon icon={faBolt} style={{ marginRight: '8px' }} />
+                        <span>Exchange Rate</span>
+                      </Button>
+
+                    </div>
+                  </div>
+                  {paymentMethodSelected === '3623962430163299'
+                    && (<div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <MyInput
+                        column
+                        width={180}
+                        fieldName={'CardNumber'}
+                        record={{}}
+                        setRecord={""}
+                      />
+                      <MyInput
+                        column
+                        width={180}
+                        fieldName={'HolderName'}
+                        record={{}}
+                        setRecord={""}
+                      />
+
+                      <MyInput
+                        column
+                        fieldType="date"
+                        fieldName="ValidUntil"
+                        record={{}}
+                        setRecord={""}
+                      />
+                    </div>)
+                  }
+                  {paymentMethodSelected === '3623980184948157'
+                    &&
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <MyInput
+                        column
+                        width={180}
+                        fieldName={'ChequeNumber'}
+                        record={{}}
+                        setRecord={""}
+                      />
+                      <MyInput
+                        column
+                        width={180}
+                        fieldName={'BankName'}
+                        record={{}}
+                        setRecord={""}
+                      />
+
+                      <MyInput
+                        column
+                        fieldType="date"
+                        fieldName="ChequeDueDate"
+                        record={{}}
+                        setRecord={""}
+                      /></div>
+                  }
+                  <div style={{ width: "100%", display: "flex", gap: "10px" }}>
+                    <div style={{ border: '1px solid #b6b7b8', flex: "2", borderRadius: "5px" }}>
+                      <Table
+                          style={{ maxHeight: 200, overflowY: "auto" }} 
+                        sortColumn={listRequest.sortBy}
+                        sortType={listRequest.sortType}
+                        onSortColumn={(sortBy, sortType) => {
+                          if (sortBy)
+                            setListRequest({
+                              ...listRequest,
+                              sortBy,
+                              sortType
+                            });
+                        }}
+                        headerHeight={50}
+                        rowHeight={50}
+                        bordered
+                        cellBordered
+                        // onRowClick={rowData => {
+                        //   handleSelectPatient(rowData);
+                        //   setSearchKeyword(null);
+                        // }}
+                        data={ []}
+                      >
+                        <Column flexGrow={1}>
+                          <HeaderCell>
+                            <Checkbox
+                            // checked={selectAll}
+                            // onChange={handleSelectAll}
+                            />
+                          </HeaderCell>
+                          <Cell>
+                            {rowData => (
+                              <Checkbox
+                              // checked={selectedRows.includes(rowData)}
+                              // onChange={() => handleRowSelection(rowData)}
+                              />
+                            )}
+                          </Cell>
+                        </Column>
+                        <Column  flexGrow={4}>
+                          <HeaderCell>
+                            
+                            <Translate>Service Name</Translate>
+                          </HeaderCell>
+                          <Cell dataKey="ServiceName" />
+                        </Column>
+                        <Column  flexGrow={1}>
+                          <HeaderCell>
+                        
+                            <Translate>Type</Translate>
+                          </HeaderCell>
+                          <Cell dataKey="Type" />
+                        </Column>
+                        <Column  flexGrow={3}>
+                          <HeaderCell>
+                            
+                            <Translate>Quantity</Translate>
+                          </HeaderCell>
+                          <Cell dataKey="Quantity" />
+                        </Column>
+                        <Column  flexGrow={2}>
+                          <HeaderCell>
+                           
+                            <Translate>Price</Translate>
+                          </HeaderCell>
+                          <Cell dataKey="Price" />
+                        </Column>
+                        <Column  flexGrow={3}>
+                          <HeaderCell>
+                            
+                            <Translate>Currency</Translate>
+                          </HeaderCell>
+                          <Cell dataKey="Currency" />
+                        </Column>
+                        
+                        
+                      </Table>
+                    </div>
+                    <div style={{ flex: "1", display: "flex", flexDirection: "column" }}>
+                      <MyInput
+                        column
+                        disabled={true}
+                        width={180}
+                        fieldName={'DueAmount'}
+                        record={{}}
+                        setRecord={""}
+                      />
+                      <MyInput
+                        column
+                        disabled={true}
+                        width={180}
+                        fieldName={'Patient`s free Balance'}
+                        record={{}}
+                        setRecord={""}
+                      />
+                    </div>
+                  </div>
+                </Form>
+
+              </Modal.Body>
+              <Modal.Footer>
+                <Button onClick={handleSavePayment} appearance="primary">
+                  Save
+                </Button>
+                <Button onClick={handleClosePaymentModel} appearance="subtle">
+                  Cancle
+                </Button>
+              </Modal.Footer>
+            </Modal>
           </Panel>
           <br />
           <Panel bordered>
@@ -454,7 +712,7 @@ const EncounterRegistration = () => {
                     width={130}
                     column
                     disabled={true}
-                    fieldLabel="Gender"
+                    fieldLabel="Sex at Birth"
                     fieldName={patientSlice.patient.genderLvalue ? 'lovDisplayVale' : 'genderLkey'}
                     record={
                       patientSlice.patient.genderLvalue
@@ -627,209 +885,8 @@ const EncounterRegistration = () => {
               </Stack.Item>
             </Stack>
           </Panel>
-          {/* <br /> */}
-          {false && (
-            <Panel
-              bordered
-              header={
-                <h5 className="title">
-                  <Translate>Secondary Information</Translate>
-                </h5>
-              }
-            >
-              <Stack>
-                <Stack.Item grow={4}>
-                  <Form layout="inline" fluid>
-                    <MyInput
-                      vr={validationResult}
-                      column
-                      disabled={!editing || encounter}
-                      fieldType="select"
-                      fieldName="basedOnLkey"
-                      selectData={encounterBasedOnLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      record={encounter ? encounter : localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
-                    <MyInput
-                      vr={validationResult}
-                      column
-                      disabled={!editing || encounter}
-                      fieldType="select"
-                      fieldLabel="Based On Detail"
-                      fieldName="basedOnKey"
-                      selectData={[]}
-                      selectDataLabel=""
-                      selectDataValue="key"
-                      record={encounter ? encounter : localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
 
-                    <MyInput
-                      vr={validationResult}
-                      column
-                      disabled={!editing || encounter}
-                      fieldType="select"
-                      fieldName="episodeCareKey"
-                      selectData={[]}
-                      selectDataLabel=""
-                      selectDataValue="key"
-                      record={encounter ? encounter : localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
-                    <br />
-                    <MyInput
-                      vr={validationResult}
-                      column
-                      disabled={!editing || encounter}
-                      fieldType="select"
-                      fieldName="serviceTypeLkey"
-                      selectData={serviceTypeLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      record={encounter ? encounter : localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
-                    <MyInput
-                      vr={validationResult}
-                      column
-                      disabled={!editing || encounter}
-                      fieldType="checkbox"
-                      fieldName="virtualService"
-                      record={encounter ? encounter : localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
-                    <br />
-                    <MyInput
-                      vr={validationResult}
-                      column
-                      disabled={!editing || encounter}
-                      fieldType="select"
-                      fieldName="dietPreferenceLkey"
-                      selectData={dietPreferenceLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      record={encounter ? encounter : localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
 
-                    <MyInput
-                      vr={validationResult}
-                      column
-                      disabled={!editing || !localEncounter.dietPreferenceLkey || encounter}
-                      fieldType="textarea"
-                      fieldName="dietPreferenceText"
-                      record={encounter ? encounter : localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
-                    <br />
-
-                    <MyInput
-                      vr={validationResult}
-                      column
-                      disabled={!editing || encounter}
-                      fieldType="select"
-                      fieldName="specialArrangementLkey"
-                      selectData={specialArrangementLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      record={encounter ? encounter : localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
-
-                    <MyInput
-                      vr={validationResult}
-                      column
-                      disabled={!editing || !localEncounter.specialArrangementLkey || encounter}
-                      fieldType="textarea"
-                      fieldName="specialArrangementText"
-                      record={encounter ? encounter : localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
-                    <br />
-                    <MyInput
-                      vr={validationResult}
-                      column
-                      disabled={!editing || encounter}
-                      fieldType="textarea"
-                      fieldName="valuableItemsText"
-                      record={encounter ? encounter : localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
-                    <br />
-                    <MyInput
-                      vr={validationResult}
-                      column
-                      disabled={!editing || encounter}
-                      fieldType="select"
-                      fieldName="specialCourtesyLkey"
-                      selectData={specialCourtesyLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      record={encounter ? encounter : localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
-
-                    <MyInput
-                      vr={validationResult}
-                      column
-                      disabled={!editing || encounter}
-                      fieldName="adminssionOrigin"
-                      record={encounter ? encounter : localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
-
-                    <MyInput
-                      vr={validationResult}
-                      column
-                      disabled={!editing || encounter}
-                      fieldName="adminssionSource"
-                      record={encounter ? encounter : localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
-
-                    <MyInput
-                      vr={validationResult}
-                      column
-                      disabled={!editing || encounter}
-                      fieldType="checkbox"
-                      fieldName="readminssion"
-                      record={encounter ? encounter : localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
-
-                    <br />
-
-                    <MyInput
-                      vr={validationResult}
-                      column
-                      disabled={!editing || encounter}
-                      fieldType="select"
-                      fieldName="locationTypeLkey"
-                      selectData={locationTypeLovQueryResponse?.object ?? []}
-                      selectDataLabel="lovDisplayVale"
-                      selectDataValue="key"
-                      record={encounter ? encounter : localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
-                    <MyInput
-                      vr={validationResult}
-                      column
-                      disabled={!editing || encounter}
-                      fieldType="select"
-                      fieldName="locationKey"
-                      selectData={[]}
-                      selectDataLabel=""
-                      selectDataValue="key"
-                      record={encounter ? encounter : localEncounter}
-                      setRecord={setLocalEncounter}
-                    />
-                  </Form>
-                </Stack.Item>
-              </Stack>
-            </Panel>
-          )}
           <br />
           <Panel
             bordered
@@ -845,20 +902,31 @@ const EncounterRegistration = () => {
                   <MyInput
                     vr={validationResult}
                     column
-                    disabled={!editing || encounter}
-                    fieldType="select"
-                    fieldName="billingAccountKey"
+                    disabled={true}
+
+                    fieldName="PatientBalance"
                     selectData={[]}
                     selectDataLabel=""
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
                   />
-
                   <MyInput
                     vr={validationResult}
                     column
-                    disabled={!editing || encounter}
+                    disabled={true}
+
+                    fieldName="Fees"
+                    selectData={[]}
+                    selectDataLabel=""
+                    selectDataValue="key"
+                    record={localEncounter}
+                    setRecord={setLocalEncounter}
+                  />
+                  <MyInput
+                    vr={validationResult}
+                    column
+
                     fieldType="select"
                     fieldName="paymentTypeLkey"
                     selectData={paymentTypeLovQueryResponse?.object ?? []}
@@ -873,8 +941,8 @@ const EncounterRegistration = () => {
                     column
                     disabled={!editing || encounter}
                     fieldType="select"
-                    fieldName="payerTypeLkey"
-                    selectData={payerTypeLovQueryResponse?.object ?? []}
+                    fieldName="InsuranceProvider"
+                    selectData={InsuranceProviderLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
                     record={localEncounter}
@@ -884,11 +952,29 @@ const EncounterRegistration = () => {
                   <MyInput
                     vr={validationResult}
                     column
-                    disabled={!editing || encounter}
+                    disabled={true}
+                    fieldName="InsurancePolicyNumber"
+                    record={localEncounter}
+                    setRecord={setLocalEncounter}
+                  />
+
+                  <MyInput
+                    vr={validationResult}
+                    column
+                    disabled={true}
+                    fieldName="GroupNumber"
+                    record={localEncounter}
+                    setRecord={setLocalEncounter}
+                  />
+
+                  <MyInput
+                    vr={validationResult}
+                    column
+                    disabled={true}
                     fieldType="select"
-                    fieldName="payerKey"
-                    selectData={[]}
-                    selectDataLabel=""
+                    fieldName="InsurancePlanType"
+                    selectData={InsurancePlanTypeLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
@@ -897,29 +983,26 @@ const EncounterRegistration = () => {
                   <MyInput
                     vr={validationResult}
                     column
-                    disabled={!editing || encounter}
-                    fieldName="payerMemberId"
+                    disabled={true}
+                    fieldName="Authorization Numbers"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
                   />
-
                   <MyInput
                     vr={validationResult}
                     column
-                    disabled={!editing || encounter}
-                    fieldName="insurancePlan"
+                    fieldType="date"
+                    disabled={true}
+                    fieldName="Expiration Date"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
                   />
+                  <div>
 
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing || encounter}
-                    fieldName="referralNumber"
-                    record={localEncounter}
-                    setRecord={setLocalEncounter}
-                  />
+                    <IconButton onClick={() => handleOpenPaymentModel()} appearance="primary" color='cyan' icon={<AddOutlineIcon />} >
+                      <Translate>Add payment</Translate>
+                    </IconButton>
+                  </div>
                 </Form>
               </Stack.Item>
             </Stack>
@@ -1226,7 +1309,9 @@ const EncounterRegistration = () => {
               size="lg"
               placement={'left'}
               open={searchResultVisible}
-              onClose={() => { setSearchResultVisible(false) }}
+              onClose={() => {
+                setSearchResultVisible(false);
+              }}
             >
               <Drawer.Header>
                 <Drawer.Title>Patient List - Search Results</Drawer.Title>
@@ -1254,7 +1339,7 @@ const EncounterRegistration = () => {
                   cellBordered
                   onRowClick={rowData => {
                     handleSelectPatient(rowData);
-                    setSearchKeyword(null)
+                    setSearchKeyword(null);
                   }}
                   data={patientListResponse?.object ?? []}
                 >
@@ -1334,6 +1419,7 @@ const EncounterRegistration = () => {
               </Drawer.Body>
             </Drawer>
           </Panel>
+
         </Panel>
       )}
     </>
