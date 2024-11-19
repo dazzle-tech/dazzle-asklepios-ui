@@ -3,6 +3,7 @@ import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
 import {
+  ApAppointment,
   ApResources
 } from '@/types/model-types';
 
@@ -38,7 +39,18 @@ export const appointmentService = createApi({
         transformResponse: (response: any) => {
           return response.object;
         }
-      }),
+      }), saveAppointment: builder.mutation({
+        query: (appointment: ApAppointment) => ({
+          url: `/appointment/save-appointment`,
+          method: 'POST',
+          body: appointment
+        }),
+        onQueryStarted: onQueryStarted,
+        transformResponse: (response: any) => {
+          return response.object;
+        }
+      })
+      
     })
 });
 
@@ -46,7 +58,7 @@ export const {
   
     useGetResourcesQuery,
     useGetResourceTypeQuery,
-    useSaveResourcesMutation
-
+    useSaveResourcesMutation,
+    useSaveAppointmentMutation
  
 } = appointmentService;
