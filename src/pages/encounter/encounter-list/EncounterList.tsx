@@ -6,7 +6,7 @@ import { ApPatient } from '@/types/model-types';
 import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import { Block, Check, DocPass, Edit, Icon, PlusRound } from '@rsuite/icons';
 import React, { useEffect, useState } from 'react';
-
+import './styles.less'
 import {
   InputGroup,
   ButtonToolbar,
@@ -24,15 +24,14 @@ import {
   DatePicker
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
+import PageIcon from '@rsuite/icons/Page';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
+import CharacterAuthorizeIcon from '@rsuite/icons/CharacterAuthorize';
+import PeoplesTimeIcon from '@rsuite/icons/PeoplesTime';
 import { addFilterToListRequest, calculateAge, formatDate, fromCamelCaseToDBName } from '@/utils';
-import {
-  useGetFacilitiesQuery,
-  useGetLovValuesByCodeAndParentQuery,
-  useGetLovValuesByCodeQuery,
-  useGetPractitionersQuery
-} from '@/services/setupService';
+import CheckRoundIcon from '@rsuite/icons/CheckRound';
+import SendIcon from '@rsuite/icons/Send';
 import {
   useGetPatientsQuery,
 } from '@/services/patientService';
@@ -40,6 +39,7 @@ import { useNavigate } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
 import { notify } from '@/utils/uiReducerActions';
+import CharacterLockIcon from '@rsuite/icons/CharacterLock';
 import PageEndIcon from '@rsuite/icons/PageEnd';
 import { timeStamp } from 'console';
 const EncounterList = () => {
@@ -68,7 +68,6 @@ const EncounterList = () => {
       ]
     });
   const { data: getPatients } = useGetPatientsQuery({ ...patientListRequest });
-  console.log(getPatients?.object);
   const [dateClickToVisit, setDateClickToVisit] = useState('');
   const { data: encounterListResponse } = useGetEncountersQuery(listRequest);
 
@@ -82,7 +81,6 @@ const EncounterList = () => {
       return 'selected-row';
     } else return '';
   };
-
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -146,7 +144,6 @@ const EncounterList = () => {
       navigate('/encounter-pre-observations');
     }
   };
-
   return (
     <>
       <Panel
@@ -171,20 +168,49 @@ const EncounterList = () => {
             <Divider vertical />
 
             <DatePicker
+
               oneTap
               placeholder="From Date"
               value={dateFilter.fromDate}
               onChange={e => setDateFilter({ ...dateFilter, fromDate: e })}
+              style={{ width: '234px' }}
             />
             <DatePicker
               oneTap
               placeholder="To Date"
               value={dateFilter.toDate}
               onChange={e => setDateFilter({ ...dateFilter, toDate: e })}
+              style={{ width: '234px' }}
             />
             <IconButton appearance="primary" icon={<icons.Search />} onClick={handleManualSearch}>
               <Translate>Search</Translate>
             </IconButton>
+
+
+
+          </ButtonToolbar>
+          <br />
+          <ButtonToolbar>
+            <IconButton
+              appearance="primary"
+              color="violet"
+              icon={<PageIcon />}
+            >
+              <Translate>My Appointments</Translate>
+            </IconButton>
+            <IconButton appearance="ghost" color="violet" icon={<SendIcon />} >
+              <Translate>Create Appointment</Translate>
+            </IconButton>
+            <IconButton appearance="primary" color="cyan" icon={<CharacterLockIcon />} >
+              <Translate>EMR</Translate>
+            </IconButton>
+            <IconButton appearance="ghost" color="cyan" icon={<CharacterAuthorizeIcon />} >
+              <Translate>Order Results</Translate>
+            </IconButton>
+            <IconButton appearance="primary" color="blue" icon={<PeoplesTimeIcon />} >
+              <Translate>Waiting list</Translate>
+            </IconButton>
+
             <div style={{ marginLeft: 'auto' }}>
               <IconButton
                 appearance="primary"
@@ -196,8 +222,6 @@ const EncounterList = () => {
                 <Translate>Pre-Visit Observations</Translate>
               </IconButton>
             </div>
-
-
           </ButtonToolbar>
         </Panel>
         <Table
@@ -229,13 +253,13 @@ const EncounterList = () => {
             </HeaderCell>
             <Cell dataKey="queueNumber" />
           </Column>
-          {/* <Column sortable flexGrow={4}>
+          <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('patientKey', e)} />
-              <Translate>Patient Key</Translate>
+              <Input onChange={e => handleFilterChange('visitId', e)} />
+              <Translate>Visit ID</Translate>
             </HeaderCell>
-            <Cell dataKey="patientKey" />
-          </Column> */}
+            <Cell dataKey="visitId" />
+          </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
               <Input onChange={e => handleFilterChange('patientFullName', e)} />
@@ -261,8 +285,6 @@ const EncounterList = () => {
               }}
             </Cell>
           </Column>
-
-
           <Column sortable flexGrow={4}>
             <HeaderCell>
               <Input onChange={e => handleFilterChange('patientAge', e)} />
@@ -304,7 +326,7 @@ const EncounterList = () => {
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input/>
+              <Input />
               <Translate>Waiting time</Translate>
             </HeaderCell>
             <Cell dataKey="" />
@@ -348,6 +370,14 @@ const EncounterList = () => {
             </HeaderCell>
             <Cell>
 
+            </Cell>
+          </Column>
+          <Column>
+            <HeaderCell>
+              <Translate>Is Observed</Translate>
+            </HeaderCell>
+            <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {rowData => (rowData.observations ? <CheckRoundIcon className='iconStyle' /> : null)}
             </Cell>
           </Column>
         </Table>
