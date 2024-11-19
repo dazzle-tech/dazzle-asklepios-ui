@@ -58,6 +58,7 @@ import Resources from './pages/appointment/resources';
 import EncounterPreObservations from './pages/encounter/encounter-pre-observations/EncounterPreObservations';
 import AgeGroup from './pages/setup/age-group';
 import FacilityPatientList from './pages/patient/facility-patient-list/FacilityPatientList'
+import ScheduleScreen from './pages/Scheduling/scheduling-screen/ScheduleScreen';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -236,6 +237,7 @@ const App = () => {
               <Route path="error-500" element={<Error500Page />} />
               <Route path="error-503" element={<Error503Page />} />
               <Route path="playground" element={<Playground />} />
+              <Route path='schedual-screen' element={<ScheduleScreen />} />
             </Route>
           </Route>
 
