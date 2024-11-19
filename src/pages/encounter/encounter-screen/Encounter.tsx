@@ -16,6 +16,22 @@ import Referrals from '../encounter-component/referrals';
 import SOAP from '../encounter-component/s.o.a.p';
 import VaccineReccord from '../encounter-component/vaccine-reccord';
 import Allergies from '../encounter-component/allergies';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUserDoctor } from '@fortawesome/free-solid-svg-icons';
+import { faBolt,
+  faVials
+   ,faFilePrescription
+   ,faStethoscope
+   ,faNotesMedical,
+   faClockRotateLeft,
+   faPersonDotsFromLine,
+   faTriangleExclamation,
+  faPills,
+  faSyringe,
+ faFileWaveform
+  
+  } from '@fortawesome/free-solid-svg-icons';
+import {faBars} from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useState } from 'react';
 import {
   InputGroup,
@@ -65,7 +81,7 @@ const Encounter = () => {
   const [startEncounter, startEncounterMutation] = useStartEncounterMutation();
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [activeContent, setActiveContent] = useState(<PatientSummary patient={patientSlice.patient} encounter={patientSlice.encounter}/>);
+  const [activeContent, setActiveContent] = useState(<PatientSummary patient={patientSlice.patient} encounter={patientSlice.encounter} />);
   const handleMenuItemClick = (content) => {
     setActiveContent(content);
     setIsDrawerOpen(false); // Optionally close the drawer after selection
@@ -134,7 +150,7 @@ const Encounter = () => {
                 >
                   <Translate>Go Back</Translate>
                 </IconButton>
-                
+
                 <IconButton
                   appearance="primary"
                   color="blue"
@@ -146,7 +162,7 @@ const Encounter = () => {
                 <IconButton appearance="primary" color="cyan" icon={<icons.ReviewRefuse />}>
                   <Translate>Problems</Translate>
                 </IconButton>
-                
+
                 {patientSlice.encounter.editable && (
                   <IconButton
                     appearance="primary"
@@ -162,82 +178,92 @@ const Encounter = () => {
                 open={isDrawerOpen}
                 onClose={() => setIsDrawerOpen(false)}
                 placement='left'
-               
+
                 style={{ width: '240px' }}
               >
                 <Drawer.Header>
                   <Drawer.Title> Encounter Menu</Drawer.Title>
                 </Drawer.Header>
-                <Drawer.Body style={{ padding:'10px'}}>
-                <List hover style={{ width: '100%', margin: 0 }}>
-      <List.Item onClick={() => handleMenuItemClick(<PatientSummary patient={patientSlice.patient} encounter={patientSlice.encounter}/>)}>
-        <Translate>Patient Summary</Translate>
-      </List.Item>
-      <List.Item onClick={() => handleMenuItemClick(<SOAP/>) }>
-        <Translate>S.O.A.P</Translate>
-      </List.Item>
-      <List.Item onClick={() => handleMenuItemClick(<DiagnosticsOrder/>) }>
-        <Translate>Diagnostics Order</Translate>
-      </List.Item>
-      <List.Item onClick={() => handleMenuItemClick(<Prescription/>) }>
-        <Translate>Prescription</Translate>
-      </List.Item>
-      <List.Item onClick={() => handleMenuItemClick(<Consultation/>) }>
-        <Translate>Consultation</Translate>
-      </List.Item>
-      <List.Item onClick={() => handleMenuItemClick(<Referrals/>) }>
-        <Translate>Referrals</Translate>
-      </List.Item>
-      <List.Item onClick={() => handleMenuItemClick(<PatientHistory/>) }>
-        <Translate>Patient History</Translate>
-      </List.Item>
-      <List.Item onClick={() => handleMenuItemClick(<Allergies/>) }>
-        <Translate>Allergies</Translate>
-      </List.Item>
-      <List.Item onClick={() => handleMenuItemClick(<MedicationsRecord/>) }>
-        <Translate>Medical Warnings</Translate>
-      </List.Item>
-      <List.Item onClick={() => handleMenuItemClick(<MedicationsRecord/>) }>
-        <Translate>Medications Record</Translate>
-      </List.Item>
-      <List.Item onClick={() => handleMenuItemClick(<VaccineReccord/>) }>
-        <Translate>Vaccine Reccord</Translate>
-      </List.Item>
-      <List.Item onClick={() => handleMenuItemClick(<DiagnosticsResult/>) }>
-        <Translate>Diagnostics Result</Translate>
-      </List.Item>
-    </List>
+                <Drawer.Body style={{ padding: '10px' }}>
+                  <List hover style={{ width: '100%', margin: 0 }}>
+                    <List.Item 
+                     style={{ display: 'flex', alignItems: 'center' }}
+                    onClick={() => handleMenuItemClick(<PatientSummary patient={patientSlice.patient} encounter={patientSlice.encounter} />)}>
+                    <FontAwesomeIcon icon={faBars} style={{ margin: '3px' }}  />
+                      <Translate>Patient Summary</Translate>
+                    </List.Item>
+                    <List.Item
+                     style={{ display: 'flex', alignItems: 'center' }}
+                     onClick={() => handleMenuItemClick(<SOAP />)}>
+                    <FontAwesomeIcon icon={faUserDoctor } style={{ margin: '3px' }}  />
+                      <Translate>S.O.A.P</Translate>
+                    </List.Item>
+                    <List.Item
+                     style={{ display: 'flex', alignItems: 'center' }}
+                     onClick={() => handleMenuItemClick(<DiagnosticsOrder />)}>
+                    <FontAwesomeIcon icon={faVials } style={{ margin: '3px' }}  />
+                      <Translate>Diagnostics Order</Translate>
+                    </List.Item>
+                    <List.Item 
+                     style={{ display: 'flex', alignItems: 'center' }}
+                    onClick={() => handleMenuItemClick(<Prescription />)}>
+                    <FontAwesomeIcon icon={faFilePrescription } style={{ margin: '3px'}} />
+                      <Translate>Prescription</Translate>
+                    </List.Item>
+                    <List.Item 
+                     style={{ display: 'flex', alignItems: 'center' }}
+                    onClick={() => handleMenuItemClick(<Consultation />)}>
+                    <FontAwesomeIcon icon={faStethoscope} style={{ margin: '3px'}} />
+                      <Translate>Consultation</Translate>
+                    </List.Item>
+                    <List.Item
+                     style={{ display: 'flex', alignItems: 'center' }}
+                     onClick={() => handleMenuItemClick(<Referrals />)}>
+                    <FontAwesomeIcon icon={faNotesMedical} style={{ margin: '3px' }}  />
+                      <Translate>Referrals</Translate>
+                    </List.Item>
+                    <List.Item 
+                     style={{ display: 'flex', alignItems: 'center' }}
+                    onClick={() => handleMenuItemClick(<PatientHistory />)}>
+                    <FontAwesomeIcon icon={faClockRotateLeft} style={{ margin: '3px'}}  />
+                      <Translate>Patient History</Translate>
+                    </List.Item>
+                    <List.Item 
+                     style={{ display: 'flex', alignItems: 'center' }}
+                    onClick={() => handleMenuItemClick(<Allergies />)}>
+                    <FontAwesomeIcon icon={faPersonDotsFromLine } style={{ margin: '3px' }} />
+                      <Translate>Allergies</Translate>
+                    </List.Item>
+                    <List.Item 
+                     style={{ display: 'flex', alignItems: 'center' }}
+                    onClick={() => handleMenuItemClick(<MedicationsRecord />)}>
+                    <FontAwesomeIcon icon={faTriangleExclamation } style={{ margin: '3px'}}  />
+                      <Translate>Medical Warnings</Translate>
+                    </List.Item>
+                    <List.Item 
+                     style={{ display: 'flex', alignItems: 'center' }}
+                    onClick={() => handleMenuItemClick(<MedicationsRecord />)}>
+                    <FontAwesomeIcon icon={faPills} style={{ margin: '3px'}}  />
+                      <Translate>Medications Record</Translate>
+                    </List.Item>
+                    <List.Item 
+                     style={{ display: 'flex', alignItems: 'center' }}
+                    onClick={() => handleMenuItemClick(<VaccineReccord />)}>
+                    <FontAwesomeIcon icon={faSyringe} style={{ margin: '3px'}} />
+                      <Translate>Vaccine Reccord</Translate>
+                    </List.Item>
+                    <List.Item
+                     style={{ display: 'flex', alignItems: 'center' }}
+                     onClick={() => handleMenuItemClick(<DiagnosticsResult />)}>
+                    <FontAwesomeIcon icon={faFileWaveform } style={{ margin: '3px' }}  />
+                      <Translate>Diagnostics Result</Translate>
+                    </List.Item>
+                  </List>
                 </Drawer.Body>
-               
+
               </Drawer>
               {activeContent} {/* Render the selected content */}
-              {/* <Tabs>
-                <TabList>
-                  <Tab>Medical Notes & Assessments</Tab>
-                  <Tab>Dental</Tab>
-                  <Tab>Applied Services</Tab>
-                  <Tab>Diagnostic Orders</Tab>
-                  <Tab>Prescription</Tab>
-                  <Tab>Diagnostics Results</Tab>
-                  <Tab>Medication Chart</Tab>
-                </TabList>
-                <TabPanel>
-                 //Medical Notes & Assessments Tab 
-                  <MedicalNotesAndAssessments />
-                </TabPanel>
-                <TabPanel>
-                  // Dental Tab 
-                  <Dental disabled={!patientSlice.encounter.editable} />
-                </TabPanel>
-                <TabPanel>
-                  // Encounter Services Tab 
-                  <EncounterServices />
-                </TabPanel>
-                <TabPanel></TabPanel>
-                <TabPanel></TabPanel>
-                <TabPanel></TabPanel>
-                <TabPanel></TabPanel>
-              </Tabs> */}
+             
             </Panel>
           </Panel>
         </BlockUI>
