@@ -28,7 +28,7 @@ import PageIcon from '@rsuite/icons/Page';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
 import CharacterAuthorizeIcon from '@rsuite/icons/CharacterAuthorize';
-import PeoplesTimeIcon from '@rsuite/icons/PeoplesTime';
+// import PeoplesTimeIcon from '@rsuite/icons/PeoplesTime';
 import { addFilterToListRequest, calculateAge, formatDate, fromCamelCaseToDBName } from '@/utils';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import SendIcon from '@rsuite/icons/Send';
@@ -207,7 +207,7 @@ const EncounterList = () => {
             <IconButton appearance="ghost" color="cyan" icon={<CharacterAuthorizeIcon />} >
               <Translate>Order Results</Translate>
             </IconButton>
-            <IconButton appearance="primary" color="blue" icon={<PeoplesTimeIcon />} >
+            <IconButton appearance="primary" color="blue" icon={<CharacterAuthorizeIcon />} >
               <Translate>Waiting list</Translate>
             </IconButton>
 
