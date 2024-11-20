@@ -20,12 +20,14 @@ import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from "@/services/se
 import TrashIcon from '@rsuite/icons/Trash';
 import { useAppSelector } from "@/hooks";
 import { useSaveAppointmentMutation } from "@/services/appointmentService";
-
+import AttachmentModal from "@/pages/patient/patient-profile/AttachmentUploadModal";
+import { object } from "prop-types";
 
 
 
 const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
 
+    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
 
     const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
     const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
@@ -41,6 +43,9 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
     const [searchResultVisible, setSearchResultVisible] = useState(false);
     const [patientAge, setPatientAge] = useState({ patientAge: null })
     const [reRenderModal, setReRenderModal] = useState(true)
+    const [instructionKey, setInstructionsKey] = useState()
+    const [instructionValue, setInstructionsValue] = useState()
+    const [instructions,setInstructions]= useState()
 
     const { Column, HeaderCell, Cell } = Table;
     const patientSlice = useAppSelector(state => state.patient);
@@ -134,6 +139,9 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
         setValidationResult(undefined);
         setReRenderModal(!reRenderModal)
         setSelectedStartDate(null)
+        setInstructions(null)
+        setInstructionsKey(null)
+        setInstructionsValue(null)
     }
     useEffect(() => {
         calculateAge(localPatient?.dob)
@@ -221,7 +229,9 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
 
     };
 
-
+    useEffect(() => {
+        setAppoitment({ ...appointment, reminderLkey: null })
+    }, [appointment?.isReminder])
 
     useEffect(() => {
         console.log(resourceTypeQueryResponse)
@@ -231,9 +241,27 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
         setAppoitment({ ...appointment, patientKey: localPatient.key })
     }, [localPatient])
 
+    useEffect(() => {
+        if (instructionKey?.instructionsLkey) {
+            console.log('teeeeeeeeeeeeeeeeeeeest')
+            const filtered = instractionsTypeQueryResponse.object
+                .filter((item) => item.key === instructionKey?.instructionsLkey)
+                .map((item) => item.lovDisplayVale);
+            setInstructionsValue(filtered)
+        }
+    }, [instructionKey])
+
+    useEffect(() => {
+        if (instructionValue) {
+            setInstructions(prevInstructions => 
+                prevInstructions ? `${prevInstructions}, ${instructionValue}` : instructionValue
+            );
+        }
+        setInstructionsKey(null)
+    }, [instructionValue]);
 
     const handleSaveAppointment = () => {
-        saveAppointment({...appointment,appointmentStart:selectedStartDate}).unwrap().then(()=>{
+        saveAppointment({ ...appointment, appointmentStart: selectedStartDate,instructions:instructions }).unwrap().then(() => {
             closeModal()
             handleClear()
         })
@@ -252,6 +280,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
                 </Modal.Header>
 
                 <Modal.Body>
+
                     <Panel bordered>
                         <ButtonToolbar>
                             {conjurePatientSearchBar('primary')}
@@ -495,6 +524,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
 
                         <div style={{ display: "flex", width: "100%", justifyContent: "flex-end", marginTop: "30px" }}>
                             <IconButton
+                                disabled={!localPatient?.key}
                                 color="cyan"
                                 style={{ marginRight: "70px", width: "180px" }}
                                 appearance="primary"
@@ -524,21 +554,21 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
                                 selectData={instractionsTypeQueryResponse?.object ?? []}
                                 selectDataLabel="lovDisplayVale"
                                 selectDataValue="key"
-                                record={appointment}
-                                setRecord={setAppoitment}
+                                record={instructionKey}
+                                setRecord={setInstructionsKey}
                             />
-                            <Input as="textarea" style={{ width: 450, marginTop: 20 }} rows={3} placeholder="Textarea" />
+                            <Input as="textarea" onChange={(e)=>setInstructions(e)} value={instructions} style={{ width: 450, marginTop: 20 }} rows={3} placeholder="Textarea" />
 
                         </div>
 
 
                         <MyInput
                             vr={validationResult}
-                            fieldType="textarea"
+                            fieldType='textarea'
                             column
                             fieldName="Notes"
                             width={400}
-                            height={126}
+                            height={125}
                             record={appointment}
                             setRecord={setAppoitment}
                         />
@@ -583,13 +613,14 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
 
                             <div style={{ marginTop: "35px" }}>
                                 <MyInput
+                                    disabled={!appointment?.isReminder}
                                     required
                                     width={165}
                                     vr={validationResult}
                                     column
                                     fieldLabel="Reminder Type"
                                     fieldType="select"
-                                    fieldName="reminderTypeLkey"
+                                    fieldName="reminderLkey"
                                     selectData={reminderTypeLovQueryResponse?.object ?? []}
                                     selectDataLabel="lovDisplayVale"
                                     selectDataValue="key"
@@ -604,12 +635,18 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
 
                         <div style={{ display: "flex", width: "20%", justifyContent: "flex-end", marginTop: "30px" }}>
 
-                            <IconButton style={{ marginRight: "70px", width: "180px", height: "30px" }} color="cyan"
-
+                            <IconButton
+                                disabled={!localPatient?.key}
+                                onClick={() => setAttachmentsModalOpen(true)}
+                                style={{ marginRight: "70px", width: "180px", height: "30px" }} color="cyan"
                                 appearance="primary" icon={<FileUploadIcon />}
                             >
                                 Attach File
                             </IconButton>
+
+                            {/* ===================AttachmentModal=================== */}
+                            <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={localPatient} />
+
                         </div>
 
 
@@ -674,7 +711,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
                 )} */}
                 </Modal.Body>
                 <Modal.Footer>
-                    <IconButton onClick={() => { console.log(selectedEvent || selectedSlot), console.log(appointment),handleSaveAppointment() }} color="violet" appearance="primary" icon={<CheckIcon />}>
+                    <IconButton onClick={() => { console.log(selectedEvent || selectedSlot), console.log(appointment), handleSaveAppointment() }} color="violet" appearance="primary" icon={<CheckIcon />}>
                         Save
                     </IconButton>
                     <Divider vertical />
