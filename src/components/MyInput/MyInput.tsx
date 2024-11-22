@@ -46,7 +46,7 @@ const MyInput = ({
       case 'textarea':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260 }}
+            style={{ width: props?.width ?? 260 ,height:props?.height??50}}
             disabled={props.disabled}
             name={fieldName}
             value={record[fieldName] ? record[fieldName] : ''}

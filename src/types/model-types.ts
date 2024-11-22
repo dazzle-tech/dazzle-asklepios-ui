@@ -287,7 +287,7 @@ export interface ApAppointment {
 	resourceTypeLkey:string;
 	resourceLkey:string;
 	appointmentStart:string;
-	instructionsLkey:string;
+	instructions:string;
 	notes:string;
 	priorityLkey:string;
 	isReminder:string;

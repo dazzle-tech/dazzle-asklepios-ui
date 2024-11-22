@@ -288,7 +288,7 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	resourceTypeLkey:undefined,
 	resourceLkey:undefined,
 	appointmentStart:'',
-	instructionsLkey:undefined,
+	instructions:'',
 	notes:'',
 	priorityLkey:undefined,
 	isReminder:'',

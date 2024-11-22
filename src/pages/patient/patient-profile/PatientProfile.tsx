@@ -106,6 +106,8 @@ import {
   useUpdateAttachmentDetailsMutation
 } from '@/services/attachmentService';
 import { notify } from '@/utils/uiReducerActions';
+import AttachmentModal from './AttachmentUploadModal';
+
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
   const byteNumbers = new Array(byteCharacters.length);
@@ -196,8 +198,7 @@ const PatientProfile = () => {
   const { data: warnings, refetch: warningsRefetch } = useGetPatientAdministrativeWarningsQuery(
     warningsAdmistritiveListRequest
   );
-  console.log(localPatient.key);
-  console.log(warnings);
+
   const patientSecondaryDocumentsResponse = useGetPatientSecondaryDocumentsQuery(
     { key: localPatient?.key },
     { skip: !localPatient?.key }
@@ -362,7 +363,7 @@ const PatientProfile = () => {
     { skip: !localPatient.key }
   );
 
-  console.log(fetchPatientImageResponse);
+
   const {
     data: patientAllergiesViewResponse,
     error: allergiesError,
@@ -427,13 +428,7 @@ const PatientProfile = () => {
     setRequestedPatientAttacment(attachmentKey);
     setActionType('view');
   };
-  const handleCleareAttachment = () => {
-    setSelectedPatientAttacment(null);
-    setRequestedPatientAttacment(null);
-    setActionType(null);
-    setAttachmentsModalOpen(false);
-    handleFinishUploading();
-  };
+
 
   const handleCleareSecondaryDocument = () => {
     setSecondaryDocumentModalOpen(false);
@@ -630,7 +625,7 @@ const PatientProfile = () => {
     savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false }).unwrap();
   };
 
-  const handleReslvePatientsWarnings = () => {};
+  const handleReslvePatientsWarnings = () => { };
 
   const handleDeletaAttachment = attachment => {
     deleteAttachment({
@@ -826,23 +821,25 @@ const PatientProfile = () => {
         addFilterToListRequest(
           fromCamelCaseToDBName(fieldName),
           'containsIgnoreCase',
-           String(value),
+          String(value),
           warningsAdmistritiveListRequest
         )
       );
     } else {
-      setWarningsAdmistritiveListRequest({ ...warningsAdmistritiveListRequest,  filters: [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: localPatient.key || undefined
-        },
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        }
-      ]});
+      setWarningsAdmistritiveListRequest({
+        ...warningsAdmistritiveListRequest, filters: [
+          {
+            fieldName: 'patient_key',
+            operator: 'match',
+            value: localPatient.key || undefined
+          },
+          {
+            fieldName: 'deleted_at',
+            operator: 'isNull',
+            value: undefined
+          }
+        ]
+      });
     }
   };
 
@@ -2623,135 +2620,8 @@ const PatientProfile = () => {
 
             {/* Attachments */}
             <TabPanel>
-              <Modal open={attachmentsModalOpen} onClose={() => handleCleareAttachment()}>
-                <Modal.Header>
-                  <Modal.Title>New/Edit Patient Attachments</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                  <div
-                    style={{
-                      borderRadius: '5px',
-                      border: '1px solid #e1e1e1',
-                      margin: '2px',
-                      position: 'relative',
-                      bottom: 0,
-                      width: '99%',
-                      height: 400,
-                      display: 'flex',
-                      alignContent: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <input
-                      disabled={actionType}
-                      type="file"
-                      ref={attachmentFileInputRef}
-                      style={{ display: 'none' }}
-                      onChange={handleFileUpload}
-                      accept="image/*"
-                    />
 
-                    {newAttachmentSrc ? (
-                      newAttachmentSrc ? (
-                        <img
-                          alt={'Attachment Preview'}
-                          width={380}
-                          height={380}
-                          onClick={() =>
-                            handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
-                          }
-                          src={newAttachmentSrc}
-                        />
-                      ) : (
-                        <FileUploadIcon
-                          onClick={() =>
-                            handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
-                          }
-                          style={{ fontSize: '250px', marginTop: '10%' }}
-                        />
-                      )
-                    ) : selectedPatientAttacment && selectedPatientAttacment.fileContent ? (
-                      selectedPatientAttacment.contentType === 'application/pdf' ? (
-                        <DetailIcon
-                          onClick={() =>
-                            handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
-                          }
-                          style={{ fontSize: '250px', marginTop: '10%' }}
-                        />
-                      ) : (
-                        <img
-                          alt={'Attachment Preview'}
-                          width={380}
-                          height={380}
-                          onClick={() =>
-                            handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
-                          }
-                          src={`data:${selectedPatientAttacment.contentType};base64,${selectedPatientAttacment.fileContent}`}
-                        />
-                      )
-                    ) : (
-                      <FileUploadIcon
-                        onClick={() =>
-                          handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
-                        }
-                        style={{ fontSize: '250px', marginTop: '10%' }}
-                      />
-                    )}
-                  </div>
-
-                  <br />
-                  <Form fluid>
-                    <Form.Group>
-                      <Form.ControlLabel>Type</Form.ControlLabel>
-                      <Input
-                        as="select"
-                        required
-                        value={selectedAttachType || ''}
-                        onChange={value => setSelectedAttachType(value)}
-                      >
-                        {attachmentsLovQueryResponse?.object?.map(item => (
-                          <option key={item.key} value={item.key}>
-                            {item.lovDisplayVale}
-                          </option>
-                        ))}
-                      </Input>
-                    </Form.Group>
-                  </Form>
-
-                  <br />
-                  <Input
-                    value={newAttachmentDetails || ''}
-                    onChange={setNewAttachmentDetails}
-                    as="textarea"
-                    rows={3}
-                    placeholder="Details"
-                  />
-                </Modal.Body>
-                <Modal.Footer>
-                  <Button onClick={() => handleCleareAttachment()} appearance="subtle">
-                    Cancel
-                  </Button>
-                  <Divider vertical />
-                  <Button
-                    disabled={actionType ? false : !uploadedAttachmentOpject?.formData}
-                    onClick={() => {
-                      console.log(uploadedAttachmentOpject);
-                      actionType === 'view'
-                        ? handleUpdateAttachmentDetails()
-                        : upload({
-                            ...uploadedAttachmentOpject,
-                            details: newAttachmentDetails,
-                            accessType: selectedAttachType
-                          })
-                            .unwrap()
-                            .then(() => handleFinishUploading());
-                    }}
-                    appearance="primary"
-                  >
-                    Save
-                  </Button>
-                </Modal.Footer>
-              </Modal>
+            <AttachmentModal isOpen={attachmentsModalOpen} onClose={()=>setAttachmentsModalOpen(false)} localPatient={localPatient}/>
 
               <ButtonToolbar style={{ padding: 1 }}>
                 <IconButton
