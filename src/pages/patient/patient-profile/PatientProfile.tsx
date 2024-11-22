@@ -2621,7 +2621,7 @@ const PatientProfile = () => {
             {/* Attachments */}
             <TabPanel>
 
-            <AttachmentModal isOpen={attachmentsModalOpen} onClose={()=>setAttachmentsModalOpen(false)} localPatient={localPatient}/>
+            <AttachmentModal isOpen={attachmentsModalOpen} onClose={()=>setAttachmentsModalOpen(false)} localPatient={localPatient} attatchmentType={'PATIENT_PROFILE_ATTACHMENT'}/>
 
               <ButtonToolbar style={{ padding: 1 }}>
                 <IconButton
