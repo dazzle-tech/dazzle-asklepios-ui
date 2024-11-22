@@ -3,7 +3,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
-import { useGetFacilitiesQuery, useSaveFacilityMutation,useRemoveFacilityMutation } from '@/services/setupService';
+import { useGetFacilitiesQuery, useSaveFacilityMutation, useRemoveFacilityMutation } from '@/services/setupService';
 import { Button, ButtonToolbar, IconButton } from 'rsuite';
 import { Block, Check, DocPass, Edit, History, Icon, PlusRound, Detail } from '@rsuite/icons';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
@@ -49,8 +49,8 @@ const Facilities = () => {
   const { data: facilityListResponse } = useGetFacilitiesQuery(listRequest);
 
   const [saveFacility, saveFacilityMutation] = useSaveFacilityMutation();
-  const [removeFacility,removeFacilityMutation] = useRemoveFacilityMutation()
-  
+  const [removeFacility, removeFacilityMutation] = useRemoveFacilityMutation()
+
   const [detailsPanle, setDetailsPanle] = useState(false);
 
   const handleNew = () => {
@@ -60,6 +60,7 @@ const Facilities = () => {
     setPopupOpen(true);
 
   };
+
 
   const handleSave = () => {
     console.log({ ...facility, address })
@@ -71,11 +72,11 @@ const Facilities = () => {
     console.log({ ...facility, address })
     setPopupOpen(false);
     setEditing(false)
-    removeFacility(facility).unwrap().then(()=>{
+    removeFacility(facility).unwrap().then(() => {
       refetchFacility()
     });
   };
-  
+
 
   useEffect(() => {
     if (saveFacilityMutation.data) {
@@ -89,12 +90,12 @@ const Facilities = () => {
     } else return '';
   };
 
-  const inputForms = (editing) => {
+  const inputForms = () => {
     return (
       <div>
         <Form layout="inline" fluid>
 
-          <MyInput disabled={!editing} column fieldName="facilityId" required record={facility} setRecord={setFacility} />
+          <MyInput disabled={!editing} fieldLabel="Facility ID" column fieldName="facilityId" required record={facility} setRecord={setFacility} />
 
           <MyInput disabled={!editing} column fieldName="facilityName" record={facility} setRecord={setFacility} />
           <MyInput
@@ -354,8 +355,8 @@ const Facilities = () => {
                 <IconButton
                   disabled={!facility.key}
                   appearance="primary"
-                  onClick={() =>{
-                   
+                  onClick={() => {
+
                     setDetailsPanle(true)
                   }
                   }
@@ -365,9 +366,9 @@ const Facilities = () => {
                   Edit Selected
                 </IconButton>
                 <IconButton
-                onClick={()=>{
-                  handleRemove(facility)
-                }}
+                  onClick={() => {
+                    handleRemove(facility)
+                  }}
                   disabled={!facility.key}
                   appearance="primary"
                   color="red"
