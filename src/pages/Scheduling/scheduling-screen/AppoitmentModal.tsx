@@ -45,7 +45,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
     const [reRenderModal, setReRenderModal] = useState(true)
     const [instructionKey, setInstructionsKey] = useState()
     const [instructionValue, setInstructionsValue] = useState()
-    const [instructions,setInstructions]= useState()
+    const [instructions, setInstructions] = useState()
 
     const { Column, HeaderCell, Cell } = Table;
     const patientSlice = useAppSelector(state => state.patient);
@@ -254,7 +254,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
 
     useEffect(() => {
         if (instructionValue) {
-            setInstructions(prevInstructions => 
+            setInstructions(prevInstructions =>
                 prevInstructions ? `${prevInstructions}, ${instructionValue}` : instructionValue
             );
         }
@@ -262,7 +262,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
     }, [instructionValue]);
 
     const handleSaveAppointment = () => {
-        saveAppointment({ ...appointment, appointmentStart: selectedStartDate,instructions:instructions }).unwrap().then(() => {
+        saveAppointment({ ...appointment, appointmentStart: selectedStartDate, instructions: instructions }).unwrap().then(() => {
             closeModal()
             handleClear()
         })
@@ -507,12 +507,12 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
                             record={appointment}
                             setRecord={setAppoitment}
                         />
-                                                <MyInput
+                        <MyInput
                             required
                             width={165}
                             vr={validationResult}
                             column
-                            fieldLabel="Duration Type"
+                            fieldLabel="Duration"
                             fieldType="select"
                             fieldName="durationLkey"
                             selectData={durationLovQueryResponse?.object ?? []}
@@ -521,7 +521,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
                             record={appointment}
                             setRecord={setAppoitment}
                         />
-                        
+
                         <div style={{ width: "100%", marginTop: "10px" }}>
                             <div>
                                 <label htmlFor="appointment-date">Start Appointment Date</label>
@@ -542,7 +542,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
                             <IconButton
                                 disabled={!localPatient?.key}
                                 color="cyan"
-                                style={{ marginRight: "70px", width: "180px" }}
+                                style={{ marginRight: "80px", width: 170 }}
                                 appearance="primary"
                                 icon={<DocPassIcon />}
                             >
@@ -573,7 +573,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
                                 record={instructionKey}
                                 setRecord={setInstructionsKey}
                             />
-                            <Input as="textarea" onChange={(e)=>setInstructions(e)} value={instructions} style={{ width: 450, marginTop: 20 }} rows={3} placeholder="Textarea" />
+                            <Input as="textarea" onChange={(e) => setInstructions(e)} value={instructions} style={{ width: 450, marginTop: 20 }} rows={3} />
 
                         </div>
 
@@ -583,89 +583,84 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
                             fieldType='textarea'
                             column
                             fieldName="Notes"
-                            width={400}
+                            width={380}
                             height={125}
                             record={appointment}
                             setRecord={setAppoitment}
                         />
 
+                        <div style={{ display: "flex", flexDirection: 'column' }} >
+                            <MyInput
+                                required
+                                width={165}
+                                vr={validationResult}
+                                column
+                                fieldLabel="Priority"
+                                fieldType="select"
+                                fieldName="priority"
+                                selectData={priorityQueryResponse?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                record={appointment}
+                                setRecord={setAppoitment}
+                            />
+                            <br /><br /><br />
+                            <div >
+                                <IconButton
+                                    disabled={!localPatient?.key}
+                                    onClick={() => setAttachmentsModalOpen(true)}
+                                    style={{ marginRight: "70px", width: 165, height: "30px" }} color="cyan"
+                                    appearance="primary" icon={<FileUploadIcon />}
+                                >
+                                    Attach File
+                                </IconButton>
+
+                                {/* ===================AttachmentModal=================== */}
+                                <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={localPatient} attatchmentType={'APPOINTMENT_ATTACHMENT'} />
+
+                            </div>
+                        </div>
+
+
                         <MyInput
-                            required
                             width={165}
+                            column
+                            fieldLabel="consent Form"
+                            fieldType="checkbox"
+                            fieldName="consentForm"
+                            record={appointment}
+                            setRecord={setAppoitment}
+                        />
+
+                        <MyInput
+                            width={165}
+                            column
+                            fieldLabel="Reminder"
+                            fieldType="checkbox"
+                            fieldName="isReminder"
+                            record={appointment}
+                            setRecord={setAppoitment}
+                        />
+
+                        <MyInput
+                            disabled={!appointment?.isReminder}
+                            required
+                            width={170}
                             vr={validationResult}
                             column
-                            fieldLabel="Priority"
+                            fieldLabel="Reminder Type"
                             fieldType="select"
-                            fieldName="priority"
-                            selectData={priorityQueryResponse?.object ?? []}
+                            fieldName="reminderLkey"
+                            selectData={reminderTypeLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
                             record={appointment}
                             setRecord={setAppoitment}
                         />
-                        <div style={{ display: "flex", flexDirection: 'column' }} >
+                        {/* <div style={{ display: "flex", width: "20%", justifyContent: "flex-end", marginTop: "30px" }}>
 
 
-                            <div>
-                            <MyInput
-                                    width={165}
-                                    column
-                                    fieldLabel="consent Form"
-                                    fieldType="checkbox"
-                                    fieldName="consentForm"
-                                    record={appointment}
-                                    setRecord={setAppoitment}
-                                />
-                                
-                                <MyInput
-                                    width={165}
-                                    column
-                                    fieldLabel="Reminder"
-                                    fieldType="checkbox"
-                                    fieldName="isReminder"
-                                    record={appointment}
-                                    setRecord={setAppoitment}
-                                />
-                              
-                            </div>
-
-                            <div style={{ marginTop: "35px" }}>
-                                <MyInput
-                                    disabled={!appointment?.isReminder}
-                                    required
-                                    width={165}
-                                    vr={validationResult}
-                                    column
-                                    fieldLabel="Reminder Type"
-                                    fieldType="select"
-                                    fieldName="reminderLkey"
-                                    selectData={reminderTypeLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    record={appointment}
-                                    setRecord={setAppoitment}
-                                />
-                            </div>
-
-
-                        </div>
-
-
-                        <div style={{ display: "flex", width: "20%", justifyContent: "flex-end", marginTop: "30px" }}>
-
-                            <IconButton
-                                disabled={!localPatient?.key}
-                                onClick={() => setAttachmentsModalOpen(true)}
-                                style={{ marginRight: "70px", width: "180px", height: "30px" }} color="cyan"
-                                appearance="primary" icon={<FileUploadIcon />}
-                            >
-                                Attach File
-                            </IconButton>
-
-                            {/* ===================AttachmentModal=================== */}
-                            <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={localPatient} attatchmentType={'APPOINTMENT_ATTACHMENT'} />
-
-                        </div>
+                        </div> */}
 
 
 
