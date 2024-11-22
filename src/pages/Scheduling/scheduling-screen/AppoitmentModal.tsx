@@ -87,6 +87,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
     const { data: priorityQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY')
     const { data: procedureLevelQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL')
     const { data: reminderTypeLovQueryResponse } = useGetLovValuesByCodeQuery('REMINDER_TYP');
+    const { data: durationLovQueryResponse } = useGetLovValuesByCodeQuery('APNTMNT_DURATION');
 
     // const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
     //     code: 'CITY',
@@ -506,6 +507,21 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
                             record={appointment}
                             setRecord={setAppoitment}
                         />
+                                                <MyInput
+                            required
+                            width={165}
+                            vr={validationResult}
+                            column
+                            fieldLabel="Duration Type"
+                            fieldType="select"
+                            fieldName="durationLkey"
+                            selectData={durationLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            record={appointment}
+                            setRecord={setAppoitment}
+                        />
+                        
                         <div style={{ width: "100%", marginTop: "10px" }}>
                             <div>
                                 <label htmlFor="appointment-date">Start Appointment Date</label>
@@ -591,6 +607,16 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
 
 
                             <div>
+                            <MyInput
+                                    width={165}
+                                    column
+                                    fieldLabel="consent Form"
+                                    fieldType="checkbox"
+                                    fieldName="consentForm"
+                                    record={appointment}
+                                    setRecord={setAppoitment}
+                                />
+                                
                                 <MyInput
                                     width={165}
                                     column
@@ -600,15 +626,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
                                     record={appointment}
                                     setRecord={setAppoitment}
                                 />
-                                <MyInput
-                                    width={165}
-                                    column
-                                    fieldLabel="consent Form"
-                                    fieldType="checkbox"
-                                    fieldName="consentForm"
-                                    record={appointment}
-                                    setRecord={setAppoitment}
-                                />
+                              
                             </div>
 
                             <div style={{ marginTop: "35px" }}>
@@ -645,7 +663,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
                             </IconButton>
 
                             {/* ===================AttachmentModal=================== */}
-                            <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={localPatient} />
+                            <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={localPatient} attatchmentType={'APPOINTMENT_ATTACHMENT'} />
 
                         </div>
 
@@ -683,9 +701,9 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
                             width={165}
                             vr={validationResult}
                             column
-                            fieldLabel="pricedure Level"
+                            fieldLabel="Procedure Level"
                             fieldType="select"
-                            fieldName="pricedureLevel"
+                            fieldName="procedureLevelLkey"
                             selectData={procedureLevelQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"

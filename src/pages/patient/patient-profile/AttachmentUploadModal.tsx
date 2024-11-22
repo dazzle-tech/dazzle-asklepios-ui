@@ -11,7 +11,7 @@ import { ApPatient } from "@/types/model-types";
 
 
 
-const AttachmentModal = ({ isOpen, onClose, localPatient }) => {
+const AttachmentModal = ({ isOpen, onClose, localPatient,attatchmentType }) => {
 
     const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
     const [actionType, setActionType] = useState(null); // 'view' or 'download'
@@ -37,8 +37,8 @@ const AttachmentModal = ({ isOpen, onClose, localPatient }) => {
     const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch } =
     useFetchAttachmentLightQuery({ refKey: localPatient?.key }, { skip: !localPatient?.key });
 
-    const handleAttachmentFileUploadClick = type => {
-        setNewAttachmentType(type); // PATIENT_PROFILE_ATTACHMENT or PATIENT_PROFILE_PICTURE
+    const handleAttachmentFileUploadClick = () => {
+        setNewAttachmentType(attatchmentType); // PATIENT_PROFILE_ATTACHMENT or PATIENT_PROFILE_PICTURE or APPOINTMENT_ATTACHMENT
         if (localPatient?.key) attachmentFileInputRef.current.click();
     };
  
@@ -119,7 +119,7 @@ const AttachmentModal = ({ isOpen, onClose, localPatient }) => {
         <Modal open={isOpen} onClose={closeModal}>
             <Modal.Header>
                 <Modal.Title onClick={() => {
-                    handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
+                    handleAttachmentFileUploadClick()
                 }} >New/Edit Patient Attachments</Modal.Title>
             </Modal.Header>
             <Modal.Body>
@@ -154,14 +154,14 @@ const AttachmentModal = ({ isOpen, onClose, localPatient }) => {
                                 width={380}
                                 height={380}
                                 onClick={() =>
-                                    handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
+                                    handleAttachmentFileUploadClick()
                                 }
                                 src={newAttachmentSrc}
                             />
                         ) : (
                             <FileUploadIcon
                                 onClick={() => {
-                                    handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT');
+                                    handleAttachmentFileUploadClick();
 
                                 }
                                 }
@@ -172,7 +172,7 @@ const AttachmentModal = ({ isOpen, onClose, localPatient }) => {
                         selectedPatientAttacment.contentType === 'application/pdf' ? (
                             <DetailIcon
                                 onClick={() =>
-                                    handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
+                                    handleAttachmentFileUploadClick()
                                 }
                                 style={{ fontSize: '250px', marginTop: '10%' }}
                             />
@@ -182,7 +182,7 @@ const AttachmentModal = ({ isOpen, onClose, localPatient }) => {
                                 width={380}
                                 height={380}
                                 onClick={() =>
-                                    handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
+                                    handleAttachmentFileUploadClick()
                                 }
                                 src={`data:${selectedPatientAttacment.contentType};base64,${selectedPatientAttacment.fileContent}`}
                             />
@@ -190,7 +190,7 @@ const AttachmentModal = ({ isOpen, onClose, localPatient }) => {
                     ) : (
                         <FileUploadIcon
                             onClick={() =>
-                                handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
+                                handleAttachmentFileUploadClick()
                             }
                             style={{ fontSize: '250px', marginTop: '10%' }}
                         />

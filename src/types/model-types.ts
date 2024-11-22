@@ -286,8 +286,10 @@ export interface ApAppointment {
 	facilityKey:string;
 	resourceTypeLkey:string;
 	resourceLkey:string;
+	visitTypeLkey:string;
+	durationLkey:string;
 	appointmentStart:string;
-	instructions:string;
+	instructionsLkey:string;
 	notes:string;
 	priorityLkey:string;
 	isReminder:string;
@@ -295,8 +297,7 @@ export interface ApAppointment {
 	consentForm:string;
 	referingPhysicianLkey:string;
 	externalPhysician:string;
-	pricedureLevelLkey:string;
-	visitTypeLkey:string;
+	procedureLevelLkey:string;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
