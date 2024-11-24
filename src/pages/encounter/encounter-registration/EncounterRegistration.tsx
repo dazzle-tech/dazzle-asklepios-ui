@@ -73,7 +73,6 @@ import {
 } from '@/types/model-types-constructor';
 const EncounterRegistration = () => {
   const encounter = useSelector((state: RootState) => state.patient.encounter);
-
   const patientSlice = useAppSelector(state => state.patient);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -148,6 +147,7 @@ const EncounterRegistration = () => {
     }
   };
 
+
   const initEncounterFromPatient = () => {
     if (patientSlice.patient) {
       setLocalEncounter({
@@ -166,10 +166,12 @@ const EncounterRegistration = () => {
   // dispatch(setPatient(cachedPatient));
   useEffect(() => {
     if (!patientSlice.patient && !localEncounter.patientKey) {
+      console.log("case1-no patient");
       dispatch(setPatient({ ...newApPatient }));
       dispatch(setEncounter({ ...newApEncounter }));
       // navigate('/patient-profile');
     } else {
+      console.log("case2 patient");
       setEditing(true);
       initEncounterFromPatient();
     }
@@ -207,8 +209,11 @@ const EncounterRegistration = () => {
   const handleOpenAppointmentViewModel = () => setOpenModelAppointmentView(true);
   const handleCloseAppointmentViewModel = () => setOpenModelAppointmentView(false);
   const handleSave = () => {
+    
     if (localEncounter && localEncounter.patientKey) {
+       
       saveEncounter(localEncounter).unwrap();
+     
     } else {
       dispatch(notify({ msg: 'encounter not linked to patient', sev: 'error' }));
     }
@@ -249,6 +254,16 @@ const EncounterRegistration = () => {
       // selecteing primary patient (localPatient)
        console.log(data);
       dispatch(setPatient(data));
+      
+      setLocalEncounter(
+        {...newApEncounter,
+          patientKey: patientSlice.patient.key,
+        patientFullName: patientSlice.patient.fullName,
+        patientAge: patientSlice.patient.dob ? calculateAge(patientSlice.patient.dob) + '' : '',
+        encounterStatusLkey: '91063195286200',//change this to be loaded from cache lov values by code
+        plannedStartDate: new Date()
+        }
+      )
       
     } else if (patientSearchTarget === 'relation') {
       // selecting patient for relation patient key
@@ -334,7 +349,7 @@ const EncounterRegistration = () => {
           <Panel bordered>
             <ButtonToolbar>
               <IconButton
-                disabled={encounter}
+               
                 appearance="primary"
                 color="violet"
                 icon={<ArowBackIcon />}
@@ -346,7 +361,7 @@ const EncounterRegistration = () => {
                 <Translate>Cancel</Translate>
               </IconButton>
               <IconButton
-                disabled={encounter}
+                
                 appearance="primary"
                 color="violet"
                 icon={<Check />}
@@ -395,7 +410,7 @@ const EncounterRegistration = () => {
                     fieldName={'VisitNote'}
                     setRecord={setLocalEncounter}
                     vr={validationResult}
-                    record={encounter ? encounter : localEncounter}
+                    record={localEncounter}
 
                   />
                 </Form>
@@ -673,8 +688,8 @@ const EncounterRegistration = () => {
                     column
                     width={130}
                     disabled={true}
-                    fieldName={'patientFullName'}
-                    record={localEncounter}
+                    fieldName={'fullName'}
+                    record={ patientSlice.patient}
                     setRecord={undefined}
                   />
                   <MyInput
@@ -740,61 +755,61 @@ const EncounterRegistration = () => {
                   <MyInput
                     vr={validationResult}
                     column
-                    disabled={!editing || encounter}
+                    
                     fieldLabel="Visit ID"
                     fieldName="visitId"
-                    record={encounter ? encounter : localEncounter}
+                    record={ localEncounter}
                     setRecord={setLocalEncounter}
                   />
 
                   <MyInput
                     vr={validationResult}
                     column
-                    disabled={!editing || encounter}
+                    
                     fieldLabel="Date"
                     fieldType="date"
                     fieldName="plannedStartDate"
-                    record={encounter ? encounter : localEncounter}
+                    record={ localEncounter}
                     setRecord={setLocalEncounter}
                   />
 
                   <MyInput
                     vr={validationResult}
                     column
-                    disabled={!editing || encounter}
+                    
                     fieldType="select"
                     fieldLabel="Visit Type"
                     fieldName="encounterTypeLkey"
                     selectData={encounterTypeLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
-                    record={encounter ? encounter : localEncounter}
+                    record={ localEncounter}
                     setRecord={setLocalEncounter}
                   />
                   <MyInput
                     vr={validationResult}
                     column
-                    disabled={!editing || encounter}
+                    
                     fieldType="select"
                     fieldName="departmentKey"
                     selectData={departmentListResponse?.object ?? []}
                     selectDataLabel="name"
                     selectDataValue="key"
-                    record={encounter ? encounter : localEncounter}
+                    record={localEncounter}
                     setRecord={setLocalEncounter}
                   />
 
                   <MyInput
                     vr={validationResult}
                     column
-                    disabled={!editing || encounter}
+                    
                     fieldType="select"
                     fieldLabel="Physician"
                     fieldName="responsiblePhysicianKey"
                     selectData={practitionerListResponse?.object ?? []}
                     selectDataLabel="practitionerFullName"
                     selectDataValue="key"
-                    record={encounter ? encounter : localEncounter}
+                    record={ localEncounter}
                     setRecord={setLocalEncounter}
                   />
 
@@ -814,39 +829,39 @@ const EncounterRegistration = () => {
                   <MyInput
                     vr={validationResult}
                     column
-                    disabled={!editing || encounter}
+                    
                     fieldType="select"
                     fieldLabel="Priority"
                     fieldName="encounterPriorityLkey"
                     selectData={encounterPriorityLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
-                    record={encounter ? encounter : localEncounter}
+                    record={ localEncounter}
                     setRecord={setLocalEncounter}
                   />
                   <br />
                   <MyInput
                     vr={validationResult}
                     column
-                    disabled={!editing || encounter}
+                    
                     fieldType="select"
                     fieldName="reasonLkey"
                     selectData={encounterReasonLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
-                    record={encounter ? encounter : localEncounter}
+                    record={ localEncounter}
                     setRecord={setLocalEncounter}
                   />
                   <MyInput
                     vr={validationResult}
                     column
-                    disabled={!editing || encounter}
+                   
                     fieldType="select"
                     fieldName="originLkey"
                     selectData={patOriginLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
-                    record={encounter ? encounter : localEncounter}
+                    record={localEncounter}
                     setRecord={setLocalEncounter}
                   />
                   <MyInput
@@ -855,7 +870,7 @@ const EncounterRegistration = () => {
 
                     fieldLabel="Source Name"
                     fieldName="source"
-                    record={encounter ? encounter : localEncounter}
+                    record={localEncounter}
                     setRecord={setLocalEncounter}
                   />
                   {/* <MyInput
@@ -877,7 +892,7 @@ const EncounterRegistration = () => {
                     selectData={bookingstatusLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
-                    record={encounter ? encounter : localEncounter}
+                    record={ localEncounter}
                     setRecord={setLocalEncounter}
                     disabled={true}
                   />
