@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Calendar as BigCalendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { Calendar as RsuiteCalendar, TagPicker,  ButtonToolbar, Panel, InputGroup, SelectPicker, Input,  } from "rsuite";
+import { Calendar as RsuiteCalendar, TagPicker, ButtonToolbar, Panel, InputGroup, SelectPicker, Input, IconButton, Button, } from "rsuite";
 import "./styles.less";
 import SearchIcon from '@rsuite/icons/Search';
 import {
@@ -11,7 +11,11 @@ import {
 } from '@/types/model-types-constructor';
 import BlockIcon from '@rsuite/icons/Block';
 import CheckIcon from '@rsuite/icons/Check';
-
+import DetailIcon from '@rsuite/icons/Detail';
+import SendIcon from '@rsuite/icons/Send';
+import CharacterAuthorizeIcon from '@rsuite/icons/CharacterAuthorize';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { CheckTreePicker } from 'rsuite';
 import Translate from "@/components/Translate";
 
 import {
@@ -21,6 +25,7 @@ import {
 import { initialListRequest } from "@/types/types";
 import AppointmentModal from "./AppoitmentModal";
 import { ApPatient } from "@/types/model-types";
+import { faPrint } from "@fortawesome/free-solid-svg-icons";
 
 const ScheduleScreen = () => {
     const localizer = momentLocalizer(moment); // Set up moment as the date localizer
@@ -81,9 +86,34 @@ const ScheduleScreen = () => {
 
     const [events, setEvents] = useState(eventsData);
 
-    const data = ['Eugenia', 'Bryan', 'Linda', 'Nancy', 'Lloyd', 'Alice', 'Julia', 'Albert'].map(
-        item => ({ label: item, value: item })
-    );
+    const data = [
+        {
+            label: 'Group 1',
+            value: 'group1',
+            children: [
+                { label: 'Eugenia', value: 'Eugenia' },
+                { label: 'Bryan', value: 'Bryan' }
+            ]
+        },
+        {
+            label: 'Group 2',
+            value: 'group2',
+            children: [
+                { label: 'Linda', value: 'Linda' },
+                { label: 'Nancy', value: 'Nancy' }
+            ]
+        },
+        {
+            label: 'Group 3',
+            value: 'group3',
+            children: [
+                { label: 'Lloyd', value: 'Lloyd' },
+                { label: 'Alice', value: 'Alice' },
+                { label: 'Julia', value: 'Julia' },
+                { label: 'Albert', value: 'Albert' }
+            ]
+        }
+    ];
     const styles = { width: 300, display: 'block', marginBottom: 10 };
 
     const [open, setOpen] = React.useState(false);
@@ -142,10 +172,40 @@ const ScheduleScreen = () => {
     return (
         <div>
             <div className="inline-two-four-container">
-                <div className="left-section">
-                    <RsuiteCalendar compact style={{ width: 320, height: 320 }} />
+                <div className="left-section"  >
+                    {/* <RsuiteCalendar compact style={{ width: 320, height: 320 }} /> */}
+                    <ButtonToolbar>
+                        <IconButton appearance="primary" color="violet" style={{ width: "45%" }} icon={<DetailIcon />}>Add Appointments</IconButton>
+                        <IconButton appearance="ghost" color="violet" style={{ width: "50%" }} icon={<SendIcon />}> View App Requests</IconButton>
+                        <IconButton appearance="primary" color="blue" style={{ width: "45%" }} icon={<CharacterAuthorizeIcon />}>Bulk Appointments</IconButton>
+                        <IconButton color="blue" appearance="ghost" style={{ width: "50%" }} icon={<SearchIcon />}>Search For Appointments</IconButton>
+
+                        <Button style={{
+                            width: "45%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "flex-start",
+                            borderRadius: "5px"
+                        }}
+                            color="cyan" appearance="primary" >
+
+                            <FontAwesomeIcon icon={faPrint} style={{ marginRight: "25px", fontSize: "18px" }} />
+                            Print Report
+                        </Button>
+                        <IconButton color="cyan" appearance="ghost" style={{ width: "50%" }} icon={<DetailIcon />}>Waiting List</IconButton>
+
+
+                    </ButtonToolbar>
+
+
                     <br />
-                    <TagPicker size="lg" placeholder="Large" data={data} style={styles} />
+                    <br />
+                    <CheckTreePicker
+                        defaultExpandAll
+                        data={data ?? []}
+                        style={{ width: "97%" }}
+                        placeholder="Select"
+                    />
                 </div>
                 <div className="right-section">
                     <BigCalendar
@@ -164,14 +224,13 @@ const ScheduleScreen = () => {
             </div>
 
 
-            <AppointmentModal isOpen={modalOpen}  onClose={()=>setModalOpen(false)}  startAppoitmentStart ={selectedStartDate} />
+            <AppointmentModal isOpen={modalOpen} onClose={() => setModalOpen(false)} startAppoitmentStart={selectedStartDate} />
 
 
         </div>
     );
 };
 
-BlockIcon
-CheckIcon
+
 
 export default ScheduleScreen;
