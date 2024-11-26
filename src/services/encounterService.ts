@@ -2,7 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApEncounter, ApPatientDiagnose, ApPatientPlan, ApReviewOfSystem } from '@/types/model-types';
+import { ApEncounter, ApPatientDiagnose, ApPatientEncounterOrder, ApPatientPlan, ApReviewOfSystem } from '@/types/model-types';
 
 export const encounterService = createApi({
   reducerPath: 'encounterApi',
@@ -177,6 +177,35 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    savePatientEncounterOrder: builder.mutation({
+      query: (patEncounterOrder: ApPatientEncounterOrder) => ({
+        url: `/encounter/save-patient-encounter-order`,
+        method: 'POST',
+        body: patEncounterOrder
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getPatientEncounterOrders: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/patient-encounter-order-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removePatientEncounterOrder: builder.mutation({
+      query: (patEncounterOrder: ApPatientEncounterOrder) => ({
+        url: `/encounter/remove-encounter-order`,
+        method: 'POST',
+        body: patEncounterOrder,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;   
+      }
+    }),
   })
 });
 
@@ -197,5 +226,9 @@ export const {
   useSavePatientDiagnoseMutation,
   useRemovePatientDiagnoseMutation,
   useSavePatientPlanMutation,
-  useGetPatientPlansQuery
+  useGetPatientPlansQuery,
+  useSavePatientEncounterOrderMutation,
+  useGetPatientEncounterOrdersQuery,
+  useRemovePatientEncounterOrderMutation
 } = encounterService;
+

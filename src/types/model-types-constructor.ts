@@ -1238,6 +1238,25 @@ export const newApPatientDiagnose:modelTypes.ApPatientDiagnose = {
 	isSuspected:undefined,
 } 
 
+export const newApPatientEncounterOrder:modelTypes.ApPatientEncounterOrder = { 
+	key:undefined,
+	patientKey:undefined,
+	visitKey:undefined,
+	testKey:undefined,
+	statusLkey:undefined,
+	receivedLabLkey:undefined,
+	reasonLkey:undefined,
+	priorityLkey:undefined,
+	notes:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApPatientIds:modelTypes.ApPatientIds = { 
 	key:undefined,
 	patientKey:undefined,

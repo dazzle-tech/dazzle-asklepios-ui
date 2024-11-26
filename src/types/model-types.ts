@@ -1237,6 +1237,25 @@ export interface ApPatientDiagnose {
 	isSuspected:boolean;
 } 
 
+export interface ApPatientEncounterOrder { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	testKey:string;
+	statusLkey:string;
+	receivedLabLkey:string;
+	reasonLkey:string;
+	priorityLkey:string;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApPatientIds { 
 	key:string;
 	patientKey:string;
