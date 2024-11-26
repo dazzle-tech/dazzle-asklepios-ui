@@ -84,6 +84,16 @@ const PatientDiagnosis = () => {
 
   });
   
+
+  const key = 
+  patientDiagnoseListResponse?.data?.object && 
+  Array.isArray(patientDiagnoseListResponse.data.object) && 
+  patientDiagnoseListResponse.data.object.length > 0
+    ? patientDiagnoseListResponse.data.object[0].key ?? ""
+    : "";
+
+ console.log(key);
+
  useEffect(() => {
   if (patientDiagnoseListResponse.data?.object?.length > 0) {
     setSelectedDiagnose(patientDiagnoseListResponse.data.object[0]);
