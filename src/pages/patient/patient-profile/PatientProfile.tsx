@@ -9,6 +9,7 @@ import {
   ApPatientSecondaryDocuments,
   ApPatientAdministrativeWarnings
 } from '@/types/model-types';
+import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
 import CloseIcon from '@rsuite/icons/Close';
 import FileDownloadIcon from '@rsuite/icons/FileDownload';
 import TrashIcon from '@rsuite/icons/Trash';
@@ -132,7 +133,7 @@ const PatientProfile = () => {
   const patientSlice = useAppSelector(state => state.patient);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-
+  const [selectedAttachment, setSelectedAttachment] = useState(null);
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [editing, setEditing] = useState(false);
   const [searchResultVisible, setSearchResultVisible] = useState(false);
@@ -140,6 +141,8 @@ const PatientProfile = () => {
   const [patientAttachments, setPatientAttachments] = useState([]);
   const [selectedCriterion, setSelectedCriterion] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [deleteDocModalOpen, setDeleteDocModalOpen] = useState(false);
+  const [deleteRelativeModalOpen, setDeleteRelativeModalOpen] = useState(false);
   const [selectedAttachType, setSelectedAttachType] = useState('');
   const [warningsAdmistritiveListRequest, setWarningsAdmistritiveListRequest] =
     useState<ListRequest>({
@@ -170,7 +173,7 @@ const PatientProfile = () => {
     { label: 'Document Number', value: 'documentNo' },
     { label: 'Full Name', value: 'fullName' },
     { label: 'Archiving Number', value: 'archivingNumber' },
-    { label: 'Primary Phone Number', value: 'mobileNumber' },
+    { label: 'Primary Phone Number', value: 'phoneNumber' },
     { label: 'Date of Birth', value: 'dob' }
   ];
 
@@ -313,7 +316,7 @@ const PatientProfile = () => {
   const [saveSecondaryDocument, setSaveSecondaryDocument] = useSaveNewSecondaryDocumentMutation();
   const [savePatientAdministrativeWarnings, setSavePatientAdministrativeWarnings] =
     useSavePatientAdministrativeWarningsMutation();
-
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [updatePatientAdministrativeWarnings, setUpdatePatientAdministrativeWarnings] =
     useUpdatePatientAdministrativeWarningsMutation();
   const [deletePatientAdministrativeWarnings, setDeletePatientAdministrativeWarnings] =
@@ -446,7 +449,6 @@ const PatientProfile = () => {
         setAttachmentsModalOpen(true);
         setSelectedPatientAttacment(fetchAttachmentByKeyResponce);
         setNewAttachmentDetails(fetchAttachmentByKeyResponce.extraDetails);
-        setNewAttachmentDetails(fetchAttachmentByKeyResponce.accessTypeLkey);
       }
     }
   }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
@@ -622,23 +624,10 @@ const PatientProfile = () => {
 
   const handleSave = () => {
     // save changes
-    savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false }).unwrap();
+    savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false }).unwrap().then(() => {
+      dispatch(notify('Patient Added Successfully'));
+    });
   };
-
-  const handleReslvePatientsWarnings = () => { };
-
-  const handleDeletaAttachment = attachment => {
-    deleteAttachment({
-      key: attachment.key
-    }).then(
-      () => (
-        attachmentRefetch(),
-        fetchPatientImageResponse.refetch(),
-        dispatch(notify('Attachment Deleted'))
-      )
-    );
-  };
-
   const handleDeleteInsurance = () => {
     deleteInsurance({
       key: selectedInsurance.key
@@ -658,9 +647,14 @@ const PatientProfile = () => {
       () => (
         patientSecondaryDocumentsResponse.refetch(),
         dispatch(notify('Secondary Document Deleted')),
-        setSelectedInsurance(null)
+        setSelectedInsurance(null),
+        setDeleteDocModalOpen(false)
       )
     );
+  };
+  const handleDeleteAttachment = (attachment) => {
+    setSelectedAttachment(attachment);
+    setDeleteModalOpen(true);
   };
 
   const handleDeleteRelation = () => {
@@ -672,7 +666,8 @@ const PatientProfile = () => {
       () => (
         patientRelationsRefetch(),
         dispatch(notify('Relation Deleted')),
-        setSelectedPatientRelation(newApPatientRelation)
+        setSelectedPatientRelation(newApPatientRelation),
+        setDeleteRelativeModalOpen(false)
       )
     );
   };
@@ -751,7 +746,28 @@ const PatientProfile = () => {
   };
 
   const handleClear = () => {
-    setLocalPatient({ ...newApPatient });
+    setLocalPatient({ ...newApPatient,
+      documentCountryLkey:null,
+      documentTypeLkey:null,
+      specialCourtesyLkey:null,
+      genderLkey:null,
+      maritalStatusLkey:null,
+      nationalityLkey:null,
+      primaryLanguageLkey:null,
+      religionLkey:null,
+      ethnicityLkey:null,
+      occupationLkey:null,
+      emergencyContactRelationLkey:null,
+      countryLkey:null,
+      stateProvinceRegionLkey:null,
+      cityLkey:null,
+      patientClassLkey:null,
+      securityAccessLevelLkey:null,
+      responsiblePartyLkey:null,
+      educationalLevelLkey:null,
+      preferredContactLkey:null,
+      districtLkey:null,
+     });
     setEditing(false);
     setValidationResult(undefined);
     dispatch(setPatient(null));
@@ -799,7 +815,11 @@ const PatientProfile = () => {
       setVerificationModalOpen(false);
     }
   }, [verifyOtpMutation]);
+  const handleClearAttachmentDelete = () => {
+    setDeleteModalOpen(false);
+    handleCleareAttachment();
 
+  };
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -814,7 +834,17 @@ const PatientProfile = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
+  const handleClearDocument = () => {
+    setSecondaryDocumentModalOpen(false);
+    setSecondaryDocument(newApPatientSecondaryDocuments);
+    setDeleteDocModalOpen(false);
 
+  };
+  const handleClearRelative = () => {
+    setSelectedPatientRelation(newApPatientRelation);
+    setDeleteRelativeModalOpen(false);
+
+  }
   const handleFilterChangeInWarning = (fieldName, value) => {
     if (value) {
       setWarningsAdmistritiveListRequest(
@@ -931,7 +961,20 @@ const PatientProfile = () => {
       setEncounterHistoryModalOpen(true);
     }
   };
-
+  const handleCleareAttachment = () => {
+    setAttachmentsModalOpen(false);
+    setRequestedPatientAttacment(null);
+    setAttachmentsModalOpen(false);
+    setRequestedPatientAttacment(null);
+    setNewAttachmentSrc(null);
+    setNewAttachmentType(null);
+    setNewAttachmentDetails('');
+    setAttachmentsModalOpen(false);
+    attachmentRefetch();
+    setSelectedPatientAttacment(null);
+    handleAttachmentSelected(null);
+    setActionType(null);
+  };
   const handleEditModal = () => {
     if (selectedInsurance) {
       setInsuranceModalOpen(true);
@@ -1888,7 +1931,7 @@ const PatientProfile = () => {
             <TabPanel>
               <Form layout="inline" fluid>
                 <ButtonToolbar>
-                  <IconButton icon={<Icon as={FaClock} />} appearance="primary">
+                  <IconButton icon={<Icon as={FaClock} />} appearance="primary" disabled={editing || !localPatient.key}>
                     Address Change Log
                   </IconButton>
                 </ButtonToolbar>
@@ -1991,7 +2034,7 @@ const PatientProfile = () => {
                   appearance="primary"
                   color="cyan"
                   icon={<PlusRound />}
-                  // disabled={editing || localPatient.key !== undefined}
+                  disabled={editing || !localPatient.key}
                   onClick={() => {
                     setInsuranceModalOpen(true);
                     setSelectedInsurance(newApPatientInsurance);
@@ -2211,6 +2254,7 @@ const PatientProfile = () => {
                     icon={<Icon as={FaQuestion} />}
                     onClick={() => setVerificationModalOpen(true)}
                     appearance="primary"
+                    disabled={editing || !localPatient.key}
                   >
                     <Translate>Patient Verification</Translate>
                   </IconButton>
@@ -2218,6 +2262,7 @@ const PatientProfile = () => {
                   <IconButton
                     icon={<Icon as={VscGitPullRequestGoToChanges} />}
                     appearance="primary"
+                    disabled={editing || !localPatient.key}
                   >
                     <Translate>Amendment Requests</Translate>
                   </IconButton>
@@ -2401,13 +2446,40 @@ const PatientProfile = () => {
                   appearance="primary"
                   color="blue"
                   icon={<TrashIcon />}
-                  onClick={handleDeleteRelation}
+                  onClick={()=>{setDeleteRelativeModalOpen(true)}}
                 >
                   <Translate>Delete</Translate>
                 </IconButton>
               </ButtonToolbar>
 
               <br />
+              <Modal open={deleteRelativeModalOpen} onClose={handleClearRelative}>
+                <Modal.Header>
+                  <Modal.Title>Confirm Delete</Modal.Title>
+
+                </Modal.Header>
+
+                <Modal.Body>
+                  <p>
+                    <RemindOutlineIcon style={{ color: '#ffca61', marginRight: '8px', fontSize: '24px' }} />
+                    <Translate style={{ fontSize: '24px' }} >
+                      Are you sure you want to delete this Relation?
+                    </Translate>
+                  </p>
+                </Modal.Body>
+                <Modal.Footer>
+                  <Button onClick={handleClearRelative} appearance="ghost" color='cyan'>
+                    Cancel
+                  </Button>
+                  <Divider vertical />
+                  <Button
+                    onClick={handleDeleteRelation}
+                    appearance="primary"
+                  >
+                    Delete
+                  </Button>
+                </Modal.Footer>
+              </Modal>
 
               <Table
                 height={600}
@@ -2496,7 +2568,7 @@ const PatientProfile = () => {
                   appearance="primary"
                   color="blue"
                   icon={<TrashIcon />}
-                  onClick={handleDeleteSecondaryDocument}
+                  onClick={() => { setDeleteDocModalOpen(true) }}
                 >
                   <Translate>Delete</Translate>
                 </IconButton>
@@ -2617,19 +2689,82 @@ const PatientProfile = () => {
                 </Button>
               </Modal.Footer>
             </Modal>
+            <Modal open={deleteDocModalOpen} onClose={handleClearDocument}>
+                <Modal.Header>
+                  <Modal.Title>Confirm Delete</Modal.Title>
+
+                </Modal.Header>
+
+                <Modal.Body>
+                  <p>
+                    <RemindOutlineIcon style={{ color: '#ffca61', marginRight: '8px', fontSize: '24px' }} />
+                    <Translate style={{ fontSize: '24px' }} >
+                      Are you sure you want to delete this Document?
+                    </Translate>
+                  </p>
+                </Modal.Body>
+                <Modal.Footer>
+                  <Button onClick={handleClearDocument} appearance="ghost" color='cyan'>
+                    Cancel
+                  </Button>
+                  <Divider vertical />
+                  <Button
+                    onClick={handleDeleteSecondaryDocument}
+                    appearance="primary"
+                  >
+                    Delete
+                  </Button>
+                </Modal.Footer>
+              </Modal>
 
             {/* Attachments */}
             <TabPanel>
 
-            <AttachmentModal isOpen={attachmentsModalOpen} onClose={()=>setAttachmentsModalOpen(false)} localPatient={localPatient} attatchmentType={'PATIENT_PROFILE_ATTACHMENT'}/>
+            <AttachmentModal isOpen={attachmentsModalOpen} localPatient={localPatient} attatchmentType={'PATIENT_PROFILE_ATTACHMENT'} selected={selectedPatientAttacment} requested={requestedPatientAttacment} actionType={actionType}/>
+            <Modal open={deleteModalOpen} onClose={handleClearAttachmentDelete}>
+                <Modal.Header>
+                  <Modal.Title><h6>Confirm Delete</h6></Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                  <p>
+                    <RemindOutlineIcon style={{ color: '#ffca61', marginRight: '8px', fontSize: '24px' }} />
+                    <Translate style={{ fontSize: '24px' }} >
+                      Are you sure you want to delete this Attachment?
+                    </Translate>
+                  </p>
+
+                </Modal.Body>
+                <Modal.Footer>
+                  <Button onClick={handleClearAttachmentDelete} appearance="ghost" color="cyan" >
+                    Cancel
+                  </Button>
+                  <Divider vertical />
+                  <Button
+                    onClick={() => {
+                      deleteAttachment({ key: selectedAttachment.key })
+                        .then(() => {
+                          attachmentRefetch();
+                          fetchPatientImageResponse.refetch();
+                          dispatch(notify('Deleted Successfully'))
+                          handleClearAttachmentDelete();
+                        })
+                    }}
+                    appearance="primary"
+                  >
+                    Delete
+                  </Button>
+                </Modal.Footer>
+              </Modal>
 
               <ButtonToolbar style={{ padding: 1 }}>
                 <IconButton
                   icon={<Icon as={FaPlus} />}
                   onClick={() => {
+                    handleCleareAttachment();
                     setAttachmentsModalOpen(true);
                   }}
                   appearance="primary"
+                  disabled={editing || !localPatient.key}
                 >
                   <Translate>New Attachment </Translate>
                 </IconButton>
@@ -2720,7 +2855,8 @@ const PatientProfile = () => {
                         <Button
                           appearance="link"
                           color="red"
-                          onClick={() => handleDeletaAttachment(attachment)}
+                          onClick={() => handleDeleteAttachment(attachment)}
+                          
                         >
                           <TrashIcon style={{ marginLeft: '10px', scale: '1.4' }} />
                         </Button>
@@ -2784,10 +2920,10 @@ const PatientProfile = () => {
             </Column>
             <Column sortable flexGrow={3}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('mobileNumber', e)} />
+                <Input onChange={e => handleFilterChange('phoneNumber', e)} />
                 <Translate>Mobile Number</Translate>
               </HeaderCell>
-              <Cell dataKey="mobileNumber" />
+              <Cell dataKey="phoneNumber" />
             </Column>
             <Column sortable flexGrow={2}>
               <HeaderCell>
@@ -2890,7 +3026,7 @@ const PatientProfile = () => {
                     onClick={() => {
                       dispatch(setEncounter(rowData));
                       // navigate('/encounter');
-                      setVisit(rowData);
+                     setVisit(rowData);
 
                       navigate('/encounter-registration');
                     }}

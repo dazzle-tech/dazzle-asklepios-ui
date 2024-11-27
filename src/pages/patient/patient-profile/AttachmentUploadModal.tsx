@@ -6,16 +6,14 @@ import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import DetailIcon from '@rsuite/icons/Detail';
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
-import { useFetchAttachmentLightQuery, useUpdateAttachmentDetailsMutation, useUploadMutation } from "@/services/attachmentService";
+import { useFetchAttachmentLightQuery, useUpdateAttachmentDetailsMutation, useUploadMutation,useFetchAttachmentByKeyQuery } from "@/services/attachmentService";
 import { ApPatient } from "@/types/model-types";
+import MyInput from "@/components/MyInput";
 
 
 
-const AttachmentModal = ({ isOpen, onClose, localPatient,attatchmentType }) => {
-
-    const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
-    const [actionType, setActionType] = useState(null); // 'view' or 'download'
-    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+const AttachmentModal = ({ isOpen, localPatient,attatchmentType ,selected ,requested,actionType}) => {
+    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(isOpen);
     const [newAttachmentType, setNewAttachmentType] = useState();
     const attachmentFileInputRef = useRef(null);
     const [newAttachmentSrc, setNewAttachmentSrc] = useState(null);
@@ -31,36 +29,74 @@ const AttachmentModal = ({ isOpen, onClose, localPatient,attatchmentType }) => {
         type: null,
         refKey: null
     });
-
-
+    const {
+        data: fetchAttachmentByKeyResponce,
+        error,
+        isLoading,
+        isFetching,
+        isSuccess,
+        refetch
+      } = useFetchAttachmentByKeyQuery(
+        { key: requested },
+        { skip: !requested || !localPatient.key }
+      );
+      const handleDownload = attachment => {
+        const byteCharacters = atob(attachment.fileContent);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: attachment.contentType });
+        // Create a temporary  element and trigger the download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = attachment.fileName;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+      };
+    useEffect(() => {
+        if (isSuccess && fetchAttachmentByKeyResponce) {
+          if (actionType === 'download') {
+            handleDownload(fetchAttachmentByKeyResponce);
+          } else if (actionType === 'view') {
+            setAttachmentsModalOpen(true);
+            setSelectedPatientAttacment(fetchAttachmentByKeyResponce);
+            setNewAttachmentDetails(fetchAttachmentByKeyResponce.extraDetails);
+            setSelectedAttachType(fetchAttachmentByKeyResponce.accessTypeLkey);
+          }
+        }
+      }, [requested, fetchAttachmentByKeyResponce, actionType]);
 
     const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch } =
     useFetchAttachmentLightQuery({ refKey: localPatient?.key }, { skip: !localPatient?.key });
-
-    const handleAttachmentFileUploadClick = () => {
+console.log("Action",fetchAttachmentByKeyResponce);
+    const handleAttachmentFileUploadClick = attatchmentType => {
+        console.log(localPatient?.key);
         setNewAttachmentType(attatchmentType); // PATIENT_PROFILE_ATTACHMENT or PATIENT_PROFILE_PICTURE or APPOINTMENT_ATTACHMENT
-        if (localPatient?.key) attachmentFileInputRef.current.click();
+        if (localPatient?.key && attachmentsModalOpen) attachmentFileInputRef.current.click();
     };
  
-    
     const [selectedPatientAttacment, setSelectedPatientAttacment] = useState<any>({
         ...newApPatientInsurance
     });
-    const handleAttachmentSelected = attachmentKey => {
-        setRequestedPatientAttacment(attachmentKey);
-        setActionType('view');
-      };
-
     const handleCleareAttachment = () => {
         setSelectedPatientAttacment(null);
-        setRequestedPatientAttacment(null);
-        setActionType(null);
+        setAttachmentsModalOpen(false);
+        setNewAttachmentSrc(null);
+        setNewAttachmentType(null);
+        setNewAttachmentDetails('');
+        setAttachmentsModalOpen(false);
+        attachmentRefetch();
+        setSelectedPatientAttacment(null);
         setAttachmentsModalOpen(false);
         handleFinishUploading();
     };
     const closeModal = () => {
-        onClose()
-        handleCleareAttachment
+        handleCleareAttachment()
     };
 
     const handleFileUpload = async event => {
@@ -102,25 +138,20 @@ const AttachmentModal = ({ isOpen, onClose, localPatient,attatchmentType }) => {
         closeModal();
         attachmentRefetch();
         setSelectedPatientAttacment(null);
-        handleAttachmentSelected(null);
-        setActionType(null);
       };
-
     const handleUpdateAttachmentDetails = () => {
         Update({
-            key: selectedPatientAttacment.key,
+            key: selected.key,
             attachmentDetails: newAttachmentDetails
         })
             .unwrap()
-            .then(() => handleFinishUploading());
+            .then(() => {handleFinishUploading();});
     };
-
+  
     return (
-        <Modal open={isOpen} onClose={closeModal}>
+        <Modal open={attachmentsModalOpen} onClose={()=>handleCleareAttachment()}>
             <Modal.Header>
-                <Modal.Title onClick={() => {
-                    handleAttachmentFileUploadClick()
-                }} >New/Edit Patient Attachments</Modal.Title>
+                <Modal.Title>New/Edit Patient Attachments</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 <div
@@ -138,7 +169,6 @@ const AttachmentModal = ({ isOpen, onClose, localPatient,attatchmentType }) => {
                     }}
                 >
                     <input
-                        disabled={actionType}
                         type="file"
                         ref={attachmentFileInputRef}
                         style={{ display: 'none' }}
@@ -154,25 +184,25 @@ const AttachmentModal = ({ isOpen, onClose, localPatient,attatchmentType }) => {
                                 width={380}
                                 height={380}
                                 onClick={() =>
-                                    handleAttachmentFileUploadClick()
+                                    handleAttachmentFileUploadClick(attatchmentType)
                                 }
                                 src={newAttachmentSrc}
                             />
                         ) : (
                             <FileUploadIcon
                                 onClick={() => {
-                                    handleAttachmentFileUploadClick();
+                                    handleAttachmentFileUploadClick(attatchmentType);
 
                                 }
                                 }
                                 style={{ fontSize: '250px', marginTop: '10%' }}
                             />
                         )
-                    ) : selectedPatientAttacment && selectedPatientAttacment.fileContent ? (
-                        selectedPatientAttacment.contentType === 'application/pdf' ? (
+                    ) : selected && selected.fileContent ? (
+                        selected.contentType === 'application/pdf' ? (
                             <DetailIcon
                                 onClick={() =>
-                                    handleAttachmentFileUploadClick()
+                                    handleAttachmentFileUploadClick(attatchmentType)
                                 }
                                 style={{ fontSize: '250px', marginTop: '10%' }}
                             />
@@ -182,15 +212,15 @@ const AttachmentModal = ({ isOpen, onClose, localPatient,attatchmentType }) => {
                                 width={380}
                                 height={380}
                                 onClick={() =>
-                                    handleAttachmentFileUploadClick()
+                                    handleAttachmentFileUploadClick(attatchmentType)
                                 }
-                                src={`data:${selectedPatientAttacment.contentType};base64,${selectedPatientAttacment.fileContent}`}
+                                src={`data:${selected.contentType};base64,${selected.fileContent}`}
                             />
                         )
                     ) : (
                         <FileUploadIcon
                             onClick={() =>
-                                handleAttachmentFileUploadClick()
+                                handleAttachmentFileUploadClick(attatchmentType)
                             }
                             style={{ fontSize: '250px', marginTop: '10%' }}
                         />
@@ -198,27 +228,24 @@ const AttachmentModal = ({ isOpen, onClose, localPatient,attatchmentType }) => {
                 </div>
 
                 <br />
-                <Form fluid>
-                    <Form.Group>
-                        <Form.ControlLabel>Type</Form.ControlLabel>
-                        <Input
-                            as="select"
-                            required
-                            value={selectedAttachType || ''}
-                            onChange={value => setSelectedAttachType(value)}
-                        >
-                            {attachmentsLovQueryResponse?.object?.map(item => (
-                                <option key={item.key} value={item.key}>
-                                    {item.lovDisplayVale}
-                                </option>
-                            ))}
-                        </Input>
-                    </Form.Group>
+                <Form>
+                        <MyInput
+                          width={550}
+                          fieldName="accessTypeLkey"
+                          fieldType="select"
+                          selectData={attachmentsLovQueryResponse?.object ?? []}
+                          selectDataLabel="lovDisplayVale"
+                          fieldLabel="Type"
+                          selectDataValue="key"
+                          record={selectedAttachType}
+                          setRecord={setSelectedAttachType}
+            /> 
+                   
                 </Form>
 
                 <br />
                 <Input
-                    value={newAttachmentDetails || ''}
+                    value={newAttachmentDetails}
                     onChange={setNewAttachmentDetails}
                     as="textarea"
                     rows={3}
@@ -226,7 +253,7 @@ const AttachmentModal = ({ isOpen, onClose, localPatient,attatchmentType }) => {
                 />
             </Modal.Body>
             <Modal.Footer>
-                <Button onClick={() => closeModal()} appearance="subtle">
+                <Button onClick={() => handleCleareAttachment()} appearance="subtle">
                     Cancel
                 </Button>
                 <Divider vertical />
@@ -242,7 +269,9 @@ const AttachmentModal = ({ isOpen, onClose, localPatient,attatchmentType }) => {
                                 accessType: selectedAttachType
                             })
                                 .unwrap()
-                                .then(() => handleFinishUploading());
+                                .then(() => 
+                              {  handleFinishUploading();
+                               })
                     }}
                     appearance="primary"
                 >
