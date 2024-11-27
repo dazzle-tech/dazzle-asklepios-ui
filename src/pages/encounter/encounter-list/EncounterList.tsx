@@ -31,6 +31,7 @@ import CharacterAuthorizeIcon from '@rsuite/icons/CharacterAuthorize';
 // import PeoplesTimeIcon from '@rsuite/icons/PeoplesTime';
 import { addFilterToListRequest, calculateAge, formatDate, fromCamelCaseToDBName } from '@/utils';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
+import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import SendIcon from '@rsuite/icons/Send';
 import {
   useGetPatientsQuery,
@@ -253,7 +254,7 @@ const EncounterList = () => {
             </HeaderCell>
             <Cell dataKey="queueNumber" />
           </Column>
-          <Column sortable flexGrow={4}>
+          <Column sortable flexGrow={3}>
             <HeaderCell>
               <Input onChange={e => handleFilterChange('visitId', e)} />
               <Translate>Visit ID</Translate>
@@ -267,7 +268,7 @@ const EncounterList = () => {
             </HeaderCell>
             <Cell dataKey="patientFullName" />
           </Column>
-          <Column sortable flexGrow={4}>
+          <Column sortable flexGrow={3}>
             <HeaderCell>
               <Input
                 onChange={(e) => handleFilterChange('patientKey', e)}
@@ -285,7 +286,7 @@ const EncounterList = () => {
               }}
             </Cell>
           </Column>
-          <Column sortable flexGrow={4}>
+          <Column sortable flexGrow={3}>
             <HeaderCell>
               <Input onChange={e => handleFilterChange('patientAge', e)} />
               <Translate>Age</Translate>
@@ -293,45 +294,49 @@ const EncounterList = () => {
             <Cell dataKey="patientAge" />
           </Column>
 
-          <Column sortable flexGrow={4}>
+          <Column sortable flexGrow={3}>
             <HeaderCell>
               <Input onChange={e => handleFilterChange('type', e)} />
               <Translate>Visit Type</Translate>
             </HeaderCell>
             <Cell dataKey="type" />
           </Column>
+          <Column sortable flexGrow={5}>
+            <HeaderCell>
+              
+              <Translate> Chief Complain </Translate>
+            </HeaderCell>
+            <Cell>
+              {rowData =>
+                rowData.chiefComplaint
+              }</Cell>
+          </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input />
-              <Translate>Clinic</Translate>
+              
+              <Translate>Diagnosis</Translate>
+            </HeaderCell>
+            <Cell dataKey="diagnosis" 
+            />
+          </Column>
+          <Column sortable flexGrow={3}>
+            <HeaderCell>
+              
+              <Translate>Prescription </Translate>
             </HeaderCell>
             <Cell
             />
           </Column>
-          <Column sortable flexGrow={4}>
+          <Column sortable flexGrow={3}>
             <HeaderCell>
-              <Input />
-              <Translate>Physician</Translate>
+              
+              <Translate> Has order</Translate>
             </HeaderCell>
-            <Cell
-            />
+            <Cell  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
+                rowData.hasOrder?<CheckRoundIcon className='iconStyle' /> :<WarningRoundIcon className='iconNoStyle' /> 
+              }</Cell>
           </Column>
-          <Column sortable flexGrow={4}>
-            <HeaderCell>
-              <Input />
-              <Translate>Booking date, Time</Translate>
-            </HeaderCell>
-            <Cell
-            />
-          </Column>
-          <Column sortable flexGrow={4}>
-            <HeaderCell>
-              <Input />
-              <Translate>Waiting time</Translate>
-            </HeaderCell>
-            <Cell dataKey="" />
-          </Column>
-          <Column sortable flexGrow={4}>
+          <Column sortable flexGrow={3}>
             <HeaderCell>
               <Input onChange={e => handleFilterChange('encounterPriorityLkey', e)} />
               <Translate>Priority</Translate>
@@ -344,13 +349,13 @@ const EncounterList = () => {
               }
             </Cell>
           </Column>
-          <Column sortable flexGrow={4}>
+          <Column sortable flexGrow={3}>
             <HeaderCell>
               <Translate>Date</Translate>
             </HeaderCell>
             <Cell dataKey="plannedStartDate" />
           </Column>
-          <Column sortable flexGrow={4}>
+          <Column sortable flexGrow={3}>
             <HeaderCell>
               <Input onChange={e => handleFilterChange('encounterStatusLkey', e)} />
               <Translate>Status</Translate>
@@ -363,16 +368,8 @@ const EncounterList = () => {
               }
             </Cell>
           </Column>
-          <Column sortable flexGrow={4}>
-            <HeaderCell>
-              <Input />
-              <Translate>Visit start date time</Translate>
-            </HeaderCell>
-            <Cell>
-
-            </Cell>
-          </Column>
-          <Column>
+         
+          <Column >
             <HeaderCell>
               <Translate>Is Observed</Translate>
             </HeaderCell>
