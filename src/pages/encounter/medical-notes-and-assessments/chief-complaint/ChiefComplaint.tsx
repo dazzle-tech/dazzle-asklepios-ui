@@ -101,8 +101,8 @@ const ChiefComplaint = () => {
       patientSlice.encounter.pastMedicalHistorySummery !== localEncounter.pastMedicalHistorySummery
     );
   };
-  const progressNoteIsChanged = () => {
-    return patientSlice.encounter.progressNote !== localEncounter.progressNote;
+  const chiefComplaintChanged = () => {
+    return patientSlice.encounter.chiefComplaint !== localEncounter.chiefComplaint;
   };
 
   return (
@@ -217,16 +217,16 @@ const ChiefComplaint = () => {
 
           <InputGroup>
             <InputGroup.Addon>
-              {!progressNoteIsChanged() && <icons.CheckRound color="green" />}
-              {progressNoteIsChanged() && <icons.Gear spin />}
+              {!chiefComplaintChanged() && <icons.CheckRound color="green" />}
+              {chiefComplaintChanged() && <icons.Gear spin />}
             </InputGroup.Addon>
             <Input
               as={'textarea'}
               rows={4}
               style={{ fontSize: '12px', maxHeight: '150px', overflowY: 'auto', resize: 'vertical' }}
-              value={localEncounter.progressNote}
-              onChange={e => setLocalEncounter({ ...localEncounter, progressNote: e })}
-              onBlur={progressNoteIsChanged() ? saveChanges : undefined}
+              value={localEncounter.chiefComplaint}
+              onChange={e => setLocalEncounter({ ...localEncounter, chiefComplaint: e })}
+              onBlur={chiefComplaintChanged() ? saveChanges : undefined}
             />
           </InputGroup>
 
