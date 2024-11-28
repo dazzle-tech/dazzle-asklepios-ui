@@ -37,9 +37,8 @@ const ReviewOfSystems = () => {
   const encounterReviewOfSystemsResponse = useGetEncounterReviewOfSystemsQuery(
     patientSlice.encounter.key
   );
-  const encounterReviewOfSystemsSummaryResponse = useGetEncounterReviewOfSystemsQuery(
-    patientSlice.encounter.key
-  );
+  
+   const{data:encounterReviewOfSystemsSummaryResponse ,refetch} = useGetEncounterReviewOfSystemsQuery(  patientSlice.encounter.key );
 
   const [saveReviewOfSystem, saveReviewOfSystemMutation] = useSaveReviewOfSystemMutation();
   const [removeReviewOfSystem, removeReviewOfSystemMutation] = useRemoveReviewOfSystemMutation();
@@ -53,16 +52,20 @@ const ReviewOfSystems = () => {
     } else {
     }
   }, []);
+  useEffect(()=>{
+    console.log("saved")
+  },[encounterReviewOfSystemsSummaryResponse,patientSlice.encounter.key])
   const closeModel=()=>{
     setOpenModel(false);
   }
   const saveChanges = async () => {
     try {
       await saveEncounterChanges(localEncounter).unwrap();
-      dispatch(notify('Added note Successfully'));
+     
+      dispatch(notify('Findings Saved Successfully'));
     } catch (error) {
       console.error("Encounter save failed:", error);
-      dispatch(notify('error add note'));
+      dispatch(notify('Findings Saved fill'));
     }
   };
   const physicalExamNoteIsChanged = () => {
@@ -134,7 +137,7 @@ const ReviewOfSystems = () => {
               <InputGroup.Addon>
                 <IconButton 
                 onClick={() => setOpenModel(true)}
-
+                    style={{fontSize:"12px"}}
                 icon={<icons.List style={{ fontSize: "10px" }} />}>Summary</IconButton> 
 
               </InputGroup.Addon>
@@ -154,7 +157,7 @@ const ReviewOfSystems = () => {
               >
                 <Table.Column flexGrow={1}>
                   <Table.HeaderCell>System</Table.HeaderCell>
-                  <Table.Cell dataKey="lovDisplayVale" />
+                  <Table.Cell style={{ fontSize:"12px"}} dataKey="lovDisplayVale" />
                 </Table.Column>
               </Table>
 
@@ -177,9 +180,11 @@ const ReviewOfSystems = () => {
                               key: mainData[rowData.key] ? mainData[rowData.key].key : undefined,
                               encounterKey: patientSlice.encounter.key,
                               bodySystemDetailKey: rowData.key,
-
                               notes: mainData[rowData.key] ? mainData[rowData.key].notes : ''
                             }).unwrap();
+                            dispatch(notify('Findings Saved Successfully'));
+                            refetch();
+
                           } else {
                             removeReviewOfSystem({
                               key: mainData[rowData.key] ? mainData[rowData.key].key : undefined,
@@ -187,6 +192,8 @@ const ReviewOfSystems = () => {
                               bodySystemDetailKey: rowData.key,
                               notes: mainData[rowData.key] ? mainData[rowData.key].notes : ''
                             }).unwrap();
+                            dispatch(notify('Findings Deleted Successfully'));
+                            refetch();
                           }
                         }}
                         checked={mainData[rowData.key] ? true : false}
@@ -234,7 +241,7 @@ const ReviewOfSystems = () => {
         </Grid>
         <Modal open={openModel} onClose={closeModel}>
           <Modal.Header>
-            <Modal.Title>find the summary</Modal.Title>
+            <Modal.Title>Physical Examination & Findings Summary</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             
@@ -246,7 +253,7 @@ const ReviewOfSystems = () => {
               backgroundColor: "#f7f7fa"
             }}>
              <pre style={{ maxHeight: '200px', overflowY: 'auto' }}>
-       {encounterReviewOfSystemsSummaryResponse?.data?.object?.map((item, index) => (
+       {encounterReviewOfSystemsSummaryResponse?.object?.map((item, index) => (
           <div key={index} style={{ marginBottom: "10px", padding: "5px", borderBottom: "1px solid #ccc" }}>
             <p>{selectedSystem.key}</p>
             <p>{item.systemDetailLvalue? item.systemDetailLvalue.lovDisplayVale
