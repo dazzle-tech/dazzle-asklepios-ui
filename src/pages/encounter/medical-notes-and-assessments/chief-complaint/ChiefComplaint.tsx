@@ -65,7 +65,7 @@ const ChiefComplaint = () => {
   useEffect(() => {
     if (patientSlice.encounter && patientSlice.encounter.key) {
       setLocalEncounter(patientSlice.encounter);
-      console.log("this is my note:" + patientSlice.encounter.progressNote);
+          
     } else {
     }
   }, []);
@@ -73,13 +73,11 @@ const ChiefComplaint = () => {
   const saveChanges =async () => {
     try {
       await saveEncounterChanges(localEncounter).unwrap();
-      dispatch(notify('saved chiefComplain Successfully'));
+      dispatch(notify('Chief Complain Saved Successfully'));
     } catch (error) {
 
-      // معالجة الخطأ هنا
 
-      console.error("Encounter save failed:", error);
-      dispatch(notify('saved chiefComplain fill'));
+      dispatch(notify('Chief Complain Saved  fill'));
     }
   };
 

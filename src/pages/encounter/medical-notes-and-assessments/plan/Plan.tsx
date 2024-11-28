@@ -70,7 +70,7 @@ const Plan = () => {
         <Grid fluid  >
             <Row gutter={15} style={{ height: '70px' }}>
                 <Col xs={12} >
-                    <div style={{ marginBottom: "8px", marginTop: "7px" }}> Physician Recommendations</div>
+                    <div style={{ marginBottom: "8px", marginTop: "7px" , fontSize:"12px" }}> Physician Recommendations</div>
                     <VoiceCitation
                         originalRecord={localPlan}
                         record={{ ...localPlan }}
@@ -82,7 +82,7 @@ const Plan = () => {
                 </Col>
 
                 <Col xs={12}>
-                    <div style={{ marginBottom: "8px", marginTop: "7px" }}>   Patient Education</div>
+                    <div style={{ marginBottom: "8px", marginTop: "7px", fontSize:"12px" }}>   Patient Education</div>
                     <VoiceCitation
                         originalRecord={localPlan}
                         record={{ ...localPlan}}
@@ -96,7 +96,7 @@ const Plan = () => {
 
             <Row gutter={15} style={{ height: '70px' }}>
                 <Col xs={12}>
-                    <div style={{ marginBottom: "10px", marginTop: "10px" }}> Lifestyle Modification</div>
+                    <div style={{ marginBottom: "10px", marginTop: "10px", fontSize:"12px" }}> Lifestyle Modification</div>
                     <VoiceCitation
                         originalRecord={localPlan}
                         record={{ ...localPlan}}
@@ -108,7 +108,7 @@ const Plan = () => {
                 </Col>
 
                 <Col xs={12}>
-                    <div style={{ marginBottom: "10px", marginTop: "10px" }}>General Instructions</div>
+                    <div style={{ marginBottom: "10px", marginTop: "10px", fontSize:"12px" }}>General Instructions</div>
                     <VoiceCitation
                         originalRecord={localPlan}
                         record={{ ...localPlan}}
