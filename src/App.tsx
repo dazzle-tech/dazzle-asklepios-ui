@@ -45,6 +45,7 @@ import Dental from './pages/encounter/dental-screen';
 import Departments from './pages/setup/departments-setup';
 import DentalActions from './pages/setup/dental-actions';
 import CDTSetup from './pages/setup/cdt-setup';
+import ICD10Setup from './pages/setup/icd10-setup';
 import ServiceSetup from './pages/setup/service-setup';
 import Translate from './components/Translate';
 import { BlockUI } from 'primereact/blockui';
@@ -231,6 +232,7 @@ const App = () => {
               <Route path="generic-medications" element={<GenericMedications />} />
               <Route path="dental-actions" element={<DentalActions />} />
               <Route path="cdt-setup" element={<CDTSetup />} />
+              <Route path="icd10-setup" element={<ICD10Setup />} />
               <Route path="services-setup" element={<ServiceSetup />} />
               <Route path="error-404" element={<Error404Page />} />
               <Route path="error-403" element={<Error403Page />} />
