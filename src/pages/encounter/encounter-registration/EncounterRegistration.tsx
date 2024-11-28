@@ -84,7 +84,8 @@ const EncounterRegistration = () => {
   const [editing, setEditing] = useState(false);
   const [validationResult, setValidationResult] = useState({});
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const { data: userListResponse, refetch: refetchUsers } = useGetUsersQuery(listRequest);
+
+
   const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
 
   /* load page LOV */
@@ -123,14 +124,16 @@ const EncounterRegistration = () => {
     isLoading: isGettingPatients,
     isFetching: isFetchingPatients,
     refetch: refetchPatients
-  } = useGetPatientsQuery({ ...listRequest, filters: [
-    {
-      fieldName: fromCamelCaseToDBName(selectedCriterion),
-      operator: 'containsIgnoreCase',
-      value: searchKeyword,
-    },
+  } = useGetPatientsQuery({
+    ...listRequest, filters: [
+      {
+        fieldName: fromCamelCaseToDBName(selectedCriterion) || "document_no",
+        operator: 'containsIgnoreCase',
+        value: searchKeyword || "-1",
+      },
 
-  ]});
+    ]
+  });
   const [paymentMethodSelected, setPaymentMethodSelected] = useState(null);
   const handleFilterChange = (fieldName, value) => {
     if (value) {
@@ -178,6 +181,7 @@ const EncounterRegistration = () => {
   }, [patientSlice.patient]);
 
   const handleCancel = () => {
+    dispatch(setPatient(null));
     dispatch(setEncounter(null));
     setLocalEncounter({ ...newApEncounter });
     // navigate('/patient-profile');
@@ -209,11 +213,11 @@ const EncounterRegistration = () => {
   const handleOpenAppointmentViewModel = () => setOpenModelAppointmentView(true);
   const handleCloseAppointmentViewModel = () => setOpenModelAppointmentView(false);
   const handleSave = () => {
-    
+
     if (localEncounter && localEncounter.patientKey) {
-       
+
       saveEncounter(localEncounter).unwrap();
-     
+
     } else {
       dispatch(notify({ msg: 'encounter not linked to patient', sev: 'error' }));
     }
@@ -252,19 +256,20 @@ const EncounterRegistration = () => {
   const handleSelectPatient = data => {
     if (patientSearchTarget === 'primary') {
       // selecteing primary patient (localPatient)
-       console.log(data);
+      console.log(data);
       dispatch(setPatient(data));
-      
+
       setLocalEncounter(
-        {...newApEncounter,
+        {
+          ...newApEncounter,
           patientKey: patientSlice.patient.key,
-        patientFullName: patientSlice.patient.fullName,
-        patientAge: patientSlice.patient.dob ? calculateAge(patientSlice.patient.dob) + '' : '',
-        encounterStatusLkey: '91063195286200',//change this to be loaded from cache lov values by code
-        plannedStartDate: new Date()
+          patientFullName: patientSlice.patient.fullName,
+          patientAge: patientSlice.patient.dob ? calculateAge(patientSlice.patient.dob) + '' : '',
+          encounterStatusLkey: '91063195286200',//change this to be loaded from cache lov values by code
+          plannedStartDate: new Date()
         }
       )
-      
+
     } else if (patientSearchTarget === 'relation') {
       // selecting patient for relation patient key
       setSelectedPatientRelation({
@@ -282,8 +287,8 @@ const EncounterRegistration = () => {
     setPatientSearchTarget(target);
     setSearchResultVisible(true);
     console.log(patientSearchTarget);
-    if (searchKeyword && searchKeyword.length >= 3 && selectedCriterion) {
-    
+    if (searchKeyword !== "" && searchKeyword.length >= 3 && selectedCriterion) {
+
       setListRequest({
         ...listRequest,
         ignore: false,
@@ -299,14 +304,14 @@ const EncounterRegistration = () => {
     console.log("kw" + searchKeyword);
     console.log("PatientSearchTarget" + patientListResponse?.object);
     console.log(listRequest);
-   
+
   };
 
   useEffect(() => {
     //3623962430163299
   }, [paymentMethodSelected]);
   useEffect(() => {
-    
+
   }, [searchKeyword]);
 
   const conjurePatientSearchBar = target => {
@@ -314,7 +319,11 @@ const EncounterRegistration = () => {
       <Panel>
 
         <ButtonToolbar>
-          <SelectPicker label="Search Criteria" data={searchCriteriaOptions} onChange={(e) => { setSelectedCriterion(e) }} style={{ width: 250 }} />
+          <SelectPicker label="Search Criteria" data={searchCriteriaOptions} 
+          onChange={(e) => {if(e!==null) {setSelectedCriterion(e) }
+            else{}
+            ;console.log(e) }} 
+          style={{ width: 250 }} />
 
           <InputGroup inside style={{ width: '350px', direction: 'ltr' }}>
             <Input
@@ -327,7 +336,7 @@ const EncounterRegistration = () => {
               value={searchKeyword}
               onChange={e => setSearchKeyword(e)}
             />
-            <InputGroup.Button onClick={() => search(target) } >
+            <InputGroup.Button onClick={() => search(target)} >
               <SearchIcon />
             </InputGroup.Button>
           </InputGroup>
@@ -349,7 +358,7 @@ const EncounterRegistration = () => {
           <Panel bordered>
             <ButtonToolbar>
               <IconButton
-               
+
                 appearance="primary"
                 color="violet"
                 icon={<ArowBackIcon />}
@@ -361,7 +370,7 @@ const EncounterRegistration = () => {
                 <Translate>Cancel</Translate>
               </IconButton>
               <IconButton
-                
+
                 appearance="primary"
                 color="violet"
                 icon={<Check />}
@@ -426,7 +435,7 @@ const EncounterRegistration = () => {
             </Modal>
             <Modal open={openModelPayment} onClose={handleClosePaymentModel} size="lg">
               <Modal.Header>
-                <Modal.Title>payment</Modal.Title>
+                <Modal.Title>Payment</Modal.Title>
               </Modal.Header>
               <Modal.Body>
                 <Form layout="inline" fluid>
@@ -522,7 +531,7 @@ const EncounterRegistration = () => {
                       />
                     </div>)
                   }
-                  {paymentMethodSelected === '3623980184948157'
+                  {paymentMethodSelected === '3623993823412902'
                     &&
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                       <MyInput
@@ -548,10 +557,36 @@ const EncounterRegistration = () => {
                         setRecord={""}
                       /></div>
                   }
+                  {paymentMethodSelected === '91849731565300'
+                    &&
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <MyInput
+                        column
+                        width={180}
+                        fieldName={'transferNumber'}
+                        record={{}}
+                        setRecord={""}
+                      />
+                      <MyInput
+                        column
+                        width={180}
+                        fieldName={'BankName'}
+                        record={{}}
+                        setRecord={""}
+                      />
+
+                      <MyInput
+                        column
+                        fieldType="date"
+                        fieldName="transferDate"
+                        record={{}}
+                        setRecord={""}
+                      /></div>
+                  }
                   <div style={{ width: "100%", display: "flex", gap: "10px" }}>
                     <div style={{ border: '1px solid #b6b7b8', flex: "2", borderRadius: "5px" }}>
                       <Table
-                          style={{ maxHeight: 200, overflowY: "auto" }} 
+                        style={{ maxHeight: 200, overflowY: "auto" }}
                         sortColumn={listRequest.sortBy}
                         sortType={listRequest.sortType}
                         onSortColumn={(sortBy, sortType) => {
@@ -570,7 +605,7 @@ const EncounterRegistration = () => {
                         //   handleSelectPatient(rowData);
                         //   setSearchKeyword(null);
                         // }}
-                        data={ []}
+                        data={[]}
                       >
                         <Column flexGrow={1}>
                           <HeaderCell>
@@ -588,43 +623,43 @@ const EncounterRegistration = () => {
                             )}
                           </Cell>
                         </Column>
-                        <Column  flexGrow={4}>
+                        <Column flexGrow={4}>
                           <HeaderCell>
-                            
+
                             <Translate>Service Name</Translate>
                           </HeaderCell>
                           <Cell dataKey="ServiceName" />
                         </Column>
-                        <Column  flexGrow={1}>
+                        <Column flexGrow={1}>
                           <HeaderCell>
-                        
+
                             <Translate>Type</Translate>
                           </HeaderCell>
                           <Cell dataKey="Type" />
                         </Column>
-                        <Column  flexGrow={3}>
+                        <Column flexGrow={3}>
                           <HeaderCell>
-                            
+
                             <Translate>Quantity</Translate>
                           </HeaderCell>
                           <Cell dataKey="Quantity" />
                         </Column>
-                        <Column  flexGrow={2}>
+                        <Column flexGrow={2}>
                           <HeaderCell>
-                           
+
                             <Translate>Price</Translate>
                           </HeaderCell>
                           <Cell dataKey="Price" />
                         </Column>
-                        <Column  flexGrow={3}>
+                        <Column flexGrow={3}>
                           <HeaderCell>
-                            
+
                             <Translate>Currency</Translate>
                           </HeaderCell>
                           <Cell dataKey="Currency" />
                         </Column>
-                        
-                        
+
+
                       </Table>
                     </div>
                     <div style={{ flex: "1", display: "flex", flexDirection: "column" }}>
@@ -689,7 +724,7 @@ const EncounterRegistration = () => {
                     width={130}
                     disabled={true}
                     fieldName={'fullName'}
-                    record={ patientSlice.patient}
+                    record={patientSlice.patient}
                     setRecord={undefined}
                   />
                   <MyInput
@@ -755,41 +790,41 @@ const EncounterRegistration = () => {
                   <MyInput
                     vr={validationResult}
                     column
-                    
+                    disabled={true}
                     fieldLabel="Visit ID"
                     fieldName="visitId"
-                    record={ localEncounter}
+                    record={localEncounter}
                     setRecord={setLocalEncounter}
                   />
 
                   <MyInput
                     vr={validationResult}
                     column
-                    
+
                     fieldLabel="Date"
                     fieldType="date"
                     fieldName="plannedStartDate"
-                    record={ localEncounter}
+                    record={localEncounter}
                     setRecord={setLocalEncounter}
                   />
 
                   <MyInput
                     vr={validationResult}
                     column
-                    
+
                     fieldType="select"
                     fieldLabel="Visit Type"
                     fieldName="encounterTypeLkey"
                     selectData={encounterTypeLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
-                    record={ localEncounter}
+                    record={localEncounter}
                     setRecord={setLocalEncounter}
                   />
                   <MyInput
                     vr={validationResult}
                     column
-                    
+
                     fieldType="select"
                     fieldName="departmentKey"
                     selectData={departmentListResponse?.object ?? []}
@@ -802,14 +837,14 @@ const EncounterRegistration = () => {
                   <MyInput
                     vr={validationResult}
                     column
-                    
+
                     fieldType="select"
                     fieldLabel="Physician"
                     fieldName="responsiblePhysicianKey"
                     selectData={practitionerListResponse?.object ?? []}
                     selectDataLabel="practitionerFullName"
                     selectDataValue="key"
-                    record={ localEncounter}
+                    record={localEncounter}
                     setRecord={setLocalEncounter}
                   />
 
@@ -829,33 +864,33 @@ const EncounterRegistration = () => {
                   <MyInput
                     vr={validationResult}
                     column
-                    
+
                     fieldType="select"
                     fieldLabel="Priority"
                     fieldName="encounterPriorityLkey"
                     selectData={encounterPriorityLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
-                    record={ localEncounter}
+                    record={localEncounter}
                     setRecord={setLocalEncounter}
                   />
                   <br />
                   <MyInput
                     vr={validationResult}
                     column
-                    
+
                     fieldType="select"
                     fieldName="reasonLkey"
                     selectData={encounterReasonLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
-                    record={ localEncounter}
+                    record={localEncounter}
                     setRecord={setLocalEncounter}
                   />
                   <MyInput
                     vr={validationResult}
                     column
-                   
+
                     fieldType="select"
                     fieldName="originLkey"
                     selectData={patOriginLovQueryResponse?.object ?? []}
@@ -892,7 +927,7 @@ const EncounterRegistration = () => {
                     selectData={bookingstatusLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
-                    record={ localEncounter}
+                    record={localEncounter}
                     setRecord={setLocalEncounter}
                     disabled={true}
                   />
@@ -1180,7 +1215,7 @@ const EncounterRegistration = () => {
                           rowHeight={60}
                           bordered
                           cellBordered
-                          data={userListResponse?.object ?? []}
+                          data={[]}
 
 
                         >
@@ -1305,7 +1340,7 @@ const EncounterRegistration = () => {
                             onChangeLimit={pageSize => {
                               setListRequest({ ...listRequest, pageSize });
                             }}
-                            total={userListResponse?.extraNumeric ?? 0}
+                            total={1}
                           />
                         </div>
                       </Panel>
