@@ -39,7 +39,7 @@ import {
     useGetPrescriptionMedicationsQuery,
     useSaveCustomeInstructionsMutation,
     useGetCustomeInstructionsQuery,
-    useDeletePrescriptionMedicationMutation
+   
 } from '@/services/encounterService';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import CheckIcon from '@rsuite/icons/Check';
