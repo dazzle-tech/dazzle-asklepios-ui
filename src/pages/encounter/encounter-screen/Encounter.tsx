@@ -65,7 +65,9 @@ import { useNavigate } from 'react-router-dom';
 import Dental from '../dental-screen';
 import {
   useCompleteEncounterMutation,
-  useStartEncounterMutation
+  useStartEncounterMutation,
+ useSavePrescriptionMutation,
+ useGetPrescriptionsQuery
 } from '@/services/encounterService';
 import { BlockUI } from 'primereact/blockui';
 import MedicalNotesAndAssessments from '../medical-notes-and-assessments';
@@ -73,6 +75,8 @@ import EncounterServices from '../encounter-services';
 import EncounterMainInfoSection from '../encounter-main-info-section';
 import CloseIcon from '@rsuite/icons/Close';
 import Allergens from '@/pages/setup/allergens-setup';
+import {ApPrescription } from '@/types/model-types';
+import {newApPrescription} from '@/types/model-types-constructor';
 const Encounter = () => {
   const encounterStatusNew = '91063195286200'; // TODO change this to be fetched from redis based on LOV CODE
   const patientSlice = useAppSelector(state => state.patient);
@@ -81,6 +85,23 @@ const Encounter = () => {
   const [startEncounter, startEncounterMutation] = useStartEncounterMutation();
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [prescription, setPrescription] = useState<ApPrescription>({ ...newApPrescription });
+  const [savePrescription, { isLoading: isSavingPrescription }] = useSavePrescriptionMutation();
+  const { data: prescriptions, isLoading: isLoadingPrescriptions } = useGetPrescriptionsQuery({
+    ...initialListRequest,
+    filters: [
+        {
+            fieldName: "patient_key",
+            operator: "match",
+            value: patientSlice.patient?.key,
+        },
+        {
+            fieldName: "visit_key",
+            operator: "match",
+            value: patientSlice.encounter?.key,
+        },
+    ],
+});
   const [activeContent, setActiveContent] = useState(<PatientSummary patient={patientSlice.patient} encounter={patientSlice.encounter} />);
   const handleMenuItemClick = (content) => {
     setActiveContent(content);
@@ -115,13 +136,18 @@ const Encounter = () => {
       completeEncounter(patientSlice.encounter).unwrap();
     }
   };
-
+ 
   useEffect(() => {
     if (completeEncounterMutation.status === 'fulfilled') {
       navigate('/encounter-list');
     }
   }, [completeEncounterMutation]);
-
+  const handleSavePrescription=()=>{
+    if (patientSlice.patient&&patientSlice.encounter) {
+    savePrescription({...prescription,patientKey:patientSlice.patient.key,
+      visitKey:patientSlice.encounter.key
+      })}
+  }
   return (
     <>
       {patientSlice.patient && patientSlice.encounter && (
@@ -200,13 +226,23 @@ const Encounter = () => {
                     </List.Item>
                     <List.Item
                      style={{ display: 'flex', alignItems: 'center' }}
-                     onClick={() => handleMenuItemClick(<DiagnosticsOrder />)}>
+                     onClick={() => 
+                     handleMenuItemClick(<DiagnosticsOrder />)
+                     }>
                     <FontAwesomeIcon icon={faVials } style={{ margin: '3px' }}  />
                       <Translate>Diagnostics Order</Translate>
                     </List.Item>
                     <List.Item 
                      style={{ display: 'flex', alignItems: 'center' }}
-                    onClick={() => handleMenuItemClick(<Prescription />)}>
+                    onClick={() => {
+                      if (prescriptions?.object?.length === 0) {
+                        console.log("The array is empty. Saving prescription...");
+                        handleSavePrescription();
+                    } else {
+                        console.log("The array is not empty:", prescriptions?.object);
+                    }
+                      handleMenuItemClick(<Prescription />);
+                    }}>
                     <FontAwesomeIcon icon={faFilePrescription } style={{ margin: '3px'}} />
                       <Translate>Prescription</Translate>
                     </List.Item>
