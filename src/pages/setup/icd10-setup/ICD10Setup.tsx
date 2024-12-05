@@ -84,9 +84,16 @@ const ICD10Setup = () => {
                     <Column sortable flexGrow={5}>
                         <HeaderCell align="center">
                             <Input onChange={e => handleFilterChange('description', e)} />
-                            <Translate>Description</Translate>
+                            <Translate>Short Description</Translate>
                         </HeaderCell>
                         <Cell dataKey="description" />
+                    </Column>
+                    <Column sortable flexGrow={5}>
+                        <HeaderCell align="center">
+                            <Input onChange={e => handleFilterChange('description', e)} />
+                            <Translate>Full Description</Translate>
+                        </HeaderCell>
+                        <Cell dataKey="fulldescription" />
                     </Column>
                 </Table>
             </BlockUI>
