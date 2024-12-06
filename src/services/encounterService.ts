@@ -206,14 +206,14 @@ export const encounterService = createApi({
         return response.object;   
       }
     }),
-    useGetPrescriptionsQuery: builder.query({
+    GetPrescriptions: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/encounter/prescription-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-    useSavePrescriptionMutation: builder.mutation({
+    SavePrescription: builder.mutation({
       query: (prescription: ApPrescription) => ({
         url: `/encounter/save-prescription`,
         method: 'POST',
@@ -224,14 +224,14 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
-    useGetPrescriptionMedicationsQuery: builder.query({
+    GetPrescriptionMedications: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/encounter/prescription-medic-lis?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-    useSavePrescriptionMedicationMutation: builder.mutation({
+    SavePrescriptionMedication: builder.mutation({
       query: (prescriptionmed: ApPrescriptionMedications) => ({
         url: `/encounter/save-prescription-medication`,
         method: 'POST',
@@ -242,14 +242,14 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
-    useGetCustomeInstructionsQuery: builder.query({
+    GetCustomeInstructions: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/encounter/custome-instructions-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-    useSaveCustomeInstructionsMutation: builder.mutation({
+    SaveCustomeInstructions: builder.mutation({
       query: (co: ApCustomeInstructions) => ({
         url: `/encounter/save-custome-instructions`,
         method: 'POST',
@@ -285,11 +285,11 @@ export const {
   useGetPatientEncounterOrdersQuery,
   useRemovePatientEncounterOrderMutation,
   useGetPrescriptionsQuery,
-  useSavePrescriptionMutation,
-  useGetPrescriptionMedicationsQuery,
-  useSavePrescriptionMedicationMutation,
-  useGetCustomeInstructionsQuery,
-  useSaveCustomeInstructionsMutation,
+ useSavePrescriptionMutation,
+ useGetPrescriptionMedicationsQuery,
+ useSavePrescriptionMedicationMutation,
+ useGetCustomeInstructionsQuery,
+ useSaveCustomeInstructionsMutation
   
 } = encounterService;
 

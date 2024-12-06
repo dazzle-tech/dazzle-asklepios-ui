@@ -38,7 +38,7 @@ import {
     useSavePrescriptionMedicationMutation,
     useGetPrescriptionMedicationsQuery,
     useSaveCustomeInstructionsMutation,
-    useGetCustomeInstructionsQuery,
+    useGetCustomeInstructionsQuery
    
 } from '@/services/encounterService';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
@@ -128,7 +128,7 @@ const Prescription = () => {
     const [customeInstruction, setCustomeInstruction] = useState<ApCustomeInstructions>({ ...newApCustomeInstructions });
     const [savePrescription, { isLoading: isSavingPrescription }] = useSavePrescriptionMutation();
     const [savePrescriptionMedication, { isLoading: isSavingPrescriptionMedication }] = useSavePrescriptionMedicationMutation();
-    const [deletePrescriptionMedication, { isLoading: isDeletingPrescriptionMedication }] = useDeletePrescriptionMedicationMutation();
+    
 
     const [saveCustomeInstructions, { isLoading: isSavingCustomeInstructions }] = useSaveCustomeInstructionsMutation();
 
