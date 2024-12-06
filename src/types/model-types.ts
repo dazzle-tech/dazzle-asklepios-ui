@@ -285,10 +285,12 @@ export interface ApAppointment {
 	patientKey:string;
 	facilityKey:string;
 	resourceTypeLkey:string;
+	resourceKey:string;
 	visitTypeLkey:string;
 	durationLkey:string;
 	appointmentStart:string;
-	instructionsLkey:string;
+	appointmentEnd:string;
+	instructions:string;
 	notes:string;
 	priorityLkey:string;
 	isReminder:string;
@@ -304,8 +306,8 @@ export interface ApAppointment {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
-	resourceKey:string;
 	resourceLkey:string;
+	instructionsLkey:string;
 } 
 
 export interface ApAttachment { 
@@ -1271,6 +1273,7 @@ export interface ApPatientEncounterOrder {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	submitDate:number;
 } 
 
 export interface ApPatientIds { 
