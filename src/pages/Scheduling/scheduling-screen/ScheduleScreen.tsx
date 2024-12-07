@@ -2,44 +2,131 @@ import React, { useEffect, useState } from "react";
 import { Calendar as BigCalendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { Calendar as RsuiteCalendar, TagPicker, ButtonToolbar, Panel, InputGroup, SelectPicker, Input, IconButton, Button, } from "rsuite";
+import { Calendar as RsuiteCalendar, TagPicker, ButtonToolbar, Panel, InputGroup, SelectPicker, Input, IconButton, Button, Form, } from "rsuite";
 import "./styles.less";
 import SearchIcon from '@rsuite/icons/Search';
 import {
-    newApAttachment,
-    newApPatient,
+    newApAppointment,
+ 
 } from '@/types/model-types-constructor';
-import BlockIcon from '@rsuite/icons/Block';
-import CheckIcon from '@rsuite/icons/Check';
+ 
 import DetailIcon from '@rsuite/icons/Detail';
 import SendIcon from '@rsuite/icons/Send';
 import CharacterAuthorizeIcon from '@rsuite/icons/CharacterAuthorize';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { CheckTreePicker } from 'rsuite';
-import Translate from "@/components/Translate";
+ 
 
 import {
     useGetFacilitiesQuery,
     useGetLovValuesByCodeQuery
 } from '@/services/setupService';
-import { initialListRequest } from "@/types/types";
+import { initialListRequest, ListRequest } from "@/types/types";
 import AppointmentModal from "./AppoitmentModal";
-import { ApPatient } from "@/types/model-types";
+import { ApPatient, ApAppointment } from "@/types/model-types";
 import { faPrint } from "@fortawesome/free-solid-svg-icons";
+import { notify } from "@/utils/uiReducerActions";
+import { useAppDispatch } from "@/hooks";
+import AppointmentActionsModal from "./AppointmentActionsModal";
+import { useGetResourcesAvailabilityQuery, useGetResourcesQuery, useGetAppointmentsQuery } from '@/services/appointmentService'
+import MyInput from '@/components/MyInput';
+import Resources from "@/pages/appointment/resources";
 
 const ScheduleScreen = () => {
-    const localizer = momentLocalizer(moment); // Set up moment as the date localizer
+    const localizer = momentLocalizer(moment); 
     const [validationResult, setValidationResult] = useState({});
     const [modalOpen, setModalOpen] = useState(false);
-    const [selectedEvent, setSelectedEvent] = useState(null); // To store selected event details
+    const [ActionsModalOpen, setActionsModalOpen] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState(null);  
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [selectedStartDate, setSelectedStartDate] = useState()
+    const [resuorceAvailabilityPeriods, setResuorceAvailabilityPeriods] = useState()
+    //Calendar Filters 
+    const [selectedFacility, setSelectedFacility] = useState(null)
+    const [selectedResourceType, setSelectedResourceType] = useState(null)
+    const [selectedResources, setSelectedResources] = useState([])
+    const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+    const [appointmentsData, setAppointmentsData] = useState([])
+    const {
+        data: appointments,
+        refetch: erfitchAppointments,
+        error,
+        isLoading
+    } = useGetAppointmentsQuery({
+        resource_type: selectedResourceType?.resourcesType || null,  
+        facility_id: selectedFacility?.facilityKey || null,   
+        resources: selectedResources ? selectedResources.resourceKey : [],  
 
-    const handleSelectSlot = (slotInfo) => {
-        setSelectedSlot(slotInfo);
-        setSelectedEvent(null); // Clear selected event when a new slot is selected
-        setModalOpen(true);
+    });
+
+ 
+
+    const extractTimeFromTimestamp = (timestamp) => {
+        const date = new Date(timestamp);
+        const hours = date.getUTCHours();
+        const minutes = date.getUTCMinutes();
+        const dateTime = `${hours}:${minutes} `
+        return dateTime;
     };
+
+    useEffect(() => {
+
+        console.log(selectedResourceType);
+        console.log(selectedResources);
+        console.log(selectedFacility);
+
+    }, [appointments, selectedResourceType, selectedFacility, selectedResources]); // Re-run when appointments or selectedResources change
+
+
+    useEffect(() => {
+        if (appointments?.object && resourcesListResponse?.object) {
+            const today = new Date();
+    
+            const formattedAppointments = appointments.object.map((appointment) => {
+                const dob = new Date(appointment?.patient?.dob);
+    
+                // البحث عن المورد الخاص بالموعد باستخدام resourceKey
+                const resource = resourcesListResponse.object.find(
+                    (item) => item.key === appointment.resourceKey
+                );
+    
+                return {
+                    title: ` ${appointment?.patient?.fullName}, ${
+                        isNaN(dob) ? "Unknown" : today.getFullYear() - dob.getFullYear()
+                    }Y , ${resource?.resourceName || "Unknown Resource"},  ${extractTimeFromTimestamp(appointment.appointmentStart)} - ${extractTimeFromTimestamp(appointment.appointmentEnd)} `, // Customize title as needed
+                    start: convertDate(appointment.appointmentStart),
+                    end: convertDate(appointment.appointmentEnd),
+                    text: appointment.notes || "No additional details available",
+                };
+            });
+    
+            // تحديث الحالة
+            setAppointmentsData(formattedAppointments);
+        }
+    }, [appointments, resourcesListResponse]);
+
+    useEffect(() => {
+        if (appointmentsData)
+            console.log(appointmentsData)
+    }, [appointmentsData])
+
+    const { data: resourcesAvailability } = useGetResourcesAvailabilityQuery({
+        resource_key: "853621685015424",
+        facility_id: "some_facility_id",
+    });
+
+    const { data: resourcesListResponse } = useGetResourcesQuery(listRequest);
+
+    const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
+
+    useEffect(() => {
+        setResuorceAvailabilityPeriods(resourcesAvailability?.object)
+    }, [resourcesAvailability])
+
+    useEffect(() => {
+        console.log(appointment)
+    }, [appointment?.key])
+
+   
 
     useEffect(() => {
         if (selectedSlot) {
@@ -48,8 +135,8 @@ const ScheduleScreen = () => {
     }, [selectedSlot])
     const handleSelectEvent = (event) => {
         setSelectedEvent(event); // Set selected event details
-        setSelectedSlot(null); // Clear selected slot when an event is selected
-        setModalOpen(true);
+        setActionsModalOpen(true)
+ 
     };
 
     const closeModal = () => {
@@ -58,64 +145,23 @@ const ScheduleScreen = () => {
     };
 
     const { data: facilityListResponse, refetch: refetchFacility } = useGetFacilitiesQuery({
-        ...initialListRequest,
-        pageSize: 1000
+        ...initialListRequest
     });
 
 
-    const eventsData = [
-        {
-            title: "Meeting with Team",
-            start: new Date(2024, 10, 15, 10, 0), // Nov 15, 10 AM
-            text: "Discussion about project milestones",
-            end: new Date(2024, 10, 15, 11, 0),
-        },
-        {
-            title: "Meeting with Team2",
-            start: new Date(2024, 10, 15, 10, 30), // Nov 15, 10:30 AM
-            text: "Follow-up on project progress",
-            end: new Date(2024, 10, 15, 12, 0),
-        },
-        {
-            title: "Doctor's Appointment",
-            start: new Date(2024, 10, 16, 13, 0), // Nov 16, 1 PM
-            text: "Routine check-up",
-            end: new Date(2024, 10, 16, 14, 0),
-        },
-    ];
-
-    const [events, setEvents] = useState(eventsData);
-
-    const data = [
-        {
-            label: 'Group 1',
-            value: 'group1',
-            children: [
-                { label: 'Eugenia', value: 'Eugenia' },
-                { label: 'Bryan', value: 'Bryan' }
-            ]
-        },
-        {
-            label: 'Group 2',
-            value: 'group2',
-            children: [
-                { label: 'Linda', value: 'Linda' },
-                { label: 'Nancy', value: 'Nancy' }
-            ]
-        },
-        {
-            label: 'Group 3',
-            value: 'group3',
-            children: [
-                { label: 'Lloyd', value: 'Lloyd' },
-                { label: 'Alice', value: 'Alice' },
-                { label: 'Julia', value: 'Julia' },
-                { label: 'Albert', value: 'Albert' }
-            ]
-        }
-    ];
-    const styles = { width: 300, display: 'block', marginBottom: 10 };
-
+    const convertDate = (appointmentEnd) => {
+         const endDate = new Date(appointmentEnd);
+        // Format to `new Date(year, month, day, hours, minutes)`
+        const formattedEnd = new Date(
+            endDate.getUTCFullYear(), // Year
+            endDate.getUTCMonth(),   // Month (0-based index)
+            endDate.getUTCDate(),    // Day
+            endDate.getUTCHours(),   // Hours
+            endDate.getUTCMinutes()  // Minutes
+        );
+        return (formattedEnd);
+    }
+ 
     const [open, setOpen] = React.useState(false);
     const [size, setSize] = React.useState();
     const handleOpen = value => {
@@ -125,9 +171,10 @@ const ScheduleScreen = () => {
     const handleClose = () => setOpen(false);
     const [selectedCriterion, setSelectedCriterion] = useState('');
     const [searchKeyword, setSearchKeyword] = useState('');
-    const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
-    const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
+     const [appointment, setAppointment] = useState<ApAppointment>({ ...newApAppointment });
+
     const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+    const dispatch = useAppDispatch();
 
     const searchCriteriaOptions = [
         { label: 'MRN', value: 'patientMrn' },
@@ -167,15 +214,24 @@ const ScheduleScreen = () => {
 
         );
     };
-
-
+ 
+    const [currentView, setCurrentView] = React.useState("month");  
+    const [currentDate, setCurrentDate] = React.useState(new Date());  
+    const handleDateSelection = (date) => {
+        if (currentView === "month") {
+            setCurrentView("day"); // Switch to day view
+            setCurrentDate(date);  // Update the selected date
+        }
+    };
+ 
+  
     return (
         <div>
             <div className="inline-two-four-container">
                 <div className="left-section"  >
                     {/* <RsuiteCalendar compact style={{ width: 320, height: 320 }} /> */}
                     <ButtonToolbar>
-                        <IconButton appearance="primary" color="violet" style={{ width: "45%" }} icon={<DetailIcon />}>Add Appointments</IconButton>
+                        <IconButton onClick={() => { setModalOpen(true) }} appearance="primary" color="violet" style={{ width: "45%" }} icon={<DetailIcon />}>Add Appointments</IconButton>
                         <IconButton appearance="ghost" color="violet" style={{ width: "50%" }} icon={<SendIcon />}> View App Requests</IconButton>
                         <IconButton appearance="primary" color="blue" style={{ width: "45%" }} icon={<CharacterAuthorizeIcon />}>Bulk Appointments</IconButton>
                         <IconButton color="blue" appearance="ghost" style={{ width: "50%" }} icon={<SearchIcon />}>Search For Appointments</IconButton>
@@ -200,32 +256,104 @@ const ScheduleScreen = () => {
 
                     <br />
                     <br />
-                    <CheckTreePicker
-                        defaultExpandAll
-                        data={data ?? []}
-                        style={{ width: "97%" }}
-                        placeholder="Select"
-                    />
+
+                    <Form fluid layout="inline"  >
+                        <MyInput
+
+                            width={300}
+                            column
+                            fieldLabel="Facility"
+                            selectData={facilityListResponse?.object ?? []}
+                            fieldType="select"
+                            selectDataLabel="facilityName"
+                            selectDataValue="key"
+                            fieldName="facilityKey"
+                            record={selectedFacility}
+                            setRecord={setSelectedFacility}
+                        />
+                    </Form>
+                    <Form fluid layout="inline"  >
+                        <MyInput
+                            width={300}
+                            vr={validationResult}
+                            column
+                            fieldLabel="Resources Type"
+                            fieldType="select"
+                            fieldName="resourcesType"
+                            selectData={resourceTypeQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            record={selectedResourceType}
+                            setRecord={setSelectedResourceType}
+                        />
+                    </Form>
+
+                    <Form fluid layout="inline"   >
+
+                        <MyInput
+                            width={300}
+                            column
+                            fieldLabel="Resources"
+                            selectData={resourcesListResponse?.object ?? []}
+                            fieldType="multyPicker"
+                            selectDataLabel="resourceName"
+                            selectDataValue="key"
+                            fieldName="resourceKey"
+                            record={selectedResources}
+                            setRecord={setSelectedResources}
+                        />
+                    </Form>
+
+
+
+                    <Button onClick={() => {
+                        console.log(selectedResourceType);
+                        console.log(selectedResources);
+                        console.log(selectedFacility);
+                        console.log({
+                            resource_type: selectedResourceType?.resourcesType || null,  
+                            facility_id: selectedFacility?.facilityKey || null,  
+                            resources: selectedResources ? selectedResources.resourceKey : [],  
+
+                        })
+                        console.log(appointments)
+            
+                        
+                    }}>Test</Button>
+
+
                 </div>
                 <div className="right-section">
                     <BigCalendar
                         localizer={localizer}
-                        events={events}
+                        events={appointmentsData}
                         startAccessor="start"
                         endAccessor="end"
                         views={["month", "week", "day", "agenda"]}
-                        defaultView="week"
+                        defaultView="month"
                         selectable={true}
-                        onSelectEvent={handleSelectEvent}
-                        onSelectSlot={handleSelectSlot}
+
+                        onSelectEvent={(event) => {
+                            handleSelectEvent(event);
+                        }}
                         style={{ height: 600 }}
+
                     />
+
                 </div>
             </div>
 
 
-            <AppointmentModal isOpen={modalOpen} onClose={() => setModalOpen(false)} startAppoitmentStart={selectedStartDate} />
-
+            <AppointmentModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                startAppoitmentStart={selectedStartDate}
+                periods={resuorceAvailabilityPeriods}
+                resourceType={selectedResourceType}
+                facility={selectedFacility}
+                onSave={erfitchAppointments}
+            />
+            <AppointmentActionsModal isActionsModalOpen={ActionsModalOpen} onActionsModalClose={() => setActionsModalOpen(false)} />
 
         </div>
     );

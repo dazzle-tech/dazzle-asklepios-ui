@@ -19,19 +19,21 @@ import { useGetPatientsQuery } from "@/services/patientService";
 import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
 import TrashIcon from '@rsuite/icons/Trash';
 import { useAppSelector } from "@/hooks";
-import { useSaveAppointmentMutation } from "@/services/appointmentService";
+import { useGetResourcesQuery, useSaveAppointmentMutation } from "@/services/appointmentService";
 import AttachmentModal from "@/pages/patient/patient-profile/AttachmentUploadModal";
 import { object } from "prop-types";
 
 
 
-const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
+const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, periods, resourceType, facility, onSave }) => {
 
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
 
     const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
     const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
     const [appointment, setAppoitment] = useState<ApAppointment>({ ...newApAppointment })
+    const [resourcesListRequest, setResourcesListRequest] = useState<ListRequest>({ ...initialListRequest });
+
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState(null); // To store selected event details
     const [selectedSlot, setSelectedSlot] = useState(null);
@@ -46,7 +48,50 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
     const [instructionKey, setInstructionsKey] = useState()
     const [instructionValue, setInstructionsValue] = useState()
     const [instructions, setInstructions] = useState()
+    const [availabilDays, setAvailabilDays] = useState()
+    const [availablePeriods, setAvailablePeriods] = useState([]);
+    const [selectedDay, setSelectedDay] = useState(null);
+    const [selectedTime, setSelectedTime] = useState(null);
+    const [availableDatesInMonth, setAvailableDatesInMonth] = useState(null);
+    const [selectedMonthDay, setSelectedMonthDay] = useState(null);
+    const [selectedPeriods, setSelectedPeriods] = useState(null);
+    const [availableTimes, setAvailableTimes] = useState(null);
+    const [selectedDuration, setSelectedDuration] = useState(null);
 
+ 
+    const dayOptions = availablePeriods.map((item) => ({
+        label: item.day,
+        value: item.day,
+    }));
+    const { data: resourcesListResponse } = useGetResourcesQuery(resourcesListRequest);
+
+    //   const [availabilityPickerData, setAvailabilityPickerData] = useState()
+    // const [availableDayAndPeriods, setAvailableDayAndPeriods] = useState([]);
+    // const [selectedDay, setSelectedDay] = useState(null);
+    // const [availablePeriods, setAvailablePeriods] = useState([]);
+    // const dayOptions = availablePeriods.map((item) => ({
+    //     label: item.day,
+    //     value: item.day,
+    // }));
+
+
+    const handleDayChange = (day) => {
+        setSelectedDay(day);
+
+        // Find the selected day's periods
+        const selectedDayData = availablePeriods.find(
+            (item) => item.day === day
+        );
+        if (selectedDayData) {
+            const periods = selectedDayData.periods.map((period, index) => ({
+                label: `${formatTime(period.startTime)} - ${formatTime(period.endTime)}`,
+                value: index, // Using index as a unique key for simplicity
+            }));
+            setAvailablePeriods(periods);
+        } else {
+            setAvailablePeriods([]);
+        }
+    };
     const { Column, HeaderCell, Cell } = Table;
     const patientSlice = useAppSelector(state => state.patient);
 
@@ -80,6 +125,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
 
 
 
+
     const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
     const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
     const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
@@ -88,6 +134,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
     const { data: procedureLevelQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL')
     const { data: reminderTypeLovQueryResponse } = useGetLovValuesByCodeQuery('REMINDER_TYP');
     const { data: durationLovQueryResponse } = useGetLovValuesByCodeQuery('APNTMNT_DURATION');
+    const { data: weekDaysLovQueryResponse } = useGetLovValuesByCodeQuery('DAYS_OF_WEEK');
 
     // const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
     //     code: 'CITY',
@@ -244,7 +291,6 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
 
     useEffect(() => {
         if (instructionKey?.instructionsLkey) {
-            console.log('teeeeeeeeeeeeeeeeeeeest')
             const filtered = instractionsTypeQueryResponse.object
                 .filter((item) => item.key === instructionKey?.instructionsLkey)
                 .map((item) => item.lovDisplayVale);
@@ -261,12 +307,273 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
         setInstructionsKey(null)
     }, [instructionValue]);
 
+    useEffect(() => {
+        if (resourceType)
+            setAppoitment({ ...appointment, resourceTypeLkey: resourceType?.resourcesType })
+
+
+    }, [resourceType])
+
+    useEffect(() => {
+
+        if (facility)
+            setAppoitment({ ...appointment, facilityKey: facility?.facilityKey })
+
+    }, [facility])
+
+    const calculateAppointmentDate = duration => {
+        console.log(duration)
+
+        const date = new Date(selectedMonthDay);
+        const time = new Date(selectedTime);
+
+        const year: number = time.getFullYear();
+        const month: number = time.getMonth();
+        const day: number = date.getDate();
+
+
+        const hours: number = time.getHours();
+        const minutes: number = time.getMinutes();
+
+
+        const mergedDateTime: Date = new Date(year, month, selectedMonthDay, hours, minutes)
+        const DateTimeAfterDuration = new Date(mergedDateTime)
+
+        if (duration)
+            console.log(DateTimeAfterDuration)
+            DateTimeAfterDuration.setMinutes(mergedDateTime.getMinutes() + parseInt(duration, 10));
+            console.log(parseInt(duration, 10))
+            console.log(DateTimeAfterDuration)
+
+
+        if (duration) {
+            return DateTimeAfterDuration
+
+        } else {
+            return mergedDateTime
+
+        }
+
+    }
+
     const handleSaveAppointment = () => {
-        saveAppointment({ ...appointment, appointmentStart: selectedStartDate, instructions: instructions }).unwrap().then(() => {
+
+        console.log({ ...appointment, appointmentStart: calculateAppointmentDate(0), appointmentEnd: calculateAppointmentDate(selectedDuration), instructions: instructions })
+        saveAppointment({ ...appointment, appointmentStart: calculateAppointmentDate(0), appointmentEnd: calculateAppointmentDate(selectedDuration), instructions: instructions }).unwrap().then(() => {
             closeModal()
             handleClear()
+            onSave()
         })
     }
+
+    const getAvailableDatesInMonth = (dayOfWeek, year, month) => {
+        const dates = [];
+        const firstDay = new Date(year, month, 1); // أول يوم في الشهر
+        const totalDays = new Date(year, month + 1, 0).getDate(); // عدد الأيام في الشهر
+
+        for (let i = 1; i <= totalDays; i++) {
+            const currentDate = new Date(year, month, i);
+            if (currentDate.toLocaleDateString('en-US', { weekday: 'long' }) === dayOfWeek) {
+                dates.push(i); // إذا كان اليوم يطابق اليوم المختار
+            }
+        }
+        return dates;
+    };
+
+
+
+    const filterWeekDays = () => {
+        const result = {};
+
+        // جمع البيانات لكل Resource
+        periods?.forEach((item) => {
+            const resourceKey = item.resourceKey;
+            const day = item.dayLvalue.lovDisplayVale; // اليوم
+            const period = {
+                startTime: item.startTime,
+                endTime: item.endTime,
+            };
+
+            if (!result[resourceKey]) result[resourceKey] = {};
+            if (!result[resourceKey][day]) result[resourceKey][day] = [];
+            result[resourceKey][day].push(period);
+        });
+
+        // تحويل البيانات إلى هيكل متوافق مع Pickers
+        const availabilityPickerData = Object.entries(result).flatMap(([resourceKey, days]) =>
+            Object.entries(days).map(([day, periods]) => ({
+                label: `${day} (${periods.length} periods)`,
+                value: `${resourceKey}-${day}`,
+                periods: periods,
+            }))
+        );
+
+        setAvailabilDays(availabilityPickerData);
+    };
+
+
+    useEffect(() => {
+        if (availabilDays?.length) {
+            console.log("Available Days:", availabilDays);
+        }
+    }, [availabilDays]);
+
+    // دمج الفترات بناءً على الاختيار
+    const mergePeriods = (periods) => {
+        if (!periods || !periods.length) return [];
+
+        const merged = [];
+        periods.sort((a, b) => a.startTime - b.startTime); // ترتيب الفترات
+        let current = { ...periods[0] };
+
+        for (let i = 1; i < periods.length; i++) {
+            if (periods[i].startTime <= current.endTime) {
+                // دمج الفترات المتداخلة
+                current.endTime = Math.max(current.endTime, periods[i].endTime);
+            } else {
+                merged.push(current);
+                current = { ...periods[i] };
+            }
+        }
+        merged.push(current); // إضافة آخر فترة
+        return merged;
+    };
+
+
+
+
+    const handleSelectDayOfWeek = (selectedDay) => {
+        setSelectedDay(selectedDay)
+        const dayOfWeek = selectedDay.split('-')[1]; // استخراج اليوم من القيمة
+        const selectedPeriods = availabilDays?.find(item => item.value === selectedDay)?.periods || [];
+        const mergedPeriods = mergePeriods(selectedPeriods);
+        setSelectedPeriods(mergedPeriods); // تخزين الفترات المتاحة المدمجة
+
+        // حساب التواريخ في الشهر بناءً على اليوم
+        const today = new Date();
+        const availableDates = getAvailableDatesInMonth(dayOfWeek, today.getFullYear(), today.getMonth());
+        setAvailableDatesInMonth(availableDates); // تخزين التواريخ المتاحة
+
+        // توليد قائمة بالأوقات
+        const availableTimes = generateTimes(mergedPeriods, 30); // 30 دقيقة كفاصل زمني
+        setAvailableTimes(availableTimes); // تخزين الأوقات المتاحة
+    };
+    const formatTime = (seconds) => {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    };
+
+    const generateTimes = (periods, interval = 30) => {
+        const times = [];
+        periods.forEach((period) => {
+            let current = period.startTime;
+            while (current < period.endTime) {
+                times.push(current);
+                current += interval * 60; // زيادة الوقت بناءً على الفاصل الزمني
+            }
+        });
+        return times;
+    };
+
+
+    // توليد قائمة بالساعات المتاحة
+    const availableHours = periods?.flatMap((period) => {
+        const startHour = Math.floor(period.startTime / 3600);
+        const endHour = Math.floor(period.endTime / 3600);
+        return Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
+    });
+
+    const isHourAvailable = (hour) => {
+        const selectedDayName = selectedDay.split('-')[1];  // استخراج اسم اليوم من `selectedDay`
+        if (!selectedDayName || !availabilDays.some(day => day.label.includes(selectedDayName))) {
+            return false; // إذا لم يتم تحديد يوم أو لم تكن هناك فترات متاحة لهذا اليوم
+        }
+
+        const periods = availabilDays.find(day => day.label.includes(selectedDayName)).periods;
+
+        return periods.some((period) => {
+            const startHour = Math.floor(period.startTime / 3600);
+            const endHour = Math.floor(period.endTime / 3600);
+            return hour >= startHour && hour < endHour;
+        });
+    };
+
+    const isMinuteAvailable = (hour, minute) => {
+        const selectedDayName = selectedDay.split('-')[1]; // استخراج اسم اليوم من `selectedDay`
+
+        // التأكد من أن اليوم موجود في `availabilDays`
+        if (!selectedDayName || !availabilDays.some(day => day.label.includes(selectedDayName))) {
+            return true; // إذا لم يكن اليوم موجودًا في الفترات المتاحة، اعتبرها متاحة
+        }
+
+        // العثور على الفترات المتاحة لذلك اليوم
+        const periods = availabilDays.find(day => day.label.includes(selectedDayName)).periods;
+
+        // اعتبار جميع الدقائق متاحة بشكل افتراضي
+        let isAvailable = true;
+
+        // التحقق إذا كانت الدقيقة متاحة بناءً على الفترات المتاحة
+        periods.forEach((period) => {
+            const startTime = period.startTime; // وقت بداية الفترة بالثواني
+            const endTime = period.endTime; // وقت نهاية الفترة بالثواني
+
+            const periodStartHour = Math.floor(startTime / 3600); // الساعة التي تبدأ فيها الفترة
+            const periodStartMinute = Math.floor((startTime % 3600) / 60); // الدقيقة التي تبدأ فيها الفترة
+            const periodEndHour = Math.floor(endTime / 3600); // الساعة التي تنتهي فيها الفترة
+            const periodEndMinute = Math.floor((endTime % 3600) / 60); // الدقيقة التي تنتهي فيها الفترة
+
+            // تحويل الساعة والدقيقة المختارة إلى ثواني
+            const selectedTimeInSeconds = hour * 3600 + minute * 60;
+
+            // التحقق إذا كانت الدقيقة تقع ضمن فترة زمنية محددة
+            if (selectedTimeInSeconds >= startTime && selectedTimeInSeconds < endTime) {
+                isAvailable = false; // إذا كانت ضمن فترة زمنية، أغلق الدقيقة
+            }
+        });
+
+        return isAvailable;
+    };
+
+    const generateAvailableMinutes = (hour) => {
+        const matchingPeriods = periods.filter(
+            (period) => hour >= Math.floor(period.startTime / 3600) && hour < Math.floor(period.endTime / 3600)
+        );
+
+        const minutes = [];
+        matchingPeriods.forEach((period) => {
+            const startMinute = Math.floor((period.startTime % 3600) / 60);
+            const endMinute = Math.floor((period.endTime % 3600) / 60);
+            for (let minute = startMinute; minute < endMinute; minute += 15) {
+                minutes.push(minute);
+            }
+        });
+
+        return minutes;
+    };
+
+    const getDurationTime = (key) => {
+        const duration = durationLovQueryResponse.object.find(
+            (item) => item.key === appointment?.durationLkey
+        );
+        console.log(duration.lovDisplayVale)
+
+        console.log(durationLovQueryResponse?.object)
+        console.log(key)
+    }
+
+    useEffect(() => {
+        if (appointment?.durationLkey) {
+            const duration = durationLovQueryResponse.object.find(
+                (item) => item.key === appointment?.durationLkey
+            )
+            const firstTwoChars = duration.lovDisplayVale.slice(0, 2);
+
+            console.log(firstTwoChars)
+            setSelectedDuration(firstTwoChars)
+        }
+
+    }, [appointment?.durationLkey])
 
     return (
 
@@ -478,17 +785,16 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
                             setRecord={setAppoitment}
                         />
 
+
                         <MyInput
-                            required
-                            width={165}
-                            vr={validationResult}
+                            width={300}
                             column
-                            fieldLabel="Resource"
+                            fieldLabel="Resources"
+                            selectData={resourcesListResponse?.object ?? []}
                             fieldType="select"
-                            fieldName="resourceLkey"
-                            selectData={[]}
-                            selectDataLabel="lovDisplayVale"
+                            selectDataLabel="resourceName"
                             selectDataValue="key"
+                            fieldName="resourceKey"
                             record={appointment}
                             setRecord={setAppoitment}
                         />
@@ -522,21 +828,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
                             setRecord={setAppoitment}
                         />
 
-                        <div style={{ width: "100%", marginTop: "10px" }}>
-                            <div>
-                                <label htmlFor="appointment-date">Start Appointment Date</label>
-                                <DatePicker
-                                    id="appointment-date"
-                                    value={selectedStartDate}
-                                    format="MM/dd/yyyy HH:mm"
-                                    onChange={(e) => setSelectedStartDate(e)}
-                                />
-                                <InfoRoundIcon style={{ marginLeft: "5px", fontSize: "22px", color: "blue" }} />
 
-                            </div>
-
-
-                        </div>
 
                         <div style={{ display: "flex", width: "100%", justifyContent: "flex-end", marginTop: "30px" }}>
                             <IconButton
@@ -552,9 +844,43 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart }) => {
                     </Form>
                     <br />
                     <br />
+                    <Form layout="inline" style={{ display: "flex" }} fluid>
 
 
+                        <div style={{ display: "flex", justifyItems: "left", gap: 10 }} >
+                            {/* اختيار يوم الأسبوع */}
+                            <SelectPicker
+                                style={{ width: 250 }}
+                                data={availabilDays ? availabilDays.map(item => ({ label: item.label, value: item.value })) : []}
+                                onChange={handleSelectDayOfWeek}
+                            />
 
+                            {/* اختيار تاريخ في الشهر */}
+                            <SelectPicker
+                                style={{ width: 120 }}
+                                disabled={!(availableDatesInMonth && availableDatesInMonth.length > 0)}
+                                data={availableDatesInMonth ? availableDatesInMonth.map(date => ({ label: `Day ${date}`, value: date })) : []}
+                                onChange={(selectedMonthDay) => setSelectedMonthDay(selectedMonthDay)}
+                            />
+
+                            <div>
+                                <DatePicker
+                                    format="HH:mm" // عرض الساعات والدقائق فقط
+                                    ranges={[]}
+                                    shouldDisableHour={(hour) => !isHourAvailable(hour)}
+                                    shouldDisableMinute={(minute, selectedHour) => !isMinuteAvailable(selectedHour, minute)}
+                                    onChange={(value) => setSelectedTime(value)}
+                                />
+                                {selectedTime && (
+                                    <div>
+                                        <strong>Selected Time:</strong> {selectedTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                    </div>
+                                )}
+                            </div>
+                            <InfoRoundIcon onClick={() => { filterWeekDays(), console.log(resourceType), console.log(facility), getDurationTime('1454758090547800') }} style={{ marginLeft: "5px", fontSize: "22px", color: "blue" }} />
+                        </div>
+
+                    </Form>
                     <Form layout="inline" style={{ display: "flex" }} fluid>
 
                         <div style={{ display: "flex", flexDirection: 'column' }} >

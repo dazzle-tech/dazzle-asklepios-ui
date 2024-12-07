@@ -308,8 +308,8 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	deletedAt:undefined,
 	isValid:undefined,
 	resourceLkey:undefined,
-
 	instructionsLkey:undefined,
+	appointmentStatus:'',
 } 
 
 export const newApAttachment:modelTypes.ApAttachment = { 
