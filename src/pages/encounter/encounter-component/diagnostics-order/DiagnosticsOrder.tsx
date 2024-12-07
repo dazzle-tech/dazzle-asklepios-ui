@@ -95,9 +95,27 @@ const DiagnosticsOrder = () => {
     const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
     const { data: departmentTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
     const [newAttachmentDetails, setNewAttachmentDetails] = useState('');
-    const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isSuccess } =
+    const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch } =
         useFetchAttachmentLightQuery({ refKey: order?.key }, { skip: !order?.key });
     const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
+    const fetchOrderAttachResponse = useFetchAttachmentQuery(
+        {
+          type: 'ORDER_ATTACHMENT',
+          refKey: order.key
+        },
+        { skip: !order.key }
+      );
+    const {
+        data: fetchAttachmentByKeyResponce,
+        error,
+        isLoading,
+        isFetching,
+        isSuccess,
+        refetch
+      } = useFetchAttachmentByKeyQuery(
+        { key: requestedPatientAttacment },
+        { skip: !requestedPatientAttacment || !order.key }
+      );
     const isSelected = rowData => {
         if (rowData && order && rowData.key === order.key) {
             return 'selected-row';
@@ -147,36 +165,59 @@ const DiagnosticsOrder = () => {
             ]
         })
     }, [showCanceled]);
-    useEffect(() => {
-        if (isSuccess && fetchPatintAttachmentsResponce) {
-            if (actionType === 'download') {
-                handleDownload(fetchPatintAttachmentsResponce[0]);
-            }
-        }
-    }, [fetchPatintAttachmentsResponce, actionType]);
-    const handleDownloadSelectedPatientAttachment = attachmentKey => {
-
-        setActionType('download');
-    };
-    const handleDownload = attachment => {
-        const byteCharacters = atob(attachment.fileContent);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
+    const handleDownload = async (attachment) => {
+        try {
+          if (!attachment?.fileContent || !attachment?.contentType || !attachment?.fileName) {
+            console.error("Invalid attachment data.");
+            return;
+          }
+      
+          const byteCharacters = atob(attachment.fileContent);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
             byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: attachment.contentType });
+      
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.style.display = "none";
+          a.href = url;
+          a.download = attachment.fileName;
+      
+          document.body.appendChild(a);
+          a.click();
+      
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+      
+          console.log("File downloaded successfully:", attachment.fileName);
+          attachmentRefetch().then(() => {
+            console.log("Refetch complete");
+        }).catch((error) => {
+            console.error("Refetch failed:", error);
+        });
+        } catch (error) {
+          console.error("Error during file download:", error);
         }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: attachment.contentType });
-
-        // Create a temporary  element and trigger the download
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = attachment.fileName;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
+      };
+      
+    useEffect(() => {
+        console.log("iam in useefect download")
+        if (isSuccess && fetchAttachmentByKeyResponce) {
+          if (actionType === 'download') {
+            handleDownload(fetchAttachmentByKeyResponce);
+          } 
+        }
+      }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
+    const handleDownloadSelectedPatientAttachment = attachmentKey => {
+        
+        setRequestedPatientAttacment(attachmentKey);
+        setActionType('download');
+        console.log("iam in download atach atKey= "+attachmentKey)
     };
+ 
 
     const handleSearch = value => {
         setSearchKeyword(value);
@@ -654,7 +695,7 @@ const DiagnosticsOrder = () => {
                                 <Button
                                     style={{ marginTop: "20px" }}
                                     appearance="link"
-                                    onClick={() => handleDownloadSelectedPatientAttachment(order.key)}
+                                    onClick={() => handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)}
                                 >
                                     Download <FileDownloadIcon style={{ marginLeft: '10px', scale: '1.4' }} />
                                 </Button>
