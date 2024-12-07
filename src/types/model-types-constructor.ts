@@ -286,10 +286,12 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	patientKey:undefined,
 	facilityKey:undefined,
 	resourceTypeLkey:undefined,
+	resourceKey:undefined,
 	visitTypeLkey:undefined,
 	durationLkey:undefined,
 	appointmentStart:'',
-	instructionsLkey:undefined,
+	appointmentEnd:'',
+	instructions:'',
 	notes:'',
 	priorityLkey:undefined,
 	isReminder:'',
@@ -305,8 +307,9 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
-	resourceKey:undefined,
 	resourceLkey:undefined,
+
+	instructionsLkey:undefined,
 } 
 
 export const newApAttachment:modelTypes.ApAttachment = { 
@@ -1272,6 +1275,7 @@ export const newApPatientEncounterOrder:modelTypes.ApPatientEncounterOrder = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	submitDate:0,
 } 
 
 export const newApPatientIds:modelTypes.ApPatientIds = { 

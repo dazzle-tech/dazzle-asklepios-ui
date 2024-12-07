@@ -3,6 +3,7 @@ import Translate from '@/components/Translate';
 import './styles.less';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import FileDownloadIcon from '@rsuite/icons/FileDownload';
 import {
     InputGroup,
     Form,
@@ -24,11 +25,20 @@ import { notify } from '@/utils/uiReducerActions';
 import {
     useGetLovValuesByCodeQuery,
 } from '@/services/setupService';
+import {
+    useFetchAttachmentQuery,
+    useFetchAttachmentLightQuery,
+    useFetchAttachmentByKeyQuery,
+    useUploadMutation,
+    useDeleteAttachmentMutation,
+    useUpdateAttachmentDetailsMutation
+} from '@/services/attachmentService';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import CheckIcon from '@rsuite/icons/Check';
 import PlusIcon from '@rsuite/icons/Plus';
 import OthersIcon from '@rsuite/icons/Others';
 import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
+import AttachmentModal from "@/pages/patient/patient-profile/AttachmentUploadModal";
 import {
     useGetDiagnosticsTestListQuery
 } from '@/services/setupService';
@@ -50,7 +60,7 @@ const DiagnosticsOrder = () => {
     const [order, setOrder] = useState<ApPatientEncounterOrder>({ ...newApPatientEncounterOrder });
     const [searchKeyword, setSearchKeyword] = useState('');
     const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-
+    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [listOrderRequest, setListOrderRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -80,9 +90,32 @@ const DiagnosticsOrder = () => {
     const [deleteOrder, deleteOrderMutation] = useRemovePatientEncounterOrderMutation();
     const [openDetailsModel, setOpenDetailsModel] = useState(false);
     const [openConfirmDeleteModel, setConfirmDeleteModel] = useState(false);
+    const [actionType, setActionType] = useState(null);
     const { data: orderPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
     const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
     const { data: departmentTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
+    const [newAttachmentDetails, setNewAttachmentDetails] = useState('');
+    const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch } =
+        useFetchAttachmentLightQuery({ refKey: order?.key }, { skip: !order?.key });
+    const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
+    const fetchOrderAttachResponse = useFetchAttachmentQuery(
+        {
+          type: 'ORDER_ATTACHMENT',
+          refKey: order.key
+        },
+        { skip: !order.key }
+      );
+    const {
+        data: fetchAttachmentByKeyResponce,
+        error,
+        isLoading,
+        isFetching,
+        isSuccess,
+        refetch
+      } = useFetchAttachmentByKeyQuery(
+        { key: requestedPatientAttacment },
+        { skip: !requestedPatientAttacment || !order.key }
+      );
     const isSelected = rowData => {
         if (rowData && order && rowData.key === order.key) {
             return 'selected-row';
@@ -91,7 +124,7 @@ const DiagnosticsOrder = () => {
 
 
     useEffect(() => {
-        if (searchKeyword !== "") {
+        if (searchKeyword.trim() !== "") {
             setListRequest(
                 {
                     ...initialListRequest,
@@ -110,28 +143,82 @@ const DiagnosticsOrder = () => {
     }, [searchKeyword]);
 
     useEffect(() => {
-    console.log(showCanceled)
-    setListOrderRequest({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: 'patient_key',
-                operator: 'match',
-                value: patientSlice.patient.key
-            },
-            {
-                fieldName: 'visit_key',
-                operator: 'match',
-                value: patientSlice.encounter.key
-            },
-            {
-                fieldName: 'is_valid',
-                operator: 'match',
-                value: showCanceled
-            }
-        ]
-    })
+        console.log(showCanceled)
+        setListOrderRequest({
+            ...initialListRequest,
+            filters: [
+                {
+                    fieldName: 'patient_key',
+                    operator: 'match',
+                    value: patientSlice.patient.key
+                },
+                {
+                    fieldName: 'visit_key',
+                    operator: 'match',
+                    value: patientSlice.encounter.key
+                },
+                {
+                    fieldName: 'is_valid',
+                    operator: 'match',
+                    value: showCanceled
+                }
+            ]
+        })
     }, [showCanceled]);
+    const handleDownload = async (attachment) => {
+        try {
+          if (!attachment?.fileContent || !attachment?.contentType || !attachment?.fileName) {
+            console.error("Invalid attachment data.");
+            return;
+          }
+      
+          const byteCharacters = atob(attachment.fileContent);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: attachment.contentType });
+      
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.style.display = "none";
+          a.href = url;
+          a.download = attachment.fileName;
+      
+          document.body.appendChild(a);
+          a.click();
+      
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+      
+          console.log("File downloaded successfully:", attachment.fileName);
+          attachmentRefetch().then(() => {
+            console.log("Refetch complete");
+        }).catch((error) => {
+            console.error("Refetch failed:", error);
+        });
+        } catch (error) {
+          console.error("Error during file download:", error);
+        }
+      };
+      
+    useEffect(() => {
+        console.log("iam in useefect download")
+        if (isSuccess && fetchAttachmentByKeyResponce) {
+          if (actionType === 'download') {
+            handleDownload(fetchAttachmentByKeyResponce);
+          } 
+        }
+      }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
+    const handleDownloadSelectedPatientAttachment = attachmentKey => {
+        
+        setRequestedPatientAttacment(attachmentKey);
+        setActionType('download');
+        console.log("iam in download atach atKey= "+attachmentKey)
+    };
+ 
+
     const handleSearch = value => {
         setSearchKeyword(value);
         console.log('serch' + searchKeyword);
@@ -163,12 +250,18 @@ const DiagnosticsOrder = () => {
     const CloseConfirmDeleteModel = () => {
         setConfirmDeleteModel(false);
     }
-    const handleSaveOrder = () => {
+    const handleSaveOrder = async () => {
         try {
-            savePatientOrder(order).unwrap();
+            await savePatientOrder(order).unwrap();
             setOpenDetailsModel(false);
             dispatch(notify('saved  Successfully'));
-            orderRefetch();
+
+            orderRefetch().then(() => {
+                console.log("Refetch complete");
+            }).catch((error) => {
+                console.error("Refetch failed:", error);
+            });
+
         }
         catch (error) {
 
@@ -191,12 +284,16 @@ const DiagnosticsOrder = () => {
 
         try {
             await Promise.all(
-                selectedRows.map(item => savePatientOrder({ ...item, statusLkey: '1804482322306061' }).unwrap())
+                selectedRows.map(item => savePatientOrder({ ...item, submitDate: 1733340770973, statusLkey: '1804482322306061' }).unwrap())
             );
 
             dispatch(notify('All orders saved successfully'));
 
-            orderRefetch();
+            orderRefetch().then(() => {
+                console.log("Refetch complete");
+            }).catch((error) => {
+                console.error("Refetch failed:", error);
+            });
             setSelectedRows([]);
         } catch (error) {
             console.error("Encounter save failed:", error);
@@ -214,7 +311,11 @@ const DiagnosticsOrder = () => {
 
             dispatch(notify('All orders deleted successfully'));
 
-            orderRefetch();
+            orderRefetch().then(() => {
+                console.log("Refetch complete");
+            }).catch((error) => {
+                console.error("Refetch failed:", error);
+            });
             setSelectedRows([]);
             CloseConfirmDeleteModel();
         } catch (error) {
@@ -223,19 +324,26 @@ const DiagnosticsOrder = () => {
             CloseConfirmDeleteModel();
         }
     };
-    const handleItemClick = (test) => {
+    const handleItemClick = async (test) => {
         setSelectedTest(test);
+
         console.log('Selected Test:', test.key);
         try {
-            savePatientOrder({
+            await savePatientOrder({
                 ...localOrder,
                 patientKey: patientSlice.patient.key,
                 visitKey: patientSlice.encounter.key,
                 testKey: selectedTest.key,
-                statusLkey: "91063195286200"
+                statusLkey: "164797574082125"
             }).unwrap();
             dispatch(notify('saved  Successfully'));
-            orderRefetch();
+
+            orderRefetch().then(() => {
+                console.log("Refetch complete");
+            }).catch((error) => {
+                console.error("Refetch failed:", error);
+            });
+            setSearchKeyword("");
         }
         catch (error) {
 
@@ -277,8 +385,8 @@ const DiagnosticsOrder = () => {
                         <Checkbox
                             checked={!showCanceled}
                             onChange={() => {
-                                
-                                
+
+
                                 setShowCanceled(!showCanceled);
                             }}
                         >
@@ -288,7 +396,7 @@ const DiagnosticsOrder = () => {
                     </Form>
 
                 </div>
-                
+
                 <div className='space-container'></div>
 
                 <div className="buttons-sect">
@@ -334,6 +442,7 @@ const DiagnosticsOrder = () => {
                 data={orderList?.object ?? []}
                 onRowClick={rowData => {
                     setOrder(rowData);
+                    console.log(fetchPatintAttachmentsResponce)
                 }}
                 rowClassName={isSelected}
             >
@@ -360,7 +469,17 @@ const DiagnosticsOrder = () => {
                         <Input onChange={e => handleFilterChange('orderType', e)} />
                         <Translate>Order Type</Translate>
                     </HeaderCell>
-                    <Cell dataKey="orderTypeLkey" />
+                    <Cell dataKey="orderTypeLkey">
+                        {rowData => {
+                            console.log("Row data:", rowData);
+                            const matchedTest = testsList?.object?.find(item => item.testTypeLkey === rowData.orderTypeLkey);
+                            console.log("Matched Test:", matchedTest);
+                            return matchedTest ? matchedTest.
+                                testTypeLvalue
+                                .lovDisplayVale : "";
+                        }}
+                    </Cell>
+
                 </Column>
                 <Column flexGrow={2}>
                     <HeaderCell align="center">
@@ -441,20 +560,30 @@ const DiagnosticsOrder = () => {
                     </HeaderCell>
                     <Cell dataKey="notes" />
                 </Column>
-                <Column flexGrow={2}>
+                {/* <Column flexGrow={2}>
                     <HeaderCell align="center">
                         <Input onChange={e => handleFilterChange('Attachment', e)} />
                         <Translate>Attachment</Translate>
                     </HeaderCell>
-                    <Cell dataKey="Attachment" />
-                </Column>
-                <Column flexGrow={2}>
+                    <Cell dataKey="Attachment" >
+                    {rowData =>
+                    <Button
+                    
+                        appearance="link"
+                        onClick={() => handleDownloadSelectedPatientAttachment(rowData.key)}
+                      >
+                        Download <FileDownloadIcon style={{ marginLeft: '10px', scale: '1.4' }} />
+                      </Button>}
+                    </Cell>
+                </Column> */}
+                <Column flexGrow={3}>
                     <HeaderCell align="center">
                         <Input onChange={e => handleFilterChange('createdAt', e)} />
                         <Translate>Submit Date</Translate>
                     </HeaderCell>
                     <Cell >
-                        {  rowData => new Date(rowData.createdAt).toISOString().split('T')[0]}
+                        {rowData => rowData.submitDate ? new Date(rowData.submitDate).toLocaleString() : ""}
+
                     </Cell>
                 </Column>
                 <Column flexGrow={2}>
@@ -496,7 +625,7 @@ const DiagnosticsOrder = () => {
                             </Form>
                         </div>
                         <div>
-                            <Form layout="inline" fluid disabled={order.statusLkey !== '91063195286200'}>
+                            <Form layout="inline" fluid disabled={order.statusLkey !== '164797574082125'}>
 
                                 <MyInput
                                     column
@@ -540,7 +669,7 @@ const DiagnosticsOrder = () => {
                             </Form>
                         </div>
                         <div>
-                            <Form layout="inline" fluid disabled={order.statusLkey !== '91063195286200'}>
+                            <Form layout="inline" fluid disabled={order.statusLkey !== '164797574082125'}>
                                 <MyInput
                                     column
                                     rows={3}
@@ -550,15 +679,7 @@ const DiagnosticsOrder = () => {
                                     record={order}
                                     setRecord={setOrder}
                                 />
-                                <MyInput
-                                    column
-                                    width={150}
 
-                                    fieldLabel="Attached File Description"
-                                    fieldName={'FileDescription'}
-                                    record={{}}
-                                    setRecord={""}
-                                />
 
 
                                 <IconButton
@@ -566,11 +687,19 @@ const DiagnosticsOrder = () => {
                                     color="cyan"
                                     appearance="primary"
                                     icon={<PlusIcon />}
-                                    disabled={order.statusLkey !== '91063195286200'}
+                                    disabled={order.statusLkey !== '164797574082125'}
+                                    onClick={() => setAttachmentsModalOpen(true)}
                                 >
                                     <Translate>Attached File</Translate>
                                 </IconButton>
-
+                                <Button
+                                    style={{ marginTop: "20px" }}
+                                    appearance="link"
+                                    onClick={() => handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)}
+                                >
+                                    Download <FileDownloadIcon style={{ marginLeft: '10px', scale: '1.4' }} />
+                                </Button>
+                                <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={order} attatchmentType={'ORDER_ATTACHMENT'} />
 
 
                             </Form>
@@ -579,7 +708,7 @@ const DiagnosticsOrder = () => {
                 </Modal.Body>
                 <Modal.Footer>
                     <Stack spacing={2} divider={<Divider vertical />}>
-                        <Button appearance="primary" disabled={order.statusLkey !== '91063195286200'} onClick={handleSaveOrder}>
+                        <Button appearance="primary" disabled={order.statusLkey !== '164797574082125'} onClick={handleSaveOrder}>
                             Save
                         </Button>
                         <Button appearance="ghost" color="cyan" onClick={CloseDetailsModel}>
@@ -588,6 +717,8 @@ const DiagnosticsOrder = () => {
                     </Stack>
                 </Modal.Footer>
             </Modal>
+
+
             <Modal open={openConfirmDeleteModel} onClose={CloseConfirmDeleteModel} overflow  >
                 <Modal.Title>
                     <Translate><h6>Confirm Delete</h6></Translate>
@@ -595,7 +726,7 @@ const DiagnosticsOrder = () => {
                 <Modal.Body>
                     <p>
                         <RemindOutlineIcon style={{ color: '#ffca61', marginRight: '8px', fontSize: '24px' }} />
-                        <Translate style={{fontSize: '24px' }} >
+                        <Translate style={{ fontSize: '24px' }} >
                             Are you sure you want to delete this orders?
                         </Translate>
                     </p>
