@@ -309,6 +309,7 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	isValid:undefined,
 	resourceLkey:undefined,
 
+	instructionsLkey:undefined,
 } 
 
 export const newApAttachment:modelTypes.ApAttachment = { 
