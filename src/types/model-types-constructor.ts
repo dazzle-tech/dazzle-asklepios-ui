@@ -286,7 +286,6 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	patientKey:undefined,
 	facilityKey:undefined,
 	resourceTypeLkey:undefined,
-	resourceLkey:undefined,
 	visitTypeLkey:undefined,
 	durationLkey:undefined,
 	appointmentStart:'',
@@ -306,6 +305,8 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	resourceKey:undefined,
+	resourceLkey:undefined,
 } 
 
 export const newApAttachment:modelTypes.ApAttachment = { 
@@ -385,6 +386,22 @@ export const newApClinicalDocumentation:modelTypes.ApClinicalDocumentation = {
 	approvedDatetime:null,
 	approvedByUserKey:undefined,
 	approvedByUserRoleLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApCustomeInstructions:modelTypes.ApCustomeInstructions = { 
+	key:undefined,
+	prescriptionMedicationsKey:undefined,
+	dose:0,
+	frequencyLkey:undefined,
+	unitLkey:undefined,
+	roaLkey:undefined,
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',
@@ -1513,6 +1530,20 @@ export const newApPractitioner:modelTypes.ApPractitioner = {
 	dob:null,
 } 
 
+export const newApPrescription:modelTypes.ApPrescription = { 
+	key:undefined,
+	patientKey:undefined,
+	visitKey:undefined,
+	statusLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApPrescriptionInstruction:modelTypes.ApPrescriptionInstruction = { 
 	key:undefined,
 	categoryLkey:undefined,
@@ -1520,6 +1551,35 @@ export const newApPrescriptionInstruction:modelTypes.ApPrescriptionInstruction =
 	unitLkey:undefined,
 	routLkey:undefined,
 	frequencyLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApPrescriptionMedications:modelTypes.ApPrescriptionMedications = { 
+	key:undefined,
+	patientKey:undefined,
+	visitKey:undefined,
+	prescriptionKey:undefined,
+	genericMedicationsKey:undefined,
+	numberOfRefills:0,
+	refillInterval:'',
+	instructionsTypeLkey:undefined,
+	instructions:'',
+	notes:'',
+	parametersToMonitor:'',
+	validUtil:null,
+	maximumDose:0,
+	genericSubstitute:undefined,
+	chronicMedication:undefined,
+	administrationInstructions:'',
+	duration:0,
+	durationTypeLkey:undefined,
+	statusLkey:undefined,
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',

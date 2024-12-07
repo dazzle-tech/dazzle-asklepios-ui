@@ -2,7 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApEncounter, ApPatientDiagnose, ApPatientEncounterOrder, ApPatientPlan, ApReviewOfSystem } from '@/types/model-types';
+import { ApCustomeInstructions, ApEncounter, ApPatientDiagnose, ApPatientEncounterOrder, ApPatientPlan, ApPrescription, ApPrescriptionMedications, ApReviewOfSystem } from '@/types/model-types';
 
 export const encounterService = createApi({
   reducerPath: 'encounterApi',
@@ -206,6 +206,60 @@ export const encounterService = createApi({
         return response.object;   
       }
     }),
+    GetPrescriptions: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/prescription-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    SavePrescription: builder.mutation({
+      query: (prescription: ApPrescription) => ({
+        url: `/encounter/save-prescription`,
+        method: 'POST',
+        body: prescription
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    GetPrescriptionMedications: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/prescription-medic-lis?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    SavePrescriptionMedication: builder.mutation({
+      query: (prescriptionmed: ApPrescriptionMedications) => ({
+        url: `/encounter/save-prescription-medication`,
+        method: 'POST',
+        body: prescriptionmed
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    GetCustomeInstructions: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/custome-instructions-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    SaveCustomeInstructions: builder.mutation({
+      query: (co: ApCustomeInstructions) => ({
+        url: `/encounter/save-custome-instructions`,
+        method: 'POST',
+        body: co
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
   })
 });
 
@@ -229,6 +283,13 @@ export const {
   useGetPatientPlansQuery,
   useSavePatientEncounterOrderMutation,
   useGetPatientEncounterOrdersQuery,
-  useRemovePatientEncounterOrderMutation
+  useRemovePatientEncounterOrderMutation,
+  useGetPrescriptionsQuery,
+ useSavePrescriptionMutation,
+ useGetPrescriptionMedicationsQuery,
+ useSavePrescriptionMedicationMutation,
+ useGetCustomeInstructionsQuery,
+ useSaveCustomeInstructionsMutation
+  
 } = encounterService;
 

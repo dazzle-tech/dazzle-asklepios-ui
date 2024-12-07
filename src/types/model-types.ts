@@ -285,7 +285,6 @@ export interface ApAppointment {
 	patientKey:string;
 	facilityKey:string;
 	resourceTypeLkey:string;
-	resourceLkey:string;
 	visitTypeLkey:string;
 	durationLkey:string;
 	appointmentStart:string;
@@ -305,6 +304,8 @@ export interface ApAppointment {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	resourceKey:string;
+	resourceLkey:string;
 } 
 
 export interface ApAttachment { 
@@ -384,6 +385,22 @@ export interface ApClinicalDocumentation {
 	approvedDatetime:Date;
 	approvedByUserKey:string;
 	approvedByUserRoleLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApCustomeInstructions { 
+	key:string;
+	prescriptionMedicationsKey:string;
+	dose:number;
+	frequencyLkey:string;
+	unitLkey:string;
+	roaLkey:string;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
@@ -1512,6 +1529,20 @@ export interface ApPractitioner {
 	dob:Date;
 } 
 
+export interface ApPrescription { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApPrescriptionInstruction { 
 	key:string;
 	categoryLkey:string;
@@ -1519,6 +1550,35 @@ export interface ApPrescriptionInstruction {
 	unitLkey:string;
 	routLkey:string;
 	frequencyLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApPrescriptionMedications { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	prescriptionKey:string;
+	genericMedicationsKey:string;
+	numberOfRefills:number;
+	refillInterval:string;
+	instructionsTypeLkey:string;
+	instructions:string;
+	notes:string;
+	parametersToMonitor:string;
+	validUtil:Date;
+	maximumDose:number;
+	genericSubstitute:boolean;
+	chronicMedication:boolean;
+	administrationInstructions:string;
+	duration:number;
+	durationTypeLkey:string;
+	statusLkey:string;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
