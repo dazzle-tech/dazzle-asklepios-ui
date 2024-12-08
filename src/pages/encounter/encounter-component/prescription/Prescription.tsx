@@ -115,6 +115,7 @@ const Prescription = () => {
         ],
     });
     const preKey = prescriptions?.object[0]?.key;
+    console.log(preKey);
     const [prescriptionMedication, setPrescriptionMedications] = useState<ApPrescriptionMedications>(
         {
             ...newApPrescriptionMedications,
@@ -135,7 +136,8 @@ const Prescription = () => {
 
 
     const { data: prescriptionMedications, isLoading: isLoadingPrescriptionMedications, refetch: medicRefetch } = useGetPrescriptionMedicationsQuery({
-        ...initialListRequest, filters: [
+        ...initialListRequest
+        , filters: [
             {
                 fieldName: "prescription_key",
                 operator: "",

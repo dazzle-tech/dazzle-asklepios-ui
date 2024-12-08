@@ -143,7 +143,10 @@ const Encounter = () => {
     }
   }, [completeEncounterMutation]);
   const handleSavePrescription=()=>{
+    console.log("iam in save pres")
     if (patientSlice.patient&&patientSlice.encounter) {
+      console.log(patientSlice.patient)
+      console.log(patientSlice.encounter)
     savePrescription({...prescription,patientKey:patientSlice.patient.key,
       visitKey:patientSlice.encounter.key
       })}
@@ -232,16 +235,18 @@ const Encounter = () => {
                     <FontAwesomeIcon icon={faVials } style={{ margin: '3px' }}  />
                       <Translate>Diagnostics Order</Translate>
                     </List.Item>
+
                     <List.Item 
                      style={{ display: 'flex', alignItems: 'center' }}
                     onClick={() => {
                       if (prescriptions?.object?.length === 0) {
                         console.log("The array is empty. Saving prescription...");
                         handleSavePrescription();
+                       
                     } else {
                         console.log("The array is not empty:", prescriptions?.object);
                     }
-                      handleMenuItemClick(<Prescription />);
+                    handleMenuItemClick(<Prescription />);
                     }}>
                     <FontAwesomeIcon icon={faFilePrescription } style={{ margin: '3px'}} />
                       <Translate>Prescription</Translate>

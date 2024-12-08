@@ -226,7 +226,7 @@ export const encounterService = createApi({
     }),
     GetPrescriptionMedications: builder.query({
       query: (listRequest: ListRequest) => ({
-        url: `/encounter/prescription-medic-lis?${fromListRequestToQueryParams(listRequest)}`
+        url: `/encounter/prescription-medic-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
