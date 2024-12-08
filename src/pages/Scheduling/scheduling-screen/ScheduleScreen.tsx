@@ -7,14 +7,14 @@ import "./styles.less";
 import SearchIcon from '@rsuite/icons/Search';
 import {
     newApAppointment,
- 
+
 } from '@/types/model-types-constructor';
- 
+
 import DetailIcon from '@rsuite/icons/Detail';
 import SendIcon from '@rsuite/icons/Send';
 import CharacterAuthorizeIcon from '@rsuite/icons/CharacterAuthorize';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
- 
+
 
 import {
     useGetFacilitiesQuery,
@@ -32,11 +32,11 @@ import MyInput from '@/components/MyInput';
 import Resources from "@/pages/appointment/resources";
 
 const ScheduleScreen = () => {
-    const localizer = momentLocalizer(moment); 
+    const localizer = momentLocalizer(moment);
     const [validationResult, setValidationResult] = useState({});
     const [modalOpen, setModalOpen] = useState(false);
     const [ActionsModalOpen, setActionsModalOpen] = useState(false);
-    const [selectedEvent, setSelectedEvent] = useState(null);  
+    const [selectedEvent, setSelectedEvent] = useState(null);
     const [selectedSlot, setSelectedSlot] = useState(null);
     const [selectedStartDate, setSelectedStartDate] = useState()
     const [resuorceAvailabilityPeriods, setResuorceAvailabilityPeriods] = useState()
@@ -46,19 +46,21 @@ const ScheduleScreen = () => {
     const [selectedResources, setSelectedResources] = useState([])
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [appointmentsData, setAppointmentsData] = useState([])
+    const [selectedAppointment, setSelectedAppointment] = useState( )
+
     const {
         data: appointments,
-        refetch: erfitchAppointments,
+        refetch: refitchAppointments,
         error,
         isLoading
     } = useGetAppointmentsQuery({
-        resource_type: selectedResourceType?.resourcesType || null,  
-        facility_id: selectedFacility?.facilityKey || null,   
-        resources: selectedResources ? selectedResources.resourceKey : [],  
+        resource_type: selectedResourceType?.resourcesType || null,
+        facility_id: selectedFacility?.facilityKey || null,
+        resources: selectedResources ? selectedResources.resourceKey : [],
 
     });
 
- 
+
 
     const extractTimeFromTimestamp = (timestamp) => {
         const date = new Date(timestamp);
@@ -68,46 +70,35 @@ const ScheduleScreen = () => {
         return dateTime;
     };
 
-    useEffect(() => {
-
-        console.log(selectedResourceType);
-        console.log(selectedResources);
-        console.log(selectedFacility);
-
-    }, [appointments, selectedResourceType, selectedFacility, selectedResources]); // Re-run when appointments or selectedResources change
-
+   
 
     useEffect(() => {
         if (appointments?.object && resourcesListResponse?.object) {
             const today = new Date();
-    
+
             const formattedAppointments = appointments.object.map((appointment) => {
                 const dob = new Date(appointment?.patient?.dob);
-    
+
                 // البحث عن المورد الخاص بالموعد باستخدام resourceKey
                 const resource = resourcesListResponse.object.find(
                     (item) => item.key === appointment.resourceKey
                 );
-    
+
                 return {
-                    title: ` ${appointment?.patient?.fullName}, ${
-                        isNaN(dob) ? "Unknown" : today.getFullYear() - dob.getFullYear()
-                    }Y , ${resource?.resourceName || "Unknown Resource"},  ${extractTimeFromTimestamp(appointment.appointmentStart)} - ${extractTimeFromTimestamp(appointment.appointmentEnd)} `, // Customize title as needed
+                    title: ` ${appointment?.patient?.fullName}, ${isNaN(dob) ? "Unknown" : today.getFullYear() - dob.getFullYear()
+                        }Y , ${resource?.resourceName || "Unknown Resource"},  ${extractTimeFromTimestamp(appointment.appointmentStart)} - ${extractTimeFromTimestamp(appointment.appointmentEnd)} `, // Customize title as needed
                     start: convertDate(appointment.appointmentStart),
                     end: convertDate(appointment.appointmentEnd),
                     text: appointment.notes || "No additional details available",
+                    appointmentData:appointment
                 };
             });
-    
-            // تحديث الحالة
-            setAppointmentsData(formattedAppointments);
+
+             setAppointmentsData(formattedAppointments);
         }
     }, [appointments, resourcesListResponse]);
 
-    useEffect(() => {
-        if (appointmentsData)
-            console.log(appointmentsData)
-    }, [appointmentsData])
+   
 
     const { data: resourcesAvailability } = useGetResourcesAvailabilityQuery({
         resource_key: "853621685015424",
@@ -122,11 +113,7 @@ const ScheduleScreen = () => {
         setResuorceAvailabilityPeriods(resourcesAvailability?.object)
     }, [resourcesAvailability])
 
-    useEffect(() => {
-        console.log(appointment)
-    }, [appointment?.key])
 
-   
 
     useEffect(() => {
         if (selectedSlot) {
@@ -134,11 +121,13 @@ const ScheduleScreen = () => {
         }
     }, [selectedSlot])
     const handleSelectEvent = (event) => {
+        console.log(event)
         setSelectedEvent(event); // Set selected event details
         setActionsModalOpen(true)
- 
+        
     };
 
+ 
     const closeModal = () => {
         setModalOpen(false);
 
@@ -150,7 +139,7 @@ const ScheduleScreen = () => {
 
 
     const convertDate = (appointmentEnd) => {
-         const endDate = new Date(appointmentEnd);
+        const endDate = new Date(appointmentEnd);
         // Format to `new Date(year, month, day, hours, minutes)`
         const formattedEnd = new Date(
             endDate.getUTCFullYear(), // Year
@@ -161,7 +150,7 @@ const ScheduleScreen = () => {
         );
         return (formattedEnd);
     }
- 
+
     const [open, setOpen] = React.useState(false);
     const [size, setSize] = React.useState();
     const handleOpen = value => {
@@ -171,7 +160,7 @@ const ScheduleScreen = () => {
     const handleClose = () => setOpen(false);
     const [selectedCriterion, setSelectedCriterion] = useState('');
     const [searchKeyword, setSearchKeyword] = useState('');
-     const [appointment, setAppointment] = useState<ApAppointment>({ ...newApAppointment });
+    const [appointment, setAppointment] = useState<ApAppointment>({ ...newApAppointment });
 
     const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
     const dispatch = useAppDispatch();
@@ -214,17 +203,17 @@ const ScheduleScreen = () => {
 
         );
     };
- 
-    const [currentView, setCurrentView] = React.useState("month");  
-    const [currentDate, setCurrentDate] = React.useState(new Date());  
+
+    const [currentView, setCurrentView] = React.useState("month");
+    const [currentDate, setCurrentDate] = React.useState(new Date());
     const handleDateSelection = (date) => {
         if (currentView === "month") {
             setCurrentView("day"); // Switch to day view
             setCurrentDate(date);  // Update the selected date
         }
     };
- 
-  
+
+
     return (
         <div>
             <div className="inline-two-four-container">
@@ -258,6 +247,23 @@ const ScheduleScreen = () => {
                     <br />
 
                     <Form fluid layout="inline"  >
+                        <MyInput
+                             width={300}
+                            vr={validationResult}
+                            column
+                            fieldLabel="City"
+                            fieldType="select"
+                            fieldName="durationLkey"
+                            selectData={[]}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                        // record={appointment}
+                        // setRecord={setAppoitment}
+                        />
+                    </Form>
+
+                    <Form fluid layout="inline"  >
+
                         <MyInput
 
                             width={300}
@@ -311,14 +317,14 @@ const ScheduleScreen = () => {
                         console.log(selectedResources);
                         console.log(selectedFacility);
                         console.log({
-                            resource_type: selectedResourceType?.resourcesType || null,  
-                            facility_id: selectedFacility?.facilityKey || null,  
-                            resources: selectedResources ? selectedResources.resourceKey : [],  
+                            resource_type: selectedResourceType?.resourcesType || null,
+                            facility_id: selectedFacility?.facilityKey || null,
+                            resources: selectedResources ? selectedResources.resourceKey : [],
 
                         })
                         console.log(appointments)
-            
-                        
+
+
                     }}>Test</Button>
 
 
@@ -351,9 +357,9 @@ const ScheduleScreen = () => {
                 periods={resuorceAvailabilityPeriods}
                 resourceType={selectedResourceType}
                 facility={selectedFacility}
-                onSave={erfitchAppointments}
+                onSave={refitchAppointments}
             />
-            <AppointmentActionsModal isActionsModalOpen={ActionsModalOpen} onActionsModalClose={() => setActionsModalOpen(false)} />
+            <AppointmentActionsModal  onStatusChange={refitchAppointments} isActionsModalOpen={ActionsModalOpen} onActionsModalClose={() => setActionsModalOpen(false)} appointment={selectedEvent}/>
 
         </div>
     );

@@ -12,72 +12,86 @@ export const appointmentService = createApi({
   baseQuery: baseQuery,
   endpoints: builder => ({
     getResources: builder.query({
-        query: (listRequest: ListRequest) => ({
-          url: `/appointment/resources-list?${fromListRequestToQueryParams(listRequest)}`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
+      query: (listRequest: ListRequest) => ({
+        url: `/appointment/resources-list?${fromListRequestToQueryParams(listRequest)}`
       }),
-      getResourcesAvailability: builder.query({
-        query: ({ resource_key, facility_id }) => ({
-          url: `/appointment/resources-availability-list?resource_key=${resource_key}&facility_id=${facility_id}`,
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5,
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    getResourcesAvailability: builder.query({
+      query: ({ resource_key, facility_id }) => ({
+        url: `/appointment/resources-availability-list?resource_key=${resource_key}&facility_id=${facility_id}`,
       }),
-      getAppointments: builder.query({
-        query: ({ resource_type, facility_id, resources }) => {
-          const resourcesParam = resources ;  
-          return {
-            url: `/appointment/appointments-list?resource_type=${resource_type}&facility_id=${facility_id}&resources=${resourcesParam}`,
-          };
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5,
+    }),
+    getAppointments: builder.query({
+      query: ({ resource_type, facility_id, resources }) => {
+        const resourcesParam = resources;
+        return {
+          url: `/appointment/appointments-list?resource_type=${resource_type}&facility_id=${facility_id}&resources=${resourcesParam}`,
+        };
+      },
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5,
+    }),
+    getResourceType: builder.query({
+      query: (resource_type: string) => ({
+        headers: {
+          resource_type
         },
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5,
+        url: `/appointment/resource-type-list`
       }),
-      getResourceType: builder.query({
-        query: (resource_type: string) => ({
-          headers: {
-            resource_type
-          },
-          url: `/appointment/resource-type-list`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
-       
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+
+    }),
+    saveResources: builder.mutation({
+      query: (resources: ApResources) => ({
+        url: `/appointment/save-resources`,
+        method: 'POST',
+        body: resources
       }),
-      saveResources: builder.mutation({
-        query: (resources: ApResources) => ({
-          url: `/appointment/save-resources`,
-          method: 'POST',
-          body: resources
-        }),
-        onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
-      }), saveAppointment: builder.mutation({
-        query: (appointment: ApAppointment) => ({
-          url: `/appointment/save-appointment`,
-          method: 'POST',
-          body: appointment
-        }),
-        onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
-      })
-      
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }), 
+    changeAppointmentStatus: builder.mutation({
+      query: (appointment: ApAppointment) => ({
+        url: `/appointment/save-appointment`,
+        method: 'POST',
+        body: appointment
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+
+    saveAppointment: builder.mutation({
+      query: (appointment: ApAppointment) => ({
+        url: `/appointment/save-appointment`,
+        method: 'POST',
+        body: appointment
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
     })
+
+  })
 });
 
 export const {
-  
-    useGetResourcesQuery,
-    useGetResourceTypeQuery,
-    useSaveResourcesMutation,
-    useSaveAppointmentMutation,
-    useGetResourcesAvailabilityQuery,
-    useGetAppointmentsQuery
- 
+
+  useGetResourcesQuery,
+  useGetResourceTypeQuery,
+  useSaveResourcesMutation,
+  useSaveAppointmentMutation,
+  useGetResourcesAvailabilityQuery,
+  useGetAppointmentsQuery,
+  useChangeAppointmentStatusMutation
+
 } = appointmentService;

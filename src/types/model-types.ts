@@ -308,6 +308,7 @@ export interface ApAppointment {
 	isValid:boolean;
 	resourceLkey:string;
 	instructionsLkey:string;
+	appointmentStatus:string;
 } 
 
 export interface ApAttachment { 
