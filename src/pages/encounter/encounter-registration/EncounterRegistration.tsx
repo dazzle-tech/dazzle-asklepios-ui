@@ -74,13 +74,16 @@ import {
 const EncounterRegistration = () => {
   const encounter = useSelector((state: RootState) => state.patient.encounter);
   const patientSlice = useAppSelector(state => state.patient);
+  
   const dispatch = useAppDispatch();
+  // dispatch(setPatient(null));
   const navigate = useNavigate();
   const [openModelVisitNote, setOpenModelVisitNote] = React.useState(false);
   const [openModelPayment, setOpenModelPayment] = React.useState(false);
   const [openModelCompanionCard, setOpenModelCompanionCard] = React.useState(false);
   const [openModelAppointmentView, setOpenModelAppointmentView] = React.useState(false);
   const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter });
+  
   const [editing, setEditing] = useState(false);
   const [validationResult, setValidationResult] = useState({});
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
@@ -311,6 +314,7 @@ const EncounterRegistration = () => {
     //3623962430163299
   }, [paymentMethodSelected]);
   useEffect(() => {
+    
 
   }, [searchKeyword]);
 
