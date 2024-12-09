@@ -46,7 +46,7 @@ const ScheduleScreen = () => {
     const [selectedResources, setSelectedResources] = useState([])
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [appointmentsData, setAppointmentsData] = useState([])
-    const [selectedAppointment, setSelectedAppointment] = useState( )
+    const [selectedAppointment, setSelectedAppointment] = useState()
 
     const {
         data: appointments,
@@ -70,7 +70,7 @@ const ScheduleScreen = () => {
         return dateTime;
     };
 
-   
+
 
     useEffect(() => {
         if (appointments?.object && resourcesListResponse?.object) {
@@ -79,10 +79,11 @@ const ScheduleScreen = () => {
             const formattedAppointments = appointments.object.map((appointment) => {
                 const dob = new Date(appointment?.patient?.dob);
 
-                // البحث عن المورد الخاص بالموعد باستخدام resourceKey
                 const resource = resourcesListResponse.object.find(
                     (item) => item.key === appointment.resourceKey
                 );
+
+                const isHidden = appointment?.appointmentStatus === "No-Show";
 
                 return {
                     title: ` ${appointment?.patient?.fullName}, ${isNaN(dob) ? "Unknown" : today.getFullYear() - dob.getFullYear()
@@ -90,28 +91,21 @@ const ScheduleScreen = () => {
                     start: convertDate(appointment.appointmentStart),
                     end: convertDate(appointment.appointmentEnd),
                     text: appointment.notes || "No additional details available",
-                    appointmentData:appointment
+                    appointmentData: appointment,
+                    hidden: isHidden,
                 };
             });
 
-             setAppointmentsData(formattedAppointments);
+            setAppointmentsData(formattedAppointments);
         }
     }, [appointments, resourcesListResponse]);
 
-   
 
-    const { data: resourcesAvailability } = useGetResourcesAvailabilityQuery({
-        resource_key: "853621685015424",
-        facility_id: "some_facility_id",
-    });
+
 
     const { data: resourcesListResponse } = useGetResourcesQuery(listRequest);
 
     const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
-
-    useEffect(() => {
-        setResuorceAvailabilityPeriods(resourcesAvailability?.object)
-    }, [resourcesAvailability])
 
 
 
@@ -124,10 +118,10 @@ const ScheduleScreen = () => {
         console.log(event)
         setSelectedEvent(event); // Set selected event details
         setActionsModalOpen(true)
-        
+
     };
 
- 
+
     const closeModal = () => {
         setModalOpen(false);
 
@@ -136,6 +130,37 @@ const ScheduleScreen = () => {
     const { data: facilityListResponse, refetch: refetchFacility } = useGetFacilitiesQuery({
         ...initialListRequest
     });
+
+    const eventPropGetter = (event) => {
+        const status = event?.appointmentData.appointmentStatus;
+        switch (status) {
+            case "Confirmed":
+                return {
+                    style: { backgroundColor: "#dab1da", color: "black" }, // Light Purple
+                }
+            case "Checked-In":
+                return {
+                    style: { backgroundColor: "#AAFFFC", color: "black" }, // Light Cyan
+                }
+            case "Completed":
+                return {
+                    style: { backgroundColor: "#90d5ff", color: "black" }, // Light Blue
+                }
+            case "Canceled":
+                return {
+                    style: { backgroundColor: "#cbcbcb", color: "black" }, // Cool Grey 
+                }
+            // default:
+            //     return <p>Unknown status</p>;
+        }
+
+        if (event?.appointmentData.appointmentStatus === "Confirmed") { // Example: Identify "activities" by a property
+            return {
+                style: { backgroundColor: "#AAFFFC", color: "black" }, // Blue background, white text
+            };
+        }
+        return {}; // Default style for other events
+    };
 
 
     const convertDate = (appointmentEnd) => {
@@ -213,6 +238,9 @@ const ScheduleScreen = () => {
         }
     };
 
+    const visibleAppointments = currentView === "agenda"
+        ? appointmentsData // Show all events in the agenda view
+        : appointmentsData.filter((event) => !event.hidden); // Example: Hide events with a "hidden" flag in other views
 
     return (
         <div>
@@ -248,7 +276,8 @@ const ScheduleScreen = () => {
 
                     <Form fluid layout="inline"  >
                         <MyInput
-                             width={300}
+                            disabled
+                            width={300}
                             vr={validationResult}
                             column
                             fieldLabel="City"
@@ -332,20 +361,20 @@ const ScheduleScreen = () => {
                 <div className="right-section">
                     <BigCalendar
                         localizer={localizer}
-                        events={appointmentsData}
+                        events={visibleAppointments} // Use the filtered appointments
                         startAccessor="start"
                         endAccessor="end"
                         views={["month", "week", "day", "agenda"]}
                         defaultView="month"
                         selectable={true}
-
                         onSelectEvent={(event) => {
-                            handleSelectEvent(event);
+                            handleSelectEvent(event); // Example event handler
                         }}
+                        onView={(view) => setCurrentView(view)} // Track the current view
                         style={{ height: 600 }}
+                        eventPropGetter={eventPropGetter} // Apply custom styles
 
                     />
-
                 </div>
             </div>
 
@@ -354,12 +383,11 @@ const ScheduleScreen = () => {
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
                 startAppoitmentStart={selectedStartDate}
-                periods={resuorceAvailabilityPeriods}
                 resourceType={selectedResourceType}
                 facility={selectedFacility}
                 onSave={refitchAppointments}
             />
-            <AppointmentActionsModal  onStatusChange={refitchAppointments} isActionsModalOpen={ActionsModalOpen} onActionsModalClose={() => setActionsModalOpen(false)} appointment={selectedEvent}/>
+            <AppointmentActionsModal onStatusChange={refitchAppointments} isActionsModalOpen={ActionsModalOpen} onActionsModalClose={() => setActionsModalOpen(false)} appointment={selectedEvent} />
 
         </div>
     );
