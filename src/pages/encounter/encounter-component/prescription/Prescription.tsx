@@ -136,8 +136,9 @@ const Prescription = () => {
 
 
     const { data: prescriptionMedications, isLoading: isLoadingPrescriptionMedications, refetch: medicRefetch } = useGetPrescriptionMedicationsQuery({
-        ...initialListRequest
-        , filters: [
+        ...initialListRequest,
+       
+         filters: [
             {
                 fieldName: "prescription_key",
                 operator: "",
@@ -308,39 +309,53 @@ medicRefetch().then(() => {
 
     }
     useEffect(() => {
-        if(inst!=null){
-        console.log("useeffect   " + inst);
-        const tagcompine = joinValuesFromArray(tags);
-        try {
-             savePrescriptionMedication({
-                ...prescriptionMedication,
-                patientKey: patientSlice.patient.key,
-                visitKey: patientSlice.encounter.key,
-                prescriptionKey: preKey,
-                genericMedicationsKey: selectedGeneric.key,
-                parametersToMonitor: tagcompine,
-                statusLkey: "1804427038369874",
-                instructions: inst,
-                dose: selectedOption === "3010606785535008" ? customeinst.dose : null,
-                frequencyLkey: selectedOption === "3010606785535008" ? customeinst.frequency : null,
-                unitLkey: selectedOption === "3010606785535008" ? customeinst.unit : null,
-                roaLkey:selectedOption === "3010606785535008" ? selectedGeneric.roaLvalue?.lovDisplayVale: null,
-                administrationInstructions: adminInstructions
-            }).unwrap();
-            dispatch(notify('saved  Successfully'));
-            handleCleare()
-            medicRefetch().then(() => {
-                console.log("Refetch complete");
-            }).catch((error) => {
-                console.error("Refetch failed:", error);
-            });
-            ;
-        } catch (error) {
-
-            console.log("iam in catch")
-            dispatch(notify('saved  fill'));
-        }}
-    }, [inst])
+        const saveData = async () => {
+            if (inst != null) {
+                console.log("useEffect   " + inst);
+    
+                if (preKey === null) {
+                    dispatch(notify('Prescription not linked. Try again'));
+                    return;
+                }
+    
+                const tagcompine = joinValuesFromArray(tags);
+                try {
+                    await savePrescriptionMedication({
+                        ...prescriptionMedication,
+                        patientKey: patientSlice.patient.key,
+                        visitKey: patientSlice.encounter.key,
+                        prescriptionKey: preKey,
+                        genericMedicationsKey: selectedGeneric.key,
+                        parametersToMonitor: tagcompine,
+                        statusLkey: "164797574082125",
+                        instructions: inst,
+                        dose: selectedOption === "3010606785535008" ? customeinst.dose : null,
+                        frequencyLkey: selectedOption === "3010606785535008" ? customeinst.frequency : null,
+                        unitLkey: selectedOption === "3010606785535008" ? customeinst.unit : null,
+                        roaLkey: selectedOption === "3010606785535008" ? selectedGeneric.roaLvalue?.lovDisplayVale : null,
+                        administrationInstructions: adminInstructions
+                    }).unwrap();
+    
+                    dispatch(notify('Saved successfully'));
+    
+                    // Perform refetches
+                    await Promise.all([
+                        medicRefetch().then(() => console.log("Medic refetch complete")),
+                        refetchCo().then(() => console.log("Co refetch complete"))
+                    ]);
+    
+                    handleCleare();
+                } catch (error) {
+                    console.error("Save failed:", error);
+                    dispatch(notify('Save failed'));
+                }
+            }
+        };
+    
+        saveData();
+    }, [inst]);
+    
+    
 
     const handleSaveMedication = () => {
 
@@ -398,22 +413,7 @@ medicRefetch().then(() => {
         setSearchKeyword("")
         console.log(Generic.genericName)
 
-        // try {
-        //     savePatientOrder({
-        //         ...localOrder,
-        //         patientKey: patientSlice.patient.key,
-        //         visitKey: patientSlice.encounter.key,
-        //         testKey: selectedTest.key,
-        //         statusLkey: "91063195286200"
-        //     }).unwrap();
-        //     dispatch(notify('saved  Successfully'));
-        //     orderRefetch();
-        // }
-        // catch (error) {
-
-        //     console.error("Encounter save failed:", error);
-        //     dispatch(notify('saved  fill'));
-        // }
+   
     };
     function handleRowData(rowData) {
         if (rowData.instructionsTypeLkey === "3010591042600262") {
@@ -913,7 +913,7 @@ medicRefetch().then(() => {
                             console.log(customeinst);
                             console.log(customeInstructions?.object)
                         }
-                        setEditing(rowData.statusLkey=="1804427038369874"?false:true)
+                        setEditing(rowData.statusLkey=="164797574082125"?false:true)
                     }}
                     rowClassName={isSelected}
                 >
@@ -943,7 +943,7 @@ medicRefetch().then(() => {
 
                         <Cell dataKey="genericMedicationsKey" >
                             {rowData =>
-                                genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey).genericName
+                                genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName
                             }
                         </Cell>
                     </Column>
@@ -966,9 +966,9 @@ medicRefetch().then(() => {
                                     }
                                     return   [
                                         generic?.dose, 
-                                        generic.unitLvalue?.lovDisplayVale,
-                                        generic.routLvalue?.lovDisplayVale,
-                                        generic.frequencyLvalue?.lovDisplayVale
+                                        generic?.unitLvalue?.lovDisplayVale,
+                                        generic?.routLvalue?.lovDisplayVale,
+                                        generic?.frequencyLvalue?.lovDisplayVale
                                     ]
                                         .filter(Boolean)
                                         .join(', ');
