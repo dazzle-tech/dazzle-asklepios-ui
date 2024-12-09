@@ -19,13 +19,13 @@ import { useGetPatientsQuery } from "@/services/patientService";
 import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
 import TrashIcon from '@rsuite/icons/Trash';
 import { useAppSelector } from "@/hooks";
-import { useChangeAppointmentStatusMutation, useGetResourcesQuery, useSaveAppointmentMutation } from "@/services/appointmentService";
+import { useChangeAppointmentStatusMutation, useGetResourcesAvailabilityQuery, useGetResourcesQuery, useSaveAppointmentMutation } from "@/services/appointmentService";
 import AttachmentModal from "@/pages/patient/patient-profile/AttachmentUploadModal";
 import { object } from "prop-types";
 
 
 
-const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, periods, resourceType, facility, onSave }) => {
+const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType, facility, onSave }) => {
 
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
 
@@ -59,7 +59,19 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, periods, reso
     const [selectedDuration, setSelectedDuration] = useState(null);
     const [selectedMonth, setSelectedMonth] = useState(null);
     const [selectedYear, setSelectedYear] = useState(null);
+    const [rowPeriods, setRowPeriods] = useState()
 
+    const { data: resourcesAvailability } = useGetResourcesAvailabilityQuery({
+        resource_key: appointment.resourceKey,
+        facility_id: "",
+    });
+
+    useEffect(() => {
+        setRowPeriods(resourcesAvailability?.object)
+        console.log(resourcesAvailability?.object)
+        console.log(appointment.resourceKey)
+        filterWeekDays()
+    }, [resourcesAvailability, appointment.resourceKey])
 
 
     const dayOptions = availablePeriods.map((item) => ({
@@ -110,7 +122,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, periods, reso
     } = useGetFacilitiesQuery({ ...initialListRequest });
 
     const [saveAppointment, saveAppointmentMutation] = useSaveAppointmentMutation()
-     
+
     useEffect(() => {
         console.log(patientSlice)
         console.log(patientSlice.patient)
@@ -370,7 +382,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, periods, reso
     const filterWeekDays = () => {
         const result = {};
 
-        periods?.forEach((item) => {
+        rowPeriods?.forEach((item) => {
             const resourceKey = item.resourceKey;
             const day = item.dayLvalue.lovDisplayVale;
             const period = {
@@ -394,10 +406,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, periods, reso
         setAvailabilDays(availabilityPickerData);
     };
 
-    useEffect(() => {
-        if (isOpen)
-            filterWeekDays()
-    }, [isOpen])
+
 
 
     useEffect(() => {
@@ -464,7 +473,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, periods, reso
 
 
     // get available houers
-    const availableHours = periods?.flatMap((period) => {
+    const availableHours = rowPeriods?.flatMap((period) => {
         const startHour = Math.floor(period.startTime / 3600);
         const endHour = Math.floor(period.endTime / 3600);
         return Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
@@ -725,6 +734,21 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, periods, reso
 
                     <Form
                         layout="inline" style={{ display: "flex", alignItems: "center" }} fluid>
+
+                        <MyInput
+                        disabled
+                            width={150}
+                            vr={validationResult}
+                            column
+                            fieldLabel="City"
+                            fieldType="select"
+                            fieldName="durationLkey"
+                            selectData={[]}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                        // record={appointment}
+                        // setRecord={setAppoitment}
+                        />
 
                         <MyInput
 

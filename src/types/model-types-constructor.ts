@@ -310,6 +310,8 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	resourceLkey:undefined,
 	instructionsLkey:undefined,
 	appointmentStatus:'',
+	noShowReasonValue:'',
+	noShowReasonLkey:undefined,
 } 
 
 export const newApAttachment:modelTypes.ApAttachment = { 

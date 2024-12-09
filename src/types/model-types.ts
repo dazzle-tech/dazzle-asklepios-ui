@@ -309,6 +309,8 @@ export interface ApAppointment {
 	resourceLkey:string;
 	instructionsLkey:string;
 	appointmentStatus:string;
+	noShowReasonValue:string;
+	noShowReasonLkey:string;
 } 
 
 export interface ApAttachment { 

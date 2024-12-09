@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Button, ButtonToolbar, IconButton, Modal } from "rsuite";
+import { Button, ButtonToolbar, Divider, Form, IconButton, Input, Modal } from "rsuite";
 import "./styles.less";
 import PageIcon from '@rsuite/icons/Page';
 import { faPrint, faSackDollar } from "@fortawesome/free-solid-svg-icons";
@@ -7,16 +7,22 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useChangeAppointmentStatusMutation } from "@/services/appointmentService";
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
+import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+import MyInput from "@/components/MyInput";
+import CheckIcon from '@rsuite/icons/Check';
+import BlockIcon from '@rsuite/icons/Block';
 
 const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appointment, onStatusChange }) => {
 
     const [changeAppointmentStatus, changeAppointmentStatusMutation] = useChangeAppointmentStatusMutation()
     const dispatch = useAppDispatch();
-    const [reRenderModal, setReRenderModal] = useState(true)
+    const [localAppointmentData, setLocalAppoitmentData] = useState(appointment)
+    const [resonModal, setResonModal] = useState(false)
+    const { data: resonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_NOSHOW_REASON');
 
     const handleCheckIn = () => {
         const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Checked-In" }).then(() => {
+        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Checked-In",noShowReasonLkey:null }).then(() => {
             dispatch(notify('Appointment Checked-In Successfully'));
             onStatusChange()
             onActionsModalClose()
@@ -24,9 +30,19 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         })
     }
 
+    useEffect(() => {
+        if (appointment)
+            setLocalAppoitmentData(appointment.appointmentData)
+    }, [appointment])
+
+    useEffect(() => {
+        if (localAppointmentData)
+            console.log(localAppointmentData)
+    }, [localAppointmentData])
+
     const handleConfirm = () => {
         const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Queued" }).then(() => {
+        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Confirmed",noShowReasonLkey:null }).then(() => {
             dispatch(notify('Appointment Confirmed Successfully'));
             onStatusChange()
             onActionsModalClose()
@@ -35,22 +51,22 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     }
 
     const handleHide = () => {
-        const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "No-Show" }).then(() => {
+        console.log(localAppointmentData)
+        changeAppointmentStatus({...localAppointmentData, appointmentStatus: "No-Show" }).then(() => {
             dispatch(notify('Appointment has been hidden Successfully'));
             onStatusChange()
             onActionsModalClose()
+            setResonModal(false)
 
         })
     }
 
-    const handleView = () => {
+    const handleCancel = () => {
         const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "No-Show" }).then(() => {
+        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Canceled" ,noShowReasonLkey:null}).then(() => {
             dispatch(notify('Appointment has been hidden Successfully'));
             onStatusChange()
             onActionsModalClose()
-
         })
     }
 
@@ -68,10 +84,10 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                         <Button disabled={appointment?.appointmentData.appointmentStatus == "Checked-In"} onClick={handleCheckIn} style={{ width: 120, height: 40 }} color="cyan" appearance="primary">
                             Check-In
                         </Button>
-                        <Button disabled={appointment?.appointmentData.appointmentStatus == "Queued"}  onClick={handleConfirm} style={{ width: 120, height: 40 }} color="violet" appearance="primary">
+                        <Button disabled={appointment?.appointmentData.appointmentStatus == "Confirmed"} onClick={handleConfirm} style={{ width: 120, height: 40 }} color="violet" appearance="primary">
                             Confirm
                         </Button>
-                        <Button  disabled={appointment?.appointmentData.appointmentStatus == "No-Show"} onClick={handleHide}  style={{ width: 120, height: 40 }} color="blue" appearance="primary">
+                        <Button disabled={appointment?.appointmentData.appointmentStatus == "No-Show"} onClick={() => setResonModal(true)} style={{ width: 120, height: 40 }} color="blue" appearance="primary">
                             No-show
                         </Button>
 
@@ -85,12 +101,10 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                         <Button style={{ width: 120, height: 40 }} color="violet" appearance="primary">
                             Change
                         </Button>
-                        <Button style={{ width: 120, height: 40 }} color="blue" appearance="primary">
+                        <Button onClick={handleCancel} style={{ width: 120, height: 40 }} color="blue" appearance="primary">
                             Cancel
                         </Button>
-                        <Button onClick={() => console.log(appointment)} style={{ width: 120, height: 40 }} color="blue" appearance="primary">
-                            Test
-                        </Button>
+ 
 
                     </ButtonToolbar>
                     <br />
@@ -115,6 +129,53 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                     </Button>
                 </Modal.Body>
 
+            </Modal>
+
+
+
+            <Modal backdrop={"static"} open={resonModal} onClose={() => setResonModal(false)}>
+                <Modal.Header>
+                    <Modal.Title>Please specify a reason for hiding this Appointment.</Modal.Title>
+                </Modal.Header>
+
+                <Modal.Body>
+                    <br />
+
+                    <Form layout="inline">
+                        <MyInput
+                            width={350}
+                            column
+                            fieldLabel="Hide Reason"
+                            fieldType="select"
+                            fieldName="noShowReasonLkey"
+                            selectData={resonLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            record={localAppointmentData}
+                            setRecord={setLocalAppoitmentData}
+                        />
+                        <br />
+                        <MyInput
+                            width={350}
+                            column
+                            fieldName="Other Reasons"
+                            record={localAppointmentData}
+                            setRecord={setLocalAppoitmentData}
+                            disabled
+                        />
+                    </Form>
+
+
+                </Modal.Body>
+                <Modal.Footer>
+                    <IconButton onClick={() => { handleHide() }} color="violet" appearance="primary" icon={<CheckIcon />}>
+                        Save
+                    </IconButton>
+                    <Divider vertical />
+                    <IconButton onClick={() => { setResonModal(false) }} color="blue" appearance="primary" icon={<BlockIcon />}>
+                        Cancel
+                    </IconButton>
+                </Modal.Footer>
             </Modal>
         </div>
     );
