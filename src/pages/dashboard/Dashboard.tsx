@@ -9,7 +9,7 @@ const Dashboard = () => {
     <Panel header={<h3 className="title">Dashboard</h3>}>
       <FlexboxGrid>
         <FlexboxGrid.Item as={Col} colspan={24} lg={8} md={12} sm={24}>
-          <Panel bordered header={<Translate>Number of In-Patient Admissions per Day</Translate>}>
+          <Panel bordered header={<Translate>Number of No-Shows per Day</Translate>}>
             <DynamicLineChart
               maxValue={10}
               title={'In-Patients'}
@@ -26,7 +26,7 @@ const Dashboard = () => {
         <FlexboxGrid.Item as={Col} colspan={24} lg={8} md={12} sm={24}>
           <Panel
             bordered
-            header="Number of Out-Patient Encounters per Day"
+            header="Number of Appointments Scheduled per Day"
             style={{ marginBottom: '10px' }}
           >
             <DynamicLineChart
@@ -43,7 +43,7 @@ const Dashboard = () => {
           </Panel>
         </FlexboxGrid.Item>
         <FlexboxGrid.Item as={Col} colspan={24} lg={8} md={12} sm={24}>
-          <Panel bordered header="Number of Discharges per Day">
+          <Panel bordered header="Number of Appointments Completed per Day">
             <DynamicLineChart
               maxValue={10}
               title={'Discharges'}
@@ -58,7 +58,7 @@ const Dashboard = () => {
           </Panel>
         </FlexboxGrid.Item>
         <FlexboxGrid.Item as={Col} colspan={24} lg={8} md={12} sm={24}>
-          <Panel bordered header="My List">
+          <Panel bordered header="Top No-show Reasons">
             <List bordered autoScroll style={{ maxHeight: '250px' }}>
               <List.Item>
                 <h6>
@@ -84,7 +84,7 @@ const Dashboard = () => {
         </FlexboxGrid.Item>
 
         <FlexboxGrid.Item as={Col} colspan={24} lg={8} md={12} sm={24}>
-          <Panel bordered header="Assigned Patients Activity">
+          <Panel bordered header="Transportation issues">
             <Stack spacing={6} style={{ overflowX: 'auto' }}>
               <Button appearance="ghost">Patient 1</Button>
               <Button>Patient 2</Button>
@@ -92,17 +92,19 @@ const Dashboard = () => {
             <hr />
             <Timeline>
               <Timeline.Item>
-                <p>March 1, 10:20 Patient registration</p>
+                <p>10:20 AM Appointment Scheduled</p>
               </Timeline.Item>
               <Timeline.Item>
-                <p>March 1, 10:49 Encounter started</p>
+                <p>10:49 AM Checked-In</p>
               </Timeline.Item>
               <Timeline.Item>
-                <p>March 1, 11:03 CBC lab order issued</p>
+                <p>11:03 AM Appointment In Progress</p>
               </Timeline.Item>
               <Timeline.Item>
+
                 <p>
-                  March 1, 11:39 CBC lab order <a>result</a>
+                11:39 AM Appointment Completed 
+                {/* <a>result</a> */}
                 </p>
               </Timeline.Item>
             </Timeline>
