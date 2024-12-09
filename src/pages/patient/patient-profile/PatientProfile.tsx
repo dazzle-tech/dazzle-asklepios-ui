@@ -461,8 +461,8 @@ const PatientProfile = () => {
     useFetchAttachmentLightQuery({ refKey: localPatient?.key }, { skip: !localPatient?.key });
 
   useEffect(() => {
-    if (patientSlice.patient) {
-      setLocalPatient(patientSlice.patient);
+    // if (patientSlice.patient) {
+    //   setLocalPatient(patientSlice.patient);
 
       setPatientRelationListRequest({
         ...patientRelationListRequest,
@@ -474,14 +474,14 @@ const PatientProfile = () => {
           }
         ]
       });
-    }
+    
   }, []);
 
-  useEffect(() => {
-    if (patientSlice.patient) {
-      setLocalPatient(patientSlice.patient);
-    }
-  }, [patientSlice]);
+  // useEffect(() => {
+  //   if (patientSlice.patient) {
+  //     setLocalPatient(patientSlice.patient);
+  //   }
+  // }, [patientSlice]);
   const isSelected = rowData => {
     if (
       rowData &&
@@ -609,7 +609,11 @@ const PatientProfile = () => {
     handleAttachmentSelected(null);
     setActionType(null);
   };
+  useEffect(() => {
+    dispatch(setPatient({ ...newApPatient }));
+    
 
+  }, []);
   const enableEdit = () => {
     setEditing(true);
     setValidationResult(undefined);
@@ -790,7 +794,7 @@ const PatientProfile = () => {
       dispatch(notify('OTP sent'));
     }
   }, [sendOtpMutation]);
-
+  
   useEffect(() => {
     if (verifyOtpMutation.status === 'fulfilled') {
       dispatch(notify('Patient verified success'));
@@ -866,7 +870,7 @@ const PatientProfile = () => {
     if (patientSearchTarget === 'primary') {
       // selecteing primary patient (localPatient)
       setLocalPatient(data);
-      dispatch(setPatient(data));
+      // dispatch(setPatient(data));
     } else if (patientSearchTarget === 'relation') {
       // selecting patient for relation patient key
       setSelectedPatientRelation({
@@ -881,6 +885,7 @@ const PatientProfile = () => {
 
   useEffect(() => {
     setSearchKeyword('');
+
   }, [selectedCriterion]);
 
   const conjurePatientSearchBar = target => {
