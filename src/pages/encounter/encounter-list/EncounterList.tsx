@@ -36,6 +36,7 @@ import SendIcon from '@rsuite/icons/Send';
 import {
   useGetPatientsQuery,
 } from '@/services/patientService';
+import { useGetIcdListQuery } from '@/services/setupService';
 import { useNavigate } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
@@ -49,7 +50,10 @@ const EncounterList = () => {
   const navigate = useNavigate();
 
   const [encounter, setLocalEncounter] = useState({ ...newApEncounter });
-
+  const { data: icdListResponseData } = useGetIcdListQuery({
+    ...initialListRequest,
+    pageSize: 100
+  });
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     ignore: true
@@ -220,7 +224,7 @@ const EncounterList = () => {
                 onClick={goToPreVisitObservations}
                 icon={<PageEndIcon />}
               >
-                <Translate>Pre-Visit Observations</Translate>
+                <Translate>Nurse Station</Translate>
               </IconButton>
             </div>
           </ButtonToolbar>
@@ -301,9 +305,9 @@ const EncounterList = () => {
             </HeaderCell>
             <Cell dataKey="type" />
           </Column>
-          <Column sortable flexGrow={5}>
+          <Column sortable flexGrow={4} fullText>
             <HeaderCell>
-              
+
               <Translate> Chief Complain </Translate>
             </HeaderCell>
             <Cell>
@@ -311,30 +315,48 @@ const EncounterList = () => {
                 rowData.chiefComplaint
               }</Cell>
           </Column>
-          <Column sortable flexGrow={4}>
+          <Column sortable flexGrow={5} fullText>
             <HeaderCell>
-              
+
               <Translate>Diagnosis</Translate>
             </HeaderCell>
-            <Cell dataKey="diagnosis" 
-            />
+            <Cell>
+              {rowData => {
+                console.log(rowData.diagnosis)
+                const diag = icdListResponseData?.object?.find(
+                  item =>item.key === rowData.diagnosis
+                );
+                console.log(icdListResponseData?.object)
+                  
+                if (diag) {
+                  console.log("Found diag:", diag);
+                  return diag.icdCode+","+diag.description;
+              } else {
+                  console.warn("No matching diag found for key:", rowData.diagnosis);
+                  return "N/A";
+              }
+                return diag?.icdCode ?? "N/A"; 
+              }}
+            </Cell>
+
           </Column>
           <Column sortable flexGrow={3}>
             <HeaderCell>
-              
+
               <Translate>Prescription </Translate>
             </HeaderCell>
-            <Cell
-            />
+            <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
+              rowData.hasPrescription ? <CheckRoundIcon className='iconStyle' /> : <WarningRoundIcon className='iconNoStyle' />
+            }</Cell>
           </Column>
           <Column sortable flexGrow={3}>
             <HeaderCell>
-              
+
               <Translate> Has order</Translate>
             </HeaderCell>
-            <Cell  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
-                rowData.hasOrder?<CheckRoundIcon className='iconStyle' /> :<WarningRoundIcon className='iconNoStyle' /> 
-              }</Cell>
+            <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
+              rowData.hasOrder ? <CheckRoundIcon className='iconStyle' /> : <WarningRoundIcon className='iconNoStyle' />
+            }</Cell>
           </Column>
           <Column sortable flexGrow={3}>
             <HeaderCell>
@@ -368,7 +390,7 @@ const EncounterList = () => {
               }
             </Cell>
           </Column>
-         
+
           <Column >
             <HeaderCell>
               <Translate>Is Observed</Translate>
