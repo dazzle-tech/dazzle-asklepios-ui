@@ -12,7 +12,7 @@ const Dashboard = () => {
           <Panel bordered header={<Translate>Number of No-Shows per Day</Translate>}>
             <DynamicLineChart
               maxValue={10}
-              title={'In-Patients'}
+              title={'No-Show'}
               chartData={[
                 { x: '2023-09-19', y: 7 },
                 { x: '2023-09-20', y: 2 },
@@ -30,7 +30,7 @@ const Dashboard = () => {
             style={{ marginBottom: '10px' }}
           >
             <DynamicLineChart
-              title={'Out-Patients'}
+              title={'Scheduled '}
               maxValue={15}
               chartData={[
                 { x: '2023-09-19', y: 13 },
@@ -46,7 +46,7 @@ const Dashboard = () => {
           <Panel bordered header="Number of Appointments Completed per Day">
             <DynamicLineChart
               maxValue={10}
-              title={'Discharges'}
+              title={'Completed'}
               chartData={[
                 { x: '2023-09-19', y: 3 },
                 { x: '2023-09-20', y: 2 },
@@ -62,21 +62,16 @@ const Dashboard = () => {
             <List bordered autoScroll style={{ maxHeight: '250px' }}>
               <List.Item>
                 <h6>
-                  Consult a pediatric
+                Transportation issues
                   <br />
-                  <small>
-                    {' '}
-                    <a>Patient #123</a> needs a pediadtric consultation for case xxxxx
-                  </small>
+                 
                 </h6>
               </List.Item>
               <List.Item>
                 <h6>
-                  Review lab result
+                Personal emergency
                   <br />
-                  <small>
-                    Lab results for <a>encounter #247</a> needs review
-                  </small>
+                  
                 </h6>
               </List.Item>
             </List>
@@ -84,7 +79,7 @@ const Dashboard = () => {
         </FlexboxGrid.Item>
 
         <FlexboxGrid.Item as={Col} colspan={24} lg={8} md={12} sm={24}>
-          <Panel bordered header="Transportation issues">
+          <Panel bordered header="Upcoming Appointments Activities">
             <Stack spacing={6} style={{ overflowX: 'auto' }}>
               <Button appearance="ghost">Patient 1</Button>
               <Button>Patient 2</Button>
