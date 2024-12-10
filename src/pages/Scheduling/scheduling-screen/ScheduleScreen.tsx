@@ -47,7 +47,9 @@ const ScheduleScreen = () => {
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [appointmentsData, setAppointmentsData] = useState([])
     const [selectedAppointment, setSelectedAppointment] = useState()
+    const [showAppointmentOnly, setShowAppointmentOnly] = useState(false)
 
+    
     const {
         data: appointments,
         refetch: refitchAppointments,
@@ -242,6 +244,25 @@ const ScheduleScreen = () => {
         ? appointmentsData // Show all events in the agenda view
         : appointmentsData.filter((event) => !event.hidden); // Example: Hide events with a "hidden" flag in other views
 
+
+    const handleChangeAppointment = () => {
+        setAppointment(selectedEvent.appointmentData)
+        console.log(selectedEvent?.appointmentData)
+        console.log(appointment)
+        setModalOpen(true)
+
+        setActionsModalOpen(false)
+    }
+
+    const handleViewAppointment = () => {
+        setAppointment(selectedEvent.appointmentData)
+        setModalOpen(true)
+        setActionsModalOpen(false)
+        setShowAppointmentOnly(true)
+        
+    }
+  
+
     return (
         <div>
             <div className="inline-two-four-container">
@@ -383,11 +404,13 @@ const ScheduleScreen = () => {
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
                 startAppoitmentStart={selectedStartDate}
+                appointmentData={selectedEvent?.appointmentData}
                 resourceType={selectedResourceType}
                 facility={selectedFacility}
                 onSave={refitchAppointments}
+                showOnly={showAppointmentOnly}
             />
-            <AppointmentActionsModal onStatusChange={refitchAppointments} isActionsModalOpen={ActionsModalOpen} onActionsModalClose={() => setActionsModalOpen(false)} appointment={selectedEvent} />
+            <AppointmentActionsModal  viewAppointment={() => handleViewAppointment()} editAppointment={() => handleChangeAppointment()} onStatusChange={refitchAppointments} isActionsModalOpen={ActionsModalOpen} onActionsModalClose={() => setActionsModalOpen(false)} appointment={selectedEvent} />
 
         </div>
     );
