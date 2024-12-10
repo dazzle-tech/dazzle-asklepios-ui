@@ -22,10 +22,27 @@ import { useAppSelector } from "@/hooks";
 import { useChangeAppointmentStatusMutation, useGetResourcesAvailabilityQuery, useGetResourcesQuery, useSaveAppointmentMutation } from "@/services/appointmentService";
 import AttachmentModal from "@/pages/patient/patient-profile/AttachmentUploadModal";
 import { object } from "prop-types";
+import { setPatient } from "@/reducers/patientSlice";
 
 
 
-const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType, facility, onSave }) => {
+const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType, facility, onSave, appointmentData, showOnly }) => {
+
+
+    useEffect(() => {
+        if (appointmentData) {
+            setAppoitment(appointmentData)
+            console.log(appointmentData?.patient)
+            setLocalPatient(appointmentData?.patient)
+        }
+    }, [appointmentData])
+
+    useEffect(() => {
+        if (showOnly) {
+
+            console.log(showOnly)
+        }
+    }, [showOnly])
 
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
 
@@ -68,11 +85,11 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
 
     useEffect(() => {
         setRowPeriods(resourcesAvailability?.object)
-        console.log(resourcesAvailability?.object)
-        console.log(appointment.resourceKey)
-        filterWeekDays()
-    }, [resourcesAvailability, appointment.resourceKey])
+    }, [resourcesAvailability?.object, appointment.resourceKey])
 
+    useEffect(() => {
+        filterWeekDays(rowPeriods)
+    }, [rowPeriods])
 
     const dayOptions = availablePeriods.map((item) => ({
         label: item.day,
@@ -301,7 +318,16 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
     }, [resourceTypeQueryResponse])
 
     useEffect(() => {
-        setAppoitment({ ...appointment, patientKey: localPatient.key })
+        if (appointmentData) {
+            setAppoitment({ ...appointment, patientKey: localPatient.key })
+            console.log({ ...appointment, patientKey: localPatient.key })
+            console.log(appointment)
+            console.log(localPatient)
+
+            console.log(localPatient.key)
+
+        }
+
     }, [localPatient])
 
     useEffect(() => {
@@ -379,10 +405,11 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
 
 
 
-    const filterWeekDays = () => {
+    const filterWeekDays = (periodsData) => {
         const result = {};
+        console.log(periodsData)
 
-        rowPeriods?.forEach((item) => {
+        periodsData?.forEach((item) => {
             const resourceKey = item.resourceKey;
             const day = item.dayLvalue.lovDisplayVale;
             const period = {
@@ -402,6 +429,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                 periods: periods,
             }))
         );
+        console.log(availabilityPickerData)
 
         setAvailabilDays(availabilityPickerData);
     };
@@ -410,6 +438,8 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
 
 
     useEffect(() => {
+        console.log("Available Days:", availabilDays);
+
         if (availabilDays?.length) {
             console.log("Available Days:", availabilDays);
         }
@@ -612,7 +642,6 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
 
                                 <Form layout="inline" fluid>
                                     <MyInput
-
                                         width={110}
                                         vr={validationResult}
                                         column
@@ -736,7 +765,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                         layout="inline" style={{ display: "flex", alignItems: "center" }} fluid>
 
                         <MyInput
-                        disabled
+                            disabled
                             width={150}
                             vr={validationResult}
                             column
@@ -760,13 +789,13 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                             selectDataLabel="facilityName"
                             selectDataValue="key"
                             fieldName="facilityKey"
-
-
+                            disabled={showOnly}
                             record={appointment}
                             setRecord={setAppoitment}
                         />
 
                         <MyInput
+                            disabled={showOnly}
                             required
                             width={165}
                             vr={validationResult}
@@ -783,6 +812,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
 
 
                         <MyInput
+                            disabled={showOnly}
                             width={300}
                             column
                             fieldLabel="Resources"
@@ -808,6 +838,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                             selectDataValue="key"
                             record={appointment}
                             setRecord={setAppoitment}
+                            disabled={showOnly}
                         />
                         <MyInput
                             required
@@ -822,13 +853,14 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                             selectDataValue="key"
                             record={appointment}
                             setRecord={setAppoitment}
+                            disabled={showOnly}
                         />
 
 
 
                         <div style={{ display: "flex", width: "100%", justifyContent: "flex-end", marginTop: "30px" }}>
                             <IconButton
-                                disabled={!localPatient?.key}
+                                disabled={(!localPatient?.key)||showOnly}
                                 color="cyan"
                                 style={{ marginRight: "80px", width: 170 }}
                                 appearance="primary"
@@ -856,6 +888,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                                         Month
                                     </label>
                                     <SelectPicker
+                                        disabled={showOnly}
                                         style={{ width: 120 }}
                                         data={Array.from({ length: 5 }, (_, index) => {
                                             const year = new Date().getFullYear() + index; // السنوات الحالية + الأربع سنوات القادمة
@@ -875,6 +908,8 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                                         Month
                                     </label>
                                     <SelectPicker
+                                        disabled={showOnly}
+
                                         style={{ width: 120 }}
                                         data={[
                                             { label: "January", value: 0 },
@@ -903,6 +938,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                                         Week Day
                                     </label>
                                     <SelectPicker
+                                        disabled={showOnly}
                                         style={{ width: 250 }}
                                         data={availabilDays ? availabilDays.map(item => ({ label: item.label, value: item.value })) : []}
                                         onChange={handleSelectDayOfWeek}
@@ -915,9 +951,10 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                                     </label>
                                     <SelectPicker
                                         style={{ width: 120 }}
-                                        disabled={!(availableDatesInMonth && availableDatesInMonth.length > 0)}
+                                        disabled={!(availableDatesInMonth && availableDatesInMonth.length > 0) || showOnly}
                                         data={availableDatesInMonth ? availableDatesInMonth.map(date => ({ label: `Day ${date}`, value: date })) : []}
                                         onChange={(selectedMonthDay) => setSelectedMonthDay(selectedMonthDay)}
+
                                     />
                                 </div>
 
@@ -951,7 +988,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
 
                         <div style={{ display: "flex", flexDirection: 'column' }} >
                             <MyInput
-
+                                disabled={showOnly}
                                 required
                                 width={450}
                                 vr={validationResult}
@@ -965,12 +1002,13 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                                 record={instructionKey}
                                 setRecord={setInstructionsKey}
                             />
-                            <Input as="textarea" onChange={(e) => setInstructions(e)} value={instructions} style={{ width: 450, marginTop: 20 }} rows={3} />
+                            <Input disabled={showOnly} as="textarea" onChange={(e) => setInstructions(e)} value={instructions} style={{ width: 450, marginTop: 20 }} rows={3} />
 
                         </div>
 
 
                         <MyInput
+                            disabled={showOnly}
                             vr={validationResult}
                             fieldType='textarea'
                             column
@@ -983,6 +1021,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
 
                         <div style={{ display: "flex", flexDirection: 'column' }} >
                             <MyInput
+                                disabled={showOnly}
                                 required
                                 width={165}
                                 vr={validationResult}
@@ -999,7 +1038,8 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                             <br /><br /><br />
                             <div >
                                 <IconButton
-                                    disabled={!localPatient?.key}
+
+                                    disabled={(!localPatient?.key) || showOnly}
                                     onClick={() => setAttachmentsModalOpen(true)}
                                     style={{ marginRight: "70px", width: 165, height: "30px" }} color="cyan"
                                     appearance="primary" icon={<FileUploadIcon />}
@@ -1015,6 +1055,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
 
 
                         <MyInput
+                            disabled={showOnly}
                             width={165}
                             column
                             fieldLabel="consent Form"
@@ -1025,6 +1066,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                         />
 
                         <MyInput
+                        disabled={showOnly}
                             width={165}
                             column
                             fieldLabel="Reminder"
@@ -1061,6 +1103,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
 
                     <Form layout="inline" style={{ display: "flex", alignItems: "center" }} fluid>
                         <MyInput
+                        disabled={showOnly}
                             required
                             width={165}
                             vr={validationResult}
@@ -1076,6 +1119,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                         />
 
                         <MyInput
+                        disabled={showOnly}
                             width={165}
                             vr={validationResult}
                             column
@@ -1084,6 +1128,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                             setRecord={setAppoitment}
                         />
                         <MyInput
+                        disabled={showOnly}
                             required
                             width={165}
                             vr={validationResult}
@@ -1116,11 +1161,11 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                 )} */}
                 </Modal.Body>
                 <Modal.Footer>
-                    <IconButton onClick={() => { console.log(selectedEvent || selectedSlot), console.log(appointment), handleSaveAppointment() }} color="violet" appearance="primary" icon={<CheckIcon />}>
+                    <IconButton  disabled={showOnly} onClick={() => { console.log(selectedEvent || selectedSlot), console.log(appointment), handleSaveAppointment() }} color="violet" appearance="primary" icon={<CheckIcon />}>
                         Save
                     </IconButton>
                     <Divider vertical />
-                    <IconButton color="orange" onClick={handleClear} appearance="primary" icon={<TrashIcon />}>
+                    <IconButton  disabled={showOnly} color="orange" onClick={handleClear} appearance="primary" icon={<TrashIcon />}>
                         Clear
                     </IconButton>
                     <IconButton color="blue" onClick={closeModal} appearance="primary" icon={<BlockIcon />}>

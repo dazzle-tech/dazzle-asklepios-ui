@@ -12,7 +12,7 @@ import MyInput from "@/components/MyInput";
 import CheckIcon from '@rsuite/icons/Check';
 import BlockIcon from '@rsuite/icons/Block';
 
-const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appointment, onStatusChange }) => {
+const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appointment, onStatusChange, editAppointment, viewAppointment  }) => {
 
     const [changeAppointmentStatus, changeAppointmentStatusMutation] = useChangeAppointmentStatusMutation()
     const dispatch = useAppDispatch();
@@ -70,6 +70,13 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         })
     }
 
+    
+    const handleChangeAction = () => {
+        onActionsModalClose()
+        editAction()
+    }
+
+
     return (
         <div>
             <Modal open={
@@ -95,16 +102,16 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                     <br />
 
                     <ButtonToolbar>
-                        <Button style={{ width: 120, height: 40 }} color="cyan" appearance="primary">
+                        <Button  onClick={()=> viewAppointment() }  style={{ width: 120, height: 40 }} color="cyan" appearance="primary">
                             View
                         </Button>
-                        <Button style={{ width: 120, height: 40 }} color="violet" appearance="primary">
+                        <Button  onClick={()=> editAppointment() }  style={{ width: 120, height: 40 }} color="violet" appearance="primary">
                             Change
                         </Button>
                         <Button onClick={handleCancel} style={{ width: 120, height: 40 }} color="blue" appearance="primary">
                             Cancel
                         </Button>
- 
+                        
 
                     </ButtonToolbar>
                     <br />
