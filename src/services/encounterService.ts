@@ -2,7 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApCustomeInstructions, ApEncounter, ApPatientDiagnose, ApPatientEncounterOrder, ApPatientPlan, ApPrescription, ApPrescriptionMedications, ApReviewOfSystem } from '@/types/model-types';
+import { ApConsultationOrder, ApCustomeInstructions, ApEncounter, ApPatientDiagnose, ApPatientEncounterOrder, ApPatientPlan, ApPrescription, ApPrescriptionMedications, ApReviewOfSystem } from '@/types/model-types';
 
 export const encounterService = createApi({
   reducerPath: 'encounterApi',
@@ -260,6 +260,24 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
+    getConsultationOrders: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/consultation-orders-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+   saveConsultationOrders: builder.mutation({
+      query: (consultation: ApConsultationOrder) => ({
+        url: `/encounter/save-consultation-orders`,
+        method: 'POST',
+        body: consultation
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
   })
 });
 
@@ -289,7 +307,9 @@ export const {
  useGetPrescriptionMedicationsQuery,
  useSavePrescriptionMedicationMutation,
  useGetCustomeInstructionsQuery,
- useSaveCustomeInstructionsMutation
+ useSaveCustomeInstructionsMutation,
+ useGetConsultationOrdersQuery,
+ useSaveConsultationOrdersMutation
   
 } = encounterService;
 

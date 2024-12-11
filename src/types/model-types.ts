@@ -399,6 +399,30 @@ export interface ApClinicalDocumentation {
 	isValid:boolean;
 } 
 
+export interface ApConsultationOrder { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	consultantSpecialtyLkey:string;
+	cityLkey:string;
+	preferredConsultantKey:string;
+	consultationMethodLkey:string;
+	consultationTypeLkey:string;
+	consultationContent:string;
+	notes:string;
+	statusLkey:string;
+	viewResponse:string;
+	resposeStatusLkey:string;
+	submissionDate:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApCustomeInstructions { 
 	key:string;
 	prescriptionMedicationsKey:string;
