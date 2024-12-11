@@ -4,6 +4,7 @@ import './styles.less';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import FileDownloadIcon from '@rsuite/icons/FileDownload';
+import FileUploadIcon from '@rsuite/icons/FileUpload';
 import {
     useGetPractitionersQuery
 } from '@/services/setupService';
@@ -37,6 +38,7 @@ import {
     useDeleteAttachmentMutation,
     useUpdateAttachmentDetailsMutation
 } from '@/services/attachmentService';
+
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import CheckIcon from '@rsuite/icons/Check';
 import PlusIcon from '@rsuite/icons/Plus';
@@ -51,8 +53,11 @@ import BlockIcon from '@rsuite/icons/Block';
 import MyInput from '@/components/MyInput';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetIcdListQuery } from '@/services/setupService';
-import {useGetConsultationOrdersQuery,
-    useSaveConsultationOrdersMutation} from '@/services/encounterService'
+import {
+    useGetConsultationOrdersQuery,
+    useSaveConsultationOrdersMutation,
+    useGetEncounterReviewOfSystemsQuery
+} from '@/services/encounterService'
 import {
     useGetPatientDiagnosisQuery
 } from '@/services/encounterService';
@@ -64,36 +69,60 @@ const Consultation = () => {
     const [selectedRows, setSelectedRows] = useState([]);
     const [showCanceled, setShowCanceled] = useState(true);
     const [showPrev, setShowPrev] = useState(true);
+    const [actionType, setActionType] = useState(null);
+    const [editing,setEditing]=useState(false);
     const [openConfirmDeleteModel, setConfirmDeleteModel] = useState(false);
+    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const { data: consultantSpecialtyLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SPECIALY');
     const { data: cityLovQueryResponse } = useGetLovValuesByCodeQuery('CITY');
     const { data: consultationMethodLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_METHOD');
     const { data: consultationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_TYPE');
     const { data: practitionerListResponse } = useGetPractitionersQuery({ ...initialListRequest });
-    const { data: consultationOrderListResponse,refetch:refetchCon } = useGetConsultationOrdersQuery(
-        { ...initialListRequest,
-            filters: [
-                {
-                    fieldName: 'patient_key',
-                    operator: 'match',
-                    value: patientSlice.patient.key
-                },
-                {
-                    fieldName: 'visit_key',
-                    operator: 'match',
-                    value: patientSlice.encounter.key
-                }
-    
-            ]
-       
-        
-     });
+    const { data: encounterReviewOfSystemsSummaryResponse, refetch } = useGetEncounterReviewOfSystemsQuery(patientSlice.encounter.key);
+    console.log(encounterReviewOfSystemsSummaryResponse?.object)
+    const summaryText = encounterReviewOfSystemsSummaryResponse?.object
+        ?.map((item, index) => {
+            const systemDetail = item.systemDetailLvalue
+                ? item.systemDetailLvalue.lovDisplayVale
+                : item.systemDetailLkey;
+            return `* ${systemDetail}\n${item.notes}`;
+        })
+        .join("\n\n");
+
+
+    console.log(summaryText);
+
+    const filters = [
+        {
+            fieldName: 'patient_key',
+            operator: 'match',
+            value: patientSlice.patient.key
+        },
+        {
+            fieldName: "status_lkey",
+            operator: showCanceled ? "notMatch" : "match",
+            value: "1804447528780744",
+        }
+    ];
+
+    if (showPrev) {
+        filters.push({
+            fieldName: 'visit_key',
+            operator: 'match',
+            value: patientSlice.encounter.key
+        });
+    }
+
+    const { data: consultationOrderListResponse, refetch: refetchCon } = useGetConsultationOrdersQuery({
+        ...initialListRequest,
+        filters
+    });
     const [saveconsultationOrders, saveConsultationOrdersMutation] = useSaveConsultationOrdersMutation();
     const { data: icdListResponseData } = useGetIcdListQuery({
         ...initialListRequest,
         pageSize: 100
     });
-   
+
     const [listRequest, setListRequest] = useState({
         ...initialListRequest,
         pageSize: 100,
@@ -117,25 +146,127 @@ const Consultation = () => {
     const [consultationOrders, setConsultationOrder] = useState<ApConsultationOrder>(
         {
             ...newApConsultationOrder
-            
+
         });
     const patientDiagnoseListResponse = useGetPatientDiagnosisQuery(listRequest);
-    const [selectedDiagnose, setSelectedDiagnose] = useState<ApPatientDiagnose>(
-        patientDiagnoseListResponse?.data?.object.length > 0
-            ? patientDiagnoseListResponse?.data?.object[0].diagnosisObject
-            : {
-                ...newApPatientDiagnose,
-                visitKey: patientSlice.encounter.key,
-                patientKey: patientSlice.patient.key,
-                createdBy: 'Administrator',
-            }
-    );
+
+    console.log(patientDiagnoseListResponse?.data?.object[0].diagnosisObject.description + "," + patientDiagnoseListResponse?.data?.object.length)
+    const [selectedDiagnose, setSelectedDiagnose] = useState<ApPatientDiagnose>({
+        ...newApPatientDiagnose,
+        visitKey: patientSlice.encounter.key,
+        patientKey: patientSlice.patient.key,
+        createdBy: 'Administrator'
+
+
+    });
+
+
+    const key =
+        patientDiagnoseListResponse?.data?.object &&
+            Array.isArray(patientDiagnoseListResponse.data.object) &&
+            patientDiagnoseListResponse.data.object.length > 0
+            ? patientDiagnoseListResponse.data.object[0].key ?? ""
+            : "";
+
+    console.log(key);
+    const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch } =
+    useFetchAttachmentLightQuery({ refKey: consultationOrders?.key }, { skip: !consultationOrders?.key });
+const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
+const fetchOrderAttachResponse = useFetchAttachmentQuery(
+    {
+      type: 'CONSULTATION_ORDER',
+      refKey: consultationOrders.key
+    },
+    { skip: !consultationOrders.key }
+  );
+const {
+    data: fetchAttachmentByKeyResponce,
+    error,
+    isLoading,
+    isFetching,
+    isSuccess,
+    refetch:refAtt
+  } = useFetchAttachmentByKeyQuery(
+    { key: requestedPatientAttacment },
+    { skip: !requestedPatientAttacment || !consultationOrders.key }
+  );
+
+
+    useEffect(() => {
+        if (patientDiagnoseListResponse.data?.object?.length > 0) {
+            setSelectedDiagnose(patientDiagnoseListResponse.data.object[0].
+                diagnosisObject
+            );
+        }
+    }, [patientDiagnoseListResponse.data]);
+
+    console.log(selectedDiagnose);
     const isSelected = rowData => {
         if (rowData && consultationOrders && rowData.key === consultationOrders.key) {
             return 'selected-row';
         } else return '';
     };
-    console.log(selectedDiagnose)
+    console.log(selectedDiagnose);
+    useEffect(() => {
+        
+           console.log(fetchAttachmentByKeyResponce)
+    }, [fetchAttachmentByKeyResponce]);
+    const handleDownload = async (attachment) => {
+        try {
+          if (!attachment?.fileContent || !attachment?.contentType || !attachment?.fileName) {
+            console.error("Invalid attachment data.");
+            return;
+          }
+      
+          const byteCharacters = atob(attachment.fileContent);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: attachment.contentType });
+      
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.style.display = "none";
+          a.href = url;
+          a.download = attachment.fileName;
+      
+          document.body.appendChild(a);
+          a.click();
+      
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+      
+          console.log("File downloaded successfully:", attachment.fileName);
+          attachmentRefetch().then(() => {
+            console.log("Refetch complete");
+        }).catch((error) => {
+            console.error("Refetch failed:", error);
+        });
+        } catch (error) {
+          console.error("Error during file download:", error);
+        }
+      };
+      
+    // useEffect(() => {
+    //     console.log("iam in useefect download")
+    //     if (isSuccess && fetchAttachmentByKeyResponce) {
+    //       if (actionType === 'download') {
+    //         handleDownload(fetchAttachmentByKeyResponce);
+    //       } 
+    //     }
+    //   }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
+    const handleDownloadSelectedPatientAttachment = attachmentKey => {
+        
+        setRequestedPatientAttacment(attachmentKey);
+        setActionType('download');
+        console.log("iam in download atach atKey= "+attachmentKey)
+      
+              handleDownload(fetchAttachmentByKeyResponce);
+            
+          
+    };
     const handleFilterChange = (fieldName, value) => {
         if (value) {
             setListRequest(
@@ -165,13 +296,15 @@ const Consultation = () => {
     const CloseConfirmDeleteModel = () => {
         setConfirmDeleteModel(false);
     }
-    const handleSave=async()=>{
-        try{ 
-            await saveconsultationOrders({...consultationOrders,
-                patientKey:patientSlice.patient.key,
-	            visitKey:patientSlice.encounter.key,
-                statusLkey:'164797574082125',
-                createdBy:"Admin"}).unwrap();
+    const handleSave = async () => {
+        try {
+            await saveconsultationOrders({
+                ...consultationOrders,
+                patientKey: patientSlice.patient.key,
+                visitKey: patientSlice.encounter.key,
+                statusLkey: '164797574082125',
+                createdBy: "Admin"
+            }).unwrap();
             dispatch(notify('saved  Successfully'));
             refetchCon().then(() => {
                 console.log("Refetch complete");
@@ -179,29 +312,28 @@ const Consultation = () => {
                 console.error("Refetch failed:", error);
             });
             handleClear();
-        }catch(error)
-        {
+        } catch (error) {
             dispatch(notify('saved  fill'));
         }
 
     }
-    const handleClear=async()=>{
+    const handleClear = async () => {
         setConsultationOrder({
             ...newApConsultationOrder
             ,
-            consultationMethodLkey:null,
-            consultationTypeLkey:null,
-            cityLkey:null,
-            consultantSpecialtyLkey:null,
-            preferredConsultantKey:null
-        }); 
+            consultationMethodLkey: null,
+            consultationTypeLkey: null,
+            cityLkey: null,
+            consultantSpecialtyLkey: null,
+            preferredConsultantKey: null
+        });
     }
     const handleCancle = async () => {
         console.log(selectedRows);
 
         try {
             await Promise.all(
-                selectedRows.map(item => saveconsultationOrders({...item, statusLkey: '1804447528780744', isValid: false ,deletedAt: Date.now()}).unwrap())
+                selectedRows.map(item => saveconsultationOrders({ ...item, statusLkey: '1804447528780744', isValid: false, deletedAt: Date.now() }).unwrap())
             );
 
             dispatch(notify('All orders deleted successfully'));
@@ -219,6 +351,27 @@ const Consultation = () => {
             CloseConfirmDeleteModel();
         }
     };
+    const handleSubmit = async () => {
+        console.log(selectedRows);
+
+        try {
+            await Promise.all(
+                selectedRows.map(item => saveconsultationOrders({ ...item, submitDate: Date.now(), statusLkey: '1804482322306061' }).unwrap())
+            );
+
+            dispatch(notify('All  Submitted successfully'));
+
+            refetchCon().then(() => {
+                console.log("Refetch complete");
+            }).catch((error) => {
+                console.error("Refetch failed:", error);
+            });
+            setSelectedRows([]);
+        } catch (error) {
+            console.error("Encounter save failed:", error);
+            dispatch(notify('One or more saves failed'));
+        }
+    };
     return (<>
         <h5>Consultation Order</h5>
         <br />
@@ -228,7 +381,7 @@ const Consultation = () => {
 
                     <MyInput
                         column
-                        disabled={false}
+                        disabled={editing}
                         width={200}
                         fieldType="select"
                         fieldLabel="Consultant Specialty"
@@ -241,7 +394,7 @@ const Consultation = () => {
                     />
                     <MyInput
                         column
-                        disabled={false}
+                        disabled={editing}
                         width={200}
                         fieldType="select"
                         fieldLabel="City"
@@ -252,10 +405,10 @@ const Consultation = () => {
                         record={consultationOrders}
                         setRecord={setConsultationOrder}
                     />
-                    
+
                     <MyInput
                         column
-                        disabled={false}
+                        disabled={editing}
                         width={200}
                         fieldType="select"
                         fieldLabel="Preferred Consultant"
@@ -269,7 +422,7 @@ const Consultation = () => {
 
                     <MyInput
                         column
-                        disabled={false}
+                        disabled={editing}
                         width={200}
                         fieldType="select"
                         fieldLabel="Consultation Method"
@@ -282,7 +435,7 @@ const Consultation = () => {
                     />
                     <MyInput
                         column
-                        disabled={false}
+                        disabled={editing}
                         width={200}
                         fieldType="select"
                         fieldLabel="Consultation Type"
@@ -301,6 +454,7 @@ const Consultation = () => {
                     <MyInput
                         column
                         width={300}
+                        disabled={editing}
                         fieldName="consultationContent"
                         rows={6}
                         fieldType="textarea"
@@ -311,6 +465,7 @@ const Consultation = () => {
                     <MyInput
                         column
                         width={300}
+                        disabled={editing}
                         fieldName="notes"
                         rows={6}
                         fieldType="textarea"
@@ -319,8 +474,8 @@ const Consultation = () => {
                     />
 
 
-                   
-                    {/* <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={order} attatchmentType={'ORDER_ATTACHMENT'} /> */}
+
+
 
 
                 </Form>
@@ -329,7 +484,7 @@ const Consultation = () => {
                     <IconButton
                         color="violet"
                         appearance="primary"
-                         onClick={handleSave}
+                        onClick={handleSave}
                         // disabled={selectedRows.length === 0}
                         icon={<CheckIcon />}
                     >
@@ -351,48 +506,40 @@ const Consultation = () => {
                 </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", width: "250px" }} >
-                <Text style={{ zoom: 0.88 }}>Diagnose</Text>
-                <SelectPicker
 
-                    disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
-                    style={{ width: '100%', zoom: 0.80 }}
-                    data={icdListResponseData?.object ?? []}
-                    labelKey="description"
-                    valueKey="key"
-                    placeholder="ICD"
-                    value={selectedDiagnose.diagnoseCode}
-
-                />
                 <Form style={{ zoom: 0.85 }} layout="inline" fluid>
                     <MyInput
                         column
                         width={300}
-                        fieldName="findingsSummary"
+                        disabled={true}
+                        fieldLabel="Diagnose"
+                        fieldName="description"
                         rows={6}
                         fieldType="textarea"
-                        record={{}}
-                        setRecord={""}
+                        record={selectedDiagnose}
+                        setRecord={setSelectedDiagnose}
                     />
+                    <Text>Finding Summery</Text>
+                    <textarea
+                        value={summaryText}
+                        readOnly
+                        rows={10}
+                        cols={50}
+                        style={{ width: "100%", height: "300px", fontFamily: "monospace" }}
+                    />
+
                 </Form>
-                <div style={{display:"flex",flexDirection:"row"}}>
-                <IconButton
-                        style={{ marginTop: "20px"}}
-                        color="cyan"
-                        appearance="primary"
-                        icon={<PlusIcon />}
-                    // disabled={order.statusLkey !== '164797574082125'}
-                    // onClick={() => setAttachmentsModalOpen(true)}
-                    >
-                        <Translate>Attached File</Translate>
-                    </IconButton>
-                    <Button
-                         style={{ marginTop: "20px"}}
+                <div style={{ display: "flex", flexDirection: "row" }}>
+                    {true && <Button
+                        style={{ marginTop: "20px" }}
                         appearance="link"
-                    // onClick={() => handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)}
+                     onClick={() => handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)}
                     >
-                        Download <FileDownloadIcon style={{ marginLeft: '3px' ,scale: '1.4' }} />
-                    </Button>
-                    </div>
+                        Download <FileDownloadIcon style={{ marginLeft: '10px', scale: '1.4' }} />
+                    </Button>}
+                    <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={consultationOrders} attatchmentType={'CONSULTATION_ORDER'} />
+
+                </div>
             </div>
 
         </div>
@@ -401,7 +548,7 @@ const Consultation = () => {
                 <IconButton
                     color="cyan"
                     appearance="primary"
-                    // onClick={handleSaveMedication}
+                    onClick={handleSubmit}
                     icon={<CheckIcon />}
                     disabled={selectedRows.length === 0}
                 >
@@ -421,7 +568,7 @@ const Consultation = () => {
                     color="cyan"
                     appearance="primary"
                     style={{ marginLeft: "5px" }}
-                // onClick={handleCleare}
+                    disabled={selectedRows.length === 0}
 
                 >
 
@@ -471,10 +618,11 @@ const Consultation = () => {
 
                     data={consultationOrderListResponse?.object ?? []}
                     onRowClick={rowData => {
-                         setConsultationOrder(rowData);
+                        setConsultationOrder(rowData);
+                        setEditing(rowData.statusLkey=="164797574082125"?false:true)
 
                     }}
-                 rowClassName={isSelected}
+                    rowClassName={isSelected}
                 >
                     <Column flexGrow={1} fullText>
                         <HeaderCell align="center">
@@ -494,14 +642,14 @@ const Consultation = () => {
 
 
                     </Column>
-                    <Column sortable  flexGrow={2}  fullText>
+                    <Column sortable flexGrow={2} fullText>
                         <HeaderCell align="center">
-                            
+
                             <Translate>Consultation Date</Translate>
                         </HeaderCell>
 
                         <Cell  >
-                        {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}
+                            {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}
                         </Cell>
                     </Column>
 
@@ -511,7 +659,7 @@ const Consultation = () => {
                             <Translate>Consultant Specialty</Translate>
                         </HeaderCell>
                         <Cell >
-                        {rowData => rowData.consultantSpecialtyLvalue?.lovDisplayVale}
+                            {rowData => rowData.consultantSpecialtyLvalue?.lovDisplayVale}
                         </Cell>
                     </Column>
 
@@ -522,7 +670,7 @@ const Consultation = () => {
                             <Translate>Status</Translate>
                         </HeaderCell>
                         <Cell >
-                        {rowData => rowData.statusLvalue.lovDisplayVale}
+                            {rowData => rowData.statusLvalue.lovDisplayVale}
                         </Cell>
                     </Column>
                     <Column flexGrow={2} fullText>
@@ -531,7 +679,7 @@ const Consultation = () => {
                             <Translate>Submitted By</Translate>
                         </HeaderCell>
                         <Cell >
-                        {rowData => rowData.createdBy}
+                            {rowData => rowData.createdBy}
                         </Cell>
                     </Column>
                     <Column flexGrow={2} fullText>
@@ -540,7 +688,7 @@ const Consultation = () => {
                             <Translate>Submission Date & Time</Translate>
                         </HeaderCell>
                         <Cell >
-                        {rowData => rowData.submissionDate ? new Date(rowData.submissionDate).toLocaleString() : ""}
+                            {rowData => rowData.submissionDate ? new Date(rowData.submissionDate).toLocaleString() : ""}
                         </Cell>
                     </Column>
                     <Column flexGrow={2} fullText>
@@ -549,7 +697,7 @@ const Consultation = () => {
                             <Translate>Respose Status</Translate>
                         </HeaderCell>
                         <Cell >
-                        {rowData => rowData.resposeStatusLvalue?.lovDisplayVale}
+                            {rowData => rowData.resposeStatusLvalue?.lovDisplayVale}
                         </Cell>
                     </Column>
                     <Column flexGrow={2} >
@@ -560,6 +708,19 @@ const Consultation = () => {
                         <Cell  >
 
                             <IconButton icon={<OthersIcon />} />
+
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={2} >
+                        <HeaderCell align="center">
+
+                            <Translate>Attached File</Translate>
+                        </HeaderCell>
+                        <Cell  >
+
+                            <IconButton
+                                onClick={() => setAttachmentsModalOpen(true)}
+                                icon={<FileUploadIcon />} />
 
                         </Cell>
                     </Column>
@@ -574,7 +735,7 @@ const Consultation = () => {
                     <p>
                         <RemindOutlineIcon style={{ color: '#ffca61', marginRight: '8px', fontSize: '24px' }} />
                         <Translate style={{ fontSize: '24px' }} >
-                            Are you sure you want to delete this orders?
+                            Are you sure you want to delete this Consultations?
                         </Translate>
                     </p>
                 </Modal.Body>

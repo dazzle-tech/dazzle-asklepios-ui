@@ -284,7 +284,7 @@ const DiagnosticsOrder = () => {
 
         try {
             await Promise.all(
-                selectedRows.map(item => savePatientOrder({ ...item, submitDate: 1733340770973, statusLkey: '1804482322306061' }).unwrap())
+                selectedRows.map(item => savePatientOrder({ ...item, submitDate:Date.now(), statusLkey: '1804482322306061' }).unwrap())
             );
 
             dispatch(notify('All orders saved successfully'));
