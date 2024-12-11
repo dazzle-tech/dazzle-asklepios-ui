@@ -400,6 +400,30 @@ export const newApClinicalDocumentation:modelTypes.ApClinicalDocumentation = {
 	isValid:undefined,
 } 
 
+export const newApConsultationOrder:modelTypes.ApConsultationOrder = { 
+	key:undefined,
+	patientKey:undefined,
+	visitKey:undefined,
+	consultantSpecialtyLkey:undefined,
+	cityLkey:undefined,
+	preferredConsultantKey:undefined,
+	consultationMethodLkey:undefined,
+	consultationTypeLkey:undefined,
+	consultationContent:'',
+	notes:'',
+	statusLkey:undefined,
+	viewResponse:'',
+	resposeStatusLkey:undefined,
+	submissionDate:0,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApCustomeInstructions:modelTypes.ApCustomeInstructions = { 
 	key:undefined,
 	prescriptionMedicationsKey:undefined,
