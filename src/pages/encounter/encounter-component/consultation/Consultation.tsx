@@ -207,11 +207,7 @@ const {
         } else return '';
     };
     console.log(selectedDiagnose);
-    useEffect(() => {
-        
-           console.log(fetchAttachmentByKeyResponce)
-    }, [fetchAttachmentByKeyResponce]);
-    const handleDownload = async (attachment) => {
+        const handleDownload = async (attachment) => {
         try {
           if (!attachment?.fileContent || !attachment?.contentType || !attachment?.fileName) {
             console.error("Invalid attachment data.");
@@ -620,6 +616,7 @@ const {
                     onRowClick={rowData => {
                         setConsultationOrder(rowData);
                         setEditing(rowData.statusLkey=="164797574082125"?false:true)
+                        console.log(requestedPatientAttacment )
 
                     }}
                     rowClassName={isSelected}
