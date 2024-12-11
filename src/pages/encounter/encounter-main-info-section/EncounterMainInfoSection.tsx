@@ -46,8 +46,8 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
   console.log(patirntObservationlist?.object);
 
   return (
-    <Form disabled style={{ zoom: 0.70 }} layout="inline" fluid>
-      <MyInput width={150} column fieldLabel="MRN" fieldName={'patientMrn'} record={patient} />
+    <Form disabled style={{ zoom: 0.70}} layout="inline" fluid >
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><MyInput width={150} column fieldLabel="MRN" fieldName={'patientMrn'} record={patient} />
       <MyInput width={150} column fieldLabel="Patient Name" fieldName={'patientFullName'} record={encounter} />
       <MyInput width={150} column fieldName={'documentNo'} record={patient} />
       <MyInput
@@ -81,13 +81,15 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
       <MyInput width={150} column fieldLabel="Height" fieldName={'latestheight'} record={patirntObservationlist?.object[0]} />
       <MyInput width={150} column fieldLabel="H.C" fieldName={'latestheadcircumference'} record={patirntObservationlist?.object[0]} />
       <MyInput width={150} column fieldLabel="BMI" fieldName={'latestbmi'} record={patirntObservationlist?.object[0]} />
-      <MyInput width={150} column fieldLabel="Blood Group" fieldName={'patientFullName'} record={patirntObservationlist?.object[0]} />
      <div style={{display:'flex',flexDirection:'column'}}>
       <Text>BSA</Text>
       <Input disabled value={Math.sqrt((patirntObservationlist?.object?.[0]?.latestweight *patirntObservationlist?.object?.[0]?. latestheight) / 3600).toFixed(2)}  style={{ width: 150 }}/>
       </div>
       
+      <MyInput width={150} column fieldLabel="Blood Group" fieldName={'patientFullName'} record={patirntObservationlist?.object[0]} />
 
+</div>
+      
     
 
       <br />

@@ -20,6 +20,7 @@ import {
   SelectPicker,
   Form
 } from 'rsuite';
+
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import BlockIcon from '@rsuite/icons/Block';
 import { notify } from '@/utils/uiReducerActions';
@@ -29,28 +30,39 @@ import {
   useSaveObservationSummaryMutation
 } from '@/services/observationService';
 import {
+  useGetEncountersQuery,
+  useCompleteEncounterRegistrationMutation
+} from '@/services/encounterService';
+import {
   useGetLovValuesByCodeAndParentQuery,
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
 import {
+  ApEncounter,
   ApPatientObservationSummary
 } from '@/types/model-types';
 import {
   newApPatientObservationSummary
 } from '@/types/model-types-constructor';
+import {
+  useCompleteEncounterMutation,
+ 
+} from '@/services/encounterService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useNavigate } from 'react-router-dom';
+import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 const EncounterPreObservations = () => {
   const patientSlice = useAppSelector(state => state.patient);
-
+  const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
   const dispatch = useAppDispatch();
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
   const navigate = useNavigate();
-
+  const[localEncounter,setLocalEncounter]=useState<ApEncounter>({...patientSlice.encounter})
   const [bmi, setBmi] = useState('');
   const [bsa, setBsa] = useState('');
   const [saveObservationSummary, setSaveObservationSummary] = useSaveObservationSummaryMutation();
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
+ const[readOnly,setReadOnly]=useState(false);
   const [patientLastVisitObservationsListRequest, setPatientLastVisitObservationsListRequest] =
     useState<ListRequest>({
       ...initialListRequest,
@@ -64,7 +76,7 @@ const EncounterPreObservations = () => {
         }
       ]
     });
-
+    const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   // TODO update status to be a LOV value
   useEffect(() => {
     if (patientSlice.encounter.encounterStatusLkey === '91109811181900') {
@@ -72,7 +84,12 @@ const EncounterPreObservations = () => {
     }
   }, [patientSlice.encounter.encounterStatusLkey]);
 
-
+  const handleCompleteEncounter = () => {
+    if (patientSlice.encounter) {
+      completeEncounter(patientSlice.encounter).unwrap();
+      setReadOnly(true);
+    }
+  };
   const [patientObservationsListRequest, setPatientObservationsListRequest] =
     useState<ListRequest>({
       ...initialListRequest,
@@ -91,6 +108,7 @@ const EncounterPreObservations = () => {
         }
       ]
     });
+    console.log("patientSlice.encounter.key",patientSlice.encounter);
   const { data: getObservationSummaries } = useGetObservationSummariesQuery({
     ...patientLastVisitObservationsListRequest,
   });
@@ -201,7 +219,46 @@ const EncounterPreObservations = () => {
           </Panel>
 
           <Panel>
-            <Grid fluid >
+          <Tabs >
+            <TabList style={{display:'flex'}}>
+              <Tab>
+                <Translate>Observations</Translate>
+              </Tab>
+              <Tab>
+                <Translate>Allergies</Translate>
+              </Tab>
+              <Tab>
+                <Translate>Medical Warnings</Translate>
+              </Tab>
+              <Tab>
+                <Translate>Vaccination</Translate>
+              </Tab>
+              
+              <Tab>
+                <Translate>Patient History </Translate>
+              </Tab>
+
+              <ButtonToolbar style={{marginLeft:'auto'}}>
+              <IconButton
+                appearance="primary"
+                disabled={isEncounterStatusClosed || readOnly}
+                color="cyan"
+                icon={<CloseOutlineIcon />}
+                onClick={() => {handleCompleteEncounter()}}
+              >
+                <Translate>Complete Visit</Translate>
+                </IconButton>
+              <IconButton
+                appearance="primary"
+                color="blue"
+                icon={<CloseOutlineIcon />}
+                onClick={() => { navigate('/encounter-list') }}
+              >
+                <Translate>Close</Translate>
+              </IconButton>
+            </ButtonToolbar>
+            </TabList>
+            <TabPanel>      <Grid fluid >
               <Row gutter={15} >
                 <div className="responseveDiv">
                   <div className='resDivPart'>  <Col xs={12}>
@@ -227,7 +284,7 @@ const EncounterPreObservations = () => {
                           <Row gutter={15}>
                             <Col xs={2}><h6 style={{ textAlign: 'left' }}>BP</h6></Col>
                             <Col xs={4}><Input
-                              disabled={isEncounterStatusClosed}
+                              disabled={isEncounterStatusClosed || readOnly}
                               type="number"
                               value={patientObservationSummary.latestbpSystolic}
                               onChange={e =>
@@ -237,7 +294,7 @@ const EncounterPreObservations = () => {
                                 })} /></Col>
                             <Col xs={1}><h6 style={{ textAlign: 'center' }}>/</h6></Col>
                             <Col xs={4}><Input
-                              disabled={isEncounterStatusClosed}
+                              disabled={isEncounterStatusClosed || readOnly}
                               type="number"
                               value={patientObservationSummary.latestbpDiastolic}
 
@@ -270,7 +327,7 @@ const EncounterPreObservations = () => {
                             <Col xs={7}>
                               <InputGroup>
                                 <Input
-                                  disabled={isEncounterStatusClosed}
+                                  disabled={isEncounterStatusClosed  || readOnly}
                                   type="number"
                                   value={patientObservationSummary.latestheartrate}
                                   onChange={e =>
@@ -291,7 +348,7 @@ const EncounterPreObservations = () => {
                               <InputGroup>
                                 <Input
                                   type="number"
-                                  disabled={isEncounterStatusClosed}
+                                  disabled={isEncounterStatusClosed  || readOnly}
                                   value={patientObservationSummary.latestrespiratoryrate}
                                   onChange={e =>
                                     setPatientObservationSummary({
@@ -310,7 +367,7 @@ const EncounterPreObservations = () => {
                             <Col xs={7}>
                               <InputGroup>
                                 <Input type="number"
-                                  disabled={isEncounterStatusClosed}
+                                  disabled={isEncounterStatusClosed  || readOnly}
                                   value={patientObservationSummary.latestoxygensaturation}
                                   onChange={e =>
                                     setPatientObservationSummary({
@@ -330,7 +387,7 @@ const EncounterPreObservations = () => {
                             <Col xs={7}>
                               <InputGroup>
                                 <Input type="number"
-                                  disabled={isEncounterStatusClosed}
+                                  disabled={isEncounterStatusClosed || readOnly}
                                   value={patientObservationSummary.latesttemperature}
                                   onChange={e =>
                                     setPatientObservationSummary({
@@ -354,6 +411,7 @@ const EncounterPreObservations = () => {
                               rows={3}
                               style={{ width: 357 }}
                               value={patientObservationSummary.latestnotes}
+                              disabled={isEncounterStatusClosed || readOnly}
                               onChange={e =>
                                 setPatientObservationSummary({
                                   ...patientObservationSummary,
@@ -394,7 +452,7 @@ const EncounterPreObservations = () => {
                               <InputGroup>
                                 <Input
                                   type="number"
-                                  disabled={isEncounterStatusClosed}
+                                  disabled={isEncounterStatusClosed  || readOnly}
                                   value={patientObservationSummary.latestweight}
                                   onChange={e =>
                                     setPatientObservationSummary({
@@ -417,7 +475,7 @@ const EncounterPreObservations = () => {
                               <InputGroup>
                                 <Input
                                   type="number"
-                                  disabled={isEncounterStatusClosed}
+                                  disabled={isEncounterStatusClosed || readOnly}
                                   value={patientObservationSummary.latestheight}
                                   onChange={e =>
                                     setPatientObservationSummary({
@@ -441,7 +499,7 @@ const EncounterPreObservations = () => {
                             <Col xs={7}>
                               <InputGroup>
                                 <Input type="number"
-                                  disabled={isEncounterStatusClosed}
+                                  disabled={isEncounterStatusClosed || readOnly}
                                   value={patientObservationSummary.latestheadcircumference}
                                   onChange={e =>
                                     setPatientObservationSummary({
@@ -479,7 +537,7 @@ const EncounterPreObservations = () => {
                             <Col xs={6}>
                               <Form fluid>
                                 <MyInput
-                                  disabled={isEncounterStatusClosed}
+                                  disabled={isEncounterStatusClosed || readOnly}
                                   width={165}
                                   row
                                   fieldLabel="Pain Degree"
@@ -501,7 +559,7 @@ const EncounterPreObservations = () => {
                           </Row>
                           <Row>
                             <Col xs={2}><Input
-                              disabled={isEncounterStatusClosed}
+                              disabled={isEncounterStatusClosed || readOnly}
                               as="textarea"
                               rows={2}
                               value={patientObservationSummary.latestpaindescription}
@@ -543,7 +601,8 @@ const EncounterPreObservations = () => {
               >
                 <Translate>Close</Translate>
               </IconButton>
-            </ButtonToolbar>
+            </ButtonToolbar></TabPanel>
+            </Tabs>
           </Panel>
         </div>
       )}
