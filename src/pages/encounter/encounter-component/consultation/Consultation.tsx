@@ -70,7 +70,7 @@ const Consultation = () => {
     const [showCanceled, setShowCanceled] = useState(true);
     const [showPrev, setShowPrev] = useState(true);
     const [actionType, setActionType] = useState(null);
-    const [editing,setEditing]=useState(false);
+    const [editing, setEditing] = useState(false);
     const [openConfirmDeleteModel, setConfirmDeleteModel] = useState(false);
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const { data: consultantSpecialtyLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SPECIALY');
@@ -87,7 +87,7 @@ const Consultation = () => {
                 : item.systemDetailLkey;
             return `* ${systemDetail}\n${item.notes}`;
         })
-        .join("\n\n");
+        .join("\n") +"\n___________-________\n"+patientSlice.encounter.physicalExamNote;
 
 
     console.log(summaryText);
@@ -150,7 +150,7 @@ const Consultation = () => {
         });
     const patientDiagnoseListResponse = useGetPatientDiagnosisQuery(listRequest);
 
-    console.log(patientDiagnoseListResponse?.data?.object[0].diagnosisObject.description + "," + patientDiagnoseListResponse?.data?.object.length)
+    console.log(patientDiagnoseListResponse?.data?.object[0]?.diagnosisObject.icdCode + "," + patientDiagnoseListResponse?.data?.object[0]?.diagnosisObject.description + "," + patientDiagnoseListResponse?.data?.object?.length)
     const [selectedDiagnose, setSelectedDiagnose] = useState<ApPatientDiagnose>({
         ...newApPatientDiagnose,
         visitKey: patientSlice.encounter.key,
@@ -163,39 +163,38 @@ const Consultation = () => {
 
     const key =
         patientDiagnoseListResponse?.data?.object &&
-            Array.isArray(patientDiagnoseListResponse.data.object) &&
-            patientDiagnoseListResponse.data.object.length > 0
-            ? patientDiagnoseListResponse.data.object[0].key ?? ""
+            Array.isArray(patientDiagnoseListResponse.data?.object) &&
+            patientDiagnoseListResponse.data?.object?.length > 0
+            ? patientDiagnoseListResponse.data?.object[0]?.key ?? ""
             : "";
 
     console.log(key);
-    const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch } =
-    useFetchAttachmentLightQuery({ refKey: consultationOrders?.key }, { skip: !consultationOrders?.key });
-const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
-const fetchOrderAttachResponse = useFetchAttachmentQuery(
-    {
-      type: 'CONSULTATION_ORDER',
-      refKey: consultationOrders.key
-    },
-    { skip: !consultationOrders.key }
-  );
-const {
-    data: fetchAttachmentByKeyResponce,
-    error,
-    isLoading,
-    isFetching,
-    isSuccess,
-    refetch:refAtt
-  } = useFetchAttachmentByKeyQuery(
-    { key: requestedPatientAttacment },
-    { skip: !requestedPatientAttacment || !consultationOrders.key }
-  );
+    // const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch } =
+    // useFetchAttachmentLightQuery({ refKey: consultationOrders?.key }, { skip: !consultationOrders?.key });
+    const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
+    const fetchOrderAttachResponse = useFetchAttachmentQuery(
+        {
+            type: 'CONSULTATION_ORDER',
+            refKey: consultationOrders.key
+        },
+        { skip: !consultationOrders.key }
+    );
+    const {
+        data: fetchAttachmentByKeyResponce,
+        error,
+        isLoading,
+        isFetching,
+        isSuccess,
+        refetch: refAtt
+    } = useFetchAttachmentByKeyQuery(
+        { key: requestedPatientAttacment },
+        { skip: !requestedPatientAttacment || !consultationOrders.key }
+    );
 
 
     useEffect(() => {
         if (patientDiagnoseListResponse.data?.object?.length > 0) {
-            setSelectedDiagnose(patientDiagnoseListResponse.data.object[0].
-                diagnosisObject
+            setSelectedDiagnose(patientDiagnoseListResponse?.data?.object[0]?.diagnosisObject
             );
         }
     }, [patientDiagnoseListResponse.data]);
@@ -207,44 +206,45 @@ const {
         } else return '';
     };
     console.log(selectedDiagnose);
-        const handleDownload = async (attachment) => {
+    const handleDownload = async (attachment) => {
         try {
-          if (!attachment?.fileContent || !attachment?.contentType || !attachment?.fileName) {
-            console.error("Invalid attachment data.");
-            return;
-          }
-      
-          const byteCharacters = atob(attachment.fileContent);
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-          const blob = new Blob([byteArray], { type: attachment.contentType });
-      
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.style.display = "none";
-          a.href = url;
-          a.download = attachment.fileName;
-      
-          document.body.appendChild(a);
-          a.click();
-      
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-      
-          console.log("File downloaded successfully:", attachment.fileName);
-          attachmentRefetch().then(() => {
-            console.log("Refetch complete");
-        }).catch((error) => {
-            console.error("Refetch failed:", error);
-        });
+            if (!attachment?.fileContent || !attachment?.contentType || !attachment?.fileName) {
+                console.error("Invalid attachment data.");
+                return;
+            }
+
+            const byteCharacters = atob(attachment.fileContent);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: attachment.contentType });
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.style.display = "none";
+            a.href = url;
+            a.download = attachment.fileName;
+
+            document.body.appendChild(a);
+            a.click();
+
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            console.log("File downloaded successfully:", attachment.fileName);
+            attachmentRefetch().then(() => {
+                console.log("Refetch complete");
+            }).catch((error) => {
+                console.error("Refetch failed:", error);
+            });
         } catch (error) {
-          console.error("Error during file download:", error);
+            console.error("Error during file download:", error);
         }
-      };
-      
+    };
+    console.log(fetchAttachmentByKeyResponce)
+    console.log(fetchOrderAttachResponse)
     // useEffect(() => {
     //     console.log("iam in useefect download")
     //     if (isSuccess && fetchAttachmentByKeyResponce) {
@@ -254,14 +254,14 @@ const {
     //     }
     //   }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
     const handleDownloadSelectedPatientAttachment = attachmentKey => {
-        
+
         setRequestedPatientAttacment(attachmentKey);
         setActionType('download');
-        console.log("iam in download atach atKey= "+attachmentKey)
-      
-              handleDownload(fetchAttachmentByKeyResponce);
-            
-          
+        console.log("iam in download atach atKey= " + attachmentKey)
+
+        handleDownload(fetchAttachmentByKeyResponce);
+
+
     };
     const handleFilterChange = (fieldName, value) => {
         if (value) {
@@ -504,32 +504,30 @@ const {
             <div style={{ display: "flex", flexDirection: "column", width: "250px" }} >
 
                 <Form style={{ zoom: 0.85 }} layout="inline" fluid>
-                    <MyInput
-                        column
-                        width={300}
-                        disabled={true}
-                        fieldLabel="Diagnose"
-                        fieldName="description"
-                        rows={6}
-                        fieldType="textarea"
-                        record={selectedDiagnose}
-                        setRecord={setSelectedDiagnose}
+
+                    <Text>Diagnose</Text>
+                    <textarea
+                        value={selectedDiagnose.icdCode + "," + selectedDiagnose.description}
+                        readOnly
+                        rows={3}
+                        cols={50}
+                        style={{ width: "100%" }}
                     />
                     <Text>Finding Summery</Text>
                     <textarea
                         value={summaryText}
                         readOnly
-                        rows={10}
+                        rows={5}
                         cols={50}
-                        style={{ width: "100%", height: "300px", fontFamily: "monospace" }}
+                        style={{ width: "100%" }}
                     />
 
                 </Form>
                 <div style={{ display: "flex", flexDirection: "row" }}>
-                    {true && <Button
+                    {fetchOrderAttachResponse.status != "uninitialized" && <Button
                         style={{ marginTop: "20px" }}
                         appearance="link"
-                     onClick={() => handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)}
+                        onClick={() => handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)}
                     >
                         Download <FileDownloadIcon style={{ marginLeft: '10px', scale: '1.4' }} />
                     </Button>}
@@ -615,8 +613,8 @@ const {
                     data={consultationOrderListResponse?.object ?? []}
                     onRowClick={rowData => {
                         setConsultationOrder(rowData);
-                        setEditing(rowData.statusLkey=="164797574082125"?false:true)
-                        console.log(requestedPatientAttacment )
+                        setEditing(rowData.statusLkey == "164797574082125" ? false : true)
+                        console.log(requestedPatientAttacment)
 
                     }}
                     rowClassName={isSelected}
