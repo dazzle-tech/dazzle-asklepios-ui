@@ -219,7 +219,7 @@ const Encounter = () => {
                      style={{ display: 'flex', alignItems: 'center' }}
                     onClick={() => handleMenuItemClick(<PatientSummary patient={patientSlice.patient} encounter={patientSlice.encounter} />)}>
                     <FontAwesomeIcon icon={faBars} style={{ margin: '3px' }}  />
-                      <Translate>Patient Summary</Translate>
+                      <Translate>Patient Dashboard</Translate>
                     </List.Item>
                     <List.Item
                      style={{ display: 'flex', alignItems: 'center' }}
