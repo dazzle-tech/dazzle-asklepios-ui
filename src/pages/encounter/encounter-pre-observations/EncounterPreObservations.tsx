@@ -214,7 +214,7 @@ const EncounterPreObservations = () => {
     <>
       {patientSlice.patient && patientSlice.encounter && (
         <div>
-          <h4>Pre-Visit Observations</h4>
+          <h4>Nurse Station</h4>
           <Panel header={<EncounterMainInfoSection patient={patientSlice.patient} encounter={patientSlice.encounter} />}>
           </Panel>
 
