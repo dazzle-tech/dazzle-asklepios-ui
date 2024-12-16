@@ -49,6 +49,7 @@ const MyInput = ({
             style={{ width: props?.width ?? 260 ,height:props?.height??50}}
             disabled={props.disabled}
             name={fieldName}
+            placeholder={props.placeholder}
             value={record[fieldName] ? record[fieldName] : ''}
             accepter={Textarea}
             onChange={handleValueChange}
@@ -80,6 +81,7 @@ const MyInput = ({
             valueKey={props?.selectDataValue ?? ''}
             value={record ? record[fieldName] : ''}
             onChange={handleValueChange}
+            defaultValue={props.defaultSelectValue}
           />
         );
       //<TagPicker data={data} style={{ width: 300 }} />

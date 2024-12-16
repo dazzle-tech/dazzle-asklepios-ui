@@ -19,7 +19,8 @@ import {
   Text,
   InputGroup,
   SelectPicker,
-  DatePicker
+  DatePicker,
+  Form
 } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { initialListRequest } from '@/types/types';
@@ -166,109 +167,106 @@ const PatientDiagnosis = () => {
   };
   return (
     <>
-      <Panel   >
-        <Grid fluid>
-          <Row gutter={15}>
-            <Col xs={11} >
-              <Row >
-                <Text style={{ zoom: 0.88 }}>Diagnose</Text>
-                <SelectPicker
-                  disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
-                  style={{ width: '100%', zoom: 0.80 }}
-                  data={icdListResponseData?.object ?? []}
-                  labelKey="description"
-                  valueKey="key"
-                  placeholder="ICD"
-                  value={selectedDiagnose.diagnoseCode}
-                  onChange={e =>
-                    setSelectedDiagnose({
-                      ...selectedDiagnose,
-                      diagnoseCode: e
-                    })
-                  }
-                />
-              </Row>
-              <Row >
-
-                <Text style={{ zoom: 0.88 }}>Additional Description</Text>
-                <InputGroup>
-                  <InputGroup.Addon>
-                    {<icons.CheckRound color="green" />}
-
-
-                  </InputGroup.Addon>
-                  <Input
-                    disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
-                    style={{ zoom: 0.80 }}
-                    value={selectedDiagnose.description}
-                    onChange={e => setSelectedDiagnose({ ...selectedDiagnose, description: e })}
-
-                  />
-                </InputGroup>
-              </Row>
-
-            </Col>
-            <Col xs={10} >
-
-              <Row gutter={5}>
-                <div style={{ display: "flex", gap: "2px" }}>
-
-                  <div style={{ display: "flex", flexDirection: "column", flex: "1" }}><Text style={{ marginRight: "2px", fontSize: "12px" }} >Syspected</Text><Toggle
-                    onChange={e =>
-                      setSelectedDiagnose({
-                        ...selectedDiagnose,
-                        isSuspected: e
-                      })
-                    } checkedChildren="Yes" unCheckedChildren="No"
-                    defaultChecked={selectedDiagnose.isSuspected}
-                    disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
-                  /></div>
-
-                  <div style={{ display: "flex", flexDirection: "column", flex: "1" }}><Text style={{ fontSize: "12px" }}>Major</Text>
-                    <Toggle
-                      onChange={e =>
-                        setSelectedDiagnose({
-                          ...selectedDiagnose,
-                          isMajor: e
-                        })}
-                      disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
-                      checkedChildren="Yes" unCheckedChildren="No" defaultChecked={selectedDiagnose.isMajor} /></div>
+      <Panel style={{ display: 'flex', flexDirection: 'column', padding: '3px' }} >
+        <div style={{ display: 'flex' }}>
+          <div >
+            <Text style={{ zoom: 0.88 }}>Diagnose</Text>
+            <SelectPicker
+              disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
+              style={{ width: '200px', zoom: 0.80 }}
+              data={icdListResponseData?.object ?? []}
+              labelKey="description"
+              valueKey="key"
+              placeholder="ICD"
+              value={selectedDiagnose.diagnoseCode}
+              onChange={e =>
+                setSelectedDiagnose({
+                  ...selectedDiagnose,
+                  diagnoseCode: e
+                })
+              }
+              renderMenuItem={(label, item) => (
+                <div>
+                   <span>{item.icdCode}</span>- <span>{item.description}</span> 
                 </div>
-              </Row>
-              <Row style={{ display: "flex" }} >
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <Text style={{ zoom: 0.88 }}>Type </Text>
-                  <SelectPicker
-                    disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
-                    style={{ width: '100%', zoom: 0.94 }}
-                    data={sourceOfInfoLovResponseData?.object ?? []}
-                    labelKey="lovDisplayVale"
-                    valueKey="key"
+            )}
+            />
+          </div>
+          <Form style={{ zoom: 0.80, marginLeft: "3px" }} layout="inline" fluid>
+            <MyInput
 
-                    value={selectedDiagnose.diagnoseTypeLkey}
-                    onChange={e =>
-                      setSelectedDiagnose({
-                        ...selectedDiagnose,
-                        diagnoseTypeLkey: e
-                      })
-                    }
-                  />
-                </div>
+              disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
+              column
+              fieldLabel="Suspected"
+              fieldType="checkbox"
+              fieldName="isSuspected"
+              record={selectedDiagnose}
+              setRecord={setSelectedDiagnose}
+            //   disabled={!editing}
+            />
+            <MyInput
 
-                <Button onClick={save} disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false} 
-                style={{border:"1px solid green" ,marginLeft:"5px"}}
-                 >
+              disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
+              column
+              fieldLabel="Major"
+              fieldType="checkbox"
+              fieldName="isMajor"
+              record={selectedDiagnose}
+              setRecord={setSelectedDiagnose}
+            //   disabled={!editing}
+            />
+          </Form>
+        </div>
+        <div style={{ display: 'flex', gap: '4px' }}>
+          <div>
+
+            <Text style={{ zoom: 0.85 }}>Additional Description</Text>
+            <InputGroup>
+              <InputGroup.Addon>
+                {<icons.CheckRound color="green" />}
+
+
+              </InputGroup.Addon>
+              <Input
+                disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
+                style={{ zoom: 0.80 }}
+                value={selectedDiagnose.description}
+                onChange={e => setSelectedDiagnose({ ...selectedDiagnose, description: e })}
+
+              />
+            </InputGroup>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '3px' }}>
+            <Text style={{ zoom: 0.88 }}>Type </Text>
+            <SelectPicker
+              disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
+              style={{ width: '100%', zoom: 0.94 }}
+              data={sourceOfInfoLovResponseData?.object ?? []}
+              labelKey="lovDisplayVale"
+              valueKey="key"
+
+              value={selectedDiagnose.diagnoseTypeLkey}
+              onChange={e =>
+                setSelectedDiagnose({
+                  ...selectedDiagnose,
+                  diagnoseTypeLkey: e
+                })
+              }
+            />
+          </div>
+          <div style={{display:'flex',justifyContent: 'center', alignItems: 'flex-end'}}>
+          <Button
+                    color="green"
+                    appearance="primary"
+                    onClick={save}
                   
-                <MdSave style={{color:"green" , zoom: 0.88 }} />
+                    
+                >
+                    <Translate>Save</Translate>
                 </Button>
-              </Row>
-            </Col>
-
-
-          </Row>
-
-        </Grid>
-
+                </div>
+       
+        </div>
       </Panel>
 
     </>

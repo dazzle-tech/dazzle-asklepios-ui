@@ -6,6 +6,7 @@ import EncounterPreObservations from '../../encounter-pre-observations/Encounter
 import { faBolt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import VoiceCitation from '@/components/VoiceCitation';
+
 import {
   FlexboxGrid,
   IconButton,
@@ -23,15 +24,30 @@ import {
   Form,
   Toggle
 } from 'rsuite';
+import { 
+  faVials
+   ,faFilePrescription
+   ,faStethoscope
+   ,faNotesMedical,
+   faClockRotateLeft,
+   faPersonDotsFromLine,
+   faTriangleExclamation,
+  faPills,
+  faSyringe,
+ faFileWaveform
+  
+  } from '@fortawesome/free-solid-svg-icons';
 const { Column, HeaderCell, Cell } = Table;
 import ChiefComplaint from '../../medical-notes-and-assessments/chief-complaint';
 import Plan from '../../medical-notes-and-assessments/plan';
 import PatientDiagnosis from '../../medical-notes-and-assessments/patient-diagnosis';
 import ReviewOfSystems from '../../medical-notes-and-assessments/review-of-systems';
+import Assessments from '../../medical-notes-and-assessments/assessments';
 import {
   useGetLovValuesByCodeAndParentQuery,
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
+import { useSaveEncounterChangesMutation } from '@/services/encounterService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { addFilterToListRequest, calculateAge, formatDate, fromCamelCaseToDBName } from '@/utils';
 import { useAppSelector, useAppDispatch } from '@/hooks';
@@ -43,18 +59,30 @@ import {
   ApPatientObservationSummary
 } from '@/types/model-types';
 import {
+  newApEncounter,
   newApPatientObservationSummary
 } from '@/types/model-types-constructor';
+import { values } from 'lodash';
+import { notify } from '@/utils/uiReducerActions';
+
+
 const SOAP = () => {
   const patientSlice = useAppSelector(state => state.patient);
 
   const dispatch = useAppDispatch();
+  const [localEncounter, setLocalEncounter] = useState({ ...patientSlice.encounter });
+   const [planInstructions, setPlanInstructions] = useState();
+    const [instructionKey, setInstructionsKey] = useState()
+      const [instructionValue, setInstructionsValue] = useState()
+       const [instructions, setInstructions] = useState()
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
+  const { data: planLovQueryResponse } = useGetLovValuesByCodeQuery('VISIT_CAREPLAN_OPT');
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     ignore: true
   });
-
+  
+  const [saveEncounterChanges, saveEncounterChangesMutation] = useSaveEncounterChangesMutation();
   const [patientLastVisitObservationsListRequest, setPatientLastVisitObservationsListRequest] =
     useState<ListRequest>({
       ...initialListRequest,
@@ -104,8 +132,33 @@ const SOAP = () => {
     latestheadcircumference: null,
     latestpainlevelLkey: null
   });
-
   useEffect(() => {
+    if (patientSlice.encounter && patientSlice.encounter.key) {
+     
+      setLocalEncounter(patientSlice.encounter);
+
+    } else {
+    }
+  }, []);
+  
+        useEffect(() => {
+          console.log('case patient')
+            if (localEncounter.planInstructions!= null){
+              
+            console.log(localEncounter.planInstructions)
+             setPlanInstructions(prevplanInstructions =>
+                    prevplanInstructions ? `${prevplanInstructions}, ${planLovQueryResponse?.object?.find(
+                        item => item.key === localEncounter.planInstructions
+                    )?.lovDisplayVale}` : 
+                    planLovQueryResponse?.object?.find(
+                        item => item.key === localEncounter.planInstructions
+                    )?.lovDisplayVale
+                );}
+    
+            setLocalEncounter({ ...localEncounter, planInstructions: null })
+        }, [localEncounter.planInstructions])
+  useEffect(() => {
+
     setPatientObservationSummary((prevSummary) => ({
       ...prevSummary,
       latesttemperature: currentObservationSummary?.latesttemperature,
@@ -125,9 +178,34 @@ const SOAP = () => {
 
     }));
   }, [currentObservationSummary]);
-  console.log(patientObservationSummary.latestweight);
+
+  const saveChanges = async () => {
+    try {
+      await saveEncounterChanges(localEncounter).unwrap();
+      dispatch(notify('Assessment  Saved Successfully'));
+    } catch (error) {
+
+
+      dispatch(notify('Assessment Saved  fill'));
+    }
+  };
+  const savePlan = async () => {
+    console.log(localEncounter)
+    console.log("ppp"+planInstructions)
+    try {
+      await saveEncounterChanges({...localEncounter,planInstructions:planInstructions}).unwrap();
+      dispatch(notify('Assessment  Saved Successfully'));
+    } catch (error) {
+
+
+      dispatch(notify('Assessment Saved  fill'));
+    }
+  };
+  const assessmentSummeryChanged = () => {
+    return patientSlice.encounter.assessmentSummery !== localEncounter.assessmentSummery;
+  };
   return (<>
-    <h5>S.O.A.P</h5>
+    <h5>Clinical Visit</h5>
     <div className="soap-container">
       <div className="column-container">
 
@@ -154,10 +232,10 @@ const SOAP = () => {
               <FontAwesomeIcon icon={faBolt} style={{ marginRight: '5px' }} />
               <span>Prescription</span>
             </Button>
-           
+
             <Button
               appearance="ghost"
-              style={{ border: '1px solid rgb(130, 95, 196)', color: 'rgb(130, 95, 196)',marginLeft:"3px" }}
+              style={{ border: '1px solid rgb(130, 95, 196)', color: 'rgb(130, 95, 196)', marginLeft: "3px" }}
 
             >
               <FontAwesomeIcon icon={faBolt} style={{ marginRight: '5px' }} />
@@ -165,7 +243,7 @@ const SOAP = () => {
             </Button>
             <Button
               appearance="ghost"
-              style={{ border: '1px solid rgb(130, 95, 196)', color: 'rgb(130, 95, 196)',marginLeft:"3px" }}
+              style={{ border: '1px solid rgb(130, 95, 196)', color: 'rgb(130, 95, 196)', marginLeft: "3px" }}
 
             >
               <FontAwesomeIcon icon={faBolt} style={{ marginRight: '5px' }} />
@@ -173,13 +251,13 @@ const SOAP = () => {
             </Button>
             <Button
               appearance="ghost"
-              style={{ border: '1px solid rgb(130, 95, 196)', color: 'rgb(130, 95, 196)',marginLeft:"3px" }}
+              style={{ border: '1px solid rgb(130, 95, 196)', color: 'rgb(130, 95, 196)', marginLeft: "3px" }}
 
             >
               <FontAwesomeIcon icon={faBolt} style={{ marginRight: '5px' }} />
-              <span>Referral</span>
+              <span>Procedures</span>
             </Button>
-            
+
           </div>
         </fieldset>
       </div>
@@ -187,7 +265,7 @@ const SOAP = () => {
       <div className="column-container">
         <fieldset style={{ flex: "2" }} className="box-container">
           <legend> vital signs</legend>
-          <Panel style={{  zoom: 0.88 }}>
+          <Panel style={{ zoom: 0.88 }}>
             <Grid fluid>
               <Row gutter={15}>
                 <Col xs={2}><h6 style={{ textAlign: 'left', fontSize: "13px" }}>BP</h6></Col>
@@ -309,10 +387,38 @@ const SOAP = () => {
           <legend>Patient Diagnosis </legend>
           <PatientDiagnosis />
         </fieldset>
-        <fieldset style={{ flex: "2" }} className="box-container">
+        <fieldset style={{ flex: "1" }} className="box-container">
           <legend>Plan</legend>
+          
+          <div style={{display:'flex',gap:'6px'}}>
+          <Form style={{ zoom: 0.85 }} fluid>
 
-          <Plan />
+            <MyInput
+
+              width={250}
+              // disabled={editing}
+              fieldType="select"
+              selectData={planLovQueryResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              fieldName={'planInstructions'}
+              record={localEncounter}
+              setRecord={setLocalEncounter}
+            />
+
+            <Input as="textarea" onChange={(e) => setPlanInstructions(e)} value={planInstructions} style={{ width: 250 }} rows={3} />
+          </Form>
+          <div style={{display:'flex',justifyContent: 'center', alignItems: 'flex-end'}}>
+          <Button
+          appearance="primary"
+          color='green'
+          onClick={savePlan}
+          >
+            Save
+            </Button>
+          </div>
+          </div>
+          
         </fieldset>
       </div>
       <div className="column-container">
@@ -414,42 +520,68 @@ const SOAP = () => {
             </Grid>
           </Panel>
         </fieldset>
-        <fieldset style={{ flex: "3" }} className="box-container">
+        <fieldset className="box-container">
+          <legend> Assessment</legend>
+          <Panel style={{ padding: '2px', zoom: 0.88 }} >
+            <Form>
+              {/* <MyInput
+            fieldType='textarea'
+            placeholder={"Only you can see this Assessment"}
+            width={450}
+            rows={4}
+            fieldName={'assesment'}
+            record={{}}
+            setRecord={{}}
+            
+            ></MyInput> */}
+
+              <Input
+                as={'textarea'}
+                rows={4}
+                style={{ fontSize: '12px', maxHeight: '150px', overflowY: 'auto', resize: 'vertical' }}
+                value={localEncounter.assessmentSummery}
+                placeholder={'Only you can see this Assessment'}
+                onChange={e => setLocalEncounter({ ...localEncounter, assessmentSummery: e })}
+                onBlur={assessmentSummeryChanged() ? saveChanges : undefined}
+              />
+
+            </Form>
+          </Panel>
+        </fieldset>
+        <fieldset style={{ flex: "2" }} className="box-container">
           <legend> Test Results </legend>
-          <Row gutter={10}>
-            <Col xs={24}>
-              <Table
-                bordered
-                onRowClick={rowData => {
 
-                }}
+          <Table
+            bordered
+            onRowClick={rowData => {
+
+            }}
 
 
-              >
+          >
 
-                <Table.Column flexGrow={1}>
-                  <Table.HeaderCell style={{ fontSize: '9px', width: '150px', padding: '10px' }}>  Type</Table.HeaderCell>
-                  <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
-                </Table.Column>
-                <Table.Column flexGrow={1}>
-                  <Table.HeaderCell style={{ fontSize: '9px', width: '150px', padding: '10px' }}>Name</Table.HeaderCell>
-                  <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
-                </Table.Column>
-                <Table.Column flexGrow={1}>
-                  <Table.HeaderCell style={{ fontSize: '9px', width: '150px', padding: '10px' }}>Result</Table.HeaderCell>
-                  <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
-                </Table.Column>
-                <Table.Column flexGrow={1}>
-                  <Table.HeaderCell style={{ fontSize: '9px', width: '150px', padding: '10px' }}>Order Time</Table.HeaderCell>
-                  <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
-                </Table.Column>
-                <Table.Column flexGrow={1}>
-                  <Table.HeaderCell style={{ fontSize: '9px', width: '150px', padding: '10px' }}>Result Time</Table.HeaderCell>
-                  <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
-                </Table.Column>
-              </Table>
-            </Col>
-          </Row>
+            <Table.Column flexGrow={1}>
+              <Table.HeaderCell style={{ fontSize: '9px', width: '150px', padding: '10px' }}>  Type</Table.HeaderCell>
+              <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+            </Table.Column>
+            <Table.Column flexGrow={1}>
+              <Table.HeaderCell style={{ fontSize: '9px', width: '150px', padding: '10px' }}>Name</Table.HeaderCell>
+              <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+            </Table.Column>
+            <Table.Column flexGrow={1}>
+              <Table.HeaderCell style={{ fontSize: '9px', width: '150px', padding: '10px' }}>Result</Table.HeaderCell>
+              <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+            </Table.Column>
+            <Table.Column flexGrow={1}>
+              <Table.HeaderCell style={{ fontSize: '9px', width: '150px', padding: '10px' }}>Order Time</Table.HeaderCell>
+              <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+            </Table.Column>
+            <Table.Column flexGrow={1}>
+              <Table.HeaderCell style={{ fontSize: '9px', width: '150px', padding: '10px' }}>Result Time</Table.HeaderCell>
+              <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+            </Table.Column>
+          </Table>
+
         </fieldset>
       </div>
 

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import './styles.less';
+import { BodyComponent } from "reactjs-human-body";
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { ApEncounter } from '@/types/model-types';
 import { newApEncounter } from '@/types/model-types-constructor';
-import Chart from '../../../../images/trace.svg';
+import Chart from '../../../../images/bodychart.svg';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
     FlexboxGrid,
@@ -24,8 +25,20 @@ import {
     InputGroup,
     SelectPicker
 } from 'rsuite';
+import {
+    useGetPatientDiagnosisQuery,
+} from '@/services/encounterService';
+import {
+    useGetPrescriptionsQuery,
+    useGetPrescriptionMedicationsQuery
+} from '@/services/encounterService';
+import {
+    useGetGenericMedicationQuery
+} from '@/services/medicationsSetupService';
 import { useGetEncountersQuery } from '@/services/encounterService';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 const PatientSummary = ({ patient, encounter }) => {
+    const patientSlice = useAppSelector(state => state.patient);
     const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
     const { data: encounterReasonLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_REASON');
 
@@ -45,7 +58,10 @@ const PatientSummary = ({ patient, encounter }) => {
         ],
 
     });
-    const { data: encounterPatientList } = useGetEncountersQuery({ ...patientVisitListRequest });
+    const { data: encounterPatientList } = useGetEncountersQuery({ ...patientVisitListRequest }, {
+        refetchOnMountOrArgChange: true,
+        refetchOnFocus: true,
+    });
     const [LastPatientVisit, setLastPatientVisit] = useState<ApEncounter>({ ...newApEncounter });
     const [chartModelIsOpen, setChartModelIsOpen] = useState(false);
     const [majorModelIsOpen, setMajorModelIsOpen] = useState(false);
@@ -71,6 +87,109 @@ const PatientSummary = ({ patient, encounter }) => {
 
         return null;
     };
+    const getPrevDiag = (targetDate) => {
+
+        const list = encounterPatientList?.object;
+
+
+        if (!Array.isArray(list) || list.length === 0) {
+            return null;
+        }
+
+
+        const index = list.findIndex(
+            (item) => item.plannedStartDate.slice(0, 10) === targetDate
+        );
+
+
+        if (index !== -1 && index - 1 < list.length) {
+            return list[index - 1].key;
+        }
+
+        return null;
+    };
+    const [listmRequest, setListmRequest] = useState({
+        ...initialListRequest,
+        pageSize: 100,
+        timestamp: new Date().getMilliseconds(),
+        sortBy: 'createdAt',
+        sortType: 'desc',
+        filters: [
+            {
+                fieldName: 'patient_key',
+                operator: 'match',
+                value: patient.key
+            },
+            {
+                fieldName: 'is_major',
+                operator: 'match',
+                value: true
+            },
+
+
+        ]
+    });
+    console.log(getPrevObjectByPlannedStartDate(patientSlice.encounter.plannedStartDate)?.key)
+    const [listdRequest, setListdRequest] = useState({
+        ...initialListRequest,
+        pageSize: 100,
+        timestamp: new Date().getMilliseconds(),
+        sortBy: 'createdAt',
+        sortType: 'desc',
+        filters: [
+            {
+                fieldName: 'patient_key',
+                operator: 'match',
+                value: patient.key
+            },
+            {
+                fieldName: 'visit_key',
+                operator: 'match',
+                value: getPrevObjectByPlannedStartDate(patientSlice.encounter.plannedStartDate)?.key
+            }
+
+
+        ]
+    });
+    const { data: majorDiagnoses } = useGetPatientDiagnosisQuery(listmRequest)
+    const majorDiagnosesCodes = majorDiagnoses?.object.map(diagnose => diagnose);
+    const { data: Diagnoses, refetch: fetchlastDiag } = useGetPatientDiagnosisQuery(listdRequest
+        , {
+            refetchOnMountOrArgChange: true,
+            refetchOnFocus: true
+        }
+
+    )
+
+    console.log(Diagnoses?.object);
+    console.log(majorDiagnosesCodes);
+
+    const { data: genericMedicationListResponse } = useGetGenericMedicationQuery({ ...initialListRequest });
+    const { data: prescriptionMedications, isLoading: isLoadingPrescriptions, refetch: preRefetch } = useGetPrescriptionMedicationsQuery({
+        ...initialListRequest,
+        filters: [
+            {
+                fieldName: "patient_key",
+                operator: "match",
+                value: patient.key
+            },
+            {
+                fieldName: "chronic_medication",
+                operator: "match",
+                value: true
+            },
+            {
+                fieldName: "status_lkey",
+                operator: "match",
+                value: "1804482322306061"
+            },
+
+
+        ],
+    });
+
+
+
 
     const handleopenchartModel = () => {
         setChartModelIsOpen(true);
@@ -90,10 +209,6 @@ const PatientSummary = ({ patient, encounter }) => {
     const handlecloseChronicModel = () => {
         setChronicModelIsOpen(false);
     };
-    console.log(patientVisitListRequest);
-    console.log(encounterPatientList?.object);
-    console.log(getPrevObjectByPlannedStartDate(encounter.plannedStartDate));
-    console.log(encounterPatientList);
 
     return (<>
         <h5>Patient Dashboard</h5>
@@ -140,10 +255,10 @@ const PatientSummary = ({ patient, encounter }) => {
 
                         <MyInput
                             column
-                            width={250}
+                            width={300}
                             fieldLabel="Diagnosis Description"
-                            fieldName="PreviuosDiagnosis"
-                            record={encounter}
+                            fieldName="description"
+                            record={Diagnoses?.object[0]?.diagnosisObject || {}}
                         /></Form>
 
                 </div>
@@ -154,6 +269,7 @@ const PatientSummary = ({ patient, encounter }) => {
                         <Col xs={24}>
                             <Table
                                 bordered
+                                data={majorDiagnosesCodes ?? []}
                                 onRowClick={rowData => {
 
                                 }}
@@ -163,11 +279,11 @@ const PatientSummary = ({ patient, encounter }) => {
 
                                 <Table.Column flexGrow={1}>
                                     <Table.HeaderCell>Problem code</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+                                    <Table.Cell>{rowData => rowData.diagnosisObject.icdCode}</Table.Cell>
                                 </Table.Column>
-                                <Table.Column flexGrow={1}>
+                                <Table.Column flexGrow={1} fullText>
                                     <Table.HeaderCell>Description</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+                                    <Table.Cell>{rowData => rowData.diagnosisObject.description}</Table.Cell>
                                 </Table.Column>
 
                             </Table>
@@ -182,6 +298,7 @@ const PatientSummary = ({ patient, encounter }) => {
                         <Col xs={24}>
                             <Table
                                 bordered
+                                data={prescriptionMedications?.object ?? []}
                                 onRowClick={rowData => {
 
                                 }}
@@ -189,14 +306,16 @@ const PatientSummary = ({ patient, encounter }) => {
 
                             >
 
-                                <Table.Column flexGrow={1}>
+                                <Table.Column flexGrow={1} fullText>
                                     <Table.HeaderCell>Medication Generic Name</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+                                    <Table.Cell>{rowData =>
+                                        genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName
+                                    }</Table.Cell>
                                 </Table.Column>
 
-                                <Table.Column flexGrow={1}>
+                                <Table.Column flexGrow={1} fullText>
                                     <Table.HeaderCell>Dose(Unit)</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+                                    <Table.Cell>{rowData => rowData.maximumDose}</Table.Cell>
                                 </Table.Column>
 
                             </Table>
@@ -212,6 +331,7 @@ const PatientSummary = ({ patient, encounter }) => {
 
                 <div className='patient-summary-panel' >
                     <img className='image-style' src={Chart} onClick={handleopenchartModel} />
+                  
                 </div>
 
             </div>
@@ -312,12 +432,29 @@ const PatientSummary = ({ patient, encounter }) => {
             </div>
             <Modal open={chartModelIsOpen} onClose={handleclosechartModel}>
                 <Modal.Header>
-                    <Modal.Title>Modal Title</Modal.Title>
+                    <Modal.Title>Body Diagram</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <img style={{ width: "400px", height: "500px", objectFit: "cover", borderRadius: '8px' }} src={Chart} />
+                    <BodyComponent
+                        partsInput={{
+                            head: { show: true },
+                            leftShoulder: { show: true },
+                            rightShoulder: { show: true },
+                            leftArm: { show: true },
+                            rightArm: { show: true },
+                            chest: { show: true },
+                            stomach: { show: true },
+                            leftLeg: { show: true },
+                            rightLeg: { show: true },
+                            leftHand: { show: true },
+                            rightHand: { show: true },
+                            leftFoot: { show: true },
+                            rightFoot: { show: true }
+                        }}
+                    />
+
                 </Modal.Body>
-                <Modal.Footer>
+                <Modal.Footer style={{ display: "flex", justifyContent: "flex-start" }}>
                     <Button onClick={handleclosechartModel} appearance="primary">
                         Ok
                     </Button>
@@ -327,15 +464,17 @@ const PatientSummary = ({ patient, encounter }) => {
                 </Modal.Footer>
             </Modal>
 
+
             <Modal open={majorModelIsOpen} onClose={handlecloseMajorModel}>
                 <Modal.Header>
-                    <Modal.Title>Modal Title</Modal.Title>
+                    <Modal.Title>Patient Major Diagnoses </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <Row gutter={15}>
                         <Col xs={24}>
                             <Table
                                 bordered
+                                data={majorDiagnosesCodes ?? []}
                                 onRowClick={rowData => {
 
                                 }}
@@ -343,27 +482,33 @@ const PatientSummary = ({ patient, encounter }) => {
 
                             >
 
-                                <Table.Column flexGrow={1}>
+                                <Table.Column flexGrow={1} fullText>
                                     <Table.HeaderCell>Problem code</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+                                    <Table.Cell>{rowData => rowData.diagnosisObject.icdCode}</Table.Cell>
                                 </Table.Column>
-                                <Table.Column flexGrow={1}>
+                                <Table.Column flexGrow={2} fullText>
                                     <Table.HeaderCell>Description</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+                                    <Table.Cell>{rowData => rowData.diagnosisObject.description}</Table.Cell>
                                 </Table.Column>
-                                <Table.Column flexGrow={1}>
-                                    <Table.HeaderCell>Severity</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+                                <Table.Column flexGrow={1} fullText>
+                                    <Table.HeaderCell>Type</Table.HeaderCell>
+                                    <Table.Cell>
+                                        {rowData =>
+                                            rowData.diagnoseTypeLvalue
+                                                ? rowData.diagnoseTypeLvalue.lovDisplayVale
+                                                : rowData.diagnoseTypeLkey
+                                        }
+                                    </Table.Cell>
                                 </Table.Column>
-                                <Table.Column flexGrow={1}>
+                                <Table.Column flexGrow={2} fullText>
                                     <Table.HeaderCell>Diagnosis Date</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+                                    <Table.Cell>{rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}</Table.Cell>
                                 </Table.Column>
                             </Table>
                         </Col>
                     </Row>
                 </Modal.Body>
-                <Modal.Footer>
+                <Modal.Footer style={{ display: "flex", justifyContent: "flex-start" }}>
                     <Button onClick={handlecloseMajorModel} appearance="primary">
                         Ok
                     </Button>
@@ -373,47 +518,45 @@ const PatientSummary = ({ patient, encounter }) => {
                 </Modal.Footer>
             </Modal>
 
-            <Modal open={ChronicModelIsOpen} onClose={handlecloseChronicModel}>
+            <Modal size="md" open={ChronicModelIsOpen} onClose={handlecloseChronicModel}>
                 <Modal.Header>
-                    <Modal.Title>Modal Title</Modal.Title>
+                    <Modal.Title>Patient Chronic Medications</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <Row gutter={15}>
-                        <Col xs={24}>
-                            <Table
-                                bordered
-                                onRowClick={rowData => {
 
-                                }}
+                    <Table
+                        bordered
+                        data={prescriptionMedications?.object ?? []}
+                        onRowClick={rowData => {
+
+                        }}
 
 
-                            >
+                    >
 
-                                <Table.Column flexGrow={1}>
-                                    <Table.HeaderCell>Medication Generic Name</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
-                                </Table.Column>
-                                <Table.Column flexGrow={1}>
-                                    <Table.HeaderCell>Medication Active Ingredient(s)</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
-                                </Table.Column>
-                                <Table.Column flexGrow={1}>
-                                    <Table.HeaderCell>Dose(Unit)</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
-                                </Table.Column>
-                                <Table.Column flexGrow={1}>
-                                    <Table.HeaderCell>Internal Code</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
-                                </Table.Column>
-                                <Table.Column flexGrow={1}>
-                                    <Table.HeaderCell>Start Date</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
-                                </Table.Column>
-                            </Table>
-                        </Col>
-                    </Row>
+                        <Table.Column flexGrow={1} fullText>
+                            <Table.HeaderCell>Medication Generic Name</Table.HeaderCell>
+                            <Table.Cell>{rowData =>
+                                genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName
+                            }</Table.Cell>
+                        </Table.Column>
+                        <Table.Column flexGrow={1} fullText>
+                            <Table.HeaderCell>Medication Active Ingredient(s)</Table.HeaderCell>
+                            <Table.Cell>{rowData => <Text>hhh</Text>}</Table.Cell>
+                        </Table.Column>
+                        <Table.Column flexGrow={1}>
+                            <Table.HeaderCell>Dose(Unit)</Table.HeaderCell>
+                            <Table.Cell>{rowData => rowData.maximumDose}</Table.Cell>
+                        </Table.Column>
+
+                        <Table.Column flexGrow={2} fullText>
+                            <Table.HeaderCell>Start Date</Table.HeaderCell>
+                            <Table.Cell>{rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}</Table.Cell>
+                        </Table.Column>
+                    </Table>
+
                 </Modal.Body>
-                <Modal.Footer>
+                <Modal.Footer style={{ display: "flex", justifyContent: "flex-start" }}>
                     <Button onClick={handlecloseChronicModel} appearance="primary">
                         Ok
                     </Button>
