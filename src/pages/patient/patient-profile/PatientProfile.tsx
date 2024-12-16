@@ -107,7 +107,6 @@ import {
   useUpdateAttachmentDetailsMutation
 } from '@/services/attachmentService';
 import { notify } from '@/utils/uiReducerActions';
-import AttachmentModalFix from './AttachmentUploadModalFix';
 
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
