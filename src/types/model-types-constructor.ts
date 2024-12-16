@@ -1573,6 +1573,7 @@ export const newApPrescription:modelTypes.ApPrescription = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	prescriptionId:'',
 } 
 
 export const newApPrescriptionInstruction:modelTypes.ApPrescriptionInstruction = { 
@@ -1618,6 +1619,8 @@ export const newApPrescriptionMedications:modelTypes.ApPrescriptionMedications =
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	refillIntervalValue:0,
+	refillIntervalUnitLkey:undefined,
 } 
 
 export const newApResources:modelTypes.ApResources = { 

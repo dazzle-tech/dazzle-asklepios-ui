@@ -24,6 +24,7 @@ import {
     RadioGroup,
     TagInput,
     TagGroup,
+    SelectPicker,
     Tag
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
@@ -39,7 +40,7 @@ import {
     useGetPrescriptionMedicationsQuery,
     useSaveCustomeInstructionsMutation,
     useGetCustomeInstructionsQuery
-   
+
 } from '@/services/encounterService';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import CheckIcon from '@rsuite/icons/Check';
@@ -70,7 +71,7 @@ const Prescription = () => {
     const [inst, setInst] = useState(null);
     const [tags, setTags] = React.useState([]);
     const [showCanceled, setShowCanceled] = useState(true);
-    const [editing,setEditing]=useState(false);
+    const [editing, setEditing] = useState(false);
     const [typing, setTyping] = React.useState(false);
     const [inputValue, setInputValue] = React.useState('');
     const [listRequest, setListRequest] = useState<ListRequest>({
@@ -88,7 +89,7 @@ const Prescription = () => {
         dose: null,
         unit: null,
         frequency: null,
-        roa:null
+        roa: null
     });
     const { data: genericMedicationListResponse } = useGetGenericMedicationQuery(listGenericRequest);
     const [selectedRows, setSelectedRows] = useState([]);
@@ -98,8 +99,9 @@ const Prescription = () => {
     const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery('PRESC_INSTRUCTIONS');
     const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const { data: instructionTypeQueryResponse } = useGetLovValuesByCodeQuery('PRESC_INSTR_TYPE');
+    const { data: refillunitQueryResponse } = useGetLovValuesByCodeQuery('REFILL_INTERVAL');
     const [prescription, setPrescription] = useState<ApPrescription>({ ...newApPrescription });
-    const { data: prescriptions, isLoading: isLoadingPrescriptions ,refetch:preRefetch} = useGetPrescriptionsQuery({
+    const { data: prescriptions, isLoading: isLoadingPrescriptions, refetch: preRefetch } = useGetPrescriptionsQuery({
         ...initialListRequest,
         filters: [
             {
@@ -114,7 +116,7 @@ const Prescription = () => {
             },
         ],
     });
-    const preKey = prescriptions?.object[0]?.key;
+    const [preKey,setPreKey] = useState(prescriptions?.object[0]?.key);
     console.log(preKey);
     const [prescriptionMedication, setPrescriptionMedications] = useState<ApPrescriptionMedications>(
         {
@@ -129,7 +131,7 @@ const Prescription = () => {
     const [customeInstruction, setCustomeInstruction] = useState<ApCustomeInstructions>({ ...newApCustomeInstructions });
     const [savePrescription, { isLoading: isSavingPrescription }] = useSavePrescriptionMutation();
     const [savePrescriptionMedication, { isLoading: isSavingPrescriptionMedication }] = useSavePrescriptionMedicationMutation();
-    
+
 
     const [saveCustomeInstructions, { isLoading: isSavingCustomeInstructions }] = useSaveCustomeInstructionsMutation();
 
@@ -137,8 +139,8 @@ const Prescription = () => {
 
     const { data: prescriptionMedications, isLoading: isLoadingPrescriptionMedications, refetch: medicRefetch } = useGetPrescriptionMedicationsQuery({
         ...initialListRequest,
-       
-         filters: [
+
+        filters: [
             {
                 fieldName: "prescription_key",
                 operator: "",
@@ -146,15 +148,16 @@ const Prescription = () => {
             },
             {
                 fieldName: "status_lkey",
-                operator: showCanceled?"notMatch":"match",
+                operator: showCanceled ? "notMatch" : "match",
                 value: "1804447528780744",
             }
         ],
     });
-    const [selectedRowoMedicationKey,setSelectedRowoMedicationKey]=useState("");
-    const { data: customeInstructions, isLoading: isLoadingCustomeInstructions,refetch:refetchCo } = useGetCustomeInstructionsQuery({ ...initialListRequest,
-           
-     });
+    const [selectedRowoMedicationKey, setSelectedRowoMedicationKey] = useState("");
+    const { data: customeInstructions, isLoading: isLoadingCustomeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
+        ...initialListRequest,
+
+    });
     console.log(prescriptions?.object[0]?.statusLkey);
     useEffect(() => {
         console.log("searchKeyword changed:", searchKeyword);
@@ -182,17 +185,18 @@ const Prescription = () => {
         console.log(prescriptionMedication)
     }, [selectedOption])
     useEffect(() => {
-        if (prescriptionMedication.administrationInstructions != null){
-          
-        console.log(prescriptionMedication.administrationInstructions)
+        if (prescriptionMedication.administrationInstructions != null) {
+
+            console.log(prescriptionMedication.administrationInstructions)
             setAdminInstructions(prevadminInstructions =>
                 prevadminInstructions ? `${prevadminInstructions}, ${administrationInstructionsLovQueryResponse?.object?.find(
                     item => item.key === prescriptionMedication.administrationInstructions
-                )?.lovDisplayVale}` : 
-                administrationInstructionsLovQueryResponse?.object?.find(
-                    item => item.key === prescriptionMedication.administrationInstructions
-                )?.lovDisplayVale
-            );}
+                )?.lovDisplayVale}` :
+                    administrationInstructionsLovQueryResponse?.object?.find(
+                        item => item.key === prescriptionMedication.administrationInstructions
+                    )?.lovDisplayVale
+            );
+        }
 
         setPrescriptionMedications({ ...prescriptionMedication, administrationInstructions: null })
     }, [prescriptionMedication.administrationInstructions])
@@ -204,20 +208,21 @@ const Prescription = () => {
     useEffect(() => {
 
     }, [selectedPreDefine, munial])
-     useEffect(()=>{
+    useEffect(() => {
 
-     },[customeinst])
-     useEffect(()=>{
-      console.log(selectedRowoMedicationKey)
-      refetchCo();
-      console.log(customeInstructions?.object)
-      setCustomeinst({...customeinst,
-                                unit:customeInstructions?.object?.find(item => item.prescriptionMedicationsKey ===selectedRowoMedicationKey)?.unitLkey,
-                                frequency:customeInstructions?.object?.find(item => item.prescriptionMedicationsKey ===selectedRowoMedicationKey)?.frequencyLkey,
-                               dose:customeInstructions?.object?.find(item => item.prescriptionMedicationsKey ===selectedRowoMedicationKey)?.dose,
-                               })
-     },[selectedRowoMedicationKey])
-     console.log(prescriptions?.object[0]?.statusLkey)
+    }, [customeinst])
+    useEffect(() => {
+        console.log(selectedRowoMedicationKey)
+        refetchCo();
+        console.log(customeInstructions?.object)
+        setCustomeinst({
+            ...customeinst,
+            unit: customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === selectedRowoMedicationKey)?.unitLkey,
+            frequency: customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === selectedRowoMedicationKey)?.frequencyLkey,
+            dose: customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === selectedRowoMedicationKey)?.dose,
+        })
+    }, [selectedRowoMedicationKey])
+    console.log(prescriptions?.object[0]?.statusLkey)
     const handleFilterChange = (fieldName, value) => {
         if (value) {
             setListRequest(
@@ -262,12 +267,12 @@ const Prescription = () => {
             }).catch((error) => {
                 console.error("Refetch failed:", error);
             });
-medicRefetch().then(() => {
-    console.log("Refetch complete");
-}).catch((error) => {
-    console.error("Refetch failed:", error);
-});
-            
+            medicRefetch().then(() => {
+                console.log("Refetch complete");
+            }).catch((error) => {
+                console.error("Refetch failed:", error);
+            });
+
 
             setSelectedRows([]);
 
@@ -277,9 +282,9 @@ medicRefetch().then(() => {
 
         }
     };
-    const handleSubmitPres =async () => {
+    const handleSubmitPres = async () => {
         try {
-           await savePrescription({
+            await savePrescription({
                 ...prescriptions?.object[0],
 
                 statusLkey: "1804482322306061"
@@ -295,7 +300,7 @@ medicRefetch().then(() => {
             }).catch((error) => {
                 console.error("Refetch failed:", error);
             });
-            
+
         }
         catch (error) {
             console.error("Error saving prescription or medications:", error);
@@ -309,7 +314,7 @@ medicRefetch().then(() => {
         }).catch((error) => {
             console.error("Refetch failed:", error);
         });
-        
+
 
 
     }
@@ -317,12 +322,12 @@ medicRefetch().then(() => {
         const saveData = async () => {
             if (inst != null) {
                 console.log("useEffect   " + inst);
-    
+
                 if (preKey === null) {
                     dispatch(notify('Prescription not linked. Try again'));
                     return;
                 }
-    
+
                 const tagcompine = joinValuesFromArray(tags);
                 try {
                     await savePrescriptionMedication({
@@ -340,15 +345,15 @@ medicRefetch().then(() => {
                         roaLkey: selectedOption === "3010606785535008" ? selectedGeneric.roaLvalue?.lovDisplayVale : null,
                         administrationInstructions: adminInstructions
                     }).unwrap();
-    
+
                     dispatch(notify('Saved successfully'));
-    
+
                     // Perform refetches
                     await Promise.all([
                         medicRefetch().then(() => console.log("Medic refetch complete")),
                         refetchCo().then(() => console.log("Co refetch complete"))
                     ]);
-    
+
                     handleCleare();
                 } catch (error) {
                     console.error("Save failed:", error);
@@ -356,15 +361,15 @@ medicRefetch().then(() => {
                 }
             }
         };
-    
+
         saveData();
     }, [inst]);
-    
-    
+
+
 
     const handleSaveMedication = () => {
 
-       
+
         if (selectedOption === '3010591042600262') {
 
             setInst(selectedPreDefine.key);
@@ -373,19 +378,19 @@ medicRefetch().then(() => {
 
         }
         else if (selectedOption === '3010573499898196') {
-            
+
             setInst(munial);
             console.log("case2  " + inst)
-            
+
         }
         else {
             setInst("")
             console.log("case3" + inst)
         }
 
-         
-       
-     
+
+
+
 
     }
     const handleCleare = () => {
@@ -400,7 +405,7 @@ medicRefetch().then(() => {
         setAdminInstructions(null)
         setSelectedGeneric(null);
         setAdminInstructions(null);
-        setCustomeinst({dose:null,frequency:null,unit:null,roa:null})
+        setCustomeinst({ dose: null, frequency: null, unit: null, roa: null })
 
     }
     const addTag = () => {
@@ -408,7 +413,7 @@ medicRefetch().then(() => {
         setTags(nextTags);
         setTyping(false);
         setInputValue('');
-    }; 
+    };
 
     const handleButtonClick = () => {
         setTyping(true);
@@ -418,7 +423,7 @@ medicRefetch().then(() => {
         setSearchKeyword("")
         console.log(Generic.genericName)
 
-   
+
     };
     function handleRowData(rowData) {
         if (rowData.instructionsTypeLkey === "3010591042600262") {
@@ -471,6 +476,41 @@ medicRefetch().then(() => {
     };
     return (<>
         <h5 style={{ marginTop: "10px" }}>Create Prescription</h5>
+        <div className='top-container-p'>
+            <div style={{width:'300px'}}>
+            <SelectPicker
+                  disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
+                  style={{ width: '100%', zoom: 0.80 }}
+                  data={prescriptions?.object ?? []}
+                  labelKey="key"
+                  valueKey="key"
+                  placeholder="prescription"
+                //   value={selectedDiagnose.diagnoseCode}
+                  onChange={e =>{
+                    setPreKey(  e );
+                console.log(preKey)}}
+                  
+                />
+            </div>
+
+
+            <IconButton
+                color="Blue"
+                appearance="primary"
+                onClick={handleSubmitPres}
+                disabled={prescriptions?.object[0]?.statusLkey == '1804482322306061' ? true : false}
+                style={{marginLeft:'auto'}}
+                icon={<CheckIcon />}
+            >
+                <Translate>New Prescription</Translate>
+            </IconButton>
+
+
+
+
+
+        </div>
+        <br />
         <div className='top-container-p'>
             <div className='form-search-container-p '>
                 <Form>
@@ -527,7 +567,7 @@ medicRefetch().then(() => {
                     appearance="primary"
                     onClick={handleSubmitPres}
                     disabled={prescriptions?.object[0]?.statusLkey == '1804482322306061' ? true : false}
-                    
+
                     icon={<CheckIcon />}
                 >
                     <Translate>Submit Prescription</Translate>
@@ -725,9 +765,23 @@ medicRefetch().then(() => {
                     <MyInput
                         column
                         disabled={editing}
-                        fieldLabel="Min. Refill Interval"
-                        width={150}
-                        fieldName={'refillInterval'}
+                        
+                        fieldType='number'
+                        width={100}
+                        fieldName={'refillIntervalValue'}
+                        record={prescriptionMedication}
+                        setRecord={setPrescriptionMedications}
+                    />
+                     <MyInput
+                        column
+                        disabled={editing}
+                        width={110}
+                        fieldType="select"
+                        fieldLabel="ٌRefill Interval Unit"
+                        selectData={refillunitQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName={'refillIntervalUnitLkey'}
                         record={prescriptionMedication}
                         setRecord={setPrescriptionMedications}
                     />
@@ -738,7 +792,7 @@ medicRefetch().then(() => {
 
                     <MyInput
 
-                        width={250} 
+                        width={250}
                         disabled={editing}
                         fieldType="select"
                         fieldLabel="Administration Instructions"
@@ -776,7 +830,7 @@ medicRefetch().then(() => {
 
                 </Form><br />
                 <Text style={{ marginBottom: "10px" }}>Parameters to monitor</Text>
-                <TagGroup   className='taggroup-style'>
+                <TagGroup className='taggroup-style'>
                     {tags.map((item, index) => (
                         <Tag key={index} closable onClose={() => removeTag(item)}>
                             {item}
@@ -867,15 +921,15 @@ medicRefetch().then(() => {
                 </Button>
 
                 <Checkbox
-                            checked={!showCanceled}
-                            onChange={() => {
-                                
-                                
-                                setShowCanceled(!showCanceled);
-                            }}
-                        >
-                            Show canceled test
-                        </Checkbox>
+                    checked={!showCanceled}
+                    onChange={() => {
+
+
+                        setShowCanceled(!showCanceled);
+                    }}
+                >
+                    Show canceled test
+                </Checkbox>
             </div>
 
             <div>
@@ -913,12 +967,12 @@ medicRefetch().then(() => {
                             console.log("Iam in custom prsecription")
                             setSelectedOption("3010606785535008")
                             setSelectedRowoMedicationKey(rowData.key);
-                            
-                               console.log(selectedRowoMedicationKey)
+
+                            console.log(selectedRowoMedicationKey)
                             console.log(customeinst);
                             console.log(customeInstructions?.object)
                         }
-                        setEditing(rowData.statusLkey=="164797574082125"?false:true)
+                        setEditing(rowData.statusLkey == "164797574082125" ? false : true)
                     }}
                     rowClassName={isSelected}
                 >
@@ -933,7 +987,7 @@ medicRefetch().then(() => {
                                     key={rowData.id}
                                     checked={selectedRows.includes(rowData)}
                                     onChange={() => handleCheckboxChange(rowData)}
-                                 disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
+                                    disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
                                 />
                             )}
                         </Cell>
@@ -963,14 +1017,14 @@ medicRefetch().then(() => {
                                     const generic = predefinedInstructionsListResponse?.object?.find(
                                         item => item.key === rowData.instructions
                                     );
-                                    
+
                                     if (generic) {
                                         console.log("Found generic:", generic);
                                     } else {
                                         console.warn("No matching generic found for key:", rowData.instructions);
                                     }
-                                    return   [
-                                        generic?.dose, 
+                                    return [
+                                        generic?.dose,
                                         generic?.unitLvalue?.lovDisplayVale,
                                         generic?.routLvalue?.lovDisplayVale,
                                         generic?.frequencyLvalue?.lovDisplayVale
@@ -978,17 +1032,17 @@ medicRefetch().then(() => {
                                         .filter(Boolean)
                                         .join(', ');
                                 }
-                                if(rowData.instructionsTypeLkey === "3010573499898196"){
-                                    return  rowData.instructions
+                                if (rowData.instructionsTypeLkey === "3010573499898196") {
+                                    return rowData.instructions
 
-                                 }
-                                 if(rowData.instructionsTypeLkey === "3010606785535008"){
-                                    return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey ===rowData.key)?.dose+
-                                    ","+customeInstructions?.object?.find(item => item.prescriptionMedicationsKey ===rowData.key)?.unitLvalue.lovDisplayVale +","+
-                                    customeInstructions?.object?.find(item => item.prescriptionMedicationsKey ===rowData.key)?.frequencyLvalue.lovDisplayVale
-                                   
-                                   
-                                 }
+                                }
+                                if (rowData.instructionsTypeLkey === "3010606785535008") {
+                                    return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose +
+                                        "," + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue.lovDisplayVale + "," +
+                                        customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue.lovDisplayVale
+
+
+                                }
 
                                 return "no";
                             }}
