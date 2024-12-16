@@ -167,6 +167,11 @@ const Prescription = () => {
                         operator: "containsIgnoreCase",
                         value: searchKeyword,
                     },
+                    {
+                        fieldName: 'deleted_at',
+                        operator: 'isNull',
+                        value: undefined
+                      }
                 ],
             });
         }

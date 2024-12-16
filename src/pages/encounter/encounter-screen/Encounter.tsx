@@ -225,7 +225,7 @@ const Encounter = () => {
                      style={{ display: 'flex', alignItems: 'center' }}
                      onClick={() => handleMenuItemClick(<SOAP />)}>
                     <FontAwesomeIcon icon={faUserDoctor } style={{ margin: '3px' }}  />
-                      <Translate>S.O.A.P</Translate>
+                      <Translate>Clinical Visit</Translate>
                     </List.Item>
                     <List.Item
                      style={{ display: 'flex', alignItems: 'center' }}
@@ -261,7 +261,7 @@ const Encounter = () => {
                      style={{ display: 'flex', alignItems: 'center' }}
                      onClick={() => handleMenuItemClick(<Referrals />)}>
                     <FontAwesomeIcon icon={faNotesMedical} style={{ margin: '3px' }}  />
-                      <Translate>Referrals</Translate>
+                      <Translate>Procedures</Translate>
                     </List.Item>
                     <List.Item 
                      style={{ display: 'flex', alignItems: 'center' }}

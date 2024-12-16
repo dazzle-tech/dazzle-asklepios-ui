@@ -791,6 +791,7 @@ export interface ApEncounter {
 	encounterNotes:string;
 	sourceName:string;
 	physicalExamNote:string;
+	planInstructions:string;
 } 
 
 export interface ApEncounterAppliedService { 

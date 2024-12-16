@@ -792,6 +792,7 @@ export const newApEncounter:modelTypes.ApEncounter = {
 	encounterNotes:'',
 	sourceName:'',
 	physicalExamNote:'',
+	planInstructions:'',
 } 
 
 export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService = { 

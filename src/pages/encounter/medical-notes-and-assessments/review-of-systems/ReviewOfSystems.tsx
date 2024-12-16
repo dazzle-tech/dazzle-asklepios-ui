@@ -144,6 +144,9 @@ const ReviewOfSystems = () => {
             </InputGroup>
           </Row>
           <Row gutter={15}>
+          <Panel header="Full Body Examination" collapsible bordered>
+   
+  
             <div style={{ display: "flex", gap: "3px" }}>
               <Table
                 style={{ flex: "1" }}
@@ -169,7 +172,7 @@ const ReviewOfSystems = () => {
                 rowHeight={50}
                 style={{ flex: "3" }}
               >
-                <Table.Column flexGrow={1}>
+                <Table.Column flexGrow={1} fullText>
                   <Table.HeaderCell>Checked</Table.HeaderCell>
                   <Table.Cell>
                     {rowData => (
@@ -180,6 +183,7 @@ const ReviewOfSystems = () => {
                               key: mainData[rowData.key] ? mainData[rowData.key].key : undefined,
                               encounterKey: patientSlice.encounter.key,
                               bodySystemDetailKey: rowData.key,
+                              systemLkey:selectedSystem.key,
                               notes: mainData[rowData.key] ? mainData[rowData.key].notes : ''
                             }).unwrap();
                             dispatch(notify('Findings Saved Successfully'));
@@ -236,6 +240,7 @@ const ReviewOfSystems = () => {
                 </Table.Column>
               </Table>
             </div>
+            </Panel>
           </Row>
 
         </Grid>
@@ -255,7 +260,7 @@ const ReviewOfSystems = () => {
              <pre style={{ maxHeight: '200px', overflowY: 'auto' }}>
        {encounterReviewOfSystemsSummaryResponse?.object?.map((item, index) => (
           <div key={index} style={{ marginBottom: "10px", padding: "5px", borderBottom: "1px solid #ccc" }}>
-            <p>{selectedSystem.key}</p>
+            <p>{item.systemLkey}</p>
             <p>{item.systemDetailLvalue? item.systemDetailLvalue.lovDisplayVale
                   : item.systemDetailLkey}</p>
             <p> {item.notes}</p>

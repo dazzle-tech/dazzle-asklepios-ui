@@ -17,6 +17,7 @@ import {
     Toggle
 } from 'rsuite';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import VoiceCitation from '@/components/VoiceCitation';
 import { newApPatientPlan } from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
@@ -25,6 +26,8 @@ import { initialListRequest } from '@/types/types';
 const Plan = () => {
     const dispatch = useAppDispatch();
     const patientSlice = useAppSelector(state => state.patient);
+    const { data: encounterReasonLovQueryResponse } = useGetLovValuesByCodeQuery('VISIT_CAREPLAN_OPT ');
+    
     const [savePlan, savePlanMutation] = useSavePatientPlanMutation();
     const [listRequest, setListRequest] = useState({
         ...initialListRequest,
