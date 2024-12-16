@@ -9,6 +9,7 @@ import {
   ApPatientSecondaryDocuments,
   ApPatientAdministrativeWarnings
 } from '@/types/model-types';
+import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
 import CloseIcon from '@rsuite/icons/Close';
 import FileDownloadIcon from '@rsuite/icons/FileDownload';
 import TrashIcon from '@rsuite/icons/Trash';
@@ -106,7 +107,7 @@ import {
   useUpdateAttachmentDetailsMutation
 } from '@/services/attachmentService';
 import { notify } from '@/utils/uiReducerActions';
-import AttachmentModal from './AttachmentUploadModal';
+import AttachmentModalFix from './AttachmentUploadModalFix';
 
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
@@ -132,7 +133,7 @@ const PatientProfile = () => {
   const patientSlice = useAppSelector(state => state.patient);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-
+  const [selectedAttachment, setSelectedAttachment] = useState(null);
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [editing, setEditing] = useState(false);
   const [searchResultVisible, setSearchResultVisible] = useState(false);
@@ -140,6 +141,8 @@ const PatientProfile = () => {
   const [patientAttachments, setPatientAttachments] = useState([]);
   const [selectedCriterion, setSelectedCriterion] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [deleteDocModalOpen, setDeleteDocModalOpen] = useState(false);
+  const [deleteRelativeModalOpen, setDeleteRelativeModalOpen] = useState(false);
   const [selectedAttachType, setSelectedAttachType] = useState('');
   const [warningsAdmistritiveListRequest, setWarningsAdmistritiveListRequest] =
     useState<ListRequest>({
@@ -170,7 +173,7 @@ const PatientProfile = () => {
     { label: 'Document Number', value: 'documentNo' },
     { label: 'Full Name', value: 'fullName' },
     { label: 'Archiving Number', value: 'archivingNumber' },
-    { label: 'Primary Phone Number', value: 'mobileNumber' },
+    { label: 'Primary Phone Number', value: 'phoneNumber' },
     { label: 'Date of Birth', value: 'dob' }
   ];
 
@@ -194,7 +197,7 @@ const PatientProfile = () => {
       },
       { skip: !localPatient.key }
     );
-  const patientKey = localPatient?.key?.toString(); // تأكيد أن القيمة هي نص
+  const patientKey = localPatient?.key?.toString();
   const { data: warnings, refetch: warningsRefetch } = useGetPatientAdministrativeWarningsQuery(
     warningsAdmistritiveListRequest
   );
@@ -226,24 +229,16 @@ const PatientProfile = () => {
       filters: updatedFilters
     }));
   }, [localPatient.key]);
-
+  console.log('localPatient.key', localPatient.key);
   const handleSaveSecondaryDocument = () => {
-    const handleCleareSecondaryDocument = () => {
-      setSecondaryDocumentModalOpen(false);
-      setSecondaryDocument(newApPatientSecondaryDocuments);
-    };
-    console.log({
-      ...selectedSecondaryDocument,
-      patientKey: localPatient.key
-    });
-    console.log({
-      ...secondaryDocument,
-      patientKey: localPatient.key
-    });
-
     saveSecondaryDocument({
       ...secondaryDocument,
-      patientKey: localPatient.key
+      patientKey: localPatient.key,
+      documentNo:
+        secondaryDocument.documentTypeLkey === 'NO_DOC'
+          ? 'No Document '
+          : secondaryDocument.documentNo
+
     })
       .unwrap()
       .then(() => {
@@ -251,6 +246,12 @@ const PatientProfile = () => {
         patientSecondaryDocumentsResponse.refetch();
         handleCleareSecondaryDocument();
       });
+    const handleCleareSecondaryDocument = () => {
+      setSecondaryDocumentModalOpen(false);
+      setSecondaryDocument(newApPatientSecondaryDocuments);
+    };
+
+
   };
 
   const [selectedPatientRelation, setSelectedPatientRelation] = useState<any>({
@@ -279,8 +280,6 @@ const PatientProfile = () => {
   const [secondaryDocumentModalOpen, setSecondaryDocumentModalOpen] = useState(false);
 
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-  // const { data: encounterLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
   const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
     code: 'CITY',
@@ -313,7 +312,7 @@ const PatientProfile = () => {
   const [saveSecondaryDocument, setSaveSecondaryDocument] = useSaveNewSecondaryDocumentMutation();
   const [savePatientAdministrativeWarnings, setSavePatientAdministrativeWarnings] =
     useSavePatientAdministrativeWarningsMutation();
-
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [updatePatientAdministrativeWarnings, setUpdatePatientAdministrativeWarnings] =
     useUpdatePatientAdministrativeWarningsMutation();
   const [deletePatientAdministrativeWarnings, setDeletePatientAdministrativeWarnings] =
@@ -358,11 +357,27 @@ const PatientProfile = () => {
   const fetchPatientImageResponse = useFetchAttachmentQuery(
     {
       type: 'PATIENT_PROFILE_PICTURE',
-      refKey: localPatient.key
+      refKey: localPatient.key,
     },
     { skip: !localPatient.key }
   );
 
+  const handleSelectPatient = data => {
+    if (patientSearchTarget === 'primary') {
+      // selecteing primary patient (localPatient)
+      setLocalPatient(data);
+      // dispatch(setPatient(data));
+    } else if (patientSearchTarget === 'relation') {
+      // selecting patient for relation patient key
+      setSelectedPatientRelation({
+        ...selectedPatientRelation,
+        relativePatientKey: data.key,
+        relativePatientObject: data
+      });
+    }
+    refetchPatients({ ...listRequest, clearResults: true });
+    setSearchResultVisible(false);
+  };
 
   const {
     data: patientAllergiesViewResponse,
@@ -402,7 +417,17 @@ const PatientProfile = () => {
   const [skipQuery, setSkipQuery] = useState(true);
   const [actionType, setActionType] = useState(null); // 'view' or 'download'
   const [visit, setVisit] = useState();
-
+  const handleDeleteInsurance = () => {
+    deleteInsurance({
+      key: selectedInsurance.key
+    }).then(
+      () => (
+        patientInsuranceResponse.refetch(),
+        dispatch(notify('Insurance Deleted')),
+        setSelectedInsurance(null)
+      )
+    );
+  };
   useEffect(() => {
     console.log(visit);
   }, [visit]);
@@ -446,7 +471,6 @@ const PatientProfile = () => {
         setAttachmentsModalOpen(true);
         setSelectedPatientAttacment(fetchAttachmentByKeyResponce);
         setNewAttachmentDetails(fetchAttachmentByKeyResponce.extraDetails);
-        setNewAttachmentDetails(fetchAttachmentByKeyResponce.accessTypeLkey);
       }
     }
   }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
@@ -461,8 +485,8 @@ const PatientProfile = () => {
     useFetchAttachmentLightQuery({ refKey: localPatient?.key }, { skip: !localPatient?.key });
 
   useEffect(() => {
-    // if (patientSlice.patient) {
-    //   setLocalPatient(patientSlice.patient);
+    if (patientSlice.patient) {
+      setLocalPatient(patientSlice.patient);
 
       setPatientRelationListRequest({
         ...patientRelationListRequest,
@@ -474,14 +498,15 @@ const PatientProfile = () => {
           }
         ]
       });
-    
+
+    }
   }, []);
 
-  // useEffect(() => {
-  //   if (patientSlice.patient) {
-  //     setLocalPatient(patientSlice.patient);
-  //   }
-  // }, [patientSlice]);
+  useEffect(() => {
+    if (patientSlice.patient) {
+      setLocalPatient(patientSlice.patient);
+    }
+  }, [patientSlice]);
   const isSelected = rowData => {
     if (
       rowData &&
@@ -544,10 +569,10 @@ const PatientProfile = () => {
       } else {
         upload({
           formData: formData,
-
           type: 'PATIENT_PROFILE_PICTURE',
           refKey: patientSlice.patient.key,
-          details: `Profile Picture for ${patientSlice.patient.fullName}`
+          details: `Profile Picture for ${patientSlice.patient.fullName}`,
+          accessType: ''
         })
           .unwrap()
           .then(() => attachmentRefetch());
@@ -560,14 +585,15 @@ const PatientProfile = () => {
     console.log({ SecondaryDocument: secondaryDocument });
   }, [secondaryDocument]);
   const [selectedRowId, setSelectedRowId] = useState(null);
-  console.log(selectedRowId);
+
   const [newAttachmentSrc, setNewAttachmentSrc] = useState(null);
   const [newAttachmentType, setNewAttachmentType] = useState();
   const [newAttachmentDetails, setNewAttachmentDetails] = useState('');
   const [uploadedAttachmentOpject, setUploadedAttachmentOpject] = useState({
     formData: null,
     type: null,
-    refKey: null
+    refKey: null,
+
   });
 
   const handleFileUpload = async event => {
@@ -588,12 +614,11 @@ const PatientProfile = () => {
         setUploadedAttachmentOpject({
           formData: formData,
           type: newAttachmentType,
-          refKey: patientSlice.patient.key
+          refKey: localPatient.key
         });
       }
     }
   };
-
   const handleFinishUploading = () => {
     setUploadedAttachmentOpject({
       formData: null,
@@ -608,17 +633,16 @@ const PatientProfile = () => {
     setSelectedPatientAttacment(null);
     handleAttachmentSelected(null);
     setActionType(null);
+    setSelectedAttachType(null);
   };
   useEffect(() => {
     dispatch(setPatient({ ...newApPatient }));
-    
-
   }, []);
   const enableEdit = () => {
     setEditing(true);
     setValidationResult(undefined);
   };
-
+  console.log(secondaryDocument.documentTypeLkey);
   const startRegistration = () => {
     setEditing(true);
     setValidationResult(undefined);
@@ -626,33 +650,9 @@ const PatientProfile = () => {
 
   const handleSave = () => {
     // save changes
-    savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false }).unwrap();
-  };
-
-  const handleReslvePatientsWarnings = () => { };
-
-  const handleDeletaAttachment = attachment => {
-    deleteAttachment({
-      key: attachment.key
-    }).then(
-      () => (
-        attachmentRefetch(),
-        fetchPatientImageResponse.refetch(),
-        dispatch(notify('Attachment Deleted'))
-      )
-    );
-  };
-
-  const handleDeleteInsurance = () => {
-    deleteInsurance({
-      key: selectedInsurance.key
-    }).then(
-      () => (
-        patientInsuranceResponse.refetch(),
-        dispatch(notify('Insurance Deleted')),
-        setSelectedInsurance(null)
-      )
-    );
+    savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false }).unwrap().then(() => {
+      dispatch(notify('Patient Added Successfully'));
+    });
   };
 
   const handleDeleteSecondaryDocument = () => {
@@ -662,11 +662,16 @@ const PatientProfile = () => {
       () => (
         patientSecondaryDocumentsResponse.refetch(),
         dispatch(notify('Secondary Document Deleted')),
-        setSelectedInsurance(null)
+        setSelectedInsurance(null),
+        setDeleteDocModalOpen(false)
       )
     );
   };
-
+  const handleDeleteAttachment = (attachment) => {
+    setSelectedAttachment(attachment);
+    setDeleteModalOpen(true);
+  };
+  console.log('uploadedAttachmentOpject', uploadedAttachmentOpject);
   const handleDeleteRelation = () => {
     console.log('required to delete relation' + selectedPatientRelation.key);
 
@@ -676,7 +681,8 @@ const PatientProfile = () => {
       () => (
         patientRelationsRefetch(),
         dispatch(notify('Relation Deleted')),
-        setSelectedPatientRelation(newApPatientRelation)
+        setSelectedPatientRelation(newApPatientRelation),
+        setDeleteRelativeModalOpen(false)
       )
     );
   };
@@ -755,7 +761,29 @@ const PatientProfile = () => {
   };
 
   const handleClear = () => {
-    setLocalPatient({ ...newApPatient });
+    setLocalPatient({
+      ...newApPatient,
+      documentCountryLkey: null,
+      documentTypeLkey: null,
+      specialCourtesyLkey: null,
+      genderLkey: null,
+      maritalStatusLkey: null,
+      nationalityLkey: null,
+      primaryLanguageLkey: null,
+      religionLkey: null,
+      ethnicityLkey: null,
+      occupationLkey: null,
+      emergencyContactRelationLkey: null,
+      countryLkey: null,
+      stateProvinceRegionLkey: null,
+      cityLkey: null,
+      patientClassLkey: null,
+      securityAccessLevelLkey: null,
+      responsiblePartyLkey: null,
+      educationalLevelLkey: null,
+      preferredContactLkey: null,
+      districtLkey: null,
+    });
     setEditing(false);
     setValidationResult(undefined);
     dispatch(setPatient(null));
@@ -794,7 +822,7 @@ const PatientProfile = () => {
       dispatch(notify('OTP sent'));
     }
   }, [sendOtpMutation]);
-  
+
   useEffect(() => {
     if (verifyOtpMutation.status === 'fulfilled') {
       dispatch(notify('Patient verified success'));
@@ -803,7 +831,11 @@ const PatientProfile = () => {
       setVerificationModalOpen(false);
     }
   }, [verifyOtpMutation]);
+  const handleClearAttachmentDelete = () => {
+    setDeleteModalOpen(false);
+    handleCleareAttachment();
 
+  };
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -818,7 +850,17 @@ const PatientProfile = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
+  const handleClearDocument = () => {
+    setSecondaryDocumentModalOpen(false);
+    setSecondaryDocument(newApPatientSecondaryDocuments);
+    setDeleteDocModalOpen(false);
 
+  };
+  const handleClearRelative = () => {
+    setSelectedPatientRelation(newApPatientRelation);
+    setDeleteRelativeModalOpen(false);
+
+  }
   const handleFilterChangeInWarning = (fieldName, value) => {
     if (value) {
       setWarningsAdmistritiveListRequest(
@@ -866,22 +908,7 @@ const PatientProfile = () => {
     }
   };
 
-  const handleSelectPatient = data => {
-    if (patientSearchTarget === 'primary') {
-      // selecteing primary patient (localPatient)
-      setLocalPatient(data);
-      // dispatch(setPatient(data));
-    } else if (patientSearchTarget === 'relation') {
-      // selecting patient for relation patient key
-      setSelectedPatientRelation({
-        ...selectedPatientRelation,
-        relativePatientKey: data.key,
-        relativePatientObject: data
-      });
-    }
-    refetchPatients({ ...listRequest, clearResults: true });
-    setSearchResultVisible(false);
-  };
+
 
   useEffect(() => {
     setSearchKeyword('');
@@ -920,7 +947,7 @@ const PatientProfile = () => {
       </Panel>
     );
   };
-  console.log(selectedPatientAdministrativeWarnings);
+
   const handleNewVisit = () => {
     navigate('/encounter-registration');
   };
@@ -936,7 +963,18 @@ const PatientProfile = () => {
       setEncounterHistoryModalOpen(true);
     }
   };
-
+  const handleCleareAttachment = () => {
+    setAttachmentsModalOpen(false);
+    setRequestedPatientAttacment(null);
+    setRequestedPatientAttacment(null);
+    setNewAttachmentSrc(null);
+    setNewAttachmentType(null);
+    setNewAttachmentDetails('');
+    attachmentRefetch();
+    setSelectedPatientAttacment(null);
+    handleAttachmentSelected(null);
+    setActionType(null);
+  };
   const handleEditModal = () => {
     if (selectedInsurance) {
       setInsuranceModalOpen(true);
@@ -949,12 +987,30 @@ const PatientProfile = () => {
     }
   };
 
-  useEffect(() => {
-    console.log({ selectedInsurance: selectedInsurance?.key });
-  }, [selectedInsurance]);
+
 
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
   const [specificCoverageModalOpen, setSpecificCoverageModalOpen] = useState(false);
+  useEffect(() => {
+    if (isSuccess && fetchAttachmentByKeyResponce) {
+      if (actionType === 'download') {
+        handleDownload(fetchAttachmentByKeyResponce);
+      } else if (actionType === 'view') {
+        setAttachmentsModalOpen(true);
+        setSelectedPatientAttacment(fetchAttachmentByKeyResponce);
+        setNewAttachmentDetails(fetchAttachmentByKeyResponce.extraDetails);
+        setSelectedAttachType(fetchAttachmentByKeyResponce.accessTypeLkey);
+      }
+    }
+  }, [fetchAttachmentByKeyResponce, actionType]);
+
+
+
+
+
+
+
+
 
   return (
     <>
@@ -1893,7 +1949,7 @@ const PatientProfile = () => {
             <TabPanel>
               <Form layout="inline" fluid>
                 <ButtonToolbar>
-                  <IconButton icon={<Icon as={FaClock} />} appearance="primary">
+                  <IconButton icon={<Icon as={FaClock} />} appearance="primary" disabled={!editing || !localPatient.key}>
                     Address Change Log
                   </IconButton>
                 </ButtonToolbar>
@@ -1996,7 +2052,7 @@ const PatientProfile = () => {
                   appearance="primary"
                   color="cyan"
                   icon={<PlusRound />}
-                  // disabled={editing || localPatient.key !== undefined}
+                  disabled={!editing || !localPatient.key}
                   onClick={() => {
                     setInsuranceModalOpen(true);
                     setSelectedInsurance(newApPatientInsurance);
@@ -2216,6 +2272,7 @@ const PatientProfile = () => {
                     icon={<Icon as={FaQuestion} />}
                     onClick={() => setVerificationModalOpen(true)}
                     appearance="primary"
+                    disabled={!editing || !localPatient.key}
                   >
                     <Translate>Patient Verification</Translate>
                   </IconButton>
@@ -2223,6 +2280,7 @@ const PatientProfile = () => {
                   <IconButton
                     icon={<Icon as={VscGitPullRequestGoToChanges} />}
                     appearance="primary"
+                    disabled={!editing || !localPatient.key}
                   >
                     <Translate>Amendment Requests</Translate>
                   </IconButton>
@@ -2406,13 +2464,40 @@ const PatientProfile = () => {
                   appearance="primary"
                   color="blue"
                   icon={<TrashIcon />}
-                  onClick={handleDeleteRelation}
+                  onClick={() => { setDeleteRelativeModalOpen(true) }}
                 >
                   <Translate>Delete</Translate>
                 </IconButton>
               </ButtonToolbar>
 
               <br />
+              <Modal open={deleteRelativeModalOpen} onClose={handleClearRelative}>
+                <Modal.Header>
+                  <Modal.Title>Confirm Delete</Modal.Title>
+
+                </Modal.Header>
+
+                <Modal.Body>
+                  <p>
+                    <RemindOutlineIcon style={{ color: '#ffca61', marginRight: '8px', fontSize: '24px' }} />
+                    <Translate style={{ fontSize: '24px' }} >
+                      Are you sure you want to delete this Relation?
+                    </Translate>
+                  </p>
+                </Modal.Body>
+                <Modal.Footer>
+                  <Button onClick={handleClearRelative} appearance="ghost" color='cyan'>
+                    Cancel
+                  </Button>
+                  <Divider vertical />
+                  <Button
+                    onClick={handleDeleteRelation}
+                    appearance="primary"
+                  >
+                    Delete
+                  </Button>
+                </Modal.Footer>
+              </Modal>
 
               <Table
                 height={600}
@@ -2501,7 +2586,7 @@ const PatientProfile = () => {
                   appearance="primary"
                   color="blue"
                   icon={<TrashIcon />}
-                  onClick={handleDeleteSecondaryDocument}
+                  onClick={() => { setDeleteDocModalOpen(true) }}
                 >
                   <Translate>Delete</Translate>
                 </IconButton>
@@ -2600,11 +2685,14 @@ const PatientProfile = () => {
                     setRecord={newRecord =>
                       setSecondaryDocument({
                         ...secondaryDocument,
-                        ...newRecord
+                        ...newRecord,
+                        documentNo:
+                          secondaryDocument.documentTypeLkey === 'NO_DOC' ? 'NO_DOC' : newRecord.documentNo
                       })
                     }
-                    disabled={localPatient.documentTypeLkey === 'NO_DOC'}
+                    disabled={secondaryDocument.documentTypeLkey === 'NO_DOC'}
                   />
+
                 </Form>
               </Modal.Body>
               <Modal.Footer>
@@ -2622,19 +2710,211 @@ const PatientProfile = () => {
                 </Button>
               </Modal.Footer>
             </Modal>
+            <Modal open={deleteDocModalOpen} onClose={handleClearDocument}>
+              <Modal.Header>
+                <Modal.Title>Confirm Delete</Modal.Title>
+
+              </Modal.Header>
+
+              <Modal.Body>
+                <p>
+                  <RemindOutlineIcon style={{ color: '#ffca61', marginRight: '8px', fontSize: '24px' }} />
+                  <Translate style={{ fontSize: '24px' }} >
+                    Are you sure you want to delete this Document?
+                  </Translate>
+                </p>
+              </Modal.Body>
+              <Modal.Footer>
+                <Button onClick={handleClearDocument} appearance="ghost" color='cyan'>
+                  Cancel
+                </Button>
+                <Divider vertical />
+                <Button
+                  onClick={handleDeleteSecondaryDocument}
+                  appearance="primary"
+                >
+                  Delete
+                </Button>
+              </Modal.Footer>
+            </Modal>
 
             {/* Attachments */}
             <TabPanel>
 
-            <AttachmentModal isOpen={attachmentsModalOpen} onClose={()=>setAttachmentsModalOpen(false)} localPatient={localPatient} attatchmentType={'PATIENT_PROFILE_ATTACHMENT'}/>
+              <Modal open={attachmentsModalOpen} onClose={() => handleCleareAttachment()}>
+                <Modal.Header>
+                  <Modal.Title>New/Edit Patient Attachments</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                  <div
+                    style={{
+                      borderRadius: '5px',
+                      border: '1px solid #e1e1e1',
+                      margin: '2px',
+                      position: 'relative',
+                      bottom: 0,
+                      width: '99%',
+                      height: 400,
+                      display: 'flex',
+                      alignContent: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <input
+                      type="file"
+                      ref={attachmentFileInputRef}
+                      style={{ display: 'none' }}
+                      onChange={handleFileUpload}
+                      accept="image/*"
+                    />
+
+                    {newAttachmentSrc ? (
+                      newAttachmentSrc ? (
+                        <img
+
+                          alt={'Attachment Preview'}
+                          width={380}
+                          height={380}
+                          onClick={() =>
+                            handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
+                          }
+                          src={newAttachmentSrc}
+                        />
+                      ) : (
+                        <FileUploadIcon
+                          onClick={() => {
+                            handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT');
+
+                          }
+                          }
+                          style={{ fontSize: '250px', marginTop: '10%' }}
+                        />
+                      )
+                    ) : selectedPatientAttacment && selectedPatientAttacment.fileContent ? (
+                      selectedPatientAttacment.contentType === 'application/pdf' ? (
+                        <DetailIcon
+                          onClick={() =>
+                            handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
+                          }
+                          style={{ fontSize: '250px', marginTop: '10%' }}
+                        />
+                      ) : (
+                        <img
+                          alt={'Attachment Preview'}
+                          width={380}
+                          height={380}
+                          onClick={() =>
+                            handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
+                          }
+                          src={`data:${selectedPatientAttacment.contentType};base64,${selectedPatientAttacment.fileContent}`}
+                        />
+                      )
+                    ) : (
+                      <FileUploadIcon
+                        onClick={() =>
+                          handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
+                        }
+                        style={{ fontSize: '250px', marginTop: '10%' }}
+                      />
+                    )}
+                  </div>
+
+                  <br />
+                  <Form>
+                    <MyInput
+                      width={550}
+                      fieldName="accessTypeLkey"
+                      fieldType="select"
+                      selectData={attachmentsLovQueryResponse?.object ?? []}
+                      selectDataLabel="lovDisplayVale"
+                      fieldLabel="Type"
+                      selectDataValue="key"
+                      record={selectedAttachType}
+                      setRecord={setSelectedAttachType}
+                    />
+
+                  </Form>
+
+                  <br />
+                  <Input
+                    value={newAttachmentDetails}
+                    onChange={setNewAttachmentDetails}
+                    as="textarea"
+                    rows={3}
+                    placeholder="Details"
+                  />
+                </Modal.Body>
+                <Modal.Footer>
+                  <Button onClick={() => handleCleareAttachment()} appearance="subtle">
+                    Cancel
+                  </Button>
+                  <Divider vertical />
+                  <Button
+                    disabled={actionType ? false : !uploadedAttachmentOpject?.formData}
+                    onClick={() => {
+                      actionType === 'view'
+                        ? handleUpdateAttachmentDetails()
+                        : upload({
+                          ...uploadedAttachmentOpject,
+                          details: newAttachmentDetails,
+                          accessType: selectedAttachType
+                        })
+                          .unwrap()
+                          .then(() => {
+                            handleFinishUploading();
+                          })
+                    }}
+                    appearance="primary"
+                  >
+                    Save
+                  </Button>
+                </Modal.Footer>
+              </Modal>            <Modal open={deleteModalOpen} onClose={handleClearAttachmentDelete}>
+                <Modal.Header>
+                  <Modal.Title><h6>Confirm Delete</h6></Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                  <p>
+                    <RemindOutlineIcon style={{ color: '#ffca61', marginRight: '8px', fontSize: '24px' }} />
+                    <Translate style={{ fontSize: '24px' }} >
+                      Are you sure you want to delete this Attachment?
+                    </Translate>
+                  </p>
+
+                </Modal.Body>
+                <Modal.Footer>
+                  <Button onClick={handleClearAttachmentDelete} appearance="ghost" color="cyan" >
+                    Cancel
+                  </Button>
+                  <Divider vertical />
+                  <Button
+                    onClick={() => {
+                      deleteAttachment({ key: selectedAttachment.key })
+                        .then(() => {
+                          attachmentRefetch();
+                          fetchPatientImageResponse.refetch();
+                          dispatch(notify('Deleted Successfully'))
+                          handleClearAttachmentDelete();
+                        })
+                    }}
+                    appearance="primary"
+                  >
+                    Delete
+                  </Button>
+                </Modal.Footer>
+              </Modal>
 
               <ButtonToolbar style={{ padding: 1 }}>
                 <IconButton
                   icon={<Icon as={FaPlus} />}
+
                   onClick={() => {
+                    handleCleareAttachment();
                     setAttachmentsModalOpen(true);
+
                   }}
                   appearance="primary"
+                  disabled={!editing || !localPatient.key}
                 >
                   <Translate>New Attachment </Translate>
                 </IconButton>
@@ -2725,7 +3005,8 @@ const PatientProfile = () => {
                         <Button
                           appearance="link"
                           color="red"
-                          onClick={() => handleDeletaAttachment(attachment)}
+                          onClick={() => handleDeleteAttachment(attachment)}
+
                         >
                           <TrashIcon style={{ marginLeft: '10px', scale: '1.4' }} />
                         </Button>
@@ -2789,10 +3070,10 @@ const PatientProfile = () => {
             </Column>
             <Column sortable flexGrow={3}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('mobileNumber', e)} />
+                <Input onChange={e => handleFilterChange('phoneNumber', e)} />
                 <Translate>Mobile Number</Translate>
               </HeaderCell>
-              <Cell dataKey="mobileNumber" />
+              <Cell dataKey="phoneNumber" />
             </Column>
             <Column sortable flexGrow={2}>
               <HeaderCell>
@@ -2855,6 +3136,7 @@ const PatientProfile = () => {
           </div>
         </Drawer.Body>
       </Drawer>
+
 
       <Drawer
         size="lg"

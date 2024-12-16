@@ -171,7 +171,7 @@ const Frame = (props: FrameProps) => {
                 width={100}
               />
             </StackItem>
-            <StackItem>
+            {/* <StackItem>
               <small>
                 <b>Facility</b>
               </small>
@@ -188,8 +188,8 @@ const Frame = (props: FrameProps) => {
                 <b>Date</b>
               </small>
               <div>{new Date().toDateString()}</div>
-            </StackItem>
-            {patientSlice.patient && (
+            </StackItem> */}
+            {/* {patientSlice.patient && (
               <StackItem>
                 <small>
                   <b>Patient</b>
@@ -205,7 +205,7 @@ const Frame = (props: FrameProps) => {
                   </a>
                 </div>
               </StackItem>
-            )}
+            )} */}
             {patientSlice.encounter && (
               <StackItem>
                 <small>
