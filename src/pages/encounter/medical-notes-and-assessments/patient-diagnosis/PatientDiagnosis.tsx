@@ -69,7 +69,10 @@ const PatientDiagnosis = () => {
     ...initialListRequest,
     pageSize: 100
   });
-
+  const modifiedData = (icdListResponseData?.object ?? []).map(item => ({
+    ...item,
+    combinedLabel: `${item.icdCode} - ${item.description}`
+  }));
   const { data: sourceOfInfoLovResponseData } = useGetLovValuesByCodeQuery('DIAGNOSIS_TYPE');
   const { data: resolutionStatusLovResponseData } =
     useGetLovValuesByCodeQuery('ALLERGY_RES_STATUS');
@@ -172,10 +175,10 @@ const PatientDiagnosis = () => {
           <div >
             <Text style={{ zoom: 0.88 }}>Diagnose</Text>
             <SelectPicker
-              disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
-              style={{ width: '200px', zoom: 0.80 }}
-              data={icdListResponseData?.object ?? []}
-              labelKey="description"
+              disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900'}
+              style={{ width: '250px', zoom: 0.80 }}
+              data={modifiedData}
+              labelKey="combinedLabel"
               valueKey="key"
               placeholder="ICD"
               value={selectedDiagnose.diagnoseCode}
@@ -185,11 +188,6 @@ const PatientDiagnosis = () => {
                   diagnoseCode: e
                 })
               }
-              renderMenuItem={(label, item) => (
-                <div>
-                   <span>{item.icdCode}</span>- <span>{item.description}</span> 
-                </div>
-            )}
             />
           </div>
           <Form style={{ zoom: 0.80, marginLeft: "3px" }} layout="inline" fluid>
@@ -254,18 +252,18 @@ const PatientDiagnosis = () => {
               }
             />
           </div>
-          <div style={{display:'flex',justifyContent: 'center', alignItems: 'flex-end'}}>
-          <Button
-                    color="green"
-                    appearance="primary"
-                    onClick={save}
-                  
-                    
-                >
-                    <Translate>Save</Translate>
-                </Button>
-                </div>
-       
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
+            <Button
+              color="green"
+              appearance="primary"
+              onClick={save}
+
+
+            >
+              <Translate>Save</Translate>
+            </Button>
+          </div>
+
         </div>
       </Panel>
 

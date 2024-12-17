@@ -113,10 +113,15 @@ const Prescription = () => {
                 fieldName: "visit_key",
                 operator: "match",
                 value: patientSlice.encounter.key,
-            },
+            }
+
         ],
     });
-    const [preKey,setPreKey] = useState(prescriptions?.object[0]?.key);
+    const filteredPrescriptions = prescriptions?.object?.filter(
+        (item) => item.statusLkey === "1804482322306061"
+    ) ?? [];
+    console.log(filteredPrescriptions)
+    const [preKey, setPreKey] = useState(null);
     console.log(preKey);
     const [prescriptionMedication, setPrescriptionMedications] = useState<ApPrescriptionMedications>(
         {
@@ -129,7 +134,8 @@ const Prescription = () => {
         } else return '';
     };
     const [customeInstruction, setCustomeInstruction] = useState<ApCustomeInstructions>({ ...newApCustomeInstructions });
-    const [savePrescription, { isLoading: isSavingPrescription }] = useSavePrescriptionMutation();
+    const [savePrescription, savePrescriptionMutation] = useSavePrescriptionMutation();
+
     const [savePrescriptionMedication, { isLoading: isSavingPrescriptionMedication }] = useSavePrescriptionMedicationMutation();
 
 
@@ -158,7 +164,7 @@ const Prescription = () => {
         ...initialListRequest,
 
     });
-    console.log(prescriptions?.object[0]?.statusLkey);
+
     useEffect(() => {
         console.log("searchKeyword changed:", searchKeyword);
         if (searchKeyword.trim() !== "") {
@@ -174,12 +180,15 @@ const Prescription = () => {
                         fieldName: 'deleted_at',
                         operator: 'isNull',
                         value: undefined
-                      }
+                    }
                 ],
             });
         }
     }, [searchKeyword]);
+    useEffect(() => {
 
+        console.log(preKey)
+    }, [preKey])
     useEffect(() => {
         setPrescriptionMedications({ ...prescriptionMedication, instructionsTypeLkey: selectedOption })
         console.log(prescriptionMedication)
@@ -222,7 +231,7 @@ const Prescription = () => {
             dose: customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === selectedRowoMedicationKey)?.dose,
         })
     }, [selectedRowoMedicationKey])
-    console.log(prescriptions?.object[0]?.statusLkey)
+
     const handleFilterChange = (fieldName, value) => {
         if (value) {
             setListRequest(
@@ -285,7 +294,9 @@ const Prescription = () => {
     const handleSubmitPres = async () => {
         try {
             await savePrescription({
-                ...prescriptions?.object[0],
+                ...prescriptions?.object?.find(prescription =>
+                    prescription.key === preKey
+                ),
 
                 statusLkey: "1804482322306061"
             }).unwrap();
@@ -425,28 +436,40 @@ const Prescription = () => {
 
 
     };
-    function handleRowData(rowData) {
-        if (rowData.instructionsTypeLkey === "3010591042600262") {
-            const generic = predefinedInstructionsListResponse?.object?.find(item => item.key === rowData.instructions);
-            console.log(generic);
-            if (generic) {
-                return [
-                    generic.genericName,
-                    generic.dosageFormLvalue?.lovDisplayVale,
-                    generic.manufacturerLvalue?.lovDisplayVale,
-                    generic.roaLvalue?.lovDisplayVale
-                ]
-                    .filter(Boolean)
-                    .join(", ");
-            }
-        } else if (rowData.instructionsTypeLkey === "3010573499898196") {
-            return rowData.instructions;
-        } else if (rowData.instructionsTypeLkey === "3010606785535008") {
-            return "Custom Instructions";
-        }
 
-        return "";
-    }
+
+    const handleSavePrescription = async () => {
+        console.log("Attempting to save prescription...");
+
+        if (patientSlice.patient && patientSlice.encounter) {
+            try {
+
+                const response = await savePrescription({
+                    ...newApPrescription,
+                    patientKey: patientSlice.patient.key,
+                    visitKey: patientSlice.encounter.key,
+                    statusLkey: "164797574082125",
+                });
+
+
+                dispatch(notify('Start New Prescription whith id :' + response?.data?.prescriptionId));
+
+                setPreKey(response?.data?.key);
+                console.log("Response Object:", response.data);
+                preRefetch().then(() => {
+                    console.log("Refetch complete pres");
+                    console.log(prescriptions?.object)
+                }).catch((error) => {
+                    console.error("Refetch failed:", error);
+                });
+
+            } catch (error) {
+                console.error("Error saving prescription:", error);
+            }
+        } else {
+            console.warn("Patient or encounter is missing. Cannot save prescription.");
+        }
+    };
 
 
     const renderInput = () => {
@@ -477,30 +500,31 @@ const Prescription = () => {
     return (<>
         <h5 style={{ marginTop: "10px" }}>Create Prescription</h5>
         <div className='top-container-p'>
-            <div style={{width:'300px'}}>
-            <SelectPicker
-                  disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
-                  style={{ width: '100%', zoom: 0.80 }}
-                  data={prescriptions?.object ?? []}
-                  labelKey="key"
-                  valueKey="key"
-                  placeholder="prescription"
-                //   value={selectedDiagnose.diagnoseCode}
-                  onChange={e =>{
-                    setPreKey(  e );
-                console.log(preKey)}}
-                  
+            <div style={{ width: '500px' }}>
+                <SelectPicker
+
+                    style={{ width: '100%' }}
+                    data={filteredPrescriptions ?? []}
+                    labelKey="prescriptionId"
+                    valueKey="key"
+                    placeholder="prescription"
+                    //   value={selectedDiagnose.diagnoseCode}
+                    onChange={e => {
+                        setPreKey(e);
+                        console.log(preKey)
+                    }}
+
                 />
             </div>
 
 
             <IconButton
-                color="Blue"
-                appearance="primary"
-                onClick={handleSubmitPres}
-                disabled={prescriptions?.object[0]?.statusLkey == '1804482322306061' ? true : false}
-                style={{marginLeft:'auto'}}
-                icon={<CheckIcon />}
+                color="cyan"
+                appearance="ghost"
+                onClick={handleSavePrescription}
+
+                style={{ marginLeft: 'auto' }}
+                icon={<PlusIcon />}
             >
                 <Translate>New Prescription</Translate>
             </IconButton>
@@ -566,7 +590,12 @@ const Prescription = () => {
                     color="violet"
                     appearance="primary"
                     onClick={handleSubmitPres}
-                    disabled={prescriptions?.object[0]?.statusLkey == '1804482322306061' ? true : false}
+
+                    disabled={
+                        prescriptions?.object?.find(prescription =>
+                            prescription.key === preKey
+                        )?.statusLkey === '1804482322306061'
+                    }
 
                     icon={<CheckIcon />}
                 >
@@ -585,12 +614,14 @@ const Prescription = () => {
 
             </div>
         </div>
+        <br />
         <div className='instructions-container-p '>
             <div className='instructions-container-p ' style={{ minWidth: "800px", border: " 1px solid #b6b7b8" }}>
                 <div>
                     <RadioGroup
                         name="radio-group"
-                        disabled={editing}
+                        disabled={preKey != null ? editing : true}
+
                         onChange={(value) => setSelectedOption(String(value))}
                     >
                         {instructionTypeQueryResponse?.object?.map((instruction, index) => (
@@ -686,7 +717,7 @@ const Prescription = () => {
                     }
                 </div>
             </div>
-            <div className='form-search-container-p ' style={{ padding: "5px", minWidth: "550px" }}>
+            <div className='form-search-container-p ' style={{ minWidth: "600px" }}>
 
 
                 <Table
@@ -698,15 +729,15 @@ const Prescription = () => {
 
                 >
 
-                    <Table.Column flexGrow={2}>
+                    <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }} >Active Ingredient</Table.HeaderCell>
                         <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
                     </Table.Column>
-                    <Table.Column flexGrow={2}>
+                    <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
                         <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
                     </Table.Column>
-                    <Table.Column flexGrow={1}>
+                    <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }} >Details</Table.HeaderCell>
                         <Table.Cell><IconButton
                             // onClick={OpenDetailsModel} 
@@ -717,15 +748,16 @@ const Prescription = () => {
 
             </div>
         </div>
-        <div className='top-container-p'>
+        <br />
+        <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid #b6b7b8' }}>
 
-            <div>
+            <div style={{ display: 'flex', gap: '10px', padding: '4px' }}>
                 <Form style={{ zoom: 0.85 }} layout="inline" fluid>
 
 
                     <MyInput
                         column
-                        disabled={editing}
+                        disabled={preKey != null ? editing : true}
                         width={150}
                         fieldType="number"
                         fieldLabel="Duration"
@@ -735,7 +767,7 @@ const Prescription = () => {
                     />
                     <MyInput
                         column
-                        disabled={editing}
+                        disabled={preKey != null ? editing : true}
                         width={150}
                         fieldType="select"
                         fieldLabel="Duration type"
@@ -745,16 +777,82 @@ const Prescription = () => {
                         fieldName={'durationTypeLkey'}
                         record={prescriptionMedication}
                         setRecord={setPrescriptionMedications}
+
+                    />
+                    <MyInput
+                        column
+                        disabled={preKey != null ? editing : true}
+                        width={150}
+                        fieldType="number"
+                        fieldName={'maximumDose'}
+                        record={prescriptionMedication}
+                        setRecord={setPrescriptionMedications}
                     />
 
                 </Form>
-                <br />
+                <Form style={{ zoom: 0.85 }} fluid>
+
+                    <MyInput
+
+                        width={250}
+                        disabled={preKey != null ? editing : true}
+                        fieldType="select"
+                        fieldLabel="Administration Instructions"
+                        selectData={administrationInstructionsLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName={'administrationInstructions'}
+                        record={prescriptionMedication}
+                        setRecord={setPrescriptionMedications}
+                    /></Form>
+                <div style={{ display: 'flex', flexDirection: 'column', paddingLeft: "6px", width: '200px' }}>
+                    <Text style={{ marginBottom: "10px" }}>Parameters to monitor</Text>
+                    <TagGroup className='taggroup-style'>
+                        {tags.map((item, index) => (
+                            <Tag key={index} closable onClose={() => removeTag(item)}>
+                                {item}
+                            </Tag>
+                        ))}
+                        {renderInput()}
+                    </TagGroup>
+                </div>
+
+    
+                <Form style={{ zoom: 0.90 }}>
+                    <MyInput
+
+                        disabled={preKey != null ? editing : true}
+                        column
+                         fieldLabel="Chronic Medication"
+                        fieldType="checkbox"
+                        fieldName="chronicMedication"
+                        record={prescriptionMedication}
+                        setRecord={setPrescriptionMedications}
+                    //   disabled={!editing}
+                    /></Form>
+
+                <Form style={{ zoom: 0.90 }}>
+                    <MyInput
+
+                        disabled={preKey != null ? editing : true}
+                        column
+                        
+                        fieldLabel="Generic substitute allowed"
+                        fieldType="checkbox"
+                        fieldName="genericSubstitute"
+                        record={prescriptionMedication}
+                        setRecord={setPrescriptionMedications}
+                   
+                    /></Form>
+
+            </div>
+            <div style={{ display: 'flex', gap: '10px', padding: '4px' }}>
                 <Form style={{ zoom: 0.85 }} layout="inline" fluid>
 
 
                     <MyInput
                         column
-                        disabled={editing}
+                        disabled={preKey != null ? editing : true}
                         fieldType='number'
                         width={150}
                         fieldName={'numberOfRefills'}
@@ -764,20 +862,20 @@ const Prescription = () => {
 
                     <MyInput
                         column
-                        disabled={editing}
-                        
+                        disabled={preKey != null ? editing : true}
+
                         fieldType='number'
-                        width={100}
+                        width={150}
                         fieldName={'refillIntervalValue'}
                         record={prescriptionMedication}
                         setRecord={setPrescriptionMedications}
                     />
-                     <MyInput
+                    <MyInput
                         column
-                        disabled={editing}
-                        width={110}
+                        disabled={preKey != null ? editing : true}
+                        width={150}
                         fieldType="select"
-                        fieldLabel="ٌRefill Interval Unit"
+                        fieldLabel="Refill Interval Unit"
                         selectData={refillunitQueryResponse?.object ?? []}
                         selectDataLabel="lovDisplayVale"
                         selectDataValue="key"
@@ -786,104 +884,36 @@ const Prescription = () => {
                         setRecord={setPrescriptionMedications}
                     />
                 </Form>
-            </div>
-            <div>
-                <Form style={{ zoom: 0.85 }} fluid>
-
-                    <MyInput
-
-                        width={250}
-                        disabled={editing}
-                        fieldType="select"
-                        fieldLabel="Administration Instructions"
-                        selectData={administrationInstructionsLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldName={'administrationInstructions'}
-                        record={prescriptionMedication}
-                        setRecord={setPrescriptionMedications}
-                    />
-
-                    <Input as="textarea" onChange={(e) => setAdminInstructions(e)} value={adminInstructions} style={{ width: 250 }} rows={3} />
-                </Form>
-            </div>
-            <div style={{ marginLeft: "10px" }}>
+                <Input as="textarea" onChange={(e) => setAdminInstructions(e)}
+                    value={adminInstructions}
+                    style={{ width: 250, zoom: 0.85 }}
+                    rows={3} />
                 <Form style={{ zoom: 0.85 }} layout="inline" fluid>
                     <MyInput
                         column
-                        disabled={editing}
-                        width={150}
-                        fieldType="date"
-                        fieldName={'validUtil'}
-                        record={prescriptionMedication}
-                        setRecord={setPrescriptionMedications}
-                    />
-                    <MyInput
-                        column
-                        disabled={editing}
-                        width={150}
-                        fieldType="number"
-                        fieldName={'maximumDose'}
-                        record={prescriptionMedication}
-                        setRecord={setPrescriptionMedications}
-                    />
-
-                </Form><br />
-                <Text style={{ marginBottom: "10px" }}>Parameters to monitor</Text>
-                <TagGroup className='taggroup-style'>
-                    {tags.map((item, index) => (
-                        <Tag key={index} closable onClose={() => removeTag(item)}>
-                            {item}
-                        </Tag>
-                    ))}
-                    {renderInput()}
-                </TagGroup>
-            </div>
-            <div>
-                <div style={{ display: "flex" }}>
-                    <div className='toggle-style'>
-
-                        <Form>
-                            <MyInput
-                                width={165}
-                                disabled={editing}
-                                column
-                                fieldLabel="Chronic Medication"
-                                fieldType="checkbox"
-                                fieldName="chronicMedication"
-                                record={prescriptionMedication}
-                                setRecord={setPrescriptionMedications}
-                            //   disabled={!editing}
-                            /></Form></div>
-                    <div className='toggle-style' style={{ marginLeft: "5px" }}>
-                        <Form>
-                            <MyInput
-                                width={165}
-                                disabled={editing}
-                                column
-                                fieldLabel="Generic substitute allowed"
-                                fieldType="checkbox"
-                                fieldName="genericSubstitute"
-                                record={prescriptionMedication}
-                                setRecord={setPrescriptionMedications}
-                            //   disabled={!editing}
-                            /></Form>
-                    </div></div>
-                <br />
-                <Form style={{ zoom: 0.85 }} layout="inline" fluid>
-                    <MyInput
-                        column
-                        disabled={editing}
+                        disabled={preKey != null ? editing : true}
                         rows={5}
                         fieldType="textarea"
-                        width={250}
+                        width={235}
                         fieldName={'notes'}
                         record={prescriptionMedication}
                         setRecord={setPrescriptionMedications}
 
                     />
                 </Form>
+                <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+                    <MyInput
+                        column
+                        disabled={preKey != null ? editing : true}
+                        width={150}
+                        fieldType="date"
+                        fieldName={'validUtil'}
+                        record={prescriptionMedication}
+                        setRecord={setPrescriptionMedications}
+                    />
 
+
+                </Form>
             </div>
         </div>
 
@@ -894,7 +924,11 @@ const Prescription = () => {
                     appearance="primary"
                     onClick={handleSaveMedication}
                     icon={<PlusIcon />}
-                    disabled={prescriptions?.object[0]?.statusLkey == '1804482322306061' ? true : false}
+                    disabled={
+                        prescriptions?.object?.find(prescription =>
+                            prescription.key === preKey
+                        )?.statusLkey === '1804482322306061'
+                    }
                 >
                     <Translate>Add</Translate>
                 </IconButton>
@@ -1026,7 +1060,7 @@ const Prescription = () => {
                                     return [
                                         generic?.dose,
                                         generic?.unitLvalue?.lovDisplayVale,
-                                        generic?.routLvalue?.lovDisplayVale,
+                                       
                                         generic?.frequencyLvalue?.lovDisplayVale
                                     ]
                                         .filter(Boolean)
@@ -1088,3 +1122,174 @@ const Prescription = () => {
     </>);
 };
 export default Prescription;
+{/* <div className='top-container-p'>
+
+<div>
+    <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+
+
+        <MyInput
+            column
+             disabled={preKey != null ? editing : true}
+            width={100}
+            fieldType="number"
+            fieldLabel="Duration"
+            fieldName={'duration'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+        />
+        <MyInput
+            column
+             disabled={preKey != null ? editing : true}
+            width={100}
+            fieldType="select"
+            fieldLabel="Duration type"
+            selectData={DurationTypeLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            fieldName={'durationTypeLkey'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+            
+        />
+         <MyInput
+            column
+             disabled={preKey != null ? editing : true}
+            width={100}
+            fieldType="number"
+            fieldName={'maximumDose'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+        />
+
+    </Form>
+    <br />
+    <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+
+
+        <MyInput
+            column
+             disabled={preKey != null ? editing : true}
+            fieldType='number'
+            width={100}
+            fieldName={'numberOfRefills'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+        />
+
+        <MyInput
+            column
+             disabled={preKey != null ? editing : true}
+            
+            fieldType='number'
+            width={100}
+            fieldName={'refillIntervalValue'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+        />
+         <MyInput
+            column
+             disabled={preKey != null ? editing : true}
+            width={100}
+            fieldType="select"
+            fieldLabel="Refill Interval Unit"
+            selectData={refillunitQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            fieldName={'refillIntervalUnitLkey'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+        />
+    </Form>
+</div>
+<div>
+    <Form style={{ zoom: 0.85 }} fluid>
+
+        <MyInput
+
+            width={250}
+             disabled={preKey != null ? editing : true}
+            fieldType="select"
+            fieldLabel="Administration Instructions"
+            selectData={administrationInstructionsLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            fieldName={'administrationInstructions'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+        />
+
+        <Input as="textarea" onChange={(e) => setAdminInstructions(e)} value={adminInstructions} style={{ width: 250 }} rows={3} />
+    </Form>
+</div>
+<div style={{ marginLeft: "10px" }}>
+    <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+        <MyInput
+            column
+             disabled={preKey != null ? editing : true}
+            width={150}
+            fieldType="date"
+            fieldName={'validUtil'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+        />
+       
+
+    </Form><br />
+    <Text style={{ marginBottom: "10px" }}>Parameters to monitor</Text>
+    <TagGroup className='taggroup-style'>
+        {tags.map((item, index) => (
+            <Tag key={index} closable onClose={() => removeTag(item)}>
+                {item}
+            </Tag>
+        ))}
+        {renderInput()}
+    </TagGroup>
+</div>
+<div>
+    <div style={{ display: "flex" }}>
+        <div className='toggle-style'>
+
+            <Form>
+                <MyInput
+                    width={165}
+                     disabled={preKey != null ? editing : true}
+                    column
+                    fieldLabel="Chronic Medication"
+                    fieldType="checkbox"
+                    fieldName="chronicMedication"
+                    record={prescriptionMedication}
+                    setRecord={setPrescriptionMedications}
+                //   disabled={!editing}
+                /></Form></div>
+        <div className='toggle-style' style={{ marginLeft: "5px" }}>
+            <Form>
+                <MyInput
+                    width={165}
+                     disabled={preKey != null ? editing : true}
+                    column
+                    fieldLabel="Generic substitute allowed"
+                    fieldType="checkbox"
+                    fieldName="genericSubstitute"
+                    record={prescriptionMedication}
+                    setRecord={setPrescriptionMedications}
+                //   disabled={!editing}
+                /></Form>
+        </div></div>
+    <br />
+    <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+        <MyInput
+            column
+             disabled={preKey != null ? editing : true}
+            rows={5}
+            fieldType="textarea"
+            width={250}
+            fieldName={'notes'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+
+        />
+    </Form>
+
+</div>
+</div> */}
