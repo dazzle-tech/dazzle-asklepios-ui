@@ -1572,6 +1572,7 @@ export interface ApPrescription {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	prescriptionId:string;
 } 
 
 export interface ApPrescriptionInstruction { 
@@ -1617,6 +1618,8 @@ export interface ApPrescriptionMedications {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	refillIntervalValue:number;
+	refillIntervalUnitLkey:string;
 } 
 
 export interface ApResources { 

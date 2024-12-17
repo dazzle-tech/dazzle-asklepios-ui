@@ -24,6 +24,7 @@ import {
     RadioGroup,
     TagInput,
     TagGroup,
+    SelectPicker,
     Tag
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
@@ -39,7 +40,7 @@ import {
     useGetPrescriptionMedicationsQuery,
     useSaveCustomeInstructionsMutation,
     useGetCustomeInstructionsQuery
-   
+
 } from '@/services/encounterService';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import CheckIcon from '@rsuite/icons/Check';
@@ -70,7 +71,7 @@ const Prescription = () => {
     const [inst, setInst] = useState(null);
     const [tags, setTags] = React.useState([]);
     const [showCanceled, setShowCanceled] = useState(true);
-    const [editing,setEditing]=useState(false);
+    const [editing, setEditing] = useState(false);
     const [typing, setTyping] = React.useState(false);
     const [inputValue, setInputValue] = React.useState('');
     const [listRequest, setListRequest] = useState<ListRequest>({
@@ -88,7 +89,7 @@ const Prescription = () => {
         dose: null,
         unit: null,
         frequency: null,
-        roa:null
+        roa: null
     });
     const { data: genericMedicationListResponse } = useGetGenericMedicationQuery(listGenericRequest);
     const [selectedRows, setSelectedRows] = useState([]);
@@ -98,8 +99,9 @@ const Prescription = () => {
     const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery('PRESC_INSTRUCTIONS');
     const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const { data: instructionTypeQueryResponse } = useGetLovValuesByCodeQuery('PRESC_INSTR_TYPE');
+    const { data: refillunitQueryResponse } = useGetLovValuesByCodeQuery('REFILL_INTERVAL');
     const [prescription, setPrescription] = useState<ApPrescription>({ ...newApPrescription });
-    const { data: prescriptions, isLoading: isLoadingPrescriptions ,refetch:preRefetch} = useGetPrescriptionsQuery({
+    const { data: prescriptions, isLoading: isLoadingPrescriptions, refetch: preRefetch } = useGetPrescriptionsQuery({
         ...initialListRequest,
         filters: [
             {
@@ -111,10 +113,15 @@ const Prescription = () => {
                 fieldName: "visit_key",
                 operator: "match",
                 value: patientSlice.encounter.key,
-            },
+            }
+
         ],
     });
-    const preKey = prescriptions?.object[0]?.key;
+    const filteredPrescriptions = prescriptions?.object?.filter(
+        (item) => item.statusLkey === "1804482322306061"
+    ) ?? [];
+    console.log(filteredPrescriptions)
+    const [preKey, setPreKey] = useState(null);
     console.log(preKey);
     const [prescriptionMedication, setPrescriptionMedications] = useState<ApPrescriptionMedications>(
         {
@@ -127,9 +134,10 @@ const Prescription = () => {
         } else return '';
     };
     const [customeInstruction, setCustomeInstruction] = useState<ApCustomeInstructions>({ ...newApCustomeInstructions });
-    const [savePrescription, { isLoading: isSavingPrescription }] = useSavePrescriptionMutation();
+    const [savePrescription, savePrescriptionMutation] = useSavePrescriptionMutation();
+
     const [savePrescriptionMedication, { isLoading: isSavingPrescriptionMedication }] = useSavePrescriptionMedicationMutation();
-    
+
 
     const [saveCustomeInstructions, { isLoading: isSavingCustomeInstructions }] = useSaveCustomeInstructionsMutation();
 
@@ -137,8 +145,8 @@ const Prescription = () => {
 
     const { data: prescriptionMedications, isLoading: isLoadingPrescriptionMedications, refetch: medicRefetch } = useGetPrescriptionMedicationsQuery({
         ...initialListRequest,
-       
-         filters: [
+
+        filters: [
             {
                 fieldName: "prescription_key",
                 operator: "",
@@ -146,16 +154,17 @@ const Prescription = () => {
             },
             {
                 fieldName: "status_lkey",
-                operator: showCanceled?"notMatch":"match",
+                operator: showCanceled ? "notMatch" : "match",
                 value: "1804447528780744",
             }
         ],
     });
-    const [selectedRowoMedicationKey,setSelectedRowoMedicationKey]=useState("");
-    const { data: customeInstructions, isLoading: isLoadingCustomeInstructions,refetch:refetchCo } = useGetCustomeInstructionsQuery({ ...initialListRequest,
-           
-     });
-    console.log(prescriptions?.object[0]?.statusLkey);
+    const [selectedRowoMedicationKey, setSelectedRowoMedicationKey] = useState("");
+    const { data: customeInstructions, isLoading: isLoadingCustomeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
+        ...initialListRequest,
+
+    });
+
     useEffect(() => {
         console.log("searchKeyword changed:", searchKeyword);
         if (searchKeyword.trim() !== "") {
@@ -171,28 +180,32 @@ const Prescription = () => {
                         fieldName: 'deleted_at',
                         operator: 'isNull',
                         value: undefined
-                      }
+                    }
                 ],
             });
         }
     }, [searchKeyword]);
+    useEffect(() => {
 
+        console.log(preKey)
+    }, [preKey])
     useEffect(() => {
         setPrescriptionMedications({ ...prescriptionMedication, instructionsTypeLkey: selectedOption })
         console.log(prescriptionMedication)
     }, [selectedOption])
     useEffect(() => {
-        if (prescriptionMedication.administrationInstructions != null){
-          
-        console.log(prescriptionMedication.administrationInstructions)
+        if (prescriptionMedication.administrationInstructions != null) {
+
+            console.log(prescriptionMedication.administrationInstructions)
             setAdminInstructions(prevadminInstructions =>
                 prevadminInstructions ? `${prevadminInstructions}, ${administrationInstructionsLovQueryResponse?.object?.find(
                     item => item.key === prescriptionMedication.administrationInstructions
-                )?.lovDisplayVale}` : 
-                administrationInstructionsLovQueryResponse?.object?.find(
-                    item => item.key === prescriptionMedication.administrationInstructions
-                )?.lovDisplayVale
-            );}
+                )?.lovDisplayVale}` :
+                    administrationInstructionsLovQueryResponse?.object?.find(
+                        item => item.key === prescriptionMedication.administrationInstructions
+                    )?.lovDisplayVale
+            );
+        }
 
         setPrescriptionMedications({ ...prescriptionMedication, administrationInstructions: null })
     }, [prescriptionMedication.administrationInstructions])
@@ -204,20 +217,21 @@ const Prescription = () => {
     useEffect(() => {
 
     }, [selectedPreDefine, munial])
-     useEffect(()=>{
+    useEffect(() => {
 
-     },[customeinst])
-     useEffect(()=>{
-      console.log(selectedRowoMedicationKey)
-      refetchCo();
-      console.log(customeInstructions?.object)
-      setCustomeinst({...customeinst,
-                                unit:customeInstructions?.object?.find(item => item.prescriptionMedicationsKey ===selectedRowoMedicationKey)?.unitLkey,
-                                frequency:customeInstructions?.object?.find(item => item.prescriptionMedicationsKey ===selectedRowoMedicationKey)?.frequencyLkey,
-                               dose:customeInstructions?.object?.find(item => item.prescriptionMedicationsKey ===selectedRowoMedicationKey)?.dose,
-                               })
-     },[selectedRowoMedicationKey])
-     console.log(prescriptions?.object[0]?.statusLkey)
+    }, [customeinst])
+    useEffect(() => {
+        console.log(selectedRowoMedicationKey)
+        refetchCo();
+        console.log(customeInstructions?.object)
+        setCustomeinst({
+            ...customeinst,
+            unit: customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === selectedRowoMedicationKey)?.unitLkey,
+            frequency: customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === selectedRowoMedicationKey)?.frequencyLkey,
+            dose: customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === selectedRowoMedicationKey)?.dose,
+        })
+    }, [selectedRowoMedicationKey])
+
     const handleFilterChange = (fieldName, value) => {
         if (value) {
             setListRequest(
@@ -262,12 +276,12 @@ const Prescription = () => {
             }).catch((error) => {
                 console.error("Refetch failed:", error);
             });
-medicRefetch().then(() => {
-    console.log("Refetch complete");
-}).catch((error) => {
-    console.error("Refetch failed:", error);
-});
-            
+            medicRefetch().then(() => {
+                console.log("Refetch complete");
+            }).catch((error) => {
+                console.error("Refetch failed:", error);
+            });
+
 
             setSelectedRows([]);
 
@@ -277,10 +291,12 @@ medicRefetch().then(() => {
 
         }
     };
-    const handleSubmitPres =async () => {
+    const handleSubmitPres = async () => {
         try {
-           await savePrescription({
-                ...prescriptions?.object[0],
+            await savePrescription({
+                ...prescriptions?.object?.find(prescription =>
+                    prescription.key === preKey
+                ),
 
                 statusLkey: "1804482322306061"
             }).unwrap();
@@ -295,7 +311,7 @@ medicRefetch().then(() => {
             }).catch((error) => {
                 console.error("Refetch failed:", error);
             });
-            
+
         }
         catch (error) {
             console.error("Error saving prescription or medications:", error);
@@ -309,7 +325,7 @@ medicRefetch().then(() => {
         }).catch((error) => {
             console.error("Refetch failed:", error);
         });
-        
+
 
 
     }
@@ -317,12 +333,12 @@ medicRefetch().then(() => {
         const saveData = async () => {
             if (inst != null) {
                 console.log("useEffect   " + inst);
-    
+
                 if (preKey === null) {
                     dispatch(notify('Prescription not linked. Try again'));
                     return;
                 }
-    
+
                 const tagcompine = joinValuesFromArray(tags);
                 try {
                     await savePrescriptionMedication({
@@ -340,15 +356,15 @@ medicRefetch().then(() => {
                         roaLkey: selectedOption === "3010606785535008" ? selectedGeneric.roaLvalue?.lovDisplayVale : null,
                         administrationInstructions: adminInstructions
                     }).unwrap();
-    
+
                     dispatch(notify('Saved successfully'));
-    
+
                     // Perform refetches
                     await Promise.all([
                         medicRefetch().then(() => console.log("Medic refetch complete")),
                         refetchCo().then(() => console.log("Co refetch complete"))
                     ]);
-    
+
                     handleCleare();
                 } catch (error) {
                     console.error("Save failed:", error);
@@ -356,15 +372,15 @@ medicRefetch().then(() => {
                 }
             }
         };
-    
+
         saveData();
     }, [inst]);
-    
-    
+
+
 
     const handleSaveMedication = () => {
 
-       
+
         if (selectedOption === '3010591042600262') {
 
             setInst(selectedPreDefine.key);
@@ -373,19 +389,19 @@ medicRefetch().then(() => {
 
         }
         else if (selectedOption === '3010573499898196') {
-            
+
             setInst(munial);
             console.log("case2  " + inst)
-            
+
         }
         else {
             setInst("")
             console.log("case3" + inst)
         }
 
-         
-       
-     
+
+
+
 
     }
     const handleCleare = () => {
@@ -400,7 +416,7 @@ medicRefetch().then(() => {
         setAdminInstructions(null)
         setSelectedGeneric(null);
         setAdminInstructions(null);
-        setCustomeinst({dose:null,frequency:null,unit:null,roa:null})
+        setCustomeinst({ dose: null, frequency: null, unit: null, roa: null })
 
     }
     const addTag = () => {
@@ -408,7 +424,7 @@ medicRefetch().then(() => {
         setTags(nextTags);
         setTyping(false);
         setInputValue('');
-    }; 
+    };
 
     const handleButtonClick = () => {
         setTyping(true);
@@ -418,30 +434,42 @@ medicRefetch().then(() => {
         setSearchKeyword("")
         console.log(Generic.genericName)
 
-   
-    };
-    function handleRowData(rowData) {
-        if (rowData.instructionsTypeLkey === "3010591042600262") {
-            const generic = predefinedInstructionsListResponse?.object?.find(item => item.key === rowData.instructions);
-            console.log(generic);
-            if (generic) {
-                return [
-                    generic.genericName,
-                    generic.dosageFormLvalue?.lovDisplayVale,
-                    generic.manufacturerLvalue?.lovDisplayVale,
-                    generic.roaLvalue?.lovDisplayVale
-                ]
-                    .filter(Boolean)
-                    .join(", ");
-            }
-        } else if (rowData.instructionsTypeLkey === "3010573499898196") {
-            return rowData.instructions;
-        } else if (rowData.instructionsTypeLkey === "3010606785535008") {
-            return "Custom Instructions";
-        }
 
-        return "";
-    }
+    };
+
+
+    const handleSavePrescription = async () => {
+        console.log("Attempting to save prescription...");
+
+        if (patientSlice.patient && patientSlice.encounter) {
+            try {
+
+                const response = await savePrescription({
+                    ...newApPrescription,
+                    patientKey: patientSlice.patient.key,
+                    visitKey: patientSlice.encounter.key,
+                    statusLkey: "164797574082125",
+                });
+
+
+                dispatch(notify('Start New Prescription whith id :' + response?.data?.prescriptionId));
+
+                setPreKey(response?.data?.key);
+                console.log("Response Object:", response.data);
+                preRefetch().then(() => {
+                    console.log("Refetch complete pres");
+                    console.log(prescriptions?.object)
+                }).catch((error) => {
+                    console.error("Refetch failed:", error);
+                });
+
+            } catch (error) {
+                console.error("Error saving prescription:", error);
+            }
+        } else {
+            console.warn("Patient or encounter is missing. Cannot save prescription.");
+        }
+    };
 
 
     const renderInput = () => {
@@ -471,6 +499,42 @@ medicRefetch().then(() => {
     };
     return (<>
         <h5 style={{ marginTop: "10px" }}>Create Prescription</h5>
+        <div className='top-container-p'>
+            <div style={{ width: '500px' }}>
+                <SelectPicker
+
+                    style={{ width: '100%' }}
+                    data={filteredPrescriptions ?? []}
+                    labelKey="prescriptionId"
+                    valueKey="key"
+                    placeholder="prescription"
+                    //   value={selectedDiagnose.diagnoseCode}
+                    onChange={e => {
+                        setPreKey(e);
+                        console.log(preKey)
+                    }}
+
+                />
+            </div>
+
+
+            <IconButton
+                color="cyan"
+                appearance="ghost"
+                onClick={handleSavePrescription}
+
+                style={{ marginLeft: 'auto' }}
+                icon={<PlusIcon />}
+            >
+                <Translate>New Prescription</Translate>
+            </IconButton>
+
+
+
+
+
+        </div>
+        <br />
         <div className='top-container-p'>
             <div className='form-search-container-p '>
                 <Form>
@@ -526,8 +590,13 @@ medicRefetch().then(() => {
                     color="violet"
                     appearance="primary"
                     onClick={handleSubmitPres}
-                    disabled={prescriptions?.object[0]?.statusLkey == '1804482322306061' ? true : false}
-                    
+
+                    disabled={
+                        prescriptions?.object?.find(prescription =>
+                            prescription.key === preKey
+                        )?.statusLkey === '1804482322306061'
+                    }
+
                     icon={<CheckIcon />}
                 >
                     <Translate>Submit Prescription</Translate>
@@ -545,12 +614,14 @@ medicRefetch().then(() => {
 
             </div>
         </div>
+        <br />
         <div className='instructions-container-p '>
             <div className='instructions-container-p ' style={{ minWidth: "800px", border: " 1px solid #b6b7b8" }}>
                 <div>
                     <RadioGroup
                         name="radio-group"
-                        disabled={editing}
+                        disabled={preKey != null ? editing : true}
+
                         onChange={(value) => setSelectedOption(String(value))}
                     >
                         {instructionTypeQueryResponse?.object?.map((instruction, index) => (
@@ -646,7 +717,7 @@ medicRefetch().then(() => {
                     }
                 </div>
             </div>
-            <div className='form-search-container-p ' style={{ padding: "5px", minWidth: "550px" }}>
+            <div className='form-search-container-p ' style={{ minWidth: "600px" }}>
 
 
                 <Table
@@ -658,15 +729,15 @@ medicRefetch().then(() => {
 
                 >
 
-                    <Table.Column flexGrow={2}>
+                    <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }} >Active Ingredient</Table.HeaderCell>
                         <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
                     </Table.Column>
-                    <Table.Column flexGrow={2}>
+                    <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
                         <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
                     </Table.Column>
-                    <Table.Column flexGrow={1}>
+                    <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }} >Details</Table.HeaderCell>
                         <Table.Cell><IconButton
                             // onClick={OpenDetailsModel} 
@@ -677,15 +748,16 @@ medicRefetch().then(() => {
 
             </div>
         </div>
-        <div className='top-container-p'>
+        <br />
+        <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid #b6b7b8' }}>
 
-            <div>
+            <div style={{ display: 'flex', gap: '10px', padding: '4px' }}>
                 <Form style={{ zoom: 0.85 }} layout="inline" fluid>
 
 
                     <MyInput
                         column
-                        disabled={editing}
+                        disabled={preKey != null ? editing : true}
                         width={150}
                         fieldType="number"
                         fieldLabel="Duration"
@@ -695,7 +767,7 @@ medicRefetch().then(() => {
                     />
                     <MyInput
                         column
-                        disabled={editing}
+                        disabled={preKey != null ? editing : true}
                         width={150}
                         fieldType="select"
                         fieldLabel="Duration type"
@@ -705,16 +777,82 @@ medicRefetch().then(() => {
                         fieldName={'durationTypeLkey'}
                         record={prescriptionMedication}
                         setRecord={setPrescriptionMedications}
+
+                    />
+                    <MyInput
+                        column
+                        disabled={preKey != null ? editing : true}
+                        width={150}
+                        fieldType="number"
+                        fieldName={'maximumDose'}
+                        record={prescriptionMedication}
+                        setRecord={setPrescriptionMedications}
                     />
 
                 </Form>
-                <br />
+                <Form style={{ zoom: 0.85 }} fluid>
+
+                    <MyInput
+
+                        width={250}
+                        disabled={preKey != null ? editing : true}
+                        fieldType="select"
+                        fieldLabel="Administration Instructions"
+                        selectData={administrationInstructionsLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName={'administrationInstructions'}
+                        record={prescriptionMedication}
+                        setRecord={setPrescriptionMedications}
+                    /></Form>
+                <div style={{ display: 'flex', flexDirection: 'column', paddingLeft: "6px", width: '200px' }}>
+                    <Text style={{ marginBottom: "10px" }}>Parameters to monitor</Text>
+                    <TagGroup className='taggroup-style'>
+                        {tags.map((item, index) => (
+                            <Tag key={index} closable onClose={() => removeTag(item)}>
+                                {item}
+                            </Tag>
+                        ))}
+                        {renderInput()}
+                    </TagGroup>
+                </div>
+
+    
+                <Form style={{ zoom: 0.90 }}>
+                    <MyInput
+
+                        disabled={preKey != null ? editing : true}
+                        column
+                         fieldLabel="Chronic Medication"
+                        fieldType="checkbox"
+                        fieldName="chronicMedication"
+                        record={prescriptionMedication}
+                        setRecord={setPrescriptionMedications}
+                    //   disabled={!editing}
+                    /></Form>
+
+                <Form style={{ zoom: 0.90 }}>
+                    <MyInput
+
+                        disabled={preKey != null ? editing : true}
+                        column
+                        
+                        fieldLabel="Generic substitute allowed"
+                        fieldType="checkbox"
+                        fieldName="genericSubstitute"
+                        record={prescriptionMedication}
+                        setRecord={setPrescriptionMedications}
+                   
+                    /></Form>
+
+            </div>
+            <div style={{ display: 'flex', gap: '10px', padding: '4px' }}>
                 <Form style={{ zoom: 0.85 }} layout="inline" fluid>
 
 
                     <MyInput
                         column
-                        disabled={editing}
+                        disabled={preKey != null ? editing : true}
                         fieldType='number'
                         width={150}
                         fieldName={'numberOfRefills'}
@@ -724,112 +862,58 @@ medicRefetch().then(() => {
 
                     <MyInput
                         column
-                        disabled={editing}
-                        fieldLabel="Min. Refill Interval"
+                        disabled={preKey != null ? editing : true}
+
+                        fieldType='number'
                         width={150}
-                        fieldName={'refillInterval'}
+                        fieldName={'refillIntervalValue'}
                         record={prescriptionMedication}
                         setRecord={setPrescriptionMedications}
                     />
-                </Form>
-            </div>
-            <div>
-                <Form style={{ zoom: 0.85 }} fluid>
-
                     <MyInput
-
-                        width={250} 
-                        disabled={editing}
+                        column
+                        disabled={preKey != null ? editing : true}
+                        width={150}
                         fieldType="select"
-                        fieldLabel="Administration Instructions"
-                        selectData={administrationInstructionsLovQueryResponse?.object ?? []}
+                        fieldLabel="Refill Interval Unit"
+                        selectData={refillunitQueryResponse?.object ?? []}
                         selectDataLabel="lovDisplayVale"
                         selectDataValue="key"
-                        fieldName={'administrationInstructions'}
+                        fieldName={'refillIntervalUnitLkey'}
                         record={prescriptionMedication}
                         setRecord={setPrescriptionMedications}
                     />
-
-                    <Input as="textarea" onChange={(e) => setAdminInstructions(e)} value={adminInstructions} style={{ width: 250 }} rows={3} />
                 </Form>
-            </div>
-            <div style={{ marginLeft: "10px" }}>
+                <Input as="textarea" onChange={(e) => setAdminInstructions(e)}
+                    value={adminInstructions}
+                    style={{ width: 250, zoom: 0.85 }}
+                    rows={3} />
                 <Form style={{ zoom: 0.85 }} layout="inline" fluid>
                     <MyInput
                         column
-                        disabled={editing}
-                        width={150}
-                        fieldType="date"
-                        fieldName={'validUtil'}
-                        record={prescriptionMedication}
-                        setRecord={setPrescriptionMedications}
-                    />
-                    <MyInput
-                        column
-                        disabled={editing}
-                        width={150}
-                        fieldType="number"
-                        fieldName={'maximumDose'}
-                        record={prescriptionMedication}
-                        setRecord={setPrescriptionMedications}
-                    />
-
-                </Form><br />
-                <Text style={{ marginBottom: "10px" }}>Parameters to monitor</Text>
-                <TagGroup   className='taggroup-style'>
-                    {tags.map((item, index) => (
-                        <Tag key={index} closable onClose={() => removeTag(item)}>
-                            {item}
-                        </Tag>
-                    ))}
-                    {renderInput()}
-                </TagGroup>
-            </div>
-            <div>
-                <div style={{ display: "flex" }}>
-                    <div className='toggle-style'>
-
-                        <Form>
-                            <MyInput
-                                width={165}
-                                disabled={editing}
-                                column
-                                fieldLabel="Chronic Medication"
-                                fieldType="checkbox"
-                                fieldName="chronicMedication"
-                                record={prescriptionMedication}
-                                setRecord={setPrescriptionMedications}
-                            //   disabled={!editing}
-                            /></Form></div>
-                    <div className='toggle-style' style={{ marginLeft: "5px" }}>
-                        <Form>
-                            <MyInput
-                                width={165}
-                                disabled={editing}
-                                column
-                                fieldLabel="Generic substitute allowed"
-                                fieldType="checkbox"
-                                fieldName="genericSubstitute"
-                                record={prescriptionMedication}
-                                setRecord={setPrescriptionMedications}
-                            //   disabled={!editing}
-                            /></Form>
-                    </div></div>
-                <br />
-                <Form style={{ zoom: 0.85 }} layout="inline" fluid>
-                    <MyInput
-                        column
-                        disabled={editing}
+                        disabled={preKey != null ? editing : true}
                         rows={5}
                         fieldType="textarea"
-                        width={250}
+                        width={235}
                         fieldName={'notes'}
                         record={prescriptionMedication}
                         setRecord={setPrescriptionMedications}
 
                     />
                 </Form>
+                <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+                    <MyInput
+                        column
+                        disabled={preKey != null ? editing : true}
+                        width={150}
+                        fieldType="date"
+                        fieldName={'validUtil'}
+                        record={prescriptionMedication}
+                        setRecord={setPrescriptionMedications}
+                    />
 
+
+                </Form>
             </div>
         </div>
 
@@ -840,7 +924,11 @@ medicRefetch().then(() => {
                     appearance="primary"
                     onClick={handleSaveMedication}
                     icon={<PlusIcon />}
-                    disabled={prescriptions?.object[0]?.statusLkey == '1804482322306061' ? true : false}
+                    disabled={
+                        prescriptions?.object?.find(prescription =>
+                            prescription.key === preKey
+                        )?.statusLkey === '1804482322306061'
+                    }
                 >
                     <Translate>Add</Translate>
                 </IconButton>
@@ -867,15 +955,15 @@ medicRefetch().then(() => {
                 </Button>
 
                 <Checkbox
-                            checked={!showCanceled}
-                            onChange={() => {
-                                
-                                
-                                setShowCanceled(!showCanceled);
-                            }}
-                        >
-                            Show canceled test
-                        </Checkbox>
+                    checked={!showCanceled}
+                    onChange={() => {
+
+
+                        setShowCanceled(!showCanceled);
+                    }}
+                >
+                    Show canceled test
+                </Checkbox>
             </div>
 
             <div>
@@ -913,12 +1001,12 @@ medicRefetch().then(() => {
                             console.log("Iam in custom prsecription")
                             setSelectedOption("3010606785535008")
                             setSelectedRowoMedicationKey(rowData.key);
-                            
-                               console.log(selectedRowoMedicationKey)
+
+                            console.log(selectedRowoMedicationKey)
                             console.log(customeinst);
                             console.log(customeInstructions?.object)
                         }
-                        setEditing(rowData.statusLkey=="164797574082125"?false:true)
+                        setEditing(rowData.statusLkey == "164797574082125" ? false : true)
                     }}
                     rowClassName={isSelected}
                 >
@@ -933,7 +1021,7 @@ medicRefetch().then(() => {
                                     key={rowData.id}
                                     checked={selectedRows.includes(rowData)}
                                     onChange={() => handleCheckboxChange(rowData)}
-                                 disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
+                                    disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
                                 />
                             )}
                         </Cell>
@@ -963,32 +1051,32 @@ medicRefetch().then(() => {
                                     const generic = predefinedInstructionsListResponse?.object?.find(
                                         item => item.key === rowData.instructions
                                     );
-                                    
+
                                     if (generic) {
                                         console.log("Found generic:", generic);
                                     } else {
                                         console.warn("No matching generic found for key:", rowData.instructions);
                                     }
-                                    return   [
-                                        generic?.dose, 
+                                    return [
+                                        generic?.dose,
                                         generic?.unitLvalue?.lovDisplayVale,
-                                        generic?.routLvalue?.lovDisplayVale,
+                                       
                                         generic?.frequencyLvalue?.lovDisplayVale
                                     ]
                                         .filter(Boolean)
                                         .join(', ');
                                 }
-                                if(rowData.instructionsTypeLkey === "3010573499898196"){
-                                    return  rowData.instructions
+                                if (rowData.instructionsTypeLkey === "3010573499898196") {
+                                    return rowData.instructions
 
-                                 }
-                                 if(rowData.instructionsTypeLkey === "3010606785535008"){
-                                    return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey ===rowData.key)?.dose+
-                                    ","+customeInstructions?.object?.find(item => item.prescriptionMedicationsKey ===rowData.key)?.unitLvalue.lovDisplayVale +","+
-                                    customeInstructions?.object?.find(item => item.prescriptionMedicationsKey ===rowData.key)?.frequencyLvalue.lovDisplayVale
-                                   
-                                   
-                                 }
+                                }
+                                if (rowData.instructionsTypeLkey === "3010606785535008") {
+                                    return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose +
+                                        "," + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue.lovDisplayVale + "," +
+                                        customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue.lovDisplayVale
+
+
+                                }
 
                                 return "no";
                             }}
@@ -1034,3 +1122,174 @@ medicRefetch().then(() => {
     </>);
 };
 export default Prescription;
+{/* <div className='top-container-p'>
+
+<div>
+    <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+
+
+        <MyInput
+            column
+             disabled={preKey != null ? editing : true}
+            width={100}
+            fieldType="number"
+            fieldLabel="Duration"
+            fieldName={'duration'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+        />
+        <MyInput
+            column
+             disabled={preKey != null ? editing : true}
+            width={100}
+            fieldType="select"
+            fieldLabel="Duration type"
+            selectData={DurationTypeLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            fieldName={'durationTypeLkey'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+            
+        />
+         <MyInput
+            column
+             disabled={preKey != null ? editing : true}
+            width={100}
+            fieldType="number"
+            fieldName={'maximumDose'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+        />
+
+    </Form>
+    <br />
+    <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+
+
+        <MyInput
+            column
+             disabled={preKey != null ? editing : true}
+            fieldType='number'
+            width={100}
+            fieldName={'numberOfRefills'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+        />
+
+        <MyInput
+            column
+             disabled={preKey != null ? editing : true}
+            
+            fieldType='number'
+            width={100}
+            fieldName={'refillIntervalValue'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+        />
+         <MyInput
+            column
+             disabled={preKey != null ? editing : true}
+            width={100}
+            fieldType="select"
+            fieldLabel="Refill Interval Unit"
+            selectData={refillunitQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            fieldName={'refillIntervalUnitLkey'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+        />
+    </Form>
+</div>
+<div>
+    <Form style={{ zoom: 0.85 }} fluid>
+
+        <MyInput
+
+            width={250}
+             disabled={preKey != null ? editing : true}
+            fieldType="select"
+            fieldLabel="Administration Instructions"
+            selectData={administrationInstructionsLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            fieldName={'administrationInstructions'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+        />
+
+        <Input as="textarea" onChange={(e) => setAdminInstructions(e)} value={adminInstructions} style={{ width: 250 }} rows={3} />
+    </Form>
+</div>
+<div style={{ marginLeft: "10px" }}>
+    <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+        <MyInput
+            column
+             disabled={preKey != null ? editing : true}
+            width={150}
+            fieldType="date"
+            fieldName={'validUtil'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+        />
+       
+
+    </Form><br />
+    <Text style={{ marginBottom: "10px" }}>Parameters to monitor</Text>
+    <TagGroup className='taggroup-style'>
+        {tags.map((item, index) => (
+            <Tag key={index} closable onClose={() => removeTag(item)}>
+                {item}
+            </Tag>
+        ))}
+        {renderInput()}
+    </TagGroup>
+</div>
+<div>
+    <div style={{ display: "flex" }}>
+        <div className='toggle-style'>
+
+            <Form>
+                <MyInput
+                    width={165}
+                     disabled={preKey != null ? editing : true}
+                    column
+                    fieldLabel="Chronic Medication"
+                    fieldType="checkbox"
+                    fieldName="chronicMedication"
+                    record={prescriptionMedication}
+                    setRecord={setPrescriptionMedications}
+                //   disabled={!editing}
+                /></Form></div>
+        <div className='toggle-style' style={{ marginLeft: "5px" }}>
+            <Form>
+                <MyInput
+                    width={165}
+                     disabled={preKey != null ? editing : true}
+                    column
+                    fieldLabel="Generic substitute allowed"
+                    fieldType="checkbox"
+                    fieldName="genericSubstitute"
+                    record={prescriptionMedication}
+                    setRecord={setPrescriptionMedications}
+                //   disabled={!editing}
+                /></Form>
+        </div></div>
+    <br />
+    <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+        <MyInput
+            column
+             disabled={preKey != null ? editing : true}
+            rows={5}
+            fieldType="textarea"
+            width={250}
+            fieldName={'notes'}
+            record={prescriptionMedication}
+            setRecord={setPrescriptionMedications}
+
+        />
+    </Form>
+
+</div>
+</div> */}

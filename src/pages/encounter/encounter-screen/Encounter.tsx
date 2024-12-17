@@ -238,16 +238,8 @@ const Encounter = () => {
 
                     <List.Item 
                      style={{ display: 'flex', alignItems: 'center' }}
-                    onClick={() => {
-                      if (prescriptions?.object?.length === 0) {
-                        console.log("The array is empty. Saving prescription...");
-                        handleSavePrescription();
-                       
-                    } else {
-                        console.log("The array is not empty:", prescriptions?.object);
-                    }
-                    handleMenuItemClick(<Prescription />);
-                    }}>
+                     onClick={() => handleMenuItemClick(<Prescription  />)}>
+                    
                     <FontAwesomeIcon icon={faFilePrescription } style={{ margin: '3px'}} />
                       <Translate>Prescription</Translate>
                     </List.Item>
