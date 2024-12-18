@@ -73,7 +73,7 @@ export const newApActiveIngredient:modelTypes.ApActiveIngredient = {
 	isControlled:undefined,
 	controlledLkey:undefined,
 	hasSynonyms:undefined,
-	chemicalFormula:'',
+	atcCode:'',
 	drugTypeLkey:undefined,
 	drugClassLkey:undefined,
 	hasBlackBoxWarning:undefined,
@@ -845,7 +845,6 @@ export const newApGenericMedication:modelTypes.ApGenericMedication = {
 	genericName:'',
 	manufacturerLkey:undefined,
 	usageInstructions:'',
-	roaLkey:undefined,
 	dosageFormLkey:undefined,
 	expiresAfterOpening:undefined,
 	expiresAfterOpeningValue:'',
@@ -855,6 +854,35 @@ export const newApGenericMedication:modelTypes.ApGenericMedication = {
 	priceListKey:undefined,
 	cost:0,
 	storageRequirements:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+	code:'',
+} 
+
+export const newApGenericMedicationActiveIngredient:modelTypes.ApGenericMedicationActiveIngredient = { 
+	key:undefined,
+	genericMedicationKey:undefined,
+	activeIngredientKey:undefined,
+	strength:0,
+	unitLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApGenericMedicationRoa:modelTypes.ApGenericMedicationRoa = { 
+	key:undefined,
+	genericMedicationKey:undefined,
+	roaLkey:undefined,
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',
@@ -1573,6 +1601,7 @@ export const newApPrescription:modelTypes.ApPrescription = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	prescriptionId:'',
 } 
 
 export const newApPrescriptionInstruction:modelTypes.ApPrescriptionInstruction = { 
@@ -1618,6 +1647,8 @@ export const newApPrescriptionMedications:modelTypes.ApPrescriptionMedications =
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	refillIntervalValue:0,
+	refillIntervalUnitLkey:undefined,
 } 
 
 export const newApResources:modelTypes.ApResources = { 

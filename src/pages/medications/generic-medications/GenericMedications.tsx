@@ -14,17 +14,22 @@ import EditIcon from '@rsuite/icons/Edit';
 import TrashIcon from '@rsuite/icons/Trash';
 import { ApGenericMedication } from '@/types/model-types';
 import { newApGenericMedication } from '@/types/model-types-constructor';
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
+import { addFilterToListRequest, conjureValueBasedOnKeyFromList, fromCamelCaseToDBName } from '@/utils';
 import NewEditGenericMedication from './NewEditGenericMedication';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+
 
 const GenericMedications = () => {
 
     const [genericMedication, setGenericMedication] = useState<ApGenericMedication>({ ...newApGenericMedication});
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-   
+    const dispatch = useAppDispatch();
     const { data: genericMedicationListResponse } = useGetGenericMedicationQuery(listRequest);
     const [removeGenericMedication, removeGenericMedicationMutation] = useRemoveGenericMedicationMutation();
     const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
+    const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
 
     const handleNew = () => {
       setGenericMedication({...newApGenericMedication});
@@ -41,6 +46,7 @@ const GenericMedications = () => {
         removeGenericMedication({
           ...genericMedication,
         }).unwrap();
+         dispatch(notify('Brand Medication  Deactivate\Activate Successfully'));
       }
     };
   
@@ -88,7 +94,7 @@ const GenericMedications = () => {
       <Panel
         header={
           <h3 className="title">
-            <Translate> Generic Medications List </Translate>
+            <Translate> Brand Medications List </Translate>
           </h3>
         }
       >
@@ -106,13 +112,13 @@ const GenericMedications = () => {
             Edit Selected
           </IconButton>
           <IconButton
-            disabled={!genericMedication.key || genericMedication.deletedAt !== null}
+            disabled={!genericMedication.key}
             appearance="primary"
             color="red"
             onClick={handleDelete}
             icon={<TrashIcon />}
           >
-            Deactivate Selected
+            Deactivate\Activate Selected
           </IconButton>
         </ButtonToolbar>
         <hr />
@@ -138,17 +144,17 @@ const GenericMedications = () => {
           }}
           rowClassName={isSelected}
         >
-              {/* <Column sortable flexGrow={2}>
+              <Column sortable flexGrow={2}>
             <HeaderCell align="center">
               <Input onChange={e => handleFilterChange('code', e)} />
               <Translate>Code </Translate>
             </HeaderCell>
             <Cell dataKey="code" />
-          </Column> */}
+          </Column>
           <Column sortable flexGrow={2}>
             <HeaderCell align="center">
               <Input onChange={e => handleFilterChange('genericName', e)} />
-              <Translate>Generic Name </Translate>
+              <Translate>Brand Name </Translate>
             </HeaderCell>
             <Cell dataKey="genericName" />
           </Column>
@@ -163,7 +169,7 @@ const GenericMedications = () => {
               }
             </Cell>
           </Column> 
-          <Column sortable flexGrow={2}>
+          <Column sortable flexGrow={2} fullText>
             <HeaderCell  align="center">
               <Input onChange={e => handleFilterChange('dosageFormLkey', e)} />
               <Translate>Dosage Form</Translate>
@@ -175,25 +181,35 @@ const GenericMedications = () => {
             </Cell>
           </Column>
          
-          <Column sortable flexGrow={3}>
+          <Column sortable flexGrow={3} fullText>
             <HeaderCell  align="center">
               <Input onChange={e => handleFilterChange('usageInstructions', e)} />
               <Translate>Usage Instructions</Translate>
             </HeaderCell>
             <Cell dataKey="usageInstructions" />
           </Column> 
-          <Column sortable flexGrow={3}>
+          <Column sortable flexGrow={2} fixed fullText>
             <HeaderCell  align="center">
-              <Input onChange={e => handleFilterChange('roaLkey', e)} />
+               <Input onChange={e => handleFilterChange('roaList', e)} /> 
               <Translate>Rout</Translate>
             </HeaderCell>
             <Cell>
-            {rowData =>
-                rowData.roaLvalue ? rowData.roaLvalue.lovDisplayVale : rowData.roaLkey
-              }
+              {rowData => rowData.roaList?.map((item, index) => {
+                const value = conjureValueBasedOnKeyFromList(
+                  medRoutLovQueryResponse?.object ?? [],
+                  item,
+                  'lovDisplayVale'
+                );
+                return (
+                  <span key={index}>
+                    {value}
+                    {index < rowData.roaList.length - 1 && ', '}
+                  </span>
+                );
+              })}
             </Cell>
           </Column> 
-          <Column sortable flexGrow={3}>
+          <Column sortable flexGrow={2}>
             <HeaderCell  align="center">
               <Input onChange={e => handleFilterChange('expiresAfterOpening', e)} />
               <Translate>Expires After Opening</Translate>
@@ -215,7 +231,7 @@ const GenericMedications = () => {
             }
             </Cell>
           </Column>
-          <Column sortable flexGrow={3}>
+          <Column sortable flexGrow={1}>
             <HeaderCell  align="center">
               <Input onChange={e => handleFilterChange('deleted_at', e)} />
               <Translate>Status</Translate>

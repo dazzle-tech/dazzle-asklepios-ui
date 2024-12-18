@@ -72,7 +72,7 @@ export interface ApActiveIngredient {
 	isControlled:boolean;
 	controlledLkey:string;
 	hasSynonyms:boolean;
-	chemicalFormula:string;
+	atcCode:string;
 	drugTypeLkey:string;
 	drugClassLkey:string;
 	hasBlackBoxWarning:boolean;
@@ -844,7 +844,6 @@ export interface ApGenericMedication {
 	genericName:string;
 	manufacturerLkey:string;
 	usageInstructions:string;
-	roaLkey:string;
 	dosageFormLkey:string;
 	expiresAfterOpening:boolean;
 	expiresAfterOpeningValue:string;
@@ -854,6 +853,35 @@ export interface ApGenericMedication {
 	priceListKey:string;
 	cost:number;
 	storageRequirements:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	code:string;
+} 
+
+export interface ApGenericMedicationActiveIngredient { 
+	key:string;
+	genericMedicationKey:string;
+	activeIngredientKey:string;
+	strength:number;
+	unitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApGenericMedicationRoa { 
+	key:string;
+	genericMedicationKey:string;
+	roaLkey:string;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
@@ -1572,6 +1600,7 @@ export interface ApPrescription {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	prescriptionId:string;
 } 
 
 export interface ApPrescriptionInstruction { 
@@ -1617,6 +1646,8 @@ export interface ApPrescriptionMedications {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	refillIntervalValue:number;
+	refillIntervalUnitLkey:string;
 } 
 
 export interface ApResources { 

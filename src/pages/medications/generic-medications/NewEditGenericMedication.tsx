@@ -11,6 +11,8 @@ import {
   useSaveGenericMedicationMutation
 } from '@/services/medicationsSetupService';
 import {  ButtonToolbar, IconButton,} from 'rsuite';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 import { Block, Check, PlusRound } from '@rsuite/icons';
 import { ApActiveIngredient, ApGenericMedication, ApPatient } from '@/types/model-types';
 import { newApActiveIngredient, newApGenericMedication } from '@/types/model-types-constructor';
@@ -32,15 +34,16 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
 
   const [saveGenericMedication, saveGenericMedicationMutation] = useSaveGenericMedicationMutation();
-
+  const [isAdded, setIsAdded] = useState(false);
   const { data: activeIngredientListResponse } = useGetGenericMedicationQuery(listRequest);
 
   const { data: GenericMedicationLovQueryResponse } = useGetLovValuesByCodeQuery('GEN_MED_MANUFACTUR');
-  const { data: MedicationClassLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ClASS');
+  const { data: doseageFormLovQueryResponse } = useGetLovValuesByCodeQuery('DOSAGE_FORMS');
   const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
-
+  
+  const [selectedROA, setSelectedROA] = useState([])
   const [editing, setEditing] = useState(false);
-
+  const dispatch = useAppDispatch();
   const handleNew = () => {
     setGenericMedication({ ...newApGenericMedication })
   };
@@ -52,15 +55,26 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
   const handleSave = () => {
     setEnableAddActive(true);
     setEditing(true);
-    saveGenericMedication(genericMedication).unwrap();
+    console.log(selectedROA)
+    saveGenericMedication({ genericMedication, roa: selectedROA? selectedROA.roaLkey : [] }).unwrap();
+      dispatch(notify('Brand Medication Saved Successfully'));
   };
+
+
   useEffect(() => {
     if (selectedGenericMedication) {
       setGenericMedication(selectedGenericMedication);
+      console.log("helllo " + selectedGenericMedication.roaList);
+      setSelectedROA(selectedGenericMedication.roaList);
+      
     } else {
       setGenericMedication(newApGenericMedication);
     }
   }, [selectedGenericMedication]);
+
+  useEffect(() => {
+    console.log("The selected ROA:", selectedROA); // This will log the updated selectedROA when it changes
+  }, [selectedROA]);
 
   useEffect(() => {
     if (saveGenericMedicationMutation.data) {
@@ -74,7 +88,7 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
     <Panel
       header={
         <h3 className="title">
-          <Translate>New/Edit Generic Medication</Translate>
+          <Translate>New/Edit Brand Medication</Translate>
         </h3>
       }
     >
@@ -89,7 +103,7 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
               onClick={handleNew}
               icon={<PlusRound />}
             >
-              <Translate>New Generic Medication</Translate>
+              <Translate>New Brand Medication</Translate>
             </IconButton>
         <IconButton
                   appearance="primary"
@@ -119,7 +133,7 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
           <Stack.Item grow={4}>
             <Form layout="inline" fluid>
               <MyInput width={360} column fieldName="code" record={genericMedication} setRecord={setGenericMedication} />
-              <MyInput width={360} column fieldName="genericName" record={genericMedication} setRecord={setGenericMedication} />
+              <MyInput width={360} column fieldLabel="Brand Name" fieldName="genericName" record={genericMedication} setRecord={setGenericMedication} />
 
               <MyInput
                 width={360}
@@ -137,25 +151,37 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
                 column
                 fieldName="dosageFormLkey"
                 fieldType="select"
-                selectData={MedicationClassLovQueryResponse?.object ?? []}
+                selectData={doseageFormLovQueryResponse?.object ?? []}
                 selectDataLabel="lovDisplayVale"
                 selectDataValue="key"
                 record={genericMedication}
                 setRecord={setGenericMedication}
               />
               <br />
-              <MyInput
-                width={360}
-                column
-                fieldLabel="Rout"
-                fieldName="roaLkey"
-                fieldType="select"
-                selectData={medRoutLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={genericMedication}
-                setRecord={setGenericMedication}
-              />
+              {/* <MyInput
+            width={360}
+            column
+            fieldLabel="Rout"
+            selectData={medRoutLovQueryResponse?.object ?? []}
+            fieldType="multyPicker"
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            fieldName={selectedROA}
+            record={selectedROA}
+            setRecord={setSelectedROA}
+          /> */}
+            <MyInput
+            width={360}
+            column
+            fieldLabel="Rout"
+            selectData={medRoutLovQueryResponse?.object ?? []}
+            fieldType="multyPicker"
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            fieldName="roaList"
+            record={genericMedication}
+            setRecord={setGenericMedication}
+          />
 
               <MyInput
                 width={360}
@@ -231,24 +257,24 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
           </Stack.Item>
         </Stack>
       </Panel>
-      {/* <Tabs>
+       <Tabs>
             <TabList>
               <Tab>Active Ingredient</Tab>
               {/* <Tab>Unit of Measurments</Tab>
               <Tab>Price</Tab> */}
-      {/* <Tab>Insurance</Tab>
+       {/* <Tab>Insurance</Tab> */}
             </TabList>
 
             <TabPanel>
-              <ActiveIngredient />
+              {genericMedication.key && <ActiveIngredient genericMedication={genericMedication} />}
                </TabPanel>
-            <TabPanel>
+            {/* <TabPanel>
             <UOM />
-            </TabPanel>
-            <TabPanel>
+            </TabPanel> */}
+            {/* <TabPanel>
                 <Price />
-              </TabPanel>
-            <TabPanel>
+              </TabPanel> */}
+            {/* <TabPanel>
             <Table
                 bordered
                 rowClassName={isSelected}
@@ -269,8 +295,8 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
                   <Table.Cell></Table.Cell>
                 </Table.Column>
               </Table>
-            </TabPanel> */}
-      {/* </Tabs>  */} 
+            </TabPanel>  */}
+       </Tabs>  
     </Panel>
   );
 };
