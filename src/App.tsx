@@ -229,7 +229,7 @@ const App = () => {
               <Route path="active-ingredients" element={<ActiveIngredientsSetup />} />
               <Route path="age-group" element={<AgeGroup/>} />
               <Route path="prescription-instructions" element={<PrescriptionInstructions />} />
-              <Route path="generic-medications" element={<GenericMedications />} />
+              <Route path="brand-medications" element={<GenericMedications />} />
               <Route path="dental-actions" element={<DentalActions />} />
               <Route path="cdt-setup" element={<CDTSetup />} />
               <Route path="icd10-setup" element={<ICD10Setup />} />

@@ -13,7 +13,8 @@ import {
   ApActiveIngredientSpecialPopulation,
   ApActiveIngredientSynonym,
   ApPrescriptionInstruction,
-  ApGenericMedication
+  ApGenericMedication,
+  ApGenericMedicationActiveIngredient
 } from '@/types/model-types';
 
 export const medicationsSetupService = createApi({
@@ -39,10 +40,42 @@ export const medicationsSetupService = createApi({
       }
     }),
     saveGenericMedication: builder.mutation({
-      query: (genericMedication: ApGenericMedication) => ({
-        url: `/medications/save-generic-medication`,
+      query: (data: { genericMedication: ApGenericMedication; roa; }) => {
+         const param = data.roa;
+        return{
+            url: `/medications/save-generic-medication?roa=${param}`,
         method: 'POST',
-        body: genericMedication
+        body: data.genericMedication,
+        }
+      
+      },onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getGenericMedicationActiveIngredient: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/medications/generic-medication-active-ingredient-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeGenericMedicationActiveIngredient: builder.mutation({
+      query: (genericMedicationActiveIngredient: ApGenericMedicationActiveIngredient) => ({
+        url: `/medications/remove-generic-medication-active-ingredient`,
+        method: 'POST',
+        body: genericMedicationActiveIngredient
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    saveGenericMedicationActiveIngredient: builder.mutation({
+      query: (genericMedicationActiveIngredient: ApGenericMedicationActiveIngredient) => ({
+        url: `/medications/save-generic-medication-active-ingredient`,
+        method: 'POST',
+        body: genericMedicationActiveIngredient
       }),onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.object;
@@ -327,6 +360,9 @@ export const {
   useGetGenericMedicationQuery,
   useRemoveGenericMedicationMutation,
   useSaveGenericMedicationMutation,
+  useGetGenericMedicationActiveIngredientQuery,
+  useSaveGenericMedicationActiveIngredientMutation,
+  useRemoveGenericMedicationActiveIngredientMutation,
   useGetActiveIngredientSynonymQuery,
   useRemoveActiveIngredientSynonymMutation,
   useSaveActiveIngredientSynonymMutation,

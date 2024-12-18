@@ -310,7 +310,7 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack, ...props })  =
             record={activeIngredient}
             setRecord={setActiveIngredient}
           />
-            <MyInput  width={240} column fieldName="chemicalFormula"  record={activeIngredient} setRecord={setActiveIngredient} />
+            <MyInput  width={240} column fieldName="atcCode"  record={activeIngredient} setRecord={setActiveIngredient} />
           <br/>
               <MyInput
                 width={400}
