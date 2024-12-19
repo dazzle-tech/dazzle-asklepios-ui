@@ -1531,6 +1531,28 @@ const PatientProfile = () => {
                   setRecord={setLocalPatient}
                   disabled={!editing}
                 />
+                    
+                    <MyInput
+                  width={165}
+                  vr={validationResult}
+                  column
+                  fieldLabel="Age"
+                  fieldType="text"
+                  fieldName=""
+                  record={''}
+                  setRecord={''}
+                  disabled
+                /><MyInput
+                  width={165}
+                  vr={validationResult}
+                  column
+                  fieldLabel="Patient Category"
+                  fieldType="text"
+                  fieldName=""
+                  record={''}
+                  setRecord={''}
+                  disabled
+                />
                 <MyInput
                   width={165}
                   vr={validationResult}
