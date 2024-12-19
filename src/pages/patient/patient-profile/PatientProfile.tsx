@@ -557,7 +557,7 @@ const PatientProfile = () => {
   }, [uploadMutation]);
 
   const handleFileChange = async event => {
-    if (!patientSlice.patient) return;
+    if (!localPatient) return;
 
     const selectedFile = event.target.files[0];
     if (selectedFile) {
@@ -569,8 +569,8 @@ const PatientProfile = () => {
         upload({
           formData: formData,
           type: 'PATIENT_PROFILE_PICTURE',
-          refKey: patientSlice.patient.key,
-          details: `Profile Picture for ${patientSlice.patient.fullName}`,
+          refKey: localPatient.key,
+          details: `Profile Picture for ${localPatient.fullName}`,
           accessType: ''
         })
           .unwrap()
