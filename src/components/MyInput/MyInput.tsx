@@ -112,6 +112,7 @@ const MyInput = ({
             name={fieldName}
             value={record[fieldName] ? new Date(record[fieldName]) : null}
             accepter={CustomDatePicker}
+            
             onChange={handleValueChange}
           />
         );

@@ -1979,3 +1979,29 @@ export interface ApUserMedicalLicense {
 	userKey:string;
 } 
 
+export interface ApVisitAllergies { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	allergyTypeLkey:string;
+	allergenKey:string;
+	onsetLkey:string;
+	onsetDate:number;
+	treatmentStrategyLkey:string;
+	sourceOfInformationLkey:string;
+	reactionDescription:string;
+	notes:string;
+	cancellationReason:string;
+	resolvedBy:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	resolvedAt:number;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	severityLkey:string;
+} 
+
