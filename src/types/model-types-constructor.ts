@@ -1980,3 +1980,29 @@ export const newApUserMedicalLicense:modelTypes.ApUserMedicalLicense = {
 	userKey:undefined,
 } 
 
+export const newApVisitAllergies:modelTypes.ApVisitAllergies = { 
+	key:undefined,
+	patientKey:undefined,
+	visitKey:undefined,
+	statusLkey:undefined,
+	allergyTypeLkey:undefined,
+	allergenKey:undefined,
+	onsetLkey:undefined,
+	onsetDate:0,
+	treatmentStrategyLkey:undefined,
+	sourceOfInformationLkey:undefined,
+	reactionDescription:'',
+	notes:'',
+	cancellationReason:'',
+	resolvedBy:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	resolvedAt:0,
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+	severityLkey:undefined,
+} 
+

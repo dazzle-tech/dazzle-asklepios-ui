@@ -4,6 +4,7 @@ import EncounterMainInfoSection from '../encounter-main-info-section';
 import { useAppSelector, useAppDispatch } from '@/hooks';
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
+import Allergies from './AllergiesNurse'
 import './styles.less';
 import { Block, Check, DocPass, Edit, History, Icon, PlusRound, Detail } from '@rsuite/icons';
 import {
@@ -55,6 +56,7 @@ const EncounterPreObservations = () => {
   const patientSlice = useAppSelector(state => state.patient);
   const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
   const dispatch = useAppDispatch();
+  const [activeTab, setActiveTab] = useState(0);
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
   const navigate = useNavigate();
   const[localEncounter,setLocalEncounter]=useState<ApEncounter>({...patientSlice.encounter})
@@ -219,7 +221,10 @@ const EncounterPreObservations = () => {
           </Panel>
 
           <Panel>
-          <Tabs >
+          <Tabs 
+          selectedIndex={activeTab}
+           onSelect={(index) => setActiveTab(index)}
+          >
             <TabList style={{display:'flex'}}>
               <Tab>
                 <Translate>Observations</Translate>
@@ -258,7 +263,9 @@ const EncounterPreObservations = () => {
               </IconButton>
             </ButtonToolbar>
             </TabList>
-            <TabPanel>      <Grid fluid >
+
+            <TabPanel>   
+                 <Grid fluid >
               <Row gutter={15} >
                 <div className="responseveDiv">
                   <div className='resDivPart'>  <Col xs={12}>
@@ -601,7 +608,11 @@ const EncounterPreObservations = () => {
               >
                 <Translate>Close</Translate>
               </IconButton>
-            </ButtonToolbar></TabPanel>
+            </ButtonToolbar>
+            </TabPanel>
+            <TabPanel>
+          {activeTab === 1&& <Allergies/>}
+        </TabPanel>
             </Tabs>
           </Panel>
         </div>

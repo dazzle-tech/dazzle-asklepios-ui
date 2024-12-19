@@ -125,7 +125,7 @@ const Consultation = () => {
 
     const [listRequest, setListRequest] = useState({
         ...initialListRequest,
-        pageSize: 100,
+       
         timestamp: new Date().getMilliseconds(),
         sortBy: 'createdAt',
         sortType: 'desc',
