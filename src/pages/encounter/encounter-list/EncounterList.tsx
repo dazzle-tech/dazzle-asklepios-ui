@@ -33,9 +33,6 @@ import { addFilterToListRequest, calculateAge, formatDate, fromCamelCaseToDBName
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import SendIcon from '@rsuite/icons/Send';
-import {
-  useGetPatientsQuery,
-} from '@/services/patientService';
 import { useGetIcdListQuery } from '@/services/setupService';
 import { useNavigate } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -72,7 +69,7 @@ const EncounterList = () => {
         }
       ]
     });
-  const { data: getPatients } = useGetPatientsQuery({ ...patientListRequest });
+
   const [dateClickToVisit, setDateClickToVisit] = useState('');
   const { data: encounterListResponse } = useGetEncountersQuery(listRequest);
 
@@ -281,12 +278,7 @@ const EncounterList = () => {
             </HeaderCell>
             <Cell>
               {(rowData) => {
-
-                const matchingPatient = getPatients?.object?.find(
-                  (item) => item.key === rowData.patientKey
-                );
-
-                return matchingPatient?.patientMrn || 'N/A';
+                return rowData?.patientObject?.patientMrn;
               }}
             </Cell>
           </Column>
