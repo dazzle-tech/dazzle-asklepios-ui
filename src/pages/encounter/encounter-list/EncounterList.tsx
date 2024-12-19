@@ -73,6 +73,7 @@ const EncounterList = () => {
       ]
     });
   const { data: getPatients } = useGetPatientsQuery({ ...patientListRequest });
+  console.log("getPatients",getPatients);
   const [dateClickToVisit, setDateClickToVisit] = useState('');
   const { data: encounterListResponse } = useGetEncountersQuery(listRequest);
 
@@ -286,7 +287,7 @@ const EncounterList = () => {
                   (item) => item.key === rowData.patientKey
                 );
 
-                return matchingPatient?.patientMrn || 'N/A';
+                return matchingPatient?.patientMrn;
               }}
             </Cell>
           </Column>

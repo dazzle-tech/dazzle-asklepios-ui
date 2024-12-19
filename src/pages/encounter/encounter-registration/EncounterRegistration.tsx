@@ -45,7 +45,7 @@ import {
 import SearchIcon from '@rsuite/icons/Search';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
-import { calculateAge, fromCamelCaseToDBName } from '@/utils';
+import { calculateAgeFormat, fromCamelCaseToDBName } from '@/utils';
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -160,7 +160,7 @@ const EncounterRegistration = () => {
         ...newApEncounter,
         patientKey: patientSlice.patient.key,
         patientFullName: patientSlice.patient.fullName,
-        patientAge: patientSlice.patient.dob ? calculateAge(patientSlice.patient.dob) + '' : '',
+        patientAge: patientSlice.patient.dob ? calculateAgeFormat(patientSlice.patient.dob) + '' : '',
         encounterStatusLkey: '91063195286200',//change this to be loaded from cache lov values by code
         plannedStartDate: new Date()
       });
@@ -267,7 +267,7 @@ const EncounterRegistration = () => {
           ...newApEncounter,
           patientKey: patientSlice.patient.key,
           patientFullName: patientSlice.patient.fullName,
-          patientAge: patientSlice.patient.dob ? calculateAge(patientSlice.patient.dob) + '' : '',
+          patientAge: patientSlice.patient.dob ? calculateAgeFormat(patientSlice.patient.dob) + '' : '',
           encounterStatusLkey: '91063195286200',//change this to be loaded from cache lov values by code
           plannedStartDate: new Date()
         }

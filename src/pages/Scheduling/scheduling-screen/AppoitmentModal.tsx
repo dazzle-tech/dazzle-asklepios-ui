@@ -23,7 +23,7 @@ import { useChangeAppointmentStatusMutation, useGetResourcesAvailabilityQuery, u
 import AttachmentModal from "@/pages/patient/patient-profile/AttachmentUploadModal";
 import { object } from "prop-types";
 import { setPatient } from "@/reducers/patientSlice";
-
+import { calculateAgeFormat } from '@/utils';
 
 
 const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType, facility, onSave, appointmentData, showOnly }) => {
@@ -224,7 +224,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
         setInstructionsValue(null)
     }
     useEffect(() => {
-        calculateAge(localPatient?.dob)
+        setPatientAge({ patientAge:localPatient?.dob? calculateAgeFormat(localPatient?.dob):null });
         console.log(localPatient)
     }, [localPatient])
 
