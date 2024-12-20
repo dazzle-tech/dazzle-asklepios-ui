@@ -18,15 +18,16 @@ import { addFilterToListRequest, fromCamelCaseToDBName } from "@/utils";
 import { useGetPatientsQuery } from "@/services/patientService";
 import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
 import TrashIcon from '@rsuite/icons/Trash';
-import { useAppSelector } from "@/hooks";
+import { useAppDispatch, useAppSelector } from "@/hooks";
 import { useChangeAppointmentStatusMutation, useGetResourcesAvailabilityQuery, useGetResourcesQuery, useSaveAppointmentMutation } from "@/services/appointmentService";
 import AttachmentModal from "@/pages/patient/patient-profile/AttachmentUploadModal";
 import { object } from "prop-types";
 import { setPatient } from "@/reducers/patientSlice";
+import { notify } from "@/utils/uiReducerActions";
 
 
 
-const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType, facility, onSave, appointmentData, showOnly }) => {
+const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, appointmentData, showOnly }) => {
 
 
     useEffect(() => {
@@ -34,6 +35,9 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
             setAppoitment(appointmentData)
             console.log(appointmentData?.patient)
             setLocalPatient(appointmentData?.patient)
+        } else {
+            setAppoitment(newApAppointment)
+            setLocalPatient(newApPatient)
         }
     }, [appointmentData])
 
@@ -50,11 +54,10 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
     const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
     const [appointment, setAppoitment] = useState<ApAppointment>({ ...newApAppointment })
     const [resourcesListRequest, setResourcesListRequest] = useState<ListRequest>({ ...initialListRequest });
-
+    const dispatch = useAppDispatch();
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState(null); // To store selected event details
     const [selectedSlot, setSelectedSlot] = useState(null);
-    const [selectedStartDate, setSelectedStartDate] = useState()
     const [validationResult, setValidationResult] = useState({});
     const [selectedCriterion, setSelectedCriterion] = useState('');
     const [searchKeyword, setSearchKeyword] = useState('');
@@ -79,13 +82,14 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
     const [rowPeriods, setRowPeriods] = useState()
 
     const { data: resourcesAvailability } = useGetResourcesAvailabilityQuery({
-        resource_key: appointment.resourceKey,
+        resource_key: appointment?.resourceKey,
         facility_id: "",
     });
 
     useEffect(() => {
         setRowPeriods(resourcesAvailability?.object)
-    }, [resourcesAvailability?.object, appointment.resourceKey])
+    }, [resourcesAvailability?.object, appointment?.resourceKey])
+
 
     useEffect(() => {
         filterWeekDays(rowPeriods)
@@ -149,11 +153,6 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
         }
     }, [patientSlice]);
 
-    useEffect(() => {
-        if (startAppoitmentStart) {
-            setSelectedStartDate(startAppoitmentStart);
-        }
-    }, [startAppoitmentStart]);
 
 
 
@@ -210,6 +209,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
     const closeModal = () => {
         onClose()
         handleClear()
+        console.log('closing model')
     };
 
     const handleClear = () => {
@@ -218,7 +218,6 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
         setPatientAge(null)
         setValidationResult(undefined);
         setReRenderModal(!reRenderModal)
-        setSelectedStartDate(null)
         setInstructions(null)
         setInstructionsKey(null)
         setInstructionsValue(null)
@@ -342,7 +341,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
     useEffect(() => {
         if (instructionValue) {
             setInstructions(prevInstructions =>
-                prevInstructions ? `${prevInstructions}, ${instructionValue}` : instructionValue
+                prevInstructions ? `${prevInstructions }, ${instructionValue}` : instructionValue[0]
             );
         }
         setInstructionsKey(null)
@@ -380,13 +379,18 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
     };
 
     const handleSaveAppointment = () => {
+        if (localPatient?.key) {
+             console.log({ ...appointment,patientKey:localPatient.key, appointmentStart: calculateAppointmentDate(0), appointmentEnd: calculateAppointmentDate(selectedDuration), instructions: instructions })
+            saveAppointment({ ...appointment,patientKey:localPatient.key,  appointmentStart: calculateAppointmentDate(0), appointmentEnd: calculateAppointmentDate(selectedDuration), instructions: instructions }).unwrap().then(() => {
+                closeModal()
+                handleClear()
+                onSave()
+            })
+        } else {
+            dispatch(notify({ msg: 'Please make sure to fill in the required fields.', sev: 'warn' }));
 
-        console.log({ ...appointment, appointmentStart: calculateAppointmentDate(0), appointmentEnd: calculateAppointmentDate(selectedDuration), instructions: instructions })
-        saveAppointment({ ...appointment, appointmentStart: calculateAppointmentDate(0), appointmentEnd: calculateAppointmentDate(selectedDuration), instructions: instructions }).unwrap().then(() => {
-            closeModal()
-            handleClear()
-            onSave()
-        })
+         }
+
     }
 
     const getAvailableDatesInMonth = (dayOfWeek, year, month) => {
@@ -593,7 +597,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
 
             <Modal key={reRenderModal} size={1600} open={
                 isOpen
-            } onClose={onClose}>
+            } onClose={closeModal}>
                 <Modal.Header>
                     <Modal.Title>Add Appointment</Modal.Title>
                 </Modal.Header>
@@ -860,7 +864,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
 
                         <div style={{ display: "flex", width: "100%", justifyContent: "flex-end", marginTop: "30px" }}>
                             <IconButton
-                                disabled={(!localPatient?.key)||showOnly}
+                                disabled={(!localPatient?.key) || showOnly}
                                 color="cyan"
                                 style={{ marginRight: "80px", width: 170 }}
                                 appearance="primary"
@@ -1066,7 +1070,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                         />
 
                         <MyInput
-                        disabled={showOnly}
+                            disabled={showOnly}
                             width={165}
                             column
                             fieldLabel="Reminder"
@@ -1103,7 +1107,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
 
                     <Form layout="inline" style={{ display: "flex", alignItems: "center" }} fluid>
                         <MyInput
-                        disabled={showOnly}
+                            disabled={showOnly}
                             required
                             width={165}
                             vr={validationResult}
@@ -1119,7 +1123,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                         />
 
                         <MyInput
-                        disabled={showOnly}
+                            disabled={showOnly}
                             width={165}
                             vr={validationResult}
                             column
@@ -1128,7 +1132,7 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                             setRecord={setAppoitment}
                         />
                         <MyInput
-                        disabled={showOnly}
+                            disabled={showOnly}
                             required
                             width={165}
                             vr={validationResult}
@@ -1161,11 +1165,11 @@ const AppointmentModal = ({ isOpen, onClose, startAppoitmentStart, resourceType,
                 )} */}
                 </Modal.Body>
                 <Modal.Footer>
-                    <IconButton  disabled={showOnly} onClick={() => { console.log(selectedEvent || selectedSlot), console.log(appointment), handleSaveAppointment() }} color="violet" appearance="primary" icon={<CheckIcon />}>
+                    <IconButton disabled={showOnly} onClick={() => { console.log(selectedEvent || selectedSlot), console.log(appointment), handleSaveAppointment() }} color="violet" appearance="primary" icon={<CheckIcon />}>
                         Save
                     </IconButton>
                     <Divider vertical />
-                    <IconButton  disabled={showOnly} color="orange" onClick={handleClear} appearance="primary" icon={<TrashIcon />}>
+                    <IconButton disabled={showOnly} color="orange" onClick={handleClear} appearance="primary" icon={<TrashIcon />}>
                         Clear
                     </IconButton>
                     <IconButton color="blue" onClick={closeModal} appearance="primary" icon={<BlockIcon />}>
