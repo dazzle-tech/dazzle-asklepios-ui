@@ -142,7 +142,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
             <Modal backdrop={"static"} open={resonModal} onClose={() => setResonModal(false)}>
                 <Modal.Header>
-                    <Modal.Title>Please specify a reason for hiding this Appointment.</Modal.Title>
+                    <Modal.Title>Please add the appointment no-show reason. </Modal.Title>
                 </Modal.Header>
 
                 <Modal.Body>

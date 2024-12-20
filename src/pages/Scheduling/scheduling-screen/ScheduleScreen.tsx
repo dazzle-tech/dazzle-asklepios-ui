@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Calendar as BigCalendar, momentLocalizer } from "react-big-calendar";
+import { Calendar as BigCalendar, Views, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { Calendar as RsuiteCalendar, TagPicker, ButtonToolbar, Panel, InputGroup, SelectPicker, Input, IconButton, Button, Form, } from "rsuite";
+import { Calendar as RsuiteCalendar, TagPicker, ButtonToolbar, Panel, InputGroup, SelectPicker, Input, IconButton, Button, Form, Drawer, Calendar, } from "rsuite";
 import "./styles.less";
 import SearchIcon from '@rsuite/icons/Search';
 import {
@@ -48,8 +48,8 @@ const ScheduleScreen = () => {
     const [appointmentsData, setAppointmentsData] = useState([])
     const [selectedAppointment, setSelectedAppointment] = useState()
     const [showAppointmentOnly, setShowAppointmentOnly] = useState(false)
+    const [filteredResourcesList, setFilteredResourcesList] = useState([])
 
-    
     const {
         data: appointments,
         refetch: refitchAppointments,
@@ -85,7 +85,7 @@ const ScheduleScreen = () => {
                     (item) => item.key === appointment.resourceKey
                 );
 
-                const isHidden = appointment?.appointmentStatus === "No-Show";
+                const isHidden = appointment?.appointmentStatus === "Canceled";
 
                 return {
                     title: ` ${appointment?.patient?.fullName}, ${isNaN(dob) ? "Unknown" : today.getFullYear() - dob.getFullYear()
@@ -105,9 +105,19 @@ const ScheduleScreen = () => {
 
 
 
-    const { data: resourcesListResponse } = useGetResourcesQuery(listRequest);
 
     const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
+
+
+    const { data: resourcesListResponse } = useGetResourcesQuery(listRequest);
+
+    useEffect(() => {
+        if (selectedResourceType) {
+            const filtered = resourcesListResponse.object.filter(resource => resource.resourceTypeLkey === selectedResourceType?.resourcesType);
+            setFilteredResourcesList(filtered);
+        }
+    }, [resourcesListResponse, selectedResourceType?.resourcesType]);
+
 
 
 
@@ -188,7 +198,7 @@ const ScheduleScreen = () => {
     const [selectedCriterion, setSelectedCriterion] = useState('');
     const [searchKeyword, setSearchKeyword] = useState('');
     const [appointment, setAppointment] = useState<ApAppointment>({ ...newApAppointment });
-
+    const [drowerOpen, setDrowerOpen] = useState(false)
     const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
     const dispatch = useAppDispatch();
 
@@ -247,10 +257,7 @@ const ScheduleScreen = () => {
 
     const handleChangeAppointment = () => {
         setAppointment(selectedEvent.appointmentData)
-        console.log(selectedEvent?.appointmentData)
-        console.log(appointment)
         setModalOpen(true)
-
         setActionsModalOpen(false)
     }
 
@@ -259,9 +266,32 @@ const ScheduleScreen = () => {
         setModalOpen(true)
         setActionsModalOpen(false)
         setShowAppointmentOnly(true)
-        
     }
-  
+
+    const CustomToolbar = ({ label, onNavigate, onView }) => {
+        return (
+            <div className="rbc-toolbar">
+                <span className="rbc-btn-group">
+                    <button onClick={() => onNavigate("PREV")}>Back</button>
+                    <button onClick={() => onNavigate("TODAY")}>Today</button>
+                    <button onClick={() => onNavigate("NEXT")}>Next</button>
+                </span>
+                <span
+                    className="rbc-toolbar-label"
+                    onClick={() => setDrowerOpen(true)}
+                    style={{ cursor: "pointer", fontWeight: "bold" }}
+                >
+                    {label}
+                </span>
+                <span className="rbc-btn-group">
+                    <button onClick={() => onView(Views.MONTH)}>Month</button>
+                    <button onClick={() => onView(Views.WEEK)}>Week</button>
+                    <button onClick={() => onView(Views.DAY)}>Day</button>
+                    <button onClick={() => onView(Views.AGENDA)}>Agenda</button>
+                </span>
+            </div>
+        );
+    };
 
     return (
         <div>
@@ -350,7 +380,7 @@ const ScheduleScreen = () => {
                             width={300}
                             column
                             fieldLabel="Resources"
-                            selectData={resourcesListResponse?.object ?? []}
+                            selectData={filteredResourcesList.length>0?filteredResourcesList: resourcesListResponse?.object ?? []}
                             fieldType="multyPicker"
                             selectDataLabel="resourceName"
                             selectDataValue="key"
@@ -362,39 +392,28 @@ const ScheduleScreen = () => {
 
 
 
-                    <Button onClick={() => {
-                        console.log(selectedResourceType);
-                        console.log(selectedResources);
-                        console.log(selectedFacility);
-                        console.log({
-                            resource_type: selectedResourceType?.resourcesType || null,
-                            facility_id: selectedFacility?.facilityKey || null,
-                            resources: selectedResources ? selectedResources.resourceKey : [],
 
-                        })
-                        console.log(appointments)
-
-
-                    }}>Test</Button>
 
 
                 </div>
                 <div className="right-section">
                     <BigCalendar
                         localizer={localizer}
-                        events={visibleAppointments} // Use the filtered appointments
+                        events={visibleAppointments}
                         startAccessor="start"
                         endAccessor="end"
                         views={["month", "week", "day", "agenda"]}
                         defaultView="month"
                         selectable={true}
                         onSelectEvent={(event) => {
-                            handleSelectEvent(event); // Example event handler
+                            handleSelectEvent(event);  // select event
                         }}
-                        onView={(view) => setCurrentView(view)} // Track the current view
+                        onView={(view) => setCurrentView(view)}
                         style={{ height: 600 }}
-                        eventPropGetter={eventPropGetter} // Apply custom styles
-
+                        eventPropGetter={eventPropGetter}
+                        components={{
+                            toolbar: CustomToolbar, // استخدام شريط الأدوات المخصص
+                        }}
                     />
                 </div>
             </div>
@@ -402,16 +421,31 @@ const ScheduleScreen = () => {
 
             <AppointmentModal
                 isOpen={modalOpen}
-                onClose={() => setModalOpen(false)}
-                startAppoitmentStart={selectedStartDate}
+                onClose={() => { setModalOpen(false), setShowAppointmentOnly(false) }}
                 appointmentData={selectedEvent?.appointmentData}
                 resourceType={selectedResourceType}
                 facility={selectedFacility}
                 onSave={refitchAppointments}
                 showOnly={showAppointmentOnly}
             />
-            <AppointmentActionsModal  viewAppointment={() => handleViewAppointment()} editAppointment={() => handleChangeAppointment()} onStatusChange={refitchAppointments} isActionsModalOpen={ActionsModalOpen} onActionsModalClose={() => setActionsModalOpen(false)} appointment={selectedEvent} />
+            <AppointmentActionsModal viewAppointment={() => handleViewAppointment()} editAppointment={() => handleChangeAppointment()} onStatusChange={refitchAppointments} isActionsModalOpen={ActionsModalOpen}
+                onActionsModalClose={() => { setSelectedEvent(null), setActionsModalOpen(false), setAppointment(null) }}
+                appointment={selectedEvent} />
 
+            <Drawer placement={'left'} open={drowerOpen} onClose={() => setDrowerOpen(false)}>
+                <Drawer.Header>
+                    <Drawer.Title>Drawer Title</Drawer.Title>
+                    <Drawer.Actions>
+                        <Button onClick={() => setDrowerOpen(false)}>Cancel</Button>
+                        <Button onClick={() => setDrowerOpen(false)} appearance="primary">
+                            Confirm
+                        </Button>
+                    </Drawer.Actions>
+                </Drawer.Header>
+                <Drawer.Body>
+                    <Calendar bordered />
+                </Drawer.Body>
+            </Drawer>
         </div>
     );
 };
