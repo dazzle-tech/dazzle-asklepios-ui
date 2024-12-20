@@ -69,7 +69,7 @@
     "reactjs-human-body": "^0.0.8",
     "redux": "^4.2.1",
     "rsuite": "^5.64.0",
-    "styled-components": "^6.1.13"
+    "styled-components": "^5.3.11"
   },
   "devDependencies": {
     "@babel/cli": "^7.7.0",
