@@ -325,14 +325,14 @@ const EncounterList = () => {
                   return diag.icdCode+","+diag.description;
               } else {
                   console.warn("No matching diag found for key:", rowData.diagnosis);
-                  return "N/A";
+                  return " ";
               }
                 return diag?.icdCode ?? "N/A"; 
               }}
             </Cell>
 
           </Column>
-          <Column sortable flexGrow={3}>
+          <Column sortable flexGrow={3} fullText>
             <HeaderCell>
 
               <Translate>Prescription </Translate>
@@ -348,6 +348,15 @@ const EncounterList = () => {
             </HeaderCell>
             <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
               rowData.hasOrder ? <CheckRoundIcon className='iconStyle' /> : <WarningRoundIcon className='iconNoStyle' />
+            }</Cell>
+          </Column>
+          <Column sortable flexGrow={3}>
+            <HeaderCell>
+
+              <Translate> Has Allergy</Translate>
+            </HeaderCell>
+            <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
+              rowData.hasAllergy? <CheckRoundIcon className='iconStyle' /> : <WarningRoundIcon className='iconNoStyle' />
             }</Cell>
           </Column>
           <Column sortable flexGrow={3}>

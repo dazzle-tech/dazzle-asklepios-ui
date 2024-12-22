@@ -16,6 +16,8 @@ import Referrals from '../encounter-component/referrals';
 import SOAP from '../encounter-component/s.o.a.p';
 import VaccineReccord from '../encounter-component/vaccine-reccord';
 import Allergies from '../encounter-component/allergies';
+import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
+import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { faBolt,
@@ -28,7 +30,8 @@ import { faBolt,
    faTriangleExclamation,
   faPills,
   faSyringe,
- faFileWaveform
+ faFileWaveform,
+ faHandDots
   
   } from '@fortawesome/free-solid-svg-icons';
 import {faBars} from '@fortawesome/free-solid-svg-icons';
@@ -52,15 +55,15 @@ import {
   Row,
   Col,
   Checkbox,
-  SelectPicker,
-  Sidenav, Nav, Toggle
+  SelectPicker,Text,
+  Sidenav, Nav, Toggle,Modal
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
 import { initialListRequest } from '@/types/types';
-import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery ,useGetAllergensQuery} from '@/services/setupService';
 import { useNavigate } from 'react-router-dom';
 import Dental from '../dental-screen';
 import {
@@ -69,6 +72,12 @@ import {
  useSavePrescriptionMutation,
  useGetPrescriptionsQuery
 } from '@/services/encounterService';
+import {
+  useGetAllergiesQuery,
+  useSaveAllergiesMutation
+} from '@/services/encounterService';
+import { ApVisitAllergies } from '@/types/model-types';
+import { newApVisitAllergies } from '@/types/model-types-constructor';
 import { BlockUI } from 'primereact/blockui';
 import MedicalNotesAndAssessments from '../medical-notes-and-assessments';
 import EncounterServices from '../encounter-services';
@@ -77,6 +86,7 @@ import CloseIcon from '@rsuite/icons/Close';
 import Allergens from '@/pages/setup/allergens-setup';
 import {ApPrescription } from '@/types/model-types';
 import {newApPrescription} from '@/types/model-types-constructor';
+
 const Encounter = () => {
   const encounterStatusNew = '91063195286200'; // TODO change this to be fetched from redis based on LOV CODE
   const patientSlice = useAppSelector(state => state.patient);
@@ -84,24 +94,37 @@ const Encounter = () => {
   const navigate = useNavigate();
   const [startEncounter, startEncounterMutation] = useStartEncounterMutation();
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
+   const { data: allergensListToGetName } = useGetAllergensQuery({
+          ...initialListRequest
+      });
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [prescription, setPrescription] = useState<ApPrescription>({ ...newApPrescription });
-  const [savePrescription, { isLoading: isSavingPrescription }] = useSavePrescriptionMutation();
-  const { data: prescriptions, isLoading: isLoadingPrescriptions } = useGetPrescriptionsQuery({
-    ...initialListRequest,
-    filters: [
+  const[openAllargyModal,setOpenAllargyModal]=useState(false);
+
+const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
+const [showCanceled, setShowCanceled] = useState(true);
+const [showPrev, setShowPrev] = useState(true);
+    const filters = [
         {
-            fieldName: "patient_key",
-            operator: "match",
-            value: patientSlice.patient?.key,
+            fieldName: 'patient_key',
+            operator: 'match',
+            value: patientSlice.patient.key
         },
         {
-            fieldName: "visit_key",
-            operator: "match",
-            value: patientSlice.encounter?.key,
-        },
-    ],
-});
+            fieldName: "status_lkey",
+            operator: showCanceled ? "notMatch" : "match",
+            value: "3196709905099521",
+        }
+    ];
+
+    if (showPrev) {
+        filters.push({
+            fieldName: 'visit_key',
+            operator: 'match',
+            value: patientSlice.encounter.key
+        });
+    }
+
+  const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({ ...initialListRequest, filters });
   const [activeContent, setActiveContent] = useState(<PatientSummary patient={patientSlice.patient} encounter={patientSlice.encounter} />);
   const handleMenuItemClick = (content) => {
     setActiveContent(content);
@@ -118,7 +141,12 @@ const Encounter = () => {
     dispatch(setPatient(null));
     navigate('/encounter-list');
   };
-
+  const CloseAllargyModal=()=>{
+    setOpenAllargyModal(false);
+  }
+  const OpenAllargyModal=()=>{
+    setOpenAllargyModal(true);
+  }
   const handleStartEncounter = () => {
     if (patientSlice.encounter && patientSlice.encounter.editable) {
       startEncounter(patientSlice.encounter).unwrap();
@@ -142,15 +170,106 @@ const Encounter = () => {
       navigate('/encounter-list');
     }
   }, [completeEncounterMutation]);
-  const handleSavePrescription=()=>{
-    console.log("iam in save pres")
-    if (patientSlice.patient&&patientSlice.encounter) {
-      console.log(patientSlice.patient)
-      console.log(patientSlice.encounter)
-    savePrescription({...prescription,patientKey:patientSlice.patient.key,
-      visitKey:patientSlice.encounter.key
-      })}
-  }
+  const renderRowExpanded = rowData => {
+    console.log("Iam in the expanded Row ")
+    console.log("Children Data:", rowData);  // Add this line to check children data
+
+    return (
+
+
+        <Table
+            data={[rowData]} // Pass the data as an array to populate the table
+            bordered
+            cellBordered
+            style={{ width: '100%', marginTop: '10px' }}
+            height={100} // Adjust height as needed
+        >
+            <Column flexGrow={1} align="center" fullText>
+                <HeaderCell>Created At</HeaderCell>
+                <Cell dataKey="onsetDate" >
+                    {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}
+                </Cell>
+            </Column>
+            <Column flexGrow={1} align="center" fullText>
+                <HeaderCell>Created By</HeaderCell>
+                <Cell dataKey="createdBy" />
+            </Column>
+            <Column flexGrow={2} align="center" fullText>
+                <HeaderCell>Resolved At</HeaderCell>
+                <Cell dataKey="resolvedAt" >
+                    {rowData => {
+                        if (rowData.statusLkey != '9766169155908512') {
+
+                            return rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : "";
+                        }
+                    }}
+                </Cell>
+            </Column>
+            <Column flexGrow={1} align="center" fullText>
+                <HeaderCell>Resolved By</HeaderCell>
+                <Cell dataKey="resolvedBy" />
+            </Column>
+            <Column flexGrow={2} align="center" fullText>
+                <HeaderCell>Cancelled At</HeaderCell>
+                <Cell dataKey="deletedAt" >
+                    {rowData => rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ""}
+                </Cell>
+            </Column>
+            <Column flexGrow={1} align="center" fullText>
+                <HeaderCell>Cancelled By</HeaderCell>
+                <Cell dataKey="deletedBy" />
+            </Column>
+            <Column flexGrow={1} align="center" fullText>
+                <HeaderCell>Cancelliton Reason</HeaderCell>
+                <Cell dataKey="cancellationReason" />
+            </Column>
+        </Table>
+
+
+    );
+};
+
+const handleExpanded = (rowData) => {
+    let open = false;
+    const nextExpandedRowKeys = [];
+
+    expandedRowKeys.forEach(key => {
+        if (key === rowData.key) {
+            open = true;
+        } else {
+            nextExpandedRowKeys.push(key);
+        }
+    });
+
+    if (!open) {
+        nextExpandedRowKeys.push(rowData.key);
+    }
+
+
+
+    console.log(nextExpandedRowKeys)
+    setExpandedRowKeys(nextExpandedRowKeys);
+};
+
+const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
+    <Cell {...props} style={{ padding: 5 }}>
+        <IconButton
+            appearance="subtle"
+            onClick={() => {
+                onChange(rowData);
+            }}
+            icon={
+                expandedRowKeys.some(key => key === rowData["key"]) ? (
+                    <CollaspedOutlineIcon />
+                ) : (
+                    <ExpandOutlineIcon />
+                )
+            }
+        />
+    </Cell>
+);
+
+
   return (
     <>
       {patientSlice.patient && patientSlice.encounter && (
@@ -188,9 +307,12 @@ const Encounter = () => {
                 >
                   <Translate>Encounter  Menu</Translate>
                 </IconButton>
-                <IconButton appearance="primary" color="cyan" icon={<icons.ReviewRefuse />}>
-                  <Translate>Problems</Translate>
-                </IconButton>
+                <Button appearance="primary" 
+                onClick={OpenAllargyModal}
+                color={patientSlice.encounter.hasAllergy?"red":"cyan"} >
+                <FontAwesomeIcon icon={faHandDots} style={{ marginRight: '5px' }} />
+                  <Translate>Allergy</Translate>
+                </Button>
 
                 {patientSlice.encounter.editable && (
                   <IconButton
@@ -298,6 +420,167 @@ const Encounter = () => {
               {activeContent} {/* Render the selected content */}
              
             </Panel>
+            <Modal  size="lg" open={openAllargyModal} onClose={CloseAllargyModal} overflow  >
+                <Modal.Title>
+                    <Translate><h6>Patient Allergy</h6></Translate>
+                </Modal.Title>
+                <Modal.Body>
+                  <div>
+                <Checkbox
+                        checked={!showCanceled}
+                        onChange={() => {
+
+
+                            setShowCanceled(!showCanceled);
+                        }}
+                    >
+                        Show Cancelled
+                    </Checkbox>
+                    <Checkbox
+                        checked={!showPrev}
+                        onChange={() => {
+
+
+                            setShowPrev(!showPrev);
+                        }}
+                    >
+                        Show Previous Consultations
+                    </Checkbox>
+                </div>
+                <Table
+                    
+                    data={allergiesListResponse?.object || []}
+                    rowKey="key"
+                    expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
+                    renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
+                    shouldUpdateScroll={false}
+                    bordered
+                    cellBordered
+                    
+                >
+                    <Column width={70} align="center">
+                        <HeaderCell>#</HeaderCell>
+                        <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
+                    </Column>
+
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Allergy Type</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.allergyTypeLvalue?.lovDisplayVale
+                            }
+                        </Cell>
+                    </Column >
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Allergen</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData => {
+                                console.log(rowData.allergenKey); 
+                                if (!allergensListToGetName?.object) {
+                                    return "Loading...";  
+                                }
+                                const getname = allergensListToGetName.object.find(item => item.key === rowData.allergenKey);
+                                console.log(getname);  
+                                return getname?.allergenName || "No Name"; 
+                            }}
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Severity</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.severityLvalue?.lovDisplayVale
+                            }
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Onset</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.onsetLvalue?.lovDisplayVale
+                            }
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Onset Date Time</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData => rowData.onsetDate ? new Date(rowData.onsetDate).toLocaleString() : "Undefind"}
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Treatment Strategy</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.treatmentStrategyLvalue?.lovDisplayVale
+                            }
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Source of information</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.sourceOfInformationLvalue?.lovDisplayVale || "BY Patient"
+                            }
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Reaction Description</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.reactionDescription
+                            }
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Notes</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.notes
+                            }
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={1} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Status</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.statusLvalue?.lovDisplayVale
+                            }
+                        </Cell>
+                    </Column>
+                </Table>
+
+                    
+
+                </Modal.Body>
+                <Modal.Footer>
+                    <Stack spacing={2} divider={<Divider vertical />}>
+                        
+                        <Button appearance="ghost" color="cyan" onClick={CloseAllargyModal}>
+                           Close
+                        </Button>
+                    </Stack>
+                </Modal.Footer>
+            </Modal>
           </Panel>
         </BlockUI>
       )}
