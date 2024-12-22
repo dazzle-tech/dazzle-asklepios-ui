@@ -123,9 +123,10 @@ const MyInput = ({
             disabled={props.disabled}
             name={fieldName}
             max={props.max ? props.max : 1000000}
-            value={record[fieldName] ? record[fieldName] : 0}
+            value={record[fieldName] ? record[fieldName] : ""}
             accepter={InputNumber}
             onChange={handleValueChange}
+            placeholder={props.placeholder}
           />
         );
       default:
