@@ -1577,13 +1577,9 @@ vr={validationResult}
 column
 fieldLabel="Age"
 fieldType="text"
-
+disabled
 fieldName="ageFormat"
 record={localPatient?.dob ? ageFormatType : null}
-
-fieldName=""
-record={''}
-setRecord={''}
 /><MyInput
 width={165}
 vr={validationResult}
@@ -1592,12 +1588,8 @@ fieldLabel="Patient Category"
 fieldType="text"
 
 fieldName="ageGroup"
-
+disabled
 record={localPatient?.dob ? ageGroupValue : null}
-
-fieldName=""
-record={''}
-setRecord={''}
 
 />
                 <MyInput
