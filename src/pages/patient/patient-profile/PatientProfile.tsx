@@ -1569,25 +1569,37 @@ const PatientProfile = () => {
                   disabled={!editing}
                 />
 
+
                 <MyInput
+
+              
                   width={165}
                   vr={validationResult}
                   column
                   fieldLabel="Age"
                   fieldType="text"
+
                   fieldName="ageFormat"
                   record={localPatient?.dob ? ageFormatType : null}
-                  disabled
-                /><MyInput
+
+                  fieldName=""
+                  record={''}
+                  setRecord={''}
+/><MyInput
                   width={165}
                   vr={validationResult}
                   column
                   fieldLabel="Patient Category"
                   fieldType="text"
+
                   fieldName="ageGroup"
 
                   record={localPatient?.dob ? ageGroupValue : null}
-                  disabled
+
+                  fieldName=""
+                  record={''}
+                  setRecord={''}
+
                 />
                 <MyInput
                   width={165}

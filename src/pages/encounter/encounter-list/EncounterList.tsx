@@ -70,6 +70,9 @@ const EncounterList = () => {
       ]
     });
 
+
+
+
   const [dateClickToVisit, setDateClickToVisit] = useState('');
   const { data: encounterListResponse } = useGetEncountersQuery(listRequest);
 
@@ -278,8 +281,10 @@ const EncounterList = () => {
             </HeaderCell>
             <Cell>
               {(rowData) => {
+
                 return rowData?.patientObject?.patientMrn;
-              }}
+
+}}
             </Cell>
           </Column>
           <Column sortable flexGrow={3}>
