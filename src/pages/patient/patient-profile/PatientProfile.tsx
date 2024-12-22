@@ -23,7 +23,7 @@ import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { faLock } from '@fortawesome/free-solid-svg-icons';
 import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
 import InsuranceModal from './InsuranceModal';
-
+import { calculateAgeFormat } from '@/utils';
 import SpecificCoverageModa from './SpecificCoverageModa';
 import ReloadIcon from '@rsuite/icons/Reload';
 
@@ -85,7 +85,8 @@ import {
   useSavePatientAdministrativeWarningsMutation,
   useGetPatientAdministrativeWarningsQuery,
   useUpdatePatientAdministrativeWarningsMutation,
-  useDeletePatientAdministrativeWarningsMutation
+  useDeletePatientAdministrativeWarningsMutation,
+  useGetAgeGroupValueQuery
 } from '@/services/patientService';
 import { FaClock, FaPencil, FaPlus, FaQuestion } from 'react-icons/fa6';
 import { VscGitPullRequestGoToChanges } from 'react-icons/vsc';
@@ -205,10 +206,46 @@ const PatientProfile = () => {
     { key: localPatient?.key },
     { skip: !localPatient?.key }
   );
+  const { data: patientAgeGroupResponse, refetch: patientAgeGroupRefetch } =
+    useGetAgeGroupValueQuery(
+      {
+        dob: localPatient?.dob ? new Date(localPatient.dob).toISOString() : null
+      },
+      { skip: !localPatient?.dob }
+    );
 
+  const [ageGroupValue, setAgeGroupValue] = useState({
+    ageGroup: "",
+  });
+  const [ageFormatType, setAgeFormatType] = useState({
+    ageFormat: "",
+  });
+
+  useEffect(() => {
+    if (patientAgeGroupResponse?.object?.lovDisplayVale) {
+      setAgeGroupValue({
+        ageGroup: patientAgeGroupResponse.object.lovDisplayVale,
+      });
+    }
+  }, [patientAgeGroupResponse]);
   useEffect(() => {
     console.log(patientSecondaryDocumentsResponse);
   }, [patientSecondaryDocumentsResponse]);
+
+  useEffect(() => {
+    if (localPatient?.dob) {
+      const calculatedFormat = calculateAgeFormat(localPatient.dob);
+      setAgeFormatType(prevState => ({
+        ...prevState,
+        ageFormat: calculatedFormat,
+      }));
+    } else {
+      setAgeFormatType(prevState => ({
+        ...prevState,
+        ageFormat: '',
+      }));
+    }
+  }, [localPatient?.dob]);
 
   useEffect(() => {
     const updatedFilters = [
@@ -1531,16 +1568,15 @@ const PatientProfile = () => {
                   setRecord={setLocalPatient}
                   disabled={!editing}
                 />
-                    
-                    <MyInput
+
+                <MyInput
                   width={165}
                   vr={validationResult}
                   column
                   fieldLabel="Age"
                   fieldType="text"
-                  fieldName=""
-                  record={''}
-                  setRecord={''}
+                  fieldName="ageFormat"
+                  record={localPatient?.dob ? ageFormatType : null}
                   disabled
                 /><MyInput
                   width={165}
@@ -1548,9 +1584,9 @@ const PatientProfile = () => {
                   column
                   fieldLabel="Patient Category"
                   fieldType="text"
-                  fieldName=""
-                  record={''}
-                  setRecord={''}
+                  fieldName="ageGroup"
+
+                  record={localPatient?.dob ? ageGroupValue : null}
                   disabled
                 />
                 <MyInput

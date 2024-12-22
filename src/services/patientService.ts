@@ -291,7 +291,16 @@ export const patientService = createApi({
         return response.object;   
       }
     }),
-    
+    getAgeGroupValue: builder.query({
+      query: (data: { dob: string }) => ({
+        url: `/pas/age-group-value`,
+        headers: {
+          dob: data.dob
+        }
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
     
   })
 });
@@ -321,4 +330,5 @@ export const {
   useGetPatientAdministrativeWarningsQuery,
   useUpdatePatientAdministrativeWarningsMutation,
   useDeletePatientAdministrativeWarningsMutation,
+  useGetAgeGroupValueQuery
 } = patientService;
