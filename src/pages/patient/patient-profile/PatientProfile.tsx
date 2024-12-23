@@ -66,7 +66,7 @@ import PageIcon from '@rsuite/icons/Page';
 import PieChartIcon from '@rsuite/icons/PieChart';
 import FileUploadIcon from '@rsuite/icons/FileUpload';
 import { RootState } from '@/store';
-
+import { calculateAgeFormat } from '@/utils';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
   useGetPatientRelationsQuery,
@@ -85,7 +85,8 @@ import {
   useSavePatientAdministrativeWarningsMutation,
   useGetPatientAdministrativeWarningsQuery,
   useUpdatePatientAdministrativeWarningsMutation,
-  useDeletePatientAdministrativeWarningsMutation
+  useDeletePatientAdministrativeWarningsMutation,
+  useGetAgeGroupValueQuery
 } from '@/services/patientService';
 import { FaClock, FaPencil, FaPlus, FaQuestion } from 'react-icons/fa6';
 import { VscGitPullRequestGoToChanges } from 'react-icons/vsc';
@@ -196,6 +197,42 @@ const PatientProfile = () => {
       },
       { skip: !localPatient.key }
     );
+
+    const { data: patientAgeGroupResponse, refetch: patientAgeGroupRefetch } =
+    useGetAgeGroupValueQuery(
+      {
+        dob: localPatient?.dob ? new Date(localPatient.dob).toISOString() : null
+      },
+      { skip: !localPatient?.dob }
+    );
+
+  const [ageGroupValue, setAgeGroupValue] = useState({
+    ageGroup: "",
+  });
+  const [ageFormatType, setAgeFormatType] = useState({
+    ageFormat: "",
+  });
+
+  useEffect(() => {
+    if (patientAgeGroupResponse?.object?.lovDisplayVale) {
+      setAgeGroupValue({
+        ageGroup: patientAgeGroupResponse.object.lovDisplayVale,
+      });
+    }
+  }, [patientAgeGroupResponse]);
+  useEffect(() => {
+    if (localPatient?.dob) {
+      const calculatedFormat = calculateAgeFormat(localPatient.dob);
+      setAgeFormatType(prevState => ({
+        ...prevState,
+        ageFormat: calculatedFormat,
+      }));
+    } else {
+      setAgeFormatType(prevState => ({
+        ...prevState,
+        ageFormat: '',
+      }));
+    }}, [localPatient?.dob]);
   const patientKey = localPatient?.key?.toString();
   const { data: warnings, refetch: warningsRefetch } = useGetPatientAdministrativeWarningsQuery(
     warningsAdmistritiveListRequest
@@ -1531,6 +1568,30 @@ const PatientProfile = () => {
                   setRecord={setLocalPatient}
                   disabled={!editing}
                 />
+
+<MyInput
+
+
+width={165}
+vr={validationResult}
+column
+fieldLabel="Age"
+fieldType="text"
+disabled
+fieldName="ageFormat"
+record={localPatient?.dob ? ageFormatType : null}
+/><MyInput
+width={165}
+vr={validationResult}
+column
+fieldLabel="Patient Category"
+fieldType="text"
+
+fieldName="ageGroup"
+disabled
+record={localPatient?.dob ? ageGroupValue : null}
+
+/>
                 <MyInput
                   width={165}
                   vr={validationResult}
