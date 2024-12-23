@@ -8,13 +8,15 @@ import {
   useGetLovValuesByCodeAndParentQuery,
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
+import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import { notify } from '@/utils/uiReducerActions';
 import { IconButton, Input, Panel, Grid, Row, Col, InputGroup, Modal, Button, Toggle, Form } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
-import { newApEncounter } from '@/types/model-types-constructor';
+
 import { useSaveEncounterChangesMutation } from '@/services/encounterService';
-import VoiceCitation from '@/components/VoiceCitation';
+import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
+
 import './styles.less';
 const ChiefComplaint = () => {
   const patientSlice = useAppSelector(state => state.patient);
@@ -22,21 +24,13 @@ const ChiefComplaint = () => {
   const { data: painPatternLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_PATTERN');
   const { data: timeUnitsLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
   const { data: bodyPartsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
-  const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter });
+  const [localEncounter, setLocalEncounter] = useState({ ...patientSlice.encounter });
   const [saveEncounterChanges, saveEncounterChangesMutation] = useSaveEncounterChangesMutation();
+  console.log(patientSlice.encounter);
+  console.log(localEncounter);
 
-  const [chiefComplaintTextAreaOpen, setChiefComplaintTextAreaOpen] = useState(false);
-  const [hpiSummaryTextAreaOpen, setHpiSummaryTextAreaOpen] = useState(false);
-  const [pastMedicalHistoryTextAreaOpen, setPastMedicalHistoryTextAreaOpen] = useState(false);
-  const [progressNoteTextAreaOpen, setProgressNoteTextAreaOpen] = useState(false);
   const [openModal, setOpenModal] = useState(null);
-  const [val, setVal] = useState('');
-  const [val2, setVal2] = useState('');
-  const [val3, setVal3] = useState('');
-  const [result, setResult] = useState('');
   const closeModal = () => setOpenModal(null);
-  const [toggleChecked, setToggleChecked] = useState(false); // State for Toggle
-
   const openSpecificModal = (modalId) => setOpenModal(modalId);
   const handleNext = () => {
     if (openModal === 'first') {
@@ -48,9 +42,7 @@ const ChiefComplaint = () => {
     }
   };
   const handleSave = () => {
-    //     const combine=val+","+val2+","+val3;
-    //    setAddChiefComplement({...addChiefComplement, result:combine}) ;
-    //     setResult(combine); // Set the result to a combined value
+
     closeModal();
 
   };
@@ -62,16 +54,11 @@ const ChiefComplaint = () => {
     }
   };
 
-  useEffect(() => {
-    if (patientSlice.encounter && patientSlice.encounter.key) {
-      setLocalEncounter(patientSlice.encounter);
-          
-    } else {
-    }
-  }, []);
 
-  const saveChanges =async () => {
+
+  const saveChanges = async () => {
     try {
+      console.log(localEncounter)
       await saveEncounterChanges(localEncounter).unwrap();
       dispatch(notify('Chief Complain Saved Successfully'));
     } catch (error) {
@@ -88,148 +75,55 @@ const ChiefComplaint = () => {
     }
   }, [saveEncounterChangesMutation]);
 
-  const chiefComplaintIsChanged = () => {
-    return patientSlice.encounter.chiefComplaint !== localEncounter.chiefComplaint;
-  };
-  const hpiSummaryIsChanged = () => {
-    return patientSlice.encounter.hpiSummery !== localEncounter.hpiSummery;
-  };
-  const pastMedicalHistoryIsChanged = () => {
-    return (
-      patientSlice.encounter.pastMedicalHistorySummery !== localEncounter.pastMedicalHistorySummery
-    );
-  };
+
+
   const chiefComplaintChanged = () => {
     return patientSlice.encounter.chiefComplaint !== localEncounter.chiefComplaint;
   };
 
   return (
     <>
-      {/* Chief Complaint Text Area Modal */}
-      <Modal open={chiefComplaintTextAreaOpen} onClose={() => setChiefComplaintTextAreaOpen(false)}>
-        <Modal.Header>
-          <Modal.Title>
-            <Translate>Chief Complaint</Translate>
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <VoiceCitation
-            originalRecord={patientSlice.encounter}
-            record={localEncounter}
-            setRecord={setLocalEncounter}
-            fieldName="chiefComplaint"
-            saveMethod={saveChanges}
-          />
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={() => setChiefComplaintTextAreaOpen(false)} appearance="primary">
-            OK
-          </Button>
-        </Modal.Footer>
-      </Modal>
 
-      {/* HPI Text Area Modal */}
-      <Modal open={hpiSummaryTextAreaOpen} onClose={() => setHpiSummaryTextAreaOpen(false)}>
-        <Modal.Header>
-          <Modal.Title>
-            <Translate>HPI</Translate>
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <VoiceCitation
-            originalRecord={patientSlice.encounter}
-            record={localEncounter}
-            setRecord={setLocalEncounter}
-            fieldName="hpiSummery"
-            saveMethod={saveChanges}
-          />
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={() => setHpiSummaryTextAreaOpen(false)} appearance="primary">
-            OK
-          </Button>
-        </Modal.Footer>
-      </Modal>
 
-      {/* Past Medical Historyu Text Area Modal */}
-      <Modal
-        open={pastMedicalHistoryTextAreaOpen}
-        onClose={() => setPastMedicalHistoryTextAreaOpen(false)}
-      >
-        <Modal.Header>
-          <Modal.Title>
-            <Translate>Past Medical History</Translate>
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <VoiceCitation
-            originalRecord={patientSlice.encounter}
-            record={localEncounter}
-            setRecord={setLocalEncounter}
-            fieldName="pastMedicalHistorySummery"
-            saveMethod={saveChanges}
-          />
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={() => setPastMedicalHistoryTextAreaOpen(false)} appearance="primary">
-            OK
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      <Panel bordered style={{width:'100%', padding: '5px', margin: '5px', display: 'flex', flexDirection: 'column' }}>
 
-      {/* Progress Note Text Area Modal */}
-      <Modal open={progressNoteTextAreaOpen} onClose={() => setProgressNoteTextAreaOpen(false)}>
-        <Modal.Header>
-          <Modal.Title>
-            <Translate>Progress Note</Translate>
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <VoiceCitation
-            originalRecord={patientSlice.encounter}
-            record={localEncounter}
-            setRecord={setLocalEncounter}
-            fieldName="progressNote"
-            saveMethod={saveChanges}
-            rows={12}
-          />
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={() => setProgressNoteTextAreaOpen(false)} appearance="primary">
-            OK
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      <Panel bordered style={{ padding: '5px', margin: '5px' }}>
-
-        <Row gutter={15}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <IconButton
-            style={{ margin: "3px" }} appearance="primary" size="sm"
+            style={{ margin: "3px" }}
+            appearance="primary"
+            size="sm"
             onClick={() => openSpecificModal('first')}
-            icon={<icons.Search style={{ fontSize: '11px' }} />} >
-            <Translate>use   Questionnair</Translate>
+            icon={<icons.Search style={{ fontSize: '11px' }} />}
+          >
+            <Translate>use Questionnair</Translate>
           </IconButton>
 
+          <IconButton
+            circle
+            style={{ marginLeft: 'auto' }}
+            icon={<CheckOutlineIcon />}
+            size="xs"
+            appearance="primary"
+            color="green"
+            onClick={saveChanges}
+          />
+        </div>
 
 
-          <InputGroup>
-            <InputGroup.Addon>
-              {!chiefComplaintChanged() && <icons.CheckRound color="green" />}
-              {chiefComplaintChanged() && <icons.Gear spin />}
-            </InputGroup.Addon>
-            <Input
-              as={'textarea'}
-              rows={4}
-              style={{ fontSize: '12px', maxHeight: '150px', overflowY: 'auto', resize: 'vertical' }}
-              value={localEncounter.chiefComplaint}
-              onChange={e => setLocalEncounter({ ...localEncounter, chiefComplaint: e })}
-              onBlur={chiefComplaintChanged() ? saveChanges : undefined}
-            />
-          </InputGroup>
 
 
-        </Row>
+        <Input
+          as={'textarea'}
+          rows={4}
+          style={{ fontSize: '12px', maxHeight: '150px', overflowY: 'auto', resize: 'vertical' }}
+          value={localEncounter.chiefComplaint}
+          onChange={e => setLocalEncounter({ ...localEncounter, chiefComplaint: e })}
+         
+        />
+
+
+
+
         {/* First Modal */}
         <Modal open={openModal === 'first'} onClose={closeModal}>
           <Modal.Header>
@@ -238,36 +132,36 @@ const ChiefComplaint = () => {
           <Modal.Body>
             <p>Since when do you have pain?</p>
             <Form fluid>
-            
-                
-                  <MyInput
-                    // disabled={true}
-                    width={180}
-                    row
-                    fieldLabel="time Units"
-                    fieldType="select"
-                    fieldName="latestpainlevelLkey"
-                    selectData={timeUnitsLovQueryResponse ?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={{}}
-                    setRecord={{}}
-                  />
-              
-                <input
-                  type="text"
-                  placeholder="other"
-                  // onChange={handleFirstOtherInputChange}
-                  // disabled={durationOtherDisabled}
-                  style={{ flex: '1', borderRadius: '4px' }}
-                />
-             <MyInput
-             fieldType="textarea"
-            fieldName="duration"
-             record={{}}
-             setRecord={{}}
-             ></MyInput>
-             
+
+
+              <MyInput
+                // disabled={true}
+                width={180}
+                row
+                fieldLabel="time Units"
+                fieldType="select"
+                fieldName="latestpainlevelLkey"
+                selectData={timeUnitsLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={{}}
+                setRecord={{}}
+              />
+
+              <input
+                type="text"
+                placeholder="other"
+                // onChange={handleFirstOtherInputChange}
+                // disabled={durationOtherDisabled}
+                style={{ flex: '1', borderRadius: '4px' }}
+              />
+              <MyInput
+                fieldType="textarea"
+                fieldName="duration"
+                record={{}}
+                setRecord={{}}
+              ></MyInput>
+
             </Form>
           </Modal.Body>
           <Modal.Footer>
@@ -298,7 +192,7 @@ const ChiefComplaint = () => {
               backgroundColor: "#f7f7fa"
             }}>
               <div style={{ display: "flex", gap: "5px", marginBottom: "7px" }}>
-              <Form>
+                <Form>
                   <MyInput
                     // disabled={true}
                     width={180}
@@ -306,7 +200,7 @@ const ChiefComplaint = () => {
                     fieldLabel="Pain Pattern"
                     fieldType="select"
                     fieldName="latestpainlevelLkey"
-                    selectData={painPatternLovQueryResponse ?.object ?? []}
+                    selectData={painPatternLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
                     record={{}}
@@ -358,7 +252,7 @@ const ChiefComplaint = () => {
                   // onChange={handleToggleChange}
                   style={{ marginBottom: '10px' }}
                 />
-               <Form>
+                <Form>
                   <MyInput
                     // disabled={true}
                     width={180}
@@ -366,7 +260,7 @@ const ChiefComplaint = () => {
                     fieldLabel="Body Parts"
                     fieldType="select"
                     fieldName="latestpainlevelLkey"
-                    selectData={bodyPartsLovQueryResponse ?.object ?? []}
+                    selectData={bodyPartsLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
                     record={{}}

@@ -4,6 +4,8 @@ import * as icons from '@rsuite/icons';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import React, { useEffect, useState } from 'react';
+import SearchIcon from '@rsuite/icons/Search';
+
 import { Toggle } from 'rsuite';
 import {
   FlexboxGrid,
@@ -20,7 +22,8 @@ import {
   InputGroup,
   SelectPicker,
   DatePicker,
-  Form
+  Form,
+  Dropdown
 } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { initialListRequest } from '@/types/types';
@@ -40,11 +43,11 @@ import { ApPatientDiagnose } from '@/types/model-types';
 const PatientDiagnosis = () => {
   const patientSlice = useAppSelector(state => state.patient);
   const dispatch = useAppDispatch();
-
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   const [listRequest, setListRequest] = useState({
     ...initialListRequest,
-    pageSize: 100,
+
     timestamp: new Date().getMilliseconds(),
     sortBy: 'createdAt',
     sortType: 'desc',
@@ -64,11 +67,32 @@ const PatientDiagnosis = () => {
   });
 
   const patientDiagnoseListResponse = useGetPatientDiagnosisQuery(listRequest);
+  const [listIcdRequest, setListIcdRequest] = useState({ ...initialListRequest });
+  const { data: icdListResponseData } = useGetIcdListQuery(listIcdRequest);
+  console.log("icdListResponseData:", icdListResponseData);
+  useEffect(() => {
+    if (searchKeyword.trim() !== "") {
+      setListIcdRequest(
+        {
+          ...initialListRequest,
+          filterLogic: 'or',
+          filters: [
+            {
+              fieldName: 'icd_code',
+              operator: 'containsIgnoreCase',
+              value: searchKeyword
+            },
+            {
+              fieldName: 'description',
+              operator: 'containsIgnoreCase',
+              value: searchKeyword
+            }
 
-  const { data: icdListResponseData } = useGetIcdListQuery({
-    ...initialListRequest,
-    pageSize: 100
-  });
+          ]
+        }
+      );
+    }
+  }, [searchKeyword]);
   const modifiedData = (icdListResponseData?.object ?? []).map(item => ({
     ...item,
     combinedLabel: `${item.icdCode} - ${item.description}`
@@ -79,7 +103,7 @@ const PatientDiagnosis = () => {
 
   const [savePatientDiagnose, savePatientDiagnoseMutation] = useSavePatientDiagnoseMutation();
   const [removePatientDiagnose, removePatientDiagnoseMutation] = useRemovePatientDiagnoseMutation();
-  const existingDiagnoseKey = "";
+  const [diagnosisIcd, setDiagnosisIcd] = useState(null);
   const [selectedDiagnose, setSelectedDiagnose] = useState<ApPatientDiagnose>({
     ...newApPatientDiagnose,
     visitKey: patientSlice.encounter.key,
@@ -110,7 +134,8 @@ const PatientDiagnosis = () => {
 
     try {
       savePatientDiagnose({
-        ...selectedDiagnose
+        ...selectedDiagnose,
+        diagnoseCode: diagnosisIcd.key
 
 
       }).unwrap();
@@ -118,10 +143,14 @@ const PatientDiagnosis = () => {
     } catch (error) {
 
       console.error("Encounter save failed:", error);
-      dispatch(notify('saved  fill'));
+      dispatch(notify('Save Failed'));
     }
   };
+  const handleSearch = value => {
+    setSearchKeyword(value);
+    console.log('serch' + searchKeyword);
 
+  };
   const remove = () => {
     if (selectedDiagnose.key) {
       removePatientDiagnose({
@@ -173,10 +202,10 @@ const PatientDiagnosis = () => {
       <Panel style={{ display: 'flex', flexDirection: 'column', padding: '3px' }} >
         <div style={{ display: 'flex' }}>
           <div >
-            <Text style={{ zoom: 0.88 }}>Diagnose</Text>
+            {/* <Text style={{ zoom: 0.88 }}>Diagnose</Text>
             <SelectPicker
               disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900'}
-              style={{ width: '250px', zoom: 0.80 }}
+              style={{ width: '300px', zoom: 0.80 }}
               data={modifiedData}
               labelKey="combinedLabel"
               valueKey="key"
@@ -188,9 +217,42 @@ const PatientDiagnosis = () => {
                   diagnoseCode: e
                 })
               }
-            />
+            /> */}
+            <Text style={{ zoom: 0.88 }}>Diagnose</Text>
+            <InputGroup inside style={{ width: '300px', zoom: 0.80 }}>
+              <Input
+                placeholder={'Search ICD'}
+                value={searchKeyword}
+                onChange={handleSearch}
+              />
+              <InputGroup.Button>
+                <SearchIcon />
+              </InputGroup.Button>
+            </InputGroup>
+            {searchKeyword && (
+              <Dropdown.Menu className="dropdown-menuresult">
+                {modifiedData && modifiedData?.map(mod => (
+                  <Dropdown.Item
+                    key={mod.key}
+                    eventKey={mod.key}
+                    onClick={() => {
+                      setSelectedDiagnose({
+                        ...selectedDiagnose,
+                        diagnoseCode: mod.key
+                      })
+                      setDiagnosisIcd(mod)
+                      setSearchKeyword("");
+                    }
+                    }
+                  >
+                    <span style={{ marginRight: "19px" }}>{mod.icdCode}</span>
+                    <span>{mod.description}</span>
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            )}
           </div>
-          <Form style={{ zoom: 0.80, marginLeft: "3px" }} layout="inline" fluid>
+          <Form style={{ zoom: 0.87, marginLeft: "10px",display: 'flex' }} layout="inline" fluid>
             <MyInput
 
               disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
@@ -203,7 +265,7 @@ const PatientDiagnosis = () => {
             //   disabled={!editing}
             />
             <MyInput
-
+              style={{ marginLeft: "10px" }}
               disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
               column
               fieldLabel="Major"
@@ -213,32 +275,41 @@ const PatientDiagnosis = () => {
               setRecord={setSelectedDiagnose}
             //   disabled={!editing}
             />
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
+
+              <Button
+                color="green"
+                appearance="primary"
+                onClick={save}
+
+
+              >
+                <Translate>Save</Translate>
+              </Button>
+            </div>
           </Form>
+
         </div>
-        <div style={{ display: 'flex', gap: '4px' }}>
+        <div style={{ display: 'flex', gap: '4px', width: '100%' }}>
           <div>
 
-            <Text style={{ zoom: 0.85 }}>Additional Description</Text>
+            <Text style={{ zoom: 0.85 }}>diagnosis</Text>
             <InputGroup>
-              <InputGroup.Addon>
-                {<icons.CheckRound color="green" />}
 
-
-              </InputGroup.Addon>
               <Input
-                disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
-                style={{ zoom: 0.80 }}
-                value={selectedDiagnose.description}
-                onChange={e => setSelectedDiagnose({ ...selectedDiagnose, description: e })}
+                disabled={true}
+                style={{ zoom: 0.80, width: '300px' }}
+                value={icdListResponseData?.object.find(item => item.key === selectedDiagnose.diagnoseCode)?.description || ""}
+              // icdListResponseData?.find(item => item.key === selectedDiagnose.diagnoseCode)
 
               />
             </InputGroup>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '3px' }}>
-            <Text style={{ zoom: 0.88 }}>Type </Text>
+            <Text style={{ zoom: 0.88, width: '200px' }}>Type </Text>
             <SelectPicker
               disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
-              style={{ width: '100%', zoom: 0.94 }}
+              style={{ width: '100%', zoom: 0.96 }}
               data={sourceOfInfoLovResponseData?.object ?? []}
               labelKey="lovDisplayVale"
               valueKey="key"
@@ -252,17 +323,7 @@ const PatientDiagnosis = () => {
               }
             />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
-            <Button
-              color="green"
-              appearance="primary"
-              onClick={save}
 
-
-            >
-              <Translate>Save</Translate>
-            </Button>
-          </div>
 
         </div>
       </Panel>

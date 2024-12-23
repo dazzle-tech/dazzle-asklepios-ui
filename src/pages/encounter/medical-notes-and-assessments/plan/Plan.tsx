@@ -64,7 +64,7 @@ const Plan = () => {
         } catch (error) {
 
             console.error("Encounter save failed:", error);
-            dispatch(notify('saved  fill'));
+            dispatch(notify('Save Failed'));
         }
     };
     console.log("patientkey:" + patientSlice.patient.key);

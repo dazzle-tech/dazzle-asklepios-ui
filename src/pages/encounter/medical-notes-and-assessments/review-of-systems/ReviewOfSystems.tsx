@@ -8,6 +8,7 @@ import {  Modal, Button, Toggle, Form } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
 import { useNavigate } from 'react-router-dom';
+import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
 import {
   useGetLovValuesByCodeAndParentQuery,
   useGetLovValuesByCodeQuery
@@ -27,7 +28,9 @@ const ReviewOfSystems = () => {
   const [selectedSystem, setSelectedSystem] = useState({ ...newApLovValues });
 
   const [saveEncounterChanges, saveEncounterChangesMutation] = useSaveEncounterChangesMutation();
-  const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter });
+  const [localEncounter, setLocalEncounter] = useState({ ...patientSlice.encounter });
+  console.log(patientSlice.encounter);
+console.log(localEncounter);
   const { data: bodySystemsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_SYS');
   const { data: bodySystemsDetailLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
     code: 'BODY_SYS_DETAIL',
@@ -45,13 +48,7 @@ const ReviewOfSystems = () => {
   const [mainData, setMainData] = useState({});
   console.log(patientSlice.encounter.key);
   
-  useEffect(() => {
-    if (patientSlice.encounter && patientSlice.encounter.key) {
-      setLocalEncounter(patientSlice.encounter);
-      console.log("this is my note:" + patientSlice.encounter);
-    } else {
-    }
-  }, []);
+
   useEffect(()=>{
     console.log("saved")
   },[encounterReviewOfSystemsSummaryResponse,patientSlice.encounter.key])
@@ -68,9 +65,7 @@ const ReviewOfSystems = () => {
       dispatch(notify('Findings Saved fill'));
     }
   };
-  const physicalExamNoteIsChanged = () => {
-    return patientSlice.encounter.physicalExamNote !== localEncounter.physicalExamNote;
-  };
+
   useEffect(() => {
     if (saveEncounterChangesMutation.status === 'fulfilled') {
       dispatch(setEncounter(saveEncounterChangesMutation.data));
@@ -122,16 +117,23 @@ const ReviewOfSystems = () => {
 
             <InputGroup>
             <InputGroup.Addon>
-              {!physicalExamNoteIsChanged() && <icons.CheckRound color="green" />}
-              {physicalExamNoteIsChanged() && <icons.Gear spin />}
-            </InputGroup.Addon>
+            <IconButton
+            circle
+            
+            icon={<CheckOutlineIcon />}
+            size="xs"
+            appearance="primary"
+            color="green"
+            onClick={saveChanges}
+          />
+              </InputGroup.Addon>
               <Input
                as={'textarea'}
                rows={1}
                style={{ fontSize: '12px', maxHeight: '150px', overflowY: 'auto', resize: 'vertical' }}
-               value={localEncounter.physicalExamNote}
+               value={patientSlice.encounter.physicalExamNote}
                 onChange={e => setLocalEncounter({ ...localEncounter, physicalExamNote: e })}
-                onBlur={physicalExamNoteIsChanged() ? saveChanges : undefined}
+               
               />
              
               <InputGroup.Addon>
@@ -142,6 +144,7 @@ const ReviewOfSystems = () => {
 
               </InputGroup.Addon>
             </InputGroup>
+          
           </Row>
           <Row gutter={15}>
           <Panel header="Full Body Examination" collapsible bordered>
