@@ -30,19 +30,39 @@ import {
 } from '@/services/encounterService';
 import {
     useGetPrescriptionsQuery,
-    useGetPrescriptionMedicationsQuery
+    useGetPrescriptionMedicationsQuery,
+    useGetAllergiesQuery
 } from '@/services/encounterService';
 import {
     useGetGenericMedicationQuery
 } from '@/services/medicationsSetupService';
 import { useGetEncountersQuery } from '@/services/encounterService';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useGetAllergensQuery} from '@/services/setupService';
 const PatientSummary = ({ patient, encounter }) => {
     const patientSlice = useAppSelector(state => state.patient);
     const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
     const { data: encounterReasonLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_REASON');
+    const { data: allergensListToGetName } = useGetAllergensQuery({
+              ...initialListRequest
+          });
+    const filters = [
+        {
+            fieldName: 'patient_key',
+            operator: 'match',
+            value: patientSlice.patient.key
+        },
+      
+        {
+            fieldName: "status_lkey",
+            operator: "Match",
+            value: "9766169155908512",
+        }
+    ];
 
 
+
+    const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({ ...initialListRequest, filters });
     const [patientVisitListRequest, setPatientVisitListReques] = useState<ListRequest>({
         ...initialListRequest,
 
@@ -331,7 +351,7 @@ const PatientSummary = ({ patient, encounter }) => {
 
                 <div className='patient-summary-panel' >
                     <img className='image-style' src={Chart} onClick={handleopenchartModel} />
-                  
+
                 </div>
 
             </div>
@@ -343,6 +363,7 @@ const PatientSummary = ({ patient, encounter }) => {
                         <Col xs={24}>
                             <Table
                                 bordered
+                                data={allergiesListResponse?.object || []}
                                 onRowClick={rowData => {
 
                                 }}
@@ -352,15 +373,27 @@ const PatientSummary = ({ patient, encounter }) => {
 
                                 <Table.Column flexGrow={1}>
                                     <Table.HeaderCell style={{ fontSize: '10px' }} >Allergy Type</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+                                    <Table.Cell>{rowData => rowData.allergyTypeLvalue?.lovDisplayVale}</Table.Cell>
+
                                 </Table.Column>
                                 <Table.Column flexGrow={1}>
                                     <Table.HeaderCell style={{ fontSize: '10px' }}>Allergene</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+                                    <Table.Cell>
+                                         {rowData => {
+                                console.log(rowData.allergenKey); 
+                                if (!allergensListToGetName?.object) {
+                                    return "Loading...";  
+                                }
+                                const getname = allergensListToGetName.object.find(item => item.key === rowData.allergenKey);
+                                console.log(getname);  
+                                return getname?.allergenName || "No Name"; 
+                            }}</Table.Cell>
                                 </Table.Column>
                                 <Table.Column flexGrow={1}>
                                     <Table.HeaderCell style={{ fontSize: '10px' }} >Start Date</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+                                    <Table.Cell>{rowData =>
+                                        rowData.severityLvalue?.lovDisplayVale
+                                    }</Table.Cell>
                                 </Table.Column>
 
                             </Table>

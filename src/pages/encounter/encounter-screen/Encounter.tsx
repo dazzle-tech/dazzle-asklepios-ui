@@ -63,7 +63,7 @@ import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
 import { initialListRequest } from '@/types/types';
-import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery ,useGetAllergensQuery} from '@/services/setupService';
+import { useGetAllergensQuery} from '@/services/setupService';
 import { useNavigate } from 'react-router-dom';
 import Dental from '../dental-screen';
 import {
@@ -79,17 +79,16 @@ import {
 import { ApVisitAllergies } from '@/types/model-types';
 import { newApVisitAllergies } from '@/types/model-types-constructor';
 import { BlockUI } from 'primereact/blockui';
-import MedicalNotesAndAssessments from '../medical-notes-and-assessments';
-import EncounterServices from '../encounter-services';
+
 import EncounterMainInfoSection from '../encounter-main-info-section';
-import CloseIcon from '@rsuite/icons/Close';
-import Allergens from '@/pages/setup/allergens-setup';
-import {ApPrescription } from '@/types/model-types';
-import {newApPrescription} from '@/types/model-types-constructor';
+
 
 const Encounter = () => {
   const encounterStatusNew = '91063195286200'; // TODO change this to be fetched from redis based on LOV CODE
   const patientSlice = useAppSelector(state => state.patient);
+  console.log(patientSlice.patient);
+  console.log(patientSlice.encounter)
+
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [startEncounter, startEncounterMutation] = useStartEncounterMutation();
@@ -102,12 +101,12 @@ const Encounter = () => {
 
 const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
 const [showCanceled, setShowCanceled] = useState(true);
-const [showPrev, setShowPrev] = useState(true);
+
     const filters = [
         {
             fieldName: 'patient_key',
             operator: 'match',
-            value: patientSlice.patient.key
+            value: patientSlice.patient?.key
         },
         {
             fieldName: "status_lkey",
@@ -116,13 +115,6 @@ const [showPrev, setShowPrev] = useState(true);
         }
     ];
 
-    if (showPrev) {
-        filters.push({
-            fieldName: 'visit_key',
-            operator: 'match',
-            value: patientSlice.encounter.key
-        });
-    }
 
   const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({ ...initialListRequest, filters });
   const [activeContent, setActiveContent] = useState(<PatientSummary patient={patientSlice.patient} encounter={patientSlice.encounter} />);
@@ -309,7 +301,7 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                 </IconButton>
                 <Button appearance="primary" 
                 onClick={OpenAllargyModal}
-                color={patientSlice.encounter.hasAllergy?"red":"cyan"} >
+                color={patientSlice.patient.hasAllergy?"red":"cyan"} >
                 <FontAwesomeIcon icon={faHandDots} style={{ marginRight: '5px' }} />
                   <Translate>Allergy</Translate>
                 </Button>
@@ -436,16 +428,8 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                     >
                         Show Cancelled
                     </Checkbox>
-                    <Checkbox
-                        checked={!showPrev}
-                        onChange={() => {
+                   
 
-
-                            setShowPrev(!showPrev);
-                        }}
-                    >
-                        Show Previous Consultations
-                    </Checkbox>
                 </div>
                 <Table
                     
@@ -479,7 +463,7 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                         </HeaderCell>
                         <Cell>
                             {rowData => {
-                                console.log(rowData.allergenKey); 
+                                
                                 if (!allergensListToGetName?.object) {
                                     return "Loading...";  
                                 }
