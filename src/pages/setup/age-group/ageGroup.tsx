@@ -55,12 +55,12 @@ const AgeGroup=()=>{
   };
   const handleSave = async () => {
     setPopupOpen(false);
-  
-    try {
+   //if you want to use response object write response.object 
+     try {
       const response = await saveAgeGroups(agegroups).unwrap();
-        console.log(response.message)
+        console.log(response.msg)
       
-        dispatch(notify(response.message));
+        dispatch(notify(response.msg));
       
     } catch (error) {
       if (error.data && error.data.message) {
