@@ -198,7 +198,7 @@ const PatientProfile = () => {
       { skip: !localPatient.key }
     );
 
-    const { data: patientAgeGroupResponse, refetch: patientAgeGroupRefetch } =
+  const { data: patientAgeGroupResponse, refetch: patientAgeGroupRefetch } =
     useGetAgeGroupValueQuery(
       {
         dob: localPatient?.dob ? new Date(localPatient.dob).toISOString() : null
@@ -232,7 +232,8 @@ const PatientProfile = () => {
         ...prevState,
         ageFormat: '',
       }));
-    }}, [localPatient?.dob]);
+    }
+  }, [localPatient?.dob]);
   const patientKey = localPatient?.key?.toString();
   const { data: warnings, refetch: warningsRefetch } = useGetPatientAdministrativeWarningsQuery(
     warningsAdmistritiveListRequest
@@ -331,6 +332,7 @@ const PatientProfile = () => {
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: categoryLovQueryResponse } = useGetLovValuesByCodeQuery('FAMILY_MMBR_CAT');
   const { data: attachmentsLovQueryResponse } = useGetLovValuesByCodeQuery('ATTACH_TYPE');
+  const { data:roleLovQueryResponse } = useGetLovValuesByCodeQuery('ER_CONTACTP_ROLE');
   const { data: administrativeWarningsLovQueryResponse } =
     useGetLovValuesByCodeQuery('ADMIN_WARNINGS');
 
@@ -818,7 +820,7 @@ const PatientProfile = () => {
       responsiblePartyLkey: null,
       educationalLevelLkey: null,
       preferredContactLkey: null,
-      districtLkey: null,
+      roleLkey: null,
     });
     setEditing(false);
     setValidationResult(undefined);
@@ -1569,29 +1571,29 @@ const PatientProfile = () => {
                   disabled={!editing}
                 />
 
-<MyInput
+                <MyInput
 
 
-width={165}
-vr={validationResult}
-column
-fieldLabel="Age"
-fieldType="text"
-disabled
-fieldName="ageFormat"
-record={localPatient?.dob ? ageFormatType : null}
-/><MyInput
-width={165}
-vr={validationResult}
-column
-fieldLabel="Patient Category"
-fieldType="text"
+                  width={165}
+                  vr={validationResult}
+                  column
+                  fieldLabel="Age"
+                  fieldType="text"
+                  disabled
+                  fieldName="ageFormat"
+                  record={localPatient?.dob ? ageFormatType : null}
+                /><MyInput
+                  width={165}
+                  vr={validationResult}
+                  column
+                  fieldLabel="Patient Category"
+                  fieldType="text"
 
-fieldName="ageGroup"
-disabled
-record={localPatient?.dob ? ageGroupValue : null}
+                  fieldName="ageGroup"
+                  disabled
+                  record={localPatient?.dob ? ageGroupValue : null}
 
-/>
+                />
                 <MyInput
                   width={165}
                   vr={validationResult}
@@ -1941,7 +1943,7 @@ record={localPatient?.dob ? ageGroupValue : null}
                   column
                   fieldType="checkbox"
                   fieldName="receiveEmail"
-                  fieldLabel="Receive Email Correspondence"
+                  fieldLabel="Receive Email"
                   record={localPatient}
                   setRecord={setLocalPatient}
                   disabled={!editing}
@@ -1972,7 +1974,7 @@ record={localPatient?.dob ? ageGroupValue : null}
                   setRecord={setLocalPatient}
                   disabled={!editing}
                 />
-                <br />
+           
                 <MyInput
                   vr={validationResult}
                   column
@@ -1981,6 +1983,7 @@ record={localPatient?.dob ? ageGroupValue : null}
                   setRecord={setLocalPatient}
                   disabled={!editing}
                 />
+                <br />
                 <MyInput
                   vr={validationResult}
                   column
@@ -1998,6 +2001,19 @@ record={localPatient?.dob ? ageGroupValue : null}
                   vr={validationResult}
                   column
                   fieldName="emergencyContactPhone"
+                  record={localPatient}
+                  setRecord={setLocalPatient}
+                  disabled={!editing}
+                />
+                  <MyInput
+                  vr={validationResult}
+                  column
+                  fieldLabel="Role"
+                  fieldType="select"
+                  fieldName="roleLkey"
+                  selectData={roleLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
                   disabled={!editing}
@@ -2052,19 +2068,7 @@ record={localPatient?.dob ? ageGroupValue : null}
                   setRecord={setLocalPatient}
                   disabled={!editing}
                 />
-                <MyInput
-                  vr={validationResult}
-                  column
-                  fieldLabel="District"
-                  fieldType="select"
-                  fieldName="districtLkey"
-                  selectData={cityLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  record={localPatient}
-                  setRecord={setLocalPatient}
-                  disabled={!editing}
-                />
+
                 <MyInput
                   vr={validationResult}
                   column

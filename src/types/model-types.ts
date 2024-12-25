@@ -1222,7 +1222,7 @@ export interface ApPatient {
 	incompletePatient:boolean;
 	extraDetails:string;
 	secondaryMobileNumber:string;
-	districtLkey:string;
+	roleLkey:string;
 } 
 
 export interface ApPatientAddresses { 
@@ -2034,5 +2034,8 @@ export interface ApVisitAllergies {
 	deletedAt:number;
 	isValid:boolean;
 	severityLkey:string;
+	typeOfPropensityLkey:string;
+	criticalityLkey:string;
+	certainty:string;
 } 
 
