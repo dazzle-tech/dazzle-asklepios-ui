@@ -1223,7 +1223,7 @@ export const newApPatient:modelTypes.ApPatient = {
 	incompletePatient:undefined,
 	extraDetails:'',
 	secondaryMobileNumber:'',
-	districtLkey:undefined,
+	roleLkey:undefined,
 } 
 
 export const newApPatientAddresses:modelTypes.ApPatientAddresses = { 
@@ -2035,5 +2035,8 @@ export const newApVisitAllergies:modelTypes.ApVisitAllergies = {
 	deletedAt:undefined,
 	isValid:undefined,
 	severityLkey:undefined,
+	typeOfPropensityLkey:undefined,
+	criticalityLkey:undefined,
+	certainty:'',
 } 
 
