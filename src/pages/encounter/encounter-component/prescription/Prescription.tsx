@@ -5,7 +5,9 @@ import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import PageIcon from '@rsuite/icons/Page';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { conjureValueBasedOnKeyFromList } from '@/utils';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
+import DocPassIcon from '@rsuite/icons/DocPass';
 import {
     InputGroup,
     Form,
@@ -42,6 +44,7 @@ import {
     useGetCustomeInstructionsQuery
 
 } from '@/services/encounterService';
+import {useGetGenericMedicationActiveIngredientQuery,useGetActiveIngredientQuery } from '@/services/medicationsSetupService';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import CheckIcon from '@rsuite/icons/Check';
 import PlusIcon from '@rsuite/icons/Plus';
@@ -92,7 +95,6 @@ const Prescription = () => {
         roa: null
     });
     const [filteredList, setFilteredList] = useState([]);
-    console.log(filteredList)
     const { data: genericMedicationListResponse } = useGetGenericMedicationQuery(listGenericRequest);
     const [selectedRows, setSelectedRows] = useState([]);
     const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
@@ -102,7 +104,33 @@ const Prescription = () => {
     const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const { data: instructionTypeQueryResponse } = useGetLovValuesByCodeQuery('PRESC_INSTR_TYPE');
     const { data: refillunitQueryResponse } = useGetLovValuesByCodeQuery('REFILL_INTERVAL');
-    const [prescription, setPrescription] = useState<ApPrescription>({ ...newApPrescription });
+      
+      const { data: activeIngredientListResponseData} = useGetActiveIngredientQuery({ ...initialListRequest });
+      const [listGinricRequest, setListGinricRequest] = useState({
+        ...initialListRequest,
+        
+        timestamp: new Date().getMilliseconds(),
+        sortBy: 'createdAt',
+        sortType: 'desc'
+        ,
+          filters: [
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
+              }
+              ,
+              {
+                fieldName: 'generic_medication_key',
+                operator: 'match',
+                value:selectedGeneric?.key
+      
+              }
+          ]
+        });
+   
+     const { data: genericMedicationActiveIngredientListResponseData,refetch:refetchGenric} = useGetGenericMedicationActiveIngredientQuery(listGinricRequest);
+       
     const { data: prescriptions, isLoading: isLoadingPrescriptions, refetch: preRefetch } = useGetPrescriptionsQuery({
         ...initialListRequest,
         filters: [
@@ -122,9 +150,17 @@ const Prescription = () => {
     const filteredPrescriptions = prescriptions?.object?.filter(
         (item) => item.statusLkey === "1804482322306061"
     ) ?? [];
-    console.log(filteredPrescriptions)
-    const [preKey, setPreKey] = useState(null);
-    console.log(preKey);
+    
+    const [preKey, setPreKey] = useState( null);
+    console.log(preKey)
+    
+    const [prescription, setPrescription] = useState<ApPrescription>({...prescriptions?.object?.find(prescription =>
+        prescription.key === preKey
+    )
+   
+});
+
+
     const [prescriptionMedication, setPrescriptionMedications] = useState<ApPrescriptionMedications>(
         {
             ...newApPrescriptionMedications,
@@ -145,8 +181,6 @@ const Prescription = () => {
 
 
     const [saveCustomeInstructions, { isLoading: isSavingCustomeInstructions }] = useSaveCustomeInstructionsMutation();
-
-
 
     const { data: prescriptionMedications, isLoading: isLoadingPrescriptionMedications, refetch: medicRefetch } = useGetPrescriptionMedicationsQuery({
         ...initialListRequest,
@@ -170,8 +204,41 @@ const Prescription = () => {
 
     });
 
+
+    useEffect(()=>{    
+        const updatedFilters = [
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
+              }
+              ,
+              {
+                fieldName: 'generic_medication_key',
+                operator: 'match',
+                value:selectedGeneric?.key
+      
+              }
+          ];
+          setListGinricRequest((prevRequest) => ({
+            ...prevRequest,
+            filters: updatedFilters,
+          }));
+
+      },[selectedGeneric])
     useEffect(() => {
-        console.log("searchKeyword changed:", searchKeyword);
+        if (prescriptions?.object) {
+            const foundPrescription = prescriptions.object.find(prescription => {
+                console.log(prescription.saveDraft);
+                return prescription.saveDraft === true;
+            });
+            console.log(foundPrescription?.key )
+            if(foundPrescription?.key !=null){
+            setPreKey(foundPrescription?.key);}
+        }
+       
+    }, [prescriptions]);
+    useEffect(() => {
         if (searchKeyword.trim() !== "") {
             setListGenericRequest({
                 ...listGenericRequest,
@@ -190,10 +257,7 @@ const Prescription = () => {
             });
         }
     }, [searchKeyword]);
-    useEffect(() => {
 
-        console.log(preKey)
-    }, [preKey])
     useEffect(() => {
         setPrescriptionMedications({ ...prescriptionMedication, instructionsTypeLkey: selectedOption })
         console.log(prescriptionMedication)
@@ -216,7 +280,7 @@ const Prescription = () => {
     }, [prescriptionMedication.administrationInstructions])
     const handleSearch = value => {
         setSearchKeyword(value);
-        console.log('serch' + searchKeyword);
+        
 
     };
     useEffect(() => {
@@ -304,6 +368,7 @@ const Prescription = () => {
                 ),
 
                 statusLkey: "1804482322306061"
+                ,saveDraft:false
             }).unwrap();
             dispatch(notify('submetid  Successfully'));
             preRefetch().then(() => {
@@ -381,7 +446,18 @@ const Prescription = () => {
 
         saveData();
     }, [inst]);
-
+useEffect(()=>{
+    console.log(preKey)
+    // if (prescriptions?.object) {
+    //     const foundPrescription = prescriptions.object.find(prescription => {
+    //         console.log(prescription.key);
+    //         return prescription.key === preKey;
+    //     });
+        
+    // setPrescription(foundPrescription)}
+    // console.log(prescription?.prescriptionId)
+   
+},[preKey])
 
 
     const handleSaveMedication = () => {
@@ -410,6 +486,7 @@ const Prescription = () => {
 
 
     }
+
     const handleCleare = () => {
         setPrescriptionMedications({
             ...newApPrescriptionMedications,
@@ -426,9 +503,11 @@ const Prescription = () => {
         setCustomeinst({ dose: null, frequency: null, unit: null, roa: null })
         setTags([])
     }
+
     useEffect(() => {
         console.log(adminInstructions)
     }, [adminInstructions])
+
     const addTag = () => {
         const nextTags = inputValue ? [...tags, inputValue] : tags;
         setTags(nextTags);
@@ -439,11 +518,15 @@ const Prescription = () => {
     const handleButtonClick = () => {
         setTyping(true);
     };
+
     const handleItemClick = (Generic) => {
         setSelectedGeneric(Generic);
+        refetchGenric() .then(() => {
+            console.log("Refetch Genric");
+        }).catch((error) => {
+            console.error("Refetch failed:", error);
+        });
         setSearchKeyword("")
-        console.log(Generic.genericName)
-        console.log(Generic.roaList);
         const newList = roaLovQueryResponse.object.filter((item) =>
             (Generic.roaList).includes(item.key)
         );
@@ -451,7 +534,16 @@ const Prescription = () => {
 
     };
 
+const saveDraft=async()=>{
+   try{
+    await savePrescription({...prescriptions?.object?.find(prescription =>
+        prescription.key === preKey
+    ),
+    saveDraft:true
+})
+   }catch(error){}
 
+}
     const handleSavePrescription = async () => {
         console.log("Attempting to save prescription...");
 
@@ -530,6 +622,11 @@ const Prescription = () => {
 
                 />
             </div>
+            <div>
+                <Text>current Prescription Id : {prescriptions?.object?.find(prescription =>
+                            prescription.key === preKey
+                        )?.prescriptionId}</Text>
+            </div>
 
 
             <IconButton
@@ -599,7 +696,19 @@ const Prescription = () => {
                     .join(', ')}
             </span>}
             <div className="buttons-sect-p">
-
+            <IconButton
+                    color="cyan"
+                    appearance="primary"
+                    onClick={saveDraft}
+                    icon={<DocPassIcon />}
+                    disabled={
+                        prescriptions?.object?.find(prescription =>
+                            prescription.key === preKey
+                        )?.statusLkey === '1804482322306061'
+                    }
+                >
+                    <Translate> Save draft</Translate>
+                </IconButton>
                 <IconButton
                     color="violet"
                     appearance="primary"
@@ -648,10 +757,10 @@ const Prescription = () => {
                 <div style={{ marginLeft: "10px" }}>
                     {selectedOption === "3010606785535008" &&
                         <div className='form-search-container-p ' style={{ width: "600px" }}>
-                            <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+                            <Form style={{ zoom: 0.85 }} layout="inline" fluid disabled={preKey != null ? editing : true}>
                                 <MyInput
                                     column
-                                    disabled={false}
+                                    
                                     width={150}
                                     fieldType='number'
                                     fieldName={'dose'}
@@ -751,19 +860,40 @@ const Prescription = () => {
                     onRowClick={rowData => {
 
                     }}
+                    data={genericMedicationActiveIngredientListResponseData?.object||[]}
 
 
                 >
 
                     <Table.Column flexGrow={2} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }} >Active Ingredient</Table.HeaderCell>
-                        <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient</Table.HeaderCell>
+                        <Table.Cell dataKey="activeIngredientKey">
+                       
+                            {rowData =>{
+                                const nameg=activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name
+                                 console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey))
+                               return nameg;}
+                            }
+                     
+                        </Table.Cell>
+                    </Table.Column>
+                    <Table.Column flexGrow={2} fullText>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient ATC Code</Table.HeaderCell>
+                        <Table.Cell dataKey="activeIngredientKey">
+                       
+                            {rowData =>{
+                                const atcg=activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode
+                                 console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey))
+                               return atcg;}
+                            }
+                     
+                        </Table.Cell>
                     </Table.Column>
                     <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
-                        <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+                        <Table.Cell>{rowData => rowData.strength}</Table.Cell>
                     </Table.Column>
-                    <Table.Column flexGrow={2} fullText>
+                    <Table.Column flexGrow={1} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }} >Details</Table.HeaderCell>
                         <Table.Cell><IconButton
                             // onClick={OpenDetailsModel} 

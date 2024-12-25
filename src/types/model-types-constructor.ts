@@ -312,6 +312,7 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	appointmentStatus:'',
 	noShowReasonValue:'',
 	noShowReasonLkey:undefined,
+	noShowOtherReason:'',
 } 
 
 export const newApAttachment:modelTypes.ApAttachment = { 
@@ -566,6 +567,7 @@ export const newApDiagnosticTest:modelTypes.ApDiagnosticTest = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	appointable:undefined,
 } 
 
 export const newApDiagnosticTestAgeType:modelTypes.ApDiagnosticTestAgeType = { 
@@ -631,6 +633,43 @@ export const newApDiagnosticTestGenetics:modelTypes.ApDiagnosticTestGenetics = {
 	isValid:undefined,
 } 
 
+export const newApDiagnosticTestLaboratory:modelTypes.ApDiagnosticTestLaboratory = { 
+	key:undefined,
+	testKey:undefined,
+	internationalCodingTypeLkey:undefined,
+	childCodeLkey:undefined,
+	labCatalogLkey:undefined,
+	propertyLkey:undefined,
+	systemLkey:undefined,
+	scaleLkey:undefined,
+	reagentsLkey:undefined,
+	methodLkey:undefined,
+	testDurationTime:0,
+	timeUnitLkey:undefined,
+	resultType:'',
+	resultUnitLkey:undefined,
+	isProfile:undefined,
+	sampleContainerLkey:undefined,
+	sampleVolume:0,
+	sampleVolumeUnitLkey:undefined,
+	tubeColorLkey:undefined,
+	testDescription:'',
+	sampleHandling:'',
+	turnaroundTime:0,
+	turnaroundTimeUnitLkey:undefined,
+	preparationRequirements:'',
+	medicalIndications:'',
+	associatedRisks:'',
+	testInstructions:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApDiagnosticTestPathology:modelTypes.ApDiagnosticTestPathology = { 
 	key:undefined,
 	testKey:undefined,
@@ -665,15 +704,6 @@ export const newApDiagnosticTestRadiology:modelTypes.ApDiagnosticTestRadiology =
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
-	labCatalogLkey:undefined,
-	propertyLkey:undefined,
-	systemLkey:undefined,
-	scaleLkey:undefined,
-	reagentsLkey:undefined,
-	methodLkey:undefined,
-	timingLkey:undefined,
-	resultType:'',
-	resultUnitLkey:undefined,
 } 
 
 export const newApDiagnosticTestSpecialPopulation:modelTypes.ApDiagnosticTestSpecialPopulation = { 
@@ -1602,6 +1632,7 @@ export const newApPrescription:modelTypes.ApPrescription = {
 	deletedAt:undefined,
 	isValid:undefined,
 	prescriptionId:'',
+	saveDraft:undefined,
 } 
 
 export const newApPrescriptionInstruction:modelTypes.ApPrescriptionInstruction = { 

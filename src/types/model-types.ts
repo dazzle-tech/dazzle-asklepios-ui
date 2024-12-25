@@ -311,6 +311,7 @@ export interface ApAppointment {
 	appointmentStatus:string;
 	noShowReasonValue:string;
 	noShowReasonLkey:string;
+	noShowOtherReason:string;
 } 
 
 export interface ApAttachment { 
@@ -565,6 +566,7 @@ export interface ApDiagnosticTest {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	appointable:boolean;
 } 
 
 export interface ApDiagnosticTestAgeType { 
@@ -630,6 +632,43 @@ export interface ApDiagnosticTestGenetics {
 	isValid:boolean;
 } 
 
+export interface ApDiagnosticTestLaboratory { 
+	key:string;
+	testKey:string;
+	internationalCodingTypeLkey:string;
+	childCodeLkey:string;
+	labCatalogLkey:string;
+	propertyLkey:string;
+	systemLkey:string;
+	scaleLkey:string;
+	reagentsLkey:string;
+	methodLkey:string;
+	testDurationTime:number;
+	timeUnitLkey:string;
+	resultType:string;
+	resultUnitLkey:string;
+	isProfile:boolean;
+	sampleContainerLkey:string;
+	sampleVolume:number;
+	sampleVolumeUnitLkey:string;
+	tubeColorLkey:string;
+	testDescription:string;
+	sampleHandling:string;
+	turnaroundTime:number;
+	turnaroundTimeUnitLkey:string;
+	preparationRequirements:string;
+	medicalIndications:string;
+	associatedRisks:string;
+	testInstructions:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApDiagnosticTestPathology { 
 	key:string;
 	testKey:string;
@@ -664,15 +703,6 @@ export interface ApDiagnosticTestRadiology {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
-	labCatalogLkey:string;
-	propertyLkey:string;
-	systemLkey:string;
-	scaleLkey:string;
-	reagentsLkey:string;
-	methodLkey:string;
-	timingLkey:string;
-	resultType:string;
-	resultUnitLkey:string;
 } 
 
 export interface ApDiagnosticTestSpecialPopulation { 
@@ -1601,6 +1631,7 @@ export interface ApPrescription {
 	deletedAt:number;
 	isValid:boolean;
 	prescriptionId:string;
+	saveDraft:boolean;
 } 
 
 export interface ApPrescriptionInstruction { 
