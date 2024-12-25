@@ -86,8 +86,7 @@ const ScheduleScreen = () => {
                 );
 
                 const isHidden = appointment?.appointmentStatus === "Canceled";
-
-                return {
+                 return {
                     title: ` ${appointment?.patient?.fullName}, ${isNaN(dob) ? "Unknown" : today.getFullYear() - dob.getFullYear()
                         }Y , ${resource?.resourceName || "Unknown Resource"},  ${extractTimeFromTimestamp(appointment.appointmentStart)} - ${extractTimeFromTimestamp(appointment.appointmentEnd)} `, // Customize title as needed
                     start: convertDate(appointment.appointmentStart),
@@ -97,8 +96,7 @@ const ScheduleScreen = () => {
                     hidden: isHidden,
                 };
             });
-
-            setAppointmentsData(formattedAppointments);
+             setAppointmentsData(formattedAppointments);
         }
     }, [appointments, resourcesListResponse]);
 
@@ -380,7 +378,7 @@ const ScheduleScreen = () => {
                             width={300}
                             column
                             fieldLabel="Resources"
-                            selectData={filteredResourcesList.length>0?filteredResourcesList: resourcesListResponse?.object ?? []}
+                            selectData={filteredResourcesList.length > 0 ? filteredResourcesList : !selectedResourceType?.resourcesType ? resourcesListResponse?.object : []}
                             fieldType="multyPicker"
                             selectDataLabel="resourceName"
                             selectDataValue="key"
