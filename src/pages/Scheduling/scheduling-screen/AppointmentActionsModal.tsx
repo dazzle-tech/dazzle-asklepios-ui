@@ -22,7 +22,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
     const handleCheckIn = () => {
         const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Checked-In",noShowReasonLkey:null }).then(() => {
+        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Checked-In",noShowReasonLkey:null,noShowOtherReason:null }).then(() => {
             dispatch(notify('Appointment Checked-In Successfully'));
             onStatusChange()
             onActionsModalClose()
@@ -42,7 +42,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
     const handleConfirm = () => {
         const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Confirmed",noShowReasonLkey:null }).then(() => {
+        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Confirmed",noShowReasonLkey:null,noShowOtherReason:null }).then(() => {
             dispatch(notify('Appointment Confirmed Successfully'));
             onStatusChange()
             onActionsModalClose()
@@ -63,7 +63,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
     const handleCancel = () => {
         const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Canceled" ,noShowReasonLkey:null}).then(() => {
+        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Canceled" ,noShowReasonLkey:null,noShowOtherReason:null}).then(() => {
             dispatch(notify('Appointment has been hidden Successfully'));
             onStatusChange()
             onActionsModalClose()
@@ -165,17 +165,18 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                         <MyInput
                             width={350}
                             column
-                            fieldName="Other Reasons"
+                            fieldLabel="Other Reason"
+                            fieldName="noShowOtherReason"
                             record={localAppointmentData}
                             setRecord={setLocalAppoitmentData}
-                            disabled
-                        />
+                         />
                     </Form>
 
 
                 </Modal.Body>
                 <Modal.Footer>
-                    <IconButton onClick={() => { handleHide() }} color="violet" appearance="primary" icon={<CheckIcon />}>
+                    <IconButton
+                   disabled={!(localAppointmentData?.noShowOtherReason || localAppointmentData?.noShowReasonLkey)}  onClick={() => { handleHide() }} color="violet" appearance="primary" icon={<CheckIcon />}>
                         Save
                     </IconButton>
                     <Divider vertical />

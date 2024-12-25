@@ -80,11 +80,15 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     const [selectedMonth, setSelectedMonth] = useState(null);
     const [selectedYear, setSelectedYear] = useState(null);
     const [rowPeriods, setRowPeriods] = useState()
+    const [filteredResourcesList, setFilteredResourcesList] = useState([])
+
 
     const { data: resourcesAvailability } = useGetResourcesAvailabilityQuery({
         resource_key: appointment?.resourceKey,
         facility_id: "",
     });
+
+
 
     useEffect(() => {
         setRowPeriods(resourcesAvailability?.object)
@@ -100,6 +104,13 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
         value: item.day,
     }));
     const { data: resourcesListResponse } = useGetResourcesQuery(resourcesListRequest);
+
+    useEffect(() => {
+        if (appointment?.resourceTypeLkey) {
+            const filtered = resourcesListResponse.object.filter(resource => resource.resourceTypeLkey === appointment?.resourceTypeLkey);
+            setFilteredResourcesList(filtered);
+        }
+    }, [resourcesListResponse, appointment?.resourceTypeLkey]);
 
     //   const [availabilityPickerData, setAvailabilityPickerData] = useState()
     // const [availableDayAndPeriods, setAvailableDayAndPeriods] = useState([]);
@@ -341,7 +352,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     useEffect(() => {
         if (instructionValue) {
             setInstructions(prevInstructions =>
-                prevInstructions ? `${prevInstructions }, ${instructionValue}` : instructionValue[0]
+                prevInstructions ? `${prevInstructions}, ${instructionValue}` : instructionValue[0]
             );
         }
         setInstructionsKey(null)
@@ -380,8 +391,8 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
     const handleSaveAppointment = () => {
         if (localPatient?.key) {
-             console.log({ ...appointment,patientKey:localPatient.key, appointmentStart: calculateAppointmentDate(0), appointmentEnd: calculateAppointmentDate(selectedDuration), instructions: instructions })
-            saveAppointment({ ...appointment,patientKey:localPatient.key,  appointmentStart: calculateAppointmentDate(0), appointmentEnd: calculateAppointmentDate(selectedDuration), instructions: instructions }).unwrap().then(() => {
+            console.log({ ...appointment, patientKey: localPatient.key, appointmentStart: calculateAppointmentDate(0), appointmentEnd: calculateAppointmentDate(selectedDuration), instructions: instructions })
+            saveAppointment({ ...appointment, patientKey: localPatient.key, appointmentStart: calculateAppointmentDate(0), appointmentEnd: calculateAppointmentDate(selectedDuration), instructions: instructions }).unwrap().then(() => {
                 closeModal()
                 handleClear()
                 onSave()
@@ -389,7 +400,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
         } else {
             dispatch(notify({ msg: 'Please make sure to fill in the required fields.', sev: 'warn' }));
 
-         }
+        }
 
     }
 
@@ -820,7 +831,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                             width={300}
                             column
                             fieldLabel="Resources"
-                            selectData={resourcesListResponse?.object ?? []}
+                            selectData={filteredResourcesList.length > 0 ? filteredResourcesList : !appointment?.resourceTypeLkey ? resourcesListResponse?.object : []}
                             fieldType="select"
                             selectDataLabel="resourceName"
                             selectDataValue="key"
