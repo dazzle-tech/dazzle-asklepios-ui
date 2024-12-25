@@ -61,6 +61,8 @@ const Allergies = () => {
     const { data: treatmentstrategyLovQueryResponse } = useGetLovValuesByCodeQuery('TREAT_STRATGY');
     const { data: sourceofinformationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
     const { data: statusLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGY_RES_STATUS');
+    const { data: allgPropnLovQueryResponse } = useGetLovValuesByCodeQuery('ALLG_PROPN');
+    const { data: criticalityLovQueryResponse } = useGetLovValuesByCodeQuery('CRITICALITY');
     const [allerges, setAllerges] = useState<ApVisitAllergies>({ ...newApVisitAllergies });
     const [showCanceled, setShowCanceled] = useState(true);
     const [editing, setEditing] = useState(false);
@@ -490,9 +492,22 @@ const Allergies = () => {
                                 }}
                                 checkedChildren="Yes"
                                 unCheckedChildren="No"
-                                style={{ width: 165 }}
+                                style={{ width: 100 }}
 
                             /></div>
+                             <MyInput
+                            column
+                            disabled={editing}
+                            width={150}
+                            fieldType="select"
+                            fieldLabel="Type of Propensity"
+                            selectData={allgPropnLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            fieldName={'typeOfPropensityLkey'}
+                            record={allerges}
+                            setRecord={setAllerges}
+                        />
                     </Form>
                     <Form style={{ zoom: 0.85, display: 'flex' }} layout="inline" fluid>
 
@@ -526,6 +541,27 @@ const Allergies = () => {
                             record={allerges}
                             setRecord={setAllerges}
                             disabled={editing}
+                        />
+                         <MyInput
+                            column
+                            disabled={editing}
+                            width={150}
+                            fieldType="select"
+                            fieldLabel="Criticality"
+                            selectData={criticalityLovQueryResponse ?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            fieldName={'criticalityLkey'}
+                            record={allerges}
+                            setRecord={setAllerges}
+                        />
+                         <MyInput
+                            column
+                            disabled={editing}
+                            width={150}
+                            fieldName={'certainty'}
+                            record={allerges}
+                            setRecord={setAllerges}
                         />
                     </Form>
                     <div>
