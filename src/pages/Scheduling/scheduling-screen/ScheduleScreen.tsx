@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Calendar as BigCalendar, Views, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { Calendar as RsuiteCalendar, TagPicker, ButtonToolbar, Panel, InputGroup, SelectPicker, Input, IconButton, Button, Form, Drawer, Calendar, } from "rsuite";
+import { Calendar as RsuiteCalendar, TagPicker, ButtonToolbar, Panel, InputGroup, SelectPicker, Input, IconButton, Button, Form, Drawer, Calendar, TagGroup, Tag, Divider, } from "rsuite";
 import "./styles.less";
 import SearchIcon from '@rsuite/icons/Search';
 import {
@@ -86,7 +86,7 @@ const ScheduleScreen = () => {
                 );
 
                 const isHidden = appointment?.appointmentStatus === "Canceled";
-                 return {
+                return {
                     title: ` ${appointment?.patient?.fullName}, ${isNaN(dob) ? "Unknown" : today.getFullYear() - dob.getFullYear()
                         }Y , ${resource?.resourceName || "Unknown Resource"},  ${extractTimeFromTimestamp(appointment.appointmentStart)} - ${extractTimeFromTimestamp(appointment.appointmentEnd)} `, // Customize title as needed
                     start: convertDate(appointment.appointmentStart),
@@ -96,7 +96,7 @@ const ScheduleScreen = () => {
                     hidden: isHidden,
                 };
             });
-             setAppointmentsData(formattedAppointments);
+            setAppointmentsData(formattedAppointments);
         }
     }, [appointments, resourcesListResponse]);
 
@@ -388,9 +388,18 @@ const ScheduleScreen = () => {
                         />
                     </Form>
 
+                    <Divider style={{ marginTop: "100px" }}>Color Key</Divider>
+
+                    <TagGroup style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+
+                        <Tag style={{ backgroundColor: "#AAFFFC" }}>Checked In Appointment</Tag>
+                        <Tag style={{ backgroundColor: "#dab1da" }} >Confirmed Appointment</Tag>
+                        <Tag style={{ backgroundColor: "#fffd8d " }}>No Show Appointment</Tag>
+                        <Tag style={{ backgroundColor: "#cbcbcb" }} >Cancled Appointment</Tag>
+                        <Tag style={{ backgroundColor: "#90d5ff" }} >Completed Appointment</Tag>
 
 
-
+                    </TagGroup>
 
 
                 </div>
@@ -410,7 +419,7 @@ const ScheduleScreen = () => {
                         style={{ height: 600 }}
                         eventPropGetter={eventPropGetter}
                         components={{
-                            toolbar: CustomToolbar, // استخدام شريط الأدوات المخصص
+                            toolbar: CustomToolbar,
                         }}
                     />
                 </div>
