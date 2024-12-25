@@ -292,7 +292,7 @@ const ActiveIngredient = ({genericMedication}) => {
                           {conjureValueBasedOnKeyFromList(
                             activeIngredientListResponseData?.object ?? [],
                             rowData.activeIngredientKey,
-                            'act_code'
+                            'atc_code'
                           )}
                         </span>
                       )}
