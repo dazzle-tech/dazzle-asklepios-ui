@@ -20,29 +20,26 @@ import {
 import MyInput from '@/components/MyInput';
 
 const LovValues = ({ lov, goBack, ...props }) => {
-  console.log(lov);
   const [lovValue, setLovValue] = useState<ApLovValues>({ ...newApLovValues });
   const [lovValuePopupOpen, setLovValuePopupOpen] = useState(false);
-
+  
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const [parentLovValueListRequest, setParentLovValueListRequest] = useState<ListRequest>({
     ...initialListRequest,
     ignore: true
   });
-
+ 
   const [saveLovValue, saveLovValueMutation] = useSaveLovValueMutation();
 
   const { data: lovValueListResponse } = useGetLovValuesQuery(listRequest);
-  console.log("kkk",lovValueListResponse?.object);
-  console.log(listRequest)
+  const [isdefault,setIsDefault]=useState(false);
   const { data: parentLovValueListResponse } = useGetLovValuesQuery(parentLovValueListRequest);
 
   useEffect(() => {
     console.log(lov)
     if (lov && lov.key) {
       setListRequest(addFilterToListRequest('lov_key', 'match', lov.key, listRequest));
-      console.log(listRequest);
-      console.log(lovValueListResponse);
+  
     }
     setLovValuePopupOpen(false);
     setLovValue({ ...newApLovValues });
@@ -56,7 +53,19 @@ const LovValues = ({ lov, goBack, ...props }) => {
     }
   }, [lov]);
   useEffect(()=>{
-console.log(lovValueListResponse);
+if (lovValueListResponse?.object) {
+  const foundDefault = lovValueListResponse.object.find(Default=> {
+     
+      return Default.isdefault=== true;
+  });
+  console.log(foundDefault?.key )
+  if(foundDefault?.key !=null){
+    setIsDefault(true);}
+    else{
+      setIsDefault(false);
+    }
+}
+console.log(isdefault);
   },[lovValueListResponse]);
 
   useEffect(() => {
@@ -270,6 +279,7 @@ console.log(lovValueListResponse);
                   setRecord={setLovValue}
                 />
                 <MyInput
+                disabled={isdefault==true?(lovValue.isdefault==true?false:true):false}
                   fieldName="isdefault"
                   fieldType="checkbox"
                   record={lovValue}
