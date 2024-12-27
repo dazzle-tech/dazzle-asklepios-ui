@@ -88,12 +88,13 @@ const ScheduleScreen = () => {
                 const isHidden = appointment?.appointmentStatus === "Canceled";
                 return {
                     title: ` ${appointment?.patient?.fullName}, ${isNaN(dob) ? "Unknown" : today.getFullYear() - dob.getFullYear()
-                        }Y , ${resource?.resourceName || "Unknown Resource"},  ${extractTimeFromTimestamp(appointment.appointmentStart)} - ${extractTimeFromTimestamp(appointment.appointmentEnd)} `, // Customize title as needed
+                        }Y , ${resource?.resourceName || "Unknown Resource"} `, // Customize title as needed
                     start: convertDate(appointment.appointmentStart),
                     end: convertDate(appointment.appointmentEnd),
                     text: appointment.notes || "No additional details available",
                     appointmentData: appointment,
                     hidden: isHidden,
+                    fromTo: `${extractTimeFromTimestamp(appointment.appointmentStart)} - ${extractTimeFromTimestamp(appointment.appointmentEnd)}`
                 };
             });
             setAppointmentsData(formattedAppointments);
@@ -159,6 +160,10 @@ const ScheduleScreen = () => {
             case "Canceled":
                 return {
                     style: { backgroundColor: "#cbcbcb", color: "black" }, // Cool Grey 
+                }
+            case "No-Show":
+                return {
+                    style: { backgroundColor: "#fffd8d", color: "black" }, // Cool Grey 
                 }
             // default:
             //     return <p>Unknown status</p>;
@@ -250,7 +255,7 @@ const ScheduleScreen = () => {
 
     const visibleAppointments = currentView === "agenda"
         ? appointmentsData // Show all events in the agenda view
-        : appointmentsData.filter((event) => !event.hidden); // Example: Hide events with a "hidden" flag in other views
+        : appointmentsData.filter((event) => !event.hidden);
 
 
     const handleChangeAppointment = () => {
@@ -290,6 +295,14 @@ const ScheduleScreen = () => {
             </div>
         );
     };
+    const getTooltipContent = (event) => {
+        // Define tooltip content based on the current view
+        if (currentView === "month") {
+          return `${event.title} - ${event.fromTo}`;
+        } else {
+          return `${event.title}`;
+        }
+      };
 
     return (
         <div>
@@ -391,10 +404,11 @@ const ScheduleScreen = () => {
                     <Divider style={{ marginTop: "100px" }}>Color Key</Divider>
 
                     <TagGroup style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-
+ 
+                        <Tag style={{  backgroundColor: "#3174ad"}}><span style={{  color: "white" }}>New Appointment</span></Tag>
                         <Tag style={{ backgroundColor: "#AAFFFC" }}>Checked In Appointment</Tag>
                         <Tag style={{ backgroundColor: "#dab1da" }} >Confirmed Appointment</Tag>
-                        <Tag style={{ backgroundColor: "#fffd8d " }}>No Show Appointment</Tag>
+                        <Tag style={{ backgroundColor: "#fffd8d" }}>No Show Appointment</Tag>
                         <Tag style={{ backgroundColor: "#cbcbcb" }} >Cancled Appointment</Tag>
                         <Tag style={{ backgroundColor: "#90d5ff" }} >Completed Appointment</Tag>
 
@@ -414,12 +428,17 @@ const ScheduleScreen = () => {
                         selectable={true}
                         onSelectEvent={(event) => {
                             handleSelectEvent(event);  // select event
+
                         }}
+                        tooltipAccessor={(event) => getTooltipContent(event)} // Dynamic tooltip content
+                        // style={{ height: "600px" }}
+
                         onView={(view) => setCurrentView(view)}
                         style={{ height: 600 }}
                         eventPropGetter={eventPropGetter}
                         components={{
                             toolbar: CustomToolbar,
+                            
                         }}
                     />
                 </div>

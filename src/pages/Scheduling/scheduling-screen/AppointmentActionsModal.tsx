@@ -50,7 +50,10 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         })
     }
 
-    const handleHide = () => {
+
+
+
+    const handleNonShow = () => {
         console.log(localAppointmentData)
         changeAppointmentStatus({...localAppointmentData, appointmentStatus: "No-Show" }).then(() => {
             dispatch(notify('Appointment has been hidden Successfully'));
@@ -176,7 +179,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                 </Modal.Body>
                 <Modal.Footer>
                     <IconButton
-                   disabled={!(localAppointmentData?.noShowOtherReason || localAppointmentData?.noShowReasonLkey)}  onClick={() => { handleHide() }} color="violet" appearance="primary" icon={<CheckIcon />}>
+                   disabled={!(localAppointmentData?.noShowOtherReason || localAppointmentData?.noShowReasonLkey)}  onClick={() => { handleNonShow() }} color="violet" appearance="primary" icon={<CheckIcon />}>
                         Save
                     </IconButton>
                     <Divider vertical />
