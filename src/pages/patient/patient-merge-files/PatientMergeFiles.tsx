@@ -498,7 +498,7 @@ const PatientMergeFiles = () => {
                                 }
                             />
                         </div>
-                        <Form layout="inline" fluid>
+                        <Form layout="inline" style={{ zoom: 0.80}} >
                             <MyInput
                                 width={165}
                                 vr={validationResult}
@@ -511,7 +511,7 @@ const PatientMergeFiles = () => {
                         </Form>
                     </Stack.Item>
                     <Stack.Item grow={15}>
-                        <Form layout="inline" fluid>
+                        <Form layout="inline" style={{ zoom: 0.80}}>
                             <MyInput
                                 required
                                 width={165}
@@ -865,7 +865,7 @@ const PatientMergeFiles = () => {
                                 }
                             />
                         </div>
-                        <Form layout="inline" fluid>
+                        <Form layout="inline" style={{ zoom: 0.80}} >
                             <MyInput
                                 width={165}
                                 vr={validationResult}
@@ -878,7 +878,7 @@ const PatientMergeFiles = () => {
                         </Form>
                     </Stack.Item>
                     <Stack.Item grow={15}>
-                        <Form layout="inline" fluid>
+                        <Form layout="inline" style={{ zoom: 0.80}}>
                             <MyInput
                                 required
                                 width={165}
