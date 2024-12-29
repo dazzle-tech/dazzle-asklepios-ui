@@ -109,6 +109,7 @@ export const newApActiveIngredient:modelTypes.ApActiveIngredient = {
 	doseAdjRenalTwo:'',
 	doseAdjRenalThree:'',
 	doseAdjRenalFour:'',
+	chemicalFormula:'',
 } 
 
 export const newApActiveIngredientAdverseEffect:modelTypes.ApActiveIngredientAdverseEffect = { 
@@ -310,9 +311,9 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	resourceLkey:undefined,
 	instructionsLkey:undefined,
 	appointmentStatus:'',
-	noShowReasonValue:'',
-	noShowReasonLkey:undefined,
-	noShowOtherReason:'',
+	reasonLkey:undefined,
+	reasonValue:'',
+	otherReason:'',
 } 
 
 export const newApAttachment:modelTypes.ApAttachment = { 
@@ -638,7 +639,7 @@ export const newApDiagnosticTestLaboratory:modelTypes.ApDiagnosticTestLaboratory
 	testKey:undefined,
 	internationalCodingTypeLkey:undefined,
 	childCodeLkey:undefined,
-	labCatalogLkey:undefined,
+	labCatalogKey:undefined,
 	propertyLkey:undefined,
 	systemLkey:undefined,
 	scaleLkey:undefined,
@@ -687,6 +688,13 @@ export const newApDiagnosticTestPathology:modelTypes.ApDiagnosticTestPathology =
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	testDescription:'',
+	sampleHandling:'',
+	medicalLndications:'',
+	criticalValues:'',
+	preparationRequirements:'',
+	associatedRisks:'',
+	pathCatalogKey:undefined,
 } 
 
 export const newApDiagnosticTestRadiology:modelTypes.ApDiagnosticTestRadiology = { 
@@ -704,6 +712,20 @@ export const newApDiagnosticTestRadiology:modelTypes.ApDiagnosticTestRadiology =
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	testDescription:'',
+	medicalIndications:'',
+	turnaroundTimeUnitLkey:undefined,
+	turnaroundTime:0,
+	associatedRisks:'',
+	radCatalogKey:undefined,
+	propertyLkey:undefined,
+	systemLkey:undefined,
+	scaleLkey:undefined,
+	reagentsLkey:undefined,
+	methodLkey:undefined,
+	timingLkey:undefined,
+	resultType:'',
+	resultUnitLkey:undefined,
 } 
 
 export const newApDiagnosticTestSpecialPopulation:modelTypes.ApDiagnosticTestSpecialPopulation = { 
@@ -892,6 +914,7 @@ export const newApGenericMedication:modelTypes.ApGenericMedication = {
 	deletedAt:undefined,
 	isValid:undefined,
 	code:'',
+	roaLkey:undefined,
 } 
 
 export const newApGenericMedicationActiveIngredient:modelTypes.ApGenericMedicationActiveIngredient = { 
@@ -1224,6 +1247,7 @@ export const newApPatient:modelTypes.ApPatient = {
 	extraDetails:'',
 	secondaryMobileNumber:'',
 	roleLkey:undefined,
+	districtLkey:undefined,
 } 
 
 export const newApPatientAddresses:modelTypes.ApPatientAddresses = { 

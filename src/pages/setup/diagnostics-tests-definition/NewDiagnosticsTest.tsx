@@ -26,14 +26,15 @@ import Laboratory from './Laboratory';
 import Pathology from './Pathology';
 import Radiology from './Radiology';
 import Genetics from './Genetics';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 // import EyeExam from './EyeExam';
-import { isNil } from 'lodash';
 
 const { Column, HeaderCell, Cell } = Table;
-
-const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
+const NewDiagnosticsTest = ({selectedDiagnosticsTest, goBack, ...props }) => {
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
-     const [basicDataSaved, setBasicDataSaved] = useState(false);
+  const [basicDataSaved, setBasicDataSaved] = useState(false);
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const [diagnosticsTest, setDiagnosticsTest] = useState<ApDiagnosticTest>({ ...newApDiagnosticTest });
   const [saveDiagnosticsTest, saveDiagnosticsTestMutation] = useSaveDiagnosticsTestMutation();
@@ -43,7 +44,7 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
   const { data: DiagnosticsTestTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_TEST-TYPES');
   
   const { data: CurrencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
-  const { data: GenderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+  const { data: GenderLovQueryResponse } = useGetLovValuesByCodeQuery('MEDICAL_GNDR');
   const { data: SpecialPopulationLovQueryResponse } = useGetLovValuesByCodeQuery('SPECIAL_POPULATION_GROUPS');
   const { data: AgeGroupLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_GROUPS');
   const { data: LabReagentsLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_REAGENTS');
@@ -64,12 +65,12 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
 
   const matchingItem =  useGetDiagnosticsTestTypeQuery(diagnosticsTest.testTypeLkey || '');
 
-  const addTag = () => {
-    const nextTags = inputValue ? [...tags, inputValue] : tags;
-    setTags(nextTags);
-    setTyping(false);
-    setInputValue('');
-  };
+  // const addTag = () => {
+  //   const nextTags = inputValue ? [...tags, inputValue] : tags;
+  //   setTags(nextTags);
+  //   setTyping(false);
+  //   setInputValue('');
+  // };
 
   const handleButtonClick = () => {
     setTyping(true);
@@ -84,8 +85,8 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
           style={{ width: 70 }}
           value={inputValue}
           onChange={setInputValue}
-          onBlur={addTag}
-          onPressEnter={addTag}
+          // onBlur={addTag}
+          // onPressEnter={addTag}
         />
       );
     }
@@ -108,8 +109,10 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
   useEffect(() => {
     if (saveDiagnosticsTestMutation.data) {
       setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+      dispatch(notify('Saved Successfully'));
     }
   }, [saveDiagnosticsTestMutation.data]);
+
 
   useEffect(() => {
     if (selectedDiagnosticsTest) {
@@ -119,7 +122,6 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
       setDiagnosticsTest(newApDiagnosticTest);
     }
   }, [selectedDiagnosticsTest]);
-
 
   const isSelected = rowData => {
     if (rowData && diagnosticsTest && rowData.key === diagnosticsTest.key) {
@@ -143,9 +145,18 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
   };
 
 
-  const handleSaveBasicInfo = () => {
-   saveDiagnosticsTest(diagnosticsTest).unwrap();
+  const handleSaveBasicInfo = async () => {
+    try {
+      await saveDiagnosticsTest({
+     ...diagnosticsTest, 
+      createdBy: 'Administrator'
+   }).unwrap();
+   dispatch(notify('Saved Successfully'));
          setBasicDataSaved(true);
+        } catch (error) {
+          console.error("Error saving diagnostics test:", error);
+          dispatch(notify('Error saving diagnostics test'));
+         }
     if (diagnosticsTest.testTypeLkey === null) {
       return null;
     }
@@ -163,10 +174,10 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
         return <Radiology diagnosticsTest={diagnosticsTest}/>;
         case 'Pathology':
           console.log("Path");
-          return <Pathology/>;
+          return <Pathology diagnosticsTest={diagnosticsTest} />;
           case 'Genetics':
             console.log("Gen");
-            return <Genetics/>;
+            return <Genetics diagnosticsTest={diagnosticsTest}/>;
             // case 'Eye Exam':
             //   console.log("Ete");
             //   return <EyeExam/>;
@@ -175,35 +186,6 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
     }
 
   }
-
-  // const handleShowComponent = () => {
-  //   let component;
-  
-  //   const componentType = matchingItem.data?.object;
-  //   console.log(componentType);
-  //   switch (componentType) {
-  //     case 'Laboratory':
-  //       component = <Laboratory />;
-  //       break;
-  //     case 'Radiology':
-  //       component = <Radiology />;
-  //       break;
-  //     case 'Pathology':
-  //       component = <Pathology />;
-  //       break;
-  //     case 'Genetics':
-  //       component = <Genetics />;
-  //       break;
-  //     case 'Eye Exam':
-  //       component = <EyeExam />;
-  //       break;
-  //     default:
-  //       component = <div>No component available</div>;
-  //   }
-  
-  //   console.log("Returning component:", component);
-  //   return component;
-  // };
   
   return (
     <Panel
@@ -309,7 +291,7 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
                />
                
               )}
-                  <MyInput
+               <MyInput
                 width={400}
                 column
                 fieldName="specialPopulation"
@@ -339,7 +321,7 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
                   </InlineEdit>
                 )
                 }
-                   <MyInput
+                <MyInput
                 width={400}
                 column
                 fieldName="ageSpecific"
@@ -361,6 +343,14 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
                   </InlineEdit>
                 )
                 }
+                <MyInput
+                width={400}
+                column
+                fieldName="appointable"
+                fieldType="checkbox"
+                record={diagnosticsTest}
+                setRecord={setDiagnosticsTest}
+              />
               <br />
 
 
@@ -369,17 +359,15 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
         </Stack>
    
       </Panel>
-      {basicDataSaved && (
+      {basicDataSaved  && (
         <Panel>
-           {console.log("the value is " + handleShowComponent() + basicDataSaved)}
+           {/* {console.log("the value is " + handleShowComponent() + basicDataSaved)} */}
            {handleShowComponent()} 
         </Panel>
 )}
     </Panel>
    
   );
-
- 
   
 };
 

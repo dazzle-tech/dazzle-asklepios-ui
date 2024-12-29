@@ -13,6 +13,7 @@ import {
   ApDepartment,
   ApDiagnosticTest,
   ApDiagnosticTestGenetics,
+  ApDiagnosticTestLaboratory,
   ApDiagnosticTestRadiology,
   ApDiagnosticTestSpecialPopulation,
   ApFacility,
@@ -505,6 +506,20 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    getDiagnosticsTestLaboratoryList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/diagnostic-test-laboratory-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    getDiagnosticsTestPathologyList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/diagnostic-test-pathology-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
     getDiagnosticsTestType: builder.query({
       query: (testTypeKey: string) => ({
         headers: {
@@ -520,6 +535,26 @@ export const setupService = createApi({
         url: `/setup/save-diagnostic-test`,
         method: 'POST',
         body: diagnosticTest,
+      }), onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.data;
+      }
+    }),
+    saveDiagnosticsTestLaboratory: builder.mutation({
+      query: (diagnosticTestLaboratory: ApDiagnosticTestLaboratory) => ({
+        url: `/setup/save-diagnostic-test-laboratory`,
+        method: 'POST',
+        body: diagnosticTestLaboratory,
+      }), onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.data;
+      }
+    }),
+    saveDiagnosticsTestPathology: builder.mutation({
+      query: (diagnosticTestLaboratory: ApDiagnosticTestLaboratory) => ({
+        url: `/setup/save-diagnostic-test-pathology`,
+        method: 'POST',
+        body: diagnosticTestLaboratory,
       }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.data;
@@ -753,7 +788,14 @@ export const {
   useGetDiagnosticsTestCatalogHeaderListQuery,
   useSaveCatalogDiagnosticsTestMutation,
   useGetCatalogDiagnosticsTestListQuery,
-  useSaveDiagnosticfsTestSpecialPopulationMutation,
+  useSaveDiagnosticsTestSpecialPopulationMutation,
+  useSaveDiagnosticsRadiologyTestMutation,
+  useGetDiagnosticsTestLaboratoryListQuery,
+  useSaveDiagnosticsTestLaboratoryMutation,
+  useGetDiagnosticsTestPathologyListQuery,
+  useSaveDiagnosticsTestPathologyMutation,
+  useGetDiagnosticsTestRadiologyListQuery,
+  useGetDiagnosticsTestGeneticsListQuery,
   useGetDiagnosticsTestNotSelectedListQuery,
   useRemoveCatalogDiagnosticTestMutation,
   useRemoveUserMutation,
