@@ -25,7 +25,7 @@ import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import SessionExpiredBackdrop from './components/SessionExpiredBackdrop/SessionExpiredBackdrop';
 import { useLoadNavigationMapQuery } from './services/uiService';
 import Facilities from './pages/setup/facilities-setup';
-
+import PatientMergeFiles from './pages/patient/patient-merge-files/PatientMergeFiles';
 import AccessRoles from './pages/setup/access-roles';
 import Lov from './pages/setup/lov-setup';
 import Users from './pages/setup/users-setup';
@@ -210,6 +210,7 @@ const App = () => {
               <Route path="facility-patient-list" element={<FacilityPatientList />} />
               <Route path="encounter" element={<Encounter />} />
               <Route path="encounter-list" element={<EncounterList />} />
+              <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="encounter-pre-observations" element={<EncounterPreObservations />} />
               <Route path="facilities" element={<Facilities />} />
               <Route path="access-roles" element={<AccessRoles />} />
