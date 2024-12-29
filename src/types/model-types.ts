@@ -108,6 +108,7 @@ export interface ApActiveIngredient {
 	doseAdjRenalTwo:string;
 	doseAdjRenalThree:string;
 	doseAdjRenalFour:string;
+	chemicalFormula:string;
 } 
 
 export interface ApActiveIngredientAdverseEffect { 
@@ -638,6 +639,7 @@ export interface ApDiagnosticTestLaboratory {
 	internationalCodingTypeLkey:string;
 	childCodeLkey:string;
 	labCatalogLkey:string;
+	labCatalogKey:string;
 	propertyLkey:string;
 	systemLkey:string;
 	scaleLkey:string;
@@ -686,6 +688,13 @@ export interface ApDiagnosticTestPathology {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	testDescription:string;
+	sampleHandling:string;
+	medicalLndications:string;
+	criticalValues:string;
+	preparationRequirements:string;
+	associatedRisks:string;
+	pathCatalogKey:string;
 } 
 
 export interface ApDiagnosticTestRadiology { 
@@ -703,6 +712,20 @@ export interface ApDiagnosticTestRadiology {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	testDescription:string;
+	medicalIndications:string;
+	turnaroundTimeUnitLkey:string;
+	turnaroundTime:number;
+	associatedRisks:string;
+	radCatalogKey:string;
+	propertyLkey:string;
+	systemLkey:string;
+	scaleLkey:string;
+	reagentsLkey:string;
+	methodLkey:string;
+	timingLkey:string;
+	resultType:string;
+	resultUnitLkey:string;
 } 
 
 export interface ApDiagnosticTestSpecialPopulation { 
@@ -891,6 +914,7 @@ export interface ApGenericMedication {
 	deletedAt:number;
 	isValid:boolean;
 	code:string;
+	roaLkey:string;
 } 
 
 export interface ApGenericMedicationActiveIngredient { 
@@ -1223,6 +1247,7 @@ export interface ApPatient {
 	extraDetails:string;
 	secondaryMobileNumber:string;
 	roleLkey:string;
+	districtLkey:string;
 } 
 
 export interface ApPatientAddresses { 

@@ -26,7 +26,7 @@ import Laboratory from './Laboratory';
 const DiagnosticsTest = () => {
  const [diagnosticsTest, setDiagnosticsTest] = useState<ApDiagnosticTest>({...newApDiagnosticTest});
  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
- const { data: diagnosticsListResponse } = useGetDiagnosticsTestListQuery(listRequest);
+ const { data: diagnosticsListResponse,  refetch: refetchDiagnostics  } = useGetDiagnosticsTestListQuery(listRequest);
  const [saveDiagnosticsTest, saveDiagnosticsTestMutation] = useSaveDiagnosticsTestMutation();
  const [carouselActiveIndex, setCarouselActiveIndex] = useState(0); 
 
@@ -34,15 +34,6 @@ const DiagnosticsTest = () => {
     setDiagnosticsTest({ ...newApDiagnosticTest});
   };
 
-  const handleSave = () => {
-    saveDiagnosticsTest(diagnosticsTest).unwrap();
-  };
-
-  useEffect(() => {
-    if (saveDiagnosticsTestMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveDiagnosticsTestMutation.data]);
 
   
   const isSelected = rowData => {
@@ -50,6 +41,11 @@ const DiagnosticsTest = () => {
       return 'selected-row';
     } else return '';
   };
+
+    useEffect(() => {
+      refetchDiagnostics();
+    }, [carouselActiveIndex]);
+
 
 
   const handleFilterChange = (fieldName, value) => {
@@ -81,7 +77,7 @@ const DiagnosticsTest = () => {
       }
     >
       <ButtonToolbar>
-        <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={() => {setCarouselActiveIndex(1); setDiagnosticsTest(newApDiagnosticTest)}}>
+        <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={() => {setCarouselActiveIndex(1); setDiagnosticsTest({...newApDiagnosticTest})}}>
           Add New
         </IconButton>
         <IconButton
@@ -108,6 +104,14 @@ const DiagnosticsTest = () => {
           icon={<EditIcon />}
         >
           Linked Services
+        </IconButton>
+        <IconButton
+          disabled={diagnosticsTest?.testTypeLkey !== '862810597620632'}
+          appearance="primary"
+          color="violet"
+          icon={<EditIcon />}
+        >
+           Normal Range Setup
         </IconButton>
       </ButtonToolbar>
       <hr />

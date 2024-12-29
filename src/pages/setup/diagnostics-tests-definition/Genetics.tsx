@@ -9,7 +9,7 @@ import { Form, Panel } from 'rsuite';
 import { ApDiagnosticTestGenetics} from '@/types/model-types';
 import { newApDiagnosticTestGenetics } from '@/types/model-types-constructor';
 
-const Genetics = () => {
+const Genetics = ({diagnosticsTest}) => {
    
     const [diagnosticTestGenetics, setDiagnosticTestGenetics] = useState<ApDiagnosticTestGenetics>({ ...newApDiagnosticTestGenetics });
     const { data: internationalCodesLovQueryResponse } = useGetLovValuesByCodeQuery('INTERNATIONAL_CODES');
