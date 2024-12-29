@@ -310,9 +310,9 @@ export interface ApAppointment {
 	resourceLkey:string;
 	instructionsLkey:string;
 	appointmentStatus:string;
-	noShowReasonValue:string;
-	noShowReasonLkey:string;
-	noShowOtherReason:string;
+	reasonLkey:string;
+	reasonValue:string;
+	otherReason:string;
 } 
 
 export interface ApAttachment { 
@@ -638,7 +638,6 @@ export interface ApDiagnosticTestLaboratory {
 	testKey:string;
 	internationalCodingTypeLkey:string;
 	childCodeLkey:string;
-	labCatalogLkey:string;
 	labCatalogKey:string;
 	propertyLkey:string;
 	systemLkey:string;

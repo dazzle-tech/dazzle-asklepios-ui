@@ -311,9 +311,9 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	resourceLkey:undefined,
 	instructionsLkey:undefined,
 	appointmentStatus:'',
-	noShowReasonValue:'',
-	noShowReasonLkey:undefined,
-	noShowOtherReason:'',
+	reasonLkey:undefined,
+	reasonValue:'',
+	otherReason:'',
 } 
 
 export const newApAttachment:modelTypes.ApAttachment = { 
@@ -639,7 +639,6 @@ export const newApDiagnosticTestLaboratory:modelTypes.ApDiagnosticTestLaboratory
 	testKey:undefined,
 	internationalCodingTypeLkey:undefined,
 	childCodeLkey:undefined,
-	labCatalogLkey:undefined,
 	labCatalogKey:undefined,
 	propertyLkey:undefined,
 	systemLkey:undefined,
