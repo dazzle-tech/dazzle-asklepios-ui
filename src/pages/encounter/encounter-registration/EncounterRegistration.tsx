@@ -53,8 +53,10 @@ import {
   useGetFacilitiesQuery,
   useGetLovValuesByCodeAndParentQuery,
   useGetLovValuesByCodeQuery,
-  useGetPractitionersQuery
+  useGetPractitionersQuery,
+  
 } from '@/services/setupService';
+
 import { useNavigate } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
@@ -64,8 +66,8 @@ import {
 import { notify } from '@/utils/uiReducerActions';
 import {
   useGetPatientRelationsQuery,
-  useGetPatientsQuery
-
+  useGetPatientsQuery,
+  useGetPatientAdministrativeWarningsQuery
 } from '@/services/patientService';
 import {
 
@@ -83,11 +85,26 @@ const EncounterRegistration = () => {
   const [openModelCompanionCard, setOpenModelCompanionCard] = React.useState(false);
   const [openModelAppointmentView, setOpenModelAppointmentView] = React.useState(false);
   const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter });
-  
+   const [administrativeWarningsModalOpen, setAdministrativeWarningsModalOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [validationResult, setValidationResult] = useState({});
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-
+   const [warningsAdmistritiveListRequest, setWarningsAdmistritiveListRequest] =
+      useState<ListRequest>({
+        ...initialListRequest,
+        filters: [
+          {
+            fieldName: 'patient_key',
+            operator: 'match',
+            value: patientSlice.patient?.key || undefined
+          },
+          {
+            fieldName: 'deleted_at',
+            operator: 'isNull',
+            value: undefined
+          }
+        ]
+      });
 
   const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
 
@@ -122,6 +139,9 @@ const EncounterRegistration = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [patientSearchTarget, setPatientSearchTarget] = useState('primary');
   const [searchResultVisible, setSearchResultVisible] = useState(false);
+   const { data: warnings, refetch: warningsRefetch } = useGetPatientAdministrativeWarningsQuery(
+      warningsAdmistritiveListRequest
+    );
   const {
     data: patientListResponse,
     isLoading: isGettingPatients,
@@ -181,7 +201,23 @@ const EncounterRegistration = () => {
       setEditing(true);
       initEncounterFromPatient();
     }
+    setWarningsAdmistritiveListRequest({
+      ...initialListRequest,
+      filters: [
+        {
+          fieldName: 'patient_key',
+          operator: 'match',
+          value: patientSlice.patient?.key || undefined
+        },
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        }
+      ]
+    })
   }, [patientSlice.patient]);
+
 
   const handleCancel = () => {
     dispatch(setPatient(null));
@@ -204,7 +240,7 @@ const EncounterRegistration = () => {
   const handleOpenNoteModel = () => setOpenModelVisitNote(true);
   const handleCloseNoteModel = () => setOpenModelVisitNote(false);
   const handleSaveNote = () => {
-    //add logic to cave note
+    console.log(localEncounter.encounterNotes)
     setOpenModelVisitNote(false);
   };
   const handleOpenPaymentModel = () => setOpenModelPayment(true);
@@ -272,6 +308,7 @@ const EncounterRegistration = () => {
           plannedStartDate: new Date()
         }
       )
+      
 
     } else if (patientSearchTarget === 'relation') {
       // selecting patient for relation patient key
@@ -349,6 +386,33 @@ const EncounterRegistration = () => {
 
     );
   };
+    const handleFilterChangeInWarning = (fieldName, value) => {
+      if (value) {
+        setWarningsAdmistritiveListRequest(
+          addFilterToListRequest(
+            fromCamelCaseToDBName(fieldName),
+            'containsIgnoreCase',
+            String(value),
+            warningsAdmistritiveListRequest
+          )
+        );
+      } else {
+        setWarningsAdmistritiveListRequest({
+          ...warningsAdmistritiveListRequest, filters: [
+            {
+              fieldName: 'patient_key',
+              operator: 'match',
+              value: localPatient.key || undefined
+            },
+            {
+              fieldName: 'deleted_at',
+              operator: 'isNull',
+              value: undefined
+            }
+          ]
+        });
+      }
+    };
   return (
     <>
       {patientSlice.patient && (
@@ -384,10 +448,13 @@ const EncounterRegistration = () => {
               </IconButton>
               <Divider vertical />
               <IconButton
-                disabled={encounter}
+                
                 appearance="primary"
                 color="orange"
                 icon={<icons.Danger />}
+                onClick={()=>{
+                  setAdministrativeWarningsModalOpen(true)
+                }}
               >
                 <Translate>Administrative Warnings</Translate>
               </IconButton>
@@ -395,7 +462,7 @@ const EncounterRegistration = () => {
                 <Translate>Patient Appointment</Translate>
               </IconButton>
 
-              <IconButton disabled={encounter} onClick={() => handleOpenNoteModel()} appearance="primary" color='cyan' icon={<icons.PublicOpinion />}>
+              <IconButton  onClick={() => handleOpenNoteModel()} appearance="primary" color='cyan' icon={<icons.PublicOpinion />}>
                 <Translate>Visit Note</Translate>
               </IconButton>
               <IconButton
@@ -420,9 +487,9 @@ const EncounterRegistration = () => {
                     disabled={false}
                     fieldType='textarea'
                     fieldLabel="Note"
-                    fieldName={'VisitNote'}
+                    fieldName={'encounterNotes'}
                     setRecord={setLocalEncounter}
-                    vr={validationResult}
+                  
                     record={localEncounter}
 
                   />
@@ -804,7 +871,7 @@ const EncounterRegistration = () => {
                   <MyInput
                     vr={validationResult}
                     column
-
+                    disabled={true}
                     fieldLabel="Date"
                     fieldType="date"
                     fieldName="plannedStartDate"
@@ -1473,7 +1540,148 @@ const EncounterRegistration = () => {
               </Drawer.Body>
             </Drawer>
           </Panel>
+          <Modal
+          size="lg"
+          open={administrativeWarningsModalOpen}
+          onClose={() => setAdministrativeWarningsModalOpen(false)}
+        >
+          <Modal.Header>
+            <Modal.Title>Administrative Warnings</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+           
+           
+            <Panel>
+              <Table
+                height={310}
+                sortColumn={warningsAdmistritiveListRequest.sortBy}
+                sortType={warningsAdmistritiveListRequest.sortType}
+                onSortColumn={(sortBy, sortType) => {
+                  if (sortBy)
+                    setWarningsAdmistritiveListRequest({
+                      ...warningsAdmistritiveListRequest,
+                      sortBy,
+                      sortType
+                    });
+                }}
+                headerHeight={80}
+                rowHeight={50}
+                bordered
+                cellBordered
+                // onRowClick={rowData => {
+                //   setSelectedPatientAdministrativeWarnings(rowData);
+                //   setSelectedRowId(rowData.key);
+                // }}
+                // rowClassName={isSelected}
+                data={warnings?.object ?? []}
+              >
+                <Column sortable flexGrow={3} fullText>
+                  <HeaderCell>
+                    <Input
+                      onChange={e =>
+                        handleFilterChangeInWarning('warningTypeLvalue.lovDisplayVale', e)
+                      }
+                    />
+                    <Translate>Warning Type</Translate>
+                  </HeaderCell>
 
+                  <Cell dataKey="warningTypeLvalue.lovDisplayVale" />
+                </Column>
+                <Column sortable flexGrow={3} fullText>
+                  <HeaderCell>
+                    <Input onChange={e => handleFilterChangeInWarning('description', e)} />
+                    <Translate>Description</Translate>
+                  </HeaderCell>
+                  <Cell dataKey="description" />
+                </Column>
+                <Column sortable flexGrow={4} fullText>
+                  <HeaderCell>
+                    <Input onChange={e => handleFilterChangeInWarning('createdAt', e)} />
+                    <Translate> Addition Date</Translate>
+                  </HeaderCell>
+                  
+                  <Cell  >
+                            {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}
+                        </Cell>
+                </Column>
+                <Column sortable flexGrow={3} fullText>
+                  <HeaderCell>
+                    <Input onChange={e => handleFilterChangeInWarning('createdBy', e)} />
+                    <Translate> Added By</Translate>
+                  </HeaderCell>
+                  <Cell dataKey="createdBy" />
+                </Column>
+                <Column sortable flexGrow={3} fullText>
+                  <HeaderCell>
+                    <Translate> Status </Translate>
+                  </HeaderCell>
+
+                  <Cell dataKey="isValid">
+                    {rowData => (rowData.isValid ? 'Active' : 'Resolved')}
+                  </Cell>
+                </Column>
+                <Column sortable flexGrow={4} fullText>
+                  <HeaderCell>
+                    <Input onChange={e => handleFilterChangeInWarning('dateResolved', e)} />
+                    <Translate> Resolution Date</Translate>
+                  </HeaderCell>
+                  <Cell dataKey="dateResolved" />
+                </Column>
+                <Column sortable flexGrow={3} fullText>
+                  <HeaderCell>
+                    <Input onChange={e => handleFilterChangeInWarning('resolvedBy', e)} />
+                    <Translate> Resolved By </Translate>
+                  </HeaderCell>
+                  <Cell dataKey="resolvedBy" />
+                </Column>
+                <Column sortable flexGrow={4} fullText>
+                  <HeaderCell>
+                    <Input onChange={e => handleFilterChangeInWarning('resolutionUndoDate', e)} />
+                    <Translate> Resolution Undo Date</Translate>
+                  </HeaderCell>
+                  <Cell dataKey="resolutionUndoDate" />
+                </Column>
+                <Column sortable flexGrow={4} fullText>
+                  <HeaderCell>
+                    <Input onChange={e => handleFilterChangeInWarning('resolvedUndoBy', e)} />
+                    <Translate>Resolution Undo By</Translate>
+                  </HeaderCell>
+                  <Cell dataKey="resolvedUndoBy" />
+                </Column>
+              
+              </Table>
+              <div style={{ padding: 20 }}>
+                <Pagination
+                  prev
+                  next
+                  first
+                  last
+                  ellipsis
+                  boundaryLinks
+                  maxButtons={5}
+                  size="xs"
+                  layout={['limit', '|', 'pager']}
+                  limitOptions={[5, 15, 30]}
+                  limit={warningsAdmistritiveListRequest.pageSize}
+                  activePage={warningsAdmistritiveListRequest.pageNumber}
+                  onChangePage={pageNumber => {
+                    setWarningsAdmistritiveListRequest({
+                      ...warningsAdmistritiveListRequest,
+                      pageNumber
+                    });
+                  }}
+                  onChangeLimit={pageSize => {
+                    setWarningsAdmistritiveListRequest({
+                      ...warningsAdmistritiveListRequest,
+                      pageSize
+                    });
+                  }}
+                  total={warnings?.extraNumeric ?? 0}
+                />
+              </div>
+            </Panel>
+          </Modal.Body>
+        </Modal>
         </Panel>
       )}
     </>
