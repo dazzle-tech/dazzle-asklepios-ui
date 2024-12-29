@@ -12,17 +12,21 @@ import MyInput from "@/components/MyInput";
 import CheckIcon from '@rsuite/icons/Check';
 import BlockIcon from '@rsuite/icons/Block';
 
-const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appointment, onStatusChange, editAppointment, viewAppointment  }) => {
+const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appointment, onStatusChange, editAppointment, viewAppointment }) => {
 
     const [changeAppointmentStatus, changeAppointmentStatusMutation] = useChangeAppointmentStatusMutation()
     const dispatch = useAppDispatch();
     const [localAppointmentData, setLocalAppoitmentData] = useState(appointment)
     const [resonModal, setResonModal] = useState(false)
-    const { data: resonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_NOSHOW_REASON');
+    const [resonType, setResonType] = useState(null)
+    const { data: noShowResonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_NOSHOW_REASON');
+    const { data: cancelResonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_CANCEL_REASON');
+    const [reasonKey, setResonKey] = useState()
+    const [otherReason, setOtherReason] = useState()
 
     const handleCheckIn = () => {
         const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Checked-In",noShowReasonLkey:null,noShowOtherReason:null }).then(() => {
+        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Checked-In", reasonLkey: null, otherReason: null }).then(() => {
             dispatch(notify('Appointment Checked-In Successfully'));
             onStatusChange()
             onActionsModalClose()
@@ -42,7 +46,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
     const handleConfirm = () => {
         const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Confirmed",noShowReasonLkey:null,noShowOtherReason:null }).then(() => {
+        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Confirmed", reasonLkey: null, otherReason: null }).then(() => {
             dispatch(notify('Appointment Confirmed Successfully'));
             onStatusChange()
             onActionsModalClose()
@@ -51,34 +55,47 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     }
 
 
+    useEffect(() => {
+        console.log(reasonKey)
+        console.log(otherReason)
 
+    }, [otherReason, reasonKey])
 
     const handleNonShow = () => {
         console.log(localAppointmentData)
-        changeAppointmentStatus({...localAppointmentData, appointmentStatus: "No-Show" }).then(() => {
-            dispatch(notify('Appointment has been hidden Successfully'));
+        changeAppointmentStatus({ ...localAppointmentData, appointmentStatus: "No-Show", otherReason: otherReason?.otherReason, reasonLkey: reasonKey?.reasonLkey }).then(() => {
+            dispatch(notify('Appointment Status has been changed Successfully'));
             onStatusChange()
             onActionsModalClose()
             setResonModal(false)
+            setResonType(null)
+            setOtherReason(null)
+            setResonKey(null)
 
         })
     }
 
     const handleCancel = () => {
         const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Canceled" ,noShowReasonLkey:null,noShowOtherReason:null}).then(() => {
-            dispatch(notify('Appointment has been hidden Successfully'));
+        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Canceled", otherReason: otherReason?.otherReason, reasonLkey: reasonKey?.reasonLkey }).then(() => {
+            dispatch(notify('Appointment has been canceled Successfully'));
             onStatusChange()
             onActionsModalClose()
+            setResonType(null)
+            setOtherReason(null)
+            setResonKey(null)
         })
     }
 
-    
+
     const handleChangeAction = () => {
         onActionsModalClose()
         editAction()
     }
 
+    useEffect(() => {
+        console.log(appointment)
+    }, [appointment])
 
     return (
         <div>
@@ -86,7 +103,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                 isActionsModalOpen
             } onClose={onActionsModalClose}>
                 <Modal.Header>
-                    <Modal.Title>{appointment?.appointmentData.fullName}</Modal.Title>
+                    <Modal.Title>{`${appointment?.title}  ${appointment?.fromTo}  ${appointment?.appointmentData.appointmentStatus}`}</Modal.Title>
                 </Modal.Header>
 
                 <Modal.Body>
@@ -97,7 +114,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                         <Button disabled={appointment?.appointmentData.appointmentStatus == "Confirmed"} onClick={handleConfirm} style={{ width: 120, height: 40 }} color="violet" appearance="primary">
                             Confirm
                         </Button>
-                        <Button disabled={appointment?.appointmentData.appointmentStatus == "No-Show"} onClick={() => setResonModal(true)} style={{ width: 120, height: 40 }} color="blue" appearance="primary">
+                        <Button disabled={appointment?.appointmentData.appointmentStatus == "No-Show"} onClick={() => { setResonType('No-show'), setResonModal(true) }} style={{ width: 120, height: 40 }} color="blue" appearance="primary">
                             No-show
                         </Button>
 
@@ -105,24 +122,23 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                     <br />
 
                     <ButtonToolbar>
-                        <Button  onClick={()=> viewAppointment() }  style={{ width: 120, height: 40 }} color="cyan" appearance="primary">
+                        <Button onClick={() => viewAppointment()} style={{ width: 120, height: 40 }} color="cyan" appearance="primary">
                             View
                         </Button>
-                        <Button  onClick={()=> editAppointment() }  style={{ width: 120, height: 40 }} color="violet" appearance="primary">
+                        <Button onClick={() => editAppointment()} style={{ width: 120, height: 40 }} color="violet" appearance="primary">
                             Change
                         </Button>
-                        <Button onClick={handleCancel} style={{ width: 120, height: 40 }} color="blue" appearance="primary">
+                        <Button disabled={appointment?.appointmentData.appointmentStatus == "Canceled"} onClick={() => { setResonType('Cancel') }} style={{ width: 120, height: 40 }} color="blue" appearance="primary">
                             Cancel
                         </Button>
-                        
+
 
                     </ButtonToolbar>
                     <br />
                     <IconButton style={{ width: 200, height: 40 }} icon={<PageIcon />} color="cyan" appearance="ghost">
                         Print Certificate
                     </IconButton>
-                    <br />
-                    <br />
+
 
                     <Button style={{
                         width: 200,
@@ -143,47 +159,49 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
 
 
-            <Modal backdrop={"static"} open={resonModal} onClose={() => setResonModal(false)}>
+            <Modal backdrop={"static"} open={resonType} onClose={() => setResonType(null)}>
                 <Modal.Header>
-                    <Modal.Title>Please add the appointment no-show reason. </Modal.Title>
+                    <Modal.Title>{`Please add the appointment ${resonType} reason. `}</Modal.Title>
                 </Modal.Header>
 
                 <Modal.Body>
+                    <br />
                     <br />
 
                     <Form layout="inline">
                         <MyInput
                             width={350}
                             column
-                            fieldLabel="Hide Reason"
+                            fieldLabel="Reason"
                             fieldType="select"
-                            fieldName="noShowReasonLkey"
-                            selectData={resonLovQueryResponse?.object ?? []}
+                            fieldName="reasonLkey"
+                            selectData={resonType === 'Cancel' ? cancelResonLovQueryResponse?.object : noShowResonLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
-                            record={localAppointmentData}
-                            setRecord={setLocalAppoitmentData}
+                            record={reasonKey}
+                            setRecord={setResonKey}
                         />
                         <br />
                         <MyInput
                             width={350}
                             column
                             fieldLabel="Other Reason"
-                            fieldName="noShowOtherReason"
-                            record={localAppointmentData}
-                            setRecord={setLocalAppoitmentData}
-                         />
+                            fieldName="otherReason"
+                            record={otherReason}
+                            setRecord={setOtherReason}
+                        />
                     </Form>
 
-
+                    <br />
+                    <br />
                 </Modal.Body>
                 <Modal.Footer>
                     <IconButton
-                   disabled={!(localAppointmentData?.noShowOtherReason || localAppointmentData?.noShowReasonLkey)}  onClick={() => { handleNonShow() }} color="violet" appearance="primary" icon={<CheckIcon />}>
+                        disabled={!(otherReason || reasonKey)} onClick={() => { resonType === 'Cancel' ? handleCancel() : handleNonShow() }} color="violet" appearance="primary" icon={<CheckIcon />}>
                         Save
                     </IconButton>
                     <Divider vertical />
-                    <IconButton onClick={() => { setResonModal(false) }} color="blue" appearance="primary" icon={<BlockIcon />}>
+                    <IconButton onClick={() => { setResonType(null) }} color="blue" appearance="primary" icon={<BlockIcon />}>
                         Cancel
                     </IconButton>
                 </Modal.Footer>
