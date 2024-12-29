@@ -391,8 +391,26 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
     const handleSaveAppointment = () => {
         if (localPatient?.key) {
-            console.log({ ...appointment, patientKey: localPatient.key, appointmentStart: calculateAppointmentDate(0), appointmentEnd: calculateAppointmentDate(selectedDuration), instructions: instructions })
-            saveAppointment({ ...appointment, patientKey: localPatient.key, appointmentStart: calculateAppointmentDate(0), appointmentEnd: calculateAppointmentDate(selectedDuration), instructions: instructions }).unwrap().then(() => {
+            console.log({
+                ...appointment,
+                patientKey: localPatient.key,
+                appointmentStart: calculateAppointmentDate(0),
+                appointmentEnd: calculateAppointmentDate(selectedDuration),
+                instructions: instructions,
+                appointmentStatus: appointment.appointmentStatus
+                    ? appointment.appointmentStatus
+                    :  "New-Appointment" ,
+            });
+            saveAppointment({
+                ...appointment,
+                patientKey: localPatient.key,
+                appointmentStart: calculateAppointmentDate(0),
+                appointmentEnd: calculateAppointmentDate(selectedDuration),
+                instructions: instructions,
+                appointmentStatus: appointment.appointmentStatus
+                    ? appointment.appointmentStatus
+                    :  "New-Appointment" ,
+            }).unwrap().then(() => {
                 closeModal()
                 handleClear()
                 onSave()

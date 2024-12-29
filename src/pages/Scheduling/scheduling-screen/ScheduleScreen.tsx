@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Calendar as BigCalendar, Views, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { Calendar as RsuiteCalendar, TagPicker, ButtonToolbar, Panel, InputGroup, SelectPicker, Input, IconButton, Button, Form, Drawer, Calendar, TagGroup, Tag, Divider, } from "rsuite";
+import { Calendar as RsuiteCalendar, TagPicker, ButtonToolbar, Panel, InputGroup, SelectPicker, Input, IconButton, Button, Form, Drawer, Calendar, TagGroup, Tag, Divider, DatePicker, } from "rsuite";
 import "./styles.less";
 import SearchIcon from '@rsuite/icons/Search';
 import {
@@ -49,6 +49,7 @@ const ScheduleScreen = () => {
     const [selectedAppointment, setSelectedAppointment] = useState()
     const [showAppointmentOnly, setShowAppointmentOnly] = useState(false)
     const [filteredResourcesList, setFilteredResourcesList] = useState([])
+    const [filteredMonth, setFilteredMonth] = useState<Date>()
 
     const {
         data: appointments,
@@ -270,6 +271,21 @@ const ScheduleScreen = () => {
         setActionsModalOpen(false)
         setShowAppointmentOnly(true)
     }
+    useEffect(() => {
+        console.log(filteredMonth)
+        console.log(drowerOpen)
+        setDrowerOpen(false)
+
+    }, [filteredMonth])
+
+    const handleDateChange = (date) => {
+        if (date) {
+          // Set to the first day of the selected month
+          const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+          setFilteredMonth(firstDayOfMonth);
+          console.log(firstDayOfMonth); 
+        }
+      };
 
     const CustomToolbar = ({ label, onNavigate, onView }) => {
         return (
@@ -284,7 +300,10 @@ const ScheduleScreen = () => {
                     onClick={() => setDrowerOpen(true)}
                     style={{ cursor: "pointer", fontWeight: "bold" }}
                 >
-                    {label}
+
+
+                    {drowerOpen ? <DatePicker value={filteredMonth} defaultOpen appearance="subtle" onChange={handleDateChange} format="yyyy-MM" /> : label}
+
                 </span>
                 <span className="rbc-btn-group">
                     <button onClick={() => onView(Views.MONTH)}>Month</button>
@@ -298,11 +317,15 @@ const ScheduleScreen = () => {
     const getTooltipContent = (event) => {
         // Define tooltip content based on the current view
         if (currentView === "month") {
-          return `${event.title} - ${event.fromTo}`;
+            return `${event.title} - ${event.fromTo}`;
         } else {
-          return `${event.title}`;
+            return `${event.title}`;
         }
-      };
+    };
+
+    const [value, setValue] = useState(new Date());
+    const [currentCalView, setCurrentCalView] = useState("month"); // Force "month" view
+
 
     return (
         <div>
@@ -404,8 +427,8 @@ const ScheduleScreen = () => {
                     <Divider style={{ marginTop: "100px" }}>Color Key</Divider>
 
                     <TagGroup style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
- 
-                        <Tag style={{  backgroundColor: "#3174ad"}}><span style={{  color: "white" }}>New Appointment</span></Tag>
+
+                        <Tag style={{ backgroundColor: "#3174ad" }}><span style={{ color: "white" }}>New Appointment</span></Tag>
                         <Tag style={{ backgroundColor: "#AAFFFC" }}>Checked In Appointment</Tag>
                         <Tag style={{ backgroundColor: "#dab1da" }} >Confirmed Appointment</Tag>
                         <Tag style={{ backgroundColor: "#fffd8d" }}>No Show Appointment</Tag>
@@ -421,6 +444,10 @@ const ScheduleScreen = () => {
                     <BigCalendar
                         localizer={localizer}
                         events={visibleAppointments}
+                        onSelectSlot={(slotInfo) => {
+                            console.log("Selected slot:", slotInfo);
+                            setModalOpen(true)
+                          }}
                         startAccessor="start"
                         endAccessor="end"
                         views={["month", "week", "day", "agenda"]}
@@ -438,8 +465,10 @@ const ScheduleScreen = () => {
                         eventPropGetter={eventPropGetter}
                         components={{
                             toolbar: CustomToolbar,
-                            
+
                         }}
+
+                        date={filteredMonth}
                     />
                 </div>
             </div>
@@ -458,9 +487,9 @@ const ScheduleScreen = () => {
                 onActionsModalClose={() => { setSelectedEvent(null), setActionsModalOpen(false), setAppointment(null) }}
                 appointment={selectedEvent} />
 
-            <Drawer placement={'left'} open={drowerOpen} onClose={() => setDrowerOpen(false)}>
+            <Drawer placement={'left'} open={false} onClose={() => setDrowerOpen(false)}>
                 <Drawer.Header>
-                    <Drawer.Title>Drawer Title</Drawer.Title>
+                    <Drawer.Title></Drawer.Title>
                     <Drawer.Actions>
                         <Button onClick={() => setDrowerOpen(false)}>Cancel</Button>
                         <Button onClick={() => setDrowerOpen(false)} appearance="primary">
@@ -469,7 +498,16 @@ const ScheduleScreen = () => {
                     </Drawer.Actions>
                 </Drawer.Header>
                 <Drawer.Body>
-                    <Calendar bordered />
+                    <DatePicker
+                        format="yyyy-MM" // Only show year and month
+                        placeholder="Select Month and Year"
+                        // onChange={handleSelect} // Trigger filter on change
+                        // value={selectedDate}
+                        cleanable
+                        placement="autoVerticalStart" // Position of the dropdown
+                        style={{ width: 500 }}
+                    />
+
                 </Drawer.Body>
             </Drawer>
         </div>
