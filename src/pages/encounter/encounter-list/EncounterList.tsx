@@ -56,21 +56,7 @@ const EncounterList = () => {
     ignore: true
   });
 
-  const [patientListRequest, setPatientListRequest] =
-    useState<ListRequest>({
-      ...initialListRequest,
-      sortBy: 'createdAt',
-      sortType: 'desc',
-      filters: [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        }
-      ]
-    });
 
-  const [dateClickToVisit, setDateClickToVisit] = useState('');
   const { data: encounterListResponse } = useGetEncountersQuery(listRequest);
 
   const [dateFilter, setDateFilter] = useState({
@@ -350,15 +336,7 @@ const EncounterList = () => {
               rowData.hasOrder ? <CheckRoundIcon className='iconStyle' /> : <WarningRoundIcon className='iconNoStyle' />
             }</Cell>
           </Column>
-          <Column sortable flexGrow={3}>
-            <HeaderCell>
-
-              <Translate> Has Allergy</Translate>
-            </HeaderCell>
-            <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
-              rowData.hasAllergy? <CheckRoundIcon className='iconStyle' /> : <WarningRoundIcon className='iconNoStyle' />
-            }</Cell>
-          </Column>
+          
           <Column sortable flexGrow={3}>
             <HeaderCell>
               <Input onChange={e => handleFilterChange('encounterPriorityLkey', e)} />
