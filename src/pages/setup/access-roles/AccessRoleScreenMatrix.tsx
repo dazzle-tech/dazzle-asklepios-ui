@@ -15,13 +15,24 @@ import { FaLockOpen } from 'react-icons/fa6';
 const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
   const { data: screenAccessMatrixResponse } = useGetScreenAccessMatrixQuery(accessRole);
   const [saveMatrix, saveMatrixMutationResponse] = useSaveScreenAccessMatrixMutation();
-
+  const [searchTerm, setSearchTerm] = useState<string>()
   const [matrixData, setMatrixData] = useState([]);
 
   useEffect(() => {
-    // adding the query result to a local state in order to make local changes
-    if (screenAccessMatrixResponse) setMatrixData(screenAccessMatrixResponse.object);
-  }, [screenAccessMatrixResponse]);
+    if (screenAccessMatrixResponse) {
+      const filteredData = searchTerm && searchTerm.trim() !== "" 
+        ? screenAccessMatrixResponse.object.filter(
+            (item) =>
+              item.screenName &&
+              item.screenName.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+        : screenAccessMatrixResponse.object; 
+
+      setMatrixData(filteredData);
+    }
+  }, [screenAccessMatrixResponse, searchTerm]);
+
+
 
   const handleReadChange = (checked, index) => {
     let matrixClone = [...matrixData];
@@ -74,6 +85,9 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
     };
     setMatrixData(matrixClone);
   };
+  const handleFilterChange = (fieldName, e) => {
+    setSearchTerm(e); 
+  };
 
   return (
     <Panel
@@ -95,6 +109,9 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
       <Table height={600} headerHeight={80} rowHeight={60} bordered cellBordered data={matrixData}>
         <Column sortable flexGrow={5}>
           <HeaderCell>
+            <Input
+              onChange={e => handleFilterChange('description', e)}
+            />
             <Translate>Screen</Translate>
           </HeaderCell>
           <Cell dataKey="screenName" />
@@ -142,7 +159,7 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
           <HeaderCell>
             <Translate>Grant All</Translate>
           </HeaderCell>
-          <Cell>{(rowData, i) => <IconButton onClick={() => {grantAll(i)}} icon={<FaLockOpen />} />}</Cell>
+          <Cell>{(rowData, i) => <IconButton onClick={() => { grantAll(i) }} icon={<FaLockOpen />} />}</Cell>
         </Column>
       </Table>
     </Panel>
