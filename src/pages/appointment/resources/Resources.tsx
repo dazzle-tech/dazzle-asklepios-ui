@@ -17,6 +17,7 @@ import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList, fromCamelCaseToDBName } from '@/utils';
 import { useGetResourcesQuery, useGetResourceTypeQuery, useSaveResourcesMutation } from '@/services/appointmentService';
+import AvailabilityTime from './AvailabilityTime';
 
 const Resources = () => {
   const [resources, setResources] = useState<ApResources>({ ...newApResources });
@@ -145,7 +146,7 @@ const Resources = () => {
         }}
         rowClassName={isSelected}
       >
-        <Column sortable flexGrow={2}>
+        {/* <Column sortable flexGrow={2}>
           <HeaderCell align="center">
             <Input onChange={e => handleFilterChange('facilityKey', e)} />
             <Translate>Facility</Translate>
@@ -161,7 +162,7 @@ const Resources = () => {
                       </span>
                     )}
                   </Cell>
-        </Column>
+        </Column> */}
         <Column sortable flexGrow={2}>
           <HeaderCell  align="center">
             <Input onChange={e => handleFilterChange('resourceTypeLkey', e)} />
@@ -231,13 +232,14 @@ const Resources = () => {
         />
       </div>
 
+<AvailabilityTime resource={resources} />
       <Modal open={popupOpen} overflow>
         <Modal.Title>
           <Translate>New/Edit Resources</Translate>
         </Modal.Title>
         <Modal.Body>
           <Form fluid>
-            <MyInput
+            {/* <MyInput
               fieldName="facilityKey"
               fieldType="select"
               selectData={facilityListResponse?.object ?? []}
@@ -245,7 +247,7 @@ const Resources = () => {
               selectDataValue="key"
               record={resources}
               setRecord={setResources}
-            /> 
+            />  */}
             <MyInput
               fieldName="resourceTypeLkey"
               fieldType="select"
