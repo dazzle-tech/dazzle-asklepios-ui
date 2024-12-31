@@ -4,7 +4,8 @@ import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
 import {
   ApAppointment,
-  ApResources
+  ApResources,
+  ApResourcesAvailabilityTime
 } from '@/types/model-types';
 
 export const appointmentService = createApi({
@@ -79,16 +80,37 @@ export const appointmentService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       }
+    }),
+      getResourcesAvailabilityTime: builder.query({
+        query: (listRequest: ListRequest) => ({
+          url: `/appointment/resources-availability-time-list?${fromListRequestToQueryParams(listRequest)}`
+        }),
+        onQueryStarted: onQueryStarted,
+        keepUnusedDataFor: 5
+      }),
+      saveResourcesAvailabilityTime: builder.mutation({
+        query: (resourcesAvailabilityTime: ApResourcesAvailabilityTime) => ({
+          url: `/appointment/save-resources-availability-time`,
+          method: 'POST',
+          body: resourcesAvailabilityTime
+        }),
+        onQueryStarted: onQueryStarted,
+        transformResponse: (response: any) => {
+          return response.object;
+        }
+      }),
     })
 
-  })
+  
 });
 
 export const {
-
+  
   useGetResourcesQuery,
   useGetResourceTypeQuery,
   useSaveResourcesMutation,
+  useGetResourcesAvailabilityTimeQuery,
+  useSaveResourcesAvailabilityTimeMutation,
   useSaveAppointmentMutation,
   useGetResourcesAvailabilityQuery,
   useGetAppointmentsQuery,
