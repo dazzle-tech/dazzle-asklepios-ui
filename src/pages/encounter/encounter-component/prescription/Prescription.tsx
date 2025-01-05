@@ -44,7 +44,7 @@ import {
     useGetCustomeInstructionsQuery
 
 } from '@/services/encounterService';
-import {useGetGenericMedicationActiveIngredientQuery,useGetActiveIngredientQuery } from '@/services/medicationsSetupService';
+import { useGetGenericMedicationActiveIngredientQuery, useGetActiveIngredientQuery } from '@/services/medicationsSetupService';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import CheckIcon from '@rsuite/icons/Check';
 import PlusIcon from '@rsuite/icons/Plus';
@@ -104,33 +104,34 @@ const Prescription = () => {
     const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const { data: instructionTypeQueryResponse } = useGetLovValuesByCodeQuery('PRESC_INSTR_TYPE');
     const { data: refillunitQueryResponse } = useGetLovValuesByCodeQuery('REFILL_INTERVAL');
-      
-      const { data: activeIngredientListResponseData} = useGetActiveIngredientQuery({ ...initialListRequest });
-      const [listGinricRequest, setListGinricRequest] = useState({
+
+    const { data: activeIngredientListResponseData } = useGetActiveIngredientQuery({ ...initialListRequest });
+    const [listGinricRequest, setListGinricRequest] = useState({
         ...initialListRequest,
+
         
-        timestamp: new Date().getMilliseconds(),
-        sortBy: 'createdAt',
+       
         sortType: 'desc'
         ,
-          filters: [
+        filters: [
             {
                 fieldName: 'deleted_at',
                 operator: 'isNull',
                 value: undefined
-              }
-              ,
-              {
+            }
+            ,
+            {
                 fieldName: 'generic_medication_key',
                 operator: 'match',
-                value:selectedGeneric?.key
-      
-              }
-          ]
-        });
-   
-     const { data: genericMedicationActiveIngredientListResponseData,refetch:refetchGenric} = useGetGenericMedicationActiveIngredientQuery(listGinricRequest);
-       
+                value: selectedGeneric?.key
+
+            }
+        ]
+    });
+
+    const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({...listGinricRequest});
+
+
     const { data: prescriptions, isLoading: isLoadingPrescriptions, refetch: preRefetch } = useGetPrescriptionsQuery({
         ...initialListRequest,
         filters: [
@@ -150,15 +151,16 @@ const Prescription = () => {
     const filteredPrescriptions = prescriptions?.object?.filter(
         (item) => item.statusLkey === "1804482322306061"
     ) ?? [];
+
+    const [preKey, setPreKey] = useState(null);
     
-    const [preKey, setPreKey] = useState( null);
-    console.log(preKey)
-    
-    const [prescription, setPrescription] = useState<ApPrescription>({...prescriptions?.object?.find(prescription =>
-        prescription.key === preKey
-    )
-   
-});
+
+    const [prescription, setPrescription] = useState<ApPrescription>({
+        ...prescriptions?.object?.find(prescription =>
+            prescription.key === preKey
+        )
+
+    });
 
 
     const [prescriptionMedication, setPrescriptionMedications] = useState<ApPrescriptionMedications>(
@@ -181,7 +183,7 @@ const Prescription = () => {
 
 
     const [saveCustomeInstructions, { isLoading: isSavingCustomeInstructions }] = useSaveCustomeInstructionsMutation();
-
+    const [editDuration,setEditDuration]=useState(false);
     const { data: prescriptionMedications, isLoading: isLoadingPrescriptionMedications, refetch: medicRefetch } = useGetPrescriptionMedicationsQuery({
         ...initialListRequest,
 
@@ -203,52 +205,67 @@ const Prescription = () => {
         ...initialListRequest,
 
     });
+    const [isdraft, setIsDraft] = useState(prescriptions?.object?.find(prescription =>
+        prescription.key === preKey
+    )?.saveDraft);
+ 
 
-
-    useEffect(()=>{  
-        console.log("selectecd:",selectedGeneric)  
+    useEffect(() => {
+       
+        const foundPrescription = prescriptions?.object?.find(prescription => prescription.key === preKey);
+        if (foundPrescription?.saveDraft !== isdraft) {
+            setIsDraft(foundPrescription?.saveDraft);
+        } 
+      
+    }, [prescriptions, preKey]);
+    useEffect(() => {
+      
         const updatedFilters = [
             {
                 fieldName: 'deleted_at',
                 operator: 'isNull',
                 value: undefined
-              }
-              ,
-              {
+            }
+            ,
+          
+            {
                 fieldName: 'generic_medication_key',
                 operator: 'match',
-                value:selectedGeneric?.key
-      
-              }
-          ];
-          setListGinricRequest((prevRequest) => ({
-            ...prevRequest,
-            filters: updatedFilters,
-          }));
-console.log("update filtter",listGinricRequest)
-      },[selectedGeneric?.key]);
-      useEffect(() => {
-        console.log("Updated listGinricRequest:", listGinricRequest);
-     
-        refetchGenric().then(() => {
-            console.log("Refetch complete ginric");
+                value: selectedGeneric?.key || null
+            }
+        ];
+        console.log(updatedFilters);
+        setListGinricRequest((prevRequest) =>({
+           
+                ...prevRequest,
+                filters: updatedFilters,
+           
+        }));
+        console.log("updated filt: ",listGinricRequest)
+    }, [selectedGeneric]);
+    
+    useEffect(() => {
+        console.log("Updated listGinricRequest after setListGinricRequest: ", listGinricRequest);
+        refetchGenric().then(()=>{
             console.log(genericMedicationActiveIngredientListResponseData?.object)
-        }).catch((error) => {
-            console.error("Refetch failed:", error);
-        });
+        })
     }, [listGinricRequest]);
     useEffect(() => {
         if (prescriptions?.object) {
             const foundPrescription = prescriptions.object.find(prescription => {
-                console.log(prescription.saveDraft);
+
                 return prescription.saveDraft === true;
             });
-            console.log(foundPrescription?.key )
-            if(foundPrescription?.key !=null){
-            setPreKey(foundPrescription?.key);}
+            console.log(foundPrescription?.key)
+            if (foundPrescription?.key != null) {
+                setPreKey(foundPrescription?.key);
+                setPrescription(foundPrescription)
+            }
+
         }
-       
+
     }, [prescriptions]);
+     
     useEffect(() => {
         if (searchKeyword.trim() !== "") {
             setListGenericRequest({
@@ -289,11 +306,12 @@ console.log("update filtter",listGinricRequest)
 
         setPrescriptionMedications({ ...prescriptionMedication, administrationInstructions: null })
     }, [prescriptionMedication.administrationInstructions])
-    const handleSearch = value => {
-        setSearchKeyword(value);
-        
-
-    };
+     useEffect(()=>{
+         console.log("ischronic",prescriptionMedication.chronicMedication);
+         setEditDuration(prescriptionMedication.chronicMedication);
+         setPrescriptionMedications({...prescriptionMedication,duration:null,durationTypeLkey:null})
+     },[prescriptionMedication.chronicMedication])
+ 
     useEffect(() => {
 
     }, [selectedPreDefine, munial])
@@ -310,8 +328,77 @@ console.log("update filtter",listGinricRequest)
             frequency: customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === selectedRowoMedicationKey)?.frequencyLkey,
             dose: customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === selectedRowoMedicationKey)?.dose,
         })
-    }, [selectedRowoMedicationKey])
+    }, [selectedRowoMedicationKey]);
+   
+    useEffect(() => {
+        const saveData = async () => {
+            console.log("useEffect   " + inst);
+            if (inst != null) {
+                console.log("useEffect   " + inst);
 
+                if (preKey === null) {
+                    dispatch(notify('Prescription not linked. Try again'));
+                    return;
+                }
+
+                const tagcompine = joinValuesFromArray(tags);
+                try {
+                    await savePrescriptionMedication({
+                        ...prescriptionMedication,
+                        patientKey: patientSlice.patient.key,
+                        visitKey: patientSlice.encounter.key,
+                        prescriptionKey: preKey,
+                        genericMedicationsKey: selectedGeneric.key,
+                        parametersToMonitor: tagcompine,
+                        statusLkey: "164797574082125",
+                        instructions: inst,
+                        dose: selectedOption === "3010606785535008" ? customeinst.dose : null,
+                        frequencyLkey: selectedOption === "3010606785535008" ? customeinst.frequency : null,
+                        unitLkey: selectedOption === "3010606785535008" ? customeinst.unit : null,
+                        roaLkey: selectedOption === "3010606785535008" ? customeinst.roa : null,
+                        administrationInstructions: adminInstructions
+                    }).unwrap();
+
+                    dispatch(notify('Saved successfully'));
+
+                    // Perform refetches
+                    await Promise.all([
+                        medicRefetch().then(() => console.log("Medic refetch complete")),
+                        refetchCo().then(() => console.log("Co refetch complete"))
+                    ]);
+
+                    handleCleare();
+                } catch (error) {
+                    console.error("Save failed:", error);
+                    dispatch(notify('Save failed'));
+                }
+            }
+        };
+
+        saveData();
+    }, [inst]);
+    useEffect(() => {
+        console.log(preKey);
+        if(preKey==null){
+            handleCleare()
+        }
+        if (prescriptions?.object) {
+            const foundPrescription = prescriptions.object.find(prescription => {
+                return prescription.key === preKey;
+            });
+
+            setPrescription(foundPrescription)
+        }
+    }, [preKey]);
+    useEffect(() => {
+
+    }, [adminInstructions])
+
+    const handleSearch = value => {
+        setSearchKeyword(value);
+
+
+    };
     const handleFilterChange = (fieldName, value) => {
         if (value) {
             setListRequest(
@@ -379,9 +466,10 @@ console.log("update filtter",listGinricRequest)
                 ),
 
                 statusLkey: "1804482322306061"
-                ,saveDraft:false
+                , saveDraft: false
             }).unwrap();
             dispatch(notify('submetid  Successfully'));
+            handleCleare();
             preRefetch().then(() => {
                 console.log("Refetch complete");
             }).catch((error) => {
@@ -410,66 +498,6 @@ console.log("update filtter",listGinricRequest)
 
 
     }
-    useEffect(() => {
-        const saveData = async () => {
-            console.log("useEffect   " + inst);
-            if (inst != null) {
-                console.log("useEffect   " + inst);
-
-                if (preKey === null) {
-                    dispatch(notify('Prescription not linked. Try again'));
-                    return;
-                }
-
-                const tagcompine = joinValuesFromArray(tags);
-                try {
-                    await savePrescriptionMedication({
-                        ...prescriptionMedication,
-                        patientKey: patientSlice.patient.key,
-                        visitKey: patientSlice.encounter.key,
-                        prescriptionKey: preKey,
-                        genericMedicationsKey: selectedGeneric.key,
-                        parametersToMonitor: tagcompine,
-                        statusLkey: "164797574082125",
-                        instructions: inst,
-                        dose: selectedOption === "3010606785535008" ? customeinst.dose : null,
-                        frequencyLkey: selectedOption === "3010606785535008" ? customeinst.frequency : null,
-                        unitLkey: selectedOption === "3010606785535008" ? customeinst.unit : null,
-                        roaLkey: selectedOption === "3010606785535008" ? customeinst.roa : null,
-                        administrationInstructions: adminInstructions
-                    }).unwrap();
-
-                    dispatch(notify('Saved successfully'));
-
-                    // Perform refetches
-                    await Promise.all([
-                        medicRefetch().then(() => console.log("Medic refetch complete")),
-                        refetchCo().then(() => console.log("Co refetch complete"))
-                    ]);
-
-                    handleCleare();
-                } catch (error) {
-                    console.error("Save failed:", error);
-                    dispatch(notify('Save failed'));
-                }
-            }
-        };
-
-        saveData();
-    }, [inst]);
-useEffect(()=>{
-    console.log(preKey)
-    // if (prescriptions?.object) {
-    //     const foundPrescription = prescriptions.object.find(prescription => {
-    //         console.log(prescription.key);
-    //         return prescription.key === preKey;
-    //     });
-        
-    // setPrescription(foundPrescription)}
-    // console.log(prescription?.prescriptionId)
-   
-},[preKey])
-
 
     const handleSaveMedication = () => {
 
@@ -515,9 +543,6 @@ useEffect(()=>{
         setTags([])
     }
 
-    useEffect(() => {
-        console.log(adminInstructions)
-    }, [adminInstructions])
 
     const addTag = () => {
         const nextTags = inputValue ? [...tags, inputValue] : tags;
@@ -532,24 +557,10 @@ useEffect(()=>{
 
     const handleItemClick = (Generic) => {
         setSelectedGeneric(Generic);
-        refetchGenric() .then(() => {
+        refetchGenric().then(() => {
             console.log("Refetch Genric");
 
-            // setListGinricRequest((prevRequest) => ({
-            //     ...prevRequest,
-            //     filters:   [ {
-            //         fieldName: 'deleted_at',
-            //         operator: 'isNull',
-            //         value: undefined
-            //       }
-            //       ,
-            //       {
-            //         fieldName: 'generic_medication_key',
-            //         operator: 'match',
-            //         value:selectedGeneric?.key
-          
-            //       }]
-            //   }));
+         
 
         }).catch((error) => {
             console.error("Refetch failed:", error);
@@ -562,18 +573,36 @@ useEffect(()=>{
 
     };
 
-const saveDraft=async()=>{
-   try{
-    await savePrescription({...prescriptions?.object?.find(prescription =>
-        prescription.key === preKey
-    ),
-    saveDraft:true
-})
-   }catch(error){}
+    const saveDraft = async () => {
+        try {
+            await savePrescription({
+                ...prescriptions?.object?.find(prescription =>
+                    prescription.key === preKey
+                ),
+                saveDraft: true
+            }).then(() => {
+                dispatch(notify('Saved Draft successfully'));
+                setIsDraft(true);
+            })
+        } catch (error) { }
 
-}
+    }
+    const cancleDraft = async () => {
+        try {
+            await savePrescription({
+                ...prescriptions?.object?.find(prescription =>
+                    prescription.key === preKey
+                ),
+                saveDraft: false
+            }).then(() => {
+                dispatch(notify(' Draft Canceld'));
+                setIsDraft(false);
+            })
+        } catch (error) { }
+
+    }
     const handleSavePrescription = async () => {
-        console.log("Attempting to save prescription...");
+
 
         if (patientSlice.patient && patientSlice.encounter) {
             try {
@@ -589,7 +618,7 @@ const saveDraft=async()=>{
                 dispatch(notify('Start New Prescription whith ID:' + response?.data?.prescriptionId));
 
                 setPreKey(response?.data?.key);
-                
+
                 preRefetch().then(() => {
                     console.log("Refetch complete pres");
                     console.log(prescriptions?.object)
@@ -645,15 +674,15 @@ const saveDraft=async()=>{
                     //   value={selectedDiagnose.diagnoseCode}
                     onChange={e => {
                         setPreKey(e);
-                        console.log(preKey)
+                        console.log("kk"+preKey);
                     }}
 
                 />
             </div>
             <div>
                 <Text>Current Prescription ID : {prescriptions?.object?.find(prescription =>
-                            prescription.key === preKey
-                        )?.prescriptionId}</Text>
+                    prescription.key === preKey
+                )?.prescriptionId}</Text>
             </div>
 
 
@@ -661,7 +690,7 @@ const saveDraft=async()=>{
                 color="cyan"
                 appearance="ghost"
                 onClick={handleSavePrescription}
-
+                 disabled={isdraft}
                 style={{ marginLeft: 'auto' }}
                 icon={<PlusIcon />}
             >
@@ -724,19 +753,40 @@ const saveDraft=async()=>{
                     .join(', ')}
             </span>}
             <div className="buttons-sect-p">
-            <IconButton
-                    color="cyan"
-                    appearance="primary"
-                    onClick={saveDraft}
-                    icon={<DocPassIcon />}
-                    disabled={
-                        prescriptions?.object?.find(prescription =>
-                            prescription.key === preKey
-                        )?.statusLkey === '1804482322306061'
-                    }
-                >
-                    <Translate> Save draft</Translate>
-                </IconButton>
+                {
+                    !isdraft &&
+                    <IconButton
+                        color="cyan"
+                        appearance="primary"
+                        onClick={saveDraft}
+                        icon={<DocPassIcon />}
+                        disabled={
+                            prescriptions?.object?.find(prescription =>
+                                prescription.key === preKey
+                            )?.statusLkey === '1804482322306061'
+                        }
+                    >
+                        <Translate> Save draft</Translate>
+                    </IconButton>
+
+                }
+                {
+                    isdraft &&
+                    <IconButton
+                        color="red"
+                        appearance="primary"
+                        onClick={cancleDraft}
+                        icon={<DocPassIcon />}
+                        disabled={
+                            prescriptions?.object?.find(prescription =>
+                                prescription.key === preKey
+                            )?.statusLkey === '1804482322306061'
+                        }
+                    >
+                        <Translate> Cancle draft</Translate>
+                    </IconButton>
+
+                }
                 <IconButton
                     color="violet"
                     appearance="primary"
@@ -788,7 +838,7 @@ const saveDraft=async()=>{
                             <Form style={{ zoom: 0.85 }} layout="inline" fluid disabled={preKey != null ? editing : true}>
                                 <MyInput
                                     column
-                                    
+
                                     width={150}
                                     fieldType='number'
                                     fieldName={'dose'}
@@ -825,7 +875,7 @@ const saveDraft=async()=>{
                                     column
                                     width={150}
                                     fieldType="select"
-                                    fieldLabel="Roa"
+                                    fieldLabel="ROA"
                                     selectData={filteredList ?? []}
                                     selectDataLabel="lovDisplayVale"
                                     selectDataValue="key"
@@ -888,7 +938,7 @@ const saveDraft=async()=>{
                     onRowClick={rowData => {
 
                     }}
-                    data={genericMedicationActiveIngredientListResponseData?.object||[]}
+                    data={genericMedicationActiveIngredientListResponseData?.object || []}
 
 
                 >
@@ -896,25 +946,27 @@ const saveDraft=async()=>{
                     <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient</Table.HeaderCell>
                         <Table.Cell dataKey="activeIngredientKey">
-                       
-                            {rowData =>{
-                                const nameg=activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name
-                                 console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey))
-                               return nameg;}
+
+                            {rowData => {
+                                const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name
+                                console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey))
+                                return nameg;
                             }
-                     
+                            }
+
                         </Table.Cell>
                     </Table.Column>
                     <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient ATC Code</Table.HeaderCell>
                         <Table.Cell dataKey="activeIngredientKey">
-                       
-                            {rowData =>{
-                                const atcg=activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode
-                                 console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey))
-                               return atcg;}
+
+                            {rowData => {
+                                const atcg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode
+                                console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey))
+                                return atcg;
                             }
-                     
+                            }
+
                         </Table.Cell>
                     </Table.Column>
                     <Table.Column flexGrow={2} fullText>
@@ -941,7 +993,7 @@ const saveDraft=async()=>{
 
                     <MyInput
                         column
-                        disabled={preKey != null ? editing : true}
+                        disabled={preKey != null ? (!editing?editDuration:editing) : true}
                         width={150}
                         fieldType="number"
                         fieldLabel="Duration"
@@ -950,10 +1002,10 @@ const saveDraft=async()=>{
                         record={prescriptionMedication}
                         setRecord={setPrescriptionMedications}
                     />
-                    
+
                     <MyInput
                         column
-                        disabled={preKey != null ? editing : true}
+                        disabled={preKey != null ? (!editing?editDuration:editing) : true}
                         width={150}
                         fieldType="select"
                         fieldLabel="Duration type"
@@ -1014,7 +1066,7 @@ const saveDraft=async()=>{
                         fieldName="chronicMedication"
                         record={prescriptionMedication}
                         setRecord={setPrescriptionMedications}
-                    //   disabled={!editing}
+                  
                     /></Form>
 
                 <Form style={{ zoom: 0.90 }}>
@@ -1246,7 +1298,7 @@ const saveDraft=async()=>{
                                     return [
                                         generic?.dose,
                                         generic?.unitLvalue?.lovDisplayVale,
-
+                                        
                                         generic?.frequencyLvalue?.lovDisplayVale
                                     ]
                                         .filter(Boolean)
@@ -1270,6 +1322,15 @@ const saveDraft=async()=>{
 
 
 
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={2}>
+                        <HeaderCell align="center">
+                            <Input onChange={e => handleFilterChange('validUtil', e)} />
+                            <Translate>Instructions Type</Translate>
+                        </HeaderCell>
+                        <Cell >
+                        {rowData =>rowData.instructionsTypeLkey?rowData.instructionsTypeLvalue.lovDisplayVale:rowData.instructionsTypeLkey}
                         </Cell>
                     </Column>
                     <Column flexGrow={2}>
