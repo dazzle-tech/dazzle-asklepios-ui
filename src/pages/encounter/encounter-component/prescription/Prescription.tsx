@@ -205,7 +205,8 @@ const Prescription = () => {
     });
 
 
-    useEffect(()=>{    
+    useEffect(()=>{  
+        console.log("selectecd:",selectedGeneric)  
         const updatedFilters = [
             {
                 fieldName: 'deleted_at',
@@ -224,8 +225,18 @@ const Prescription = () => {
             ...prevRequest,
             filters: updatedFilters,
           }));
-
-      },[selectedGeneric])
+console.log("update filtter",listGinricRequest)
+      },[selectedGeneric?.key]);
+      useEffect(() => {
+        console.log("Updated listGinricRequest:", listGinricRequest);
+     
+        refetchGenric().then(() => {
+            console.log("Refetch complete ginric");
+            console.log(genericMedicationActiveIngredientListResponseData?.object)
+        }).catch((error) => {
+            console.error("Refetch failed:", error);
+        });
+    }, [listGinricRequest]);
     useEffect(() => {
         if (prescriptions?.object) {
             const foundPrescription = prescriptions.object.find(prescription => {
@@ -523,6 +534,23 @@ useEffect(()=>{
         setSelectedGeneric(Generic);
         refetchGenric() .then(() => {
             console.log("Refetch Genric");
+
+            // setListGinricRequest((prevRequest) => ({
+            //     ...prevRequest,
+            //     filters:   [ {
+            //         fieldName: 'deleted_at',
+            //         operator: 'isNull',
+            //         value: undefined
+            //       }
+            //       ,
+            //       {
+            //         fieldName: 'generic_medication_key',
+            //         operator: 'match',
+            //         value:selectedGeneric?.key
+          
+            //       }]
+            //   }));
+
         }).catch((error) => {
             console.error("Refetch failed:", error);
         });
@@ -558,10 +586,10 @@ const saveDraft=async()=>{
                 });
 
 
-                dispatch(notify('Start New Prescription whith id :' + response?.data?.prescriptionId));
+                dispatch(notify('Start New Prescription whith ID:' + response?.data?.prescriptionId));
 
                 setPreKey(response?.data?.key);
-                console.log("Response Object:", response.data.k);
+                
                 preRefetch().then(() => {
                     console.log("Refetch complete pres");
                     console.log(prescriptions?.object)
@@ -623,7 +651,7 @@ const saveDraft=async()=>{
                 />
             </div>
             <div>
-                <Text>current Prescription Id : {prescriptions?.object?.find(prescription =>
+                <Text>Current Prescription ID : {prescriptions?.object?.find(prescription =>
                             prescription.key === preKey
                         )?.prescriptionId}</Text>
             </div>
