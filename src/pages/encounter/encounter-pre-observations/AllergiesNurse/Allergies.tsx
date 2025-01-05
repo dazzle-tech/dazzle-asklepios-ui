@@ -289,7 +289,7 @@ const Allergies = () => {
             });
             handleClear();
         } catch (error) {
-            dispatch(notify('saved  fill'));
+            dispatch(notify('Save Failed'));
             console.error('An error occurred:', error);
 
         }

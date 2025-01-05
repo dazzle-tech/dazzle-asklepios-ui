@@ -309,7 +309,7 @@ const Consultation = () => {
             });
             handleClear();
         } catch (error) {
-            dispatch(notify('saved  fill'));
+            dispatch(notify('Save Failed'));
         }
 
     }

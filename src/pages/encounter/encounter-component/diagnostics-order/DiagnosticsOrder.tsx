@@ -266,7 +266,7 @@ const DiagnosticsOrder = () => {
         catch (error) {
 
 
-            dispatch(notify('saved  fill'));
+            dispatch(notify('Save Failed'));
         }
 
     }
@@ -348,7 +348,7 @@ const DiagnosticsOrder = () => {
         catch (error) {
 
             console.error("Encounter save failed:", error);
-            dispatch(notify('saved  fill'));
+            dispatch(notify('Save Failed'));
         }
     };
     return (

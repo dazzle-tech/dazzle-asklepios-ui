@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useContext } from 'react';
 import { TagInput, Panel } from 'rsuite';
 import './styles.less';
 import MyInput from '@/components/MyInput';
@@ -24,24 +24,13 @@ import {
   Form,
   Toggle
 } from 'rsuite';
-import { 
-  faVials
-   ,faFilePrescription
-   ,faStethoscope
-   ,faNotesMedical,
-   faClockRotateLeft,
-   faPersonDotsFromLine,
-   faTriangleExclamation,
-  faPills,
-  faSyringe,
- faFileWaveform
-  
-  } from '@fortawesome/free-solid-svg-icons';
+
 const { Column, HeaderCell, Cell } = Table;
 import ChiefComplaint from '../../medical-notes-and-assessments/chief-complaint';
 import Plan from '../../medical-notes-and-assessments/plan';
 import PatientDiagnosis from '../../medical-notes-and-assessments/patient-diagnosis';
 import ReviewOfSystems from '../../medical-notes-and-assessments/review-of-systems';
+import Consultation from '../consultation';
 import Assessments from '../../medical-notes-and-assessments/assessments';
 import {
   useGetLovValuesByCodeAndParentQuery,
@@ -71,6 +60,7 @@ const SOAP = () => {
 
   const dispatch = useAppDispatch();
   const [localEncounter, setLocalEncounter] = useState({ ...patientSlice.encounter });
+  console.log(patientSlice.encounter)
    const [planInstructions, setPlanInstructions] = useState();
     const [instructionKey, setInstructionsKey] = useState()
       const [instructionValue, setInstructionsValue] = useState()
@@ -132,15 +122,17 @@ const SOAP = () => {
     latestheadcircumference: null,
     latestpainlevelLkey: null
   });
+
   useEffect(() => {
+    
     if (patientSlice.encounter && patientSlice.encounter.key) {
      
       setLocalEncounter(patientSlice.encounter);
-
+ 
     } else {
     }
   }, []);
-  
+
         useEffect(() => {
           console.log('case patient')
             if (localEncounter.planInstructions!= null){
@@ -186,10 +178,11 @@ const SOAP = () => {
     } catch (error) {
 
 
-      dispatch(notify('Assessment Saved  fill'));
+      dispatch(notify('Assessment Save Failed'));
     }
   };
   const savePlan = async () => {
+
     console.log(localEncounter)
     console.log("ppp"+planInstructions)
     try {
@@ -198,7 +191,7 @@ const SOAP = () => {
     } catch (error) {
 
 
-      dispatch(notify('Assessment Saved  fill'));
+      dispatch(notify('Assessment Save Failed'));
     }
   };
   const assessmentSummeryChanged = () => {
@@ -227,7 +220,7 @@ const SOAP = () => {
             <Button
               appearance="ghost"
               style={{ border: '1px solid rgb(130, 95, 196)', color: 'rgb(130, 95, 196)' }}
-
+              
             >
               <FontAwesomeIcon icon={faBolt} style={{ marginRight: '5px' }} />
               <span>Prescription</span>
@@ -244,7 +237,7 @@ const SOAP = () => {
             <Button
               appearance="ghost"
               style={{ border: '1px solid rgb(130, 95, 196)', color: 'rgb(130, 95, 196)', marginLeft: "3px" }}
-
+            
             >
               <FontAwesomeIcon icon={faBolt} style={{ marginRight: '5px' }} />
               <span>Consultation</span>
@@ -395,7 +388,7 @@ const SOAP = () => {
 
             <MyInput
 
-              width={250}
+              width={350}
               // disabled={editing}
               fieldType="select"
               selectData={planLovQueryResponse?.object ?? []}
@@ -406,7 +399,7 @@ const SOAP = () => {
               setRecord={setLocalEncounter}
             />
 
-            <Input as="textarea" onChange={(e) => setPlanInstructions(e)} value={planInstructions} style={{ width: 250 }} rows={3} />
+            <Input as="textarea" onChange={(e) => setPlanInstructions(e)} value={planInstructions} style={{ width: 350 }} rows={3} />
           </Form>
           <div style={{display:'flex',justifyContent: 'center', alignItems: 'flex-end'}}>
           <Button

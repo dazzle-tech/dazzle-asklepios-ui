@@ -719,7 +719,7 @@ export const setupService = createApi({
       }),
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
-        return response.object;
+        return response;
       },
     }),
     getAgeGroup: builder.query({

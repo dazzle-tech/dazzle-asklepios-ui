@@ -9,6 +9,8 @@ import EditIcon from '@rsuite/icons/Edit';
 import TrashIcon from '@rsuite/icons/Trash';
 import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
+import { useAppDispatch, useAppSelector } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 import {
     useGetLovValuesByCodeQuery,
     useSaveAgeGroupMutation,
@@ -21,7 +23,7 @@ const AgeGroup=()=>{
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [popupOpen, setPopupOpen] = useState(false);
     const [agegroups, setAgeGroups] = useState<ApAgeGroup>({ ...newApAgeGroup });
-
+    const dispatch = useAppDispatch();
     const { data: agegroupsLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_GROUPS');
     const { data: ageunitsLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_UNITS');
     const [saveAgeGroups, saveAgeGroupsMutation] = useSaveAgeGroupMutation();
@@ -51,10 +53,27 @@ const AgeGroup=()=>{
   setAgeGroups({ ...newApAgeGroup,fromAge:null,toAge:null });
     setPopupOpen(true);
   };
-  const handleSave = () => {
+  const handleSave = async () => {
     setPopupOpen(false);
-    saveAgeGroups(agegroups).unwrap();
+   //if you want to use response object write response.object 
+     try {
+      const response = await saveAgeGroups(agegroups).unwrap();
+        console.log(response.msg)
+      
+        dispatch(notify(response.msg));
+      
+    } catch (error) {
+      if (error.data && error.data.message) {
+        // Display error message from server
+        dispatch(notify(error.data.message));
+      } else {
+        // Generic error notification
+        dispatch(notify("An unexpected error occurred"));
+      }
+    }
   };
+  
+  
   useEffect(() => {
     if (saveAgeGroupsMutation.data) {
       setListRequest({ ...listRequest, timestamp: new Date().getTime() });
