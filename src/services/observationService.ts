@@ -2,7 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApPatientObservationSummary } from '@/types/model-types';
+import { ApPatientObservationSummary, ApVisitAllergies, ApVisitWarning } from '@/types/model-types';
 
 export const observationService = createApi({
   reducerPath: 'observationApi',
@@ -38,11 +38,52 @@ export const observationService = createApi({
         return response.object;
       }
     })
+    ,
+    getAllergies: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/observation/allergies-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+   saveAllergies: builder.mutation({
+      query: (allergies:ApVisitAllergies) => ({
+        url: `/observation/save-allergies`,
+        method: 'POST',
+        body: allergies
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getWarnings: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/observation/warnings-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+   saveWarnings: builder.mutation({
+      query: (allergies:ApVisitWarning) => ({
+        url: `/observation/save-warnings`,
+        method: 'POST',
+        body: allergies
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    })
   })
 });
 
 export const {
   useGetObservationSummariesQuery,
   useSaveObservationSummaryMutation,
-  useRemoveObservationSummaryMutation
+  useRemoveObservationSummaryMutation,
+   useGetAllergiesQuery,
+   useSaveAllergiesMutation,
+   useGetWarningsQuery,
+   useSaveWarningsMutation
 } = observationService;
