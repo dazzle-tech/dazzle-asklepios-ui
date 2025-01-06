@@ -2093,3 +2093,25 @@ export const newApVisitAllergies:modelTypes.ApVisitAllergies = {
 	certainty:'',
 } 
 
+export const newApVisitWarning:modelTypes.ApVisitWarning = { 
+	key:undefined,
+	patientKey:undefined,
+	visitKey:undefined,
+	statusLkey:undefined,
+	warningTypeLkey:undefined,
+	firstTimeRecorded:0,
+	actionTake:'',
+	sourceOfInformationLkey:undefined,
+	notes:'',
+	cancellationReason:'',
+	resolvedBy:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	resolvedAt:0,
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	severityLkey:undefined,
+} 
+

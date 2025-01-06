@@ -278,24 +278,7 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
-    getAllergies: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/encounter/allergies-list?${fromListRequestToQueryParams(listRequest)}`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-   saveAllergies: builder.mutation({
-      query: (allergies: ApVisitAllergies) => ({
-        url: `/encounter/save-allergies`,
-        method: 'POST',
-        body: allergies
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
+   
   })
 });
 
@@ -327,9 +310,8 @@ export const {
  useGetCustomeInstructionsQuery,
  useSaveCustomeInstructionsMutation,
  useGetConsultationOrdersQuery,
- useSaveConsultationOrdersMutation,
- useGetAllergiesQuery,
- useSaveAllergiesMutation
+ useSaveConsultationOrdersMutation
+
   
 } = encounterService;
 

@@ -2092,3 +2092,25 @@ export interface ApVisitAllergies {
 	certainty:string;
 } 
 
+export interface ApVisitWarning { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	warningTypeLkey:string;
+	firstTimeRecorded:number;
+	actionTake:string;
+	sourceOfInformationLkey:string;
+	notes:string;
+	cancellationReason:string;
+	resolvedBy:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	resolvedAt:number;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	severityLkey:string;
+} 
+
