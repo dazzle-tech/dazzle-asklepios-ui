@@ -74,17 +74,17 @@ const EncounterPreObservations = () => {
         {
           fieldName: 'patient_key',
           operator: 'match',
-          value: patientSlice.patient.key
+          value: patientSlice?.patient?.key
         }
       ]
     });
     const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   // TODO update status to be a LOV value
   useEffect(() => {
-    if (patientSlice.encounter.encounterStatusLkey === '91109811181900') {
+    if (patientSlice?.encounter?.encounterStatusLkey === '91109811181900') {
       setIsEncounterStatusClosed(true);
     }
-  }, [patientSlice.encounter.encounterStatusLkey]);
+  }, [patientSlice.encounter?.encounterStatusLkey]);
 
   const handleCompleteEncounter = () => {
     if (patientSlice.encounter) {
@@ -100,13 +100,13 @@ const EncounterPreObservations = () => {
         {
           fieldName: 'patient_key',
           operator: 'match',
-          value: patientSlice.patient.key
+          value: patientSlice.patient?.key
         }
         ,
         {
           fieldName: 'visit_key',
           operator: 'match',
-          value: patientSlice.encounter.key
+          value: patientSlice.encounter?.key
         }
       ]
     });
@@ -177,9 +177,9 @@ const EncounterPreObservations = () => {
         platestheartrate: firstObservationSummary?.latestheartrate || null,
         platestrespiratoryrate: firstObservationSummary?.latestrespiratoryrate || null,
         platestoxygensaturation: firstObservationSummary?.latestoxygensaturation || null,
-        platestweight: firstObservationSummary?.latestweight || null,
-        platestheight: firstObservationSummary?.latestheight || null,
-        platestheadcircumference: firstObservationSummary?.latestheadcircumference || null,
+        platestweight: firstObservationSummary?.latestweight || firstObservationSummary?.platestweight,
+        platestheight: firstObservationSummary?.latestheight || firstObservationSummary?.platestheight,
+        platestheadcircumference: firstObservationSummary?.latestheadcircumference || firstObservationSummary?.platestheadcircumference,
         platestnotes: firstObservationSummary?.latestnotes || '',
         platestpaindescription: firstObservationSummary?.latestpaindescription || '',
         platestpainlevelLkey: firstObservationSummary?.latestpainlevelLkey || '',

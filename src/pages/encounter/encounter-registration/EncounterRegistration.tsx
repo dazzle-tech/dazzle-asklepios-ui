@@ -885,7 +885,7 @@ const EncounterRegistration = () => {
 
                     fieldType="select"
                     fieldLabel="Visit Type"
-                    fieldName="encounterTypeLkey"
+                    fieldName="visitTypeLkey"
                     selectData={encounterTypeLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
@@ -911,7 +911,7 @@ const EncounterRegistration = () => {
 
                     fieldType="select"
                     fieldLabel="Physician"
-                    fieldName="responsiblePhysicianKey"
+                    fieldName="physicianKey"
                     selectData={practitionerListResponse?.object ?? []}
                     selectDataLabel="practitionerFullName"
                     selectDataValue="key"
@@ -919,19 +919,7 @@ const EncounterRegistration = () => {
                     setRecord={setLocalEncounter}
                   />
 
-                  {/* <MyInput
-                    vr={validationResult}
-                    column
-                    disabled={!editing}
-                    fieldType="select"
-                    fieldLabel='Visit Status'
-                    fieldName="encounterStatusLkey"
-                    selectData={encounterStatusLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={localEncounter}
-                    setRecord={setLocalEncounter}
-                  /> */}
+                  
                   <MyInput
                     vr={validationResult}
                     column
@@ -963,7 +951,7 @@ const EncounterRegistration = () => {
                     column
 
                     fieldType="select"
-                    fieldName="originLkey"
+                    fieldName="admissionOrigin"
                     selectData={patOriginLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
@@ -975,7 +963,7 @@ const EncounterRegistration = () => {
                     column
 
                     fieldLabel="Source Name"
-                    fieldName="source"
+                    fieldName="sourceName"
                     record={localEncounter}
                     setRecord={setLocalEncounter}
                   />

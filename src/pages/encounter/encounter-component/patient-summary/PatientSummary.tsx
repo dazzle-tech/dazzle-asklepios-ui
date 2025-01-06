@@ -279,7 +279,7 @@ const PatientSummary = ({ patient, encounter }) => {
                             width={140}
                             fieldType="select"
                             fieldLabel="Visit Type"
-                            fieldName="encounterTypeLkey"
+                            fieldName="visitTypeLkey"
                             selectData={encounterTypeLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
@@ -290,7 +290,7 @@ const PatientSummary = ({ patient, encounter }) => {
                             column
                             fieldType="select"
                             fieldLabel="Reason"
-                            fieldName="encounterReasonLkey"
+                            fieldName="reasonLkey"
                             selectData={encounterReasonLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
@@ -438,6 +438,7 @@ const PatientSummary = ({ patient, encounter }) => {
                                 <Table.Column flexGrow={1}>
                                     <Table.HeaderCell style={{ fontSize: '10px' }}>Allergene</Table.HeaderCell>
                                     <Table.Cell>
+
                                         {rowData => {
                                             
                                             if (!allergensListToGetName?.object) {
