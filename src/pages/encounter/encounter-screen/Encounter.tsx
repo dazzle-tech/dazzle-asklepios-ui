@@ -74,7 +74,8 @@ import {
 } from '@/services/encounterService';
 import {
   useGetAllergiesQuery,
-  useSaveAllergiesMutation
+  useSaveAllergiesMutation,
+  useGetWarningsQuery
 } from '@/services/observationService';
 import { ApVisitAllergies } from '@/types/model-types';
 import { newApVisitAllergies } from '@/types/model-types-constructor';
@@ -98,7 +99,7 @@ const Encounter = () => {
       });
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const[openAllargyModal,setOpenAllargyModal]=useState(false);
-
+  const[openWarningModal,setOpenWarningModal]=useState(false);
 const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
 const [showCanceled, setShowCanceled] = useState(true);
 
@@ -117,6 +118,7 @@ const [showCanceled, setShowCanceled] = useState(true);
 
 
   const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({ ...initialListRequest, filters });
+  const { data: warningsListResponse, refetch: fetchwarning } = useGetWarningsQuery({ ...initialListRequest, filters });
   const [activeContent, setActiveContent] = useState(<PatientSummary patient={patientSlice.patient} encounter={patientSlice.encounter} />);
   const handleMenuItemClick = (content) => {
     setActiveContent(content);
@@ -138,6 +140,12 @@ const [showCanceled, setShowCanceled] = useState(true);
   }
   const OpenAllargyModal=()=>{
     setOpenAllargyModal(true);
+  }
+  const CloseWarningModal=()=>{
+    setOpenWarningModal(false);
+  }
+  const OpenWarningModal=()=>{
+    setOpenWarningModal(true);
   }
   const handleStartEncounter = () => {
     if (patientSlice.encounter && patientSlice.encounter.editable) {
@@ -305,14 +313,19 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                 <FontAwesomeIcon icon={faHandDots} style={{ marginRight: '5px' }} />
                   <Translate>Allergy</Translate>
                 </Button>
-
+                <Button appearance="primary" 
+                onClick={OpenWarningModal}
+                color={patientSlice.patient.hasWarning?"red":"cyan"} >
+                <FontAwesomeIcon icon={faHandDots} style={{ marginRight: '5px' }} />
+                  <Translate>Warning</Translate>
+                </Button>
                 {patientSlice.encounter.editable && (
                   <IconButton
                     appearance="primary"
                     icon={<icons.CloseOutline />}
                     onClick={handleCompleteEncounter}
                   >
-                    <Translate>Complete Visit (Close)</Translate>
+                    <Translate>Complete Visit</Translate>
                   </IconButton>
                 )}
               </ButtonToolbar>
@@ -560,6 +573,115 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                     <Stack spacing={2} divider={<Divider vertical />}>
                         
                         <Button appearance="ghost" color="cyan" onClick={CloseAllargyModal}>
+                           Close
+                        </Button>
+                    </Stack>
+                </Modal.Footer>
+            </Modal>
+            <Modal  size="lg" open={openWarningModal} onClose={CloseWarningModal} overflow  >
+                <Modal.Title>
+                    <Translate><h6>Patient Warning</h6></Translate>
+                </Modal.Title>
+                <Modal.Body>
+                  <div>
+                <Checkbox
+                        checked={!showCanceled}
+                        onChange={() => {
+
+
+                            setShowCanceled(!showCanceled);
+                        }}
+                    >
+                        Show Cancelled
+                    </Checkbox>
+                   
+
+                </div>
+                <Table
+                    height={600}
+                    data={warningsListResponse?.object || []}
+                    rowKey="key"
+                    expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
+                    renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
+                    shouldUpdateScroll={false}
+                    bordered
+                    cellBordered
+                   
+                >
+                    <Column width={70} align="center">
+                        <HeaderCell>#</HeaderCell>
+                        <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
+                    </Column>
+
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Warning Type</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.warningTypeLvalue?.lovDisplayVale
+                            }
+                        </Cell>
+                    </Column >
+                   
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Severity</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.severityLvalue?.lovDisplayVale
+                            }
+                        </Cell>
+                    </Column>
+                    
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>First Time Recorded</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData => rowData.firstTimeRecorded ? new Date(rowData.firstTimeRecorded).toLocaleString() : "Undefind"}
+                        </Cell>
+                    </Column>
+                   
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Source of information</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.sourceOfInformationLvalue?.lovDisplayVale || "BY Patient"
+                            }
+                        </Cell>
+                    </Column>
+                   
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Notes</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.notes
+                            }
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={1} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Status</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.statusLvalue?.lovDisplayVale
+                            }
+                        </Cell>
+                    </Column>
+                </Table>
+
+                </Modal.Body>
+                <Modal.Footer>
+                    <Stack spacing={2} divider={<Divider vertical />}>
+                        
+                        <Button appearance="ghost" color="cyan" onClick={CloseWarningModal}>
                            Close
                         </Button>
                     </Stack>
