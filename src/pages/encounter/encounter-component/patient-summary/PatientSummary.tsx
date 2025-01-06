@@ -31,28 +31,35 @@ import {
 import {
     useGetPrescriptionsQuery,
     useGetPrescriptionMedicationsQuery,
-    useGetAllergiesQuery
+    useGetAllergiesQuery,
+    useGetCustomeInstructionsQuery
 } from '@/services/encounterService';
 import {
     useGetGenericMedicationQuery
 } from '@/services/medicationsSetupService';
 import { useGetEncountersQuery } from '@/services/encounterService';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { useGetAllergensQuery} from '@/services/setupService';
+import { useGetAllergensQuery } from '@/services/setupService';
+import {
+    useGetPrescriptionInstructionQuery,
+
+} from '@/services/medicationsSetupService';
+import { useGetGenericMedicationActiveIngredientQuery, useGetActiveIngredientQuery } from '@/services/medicationsSetupService';
+
 const PatientSummary = ({ patient, encounter }) => {
     const patientSlice = useAppSelector(state => state.patient);
     const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
     const { data: encounterReasonLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_REASON');
     const { data: allergensListToGetName } = useGetAllergensQuery({
-              ...initialListRequest
-          });
+        ...initialListRequest
+    });
     const filters = [
         {
             fieldName: 'patient_key',
             operator: 'match',
             value: patientSlice.patient.key
         },
-      
+
         {
             fieldName: "status_lkey",
             operator: "Match",
@@ -61,7 +68,12 @@ const PatientSummary = ({ patient, encounter }) => {
     ];
 
 
+    const { data: customeInstructions, isLoading: isLoadingCustomeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
+        ...initialListRequest,
 
+    });
+    const { data: activeIngredientListResponseData } = useGetActiveIngredientQuery({ ...initialListRequest });
+    const { data: predefinedInstructionsListResponse } = useGetPrescriptionInstructionQuery({ ...initialListRequest });
     const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({ ...initialListRequest, filters });
     const [patientVisitListRequest, setPatientVisitListReques] = useState<ListRequest>({
         ...initialListRequest,
@@ -181,8 +193,6 @@ const PatientSummary = ({ patient, encounter }) => {
 
     )
 
-    console.log(Diagnoses?.object);
-    console.log(majorDiagnosesCodes);
 
     const { data: genericMedicationListResponse } = useGetGenericMedicationQuery({ ...initialListRequest });
     const { data: prescriptionMedications, isLoading: isLoadingPrescriptions, refetch: preRefetch } = useGetPrescriptionMedicationsQuery({
@@ -207,9 +217,20 @@ const PatientSummary = ({ patient, encounter }) => {
 
         ],
     });
+   const [listGinricRequest, setListGinricRequest] = useState({
+        ...initialListRequest,
 
+        
+       
+        sortType: 'desc'
+        
+            
+           
+        
+    });
+    const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({...listGinricRequest});
 
-
+   console.log(genericMedicationActiveIngredientListResponseData?.object)
 
     const handleopenchartModel = () => {
         setChartModelIsOpen(true);
@@ -228,6 +249,9 @@ const PatientSummary = ({ patient, encounter }) => {
     };
     const handlecloseChronicModel = () => {
         setChronicModelIsOpen(false);
+    };
+    const joinValuesFromArray = (values) => {
+        return values.filter(Boolean).join(', ');
     };
 
     return (<>
@@ -334,8 +358,43 @@ const PatientSummary = ({ patient, encounter }) => {
                                 </Table.Column>
 
                                 <Table.Column flexGrow={1} fullText>
-                                    <Table.HeaderCell>Dose(Unit)</Table.HeaderCell>
-                                    <Table.Cell>{rowData => rowData.maximumDose}</Table.Cell>
+                                    <Table.HeaderCell>Instructions</Table.HeaderCell>
+                                    <Table.Cell>
+                                        {rowData => {
+                                            if (rowData.instructionsTypeLkey === "3010591042600262") {
+                                                const generic = predefinedInstructionsListResponse?.object?.find(
+                                                    item => item.key === rowData.instructions
+                                                );
+
+                                                if (generic) {
+                                                    console.log("Found generic:", generic);
+                                                } else {
+                                                    console.warn("No matching generic found for key:", rowData.instructions);
+                                                }
+                                                return [
+                                                    generic?.dose,
+                                                    generic?.unitLvalue?.lovDisplayVale,
+
+                                                    generic?.frequencyLvalue?.lovDisplayVale
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(', ');
+                                            }
+                                            if (rowData.instructionsTypeLkey === "3010573499898196") {
+                                                return rowData.instructions
+
+                                            }
+                                            if (rowData.instructionsTypeLkey === "3010606785535008") {
+                                                return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose +
+                                                    "," + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue.lovDisplayVale + "," +
+                                                    customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue.lovDisplayVale
+
+
+                                            }
+
+                                            return "no";
+                                        }}
+                                    </Table.Cell>
                                 </Table.Column>
 
                             </Table>
@@ -379,15 +438,16 @@ const PatientSummary = ({ patient, encounter }) => {
                                 <Table.Column flexGrow={1}>
                                     <Table.HeaderCell style={{ fontSize: '10px' }}>Allergene</Table.HeaderCell>
                                     <Table.Cell>
-                                         {rowData => {
-                               
-                                if (!allergensListToGetName?.object) {
-                                    return "Loading...";  
-                                }
-                                const getname = allergensListToGetName.object.find(item => item.key === rowData.allergenKey);
-                                
-                                return getname?.allergenName || "No Name"; 
-                            }}</Table.Cell>
+
+                                        {rowData => {
+                                            
+                                            if (!allergensListToGetName?.object) {
+                                                return "Loading...";
+                                            }
+                                            const getname = allergensListToGetName.object.find(item => item.key === rowData.allergenKey);
+                                            
+                                            return getname?.allergenName || "No Name";
+                                        }}</Table.Cell>
                                 </Table.Column>
                                 <Table.Column flexGrow={1}>
                                     <Table.HeaderCell style={{ fontSize: '10px' }} >Start Date</Table.HeaderCell>
@@ -573,32 +633,90 @@ const PatientSummary = ({ patient, encounter }) => {
                                 genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName
                             }</Table.Cell>
                         </Table.Column>
-                        <Table.Column flexGrow={1} fullText>
-                            <Table.HeaderCell>Medication Active Ingredient(s)</Table.HeaderCell>
-                            <Table.Cell>{rowData => <Text>hhh</Text>}</Table.Cell>
-                        </Table.Column>
-                        <Table.Column flexGrow={1}>
-                            <Table.HeaderCell>Dose(Unit)</Table.HeaderCell>
-                            <Table.Cell>{rowData => rowData.maximumDose}</Table.Cell>
-                        </Table.Column>
-
                         <Table.Column flexGrow={2} fullText>
-                            <Table.HeaderCell>Start Date</Table.HeaderCell>
-                            <Table.Cell>{rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}</Table.Cell>
+                            <Table.HeaderCell>Medication Active Ingredient(s)</Table.HeaderCell>
+                            <Table.Cell>{rowData => {
+                               const act = genericMedicationActiveIngredientListResponseData?.object?.filter(gin => {
+                                console.log(`Checking: ${rowData.genericMedicationsKey} === ${gin.genericMedicationKey}`);  return rowData.genericMedicationsKey === gin.genericMedicationKey;
+                            });
+                             
+                             const ingredientNames = activeIngredientListResponseData?.object
+                             ?.filter((active) =>
+                                 act?.some((item) => item.activeIngredientKey === active.key)
+                             )
+                             .map((active) => active.name); // Extract only the `name` property
+                         
+                        
+                            return joinValuesFromArray(ingredientNames);
+                            
+                            }
+                                }</Table.Cell>
                         </Table.Column>
-                    </Table>
+                        <Table.Column flexGrow={1} fullText>
+                            <Table.HeaderCell>Instructions</Table.HeaderCell>
+                            <Table.Cell>
+                                {rowData => {
+                                    if (rowData.instructionsTypeLkey === "3010591042600262") {
+                                        const generic = predefinedInstructionsListResponse?.object?.find(
+                                            item => item.key === rowData.instructions
+                                        );
 
-                </Modal.Body>
-                <Modal.Footer style={{ display: "flex", justifyContent: "flex-start" }}>
-                    <Button onClick={handlecloseChronicModel} appearance="primary">
-                        Ok
-                    </Button>
-                    <Button onClick={handlecloseChronicModel} appearance="subtle">
-                        Cancel
-                    </Button>
-                </Modal.Footer>
-            </Modal>
-        </div>
+                                        if (generic) {
+                                            console.log("Found generic:", generic);
+                                        } else {
+                                            console.warn("No matching generic found for key:", rowData.instructions);
+                                        }
+                                        return [
+                                            generic?.dose,
+                                            generic?.unitLvalue?.lovDisplayVale,
+
+                                            generic?.frequencyLvalue?.lovDisplayVale
+                                        ]
+                                            .filter(Boolean)
+                                            .join(', ');
+                                    }
+                                    if (rowData.instructionsTypeLkey === "3010573499898196") {
+                                        return rowData.instructions
+
+                                    }
+                                    if (rowData.instructionsTypeLkey === "3010606785535008") {
+                                        return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose +
+                                            "," + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue.lovDisplayVale + "," +
+                                            customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue.lovDisplayVale
+
+
+                                    }
+
+                                    return "no";
+                                }}
+                            </Table.Cell>
+                        </Table.Column>
+
+                        <Table.Column flexGrow={1} fullText>
+                            <Table.HeaderCell>Instructions Type</Table.HeaderCell>
+                            <Table.Cell>
+                            {rowData =>rowData.instructionsTypeLkey?rowData.instructionsTypeLvalue.lovDisplayVale:rowData.instructionsTypeLkey}
+                                </Table.Cell>
+                        </Table.Column>
+                   
+
+                    <Table.Column flexGrow={1} fullText>
+                        <Table.HeaderCell>Start Date</Table.HeaderCell>
+                        <Table.Cell>{rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}</Table.Cell>
+                    </Table.Column>
+                </Table>
+
+            </Modal.Body>
+            <Modal.Footer style={{ display: "flex", justifyContent: "flex-start" }}>
+                <Button onClick={handlecloseChronicModel} appearance="primary">
+                    Ok
+                </Button>
+                <Button onClick={handlecloseChronicModel} appearance="subtle">
+                    Cancel
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    </div >
     </>);
 };
 export default PatientSummary;
