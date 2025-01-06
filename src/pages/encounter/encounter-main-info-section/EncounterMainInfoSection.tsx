@@ -23,7 +23,7 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
    const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
   const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
- 
+  
   console.log("encounter",encounter);
  
   const { data: patirntObservationlist } = useGetObservationSummariesQuery({
@@ -44,8 +44,18 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
     ],
 
   });
-
-
+  const [bodyMeasurements,setBodyMeasurements]=useState({
+    height:null,
+    weight:null,
+    headcircumference:null
+  })
+  useEffect(()=>{
+    setBodyMeasurements({
+      height:patirntObservationlist?.object[0]?.latestheight??patirntObservationlist?.object[0]?.platestheight,
+      weight:patirntObservationlist?.object[0]?.latestweight??patirntObservationlist?.object[0]?.platestweight,
+      headcircumference:patirntObservationlist?.object[0]?.latestheadcircumference??patirntObservationlist?.object[0]?.platestheadcircumference
+    })
+  },[patirntObservationlist])
   return (
     <Form disabled style={{ zoom: 0.70}} layout="inline" fluid >
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><MyInput width={150} column fieldLabel="MRN" fieldName={'patientMrn'} record={patient} />
@@ -78,13 +88,13 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
 
         disabled={true}
       />
-      <MyInput width={150} column fieldLabel="Weight" fieldName={'latestweight'} record={patirntObservationlist?.object[0]} />
-      <MyInput width={150} column fieldLabel="Height" fieldName={'latestheight'} record={patirntObservationlist?.object[0]} />
-      <MyInput width={150} column fieldLabel="H.C" fieldName={'latestheadcircumference'} record={patirntObservationlist?.object[0]} />
+      <MyInput width={150} column fieldLabel="Weight" fieldName={'weight'} record={bodyMeasurements} />
+      <MyInput width={150} column fieldLabel="Height" fieldName={'height'} record={bodyMeasurements} />
+      <MyInput width={150} column fieldLabel="H.C" fieldName={'headcircumference'} record={bodyMeasurements} />
       <MyInput width={150} column fieldLabel="BMI" fieldName={'latestbmi'} record={patirntObservationlist?.object[0]} />
      <div style={{display:'flex',flexDirection:'column'}}>
       <Text>BSA</Text>
-      <Input disabled value={Math.sqrt((patirntObservationlist?.object?.[0]?.latestweight *patirntObservationlist?.object?.[0]?. latestheight) / 3600).toFixed(2)}  style={{ width: 150 }}/>
+      <Input disabled value={Math.sqrt((bodyMeasurements.weight *bodyMeasurements.height) / 3600).toFixed(2)}  style={{ width: 150 }}/>
       </div>
       
       <MyInput width={150} column fieldLabel="Blood Group" fieldName={'patientFullName'} record={patirntObservationlist?.object[0]} />
