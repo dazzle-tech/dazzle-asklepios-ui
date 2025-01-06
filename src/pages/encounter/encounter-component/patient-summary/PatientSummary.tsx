@@ -37,8 +37,9 @@ import {
 import {
     useGetGenericMedicationQuery
 } from '@/services/medicationsSetupService';
-import { useGetEncountersQuery,useGetCustomeInstructionsQuery,  useGetPrescriptionsQuery,
-    useGetPrescriptionMedicationsQuery, } from '@/services/encounterService';
+
+import { useGetEncountersQuery,  useGetPrescriptionsQuery,
+    useGetPrescriptionMedicationsQuery,useGetCustomeInstructionsQuery } from '@/services/encounterService';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useGetAllergensQuery } from '@/services/setupService';
 import {
