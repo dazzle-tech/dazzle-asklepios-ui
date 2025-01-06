@@ -28,16 +28,17 @@ import {
 import {
     useGetPatientDiagnosisQuery,
 } from '@/services/encounterService';
-import {
-    useGetPrescriptionsQuery,
-    useGetPrescriptionMedicationsQuery,
-    useGetAllergiesQuery,
-    useGetCustomeInstructionsQuery
-} from '@/services/encounterService';
+
+
+  import{
+    useGetAllergiesQuery
+} from '@/services/observationService';
+
 import {
     useGetGenericMedicationQuery
 } from '@/services/medicationsSetupService';
-import { useGetEncountersQuery } from '@/services/encounterService';
+import { useGetEncountersQuery,useGetCustomeInstructionsQuery,  useGetPrescriptionsQuery,
+    useGetPrescriptionMedicationsQuery, } from '@/services/encounterService';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useGetAllergensQuery } from '@/services/setupService';
 import {
