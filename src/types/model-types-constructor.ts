@@ -314,6 +314,9 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	reasonLkey:undefined,
 	reasonValue:'',
 	otherReason:'',
+	noShowReasonLkey:undefined,
+	noShowReasonValue:'',
+	noShowOtherReason:'',
 } 
 
 export const newApAttachment:modelTypes.ApAttachment = { 
@@ -726,6 +729,7 @@ export const newApDiagnosticTestRadiology:modelTypes.ApDiagnosticTestRadiology =
 	timingLkey:undefined,
 	resultType:'',
 	resultUnitLkey:undefined,
+	labCatalogLkey:undefined,
 } 
 
 export const newApDiagnosticTestSpecialPopulation:modelTypes.ApDiagnosticTestSpecialPopulation = { 
@@ -845,6 +849,8 @@ export const newApEncounter:modelTypes.ApEncounter = {
 	sourceName:'',
 	physicalExamNote:'',
 	planInstructions:'',
+	visitTypeLkey:undefined,
+	physicianKey:undefined,
 } 
 
 export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService = { 
@@ -2033,6 +2039,29 @@ export const newApUserMedicalLicense:modelTypes.ApUserMedicalLicense = {
 	deletedAt:undefined,
 	isValid:undefined,
 	userKey:undefined,
+} 
+
+export const newApVaccine:modelTypes.ApVaccine = { 
+	key:undefined,
+	vaccineCode:'',
+	vaccineName:'',
+	atcCode:'',
+	typeLkey:undefined,
+	roaLkey:undefined,
+	siteOfAdministration:'',
+	postOpeningDuration:'',
+	durationUnitLkey:undefined,
+	indications:'',
+	possibleReactions:'',
+	contraindicationsAndPrecautions:'',
+	storageAndHandling:'',
+	isValid:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
 } 
 
 export const newApVisitAllergies:modelTypes.ApVisitAllergies = { 

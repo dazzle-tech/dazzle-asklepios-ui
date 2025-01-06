@@ -21,9 +21,10 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
   const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
   const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+   const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
   const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
-  console.log(patient.key);
-  console.log(encounter.key);
+ 
+  console.log("encounter",encounter);
  
   const { data: patirntObservationlist } = useGetObservationSummariesQuery({
     ...initialListRequest,
@@ -43,7 +44,7 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
     ],
 
   });
-  console.log(patirntObservationlist?.object);
+
 
   return (
     <Form disabled style={{ zoom: 0.70}} layout="inline" fluid >
@@ -102,15 +103,6 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         record={encounter}
       />
 
-      {//when add booking date field in database add it here
-      }
-      <MyInput
-        column
-        width={150}
-        fieldLabel="Booking source"
-        fieldName="bookingsource"
-        record={encounter}
-      />
       <MyInput
         column
         width={150}
@@ -125,11 +117,12 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         width={150}
         fieldType="select"
         fieldLabel="Visit Type"
-        fieldName="encounterTypeLkey"
+        fieldName="visitTypeLkey"
         selectData={encounterTypeLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
         record={encounter}
+
       />
       <MyInput
         width={150}
@@ -147,8 +140,19 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         column
         fieldType="select"
         fieldLabel="Reason"
-        fieldName="encounterReasonLkey"
+        fieldName="reasonLkey"
         selectData={encounterReasonLovQueryResponse?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        selectDataValue="key"
+        record={encounter}
+      />
+        <MyInput
+        width={150}
+        column
+        fieldType="select"
+        fieldLabel="Origin"
+        fieldName="admissionOrigin"
+        selectData={patOriginLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
         record={encounter}

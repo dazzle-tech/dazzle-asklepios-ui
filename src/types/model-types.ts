@@ -313,6 +313,9 @@ export interface ApAppointment {
 	reasonLkey:string;
 	reasonValue:string;
 	otherReason:string;
+	noShowReasonLkey:string;
+	noShowReasonValue:string;
+	noShowOtherReason:string;
 } 
 
 export interface ApAttachment { 
@@ -725,6 +728,7 @@ export interface ApDiagnosticTestRadiology {
 	timingLkey:string;
 	resultType:string;
 	resultUnitLkey:string;
+	labCatalogLkey:string;
 } 
 
 export interface ApDiagnosticTestSpecialPopulation { 
@@ -844,6 +848,8 @@ export interface ApEncounter {
 	sourceName:string;
 	physicalExamNote:string;
 	planInstructions:string;
+	visitTypeLkey:string;
+	physicianKey:string;
 } 
 
 export interface ApEncounterAppliedService { 
@@ -2032,6 +2038,29 @@ export interface ApUserMedicalLicense {
 	deletedAt:number;
 	isValid:boolean;
 	userKey:string;
+} 
+
+export interface ApVaccine { 
+	key:string;
+	vaccineCode:string;
+	vaccineName:string;
+	atcCode:string;
+	typeLkey:string;
+	roaLkey:string;
+	siteOfAdministration:string;
+	postOpeningDuration:string;
+	durationUnitLkey:string;
+	indications:string;
+	possibleReactions:string;
+	contraindicationsAndPrecautions:string;
+	storageAndHandling:string;
+	isValid:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
 } 
 
 export interface ApVisitAllergies { 

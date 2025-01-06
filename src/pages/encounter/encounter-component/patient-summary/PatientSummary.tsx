@@ -255,7 +255,7 @@ const PatientSummary = ({ patient, encounter }) => {
                             width={140}
                             fieldType="select"
                             fieldLabel="Visit Type"
-                            fieldName="encounterTypeLkey"
+                            fieldName="visitTypeLkey"
                             selectData={encounterTypeLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
@@ -266,7 +266,7 @@ const PatientSummary = ({ patient, encounter }) => {
                             column
                             fieldType="select"
                             fieldLabel="Reason"
-                            fieldName="encounterReasonLkey"
+                            fieldName="reasonLkey"
                             selectData={encounterReasonLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
@@ -380,12 +380,12 @@ const PatientSummary = ({ patient, encounter }) => {
                                     <Table.HeaderCell style={{ fontSize: '10px' }}>Allergene</Table.HeaderCell>
                                     <Table.Cell>
                                          {rowData => {
-                                console.log(rowData.allergenKey); 
+                               
                                 if (!allergensListToGetName?.object) {
                                     return "Loading...";  
                                 }
                                 const getname = allergensListToGetName.object.find(item => item.key === rowData.allergenKey);
-                                console.log(getname);  
+                                
                                 return getname?.allergenName || "No Name"; 
                             }}</Table.Cell>
                                 </Table.Column>
