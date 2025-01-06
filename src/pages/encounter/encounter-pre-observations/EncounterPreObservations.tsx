@@ -216,7 +216,7 @@ const EncounterPreObservations = () => {
   return (
     <>
       {patientSlice.patient && patientSlice.encounter && (
-        <div>
+        <div >
           <h4>Nurse Station</h4>
           <Panel header={<EncounterMainInfoSection patient={patientSlice.patient} encounter={patientSlice.encounter} />}>
           </Panel>
@@ -266,7 +266,7 @@ const EncounterPreObservations = () => {
               </TabList>
 
               <TabPanel>
-                <Grid fluid >
+                <Grid fluid style={{ zoom: 0.85}} >
                   <Row gutter={15} >
                     <div className="responseveDiv">
                       <div className='resDivPart'>  <Col xs={12}>

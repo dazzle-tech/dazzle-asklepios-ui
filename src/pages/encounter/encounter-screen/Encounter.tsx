@@ -75,7 +75,7 @@ import {
 import {
   useGetAllergiesQuery,
   useSaveAllergiesMutation
-} from '@/services/encounterService';
+} from '@/services/observationService';
 import { ApVisitAllergies } from '@/types/model-types';
 import { newApVisitAllergies } from '@/types/model-types-constructor';
 import { BlockUI } from 'primereact/blockui';

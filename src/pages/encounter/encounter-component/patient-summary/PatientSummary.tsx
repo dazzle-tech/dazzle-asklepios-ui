@@ -29,14 +29,14 @@ import {
     useGetPatientDiagnosisQuery,
 } from '@/services/encounterService';
 import {
-    useGetPrescriptionsQuery,
-    useGetPrescriptionMedicationsQuery,
+  
     useGetAllergiesQuery
-} from '@/services/encounterService';
+} from '@/services/observationService';
 import {
     useGetGenericMedicationQuery
 } from '@/services/medicationsSetupService';
-import { useGetEncountersQuery } from '@/services/encounterService';
+import { useGetEncountersQuery,  useGetPrescriptionsQuery,
+    useGetPrescriptionMedicationsQuery, } from '@/services/encounterService';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useGetAllergensQuery} from '@/services/setupService';
 const PatientSummary = ({ patient, encounter }) => {
