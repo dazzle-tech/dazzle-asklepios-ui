@@ -1661,7 +1661,7 @@ const PatientProfile = () => {
                   selectDataValue="key"
                   record={localPatient}
                   setRecord={setLocalPatient}
-                  disabled={!editing}
+                  disabled={localPatient.documentTypeLkey === 'NO_DOC' || !editing}
                 />
                 <MyInput
                   required
