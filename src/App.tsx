@@ -30,7 +30,7 @@ import AccessRoles from './pages/setup/access-roles';
 import Lov from './pages/setup/lov-setup';
 import Users from './pages/setup/users-setup';
 import UOMGroup from './pages/setup/uom-group';
-
+import Vaccine from './pages/setup/vaccine-setup';
 import Modules from './pages/setup/modules-setup';
 import * as icons from 'react-icons/fa6';
 import PatientProfile from './pages/patient/patient-profile';
@@ -216,6 +216,7 @@ const App = () => {
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />
               <Route path="modules-setup" element={<Modules />} />
+              <Route path="vaccine-setup" element={<Vaccine />} />
               <Route path="users" element={<Users />} />
               <Route path="uom-group" element={<UOMGroup />} />
               <Route path="encounter-pre-observations" element={<EncounterPreObservations />} />

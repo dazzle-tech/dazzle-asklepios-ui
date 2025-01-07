@@ -745,6 +745,56 @@ export const newApDiagnosticTestSpecialPopulation:modelTypes.ApDiagnosticTestSpe
 	isValid:undefined,
 } 
 
+export const newApDrugOrder:modelTypes.ApDrugOrder = { 
+	key:undefined,
+	patientKey:undefined,
+	visitKey:undefined,
+	statusLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+	drugorderId:'',
+	saveDraft:undefined,
+} 
+
+export const newApDrugOrderMedications:modelTypes.ApDrugOrderMedications = { 
+	key:undefined,
+	patientKey:undefined,
+	visitKey:undefined,
+	drugOrderKey:undefined,
+	genericMedicationsKey:undefined,
+	drugOrderTypeLkey:undefined,
+	doseUnitLkey:undefined,
+	roaLkey:undefined,
+	frequency:0,
+	priorityLkey:undefined,
+	pharmacyDepartmentKey:undefined,
+	dose:0,
+	notes:'',
+	prnIndication:'',
+	specialInstructions:'',
+	parametersToMonitor:'',
+	startDateTime:0,
+	maximumDose:0,
+	genericSubstitute:undefined,
+	chronicMedication:undefined,
+	patientOwnMedication:undefined,
+	administrationInstructions:'',
+	duration:0,
+	durationTypeLkey:undefined,
+	statusLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
 export const newApDvmRule:modelTypes.ApDvmRule = { 
 	key:undefined,
 	screenMetadataKey:undefined,
@@ -2062,6 +2112,23 @@ export const newApVaccine:modelTypes.ApVaccine = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
+} 
+
+export const newApVaccineBrands:modelTypes.ApVaccineBrands = { 
+	key:undefined,
+	vaccineKey:undefined,
+	brandName:'',
+	manufacturerLkey:undefined,
+	volume:0,
+	unitLkey:undefined,
+	marketingAuthorizationHolder:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
 } 
 
 export const newApVisitAllergies:modelTypes.ApVisitAllergies = { 
