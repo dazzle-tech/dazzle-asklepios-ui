@@ -7,125 +7,125 @@ import {
     Input,
     Panel,
     Text,
-    Checkbox,
     Dropdown,
     Button,
     IconButton,
     Table,
     Modal,
-    Stack,
     Divider,
-    Radio,
-    RadioGroup,
-    TagInput,
-    TagGroup,
-    SelectPicker,
-    Tag, Pagination, ButtonToolbar,
+    Pagination, ButtonToolbar,
+    Grid,
+    Row,
+    Col,
 } from 'rsuite';
 import SearchIcon from '@rsuite/icons/Search';
 const { Column, HeaderCell, Cell } = Table;
+import { MdSave } from 'react-icons/md';
 import {
     useGetIcdListQuery,
 } from '@/services/setupService';
-import {
-    useGetDepartmentsQuery,
-    useGetFacilitiesQuery,
-    useGetPractitionersQuery,
-    useSavePractitionerMutation,
-    useDeactiveActivePractitionerMutation,
-    useRemovePractitionerMutation,
-    useGetUserRecordQuery,
-    useGetUsersQuery
-} from '@/services/setupService';
+import { useAppDispatch } from '@/hooks';
+
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import EditIcon from '@rsuite/icons/Edit';
 import TrashIcon from '@rsuite/icons/Trash';
-import { ApPractitioner ,ApVaccine} from '@/types/model-types';
-import { newApPractitioner,newApVaccine } from '@/types/model-types-constructor';
+import { notify } from '@/utils/uiReducerActions';
+import {  ApVaccine, ApVaccineBrands } from '@/types/model-types';
+import {  newApVaccine, newApVaccineBrands } from '@/types/model-types-constructor';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList, fromCamelCaseToDBName } from '@/utils';
 import {
-    useGetLovValuesByCodeAndParentQuery,
-    useGetLovValuesByCodeQuery
+    useSaveVaccineMutation,
+    useGetLovValuesByCodeQuery,
+    useGetVaccineListQuery,
+    useRemoveVaccineMutation,
+    useDeactiveActivVaccineMutation,
+    useSaveVaccineBrandMutation,
+    useGetVaccineBrandsListQuery, useDeactiveActivVaccineBrandsMutation
 } from '@/services/setupService';
 import ReloadIcon from '@rsuite/icons/Reload';
-
 const Vaccine = () => {
-    const [practitioner, setPractitioner] = useState<ApPractitioner>({ ...newApPractitioner });
+
     const [vaccine, setVaccine] = useState<ApVaccine>({ ...newApVaccine });
+    const [vaccineBrand, setVaccineBrand] = useState<ApVaccineBrands>({ ...newApVaccineBrands });
     const [popupOpen, setPopupOpen] = useState(false);
-    const [newPrac, setnewPrac] = useState(false);
+    const [editBrand, setEditBrand] = useState(false);
+    const [possibleDescription, setPossibleDescription] = useState('');
     const [searchKeyword, setSearchKeyword] = useState('');
-    const [indicationsIcd, setIndicationsIcd] = useState(null);
-    const [facilityListRequest, setFacilityListRequest] = useState<ListRequest>({
-        ...initialListRequest
-    });
-    const [departmentListRequest, setDepartmentListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        ignore: true
-    });
+    const [indicationsIcd, setIndicationsIcd] = useState({ indications: null });
+    const [indicationsDescription, setindicationsDescription] = useState<string>('');
+    const [saveVaccine, saveVaccineMutation] = useSaveVaccineMutation();
+    const [saveVaccineBrand, saveVaccineBrandMutation] = useSaveVaccineBrandMutation();
+    const [removeVaccine, removeVaccineMutation] = useRemoveVaccineMutation();
+    const [deactiveVaccine, deactiveVaccineMutation] = useDeactiveActivVaccineMutation();
+    const [deactiveVaccineBrand, deactiveVaccineBrandMutation] = useDeactiveActivVaccineBrandsMutation();
+    const dispatch = useAppDispatch();
+    const [edit_new, setEdit_new] = useState(false);
 
     //LOV
     const { data: typeLovQueryResponse } = useGetLovValuesByCodeQuery('VACCIN_TYP');
     const { data: rOALovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
     const { data: medAdversLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ADVERS_EFFECTS');
-    const [edit_new, setEdit_new] = useState(false);
+    const { data: manufacturerLovQueryResponse } = useGetLovValuesByCodeQuery('GEN_MED_MANUFACTUR');
+    const { data: volumUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+
+   
 
 
-    const [dactivePractitioner, dactivePractitionerMutation] = useDeactiveActivePractitionerMutation();
-    const [removePractitioner, removePractitionerMutation] = useRemovePractitionerMutation();
-    const { data: getOneUser } = useGetUserRecordQuery(
-        { userId: practitioner.linkedUser },
-        { skip: !practitioner.linkedUser }
-    );
     const handleClear = () => {
         setPopupOpen(false);
-
+        setVaccine(newApVaccine);
+        setVaccineBrand(newApVaccineBrands);
+        setEditBrand(false);
+        setindicationsDescription('');
+        setPossibleDescription('');
     };
-    useEffect(() => {
-        if (getOneUser) {
-            setPractitioner({
-                ...practitioner,
-                practitionerFullName: getOneUser.fullName,
-                practitionerFirstName: getOneUser.firstName,
-                practitionerLastName: getOneUser.lastName,
-                practitionerEmail: getOneUser.email,
-                genderLkey: getOneUser.sexAtBirthLkey,
-                practitionerPhoneNumber: getOneUser.phoneNumber
-
-            });
-        }
-    }, [getOneUser]);
-
     const handleNew = () => {
         setEdit_new(true);
-        setnewPrac(true)
-    };
 
+    };
     const handleEdit = () => {
         setEdit_new(true);
-        setnewPrac(false)
+        setPopupOpen(true);
 
     };
+    const handleSave = () => {
+        saveVaccine({ ...vaccine, possibleReactions: possibleDescription, indications: indicationsDescription, isValid: true }).unwrap().then(() => {
+            if (vaccine.key) {
+                dispatch(notify('Vaccine Updated Successfully'));
+            }
+            else { dispatch(notify('Vaccine Added Successfully')); }
 
-
+            refetch();
+            setEdit_new(false);
+            setEditBrand(true)
+        });
+    };
+    const handleSaveVaccineBrand = () => {
+        saveVaccineBrand({ ...vaccineBrand, vaccineKey: vaccine.key, valid: true }).unwrap().then(() => {
+            setVaccineBrand({...newApVaccineBrands,brandName:'',});
+            dispatch(notify('Vaccine Brand Added Successfully'));
+            refetchVaccineDrand();
+            setVaccineBrand({...newApVaccineBrands, vaccineKey:vaccine.key,
+                brandName:'',
+                manufacturerLkey:null,
+                volume:0,
+                unitLkey:null,
+                marketingAuthorizationHolder:''});
+            setEdit_new(false);
+        });
+    };
 
     useEffect(() => {
-        if (practitioner.primaryFacilityKey) {
-            setDepartmentListRequest(
-                addFilterToListRequest('facility_key', 'match', practitioner.primaryFacilityKey, {
-                    ...departmentListRequest,
-                    ignore: false
-                })
-            );
+        if (saveVaccineMutation && saveVaccineMutation.status === 'fulfilled') {
+            setVaccine(saveVaccineMutation.data);
+            refetch();
         }
-    }, [practitioner.primaryFacilityKey]);
-
-
+    }, [saveVaccineMutation]);
 
     const isSelected = rowData => {
-        if (rowData && practitioner && rowData.key === practitioner.key) {
+        if (rowData && vaccine && vaccine.key === rowData.key) {
             return 'selected-row';
         } else return '';
     };
@@ -145,21 +145,52 @@ const Vaccine = () => {
         }
     };
 
+    const isSelectedBrand = rowData => {
+        if (rowData && vaccineBrand && vaccineBrand.key === rowData.key) {
+            return 'selected-row';
+        } else return '';
+    };
     const handleDeactive = () => {
-        console.log(practitioner)
-        dactivePractitioner(practitioner).unwrap().then(() => {
-            setPractitioner(newApPractitioner)
+
+        deactiveVaccine(vaccine).unwrap().then(() => {
+            refetch();
+            if (vaccine.isValid) { dispatch(notify('Vaccine Deactived Successfully')); }
+            else { dispatch(notify('Vaccine Activated Successfully')); }
+
+
+            setVaccine(newApVaccine);
+        })
+    };
+    const handleDeactiveBrand = () => {
+
+        deactiveVaccineBrand(vaccineBrand).unwrap().then(() => {
+            refetchVaccineDrand();
+            if (vaccineBrand.isValid) { dispatch(notify('Vaccine Brand Deactived Successfully')); }
+            else { dispatch(notify('Vaccine Brand Activated Successfully')); }
+            refetchVaccineDrand();
+
+            setVaccineBrand(newApVaccineBrands);
         })
     };
 
     const handleDelete = () => {
-        removePractitioner(practitioner).unwrap().then(() => {
-            setPractitioner(newApPractitioner)
+        removeVaccine(vaccine).unwrap().then(() => {
+            setVaccine(newApVaccine);
+            dispatch(notify('Vaccine Deleted Successfully'));
+            refetch();
         })
     };
 
-    ///
-
+    const [icdListRequest, setIcdListRequest] = useState<ListRequest>({
+        ...initialListRequest,
+        filters: [
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
+            }
+        ],
+    });
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -171,7 +202,41 @@ const Vaccine = () => {
         ],
     });
 
-    const { data: icdListResponseLoading } = useGetIcdListQuery(listRequest);
+    const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListRequest>({
+        ...initialListRequest,
+        filters: [
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined,
+            },
+        ],
+    });
+
+    useEffect(() => {
+        setVaccineBrandsListRequest((prev) => ({
+            ...prev,
+            filters: [
+                {
+                    fieldName: 'deleted_at',
+                    operator: 'isNull',
+                    value: undefined,
+                },
+                ...(vaccine?.key
+                    ? [
+                        {
+                            fieldName: 'vaccine_key',
+                            operator: 'match',
+                            value: vaccine.key,
+                        },
+                    ]
+                    : []),
+            ],
+        }));
+    }, [vaccine?.key]);
+    const { data: vaccineBrandsListResponseLoading, refetch: refetchVaccineDrand } = useGetVaccineBrandsListQuery(vaccineBrandsListRequest);
+    const { data: vaccineListResponseLoading, refetch } = useGetVaccineListQuery(listRequest);
+    const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
     const handleSearch = value => {
         setSearchKeyword(value);
 
@@ -179,7 +244,7 @@ const Vaccine = () => {
     };
     useEffect(() => {
         if (searchKeyword.trim() !== "") {
-            setListRequest(
+            setIcdListRequest(
                 {
                     ...initialListRequest,
                     filterLogic: 'or',
@@ -204,9 +269,43 @@ const Vaccine = () => {
         ...item,
         combinedLabel: `${item.icdCode} - ${item.description}`,
     }));
+    useEffect(() => {
+        if (indicationsIcd.indications != null) {
+
+            setindicationsDescription(prevadminInstructions => {
+                const currentIcd = icdListResponseLoading?.object?.find(
+                    item => item.key === indicationsIcd.indications
+                );
+
+                if (!currentIcd) return prevadminInstructions;
+
+                const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
+
+                return prevadminInstructions
+                    ? `${prevadminInstructions}\n${newEntry}`
+                    : newEntry;
+            });
+        }
+    }, [indicationsIcd.indications]);
+    useEffect(() => {
+        if (vaccine.possibleReactions != null) {
+            const foundItem = medAdversLovQueryResponse?.object?.find(
+                item => item.key === vaccine.possibleReactions
+            );
+
+            const displayValue = foundItem?.lovDisplayVale || '';
+
+            if (displayValue) {
+                setPossibleDescription(prevadminInstructions =>
+                    prevadminInstructions
+                        ? `${prevadminInstructions}, ${displayValue}`
+                        : displayValue
+                );
+            }
+        }
+    }, [vaccine.possibleReactions]);
 
 
-    console.log("icdListResponseLoading---->", icdListResponseLoading)
     return (
 
         <Panel
@@ -217,14 +316,14 @@ const Vaccine = () => {
             }
         >
             <ButtonToolbar>
-                <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={() => { setPopupOpen(true) }}>
+                <IconButton appearance="primary" color="violet" icon={<AddOutlineIcon />} onClick={() => { setPopupOpen(true), setVaccine({ ...newApVaccine }), setEdit_new(true) }}>
                     Add New
                 </IconButton>
                 <IconButton
-                    disabled={!practitioner.key}
+                    disabled={!vaccine.key}
                     appearance="primary"
                     onClick={() => handleEdit()}
-                    color="green"
+                    color="cyan"
                     icon={<EditIcon />}
                 >
                     Edit Selected
@@ -232,41 +331,40 @@ const Vaccine = () => {
 
 
                 <IconButton
-                    disabled={!practitioner.key}
+                    disabled={!vaccine.key}
                     appearance="primary"
-                    color="red"
+                    color="blue"
                     icon={<TrashIcon />}
                     onClick={() => { handleDelete() }}
                 >
                     Delete Selected
                 </IconButton>
-                {
-                    practitioner.isValid || practitioner.key == null ?
-                        <IconButton
-                            disabled={!practitioner.key}
-                            appearance="primary"
-                            color="orange"
-                            icon={<TrashIcon />}
-                            onClick={() => {
-                                handleDeactive()
-                            }}
-                        >
-                            Deactivate Selected
-                        </IconButton>
-                        :
-                        <IconButton
-                            disabled={!practitioner.key}
-                            appearance="primary"
-                            color="green"
-                            icon={<ReloadIcon />}
-                            onClick={() => {
-                                handleDeactive()
-                            }}
-                        >
-                            Activate
-                        </IconButton>
 
-                }
+                <IconButton
+                    disabled={!vaccine.isValid}
+                    appearance="ghost"
+                    color="cyan"
+                    icon={<TrashIcon />}
+                    onClick={() => {
+                        handleDeactive()
+                    }}
+                >
+                    Deactivate Selected
+                </IconButton>
+
+                <IconButton
+                    disabled={vaccine.isValid || vaccine.key === undefined}
+                    appearance="ghost"
+                    color="violet"
+                    icon={<ReloadIcon />}
+                    onClick={() => {
+                        handleDeactive()
+                    }}
+                >
+                    Activate
+                </IconButton>
+
+
 
 
             </ButtonToolbar>
@@ -287,62 +385,66 @@ const Vaccine = () => {
                 rowHeight={60}
                 bordered
                 cellBordered
-                data={[]}
+                data={vaccineListResponseLoading?.object ?? []}
                 onRowClick={rowData => {
-                    setPractitioner(rowData);
-
-
+                    setVaccine(rowData);
                 }}
                 rowClassName={isSelected}
             >
 
-                <Column sortable flexGrow={4}>
+                <Column sortable flexGrow={2}>
                     <HeaderCell>
-                        <Input onChange={e => handleFilterChange('practitionerFullName', e)} />
+                        <Input onChange={e => handleFilterChange('vaccineName', e)} />
                         <Translate>Vaccine Name</Translate>
                     </HeaderCell>
-                    <Cell dataKey="practitionerFullName" />
+                    <Cell dataKey="vaccineName" />
                 </Column>
 
-                <Column sortable flexGrow={4} >
+                <Column sortable flexGrow={2} >
                     <HeaderCell>
-                        <Input onChange={e => handleFilterChange('linkedUser', e)} />
+                        <Input onChange={e => handleFilterChange('vaccineCode', e)} />
                         <Translate>Code</Translate>
                     </HeaderCell>
-                    <Cell dataKey="specialty" />
+                    <Cell dataKey="vaccineCode" />
                 </Column>
-                <Column sortable flexGrow={3}>
+                <Column sortable flexGrow={2}>
                     <HeaderCell>
-                        <Input onChange={e => handleFilterChange('specialty', e)} />
+                        <Input onChange={e => handleFilterChange('typeLkey', e)} />
                         <Translate>Type</Translate>
                     </HeaderCell>
-                    <Cell dataKey="specialty" />
+                    <Cell>
+                        {rowData =>
+                            rowData.typeLvalue
+                                ? rowData.typeLvalue.lovDisplayVale
+                                : rowData.typeLkey
+                        }
+                    </Cell>
                 </Column>
                 <Column sortable flexGrow={2}>
                     <HeaderCell>
                         <Input onChange={e => {
-                            handleFilterChange('isValid', e);
-                            console.log(e)
+                            handleFilterChange('atcCode', e);
+
                         }} />
 
                         <Translate>ATC code</Translate>
                     </HeaderCell>
-                    <Cell dataKey="jobRole" />
+                    <Cell dataKey="atcCode" />
                 </Column>
                 <Column sortable flexGrow={2}>
                     <HeaderCell>
                         <Input onChange={e => {
                             handleFilterChange('isValid', e);
-                            console.log(e)
+
                         }} />
 
                         <Translate>Status</Translate>
                     </HeaderCell>
-                    <Cell dataKey="jobRole" />
+                    <Cell>{rowData => rowData.isValid ? "Valid" : "InValid"}</Cell>
                 </Column>
             </Table>
 
-            {/* <div style={{ padding: 20 }}>
+            <div style={{ padding: 20 }}>
                 <Pagination
                     prev
                     next
@@ -362,9 +464,9 @@ const Vaccine = () => {
                     onChangeLimit={pageSize => {
                         setListRequest({ ...listRequest, pageSize });
                     }}
-                    total={0}
+                    total={vaccineListResponseLoading?.extraNumeric ?? 0}
                 />
-            </div> */}
+            </div>
 
 
             <Modal
@@ -384,6 +486,7 @@ const Vaccine = () => {
                             fieldName="vaccineCode"
                             record={vaccine}
                             setRecord={setVaccine}
+                            disabled={!edit_new}
                         />
                         <MyInput
                             width={200}
@@ -393,6 +496,7 @@ const Vaccine = () => {
                             record={vaccine}
                             setRecord={setVaccine}
                             plachplder={"Medical Component"}
+                            disabled={!edit_new}
                         />
                         <MyInput
                             width={200}
@@ -401,6 +505,7 @@ const Vaccine = () => {
                             fieldName="atcCode"
                             record={vaccine}
                             setRecord={setVaccine}
+                            disabled={!edit_new}
                         />
                         <MyInput
                             width={200}
@@ -413,6 +518,7 @@ const Vaccine = () => {
                             selectDataValue="key"
                             record={vaccine}
                             setRecord={setVaccine}
+                            disabled={!edit_new}
                         />
                         <br />
                         <MyInput
@@ -426,6 +532,7 @@ const Vaccine = () => {
                             selectDataValue="key"
                             record={vaccine}
                             setRecord={setVaccine}
+                            disabled={!edit_new}
                         />
                         <MyInput
                             width={200}
@@ -434,6 +541,7 @@ const Vaccine = () => {
                             fieldName="siteOfAdministration"
                             record={vaccine}
                             setRecord={setVaccine}
+                            disabled={!edit_new}
                         />
                         <MyInput
                             width={200}
@@ -442,6 +550,7 @@ const Vaccine = () => {
                             fieldName="postOpeningDuration"
                             record={vaccine}
                             setRecord={setVaccine}
+                            disabled={!edit_new}
                         />
                         <MyInput
                             width={200}
@@ -454,80 +563,278 @@ const Vaccine = () => {
                             selectDataValue="key"
                             record={vaccine}
                             setRecord={setVaccine}
+                            disabled={!edit_new}
                         />
                         <br />
-                        <div style={{display:"flex",alignItems:'center',gap:'10px'}}>
-                        <div>
-                            <Text style={{ fontWeight:'800' ,fontSize:'16px'}}>Indications</Text>
-                            <InputGroup inside style={{ width: '415px' }}>
-                                <Input
-                                    placeholder="Search ICD"
-                                    value={searchKeyword}
-                                    onChange={handleSearch}
-                                />
-                                <InputGroup.Button>
-                                    <SearchIcon />
-                                </InputGroup.Button>
-                            </InputGroup>
-                            {searchKeyword && (
-                                <Dropdown.Menu className="dropdown-menuresult">
-                                    {modifiedData?.map(mod => (
-                                        <Dropdown.Item
-                                            key={mod.key}
-                                            eventKey={mod.key}
-                                            onClick={() => {
-                                                setVaccine({
-                                                  ...vaccine
-                                                })
-                                                setIndicationsIcd(mod)
-                                                setSearchKeyword("");}}
-                                        >
-                                            <span style={{ marginRight: "19px" }}>{mod.icdCode}</span>
-                                            <span>{mod.description}</span>
-                                        </Dropdown.Item>
-                                    ))}
-                                </Dropdown.Menu>
-                            )}
-                        </div>
+                        <div style={{ display: "flex", alignItems: 'center', gap: '10px' }}>
+                            <div>
+                                <Text style={{ fontWeight: '800', fontSize: '16px' }}>Indications</Text>
+                                <InputGroup inside style={{ width: '415px' }}>
+                                    <Input
+                                        disabled={!edit_new}
+                                        placeholder="Search ICD"
+                                        value={searchKeyword}
+                                        onChange={handleSearch}
+                                    />
+                                    <InputGroup.Button>
+                                        <SearchIcon />
+                                    </InputGroup.Button>
+                                </InputGroup>
+                                {searchKeyword && (
+                                    <Dropdown.Menu disabled={!edit_new} className="dropdown-menuresult">
+                                        {modifiedData?.map(mod => (
+                                            <Dropdown.Item
+                                                key={mod.key}
+                                                eventKey={mod.key}
+                                                onClick={() => {
+                                                    setIndicationsIcd({
+                                                        ...indicationsIcd,
+                                                        indications: mod.key
+                                                    })
+                                                    setSearchKeyword("");
+                                                }}
+                                            >
+                                                <span style={{ marginRight: "19px" }}>{mod.icdCode}</span>
+                                                <span>{mod.description}</span>
+                                            </Dropdown.Item>
+                                        ))}
+                                    </Dropdown.Menu>
+                                )}
+                            </div>
 
-                        <MyInput
-                            width={415}
-                            column
-                            fieldLabel="Possible Reactions"
-                            fieldType="select"
-                            fieldName=""
-                            selectData={medAdversLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            record={vaccine}
-                            setRecord={setVaccine}
-                        />
+                            <MyInput
+                                width={415}
+                                column
+                                fieldLabel="Possible Reactions"
+                                fieldType="select"
+                                fieldName={'possibleReactions'}
+                                selectData={medAdversLovQueryResponse?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                record={vaccine}
+                                setRecord={setVaccine}
+                                disabled={!edit_new}
+                            />
                         </div>
-                       
-                    
-                    <MyInput width={415} column fieldType="textarea" fieldName="" record={""} setRecord={""} />
-                    
-                       <MyInput width={415} column fieldType="textarea" fieldName="" record={""} setRecord={""} />
-                       <MyInput width={415} column fieldType="textarea" fieldName="contraindicationsAndPrecautions" record={vaccine}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <Input as="textarea"
+                                disabled={true}
+                                onChange={(e) => setindicationsDescription} value={indicationsDescription || vaccine.indications}
+                                style={{ width: 415 }} rows={4} />
+
+                            <Input as="textarea"
+                                disabled={true}
+                                onChange={(e) => setPossibleDescription} value={possibleDescription || vaccine.possibleReactions}
+                                style={{ width: 415 }} rows={4} /></div>
+
+
+                        <MyInput width={415} column fieldType="textarea" disabled={!edit_new} fieldName="contraindicationsAndPrecautions" record={vaccine}
                             setRecord={setVaccine} />
-                    
-                       <MyInput width={415} column fieldType="textarea" fieldName="storageAndHandling" record={vaccine}
+
+                        <MyInput width={415} column fieldType="textarea" disabled={!edit_new} fieldName="storageAndHandling" record={vaccine}
                             setRecord={setVaccine} />
                     </Form>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        alignItems: 'center',
+
+                        width: 840
+                    }}> <div><Button color='blue' onClick={() => handleClear()} appearance="ghost" >
+                        Cancel
+                    </Button></div>
+                        <Divider vertical />
+                        <div> <Button
+                            onClick={() => {
+                                handleSave();
+                            }}
+                            appearance="primary"
+                            color='violet'
+                        >
+                            Save
+                        </Button></div>
+                        <br />
+                    </div>
+                    <br />
+                    <Panel header="Add Brand Products of Vaccine " collapsible bordered>
+                        <div>
+                            <Form layout="inline" fluid>
+
+                                <MyInput
+                                    required
+                                    width={150}
+                                    column
+                                    fieldLabel="Brand Name"
+                                    fieldName="brandName"
+                                    record={vaccineBrand}
+                                    setRecord={setVaccineBrand}
+                                    disabled={!editBrand && !vaccine.key}
+                                />
+                                <MyInput
+                                    required
+                                    width={150}
+                                    column
+                                    fieldLabel="Manufacturer"
+                                    fieldType="select"
+                                    fieldName="manufacturerLkey"
+                                    selectData={manufacturerLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    record={vaccineBrand}
+                                    setRecord={setVaccineBrand}
+                                    disabled={!editBrand && !vaccine.key}
+                                />
+                                <MyInput
+                                    required
+                                    width={210}
+                                    column
+                                    fieldType="number"
+                                    fieldLabel="Volume"
+                                    fieldName="volume"
+                                    record={vaccineBrand}
+                                    setRecord={setVaccineBrand}
+                                    disabled={!editBrand && !vaccine.key}
+                                />
+                                <MyInput
+                                    required
+                                    width={100}
+                                    column
+                                    fieldLabel="Unit"
+                                    fieldType="select"
+                                    fieldName="unitLkey"
+                                    selectData={volumUnitLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    record={vaccineBrand}
+                                    setRecord={setVaccineBrand}
+                                    disabled={!editBrand && !vaccine.key}
+
+                                />
+                                <MyInput
+                                    width={200}
+                                    column
+                                    fieldLabel="Marketing Authorization Holder"
+                                    fieldName="marketingAuthorizationHolder"
+                                    record={vaccineBrand}
+                                    setRecord={setVaccineBrand}
+                                    disabled={!editBrand && !vaccine.key}
+
+                                />
+
+                            </Form>
+                        </div>
+
+                        <Panel bordered>
+
+                            <Grid fluid>
+                                <Row gutter={15}>
+
+
+                                    <Col xs={23}>
+
+                                        <Grid fluid>
+
+                                            <Row gutter={15} style={{ border: '1px solid #e1e1e1' }}>
+
+                                                <Col xs={20}></Col>
+                                                <Col >
+                                                    <ButtonToolbar zoom={.8} style={{ padding: '6px', display: 'flex' }}>
+                                                        <IconButton
+                                                            size="xs"
+                                                            disabled={vaccineBrand.brandName === '' || vaccineBrand.manufacturerLkey === undefined || vaccineBrand.volume === 0 || vaccineBrand.unitLkey === undefined}
+                                                            onClick={handleSaveVaccineBrand}
+                                                            appearance="primary"
+                                                            color="violet"
+                                                            icon={<MdSave />}
+                                                        >
+
+                                                        </IconButton>
+
+                                                        <IconButton
+                                                            disabled={!vaccineBrand.key}
+                                                            size="xs"
+                                                            appearance="primary"
+                                                            onClick={handleDeactiveBrand}
+                                                            color="blue"
+                                                            icon={<TrashIcon />}
+                                                        >
+
+                                                        </IconButton>
+
+
+
+                                                    </ButtonToolbar>
+                                                </Col>
+                                            </Row>
+                                            <Row gutter={18}>
+                                                <Col xs={24}>
+                                                    <Table
+                                                        bordered
+                                                        onRowClick={rowData => {
+
+                                                            setVaccineBrand(rowData)
+                                                        }}
+                                                        rowClassName={isSelectedBrand}
+                                                        data={vaccine.key ? vaccineBrandsListResponseLoading?.object ?? [] : []}
+                                                    >
+                                                        <Table.Column flexGrow={2}>
+                                                            <Table.HeaderCell>Brand Name</Table.HeaderCell>
+                                                            <Table.Cell dataKey="brandName" />
+                                                        </Table.Column>
+                                                        <Table.Column flexGrow={2}>
+
+                                                            <Table.HeaderCell>Manufacturer</Table.HeaderCell>
+                                                            <Table.Cell>
+
+                                                                {rowData =>
+                                                                    rowData.manufacturerLvalue
+                                                                        ? rowData.manufacturerLvalue.lovDisplayVale
+                                                                        : rowData.manufacturerLkey
+                                                                }
+                                                            </Table.Cell>
+                                                        </Table.Column>
+                                                        <Table.Column flexGrow={2}>
+                                                            <Table.HeaderCell>Volume</Table.HeaderCell>
+                                                            <Table.Cell>
+
+                                                                {rowData => (
+                                                                    <>
+                                                                        {rowData.volume}{" "}
+                                                                        {rowData.unitLvalue
+                                                                            ? rowData.unitLvalue.lovDisplayVale
+                                                                            : rowData.unitLkey}
+                                                                    </>
+                                                                )}
+                                                            </Table.Cell>
+                                                        </Table.Column>
+                                                        <Table.Column flexGrow={4}>
+                                                            <Table.HeaderCell>Marketing Authorization Holder</Table.HeaderCell>
+                                                            <Table.Cell dataKey="marketingAuthorizationHolder" >
+
+                                                            </Table.Cell>
+                                                        </Table.Column>
+                                                        <Table.Column flexGrow={2}>
+                                                            <Table.HeaderCell>Status</Table.HeaderCell>
+                                                            <Cell dataKey="isValid">
+                                                                {rowData => (rowData.isValid ? 'Valid' : 'InValid')}
+                                                            </Cell>
+                                                        </Table.Column>
+
+                                                    </Table>
+                                                </Col>
+                                            </Row>
+                                        </Grid>
+                                    </Col>
+                                </Row>
+                            </Grid>
+                        </Panel>
+                    </Panel>
+
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button onClick={() => handleClear()} appearance="subtle">
-                        Cancel
-                    </Button>
-                    <Divider vertical />
-                    <Button
-                        //   onClick={() => {
-                        //     handleSaveSecondaryDocument();
-                        //   }}
-                        appearance="primary"
-                    >
-                        Save
-                    </Button>
+        <Button onClick={handleClear} appearance="ghost" color='blue'>
+                  Close
+                </Button>
                 </Modal.Footer>
             </Modal>
         </Panel>

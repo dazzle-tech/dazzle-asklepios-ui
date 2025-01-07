@@ -744,6 +744,56 @@ export interface ApDiagnosticTestSpecialPopulation {
 	isValid:boolean;
 } 
 
+export interface ApDrugOrder { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	drugorderId:string;
+	saveDraft:boolean;
+} 
+
+export interface ApDrugOrderMedications { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	drugOrderKey:string;
+	genericMedicationsKey:string;
+	drugOrderTypeLkey:string;
+	doseUnitLkey:string;
+	roaLkey:string;
+	frequency:number;
+	priorityLkey:string;
+	pharmacyDepartmentKey:string;
+	dose:number;
+	notes:string;
+	prnIndication:string;
+	specialInstructions:string;
+	parametersToMonitor:string;
+	startDateTime:number;
+	maximumDose:number;
+	genericSubstitute:boolean;
+	chronicMedication:boolean;
+	patientOwnMedication:boolean;
+	administrationInstructions:string;
+	duration:number;
+	durationTypeLkey:string;
+	statusLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
 export interface ApDvmRule { 
 	key:string;
 	screenMetadataKey:string;
@@ -2061,6 +2111,23 @@ export interface ApVaccine {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
+} 
+
+export interface ApVaccineBrands { 
+	key:string;
+	vaccineKey:string;
+	brandName:string;
+	manufacturerLkey:string;
+	volume:number;
+	unitLkey:string;
+	marketingAuthorizationHolder:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
 } 
 
 export interface ApVisitAllergies { 

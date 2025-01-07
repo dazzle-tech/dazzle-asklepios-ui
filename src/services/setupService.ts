@@ -26,7 +26,9 @@ import {
   ApServiceCdt,
   ApUser,
   ApUserFacilitiyDepartments,
-  ApUserMedicalLicense
+  ApUserMedicalLicense,
+  ApVaccine,
+  ApVaccineBrands
 
 } from '@/types/model-types';
 
@@ -729,6 +731,77 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    saveVaccine: builder.mutation({
+      query: (vaccine: ApVaccine) => ({
+        url: `/setup/save-vaccine`,
+        method: 'POST',
+        body: vaccine
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+
+    }),
+    getVaccineList: builder.query({
+      query: (listRequest: ListRequest) => ({
+         url: `/setup/vaccine-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeVaccine: builder.mutation({
+      query: (vaccine: ApVaccine) => ({
+        url: `/setup/remove-vaccine`,
+        method: 'POST',
+        body: vaccine,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+    }),
+    deactiveActivVaccine: builder.mutation({
+      query: (vaccine: ApVaccine) => ({
+        url: `/setup/deactive-avtice-vaccine`,
+        method: 'POST',
+        body: vaccine,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+    }),
+    saveVaccineBrand: builder.mutation({
+      query: (brand: ApVaccineBrands) => ({
+        url: `/setup/save-vaccine-brands`,
+        method: 'POST',
+        body: brand
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+
+    }),
+    getVaccineBrandsList: builder.query({
+      query: (listRequest: ListRequest) => ({
+         url: `/setup/vaccine-brands-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    deactiveActivVaccineBrands: builder.mutation({
+      query: (vaccineBrand: ApVaccineBrands) => ({
+        url: `/setup/deactive-avtice-vaccine-brand`,
+        method: 'POST',
+        body: vaccineBrand,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+    }),
   })
 
 });
@@ -805,5 +878,12 @@ export const {
   useRemoveUserFacilityDepartmentMutation,
   useGetUserRecordQuery,
   useSaveAgeGroupMutation,
-  useGetAgeGroupQuery
+  useGetAgeGroupQuery,
+  useSaveVaccineMutation,
+  useGetVaccineListQuery,
+  useRemoveVaccineMutation,
+  useDeactiveActivVaccineMutation,
+  useSaveVaccineBrandMutation,
+  useGetVaccineBrandsListQuery,
+  useDeactiveActivVaccineBrandsMutation
 } = setupService;
