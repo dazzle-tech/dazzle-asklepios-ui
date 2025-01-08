@@ -16,6 +16,7 @@ import Referrals from '../encounter-component/referrals';
 import SOAP from '../encounter-component/s.o.a.p';
 import VaccineReccord from '../encounter-component/vaccine-reccord';
 import Allergies from '../encounter-component/allergies';
+import DrugOrder from '../encounter-component/drug-order';
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -87,9 +88,6 @@ import EncounterMainInfoSection from '../encounter-main-info-section';
 const Encounter = () => {
   const encounterStatusNew = '91063195286200'; // TODO change this to be fetched from redis based on LOV CODE
   const patientSlice = useAppSelector(state => state.patient);
-  console.log(patientSlice.patient);
-  console.log(patientSlice.encounter)
-
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [startEncounter, startEncounterMutation] = useStartEncounterMutation();
@@ -369,6 +367,13 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                     
                     <FontAwesomeIcon icon={faFilePrescription } style={{ margin: '3px'}} />
                       <Translate>Prescription</Translate>
+                    </List.Item>
+                    <List.Item 
+                     style={{ display: 'flex', alignItems: 'center' }}
+                     onClick={() => handleMenuItemClick(<DrugOrder  />)}>
+                    
+                    <FontAwesomeIcon icon={faFilePrescription } style={{ margin: '3px'}} />
+                      <Translate>Drug Order</Translate>
                     </List.Item>
                     <List.Item 
                      style={{ display: 'flex', alignItems: 'center' }}
