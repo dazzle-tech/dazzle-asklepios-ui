@@ -54,7 +54,6 @@ import BlockIcon from '@rsuite/icons/Block';
 import SearchIcon from '@rsuite/icons/Search';
 import MyInput from '@/components/MyInput';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { object } from 'prop-types';
 import { ApCustomeInstructions, ApGenericMedication, ApPrescription, ApPrescriptionMedications } from '@/types/model-types';
 import { newApCustomeInstructions, newApGenericMedication, newApPrescription, newApPrescriptionMedications } from '@/types/model-types-constructor';
 import {
@@ -64,7 +63,7 @@ import {
     useGetPrescriptionInstructionQuery,
 
 } from '@/services/medicationsSetupService';
-import { mediaQuerySizeMap } from 'rsuite/esm/useMediaQuery/useMediaQuery';
+
 
 const Prescription = () => {
     const patientSlice = useAppSelector(state => state.patient);
@@ -250,6 +249,7 @@ const Prescription = () => {
             console.log(genericMedicationActiveIngredientListResponseData?.object)
         })
     }, [listGinricRequest]);
+   
     useEffect(() => {
         if (prescriptions?.object) {
             const foundPrescription = prescriptions.object.find(prescription => {
@@ -377,6 +377,7 @@ const Prescription = () => {
 
         saveData();
     }, [inst]);
+
     useEffect(() => {
         console.log(preKey);
         if(preKey==null){
@@ -390,6 +391,7 @@ const Prescription = () => {
             setPrescription(foundPrescription)
         }
     }, [preKey]);
+    
     useEffect(() => {
 
     }, [adminInstructions])
@@ -671,7 +673,6 @@ const Prescription = () => {
                     labelKey="prescriptionId"
                     valueKey="key"
                     placeholder="prescription"
-                    //   value={selectedDiagnose.diagnoseCode}
                     onChange={e => {
                         setPreKey(e);
                         console.log("kk"+preKey);
@@ -1200,7 +1201,7 @@ const Prescription = () => {
                         setShowCanceled(!showCanceled);
                     }}
                 >
-                    Show canceled test
+                    Show canceled Prescription
                 </Checkbox>
             </div>
 

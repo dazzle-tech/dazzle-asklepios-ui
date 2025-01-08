@@ -2128,6 +2128,7 @@ export interface ApVaccineBrands {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+
 } 
 
 export interface ApVisitAllergies { 

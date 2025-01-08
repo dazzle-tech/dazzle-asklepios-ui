@@ -2,7 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApConsultationOrder, ApCustomeInstructions, ApEncounter, ApPatientDiagnose, ApPatientEncounterOrder, ApPatientPlan, ApPrescription, ApPrescriptionMedications, ApReviewOfSystem, ApVisitAllergies } from '@/types/model-types';
+import { ApConsultationOrder, ApCustomeInstructions, ApDrugOrder, ApDrugOrderMedications, ApEncounter, ApPatientDiagnose, ApPatientEncounterOrder, ApPatientPlan, ApPrescription, ApPrescriptionMedications, ApReviewOfSystem, ApVisitAllergies } from '@/types/model-types';
 
 export const encounterService = createApi({
   reducerPath: 'encounterApi',
@@ -278,6 +278,42 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
+    getDrugOrder: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/drug_order-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    SaveDrugOrder: builder.mutation({
+      query: (co: ApDrugOrder) => ({
+        url: `/encounter/save-drug-order`,
+        method: 'POST',
+        body: co
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getDrugOrderMedication: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/drug-order-medic-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+   saveDrugOrderMedication: builder.mutation({
+      query: (order: ApDrugOrderMedications) => ({
+        url: `/encounter/save-drug-order-medic`,
+        method: 'POST',
+        body: order
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
    
   })
 });
@@ -310,7 +346,11 @@ export const {
  useGetCustomeInstructionsQuery,
  useSaveCustomeInstructionsMutation,
  useGetConsultationOrdersQuery,
- useSaveConsultationOrdersMutation
+ useSaveConsultationOrdersMutation,
+ useGetDrugOrderQuery,
+ useSaveDrugOrderMutation,
+ useGetDrugOrderMedicationQuery,
+ useSaveDrugOrderMedicationMutation
 
   
 } = encounterService;

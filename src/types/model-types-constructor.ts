@@ -2129,6 +2129,7 @@ export const newApVaccineBrands:modelTypes.ApVaccineBrands = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+
 } 
 
 export const newApVisitAllergies:modelTypes.ApVisitAllergies = { 
