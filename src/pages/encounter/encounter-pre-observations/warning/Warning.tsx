@@ -102,7 +102,16 @@ const Warning = () => {
     useEffect(() => {
 
     }, [selectedFirstDate]);
+    useEffect(() => {
 
+       if(warning.firstTimeRecorded!=0){
+        setEditDate(false);
+        setSelectedFirstDate(new Date(warning.firstTimeRecorded));
+       }
+       if(warning.sourceOfInformationLkey!=null){
+        seteditSourceof(false);
+     }
+    }, [warning]);
     const handleDateChange = (date) => {
         if (date) {
             const timestamp = date.getTime();
@@ -141,9 +150,10 @@ const Warning = () => {
             sourceOfInformationLkey: null,
             severityLkey: null,
             warningTypeLkey: null
-        }
-
-        )
+        } )
+        setSelectedFirstDate(null);
+        setEditDate(true);
+        seteditSourceof(true);
 
     }
     const OpenCancellationReasonModel = () => {
@@ -335,6 +345,15 @@ const Warning = () => {
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
                             fieldName={'warningTypeLkey'}
+                            record={warning}
+                            setRecord={setWarning}
+                        />
+                               <MyInput
+                            column
+                            disabled={editing}
+                            width={150}
+                           
+                            fieldName={'warning'}
                             record={warning}
                             setRecord={setWarning}
                         />
@@ -580,7 +599,26 @@ const Warning = () => {
                             }
                         </Cell>
                     </Column>
-                   
+                    <Column flexGrow={1} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Warning</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.warning
+                            }
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={1} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Action Taken</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.actionTake
+                            }
+                        </Cell>
+                    </Column>
                     <Column flexGrow={2} fullText>
                         <HeaderCell align="center">
                             <Translate>Notes</Translate>
@@ -638,6 +676,7 @@ const Warning = () => {
                     </Stack>
                 </Modal.Footer>
             </Modal>
+
             <Modal open={openConfirmResolvedModel} onClose={CloseConfirmResolvedModel} overflow  >
                 <Modal.Title>
                     <Translate><h6>Confirm Resolved</h6></Translate>
@@ -658,6 +697,7 @@ const Warning = () => {
                     </Stack>
                 </Modal.Footer>
             </Modal>
+
             <Modal open={openConfirmUndoResolvedModel} onClose={CloseConfirmUndoResolvedModel} overflow  >
                 <Modal.Title>
                     <Translate><h6>Confirm Undo Resolve</h6></Translate>

@@ -792,6 +792,11 @@ export interface ApDrugOrderMedications {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
+	cancellationReason:string;
+	indicationUseLkey:string;
+	indicationIcd:string;
+	indicationSnomed:string;
+	indicationManually:string;
 } 
 
 export interface ApDvmRule { 
@@ -2111,6 +2116,7 @@ export interface ApVaccine {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
+	numberOfDosesLkey:string;
 } 
 
 export interface ApVaccineBrands { 
@@ -2128,7 +2134,21 @@ export interface ApVaccineBrands {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+} 
 
+export interface ApVaccineDose { 
+	key:string;
+	doseName:string;
+	fromAge:number;
+	toAge:number;
+	fromAgeUnitLkey:string;
+	toAgeUnitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
 } 
 
 export interface ApVisitAllergies { 
@@ -2180,5 +2200,6 @@ export interface ApVisitWarning {
 	updatedAt:number;
 	deletedAt:number;
 	severityLkey:string;
+	warning:string;
 } 
 
