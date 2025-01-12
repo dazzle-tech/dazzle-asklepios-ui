@@ -142,12 +142,18 @@ const Allergies = () => {
 
 
     }, [allerges.reactionDescription]);
+        useEffect(() => {
 
+             if(allerges.onsetDate!=0){
+                setEditOnset(false);
+                selectedOnsetDate(new Date(allerges.onsetDate));             
+             }
+             if(allerges.sourceOfInformationLkey!=null){
+                seteditSourceof(false);
+             }
+          }, [allerges]);
 
     const renderRowExpanded = rowData => {
-        console.log("Iam in the expanded Row ")
-        console.log("Children Data:", rowData);  // Add this line to check children data
-
         return (
 
 
@@ -247,11 +253,10 @@ const Allergies = () => {
 
     const handleDateChange = (date) => {
         if (date) {
-            const timestamp = date.getTime();
             if (!editOnset) {
                 setSelectedOnsetDate(date);
             }
-            console.log("Timestamp to send:", timestamp);
+
         }
     };
     const handleClear = () => {
@@ -265,9 +270,10 @@ const Allergies = () => {
             treatmentStrategyLkey: null,
             severityLkey: null
 
-        }
-
-        )
+        } );
+        setSelectedOnsetDate(null);
+        setEditOnset(true);
+        seteditSourceof(true);
         setReactionDescription(null);
     }
     const handleSave = async () => {

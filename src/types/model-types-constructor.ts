@@ -793,6 +793,11 @@ export const newApDrugOrderMedications:modelTypes.ApDrugOrderMedications = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
+	cancellationReason:'',
+	indicationUseLkey:undefined,
+	indicationIcd:'',
+	indicationSnomed:'',
+	indicationManually:'',
 } 
 
 export const newApDvmRule:modelTypes.ApDvmRule = { 
@@ -2112,6 +2117,7 @@ export const newApVaccine:modelTypes.ApVaccine = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
+	numberOfDosesLkey:undefined,
 } 
 
 export const newApVaccineBrands:modelTypes.ApVaccineBrands = { 
@@ -2129,7 +2135,21 @@ export const newApVaccineBrands:modelTypes.ApVaccineBrands = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+} 
 
+export const newApVaccineDose:modelTypes.ApVaccineDose = { 
+	key:undefined,
+	doseName:'',
+	fromAge:0,
+	toAge:0,
+	fromAgeUnitLkey:undefined,
+	toAgeUnitLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
 } 
 
 export const newApVisitAllergies:modelTypes.ApVisitAllergies = { 
@@ -2181,5 +2201,6 @@ export const newApVisitWarning:modelTypes.ApVisitWarning = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	severityLkey:undefined,
+	warning:'',
 } 
 
