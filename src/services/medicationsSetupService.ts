@@ -352,6 +352,17 @@ export const medicationsSetupService = createApi({
           return response.object;
         }
       }),
+      getGenericMedicationWithActiveIngredient: builder.query({
+        query: (active: string) => ({
+          headers: {
+            active
+          },
+          url: `/medications/generic-medication_act-list`
+        }),
+        onQueryStarted: onQueryStarted,
+        keepUnusedDataFor: 5
+  
+      }),
     })
 });
 
@@ -391,6 +402,7 @@ export const {
   useRemovePrescriptionInstructionMutation,
   useSavePrescriptionInstructionMutation,
   useGetActiveIngredientQuery,
-  useSaveActiveIngredientMutation
+  useSaveActiveIngredientMutation,
+  useGetGenericMedicationWithActiveIngredientQuery
  
 } = medicationsSetupService;
