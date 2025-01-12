@@ -885,7 +885,7 @@ const EncounterRegistration = () => {
 
                     fieldType="select"
                     fieldLabel="Visit Type"
-                    fieldName="visitTypeLkey"
+                    fieldName="encounterTypeLkey"
                     selectData={encounterTypeLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"

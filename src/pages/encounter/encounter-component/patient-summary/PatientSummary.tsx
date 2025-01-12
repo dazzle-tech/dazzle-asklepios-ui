@@ -105,6 +105,7 @@ const PatientSummary = ({ patient, encounter }) => {
     const [chartModelIsOpen, setChartModelIsOpen] = useState(false);
     const [majorModelIsOpen, setMajorModelIsOpen] = useState(false);
     const [ChronicModelIsOpen, setChronicModelIsOpen] = useState(false);
+    const[prevKey,setPrevKey]=useState(null);
     const getPrevObjectByPlannedStartDate = (targetDate) => {
 
         const list = encounterPatientList?.object;
@@ -190,6 +191,7 @@ const PatientSummary = ({ patient, encounter }) => {
 
         ]
     });
+    console.log(listdRequest)
     const { data: majorDiagnoses } = useGetPatientDiagnosisQuery(listmRequest)
     const majorDiagnosesCodes = majorDiagnoses?.object.map(diagnose => diagnose);
     const { data: Diagnoses, refetch: fetchlastDiag } = useGetPatientDiagnosisQuery(listdRequest
@@ -199,6 +201,7 @@ const PatientSummary = ({ patient, encounter }) => {
         }
 
     )
+    const [diadiscription,setDiaDescription]=useState(null);
 
 
     const { data: genericMedicationListResponse } = useGetGenericMedicationQuery({ ...initialListRequest });
@@ -237,7 +240,11 @@ const PatientSummary = ({ patient, encounter }) => {
     });
     const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({...listGinricRequest});
 
-   console.log(genericMedicationActiveIngredientListResponseData?.object)
+   useEffect(()=>{
+    console.log(getPrevObjectByPlannedStartDate(patientSlice.encounter.plannedStartDate)?.key)
+    setDiaDescription(Diagnoses?.object[0]?.diagnosisObject)
+  },[ patientSlice.encounter.plannedStartDate]);
+ 
 
     const handleopenchartModel = () => {
         setChartModelIsOpen(true);
@@ -260,7 +267,7 @@ const PatientSummary = ({ patient, encounter }) => {
     const joinValuesFromArray = (values) => {
         return values.filter(Boolean).join(', ');
     };
-
+  
     return (<>
         <h5>Patient Dashboard</h5>
 
@@ -286,7 +293,7 @@ const PatientSummary = ({ patient, encounter }) => {
                             width={140}
                             fieldType="select"
                             fieldLabel="Visit Type"
-                            fieldName="visitTypeLkey"
+                            fieldName="encounterTypeLkey"
                             selectData={encounterTypeLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
@@ -309,7 +316,7 @@ const PatientSummary = ({ patient, encounter }) => {
                             width={300}
                             fieldLabel="Diagnosis Description"
                             fieldName="description"
-                            record={Diagnoses?.object[0]?.diagnosisObject || {}}
+                            record={diadiscription || {}}
                         /></Form>
 
                 </div>
