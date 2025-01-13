@@ -28,7 +28,9 @@ import {
   ApUserFacilitiyDepartments,
   ApUserMedicalLicense,
   ApVaccine,
-  ApVaccineBrands
+  ApVaccineBrands,
+  ApVaccineDose,
+  ApVaccineDosesInterval
 
 } from '@/types/model-types';
 
@@ -802,6 +804,79 @@ export const setupService = createApi({
         return response.object;
       },
     }),
+    getDoseNumbersList: builder.query({
+      query: (data: {key: string }) => ({
+        url: `/setup/vaccine-doses-numbers-list`,
+        headers: {
+        key: data.key
+        }
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+      keepUnusedDataFor: 0
+    }),
+    saveVaccineDose: builder.mutation({
+      query: (brand: ApVaccineDose) => ({
+        url: `/setup/save-vaccine-dose`,
+        method: 'POST',
+        body: brand
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+
+    }),
+    getVaccineDosesList: builder.query({
+      query: (listRequest: ListRequest) => ({
+         url: `/setup/vaccine-doses-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeVaccineDose: builder.mutation({
+      query: (vaccineDose: ApVaccineDose) => ({
+        url: `/setup/remove-vaccine-dose`,
+        method: 'POST',
+        body: vaccineDose,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+    }),
+    saveVaccineDosesInterval: builder.mutation({
+      query: (interval: ApVaccineDosesInterval) => ({
+        url: `/setup/save-vaccine-doses-interval`,
+        method: 'POST',
+        body: interval
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+
+    }),
+    getVaccineDosesIntervalList: builder.query({
+      query: (listRequest: ListRequest) => ({
+         url: `/setup/vaccine-doses-interval-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeVaccineDoseInterval: builder.mutation({
+      query: (interval: ApVaccineDosesInterval) => ({
+        url: `/setup/remove-vaccine-doses-interval`,
+        method: 'POST',
+        body: interval,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+    }),
   })
 
 });
@@ -885,5 +960,12 @@ export const {
   useDeactiveActivVaccineMutation,
   useSaveVaccineBrandMutation,
   useGetVaccineBrandsListQuery,
-  useDeactiveActivVaccineBrandsMutation
+  useDeactiveActivVaccineBrandsMutation,
+  useGetDoseNumbersListQuery,
+  useSaveVaccineDoseMutation,
+  useGetVaccineDosesListQuery,
+  useRemoveVaccineDoseMutation,
+  useSaveVaccineDosesIntervalMutation,
+  useGetVaccineDosesIntervalListQuery,
+  useRemoveVaccineDoseIntervalMutation
 } = setupService;
