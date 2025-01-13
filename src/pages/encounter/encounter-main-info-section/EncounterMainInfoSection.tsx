@@ -123,7 +123,7 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         width={150}
         fieldType="select"
         fieldLabel="Visit Type"
-        fieldName="visitTypeLkey"
+        fieldName="encounterTypeLkey"
         selectData={encounterTypeLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
@@ -172,6 +172,13 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         selectData={encounterPymentMethodLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
+        record={encounter}
+      />
+       <MyInput
+        column
+        width={150}
+        fieldLabel="Notes"
+        fieldName="encounterNotes"
         record={encounter}
       />
 

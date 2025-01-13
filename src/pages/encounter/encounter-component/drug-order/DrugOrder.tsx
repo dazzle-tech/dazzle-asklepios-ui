@@ -334,7 +334,7 @@ const DrugOrder = () => {
 
     }, [orders, drugKey]);
     useEffect(() => {
-        if (indicationsIcd.indicationIcd != null) {
+        if (indicationsIcd.indicationIcd != null||indicationsIcd.indicationIcd !="") {
 
             setindicationsDescription(prevadminInstructions => {
                 const currentIcd = icdListResponseLoading?.object?.find(
@@ -415,20 +415,7 @@ const DrugOrder = () => {
 
 
     };
-    const handleFilterChange = (fieldName, value) => {
-        if (value) {
-            setListRequest(
-                addFilterToListRequest(
-                    fromCamelCaseToDBName(fieldName),
-                    'containsIgnoreCase',
-                    value,
-                    listRequest
-                )
-            );
-        } else {
-            setListRequest({ ...listRequest, filters: [] });
-        }
-    };
+
     const handleCheckboxChange = (key) => {
         setSelectedRows((prev) => {
             if (prev.includes(key)) {
@@ -615,15 +602,20 @@ const DrugOrder = () => {
             startDateTime: null,
             genericSubstitute: false,
             chronicMedication: false,
+            patientOwnMedication:null,
             priorityLkey: null,
             roaLkey: null,
             doseUnitLkey: null,
             drugOrderTypeLkey: null,
-            indicationUseLkey: null
+            indicationUseLkey: null,
+            pharmacyDepartmentKey:null,
+            
 
         })
         setAdminInstructions("");
         setSelectedGeneric(null);
+        setSelectedFirstDate(null);
+        setindicationsDescription("")
 
 
         setTags([])
@@ -962,16 +954,26 @@ const DrugOrder = () => {
                                 record={orderMedication}
                                 setRecord={setOrderMedication}
                             />
-                            <MyInput
-                                column
-                                width={150}
-                                fieldType="number"
-                                fieldLabel="Frequency"
 
-                                fieldName={'frequency'}
-                                record={orderMedication}
-                                setRecord={setOrderMedication}
-                            />
+                            <div>
+                                <Text style={{ fontWeight: 'bold', marginTop: '7px' }}>Frequency</Text>
+                                <InputGroup style={{ width: '160px' ,zoom:0.85, height: '40px' }}>
+                                    <Input
+                                        disabled={drugKey != null ? editing : true}
+                                        style={{ width: '100px', height: '100%' }} 
+                                        type="number"
+                                        value={orderMedication.frequency}
+                                        onChange={e =>
+                                            setOrderMedication({
+                                                ...orderMedication,
+                                                frequency: Number(e)
+                                            })} />
+                                    <InputGroup.Addon>
+                                        <Text>Hr</Text>
+                                    </InputGroup.Addon>
+                                </InputGroup>
+                            </div>
+
                             <MyInput
                                 column
                                 width={150}
@@ -987,7 +989,7 @@ const DrugOrder = () => {
                             <IconButton
                                 color="cyan"
                                 appearance="primary"
-                                style={{ height: '35px', width: '170px', marginTop: '20px' }}
+                                style={{ height: '35px', width: '170px', marginTop: '25px' }}
                                 icon={<PlusIcon />}
                             >
                                 <Translate>Create Titration Plan</Translate>
@@ -995,116 +997,116 @@ const DrugOrder = () => {
                         </Form>
 
                     </div>
-                    <div>
-                        <fieldset style={{ border: '2px solid #b6b7b8"', padding: '5px', display: 'flex', gap: '5px' }}>
-                            <legend style={{ fontWeight: 'bold' }}>Indication</legend>
+                    <Divider style={{ fontWeight: 'bold' }}>Indication</Divider>
+                    <div style={{ border: '2px solid #b6b7b8"', padding: '5px', display: 'flex', gap: '5px' }}>
 
-                            <div style={{ marginBottom: '3px', zoom: 0.85 }}>
-                                <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
-                                    <Input
-                                        disabled={drugKey != null ? editing : true}
-                                        placeholder="Search ICD"
-                                        value={searchKeywordicd}
-                                        onChange={handleSearchIcd}
-                                    />
-                                    <InputGroup.Button>
-                                        <SearchIcon />
-                                    </InputGroup.Button>
-                                </InputGroup>
-                                {searchKeywordicd && (
-                                    <Dropdown.Menu disabled={!edit_new} className="dropdown-menuresult">
-                                        {modifiedData?.map(mod => (
-                                            <Dropdown.Item
-                                                key={mod.key}
-                                                eventKey={mod.key}
-                                                onClick={() => {
-                                                    setIndicationsIcd({
-                                                        ...indicationsIcd,
-                                                        indicationIcd: mod.key
-                                                    })
-                                                    setSearchKeywordicd("");
-                                                }}
-                                            >
-                                                <span style={{ marginRight: "19px" }}>{mod.icdCode}</span>
-                                                <span>{mod.description}</span>
-                                            </Dropdown.Item>
-                                        ))}
-                                    </Dropdown.Menu>
-                                )}
-                                <Input as="textarea"
-                                    disabled={true}
-                                    onChange={(e) => setindicationsDescription} value={indicationsDescription
-                                        || orderMedication.indicationIcd
-                                    }
-                                    style={{ width: 300 }} rows={4} />
-                            </div>
-                            <div style={{ marginBottom: '3px', zoom: 0.85 }}>
-                                <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
-                                    <Input
-                                        disabled={drugKey != null ? editing : true}
-                                        placeholder="Search SNOMED-CT"
-                                        value={""}
 
-                                    />
-                                    <InputGroup.Button>
-                                        <SearchIcon />
-                                    </InputGroup.Button>
-                                </InputGroup>
 
-                                <Input as="textarea"
-                                    disabled={true}
-
-                                    style={{ width: 300 }} rows={4} />
-                            </div>
-                            <div style={{ marginBottom: '3px', zoom: 0.85 }}>
-                                <Form layout="inline" fluid>
-                                    <MyInput
-                                        column
-                                        disabled={drugKey != null ? editing : true}
-                                        width={200}
-
-                                        fieldType="select"
-                                        fieldLabel="Indication Use"
-                                        selectData={indicationLovQueryResponse?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
-                                        selectDataValue="key"
-                                        fieldName={'indicationUseLkey'}
-                                        record={orderMedication}
-                                        setRecord={setOrderMedication}
-
-                                    />
-                                </Form>
+                        <div style={{ marginBottom: '3px', zoom: 0.85 }}>
+                            <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
                                 <Input
-                                    as="textarea"
-                                    placeholder="Write Indication Manually"
                                     disabled={drugKey != null ? editing : true}
-                                     value={orderMedication.indicationManually}
-                                    onChange={(e) => {
-                                        console.log(e);
-                                        setOrderMedication({ ...orderMedication, indicationManually: e });
-                                    }}
-                                    style={{ width: 200 }}
-                                    rows={4}
+                                    placeholder="Search ICD-10"
+                                    value={searchKeywordicd}
+                                    onChange={handleSearchIcd}
                                 />
+                                <InputGroup.Button>
+                                    <SearchIcon />
+                                </InputGroup.Button>
+                            </InputGroup>
+                            {searchKeywordicd && (
+                                <Dropdown.Menu disabled={!edit_new} className="dropdown-menuresult">
+                                    {modifiedData?.map(mod => (
+                                        <Dropdown.Item
+                                            key={mod.key}
+                                            eventKey={mod.key}
+                                            onClick={() => {
+                                                setIndicationsIcd({
+                                                    ...indicationsIcd,
+                                                    indicationIcd: mod.key
+                                                })
+                                                setSearchKeywordicd("");
+                                            }}
+                                        >
+                                            <span style={{ marginRight: "19px" }}>{mod.icdCode}</span>
+                                            <span>{mod.description}</span>
+                                        </Dropdown.Item>
+                                    ))}
+                                </Dropdown.Menu>
+                            )}
+                            <Input as="textarea"
+                                disabled={true}
+                                onChange={(e) => setindicationsDescription} value={indicationsDescription
+                                    || orderMedication.indicationIcd
+                                }
+                                style={{ width: 300 }} rows={4} />
+                        </div>
+                        <div style={{ marginBottom: '3px', zoom: 0.85 }}>
+                            <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
+                                <Input
+                                    disabled={drugKey != null ? editing : true}
+                                    placeholder="Search SNOMED-CT"
+                                    value={""}
 
-                            </div>
+                                />
+                                <InputGroup.Button>
+                                    <SearchIcon />
+                                </InputGroup.Button>
+                            </InputGroup>
 
-                        </fieldset></div>
+                            <Input as="textarea"
+                                disabled={true}
+
+                                style={{ width: 300 }} rows={4} />
+                        </div>
+                        <div style={{ marginBottom: '3px', zoom: 0.85 }}>
+                            <Form layout="inline" fluid>
+                                <MyInput
+                                    column
+                                    disabled={drugKey != null ? editing : true}
+                                    width={200}
+
+                                    fieldType="select"
+                                    fieldLabel="Indication Use"
+                                    selectData={indicationLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName={'indicationUseLkey'}
+                                    record={orderMedication}
+                                    setRecord={setOrderMedication}
+
+                                />
+                            </Form>
+                            <Input
+                                as="textarea"
+                                placeholder="Write Indication Manually"
+                                disabled={drugKey != null ? editing : true}
+                                value={orderMedication.indicationManually}
+                                onChange={(e) => {
+                                    console.log(e);
+                                    setOrderMedication({ ...orderMedication, indicationManually: e });
+                                }}
+                                style={{ width: 200 }}
+                                rows={4}
+                            />
+
+                        </div>
+
+                    </div>
                 </div>
 
 
 
             </div>
-            <div className='form-search-container-p ' style={{ minWidth: "600px" }}>
+            <div className='form-search-container-p ' style={{ minWidth: "620px" }}>
 
 
                 <Table
                     bordered
                     onRowClick={rowData => {
-
                     }}
                     data={genericMedicationActiveIngredientListResponseData?.object || []}
-
+                    height={300}
 
                 >
 
@@ -1114,14 +1116,14 @@ const DrugOrder = () => {
 
                             {rowData => {
                                 const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name
-                                console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey))
+
                                 return nameg;
                             }
                             }
 
                         </Table.Cell>
                     </Table.Column>
-                    <Table.Column flexGrow={2} fullText>
+                    <Table.Column flexGrow={3} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient ATC Code</Table.HeaderCell>
                         <Table.Cell dataKey="activeIngredientKey">
 
@@ -1447,7 +1449,7 @@ const DrugOrder = () => {
 
                 <Column flexGrow={2} fullText>
                     <HeaderCell align="center">
-                        <Translate>First Time Recorded</Translate>
+                        <Translate>Start Date Time</Translate>
                     </HeaderCell>
                     <Cell>
                         {rowData => rowData.startDateTime ? new Date(rowData.startDateTime).toLocaleString() : " "}

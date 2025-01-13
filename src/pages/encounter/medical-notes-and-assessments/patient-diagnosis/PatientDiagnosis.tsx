@@ -218,10 +218,10 @@ const PatientDiagnosis = () => {
                 })
               }
             /> */}
-            <Text style={{ zoom: 0.88 }}>Diagnose</Text>
-            <InputGroup inside style={{ width: '300px', zoom: 0.80 }}>
+          
+            <InputGroup inside style={{ width: '300px', zoom: 0.80 ,marginTop:'20px'}}>
               <Input
-                placeholder={'Search ICD'}
+                placeholder={'Search ICD-10'}
                 value={searchKeyword}
                 onChange={handleSearch}
               />
