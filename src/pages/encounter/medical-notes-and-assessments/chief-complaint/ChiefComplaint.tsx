@@ -88,8 +88,20 @@ const ChiefComplaint = () => {
       <Panel bordered style={{width:'100%', padding: '5px', margin: '5px', display: 'flex', flexDirection: 'column' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+         
+
           <IconButton
+            circle
             style={{ margin: "3px" }}
+            
+            icon={<CheckOutlineIcon />}
+            size="xs"
+            appearance="primary"
+            color="green"
+            onClick={saveChanges}
+          />
+           <IconButton
+           style={{ marginLeft: 'auto' }}
             appearance="primary"
             size="sm"
             onClick={() => openSpecificModal('first')}
@@ -97,16 +109,6 @@ const ChiefComplaint = () => {
           >
             <Translate>use Questionnair</Translate>
           </IconButton>
-
-          <IconButton
-            circle
-            style={{ marginLeft: 'auto' }}
-            icon={<CheckOutlineIcon />}
-            size="xs"
-            appearance="primary"
-            color="green"
-            onClick={saveChanges}
-          />
         </div>
 
 

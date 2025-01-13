@@ -155,7 +155,7 @@ const PatientSummary = ({ patient, encounter }) => {
 
         ]
     });
-    console.log(listdRequest)
+ 
     const { data: majorDiagnoses } = useGetPatientDiagnosisQuery(listmRequest)
     const majorDiagnosesCodes = majorDiagnoses?.object.map(diagnose => diagnose);
     const { data: Diagnoses, refetch: fetchlastDiag } = useGetPatientDiagnosisQuery(listdRequest
@@ -193,14 +193,8 @@ const PatientSummary = ({ patient, encounter }) => {
     });
    const [listGinricRequest, setListGinricRequest] = useState({
         ...initialListRequest,
-
-        
-       
         sortType: 'desc'
-        
-            
-           
-        
+ 
     });
     const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({...listGinricRequest});
 
@@ -226,14 +220,16 @@ const PatientSummary = ({ patient, encounter }) => {
 
 
     ];
-
+console.log(updatedFilters);
     setListdRequest((prevRequest) =>({
        
             ...prevRequest,
             filters: updatedFilters,
        
     }));
-  },[prevencounter])
+ 
+  },[prevencounter]);
+  
     const handleopenchartModel = () => {
         setChartModelIsOpen(true);
     };
@@ -304,7 +300,7 @@ const PatientSummary = ({ patient, encounter }) => {
                             width={300}
                             fieldLabel="Diagnosis Description"
                             fieldName="description"
-                            record={diadiscription || {}}
+                            record={Diagnoses?.object[0]?.diagnosisObject || {}}
                         /></Form>
 
                 </div>

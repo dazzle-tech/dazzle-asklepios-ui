@@ -334,7 +334,7 @@ const DrugOrder = () => {
 
     }, [orders, drugKey]);
     useEffect(() => {
-        if (indicationsIcd.indicationIcd != null) {
+        if (indicationsIcd.indicationIcd != null||indicationsIcd.indicationIcd !="") {
 
             setindicationsDescription(prevadminInstructions => {
                 const currentIcd = icdListResponseLoading?.object?.find(
@@ -615,6 +615,7 @@ const DrugOrder = () => {
         setAdminInstructions("");
         setSelectedGeneric(null);
         setSelectedFirstDate(null);
+        setindicationsDescription("")
 
 
         setTags([])
@@ -953,16 +954,7 @@ const DrugOrder = () => {
                                 record={orderMedication}
                                 setRecord={setOrderMedication}
                             />
-                            {/* <MyInput
-                                column
-                                width={150}
-                                fieldType="number"
-                                fieldLabel="Frequency"
 
-                                fieldName={'frequency'}
-                                record={orderMedication}
-                                setRecord={setOrderMedication}
-                            /> */}
                             <div>
                                 <Text style={{ fontWeight: 'bold', marginTop: '7px' }}>Frequency</Text>
                                 <InputGroup style={{ width: '160px' ,zoom:0.85, height: '40px' }}>
@@ -1014,7 +1006,7 @@ const DrugOrder = () => {
                             <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
                                 <Input
                                     disabled={drugKey != null ? editing : true}
-                                    placeholder="Search ICD"
+                                    placeholder="Search ICD-10"
                                     value={searchKeywordicd}
                                     onChange={handleSearchIcd}
                                 />

@@ -257,7 +257,7 @@ const SOAP = () => {
 
       <div className="column-container">
         <fieldset style={{ flex: "2" }} className="box-container">
-          <legend> vital signs</legend>
+          <legend> Vital signs</legend>
           <Panel style={{ zoom: 0.88 }}>
             <Grid fluid>
               <Row gutter={15}>
