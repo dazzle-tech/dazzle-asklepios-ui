@@ -127,7 +127,7 @@ const CDTSetup = () => {
     <Panel
       header={
         <h3 className="title">
-          <Translate>Procedures Setup</Translate>
+          <Translate>CDT Codes</Translate>
         </h3>
       }
     >
@@ -193,17 +193,7 @@ const CDTSetup = () => {
           }}
           rowClassName={isSelected}
         >
-          <Column sortable flexGrow={1}>
-            <HeaderCell align="center">
-              <Input onChange={e => handleFilterChange('typeLkey', e)} />
-              <Translate>Type</Translate>
-            </HeaderCell>
-            <Cell>
-              {rowData =>
-                rowData.typeLvalue ? rowData.typeLvalue.lovDisplayVale : rowData.typeLkey
-              }
-            </Cell>
-          </Column>
+      
           <Column sortable flexGrow={1}>
             <HeaderCell align="center">
               <Input onChange={e => handleFilterChange('cdtCode', e)} />
