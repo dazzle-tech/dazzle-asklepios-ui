@@ -1767,6 +1767,50 @@ export const newApPrescriptionMedications:modelTypes.ApPrescriptionMedications =
 	refillIntervalUnitLkey:undefined,
 } 
 
+export const newApProcedureCoding:modelTypes.ApProcedureCoding = { 
+	key:undefined,
+	procedureKey:undefined,
+	codeTypeLkey:undefined,
+	internationalCodeKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
+export const newApProcedurePriceList:modelTypes.ApProcedurePriceList = { 
+	key:undefined,
+	procedureKey:undefined,
+	price:0,
+	currencyLkey:undefined,
+	priceListKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
+export const newApProcedureSetup:modelTypes.ApProcedureSetup = { 
+	key:undefined,
+	name:'',
+	code:'',
+	categoryLkey:undefined,
+	indications:'',
+	contraindications:'',
+	preparationInstructions:'',
+	recoveryNotes:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
 export const newApResources:modelTypes.ApResources = { 
 	key:undefined,
 	facilityKey:undefined,
@@ -2139,11 +2183,28 @@ export const newApVaccineBrands:modelTypes.ApVaccineBrands = {
 
 export const newApVaccineDose:modelTypes.ApVaccineDose = { 
 	key:undefined,
-	doseName:'',
 	fromAge:0,
 	toAge:0,
 	fromAgeUnitLkey:undefined,
 	toAgeUnitLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	vaccineKey:undefined,
+	doseNameLkey:undefined,
+	isBooster:undefined,
+} 
+
+export const newApVaccineDosesInterval:modelTypes.ApVaccineDosesInterval = { 
+	key:undefined,
+	vaccineKey:undefined,
+	fromDoseKey:undefined,
+	toDoseKey:undefined,
+	intervalBetweenDoses:0,
+	unitLkey:undefined,
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',

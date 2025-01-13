@@ -1766,6 +1766,50 @@ export interface ApPrescriptionMedications {
 	refillIntervalUnitLkey:string;
 } 
 
+export interface ApProcedureCoding { 
+	key:string;
+	procedureKey:string;
+	codeTypeLkey:string;
+	internationalCodeKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApProcedurePriceList { 
+	key:string;
+	procedureKey:string;
+	price:number;
+	currencyLkey:string;
+	priceListKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApProcedureSetup { 
+	key:string;
+	name:string;
+	code:string;
+	categoryLkey:string;
+	indications:string;
+	contraindications:string;
+	preparationInstructions:string;
+	recoveryNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
 export interface ApResources { 
 	key:string;
 	facilityKey:string;
@@ -2138,11 +2182,28 @@ export interface ApVaccineBrands {
 
 export interface ApVaccineDose { 
 	key:string;
-	doseName:string;
 	fromAge:number;
 	toAge:number;
 	fromAgeUnitLkey:string;
 	toAgeUnitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	vaccineKey:string;
+	doseNameLkey:string;
+	isBooster:boolean;
+} 
+
+export interface ApVaccineDosesInterval { 
+	key:string;
+	vaccineKey:string;
+	fromDoseKey:string;
+	toDoseKey:string;
+	intervalBetweenDoses:number;
+	unitLkey:string;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
