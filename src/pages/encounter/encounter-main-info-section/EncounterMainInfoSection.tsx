@@ -24,7 +24,6 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
    const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
   const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
   
-  console.log("encounter",encounter);
  
   const { data: patirntObservationlist } = useGetObservationSummariesQuery({
     ...initialListRequest,
@@ -35,15 +34,12 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         fieldName: "patient_key",
         operator: "match",
         value: patient.key,
-      },
-      {
-        fieldName: "visit_key ",
-        operator: "match",
-        value:encounter.key,
       }
+    
     ],
 
   });
+
   const [bodyMeasurements,setBodyMeasurements]=useState({
     height:null,
     weight:null,
@@ -51,9 +47,9 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
   })
   useEffect(()=>{
     setBodyMeasurements({
-      height:patirntObservationlist?.object[0]?.latestheight??patirntObservationlist?.object[0]?.platestheight,
-      weight:patirntObservationlist?.object[0]?.latestweight??patirntObservationlist?.object[0]?.platestweight,
-      headcircumference:patirntObservationlist?.object[0]?.latestheadcircumference??patirntObservationlist?.object[0]?.platestheadcircumference
+      height:patirntObservationlist?.object?.find((item)=>item.latestheight!=null)?.latestheight,
+      weight:patirntObservationlist?.object?.find((item)=>item.latestweight!=null)?.latestweight,
+      headcircumference:patirntObservationlist?.object?.find((item)=>item.latestheadcircumference!=null)?.latestheadcircumference
     })
   },[patirntObservationlist])
   return (

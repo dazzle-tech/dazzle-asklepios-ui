@@ -32,7 +32,8 @@ import { faBolt,
   faPills,
   faSyringe,
  faFileWaveform,
- faHandDots
+ faHandDots,
+
   
   } from '@fortawesome/free-solid-svg-icons';
 import {faBars} from '@fortawesome/free-solid-svg-icons';
@@ -314,7 +315,7 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                 <Button appearance="primary" 
                 onClick={OpenWarningModal}
                 color={patientSlice.patient.hasWarning?"red":"cyan"} >
-                <FontAwesomeIcon icon={faHandDots} style={{ marginRight: '5px' }} />
+                <FontAwesomeIcon icon={faTriangleExclamation}  style={{ marginRight: '5px' }} />
                   <Translate>Warning</Translate>
                 </Button>
                 {patientSlice.encounter.editable && (
@@ -372,7 +373,7 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                      style={{ display: 'flex', alignItems: 'center' }}
                      onClick={() => handleMenuItemClick(<DrugOrder  />)}>
                     
-                    <FontAwesomeIcon icon={faFilePrescription } style={{ margin: '3px'}} />
+                    <FontAwesomeIcon icon={faPills}  style={{ margin: '3px'}} />
                       <Translate>Drug Order</Translate>
                     </List.Item>
                     <List.Item 

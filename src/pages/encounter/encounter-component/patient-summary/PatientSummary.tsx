@@ -43,6 +43,10 @@ import { useGetEncountersQuery,  useGetPrescriptionsQuery,
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { useGetAllergensQuery } from '@/services/setupService';
 import {
+    useGetWarningsQuery,
+    useSaveWarningsMutation
+} from '@/services/observationService';
+import {
     useGetPrescriptionInstructionQuery,
 
 } from '@/services/medicationsSetupService';
@@ -77,6 +81,7 @@ const PatientSummary = ({ patient, encounter }) => {
     const { data: activeIngredientListResponseData } = useGetActiveIngredientQuery({ ...initialListRequest });
     const { data: predefinedInstructionsListResponse } = useGetPrescriptionInstructionQuery({ ...initialListRequest });
     const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({ ...initialListRequest, filters });
+    const { data: warningsListResponse, refetch: fetchwarnings } = useGetWarningsQuery({ ...initialListRequest, filters });
     const [patientVisitListRequest, setPatientVisitListReques] = useState<ListRequest>({
         ...initialListRequest,
 
@@ -100,6 +105,7 @@ const PatientSummary = ({ patient, encounter }) => {
     const [chartModelIsOpen, setChartModelIsOpen] = useState(false);
     const [majorModelIsOpen, setMajorModelIsOpen] = useState(false);
     const [ChronicModelIsOpen, setChronicModelIsOpen] = useState(false);
+    const[prevKey,setPrevKey]=useState(null);
     const getPrevObjectByPlannedStartDate = (targetDate) => {
 
         const list = encounterPatientList?.object;
@@ -185,6 +191,7 @@ const PatientSummary = ({ patient, encounter }) => {
 
         ]
     });
+    console.log(listdRequest)
     const { data: majorDiagnoses } = useGetPatientDiagnosisQuery(listmRequest)
     const majorDiagnosesCodes = majorDiagnoses?.object.map(diagnose => diagnose);
     const { data: Diagnoses, refetch: fetchlastDiag } = useGetPatientDiagnosisQuery(listdRequest
@@ -194,6 +201,7 @@ const PatientSummary = ({ patient, encounter }) => {
         }
 
     )
+    const [diadiscription,setDiaDescription]=useState(null);
 
 
     const { data: genericMedicationListResponse } = useGetGenericMedicationQuery({ ...initialListRequest });
@@ -232,7 +240,11 @@ const PatientSummary = ({ patient, encounter }) => {
     });
     const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({...listGinricRequest});
 
-   console.log(genericMedicationActiveIngredientListResponseData?.object)
+   useEffect(()=>{
+    console.log(getPrevObjectByPlannedStartDate(patientSlice.encounter.plannedStartDate)?.key)
+    setDiaDescription(Diagnoses?.object[0]?.diagnosisObject)
+  },[ patientSlice.encounter.plannedStartDate]);
+ 
 
     const handleopenchartModel = () => {
         setChartModelIsOpen(true);
@@ -255,7 +267,7 @@ const PatientSummary = ({ patient, encounter }) => {
     const joinValuesFromArray = (values) => {
         return values.filter(Boolean).join(', ');
     };
-
+  
     return (<>
         <h5>Patient Dashboard</h5>
 
@@ -281,7 +293,7 @@ const PatientSummary = ({ patient, encounter }) => {
                             width={140}
                             fieldType="select"
                             fieldLabel="Visit Type"
-                            fieldName="visitTypeLkey"
+                            fieldName="encounterTypeLkey"
                             selectData={encounterTypeLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
@@ -304,7 +316,7 @@ const PatientSummary = ({ patient, encounter }) => {
                             width={300}
                             fieldLabel="Diagnosis Description"
                             fieldName="description"
-                            record={Diagnoses?.object[0]?.diagnosisObject || {}}
+                            record={diadiscription || {}}
                         /></Form>
 
                 </div>
@@ -432,12 +444,12 @@ const PatientSummary = ({ patient, encounter }) => {
 
                             >
 
-                                <Table.Column flexGrow={1}>
+                                <Table.Column flexGrow={1} fullText>
                                     <Table.HeaderCell style={{ fontSize: '10px' }} >Allergy Type</Table.HeaderCell>
                                     <Table.Cell>{rowData => rowData.allergyTypeLvalue?.lovDisplayVale}</Table.Cell>
 
                                 </Table.Column>
-                                <Table.Column flexGrow={1}>
+                                <Table.Column flexGrow={1} fullText>
                                     <Table.HeaderCell style={{ fontSize: '10px' }}>Allergene</Table.HeaderCell>
                                     <Table.Cell>
 
@@ -451,11 +463,11 @@ const PatientSummary = ({ patient, encounter }) => {
                                             return getname?.allergenName || "No Name";
                                         }}</Table.Cell>
                                 </Table.Column>
-                                <Table.Column flexGrow={1}>
-                                    <Table.HeaderCell style={{ fontSize: '10px' }} >Start Date</Table.HeaderCell>
-                                    <Table.Cell>{rowData =>
-                                        rowData.severityLvalue?.lovDisplayVale
-                                    }</Table.Cell>
+                                <Table.Column flexGrow={1} fullText>
+                                    <Table.HeaderCell style={{ fontSize: '10px' }} >Onset Date</Table.HeaderCell>
+                                    <Table.Cell>
+                                       
+                                         {rowData => rowData.onsetDate ? new Date(rowData.onsetDate).toLocaleString():"Undefind" }</Table.Cell>
                                 </Table.Column>
 
                             </Table>
@@ -468,24 +480,25 @@ const PatientSummary = ({ patient, encounter }) => {
                         <Col xs={24}>
                             <Table
                                 bordered
+                                data={ warningsListResponse?.object||[]}
                                 onRowClick={rowData => {
 
                                 }}
-
+                                   
 
                             >
 
-                                <Table.Column flexGrow={1}>
+                                <Table.Column flexGrow={1} fullText>
                                     <Table.HeaderCell style={{ fontSize: '10px' }}>Warning Type</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+                                    <Table.Cell>{rowData =>rowData.warningTypeLvalue?.lovDisplayVale}</Table.Cell>
                                 </Table.Column>
-                                <Table.Column flexGrow={1}>
+                                <Table.Column flexGrow={1} fullText>
                                     <Table.HeaderCell style={{ fontSize: '10px' }}>Warning</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+                                    <Table.Cell>{rowData =>rowData.warning}</Table.Cell>
                                 </Table.Column>
-                                <Table.Column flexGrow={1}>
-                                    <Table.HeaderCell style={{ fontSize: '10px' }}>Start Date</Table.HeaderCell>
-                                    <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
+                                <Table.Column flexGrow={1} fullText>
+                                    <Table.HeaderCell style={{ fontSize: '10px' }}>First Time Recorded</Table.HeaderCell>
+                                    <Table.Cell>{rowData => rowData.firstTimeRecorded? new Date(rowData.firstTimeRecorded).toLocaleString():"Undefind" }</Table.Cell>
                                 </Table.Column>
 
                             </Table>
