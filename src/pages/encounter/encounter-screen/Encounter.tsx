@@ -15,7 +15,7 @@ import Prescription from '../encounter-component/prescription';
 import Referrals from '../encounter-component/referrals';
 import SOAP from '../encounter-component/s.o.a.p';
 import VaccineReccord from '../encounter-component/vaccine-reccord';
-import Allergies from '../encounter-component/allergies';
+import Allergies from '../encounter-pre-observations/AllergiesNurse';
 import DrugOrder from '../encounter-component/drug-order';
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
@@ -84,6 +84,7 @@ import { newApVisitAllergies } from '@/types/model-types-constructor';
 import { BlockUI } from 'primereact/blockui';
 
 import EncounterMainInfoSection from '../encounter-main-info-section';
+import Warning from '../encounter-pre-observations/warning';
 
 
 const Encounter = () => {
@@ -402,7 +403,7 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                     </List.Item>
                     <List.Item 
                      style={{ display: 'flex', alignItems: 'center' }}
-                    onClick={() => handleMenuItemClick(<MedicationsRecord />)}>
+                    onClick={() => handleMenuItemClick(<Warning/>)}>
                     <FontAwesomeIcon icon={faTriangleExclamation } style={{ margin: '3px'}}  />
                       <Translate>Medical Warnings</Translate>
                     </List.Item>
