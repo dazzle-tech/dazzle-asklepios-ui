@@ -131,8 +131,8 @@ console.log(localEncounter);
                as={'textarea'}
                rows={1}
                style={{ fontSize: '12px', maxHeight: '150px', overflowY: 'auto', resize: 'vertical' }}
-               value={patientSlice.encounter.physicalExamNote}
-                onChange={e => setLocalEncounter({ ...localEncounter, physicalExamNote: e })}
+               value={localEncounter.physicalExamSummery}
+                onChange={e => setLocalEncounter({ ...localEncounter, physicalExamSummery: e })}
                
               />
              

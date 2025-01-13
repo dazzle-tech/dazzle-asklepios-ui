@@ -56,6 +56,7 @@ const PatientSummary = ({ patient, encounter }) => {
     const patientSlice = useAppSelector(state => state.patient);
     const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
     const { data: encounterReasonLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_REASON');
+    const[prevencounter,setPrevencounter]=useState<ApEncounter>({...newApEncounter});
     const { data: allergensListToGetName } = useGetAllergensQuery({
         ...initialListRequest
     });
@@ -92,6 +93,11 @@ const PatientSummary = ({ patient, encounter }) => {
                 fieldName: 'patient_key',
                 operator: 'match',
                 value: patient.key
+            },
+            {
+                fieldName: 'planned_start_date',
+                operator: 'lt',
+                value: encounter.plannedStartDate
             }
 
         ],
@@ -101,53 +107,11 @@ const PatientSummary = ({ patient, encounter }) => {
         refetchOnMountOrArgChange: true,
         refetchOnFocus: true,
     });
+
     const [LastPatientVisit, setLastPatientVisit] = useState<ApEncounter>({ ...newApEncounter });
     const [chartModelIsOpen, setChartModelIsOpen] = useState(false);
     const [majorModelIsOpen, setMajorModelIsOpen] = useState(false);
     const [ChronicModelIsOpen, setChronicModelIsOpen] = useState(false);
-    const[prevKey,setPrevKey]=useState(null);
-    const getPrevObjectByPlannedStartDate = (targetDate) => {
-
-        const list = encounterPatientList?.object;
-
-
-        if (!Array.isArray(list) || list.length === 0) {
-            return null;
-        }
-
-
-        const index = list.findIndex(
-            (item) => item.plannedStartDate.slice(0, 10) === targetDate
-        );
-
-
-        if (index !== -1 && index - 1 < list.length) {
-            return list[index - 1];
-        }
-
-        return null;
-    };
-    const getPrevDiag = (targetDate) => {
-
-        const list = encounterPatientList?.object;
-
-
-        if (!Array.isArray(list) || list.length === 0) {
-            return null;
-        }
-
-
-        const index = list.findIndex(
-            (item) => item.plannedStartDate.slice(0, 10) === targetDate
-        );
-
-
-        if (index !== -1 && index - 1 < list.length) {
-            return list[index - 1].key;
-        }
-
-        return null;
-    };
     const [listmRequest, setListmRequest] = useState({
         ...initialListRequest,
         pageSize: 100,
@@ -169,7 +133,7 @@ const PatientSummary = ({ patient, encounter }) => {
 
         ]
     });
-    console.log(getPrevObjectByPlannedStartDate(patientSlice.encounter.plannedStartDate)?.key)
+
     const [listdRequest, setListdRequest] = useState({
         ...initialListRequest,
         pageSize: 100,
@@ -185,7 +149,7 @@ const PatientSummary = ({ patient, encounter }) => {
             {
                 fieldName: 'visit_key',
                 operator: 'match',
-                value: getPrevObjectByPlannedStartDate(patientSlice.encounter.plannedStartDate)?.key
+                value: prevencounter?.key
             }
 
 
@@ -240,12 +204,36 @@ const PatientSummary = ({ patient, encounter }) => {
     });
     const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({...listGinricRequest});
 
-   useEffect(()=>{
-    console.log(getPrevObjectByPlannedStartDate(patientSlice.encounter.plannedStartDate)?.key)
-    setDiaDescription(Diagnoses?.object[0]?.diagnosisObject)
-  },[ patientSlice.encounter.plannedStartDate]);
  
 
+    useEffect(()=>{
+
+    setPrevencounter(encounterPatientList?.object[0]);
+  },[encounterPatientList])
+  useEffect(()=>{
+    console.log(prevencounter);
+    const updatedFilters = [
+        {
+            fieldName: 'patient_key',
+            operator: 'match',
+            value: patient.key
+        },
+        {
+            fieldName: 'visit_key',
+            operator: 'match',
+            value: prevencounter?.key
+        }
+
+
+    ];
+
+    setListdRequest((prevRequest) =>({
+       
+            ...prevRequest,
+            filters: updatedFilters,
+       
+    }));
+  },[prevencounter])
     const handleopenchartModel = () => {
         setChartModelIsOpen(true);
     };
@@ -286,7 +274,7 @@ const PatientSummary = ({ patient, encounter }) => {
                             fieldLabel="Visit Date"
                             fieldType="date"
                             fieldName="plannedStartDate"
-                            record={getPrevObjectByPlannedStartDate(encounter.plannedStartDate) || {}}
+                            record={prevencounter || {}}
                         />
                         <MyInput
                             column
@@ -297,7 +285,7 @@ const PatientSummary = ({ patient, encounter }) => {
                             selectData={encounterTypeLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
-                            record={getPrevObjectByPlannedStartDate(encounter.plannedStartDate) || {}}
+                            record={prevencounter|| {}}
                         />
                         <MyInput
                             width={140}
@@ -308,7 +296,7 @@ const PatientSummary = ({ patient, encounter }) => {
                             selectData={encounterReasonLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
-                            record={getPrevObjectByPlannedStartDate(encounter.plannedStartDate) || {}}
+                            record={prevencounter|| {}}
                         />
 
                         <MyInput
