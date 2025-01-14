@@ -21,6 +21,9 @@ import {
   ApLovValues,
   ApModule,
   ApPractitioner,
+  ApProcedureCoding,
+  ApProcedurePriceList,
+  ApProcedureSetup,
   ApScreen,
   ApService,
   ApServiceCdt,
@@ -804,6 +807,7 @@ export const setupService = createApi({
         return response.object;
       },
     }),
+
     getDoseNumbersList: builder.query({
       query: (data: {key: string }) => ({
         url: `/setup/vaccine-doses-numbers-list`,
@@ -821,7 +825,20 @@ export const setupService = createApi({
       query: (brand: ApVaccineDose) => ({
         url: `/setup/save-vaccine-dose`,
         method: 'POST',
-        body: brand
+        body: brand  }),
+        onQueryStarted: onQueryStarted,
+        transformResponse: (response: any) => {
+          return response.object;
+        }
+  
+      }),
+
+    saveProcedure: builder.mutation({
+      query: (p: ApProcedureSetup) => ({
+        url: `/setup/save-procedure`,
+        method: 'POST',
+        body: p
+
       }),
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
@@ -829,13 +846,23 @@ export const setupService = createApi({
       }
 
     }),
+
     getVaccineDosesList: builder.query({
       query: (listRequest: ListRequest) => ({
          url: `/setup/vaccine-doses-list?${fromListRequestToQueryParams(listRequest)}`
+        }),
+        onQueryStarted: onQueryStarted,
+        keepUnusedDataFor: 5
+      })
+   , getProcedureList: builder.query({
+      query: (listRequest: ListRequest) => ({
+         url: `/setup/procedure-list?${fromListRequestToQueryParams(listRequest)}`
+
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+
     removeVaccineDose: builder.mutation({
       query: (vaccineDose: ApVaccineDose) => ({
         url: `/setup/remove-vaccine-dose`,
@@ -852,6 +879,19 @@ export const setupService = createApi({
         url: `/setup/save-vaccine-doses-interval`,
         method: 'POST',
         body: interval
+      }),}),
+    removeProcedure: builder.mutation({
+      query: (P: ApProcedureSetup) => ({
+        url: `/setup/remove-procedure`,
+        method: 'POST',
+        body: P,
+      }),}),
+    saveProcedureCoding: builder.mutation({
+      query: (p: ApProcedureCoding) => ({
+        url: `/setup/save-procedure-coding`,
+        method: 'POST',
+        body: p
+
       }),
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
@@ -859,24 +899,66 @@ export const setupService = createApi({
       }
 
     }),
+
     getVaccineDosesIntervalList: builder.query({
       query: (listRequest: ListRequest) => ({
          url: `/setup/vaccine-doses-interval-list?${fromListRequestToQueryParams(listRequest)}`
+        }),
+        onQueryStarted: onQueryStarted,
+        keepUnusedDataFor: 5
+      }),
+    getProcedureCodingList: builder.query({
+      query: (listRequest: ListRequest) => ({
+         url: `/setup/procedure-coding-list?${fromListRequestToQueryParams(listRequest)}`
+
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+
     removeVaccineDoseInterval: builder.mutation({
       query: (interval: ApVaccineDosesInterval) => ({
         url: `/setup/remove-vaccine-doses-interval`,
         method: 'POST',
         body: interval,
+      }),}),
+    removeProcedureCoding: builder.mutation({
+      query: (P: ApProcedureCoding) => ({
+        url: `/setup/remove-coding`,
+        method: 'POST',
+        body: P,
+      }),}),
+    saveProcedurePriceList: builder.mutation({
+      query: (p: ApProcedurePriceList) => ({
+        url: `/setup/save-procedure-price-list`,
+        method: 'POST',
+        body: p
+
       }),
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.object;
+
       },
     }),
+
+     
+
+   
+    getProcedurePriceList: builder.query({
+      query: (listRequest: ListRequest) => ({
+         url: `/setup/procedure-price-list-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeProcedurePriceList: builder.mutation({
+      query: (P: ApProcedurePriceList) => ({
+        url: `/setup/remove-price-list`,
+        method: 'POST',
+        body: P,
+      }),}),
+
   })
 
 });
@@ -961,11 +1043,22 @@ export const {
   useSaveVaccineBrandMutation,
   useGetVaccineBrandsListQuery,
   useDeactiveActivVaccineBrandsMutation,
+
   useGetDoseNumbersListQuery,
   useSaveVaccineDoseMutation,
   useGetVaccineDosesListQuery,
   useRemoveVaccineDoseMutation,
   useSaveVaccineDosesIntervalMutation,
   useGetVaccineDosesIntervalListQuery,
-  useRemoveVaccineDoseIntervalMutation
+  useRemoveVaccineDoseIntervalMutation,
+  useGetProcedureListQuery,
+  useSaveProcedureMutation,
+  useGetProcedureCodingListQuery,
+  useGetProcedurePriceListQuery,
+  useSaveProcedureCodingMutation,
+  useSaveProcedurePriceListMutation,
+  useRemoveProcedureMutation,
+  useRemoveProcedurePriceListMutation,
+  useRemoveProcedureCodingMutation
+
 } = setupService;

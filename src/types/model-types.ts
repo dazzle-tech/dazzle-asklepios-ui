@@ -2195,6 +2195,7 @@ export interface ApVaccineDose {
 	vaccineKey:string;
 	doseNameLkey:string;
 	isBooster:boolean;
+
 } 
 
 export interface ApVaccineDosesInterval { 
@@ -2210,6 +2211,7 @@ export interface ApVaccineDosesInterval {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
+
 } 
 
 export interface ApVisitAllergies { 
