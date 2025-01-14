@@ -2196,6 +2196,7 @@ export const newApVaccineDose:modelTypes.ApVaccineDose = {
 	vaccineKey:undefined,
 	doseNameLkey:undefined,
 	isBooster:undefined,
+
 } 
 
 export const newApVaccineDosesInterval:modelTypes.ApVaccineDosesInterval = { 
@@ -2211,6 +2212,7 @@ export const newApVaccineDosesInterval:modelTypes.ApVaccineDosesInterval = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
+
 } 
 
 export const newApVisitAllergies:modelTypes.ApVisitAllergies = { 

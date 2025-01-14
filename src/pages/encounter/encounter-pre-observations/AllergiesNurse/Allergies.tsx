@@ -146,7 +146,7 @@ const Allergies = () => {
 
              if(allerges.onsetDate!=0){
                 setEditOnset(false);
-                selectedOnsetDate(new Date(allerges.onsetDate));             
+                setSelectedOnsetDate(new Date(allerges.onsetDate));             
              }
              if(allerges.sourceOfInformationLkey!=null){
                 seteditSourceof(false);
