@@ -73,7 +73,7 @@ const Consultation = () => {
     const [editing, setEditing] = useState(false);
     const [openConfirmDeleteModel, setConfirmDeleteModel] = useState(false);
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-    const { data: consultantSpecialtyLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SPECIALY');
+    const { data: consultantSpecialtyLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY ');
     const { data: cityLovQueryResponse } = useGetLovValuesByCodeQuery('CITY');
     const { data: consultationMethodLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_METHOD');
     const { data: consultationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_TYPE');
