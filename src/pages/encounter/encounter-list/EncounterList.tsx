@@ -375,7 +375,7 @@ const EncounterList = () => {
               <Translate>Is Observed</Translate>
             </HeaderCell>
             <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {rowData => (rowData.observations ? <CheckRoundIcon className='iconStyle' /> : null)}
+              {rowData => (rowData.hasObservation? <CheckRoundIcon className='iconStyle' /> :  <WarningRoundIcon className='iconNoStyle' />)}
             </Cell>
           </Column>
         </Table>
