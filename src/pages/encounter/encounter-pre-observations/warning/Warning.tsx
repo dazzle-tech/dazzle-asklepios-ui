@@ -68,6 +68,20 @@ const Warning = () => {
     const [showCanceled, setShowCanceled] = useState(true);
     const [editing, setEditing] = useState(false);
     const [showPrev, setShowPrev] = useState(true);
+    const [listRequestWar, setListRequestWar] = useState<ListRequest>({
+        ...initialListRequest, filters: [
+            {
+                fieldName: 'patient_key',
+                operator: 'match',
+                value: patientSlice.patient.key
+            },
+            {
+                fieldName: "status_lkey",
+                operator: showCanceled ? "notMatch" : "match",
+                value: "3196709905099521",
+            }
+        ]
+    })
     const filters = [
         {
             fieldName: 'patient_key',
@@ -88,7 +102,7 @@ const Warning = () => {
             value: patientSlice.encounter.key
         });
     }
-    const { data: warningsListResponse, refetch: fetchwarnings } = useGetWarningsQuery({ ...initialListRequest, filters });
+    const { data: warningsListResponse, refetch: fetchwarnings } = useGetWarningsQuery({ ...listRequestWar });
     const [selectedFirstDate, setSelectedFirstDate] = useState(null);
     const [editDate, setEditDate] = useState(true)
     const [editSourceof, seteditSourceof] = useState(true);
@@ -104,14 +118,116 @@ const Warning = () => {
     }, [selectedFirstDate]);
     useEffect(() => {
 
-       if(warning.firstTimeRecorded!=0){
-        setEditDate(false);
-        setSelectedFirstDate(new Date(warning.firstTimeRecorded));
-       }
-       if(warning.sourceOfInformationLkey!=null){
-        seteditSourceof(false);
-     }
+        if (warning.firstTimeRecorded != 0) {
+            setEditDate(false);
+            setSelectedFirstDate(new Date(warning.firstTimeRecorded));
+        }
+        if (warning.sourceOfInformationLkey != null) {
+            seteditSourceof(false);
+        }
     }, [warning]);
+    useEffect(() => {
+        if (showPrev) {
+            const updatedFilters = [
+                {
+                    fieldName: 'patient_key',
+                    operator: 'match',
+                    value: patientSlice.patient.key
+                },
+                {
+                    fieldName: "status_lkey",
+                    operator: showCanceled ? "notMatch" : "match",
+                    value: "3196709905099521",
+                },
+                {
+                    fieldName: 'visit_key',
+                    operator: 'match',
+                    value: patientSlice.encounter.key
+                }
+
+            ];
+            setListRequestWar((prevRequest) => ({
+                ...prevRequest,
+                filters: updatedFilters,
+            }));
+
+        }
+        else {
+            const updatedFilters = [
+                {
+                    fieldName: 'patient_key',
+                    operator: 'match',
+                    value: patientSlice.patient.key
+                },
+                {
+                    fieldName: "status_lkey",
+                    operator: showCanceled ? "notMatch" : "match",
+                    value: "3196709905099521",
+                }
+
+            ];
+            setListRequestWar((prevRequest) => ({
+                ...prevRequest,
+                filters: updatedFilters,
+            }));
+        }
+    }, [showPrev]);
+    useEffect(()=>{
+        if (showPrev) {
+            const updatedFilters = [
+                {
+                    fieldName: 'patient_key',
+                    operator: 'match',
+                    value: patientSlice.patient.key
+                },
+                {
+                    fieldName: "status_lkey",
+                    operator: showCanceled ? "notMatch" : "match",
+                    value: "3196709905099521",
+                },
+                {
+                    fieldName: 'visit_key',
+                    operator: 'match',
+                    value: patientSlice.encounter.key
+                }
+
+            ];
+            setListRequestWar((prevRequest) => ({
+                ...prevRequest,
+                filters: updatedFilters,
+            }));
+
+        }
+        else {
+            const updatedFilters = [
+                {
+                    fieldName: 'patient_key',
+                    operator: 'match',
+                    value: patientSlice.patient.key
+                },
+                {
+                    fieldName: "status_lkey",
+                    operator: showCanceled ? "notMatch" : "match",
+                    value: "3196709905099521",
+                }
+
+            ];
+            setListRequestWar((prevRequest) => ({
+                ...prevRequest,
+                filters: updatedFilters,
+            }));
+        }
+    },[showCanceled]);
+    useEffect(() => {
+        console.log(saveWarningMutation);
+        setShowPrev(true);
+
+        fetchwarnings();
+    }, [saveWarningMutation])
+    useEffect(() => {
+        fetchwarnings();
+        console.log(warningsListResponse)
+    }, [listRequestWar])
     const handleDateChange = (date) => {
         if (date) {
             const timestamp = date.getTime();
@@ -122,7 +238,7 @@ const Warning = () => {
         }
     };
     const handleSave = async () => {
-
+        setShowPrev(true);
         try {
             saveWarning({
                 ...warning
@@ -132,12 +248,15 @@ const Warning = () => {
                 firstTimeRecorded: selectedFirstDate ? selectedFirstDate.getTime() : null
             }).unwrap();
             dispatch(notify('saved  Successfully'));
-            fetchwarnings().then(() => {
-                console.log("Refetch complete");
+          setShowPrev(false);
+          await  fetchwarnings().then(() => {
+            
             }).catch((error) => {
                 console.error("Refetch failed:", error);
             });
-            handleClear();
+         
+           await  handleClear();
+           setShowPrev(true);
         } catch (error) {
             dispatch(notify('Save Failed'));
             console.error('An error occurred:', error);
@@ -150,7 +269,7 @@ const Warning = () => {
             sourceOfInformationLkey: null,
             severityLkey: null,
             warningTypeLkey: null
-        } )
+        })
         setSelectedFirstDate(null);
         setEditDate(true);
         seteditSourceof(true);
@@ -182,8 +301,8 @@ const Warning = () => {
 
             }).unwrap();
             dispatch(notify(' deleted successfully'));
-
-            fetchwarnings().then(() => {
+            await setShowCanceled(false);
+           await fetchwarnings().then(() => {
                 console.log("Refetch complete");
             }).catch((error) => {
                 console.error("Refetch failed:", error);
@@ -200,8 +319,8 @@ const Warning = () => {
 
             }).unwrap();
             dispatch(notify('Resolved successfully'));
-
-            fetchwarnings().then(() => {
+            setShowPrev(!showPrev);
+           await fetchwarnings().then(() => {
                 console.log("Refetch complete");
             }).catch((error) => {
                 console.error("Refetch failed:", error);
@@ -220,8 +339,8 @@ const Warning = () => {
 
             }).unwrap();
             dispatch(notify('Undo Resolved successfully'));
-
-            fetchwarnings().then(() => {
+            setShowPrev(!showPrev);
+           await fetchwarnings().then(() => {
                 console.log("Refetch complete");
             }).catch((error) => {
                 console.error("Refetch failed:", error);
@@ -348,11 +467,11 @@ const Warning = () => {
                             record={warning}
                             setRecord={setWarning}
                         />
-                               <MyInput
+                        <MyInput
                             column
                             disabled={editing}
                             width={150}
-                           
+
                             fieldName={'warning'}
                             record={warning}
                             setRecord={setWarning}
@@ -568,7 +687,7 @@ const Warning = () => {
                             }
                         </Cell>
                     </Column >
-                   
+
                     <Column flexGrow={2} fullText>
                         <HeaderCell align="center">
                             <Translate>Severity</Translate>
@@ -579,7 +698,7 @@ const Warning = () => {
                             }
                         </Cell>
                     </Column>
-                    
+
                     <Column flexGrow={2} fullText>
                         <HeaderCell align="center">
                             <Translate>First Time Recorded</Translate>
@@ -588,7 +707,7 @@ const Warning = () => {
                             {rowData => rowData.firstTimeRecorded ? new Date(rowData.firstTimeRecorded).toLocaleString() : "Undefind"}
                         </Cell>
                     </Column>
-                   
+
                     <Column flexGrow={2} fullText>
                         <HeaderCell align="center">
                             <Translate>Source of information</Translate>
@@ -647,7 +766,7 @@ const Warning = () => {
                     <Translate><h6>Confirm Cancel</h6></Translate>
                 </Modal.Title>
                 <Modal.Body>
-                    
+
 
                     <Form style={{ zoom: 0.85 }} layout="inline" fluid>
                         <MyInput
@@ -668,7 +787,7 @@ const Warning = () => {
                 <Modal.Footer>
                     <Stack spacing={2} divider={<Divider vertical />}>
                         <Button appearance="primary" onClick={handleCancle}>
-                           Cancel
+                            Cancel
                         </Button>
                         <Button appearance="ghost" color="cyan" onClick={CloseCancellationReasonModel}>
                             Close

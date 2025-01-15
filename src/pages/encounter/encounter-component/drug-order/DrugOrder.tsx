@@ -581,6 +581,7 @@ const DrugOrder = () => {
                 administrationInstructions: adminInstructions
             }).unwrap().then(() => {
                 dispatch(notify("added sucssesfily"));
+                handleCleare();
                 medicRefetch();
             })
         } catch (error) {
@@ -602,7 +603,7 @@ const DrugOrder = () => {
             startDateTime: null,
             genericSubstitute: false,
             chronicMedication: false,
-            patientOwnMedication:null,
+            patientOwnMedication:false,
             priorityLkey: null,
             roaLkey: null,
             doseUnitLkey: null,
@@ -615,7 +616,7 @@ const DrugOrder = () => {
         setAdminInstructions("");
         setSelectedGeneric(null);
         setSelectedFirstDate(null);
-        setindicationsDescription("")
+        setindicationsDescription("");
 
 
         setTags([])
