@@ -67,28 +67,24 @@ const Allergies = () => {
     const [showCanceled, setShowCanceled] = useState(true);
     const [editing, setEditing] = useState(false);
     const [showPrev, setShowPrev] = useState(true);
-    const filters = [
-        {
-            fieldName: 'patient_key',
-            operator: 'match',
-            value: patientSlice.patient.key
-        },
-        {
-            fieldName: "status_lkey",
-            operator: showCanceled ? "notMatch" : "match",
-            value: "3196709905099521",
-        }
-    ];
+    const [listRequestallerg, setListRequestallerg] = useState<ListRequest>({
+        ...initialListRequest, filters: [
+            {
+                fieldName: 'patient_key',
+                operator: 'match',
+                value: patientSlice.patient.key
+            },
+            {
+                fieldName: "status_lkey",
+                operator: showCanceled ? "notMatch" : "match",
+                value: "3196709905099521",
+            }
+        ]
+    })
 
-    if (showPrev) {
-        filters.push({
-            fieldName: 'visit_key',
-            operator: 'match',
-            value: patientSlice.encounter.key
-        });
-    }
 
-    const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({ ...initialListRequest, filters });
+    const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({ ...listRequestallerg });
+
     const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
     const [openConfirmResolvedModel, setOpenConfirmResolvedModel] = useState(false);
     const [openConfirmUndoResolvedModel, setOpenConfirmUndoResolvedModel] = useState(false);
@@ -107,7 +103,7 @@ const Allergies = () => {
     const { data: allergensListToGetName } = useGetAllergensQuery({
         ...initialListRequest
     });
-    console.log(allergensListToGetName?.object)
+
     const [selectedOnsetDate, setSelectedOnsetDate] = useState(null);
     const [saveAllergies, saveAllergiesMutation] = useSaveAllergiesMutation();
     const [reactionDescription, setReactionDescription] = useState();
@@ -117,14 +113,14 @@ const Allergies = () => {
         ...initialListRequest,
     });
     const dispatch = useAppDispatch();
-    console.log(patientSlice.patient);
+
     const isSelected = rowData => {
         if (rowData && allerges && rowData.key === allerges.key) {
             return 'selected-row';
         } else return '';
     };
     useEffect(() => {
-        console.log(selectedOnsetDate)
+
     }, [selectedOnsetDate]);
     useEffect(() => {
         if (allerges.reactionDescription != null) {
@@ -142,17 +138,119 @@ const Allergies = () => {
 
 
     }, [allerges.reactionDescription]);
-        useEffect(() => {
+    useEffect(() => {
 
-             if(allerges.onsetDate!=0){
-                setEditOnset(false);
-                setSelectedOnsetDate(new Date(allerges.onsetDate));             
-             }
-             if(allerges.sourceOfInformationLkey!=null){
-                seteditSourceof(false);
-             }
-          }, [allerges]);
+        if (allerges.onsetDate != 0) {
+            setEditOnset(false);
+            setSelectedOnsetDate(new Date(allerges.onsetDate));
+        }
+        if (allerges.sourceOfInformationLkey != null) {
+            seteditSourceof(false);
+        }
+    }, [allerges]);
+    useEffect(() => {
+        if (showPrev) {
+            const updatedFilters = [
+                {
+                    fieldName: 'patient_key',
+                    operator: 'match',
+                    value: patientSlice.patient.key
+                },
+                {
+                    fieldName: "status_lkey",
+                    operator: showCanceled ? "notMatch" : "match",
+                    value: "3196709905099521",
+                },
+                {
+                    fieldName: 'visit_key',
+                    operator: 'match',
+                    value: patientSlice.encounter.key
+                }
 
+
+            ];
+            setListRequestallerg((prevRequest) => ({
+                ...prevRequest,
+                filters: updatedFilters,
+            }));
+
+        }
+        else {
+            const updatedFilters = [
+                {
+                    fieldName: 'patient_key',
+                    operator: 'match',
+                    value: patientSlice.patient.key
+                },
+                {
+                    fieldName: "status_lkey",
+                    operator: showCanceled ? "notMatch" : "match",
+                    value: "3196709905099521",
+                }
+
+            ];
+            setListRequestallerg((prevRequest) => ({
+                ...prevRequest,
+                filters: updatedFilters,
+            }));
+        }
+    }, [showPrev]);
+    useEffect(() => {
+        console.log(saveAllergiesMutation);
+        setShowPrev(true);
+
+        fetchallerges();
+    }, [saveAllergiesMutation])
+    useEffect(() => {
+        fetchallerges();
+        console.log(allergiesListResponse)
+    }, [listRequestallerg])
+     useEffect(()=>{
+        if (showPrev) {
+            const updatedFilters = [
+                {
+                    fieldName: 'patient_key',
+                    operator: 'match',
+                    value: patientSlice.patient.key
+                },
+                {
+                    fieldName: "status_lkey",
+                    operator: showCanceled ? "notMatch" : "match",
+                    value: "3196709905099521",
+                },
+                {
+                    fieldName: 'visit_key',
+                    operator: 'match',
+                    value: patientSlice.encounter.key
+                }
+
+            ];
+            setListRequestallerg((prevRequest) => ({
+                ...prevRequest,
+                filters: updatedFilters,
+            }));
+
+        }
+        else {
+            const updatedFilters = [
+                {
+                    fieldName: 'patient_key',
+                    operator: 'match',
+                    value: patientSlice.patient.key
+                },
+                {
+                    fieldName: "status_lkey",
+                    operator: showCanceled ? "notMatch" : "match",
+                    value: "3196709905099521",
+                }
+
+            ];
+            setListRequestallerg((prevRequest) => ({
+                ...prevRequest,
+                filters: updatedFilters,
+            }));
+        }
+     },[showCanceled]);
     const renderRowExpanded = rowData => {
         return (
 
@@ -198,6 +296,26 @@ const Allergies = () => {
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Cancelled By</HeaderCell>
                     <Cell dataKey="deletedBy" />
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Notes</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            rowData.notes
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Certainty</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            rowData.certainty
+                        }
+                    </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Cancelliton Reason</HeaderCell>
@@ -268,38 +386,39 @@ const Allergies = () => {
             reactionDescription: null,
             sourceOfInformationLkey: null,
             treatmentStrategyLkey: null,
-            severityLkey: null
+            severityLkey: null,
+            criticalityLkey: null,
+            typeOfPropensityLkey: null
 
-        } );
+
+        });
         setSelectedOnsetDate(null);
         setEditOnset(true);
         seteditSourceof(true);
         setReactionDescription(null);
     }
     const handleSave = async () => {
-        console.log(selectedOnsetDate);
+        setShowPrev(true);
         try {
-            saveAllergies({
-                ...allerges
-                , patientKey: patientSlice.patient.key
-                , visitKey: patientSlice.encounter.key
-                , statusLkey: '9766169155908512',
-                reactionDescription: reactionDescription
-                , onsetDate: selectedOnsetDate ? selectedOnsetDate.getTime() : null
+            await saveAllergies({
+                ...allerges,
+                patientKey: patientSlice.patient.key,
+                visitKey: patientSlice.encounter.key,
+                statusLkey: '9766169155908512',
+                reactionDescription: reactionDescription,
+                onsetDate: selectedOnsetDate ? selectedOnsetDate.getTime() : null
             }).unwrap();
-            dispatch(notify('saved  Successfully'));
-            fetchallerges().then(() => {
-                console.log("Refetch complete");
-            }).catch((error) => {
-                console.error("Refetch failed:", error);
-            });
-            handleClear();
+            dispatch(notify('Saved Successfully'));
+             setShowPrev(false);
+            await fetchallerges();  // Ensure refetch is awaited
+            await handleClear();
+            setShowPrev(true);
+           
         } catch (error) {
             dispatch(notify('Save Failed'));
             console.error('An error occurred:', error);
-
         }
-    }
+    };
 
     const OpenCancellationReasonModel = () => {
         setOpenCancellationReasonModel(true);
@@ -327,7 +446,7 @@ const Allergies = () => {
 
             }).unwrap();
             dispatch(notify(' deleted successfully'));
-
+            setShowCanceled(false)
             fetchallerges().then(() => {
                 console.log("Refetch complete");
             }).catch((error) => {
@@ -339,6 +458,7 @@ const Allergies = () => {
     }
 
     const handleResolved = async () => {
+        setShowPrev(true);
         try {
             await saveAllergies({
                 ...allerges,
@@ -346,19 +466,22 @@ const Allergies = () => {
 
             }).unwrap();
             dispatch(notify('Resolved successfully'));
-
-            fetchallerges().then(() => {
+            setShowPrev(false);
+          await  fetchallerges().then(() => {
                 console.log("Refetch complete");
             }).catch((error) => {
                 console.error("Refetch failed:", error);
             });
 
             CloseConfirmResolvedModel();
+            setShowPrev(true);
+            setAllerges({ ...newApVisitAllergies })
         } catch {
             dispatch(notify('Resolved Fill'));
         }
     }
     const handleUndoResolved = async () => {
+        setShowPrev(true);
         try {
             await saveAllergies({
                 ...allerges,
@@ -366,14 +489,16 @@ const Allergies = () => {
 
             }).unwrap();
             dispatch(notify('Undo Resolved successfully'));
-
-            fetchallerges().then(() => {
+            setShowPrev(false);
+           await  fetchallerges().then(() => {
                 console.log("Refetch complete");
             }).catch((error) => {
                 console.error("Refetch failed:", error);
             });
 
             CloseConfirmUndoResolvedModel();
+            setShowPrev(true);
+            setAllerges({ ...newApVisitAllergies })
         } catch {
             dispatch(notify('Undo Resolved Fill'));
         }
@@ -422,20 +547,20 @@ const Allergies = () => {
                             record={allerges}
                             setRecord={setAllerges}
                         />
-                         <MyInput
+                        <MyInput
                             column
                             disabled={editing}
                             width={150}
                             fieldType="select"
                             fieldLabel="Criticality"
-                            selectData={criticalityLovQueryResponse ?.object ?? []}
+                            selectData={criticalityLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
                             fieldName={'criticalityLkey'}
                             record={allerges}
                             setRecord={setAllerges}
                         />
-                         <MyInput
+                        <MyInput
                             column
                             disabled={editing}
                             width={150}
@@ -481,7 +606,7 @@ const Allergies = () => {
                                 style={{ width: 130 }}
 
                             /></div>
-                     
+
                         <MyInput
                             column
                             disabled={editSourceof}
@@ -510,10 +635,10 @@ const Allergies = () => {
                                 style={{ width: 100 }}
 
                             /></div>
-                        
+
                     </Form>
                     <Form style={{ zoom: 0.85, display: 'flex' }} layout="inline" fluid>
-                    <MyInput
+                        <MyInput
                             column
                             disabled={editing}
                             width={150}
@@ -526,7 +651,7 @@ const Allergies = () => {
                             record={allerges}
                             setRecord={setAllerges}
                         />
-                    <MyInput
+                        <MyInput
                             column
                             disabled={editing}
                             width={150}
@@ -570,7 +695,7 @@ const Allergies = () => {
                             setRecord={setAllerges}
                             disabled={editing}
                         />
-                        
+
                     </Form>
                     <div>
                         <IconButton
@@ -689,23 +814,33 @@ const Allergies = () => {
                         </HeaderCell>
                         <Cell>
                             {rowData => {
-                                console.log(rowData.allergenKey); 
+
                                 if (!allergensListToGetName?.object) {
-                                    return "Loading...";  
+                                    return "Loading...";
                                 }
                                 const getname = allergensListToGetName.object.find(item => item.key === rowData.allergenKey);
-                                console.log(getname);  
-                                return getname?.allergenName || "No Name"; 
+
+                                return getname?.allergenName || "No Name";
                             }}
                         </Cell>
                     </Column>
-                    <Column flexGrow={2} fullText>
+                    <Column flexGrow={1} fullText>
                         <HeaderCell align="center">
                             <Translate>Severity</Translate>
                         </HeaderCell>
                         <Cell>
                             {rowData =>
                                 rowData.severityLvalue?.lovDisplayVale
+                            }
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Certainty type</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.criticalityLkey ? rowData.criticalityLvalue.lovDisplayVale : rowData.criticalityLkey
                             }
                         </Cell>
                     </Column>
@@ -759,11 +894,11 @@ const Allergies = () => {
                     </Column>
                     <Column flexGrow={2} fullText>
                         <HeaderCell align="center">
-                            <Translate>Notes</Translate>
+                            <Translate>Type Of Propensity</Translate>
                         </HeaderCell>
                         <Cell>
                             {rowData =>
-                                rowData.notes
+                                rowData.typeOfPropensityLkey ? rowData.typeOfPropensityLvalue.lovDisplayVale : rowData.typeOfPropensityLkey
                             }
                         </Cell>
                     </Column>
@@ -785,7 +920,7 @@ const Allergies = () => {
                     <Translate><h6>Confirm Cancel</h6></Translate>
                 </Modal.Title>
                 <Modal.Body>
-                   
+
 
                     <Form style={{ zoom: 0.85 }} layout="inline" fluid>
                         <MyInput

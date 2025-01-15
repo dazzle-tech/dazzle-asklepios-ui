@@ -293,7 +293,7 @@ const PatientDiagnosis = () => {
         <div style={{ display: 'flex', gap: '4px', width: '100%' }}>
           <div>
 
-            <Text style={{ zoom: 0.85 }}>diagnosis</Text>
+            <Text style={{ zoom: 0.85 }}>Diagnosis</Text>
             <InputGroup>
 
               <Input
