@@ -161,14 +161,7 @@ const Consultation = () => {
     });
 
 
-    const key =
-        patientDiagnoseListResponse?.data?.object &&
-            Array.isArray(patientDiagnoseListResponse.data?.object) &&
-            patientDiagnoseListResponse.data?.object?.length > 0
-            ? patientDiagnoseListResponse.data?.object[0]?.key ?? ""
-            : "";
 
-    console.log(key);
     // const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch } =
     // useFetchAttachmentLightQuery({ refKey: consultationOrders?.key }, { skip: !consultationOrders?.key });
     const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
