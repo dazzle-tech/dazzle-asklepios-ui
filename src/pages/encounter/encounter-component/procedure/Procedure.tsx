@@ -6,7 +6,9 @@ import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import FileDownloadIcon from '@rsuite/icons/FileDownload';
 import FileUploadIcon from '@rsuite/icons/FileUpload';
+import PatientOrder from '../diagnostics-order'
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
+
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
 import {
     useGetPractitionersQuery
@@ -48,7 +50,7 @@ import CheckIcon from '@rsuite/icons/Check';
 import PlusIcon from '@rsuite/icons/Plus';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
-import { faPrint } from '@fortawesome/free-solid-svg-icons';
+import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import OthersIcon from '@rsuite/icons/Others';
 import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
 import AttachmentModal from "@/pages/patient/patient-profile/AttachmentUploadModal";
@@ -108,12 +110,15 @@ const Referrals = () => {
         ]
     });
     const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
-    const [procedure, setProcedure] = useState<ApProcedure>({ ...newApProcedure, encounterKey: patientSlice.encounter.key });
+    const [openOrderModel, setOpenOrderModel] = useState(false);
+    const [procedure, setProcedure] = useState<ApProcedure>({ ...newApProcedure, encounterKey: patientSlice.encounter.key, currentDepartment: true });
     const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
     const { data: ProcedureLevelLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
     const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
     const { data: depTTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
     const { data: faciltyypesLovQueryResponse } = useGetLovValuesByCodeQuery('FSLTY_TYP');
+    const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
+    const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
     const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
     const [listRequestPro, setListRequestPro] = useState<ListRequest>({
         ...initialListRequest
@@ -186,10 +191,10 @@ const Referrals = () => {
     const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
     const fetchOrderAttachResponse = useFetchAttachmentQuery(
         {
-            type: 'CONSULTATION_ORDER',
-            // refKey: consultationOrders.key
+            type: 'PROCEDURE_ORDER',
+            refKey: procedure.key
         },
-        // { skip: !consultationOrders.key }
+        { skip: !procedure.key }
     );
     const {
         data: fetchAttachmentByKeyResponce,
@@ -215,11 +220,11 @@ const Referrals = () => {
             }
         ],
     });
-    const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
-    const modifiedData = (icdListResponseLoading?.object ?? []).map(item => ({
-        ...item,
-        combinedLabel: `${item.icdCode} - ${item.description}`,
-    }));
+   const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
+      const modifiedData = (icdListResponseLoading?.object ?? []).map(item => ({
+          ...item,
+          combinedLabel: `${item.icdCode} - ${item.description}`,
+      }));
     useEffect(() => {
         if (procedure.indications != null || procedure.indications != "") {
 
@@ -238,6 +243,29 @@ const Referrals = () => {
             });
         }
     }, [procedure.indications]);
+        useEffect(() => {
+            if (searchKeywordicd.trim() !== "") {
+                setIcdListRequest(
+                    {
+                        ...initialListRequest,
+                        filterLogic: 'or',
+                        filters: [
+                            {
+                                fieldName: 'icd_code',
+                                operator: 'containsIgnoreCase',
+                                value: searchKeywordicd
+                            },
+                            {
+                                fieldName: 'description',
+                                operator: 'containsIgnoreCase',
+                                value: searchKeywordicd
+                            }
+    
+                        ]
+                    }
+                );
+            }
+        }, [searchKeywordicd]);
 
     useEffect(() => {
         setListRequestPro((prev) => ({
@@ -256,6 +284,11 @@ const Referrals = () => {
             ],
         }));
     }, [procedure?.categoryKey]);
+    useEffect(()=>{
+        if(procedure.currentDepartment){
+            setProcedure({...procedure,departmentKey:null,faciltyLkey:null});
+        }
+    },[procedure.currentDepartment])
     useEffect(() => {
         if (patientDiagnoseListResponse.data?.object?.length > 0) {
             setSelectedDiagnose(patientDiagnoseListResponse?.data?.object[0]?.diagnosisObject
@@ -300,7 +333,7 @@ const Referrals = () => {
         }
     };
     const handleDownloadSelectedPatientAttachment = attachmentKey => {
-
+        console.log("iam in downlod file fun")
         setRequestedPatientAttacment(attachmentKey);
         setActionType('download');
 
@@ -344,15 +377,20 @@ const Referrals = () => {
 
     };
     const handleSave = async () => {
+
         try {
+
+
             await saveProcedures({
                 ...procedure,
                 statusLkey: '3621653475992516',
-                Indications:indicationsDescription
+                indications: indicationsDescription,
+                encounterKey:patientSlice.encounter.key
             }).unwrap().then(() => {
+               
                 proRefetch();
             });
-
+            handleClear();
             dispatch(notify('saved  Successfully'));
 
 
@@ -364,9 +402,30 @@ const Referrals = () => {
     const CloseCancellationReasonModel = () => {
         setOpenCancellationReasonModel(false);
     }
+    const CloseOrderModel = () => {
+        setOpenOrderModel(false);
+    }
     const joinValuesFromArray = (values) => {
         return values.filter(Boolean).join(', ');
     };
+    const handleClear = () => {
+        setProcedure({
+            ...newApProcedure,
+
+            statusLkey: '3621653475992516',
+            indications: indicationsDescription,
+            bodyPartLkey: null,
+            sideLkey: null,
+            faciltyLkey: null,
+            priorityLkey: null,
+            procedureLevelLkey: null,
+            departmentKey: null,
+            categoryKey: null,
+            procedureNameKey: null
+
+        })
+    }
+
     const renderRowExpanded = rowData => {
         // Add this line to check children data
 
@@ -380,6 +439,47 @@ const Referrals = () => {
                 style={{ width: '100%', marginTop: '10px' }}
                 height={100} // Adjust height as needed
             >
+                 <Column flexGrow={2} align="center" fullText>
+                    <HeaderCell>Facelity</HeaderCell>
+                    <Cell dataKey="faciltyLvalue.lovDisplayVale" >
+                        {rowData => rowData.faciltyLkey?rowData.faciltyLvalue.lovDisplayVale:rowData.faciltyLkey}
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} align="center" fullText>
+                    <HeaderCell>Department</HeaderCell>
+                    <Cell dataKey="departmentKey" >
+                    {rowData => {
+                        console.log("iam heare");
+                        console.log('Item Key:', department[0].key);
+                        console.log('Row Data Department Key:', rowData.departmentKey);
+                        const d= department?.find(item => item.key === rowData.departmentKey);
+                    
+                    console.log('Matched Department:', d);
+                    
+                    return d?.name||'g';
+                    
+                    }}
+                   
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} align="center" fullText>
+                    <HeaderCell>Current Department</HeaderCell>
+                    <Cell  >
+                        {rowData => rowData.currentDepartment?"Yes":""}
+                    </Cell>
+                </Column>
+                <Column flexGrow={1} align="center" fullText>
+                    <HeaderCell>Body Part</HeaderCell>
+                    <Cell dataKey="bodyPartLvalue.lovDisplayVale" >
+                        {rowData => rowData.bodyPartLkey?rowData.bodyPartLvalue.lovDisplayVale:rowData.bodyPartLkey}
+                    </Cell>
+                </Column>
+                <Column flexGrow={1} align="center" fullText>
+                    <HeaderCell>Side</HeaderCell>
+                    <Cell dataKey="sideLvalue.lovDisplayVale" >
+                        {rowData => rowData.sideLkey?rowData.sideLvalue.lovDisplayVale:rowData.sideLkey}
+                    </Cell>
+                </Column>
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Created At</HeaderCell>
                     <Cell dataKey="createdAt" >
@@ -437,7 +537,10 @@ const Referrals = () => {
 
         try {
             await
-                saveProcedures({ ...procedure, statusLkey: "3621690096636149", deletedAt: Date.now() }).unwrap();
+                saveProcedures({ ...procedure, statusLkey: "3621690096636149", deletedAt: Date.now() }).unwrap()
+                    .then(() => {
+                        proRefetch();
+                    });
 
 
             dispatch(notify(' procedure deleted successfully'));
@@ -467,7 +570,8 @@ const Referrals = () => {
             />
         </Cell>
     );
-    return (<>   <h5>Procedure Order</h5>
+    return (<> 
+      <h5>Procedure Order</h5>
         <br />
         <div className='top-div'>
             <div>
@@ -476,7 +580,7 @@ const Referrals = () => {
                     <MyInput
                         column
                         disabled={editing}
-                        width={180}
+                        width={170}
                         fieldType="select"
                         fieldLabel="Category Type"
                         selectData={CategoryLovQueryResponse?.object ?? []}
@@ -489,7 +593,7 @@ const Referrals = () => {
                     <MyInput
                         column
                         disabled={editing}
-                        width={180}
+                        width={170}
                         fieldType="select"
                         fieldLabel="Procedure Name"
                         selectData={procedureQueryResponse?.object ?? []}
@@ -502,7 +606,7 @@ const Referrals = () => {
                     <MyInput
                         column
                         disabled={editing}
-                        width={180}
+                        width={170}
                         fieldType="select"
                         fieldLabel="Procedure Level"
                         selectData={ProcedureLevelLovQueryResponse?.object ?? []}
@@ -515,7 +619,7 @@ const Referrals = () => {
                     <MyInput
                         column
                         disabled={editing}
-                        width={180}
+                        width={170}
                         fieldType="select"
                         fieldLabel="Priority"
                         selectData={priorityLovQueryResponse?.object ?? []}
@@ -528,8 +632,8 @@ const Referrals = () => {
 
                     <MyInput
                         column
-                        disabled={editing}
-                        width={180}
+                        disabled={editing ? editing : procedure.currentDepartment}
+                        width={170}
                         fieldType="select"
                         fieldLabel="Facilty "
                         selectData={faciltyypesLovQueryResponse?.object ?? []}
@@ -541,8 +645,8 @@ const Referrals = () => {
                     />
                     <MyInput
                         column
-                        disabled={editing}
-                        width={180}
+                        disabled={editing ? editing : procedure.currentDepartment}
+                        width={170}
                         fieldType="select"
                         fieldLabel="Department"
                         selectData={department ?? []}
@@ -552,12 +656,26 @@ const Referrals = () => {
                         record={procedure}
                         setRecord={setProcedure}
                     />
+                    <MyInput
+
+                        disabled={editing}
+                        column
+                        fieldType="checkbox"
+                        fieldName="currentDepartment"
+                        record={procedure}
+                        setRecord={setProcedure}
+
+                    />
+
                 </Form>
                 <br />
                 <div style={{ display: 'flex', zoom: 0.85, gap: '10px' }}>
-                    <div style={{ width: '180px' }}>
+
+
+                    <div style={{ width: '190px' }}>
                         <Text style={{ marginTop: '6px', fontWeight: 'bold' }}>Start Date Time</Text>
                         <DatePicker
+                            disabled={editing}
                             format="MM/dd/yyyy hh:mm aa"
                             showMeridian
                             value={procedure.scheduledDateTime != 0 ? new Date(procedure.scheduledDateTime) : new Date()}
@@ -567,28 +685,39 @@ const Referrals = () => {
                                     scheduledDateTime: value.getTime()
                                 });
                             }}
-                        // disabled={drugKey != null ? editing : true}
+
                         />
 
                     </div>
-                    <Form layout="inline" fluid>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <Form layout="inline" fluid disabled={editing}>
 
 
-                        <MyInput
-                            column
-                            width={200}
+                            <MyInput
+                                column
+                                width={200}
+                                disabled={editing}
+                                fieldName="notes"
+                                rows={6}
+                                fieldType="textarea"
+                                record={procedure}
+                                setRecord={setProcedure}
+                            />
+
+
+
+                        </Form>
+                        <IconButton
+                            color="violet"
+                            appearance="ghost"
+                            onClick={() => { setOpenOrderModel(true) }}
                             disabled={editing}
-                            fieldName="notes"
-                            rows={6}
-                            fieldType="textarea"
-                            record={procedure}
-                            setRecord={setProcedure}
-                        />
-
-
-
-                    </Form>
-                    <div style={{ margin: '3px' }}>
+                            icon={<CheckIcon />}
+                        >
+                            <Translate>Order Related Tests</Translate>
+                        </IconButton>
+                    </div>
+                    <div style={{ margin: '5px' }}>
                         <Text style={{ fontWeight: 'bold' }}>Indications</Text>
                         <InputGroup inside style={{ width: '300px', margin: '3px' }}>
                             <Input
@@ -630,7 +759,7 @@ const Referrals = () => {
                     <div>
                         <Table
                             height={200}
-                            width={300}
+                            width={330}
 
                             headerHeight={33}
                             rowHeight={40}
@@ -660,6 +789,37 @@ const Referrals = () => {
 
                         </Table>
                     </div>
+                    <div >
+                        <Form layout="inline"  >
+                            <MyInput
+                                column
+                                disabled={editing}
+                                width={170}
+                                fieldType="select"
+                                fieldLabel="Body Part "
+                                selectData={bodypartLovQueryResponse?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                fieldName={'bodyPartLkey'}
+                                record={procedure}
+                                setRecord={setProcedure}
+                            />
+                            <MyInput
+                                column
+                                disabled={editing}
+                                width={170}
+                                fieldType="select"
+                                fieldLabel="Side"
+                                selectData={sideLovQueryResponse?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                fieldName={'sideLkey'}
+                                record={procedure}
+                                setRecord={setProcedure}
+                            />
+                        </Form>
+
+                    </div >
                 </div>
 
                 <br />
@@ -677,7 +837,7 @@ const Referrals = () => {
                         color="cyan"
                         appearance="primary"
                         style={{ marginLeft: "5px" }}
-                    // onClick={handleClear}
+                        onClick={handleClear}
 
                     >
 
@@ -688,7 +848,7 @@ const Referrals = () => {
 
                 </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", width: "250px" }} >
+            <div style={{ display: "flex", flexDirection: "column", width: "300px" }} >
 
                 <Form style={{ zoom: 0.85 }} layout="inline" fluid>
 
@@ -716,7 +876,7 @@ const Referrals = () => {
                         appearance="link"
                         onClick={() => handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)}
                     >
-                        Download <FileDownloadIcon style={{ marginLeft: '10px', scale: '1.4' }} />
+                        Download <FileDownloadIcon style={{ scale: '1.4' }} />
                     </Button>}
                     <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={procedure} attatchmentType={'PROCEDURE_ORDER'} />
 
@@ -758,8 +918,48 @@ const Referrals = () => {
                     </Stack>
                 </Modal.Footer>
             </Modal>
+            <Modal size='lg' open={openOrderModel} onClose={CloseOrderModel} overflow  >
+                <Modal.Title>
+                    <Translate><h6>Add Order</h6></Translate>
+                </Modal.Title>
+                <Modal.Body>
+
+
+                    < PatientOrder />
+                </Modal.Body>
+                <Modal.Footer>
+                    <Stack spacing={2} divider={<Divider vertical />}>
+
+                        <Button appearance="ghost" color="cyan" onClick={CloseOrderModel}>
+                            Close
+                        </Button>
+                    </Stack>
+                </Modal.Footer>
+            </Modal>
 
         </div>
+        <IconButton
+            color="cyan"
+            appearance="primary"
+            style={{ marginLeft: "5px" }}
+            icon={<BlockIcon />}
+            onClick={() => setOpenCancellationReasonModel(true)}
+
+        >
+            <Translate> Cancle</Translate>
+        </IconButton>
+        <Checkbox
+            checked={!showCanceled}
+            onChange={() => {
+
+
+                setShowCanceled(!showCanceled);
+                if (showCanceled == false)
+                    setEditing(true);
+            }}
+        >
+            Show Cancelled
+        </Checkbox>
         <Table
             height={600}
             data={procedures?.object ?? []}
@@ -819,13 +1019,13 @@ const Referrals = () => {
                 <Cell>
                     {rowData => {
                         const category = CategoryLovQueryResponse?.object?.find(item => {
-                            console.log(item.key + ":" + rowData.categoryKey);
+
                             return item.key === rowData.categoryKey;
                         });
-                        console.log(category);
+
                         return category?.
-                        lovDisplayVale
-                         || ' ';
+                            lovDisplayVale
+                            || ' ';
                     }}
 
 
@@ -833,7 +1033,7 @@ const Referrals = () => {
                 </Cell>
             </Column>
 
-            <Column flexGrow={2} fullText>
+            <Column flexGrow={1} fullText>
                 <HeaderCell align="center">
                     <Translate>Priority</Translate>
                 </HeaderCell>
@@ -871,6 +1071,32 @@ const Referrals = () => {
                     {rowData =>
                         rowData.statusLvalue?.lovDisplayVale
                     }
+                </Cell>
+            </Column>
+            <Column flexGrow={1} >
+                <HeaderCell align="center">
+
+                    <Translate>Perform</Translate>
+                </HeaderCell>
+                <Cell  >
+
+                    <IconButton
+
+                        icon={<FontAwesomeIcon icon={faBedPulse} />} />
+
+                </Cell>
+            </Column>
+            <Column flexGrow={1} >
+                <HeaderCell align="center">
+
+                    <Translate>Attached File</Translate>
+                </HeaderCell>
+                <Cell  >
+
+                    <IconButton
+                        onClick={() => setAttachmentsModalOpen(true)}
+                        icon={<FileUploadIcon />} />
+
                 </Cell>
             </Column>
         </Table>

@@ -1812,6 +1812,9 @@ export const newApProcedure:modelTypes.ApProcedure = {
 	deletedAt:undefined,
 	faciltyLkey:undefined,
 	encounterKey:undefined,
+	bodyPartLkey:undefined,
+	sideLkey:undefined,
+	currentDepartment:undefined,
 } 
 
 export const newApProcedureCoding:modelTypes.ApProcedureCoding = { 

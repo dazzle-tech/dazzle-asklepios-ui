@@ -6,6 +6,7 @@ import { ApPatient } from '@/types/model-types';
 import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import { Block, Check, DocPass, Edit, Icon, PlusRound } from '@rsuite/icons';
 import React, { useEffect, useState } from 'react';
+import { Badge } from 'rsuite';
 import './styles.less'
 import {
   InputGroup,
@@ -324,7 +325,24 @@ const EncounterList = () => {
               <Translate>Prescription </Translate>
             </HeaderCell>
             <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
-              rowData.hasPrescription ? <CheckRoundIcon className='iconStyle' /> : <WarningRoundIcon className='iconNoStyle' />
+              rowData.hasPrescription ?  <Badge  content="YES"  style={{
+                backgroundColor: '#bcf4f7',
+                color: '#008aa6',
+                padding: '5px 19px', 
+                borderRadius: '12px', 
+                fontSize: '12px' ,
+                fontWeight:"bold"
+              }}/> :  <Badge
+              style={{
+                backgroundColor: 'rgba(238, 130, 238, 0.2)',
+                color: '#4B0082',
+                padding: '5px 19px', 
+                borderRadius: '12px', 
+                fontSize: '12px' ,
+                fontWeight:"bold"
+              }}
+              content="NO"
+            />
             }</Cell>
           </Column>
           <Column sortable flexGrow={3}>
@@ -333,7 +351,24 @@ const EncounterList = () => {
               <Translate> Has order</Translate>
             </HeaderCell>
             <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
-              rowData.hasOrder ? <CheckRoundIcon className='iconStyle' /> : <WarningRoundIcon className='iconNoStyle' />
+              rowData.hasOrder ?  <Badge  content="YES"  style={{
+                backgroundColor: '#bcf4f7',
+                color: '#008aa6',
+                padding: '5px 19px', 
+                borderRadius: '12px', 
+                fontSize: '12px' ,
+                fontWeight:"bold"
+              }}/> :  <Badge
+              style={{
+                backgroundColor: 'rgba(238, 130, 238, 0.2)',
+                color: '#4B0082',
+                padding: '5px 19px', 
+                borderRadius: '12px', 
+                fontSize: '12px' ,
+                fontWeight:"bold"
+              }}
+              content="NO"
+            />
             }</Cell>
           </Column>
           
@@ -375,7 +410,24 @@ const EncounterList = () => {
               <Translate>Is Observed</Translate>
             </HeaderCell>
             <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {rowData => (rowData.hasObservation? <CheckRoundIcon className='iconStyle' /> :  <WarningRoundIcon className='iconNoStyle' />)}
+              {rowData => (rowData.hasObservation?  <Badge  content="YES"  style={{
+                backgroundColor: '#bcf4f7',
+                color: '#008aa6',
+                padding: '5px 19px', 
+                borderRadius: '12px', 
+                fontSize: '12px' ,
+                fontWeight:"bold"
+              }}/> :  <Badge
+              style={{
+                backgroundColor: 'rgba(238, 130, 238, 0.2)',
+                color: '#4B0082',
+                padding: '5px 19px', 
+                borderRadius: '12px', 
+                fontSize: '12px' ,
+                fontWeight:"bold"
+              }}
+              content="NO"
+            />)}
             </Cell>
           </Column>
         </Table>

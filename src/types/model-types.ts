@@ -1811,6 +1811,9 @@ export interface ApProcedure {
 	deletedAt:number;
 	faciltyLkey:string;
 	encounterKey:string;
+	bodyPartLkey:string;
+	sideLkey:string;
+	currentDepartment:boolean;
 } 
 
 export interface ApProcedureCoding { 
