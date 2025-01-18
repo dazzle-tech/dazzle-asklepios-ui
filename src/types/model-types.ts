@@ -925,6 +925,30 @@ export interface ApEncounterAppliedService {
 	isValid:boolean;
 } 
 
+export interface ApEncounterVaccination { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	vaccineKey:string;
+	vaccineBrandKey:string;
+	vaccineDoseKey:string;
+	vaccineLotNumber:string;
+	dateAdministered:number;
+	actualSide:string;
+	administrationReactions:string;
+	externalFacilityName:string;
+	notes:string;
+	reviewedBy:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	reviewedAt:number;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+} 
+
 export interface ApFacility { 
 	key:string;
 	facilityId:string;
@@ -1766,6 +1790,32 @@ export interface ApPrescriptionMedications {
 	refillIntervalUnitLkey:string;
 } 
 
+export interface ApProcedure { 
+	key:string;
+	procedureNameKey:string;
+	procedureId:string;
+	procedureLevelLkey:string;
+	categoryKey:string;
+	indications:string;
+	priorityLkey:string;
+	statusLkey:string;
+	scheduledDateTime:number;
+	notes:string;
+	departmentKey:string;
+	cancellationReason:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	faciltyLkey:string;
+	encounterKey:string;
+	bodyPartLkey:string;
+	sideLkey:string;
+	currentDepartment:boolean;
+} 
+
 export interface ApProcedureCoding { 
 	key:string;
 	procedureKey:string;
@@ -2195,7 +2245,6 @@ export interface ApVaccineDose {
 	vaccineKey:string;
 	doseNameLkey:string;
 	isBooster:boolean;
-
 } 
 
 export interface ApVaccineDosesInterval { 
@@ -2211,7 +2260,6 @@ export interface ApVaccineDosesInterval {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
-
 } 
 
 export interface ApVisitAllergies { 

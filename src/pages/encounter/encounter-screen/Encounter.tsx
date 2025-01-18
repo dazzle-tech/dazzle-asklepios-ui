@@ -12,7 +12,7 @@ import MedicationsRecord from '../encounter-component/medications-record';
 import PatientHistory from '../encounter-component/patient-history';
 import PatientSummary from '../encounter-component/patient-summary';
 import Prescription from '../encounter-component/prescription';
-import Referrals from '../encounter-component/referrals';
+import Referrals from '../encounter-component/procedure';
 import SOAP from '../encounter-component/s.o.a.p';
 import VaccineReccord from '../encounter-component/vaccine-reccord';
 import Allergies from '../encounter-pre-observations/AllergiesNurse';

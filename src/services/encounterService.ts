@@ -2,7 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApConsultationOrder, ApCustomeInstructions, ApDrugOrder, ApDrugOrderMedications, ApEncounter, ApPatientDiagnose, ApPatientEncounterOrder, ApPatientPlan, ApPrescription, ApPrescriptionMedications, ApReviewOfSystem, ApVisitAllergies } from '@/types/model-types';
+import { ApConsultationOrder, ApCustomeInstructions, ApDrugOrder, ApDrugOrderMedications, ApEncounter, ApPatientDiagnose, ApPatientEncounterOrder, ApPatientPlan, ApPrescription, ApPrescriptionMedications, ApProcedure, ApReviewOfSystem, ApVisitAllergies } from '@/types/model-types';
 
 export const encounterService = createApi({
   reducerPath: 'encounterApi',
@@ -314,6 +314,25 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
+    getProcedures: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/procedures-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+   saveProcedures: builder.mutation({
+      query: (order: ApProcedure) => ({
+        url: `/encounter/save-procedures`,
+        method: 'POST',
+        body: order
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+
    
   })
 });
@@ -350,7 +369,9 @@ export const {
  useGetDrugOrderQuery,
  useSaveDrugOrderMutation,
  useGetDrugOrderMedicationQuery,
- useSaveDrugOrderMedicationMutation
+ useSaveDrugOrderMedicationMutation,
+ useGetProceduresQuery,
+ useSaveProceduresMutation
 
   
 } = encounterService;

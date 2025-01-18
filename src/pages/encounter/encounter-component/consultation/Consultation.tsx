@@ -161,14 +161,7 @@ const Consultation = () => {
     });
 
 
-    const key =
-        patientDiagnoseListResponse?.data?.object &&
-            Array.isArray(patientDiagnoseListResponse.data?.object) &&
-            patientDiagnoseListResponse.data?.object?.length > 0
-            ? patientDiagnoseListResponse.data?.object[0]?.key ?? ""
-            : "";
 
-    console.log(key);
     // const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch } =
     // useFetchAttachmentLightQuery({ refKey: consultationOrders?.key }, { skip: !consultationOrders?.key });
     const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
@@ -199,13 +192,13 @@ const Consultation = () => {
         }
     }, [patientDiagnoseListResponse.data]);
 
-    console.log(selectedDiagnose);
+ 
     const isSelected = rowData => {
         if (rowData && consultationOrders && rowData.key === consultationOrders.key) {
             return 'selected-row';
         } else return '';
     };
-    console.log(selectedDiagnose);
+
     const handleDownload = async (attachment) => {
         try {
             if (!attachment?.fileContent || !attachment?.contentType || !attachment?.fileName) {
@@ -243,16 +236,7 @@ const Consultation = () => {
             console.error("Error during file download:", error);
         }
     };
-    console.log(fetchAttachmentByKeyResponce)
-    console.log(fetchOrderAttachResponse)
-    // useEffect(() => {
-    //     console.log("iam in useefect download")
-    //     if (isSuccess && fetchAttachmentByKeyResponce) {
-    //       if (actionType === 'download') {
-    //         handleDownload(fetchAttachmentByKeyResponce);
-    //       } 
-    //     }
-    //   }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
+ 
     const handleDownloadSelectedPatientAttachment = attachmentKey => {
 
         setRequestedPatientAttacment(attachmentKey);

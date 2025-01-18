@@ -926,6 +926,30 @@ export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService =
 	isValid:undefined,
 } 
 
+export const newApEncounterVaccination:modelTypes.ApEncounterVaccination = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	vaccineKey:undefined,
+	vaccineBrandKey:undefined,
+	vaccineDoseKey:undefined,
+	vaccineLotNumber:'',
+	dateAdministered:0,
+	actualSide:'',
+	administrationReactions:'',
+	externalFacilityName:'',
+	notes:'',
+	reviewedBy:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	reviewedAt:0,
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	cancellationReason:'',
+} 
+
 export const newApFacility:modelTypes.ApFacility = { 
 	key:undefined,
 	facilityId:'',
@@ -1767,6 +1791,32 @@ export const newApPrescriptionMedications:modelTypes.ApPrescriptionMedications =
 	refillIntervalUnitLkey:undefined,
 } 
 
+export const newApProcedure:modelTypes.ApProcedure = { 
+	key:undefined,
+	procedureNameKey:undefined,
+	procedureId:'',
+	procedureLevelLkey:undefined,
+	categoryKey:undefined,
+	indications:'',
+	priorityLkey:undefined,
+	statusLkey:undefined,
+	scheduledDateTime:0,
+	notes:'',
+	departmentKey:undefined,
+	cancellationReason:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	faciltyLkey:undefined,
+	encounterKey:undefined,
+	bodyPartLkey:undefined,
+	sideLkey:undefined,
+	currentDepartment:undefined,
+} 
+
 export const newApProcedureCoding:modelTypes.ApProcedureCoding = { 
 	key:undefined,
 	procedureKey:undefined,
@@ -2196,7 +2246,6 @@ export const newApVaccineDose:modelTypes.ApVaccineDose = {
 	vaccineKey:undefined,
 	doseNameLkey:undefined,
 	isBooster:undefined,
-
 } 
 
 export const newApVaccineDosesInterval:modelTypes.ApVaccineDosesInterval = { 
@@ -2212,7 +2261,6 @@ export const newApVaccineDosesInterval:modelTypes.ApVaccineDosesInterval = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
-
 } 
 
 export const newApVisitAllergies:modelTypes.ApVisitAllergies = { 
