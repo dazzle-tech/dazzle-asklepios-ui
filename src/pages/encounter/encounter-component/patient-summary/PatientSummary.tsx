@@ -220,7 +220,7 @@ const PatientSummary = ({ patient, encounter }) => {
 
 
     ];
-console.log(updatedFilters);
+
     setListdRequest((prevRequest) =>({
        
             ...prevRequest,

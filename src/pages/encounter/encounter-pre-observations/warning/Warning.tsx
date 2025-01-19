@@ -54,7 +54,7 @@ import { newApVisitWarning } from '@/types/model-types-constructor';
 
 const Warning = () => {
     const patientSlice = useAppSelector(state => state.patient);
-    console.log(patientSlice.patient);
+
     const { data: warningTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_WARNING_TYPS');
     const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
     const { data: sourceofinformationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
@@ -82,26 +82,7 @@ const Warning = () => {
             }
         ]
     })
-    const filters = [
-        {
-            fieldName: 'patient_key',
-            operator: 'match',
-            value: patientSlice.patient.key
-        },
-        {
-            fieldName: "status_lkey",
-            operator: showCanceled ? "notMatch" : "match",
-            value: "3196709905099521",
-        }
-    ];
-
-    if (showPrev) {
-        filters.push({
-            fieldName: 'visit_key',
-            operator: 'match',
-            value: patientSlice.encounter.key
-        });
-    }
+ 
     const { data: warningsListResponse, refetch: fetchwarnings } = useGetWarningsQuery({ ...listRequestWar });
     const [selectedFirstDate, setSelectedFirstDate] = useState(null);
     const [editDate, setEditDate] = useState(true)
@@ -126,7 +107,28 @@ const Warning = () => {
             seteditSourceof(false);
         }
     }, [warning]);
+    //  useEffect(() => {
+    //     console.log("Show prev",showPrev)
+    //     setListRequestWar((prev) => ({
+    //             ...prev,
+    //             filters: [
+    
+    //                 ...(showPrev
+    //                     ? [
+                            
+    //                         {
+    //                             fieldName: 'visit_key',
+    //                             operator: 'match',
+    //                             value: patientSlice.encounter.key
+    //                         }
+    //                     ]
+    //                     : []),
+    //             ],
+    //         }));
+    //         fetchwarnings();
+    //     }, [showPrev]);
     useEffect(() => {
+        console.log("showPrev ",showPrev)
         if (showPrev) {
             const updatedFilters = [
                 {
@@ -171,6 +173,7 @@ const Warning = () => {
                 filters: updatedFilters,
             }));
         }
+        fetchwarnings();
     }, [showPrev]);
     useEffect(()=>{
         if (showPrev) {
@@ -219,14 +222,15 @@ const Warning = () => {
         }
     },[showCanceled]);
     useEffect(() => {
-        console.log(saveWarningMutation);
+
         setShowPrev(true);
 
         fetchwarnings();
     }, [saveWarningMutation])
     useEffect(() => {
+        console.log("listwar: ",listRequestWar)
         fetchwarnings();
-        console.log(warningsListResponse)
+        
     }, [listRequestWar])
     const handleDateChange = (date) => {
         if (date) {
@@ -249,11 +253,7 @@ const Warning = () => {
             }).unwrap();
             dispatch(notify('saved  Successfully'));
           setShowPrev(false);
-          await  fetchwarnings().then(() => {
-            
-            }).catch((error) => {
-                console.error("Refetch failed:", error);
-            });
+          await  fetchwarnings();
          
            await  handleClear();
            setShowPrev(true);
@@ -362,7 +362,9 @@ const Warning = () => {
                 data={[rowData]} // Pass the data as an array to populate the table
                 bordered
                 cellBordered
-                style={{ width: '100%', marginTop: '10px' }}
+                headerHeight={30}
+                rowHeight={40}
+                style={{ width: '100%', marginTop: '5px',marginBottom:'5px' }}
                 height={100} // Adjust height as needed
             >
                 <Column flexGrow={1} align="center" fullText>

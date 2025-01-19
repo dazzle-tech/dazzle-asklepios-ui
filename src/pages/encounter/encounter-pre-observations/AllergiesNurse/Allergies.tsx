@@ -258,8 +258,11 @@ const Allergies = () => {
             <Table
                 data={[rowData]} // Pass the data as an array to populate the table
                 bordered
+                headerHeight={30}
+                rowHeight={40}
+                style={{ width: '100%', marginTop: '5px',marginBottom:'5px' }}
                 cellBordered
-                style={{ width: '100%', marginTop: '10px' }}
+                
                 height={100} // Adjust height as needed
             >
                 <Column flexGrow={1} align="center" fullText>

@@ -181,10 +181,12 @@ const [showCanceled, setShowCanceled] = useState(true);
             data={[rowData]} // Pass the data as an array to populate the table
             bordered
             cellBordered
-            style={{ width: '100%', marginTop: '10px' }}
+            headerHeight={30}
+            rowHeight={40}
+            style={{ width: '100%', marginTop: '5px',marginBottom:'5px' }}
             height={100} // Adjust height as needed
         >
-            <Column flexGrow={1} align="center" fullText>
+            <Column flexGrow={2} align="center" fullText>
                 <HeaderCell>Created At</HeaderCell>
                 <Cell dataKey="onsetDate" >
                     {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}
