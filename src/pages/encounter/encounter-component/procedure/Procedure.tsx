@@ -158,7 +158,7 @@ const Referrals = () => {
                 : item.systemDetailLkey;
             return `* ${systemDetail}\n${item.notes}`;
         })
-        .join("\n") + "\n___________-________\n" + patientSlice.encounter.physicalExamNote;
+        .join("\n") + "\n____________________\n" + (patientSlice?.encounter?.physicalExamNote||"");
     const isSelected = rowData => {
         if (rowData && procedure && rowData.key === procedure.key) {
             return 'selected-row';
@@ -854,7 +854,7 @@ const Referrals = () => {
 
                     <Text>Diagnose</Text>
                     <textarea
-                        value={selectedDiagnose.icdCode + "," + selectedDiagnose.description}
+                       value={selectedDiagnose && selectedDiagnose.icdCode && selectedDiagnose.description ? `${selectedDiagnose.icdCode}, ${selectedDiagnose.description}` : ''}
                         readOnly
                         rows={3}
                         cols={50}
