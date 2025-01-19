@@ -87,7 +87,7 @@ const Consultation = () => {
                 : item.systemDetailLkey;
             return `* ${systemDetail}\n${item.notes}`;
         })
-        .join("\n") +"\n___________-________\n"+patientSlice.encounter.physicalExamNote;
+        .join("\n") +"\n____________________\n"+(patientSlice.encounter?.physicalExamNote??"");
 
 
     console.log(summaryText);
@@ -150,7 +150,6 @@ const Consultation = () => {
         });
     const patientDiagnoseListResponse = useGetPatientDiagnosisQuery(listRequest);
 
-    console.log(patientDiagnoseListResponse?.data?.object[0]?.diagnosisObject.icdCode + "," + patientDiagnoseListResponse?.data?.object[0]?.diagnosisObject.description + "," + patientDiagnoseListResponse?.data?.object?.length)
     const [selectedDiagnose, setSelectedDiagnose] = useState<ApPatientDiagnose>({
         ...newApPatientDiagnose,
         visitKey: patientSlice.encounter.key,
@@ -491,7 +490,7 @@ const Consultation = () => {
 
                     <Text>Diagnose</Text>
                     <textarea
-                        value={selectedDiagnose.icdCode + "," + selectedDiagnose.description}
+                             value={selectedDiagnose && selectedDiagnose.icdCode && selectedDiagnose.description ? `${selectedDiagnose.icdCode}, ${selectedDiagnose.description}` : ''}
                         readOnly
                         rows={3}
                         cols={50}
