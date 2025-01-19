@@ -62,6 +62,8 @@ import AgeGroup from './pages/setup/age-group';
 import FacilityPatientList from './pages/patient/facility-patient-list/FacilityPatientList'
 import ScheduleScreen from './pages/Scheduling/scheduling-screen/ScheduleScreen';
 
+import VaccinationTab from './pages/encounter/encounter-pre-observations/vaccination-tab';
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -218,6 +220,7 @@ const App = () => {
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />
               <Route path="modules-setup" element={<Modules />} />
+              <Route path="vaccination-tab" element={<VaccinationTab />} />
               <Route path="vaccine-setup" element={<Vaccine />} />
               <Route path="procedure-setup" element={<ProcedureSetup />} />
               <Route path="users" element={<Users />} />

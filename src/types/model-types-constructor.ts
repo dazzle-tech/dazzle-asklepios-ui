@@ -948,6 +948,8 @@ export const newApEncounterVaccination:modelTypes.ApEncounterVaccination = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	cancellationReason:'',
+	statusLkey:undefined,
+
 } 
 
 export const newApFacility:modelTypes.ApFacility = { 

@@ -53,6 +53,7 @@ import {
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useNavigate } from 'react-router-dom';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import VaccinationTab from './vaccination-tab';
 const EncounterPreObservations = () => {
   const patientSlice = useAppSelector(state => state.patient);
   const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
@@ -616,6 +617,9 @@ const EncounterPreObservations = () => {
               </TabPanel>
               <TabPanel>
           {activeTab === 2&& <Warning/>}
+        </TabPanel>
+        <TabPanel>
+          {activeTab === 3&& <VaccinationTab/>}
         </TabPanel>
             </Tabs>
           </Panel>
