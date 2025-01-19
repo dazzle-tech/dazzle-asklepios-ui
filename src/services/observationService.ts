@@ -2,7 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApPatientObservationSummary, ApVisitAllergies, ApVisitWarning } from '@/types/model-types';
+import { ApPatientObservationSummary, ApVisitAllergies, ApVisitWarning,ApEncounterVaccination } from '@/types/model-types';
 
 export const observationService = createApi({
   reducerPath: 'observationApi',
@@ -74,8 +74,25 @@ export const observationService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       }
-    })
-  })
+    }),
+    saveEncounterVaccine: builder.mutation({
+      query: (encounterVaccination: ApEncounterVaccination) => ({
+        url: `/observation/save-encounter-vaccine`,
+        method: 'POST',
+        body: encounterVaccination
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+
+  }),  getEncounterVaccine: builder.query({
+    query: (listRequest: ListRequest) => ({
+      url: `/observation/encounter-vaccine-list?${fromListRequestToQueryParams(listRequest)}`
+    }),
+    onQueryStarted: onQueryStarted,
+    keepUnusedDataFor: 5
+  }),})
 });
 
 export const {
@@ -85,5 +102,7 @@ export const {
    useGetAllergiesQuery,
    useSaveAllergiesMutation,
    useGetWarningsQuery,
-   useSaveWarningsMutation
+   useSaveWarningsMutation,
+   useSaveEncounterVaccineMutation,
+   useGetEncounterVaccineQuery
 } = observationService;

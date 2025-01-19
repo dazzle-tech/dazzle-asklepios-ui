@@ -947,6 +947,8 @@ export interface ApEncounterVaccination {
 	updatedAt:number;
 	deletedAt:number;
 	cancellationReason:string;
+	statusLkey:string;
+
 } 
 
 export interface ApFacility { 
