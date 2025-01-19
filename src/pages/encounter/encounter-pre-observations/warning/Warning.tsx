@@ -375,6 +375,16 @@ const Warning = () => {
                     <HeaderCell>Created By</HeaderCell>
                     <Cell dataKey="createdBy" />
                 </Column>
+                <Column flexGrow={1} align="center" fullText>
+                    <HeaderCell>Updated At</HeaderCell>
+                    <Cell dataKey="updatedAt" >
+                        {rowData => rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString() : ""}
+                    </Cell>
+                </Column>
+                <Column flexGrow={1} align="center" fullText>
+                    <HeaderCell>Updated By</HeaderCell>
+                    <Cell dataKey="updatedBy" />
+                </Column>
                 <Column flexGrow={2} align="center" fullText>
                     <HeaderCell>Resolved At</HeaderCell>
                     <Cell dataKey="resolvedAt" >
