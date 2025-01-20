@@ -81,13 +81,30 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     const [selectedYear, setSelectedYear] = useState(null);
     const [rowPeriods, setRowPeriods] = useState()
     const [filteredResourcesList, setFilteredResourcesList] = useState([])
+    const [filteredDates, setFilteredDates] = useState([]);
 
 
     const { data: resourcesAvailability } = useGetResourcesAvailabilityQuery({
         resource_key: appointment?.resourceKey,
         facility_id: "",
     });
+    useEffect(() => {
+        if (appointmentData?.appointmentStart) {
+            const date = new Date(appointmentData?.appointmentStart);
+            setSelectedYear(date.getFullYear());
+            setSelectedMonth(date.getMonth());
+            setSelectedMonthDay(date.getDate());
+            setSelectedTime(date);
+        }
+    }, [appointmentData?.appointmentStart]);
 
+    useEffect(() => {
+        console.log(selectedMonthDay)
+        console.log(appointment?.resourceKey)
+        console.log(rowPeriods)
+        console.log(availabilDays)
+
+    }, [selectedMonthDay, appointment])
 
 
     useEffect(() => {
@@ -399,7 +416,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                 instructions: instructions,
                 appointmentStatus: appointment.appointmentStatus
                     ? appointment.appointmentStatus
-                    :  "New-Appointment" ,
+                    : "New-Appointment",
             });
             saveAppointment({
                 ...appointment,
@@ -409,7 +426,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                 instructions: instructions,
                 appointmentStatus: appointment.appointmentStatus
                     ? appointment.appointmentStatus
-                    :  "New-Appointment" ,
+                    : "New-Appointment",
             }).unwrap().then(() => {
                 closeModal()
                 handleClear()
@@ -618,6 +635,20 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
         }
 
     }, [appointment?.durationLkey])
+
+
+    useEffect(() => {
+        console.log(availableDatesInMonth)
+    }, [availableDatesInMonth])
+
+    useEffect(() => {
+        const today = new Date();
+        const currentDay = today.getDate();
+
+        // تصفية الأيام المتاحة لاستبعاد الأيام التي مضت
+        const futureDates = availableDatesInMonth?.filter(date => date >= currentDay);
+        setFilteredDates(futureDates);
+    }, [availableDatesInMonth]);
 
     return (
 
@@ -985,12 +1016,31 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                     <SelectPicker
                                         style={{ width: 120 }}
                                         disabled={!(availableDatesInMonth && availableDatesInMonth.length > 0) || showOnly}
-                                        data={availableDatesInMonth ? availableDatesInMonth.map(date => ({ label: `Day ${date}`, value: date })) : []}
+                                        data={
+                                            availableDatesInMonth
+                                                ? availableDatesInMonth.map((date) => ({
+                                                    label: `Day ${date}`,
+                                                    value: date,
+                                                }))
+                                                : []
+                                        }
+                                        defaultValue={availableDatesInMonth && availableDatesInMonth.length > 0 ? availableDatesInMonth[0] : null} // تعيين أول يوم كقيمة افتراضية
+                                        placeholder="Select a day"
                                         onChange={(selectedMonthDay) => setSelectedMonthDay(selectedMonthDay)}
-
                                     />
-                                </div>
 
+                                    {/* <SelectPicker
+                                       disabled={!(availableDatesInMonth && availableDatesInMonth.length > 0) || showOnly}
+                                        style={{ width: 120 }}
+                                         data={filteredDates?.map(date => ({
+                                            label: `Day ${date}`,
+                                            value: date,
+                                        }))}
+                                         placeholder="Select a day"
+                                        onChange={setSelectedMonthDay}
+                                    /> */}
+
+                                </div>
                                 {/* Select Time */}
                                 <div>
                                     <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
@@ -1008,7 +1058,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                     </div>
                                 </div>
                                 <div style={{ marginTop: 30 }}>
-                                    <InfoRoundIcon onClick={() => { filterWeekDays() }} style={{ marginLeft: "5px", fontSize: "22px", color: "blue" }} />
+                                    <InfoRoundIcon style={{ marginLeft: "5px", fontSize: "22px", color: "blue" }} />
 
                                 </div>
                             </div>
