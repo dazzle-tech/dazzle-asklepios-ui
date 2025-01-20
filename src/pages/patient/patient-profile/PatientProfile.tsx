@@ -131,6 +131,7 @@ const handleDownload = attachment => {
 
 const PatientProfile = () => {
   const patientSlice = useAppSelector(state => state.patient);
+  const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [selectedAttachment, setSelectedAttachment] = useState(null);
@@ -164,6 +165,16 @@ const PatientProfile = () => {
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     ignore: !searchKeyword || searchKeyword.length < 3
+  });
+  const [documenstListRequest, setDocumentsListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    filters: [
+      {
+        fieldName: 'deleted_at',
+        operator: 'isNull',
+        value: undefined
+      }
+    ]
   });
   //Administrative Warning
   const [patientAdministrativeWarnings, setPatientAdministrativeWarnings] =
@@ -239,14 +250,29 @@ const PatientProfile = () => {
     warningsAdmistritiveListRequest
   );
 
-  const patientSecondaryDocumentsResponse = useGetPatientSecondaryDocumentsQuery(
-    { key: localPatient?.key },
-    { skip: !localPatient?.key }
-  );
-
+  const { data: patientSecondaryDocumentsResponse, refetch: patientSecondaryDocuments } = useGetPatientSecondaryDocumentsQuery(documenstListRequest, { skip: !localPatient.key });
+  
   useEffect(() => {
-    console.log(patientSecondaryDocumentsResponse);
-  }, [patientSecondaryDocumentsResponse]);
+    setDocumentsListRequest((prev) => ({
+      ...prev,
+      filters: [
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined,
+        },
+        ...(localPatient?.key
+          ? [
+            {
+              fieldName: 'patient_key',
+              operator: 'match',
+              value: localPatient.key,
+            },
+          ]
+          : []),
+      ],
+    }));
+  }, [localPatient.key]);
 
   useEffect(() => {
     const updatedFilters = [
@@ -266,11 +292,13 @@ const PatientProfile = () => {
       filters: updatedFilters
     }));
   }, [localPatient.key]);
-  console.log('localPatient.key', localPatient.key);
+  
   const handleSaveSecondaryDocument = () => {
+    if(secondaryDocument.key===undefined){
     saveSecondaryDocument({
       ...secondaryDocument,
       patientKey: localPatient.key,
+      createdBy: authSlice.user.key,
       documentNo:
         secondaryDocument.documentTypeLkey === 'NO_DOC'
           ? 'No Document '
@@ -280,14 +308,26 @@ const PatientProfile = () => {
       .unwrap()
       .then(() => {
         dispatch(notify('Document Added Successfully'));
-        patientSecondaryDocumentsResponse.refetch();
+        patientSecondaryDocuments();
         handleCleareSecondaryDocument();
       });
-    const handleCleareSecondaryDocument = () => {
-      setSecondaryDocumentModalOpen(false);
-      setSecondaryDocument(newApPatientSecondaryDocuments);
-    };
+  }
+  else if(secondaryDocument.key){saveSecondaryDocument({
+    ...secondaryDocument,
+    patientKey: localPatient.key,
+    updatedBy: authSlice.user.key,
+    documentNo:
+      secondaryDocument.documentTypeLkey === 'NO_DOC'
+        ? 'No Document '
+        : secondaryDocument.documentNo
 
+  })
+    .unwrap()
+    .then(() => {
+      dispatch(notify('Document Updated Successfully'));
+      patientSecondaryDocuments();
+      handleCleareSecondaryDocument();
+    });}
 
   };
 
@@ -298,7 +338,7 @@ const PatientProfile = () => {
     useState<any>({
       ...newApPatientAdministrativeWarnings
     });
-  console.log(selectedPatientAdministrativeWarnings);
+ 
   const [selectedSecondaryDocument, setSelectedSecondaryDocument] = useState<any>({
     ...newApPatientSecondaryDocuments
   });
@@ -332,7 +372,7 @@ const PatientProfile = () => {
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: categoryLovQueryResponse } = useGetLovValuesByCodeQuery('FAMILY_MMBR_CAT');
   const { data: attachmentsLovQueryResponse } = useGetLovValuesByCodeQuery('ATTACH_TYPE');
-  const { data:roleLovQueryResponse } = useGetLovValuesByCodeQuery('ER_CONTACTP_ROLE');
+  const { data: roleLovQueryResponse } = useGetLovValuesByCodeQuery('ER_CONTACTP_ROLE');
   const { data: administrativeWarningsLovQueryResponse } =
     useGetLovValuesByCodeQuery('ADMIN_WARNINGS');
 
@@ -428,13 +468,9 @@ const PatientProfile = () => {
     patientKey: localPatient.key
   });
 
-  useEffect(() => {
-    console.log(encounterHistoryResponse);
-  }, [encounterHistoryResponse]);
+
 
   useEffect(() => {
-    console.log(secondaryDocument);
-    console.log(selectedSecondaryDocument);
     if (selectedSecondaryDocument) {
       setSecondaryDocument(selectedSecondaryDocument);
     }
@@ -451,7 +487,11 @@ const PatientProfile = () => {
     isSuccessAllergies,
     patientAllergiesViewResponse
   ]);
-
+  const isSelectedDocument = rowData => {
+    if (rowData && secondaryDocument && secondaryDocument.key === rowData.key) {
+        return 'selected-row';
+    } else return '';
+};
   const [skipQuery, setSkipQuery] = useState(true);
   const [actionType, setActionType] = useState(null); // 'view' or 'download'
   const [visit, setVisit] = useState();
@@ -466,10 +506,7 @@ const PatientProfile = () => {
       )
     );
   };
-  useEffect(() => {
-    console.log(visit);
-  }, [visit]);
-
+ 
   const {
     data: fetchAttachmentByKeyResponce,
     error,
@@ -495,11 +532,10 @@ const PatientProfile = () => {
 
   const handleCleareSecondaryDocument = () => {
     setSecondaryDocumentModalOpen(false);
+      setSecondaryDocument(newApPatientSecondaryDocuments);
   };
 
-  useEffect(() => {
-    console.log('Requested Patient Attacment Data:', requestedPatientAttacment);
-  }, [requestedPatientAttacment]);
+
 
   useEffect(() => {
     if (isSuccess && fetchAttachmentByKeyResponce) {
@@ -561,8 +597,6 @@ const PatientProfile = () => {
       } else {
         setPatientAttachments(undefined);
       }
-
-    console.log({ 'patient attatchments': fetchPatintAttachmentsResponce });
   }, [fetchPatintAttachmentsResponce]);
 
   useEffect(() => {
@@ -620,7 +654,7 @@ const PatientProfile = () => {
 
   const [secondaryDocument, setSecondaryDocument] = useState(newApPatientSecondaryDocuments);
   useEffect(() => {
-    console.log({ SecondaryDocument: secondaryDocument });
+   
   }, [secondaryDocument]);
   const [selectedRowId, setSelectedRowId] = useState(null);
 
@@ -680,7 +714,7 @@ const PatientProfile = () => {
     setEditing(true);
     setValidationResult(undefined);
   };
-  console.log(secondaryDocument.documentTypeLkey);
+
   const startRegistration = () => {
     setEditing(true);
     setValidationResult(undefined);
@@ -698,7 +732,7 @@ const PatientProfile = () => {
       key: selectedSecondaryDocument.key
     }).then(
       () => (
-        patientSecondaryDocumentsResponse.refetch(),
+        patientSecondaryDocuments(),
         dispatch(notify('Secondary Document Deleted')),
         setSelectedInsurance(null),
         setDeleteDocModalOpen(false)
@@ -709,9 +743,9 @@ const PatientProfile = () => {
     setSelectedAttachment(attachment);
     setDeleteModalOpen(true);
   };
-  console.log('uploadedAttachmentOpject', uploadedAttachmentOpject);
+
   const handleDeleteRelation = () => {
-    console.log('required to delete relation' + selectedPatientRelation.key);
+   
 
     deleteRelation({
       key: selectedPatientRelation.key
@@ -724,7 +758,7 @@ const PatientProfile = () => {
       )
     );
   };
-  console.log(selectedPatientAdministrativeWarnings);
+
 
   const handleUpdateAdministrativeWarningsUnDoResolved = () => {
     updatePatientAdministrativeWarnings({
@@ -775,15 +809,14 @@ const PatientProfile = () => {
       });
   };
 
-  console.log(selectedPatientAdministrativeWarnings);
+ 
   const handleDeletePatientAdministrativeWarnings = () => {
     deletePatientAdministrativeWarnings({
       ...selectedPatientAdministrativeWarnings
     })
       .unwrap()
       .then(() => {
-        console.log(selectedPatientAdministrativeWarnings);
-
+       
         warningsRefetch();
         dispatch(notify('Deleted Successfly '));
         setSelectedPatientAdministrativeWarnings({ ...newApPatientAdministrativeWarnings });
@@ -1974,7 +2007,7 @@ const PatientProfile = () => {
                   setRecord={setLocalPatient}
                   disabled={!editing}
                 />
-           
+
                 <MyInput
                   vr={validationResult}
                   column
@@ -2005,7 +2038,7 @@ const PatientProfile = () => {
                   setRecord={setLocalPatient}
                   disabled={!editing}
                 />
-                  <MyInput
+                <MyInput
                   vr={validationResult}
                   column
                   fieldLabel="Role"
@@ -2660,7 +2693,7 @@ const PatientProfile = () => {
               <Form layout="inline" fluid>
                 <Table
                   height={600}
-                  data={patientSecondaryDocumentsResponse?.data?.object ?? []}
+                  data={patientSecondaryDocumentsResponse?.object ?? []}
                   headerHeight={40}
                   rowHeight={50}
                   bordered
@@ -2668,19 +2701,34 @@ const PatientProfile = () => {
                   onRowClick={rowData => {
                     setSelectedSecondaryDocument(rowData);
                   }}
+                  rowClassName={isSelectedDocument}
                 >
                   <Column sortable flexGrow={4}>
                     <HeaderCell>
                       <Translate>Document Country</Translate>
                     </HeaderCell>
-                    <Cell dataKey="docContry" />
+                    <Cell>
+                      {rowData =>
+                        rowData.documentCountryLvalue
+                          ? rowData.documentCountryLvalue.lovDisplayVale
+                          : rowData.documentCountryLkey
+                      }
+
+                    </Cell>
                   </Column>
 
                   <Column sortable flexGrow={4}>
                     <HeaderCell>
                       <Translate>Document Type</Translate>
                     </HeaderCell>
-                    <Cell dataKey="docType" />
+                    <Cell>
+                      {rowData =>
+                        rowData.documentTypeLvalue
+                          ? rowData.documentTypeLvalue.lovDisplayVale
+                          : rowData.documentTypeLkey
+                      }
+
+                    </Cell>
                   </Column>
 
                   <Column sortable flexGrow={4}>
@@ -2688,6 +2736,41 @@ const PatientProfile = () => {
                       <Translate>Document Number</Translate>
                     </HeaderCell>
                     <Cell dataKey="documentNo" />
+                  </Column>
+                  <Column sortable flexGrow={4}>
+                    <HeaderCell>
+                      <Translate>Created By</Translate>
+                    </HeaderCell>
+                    <Cell >
+                        {rowData => rowData?.createdByUser?.fullName}
+                    </Cell>
+
+                  </Column>
+                  <Column sortable flexGrow={4}>
+                    <HeaderCell>
+                      <Translate>Created At</Translate>
+                    </HeaderCell>
+                    <Cell >
+                    {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString("en-GB") : ""}
+
+                    </Cell>
+                  </Column>
+                  <Column sortable flexGrow={4}>
+                    <HeaderCell>
+                      <Translate>Updated By</Translate>
+                    </HeaderCell>
+                    <Cell >
+                        {rowData => rowData?.updatedByUser?.fullName}
+                    </Cell>
+                  </Column>
+                  <Column sortable flexGrow={4}>
+                    <HeaderCell>
+                      <Translate>Updated At</Translate>
+                    </HeaderCell>
+                    <Cell >
+
+                        {rowData => rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
+                    </Cell>
                   </Column>
                 </Table>
               </Form>
