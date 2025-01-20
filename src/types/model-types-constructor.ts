@@ -949,7 +949,6 @@ export const newApEncounterVaccination:modelTypes.ApEncounterVaccination = {
 	deletedAt:undefined,
 	cancellationReason:'',
 	statusLkey:undefined,
-
 } 
 
 export const newApFacility:modelTypes.ApFacility = { 
@@ -1791,6 +1790,9 @@ export const newApPrescriptionMedications:modelTypes.ApPrescriptionMedications =
 	isValid:undefined,
 	refillIntervalValue:0,
 	refillIntervalUnitLkey:undefined,
+	indicationManually:'',
+	indicationUseLkey:undefined,
+	indicationIcd:'',
 } 
 
 export const newApProcedure:modelTypes.ApProcedure = { 

@@ -948,7 +948,6 @@ export interface ApEncounterVaccination {
 	deletedAt:number;
 	cancellationReason:string;
 	statusLkey:string;
-
 } 
 
 export interface ApFacility { 
@@ -1790,6 +1789,9 @@ export interface ApPrescriptionMedications {
 	isValid:boolean;
 	refillIntervalValue:number;
 	refillIntervalUnitLkey:string;
+	indicationManually:string;
+	indicationUseLkey:string;
+	indicationIcd:string;
 } 
 
 export interface ApProcedure { 

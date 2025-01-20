@@ -334,7 +334,7 @@ const DrugOrder = () => {
 
     }, [orders, drugKey]);
     useEffect(() => {
-        if (indicationsIcd.indicationIcd != null||indicationsIcd.indicationIcd !="") {
+        if (indicationsIcd.indicationIcd != null || indicationsIcd.indicationIcd != "") {
 
             setindicationsDescription(prevadminInstructions => {
                 const currentIcd = icdListResponseLoading?.object?.find(
@@ -603,14 +603,14 @@ const DrugOrder = () => {
             startDateTime: null,
             genericSubstitute: false,
             chronicMedication: false,
-            patientOwnMedication:false,
+            patientOwnMedication: false,
             priorityLkey: null,
             roaLkey: null,
             doseUnitLkey: null,
             drugOrderTypeLkey: null,
             indicationUseLkey: null,
-            pharmacyDepartmentKey:null,
-            
+            pharmacyDepartmentKey: null,
+
 
         })
         setAdminInstructions("");
@@ -958,10 +958,10 @@ const DrugOrder = () => {
 
                             <div>
                                 <Text style={{ fontWeight: 'bold', marginTop: '7px' }}>Frequency</Text>
-                                <InputGroup style={{ width: '160px' ,zoom:0.85, height: '40px' }}>
+                                <InputGroup style={{ width: '160px', zoom: 0.85, height: '40px' }}>
                                     <Input
                                         disabled={drugKey != null ? editing : true}
-                                        style={{ width: '100px', height: '100%' }} 
+                                        style={{ width: '100px', height: '100%' }}
                                         type="number"
                                         value={orderMedication.frequency}
                                         onChange={e =>
