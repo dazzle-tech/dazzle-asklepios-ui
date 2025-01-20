@@ -104,18 +104,13 @@ export const patientService = createApi({
     }),
 
     getPatientSecondaryDocuments: builder.query({
-      query: (data: { key: string }) => {
-        return {
-          url: `/pas/patient_secondary_documents_list`,
-          headers: {
-            key: data.key
-          }
-        };
-      },
+      query: (listRequest: ListRequest) => ({
+        url: `/pas/patient-secondary_document_list?${fromListRequestToQueryParams(listRequest)}`,
+      }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-
+     
     savePatientRelation: builder.mutation({
       query: (request: ApPatientRelation) => ({
         url: `/pas/save-patient-relation`,
