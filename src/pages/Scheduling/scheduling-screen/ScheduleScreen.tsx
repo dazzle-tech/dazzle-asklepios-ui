@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Calendar as BigCalendar, Views, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { Calendar as RsuiteCalendar, TagPicker, ButtonToolbar, Panel, InputGroup, SelectPicker, Input, IconButton, Button, Form, Drawer, Calendar, TagGroup, Tag, Divider, DatePicker, } from "rsuite";
+import { Calendar as RsuiteCalendar, TagPicker, ButtonToolbar, Panel, InputGroup, SelectPicker, Input, IconButton, Button, Form, Drawer, Calendar, TagGroup, Tag, Divider, DatePicker, Checkbox, } from "rsuite";
 import "./styles.less";
 import SearchIcon from '@rsuite/icons/Search';
 import {
@@ -49,6 +49,7 @@ const ScheduleScreen = () => {
     const [selectedAppointment, setSelectedAppointment] = useState()
     const [showAppointmentOnly, setShowAppointmentOnly] = useState(false)
     const [filteredResourcesList, setFilteredResourcesList] = useState([])
+    const [showCanceled, setShowCanceled] = useState<boolean>(false) 
     const [filteredMonth, setFilteredMonth] = useState<Date>()
 
     const {
@@ -254,7 +255,7 @@ const ScheduleScreen = () => {
         }
     };
 
-    const visibleAppointments = currentView === "agenda"
+    const visibleAppointments = currentView === "agenda" || showCanceled
         ? appointmentsData // Show all events in the agenda view
         : appointmentsData.filter((event) => !event.hidden);
 
@@ -423,10 +424,12 @@ const ScheduleScreen = () => {
                             setRecord={setSelectedResources}
                         />
                     </Form>
+                    <div></div>
+                    <Checkbox onChange={()=>setShowCanceled(!showCanceled)}>Show Canceled</Checkbox>
 
-                    <Divider style={{ marginTop: "100px" }}>Color Key</Divider>
+                    <Divider  style={{ marginTop: "50px" }}> </Divider>
 
-                    <TagGroup style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <TagGroup style={{ display: 'flex', flexDirection: 'column', gap: '8px',width:"50%" }}>
 
                         <Tag style={{ backgroundColor: "#3174ad" }}><span style={{ color: "white" }}>New Appointment</span></Tag>
                         <Tag style={{ backgroundColor: "#AAFFFC" }}>Checked In Appointment</Tag>
