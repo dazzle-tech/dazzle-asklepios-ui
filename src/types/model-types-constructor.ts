@@ -759,6 +759,8 @@ export const newApDrugOrder:modelTypes.ApDrugOrder = {
 	isValid:undefined,
 	drugorderId:'',
 	saveDraft:undefined,
+	submittedBy :'',
+	submittedAt:0,
 } 
 
 export const newApDrugOrderMedications:modelTypes.ApDrugOrderMedications = { 
@@ -1001,6 +1003,7 @@ export const newApGenericMedication:modelTypes.ApGenericMedication = {
 	isValid:undefined,
 	code:'',
 	roaLkey:undefined,
+	marketingAuthorizationHolder:'',
 } 
 
 export const newApGenericMedicationActiveIngredient:modelTypes.ApGenericMedicationActiveIngredient = { 
@@ -1743,6 +1746,8 @@ export const newApPrescription:modelTypes.ApPrescription = {
 	isValid:undefined,
 	prescriptionId:'',
 	saveDraft:undefined,
+	submittedBy :'',
+	submittedAt:0,
 } 
 
 export const newApPrescriptionInstruction:modelTypes.ApPrescriptionInstruction = { 

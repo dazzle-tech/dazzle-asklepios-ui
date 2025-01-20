@@ -758,6 +758,8 @@ export interface ApDrugOrder {
 	isValid:boolean;
 	drugorderId:string;
 	saveDraft:boolean;
+	submittedBy :string;
+	submittedAt:number;
 } 
 
 export interface ApDrugOrderMedications { 
@@ -1000,6 +1002,7 @@ export interface ApGenericMedication {
 	isValid:boolean;
 	code:string;
 	roaLkey:string;
+	marketingAuthorizationHolder:string;
 } 
 
 export interface ApGenericMedicationActiveIngredient { 
@@ -1742,6 +1745,8 @@ export interface ApPrescription {
 	isValid:boolean;
 	prescriptionId:string;
 	saveDraft:boolean;
+	submittedBy :string;
+	submittedAt:number;
 } 
 
 export interface ApPrescriptionInstruction { 

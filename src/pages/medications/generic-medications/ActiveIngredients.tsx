@@ -42,9 +42,6 @@ import { notify } from '@/utils/uiReducerActions';
 
 const ActiveIngredient = ({genericMedication}) => {
 
-    const [selectedDiagnose, setSelectedDiagnose] = useState<ApPatientDiagnose>({
-      ...newApPatientDiagnose
-    });
     const [genericActive, setGenericActive] = useState<ApGenericMedicationActiveIngredient>({...newApGenericMedicationActiveIngredient});
      const [activeIngredientsListRequest, setActiveIngredientsListRequest] = useState<ListRequest>({
           ...initialListRequest
@@ -121,7 +118,11 @@ const ActiveIngredient = ({genericMedication}) => {
           ...listRequest,
           timestamp: new Date().getMilliseconds()
         });
-        setGenericActive({ ...newApGenericMedicationActiveIngredient });
+        setGenericActive({
+           ...newApGenericMedicationActiveIngredient,
+            activeIngredientKey: null,
+            unitLkey: null 
+         });
       }
     }, [saveGenericMedicationActiveIngredientMutation]);
   
@@ -131,7 +132,11 @@ const ActiveIngredient = ({genericMedication}) => {
           ...listRequest,
           timestamp: new Date().getMilliseconds()
         });
-        setSelectedDiagnose({ ...newApPatientDiagnose });
+        setGenericActive({
+          ...newApGenericMedicationActiveIngredient,
+           activeIngredientKey: null,
+           unitLkey: null 
+        });
       }
     }, [removeGenericMedicationActiveIngredientMutation]);
   
@@ -185,7 +190,7 @@ const ActiveIngredient = ({genericMedication}) => {
                 icon={<Plus />}
               />
               <IconButton
-                disabled={!isActive || !genericActive.key}
+                disabled={!isActive}
                 size="xs"
                 appearance="primary"
                 color="green"
@@ -285,7 +290,7 @@ const ActiveIngredient = ({genericMedication}) => {
                   </Table.Cell>
                 </Table.Column>
                 <Table.Column flexGrow={1}>
-                <Table.HeaderCell>Active Ingredient ACT Code</Table.HeaderCell>
+                <Table.HeaderCell>Active Ingredient ATC Code</Table.HeaderCell>
                   <Table.Cell>
                       {rowData => (
                         <span>

@@ -26,7 +26,7 @@ const GenericMedications = () => {
     const [genericMedication, setGenericMedication] = useState<ApGenericMedication>({ ...newApGenericMedication});
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const dispatch = useAppDispatch();
-    const { data: genericMedicationListResponse } = useGetGenericMedicationQuery(listRequest);
+    const { data: genericMedicationListResponse, refetch: genericMedicationRefetch } = useGetGenericMedicationQuery(listRequest);
     const [removeGenericMedication, removeGenericMedicationMutation] = useRemoveGenericMedicationMutation();
     const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
     const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
@@ -84,6 +84,9 @@ const GenericMedications = () => {
     }, [removeGenericMedicationMutation]);
   
 
+    useEffect(() => {
+      genericMedicationRefetch();
+    }, [carouselActiveIndex]);
   
     return (
       <Carousel
