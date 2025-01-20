@@ -64,7 +64,9 @@ import {
 
 } from '@/services/medicationsSetupService';
 
-
+import {
+    useGetIcdListQuery,
+} from '@/services/setupService';
 const Prescription = () => {
     const patientSlice = useAppSelector(state => state.patient);
     const dispatch = useAppDispatch();
@@ -75,6 +77,8 @@ const Prescription = () => {
     const [showCanceled, setShowCanceled] = useState(true);
     const [editing, setEditing] = useState(false);
     const [typing, setTyping] = React.useState(false);
+    const [searchKeywordicd, setSearchKeywordicd] = useState('');
+    const [searchKeywordSnomed, setSearchKeywordSnomed] = useState('');
     const [inputValue, setInputValue] = React.useState('');
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -93,6 +97,7 @@ const Prescription = () => {
         frequency: null,
         roa: null
     });
+     const [indicationsIcd, setIndicationsIcd] = useState({ indicationIcd: null });
     const [filteredList, setFilteredList] = useState([]);
     const { data: genericMedicationListResponse } = useGetGenericMedicationQuery(listGenericRequest);
     const [selectedRows, setSelectedRows] = useState([]);
@@ -103,13 +108,14 @@ const Prescription = () => {
     const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const { data: instructionTypeQueryResponse } = useGetLovValuesByCodeQuery('PRESC_INSTR_TYPE');
     const { data: refillunitQueryResponse } = useGetLovValuesByCodeQuery('REFILL_INTERVAL');
-
+    const { data: indicationLovQueryResponse } = useGetLovValuesByCodeQuery('MED_INDICATION_USE');
+     const [indicationsDescription, setindicationsDescription] = useState<string>('');
     const { data: activeIngredientListResponseData } = useGetActiveIngredientQuery({ ...initialListRequest });
     const [listGinricRequest, setListGinricRequest] = useState({
         ...initialListRequest,
 
-        
-       
+
+
         sortType: 'desc'
         ,
         filters: [
@@ -128,7 +134,7 @@ const Prescription = () => {
         ]
     });
 
-    const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({...listGinricRequest});
+    const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({ ...listGinricRequest });
 
 
     const { data: prescriptions, isLoading: isLoadingPrescriptions, refetch: preRefetch } = useGetPrescriptionsQuery({
@@ -152,7 +158,7 @@ const Prescription = () => {
     ) ?? [];
 
     const [preKey, setPreKey] = useState(null);
-    
+
 
     const [prescription, setPrescription] = useState<ApPrescription>({
         ...prescriptions?.object?.find(prescription =>
@@ -161,7 +167,17 @@ const Prescription = () => {
 
     });
 
-
+    const [icdListRequest, setIcdListRequest] = useState<ListRequest>({
+        ...initialListRequest,
+        filters: [
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
+            }
+        ],
+    });
+    const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
     const [prescriptionMedication, setPrescriptionMedications] = useState<ApPrescriptionMedications>(
         {
             ...newApPrescriptionMedications,
@@ -170,6 +186,10 @@ const Prescription = () => {
             numberOfRefills: null
 
         });
+        const modifiedData = (icdListResponseLoading?.object ?? []).map(item => ({
+            ...item,
+            combinedLabel: `${item.icdCode} - ${item.description}`,
+        }));
     const isSelected = rowData => {
         if (rowData && prescriptionMedication && rowData.key === prescriptionMedication.key) {
             return 'selected-row';
@@ -179,10 +199,10 @@ const Prescription = () => {
     const [savePrescription, savePrescriptionMutation] = useSavePrescriptionMutation();
 
     const [savePrescriptionMedication, { isLoading: isSavingPrescriptionMedication }] = useSavePrescriptionMedicationMutation();
-
+   
 
     const [saveCustomeInstructions, { isLoading: isSavingCustomeInstructions }] = useSaveCustomeInstructionsMutation();
-    const [editDuration,setEditDuration]=useState(false);
+    const [editDuration, setEditDuration] = useState(false);
     const { data: prescriptionMedications, isLoading: isLoadingPrescriptionMedications, refetch: medicRefetch } = useGetPrescriptionMedicationsQuery({
         ...initialListRequest,
 
@@ -207,18 +227,18 @@ const Prescription = () => {
     const [isdraft, setIsDraft] = useState(prescriptions?.object?.find(prescription =>
         prescription.key === preKey
     )?.saveDraft);
- 
+
 
     useEffect(() => {
-       
+
         const foundPrescription = prescriptions?.object?.find(prescription => prescription.key === preKey);
         if (foundPrescription?.saveDraft !== isdraft) {
             setIsDraft(foundPrescription?.saveDraft);
-        } 
-      
+        }
+
     }, [prescriptions, preKey]);
     useEffect(() => {
-      
+
         const updatedFilters = [
             {
                 fieldName: 'deleted_at',
@@ -226,7 +246,7 @@ const Prescription = () => {
                 value: undefined
             }
             ,
-          
+
             {
                 fieldName: 'generic_medication_key',
                 operator: 'match',
@@ -234,22 +254,22 @@ const Prescription = () => {
             }
         ];
         console.log(updatedFilters);
-        setListGinricRequest((prevRequest) =>({
-           
-                ...prevRequest,
-                filters: updatedFilters,
-           
+        setListGinricRequest((prevRequest) => ({
+
+            ...prevRequest,
+            filters: updatedFilters,
+
         }));
-        console.log("updated filt: ",listGinricRequest)
+        console.log("updated filt: ", listGinricRequest)
     }, [selectedGeneric]);
-    
+
     useEffect(() => {
         console.log("Updated listGinricRequest after setListGinricRequest: ", listGinricRequest);
-        refetchGenric().then(()=>{
+        refetchGenric().then(() => {
             console.log(genericMedicationActiveIngredientListResponseData?.object)
         })
     }, [listGinricRequest]);
-   
+
     useEffect(() => {
         if (prescriptions?.object) {
             const foundPrescription = prescriptions.object.find(prescription => {
@@ -265,7 +285,7 @@ const Prescription = () => {
         }
 
     }, [prescriptions]);
-     
+
     useEffect(() => {
         if (searchKeyword.trim() !== "") {
             setListGenericRequest({
@@ -285,6 +305,29 @@ const Prescription = () => {
             });
         }
     }, [searchKeyword]);
+    useEffect(() => {
+        if (searchKeywordicd.trim() !== "") {
+            setIcdListRequest(
+                {
+                    ...initialListRequest,
+                    filterLogic: 'or',
+                    filters: [
+                        {
+                            fieldName: 'icd_code',
+                            operator: 'containsIgnoreCase',
+                            value: searchKeywordicd
+                        },
+                        {
+                            fieldName: 'description',
+                            operator: 'containsIgnoreCase',
+                            value: searchKeywordicd
+                        }
+
+                    ]
+                }
+            );
+        }
+    }, [searchKeywordicd]);
 
     useEffect(() => {
         setPrescriptionMedications({ ...prescriptionMedication, instructionsTypeLkey: selectedOption })
@@ -292,8 +335,6 @@ const Prescription = () => {
     }, [selectedOption])
     useEffect(() => {
         if (prescriptionMedication.administrationInstructions != null) {
-
-            console.log(prescriptionMedication.administrationInstructions)
             setAdminInstructions(prevadminInstructions =>
                 prevadminInstructions ? `${prevadminInstructions}, ${administrationInstructionsLovQueryResponse?.object?.find(
                     item => item.key === prescriptionMedication.administrationInstructions
@@ -306,12 +347,12 @@ const Prescription = () => {
 
         setPrescriptionMedications({ ...prescriptionMedication, administrationInstructions: null })
     }, [prescriptionMedication.administrationInstructions])
-     useEffect(()=>{
-         console.log("ischronic",prescriptionMedication.chronicMedication);
-         setEditDuration(prescriptionMedication.chronicMedication);
-         setPrescriptionMedications({...prescriptionMedication,duration:null,durationTypeLkey:null})
-     },[prescriptionMedication.chronicMedication])
- 
+    useEffect(() => {
+
+        setEditDuration(prescriptionMedication.chronicMedication);
+        setPrescriptionMedications({ ...prescriptionMedication, duration: null, durationTypeLkey: null })
+    }, [prescriptionMedication.chronicMedication])
+
     useEffect(() => {
 
     }, [selectedPreDefine, munial])
@@ -329,12 +370,11 @@ const Prescription = () => {
             dose: customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === selectedRowoMedicationKey)?.dose,
         })
     }, [selectedRowoMedicationKey]);
-   
+
     useEffect(() => {
         const saveData = async () => {
-            console.log("useEffect   " + inst);
             if (inst != null) {
-                console.log("useEffect   " + inst);
+
 
                 if (preKey === null) {
                     dispatch(notify('Prescription not linked. Try again'));
@@ -342,6 +382,7 @@ const Prescription = () => {
                 }
 
                 const tagcompine = joinValuesFromArray(tags);
+                console.log("indicationsDescription",indicationsDescription)
                 try {
                     await savePrescriptionMedication({
                         ...prescriptionMedication,
@@ -356,7 +397,8 @@ const Prescription = () => {
                         frequencyLkey: selectedOption === "3010606785535008" ? customeinst.frequency : null,
                         unitLkey: selectedOption === "3010606785535008" ? customeinst.unit : null,
                         roaLkey: selectedOption === "3010606785535008" ? customeinst.roa : null,
-                        administrationInstructions: adminInstructions
+                        administrationInstructions: adminInstructions,
+                        indicationIcd: indicationsDescription
                     }).unwrap();
 
                     dispatch(notify('Saved successfully'));
@@ -380,7 +422,7 @@ const Prescription = () => {
 
     useEffect(() => {
         console.log(preKey);
-        if(preKey==null){
+        if (preKey == null) {
             handleCleare()
         }
         if (prescriptions?.object) {
@@ -391,11 +433,28 @@ const Prescription = () => {
             setPrescription(foundPrescription)
         }
     }, [preKey]);
-    
+
     useEffect(() => {
 
     }, [adminInstructions])
-
+     useEffect(() => {
+            if (indicationsIcd.indicationIcd != null || indicationsIcd.indicationIcd != "") {
+    
+                setindicationsDescription(prevadminInstructions => {
+                    const currentIcd = icdListResponseLoading?.object?.find(
+                        item => item.key === indicationsIcd.indicationIcd
+                    );
+    
+                    if (!currentIcd) return prevadminInstructions;
+    
+                    const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
+    
+                    return prevadminInstructions
+                        ? `${prevadminInstructions}\n${newEntry}`
+                        : newEntry;
+                });
+            }
+        }, [indicationsIcd.indicationIcd]);
     const handleSearch = value => {
         setSearchKeyword(value);
 
@@ -536,15 +595,21 @@ const Prescription = () => {
             instructionsTypeLkey: null,
             genericSubstitute: false,
             chronicMedication: false,
-            refillIntervalUnitLkey: null
+            refillIntervalUnitLkey: null,
+            indicationUseLkey:null
         })
         setAdminInstructions("");
         setSelectedGeneric(null);
-
+        setindicationsDescription(null);
+        
         setCustomeinst({ dose: null, frequency: null, unit: null, roa: null })
         setTags([])
     }
+    const handleSearchIcd = value => {
+        setSearchKeywordicd(value);
 
+
+    };
 
     const addTag = () => {
         const nextTags = inputValue ? [...tags, inputValue] : tags;
@@ -562,7 +627,7 @@ const Prescription = () => {
         refetchGenric().then(() => {
             console.log("Refetch Genric");
 
-         
+
 
         }).catch((error) => {
             console.error("Refetch failed:", error);
@@ -675,7 +740,6 @@ const Prescription = () => {
                     placeholder="prescription"
                     onChange={e => {
                         setPreKey(e);
-                        console.log("kk"+preKey);
                     }}
 
                 />
@@ -691,7 +755,7 @@ const Prescription = () => {
                 color="cyan"
                 appearance="ghost"
                 onClick={handleSavePrescription}
-                 disabled={isdraft}
+                disabled={isdraft}
                 style={{ marginLeft: 'auto' }}
                 icon={<PlusIcon />}
             >
@@ -817,118 +881,218 @@ const Prescription = () => {
             </div>
         </div>
         <br />
+
         <div className='instructions-container-p '>
-            <div className='instructions-container-p ' style={{ minWidth: "800px", border: " 1px solid #b6b7b8" }}>
-                <div>
-                    <RadioGroup
-                        name="radio-group"
-                        disabled={preKey != null ? editing : true}
+            <div style={{ marginLeft: "10px", display: 'flex', flexDirection: 'column', border: " 1px solid #b6b7b8" }}>
+                <div className='instructions-container-p ' style={{ minWidth: "800px" }}>
+                    <div>
+                        <RadioGroup
+                            name="radio-group"
+                            disabled={preKey != null ? editing : true}
 
-                        onChange={(value) => setSelectedOption(String(value))}
-                    >
-                        {instructionTypeQueryResponse?.object?.map((instruction, index) => (
-                            <Radio key={index} value={instruction.key}>
-                                {instruction.lovDisplayVale}
-                            </Radio>
-                        ))}
-                    </RadioGroup>
-                </div>
-                <div style={{ marginLeft: "10px" }}>
-                    {selectedOption === "3010606785535008" &&
-                        <div className='form-search-container-p ' style={{ width: "600px" }}>
-                            <Form style={{ zoom: 0.85 }} layout="inline" fluid disabled={preKey != null ? editing : true}>
-                                <MyInput
-                                    column
+                            onChange={(value) => setSelectedOption(String(value))}
+                        >
+                            {instructionTypeQueryResponse?.object?.map((instruction, index) => (
+                                <Radio key={index} value={instruction.key}>
+                                    {instruction.lovDisplayVale}
+                                </Radio>
+                            ))}
+                        </RadioGroup>
+                    </div>
+                    <div style={{ marginLeft: "10px" }}>
+                        {selectedOption === "3010606785535008" &&
+                            <div className='form-search-container-p ' style={{ width: "600px" }}>
+                                <Form style={{ zoom: 0.85 }} layout="inline" fluid disabled={preKey != null ? editing : true}>
+                                    <MyInput
+                                        column
 
-                                    width={150}
-                                    fieldType='number'
-                                    fieldName={'dose'}
-                                    record={customeinst}
-                                    setRecord={setCustomeinst}
-                                />
+                                        width={150}
+                                        fieldType='number'
+                                        fieldName={'dose'}
+                                        record={customeinst}
+                                        setRecord={setCustomeinst}
+                                    />
 
-                                <MyInput
-                                    column
+                                    <MyInput
+                                        column
 
-                                    width={150}
-                                    fieldType="select"
-                                    fieldLabel="Unit"
-                                    selectData={unitLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    fieldName={'unit'}
-                                    record={customeinst}
-                                    setRecord={setCustomeinst}
-                                />
-                                <MyInput
-                                    column
-                                    width={150}
-                                    fieldType="select"
-                                    fieldLabel="Frequency"
-                                    selectData={FrequencyLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    fieldName={'frequency'}
-                                    record={customeinst}
-                                    setRecord={setCustomeinst}
-                                />
-                                <MyInput
-                                    column
-                                    width={150}
-                                    fieldType="select"
-                                    fieldLabel="ROA"
-                                    selectData={filteredList ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    fieldName={'roa'}
-                                    record={customeinst}
-                                    setRecord={setCustomeinst}
-                                />
+                                        width={150}
+                                        fieldType="select"
+                                        fieldLabel="Unit"
+                                        selectData={unitLovQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        fieldName={'unit'}
+                                        record={customeinst}
+                                        setRecord={setCustomeinst}
+                                    />
+                                    <MyInput
+                                        column
+                                        width={150}
+                                        fieldType="select"
+                                        fieldLabel="Frequency"
+                                        selectData={FrequencyLovQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        fieldName={'frequency'}
+                                        record={customeinst}
+                                        setRecord={setCustomeinst}
+                                    />
+                                    <MyInput
+                                        column
+                                        width={150}
+                                        fieldType="select"
+                                        fieldLabel="ROA"
+                                        selectData={filteredList ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        fieldName={'roa'}
+                                        record={customeinst}
+                                        setRecord={setCustomeinst}
+                                    />
+                                </Form>
+
+                            </div>
+                        }
+                        {selectedOption === "3010591042600262" &&
+                            <Form layout="inline" fluid>
+
+                                <Dropdown style={{ width: "200px" }} title={!selectedPreDefine ? "Pre-defined Instructions" : [
+                                    selectedPreDefine.dose,
+
+                                    selectedPreDefine.unitLvalue?.lovDisplayVale,
+                                    selectedPreDefine.routLvalue?.lovDisplayVale,
+                                    selectedPreDefine.frequencyLvalue?.lovDisplayVale
+                                ]
+                                    .filter(Boolean)
+                                    .join(', ')}>
+                                    {predefinedInstructionsListResponse && predefinedInstructionsListResponse?.object?.map((item, index) => (
+                                        <Dropdown.Item key={index}
+                                            onClick={() => setSelectedPreDefine(item)}>
+                                            {[item.dose,
+
+                                            item.unitLvalue?.lovDisplayVale,
+                                            item.routLvalue?.lovDisplayVale,
+                                            item.frequencyLvalue?.lovDisplayVale
+                                            ]
+                                                .filter(Boolean)
+                                                .join(', ')}</Dropdown.Item>
+                                    ))}
+                                </Dropdown>
                             </Form>
+                        }
+                        {selectedOption === "3010573499898196" &&
+                            <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+                                <textarea
+                                    rows={4}
+                                    style={{ width: '350px' }}
+                                    disabled={false}
+                                    value={munial}
+                                    onChange={(e) => setMunial(e.target.value)}
 
-                        </div>
-                    }
-                    {selectedOption === "3010591042600262" &&
-                        <Form layout="inline" fluid>
+                                />
 
-                            <Dropdown style={{ width: "200px" }} title={!selectedPreDefine ? "Pre-defined Instructions" : [
-                                selectedPreDefine.dose,
 
-                                selectedPreDefine.unitLvalue?.lovDisplayVale,
-                                selectedPreDefine.routLvalue?.lovDisplayVale,
-                                selectedPreDefine.frequencyLvalue?.lovDisplayVale
-                            ]
-                                .filter(Boolean)
-                                .join(', ')}>
-                                {predefinedInstructionsListResponse && predefinedInstructionsListResponse?.object?.map((item, index) => (
-                                    <Dropdown.Item key={index}
-                                        onClick={() => setSelectedPreDefine(item)}>
-                                        {[item.dose,
+                            </Form>
+                        }
 
-                                        item.unitLvalue?.lovDisplayVale,
-                                        item.routLvalue?.lovDisplayVale,
-                                        item.frequencyLvalue?.lovDisplayVale
-                                        ]
-                                            .filter(Boolean)
-                                            .join(', ')}</Dropdown.Item>
+                    </div>
+                </div>
+                <Divider style={{ fontWeight: 'bold' }}>Indication</Divider>
+                <div style={{ border: '2px solid #b6b7b8"', padding: '5px', display: 'flex', gap: '5px' }}>
+
+
+
+                    <div style={{ marginBottom: '3px', zoom: 0.85 }}>
+                        <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
+                            <Input
+                                disabled={preKey != null ? editing : true}
+                                placeholder="Search ICD-10"
+                                value={searchKeywordicd}
+                                onChange={handleSearchIcd}
+                            />
+                            <InputGroup.Button>
+                                <SearchIcon />
+                            </InputGroup.Button>
+                        </InputGroup>
+                        {searchKeywordicd && (
+                            <Dropdown.Menu  className="dropdown-menuresult">
+                                {modifiedData?.map(mod => (
+                                    <Dropdown.Item
+                                        key={mod.key}
+                                        eventKey={mod.key}
+                                        onClick={() => {
+                                            setIndicationsIcd({
+                                                ...indicationsIcd,
+                                                indicationIcd: mod.key
+                                            })
+                                            setSearchKeywordicd("");
+                                        }}
+                                    >
+                                        <span style={{ marginRight: "19px" }}>{mod.icdCode}</span>
+                                        <span>{mod.description}</span>
+                                    </Dropdown.Item>
                                 ))}
-                            </Dropdown>
-                        </Form>
-                    }
-                    {selectedOption === "3010573499898196" &&
-                        <Form style={{ zoom: 0.85 }} layout="inline" fluid>
-                            <textarea
-                                rows={4}
-                                style={{ width: '350px' }}
-                                disabled={false}
-                                value={munial}
-                                onChange={(e) => setMunial(e.target.value)}
+                            </Dropdown.Menu>
+                        )}
+                        <Input as="textarea"
+                            disabled={true}
+                            onChange={(e) => setindicationsDescription} value={indicationsDescription
+                                || prescriptionMedication.indicationIcd
+                            }
+                            style={{ width: 300 }} rows={4} />
+                    </div>
+                    <div style={{ marginBottom: '3px', zoom: 0.85 }}>
+                        <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
+                            <Input
+                               disabled={preKey != null ? editing : true}
+                                placeholder="Search SNOMED-CT"
+                                value={""}
 
                             />
+                            <InputGroup.Button>
+                                <SearchIcon />
+                            </InputGroup.Button>
+                        </InputGroup>
 
+                        <Input as="textarea"
+                            disabled={true}
 
+                            style={{ width: 300 }} rows={4} />
+                    </div>
+                    <div style={{ marginBottom: '3px', zoom: 0.85 }}>
+                        <Form layout="inline" fluid>
+                            <MyInput
+                                column
+                                disabled={preKey != null ? editing : true}
+                                width={200}
+
+                                fieldType="select"
+                                fieldLabel="Indication Use"
+                                selectData={indicationLovQueryResponse?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                fieldName={'indicationUseLkey'}
+                                record={prescriptionMedication}
+                                setRecord={setPrescriptionMedications}
+
+                            />
                         </Form>
-                    }
+                        <Input
+                            as="textarea"
+                            placeholder="Write Indication Manually"
+                            disabled={preKey != null ? editing : true}
+                            value={prescriptionMedication.indicationManually}
+                            onChange={(e) => {
+                               
+                                setPrescriptionMedications({ ...prescriptionMedication, indicationManually: e });
+                            }}
+                            style={{ width: 200 }}
+                            rows={4}
+                        />
+
+                    </div>
+
                 </div>
             </div>
             <div className='form-search-container-p ' style={{ minWidth: "600px" }}>
@@ -994,7 +1158,7 @@ const Prescription = () => {
 
                     <MyInput
                         column
-                        disabled={preKey != null ? (!editing?editDuration:editing) : true}
+                        disabled={preKey != null ? (!editing ? editDuration : editing) : true}
                         width={150}
                         fieldType="number"
                         fieldLabel="Duration"
@@ -1006,7 +1170,7 @@ const Prescription = () => {
 
                     <MyInput
                         column
-                        disabled={preKey != null ? (!editing?editDuration:editing) : true}
+                        disabled={preKey != null ? (!editing ? editDuration : editing) : true}
                         width={150}
                         fieldType="select"
                         fieldLabel="Duration type"
@@ -1067,7 +1231,7 @@ const Prescription = () => {
                         fieldName="chronicMedication"
                         record={prescriptionMedication}
                         setRecord={setPrescriptionMedications}
-                  
+
                     /></Form>
 
                 <Form style={{ zoom: 0.90 }}>
@@ -1299,7 +1463,7 @@ const Prescription = () => {
                                     return [
                                         generic?.dose,
                                         generic?.unitLvalue?.lovDisplayVale,
-                                        
+
                                         generic?.frequencyLvalue?.lovDisplayVale
                                     ]
                                         .filter(Boolean)
@@ -1331,7 +1495,7 @@ const Prescription = () => {
                             <Translate>Instructions Type</Translate>
                         </HeaderCell>
                         <Cell >
-                        {rowData =>rowData.instructionsTypeLkey?rowData.instructionsTypeLvalue.lovDisplayVale:rowData.instructionsTypeLkey}
+                            {rowData => rowData.instructionsTypeLkey ? rowData.instructionsTypeLvalue.lovDisplayVale : rowData.instructionsTypeLkey}
                         </Cell>
                     </Column>
                     <Column flexGrow={2}>
