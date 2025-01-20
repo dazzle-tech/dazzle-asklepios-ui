@@ -300,22 +300,9 @@ const EncounterList = () => {
               <Translate>Diagnosis</Translate>
             </HeaderCell>
             <Cell>
-              {rowData => {
-                console.log(rowData.diagnosis)
-                const diag = icdListResponseData?.object?.find(
-                  item =>item.key === rowData.diagnosis
-                );
-                console.log(icdListResponseData?.object)
-                  
-                if (diag) {
-                  console.log("Found diag:", diag);
-                  return diag.icdCode+","+diag.description;
-              } else {
-                  console.warn("No matching diag found for key:", rowData.diagnosis);
-                  return " ";
-              }
-                return diag?.icdCode ?? "N/A"; 
-              }}
+              {rowData => 
+                rowData.diagnosis}
+               
             </Cell>
 
           </Column>
