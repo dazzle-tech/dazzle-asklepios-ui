@@ -25,6 +25,7 @@ const Resources = () => {
 
   const [isPractitioner, setISPractitioner] = useState(false);
   const [isDepartment, setISDepartment] = useState(false);
+  const [isMedicalTest, setIsMedicalTest] = useState(false);
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
 
   const [saveResources, saveResourcesMutation] = useSaveResourcesMutation();
@@ -63,11 +64,18 @@ const Resources = () => {
       case '2039534205961578':
        setISPractitioner(true);
        setISDepartment(false);
+       setIsMedicalTest(false);
        break;
       case '2039516279378421':
        setISDepartment(true);
        setISPractitioner(false);
+       setIsMedicalTest(false);
        break;
+       case '2039620472612029':
+        setISDepartment(false);
+        setISPractitioner(false);
+        setIsMedicalTest(true);
+        break;
     }
   }, [resources.resourceTypeLkey]);
 
@@ -194,18 +202,21 @@ const Resources = () => {
         </Column>
         <Column sortable flexGrow={3}>
           <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('createdBy', e)} />
+            <Input onChange={e => handleFilterChange('createdAt', e)} />
             <Translate>Creation Date</Translate>
           </HeaderCell>
-          <Cell dataKey="createdBy" />
+          <Cell> 
+          {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}
+          </Cell>
         </Column> 
         <Column sortable flexGrow={3}>
           <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('createdAt', e)} />
-            <Translate>Created By</Translate>
+            <Input onChange={e => handleFilterChange('createdBy', e)} />
+            <Translate> Created By</Translate>
           </HeaderCell>
-          <Cell dataKey="createdAt" />
+          <Cell dataKey="createdBy" />
         </Column> 
+       
         
       </Table>
       <div style={{ padding: 20 }}>
@@ -274,6 +285,18 @@ const Resources = () => {
               fieldType="select"
               selectData={resourceTypeListResponse?.data?.object ?? []}
               selectDataLabel="name"
+              selectDataValue="key"
+              record={resources}
+              setRecord={setResources}
+            />} 
+
+             
+            {isMedicalTest && <MyInput
+              fieldLabel="Resource"
+              fieldName="resourceKey"
+              fieldType="select"
+              selectData={resourceTypeListResponse?.data?.object ?? []}
+              selectDataLabel="testName"
               selectDataValue="key"
               record={resources}
               setRecord={setResources}
