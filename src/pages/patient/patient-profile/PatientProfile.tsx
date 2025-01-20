@@ -102,6 +102,7 @@ import { useGetEncountersQuery } from '@/services/encounterService';
 import {
   useFetchAttachmentQuery,
   useFetchAttachmentLightQuery,
+  useGetPatientAttachmentsListQuery,
   useFetchAttachmentByKeyQuery,
   useUploadMutation,
   useDeleteAttachmentMutation,
@@ -144,7 +145,9 @@ const PatientProfile = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [deleteDocModalOpen, setDeleteDocModalOpen] = useState(false);
   const [deleteRelativeModalOpen, setDeleteRelativeModalOpen] = useState(false);
-  const [selectedAttachType, setSelectedAttachType] = useState('');
+  const [selectedAttachType, setSelectedAttachType] = useState({
+    accessTypeLkey:''
+  });
   const [warningsAdmistritiveListRequest, setWarningsAdmistritiveListRequest] =
     useState<ListRequest>({
       ...initialListRequest,
@@ -167,6 +170,16 @@ const PatientProfile = () => {
     ignore: !searchKeyword || searchKeyword.length < 3
   });
   const [documenstListRequest, setDocumentsListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    filters: [
+      {
+        fieldName: 'deleted_at',
+        operator: 'isNull',
+        value: undefined
+      }
+    ]
+  });
+  const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
       {
@@ -545,6 +558,7 @@ const PatientProfile = () => {
         setAttachmentsModalOpen(true);
         setSelectedPatientAttacment(fetchAttachmentByKeyResponce);
         setNewAttachmentDetails(fetchAttachmentByKeyResponce.extraDetails);
+        setSelectedAttachType({accessTypeLkey:fetchAttachmentByKeyResponce.accessTypeLkey})
       }
     }
   }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
@@ -556,7 +570,7 @@ const PatientProfile = () => {
   });
 
   const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch } =
-    useFetchAttachmentLightQuery({ refKey: localPatient?.key }, { skip: !localPatient?.key });
+  useGetPatientAttachmentsListQuery(attachmentsListRequest, { skip: !localPatient?.key });
 
   useEffect(() => {
     if (patientSlice.patient) {
@@ -593,7 +607,7 @@ const PatientProfile = () => {
   useEffect(() => {
     if (fetchPatintAttachmentsResponce)
       if (fetchPatintAttachmentsResponce && localPatient.key) {
-        setPatientAttachments(fetchPatintAttachmentsResponce);
+        setPatientAttachments(fetchPatintAttachmentsResponce?.object);
       } else {
         setPatientAttachments(undefined);
       }
@@ -644,7 +658,8 @@ const PatientProfile = () => {
           type: 'PATIENT_PROFILE_PICTURE',
           refKey: localPatient.key,
           details: `Profile Picture for ${localPatient.fullName}`,
-          accessType: ''
+          accessType: '',
+          createdBy:authSlice.user.key
         })
           .unwrap()
           .then(() => attachmentRefetch());
@@ -809,7 +824,7 @@ const PatientProfile = () => {
       });
   };
 
- 
+
   const handleDeletePatientAdministrativeWarnings = () => {
     deletePatientAdministrativeWarnings({
       ...selectedPatientAdministrativeWarnings
@@ -825,7 +840,9 @@ const PatientProfile = () => {
   const handleUpdateAttachmentDetails = () => {
     Update({
       key: selectedPatientAttacment.key,
-      attachmentDetails: newAttachmentDetails
+      attachmentDetails: newAttachmentDetails,
+      updatedBy:authSlice.user.key,
+      accessType:selectedAttachType.accessTypeLkey
     })
       .unwrap()
       .then(() => handleFinishUploading());
@@ -1070,15 +1087,33 @@ const PatientProfile = () => {
         setAttachmentsModalOpen(true);
         setSelectedPatientAttacment(fetchAttachmentByKeyResponce);
         setNewAttachmentDetails(fetchAttachmentByKeyResponce.extraDetails);
-        setSelectedAttachType(fetchAttachmentByKeyResponce.accessTypeLkey);
+        setSelectedAttachType({accessTypeLkey:fetchAttachmentByKeyResponce.accessTypeLkey});
       }
     }
   }, [fetchAttachmentByKeyResponce, actionType]);
 
 
-
-
-
+  useEffect(() => {
+    setAttachmentsListRequest((prev) => ({
+      ...prev,
+      filters: [
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined,
+        },
+        ...(localPatient?.key
+          ? [
+            {
+              fieldName: 'reference_object_key',
+              operator: 'match',
+              value: localPatient.key,
+            },
+          ]
+          : []),
+      ],
+    }));
+  }, [localPatient.key]);
 
 
 
@@ -3004,7 +3039,8 @@ const PatientProfile = () => {
                         : upload({
                           ...uploadedAttachmentOpject,
                           details: newAttachmentDetails,
-                          accessType: selectedAttachType
+                          accessType: selectedAttachType.accessTypeLkey,
+                          createdBy:authSlice.user.key
                         })
                           .unwrap()
                           .then(() => {
@@ -3091,38 +3127,43 @@ const PatientProfile = () => {
                 }}
                 data={patientAttachments ?? []}
               >
-                <Column sortable flexGrow={4}>
+                <Column sortable flexGrow={4}  fullText>
                   <HeaderCell>
                     <Translate>Attachment Name</Translate>
                   </HeaderCell>
-                  <Cell dataKey="fileName" />
+                  <Cell dataKey="fileName"  fullText/>
                 </Column>
 
-                <Column sortable flexGrow={4}>
+                <Column sortable flexGrow={4}  fullText>
                   <HeaderCell>
                     <Translate>File Type</Translate>
                   </HeaderCell>
-                  <Cell dataKey="contentType" />
+                  <Cell dataKey="contentType"  fullText/>
                 </Column>
 
-                <Column sortable flexGrow={4}>
+                <Column sortable flexGrow={4}  fullText>
                   <HeaderCell>
                     <Translate>Details</Translate>
                   </HeaderCell>
-                  <Cell dataKey="extraDetails" />
+                  <Cell dataKey="extraDetails"  fullText/>
                 </Column>
-                <Column sortable flexGrow={4}>
+                <Column sortable flexGrow={4}  fullText>
                   <HeaderCell>
                     <Translate>Source</Translate>
                   </HeaderCell>
-                  <Cell dataKey="accessTypeLkey" />
+                  <Cell  fullText>   
+                    {rowData =>rowData.accessTypeLvalue
+                    ? rowData.accessTypeLvalue.lovDisplayVale
+                    : rowData.accessTypeLkey
+
+                }</Cell>
                 </Column>
 
-                <Column sortable flexGrow={4}>
+                <Column sortable flexGrow={4}  fullText>
                   <HeaderCell>
                     <Translate>Download</Translate>
                   </HeaderCell>
-                  <Cell>
+                  <Cell  fullText>
                     {attachment => (
                       <Button
                         appearance="link"
@@ -3133,11 +3174,46 @@ const PatientProfile = () => {
                     )}
                   </Cell>
                 </Column>
-                <Column sortable flexGrow={4}>
+                <Column sortable flexGrow={4}  fullText>
+                <HeaderCell>
+                      <Translate>Created By</Translate>
+                    </HeaderCell>
+                    <Cell  fullText>
+                        {rowData => rowData?.createdByUser?.fullName}
+                    </Cell>
+
+                  </Column>
+                  <Column sortable flexGrow={4}  fullText>
+                    <HeaderCell>
+                      <Translate>Created At</Translate>
+                    </HeaderCell>
+                    <Cell  fullText>
+                    {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString("en-GB") : ""}
+
+                    </Cell>
+                  </Column>
+                  <Column sortable flexGrow={4}  fullText>
+                    <HeaderCell>
+                      <Translate>Updated By</Translate>
+                    </HeaderCell>
+                    <Cell  fullText>
+                        {rowData => rowData?.updatedByUser?.fullName}
+                    </Cell>
+                  </Column>
+                  <Column sortable flexGrow={4}  fullText>
+                    <HeaderCell>
+                      <Translate>Updated At</Translate>
+                    </HeaderCell>
+                    <Cell  fullText>
+
+                        {rowData => rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
+                    </Cell>
+                  </Column>
+                <Column sortable flexGrow={4}  fullText>
                   <HeaderCell>
                     <Translate>Actions</Translate>
                   </HeaderCell>
-                  <Cell>
+                  <Cell  fullText>
                     {attachment => (
                       <div>
                         <Button
@@ -3146,12 +3222,21 @@ const PatientProfile = () => {
                         >
                           Preview / Edit
                         </Button>
-
-                        <Divider vertical />
-
+                      </div>
+                    )}
+                  </Cell>
+                </Column>
+                <Column sortable flexGrow={3} fullText>
+                    <HeaderCell>
+                      <Translate>Delete</Translate>
+                    </HeaderCell>
+                    <Cell  fullText>
+                    {attachment => (
+                      <div>
+                        
                         <Button
                           appearance="link"
-                          color="red"
+                          color="blue"
                           onClick={() => handleDeleteAttachment(attachment)}
 
                         >
@@ -3159,8 +3244,8 @@ const PatientProfile = () => {
                         </Button>
                       </div>
                     )}
-                  </Cell>
-                </Column>
+                    </Cell>
+                  </Column>
               </Table>
             </TabPanel>
 
