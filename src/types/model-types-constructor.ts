@@ -316,7 +316,7 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	otherReason:'',
 	noShowReasonLkey:undefined,
 	noShowReasonValue:'',
-	noShowOtherReason:'',
+	noShowOtherReason:'', 
 } 
 
 export const newApAttachment:modelTypes.ApAttachment = { 
@@ -2271,6 +2271,7 @@ export const newApVaccineDosesInterval:modelTypes.ApVaccineDosesInterval = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 } 
+
 
 export const newApVisitAllergies:modelTypes.ApVisitAllergies = { 
 	key:undefined,
