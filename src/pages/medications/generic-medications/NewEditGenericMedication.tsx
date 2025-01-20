@@ -40,7 +40,7 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
   const { data: GenericMedicationLovQueryResponse } = useGetLovValuesByCodeQuery('GEN_MED_MANUFACTUR');
   const { data: doseageFormLovQueryResponse } = useGetLovValuesByCodeQuery('DOSAGE_FORMS');
   const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
-  
+  const [preKey, setPreKey] = useState(genericMedication?.key) ;
   const [selectedROA, setSelectedROA] = useState([])
   const [editing, setEditing] = useState(false);
   const dispatch = useAppDispatch();
@@ -52,19 +52,24 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
     navigate('/GenericMedications');
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    try {
     setEnableAddActive(true);
     setEditing(true);
-    console.log(selectedROA)
-    saveGenericMedication({ genericMedication, roa: selectedROA? selectedROA.roaLkey : [] }).unwrap();
+    const response = await saveGenericMedication({ genericMedication, roa: selectedROA? selectedROA.roaLkey : [] }).unwrap();
       dispatch(notify('Brand Medication Saved Successfully'));
+      setGenericMedication(response);
+      setPreKey(response?.key);
+    } catch (error) {
+      console.error("Error saving Brand Medication:", error);
+  }
   };
 
 
   useEffect(() => {
     if (selectedGenericMedication) {
       setGenericMedication(selectedGenericMedication);
-      console.log("helllo " + selectedGenericMedication.roaList);
+      setPreKey(selectedGenericMedication.key);
       setSelectedROA(selectedGenericMedication.roaList);
       
     } else {
@@ -73,16 +78,10 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
   }, [selectedGenericMedication]);
 
   useEffect(() => {
-    console.log("The selected ROA:", selectedROA); // This will log the updated selectedROA when it changes
-  }, [selectedROA]);
-
-  useEffect(() => {
     if (saveGenericMedicationMutation.data) {
       setListRequest({ ...listRequest, timestamp: new Date().getTime() });
     }
   }, [saveGenericMedicationMutation.data]);
-
-
 
   return (
     <Panel
@@ -197,7 +196,14 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
                 fieldName="storageRequirements"
                 fieldType="textarea"
                 record={genericMedication}
-                isabled={!editing}
+                setRecord={setGenericMedication}
+              />
+                  <MyInput
+                width={360}
+                column
+                fieldName="marketingAuthorizationHolder"
+                fieldType="textarea"
+                record={genericMedication}
                 setRecord={setGenericMedication}
               />
               <MyInput
@@ -209,7 +215,7 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
                 setRecord={setGenericMedication}
               />
 
-             {genericMedication.expiresAfterOpening && <MyInput
+             {genericMedication?.expiresAfterOpening && <MyInput
                 width={360}
                 column
                 fieldName="expiresAfterOpeningValue"
@@ -266,7 +272,7 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
             </TabList>
 
             <TabPanel>
-              {genericMedication.key && <ActiveIngredient genericMedication={genericMedication} />}
+              {preKey && <ActiveIngredient genericMedication={genericMedication} />}
                </TabPanel>
             {/* <TabPanel>
             <UOM />

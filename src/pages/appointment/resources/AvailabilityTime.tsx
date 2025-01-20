@@ -38,7 +38,7 @@ const AvailabilityTime = ({resource}) => {
   const [saveResourcesAvailabilityTime, saveResourcesAvailabilityTimeMutation] = useSaveResourcesAvailabilityTimeMutation();
   const [selectedRows, setSelectedRows] = useState([]);
 
-  const { data: resourceAvailabilityTimeListResponse } = useGetResourcesAvailabilityTimeQuery(resourcesAvailabilityTimeListRequest);
+  const { data: resourceAvailabilityTimeListResponse, refetch : availabilityRefetch } = useGetResourcesAvailabilityTimeQuery(resourcesAvailabilityTimeListRequest);
   const { data: resourcesListResponse } = useGetResourcesQuery(listRequest);
   const { data: facilityListResponse } = useGetFacilitiesQuery(listRequest);
   const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
@@ -123,9 +123,15 @@ const AvailabilityTime = ({resource}) => {
     return (hours * 3600) + (minutes * 60);
   }
 
+ 
   const handleSave = () => {
     setPopupOpen(false);
-    saveResourcesAvailabilityTime(resourcesAvailabilityTime).unwrap();
+    saveResourcesAvailabilityTime({
+      ...resourcesAvailabilityTime,
+      resourceKey: resource.key,
+      createdBy: 'Administrator'
+  }).unwrap().then(() => availabilityRefetch());
+
   };
 
   const handleRowClick = (patient) => {
@@ -136,13 +142,49 @@ const AvailabilityTime = ({resource}) => {
     }
   };
 
+  // const convertSecondsToTime = (seconds: number): string => {
+  //   const hours = Math.floor(seconds / 3600); 
+  //   const minutes = Math.floor((seconds % 3600) / 60); 
+  //   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  // };
+
   const convertSecondsToTime = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600); 
-    const minutes = Math.floor((seconds % 3600) / 60); 
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
 
-
+  const convertSecondsToDate = (seconds: number): Date => {
+    const date = new Date(0); 
+    // date.setSeconds(seconds);
+  const hours = Math.floor(seconds / 3600); 
+  const minutes = Math.floor((seconds % 3600) / 60);
+  date.setHours(hours);
+  date.setMinutes(minutes);
+  date.setSeconds(0); 
+  // Set date to 1970-01-01, so it doesn't affect the date in the DatePicker
+  date.setFullYear(1970);
+  date.setMonth(0); // January (0-based index)
+  date.setDate(1); // First day of January
+  return date;
+  };
+  
+  const handleNameOfDay = (day) => {
+   
+    if (dayLovQueryResponse && Array.isArray(dayLovQueryResponse.object)) {
+      const dayObject = dayLovQueryResponse.object.find(dayObj => dayObj.key === String(day));
+      if (dayObject) {
+        console.log("The name of the day is:", dayObject.lovDisplayVale);
+        return dayObject.lovDisplayVale; 
+      } else {
+        console.log("No day found with the key:", day);
+        return null;
+      }
+    } else {
+      console.log("Invalid or missing object array in response");
+      return null; 
+    }
+  };
 
   const groupDataByDay = (data: ApResourcesAvailabilityTime[]) => {
     if (!Array.isArray(data)) {
@@ -164,77 +206,30 @@ const AvailabilityTime = ({resource}) => {
   };
 
 
-
-  const handleExpanded = (rowData) => {
-    let open = false;
-    const nextExpandedRowKeys = [];
-
-    expandedRowKeys.forEach(key => {
-      if (key === rowData) {
-        open = true;
-      } else {
-        nextExpandedRowKeys.push(key);
-      }
-    });
-
-    if (!open) {
-      nextExpandedRowKeys.push(rowData);
-    }
-
-
-
-  console.log("Iam the next expand key" + nextExpandedRowKeys)
-    setExpandedRowKeys(nextExpandedRowKeys);
+  const convertDateToSeconds = (date: Date): number => {
+    const midnight = new Date(date);
+    midnight.setHours(0, 0, 0, 0); 
+    const seconds = Math.floor((date.getTime() - midnight.getTime()) / 1000);
+    
+    return seconds;
   };
-  const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
 
-  console.log("i am in expand key" + expandedRowKeys)
-  const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
-    <Cell {...props} style={{ padding: 5 }}>
-      <IconButton
-        appearance="subtle"
-        onClick={() => {
-          onChange(rowData);
-        }}
-        icon={
-          expandedRowKeys.some(key => key === rowData["dayLKey"]) ? (
-            <CollaspedOutlineIcon />
-          ) : (
-            <ExpandOutlineIcon />
-          )
-        }
-      />
-    </Cell>
-  );
-
-
-
-
-
-
-
-
-
-
-
-
-  const [startTime, setStartTime] = useState(convertSecondsToTime(resourcesAvailabilityTime.startTime));
-  const [endTime, setEndTime] = useState(convertSecondsToTime(resourcesAvailabilityTime.endTime));
-  const [breakFrom, setBreakFrom] = useState(convertSecondsToTime(resourcesAvailabilityTime.breakFrom));
-  const [breakTo, setBreakTo] = useState(convertSecondsToTime(resourcesAvailabilityTime.breakTo));
-
-
-  const handleTimeChange = (field: string, value: string) => {
-    const timeInSeconds = convertTimeToSeconds(value);
-    console.log(timeInSeconds);
-    setResourcesAvailabilityTime((prev) => ({
-      ...prev,
-      [field]: timeInSeconds,  // Update the time in seconds
-    }));
+  const handleTimeChange = (field, value) => {
+    // const timeInSeconds = convertTimeToSeconds(value);
+    if(value){
+      const timeInSeconds = convertDateToSeconds(value);
+      console.log(value.getTime());
+      console.log(timeInSeconds);
+      setResourcesAvailabilityTime((prev) => ({
+        ...prev,
+        [field]: timeInSeconds,
+      }));
+    }
+   
   };
 
 const TimePanel = ({ day, times }) => (
-  <Panel header={day}>
+  <Panel header={handleNameOfDay(day)}>
     <Table data={times} 
            autoHeight
            rowKey="key"  
@@ -338,44 +333,6 @@ const groupedData = groupDataByDay(resourceAvailabilityTimeListResponse?.object?
         <TimePanel key={index} day={dayData.dayLkey} times={dayData.children} />
       ))}
     </PanelGroup>
-    
-      {/* <Table
-      height={600}
-  data={groupDataByDay(resourceAvailabilityTimeListResponse?.object ?? [])}
-  rowKey="dayLkey"
-  expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
-  renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
-  shouldUpdateScroll={false}
-  bordered
-    > */}
-         {/* <Column width={70} align="center">
-        <HeaderCell>#</HeaderCell>
-        <ExpandCell rowData={rowData => rowData.dayLkey} dataKey="dayLkey" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} /> 
-      </Column> */}
-       {/* <Column flexGrow={1}>
-                <HeaderCell>#</HeaderCell>
-                <Cell>
-                {rowData => ( 
-                   <IconButton
-                     icon={<ArrowDownLineIcon/>}
-                   />
-                  )}
-            
-                </Cell>
-              </Column> 
-            <Column flexGrow={500}>
-          <HeaderCell align="center">
-            <Translate>Day</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.dayTypeLvalue ? rowData.dayLvalue.lovDisplayVale : rowData.dayLkey
-            }
-          </Cell>
-        </Column>
-      </Table> */}
-
-
       <div style={{ padding: 20 }}>
         <Pagination
           prev
@@ -435,82 +392,37 @@ const groupedData = groupDataByDay(resourceAvailabilityTimeListResponse?.object?
               setRecord={setResourcesAvailabilityTime}
             />
              <Form fluid layout='inline'>
-             {/* <MyInput
-                  width={165}
-                  column
-                  fieldType="time"
-                  fieldLabel="Start Time"
-                  fieldName="startTime"
-                  record={resourcesAvailabilityTime}
-                  setRecord={setResourcesAvailabilityTime}
-                /> */}
-                          <MyInput
-              width={165}
-              column
-              fieldType="time"
-              fieldLabel="Start Time"
-              fieldName="value"
-              record={resourcesAvailabilityTime}
-              setRecord={setResourcesAvailabilityTime}
-              value={startTime}
-              onChange={(value) => handleTimeChange('startTime', value)}
-            />
-           
-             {/* <Text>Start Time</Text>
-              <DatePicker
-                format="HH:mm"
-                caretAs={FaClock}
-                placeholder="Select Start Time"
-                value={selectFromTime}
-                onChange={handleTimeChange}
-              /> */}
-             
-             {/* <Text>Start Time</Text>
-              <DatePicker
-                format="HH:mm"
-                placeholder="Select Start Time"
-                label={convertSecondsToTime(resourcesAvailabilityTime.startTime)}
-                onChange={e =>
-                  convertTimeToSeconds(e),
-                }
-              /> */}
+        
 
-                 <MyInput
-                  width={165}
-                  column
-                  fieldType="time"
-                  fieldLabel="End Time"
-                  fieldName="value"
-                  record={resourcesAvailabilityTime}
-                  setRecord={setResourcesAvailabilityTime}
-                  value={endTime}
-                  onChange={(value) => handleTimeChange('endTime', value)}
-                />
+              <Text>Start Time</Text>
+              <DatePicker
+                format="HH:mm"
+                value={convertSecondsToDate(resourcesAvailabilityTime.startTime)}
+                onChange={(value) => handleTimeChange('startTime', value)}
+              />
+
+              <Text>End Time</Text>
+              <DatePicker
+                format="HH:mm"
+                value={convertSecondsToDate(resourcesAvailabilityTime.endTime)}
+                onChange={(value) => handleTimeChange('endTime', value)}
+              />
                  
              </Form>
              <Form fluid layout='inline'>
-             <MyInput
-                  width={165}
-                  column
-                  fieldType="time"
-                  fieldLabel="Break From"
-                  fieldName="value"
-                  record={resourcesAvailabilityTime}
-                  setRecord={setResourcesAvailabilityTime}
-                  value={breakFrom}
-                  onChange={(value) => handleTimeChange('breakFrom', value)}
-                />
-                 <MyInput
-                  width={165}
-                  column
-                  fieldType="time"
-                  fieldLabel="Breake To"
-                  fieldName="value"
-                  record={resourcesAvailabilityTime}
-                  setRecord={setResourcesAvailabilityTime}
-                  value={breakTo}
-                  onChange={(value) => handleTimeChange('breakTo', value)}
-                />
+             <Text>Break From</Text>
+              <DatePicker
+                format="HH:mm"
+                value={convertSecondsToDate(resourcesAvailabilityTime.breakFrom)}
+                onChange={(value) => handleTimeChange('breakFrom', value)}
+              />
+
+              <Text>Break To</Text>
+              <DatePicker
+                format="HH:mm"
+                value={convertSecondsToDate(resourcesAvailabilityTime.breakTo)}
+                onChange={(value) => handleTimeChange('breakTo', value)}
+              />
              </Form>
           </Form>
         </Modal.Body>
