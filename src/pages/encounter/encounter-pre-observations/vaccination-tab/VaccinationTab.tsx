@@ -58,7 +58,7 @@ import { useSaveEncounterVaccineMutation, useGetEncounterVaccineQuery } from '@/
 import { ApVaccine, ApVaccineBrands, ApVaccineDose, ApVaccineDosesInterval, ApEncounterVaccination } from '@/types/model-types';
 import { newApVaccine, newApVaccineBrands, newApVaccineDose, newApVaccineDosesInterval, newApEncounterVaccination } from '@/types/model-types-constructor';
 const { Column, HeaderCell, Cell } = Table;
-const VaccinationTab = () => {
+const VaccinationTab = ({ disabled }) => {
     const patientSlice = useAppSelector(state => state.patient);
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
@@ -67,6 +67,7 @@ const VaccinationTab = () => {
     const [vaccineBrand, setVaccineBrand] = useState<ApVaccineBrands>({ ...newApVaccineBrands, volume: null });
     const [vaccineDose, setVaccineDose] = useState<ApVaccineDose>({ ...newApVaccineDose });
     const [encounterVaccination, setEncounterVaccination] = useState<ApEncounterVaccination>({ ...newApEncounterVaccination });
+
     const [vaccineDoseInterval, setVaccineDoseInterval] = useState<ApVaccineDosesInterval>({ ...newApVaccineDosesInterval });
     const [vaccineToDose, setVaccineToDose] = useState<ApVaccineDose>({ ...newApVaccineDose });
     const [possibleDescription, setPossibleDescription] = useState('');
@@ -76,6 +77,7 @@ const VaccinationTab = () => {
     const [encounterStatus, setEncounterStatus] = useState('');
     const [allData, setAllDate] = useState(false);
     const reviewedAt = (new Date()).getTime();
+    const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
     const [hasExternalFacility, setHasExternalFacility] = useState({ isHas: encounterVaccination?.externalFacilityName === '' ? false : true })
     const [saveEncounterVaccine, saveEncounterVaccineMutation] = useSaveEncounterVaccineMutation();
     const [vaccineListRequest, setVaccineListRequest] = useState<ListRequest>({
@@ -147,6 +149,7 @@ const VaccinationTab = () => {
     const { data: numSerialLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS_SERIAL');
     const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
     const { data: statusLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGY_RES_STATUS');
+    const { data: volumUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
 
     //listResponses
     const { data: vaccineDosesListResponseLoading, refetch: refetchVaccineDoses } = useGetVaccineDosesListQuery(vaccineDosesListRequest, {
@@ -195,8 +198,10 @@ const VaccinationTab = () => {
         });
         setVaccineBrand({
             ...newApVaccineBrands,
+            brandName: null,
             manufacturerLkey: null,
-            unitLkey: null
+            unitLkey: null,
+
         });
         setVaccineDose({
             ...newApVaccineDose,
@@ -213,6 +218,8 @@ const VaccinationTab = () => {
 
         });
         setVaccineDoseInterval({ ...newApVaccineDosesInterval })
+        setHasExternalFacility({ isHas: false });
+        setPossibleDescription('');
     };
     const handleExpanded = (rowData) => {
         let open = false;
@@ -229,10 +236,6 @@ const VaccinationTab = () => {
         if (!open) {
             nextExpandedRowKeys.push(rowData.key);
         }
-
-
-
-        console.log(nextExpandedRowKeys)
         setExpandedRowKeys(nextExpandedRowKeys);
     };
     const renderRowExpanded = rowData => {
@@ -274,12 +277,12 @@ const VaccinationTab = () => {
                 <Column flexGrow={2} align="center" fullText>
                     <HeaderCell>Reviewed At</HeaderCell>
                     <Cell dataKey="reviewedAt" >
-                       
-                           
 
-                                { rowData => rowData.reviewedAt ? new Date(rowData.reviewedAt).toLocaleString("en-GB") : "" }
-                           
-                      
+
+
+                        {rowData => rowData.reviewedAt ? new Date(rowData.reviewedAt).toLocaleString("en-GB") : ""}
+
+
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
@@ -337,11 +340,13 @@ const VaccinationTab = () => {
                 dispatch(notify('Encounter Vaccine Added Successfully'));
                 setEncounterVaccination({ ...newApEncounterVaccination, statusLkey: null })
                 encounterVaccine();
+                handleClearField();
             });
         } else if (encounterVaccination.key) {
-            saveEncounterVaccine({ ...encounterVaccination, updatedBy: authSlice.user.key }).unwrap().then(() => {
+            saveEncounterVaccine({ ...encounterVaccination, vaccineKey: vaccine.key, vaccineBrandKey: vaccineBrand.key, vaccineDoseKey: vaccineDose.key, patientKey: patientSlice.patient.key, encounterKey: patientSlice.encounter.key, administrationReactions: possibleDescription, updatedBy: authSlice.user.key }).unwrap().then(() => {
                 dispatch(notify('Encounter Vaccine Updated Successfully'));
                 encounterVaccine();
+                handleClearField();
             });
         }
 
@@ -353,13 +358,23 @@ const VaccinationTab = () => {
         });
     };
     const handleReviewe = () => {
-        saveEncounterVaccine({ ...encounterVaccination, statusLkey: "3721622082897301", reviewedAt: reviewedAt, reviewedBy: authSlice.user.key ,updatedBy:authSlice.user.key}).unwrap().then(() => {
+        saveEncounterVaccine({ ...encounterVaccination, statusLkey: "3721622082897301", reviewedAt: reviewedAt, reviewedBy: authSlice.user.key, updatedBy: authSlice.user.key }).unwrap().then(() => {
             dispatch(notify('Encounter Vaccine Reviewed Successfully'));
             encounterVaccine();
         });
-      
+
     }
     /// useEffects 
+    // TODO update status to be a LOV value
+    useEffect(() => {
+        if (patientSlice?.encounter?.encounterStatusLkey === '91109811181900') {
+            setIsEncounterStatusClosed(true);
+        }
+    }, [patientSlice.encounter?.encounterStatusLkey]);
+    useEffect(() => {
+        console.log(isEncounterStatusClosed)
+    }, [isEncounterStatusClosed, patientSlice?.encounter?.encounterStatusLkey, disabled]);
+
     useEffect(() => {
         if (searchKeyword.trim() !== "") {
             setVaccineListRequest(
@@ -540,9 +555,12 @@ const VaccinationTab = () => {
             ],
         }));
     }, [patientSlice.patient?.key, patientSlice.encounter?.key]);
-useEffect(()=>{
-    encounterVaccine();
-},[handleReviewe,saveEncounterVaccine])
+    useEffect(() => {
+        encounterVaccine();
+    }, [handleReviewe, saveEncounterVaccine])
+    useEffect(() => {
+        setHasExternalFacility({ isHas: encounterVaccination?.externalFacilityName === '' ? false : true });
+    }, [encounterVaccination])
     useEffect(() => {
         setEncounterVaccineListRequest((prev) => ({
             ...prev,
@@ -640,7 +658,7 @@ useEffect(()=>{
                                 <Text style={{ fontWeight: '800', fontSize: '16px' }}>Vaccine Name</Text>
                                 <InputGroup inside style={{ width: '230px' }}>
                                     <Input
-                                        //  disabled={!edit_new}
+                                        disabled={isEncounterStatusClosed || disabled}
                                         placeholder="Search"
                                         value={searchKeyword}
                                         onChange={handleSearch}
@@ -740,7 +758,7 @@ useEffect(()=>{
 
                             <ButtonToolbar>
                                 <IconButton width={180} style={{ marginTop: '25px' }} appearance="primary" color="cyan" icon={<PlusIcon />} onClick={() => { setPopupOpen(true) }}
-                                >
+                                    disabled={!vaccine.key} >
                                     View Vaccine
                                 </IconButton> </ButtonToolbar></div>
                     </Form>
@@ -752,7 +770,12 @@ useEffect(()=>{
                                 <SelectPicker
 
                                     data={brandsNameList}
-                                    value={brandsNameList.key}
+
+                                    value={
+                                        vaccineBrand?.brandName === null
+                                            ? null
+                                            : brandsNameList.key
+                                    }
                                     onChange={(value) => {
                                         const selectedItem = brandsNameList.find((item) => item.value === value);
                                         setVaccineBrand({ ...selectedItem.vaccineBrand });
@@ -761,18 +784,33 @@ useEffect(()=>{
                                     placeholder={vaccineBrand?.key ? vaccineBrand?.brandName : 'Select'}
                                     labelKey="label"
                                     valueKey="value"
+                                    disabled={!vaccine.key || isEncounterStatusClosed || disabled}
 
                                 />
                             </div>
                             <MyInput
                                 column
                                 disabled
-                                width={200}
+                                width={90}
                                 fieldType="text"
                                 fieldLabel="Volume"
                                 fieldName='volume'
                                 record={vaccineBrand}
                                 setRecord={setVaccineBrand}
+                            />
+                            <MyInput
+                                disabled
+                                width={100}
+                                column
+                                fieldLabel="Unit"
+                                fieldType="select"
+                                fieldName="unitLkey"
+                                selectData={volumUnitLovQueryResponse?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                record={vaccineBrand}
+                                setRecord={setVaccineBrand}
+
                             />
                             <MyInput
 
@@ -790,7 +828,7 @@ useEffect(()=>{
                             />
                             <MyInput
                                 column
-
+                                disabled={isEncounterStatusClosed || disabled}
                                 width={230}
                                 fieldType="text"
                                 fieldLabel="Vaccine Lot Number"
@@ -804,25 +842,41 @@ useEffect(()=>{
                                     <DatePicker
                                         format="MM/dd/yyyy hh:mm"
                                         showMeridian
+                                        disabled={isEncounterStatusClosed || disabled}
                                         style={{ width: '230px' }}
-                                        placeholder={encounterVaccination.dateAdministered?new Date(encounterVaccination.dateAdministered).toLocaleString("en-GB"):"MM/dd/yyyy hh:mm"}
+                                        value={encounterVaccination.dateAdministered ? new Date(encounterVaccination.dateAdministered) : null}
+                                        placeholder={encounterVaccination.dateAdministered ? new Date(encounterVaccination.dateAdministered).toLocaleString("en-GB") : "MM/dd/yyyy hh:mm"}
                                         onChange={newValue => {
-                                            setEncounterVaccination(prev => ({
-                                                ...prev,
-                                                dateAdministered: newValue.getTime()
-                                            }));
+                                            if (newValue) {
+                                                setEncounterVaccination(prev => ({
+                                                    ...prev,
+                                                    dateAdministered: newValue.getTime()
+                                                }));
+                                            } else {
+
+                                                setEncounterVaccination(prev => ({
+                                                    ...prev,
+                                                    dateAdministered: null
+                                                }));
+                                            }
                                         }}
                                     />
                                 </Stack>
 
+
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px' }}>
-                                <div>  <MyLabel label="Dose Name" /></div>
+                                <div>
+                                    <MyLabel label="Dose Name" />
+                                </div>
                                 <SelectPicker
-
                                     data={dosesList}
-                                    value={dosesList.key}
+                                    value={
+                                        vaccineDose?.doseNameLkey === null
+                                            ? null
+                                            : dosesList.key
+                                    }
                                     onChange={(value) => {
                                         const selectedItem = dosesList.find((item) => item.value === value);
                                         setVaccineDose({ ...selectedItem.vaccineDoses });
@@ -830,9 +884,15 @@ useEffect(()=>{
                                     style={{ width: 230 }}
                                     labelKey="label"
                                     valueKey="value"
-                                    placeholder={vaccineDose?.key ? vaccineDose?.doseNameLvalue.lovDisplayVale:'Select'}
-
+                                    placeholder={
+                                        vaccineDose?.key
+                                            ? vaccineDose?.doseNameLvalue.lovDisplayVale
+                                            : 'Select'
+                                    }
+                                    disabled={!vaccine.key || isEncounterStatusClosed || disabled}
                                 />
+
+
                             </div>
                             <MyInput
 
@@ -881,7 +941,7 @@ useEffect(()=>{
                     <Form style={{ zoom: 0.85, display: 'flex' }} layout="inline" fluid>
                         <MyInput
                             column
-
+                            disabled={isEncounterStatusClosed || disabled}
                             width={300}
                             fieldType="text"
                             fieldLabel="Actual Side and Site of Administration"
@@ -900,7 +960,7 @@ useEffect(()=>{
                             selectDataValue="key"
                             record={encounterVaccination}
                             setRecord={setEncounterVaccination}
-
+                            disabled={isEncounterStatusClosed || disabled}
                         />
                         <MyInput
                             width={230}
@@ -910,7 +970,7 @@ useEffect(()=>{
                             fieldName="isHas"
                             record={hasExternalFacility}
                             setRecord={setHasExternalFacility}
-
+                            disabled={isEncounterStatusClosed || disabled}
                         />
                         <MyInput
                             column
@@ -930,6 +990,7 @@ useEffect(()=>{
                         <Form style={{ display: 'flex', flexDirection: 'column' }}>
                             <MyLabel label="Notes" />
                             <Input
+                                disabled={isEncounterStatusClosed || disabled}
                                 as="textarea"
                                 value={encounterVaccination.notes}
                                 onChange={(e) => setEncounterVaccination({
@@ -954,7 +1015,7 @@ useEffect(()=>{
                         appearance="primary"
                         onClick={() => handleSaveEncounterVaccine()}
 
-                       disabled={encounterVaccination.statusLkey === '3196709905099521'}
+                        disabled={encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || patientSlice.encounter.key != encounterVaccination.encounterKey}
                         icon={<CheckIcon />}
                     >
                         <Translate>Save</Translate>
@@ -964,7 +1025,6 @@ useEffect(()=>{
                         appearance="primary"
                         style={{ marginLeft: "5px" }}
                         onClick={handleClearField}
-
                     >
 
                         <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px' }} />
@@ -981,7 +1041,7 @@ useEffect(()=>{
                         appearance="primary"
                         onClick={() => { setPopupCancelOpen(true) }}
                         icon={<CloseOutlineIcon />}
-                        disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3196709905099521'}
+                        disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || patientSlice.encounter.key != encounterVaccination.encounterKey}
 
                     >
                         <Translate>Cancel</Translate>
@@ -992,7 +1052,7 @@ useEffect(()=>{
                         onClick={handleReviewe}
                         style={{ marginLeft: '4px' }}
                         icon={<CheckOutlineIcon />}
-                        disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3721622082897301' || encounterVaccination.statusLkey === '3196709905099521'}
+                        disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3721622082897301' || encounterVaccination.statusLkey === '3196709905099521' || encounterVaccination.key != undefined ? patientSlice.encounter.key != encounterVaccination.key : false || isEncounterStatusClosed || disabled || patientSlice.encounter.key != encounterVaccination.encounterKey}
                     >
                         <Translate>Review</Translate>
                     </IconButton>
@@ -1028,8 +1088,8 @@ useEffect(()=>{
                     height={600}
                     data={encounterVaccineListResponseLoading?.object ?? []}
                     rowKey="key"
-                    expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
-                    renderRowExpanded={renderRowExpanded} 
+                    expandedRowKeys={expandedRowKeys}
+                    renderRowExpanded={renderRowExpanded}
                     shouldUpdateScroll={false}
                     bordered
                     cellBordered
@@ -1038,8 +1098,8 @@ useEffect(()=>{
                             ...rowData
                         });
                         setVaccineBrand({ ...rowData.vaccineBrands });
-                        setVaccineDose({...rowData.vaccineDose})
-                        setVaccine({...rowData.vaccine})
+                        setVaccineDose({ ...rowData.vaccineDose })
+                        setVaccine({ ...rowData.vaccine })
 
                     }}
                     rowClassName={isSelected}
@@ -1084,7 +1144,7 @@ useEffect(()=>{
                     </Column>
                     <Column flexGrow={2} fullText>
                         <HeaderCell align="center">
-                            <Translate>Date od Administration</Translate>
+                            <Translate>Date of Administration</Translate>
                         </HeaderCell>
                         <Cell>
                             {rowData => {
@@ -1117,9 +1177,7 @@ useEffect(()=>{
                         <HeaderCell align="center">
                             <Translate>Vaccination Location</Translate>
                         </HeaderCell>
-                        <Cell>
-
-                        </Cell>
+                        <Cell dataKey="externalFacilityName" />
                     </Column>
                     <Column flexGrow={2} fullText>
                         <HeaderCell align="center">
