@@ -253,20 +253,18 @@ const Prescription = () => {
                 value: selectedGeneric?.key || null
             }
         ];
-        console.log(updatedFilters);
+
         setListGinricRequest((prevRequest) => ({
 
             ...prevRequest,
             filters: updatedFilters,
 
         }));
-        console.log("updated filt: ", listGinricRequest)
+
     }, [selectedGeneric]);
 
     useEffect(() => {
-        console.log("Updated listGinricRequest after setListGinricRequest: ", listGinricRequest);
         refetchGenric().then(() => {
-            console.log(genericMedicationActiveIngredientListResponseData?.object)
         })
     }, [listGinricRequest]);
 
@@ -276,7 +274,7 @@ const Prescription = () => {
 
                 return prescription.saveDraft === true;
             });
-            console.log(foundPrescription?.key)
+
             if (foundPrescription?.key != null) {
                 setPreKey(foundPrescription?.key);
                 setPrescription(foundPrescription)
@@ -331,7 +329,7 @@ const Prescription = () => {
 
     useEffect(() => {
         setPrescriptionMedications({ ...prescriptionMedication, instructionsTypeLkey: selectedOption })
-        console.log(prescriptionMedication)
+      
     }, [selectedOption])
     useEffect(() => {
         if (prescriptionMedication.administrationInstructions != null) {
@@ -360,9 +358,9 @@ const Prescription = () => {
 
     }, [customeinst])
     useEffect(() => {
-        console.log(selectedRowoMedicationKey)
+   
         refetchCo();
-        console.log(customeInstructions?.object)
+
         setCustomeinst({
             ...customeinst,
             unit: customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === selectedRowoMedicationKey)?.unitLkey,
@@ -382,7 +380,7 @@ const Prescription = () => {
                 }
 
                 const tagcompine = joinValuesFromArray(tags);
-                console.log("indicationsDescription",indicationsDescription)
+    
                 try {
                     await savePrescriptionMedication({
                         ...prescriptionMedication,
@@ -405,8 +403,8 @@ const Prescription = () => {
 
                     // Perform refetches
                     await Promise.all([
-                        medicRefetch().then(() => console.log("Medic refetch complete")),
-                        refetchCo().then(() => console.log("Co refetch complete"))
+                        medicRefetch().then(() =>""),
+                        refetchCo().then(() => "")
                     ]);
 
                     handleCleare();
@@ -421,7 +419,6 @@ const Prescription = () => {
     }, [inst]);
 
     useEffect(() => {
-        console.log(preKey);
         if (preKey == null) {
             handleCleare()
         }
@@ -491,8 +488,6 @@ const Prescription = () => {
         return values.filter(Boolean).join(', ');
     };
     const handleCancle = async () => {
-        console.log(selectedRows);
-
         try {
             await Promise.all(
                 selectedRows.map(item => savePrescriptionMedication({ ...item, isValid: false, statusLkey: "1804447528780744", deletedAt: Date.now() }).unwrap())
@@ -500,14 +495,14 @@ const Prescription = () => {
 
             dispatch(notify('All medication deleted successfully'));
             medicRefetch().then(() => {
-                console.log("Refetch complete");
+             
             }).catch((error) => {
-                console.error("Refetch failed:", error);
+               
             });
             medicRefetch().then(() => {
-                console.log("Refetch complete");
+              
             }).catch((error) => {
-                console.error("Refetch failed:", error);
+               
             });
 
 
@@ -527,20 +522,13 @@ const Prescription = () => {
                 ),
 
                 statusLkey: "1804482322306061"
-                , saveDraft: false
+                , saveDraft: false,
+                submittedAt:Date.now()
             }).unwrap();
             dispatch(notify('submetid  Successfully'));
             handleCleare();
-            preRefetch().then(() => {
-                console.log("Refetch complete");
-            }).catch((error) => {
-                console.error("Refetch failed:", error);
-            });
-            medicRefetch().then(() => {
-                console.log("Refetch complete");
-            }).catch((error) => {
-                console.error("Refetch failed:", error);
-            });
+            preRefetch().then(() => "");
+            medicRefetch().then(() =>"");
 
         }
         catch (error) {
@@ -550,11 +538,7 @@ const Prescription = () => {
         prescriptionMedications?.object?.map((item) => {
             savePrescriptionMedication({ ...item, statusLkey: "1804482322306061" })
         })
-        medicRefetch().then(() => {
-            console.log("Refetch complete");
-        }).catch((error) => {
-            console.error("Refetch failed:", error);
-        });
+        medicRefetch().then(() => "");
 
 
 
@@ -564,21 +548,13 @@ const Prescription = () => {
 
 
         if (selectedOption === '3010591042600262') {
-
             setInst(selectedPreDefine.key);
-            console.log(selectedPreDefine.key)
-            console.log("case1" + inst)
-
         }
         else if (selectedOption === '3010573499898196') {
-
             setInst(munial);
-            console.log("case2  " + inst)
-
         }
         else {
-            setInst("")
-            console.log("case3" + inst)
+            setInst("");
         }
 
 
@@ -624,14 +600,7 @@ const Prescription = () => {
 
     const handleItemClick = (Generic) => {
         setSelectedGeneric(Generic);
-        refetchGenric().then(() => {
-            console.log("Refetch Genric");
-
-
-
-        }).catch((error) => {
-            console.error("Refetch failed:", error);
-        });
+        refetchGenric().then(() => "");
         setSearchKeyword("")
         const newList = roaLovQueryResponse.object.filter((item) =>
             (Generic.roaList).includes(item.key)
@@ -686,12 +655,7 @@ const Prescription = () => {
 
                 setPreKey(response?.data?.key);
 
-                preRefetch().then(() => {
-                    console.log("Refetch complete pres");
-                    console.log(prescriptions?.object)
-                }).catch((error) => {
-                    console.error("Refetch failed:", error);
-                });
+                preRefetch().then(() => "");
 
             } catch (error) {
                 console.error("Error saving prescription:", error);
@@ -1114,7 +1078,7 @@ const Prescription = () => {
 
                             {rowData => {
                                 const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name
-                                console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey))
+                               
                                 return nameg;
                             }
                             }
@@ -1127,7 +1091,7 @@ const Prescription = () => {
 
                             {rowData => {
                                 const atcg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode
-                                console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey))
+                             
                                 return atcg;
                             }
                             }
@@ -1401,13 +1365,8 @@ const Prescription = () => {
                             setSelectedOption("3010573499898196")
                         }
                         else if (rowData.instructionsTypeLkey == "3010606785535008") {
-                            console.log("Iam in custom prsecription")
                             setSelectedOption("3010606785535008")
                             setSelectedRowoMedicationKey(rowData.key);
-
-                            console.log(selectedRowoMedicationKey)
-                            console.log(customeinst);
-                            console.log(customeInstructions?.object)
                         }
                         setEditing(rowData.statusLkey == "164797574082125" ? false : true)
                     }}

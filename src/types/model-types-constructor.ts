@@ -316,7 +316,7 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	otherReason:'',
 	noShowReasonLkey:undefined,
 	noShowReasonValue:'',
-	noShowOtherReason:'', 
+	noShowOtherReason:'',
 } 
 
 export const newApAttachment:modelTypes.ApAttachment = { 
@@ -759,7 +759,7 @@ export const newApDrugOrder:modelTypes.ApDrugOrder = {
 	isValid:undefined,
 	drugorderId:'',
 	saveDraft:undefined,
-	submittedBy :'',
+	submittedBy:'',
 	submittedAt:0,
 } 
 
@@ -1746,7 +1746,7 @@ export const newApPrescription:modelTypes.ApPrescription = {
 	isValid:undefined,
 	prescriptionId:'',
 	saveDraft:undefined,
-	submittedBy :'',
+	submittedBy:'',
 	submittedAt:0,
 } 
 
@@ -2271,7 +2271,6 @@ export const newApVaccineDosesInterval:modelTypes.ApVaccineDosesInterval = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 } 
-
 
 export const newApVisitAllergies:modelTypes.ApVisitAllergies = { 
 	key:undefined,

@@ -531,7 +531,8 @@ const DrugOrder = () => {
                 ),
 
                 statusLkey: "1804482322306061"
-                , saveDraft: false
+                , saveDraft: false,
+                submittedAt:Date.now()
             }).unwrap();
             dispatch(notify('submetid  Successfully'));
             handleCleare();
