@@ -505,6 +505,11 @@ const PatientProfile = () => {
         return 'selected-row';
     } else return '';
 };
+const isSelectedRelation = rowData => {
+  if (rowData && selectedPatientRelation && selectedPatientRelation.key === rowData.key) {
+      return 'selected-row';
+  } else return '';
+};
   const [skipQuery, setSkipQuery] = useState(true);
   const [actionType, setActionType] = useState(null); // 'view' or 'download'
   const [visit, setVisit] = useState();
@@ -549,6 +554,19 @@ const PatientProfile = () => {
   };
 
 
+  const handleSaveFamilyMembers = () => {
+    savePatientRelation({
+      ...selectedPatientRelation,
+      patientKey: localPatient.key,
+    }) .unwrap()
+      .then(() => {
+        patientRelationsRefetch();
+      })
+      patientRelationsRefetch();}
+      
+    
+  
+  
 
   useEffect(() => {
     if (isSuccess && fetchAttachmentByKeyResponce) {
@@ -2552,10 +2570,7 @@ const PatientProfile = () => {
                   <Divider vertical />
                   <Button
                     onClick={() =>
-                      savePatientRelation({
-                        ...selectedPatientRelation,
-                        patientKey: localPatient.key
-                      }).unwrap()
+                      handleSaveFamilyMembers()
                     }
                     appearance="primary"
                   >
@@ -2651,6 +2666,8 @@ const PatientProfile = () => {
                   setSelectedPatientRelation(rowData);
                 }}
                 data={patientRelationsResponse?.object ?? []}
+                rowClassName={isSelectedRelation}
+                
               >
                 <Column sortable flexGrow={4}>
                   <HeaderCell>
