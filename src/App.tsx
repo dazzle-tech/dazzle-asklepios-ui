@@ -152,7 +152,7 @@ const App = () => {
   return (
     <IntlProvider locale="en" messages={locales.en}>
       <div style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}>
-        @ {authSlice.tenant ? authSlice.tenant.tenantName : 'No-Tenant'}
+        {/* @ {authSlice.tenant ? authSlice.tenant.tenantName : 'No-Tenant'} */}
       </div>
 
       <div
