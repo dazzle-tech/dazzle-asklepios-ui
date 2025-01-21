@@ -90,8 +90,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
     const handleChangeAction = () => {
         onActionsModalClose()
-        editAction()
-    }
+     }
 
     useEffect(() => {
         console.log(appointment)
@@ -135,13 +134,14 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
                     </ButtonToolbar>
                     <br />
-                    <IconButton style={{ width: 200, height: 40 }} icon={<PageIcon />} color="cyan" appearance="ghost">
+                    <div style={{display:"flex",gap:"20px"}}>
+                    <IconButton style={{ width: 180, height: 40 }} icon={<PageIcon />} color="cyan" appearance="ghost">
                         Print Certificate
                     </IconButton>
 
 
                     <Button style={{
-                        width: 200,
+                        width: 180,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "flex-start",
@@ -153,6 +153,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                         <FontAwesomeIcon icon={faSackDollar} style={{ marginRight: "25px", fontSize: "18px" }} />
                         <span style={{ marginLeft: "13px" }}>Add Payment</span>
                     </Button>
+                    </div>
+                  
                 </Modal.Body>
 
             </Modal>
