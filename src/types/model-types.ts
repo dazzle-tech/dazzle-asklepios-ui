@@ -758,7 +758,7 @@ export interface ApDrugOrder {
 	isValid:boolean;
 	drugorderId:string;
 	saveDraft:boolean;
-	submittedBy :string;
+	submittedBy:string;
 	submittedAt:number;
 } 
 
@@ -1745,7 +1745,7 @@ export interface ApPrescription {
 	isValid:boolean;
 	prescriptionId:string;
 	saveDraft:boolean;
-	submittedBy :string;
+	submittedBy:string;
 	submittedAt:number;
 } 
 
