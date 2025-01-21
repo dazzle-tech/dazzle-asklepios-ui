@@ -1015,7 +1015,7 @@ const VaccinationTab = ({ disabled }) => {
                         appearance="primary"
                         onClick={() => handleSaveEncounterVaccine()}
 
-                        disabled={encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || patientSlice.encounter.key != encounterVaccination.encounterKey}
+                        disabled={encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? patientSlice.encounter.key != encounterVaccination.encounterKey: false}
                         icon={<CheckIcon />}
                     >
                         <Translate>Save</Translate>
@@ -1041,7 +1041,7 @@ const VaccinationTab = ({ disabled }) => {
                         appearance="primary"
                         onClick={() => { setPopupCancelOpen(true) }}
                         icon={<CloseOutlineIcon />}
-                        disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || patientSlice.encounter.key != encounterVaccination.encounterKey}
+                        disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? patientSlice.encounter.key != encounterVaccination.encounterKey: false}
 
                     >
                         <Translate>Cancel</Translate>
@@ -1052,7 +1052,7 @@ const VaccinationTab = ({ disabled }) => {
                         onClick={handleReviewe}
                         style={{ marginLeft: '4px' }}
                         icon={<CheckOutlineIcon />}
-                        disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3721622082897301' || encounterVaccination.statusLkey === '3196709905099521' || encounterVaccination.key != undefined ? patientSlice.encounter.key != encounterVaccination.key : false || isEncounterStatusClosed || disabled || patientSlice.encounter.key != encounterVaccination.encounterKey}
+                        disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3721622082897301' || encounterVaccination.statusLkey === '3196709905099521' || encounterVaccination.key != undefined ? patientSlice.encounter.key != encounterVaccination.encounterKey: false || isEncounterStatusClosed || disabled }
                     >
                         <Translate>Review</Translate>
                     </IconButton>
