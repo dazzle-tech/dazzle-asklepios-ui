@@ -715,7 +715,7 @@ const Allergies = () => {
                             color="violet"
                             appearance="primary"
                             onClick={handleSave}
-                            disabled={allerges?.statusLkey == '3196709905099521' ? true : false}
+                            disabled={showPrev?(allerges?.statusLkey == '3196709905099521' ? true : false):true}
 
                             icon={<CheckIcon />}
                         >
