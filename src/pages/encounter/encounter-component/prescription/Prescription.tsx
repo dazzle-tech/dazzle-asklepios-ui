@@ -1100,7 +1100,9 @@ const Prescription = () => {
                     </Table.Column>
                     <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
-                        <Table.Cell>{rowData => rowData.strength}</Table.Cell>
+                        <Table.Cell>{rowData =>{
+                            return rowData.strength+" "+rowData.unitLvalue?.lovDisplayVale}}
+                            </Table.Cell>
                     </Table.Column>
                     <Table.Column flexGrow={1} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }} >Details</Table.HeaderCell>
