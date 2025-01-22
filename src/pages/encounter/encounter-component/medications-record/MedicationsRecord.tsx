@@ -769,7 +769,7 @@ const MedicationsRecord = () => {
                             }
                         </Cell>
                     </Column>
-                    <Column flexGrow={2} width={200} fullText>
+                    <Column flexGrow={1} width={150} fullText>
                         <HeaderCell align="center">
 
                             <Translate>Instruction Type</Translate>
@@ -783,7 +783,7 @@ const MedicationsRecord = () => {
                         </Cell>
                     </Column>
                     
-                    <Column flexGrow={2} fullText>
+                    <Column flexGrow={2.5} fullText>
                         <HeaderCell align="center">
                             <Translate>Instruction</Translate>
                         </HeaderCell>
@@ -824,7 +824,7 @@ const MedicationsRecord = () => {
     
                                 }
                               
-                                else{return joinValuesFromArray([rowData.dose,rowData.unit, rowData.frequency, rowData.roa]);}  
+                                else{return joinValuesFromArray([rowData.dose,rowData.unit,"every "+rowData.frequency+ " hours", rowData.roa]);}  
                                
                             }}
 
