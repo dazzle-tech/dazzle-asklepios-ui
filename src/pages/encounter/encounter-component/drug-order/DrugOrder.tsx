@@ -1236,7 +1236,7 @@ const DrugOrder = () => {
                         disabled={drugKey != null ? editing : true}
                         column
 
-                        fieldLabel="Generic substitute allowed"
+                        fieldLabel="Brand substitute allowed"
                         fieldType="checkbox"
                         fieldName="genericSubstitute"
                         record={orderMedication}

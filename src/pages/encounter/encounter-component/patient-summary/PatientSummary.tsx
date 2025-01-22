@@ -349,7 +349,7 @@ const PatientSummary = ({ patient, encounter }) => {
                             >
 
                                 <Table.Column flexGrow={1} fullText>
-                                    <Table.HeaderCell>Medication Generic Name</Table.HeaderCell>
+                                    <Table.HeaderCell>Medication Brand Name</Table.HeaderCell>
                                     <Table.Cell>{rowData =>
                                         genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName
                                     }</Table.Cell>
@@ -627,7 +627,7 @@ const PatientSummary = ({ patient, encounter }) => {
                     >
 
                         <Table.Column flexGrow={1} fullText>
-                            <Table.HeaderCell>Medication Generic Name</Table.HeaderCell>
+                            <Table.HeaderCell>Medication Brand Name</Table.HeaderCell>
                             <Table.Cell>{rowData =>
                                 genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName
                             }</Table.Cell>
