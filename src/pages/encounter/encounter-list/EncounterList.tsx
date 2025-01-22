@@ -249,12 +249,23 @@ const EncounterList = () => {
             </HeaderCell>
             <Cell dataKey="visitId" />
           </Column>
-          <Column sortable flexGrow={4}>
-            <HeaderCell>
+          <Column sortable flexGrow={6} fullText>
+            <HeaderCell fullText>
               <Input onChange={e => handleFilterChange('patientFullName', e)} />
               <Translate>Patient Name</Translate>
             </HeaderCell>
-            <Cell dataKey="patientFullName" />
+            <Cell dataKey="patientFullName" fullText>
+              {rowData => rowData?.patientObject?.privatePatient ? (
+                <div>
+                  <Badge color="cyan" content={'Private'}>
+                    <p style={{ marginTop: '5px' }}>{rowData?.patientObject?.fullName}</p>
+                  </Badge>
+                </div>
+              ) : (
+                <p>{rowData?.patientObject?.fullName}</p>
+              )
+              }
+            </Cell>
           </Column>
           <Column sortable flexGrow={3}>
             <HeaderCell>
@@ -300,9 +311,9 @@ const EncounterList = () => {
               <Translate>Diagnosis</Translate>
             </HeaderCell>
             <Cell>
-              {rowData => 
+              {rowData =>
                 rowData.diagnosis}
-               
+
             </Cell>
 
           </Column>
@@ -312,24 +323,24 @@ const EncounterList = () => {
               <Translate>Prescription </Translate>
             </HeaderCell>
             <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
-              rowData.hasPrescription ?  <Badge  content="YES"  style={{
+              rowData.hasPrescription ? <Badge content="YES" style={{
                 backgroundColor: '#bcf4f7',
                 color: '#008aa6',
-                padding: '5px 19px', 
-                borderRadius: '12px', 
-                fontSize: '12px' ,
-                fontWeight:"bold"
-              }}/> :  <Badge
-              style={{
-                backgroundColor: 'rgba(238, 130, 238, 0.2)',
-                color: '#4B0082',
-                padding: '5px 19px', 
-                borderRadius: '12px', 
-                fontSize: '12px' ,
-                fontWeight:"bold"
-              }}
-              content="NO"
-            />
+                padding: '5px 19px',
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: "bold"
+              }} /> : <Badge
+                style={{
+                  backgroundColor: 'rgba(238, 130, 238, 0.2)',
+                  color: '#4B0082',
+                  padding: '5px 19px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: "bold"
+                }}
+                content="NO"
+              />
             }</Cell>
           </Column>
           <Column sortable flexGrow={3}>
@@ -338,27 +349,27 @@ const EncounterList = () => {
               <Translate> Has order</Translate>
             </HeaderCell>
             <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
-              rowData.hasOrder ?  <Badge  content="YES"  style={{
+              rowData.hasOrder ? <Badge content="YES" style={{
                 backgroundColor: '#bcf4f7',
                 color: '#008aa6',
-                padding: '5px 19px', 
-                borderRadius: '12px', 
-                fontSize: '12px' ,
-                fontWeight:"bold"
-              }}/> :  <Badge
-              style={{
-                backgroundColor: 'rgba(238, 130, 238, 0.2)',
-                color: '#4B0082',
-                padding: '5px 19px', 
-                borderRadius: '12px', 
-                fontSize: '12px' ,
-                fontWeight:"bold"
-              }}
-              content="NO"
-            />
+                padding: '5px 19px',
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: "bold"
+              }} /> : <Badge
+                style={{
+                  backgroundColor: 'rgba(238, 130, 238, 0.2)',
+                  color: '#4B0082',
+                  padding: '5px 19px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: "bold"
+                }}
+                content="NO"
+              />
             }</Cell>
           </Column>
-          
+
           <Column sortable flexGrow={3}>
             <HeaderCell>
               <Input onChange={e => handleFilterChange('encounterPriorityLkey', e)} />
@@ -397,24 +408,24 @@ const EncounterList = () => {
               <Translate>Is Observed</Translate>
             </HeaderCell>
             <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {rowData => (rowData.hasObservation?  <Badge  content="YES"  style={{
+              {rowData => (rowData.hasObservation ? <Badge content="YES" style={{
                 backgroundColor: '#bcf4f7',
                 color: '#008aa6',
-                padding: '5px 19px', 
-                borderRadius: '12px', 
-                fontSize: '12px' ,
-                fontWeight:"bold"
-              }}/> :  <Badge
-              style={{
-                backgroundColor: 'rgba(238, 130, 238, 0.2)',
-                color: '#4B0082',
-                padding: '5px 19px', 
-                borderRadius: '12px', 
-                fontSize: '12px' ,
-                fontWeight:"bold"
-              }}
-              content="NO"
-            />)}
+                padding: '5px 19px',
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: "bold"
+              }} /> : <Badge
+                style={{
+                  backgroundColor: 'rgba(238, 130, 238, 0.2)',
+                  color: '#4B0082',
+                  padding: '5px 19px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: "bold"
+                }}
+                content="NO"
+              />)}
             </Cell>
           </Column>
         </Table>

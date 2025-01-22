@@ -2154,6 +2154,18 @@ export interface ApUser {
 	mustChangePassword:boolean;
 } 
 
+export interface ApUserAccessPrivatePatient { 
+	key:string;
+	userKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	reason:string;
+} 
+
 export interface ApUserFacilities { 
 	key:string;
 	userId:string;
