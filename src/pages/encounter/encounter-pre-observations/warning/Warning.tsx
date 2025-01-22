@@ -593,7 +593,7 @@ const Warning = () => {
                             color="violet"
                             appearance="primary"
                             onClick={handleSave}
-                            disabled={warning.statusLkey == '3196709905099521' ? true : false}
+                            disabled={showPrev?(warning?.statusLkey == '3196709905099521' ? true : false):true}
 
                             icon={<CheckIcon />}
                         >
