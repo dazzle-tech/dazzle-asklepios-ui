@@ -935,7 +935,6 @@ const DrugOrder = () => {
                         <Form style={{ zoom: 0.85, display: 'flex' }} layout="inline" fluid disabled={drugKey != null ? editing : true}>
                             <MyInput
                                 column
-
                                 width={150}
                                 fieldType='number'
                                 fieldName={'dose'}
@@ -945,7 +944,6 @@ const DrugOrder = () => {
 
                             <MyInput
                                 column
-
                                 width={150}
                                 fieldType="select"
                                 fieldLabel="Unit"
@@ -1445,7 +1443,7 @@ const DrugOrder = () => {
                     </HeaderCell>
                     <Cell>
                         {rowData => {
-                            return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, rowData.frequency, rowData.roaLvalue?.lovDisplayVale]);
+                            return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, "every "+rowData.frequency+ " hours", rowData.roaLvalue?.lovDisplayVale]);
                         }
                         }
                     </Cell>
