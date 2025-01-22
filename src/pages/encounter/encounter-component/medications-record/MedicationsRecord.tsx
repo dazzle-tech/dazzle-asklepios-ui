@@ -26,13 +26,15 @@ import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import {
     useGetGenericMedicationQuery,
-    useGetPrescriptionInstructionQuery
+    useGetPrescriptionInstructionQuery,
+    useGetGenericMedicationActiveIngredientQuery
 } from '@/services/medicationsSetupService';
 import {
 
     useGetPrescriptionsQuery,
     useGetPrescriptionMedicationsQuery,
     useGetCustomeInstructionsQuery
+    
 } from '@/services/encounterService';
 import {
     useGetDrugOrderQuery,
@@ -168,7 +170,12 @@ const MedicationsRecord = () => {
             return 'selected-row';
         } else return '';
     };
-
+ const [listGinricRequest, setListGinricRequest] = useState({
+        ...initialListRequest,
+        sortType: 'desc'
+ 
+    });
+    const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({...listGinricRequest});
     const combinedArray = [];
 
 
@@ -234,9 +241,22 @@ const MedicationsRecord = () => {
     const joinValuesFromArray = (values) => {
         return values.filter(Boolean).join(', ');
     };
-    const joinValuesFromArrayo = (objects) => {
+    const joinValuesFromArrayo = (objects, genericMedicationsKey) => {
+   
         return objects
-            .map(obj => `${obj.name}:${obj.code}`) 
+            .map(obj => {
+                
+                const matchingActiveIngredient = genericMedicationActiveIngredientListResponseData?.object?.find(ingredient => {
+                    return ingredient.genericMedicationKey === genericMedicationsKey && ingredient.activeIngredientKey === obj.key;
+                });
+                
+                
+                if (matchingActiveIngredient) {
+                    return `${obj.name}:${matchingActiveIngredient.strength} ${matchingActiveIngredient.unitLvalue.lovDisplayVale} `;
+                }
+               
+                return obj.name;
+            })
             .join(', '); 
     };
     const renderRowExpanded = rowData => {
@@ -504,7 +524,7 @@ const MedicationsRecord = () => {
                     </Column>
                     <Column flexGrow={2} fullText>
                         <HeaderCell align="center">
-                            <Translate>Indicated</Translate>
+                            <Translate>Indication</Translate>
                         </HeaderCell>
                         <Cell  >
                             {rowData => joinValuesFromArray([rowData.indicationIcd, rowData.indicationManually])}
@@ -764,7 +784,7 @@ const MedicationsRecord = () => {
                         </HeaderCell>
 
                         <Cell >
-                            {rowData =>joinValuesFromArrayo(rowData.activeIngredient)
+                            {rowData =>joinValuesFromArrayo(rowData.activeIngredient ,rowData.genericMedicationsKey)
                                
                             }
                         </Cell>
