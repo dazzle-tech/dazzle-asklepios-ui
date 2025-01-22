@@ -449,12 +449,8 @@ const Referrals = () => {
                     <HeaderCell>Department</HeaderCell>
                     <Cell dataKey="departmentKey" >
                     {rowData => {
-                        console.log("iam heare");
-                        console.log('Item Key:', department[0].key);
-                        console.log('Row Data Department Key:', rowData.departmentKey);
-                        const d= department?.find(item => item.key === rowData.departmentKey);
+             const d= department?.find(item => item.key === rowData.departmentKey);
                     
-                    console.log('Matched Department:', d);
                     
                     return d?.name||'g';
                     
@@ -670,7 +666,40 @@ const Referrals = () => {
                 </Form>
                 <br />
                 <div style={{ display: 'flex', zoom: 0.85, gap: '10px' }}>
+                <div>
+                        <Table
+                            height={200}
+                            width={330}
+                           
+                             bordered
+                            headerHeight={33}
+                            rowHeight={40}
 
+                            data={procedurecodingQueryResponse?.object ?? []}
+
+                        >
+                            <Column sortable flexGrow={1.5}>
+                                <HeaderCell align="center">
+
+                                    <Translate>Code Type</Translate>
+                                </HeaderCell>
+                                <Cell align="center">
+                                    {rowData => rowData.codeTypeLkey ? rowData.codeTypeLvalue.lovDisplayVale : rowData.codeTypeLkey}
+                                </Cell  >
+                            </Column>
+                            <Column sortable flexGrow={2}>
+                                <HeaderCell align="center">
+
+                                    <Translate>international Code</Translate>
+                                </HeaderCell>
+                                <Cell align="center">
+                                    {rowData => rowData.internationalCodeKey}
+                                </Cell  >
+                            </Column>
+
+
+                        </Table>
+                    </div>
 
                     <div style={{ width: '190px' }}>
                         <Text style={{ marginTop: '6px', fontWeight: 'bold' }}>Start Date Time</Text>
@@ -756,39 +785,7 @@ const Referrals = () => {
                             }
                             style={{ width: 300 }} rows={4} />
                     </div>
-                    <div>
-                        <Table
-                            height={200}
-                            width={330}
-
-                            headerHeight={33}
-                            rowHeight={40}
-
-                            data={procedurecodingQueryResponse?.object ?? []}
-
-                        >
-                            <Column sortable flexGrow={1}>
-                                <HeaderCell align="center">
-
-                                    <Translate>Code Type</Translate>
-                                </HeaderCell>
-                                <Cell align="center">
-                                    {rowData => rowData.codeTypeLkey ? rowData.codeTypeLvalue.lovDisplayVale : rowData.codeTypeLkey}
-                                </Cell  >
-                            </Column>
-                            <Column sortable flexGrow={2}>
-                                <HeaderCell align="center">
-
-                                    <Translate>international Code</Translate>
-                                </HeaderCell>
-                                <Cell align="center">
-                                    {rowData => rowData.internationalCodeKey}
-                                </Cell  >
-                            </Column>
-
-
-                        </Table>
-                    </div>
+                
                     <div >
                         <Form layout="inline"  >
                             <MyInput
