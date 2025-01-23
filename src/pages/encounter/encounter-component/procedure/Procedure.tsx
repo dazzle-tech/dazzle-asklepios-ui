@@ -674,9 +674,9 @@ const Referrals = () => {
                 </Form>
                 <br />
                 <div style={{ display: 'flex', zoom: 0.85, gap: '10px' }}>
-                <div>
+                <div style={{marginTop:'5px'}}>
                         <Table
-                            height={200}
+                            height={150}
                             width={330}
                            
                              bordered
@@ -707,52 +707,6 @@ const Referrals = () => {
 
 
                         </Table>
-                    </div>
-
-                    <div style={{ width: '190px' }}>
-                        <Text style={{ marginTop: '6px', fontWeight: 'bold' }}>Start Date Time</Text>
-                        <DatePicker
-                            disabled={editing}
-                            format="MM/dd/yyyy hh:mm aa"
-                            showMeridian
-                            value={procedure.scheduledDateTime != 0 ? new Date(procedure.scheduledDateTime) : new Date()}
-                            onChange={(value) => {
-                                setProcedure({
-                                    ...procedure,
-                                    scheduledDateTime: value.getTime()
-                                });
-                            }}
-
-                        />
-
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                        <Form layout="inline" fluid disabled={editing}>
-
-
-                            <MyInput
-                                column
-                                width={200}
-                                disabled={editing}
-                                fieldName="notes"
-                                rows={6}
-                                fieldType="textarea"
-                                record={procedure}
-                                setRecord={setProcedure}
-                            />
-
-
-
-                        </Form>
-                        <IconButton
-                            color="violet"
-                            appearance="ghost"
-                            onClick={() => { setOpenOrderModel(true) }}
-                            disabled={editing}
-                            icon={<CheckIcon />}
-                        >
-                            <Translate>Order Related Tests</Translate>
-                        </IconButton>
                     </div>
                     <div style={{ margin: '5px' }}>
                         <Text style={{ fontWeight: 'bold' }}>Indications</Text>
@@ -793,12 +747,51 @@ const Referrals = () => {
                             }
                             style={{ width: 300 }} rows={4} />
                     </div>
-                
+                   
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <div >
-                        <Form layout="inline"  >
+                        <Text style={{ marginTop: '6px', fontWeight: 'bold' }}>Scheduled Date</Text>
+                        <DatePicker
+                            disabled={editing}
+                            format="MM/dd/yyyy hh:mm aa"
+                            showMeridian
+                            value={procedure.scheduledDateTime != 0 ? new Date(procedure.scheduledDateTime) : new Date()}
+                            onChange={(value) => {
+                                setProcedure({
+                                    ...procedure,
+                                    scheduledDateTime: value.getTime()
+                                });
+                            }}
+
+                        />
+
+                    </div>
+                        <Form layout="inline" fluid disabled={editing}>
+
                             <MyInput
                                 column
+                                width={220}
+                                height={72}
                                 disabled={editing}
+                                fieldName="notes"
+                                
+                                fieldType="textarea"
+                                record={procedure}
+                                setRecord={setProcedure}
+                            />
+
+
+
+                        </Form>
+                      
+                    </div>
+                   
+                
+                    <div >
+                        <Form layout="inline" fluid disabled={editing} >
+                            <MyInput
+                                column
+                               
                                 width={170}
                                 fieldType="select"
                                 fieldLabel="Body Part "
@@ -811,7 +804,7 @@ const Referrals = () => {
                             />
                             <MyInput
                                 column
-                                disabled={editing}
+                                
                                 width={170}
                                 fieldType="select"
                                 fieldLabel="Side"
@@ -823,7 +816,15 @@ const Referrals = () => {
                                 setRecord={setProcedure}
                             />
                         </Form>
-
+                        <IconButton
+                            color="violet"
+                            appearance="ghost"
+                            onClick={() => { setOpenOrderModel(true) }}
+                            disabled={editing}
+                            icon={<CheckIcon />}
+                        >
+                            <Translate>Order Related Tests</Translate>
+                        </IconButton>
                     </div >
                 </div>
 
