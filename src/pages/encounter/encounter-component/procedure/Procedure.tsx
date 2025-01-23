@@ -436,8 +436,10 @@ const Referrals = () => {
                 data={[rowData]} // Pass the data as an array to populate the table
                 bordered
                 cellBordered
-                style={{ width: '100%', marginTop: '10px' }}
-                height={100} // Adjust height as needed
+                style={{ width: '100%', marginTop: '10px',marginBottom:'5px' }}
+                height={100}
+                headerHeight={30}
+                rowHeight={40} // Adjust height as needed
             >
                  <Column flexGrow={2} align="center" fullText>
                     <HeaderCell>Facelity</HeaderCell>
@@ -452,7 +454,7 @@ const Referrals = () => {
              const d= department?.find(item => item.key === rowData.departmentKey);
                     
                     
-                    return d?.name||'g';
+                    return d?.name||'';
                     
                     }}
                    
@@ -474,6 +476,12 @@ const Referrals = () => {
                     <HeaderCell>Side</HeaderCell>
                     <Cell dataKey="sideLvalue.lovDisplayVale" >
                         {rowData => rowData.sideLkey?rowData.sideLvalue.lovDisplayVale:rowData.sideLkey}
+                    </Cell>
+                </Column>
+                <Column flexGrow={1} align="center" fullText>
+                    <HeaderCell>Note</HeaderCell>
+                    <Cell dataKey="notes" >
+                        {rowData => rowData.notes}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
@@ -1075,10 +1083,10 @@ const Referrals = () => {
 
                     <Translate>Perform</Translate>
                 </HeaderCell>
-                <Cell  >
+                <Cell align="center" >
 
                     <IconButton
-
+                      style={{zoom:0.85}}
                         icon={<FontAwesomeIcon icon={faBedPulse} />} />
 
                 </Cell>
@@ -1088,9 +1096,10 @@ const Referrals = () => {
 
                     <Translate>Attached File</Translate>
                 </HeaderCell>
-                <Cell  >
+                <Cell  align="center">
 
                     <IconButton
+                     style={{zoom:0.85}}
                         onClick={() => setAttachmentsModalOpen(true)}
                         icon={<FileUploadIcon />} />
 
