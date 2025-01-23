@@ -2,13 +2,15 @@ import React, { useEffect, useState } from 'react';
 
 import Translate from '@/components/Translate';
 import './styles.less';
+import * as icons from '@rsuite/icons';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { faList, faPlay, faCheck, faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
+import EncounterMainInfoSection from '../../encounter-main-info-section';
 import FileDownloadIcon from '@rsuite/icons/FileDownload';
 import FileUploadIcon from '@rsuite/icons/FileUpload';
 import PatientOrder from '../diagnostics-order'
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
 import {
     useGetPractitionersQuery
@@ -28,7 +30,9 @@ import {
     Modal,
     Stack,
     Divider,
-    DatePicker
+    DatePicker,
+    Steps,
+    ButtonToolbar
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 
@@ -84,6 +88,7 @@ const Referrals = () => {
     const [showPrev, setShowPrev] = useState(true);
     const [actionType, setActionType] = useState(null);
     const [editing, setEditing] = useState(false);
+    const [openPerformModal, setOpenPerformModal] = useState(false)
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
     const [indicationsDescription, setindicationsDescription] = useState<string>('');
     const [searchKeywordicd, setSearchKeywordicd] = useState('');
@@ -158,7 +163,7 @@ const Referrals = () => {
                 : item.systemDetailLkey;
             return `* ${systemDetail}\n${item.notes}`;
         })
-        .join("\n") + "\n____________________\n" + (patientSlice?.encounter?.physicalExamNote||"");
+        .join("\n") + "\n____________________\n" + (patientSlice?.encounter?.physicalExamNote || "");
     const isSelected = rowData => {
         if (rowData && procedure && rowData.key === procedure.key) {
             return 'selected-row';
@@ -220,11 +225,11 @@ const Referrals = () => {
             }
         ],
     });
-   const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
-      const modifiedData = (icdListResponseLoading?.object ?? []).map(item => ({
-          ...item,
-          combinedLabel: `${item.icdCode} - ${item.description}`,
-      }));
+    const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
+    const modifiedData = (icdListResponseLoading?.object ?? []).map(item => ({
+        ...item,
+        combinedLabel: `${item.icdCode} - ${item.description}`,
+    }));
     useEffect(() => {
         if (procedure.indications != null || procedure.indications != "") {
 
@@ -243,29 +248,29 @@ const Referrals = () => {
             });
         }
     }, [procedure.indications]);
-        useEffect(() => {
-            if (searchKeywordicd.trim() !== "") {
-                setIcdListRequest(
-                    {
-                        ...initialListRequest,
-                        filterLogic: 'or',
-                        filters: [
-                            {
-                                fieldName: 'icd_code',
-                                operator: 'containsIgnoreCase',
-                                value: searchKeywordicd
-                            },
-                            {
-                                fieldName: 'description',
-                                operator: 'containsIgnoreCase',
-                                value: searchKeywordicd
-                            }
-    
-                        ]
-                    }
-                );
-            }
-        }, [searchKeywordicd]);
+    useEffect(() => {
+        if (searchKeywordicd.trim() !== "") {
+            setIcdListRequest(
+                {
+                    ...initialListRequest,
+                    filterLogic: 'or',
+                    filters: [
+                        {
+                            fieldName: 'icd_code',
+                            operator: 'containsIgnoreCase',
+                            value: searchKeywordicd
+                        },
+                        {
+                            fieldName: 'description',
+                            operator: 'containsIgnoreCase',
+                            value: searchKeywordicd
+                        }
+
+                    ]
+                }
+            );
+        }
+    }, [searchKeywordicd]);
 
     useEffect(() => {
         setListRequestPro((prev) => ({
@@ -284,11 +289,11 @@ const Referrals = () => {
             ],
         }));
     }, [procedure?.categoryKey]);
-    useEffect(()=>{
-        if(procedure.currentDepartment){
-            setProcedure({...procedure,departmentKey:null,faciltyLkey:null});
+    useEffect(() => {
+        if (procedure.currentDepartment) {
+            setProcedure({ ...procedure, departmentKey: null, faciltyLkey: null });
         }
-    },[procedure.currentDepartment])
+    }, [procedure.currentDepartment])
     useEffect(() => {
         if (patientDiagnoseListResponse.data?.object?.length > 0) {
             setSelectedDiagnose(patientDiagnoseListResponse?.data?.object[0]?.diagnosisObject
@@ -365,11 +370,11 @@ const Referrals = () => {
             }
         });
     };
-    const OpenConfirmDeleteModel = () => {
-        setConfirmDeleteModel(true);
+    const OpenPerformModel = () => {
+        setOpenPerformModal(true);
     }
-    const CloseConfirmDeleteModel = () => {
-        setConfirmDeleteModel(false);
+    const ClosePerformModel = () => {
+        setOpenPerformModal(false);
     }
     const handleSearchIcd = value => {
         setSearchKeywordicd(value);
@@ -385,9 +390,9 @@ const Referrals = () => {
                 ...procedure,
                 statusLkey: '3621653475992516',
                 indications: indicationsDescription,
-                encounterKey:patientSlice.encounter.key
+                encounterKey: patientSlice.encounter.key
             }).unwrap().then(() => {
-               
+
                 proRefetch();
             });
             handleClear();
@@ -396,6 +401,27 @@ const Referrals = () => {
 
         } catch (error) {
             dispatch(notify('Save Failed'));
+        }
+
+    }
+    const handleChangeStatus = async ( status) => {
+
+        try {
+
+
+            await saveProcedures({
+                ...procedure,
+                statusLkey: status,
+            }).unwrap().then(() => {
+
+                proRefetch();
+            });
+            handleClear();
+            dispatch(notify('Changed Status Successfully'));
+
+
+        } catch (error) {
+            dispatch(notify('Changed Status Failed'));
         }
 
     }
@@ -436,46 +462,46 @@ const Referrals = () => {
                 data={[rowData]} // Pass the data as an array to populate the table
                 bordered
                 cellBordered
-                style={{ width: '100%', marginTop: '10px',marginBottom:'5px' }}
-                height={100}
+                style={{ width: '100%', marginTop: '10px', marginBottom: '5px' }}
+                height={105}
                 headerHeight={30}
                 rowHeight={40} // Adjust height as needed
             >
-                 <Column flexGrow={2} align="center" fullText>
+                <Column flexGrow={2} align="center" fullText>
                     <HeaderCell>Facelity</HeaderCell>
                     <Cell dataKey="faciltyLvalue.lovDisplayVale" >
-                        {rowData => rowData.faciltyLkey?rowData.faciltyLvalue.lovDisplayVale:rowData.faciltyLkey}
+                        {rowData => rowData.faciltyLkey ? rowData.faciltyLvalue.lovDisplayVale : rowData.faciltyLkey}
                     </Cell>
                 </Column>
                 <Column flexGrow={2} align="center" fullText>
                     <HeaderCell>Department</HeaderCell>
                     <Cell dataKey="departmentKey" >
-                    {rowData => {
-             const d= department?.find(item => item.key === rowData.departmentKey);
-                    
-                    
-                    return d?.name||'';
-                    
-                    }}
-                   
+                        {rowData => {
+                            const d = department?.find(item => item.key === rowData.departmentKey);
+
+
+                            return d?.name || '';
+
+                        }}
+
                     </Cell>
                 </Column>
-                <Column flexGrow={2} align="center" fullText>
+                <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Current Department</HeaderCell>
                     <Cell  >
-                        {rowData => rowData.currentDepartment?"Yes":""}
+                        {rowData => rowData.currentDepartment ? "Yes" : ""}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Body Part</HeaderCell>
                     <Cell dataKey="bodyPartLvalue.lovDisplayVale" >
-                        {rowData => rowData.bodyPartLkey?rowData.bodyPartLvalue.lovDisplayVale:rowData.bodyPartLkey}
+                        {rowData => rowData.bodyPartLkey ? rowData.bodyPartLvalue.lovDisplayVale : rowData.bodyPartLkey}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Side</HeaderCell>
                     <Cell dataKey="sideLvalue.lovDisplayVale" >
-                        {rowData => rowData.sideLkey?rowData.sideLvalue.lovDisplayVale:rowData.sideLkey}
+                        {rowData => rowData.sideLkey ? rowData.sideLvalue.lovDisplayVale : rowData.sideLkey}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
@@ -484,7 +510,7 @@ const Referrals = () => {
                         {rowData => rowData.notes}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={2} align="center" fullText>
                     <HeaderCell>Created At</HeaderCell>
                     <Cell dataKey="createdAt" >
                         {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}
@@ -574,8 +600,8 @@ const Referrals = () => {
             />
         </Cell>
     );
-    return (<> 
-      <h5>Procedure Order</h5>
+    return (<>
+        <h5>Procedure Order</h5>
         <br />
         <div className='top-div'>
             <div>
@@ -674,12 +700,12 @@ const Referrals = () => {
                 </Form>
                 <br />
                 <div style={{ display: 'flex', zoom: 0.85, gap: '10px' }}>
-                <div style={{marginTop:'5px'}}>
+                    <div style={{ marginTop: '5px' }}>
                         <Table
                             height={150}
                             width={330}
-                           
-                             bordered
+
+                            bordered
                             headerHeight={33}
                             rowHeight={40}
 
@@ -747,25 +773,25 @@ const Referrals = () => {
                             }
                             style={{ width: 300 }} rows={4} />
                     </div>
-                   
+
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div >
-                        <Text style={{ marginTop: '6px', fontWeight: 'bold' }}>Scheduled Date</Text>
-                        <DatePicker
-                            disabled={editing}
-                            format="MM/dd/yyyy hh:mm aa"
-                            showMeridian
-                            value={procedure.scheduledDateTime != 0 ? new Date(procedure.scheduledDateTime) : new Date()}
-                            onChange={(value) => {
-                                setProcedure({
-                                    ...procedure,
-                                    scheduledDateTime: value.getTime()
-                                });
-                            }}
+                        <div >
+                            <Text style={{ marginTop: '6px', fontWeight: 'bold' }}>Scheduled Date</Text>
+                            <DatePicker
+                                disabled={editing}
+                                format="MM/dd/yyyy hh:mm aa"
+                                showMeridian
+                                value={procedure.scheduledDateTime != 0 ? new Date(procedure.scheduledDateTime) : new Date()}
+                                onChange={(value) => {
+                                    setProcedure({
+                                        ...procedure,
+                                        scheduledDateTime: value.getTime()
+                                    });
+                                }}
 
-                        />
+                            />
 
-                    </div>
+                        </div>
                         <Form layout="inline" fluid disabled={editing}>
 
                             <MyInput
@@ -774,7 +800,7 @@ const Referrals = () => {
                                 height={72}
                                 disabled={editing}
                                 fieldName="notes"
-                                
+
                                 fieldType="textarea"
                                 record={procedure}
                                 setRecord={setProcedure}
@@ -783,15 +809,15 @@ const Referrals = () => {
 
 
                         </Form>
-                      
+
                     </div>
-                   
-                
+
+
                     <div >
                         <Form layout="inline" fluid disabled={editing} >
                             <MyInput
                                 column
-                               
+
                                 width={170}
                                 fieldType="select"
                                 fieldLabel="Body Part "
@@ -804,7 +830,7 @@ const Referrals = () => {
                             />
                             <MyInput
                                 column
-                                
+
                                 width={170}
                                 fieldType="select"
                                 fieldLabel="Side"
@@ -860,7 +886,7 @@ const Referrals = () => {
 
                     <Text>Diagnose</Text>
                     <textarea
-                       value={selectedDiagnose && selectedDiagnose.icdCode && selectedDiagnose.description ? `${selectedDiagnose.icdCode}, ${selectedDiagnose.description}` : ''}
+                        value={selectedDiagnose && selectedDiagnose.icdCode && selectedDiagnose.description ? `${selectedDiagnose.icdCode}, ${selectedDiagnose.description}` : ''}
                         readOnly
                         rows={3}
                         cols={50}
@@ -1087,7 +1113,8 @@ const Referrals = () => {
                 <Cell align="center" >
 
                     <IconButton
-                      style={{zoom:0.85}}
+                        style={{ zoom: 0.85 }}
+                        onClick={OpenPerformModel}
                         icon={<FontAwesomeIcon icon={faBedPulse} />} />
 
                 </Cell>
@@ -1097,16 +1124,155 @@ const Referrals = () => {
 
                     <Translate>Attached File</Translate>
                 </HeaderCell>
-                <Cell  align="center">
+                <Cell align="center">
 
                     <IconButton
-                     style={{zoom:0.85}}
+                        style={{ zoom: 0.85 }}
                         onClick={() => setAttachmentsModalOpen(true)}
                         icon={<FileUploadIcon />} />
 
                 </Cell>
             </Column>
         </Table>
+
+        <Modal size={'full'} open={openPerformModal} onClose={ClosePerformModel}>
+            <Modal.Header>
+                <Modal.Title>Modal Title</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <EncounterMainInfoSection patient={patientSlice.patient} encounter={patientSlice.encounter} />
+                <Divider style={{ margin: '4px 4px' }} />
+                <Form style={{ zoom: 0.85 }} layout="inline" fluid disabled={true}>
+                    
+                <MyInput
+                        column
+                      
+                        width={170}
+                        fieldType="select"
+                        fieldLabel="Category Type"
+                        selectData={CategoryLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName={'categoryKey'}
+                        record={procedure}
+                        setRecord={setProcedure}
+                    />
+                    <MyInput
+                        column
+                      
+                        width={170}
+                        fieldType="select"
+                        fieldLabel="Procedure Name"
+                        selectData={procedureQueryResponse?.object ?? []}
+                        selectDataLabel="name"
+                        selectDataValue="key"
+                        fieldName={'procedureNameKey'}
+                        record={procedure}
+                        setRecord={setProcedure}
+                    />
+                  
+                    <MyInput
+                        column
+                       
+                        width={170}
+                        fieldType="select"
+                        fieldLabel="Priority"
+                        selectData={priorityLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName={'priorityLkey'}
+                        record={procedure}
+                        setRecord={setProcedure}
+                    />
+
+                    <MyInput
+                        column
+
+                        width={170}
+                        fieldType="select"
+                        fieldLabel="Body Part "
+                        selectData={bodypartLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName={'bodyPartLkey'}
+                        record={procedure}
+                        setRecord={setProcedure}
+                    />
+                    <MyInput
+                        column
+                        width={170}
+                        fieldType="select"
+                        fieldLabel="Side"
+                        selectData={sideLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName={'sideLkey'}
+                        record={procedure}
+                        setRecord={setProcedure}
+                    />
+                </Form>
+                <Divider style={{ margin: '4px 4px' }} />
+                <ButtonToolbar>
+
+
+                    <Button
+                        appearance="ghost"
+                        style={{ border: '1px solid rgb(106, 195, 200)', color: 'rgb(38, 119, 154)' }}
+                        onClick={() => handleChangeStatus("3621794252137516")}
+                    >
+                        <FontAwesomeIcon icon={faList} style={{ marginRight: '5px' }} />
+                        <span>Awaiting Consent</span>
+                    </Button>
+
+                    <Button
+                        appearance="ghost"
+                        style={{ border: '1px solid rgb(106, 195, 200)', color: 'rgb(38, 119, 154)' }}
+                        onClick={() => handleChangeStatus("3621681578985655")}
+                        >
+                           
+                        <FontAwesomeIcon icon={faPlay} style={{ marginRight: '5px' }} />
+                        <Translate>Start Procedure</Translate>
+                    </Button>
+                    <Button appearance="ghost"
+                        style={{ border: '1px solid rgb(106, 195, 200)', color: 'rgb(38, 119, 154)' }}
+                        onClick={() => handleChangeStatus("3621707345048408")}
+                        >
+                        <FontAwesomeIcon icon={faCheck} style={{ marginRight: '5px' }} />
+                        <Translate>Complete Procedure</Translate>
+                    </Button>
+                    <Button appearance="ghost"
+                        style={{ border: '1px solid rgb(106, 195, 200)', color: 'rgb(38, 119, 154)' }}>
+                        <FontAwesomeIcon icon={faRectangleXmark} style={{ marginRight: '5px' }} 
+                        onClick={() => handleChangeStatus("3621690096636149")}
+                        />
+                        <Translate>Cancel Procedure</Translate>
+                    </Button>
+
+                </ButtonToolbar>
+
+                <Divider />
+                <Steps style={{ zoom: 0.85 }} current={1}>
+                    <Steps.Item title="Procedure Registration" />
+                    <Steps.Item title="Pre-Procedure Assessment" />
+                    <Steps.Item title="Procedure Performing" />
+                    <Steps.Item title="Post-Procedure Care and Follow-up" />
+                    <Steps.Item title="Equipment and Logistics" />
+                    <Steps.Item title="Completed" />
+                </Steps>
+                <Divider />
+                <Panel header="Procedure Registration" collapsible bordered >1</Panel>
+                <Panel header="Pre-Procedure Assessment" collapsible bordered >2</Panel>
+                <Panel header="Procedure Performing" collapsible bordered >3</Panel>
+                <Panel header="Post-Procedure Care and Follow-up" collapsible bordered >4</Panel>
+                <Panel header=" Equipment and Logistics" collapsible bordered >5</Panel>
+            </Modal.Body>
+            <Modal.Footer>
+
+                <Button onClick={ClosePerformModel} appearance="primary">
+                    Close
+                </Button>
+            </Modal.Footer>
+        </Modal>
     </>);
 };
 export default Referrals;
