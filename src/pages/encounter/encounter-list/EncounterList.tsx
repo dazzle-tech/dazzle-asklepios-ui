@@ -46,7 +46,7 @@ const EncounterList = () => {
   const patientSlice = useAppSelector(state => state.patient);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-
+  const[localPatient,setLocalPatient]=useState<ApPatient>({...newApPatient})
   const [encounter, setLocalEncounter] = useState({ ...newApEncounter });
   const { data: icdListResponseData } = useGetIcdListQuery({
     ...initialListRequest,
@@ -130,8 +130,11 @@ const EncounterList = () => {
     if (encounter && encounter.key) {
       dispatch(setEncounter(encounter));
       dispatch(setPatient(encounter['patientObject']));
-      navigate('/encounter-pre-observations');
     }
+    const privatePatientPath = '/user-access-patient-private';
+    const preObservationsPath = '/encounter-pre-observations';
+    const targetPath = localPatient.privatePatient ? privatePatientPath : preObservationsPath;
+    navigate(targetPath);
   };
   return (
     <>
@@ -232,6 +235,7 @@ const EncounterList = () => {
           data={encounterListResponse?.object ?? []}
           onRowClick={rowData => {
             setLocalEncounter(rowData);
+            setLocalPatient(rowData.patientObject)
           }}
           rowClassName={isSelected}
         >

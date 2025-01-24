@@ -31,61 +31,47 @@ import { Block, Check, DocPass, Edit, History, Icon, PlusRound, Detail } from '@
 import { notify } from '@/utils/uiReducerActions';
 import { initialListRequest, ListRequest } from '@/types/types';
 import MyInput from '@/components/MyInput';
-import { ApUser } from '@/types/model-types';
-import { newApUser } from '@/types/model-types-constructor';
-
-
+import { ApUser, ApUserAccessPrivatePatient } from '@/types/model-types';
+import { newApUser, newApUserAccessPrivatePatient } from '@/types/model-types-constructor';
+import { useSaveUserAccessLoginPrivatePatientMutation } from '@/services/patientService';
+import { setEncounter, setPatient } from '@/reducers/patientSlice';
 
 const EncounterPatientPrivateLogin = () => {
-const[localUser,setLocalUser] = useState<ApUser>({ ...newApUser });
- //const [saveEmployee, saveEmployeeMutation] = useConfirmEmployeeLoginMutation();
-  // const navigate = useNavigate();
-  // const dispatch = useAppDispatch();
-  // const [localEmployee, setLocalEmployee] = useState<ApEmployee>({ ...newApEmployee });
+  const [localUser, setLocalUser] = useState<ApUser>({ ...newApUser });
+  const [localLoginUser, setLocalLoginUser] = useState<ApUserAccessPrivatePatient>({ ...newApUserAccessPrivatePatient });
+  const [reason, setReason] = useState(localLoginUser.reason);
+  const [saveUserAccessLoginPrivatePatient, saveUserAccessLoginPrivatePatientMutation] = useSaveUserAccessLoginPrivatePatientMutation();
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const patientSlice = useAppSelector(state => state.patient);
 
-  // const [principalListRequest, setPrincipalListRequest] = useState<ListRequest>({
-  //   ...initialListRequest,
-  //   filters: [
-  //     {
-  //       fieldName: 'deleted_at',
-  //       operator: 'isNull',
-  //       value: undefined
-  //     }
-  //   ]
-  // });
-  // const principalResponse = useGetPrincipalQuery({ ...principalListRequest });
-  // const data = (principalResponse?.data?.object ?? []).map(item => ({
-  //   label: item.name,
-  //   value: item.key
-  // }));
+  useEffect(() => {
+    setReason(localLoginUser.reason)
+  }, [localLoginUser])
 
-  // const handleChangePrincipal = (value) => {
-  //   setLocalEmployee({
-  //     ...localEmployee,
-  //     principalKey: value,
-  //   });
 
-  // };
 
-  // const handleSave = () => {
+  const handleSave = async() => {
+    try {
+      const response = await saveUserAccessLoginPrivatePatient({
+        user: localUser,
+        reason: reason
+      })
+        .unwrap()
+        if (response?.msg=== "success") {
+          dispatch(notify(`Welcome ${localUser.username}`));
+          dispatch(setEncounter(patientSlice.encounter));
+          dispatch(setPatient(patientSlice.patient));
+          navigate('/encounter-pre-observations');
+        } else {
+          dispatch(notify("No matching record found"));
+        }
+      } catch (error) {
+        dispatch(notify("No matching record found"));
+      }
+  };
+  
 
-  //   saveEmployee({ ...localEmployee }).unwrap().then(() => {
-  //     dispatch(notify(`Welcom ${localEmployee.firstName} ${localEmployee.lastName} `));
-
-  //   });
-
-  // };
-  // useEffect(() => {
-  //   if (saveEmployeeMutation && saveEmployeeMutation.status === 'fulfilled' && saveEmployeeMutation.data.msg === "success") {
-  //     setLocalEmployee(saveEmployeeMutation?.data?.object);
-
-  //     navigate('/seafarer-registerd-visits', {
-  //       state: { employee: saveEmployeeMutation?.data?.object }
-  //     });
-  //   } else if (saveEmployeeMutation && saveEmployeeMutation.status === 'rejected') {
-  //     // setValidationResult(saveEmployeeMutation.error.data.validationResult);
-  //   }
-  // }, [saveEmployeeMutation]);
   return (
     <>
       <Panel
@@ -133,14 +119,13 @@ const[localUser,setLocalUser] = useState<ApUser>({ ...newApUser });
 
             </Stack.Item>
             <Stack.Item grow={15}>
-              <Form layout="inline" fluid>
+              <Form layout="inline" fluid style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
 
                 <MyInput
                   required
                   width={165}
-
                   column
-                  fieldName="firstName"
+                  fieldName="username"
                   record={localUser}
                   setRecord={setLocalUser}
 
@@ -149,7 +134,7 @@ const[localUser,setLocalUser] = useState<ApUser>({ ...newApUser });
                   required
                   width={165}
                   column
-                  fieldName="secondName"
+                  fieldName="password"
                   record={localUser}
                   setRecord={setLocalUser}
 
@@ -158,37 +143,34 @@ const[localUser,setLocalUser] = useState<ApUser>({ ...newApUser });
                 <MyInput
                   required
                   width={165}
-
                   column
-                  fieldName="lastName"
-                  record={localUser}
-                  setRecord={setLocalUser}
+                  fieldName="reason"
+                  record={localLoginUser}
+                  setRecord={setLocalLoginUser}
 
                 />
-              
-                <Form layout="inline" fluid style={{ display: 'flex', alignItems: 'center' }}   >
-             
+
 
                 <ButtonToolbar>
-                    <IconButton
-                      appearance="primary"
-                      color="violet"
-                      icon={<Check />}
-                      //onClick={handleSave}
-                      style={{ marginTop: '26px' }}
-                      //disabled={localEmployee.firstName === "" || localEmployee.secondName === "" || localEmployee.lastName === "" || localEmployee.personId === '' || localEmployee.sfRegNo === ''}
-                    >
-                      <Translate>Confirm</Translate>
-                    </IconButton>
+                  <IconButton
+                    appearance="primary"
+                    color="violet"
+                    icon={<Check />}
+                    onClick={handleSave}
+                    style={{ marginTop: '26px' }}
+                   disabled={localUser.password === "" || localUser.username === "" || localLoginUser.reason ===""}
+                  >
+                    <Translate>Confirm</Translate>
+                  </IconButton>
 
-                  </ButtonToolbar>
-
-                </Form>
-
-
-
+                </ButtonToolbar>
 
               </Form>
+
+
+
+
+
             </Stack.Item>
           </Stack>
 
