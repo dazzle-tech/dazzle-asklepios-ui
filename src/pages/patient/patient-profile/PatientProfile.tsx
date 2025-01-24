@@ -2050,7 +2050,7 @@ const isSelectedRelation = rowData => {
                 <MyInput
                   vr={validationResult}
                   column
-                  fieldLabel="Preferred Language"
+                  fieldLabel="Native Language"
                   fieldType="select"
                   fieldName="primaryLanguageLkey"
                   selectData={primaryLangLovQueryResponse?.object ?? []}
