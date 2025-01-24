@@ -1,8 +1,9 @@
+
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApPatient, ApPatientAllergies, ApPatientRelation, ApPatientSecondaryDocuments, ApPatientInsurance, ApPatientInsuranceCoverage, ApPatientAdministrativeWarnings } from '@/types/model-types';
+import { ApPatient, ApPatientAllergies,ApUser, ApPatientRelation, ApPatientSecondaryDocuments, ApPatientInsurance, ApPatientInsuranceCoverage, ApPatientAdministrativeWarnings } from '@/types/model-types';
 
 export const patientService = createApi({
   reducerPath: 'patientApi',
@@ -296,7 +297,21 @@ export const patientService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-  })
+    saveUserAccessLoginPrivatePatient: builder.mutation({
+      query: (data: { user:ApUser , reason: string }) => ({
+        url: `/pas/user-access-private-patient`,
+        method: 'POST',
+        body: data.user, 
+        headers: {
+          reason : data.reason
+        },
+      }),
+      transformResponse: (response) => {
+        return response;
+      },
+    }), 
+  }),
+    
 });
 
 export const {
@@ -324,5 +339,6 @@ export const {
   useGetPatientAdministrativeWarningsQuery,
   useUpdatePatientAdministrativeWarningsMutation,
   useDeletePatientAdministrativeWarningsMutation,
-  useGetAgeGroupValueQuery
+  useGetAgeGroupValueQuery,
+  useSaveUserAccessLoginPrivatePatientMutation
 } = patientService;

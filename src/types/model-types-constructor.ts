@@ -2155,6 +2155,18 @@ export const newApUser:modelTypes.ApUser = {
 	mustChangePassword:undefined,
 } 
 
+export const newApUserAccessPrivatePatient:modelTypes.ApUserAccessPrivatePatient = { 
+	key:undefined,
+	userKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	reason:'',
+} 
+
 export const newApUserFacilities:modelTypes.ApUserFacilities = { 
 	key:undefined,
 	userId:'',

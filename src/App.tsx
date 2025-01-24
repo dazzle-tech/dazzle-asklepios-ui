@@ -61,7 +61,7 @@ import EncounterPreObservations from './pages/encounter/encounter-pre-observatio
 import AgeGroup from './pages/setup/age-group';
 import FacilityPatientList from './pages/patient/facility-patient-list/FacilityPatientList'
 import ScheduleScreen from './pages/Scheduling/scheduling-screen/ScheduleScreen';
-
+import EncounterPatientPrivateLogin from './pages/encounter/encounter-patient-private';
 import VaccinationTab from './pages/encounter/encounter-pre-observations/vaccination-tab';
 
 const App = () => {
@@ -220,7 +220,7 @@ const App = () => {
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />
               <Route path="modules-setup" element={<Modules />} />
-              <Route path="vaccination-tab" element={<VaccinationTab />} />
+              <Route path="user-access-patient-private" element={<EncounterPatientPrivateLogin />} />
               <Route path="vaccine-setup" element={<Vaccine />} />
               <Route path="procedure-setup" element={<ProcedureSetup />} />
               <Route path="users" element={<Users />} />
