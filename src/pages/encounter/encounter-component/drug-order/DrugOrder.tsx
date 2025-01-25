@@ -795,14 +795,7 @@ const DrugOrder = () => {
 
 
                 </Form>
-                {/* <Checkbox
-                    checked={!searchActive}
-                    onChange={() => {
-                        setSearchActive(!searchActive)
-                    }}
-                >
-                    Search Active Ingredient Only
-                </Checkbox> */}
+              
             </div>
             {selectedGeneric && <span style={{ marginTop: "25px", fontWeight: "bold" }}>
                 {[selectedGeneric.genericName,

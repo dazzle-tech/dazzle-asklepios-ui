@@ -14,7 +14,8 @@ import {
   ApActiveIngredientSynonym,
   ApPrescriptionInstruction,
   ApGenericMedication,
-  ApGenericMedicationActiveIngredient
+  ApGenericMedicationActiveIngredient,
+  ApBrandMedicationSubstitutes
 } from '@/types/model-types';
 
 export const medicationsSetupService = createApi({
@@ -363,6 +364,27 @@ export const medicationsSetupService = createApi({
         keepUnusedDataFor: 5
   
       }),
+      saveLinkedBrandMedication: builder.mutation({
+        query: (link: ApBrandMedicationSubstitutes) => ({
+          url: `/medications/save_link-brand-medication`,
+          method: 'POST',
+          body: link
+        }),onQueryStarted: onQueryStarted,
+        transformResponse: (response: any) => {
+          return response;
+        }
+      }),
+      getLinkedBrand: builder.query({
+        query: (key: string) => ({
+          headers: {
+           key
+          },
+          url: `/medications/brands-linked-list`
+        }),
+        onQueryStarted: onQueryStarted,
+        keepUnusedDataFor: 5
+  
+      }),
     })
 });
 
@@ -403,6 +425,8 @@ export const {
   useSavePrescriptionInstructionMutation,
   useGetActiveIngredientQuery,
   useSaveActiveIngredientMutation,
-  useGetGenericMedicationWithActiveIngredientQuery
+  useGetGenericMedicationWithActiveIngredientQuery,
+  useSaveLinkedBrandMedicationMutation,
+  useGetLinkedBrandQuery
  
 } = medicationsSetupService;

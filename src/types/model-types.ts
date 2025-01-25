@@ -337,6 +337,19 @@ export interface ApAttachment {
 	accessTypeLkey:string;
 } 
 
+export interface ApBrandMedicationSubstitutes { 
+	key:string;
+	brandKey:string;
+	alternativeBrandKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	description:string;
+} 
+
 export interface ApCatalogDiagnosticTest { 
 	key:string;
 	testKey:string;
