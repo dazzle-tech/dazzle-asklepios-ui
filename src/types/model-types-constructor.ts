@@ -338,6 +338,19 @@ export const newApAttachment:modelTypes.ApAttachment = {
 	accessTypeLkey:undefined,
 } 
 
+export const newApBrandMedicationSubstitutes:modelTypes.ApBrandMedicationSubstitutes = { 
+	key:undefined,
+	brandKey:undefined,
+	alternativeBrandKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	description:'',
+} 
+
 export const newApCatalogDiagnosticTest:modelTypes.ApCatalogDiagnosticTest = { 
 	key:undefined,
 	testKey:undefined,
