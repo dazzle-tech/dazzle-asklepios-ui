@@ -2192,6 +2192,16 @@ const isSelectedRelation = rowData => {
                   setRecord={setLocalPatient}
                   disabled={!editing}
                 />
+                 <MyInput
+                  vr={validationResult}
+                  column
+                  fieldLabel="Country ID"
+                  fieldType="text"
+                  fieldName=""
+                  record={localPatient}
+                  setRecord={setLocalPatient}
+                  disabled
+                />
               </Form>
             </TabPanel>
 
