@@ -138,6 +138,7 @@ export interface ApActiveIngredientContraindication {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	icdCodeKey:string;
 } 
 
 export interface ApActiveIngredientDrugInteraction { 
@@ -182,6 +183,7 @@ export interface ApActiveIngredientIndication {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	icdCodeKey:string;
 } 
 
 export interface ApActiveIngredientRecommendedDosage { 
@@ -1349,6 +1351,7 @@ export interface ApPatient {
 	secondaryMobileNumber:string;
 	roleLkey:string;
 	districtLkey:string;
+	countryId:string;
 } 
 
 export interface ApPatientAddresses { 

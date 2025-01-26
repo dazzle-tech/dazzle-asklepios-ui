@@ -2197,7 +2197,7 @@ const isSelectedRelation = rowData => {
                   column
                   fieldLabel="Country ID"
                   fieldType="text"
-                  fieldName=""
+                  fieldName="countryId"
                   record={localPatient}
                   setRecord={setLocalPatient}
                   disabled
