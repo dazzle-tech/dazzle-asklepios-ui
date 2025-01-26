@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import DocPassIcon from '@rsuite/icons/DocPass';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import {
     InputGroup,
     Form,
@@ -61,7 +62,8 @@ import {
 } from '@/services/medicationsSetupService';
 import {
     useGetPrescriptionInstructionQuery,
-
+    useGetLinkedBrandQuery,
+    useGetGenericMedicationWithActiveIngredientQuery
 } from '@/services/medicationsSetupService';
 
 import {
@@ -97,9 +99,9 @@ const Prescription = () => {
         frequency: null,
         roa: null
     });
-     const [indicationsIcd, setIndicationsIcd] = useState({ indicationIcd: null });
+    const [indicationsIcd, setIndicationsIcd] = useState({ indicationIcd: null });
     const [filteredList, setFilteredList] = useState([]);
-    const { data: genericMedicationListResponse } = useGetGenericMedicationQuery(listGenericRequest);
+
     const [selectedRows, setSelectedRows] = useState([]);
     const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
     const { data: FrequencyLovQueryResponse } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
@@ -109,7 +111,9 @@ const Prescription = () => {
     const { data: instructionTypeQueryResponse } = useGetLovValuesByCodeQuery('PRESC_INSTR_TYPE');
     const { data: refillunitQueryResponse } = useGetLovValuesByCodeQuery('REFILL_INTERVAL');
     const { data: indicationLovQueryResponse } = useGetLovValuesByCodeQuery('MED_INDICATION_USE');
-     const [indicationsDescription, setindicationsDescription] = useState<string>('');
+    const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
+    const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
+    const [indicationsDescription, setindicationsDescription] = useState<string>('');
     const { data: activeIngredientListResponseData } = useGetActiveIngredientQuery({ ...initialListRequest });
     const [listGinricRequest, setListGinricRequest] = useState({
         ...initialListRequest,
@@ -133,9 +137,9 @@ const Prescription = () => {
             }
         ]
     });
-
+    const { data: lisOfLinkedBrand } = useGetLinkedBrandQuery(selectedGeneric?.key, { skip: selectedGeneric?.key == null });
     const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({ ...listGinricRequest });
-
+    const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
 
     const { data: prescriptions, isLoading: isLoadingPrescriptions, refetch: preRefetch } = useGetPrescriptionsQuery({
         ...initialListRequest,
@@ -186,10 +190,10 @@ const Prescription = () => {
             numberOfRefills: null
 
         });
-        const modifiedData = (icdListResponseLoading?.object ?? []).map(item => ({
-            ...item,
-            combinedLabel: `${item.icdCode} - ${item.description}`,
-        }));
+    const modifiedData = (icdListResponseLoading?.object ?? []).map(item => ({
+        ...item,
+        combinedLabel: `${item.icdCode} - ${item.description}`,
+    }));
     const isSelected = rowData => {
         if (rowData && prescriptionMedication && rowData.key === prescriptionMedication.key) {
             return 'selected-row';
@@ -199,7 +203,7 @@ const Prescription = () => {
     const [savePrescription, savePrescriptionMutation] = useSavePrescriptionMutation();
 
     const [savePrescriptionMedication, { isLoading: isSavingPrescriptionMedication }] = useSavePrescriptionMedicationMutation();
-   
+
 
     const [saveCustomeInstructions, { isLoading: isSavingCustomeInstructions }] = useSaveCustomeInstructionsMutation();
     const [editDuration, setEditDuration] = useState(false);
@@ -329,7 +333,7 @@ const Prescription = () => {
 
     useEffect(() => {
         setPrescriptionMedications({ ...prescriptionMedication, instructionsTypeLkey: selectedOption })
-      
+
     }, [selectedOption])
     useEffect(() => {
         if (prescriptionMedication.administrationInstructions != null) {
@@ -358,7 +362,7 @@ const Prescription = () => {
 
     }, [customeinst])
     useEffect(() => {
-   
+
         refetchCo();
 
         setCustomeinst({
@@ -380,7 +384,7 @@ const Prescription = () => {
                 }
 
                 const tagcompine = joinValuesFromArray(tags);
-    
+
                 try {
                     await savePrescriptionMedication({
                         ...prescriptionMedication,
@@ -403,7 +407,7 @@ const Prescription = () => {
 
                     // Perform refetches
                     await Promise.all([
-                        medicRefetch().then(() =>""),
+                        medicRefetch().then(() => ""),
                         refetchCo().then(() => "")
                     ]);
 
@@ -434,24 +438,24 @@ const Prescription = () => {
     useEffect(() => {
 
     }, [adminInstructions])
-     useEffect(() => {
-            if (indicationsIcd.indicationIcd != null || indicationsIcd.indicationIcd != "") {
-    
-                setindicationsDescription(prevadminInstructions => {
-                    const currentIcd = icdListResponseLoading?.object?.find(
-                        item => item.key === indicationsIcd.indicationIcd
-                    );
-    
-                    if (!currentIcd) return prevadminInstructions;
-    
-                    const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
-    
-                    return prevadminInstructions
-                        ? `${prevadminInstructions}\n${newEntry}`
-                        : newEntry;
-                });
-            }
-        }, [indicationsIcd.indicationIcd]);
+    useEffect(() => {
+        if (indicationsIcd.indicationIcd != null || indicationsIcd.indicationIcd != "") {
+
+            setindicationsDescription(prevadminInstructions => {
+                const currentIcd = icdListResponseLoading?.object?.find(
+                    item => item.key === indicationsIcd.indicationIcd
+                );
+
+                if (!currentIcd) return prevadminInstructions;
+
+                const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
+
+                return prevadminInstructions
+                    ? `${prevadminInstructions}\n${newEntry}`
+                    : newEntry;
+            });
+        }
+    }, [indicationsIcd.indicationIcd]);
     const handleSearch = value => {
         setSearchKeyword(value);
 
@@ -495,14 +499,14 @@ const Prescription = () => {
 
             dispatch(notify('All medication deleted successfully'));
             medicRefetch().then(() => {
-             
+
             }).catch((error) => {
-               
+
             });
             medicRefetch().then(() => {
-              
+
             }).catch((error) => {
-               
+
             });
 
 
@@ -523,12 +527,12 @@ const Prescription = () => {
 
                 statusLkey: "1804482322306061"
                 , saveDraft: false,
-                submittedAt:Date.now()
+                submittedAt: Date.now()
             }).unwrap();
             dispatch(notify('submetid  Successfully'));
             handleCleare();
             preRefetch().then(() => "");
-            medicRefetch().then(() =>"");
+            medicRefetch().then(() => "");
 
         }
         catch (error) {
@@ -572,12 +576,12 @@ const Prescription = () => {
             genericSubstitute: false,
             chronicMedication: false,
             refillIntervalUnitLkey: null,
-            indicationUseLkey:null
+            indicationUseLkey: null
         })
         setAdminInstructions("");
         setSelectedGeneric(null);
         setindicationsDescription(null);
-        
+
         setCustomeinst({ dose: null, frequency: null, unit: null, roa: null })
         setTags([])
     }
@@ -664,7 +668,9 @@ const Prescription = () => {
             console.warn("Patient or encounter is missing. Cannot save prescription.");
         }
     };
-
+    const CloseSubstitutesModel = () => {
+        setOpenSubstitutesModel(false);
+    }
 
     const renderInput = () => {
         if (typing) {
@@ -763,7 +769,7 @@ const Prescription = () => {
                                             .filter(Boolean)
                                             .join(', ')}
                                     </span>
-
+                                    {Generic.activeIngredients}
                                 </Dropdown.Item>
                             ))}
                         </Dropdown.Menu>
@@ -773,6 +779,19 @@ const Prescription = () => {
 
                 </Form>
             </div>
+               <Button
+                            color="cyan"
+                            appearance="primary"
+                            style={{ height: '30px', marginTop: '23px' }}
+                        onClick={()=>{
+                            setOpenSubstitutesModel(true);
+                        }}
+            
+                        >
+            
+                            <FontAwesomeIcon icon={faCircleInfo} style={{ marginRight: '5px' }} />
+                            <span>Substitutes</span>
+                        </Button>
             {selectedGeneric && <span style={{ marginTop: "25px", fontWeight: "bold" }}>
                 {[selectedGeneric.genericName,
                 selectedGeneric.dosageFormLvalue?.lovDisplayVale,
@@ -980,7 +999,7 @@ const Prescription = () => {
                             </InputGroup.Button>
                         </InputGroup>
                         {searchKeywordicd && (
-                            <Dropdown.Menu  className="dropdown-menuresult">
+                            <Dropdown.Menu className="dropdown-menuresult">
                                 {modifiedData?.map(mod => (
                                     <Dropdown.Item
                                         key={mod.key}
@@ -1009,7 +1028,7 @@ const Prescription = () => {
                     <div style={{ marginBottom: '3px', zoom: 0.85 }}>
                         <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
                             <Input
-                               disabled={preKey != null ? editing : true}
+                                disabled={preKey != null ? editing : true}
                                 placeholder="Search SNOMED-CT"
                                 value={""}
 
@@ -1048,7 +1067,7 @@ const Prescription = () => {
                             disabled={preKey != null ? editing : true}
                             value={prescriptionMedication.indicationManually}
                             onChange={(e) => {
-                               
+
                                 setPrescriptionMedications({ ...prescriptionMedication, indicationManually: e });
                             }}
                             style={{ width: 200 }}
@@ -1078,7 +1097,7 @@ const Prescription = () => {
 
                             {rowData => {
                                 const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name
-                               
+
                                 return nameg;
                             }
                             }
@@ -1091,7 +1110,7 @@ const Prescription = () => {
 
                             {rowData => {
                                 const atcg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode
-                             
+
                                 return atcg;
                             }
                             }
@@ -1100,9 +1119,10 @@ const Prescription = () => {
                     </Table.Column>
                     <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
-                        <Table.Cell>{rowData =>{
-                            return rowData.strength+" "+rowData.unitLvalue?.lovDisplayVale}}
-                            </Table.Cell>
+                        <Table.Cell>{rowData => {
+                            return rowData.strength + " " + rowData.unitLvalue?.lovDisplayVale
+                        }}
+                        </Table.Cell>
                     </Table.Column>
                     <Table.Column flexGrow={1} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }} >Details</Table.HeaderCell>
@@ -1491,6 +1511,132 @@ const Prescription = () => {
                 </Table>
 
             </div>
+            <Modal size={'lg'} open={openSubstitutesModel} onClose={CloseSubstitutesModel} overflow  >
+                <Modal.Title>
+                    <Translate><h6>Substitues</h6></Translate>
+                </Modal.Title>
+                <Modal.Body>
+                    <Table
+                        height={400}
+
+                        headerHeight={50}
+                        rowHeight={60}
+                        bordered
+                        cellBordered
+                        data={lisOfLinkedBrand?.object ?? []}
+                    //   onRowClick={rowData => {
+                    //     setGenericMedication(rowData);
+                    //   }}
+                    //   rowClassName={isSelected}
+                    >
+                        <Column sortable flexGrow={2}>
+                            <HeaderCell align="center">
+                                <Translate>Code </Translate>
+                            </HeaderCell>
+                            <Cell dataKey="code" />
+                        </Column>
+                        <Column sortable flexGrow={2}>
+                            <HeaderCell align="center">
+                                <Translate>Brand Name </Translate>
+                            </HeaderCell>
+                            <Cell dataKey="genericName" />
+                        </Column>
+                        <Column sortable flexGrow={2}>
+                            <HeaderCell align="center">
+
+                                <Translate>Manufacturer</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="manufacturerLkey">
+                                {rowData =>
+                                    rowData.manufacturerLvalue ? rowData.manufacturerLvalue.lovDisplayVale : rowData.manufacturerLkey
+                                }
+                            </Cell>
+                        </Column>
+                        <Column sortable flexGrow={2} fullText>
+                            <HeaderCell align="center">
+
+                                <Translate>Dosage Form</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData =>
+                                    rowData.dosageFormLvalue ? rowData.dosageFormLvalue.lovDisplayVale : rowData.dosageFormLkey
+                                }
+                            </Cell>
+                        </Column>
+
+                        <Column sortable flexGrow={3} fullText>
+                            <HeaderCell align="center">
+
+                                <Translate>Usage Instructions</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="usageInstructions" />
+                        </Column>
+                        <Column sortable flexGrow={2} fixed fullText>
+                            <HeaderCell align="center">
+
+                                <Translate>Rout</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData => rowData.roaList?.map((item, index) => {
+                                    const value = conjureValueBasedOnKeyFromList(
+                                        medRoutLovQueryResponse?.object ?? [],
+                                        item,
+                                        'lovDisplayVale'
+                                    );
+                                    return (
+                                        <span key={index}>
+                                            {value}
+                                            {index < rowData.roaList.length - 1 && ', '}
+                                        </span>
+                                    );
+                                })}
+                            </Cell>
+                        </Column>
+                        <Column sortable flexGrow={2}>
+                            <HeaderCell align="center">
+
+                                <Translate>Expires After Opening</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData =>
+                                    rowData.expiresAfterOpening ? 'Yes' : 'No'
+                                }
+                            </Cell>
+                        </Column>
+                        <Column sortable flexGrow={3}>
+                            <HeaderCell align="center">
+
+                                <Translate>Single Patient Use</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData =>
+                                    rowData.singlePatientUse ? 'Yes' : 'No'
+                                }
+                            </Cell>
+                        </Column>
+                        <Column sortable flexGrow={1}>
+                            <HeaderCell align="center">
+
+                                <Translate>Status</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData =>
+                                    rowData.deletedAt === null ? 'Active' : 'InActive'
+                                }
+                            </Cell>
+                        </Column>
+                    </Table>
+
+                </Modal.Body>
+                <Modal.Footer>
+                    <Stack spacing={2} divider={<Divider vertical />}>
+
+                        <Button appearance="ghost" color="cyan" onClick={CloseSubstitutesModel}>
+                            Close
+                        </Button>
+                    </Stack>
+                </Modal.Footer>
+            </Modal>
         </div>
     </>);
 };
