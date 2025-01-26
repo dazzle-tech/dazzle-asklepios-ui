@@ -194,7 +194,7 @@ const GenericMedications = () => {
           <Column sortable flexGrow={2} fixed fullText>
             <HeaderCell  align="center">
                <Input onChange={e => handleFilterChange('roaList', e)} /> 
-              <Translate>Rout</Translate>
+              <Translate>ROA</Translate>
             </HeaderCell>
             <Cell>
               {rowData => rowData.roaList?.map((item, index) => {

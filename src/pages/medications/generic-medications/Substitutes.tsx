@@ -2,6 +2,7 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
+import { Plus, Trash } from '@rsuite/icons';
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList, fromCamelCaseToDBName } from '@/utils';
 import React, { useEffect, useState } from 'react';
 import {
@@ -29,23 +30,31 @@ import {
     useGetGenericMedicationQuery,
     useGetGenericMedicationWithActiveIngredientQuery,
     useSaveLinkedBrandMedicationMutation,
-    useGetLinkedBrandQuery
+    useGetLinkedBrandQuery,
+    useRemoveLinkedBrandMedicationMutation
 } from '@/services/medicationsSetupService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { ApBrandMedicationSubstitutes } from '@/types/model-types';
-import { newApBrandMedicationSubstitutes } from '@/types/model-types-constructor';
+import { ApBrandMedicationSubstitutes, ApGenericMedication } from '@/types/model-types';
+import { newApBrandMedicationSubstitutes, newApGenericMedication } from '@/types/model-types-constructor';
 const Substitutes = ({ genericMedication }) => {
     const [searchKeyword, setSearchKeyword] = useState('');
     const [selectedGeneric, setSelectedGeneric] = useState(null);
     const [linkedBrand, setLinkedBrand] = useState<ApBrandMedicationSubstitutes>({ ...newApBrandMedicationSubstitutes })
     const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
-    const{data:lisOfLinkedBrand}=useGetLinkedBrandQuery(genericMedication.key);
+    const{data:lisOfLinkedBrand,refetch:fetchB}=useGetLinkedBrandQuery(genericMedication.key);
     const dispatch = useAppDispatch();
     const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
     const [listGenericRequest, setListGenericRequest] = useState<ListRequest>({ ...initialListRequest });
-
     const [saveLinkBrandMedication, saveLinkedBrandMedicationMutation] = useSaveLinkedBrandMedicationMutation();
+    const[removeLinkedBrand,removeLinkedBrandMutation]=useRemoveLinkedBrandMedicationMutation();
+    const[brand,setBrand]=useState<ApGenericMedication>({...newApGenericMedication});
+    const [brandAlt,setBrandAlt]=useState<ApBrandMedicationSubstitutes>({...newApBrandMedicationSubstitutes});
+    const isSelected = rowData => {
+        if (rowData && brand && rowData.key === brand.key) {
+          return 'selected-row';
+        } else return '';
+      };
     useEffect(() => {
         if (searchKeyword.trim() !== "") {
             setListGenericRequest({
@@ -65,20 +74,33 @@ const Substitutes = ({ genericMedication }) => {
             });
         }
     }, [searchKeyword]);
+  
+    useEffect(() => {
+        if(selectedGeneric!=null){
+        if(genericMedication?.key!==selectedGeneric?.key){
+        try {
+            saveLinkBrandMedication({ ...linkedBrand, brandKey: genericMedication.key, alternativeBrandKey: selectedGeneric.key }).unwrap().then(()=>{
+                fetchB();
+            });
+            dispatch(notify('Saved  successfully'));
+          
+        }
+        catch (error) {
+            dispatch(notify('Saved Faild'));
+         }}
+         else{
+            dispatch(notify('This medication is no different '));
+         }}
+    }, [selectedGeneric]);
+      
+    useEffect(()=>{
+        if(brand.key!==null){
+        setBrandAlt({...brandAlt,brandKey:genericMedication.key,alternativeBrandKey:brand.key});}
+    },[brand.key]);
     const handleItemClick = (Generic) => {
         setSelectedGeneric(Generic);
-
         setSearchKeyword("")
-
     };
-    useEffect(() => {
-        console.log(selectedGeneric);
-        try {
-            saveLinkBrandMedication({ ...linkedBrand, brandKey: genericMedication.key, alternativeBrandKey: selectedGeneric.key }).unwrap();
-            dispatch(notify('Saved  successfully'));
-        }
-        catch (error) { }
-    }, [selectedGeneric])
     const handleFilterChange = (fieldName, value) => {
         if (value) {
             //     setListRequest(
@@ -97,6 +119,19 @@ const Substitutes = ({ genericMedication }) => {
     const handleSearch = value => {
         setSearchKeyword(value);
     };
+
+    const handleRemove=()=>{
+        try{
+            removeLinkedBrand({...brandAlt}).unwrap().then(()=>{
+                fetchB();
+            });
+            dispatch(notify('deleted successfully'));
+          
+           }
+            catch(error){
+               
+            }
+    }
     return (<>
         <div className='top-container-p'>
             <div className='form-search-container-p '>
@@ -149,7 +184,17 @@ const Substitutes = ({ genericMedication }) => {
                     .filter(Boolean)
                     .join(', ')}
             </span>}
-
+          <div style={{height:'80px',display:'flex' ,justifyContent:'center',alignItems:'center'}}>
+              <IconButton
+                 disabled={!brand.key}
+                size="xs"
+                appearance="primary"
+                color="red"
+                onClick={handleRemove}
+                icon={<Trash />}
+              />
+              </div>
+          
         </div>
         <Table
             height={400}
@@ -159,10 +204,11 @@ const Substitutes = ({ genericMedication }) => {
             bordered
             cellBordered
             data={lisOfLinkedBrand?.object ?? []}
-        //   onRowClick={rowData => {
-        //     setGenericMedication(rowData);
-        //   }}
-        //   rowClassName={isSelected}
+          onRowClick={rowData => {
+            setBrand(rowData);
+          
+          }}
+          rowClassName={isSelected}
         >
             <Column sortable flexGrow={2}>
                 <HeaderCell align="center">
@@ -211,7 +257,7 @@ const Substitutes = ({ genericMedication }) => {
             <Column sortable flexGrow={2} fixed fullText>
                 <HeaderCell align="center">
                     <Input onChange={e => handleFilterChange('roaList', e)} />
-                    <Translate>Rout</Translate>
+                    <Translate>ROA</Translate>
                 </HeaderCell>
                 <Cell>
                     {rowData => rowData.roaList?.map((item, index) => {
