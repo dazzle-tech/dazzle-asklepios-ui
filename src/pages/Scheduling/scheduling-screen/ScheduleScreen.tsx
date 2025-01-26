@@ -262,7 +262,7 @@ const ScheduleScreen = () => {
     };
 
     const visibleAppointments = currentView === "agenda" || showCanceled
-        ? appointmentsData // Show all events in the agenda view
+        ? appointmentsData  
         : appointmentsData.filter((event) => !event.hidden);
 
 

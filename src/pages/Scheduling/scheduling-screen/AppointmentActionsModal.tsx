@@ -11,6 +11,10 @@ import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import MyInput from "@/components/MyInput";
 import CheckIcon from '@rsuite/icons/Check';
 import BlockIcon from '@rsuite/icons/Block';
+import { useCompleteEncounterRegistrationMutation } from "@/services/encounterService";
+import { newApEncounter } from "@/types/model-types-constructor";
+import { da } from "date-fns/locale";
+import { calculateAgeFormat } from "@/utils";
 
 const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appointment, onStatusChange, editAppointment, viewAppointment }) => {
 
@@ -23,6 +27,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     const { data: cancelResonLovQueryResponse } = useGetLovValuesByCodeQuery('APP_CANCEL_REASON');
     const [reasonKey, setResonKey] = useState()
     const [otherReason, setOtherReason] = useState()
+    const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
+    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter });
 
     const handleCheckIn = () => {
         const appointmentData = appointment?.appointmentData
@@ -33,6 +39,19 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
         })
     }
+    const handleSaveVisit = (data) => {
+        const visit = {
+            ...localEncounter,
+            patientAge: data?.patient.dob ? calculateAgeFormat(data.patient.dob) + '' : '',
+            patientKey: data?.patient.key,
+            patientFullName: data?.patient.fullName,
+            encounterStatusLkey: "91084250213000",
+            plannedStartDate: data?.appointmentStart
+        }
+        saveEncounter(visit).unwrap();
+        console.log(visit)
+
+    };
 
     useEffect(() => {
         if (appointment)
@@ -51,6 +70,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             onStatusChange()
             onActionsModalClose()
 
+        }).then(() => {
+            handleSaveVisit(appointment?.appointmentData)
         })
     }
 
@@ -90,7 +111,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
     const handleChangeAction = () => {
         onActionsModalClose()
-     }
+    }
 
     useEffect(() => {
         console.log(appointment)
@@ -134,27 +155,27 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
                     </ButtonToolbar>
                     <br />
-                    <div style={{display:"flex",gap:"20px"}}>
-                    <IconButton style={{ width: 180, height: 40 }} icon={<PageIcon />} color="cyan" appearance="ghost">
-                        Print Certificate
-                    </IconButton>
+                    <div style={{ display: "flex", gap: "20px" }}>
+                        <IconButton style={{ width: 180, height: 40 }} icon={<PageIcon />} color="cyan" appearance="ghost">
+                            Print Certificate
+                        </IconButton>
 
 
-                    <Button style={{
-                        width: 180,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "flex-start",
-                        borderRadius: "5px",
-                        height: 40
-                    }}
-                        color="blue" appearance="ghost" >
+                        <Button style={{
+                            width: 180,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "flex-start",
+                            borderRadius: "5px",
+                            height: 40
+                        }}
+                            color="blue" appearance="ghost" >
 
-                        <FontAwesomeIcon icon={faSackDollar} style={{ marginRight: "25px", fontSize: "18px" }} />
-                        <span style={{ marginLeft: "13px" }}>Add Payment</span>
-                    </Button>
+                            <FontAwesomeIcon icon={faSackDollar} style={{ marginRight: "25px", fontSize: "18px" }} />
+                            <span style={{ marginLeft: "13px" }}>Add Payment</span>
+                        </Button>
                     </div>
-                  
+
                 </Modal.Body>
 
             </Modal>
