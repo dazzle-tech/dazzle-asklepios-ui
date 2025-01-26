@@ -72,7 +72,7 @@ const ActiveIngredient = ({genericMedication}) => {
     const dispatch = useAppDispatch();
     const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({ ...newApActiveIngredient });
     const { data: sourceOfInfoLovResponseData } = useGetLovValuesByCodeQuery('SOURCE_OF_INFO');
-    const { data: UOMLovResponseData } = useGetLovValuesByCodeQuery('UOM');
+    const { data: UOMLovResponseData } = useGetLovValuesByCodeQuery('VALUE_UNIT');
     const { data: genericMedicationActiveIngredientListResponseData} = useGetGenericMedicationActiveIngredientQuery(listRequest);
     const [saveGenericMedicationActiveIngredient, saveGenericMedicationActiveIngredientMutation]= useSaveGenericMedicationActiveIngredientMutation();
     const [removeGenericMedicationActiveIngredient, removeGenericMedicationActiveIngredientMutation] = useRemoveGenericMedicationActiveIngredientMutation();
