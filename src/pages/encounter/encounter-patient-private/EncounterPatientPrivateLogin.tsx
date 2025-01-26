@@ -35,7 +35,7 @@ import { ApUser, ApUserAccessPrivatePatient } from '@/types/model-types';
 import { newApUser, newApUserAccessPrivatePatient } from '@/types/model-types-constructor';
 import { useSaveUserAccessLoginPrivatePatientMutation } from '@/services/patientService';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
-
+import { useLocation } from 'react-router-dom';
 const EncounterPatientPrivateLogin = () => {
   const [localUser, setLocalUser] = useState<ApUser>({ ...newApUser });
   const [localLoginUser, setLocalLoginUser] = useState<ApUserAccessPrivatePatient>({ ...newApUserAccessPrivatePatient });
@@ -44,7 +44,8 @@ const EncounterPatientPrivateLogin = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const patientSlice = useAppSelector(state => state.patient);
-
+  const location = useLocation();
+  const propsData = location.state;
   useEffect(() => {
     setReason(localLoginUser.reason)
   }, [localLoginUser])
@@ -62,7 +63,9 @@ const EncounterPatientPrivateLogin = () => {
           dispatch(notify(`Welcome ${localUser.username}`));
           dispatch(setEncounter(patientSlice.encounter));
           dispatch(setPatient(patientSlice.patient));
-          navigate('/encounter-pre-observations');
+          if(propsData.info === "toNurse"){navigate('/encounter-pre-observations')}
+          else if(propsData.info === "toEncounter"){navigate('/encounter')}
+          
         } else {
           dispatch(notify("No matching record found"));
         }
@@ -134,6 +137,7 @@ const EncounterPatientPrivateLogin = () => {
                   required
                   width={165}
                   column
+                  fieldType="password"
                   fieldName="password"
                   record={localUser}
                   setRecord={setLocalUser}
