@@ -42,14 +42,14 @@ export const medicationsSetupService = createApi({
     }),
     saveGenericMedication: builder.mutation({
       query: (data: { genericMedication: ApGenericMedication; roa; }) => {
-         const param = data.roa;
-        return{
-            url: `/medications/save-generic-medication?roa=${param}`,
-        method: 'POST',
-        body: data.genericMedication,
+        const param = data.roa;
+        return {
+          url: `/medications/save-generic-medication?roa=${param}`,
+          method: 'POST',
+          body: data.genericMedication,
         }
-      
-      },onQueryStarted: onQueryStarted,
+
+      }, onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.object;
       }
@@ -77,7 +77,7 @@ export const medicationsSetupService = createApi({
         url: `/medications/save-generic-medication-active-ingredient`,
         method: 'POST',
         body: genericMedicationActiveIngredient
-      }),onQueryStarted: onQueryStarted,
+      }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.object;
       }
@@ -105,291 +105,301 @@ export const medicationsSetupService = createApi({
         url: `/medications/save-prescription-instruction`,
         method: 'POST',
         body: prescriptionInstruction
-      }),onQueryStarted: onQueryStarted,
+      }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.object;
       }
     }),
 
     getActiveIngredientSynonym: builder.query({
-        query: (listRequest: ListRequest) => ({
-          url: `/medications/active-ingredient-synonym-list?${fromListRequestToQueryParams(listRequest)}`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
+      query: (listRequest: ListRequest) => ({
+        url: `/medications/active-ingredient-synonym-list?${fromListRequestToQueryParams(listRequest)}`
       }),
-      removeActiveIngredientSynonym: builder.mutation({
-        query: (activeIngredientSynonym: ApActiveIngredientSynonym) => ({
-          url: `/medications/remove-active-ingredient-synonym`,
-          method: 'POST',
-          body: activeIngredientSynonym
-        }),
-        onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeActiveIngredientSynonym: builder.mutation({
+      query: (activeIngredientSynonym: ApActiveIngredientSynonym) => ({
+        url: `/medications/remove-active-ingredient-synonym`,
+        method: 'POST',
+        body: activeIngredientSynonym
       }),
-      saveActiveIngredientSynonym: builder.mutation({
-        query: (activeIngredientSynonym: ApActiveIngredientSynonym) => ({
-          url: `/medications/save-active-ingredient-synonym`,
-          method: 'POST',
-          body: activeIngredientSynonym
-        }),onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    saveActiveIngredientSynonym: builder.mutation({
+      query: (activeIngredientSynonym: ApActiveIngredientSynonym) => ({
+        url: `/medications/save-active-ingredient-synonym`,
+        method: 'POST',
+        body: activeIngredientSynonym
+      }), onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getActiveIngredientAdverseEffect: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/medications/active-ingredient-adverse-effect-list?${fromListRequestToQueryParams(listRequest)}`
       }),
-      getActiveIngredientAdverseEffect: builder.query({
-        query: (listRequest: ListRequest) => ({
-          url: `/medications/active-ingredient-adverse-effect-list?${fromListRequestToQueryParams(listRequest)}`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeActiveIngredientAdverseEffect: builder.mutation({
+      query: (activeIngredientAdverseEffect: ApActiveIngredientAdverseEffect) => ({
+        url: `/medications/remove-active-ingredient-adverse-effect`,
+        method: 'POST',
+        body: activeIngredientAdverseEffect
       }),
-      removeActiveIngredientAdverseEffect: builder.mutation({
-        query: (activeIngredientAdverseEffect: ApActiveIngredientAdverseEffect) => ({
-          url: `/medications/remove-active-ingredient-adverse-effect`,
-          method: 'POST',
-          body: activeIngredientAdverseEffect
-        }),
-        onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    saveActiveIngredientAdverseEffect: builder.mutation({
+      query: (activeIngredientAdverseEffect: ApActiveIngredientAdverseEffect) => ({
+        url: `/medications/save-active-ingredient-adverse-effect`,
+        method: 'POST',
+        body: activeIngredientAdverseEffect
+      }), onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getActiveIngredientSpecialPopulation: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/medications/active-ingredient-special-population-list?${fromListRequestToQueryParams(listRequest)}`
       }),
-      saveActiveIngredientAdverseEffect: builder.mutation({
-        query: (activeIngredientAdverseEffect: ApActiveIngredientAdverseEffect) => ({
-          url: `/medications/save-active-ingredient-adverse-effect`,
-          method: 'POST',
-          body: activeIngredientAdverseEffect
-        }),onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeActiveIngredientSpecialPopulation: builder.mutation({
+      query: (activeIngredientSpecialPopulation: ApActiveIngredientSpecialPopulation) => ({
+        url: `/medications/remove-active-ingredient-special-population`,
+        method: 'POST',
+        body: activeIngredientSpecialPopulation
       }),
-      getActiveIngredientSpecialPopulation: builder.query({
-        query: (listRequest: ListRequest) => ({
-          url: `/medications/active-ingredient-special-population-list?${fromListRequestToQueryParams(listRequest)}`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    saveActiveIngredientSpecialPopulation: builder.mutation({
+      query: (ApActiveIngredientSpecialPopulation: ApActiveIngredientSpecialPopulation) => ({
+        url: `/medications/save-active-ingredient-special-population`,
+        method: 'POST',
+        body: ApActiveIngredientSpecialPopulation
+      }), onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getActiveIngredientFoodInteraction: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/medications/active-ingredient-food-interaction-list?${fromListRequestToQueryParams(listRequest)}`
       }),
-      removeActiveIngredientSpecialPopulation: builder.mutation({
-        query: (activeIngredientSpecialPopulation: ApActiveIngredientSpecialPopulation) => ({
-          url: `/medications/remove-active-ingredient-special-population`,
-          method: 'POST',
-          body: activeIngredientSpecialPopulation
-        }),
-        onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeActiveIngredientFoodInteraction: builder.mutation({
+      query: (activeIngredientFoodInteraction: ApActiveIngredientFoodInteraction) => ({
+        url: `/medications/remove-active-ingredient-food-interaction`,
+        method: 'POST',
+        body: activeIngredientFoodInteraction
       }),
-      saveActiveIngredientSpecialPopulation: builder.mutation({
-        query: (ApActiveIngredientSpecialPopulation: ApActiveIngredientSpecialPopulation) => ({
-          url: `/medications/save-active-ingredient-special-population`,
-          method: 'POST',
-          body: ApActiveIngredientSpecialPopulation
-        }),onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    saveActiveIngredientFoodInteraction: builder.mutation({
+      query: (activeIngredientFoodInteraction: ApActiveIngredientFoodInteraction) => ({
+        url: `/medications/save-active-ingredient-food-interaction`,
+        method: 'POST',
+        body: activeIngredientFoodInteraction
+      }), onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getActiveIngredientDrugInteraction: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/medications/active-ingredient-drug-interaction-list?${fromListRequestToQueryParams(listRequest)}`
       }),
-      getActiveIngredientFoodInteraction: builder.query({
-        query: (listRequest: ListRequest) => ({
-          url: `/medications/active-ingredient-food-interaction-list?${fromListRequestToQueryParams(listRequest)}`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeActiveIngredientDrugInteraction: builder.mutation({
+      query: (activeIngredientDrugInteraction: ApActiveIngredientDrugInteraction) => ({
+        url: `/medications/remove-active-ingredient-drug-interaction`,
+        method: 'POST',
+        body: activeIngredientDrugInteraction
       }),
-      removeActiveIngredientFoodInteraction: builder.mutation({
-        query: (activeIngredientFoodInteraction: ApActiveIngredientFoodInteraction) => ({
-          url: `/medications/remove-active-ingredient-food-interaction`,
-          method: 'POST',
-          body: activeIngredientFoodInteraction
-        }),
-        onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    saveActiveIngredientDrugInteraction: builder.mutation({
+      query: (activeIngredientDrugInteraction: ApActiveIngredientDrugInteraction) => ({
+        url: `/medications/save-active-ingredient-drug-interaction`,
+        method: 'POST',
+        body: activeIngredientDrugInteraction
+      }), onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getActiveIngredientRecommededDosage: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/medications/active-ingredient-recommended-dosage-list?${fromListRequestToQueryParams(listRequest)}`
       }),
-      saveActiveIngredientFoodInteraction: builder.mutation({
-        query: (activeIngredientFoodInteraction: ApActiveIngredientFoodInteraction) => ({
-          url: `/medications/save-active-ingredient-food-interaction`,
-          method: 'POST',
-          body: activeIngredientFoodInteraction
-        }),onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeActiveIngredientRecommendedDosage: builder.mutation({
+      query: (activeIngredientRecommendedDosage: ApActiveIngredientRecommendedDosage) => ({
+        url: `/medications/remove-active-ingredient-recommended-dosage`,
+        method: 'POST',
+        body: activeIngredientRecommendedDosage
       }),
-      getActiveIngredientDrugInteraction: builder.query({
-        query: (listRequest: ListRequest) => ({
-          url: `/medications/active-ingredient-drug-interaction-list?${fromListRequestToQueryParams(listRequest)}`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    saveActiveIngredientRecommendedDosage: builder.mutation({
+      query: (activeIngredientRecommendedDosage: ApActiveIngredientRecommendedDosage) => ({
+        url: `/medications/save-active-ingredient-recommended-dosage`,
+        method: 'POST',
+        body: activeIngredientRecommendedDosage
+      }), onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getActiveIngredientContraindication: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/medications/active-ingredient-contraindication-list?${fromListRequestToQueryParams(listRequest)}`
       }),
-      removeActiveIngredientDrugInteraction: builder.mutation({
-        query: (activeIngredientDrugInteraction: ApActiveIngredientDrugInteraction) => ({
-          url: `/medications/remove-active-ingredient-drug-interaction`,
-          method: 'POST',
-          body: activeIngredientDrugInteraction
-        }),
-        onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeActiveIngredientContraindication: builder.mutation({
+      query: (activeIngredientContraindication: ApActiveIngredientContraindication) => ({
+        url: `/medications/remove-active-ingredient-contraindication`,
+        method: 'POST',
+        body: activeIngredientContraindication
       }),
-      saveActiveIngredientDrugInteraction: builder.mutation({
-        query: (activeIngredientDrugInteraction: ApActiveIngredientDrugInteraction) => ({
-          url: `/medications/save-active-ingredient-drug-interaction`,
-          method: 'POST',
-          body: activeIngredientDrugInteraction
-        }),onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    saveActiveIngredientContraindication: builder.mutation({
+      query: (activeIngredientContraindication: ApActiveIngredientContraindication) => ({
+        url: `/medications/save-active-ingredient-contraindication`,
+        method: 'POST',
+        body: activeIngredientContraindication
+      }), onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getActiveIngredientIndication: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/medications/active-ingredient-indication-list?${fromListRequestToQueryParams(listRequest)}`
+
       }),
-      getActiveIngredientRecommededDosage: builder.query({
-        query: (listRequest: ListRequest) => ({
-          url: `/medications/active-ingredient-recommended-dosage-list?${fromListRequestToQueryParams(listRequest)}`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeActiveIngredientIndication: builder.mutation({
+      query: (activeIngredientIndication: ApActiveIngredientIndication) => ({
+        url: `/medications/remove-active-ingredient-indication`,
+        method: 'POST',
+        body: activeIngredientIndication
       }),
-      removeActiveIngredientRecommendedDosage: builder.mutation({
-        query: (activeIngredientRecommendedDosage: ApActiveIngredientRecommendedDosage) => ({
-          url: `/medications/remove-active-ingredient-recommended-dosage`,
-          method: 'POST',
-          body: activeIngredientRecommendedDosage
-        }),
-        onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    saveActiveIngredientIndication: builder.mutation({
+      query: (activeIngredientIndication: ApActiveIngredientIndication) => ({
+        url: `/medications/save-active-ingredient-indication`,
+        method: 'POST',
+        body: activeIngredientIndication
+      }), onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getActiveIngredient: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/medications/active-ingredient-list?${fromListRequestToQueryParams(listRequest)}`
       }),
-      saveActiveIngredientRecommendedDosage: builder.mutation({
-        query: (activeIngredientRecommendedDosage: ApActiveIngredientRecommendedDosage) => ({
-          url: `/medications/save-active-ingredient-recommended-dosage`,
-          method: 'POST',
-          body: activeIngredientRecommendedDosage
-        }),onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    saveActiveIngredient: builder.mutation({
+      query: (activeIngredient: ApActiveIngredient) => ({
+        url: `/medications/save-active-ingredient`,
+        method: 'POST',
+        body: activeIngredient
+      }), onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getGenericMedicationWithActiveIngredient: builder.query({
+      query: (active: string) => ({
+        headers: {
+          active
+        },
+        url: `/medications/generic-medication_act-list`
       }),
-      getActiveIngredientContraindication: builder.query({
-        query: (listRequest: ListRequest) => ({
-          url: `/medications/active-ingredient-contraindication-list?${fromListRequestToQueryParams(listRequest)}`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+
+    }),
+    saveLinkedBrandMedication: builder.mutation({
+      query: (link: ApBrandMedicationSubstitutes) => ({
+        url: `/medications/save_link-brand-medication`,
+        method: 'POST',
+        body: link
+      }), onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response;
+      }
+    }),
+    getLinkedBrand: builder.query({
+      query: (key: string) => ({
+        headers: {
+          key
+        },
+        url: `/medications/brands-linked-list`
       }),
-      removeActiveIngredientContraindication: builder.mutation({
-        query: (activeIngredientContraindication: ApActiveIngredientContraindication) => ({
-          url: `/medications/remove-active-ingredient-contraindication`,
-          method: 'POST',
-          body: activeIngredientContraindication
-        }),
-        onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
-      }),
-      saveActiveIngredientContraindication: builder.mutation({
-        query: (activeIngredientContraindication: ApActiveIngredientContraindication) => ({
-          url: `/medications/save-active-ingredient-contraindication`,
-          method: 'POST',
-          body: activeIngredientContraindication
-        }),onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
-      }),
-      getActiveIngredientIndication: builder.query({
-        query: (listRequest: ListRequest) => ({
-          url: `/medications/active-ingredient-indication-list?${fromListRequestToQueryParams(listRequest)}`
-         
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
-      }),
-      removeActiveIngredientIndication: builder.mutation({
-        query: (activeIngredientIndication: ApActiveIngredientIndication) => ({
-          url: `/medications/remove-active-ingredient-indication`,
-          method: 'POST',
-          body: activeIngredientIndication
-        }),
-        onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
-      }),
-      saveActiveIngredientIndication: builder.mutation({
-        query: (activeIngredientIndication: ApActiveIngredientIndication) => ({
-          url: `/medications/save-active-ingredient-indication`,
-          method: 'POST',
-          body: activeIngredientIndication
-        }),onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
-      }),
-      getActiveIngredient: builder.query({
-        query: (listRequest: ListRequest) => ({
-          url: `/medications/active-ingredient-list?${fromListRequestToQueryParams(listRequest)}`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
-      }),
-      saveActiveIngredient: builder.mutation({
-        query: (activeIngredient: ApActiveIngredient) => ({
-          url: `/medications/save-active-ingredient`,
-          method: 'POST',
-          body: activeIngredient
-        }),onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
-      }),
-      getGenericMedicationWithActiveIngredient: builder.query({
-        query: (active: string) => ({
-          headers: {
-            active
-          },
-          url: `/medications/generic-medication_act-list`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
-  
-      }),
-      saveLinkedBrandMedication: builder.mutation({
-        query: (link: ApBrandMedicationSubstitutes) => ({
-          url: `/medications/save_link-brand-medication`,
-          method: 'POST',
-          body: link
-        }),onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response;
-        }
-      }),
-      getLinkedBrand: builder.query({
-        query: (key: string) => ({
-          headers: {
-           key
-          },
-          url: `/medications/brands-linked-list`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
-  
-      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+
+    }),
+    removeLinkedBrandMedication: builder.mutation({
+      query: (link: ApBrandMedicationSubstitutes) => ({
+        url: `/medications/delete-link-brand-medication`,
+        method: 'POST',
+        body:link
+      }), onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response;
+      }
     })
+  })
 });
 
 export const {
-  
+
   useGetGenericMedicationQuery,
   useRemoveGenericMedicationMutation,
   useSaveGenericMedicationMutation,
@@ -427,6 +437,7 @@ export const {
   useSaveActiveIngredientMutation,
   useGetGenericMedicationWithActiveIngredientQuery,
   useSaveLinkedBrandMedicationMutation,
-  useGetLinkedBrandQuery
- 
+  useGetLinkedBrandQuery,
+  useRemoveLinkedBrandMedicationMutation
+
 } = medicationsSetupService;

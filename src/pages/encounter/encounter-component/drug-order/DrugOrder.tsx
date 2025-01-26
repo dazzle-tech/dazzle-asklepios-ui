@@ -975,7 +975,7 @@ const DrugOrder = () => {
                                 <Text style={{ fontWeight: 'bold', marginTop: '7px' }}>Frequency</Text>
                                 <InputGroup style={{ width: '160px', zoom: 0.85, height: '40px' }}>
                                     <Input
-                                        disabled={orderMedication.drugOrderTypeLkey != '2937757567806213' ? true : false}
+                                        disabled={orderMedication.drugOrderTypeLkey == '2937757567806213' ? true : false}
 
                                         style={{ width: '100px', height: '100%' }}
                                         type="number"
