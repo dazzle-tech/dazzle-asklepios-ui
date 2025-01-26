@@ -7,6 +7,7 @@ import PageIcon from '@rsuite/icons/Page';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import {
     InputGroup,
@@ -46,7 +47,8 @@ import MyInput from '@/components/MyInput';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
     useGetGenericMedicationQuery,
-    useGetGenericMedicationWithActiveIngredientQuery
+    useGetGenericMedicationWithActiveIngredientQuery,
+    useGetLinkedBrandQuery
 } from '@/services/medicationsSetupService';
 import {
     useGetLovValuesByCodeQuery,
@@ -89,6 +91,7 @@ const DrugOrder = () => {
     const [editDuration, setEditDuration] = useState(false);
     const [adminInstructions, setAdminInstructions] = useState("");
     const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
+    const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
     const [indicationsIcd, setIndicationsIcd] = useState({ indicationIcd: null });
     const [edit_new, setEdit_new] = useState(true);
@@ -100,6 +103,7 @@ const DrugOrder = () => {
     const { data: indicationLovQueryResponse } = useGetLovValuesByCodeQuery('MED_INDICATION_USE');
     const { data: DurationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_DURATION');
     const { data: priorityLevelLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
+    const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ORDER_ADMIN_NSTRUCTIONS');
     const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const [listRequest, setListRequest] = useState<ListRequest>({
@@ -186,6 +190,7 @@ const DrugOrder = () => {
             }
         ],
     });
+    const { data: lisOfLinkedBrand } = useGetLinkedBrandQuery(selectedGeneric?.key, { skip: selectedGeneric?.key == null });
     const filteredorders = orders?.object?.filter(
         (item) => item.statusLkey === "1804482322306061"
     ) ?? [];
@@ -532,7 +537,7 @@ const DrugOrder = () => {
 
                 statusLkey: "1804482322306061"
                 , saveDraft: false,
-                submittedAt:Date.now()
+                submittedAt: Date.now()
             }).unwrap();
             dispatch(notify('submetid  Successfully'));
             handleCleare();
@@ -627,6 +632,9 @@ const DrugOrder = () => {
     }
     const CloseCancellationReasonModel = () => {
         setOpenCancellationReasonModel(false);
+    }
+    const CloseSubstitutesModel = () => {
+        setOpenSubstitutesModel(false);
     }
     const renderRowExpanded = rowData => {
         // Add this line to check children data
@@ -795,8 +803,23 @@ const DrugOrder = () => {
 
 
                 </Form>
-              
+
             </div>
+
+            <Button
+                color="cyan"
+                appearance="primary"
+                style={{ height: '30px', marginTop: '23px' }}
+            onClick={()=>{
+                setOpenSubstitutesModel(true);
+            }}
+
+            >
+
+                <FontAwesomeIcon icon={faCircleInfo} style={{ marginRight: '5px' }} />
+                <span>Substitutes</span>
+            </Button>
+
             {selectedGeneric && <span style={{ marginTop: "25px", fontWeight: "bold" }}>
                 {[selectedGeneric.genericName,
                 selectedGeneric.dosageFormLvalue?.lovDisplayVale,
@@ -952,8 +975,8 @@ const DrugOrder = () => {
                                 <Text style={{ fontWeight: 'bold', marginTop: '7px' }}>Frequency</Text>
                                 <InputGroup style={{ width: '160px', zoom: 0.85, height: '40px' }}>
                                     <Input
-                                     disabled={orderMedication.drugOrderTypeLkey != '2937757567806213' ? true : false}
-                                       
+                                        disabled={orderMedication.drugOrderTypeLkey != '2937757567806213' ? true : false}
+
                                         style={{ width: '100px', height: '100%' }}
                                         type="number"
                                         value={orderMedication.frequency}
@@ -970,7 +993,7 @@ const DrugOrder = () => {
 
                             <MyInput
                                 column
-                               
+
                                 width={150}
                                 fieldType="select"
                                 fieldLabel="ROA"
@@ -1436,7 +1459,7 @@ const DrugOrder = () => {
                     </HeaderCell>
                     <Cell>
                         {rowData => {
-                            return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, "every "+rowData.frequency+ " hours", rowData.roaLvalue?.lovDisplayVale]);
+                            return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, "every " + rowData.frequency + " hours", rowData.roaLvalue?.lovDisplayVale]);
                         }
                         }
                     </Cell>
@@ -1511,6 +1534,132 @@ const DrugOrder = () => {
                             Cancel
                         </Button>
                         <Button appearance="ghost" color="cyan" onClick={CloseCancellationReasonModel}>
+                            Close
+                        </Button>
+                    </Stack>
+                </Modal.Footer>
+            </Modal>
+            <Modal size={'lg'} open={openSubstitutesModel} onClose={CloseSubstitutesModel} overflow  >
+                <Modal.Title>
+                    <Translate><h6>Substitues</h6></Translate>
+                </Modal.Title>
+                <Modal.Body>
+                    <Table
+                        height={400}
+
+                        headerHeight={50}
+                        rowHeight={60}
+                        bordered
+                        cellBordered
+                        data={lisOfLinkedBrand?.object ?? []}
+                    //   onRowClick={rowData => {
+                    //     setGenericMedication(rowData);
+                    //   }}
+                    //   rowClassName={isSelected}
+                    >
+                        <Column sortable flexGrow={2}>
+                            <HeaderCell align="center">
+                                <Translate>Code </Translate>
+                            </HeaderCell>
+                            <Cell dataKey="code" />
+                        </Column>
+                        <Column sortable flexGrow={2}>
+                            <HeaderCell align="center">
+                                <Translate>Brand Name </Translate>
+                            </HeaderCell>
+                            <Cell dataKey="genericName" />
+                        </Column>
+                        <Column sortable flexGrow={2}>
+                            <HeaderCell align="center">
+
+                                <Translate>Manufacturer</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="manufacturerLkey">
+                                {rowData =>
+                                    rowData.manufacturerLvalue ? rowData.manufacturerLvalue.lovDisplayVale : rowData.manufacturerLkey
+                                }
+                            </Cell>
+                        </Column>
+                        <Column sortable flexGrow={2} fullText>
+                            <HeaderCell align="center">
+
+                                <Translate>Dosage Form</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData =>
+                                    rowData.dosageFormLvalue ? rowData.dosageFormLvalue.lovDisplayVale : rowData.dosageFormLkey
+                                }
+                            </Cell>
+                        </Column>
+
+                        <Column sortable flexGrow={3} fullText>
+                            <HeaderCell align="center">
+
+                                <Translate>Usage Instructions</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="usageInstructions" />
+                        </Column>
+                        <Column sortable flexGrow={2} fixed fullText>
+                            <HeaderCell align="center">
+
+                                <Translate>Rout</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData => rowData.roaList?.map((item, index) => {
+                                    const value = conjureValueBasedOnKeyFromList(
+                                        medRoutLovQueryResponse?.object ?? [],
+                                        item,
+                                        'lovDisplayVale'
+                                    );
+                                    return (
+                                        <span key={index}>
+                                            {value}
+                                            {index < rowData.roaList.length - 1 && ', '}
+                                        </span>
+                                    );
+                                })}
+                            </Cell>
+                        </Column>
+                        <Column sortable flexGrow={2}>
+                            <HeaderCell align="center">
+
+                                <Translate>Expires After Opening</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData =>
+                                    rowData.expiresAfterOpening ? 'Yes' : 'No'
+                                }
+                            </Cell>
+                        </Column>
+                        <Column sortable flexGrow={3}>
+                            <HeaderCell align="center">
+
+                                <Translate>Single Patient Use</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData =>
+                                    rowData.singlePatientUse ? 'Yes' : 'No'
+                                }
+                            </Cell>
+                        </Column>
+                        <Column sortable flexGrow={1}>
+                            <HeaderCell align="center">
+
+                                <Translate>Status</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData =>
+                                    rowData.deletedAt === null ? 'Active' : 'InActive'
+                                }
+                            </Cell>
+                        </Column>
+                    </Table>
+
+                </Modal.Body>
+                <Modal.Footer>
+                    <Stack spacing={2} divider={<Divider vertical />}>
+
+                        <Button appearance="ghost" color="cyan" onClick={CloseSubstitutesModel}>
                             Close
                         </Button>
                     </Stack>
