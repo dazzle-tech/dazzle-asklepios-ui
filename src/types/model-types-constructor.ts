@@ -139,6 +139,7 @@ export const newApActiveIngredientContraindication:modelTypes.ApActiveIngredient
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	icdCodeKey:undefined,
 } 
 
 export const newApActiveIngredientDrugInteraction:modelTypes.ApActiveIngredientDrugInteraction = { 
@@ -183,6 +184,7 @@ export const newApActiveIngredientIndication:modelTypes.ApActiveIngredientIndica
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	icdCodeKey:undefined,
 } 
 
 export const newApActiveIngredientRecommendedDosage:modelTypes.ApActiveIngredientRecommendedDosage = { 
@@ -1350,6 +1352,7 @@ export const newApPatient:modelTypes.ApPatient = {
 	secondaryMobileNumber:'',
 	roleLkey:undefined,
 	districtLkey:undefined,
+	countryId:'',
 } 
 
 export const newApPatientAddresses:modelTypes.ApPatientAddresses = { 
