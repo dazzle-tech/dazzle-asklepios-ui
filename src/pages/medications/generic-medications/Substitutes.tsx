@@ -121,6 +121,7 @@ const Substitutes = ({ genericMedication }) => {
                 dispatch(notify('This medication is no different '));
              }}
              setOpenConfirmSavModal(false);
+             setSelectedGeneric(null);
     }
     const handleItemClick = (Generic) => {
        setOpenConfirmSavModal(true);
@@ -157,6 +158,7 @@ const Substitutes = ({ genericMedication }) => {
             catch(error){
                
             }
+            setSelectedGeneric(null);
     }
     return (<>
         <div className='top-container-p'>
