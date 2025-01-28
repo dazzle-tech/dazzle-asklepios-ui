@@ -29,9 +29,12 @@ import {
     TagGroup,
     SelectPicker,
     Tag,
-    DatePicker
+    DatePicker,
+
+
 
 } from 'rsuite';
+import { List} from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
@@ -57,10 +60,15 @@ import {
     useGetDrugOrderQuery,
     useSaveDrugOrderMutation,
     useGetDrugOrderMedicationQuery,
-    useSaveDrugOrderMedicationMutation
+    useSaveDrugOrderMedicationMutation,
+
 } from '@/services/encounterService';
 import {
+    useGetAllergiesQuery
+} from '@/services/observationService';
+import {
     useGetDepartmentsQuery,
+
 } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
 import { ApDrugOrderMedications } from '@/types/model-types';
@@ -69,6 +77,7 @@ import { filter } from 'lodash';
 import {
     useGetIcdListQuery,
 } from '@/services/setupService';
+import './styles.less';
 const DrugOrder = () => {
     const patientSlice = useAppSelector(state => state.patient);
     const dispatch = useAppDispatch();
@@ -106,6 +115,23 @@ const DrugOrder = () => {
     const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ORDER_ADMIN_NSTRUCTIONS');
     const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
+    const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({
+        ...initialListRequest,
+        filters: [
+            {
+                fieldName: 'patient_key',
+                operator: 'match',
+                value: patientSlice.patient.key
+            },
+            ,
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
+            }
+
+        ]
+    });
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         ignore: true
@@ -743,6 +769,16 @@ const DrugOrder = () => {
                     order.key === drugKey
                 )?.drugorderId}</Text>
             </div>
+            <div className="custom-fab">
+
+                <List style={{ height: '190px', overflowY: 'auto' }}>
+                    {allergiesListResponse?.object?.map((order, index) => (
+                        <List.Item key={index}>
+                            {order.allergyTypeLvalue?.lovDisplayVale}, {order.severityLvalue.lovDisplayVale},{order.allergensName}
+                        </List.Item>
+                    ))}
+                </List>
+            </div>
 
 
             <IconButton
@@ -810,9 +846,9 @@ const DrugOrder = () => {
                 color="cyan"
                 appearance="primary"
                 style={{ height: '30px', marginTop: '23px' }}
-            onClick={()=>{
-                setOpenSubstitutesModel(true);
-            }}
+                onClick={() => {
+                    setOpenSubstitutesModel(true);
+                }}
 
             >
 
@@ -1409,6 +1445,7 @@ const DrugOrder = () => {
                     Show canceled orders
                 </Checkbox>
             </div>
+
             <Table
                 height={600}
                 data={orderMedications?.object || []}
@@ -1653,6 +1690,7 @@ const DrugOrder = () => {
                                 }
                             </Cell>
                         </Column>
+
                     </Table>
 
                 </Modal.Body>
@@ -1666,6 +1704,7 @@ const DrugOrder = () => {
                 </Modal.Footer>
             </Modal>
         </div>
+
     </>)
 };
 export default DrugOrder;

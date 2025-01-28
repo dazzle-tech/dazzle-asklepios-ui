@@ -9,6 +9,7 @@ import { conjureValueBasedOnKeyFromList } from '@/utils';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { List} from 'rsuite';
 import {
     InputGroup,
     Form,
@@ -65,7 +66,9 @@ import {
     useGetLinkedBrandQuery,
     useGetGenericMedicationWithActiveIngredientQuery
 } from '@/services/medicationsSetupService';
-
+import {
+    useGetAllergiesQuery
+} from '@/services/observationService';
 import {
     useGetIcdListQuery,
 } from '@/services/setupService';
@@ -85,6 +88,23 @@ const Prescription = () => {
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         ignore: true
+    });
+    const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({
+        ...initialListRequest,
+        filters: [
+            {
+                fieldName: 'patient_key',
+                operator: 'match',
+                value: patientSlice.patient.key
+            },
+            ,
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
+            }
+
+        ]
     });
     const [genericMedication, setGenericMedication] = useState<ApGenericMedication>({ ...newApGenericMedication });
     const [listGenericRequest, setListGenericRequest] = useState<ListRequest>({ ...initialListRequest });
@@ -719,7 +739,16 @@ const Prescription = () => {
                     prescription.key === preKey
                 )?.prescriptionId}</Text>
             </div>
+            <div className="custom-fab">
 
+                <List style={{ height: '190px', overflowY: 'auto' }}>
+                    {allergiesListResponse?.object?.map((order, index) => (
+                        <List.Item key={index}>
+                            {order.allergyTypeLvalue?.lovDisplayVale}, {order.severityLvalue.lovDisplayVale},{order.allergensName}
+                        </List.Item>
+                    ))}
+                </List>
+            </div>
 
             <IconButton
                 color="cyan"
@@ -779,19 +808,19 @@ const Prescription = () => {
 
                 </Form>
             </div>
-               <Button
-                            color="cyan"
-                            appearance="primary"
-                            style={{ height: '30px', marginTop: '23px' }}
-                        onClick={()=>{
-                            setOpenSubstitutesModel(true);
-                        }}
-            
-                        >
-            
-                            <FontAwesomeIcon icon={faCircleInfo} style={{ marginRight: '5px' }} />
-                            <span>Substitutes</span>
-                        </Button>
+            <Button
+                color="cyan"
+                appearance="primary"
+                style={{ height: '30px', marginTop: '23px' }}
+                onClick={() => {
+                    setOpenSubstitutesModel(true);
+                }}
+
+            >
+
+                <FontAwesomeIcon icon={faCircleInfo} style={{ marginRight: '5px' }} />
+                <span>Substitutes</span>
+            </Button>
             {selectedGeneric && <span style={{ marginTop: "25px", fontWeight: "bold" }}>
                 {[selectedGeneric.genericName,
                 selectedGeneric.dosageFormLvalue?.lovDisplayVale,
