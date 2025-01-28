@@ -20,8 +20,13 @@ import {
     SelectPicker,
     DatePicker,
     Dropdown,
-    Form
+    Form,
+    Modal,
+    Stack,
+    Button,
+    Divider
 } from 'rsuite';
+import { CheckOutline, CloseOutline } from "@rsuite/icons";
 import SearchIcon from '@rsuite/icons/Search';
 import 'react-tabs/style/react-tabs.css';
 const { Column, HeaderCell, Cell } = Table;
@@ -40,6 +45,7 @@ import { newApBrandMedicationSubstitutes, newApGenericMedication } from '@/types
 const Substitutes = ({ genericMedication }) => {
     const [searchKeyword, setSearchKeyword] = useState('');
     const [selectedGeneric, setSelectedGeneric] = useState(null);
+    const[openConfirmSaveModal,setOpenConfirmSavModal]=useState(false);
     const [linkedBrand, setLinkedBrand] = useState<ApBrandMedicationSubstitutes>({ ...newApBrandMedicationSubstitutes })
     const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const{data:lisOfLinkedBrand,refetch:fetchB}=useGetLinkedBrandQuery(genericMedication.key);
@@ -75,29 +81,49 @@ const Substitutes = ({ genericMedication }) => {
         }
     }, [searchKeyword]);
   
-    useEffect(() => {
-        if(selectedGeneric!=null){
-        if(genericMedication?.key!==selectedGeneric?.key){
-        try {
-            saveLinkBrandMedication({ ...linkedBrand, brandKey: genericMedication.key, alternativeBrandKey: selectedGeneric.key }).unwrap().then(()=>{
-                fetchB();
-            });
-            dispatch(notify('Saved  successfully'));
+    // useEffect(() => {
+    //     if(selectedGeneric!=null){
+    //     if(genericMedication?.key!==selectedGeneric?.key){
+    //     try {
+    //         saveLinkBrandMedication({ ...linkedBrand, brandKey: genericMedication.key, alternativeBrandKey: selectedGeneric.key }).unwrap().then(()=>{
+    //             fetchB();
+    //         });
+    //         dispatch(notify('Saved  successfully'));
           
-        }
-        catch (error) {
-            dispatch(notify('Saved Faild'));
-         }}
-         else{
-            dispatch(notify('This medication is no different '));
-         }}
-    }, [selectedGeneric]);
+    //     }
+    //     catch (error) {
+    //         dispatch(notify('Saved Faild'));
+    //      }}
+    //      else{
+    //         dispatch(notify('This medication is no different '));
+    //      }}
+    // }, [selectedGeneric]);
       
     useEffect(()=>{
         if(brand.key!==null){
         setBrandAlt({...brandAlt,brandKey:genericMedication.key,alternativeBrandKey:brand.key});}
     },[brand.key]);
+    const handleSave=()=>{
+        if(selectedGeneric!=null){
+            if(genericMedication?.key!==selectedGeneric?.key){
+            try {
+                saveLinkBrandMedication({ ...linkedBrand, brandKey: genericMedication.key, alternativeBrandKey: selectedGeneric.key }).unwrap().then(()=>{
+                    fetchB();
+                });
+                dispatch(notify('Saved  successfully'));
+
+              
+            }
+            catch (error) {
+                dispatch(notify('Saved Faild'));
+             }}
+             else{
+                dispatch(notify('This medication is no different '));
+             }}
+             setOpenConfirmSavModal(false);
+    }
     const handleItemClick = (Generic) => {
+       setOpenConfirmSavModal(true);
         setSelectedGeneric(Generic);
         setSearchKeyword("")
     };
@@ -176,6 +202,7 @@ const Substitutes = ({ genericMedication }) => {
                 </Form>
 
             </div>
+            <div style={{width:'250px',display:'flex' ,justifyContent:'center',alignItems:'center',height:'60px'}}>
             {selectedGeneric && <span style={{ marginTop: "25px", fontWeight: "bold" }}>
                 {[selectedGeneric.genericName,
                 selectedGeneric.dosageFormLvalue?.lovDisplayVale,
@@ -183,7 +210,7 @@ const Substitutes = ({ genericMedication }) => {
                 selectedGeneric.roaLvalue?.lovDisplayVale]
                     .filter(Boolean)
                     .join(', ')}
-            </span>}
+            </span>}</div>
           <div style={{height:'80px',display:'flex' ,justifyContent:'center',alignItems:'center'}}>
               <IconButton
                  disabled={!brand.key}
@@ -206,6 +233,7 @@ const Substitutes = ({ genericMedication }) => {
             data={lisOfLinkedBrand?.object ?? []}
           onRowClick={rowData => {
             setBrand(rowData);
+            setSelectedGeneric(rowData);
           
           }}
           rowClassName={isSelected}
@@ -309,6 +337,30 @@ const Substitutes = ({ genericMedication }) => {
                 </Cell>
             </Column>
         </Table>
+     
+      <Modal open={openConfirmSaveModal} onClose={()=>setOpenConfirmSavModal(false)} overflow  >
+                <Modal.Title>
+                    <Translate><h6>Confirm Add</h6></Translate>
+                </Modal.Title>
+                <Modal.Body>
+                    <p>
+                        <CheckOutline  style={{ color: '#82cf82', marginRight: '8px', fontSize: '24px' }} />
+                        <Translate style={{ fontSize: '24px' }} >
+                        Are you sure you want to add this brand?
+                        </Translate>
+                    </p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Stack spacing={2} divider={<Divider vertical />}>
+                        <Button appearance="primary"onClick={handleSave}>
+                            Save
+                        </Button>
+                        <Button appearance="ghost" color="cyan"  onClick={()=>setOpenConfirmSavModal(false)}>
+                            Cancel
+                        </Button>
+                    </Stack>
+                </Modal.Footer>
+            </Modal>
     </>)
 }
 export default Substitutes; 
