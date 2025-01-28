@@ -81,23 +81,7 @@ const Substitutes = ({ genericMedication }) => {
         }
     }, [searchKeyword]);
   
-    // useEffect(() => {
-    //     if(selectedGeneric!=null){
-    //     if(genericMedication?.key!==selectedGeneric?.key){
-    //     try {
-    //         saveLinkBrandMedication({ ...linkedBrand, brandKey: genericMedication.key, alternativeBrandKey: selectedGeneric.key }).unwrap().then(()=>{
-    //             fetchB();
-    //         });
-    //         dispatch(notify('Saved  successfully'));
-          
-    //     }
-    //     catch (error) {
-    //         dispatch(notify('Saved Faild'));
-    //      }}
-    //      else{
-    //         dispatch(notify('This medication is no different '));
-    //      }}
-    // }, [selectedGeneric]);
+   
       
     useEffect(()=>{
         if(brand.key!==null){

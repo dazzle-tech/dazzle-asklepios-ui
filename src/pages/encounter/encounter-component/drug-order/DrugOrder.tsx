@@ -1166,7 +1166,7 @@ const DrugOrder = () => {
 
                     <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient</Table.HeaderCell>
-                        <Table.Cell dataKey="activeIngredientKey">
+                        <Table.Cell >
 
                             {rowData => {
                                 const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name
@@ -1177,13 +1177,12 @@ const DrugOrder = () => {
 
                         </Table.Cell>
                     </Table.Column>
-                    <Table.Column flexGrow={3} fullText>
+                    <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient ATC Code</Table.HeaderCell>
-                        <Table.Cell dataKey="activeIngredientKey">
+                        <Table.Cell >
 
                             {rowData => {
                                 const atcg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode
-                                console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey))
                                 return atcg;
                             }
                             }
@@ -1193,6 +1192,28 @@ const DrugOrder = () => {
                     <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
                         <Table.Cell>{rowData => rowData.strength}</Table.Cell>
+                    </Table.Column>
+                    <Table.Column flexGrow={1} fullText>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>IsControlled</Table.HeaderCell>
+                        <Table.Cell>
+                        {rowData => {
+                                const c = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled?"Yes":"No"
+                                console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled)
+                                return c;
+                            }
+                            }
+                        </Table.Cell>
+                    </Table.Column>
+                    <Table.Column flexGrow={2} fullText>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>Controlled</Table.HeaderCell>
+                        <Table.Cell>
+                        {rowData => {
+                                const c = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.controlledLvalue.lovDisplayVale
+                                console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled)
+                                return c;
+                            }
+                            }
+                        </Table.Cell>
                     </Table.Column>
                     <Table.Column flexGrow={1} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }} >Details</Table.HeaderCell>
