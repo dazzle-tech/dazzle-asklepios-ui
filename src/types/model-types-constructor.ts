@@ -1642,6 +1642,21 @@ export const newApPatientPlan:modelTypes.ApPatientPlan = {
 	isValid:undefined,
 } 
 
+export const newApPatientPreferredHealthProfessional:modelTypes.ApPatientPreferredHealthProfessional = { 
+	key:undefined,
+	practitionerKey:undefined,
+	facilityKey:undefined,
+	createdBy:'',
+	networkAffiliation:'',
+	relatedWith:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	patientKey:undefined,
+} 
+
 export const newApPatientProblem:modelTypes.ApPatientProblem = { 
 	key:undefined,
 	patientKey:undefined,

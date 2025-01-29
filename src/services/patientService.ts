@@ -3,7 +3,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApPatient, ApPatientAllergies,ApUser, ApPatientRelation, ApPatientSecondaryDocuments, ApPatientInsurance, ApPatientInsuranceCoverage, ApPatientAdministrativeWarnings } from '@/types/model-types';
+import { ApPatient, ApPatientAllergies,ApUser, ApPatientRelation, ApPatientSecondaryDocuments, ApPatientInsurance, ApPatientInsuranceCoverage, ApPatientAdministrativeWarnings ,ApPatientPreferredHealthProfessional } from '@/types/model-types';
 
 export const patientService = createApi({
   reducerPath: 'patientApi',
@@ -310,6 +310,34 @@ export const patientService = createApi({
         return response;
       },
     }), 
+    savePatientPreferredHealthProfessional: builder.mutation({
+      query: (patientPH: ApPatientPreferredHealthProfessional) => ({
+        url: `/pas/save-patient-preferred-health`,
+        method: 'POST',
+        body: patientPH
+      }),
+      transformResponse: (response) => {
+        return response;
+      },
+    }), 
+    getPatientPreferredHealthProfessional: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/pas/patient-preferred-health-list?${fromListRequestToQueryParams(listRequest)}`,
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    deletePatientPreferredHealthProfessional: builder.mutation({
+      query: (patientPH: ApPatientPreferredHealthProfessional) => ({
+        url: `/pas/remove-patient-preferred-health`, 
+        method: 'POST',
+        body: patientPH,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;   
+      }
+    }),
   }),
     
 });
@@ -340,5 +368,8 @@ export const {
   useUpdatePatientAdministrativeWarningsMutation,
   useDeletePatientAdministrativeWarningsMutation,
   useGetAgeGroupValueQuery,
-  useSaveUserAccessLoginPrivatePatientMutation
+  useSaveUserAccessLoginPrivatePatientMutation,
+  useSavePatientPreferredHealthProfessionalMutation,
+  useGetPatientPreferredHealthProfessionalQuery,
+  useDeletePatientPreferredHealthProfessionalMutation
 } = patientService;
