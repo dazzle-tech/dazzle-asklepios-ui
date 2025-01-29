@@ -9,7 +9,7 @@ import { conjureValueBasedOnKeyFromList } from '@/utils';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
-import { List} from 'rsuite';
+import { List } from 'rsuite';
 import {
     InputGroup,
     Form,
@@ -1108,59 +1108,72 @@ const Prescription = () => {
                 </div>
             </div>
             <div className='form-search-container-p ' style={{ minWidth: "600px" }}>
-
-
                 <Table
                     bordered
-                    onRowClick={rowData => {
-
-                    }}
+                    onRowClick={rowData => console.log("Row clicked:", rowData)}
                     data={genericMedicationActiveIngredientListResponseData?.object || []}
-
-
+                    height={300}
                 >
-
                     <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient</Table.HeaderCell>
-                        <Table.Cell dataKey="activeIngredientKey">
-
+                        <Table.Cell>
                             {rowData => {
-                                const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name
-
+                                if (!rowData) return " ";
+                                const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name || "N/A";
                                 return nameg;
-                            }
-                            }
-
+                            }}
                         </Table.Cell>
                     </Table.Column>
+
                     <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient ATC Code</Table.HeaderCell>
-                        <Table.Cell dataKey="activeIngredientKey">
-
+                        <Table.Cell>
                             {rowData => {
-                                const atcg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode
-
+                                if (!rowData) return " ";
+                                const atcg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode || "N/A";
                                 return atcg;
-                            }
-                            }
+                            }}
+                        </Table.Cell>
+                    </Table.Column>
 
-                        </Table.Cell>
-                    </Table.Column>
-                    <Table.Column flexGrow={2} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
-                        <Table.Cell>{rowData => {
-                            return rowData.strength + " " + rowData.unitLvalue?.lovDisplayVale
-                        }}
-                        </Table.Cell>
-                    </Table.Column>
                     <Table.Column flexGrow={1} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }} >Details</Table.HeaderCell>
-                        <Table.Cell><IconButton
-                            // onClick={OpenDetailsModel} 
-                            icon={<OthersIcon />} /></Table.Cell>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
+                        <Table.Cell>
+                            {rowData => rowData?.strength ?? "N/A"}
+                        </Table.Cell>
                     </Table.Column>
 
+                    <Table.Column flexGrow={1} fullText>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>IsControlled</Table.HeaderCell>
+                        <Table.Cell>
+                            {rowData => {
+                                if (!rowData) return "N/A";
+                                const isControlled = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled;
+                                return isControlled ? "Yes" : "No";
+                            }}
+                        </Table.Cell>
+                    </Table.Column>
+
+                    <Table.Column flexGrow={2} fullText>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>Controlled</Table.HeaderCell>
+                        <Table.Cell>
+                            {rowData => {
+                                if (!rowData) return " ";
+                                const controlledValue = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.controlledLvalue?.lovDisplayVale || "N/A";
+                                return controlledValue;
+                            }}
+                        </Table.Cell>
+                    </Table.Column>
+
+                    <Table.Column flexGrow={1} fullText>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>Details</Table.HeaderCell>
+                        <Table.Cell>
+                            <IconButton icon={<OthersIcon />} />
+                        </Table.Cell>
+                    </Table.Column>
                 </Table>
+
+
 
             </div>
         </div>
