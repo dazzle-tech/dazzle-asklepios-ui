@@ -109,7 +109,7 @@ import {
   useUpdateAttachmentDetailsMutation
 } from '@/services/attachmentService';
 import { notify } from '@/utils/uiReducerActions';
-
+import PreferredHealthProfessional from './PreferredHealthProfessional';
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
   const byteNumbers = new Array(byteCharacters.length);
@@ -1804,6 +1804,9 @@ const isSelectedRelation = rowData => {
                 <Translate>Privacy & Security</Translate>
               </Tab>
               <Tab>
+                <Translate>Preferred Health Professional</Translate>
+              </Tab>
+              <Tab>
                 <Translate>Family Members</Translate>
               </Tab>
               <Tab>
@@ -2526,7 +2529,8 @@ const isSelectedRelation = rowData => {
                 />
               </Form>
             </TabPanel>
-
+              {/* PreferredHealthProfessional */}
+            <TabPanel><PreferredHealthProfessional patient={localPatient} isClick={!editing || !localPatient.key}/></TabPanel>
             {/* Relations */}
             <TabPanel>
               <Modal open={relationModalOpen} onClose={() => setRelationModalOpen(false)}>

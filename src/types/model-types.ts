@@ -1641,6 +1641,21 @@ export interface ApPatientPlan {
 	isValid:boolean;
 } 
 
+export interface ApPatientPreferredHealthProfessional { 
+	key:string;
+	practitionerKey:string;
+	facilityKey:string;
+	createdBy:string;
+	networkAffiliation:string;
+	relatedWith:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	patientKey:string;
+} 
+
 export interface ApPatientProblem { 
 	key:string;
 	patientKey:string;
