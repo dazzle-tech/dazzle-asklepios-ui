@@ -75,7 +75,39 @@
 
 }
 .dropdown-menuresult {
-    width: auto; /* العرض يعتمد على المحتوى */
-    min-width: fit-content; /* الحد الأدنى يعتمد على حجم المحتوى */
-    white-space: nowrap; /* منع التفاف النص لضمان التكيف مع المحتوى */
+    width: auto;
+    min-width: fit-content; 
+    white-space: nowrap;
+}
+.custom-fab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed; 
+    bottom: 20px; 
+    right: 20px; 
+    box-sizing: border-box;
+    background-color: #e0e0e0;
+    color: rgba(0, 0, 0, 0.87);
+    width: 300px; 
+    height:250px;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0px 3px 5px -1px rgba(0, 0, 0, 0.2), 
+                0px 6px 10px 0px rgba(0, 0, 0, 0.14), 
+                0px 1px 18px 0px rgba(0, 0, 0, 0.12); 
+    cursor: pointer;
+    border: none;
+    outline: none;
+    padding: 10px;
+    transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1), 
+                box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 9999;
+}
+
+
+.custom-fab-icon {
+    font-size:12px; 
+    line-height: 1;
+    
 }

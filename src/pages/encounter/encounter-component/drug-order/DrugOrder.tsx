@@ -34,7 +34,7 @@ import {
 
 
 } from 'rsuite';
-import { List} from 'rsuite';
+import { List } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
@@ -98,6 +98,7 @@ const DrugOrder = () => {
     const [isdraft, setIsDraft] = useState(false);
     const [selectedFirstDate, setSelectedFirstDate] = useState(null);
     const [editDuration, setEditDuration] = useState(false);
+    const [isMinimized, setIsMinimized] = useState(true);
     const [adminInstructions, setAdminInstructions] = useState("");
     const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
     const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
@@ -769,16 +770,92 @@ const DrugOrder = () => {
                     order.key === drugKey
                 )?.drugorderId}</Text>
             </div>
-            <div className="custom-fab">
+            {!isMinimized && <div className="custom-fab">
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', marginTop: '12px', justifyContent: 'space-between', width: '100%' }}>
+                        <Text style={{
+                            fontWeight: 'bold',
+                            marginBottom: '10px',
+                            fontFamily: "'Times New Roman', serif"
+                        }}>
+                            Patient's Allergies
+                        </Text>
 
-                <List style={{ height: '190px', overflowY: 'auto' }}>
-                    {allergiesListResponse?.object?.map((order, index) => (
-                        <List.Item key={index}>
-                            {order.allergyTypeLvalue?.lovDisplayVale}, {order.severityLvalue.lovDisplayVale},{order.allergensName}
-                        </List.Item>
-                    ))}
-                </List>
-            </div>
+                        <div style={{ marginLeft: 'auto', display: 'flex' }}>
+                            <button onClick={() => setIsMinimized(true)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    padding: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '10px',
+                                    fontSize: '18px'
+                                }}>
+                                -
+                            </button>
+                            <button onClick={() => setIsMinimized(false)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    padding: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '10px',
+                                    marginLeft: '2px',
+                                    fontSize: '18px'
+                                }}>
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                    <List style={{ height: '190px',width:'250px' ,overflow: 'auto' }}>
+                        {allergiesListResponse?.object?.map((order, index) => (
+                            <List.Item key={index}>
+                                {order.allergyTypeLvalue?.lovDisplayVale}, {order.severityLvalue.lovDisplayVale},{order.allergensName}
+                            </List.Item>
+                        ))}
+                    </List>
+                </div>
+            </div>}
+            {isMinimized &&
+                <div className="custom-fab" style={{ height: '60px' }}>
+                    <div style={{ display: 'flex', marginTop: '12px', justifyContent: 'space-between', width: '100%' }}>
+                        <Text style={{
+                            fontWeight: 'bold',
+                            marginBottom: '10px',
+                            fontFamily: "'Times New Roman', serif"
+                        }}>
+                            Patient's Allergies
+                        </Text>
+
+                        <div style={{ marginLeft: 'auto', display: 'flex' }}>
+                            <button onClick={() => setIsMinimized(true)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    padding: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '10px',
+                                    fontSize: '18px'
+                                }}>
+                                -
+                            </button>
+                            <button onClick={() => setIsMinimized(false)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    padding: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '10px',
+                                    marginLeft: '2px',
+                                    fontSize: '18px'
+                                }}>
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                </div>}
 
 
             <IconButton
@@ -1196,8 +1273,8 @@ const DrugOrder = () => {
                     <Table.Column flexGrow={1} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>IsControlled</Table.HeaderCell>
                         <Table.Cell>
-                        {rowData => {
-                                const c = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled?"Yes":"No"
+                            {rowData => {
+                                const c = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled ? "Yes" : "No"
                                 console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled)
                                 return c;
                             }
@@ -1207,7 +1284,7 @@ const DrugOrder = () => {
                     <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Controlled</Table.HeaderCell>
                         <Table.Cell>
-                        {rowData => {
+                            {rowData => {
                                 const c = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.controlledLvalue.lovDisplayVale
                                 console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled)
                                 return c;

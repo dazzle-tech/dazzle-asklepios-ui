@@ -82,6 +82,8 @@ const Prescription = () => {
     const [showCanceled, setShowCanceled] = useState(true);
     const [editing, setEditing] = useState(false);
     const [typing, setTyping] = React.useState(false);
+
+    const [isMinimized, setIsMinimized] = useState(true);
     const [searchKeywordicd, setSearchKeywordicd] = useState('');
     const [searchKeywordSnomed, setSearchKeywordSnomed] = useState('');
     const [inputValue, setInputValue] = React.useState('');
@@ -739,16 +741,92 @@ const Prescription = () => {
                     prescription.key === preKey
                 )?.prescriptionId}</Text>
             </div>
-            <div className="custom-fab">
+            {!isMinimized && <div className="custom-fab">
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', marginTop: '12px', justifyContent: 'space-between', width: '100%' }}>
+                        <Text style={{
+                            fontWeight: 'bold',
+                            marginBottom: '10px',
+                            fontFamily: "'Times New Roman', serif"
+                        }}>
+                            Patient's Allergies
+                        </Text>
 
-                <List style={{ height: '190px', overflowY: 'auto' }}>
-                    {allergiesListResponse?.object?.map((order, index) => (
-                        <List.Item key={index}>
-                            {order.allergyTypeLvalue?.lovDisplayVale}, {order.severityLvalue.lovDisplayVale},{order.allergensName}
-                        </List.Item>
-                    ))}
-                </List>
-            </div>
+                        <div style={{ marginLeft: 'auto', display: 'flex' }}>
+                            <button onClick={() => setIsMinimized(true)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    padding: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '10px',
+                                    fontSize: '18px'
+                                }}>
+                                -
+                            </button>
+                            <button onClick={() => setIsMinimized(false)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    padding: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '10px',
+                                    marginLeft: '2px',
+                                    fontSize: '18px'
+                                }}>
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                    <List style={{ height: '190px',width:'250px' ,overflow: 'auto' }}>
+                        {allergiesListResponse?.object?.map((order, index) => (
+                            <List.Item key={index}>
+                                {order.allergyTypeLvalue?.lovDisplayVale}-{order.allergensName}-{order.severityLvalue.lovDisplayVale}
+                            </List.Item>
+                        ))}
+                    </List>
+                </div>
+            </div>}
+            {isMinimized &&
+                <div className="custom-fab" style={{ height: '60px' }}>
+                    <div style={{ display: 'flex', marginTop: '12px', justifyContent: 'space-between', width: '100%' }}>
+                        <Text style={{
+                            fontWeight: 'bold',
+                            marginBottom: '10px',
+                            fontFamily: "'Times New Roman', serif"
+                        }}>
+                            Patient's Allergies
+                        </Text>
+
+                        <div style={{ marginLeft: 'auto', display: 'flex' }}>
+                            <button onClick={() => setIsMinimized(true)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    padding: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '10px',
+                                    fontSize: '18px'
+                                }}>
+                                -
+                            </button>
+                            <button onClick={() => setIsMinimized(false)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    padding: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '10px',
+                                    marginLeft: '2px',
+                                    fontSize: '18px'
+                                }}>
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                </div>}
 
             <IconButton
                 color="cyan"
