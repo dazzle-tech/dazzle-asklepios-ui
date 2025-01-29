@@ -110,6 +110,7 @@ import {
 } from '@/services/attachmentService';
 import { notify } from '@/utils/uiReducerActions';
 import PreferredHealthProfessional from './PreferredHealthProfessional';
+import ConsentFormTab from './ConsentFormTab';
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
   const byteNumbers = new Array(byteCharacters.length);
@@ -1804,6 +1805,9 @@ const isSelectedRelation = rowData => {
                 <Translate>Privacy & Security</Translate>
               </Tab>
               <Tab>
+                <Translate>Consent Forms</Translate>
+              </Tab>
+              <Tab>
                 <Translate>Preferred Health Professional</Translate>
               </Tab>
               <Tab>
@@ -2508,26 +2512,12 @@ const isSelectedRelation = rowData => {
                   setRecord={setLocalPatient}
                   disabled={!editing}
                 />
-                <br />
-                <MyInput
-                  vr={validationResult}
-                  fieldType="checkbox"
-                  fieldLabel="Consent"
-                  fieldName="consent"
-                  record={localPatient}
-                  setRecord={setLocalPatient}
-                  disabled={!editing}
-                />
-                <MyInput
-                  vr={validationResult}
-                  fieldType="date"
-                  fieldLabel=" "
-                  fieldName="consentDate"
-                  record={localPatient}
-                  setRecord={setLocalPatient}
-                  disabled={!editing}
-                />
               </Form>
+            </TabPanel>
+
+             {/* Consent Forms */}
+             <TabPanel>
+             <ConsentFormTab patient={localPatient} isClick={!editing || !localPatient.key} />
             </TabPanel>
               {/* PreferredHealthProfessional */}
             <TabPanel><PreferredHealthProfessional patient={localPatient} isClick={!editing || !localPatient.key}/></TabPanel>
