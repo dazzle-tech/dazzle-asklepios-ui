@@ -816,6 +816,23 @@ export interface ApDrugOrderMedications {
 	indicationManually:string;
 } 
 
+export interface ApDuplicationCandidateSetup { 
+	key:string;
+	role:string;
+	dateOfBirth:boolean;
+	dob:boolean;
+	lastName:boolean;
+	documentNo:boolean;
+	mobileNumber:boolean;
+	gender:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
 export interface ApDvmRule { 
 	key:string;
 	screenMetadataKey:string;

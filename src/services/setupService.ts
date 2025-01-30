@@ -16,6 +16,7 @@ import {
   ApDiagnosticTestLaboratory,
   ApDiagnosticTestRadiology,
   ApDiagnosticTestSpecialPopulation,
+  ApDuplicationCandidateSetup,
   ApFacility,
   ApLov,
   ApLovValues,
@@ -942,9 +943,6 @@ export const setupService = createApi({
       },
     }),
 
-     
-
-   
     getProcedurePriceList: builder.query({
       query: (listRequest: ListRequest) => ({
          url: `/setup/procedure-price-list-list?${fromListRequestToQueryParams(listRequest)}`
@@ -952,12 +950,37 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+
     removeProcedurePriceList: builder.mutation({
       query: (P: ApProcedurePriceList) => ({
         url: `/setup/remove-price-list`,
         method: 'POST',
         body: P,
       }),}),
+
+      saveDuplicationCandidateSetup: builder.mutation({
+        query: (p: ApDuplicationCandidateSetup) => ({
+          url: `/setup/save-duplication_candidate_setup`,
+          method: 'POST',
+          body: p
+  
+        }),
+        onQueryStarted: onQueryStarted,
+        transformResponse: (response: any) => {
+          return response.object;
+  
+        },
+      }),
+  
+      getDuplicationCandidateSetupList: builder.query({
+        query: (listRequest: ListRequest) => ({
+           url: `/setup/duplication_candidate_setup-list?${fromListRequestToQueryParams(listRequest)}`
+        }),
+        onQueryStarted: onQueryStarted,
+        keepUnusedDataFor: 5
+      }),
+      
+   
 
   })
 
@@ -1059,6 +1082,9 @@ export const {
   useSaveProcedurePriceListMutation,
   useRemoveProcedureMutation,
   useRemoveProcedurePriceListMutation,
-  useRemoveProcedureCodingMutation
+  useRemoveProcedureCodingMutation,
+  useGetDuplicationCandidateSetupListQuery,
+  useSaveDuplicationCandidateSetupMutation
+
 
 } = setupService;

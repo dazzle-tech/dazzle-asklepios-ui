@@ -16,13 +16,25 @@ import { MdSave } from 'react-icons/md';
 import { Tabs, Placeholder } from 'rsuite';
 import ReloadIcon from '@rsuite/icons/Reload';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
+import {
+    useGetDuplicationCandidateSetupListQuery,
+    useSaveDuplicationCandidateSetupMutation
+} from '@/services/setupService';
+import { ApDuplicationCandidateSetup } from '@/types/model-types';
+import { newApDuplicationCandidateSetup } from '@/types/model-types-constructor';
 const PotintialDuplicate = () => {
     const [isactive, setIsactive] = useState(false);
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [popupOpen, setPopupOpen] = useState(false);
     const dispatch = useAppDispatch();
-
-
+    const[candidate,setCandidate]=useState<ApDuplicationCandidateSetup>({...newApDuplicationCandidateSetup})
+    const [saveCandidate, saveCandidateMutation] = useSaveDuplicationCandidateSetupMutation();
+    const { data: CandidateListResponse ,refetch:candfetch} = useGetDuplicationCandidateSetupListQuery(listRequest);
+    const isSelected = rowData => {
+        if (rowData && candidate && rowData.key === candidate.key) {
+          return 'selected-row';
+        } else return '';
+      };
 
     const handleFilterChange = (fieldName, value) => {
         if (value) {
@@ -38,6 +50,32 @@ const PotintialDuplicate = () => {
             setListRequest({ ...listRequest, filters: [] });
         }
     };
+     const handleNew = () => {
+        setCandidate({ ...newApDuplicationCandidateSetup });
+        setPopupOpen(true);
+      };
+      const handleSave = async () => {
+        setPopupOpen(false);
+        //if you want to use response object write response.object 
+        try {
+          const response = await saveCandidate(candidate).unwrap().then(()=>{
+            candfetch();
+          });
+         
+    
+          dispatch(notify("saved sucssecfly"));
+          
+    
+        } catch (error) {
+          if (error.data && error.data.message) {
+            // Display error message from server
+            dispatch(notify(error.data.message));
+          } else {
+            // Generic error notification
+            dispatch(notify("An unexpected error occurred"));
+          }
+        }
+      };
     return (<>
         <Panel
             header={
@@ -49,15 +87,15 @@ const PotintialDuplicate = () => {
             <ButtonToolbar>
                 <IconButton appearance="primary"
                     icon={<AddOutlineIcon />}
-                //    onClick={handleNew}
+                   onClick={handleNew}
                 >
                     Add New
                 </IconButton>
                 <IconButton
 
-                    //   disabled={!agegroups.key}
+                      disabled={!candidate.key}
                     appearance="primary"
-                    //   onClick={() => setPopupOpen(true)}
+                    onClick={() => setPopupOpen(true)}
                     color="cyan"
                     icon={<EditIcon />}
                 >
@@ -65,13 +103,13 @@ const PotintialDuplicate = () => {
                 </IconButton>
                 {!isactive &&
                     <IconButton
-                        // disabled={!procedure.key}
-                        // onClick={()=>{
-                        //     removeProcedure({...procedure}).unwrap().then(()=>{
-                        //         profetch();
-                        //     });
-                        //     setIsactive(true);
-                        // }}
+                        disabled={!candidate.key}
+                        onClick={()=>{
+                            saveCandidate({...candidate,deletedAt:Date.now()}).unwrap().then(()=>{
+                                candfetch();
+                            });
+                            setIsactive(true);
+                        }}
                         appearance="primary"
                         color="violet"
                         icon={<TrashIcon />
@@ -86,14 +124,14 @@ const PotintialDuplicate = () => {
                     <IconButton
                         color="orange"
                         appearance="primary"
-                        // onClick={()=>{
-                        //     saveProcedure({...procedure,deletedAt:null}).unwrap().then(()=>{
-                        //         profetch();
-                        //     });
-                        //     setIsactive(false);
-                        // }}
+                        onClick={()=>{
+                            saveCandidate({...candidate,deletedAt:null}).unwrap().then(()=>{
+                                candfetch();
+                            });
+                            setIsactive(false);
+                        }}
                         icon={<ReloadIcon />}
-                    // disabled={!procedure.key}
+                    disabled={!candidate.key}
                     >
                         <Translate> Activate</Translate>
                     </IconButton>
@@ -118,43 +156,69 @@ const PotintialDuplicate = () => {
                 rowHeight={60}
                 bordered
                 cellBordered
-                data={[]}
-            // onRowClick={rowData => {
-            //     setProcedure(rowData);
-            // }}
-            // rowClassName={isSelected}
+                data={CandidateListResponse?.object??[]}
+            onRowClick={rowData => {
+                setCandidate(rowData);
+            }}
+            rowClassName={isSelected}
             >
-                <Column sortable flexGrow={2}>
+                <Column sortable flexGrow={1}>
                     <HeaderCell align="center">
-                        <Input onChange={e => handleFilterChange('name', e)} />
-                        <Translate>Procedure Name</Translate>
+                        
+                        <Translate>Role</Translate>
                     </HeaderCell>
                     <Cell align="center">
-                        {rowData => rowData.name}
+                        {rowData => rowData.role}
                     </Cell  >
                 </Column>
                 <Column sortable flexGrow={2}>
                     <HeaderCell align="center">
-                        <Input onChange={e => handleFilterChange('name', e)} />
-                        <Translate>Procedure Code</Translate>
+                        
+                        <Translate>Date Of Barith</Translate>
                     </HeaderCell>
                     <Cell align="center">
-                        {rowData => rowData.code}
+                        {rowData => rowData.dob?"True":"False"}
+                    </Cell  >
+                </Column>
+                <Column sortable flexGrow={2}>
+                    <HeaderCell align="center">
+                       
+                        <Translate>Last Name</Translate>
+                    </HeaderCell>
+                    <Cell align="center">
+                        {rowData => rowData.lastName?"True":"False"}
                     </Cell  >
                 </Column>
                 <Column sortable flexGrow={3}>
                     <HeaderCell align="center">
-                        <Input onChange={e => handleFilterChange('name', e)} />
-                        <Translate> Category </Translate>
+                    
+                        <Translate>Mobile Number </Translate>
                     </HeaderCell>
                     <Cell align="center">
-                        {rowData => rowData.categoryLkey ? rowData.categoryLvalue.lovDisplayVale : rowData.categoryLkey}
+                        {rowData => rowData.mobileNumber?"True":"False"}
                     </Cell  >
                 </Column>
-
+                <Column sortable flexGrow={2}>
+                    <HeaderCell align="center">
+        
+                        <Translate>Document Number </Translate>
+                    </HeaderCell>
+                    <Cell align="center">
+                        {rowData => rowData.documentNo?"True":"False"}
+                    </Cell  >
+                </Column>
+                <Column sortable flexGrow={3}>
+                    <HeaderCell align="center">
+           
+                        <Translate>Sex At Barith</Translate>
+                    </HeaderCell>
+                    <Cell align="center">
+                        {rowData => rowData.gender?"True":"False"}
+                    </Cell  >
+                </Column>
                 <Column flexGrow={2}>
                     <HeaderCell align="center">
-                        <Input onChange={e => handleFilterChange('isValid', e)} />
+                    
                         <Translate>status</Translate>
                     </HeaderCell>
                     <Cell align="center">
@@ -162,7 +226,64 @@ const PotintialDuplicate = () => {
                     </Cell>
                 </Column>
 
-            </Table></Panel>
+            </Table>
+            <Modal open={popupOpen}  overflow>
+        <Modal.Title>
+          <Translate>New </Translate>
+        </Modal.Title>
+        <Modal.Body>
+          <Form >
+
+            <MyInput
+              fieldName="lastName"
+              fieldType="checkbox"
+              record={candidate}
+              setRecord={setCandidate}
+            />
+              <MyInput
+              fieldLable="Date Of birthd"
+              fieldName="dob"
+              fieldType="checkbox"
+              record={candidate}
+              setRecord={setCandidate}
+            />
+            <MyInput
+              fieldName="documentNo"
+              fieldType="checkbox"
+              record={candidate}
+              setRecord={setCandidate}
+            />
+              <MyInput
+              fieldLable="Six At birthd"
+              fieldName="gender"
+              fieldType="checkbox"
+              record={candidate}
+              setRecord={setCandidate}
+            />
+               <MyInput
+              fieldLable="Mobile Number"
+              fieldName="mobileNumber"
+              fieldType="checkbox"
+              record={candidate}
+              setRecord={setCandidate}
+            />
+           
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Stack spacing={2} divider={<Divider vertical />}>
+            <Button appearance="primary"
+              onClick={handleSave}
+            >
+              Save
+            </Button>
+            <Button appearance="ghost" onClick={() => setPopupOpen(false)}>
+              Cancel
+            </Button>
+          </Stack>
+        </Modal.Footer>
+      </Modal>
+            </Panel>
     </>)
 }
 export default PotintialDuplicate;
