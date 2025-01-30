@@ -47,6 +47,7 @@ import DentalActions from './pages/setup/dental-actions';
 import CDTSetup from './pages/setup/cdt-setup';
 import ICD10Setup from './pages/setup/icd10-setup';
 import ServiceSetup from './pages/setup/service-setup';
+import PotintialDuplicate from './pages/setup/potential-duplicate';
 import ProcedureSetup from './pages/setup/procedure-setup';
 import Translate from './components/Translate';
 import { BlockUI } from 'primereact/blockui';
@@ -223,6 +224,7 @@ const App = () => {
               <Route path="user-access-patient-private" element={<EncounterPatientPrivateLogin />} />
               <Route path="vaccine-setup" element={<Vaccine />} />
               <Route path="procedure-setup" element={<ProcedureSetup />} />
+              <Route path="potintial-duplicate" element={<PotintialDuplicate />} />
               <Route path="users" element={<Users />} />
               <Route path="uom-group" element={<UOMGroup />} />
               <Route path="encounter-pre-observations" element={<EncounterPreObservations />} />

@@ -779,7 +779,7 @@ const Prescription = () => {
                         </div>
                     </div>
 
-                    <List style={{ height: '190px',width:'250px' ,overflow: 'auto' }}>
+                    <List style={{ height: '190px', width: '250px', overflow: 'auto' }}>
                         {allergiesListResponse?.object?.map((order, index) => (
                             <List.Item key={index}>
                                 {order.allergyTypeLvalue?.lovDisplayVale}-{order.allergensName}-{order.severityLvalue.lovDisplayVale}
@@ -1197,7 +1197,7 @@ const Prescription = () => {
                         <Table.Cell>
                             {rowData => {
                                 if (!rowData) return " ";
-                                const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name || "N/A";
+                                const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name || " ";
                                 return nameg;
                             }}
                         </Table.Cell>
@@ -1208,7 +1208,7 @@ const Prescription = () => {
                         <Table.Cell>
                             {rowData => {
                                 if (!rowData) return " ";
-                                const atcg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode || "N/A";
+                                const atcg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode || " ";
                                 return atcg;
                             }}
                         </Table.Cell>
@@ -1217,7 +1217,7 @@ const Prescription = () => {
                     <Table.Column flexGrow={1} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
                         <Table.Cell>
-                            {rowData => rowData?.strength ?? "N/A"}
+                            {rowData => rowData?.strength ?? " "}
                         </Table.Cell>
                     </Table.Column>
 
@@ -1225,7 +1225,7 @@ const Prescription = () => {
                         <Table.HeaderCell style={{ fontSize: '14px' }}>IsControlled</Table.HeaderCell>
                         <Table.Cell>
                             {rowData => {
-                                if (!rowData) return "N/A";
+                                if (!rowData) return " ";
                                 const isControlled = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled;
                                 return isControlled ? "Yes" : "No";
                             }}
@@ -1237,7 +1237,7 @@ const Prescription = () => {
                         <Table.Cell>
                             {rowData => {
                                 if (!rowData) return " ";
-                                const controlledValue = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.controlledLvalue?.lovDisplayVale || "N/A";
+                                const controlledValue = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.controlledLvalue?.lovDisplayVale || " ";
                                 return controlledValue;
                             }}
                         </Table.Cell>

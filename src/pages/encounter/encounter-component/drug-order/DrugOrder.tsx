@@ -808,7 +808,7 @@ const DrugOrder = () => {
                         </div>
                     </div>
 
-                    <List style={{ height: '190px',width:'250px' ,overflow: 'auto' }}>
+                    <List style={{ height: '190px', width: '250px', overflow: 'auto' }}>
                         {allergiesListResponse?.object?.map((order, index) => (
                             <List.Item key={index}>
                                 {order.allergyTypeLvalue?.lovDisplayVale}, {order.severityLvalue.lovDisplayVale},{order.allergensName}
@@ -1230,75 +1230,69 @@ const DrugOrder = () => {
 
             </div>
             <div className='form-search-container-p ' style={{ minWidth: "620px" }}>
-
-
                 <Table
                     bordered
-                    onRowClick={rowData => {
-                    }}
+                    onRowClick={rowData => console.log("Row clicked:", rowData)}
                     data={genericMedicationActiveIngredientListResponseData?.object || []}
                     height={300}
-
                 >
-
                     <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient</Table.HeaderCell>
-                        <Table.Cell >
-
+                        <Table.Cell>
                             {rowData => {
-                                const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name
-
+                                if (!rowData) return " ";
+                                const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name || " ";
                                 return nameg;
-                            }
-                            }
-
+                            }}
                         </Table.Cell>
                     </Table.Column>
+
                     <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient ATC Code</Table.HeaderCell>
-                        <Table.Cell >
-
+                        <Table.Cell>
                             {rowData => {
-                                const atcg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode
+                                if (!rowData) return " ";
+                                const atcg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode || " ";
                                 return atcg;
-                            }
-                            }
-
+                            }}
                         </Table.Cell>
                     </Table.Column>
-                    <Table.Column flexGrow={2} fullText>
+
+                    <Table.Column flexGrow={1} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
-                        <Table.Cell>{rowData => rowData.strength}</Table.Cell>
+                        <Table.Cell>
+                            {rowData => rowData?.strength ?? " "}
+                        </Table.Cell>
                     </Table.Column>
+
                     <Table.Column flexGrow={1} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>IsControlled</Table.HeaderCell>
                         <Table.Cell>
                             {rowData => {
-                                const c = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled ? "Yes" : "No"
-                                console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled)
-                                return c;
-                            }
-                            }
+                                if (!rowData) return " ";
+                                const isControlled = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled;
+                                return isControlled ? "Yes" : "No";
+                            }}
                         </Table.Cell>
                     </Table.Column>
+
                     <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Controlled</Table.HeaderCell>
                         <Table.Cell>
                             {rowData => {
-                                const c = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.controlledLvalue.lovDisplayVale
-                                console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled)
-                                return c;
-                            }
-                            }
+                                if (!rowData) return " ";
+                                const controlledValue = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.controlledLvalue?.lovDisplayVale || " ";
+                                return controlledValue;
+                            }}
                         </Table.Cell>
                     </Table.Column>
-                    <Table.Column flexGrow={1} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }} >Details</Table.HeaderCell>
-                        <Table.Cell><IconButton
-                            // onClick={OpenDetailsModel} 
-                            icon={<OthersIcon />} /></Table.Cell>
-                    </Table.Column>
 
+                    <Table.Column flexGrow={1} fullText>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>Details</Table.HeaderCell>
+                        <Table.Cell>
+                            <IconButton icon={<OthersIcon />} />
+                        </Table.Cell>
+                    </Table.Column>
                 </Table>
 
             </div>
