@@ -359,7 +359,7 @@ const DrugOrder = () => {
     }, [drugKey]);
     useEffect(() => {
 
-        const foundOrder = orders?.object?.find(prescription => prescription.key === drugKey);
+        const foundOrder = orders?.object?.find(order=> order.key === drugKey);
         if (foundOrder?.saveDraft !== isdraft) {
             setIsDraft(foundOrder?.saveDraft);
         }
@@ -502,7 +502,7 @@ const DrugOrder = () => {
     };
     const handleSaveOrder = async () => {
 
-
+           handleCleare();
         if (patientSlice.patient && patientSlice.encounter) {
             try {
 
@@ -514,23 +514,23 @@ const DrugOrder = () => {
                 });
 
 
-                dispatch(notify('Start New Prescription whith ID:' + response?.data?.drugorderId));
+                dispatch(notify('Start New Order whith ID:' + response?.data?.drugorderId));
 
                 setDrugKey(response?.data?.key);
+                
 
                 ordRefetch().then(() => {
                     console.log("Refetch complete pres");
-                    console.log(orders?.object);
-                    console.log(drugKey);
+
                 }).catch((error) => {
                     console.error("Refetch failed:", error);
                 });
 
             } catch (error) {
-                console.error("Error saving prescription:", error);
+                console.error("Error saving Order:", error);
             }
         } else {
-            dispatch(notify("Patient or encounter is missing. Cannot save prescription."));
+            dispatch(notify("Patient or encounter is missing. Cannot save Order."));
         }
     };
     const handleCancle = async () => {
@@ -598,7 +598,6 @@ const DrugOrder = () => {
     }
 
     const handleSaveMedication = () => {
-        console.log(indicationsDescription);
         try {
             const tagcompine = joinValuesFromArray(tags);
             saveDrugorderMedication({
