@@ -817,6 +817,23 @@ export const newApDrugOrderMedications:modelTypes.ApDrugOrderMedications = {
 	indicationManually:'',
 } 
 
+export const newApDuplicationCandidateSetup:modelTypes.ApDuplicationCandidateSetup = { 
+	key:undefined,
+	role:'',
+	dateOfBirth:undefined,
+	dob:undefined,
+	lastName:undefined,
+	documentNo:undefined,
+	mobileNumber:undefined,
+	gender:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
 export const newApDvmRule:modelTypes.ApDvmRule = { 
 	key:undefined,
 	screenMetadataKey:undefined,
