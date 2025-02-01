@@ -8,6 +8,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import DocPassIcon from '@rsuite/icons/DocPass';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { List } from 'rsuite';
 import {
     InputGroup,
     Form,
@@ -61,9 +63,12 @@ import {
 } from '@/services/medicationsSetupService';
 import {
     useGetPrescriptionInstructionQuery,
-
+    useGetLinkedBrandQuery,
+    useGetGenericMedicationWithActiveIngredientQuery
 } from '@/services/medicationsSetupService';
-
+import {
+    useGetAllergiesQuery
+} from '@/services/observationService';
 import {
     useGetIcdListQuery,
 } from '@/services/setupService';
@@ -77,12 +82,31 @@ const Prescription = () => {
     const [showCanceled, setShowCanceled] = useState(true);
     const [editing, setEditing] = useState(false);
     const [typing, setTyping] = React.useState(false);
+
+    const [isMinimized, setIsMinimized] = useState(true);
     const [searchKeywordicd, setSearchKeywordicd] = useState('');
     const [searchKeywordSnomed, setSearchKeywordSnomed] = useState('');
     const [inputValue, setInputValue] = React.useState('');
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         ignore: true
+    });
+    const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({
+        ...initialListRequest,
+        filters: [
+            {
+                fieldName: 'patient_key',
+                operator: 'match',
+                value: patientSlice.patient.key
+            },
+            ,
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
+            }
+
+        ]
     });
     const [genericMedication, setGenericMedication] = useState<ApGenericMedication>({ ...newApGenericMedication });
     const [listGenericRequest, setListGenericRequest] = useState<ListRequest>({ ...initialListRequest });
@@ -97,9 +121,9 @@ const Prescription = () => {
         frequency: null,
         roa: null
     });
-     const [indicationsIcd, setIndicationsIcd] = useState({ indicationIcd: null });
+    const [indicationsIcd, setIndicationsIcd] = useState({ indicationIcd: null });
     const [filteredList, setFilteredList] = useState([]);
-    const { data: genericMedicationListResponse } = useGetGenericMedicationQuery(listGenericRequest);
+
     const [selectedRows, setSelectedRows] = useState([]);
     const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
     const { data: FrequencyLovQueryResponse } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
@@ -109,7 +133,9 @@ const Prescription = () => {
     const { data: instructionTypeQueryResponse } = useGetLovValuesByCodeQuery('PRESC_INSTR_TYPE');
     const { data: refillunitQueryResponse } = useGetLovValuesByCodeQuery('REFILL_INTERVAL');
     const { data: indicationLovQueryResponse } = useGetLovValuesByCodeQuery('MED_INDICATION_USE');
-     const [indicationsDescription, setindicationsDescription] = useState<string>('');
+    const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
+    const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
+    const [indicationsDescription, setindicationsDescription] = useState<string>('');
     const { data: activeIngredientListResponseData } = useGetActiveIngredientQuery({ ...initialListRequest });
     const [listGinricRequest, setListGinricRequest] = useState({
         ...initialListRequest,
@@ -133,9 +159,9 @@ const Prescription = () => {
             }
         ]
     });
-
+    const { data: lisOfLinkedBrand } = useGetLinkedBrandQuery(selectedGeneric?.key, { skip: selectedGeneric?.key == null });
     const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({ ...listGinricRequest });
-
+    const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
 
     const { data: prescriptions, isLoading: isLoadingPrescriptions, refetch: preRefetch } = useGetPrescriptionsQuery({
         ...initialListRequest,
@@ -186,10 +212,10 @@ const Prescription = () => {
             numberOfRefills: null
 
         });
-        const modifiedData = (icdListResponseLoading?.object ?? []).map(item => ({
-            ...item,
-            combinedLabel: `${item.icdCode} - ${item.description}`,
-        }));
+    const modifiedData = (icdListResponseLoading?.object ?? []).map(item => ({
+        ...item,
+        combinedLabel: `${item.icdCode} - ${item.description}`,
+    }));
     const isSelected = rowData => {
         if (rowData && prescriptionMedication && rowData.key === prescriptionMedication.key) {
             return 'selected-row';
@@ -199,7 +225,7 @@ const Prescription = () => {
     const [savePrescription, savePrescriptionMutation] = useSavePrescriptionMutation();
 
     const [savePrescriptionMedication, { isLoading: isSavingPrescriptionMedication }] = useSavePrescriptionMedicationMutation();
-   
+
 
     const [saveCustomeInstructions, { isLoading: isSavingCustomeInstructions }] = useSaveCustomeInstructionsMutation();
     const [editDuration, setEditDuration] = useState(false);
@@ -253,20 +279,18 @@ const Prescription = () => {
                 value: selectedGeneric?.key || null
             }
         ];
-        console.log(updatedFilters);
+
         setListGinricRequest((prevRequest) => ({
 
             ...prevRequest,
             filters: updatedFilters,
 
         }));
-        console.log("updated filt: ", listGinricRequest)
+
     }, [selectedGeneric]);
 
     useEffect(() => {
-        console.log("Updated listGinricRequest after setListGinricRequest: ", listGinricRequest);
         refetchGenric().then(() => {
-            console.log(genericMedicationActiveIngredientListResponseData?.object)
         })
     }, [listGinricRequest]);
 
@@ -276,7 +300,7 @@ const Prescription = () => {
 
                 return prescription.saveDraft === true;
             });
-            console.log(foundPrescription?.key)
+
             if (foundPrescription?.key != null) {
                 setPreKey(foundPrescription?.key);
                 setPrescription(foundPrescription)
@@ -331,7 +355,7 @@ const Prescription = () => {
 
     useEffect(() => {
         setPrescriptionMedications({ ...prescriptionMedication, instructionsTypeLkey: selectedOption })
-        console.log(prescriptionMedication)
+
     }, [selectedOption])
     useEffect(() => {
         if (prescriptionMedication.administrationInstructions != null) {
@@ -360,9 +384,9 @@ const Prescription = () => {
 
     }, [customeinst])
     useEffect(() => {
-        console.log(selectedRowoMedicationKey)
+
         refetchCo();
-        console.log(customeInstructions?.object)
+
         setCustomeinst({
             ...customeinst,
             unit: customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === selectedRowoMedicationKey)?.unitLkey,
@@ -382,7 +406,7 @@ const Prescription = () => {
                 }
 
                 const tagcompine = joinValuesFromArray(tags);
-                console.log("indicationsDescription",indicationsDescription)
+
                 try {
                     await savePrescriptionMedication({
                         ...prescriptionMedication,
@@ -405,8 +429,8 @@ const Prescription = () => {
 
                     // Perform refetches
                     await Promise.all([
-                        medicRefetch().then(() => console.log("Medic refetch complete")),
-                        refetchCo().then(() => console.log("Co refetch complete"))
+                        medicRefetch().then(() => ""),
+                        refetchCo().then(() => "")
                     ]);
 
                     handleCleare();
@@ -421,7 +445,6 @@ const Prescription = () => {
     }, [inst]);
 
     useEffect(() => {
-        console.log(preKey);
         if (preKey == null) {
             handleCleare()
         }
@@ -437,24 +460,24 @@ const Prescription = () => {
     useEffect(() => {
 
     }, [adminInstructions])
-     useEffect(() => {
-            if (indicationsIcd.indicationIcd != null || indicationsIcd.indicationIcd != "") {
-    
-                setindicationsDescription(prevadminInstructions => {
-                    const currentIcd = icdListResponseLoading?.object?.find(
-                        item => item.key === indicationsIcd.indicationIcd
-                    );
-    
-                    if (!currentIcd) return prevadminInstructions;
-    
-                    const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
-    
-                    return prevadminInstructions
-                        ? `${prevadminInstructions}\n${newEntry}`
-                        : newEntry;
-                });
-            }
-        }, [indicationsIcd.indicationIcd]);
+    useEffect(() => {
+        if (indicationsIcd.indicationIcd != null || indicationsIcd.indicationIcd != "") {
+
+            setindicationsDescription(prevadminInstructions => {
+                const currentIcd = icdListResponseLoading?.object?.find(
+                    item => item.key === indicationsIcd.indicationIcd
+                );
+
+                if (!currentIcd) return prevadminInstructions;
+
+                const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
+
+                return prevadminInstructions
+                    ? `${prevadminInstructions}\n${newEntry}`
+                    : newEntry;
+            });
+        }
+    }, [indicationsIcd.indicationIcd]);
     const handleSearch = value => {
         setSearchKeyword(value);
 
@@ -491,8 +514,6 @@ const Prescription = () => {
         return values.filter(Boolean).join(', ');
     };
     const handleCancle = async () => {
-        console.log(selectedRows);
-
         try {
             await Promise.all(
                 selectedRows.map(item => savePrescriptionMedication({ ...item, isValid: false, statusLkey: "1804447528780744", deletedAt: Date.now() }).unwrap())
@@ -500,14 +521,14 @@ const Prescription = () => {
 
             dispatch(notify('All medication deleted successfully'));
             medicRefetch().then(() => {
-                console.log("Refetch complete");
+
             }).catch((error) => {
-                console.error("Refetch failed:", error);
+
             });
             medicRefetch().then(() => {
-                console.log("Refetch complete");
+
             }).catch((error) => {
-                console.error("Refetch failed:", error);
+
             });
 
 
@@ -527,20 +548,13 @@ const Prescription = () => {
                 ),
 
                 statusLkey: "1804482322306061"
-                , saveDraft: false
+                , saveDraft: false,
+                submittedAt: Date.now()
             }).unwrap();
             dispatch(notify('submetid  Successfully'));
             handleCleare();
-            preRefetch().then(() => {
-                console.log("Refetch complete");
-            }).catch((error) => {
-                console.error("Refetch failed:", error);
-            });
-            medicRefetch().then(() => {
-                console.log("Refetch complete");
-            }).catch((error) => {
-                console.error("Refetch failed:", error);
-            });
+            preRefetch().then(() => "");
+            medicRefetch().then(() => "");
 
         }
         catch (error) {
@@ -550,11 +564,7 @@ const Prescription = () => {
         prescriptionMedications?.object?.map((item) => {
             savePrescriptionMedication({ ...item, statusLkey: "1804482322306061" })
         })
-        medicRefetch().then(() => {
-            console.log("Refetch complete");
-        }).catch((error) => {
-            console.error("Refetch failed:", error);
-        });
+        medicRefetch().then(() => "");
 
 
 
@@ -564,21 +574,13 @@ const Prescription = () => {
 
 
         if (selectedOption === '3010591042600262') {
-
             setInst(selectedPreDefine.key);
-            console.log(selectedPreDefine.key)
-            console.log("case1" + inst)
-
         }
         else if (selectedOption === '3010573499898196') {
-
             setInst(munial);
-            console.log("case2  " + inst)
-
         }
         else {
-            setInst("")
-            console.log("case3" + inst)
+            setInst("");
         }
 
 
@@ -596,12 +598,12 @@ const Prescription = () => {
             genericSubstitute: false,
             chronicMedication: false,
             refillIntervalUnitLkey: null,
-            indicationUseLkey:null
+            indicationUseLkey: null
         })
         setAdminInstructions("");
         setSelectedGeneric(null);
         setindicationsDescription(null);
-        
+
         setCustomeinst({ dose: null, frequency: null, unit: null, roa: null })
         setTags([])
     }
@@ -624,14 +626,7 @@ const Prescription = () => {
 
     const handleItemClick = (Generic) => {
         setSelectedGeneric(Generic);
-        refetchGenric().then(() => {
-            console.log("Refetch Genric");
-
-
-
-        }).catch((error) => {
-            console.error("Refetch failed:", error);
-        });
+        refetchGenric().then(() => "");
         setSearchKeyword("")
         const newList = roaLovQueryResponse.object.filter((item) =>
             (Generic.roaList).includes(item.key)
@@ -686,12 +681,7 @@ const Prescription = () => {
 
                 setPreKey(response?.data?.key);
 
-                preRefetch().then(() => {
-                    console.log("Refetch complete pres");
-                    console.log(prescriptions?.object)
-                }).catch((error) => {
-                    console.error("Refetch failed:", error);
-                });
+                preRefetch().then(() => "");
 
             } catch (error) {
                 console.error("Error saving prescription:", error);
@@ -700,7 +690,9 @@ const Prescription = () => {
             console.warn("Patient or encounter is missing. Cannot save prescription.");
         }
     };
-
+    const CloseSubstitutesModel = () => {
+        setOpenSubstitutesModel(false);
+    }
 
     const renderInput = () => {
         if (typing) {
@@ -749,7 +741,92 @@ const Prescription = () => {
                     prescription.key === preKey
                 )?.prescriptionId}</Text>
             </div>
+            {!isMinimized && <div className="custom-fab">
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', marginTop: '12px', justifyContent: 'space-between', width: '100%' }}>
+                        <Text style={{
+                            fontWeight: 'bold',
+                            marginBottom: '10px',
+                            fontFamily: "'Times New Roman', serif"
+                        }}>
+                            Patient's Allergies
+                        </Text>
 
+                        <div style={{ marginLeft: 'auto', display: 'flex' }}>
+                            <button onClick={() => setIsMinimized(true)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    padding: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '10px',
+                                    fontSize: '18px'
+                                }}>
+                                -
+                            </button>
+                            <button onClick={() => setIsMinimized(false)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    padding: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '10px',
+                                    marginLeft: '2px',
+                                    fontSize: '18px'
+                                }}>
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                    <List style={{ height: '190px', width: '250px', overflow: 'auto' }}>
+                        {allergiesListResponse?.object?.map((order, index) => (
+                            <List.Item key={index}>
+                                {order.allergyTypeLvalue?.lovDisplayVale}-{order.allergensName}-{order.severityLvalue.lovDisplayVale}
+                            </List.Item>
+                        ))}
+                    </List>
+                </div>
+            </div>}
+            {isMinimized &&
+                <div className="custom-fab" style={{ height: '60px' }}>
+                    <div style={{ display: 'flex', marginTop: '12px', justifyContent: 'space-between', width: '100%' }}>
+                        <Text style={{
+                            fontWeight: 'bold',
+                            marginBottom: '10px',
+                            fontFamily: "'Times New Roman', serif"
+                        }}>
+                            Patient's Allergies
+                        </Text>
+
+                        <div style={{ marginLeft: 'auto', display: 'flex' }}>
+                            <button onClick={() => setIsMinimized(true)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    padding: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '10px',
+                                    fontSize: '18px'
+                                }}>
+                                -
+                            </button>
+                            <button onClick={() => setIsMinimized(false)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    padding: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '10px',
+                                    marginLeft: '2px',
+                                    fontSize: '18px'
+                                }}>
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                </div>}
 
             <IconButton
                 color="cyan"
@@ -799,7 +876,7 @@ const Prescription = () => {
                                             .filter(Boolean)
                                             .join(', ')}
                                     </span>
-
+                                    {Generic.activeIngredients}
                                 </Dropdown.Item>
                             ))}
                         </Dropdown.Menu>
@@ -809,6 +886,19 @@ const Prescription = () => {
 
                 </Form>
             </div>
+            <Button
+                color="cyan"
+                appearance="primary"
+                style={{ height: '30px', marginTop: '23px' }}
+                onClick={() => {
+                    setOpenSubstitutesModel(true);
+                }}
+
+            >
+
+                <FontAwesomeIcon icon={faCircleInfo} style={{ marginRight: '5px' }} />
+                <span>Substitutes</span>
+            </Button>
             {selectedGeneric && <span style={{ marginTop: "25px", fontWeight: "bold" }}>
                 {[selectedGeneric.genericName,
                 selectedGeneric.dosageFormLvalue?.lovDisplayVale,
@@ -1016,7 +1106,7 @@ const Prescription = () => {
                             </InputGroup.Button>
                         </InputGroup>
                         {searchKeywordicd && (
-                            <Dropdown.Menu  className="dropdown-menuresult">
+                            <Dropdown.Menu className="dropdown-menuresult">
                                 {modifiedData?.map(mod => (
                                     <Dropdown.Item
                                         key={mod.key}
@@ -1045,7 +1135,7 @@ const Prescription = () => {
                     <div style={{ marginBottom: '3px', zoom: 0.85 }}>
                         <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
                             <Input
-                               disabled={preKey != null ? editing : true}
+                                disabled={preKey != null ? editing : true}
                                 placeholder="Search SNOMED-CT"
                                 value={""}
 
@@ -1084,7 +1174,7 @@ const Prescription = () => {
                             disabled={preKey != null ? editing : true}
                             value={prescriptionMedication.indicationManually}
                             onChange={(e) => {
-                               
+
                                 setPrescriptionMedications({ ...prescriptionMedication, indicationManually: e });
                             }}
                             style={{ width: 200 }}
@@ -1096,56 +1186,72 @@ const Prescription = () => {
                 </div>
             </div>
             <div className='form-search-container-p ' style={{ minWidth: "600px" }}>
-
-
                 <Table
                     bordered
-                    onRowClick={rowData => {
-
-                    }}
+                    onRowClick={rowData => console.log("Row clicked:", rowData)}
                     data={genericMedicationActiveIngredientListResponseData?.object || []}
-
-
+                    height={300}
                 >
-
                     <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient</Table.HeaderCell>
-                        <Table.Cell dataKey="activeIngredientKey">
-
+                        <Table.Cell>
                             {rowData => {
-                                const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name
-                                console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey))
+                                if (!rowData) return " ";
+                                const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name || " ";
                                 return nameg;
-                            }
-                            }
-
+                            }}
                         </Table.Cell>
                     </Table.Column>
+
                     <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient ATC Code</Table.HeaderCell>
-                        <Table.Cell dataKey="activeIngredientKey">
-
+                        <Table.Cell>
                             {rowData => {
-                                const atcg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode
-                                console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey))
+                                if (!rowData) return " ";
+                                const atcg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode || " ";
                                 return atcg;
-                            }
-                            }
-
+                            }}
                         </Table.Cell>
                     </Table.Column>
-                    <Table.Column flexGrow={2} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
-                        <Table.Cell>{rowData => rowData.strength}</Table.Cell>
-                    </Table.Column>
+
                     <Table.Column flexGrow={1} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }} >Details</Table.HeaderCell>
-                        <Table.Cell><IconButton
-                            // onClick={OpenDetailsModel} 
-                            icon={<OthersIcon />} /></Table.Cell>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
+                        <Table.Cell>
+                            {rowData => rowData?.strength ?? " "}
+                        </Table.Cell>
                     </Table.Column>
 
+                    <Table.Column flexGrow={1} fullText>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>IsControlled</Table.HeaderCell>
+                        <Table.Cell>
+                            {rowData => {
+                                if (!rowData) return " ";
+                                const isControlled = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled;
+                                return isControlled ? "Yes" : "No";
+                            }}
+                        </Table.Cell>
+                    </Table.Column>
+
+                    <Table.Column flexGrow={2} fullText>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>Controlled</Table.HeaderCell>
+                        <Table.Cell>
+                            {rowData => {
+                                if (!rowData) return " ";
+                                const controlledValue = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.controlledLvalue?.lovDisplayVale || " ";
+                                return controlledValue;
+                            }}
+                        </Table.Cell>
+                    </Table.Column>
+
+                    <Table.Column flexGrow={1} fullText>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>Details</Table.HeaderCell>
+                        <Table.Cell>
+                            <IconButton icon={<OthersIcon />} />
+                        </Table.Cell>
+                    </Table.Column>
                 </Table>
+
+
 
             </div>
         </div>
@@ -1240,7 +1346,7 @@ const Prescription = () => {
                         disabled={preKey != null ? editing : true}
                         column
 
-                        fieldLabel="Generic substitute allowed"
+                        fieldLabel="Brand substitute allowed"
                         fieldType="checkbox"
                         fieldName="genericSubstitute"
                         record={prescriptionMedication}
@@ -1401,13 +1507,8 @@ const Prescription = () => {
                             setSelectedOption("3010573499898196")
                         }
                         else if (rowData.instructionsTypeLkey == "3010606785535008") {
-                            console.log("Iam in custom prsecription")
                             setSelectedOption("3010606785535008")
                             setSelectedRowoMedicationKey(rowData.key);
-
-                            console.log(selectedRowoMedicationKey)
-                            console.log(customeinst);
-                            console.log(customeInstructions?.object)
                         }
                         setEditing(rowData.statusLkey == "164797574082125" ? false : true)
                     }}
@@ -1530,6 +1631,132 @@ const Prescription = () => {
                 </Table>
 
             </div>
+            <Modal size={'lg'} open={openSubstitutesModel} onClose={CloseSubstitutesModel} overflow  >
+                <Modal.Title>
+                    <Translate><h6>Substitues</h6></Translate>
+                </Modal.Title>
+                <Modal.Body>
+                    <Table
+                        height={400}
+
+                        headerHeight={50}
+                        rowHeight={60}
+                        bordered
+                        cellBordered
+                        data={lisOfLinkedBrand?.object ?? []}
+                    //   onRowClick={rowData => {
+                    //     setGenericMedication(rowData);
+                    //   }}
+                    //   rowClassName={isSelected}
+                    >
+                        <Column sortable flexGrow={2}>
+                            <HeaderCell align="center">
+                                <Translate>Code </Translate>
+                            </HeaderCell>
+                            <Cell dataKey="code" />
+                        </Column>
+                        <Column sortable flexGrow={2}>
+                            <HeaderCell align="center">
+                                <Translate>Brand Name </Translate>
+                            </HeaderCell>
+                            <Cell dataKey="genericName" />
+                        </Column>
+                        <Column sortable flexGrow={2}>
+                            <HeaderCell align="center">
+
+                                <Translate>Manufacturer</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="manufacturerLkey">
+                                {rowData =>
+                                    rowData.manufacturerLvalue ? rowData.manufacturerLvalue.lovDisplayVale : rowData.manufacturerLkey
+                                }
+                            </Cell>
+                        </Column>
+                        <Column sortable flexGrow={2} fullText>
+                            <HeaderCell align="center">
+
+                                <Translate>Dosage Form</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData =>
+                                    rowData.dosageFormLvalue ? rowData.dosageFormLvalue.lovDisplayVale : rowData.dosageFormLkey
+                                }
+                            </Cell>
+                        </Column>
+
+                        <Column sortable flexGrow={3} fullText>
+                            <HeaderCell align="center">
+
+                                <Translate>Usage Instructions</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="usageInstructions" />
+                        </Column>
+                        <Column sortable flexGrow={2} fixed fullText>
+                            <HeaderCell align="center">
+
+                                <Translate>Rout</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData => rowData.roaList?.map((item, index) => {
+                                    const value = conjureValueBasedOnKeyFromList(
+                                        medRoutLovQueryResponse?.object ?? [],
+                                        item,
+                                        'lovDisplayVale'
+                                    );
+                                    return (
+                                        <span key={index}>
+                                            {value}
+                                            {index < rowData.roaList.length - 1 && ', '}
+                                        </span>
+                                    );
+                                })}
+                            </Cell>
+                        </Column>
+                        <Column sortable flexGrow={2}>
+                            <HeaderCell align="center">
+
+                                <Translate>Expires After Opening</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData =>
+                                    rowData.expiresAfterOpening ? 'Yes' : 'No'
+                                }
+                            </Cell>
+                        </Column>
+                        <Column sortable flexGrow={3}>
+                            <HeaderCell align="center">
+
+                                <Translate>Single Patient Use</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData =>
+                                    rowData.singlePatientUse ? 'Yes' : 'No'
+                                }
+                            </Cell>
+                        </Column>
+                        <Column sortable flexGrow={1}>
+                            <HeaderCell align="center">
+
+                                <Translate>Status</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData =>
+                                    rowData.deletedAt === null ? 'Active' : 'InActive'
+                                }
+                            </Cell>
+                        </Column>
+                    </Table>
+
+                </Modal.Body>
+                <Modal.Footer>
+                    <Stack spacing={2} divider={<Divider vertical />}>
+
+                        <Button appearance="ghost" color="cyan" onClick={CloseSubstitutesModel}>
+                            Close
+                        </Button>
+                    </Stack>
+                </Modal.Footer>
+            </Modal>
         </div>
     </>);
 };

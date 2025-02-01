@@ -3,6 +3,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import { Input, Modal, Pagination, Panel, Table, Container, Row, Col, Nav } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
+import Substitutes from './Substitutes';
 import {
   useGetLovValuesByCodeQuery,
 } from '@/services/setupService';
@@ -266,6 +267,7 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
        <Tabs>
             <TabList>
               <Tab>Active Ingredient</Tab>
+              <Tab>Substitutes</Tab>
               {/* <Tab>Unit of Measurments</Tab>
               <Tab>Price</Tab> */}
        {/* <Tab>Insurance</Tab> */}
@@ -273,6 +275,9 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
 
             <TabPanel>
               {preKey && <ActiveIngredient genericMedication={genericMedication} />}
+               </TabPanel>
+               <TabPanel>
+                <Substitutes genericMedication={genericMedication}/>
                </TabPanel>
             {/* <TabPanel>
             <UOM />

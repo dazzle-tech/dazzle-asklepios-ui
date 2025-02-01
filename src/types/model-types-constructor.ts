@@ -817,6 +817,23 @@ export const newApDrugOrderMedications:modelTypes.ApDrugOrderMedications = {
 	indicationManually:'',
 } 
 
+export const newApDuplicationCandidateSetup:modelTypes.ApDuplicationCandidateSetup = { 
+	key:undefined,
+	role:'',
+	dateOfBirth:undefined,
+	dob:undefined,
+	lastName:undefined,
+	documentNo:undefined,
+	mobileNumber:undefined,
+	gender:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
 export const newApDvmRule:modelTypes.ApDvmRule = { 
 	key:undefined,
 	screenMetadataKey:undefined,
@@ -1352,6 +1369,7 @@ export const newApPatient:modelTypes.ApPatient = {
 	secondaryMobileNumber:'',
 	roleLkey:undefined,
 	districtLkey:undefined,
+	countryId:'',
 } 
 
 export const newApPatientAddresses:modelTypes.ApPatientAddresses = { 
@@ -1639,6 +1657,21 @@ export const newApPatientPlan:modelTypes.ApPatientPlan = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+} 
+
+export const newApPatientPreferredHealthProfessional:modelTypes.ApPatientPreferredHealthProfessional = { 
+	key:undefined,
+	practitionerKey:undefined,
+	facilityKey:undefined,
+	createdBy:'',
+	networkAffiliation:'',
+	relatedWith:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	patientKey:undefined,
 } 
 
 export const newApPatientProblem:modelTypes.ApPatientProblem = { 

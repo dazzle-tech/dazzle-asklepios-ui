@@ -7,6 +7,7 @@ import PageIcon from '@rsuite/icons/Page';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import {
     InputGroup,
@@ -28,9 +29,12 @@ import {
     TagGroup,
     SelectPicker,
     Tag,
-    DatePicker
+    DatePicker,
+
+
 
 } from 'rsuite';
+import { List } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
@@ -46,7 +50,8 @@ import MyInput from '@/components/MyInput';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
     useGetGenericMedicationQuery,
-    useGetGenericMedicationWithActiveIngredientQuery
+    useGetGenericMedicationWithActiveIngredientQuery,
+    useGetLinkedBrandQuery
 } from '@/services/medicationsSetupService';
 import {
     useGetLovValuesByCodeQuery,
@@ -55,10 +60,15 @@ import {
     useGetDrugOrderQuery,
     useSaveDrugOrderMutation,
     useGetDrugOrderMedicationQuery,
-    useSaveDrugOrderMedicationMutation
+    useSaveDrugOrderMedicationMutation,
+
 } from '@/services/encounterService';
 import {
+    useGetAllergiesQuery
+} from '@/services/observationService';
+import {
     useGetDepartmentsQuery,
+
 } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
 import { ApDrugOrderMedications } from '@/types/model-types';
@@ -67,6 +77,7 @@ import { filter } from 'lodash';
 import {
     useGetIcdListQuery,
 } from '@/services/setupService';
+import './styles.less';
 const DrugOrder = () => {
     const patientSlice = useAppSelector(state => state.patient);
     const dispatch = useAppDispatch();
@@ -87,8 +98,10 @@ const DrugOrder = () => {
     const [isdraft, setIsDraft] = useState(false);
     const [selectedFirstDate, setSelectedFirstDate] = useState(null);
     const [editDuration, setEditDuration] = useState(false);
+    const [isMinimized, setIsMinimized] = useState(true);
     const [adminInstructions, setAdminInstructions] = useState("");
     const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
+    const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
     const [indicationsIcd, setIndicationsIcd] = useState({ indicationIcd: null });
     const [edit_new, setEdit_new] = useState(true);
@@ -100,8 +113,26 @@ const DrugOrder = () => {
     const { data: indicationLovQueryResponse } = useGetLovValuesByCodeQuery('MED_INDICATION_USE');
     const { data: DurationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_DURATION');
     const { data: priorityLevelLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
+    const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ORDER_ADMIN_NSTRUCTIONS');
     const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
+    const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({
+        ...initialListRequest,
+        filters: [
+            {
+                fieldName: 'patient_key',
+                operator: 'match',
+                value: patientSlice.patient.key
+            },
+            ,
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
+            }
+
+        ]
+    });
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         ignore: true
@@ -186,6 +217,7 @@ const DrugOrder = () => {
             }
         ],
     });
+    const { data: lisOfLinkedBrand } = useGetLinkedBrandQuery(selectedGeneric?.key, { skip: selectedGeneric?.key == null });
     const filteredorders = orders?.object?.filter(
         (item) => item.statusLkey === "1804482322306061"
     ) ?? [];
@@ -531,7 +563,8 @@ const DrugOrder = () => {
                 ),
 
                 statusLkey: "1804482322306061"
-                , saveDraft: false
+                , saveDraft: false,
+                submittedAt: Date.now()
             }).unwrap();
             dispatch(notify('submetid  Successfully'));
             handleCleare();
@@ -626,6 +659,9 @@ const DrugOrder = () => {
     }
     const CloseCancellationReasonModel = () => {
         setOpenCancellationReasonModel(false);
+    }
+    const CloseSubstitutesModel = () => {
+        setOpenSubstitutesModel(false);
     }
     const renderRowExpanded = rowData => {
         // Add this line to check children data
@@ -734,6 +770,92 @@ const DrugOrder = () => {
                     order.key === drugKey
                 )?.drugorderId}</Text>
             </div>
+            {!isMinimized && <div className="custom-fab">
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', marginTop: '12px', justifyContent: 'space-between', width: '100%' }}>
+                        <Text style={{
+                            fontWeight: 'bold',
+                            marginBottom: '10px',
+                            fontFamily: "'Times New Roman', serif"
+                        }}>
+                            Patient's Allergies
+                        </Text>
+
+                        <div style={{ marginLeft: 'auto', display: 'flex' }}>
+                            <button onClick={() => setIsMinimized(true)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    padding: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '10px',
+                                    fontSize: '18px'
+                                }}>
+                                -
+                            </button>
+                            <button onClick={() => setIsMinimized(false)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    padding: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '10px',
+                                    marginLeft: '2px',
+                                    fontSize: '18px'
+                                }}>
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                    <List style={{ height: '190px', width: '250px', overflow: 'auto' }}>
+                        {allergiesListResponse?.object?.map((order, index) => (
+                            <List.Item key={index}>
+                                {order.allergyTypeLvalue?.lovDisplayVale}, {order.severityLvalue.lovDisplayVale},{order.allergensName}
+                            </List.Item>
+                        ))}
+                    </List>
+                </div>
+            </div>}
+            {isMinimized &&
+                <div className="custom-fab" style={{ height: '60px' }}>
+                    <div style={{ display: 'flex', marginTop: '12px', justifyContent: 'space-between', width: '100%' }}>
+                        <Text style={{
+                            fontWeight: 'bold',
+                            marginBottom: '10px',
+                            fontFamily: "'Times New Roman', serif"
+                        }}>
+                            Patient's Allergies
+                        </Text>
+
+                        <div style={{ marginLeft: 'auto', display: 'flex' }}>
+                            <button onClick={() => setIsMinimized(true)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    padding: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '10px',
+                                    fontSize: '18px'
+                                }}>
+                                -
+                            </button>
+                            <button onClick={() => setIsMinimized(false)}
+                                style={{
+                                    backgroundColor: 'white',
+                                    padding: '5px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    marginBottom: '10px',
+                                    marginLeft: '2px',
+                                    fontSize: '18px'
+                                }}>
+                                +
+                            </button>
+                        </div>
+                    </div>
+
+                </div>}
 
 
             <IconButton
@@ -794,15 +916,23 @@ const DrugOrder = () => {
 
 
                 </Form>
-                {/* <Checkbox
-                    checked={!searchActive}
-                    onChange={() => {
-                        setSearchActive(!searchActive)
-                    }}
-                >
-                    Search Active Ingredient Only
-                </Checkbox> */}
+
             </div>
+
+            <Button
+                color="cyan"
+                appearance="primary"
+                style={{ height: '30px', marginTop: '23px' }}
+                onClick={() => {
+                    setOpenSubstitutesModel(true);
+                }}
+
+            >
+
+                <FontAwesomeIcon icon={faCircleInfo} style={{ marginRight: '5px' }} />
+                <span>Substitutes</span>
+            </Button>
+
             {selectedGeneric && <span style={{ marginTop: "25px", fontWeight: "bold" }}>
                 {[selectedGeneric.genericName,
                 selectedGeneric.dosageFormLvalue?.lovDisplayVale,
@@ -934,7 +1064,6 @@ const DrugOrder = () => {
                         <Form style={{ zoom: 0.85, display: 'flex' }} layout="inline" fluid disabled={drugKey != null ? editing : true}>
                             <MyInput
                                 column
-
                                 width={150}
                                 fieldType='number'
                                 fieldName={'dose'}
@@ -944,7 +1073,6 @@ const DrugOrder = () => {
 
                             <MyInput
                                 column
-
                                 width={150}
                                 fieldType="select"
                                 fieldLabel="Unit"
@@ -960,7 +1088,8 @@ const DrugOrder = () => {
                                 <Text style={{ fontWeight: 'bold', marginTop: '7px' }}>Frequency</Text>
                                 <InputGroup style={{ width: '160px', zoom: 0.85, height: '40px' }}>
                                     <Input
-                                        disabled={drugKey != null ? editing : true}
+                                        disabled={orderMedication.drugOrderTypeLkey == '2937757567806213' ? true : false}
+
                                         style={{ width: '100px', height: '100%' }}
                                         type="number"
                                         value={orderMedication.frequency}
@@ -977,6 +1106,7 @@ const DrugOrder = () => {
 
                             <MyInput
                                 column
+
                                 width={150}
                                 fieldType="select"
                                 fieldLabel="ROA"
@@ -1100,54 +1230,69 @@ const DrugOrder = () => {
 
             </div>
             <div className='form-search-container-p ' style={{ minWidth: "620px" }}>
-
-
                 <Table
                     bordered
-                    onRowClick={rowData => {
-                    }}
+                    onRowClick={rowData => console.log("Row clicked:", rowData)}
                     data={genericMedicationActiveIngredientListResponseData?.object || []}
                     height={300}
-
                 >
-
                     <Table.Column flexGrow={2} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient</Table.HeaderCell>
-                        <Table.Cell dataKey="activeIngredientKey">
-
+                        <Table.Cell>
                             {rowData => {
-                                const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name
-
+                                if (!rowData) return " ";
+                                const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name || " ";
                                 return nameg;
-                            }
-                            }
-
+                            }}
                         </Table.Cell>
                     </Table.Column>
-                    <Table.Column flexGrow={3} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient ATC Code</Table.HeaderCell>
-                        <Table.Cell dataKey="activeIngredientKey">
 
-                            {rowData => {
-                                const atcg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode
-                                console.log(activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey))
-                                return atcg;
-                            }
-                            }
-
-                        </Table.Cell>
-                    </Table.Column>
                     <Table.Column flexGrow={2} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
-                        <Table.Cell>{rowData => rowData.strength}</Table.Cell>
-                    </Table.Column>
-                    <Table.Column flexGrow={1} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }} >Details</Table.HeaderCell>
-                        <Table.Cell><IconButton
-                            // onClick={OpenDetailsModel} 
-                            icon={<OthersIcon />} /></Table.Cell>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient ATC Code</Table.HeaderCell>
+                        <Table.Cell>
+                            {rowData => {
+                                if (!rowData) return " ";
+                                const atcg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode || " ";
+                                return atcg;
+                            }}
+                        </Table.Cell>
                     </Table.Column>
 
+                    <Table.Column flexGrow={1} fullText>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
+                        <Table.Cell>
+                            {rowData => rowData?.strength ?? " "}
+                        </Table.Cell>
+                    </Table.Column>
+
+                    <Table.Column flexGrow={1} fullText>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>IsControlled</Table.HeaderCell>
+                        <Table.Cell>
+                            {rowData => {
+                                if (!rowData) return " ";
+                                const isControlled = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled;
+                                return isControlled ? "Yes" : "No";
+                            }}
+                        </Table.Cell>
+                    </Table.Column>
+
+                    <Table.Column flexGrow={2} fullText>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>Controlled</Table.HeaderCell>
+                        <Table.Cell>
+                            {rowData => {
+                                if (!rowData) return " ";
+                                const controlledValue = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.controlledLvalue?.lovDisplayVale || " ";
+                                return controlledValue;
+                            }}
+                        </Table.Cell>
+                    </Table.Column>
+
+                    <Table.Column flexGrow={1} fullText>
+                        <Table.HeaderCell style={{ fontSize: '14px' }}>Details</Table.HeaderCell>
+                        <Table.Cell>
+                            <IconButton icon={<OthersIcon />} />
+                        </Table.Cell>
+                    </Table.Column>
                 </Table>
 
             </div>
@@ -1235,7 +1380,7 @@ const DrugOrder = () => {
                         disabled={drugKey != null ? editing : true}
                         column
 
-                        fieldLabel="Generic substitute allowed"
+                        fieldLabel="Brand substitute allowed"
                         fieldType="checkbox"
                         fieldName="genericSubstitute"
                         record={orderMedication}
@@ -1392,6 +1537,7 @@ const DrugOrder = () => {
                     Show canceled orders
                 </Checkbox>
             </div>
+
             <Table
                 height={600}
                 data={orderMedications?.object || []}
@@ -1442,7 +1588,7 @@ const DrugOrder = () => {
                     </HeaderCell>
                     <Cell>
                         {rowData => {
-                            return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, rowData.frequency, rowData.roaLvalue?.lovDisplayVale]);
+                            return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, "every " + rowData.frequency + " hours", rowData.roaLvalue?.lovDisplayVale]);
                         }
                         }
                     </Cell>
@@ -1522,7 +1668,135 @@ const DrugOrder = () => {
                     </Stack>
                 </Modal.Footer>
             </Modal>
+            <Modal size={'lg'} open={openSubstitutesModel} onClose={CloseSubstitutesModel} overflow  >
+                <Modal.Title>
+                    <Translate><h6>Substitues</h6></Translate>
+                </Modal.Title>
+                <Modal.Body>
+                    <Table
+                        height={400}
+
+                        headerHeight={50}
+                        rowHeight={60}
+                        bordered
+                        cellBordered
+                        data={lisOfLinkedBrand?.object ?? []}
+                    //   onRowClick={rowData => {
+                    //     setGenericMedication(rowData);
+                    //   }}
+                    //   rowClassName={isSelected}
+                    >
+                        <Column sortable flexGrow={2}>
+                            <HeaderCell align="center">
+                                <Translate>Code </Translate>
+                            </HeaderCell>
+                            <Cell dataKey="code" />
+                        </Column>
+                        <Column sortable flexGrow={2}>
+                            <HeaderCell align="center">
+                                <Translate>Brand Name </Translate>
+                            </HeaderCell>
+                            <Cell dataKey="genericName" />
+                        </Column>
+                        <Column sortable flexGrow={2}>
+                            <HeaderCell align="center">
+
+                                <Translate>Manufacturer</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="manufacturerLkey">
+                                {rowData =>
+                                    rowData.manufacturerLvalue ? rowData.manufacturerLvalue.lovDisplayVale : rowData.manufacturerLkey
+                                }
+                            </Cell>
+                        </Column>
+                        <Column sortable flexGrow={2} fullText>
+                            <HeaderCell align="center">
+
+                                <Translate>Dosage Form</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData =>
+                                    rowData.dosageFormLvalue ? rowData.dosageFormLvalue.lovDisplayVale : rowData.dosageFormLkey
+                                }
+                            </Cell>
+                        </Column>
+
+                        <Column sortable flexGrow={3} fullText>
+                            <HeaderCell align="center">
+
+                                <Translate>Usage Instructions</Translate>
+                            </HeaderCell>
+                            <Cell dataKey="usageInstructions" />
+                        </Column>
+                        <Column sortable flexGrow={2} fixed fullText>
+                            <HeaderCell align="center">
+
+                                <Translate>Rout</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData => rowData.roaList?.map((item, index) => {
+                                    const value = conjureValueBasedOnKeyFromList(
+                                        medRoutLovQueryResponse?.object ?? [],
+                                        item,
+                                        'lovDisplayVale'
+                                    );
+                                    return (
+                                        <span key={index}>
+                                            {value}
+                                            {index < rowData.roaList.length - 1 && ', '}
+                                        </span>
+                                    );
+                                })}
+                            </Cell>
+                        </Column>
+                        <Column sortable flexGrow={2}>
+                            <HeaderCell align="center">
+
+                                <Translate>Expires After Opening</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData =>
+                                    rowData.expiresAfterOpening ? 'Yes' : 'No'
+                                }
+                            </Cell>
+                        </Column>
+                        <Column sortable flexGrow={3}>
+                            <HeaderCell align="center">
+
+                                <Translate>Single Patient Use</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData =>
+                                    rowData.singlePatientUse ? 'Yes' : 'No'
+                                }
+                            </Cell>
+                        </Column>
+                        <Column sortable flexGrow={1}>
+                            <HeaderCell align="center">
+
+                                <Translate>Status</Translate>
+                            </HeaderCell>
+                            <Cell>
+                                {rowData =>
+                                    rowData.deletedAt === null ? 'Active' : 'InActive'
+                                }
+                            </Cell>
+                        </Column>
+
+                    </Table>
+
+                </Modal.Body>
+                <Modal.Footer>
+                    <Stack spacing={2} divider={<Divider vertical />}>
+
+                        <Button appearance="ghost" color="cyan" onClick={CloseSubstitutesModel}>
+                            Close
+                        </Button>
+                    </Stack>
+                </Modal.Footer>
+            </Modal>
         </div>
+
     </>)
 };
 export default DrugOrder;

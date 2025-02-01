@@ -346,13 +346,8 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
     useEffect(() => {
         if (appointmentData) {
-            setAppoitment({ ...appointment, patientKey: localPatient.key })
-            console.log({ ...appointment, patientKey: localPatient.key })
-            console.log(appointment)
-            console.log(localPatient)
-
-            console.log(localPatient.key)
-
+            setAppoitment({ ...appointment, patientKey: localPatient?.key })
+    
         }
 
     }, [localPatient])
@@ -1013,7 +1008,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                     <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
                                         Month Day
                                     </label>
-                                    <SelectPicker
+                                    {/* <SelectPicker
                                         style={{ width: 120 }}
                                         disabled={!(availableDatesInMonth && availableDatesInMonth.length > 0) || showOnly}
                                         data={
@@ -1027,9 +1022,9 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                         defaultValue={availableDatesInMonth && availableDatesInMonth.length > 0 ? availableDatesInMonth[0] : null} // تعيين أول يوم كقيمة افتراضية
                                         placeholder="Select a day"
                                         onChange={(selectedMonthDay) => setSelectedMonthDay(selectedMonthDay)}
-                                    />
+                                    /> */}
 
-                                    {/* <SelectPicker
+                                    <SelectPicker
                                        disabled={!(availableDatesInMonth && availableDatesInMonth.length > 0) || showOnly}
                                         style={{ width: 120 }}
                                          data={filteredDates?.map(date => ({
@@ -1038,7 +1033,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                         }))}
                                          placeholder="Select a day"
                                         onChange={setSelectedMonthDay}
-                                    /> */}
+                                    />
 
                                 </div>
                                 {/* Select Time */}
@@ -1247,7 +1242,6 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                     <IconButton disabled={showOnly} onClick={() => { console.log(selectedEvent || selectedSlot), console.log(appointment), handleSaveAppointment() }} color="violet" appearance="primary" icon={<CheckIcon />}>
                         Save
                     </IconButton>
-                    <Divider vertical />
                     <IconButton disabled={showOnly} color="orange" onClick={handleClear} appearance="primary" icon={<TrashIcon />}>
                         Clear
                     </IconButton>

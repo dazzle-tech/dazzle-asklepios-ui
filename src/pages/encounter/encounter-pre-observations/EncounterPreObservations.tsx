@@ -115,6 +115,7 @@ const EncounterPreObservations = () => {
   console.log("patientSlice.encounter.key", patientSlice.encounter);
   const { data: getObservationSummaries } = useGetObservationSummariesQuery({
     ...patientLastVisitObservationsListRequest,
+
   });
   const { data: getCurrenttObservationSummaries } = useGetObservationSummariesQuery({
     ...patientObservationsListRequest,
@@ -619,7 +620,7 @@ const EncounterPreObservations = () => {
           {activeTab === 2&& <Warning/>}
         </TabPanel>
         <TabPanel>
-          {activeTab === 3&& <VaccinationTab/>}
+          {activeTab === 3&& <VaccinationTab   disabled={isEncounterStatusClosed || readOnly}/>}
         </TabPanel>
             </Tabs>
           </Panel>

@@ -47,6 +47,7 @@ import DentalActions from './pages/setup/dental-actions';
 import CDTSetup from './pages/setup/cdt-setup';
 import ICD10Setup from './pages/setup/icd10-setup';
 import ServiceSetup from './pages/setup/service-setup';
+import PotintialDuplicate from './pages/setup/potential-duplicate';
 import ProcedureSetup from './pages/setup/procedure-setup';
 import Translate from './components/Translate';
 import { BlockUI } from 'primereact/blockui';
@@ -61,7 +62,7 @@ import EncounterPreObservations from './pages/encounter/encounter-pre-observatio
 import AgeGroup from './pages/setup/age-group';
 import FacilityPatientList from './pages/patient/facility-patient-list/FacilityPatientList'
 import ScheduleScreen from './pages/Scheduling/scheduling-screen/ScheduleScreen';
-
+import EncounterPatientPrivateLogin from './pages/encounter/encounter-patient-private';
 import VaccinationTab from './pages/encounter/encounter-pre-observations/vaccination-tab';
 
 const App = () => {
@@ -152,7 +153,7 @@ const App = () => {
   return (
     <IntlProvider locale="en" messages={locales.en}>
       <div style={{ position: 'fixed', right: '1%', bottom: '1%', zIndex: 1000, color: 'grey' }}>
-        @ {authSlice.tenant ? authSlice.tenant.tenantName : 'No-Tenant'}
+        {/* @ {authSlice.tenant ? authSlice.tenant.tenantName : 'No-Tenant'} */}
       </div>
 
       <div
@@ -220,9 +221,10 @@ const App = () => {
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />
               <Route path="modules-setup" element={<Modules />} />
-              <Route path="vaccination-tab" element={<VaccinationTab />} />
+              <Route path="user-access-patient-private" element={<EncounterPatientPrivateLogin />} />
               <Route path="vaccine-setup" element={<Vaccine />} />
               <Route path="procedure-setup" element={<ProcedureSetup />} />
+              <Route path="potintial-duplicate" element={<PotintialDuplicate />} />
               <Route path="users" element={<Users />} />
               <Route path="uom-group" element={<UOMGroup />} />
               <Route path="encounter-pre-observations" element={<EncounterPreObservations />} />

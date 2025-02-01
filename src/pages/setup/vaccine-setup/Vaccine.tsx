@@ -27,6 +27,8 @@ import {
     useGetIcdListQuery,
 } from '@/services/setupService';
 import { useAppDispatch } from '@/hooks';
+
+
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
@@ -253,13 +255,6 @@ const Vaccine = () => {
         })
     };
 
-    const handleDelete = () => {
-        removeVaccine(vaccine).unwrap().then(() => {
-            setVaccine(newApVaccine);
-            dispatch(notify('Vaccine Deleted Successfully'));
-            refetch();
-        })
-    };
     const handleDeleteVaccineDose = () => {
         removeVaccineDose(vaccineDose).unwrap().then(() => {
             setVaccineDose(newApVaccineDose);
@@ -509,38 +504,20 @@ const Vaccine = () => {
                 >
                     Edit Selected
                 </IconButton>
+                
                 <IconButton
-                    disabled={!vaccine.key}
-                    appearance="primary"
-                    color="blue"
-                    icon={<TrashIcon />}
-                    onClick={() => { handleDelete() }}
-                >
-                    Delete Selected
-                </IconButton>
-                <IconButton
-                    disabled={vaccine.isValid || vaccine.key === undefined}
+                    disabled={ vaccine.key === undefined}
                     appearance="ghost"
                     color="violet"
-                    icon={<CheckRoundIcon />}
+                    icon={<ReloadIcon />}
                     onClick={() => {
                         handleDeactive()
                     }}
                 >
-                    Activate
+                    Activate / Deactivate 
                 </IconButton>
 
-                <IconButton
-                    disabled={!vaccine.isValid}
-                    appearance="ghost"
-                    color="cyan"
-                    icon={<WarningRoundIcon />}
-                    onClick={() => {
-                        handleDeactive()
-                    }}
-                >
-                    Deactivate Selected
-                </IconButton>
+                
                 <IconButton
                     disabled={!vaccine.key}
                     appearance="ghost"

@@ -46,7 +46,7 @@ const EncounterList = () => {
   const patientSlice = useAppSelector(state => state.patient);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-
+  const[localPatient,setLocalPatient]=useState<ApPatient>({...newApPatient})
   const [encounter, setLocalEncounter] = useState({ ...newApEncounter });
   const { data: icdListResponseData } = useGetIcdListQuery({
     ...initialListRequest,
@@ -121,17 +121,37 @@ const EncounterList = () => {
     if (encounter && encounter.key) {
       dispatch(setEncounter(encounter));
       dispatch(setPatient(encounter['patientObject']));
-      navigate('/encounter');
     }
+  
+    const privatePatientPath = '/user-access-patient-private';
+    const encounterPath = '/encounter';
+    const targetPath = localPatient.privatePatient ? privatePatientPath : encounterPath;
+
+    if (localPatient.privatePatient) {
+      navigate(targetPath, { state: { info: "toEncounter" } });
+    } else {
+      navigate(targetPath); 
+    }
+  
     const currentDateTime = new Date().toLocaleString();
     setDateClickToVisit(currentDateTime);
   };
+  
   const goToPreVisitObservations = () => {
     if (encounter && encounter.key) {
       dispatch(setEncounter(encounter));
       dispatch(setPatient(encounter['patientObject']));
-      navigate('/encounter-pre-observations');
     }
+    const privatePatientPath = '/user-access-patient-private';
+    const preObservationsPath = '/encounter-pre-observations';
+    const targetPath = localPatient.privatePatient ? privatePatientPath : preObservationsPath;
+    if (localPatient.privatePatient) {
+      navigate(targetPath, { state: { info: "toNurse" } });
+    } else {
+      navigate(targetPath); 
+    }
+  
+    
   };
   return (
     <>
@@ -232,6 +252,7 @@ const EncounterList = () => {
           data={encounterListResponse?.object ?? []}
           onRowClick={rowData => {
             setLocalEncounter(rowData);
+            setLocalPatient(rowData.patientObject)
           }}
           rowClassName={isSelected}
         >
@@ -249,12 +270,23 @@ const EncounterList = () => {
             </HeaderCell>
             <Cell dataKey="visitId" />
           </Column>
-          <Column sortable flexGrow={4}>
-            <HeaderCell>
+          <Column sortable flexGrow={6} fullText>
+            <HeaderCell fullText>
               <Input onChange={e => handleFilterChange('patientFullName', e)} />
               <Translate>Patient Name</Translate>
             </HeaderCell>
-            <Cell dataKey="patientFullName" />
+            <Cell dataKey="patientFullName" fullText>
+              {rowData => rowData?.patientObject?.privatePatient ? (
+                <div>
+                  <Badge color="cyan" content={'Private'}>
+                    <p style={{ marginTop: '5px' }}>{rowData?.patientObject?.fullName}</p>
+                  </Badge>
+                </div>
+              ) : (
+                <p>{rowData?.patientObject?.fullName}</p>
+              )
+              }
+            </Cell>
           </Column>
           <Column sortable flexGrow={3}>
             <HeaderCell>
@@ -300,9 +332,9 @@ const EncounterList = () => {
               <Translate>Diagnosis</Translate>
             </HeaderCell>
             <Cell>
-              {rowData => 
+              {rowData =>
                 rowData.diagnosis}
-               
+
             </Cell>
 
           </Column>
@@ -312,24 +344,24 @@ const EncounterList = () => {
               <Translate>Prescription </Translate>
             </HeaderCell>
             <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
-              rowData.hasPrescription ?  <Badge  content="YES"  style={{
+              rowData.hasPrescription ? <Badge content="YES" style={{
                 backgroundColor: '#bcf4f7',
                 color: '#008aa6',
-                padding: '5px 19px', 
-                borderRadius: '12px', 
-                fontSize: '12px' ,
-                fontWeight:"bold"
-              }}/> :  <Badge
-              style={{
-                backgroundColor: 'rgba(238, 130, 238, 0.2)',
-                color: '#4B0082',
-                padding: '5px 19px', 
-                borderRadius: '12px', 
-                fontSize: '12px' ,
-                fontWeight:"bold"
-              }}
-              content="NO"
-            />
+                padding: '5px 19px',
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: "bold"
+              }} /> : <Badge
+                style={{
+                  backgroundColor: 'rgba(238, 130, 238, 0.2)',
+                  color: '#4B0082',
+                  padding: '5px 19px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: "bold"
+                }}
+                content="NO"
+              />
             }</Cell>
           </Column>
           <Column sortable flexGrow={3}>
@@ -338,27 +370,27 @@ const EncounterList = () => {
               <Translate> Has order</Translate>
             </HeaderCell>
             <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
-              rowData.hasOrder ?  <Badge  content="YES"  style={{
+              rowData.hasOrder ? <Badge content="YES" style={{
                 backgroundColor: '#bcf4f7',
                 color: '#008aa6',
-                padding: '5px 19px', 
-                borderRadius: '12px', 
-                fontSize: '12px' ,
-                fontWeight:"bold"
-              }}/> :  <Badge
-              style={{
-                backgroundColor: 'rgba(238, 130, 238, 0.2)',
-                color: '#4B0082',
-                padding: '5px 19px', 
-                borderRadius: '12px', 
-                fontSize: '12px' ,
-                fontWeight:"bold"
-              }}
-              content="NO"
-            />
+                padding: '5px 19px',
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: "bold"
+              }} /> : <Badge
+                style={{
+                  backgroundColor: 'rgba(238, 130, 238, 0.2)',
+                  color: '#4B0082',
+                  padding: '5px 19px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: "bold"
+                }}
+                content="NO"
+              />
             }</Cell>
           </Column>
-          
+
           <Column sortable flexGrow={3}>
             <HeaderCell>
               <Input onChange={e => handleFilterChange('encounterPriorityLkey', e)} />
@@ -397,24 +429,24 @@ const EncounterList = () => {
               <Translate>Is Observed</Translate>
             </HeaderCell>
             <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {rowData => (rowData.hasObservation?  <Badge  content="YES"  style={{
+              {rowData => (rowData.hasObservation ? <Badge content="YES" style={{
                 backgroundColor: '#bcf4f7',
                 color: '#008aa6',
-                padding: '5px 19px', 
-                borderRadius: '12px', 
-                fontSize: '12px' ,
-                fontWeight:"bold"
-              }}/> :  <Badge
-              style={{
-                backgroundColor: 'rgba(238, 130, 238, 0.2)',
-                color: '#4B0082',
-                padding: '5px 19px', 
-                borderRadius: '12px', 
-                fontSize: '12px' ,
-                fontWeight:"bold"
-              }}
-              content="NO"
-            />)}
+                padding: '5px 19px',
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: "bold"
+              }} /> : <Badge
+                style={{
+                  backgroundColor: 'rgba(238, 130, 238, 0.2)',
+                  color: '#4B0082',
+                  padding: '5px 19px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: "bold"
+                }}
+                content="NO"
+              />)}
             </Cell>
           </Column>
         </Table>

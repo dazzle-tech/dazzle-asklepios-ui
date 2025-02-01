@@ -109,7 +109,8 @@ import {
   useUpdateAttachmentDetailsMutation
 } from '@/services/attachmentService';
 import { notify } from '@/utils/uiReducerActions';
-
+import PreferredHealthProfessional from './PreferredHealthProfessional';
+import ConsentFormTab from './ConsentFormTab';
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
   const byteNumbers = new Array(byteCharacters.length);
@@ -505,6 +506,11 @@ const PatientProfile = () => {
         return 'selected-row';
     } else return '';
 };
+const isSelectedRelation = rowData => {
+  if (rowData && selectedPatientRelation && selectedPatientRelation.key === rowData.key) {
+      return 'selected-row';
+  } else return '';
+};
   const [skipQuery, setSkipQuery] = useState(true);
   const [actionType, setActionType] = useState(null); // 'view' or 'download'
   const [visit, setVisit] = useState();
@@ -549,6 +555,19 @@ const PatientProfile = () => {
   };
 
 
+  const handleSaveFamilyMembers = () => {
+    savePatientRelation({
+      ...selectedPatientRelation,
+      patientKey: localPatient.key,
+    }) .unwrap()
+      .then(() => {
+        patientRelationsRefetch();
+      })
+      patientRelationsRefetch();}
+      
+    
+  
+  
 
   useEffect(() => {
     if (isSuccess && fetchAttachmentByKeyResponce) {
@@ -1786,6 +1805,12 @@ const PatientProfile = () => {
                 <Translate>Privacy & Security</Translate>
               </Tab>
               <Tab>
+                <Translate>Consent Forms</Translate>
+              </Tab>
+              <Tab>
+                <Translate>Preferred Health Professional</Translate>
+              </Tab>
+              <Tab>
                 <Translate>Family Members</Translate>
               </Tab>
               <Tab>
@@ -2032,7 +2057,7 @@ const PatientProfile = () => {
                 <MyInput
                   vr={validationResult}
                   column
-                  fieldLabel="Preferred Language"
+                  fieldLabel="Native Language"
                   fieldType="select"
                   fieldName="primaryLanguageLkey"
                   selectData={primaryLangLovQueryResponse?.object ?? []}
@@ -2173,6 +2198,16 @@ const PatientProfile = () => {
                   record={localPatient}
                   setRecord={setLocalPatient}
                   disabled={!editing}
+                />
+                 <MyInput
+                  vr={validationResult}
+                  column
+                  fieldLabel="Country ID"
+                  fieldType="text"
+                  fieldName="countryId"
+                  record={localPatient}
+                  setRecord={setLocalPatient}
+                  disabled
                 />
               </Form>
             </TabPanel>
@@ -2477,28 +2512,15 @@ const PatientProfile = () => {
                   setRecord={setLocalPatient}
                   disabled={!editing}
                 />
-                <br />
-                <MyInput
-                  vr={validationResult}
-                  fieldType="checkbox"
-                  fieldLabel="Consent"
-                  fieldName="consent"
-                  record={localPatient}
-                  setRecord={setLocalPatient}
-                  disabled={!editing}
-                />
-                <MyInput
-                  vr={validationResult}
-                  fieldType="date"
-                  fieldLabel=" "
-                  fieldName="consentDate"
-                  record={localPatient}
-                  setRecord={setLocalPatient}
-                  disabled={!editing}
-                />
               </Form>
             </TabPanel>
 
+             {/* Consent Forms */}
+             <TabPanel>
+             <ConsentFormTab patient={localPatient} isClick={!editing || !localPatient.key} />
+            </TabPanel>
+              {/* PreferredHealthProfessional */}
+            <TabPanel><PreferredHealthProfessional patient={localPatient} isClick={!editing || !localPatient.key}/></TabPanel>
             {/* Relations */}
             <TabPanel>
               <Modal open={relationModalOpen} onClose={() => setRelationModalOpen(false)}>
@@ -2552,10 +2574,7 @@ const PatientProfile = () => {
                   <Divider vertical />
                   <Button
                     onClick={() =>
-                      savePatientRelation({
-                        ...selectedPatientRelation,
-                        patientKey: localPatient.key
-                      }).unwrap()
+                      handleSaveFamilyMembers()
                     }
                     appearance="primary"
                   >
@@ -2651,6 +2670,8 @@ const PatientProfile = () => {
                   setSelectedPatientRelation(rowData);
                 }}
                 data={patientRelationsResponse?.object ?? []}
+                rowClassName={isSelectedRelation}
+                
               >
                 <Column sortable flexGrow={4}>
                   <HeaderCell>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Calendar as BigCalendar, Views, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { Calendar as RsuiteCalendar, TagPicker, ButtonToolbar, Panel, InputGroup, SelectPicker, Input, IconButton, Button, Form, Drawer, Calendar, TagGroup, Tag, Divider, DatePicker, Checkbox, } from "rsuite";
+import { Calendar as RsuiteCalendar, TagPicker, ButtonToolbar, Panel, InputGroup, SelectPicker, Input, IconButton, Button, Form, Drawer, Calendar, TagGroup, Tag, Divider, DatePicker, Checkbox, Modal, } from "rsuite";
 import "./styles.less";
 import SearchIcon from '@rsuite/icons/Search';
 import {
@@ -30,7 +30,7 @@ import AppointmentActionsModal from "./AppointmentActionsModal";
 import { useGetResourcesAvailabilityQuery, useGetResourcesQuery, useGetAppointmentsQuery } from '@/services/appointmentService'
 import MyInput from '@/components/MyInput';
 import Resources from "@/pages/appointment/resources";
-
+ 
 const ScheduleScreen = () => {
     const localizer = momentLocalizer(moment);
     const [validationResult, setValidationResult] = useState({});
@@ -49,8 +49,9 @@ const ScheduleScreen = () => {
     const [selectedAppointment, setSelectedAppointment] = useState()
     const [showAppointmentOnly, setShowAppointmentOnly] = useState(false)
     const [filteredResourcesList, setFilteredResourcesList] = useState([])
-    const [showCanceled, setShowCanceled] = useState<boolean>(false) 
+    const [showCanceled, setShowCanceled] = useState<boolean>(false)
     const [filteredMonth, setFilteredMonth] = useState<Date>()
+    const [showReasonModal, setShowReasonModal] = useState(false);
 
     const {
         data: appointments,
@@ -128,10 +129,15 @@ const ScheduleScreen = () => {
         }
     }, [selectedSlot])
     const handleSelectEvent = (event) => {
-        console.log(event)
-        setSelectedEvent(event); // Set selected event details
-        setActionsModalOpen(true)
+        console.log(event);
+        console.log(event?.appointmentData?.appointmentStatus);
+        setSelectedEvent(event); 
+        if (event?.appointmentData?.appointmentStatus === "Canceled" || event?.appointmentData?.appointmentStatus === "No-Show") {
+            setShowReasonModal(true);
+            return;
+        }
 
+        setActionsModalOpen(true); 
     };
 
 
@@ -256,7 +262,7 @@ const ScheduleScreen = () => {
     };
 
     const visibleAppointments = currentView === "agenda" || showCanceled
-        ? appointmentsData // Show all events in the agenda view
+        ? appointmentsData  
         : appointmentsData.filter((event) => !event.hidden);
 
 
@@ -281,12 +287,12 @@ const ScheduleScreen = () => {
 
     const handleDateChange = (date) => {
         if (date) {
-          // Set to the first day of the selected month
-          const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-          setFilteredMonth(firstDayOfMonth);
-          console.log(firstDayOfMonth); 
+            // Set to the first day of the selected month
+            const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+            setFilteredMonth(firstDayOfMonth);
+            console.log(firstDayOfMonth);
         }
-      };
+    };
 
     const CustomToolbar = ({ label, onNavigate, onView }) => {
         return (
@@ -327,6 +333,9 @@ const ScheduleScreen = () => {
     const [value, setValue] = useState(new Date());
     const [currentCalView, setCurrentCalView] = useState("month"); // Force "month" view
 
+    useEffect(() => {
+        console.log(selectedEvent?.appointmentData.otherReason)
+    }, [selectedEvent])
 
     return (
         <div>
@@ -425,11 +434,11 @@ const ScheduleScreen = () => {
                         />
                     </Form>
                     <div></div>
-                    <Checkbox onChange={()=>setShowCanceled(!showCanceled)}>Show Canceled</Checkbox>
+                    <Checkbox onChange={() => setShowCanceled(!showCanceled)}>Show Canceled</Checkbox>
 
-                    <Divider  style={{ marginTop: "50px" }}> </Divider>
+                    <Divider style={{ marginTop: "50px" }}> </Divider>
 
-                    <TagGroup style={{ display: 'flex', flexDirection: 'column', gap: '8px',width:"50%" }}>
+                    <TagGroup style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: "50%" }}>
 
                         <Tag style={{ backgroundColor: "#3174ad" }}><span style={{ color: "white" }}>New Appointment</span></Tag>
                         <Tag style={{ backgroundColor: "#AAFFFC" }}>Checked In Appointment</Tag>
@@ -450,7 +459,7 @@ const ScheduleScreen = () => {
                         onSelectSlot={(slotInfo) => {
                             console.log("Selected slot:", slotInfo);
                             setModalOpen(true)
-                          }}
+                        }}
                         startAccessor="start"
                         endAccessor="end"
                         views={["month", "week", "day", "agenda"]}
@@ -513,6 +522,39 @@ const ScheduleScreen = () => {
 
                 </Drawer.Body>
             </Drawer>
+
+            <Modal  open={showReasonModal} onClose={() => setShowReasonModal(false)}>
+                <Modal.Header>
+                </Modal.Header>
+
+                <Modal.Body>
+                    <br />
+                    <br />
+
+                    <Form layout="inline">
+                        <div>
+                            <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
+                                Reason
+                            </label>
+                            <Input value={selectedEvent?.appointmentData?.reasonLvalue?.lovDisplayVale??null} width={350}  />
+
+                        </div>
+                        <br />
+                        <div>
+                            <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
+                                Other Reason
+                            </label>
+                            <Input value={selectedEvent?.appointmentData.otherReason}  width={350}   />
+
+                        </div>
+                    </Form>
+
+                    <br />
+                    <br />
+                </Modal.Body>
+
+            </Modal>
+
         </div>
     );
 };

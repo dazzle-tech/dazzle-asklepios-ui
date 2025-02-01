@@ -12,56 +12,56 @@ import MyInput from '@/components/MyInput';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import {
-    useGetLovValuesByCodeQuery,
-    useSaveAgeGroupMutation,
-    useGetAgeGroupQuery
-  } from '@/services/setupService';
+  useGetLovValuesByCodeQuery,
+  useSaveAgeGroupMutation,
+  useGetAgeGroupQuery
+} from '@/services/setupService';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { ApAgeGroup } from '@/types/model-types';
 import { newApAgeGroup } from '@/types/model-types-constructor';
-const AgeGroup=()=>{
-    const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-    const [popupOpen, setPopupOpen] = useState(false);
-    const [agegroups, setAgeGroups] = useState<ApAgeGroup>({ ...newApAgeGroup });
-    const dispatch = useAppDispatch();
-    const { data: agegroupsLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_GROUPS');
-    const { data: ageunitsLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_UNITS');
-    const [saveAgeGroups, saveAgeGroupsMutation] = useSaveAgeGroupMutation();
+const AgeGroup = () => {
+  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [agegroups, setAgeGroups] = useState<ApAgeGroup>({ ...newApAgeGroup });
+  const dispatch = useAppDispatch();
+  const { data: agegroupsLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_GROUPS');
+  const { data: ageunitsLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_UNITS');
+  const [saveAgeGroups, saveAgeGroupsMutation] = useSaveAgeGroupMutation();
   const { data: ageGroupsListResponse } = useGetAgeGroupQuery(listRequest);
 
   const isSelected = rowData => {
-    if (rowData && agegroups  && rowData.key === agegroups .key) {
+    if (rowData && agegroups && rowData.key === agegroups.key) {
       return 'selected-row';
     } else return '';
   };
-    const handleFilterChange = (fieldName, value) => {
-        if (value) {
-          setListRequest(
-            addFilterToListRequest(
-              fromCamelCaseToDBName(fieldName),
-              'containsIgnoreCase',
-              value,
-              listRequest
-            )
-          );
-        } else {
-          setListRequest({ ...listRequest, filters: [] });
-        }
-      };
-      
-  const handleNew = () => { 
-  setAgeGroups({ ...newApAgeGroup,fromAge:null,toAge:null });
+  const handleFilterChange = (fieldName, value) => {
+    if (value) {
+      setListRequest(
+        addFilterToListRequest(
+          fromCamelCaseToDBName(fieldName),
+          'containsIgnoreCase',
+          value,
+          listRequest
+        )
+      );
+    } else {
+      setListRequest({ ...listRequest, filters: [] });
+    }
+  };
+
+  const handleNew = () => {
+    setAgeGroups({ ...newApAgeGroup, fromAge: null, toAge: null });
     setPopupOpen(true);
   };
   const handleSave = async () => {
     setPopupOpen(false);
-   //if you want to use response object write response.object 
-     try {
+    //if you want to use response object write response.object 
+    try {
       const response = await saveAgeGroups(agegroups).unwrap();
-        console.log(response.msg)
-      
-        dispatch(notify(response.msg));
-      
+      console.log(response.msg)
+
+      dispatch(notify(response.msg));
+
     } catch (error) {
       if (error.data && error.data.message) {
         // Display error message from server
@@ -72,16 +72,16 @@ const AgeGroup=()=>{
       }
     }
   };
-  
-  
+
+
   useEffect(() => {
     if (saveAgeGroupsMutation.data) {
       setListRequest({ ...listRequest, timestamp: new Date().getTime() });
     }
   }, [saveAgeGroupsMutation.data]);
- 
-    return(<> 
-     <Panel
+
+  return (<>
+    <Panel
       header={
         <h3 className="title">
           <Translate>Age Group</Translate>
@@ -90,13 +90,13 @@ const AgeGroup=()=>{
     >
       <ButtonToolbar>
         <IconButton appearance="primary"
-          icon={<AddOutlineIcon />} 
-           onClick={handleNew}
-         >
+          icon={<AddOutlineIcon />}
+          onClick={handleNew}
+        >
           Add New
         </IconButton>
         <IconButton
-        
+
           disabled={!agegroups.key}
           appearance="primary"
           onClick={() => setPopupOpen(true)}
@@ -107,8 +107,8 @@ const AgeGroup=()=>{
         </IconButton>
         <IconButton
           disabled={!agegroups.key}
-            appearance="ghost"
-            style={{ border: '1px solid rgb(130, 95, 196)',color:'rgb(130, 95, 196)' }}
+          appearance="ghost"
+          style={{ border: '1px solid rgb(130, 95, 196)', color: 'rgb(130, 95, 196)' }}
           icon={<TrashIcon />}
         >
           Deactivate
@@ -135,7 +135,7 @@ const AgeGroup=()=>{
         onRowClick={rowData => {
           setAgeGroups(rowData);
         }}
-         rowClassName={isSelected}
+        rowClassName={isSelected}
       >
         <Column sortable flexGrow={2}>
           <HeaderCell align="center">
@@ -143,42 +143,42 @@ const AgeGroup=()=>{
             <Translate>Age Group</Translate>
           </HeaderCell>
           <Cell>
-          {rowData => ` ${rowData.ageGroupLvalue? rowData.ageGroupLvalue.lovDisplayVale
-                  : rowData.ageGroupLkey}`}
+            {rowData => ` ${rowData.ageGroupLvalue ? rowData.ageGroupLvalue.lovDisplayVale
+              : rowData.ageGroupLkey}`}
           </Cell  >
         </Column>
         <Column sortable flexGrow={2}>
-          <HeaderCell  align="center">
+          <HeaderCell align="center">
             <Input onChange={e => handleFilterChange('fromAge', e)} />
-            
+
             <Translate>Age From Unit</Translate>
           </HeaderCell>
-          <Cell dataKey="fromAge" >   
-             {rowData => `${rowData.fromAge} ${rowData.fromAgeUnitLvalue? rowData.fromAgeUnitLvalue.lovDisplayVale
-                  : rowData.fromAgeUnitLkey}`}
-    {/* {rowData => rowData.fromAge } */}
-  </Cell>
-        </Column> 
+          <Cell dataKey="fromAge" >
+            {rowData => `${rowData.fromAge} ${rowData.fromAgeUnitLvalue ? rowData.fromAgeUnitLvalue.lovDisplayVale
+              : rowData.fromAgeUnitLkey}`}
+            {/* {rowData => rowData.fromAge } */}
+          </Cell>
+        </Column>
         <Column sortable flexGrow={2} >
-          <HeaderCell  align="center">
+          <HeaderCell align="center">
             <Input onChange={e => handleFilterChange('toAge', e)} />
             <Translate>Age To Unit</Translate>
           </HeaderCell>
           <Cell dataKey="toAge" >
-          {rowData => `${rowData.toAge} ${rowData.toAgeUnitLvalue? rowData.toAgeUnitLvalue.lovDisplayVale
-                  : rowData.toAgeUnitLkey}`}
+            {rowData => `${rowData.toAge} ${rowData.toAgeUnitLvalue ? rowData.toAgeUnitLvalue.lovDisplayVale
+              : rowData.toAgeUnitLkey}`}
           </Cell>
         </Column>
-        <Column  flexGrow={3}>
-          <HeaderCell  align="center">
+        <Column flexGrow={3}>
+          <HeaderCell align="center">
             <Input onChange={e => handleFilterChange('isValid', e)} />
             <Translate>status</Translate>
           </HeaderCell>
           <Cell >
-          {rowData => rowData.isValid?'active':'deactive'}
+            {rowData => rowData.isValid ? 'active' : 'deactive'}
           </Cell>
-        </Column> 
-        
+        </Column>
+
       </Table>
       <Modal open={popupOpen} overflow>
         <Modal.Title>
@@ -186,7 +186,7 @@ const AgeGroup=()=>{
         </Modal.Title>
         <Modal.Body>
           <Form fluid>
-           
+
             <MyInput
               fieldName="ageGroupLkey"
               fieldType="select"
@@ -196,49 +196,49 @@ const AgeGroup=()=>{
               record={agegroups}
               setRecord={setAgeGroups}
             />
-            <div style={{display:"flex" ,gap:"20px"}}>
+            <div style={{ display: "flex", gap: "20px" }}>
 
-            <MyInput   width={150} fieldName="fromAge" record={agegroups} setRecord={setAgeGroups} />
-             <MyInput
-               width={100}
-              fieldName="fromAgeUnitLkey"
-              fieldType="select"
-              selectData={ageunitsLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={agegroups}
-              setRecord={setAgeGroups}
-            />
+              <MyInput width={150} fieldName="fromAge" record={agegroups} setRecord={setAgeGroups} />
+              <MyInput
+                width={100}
+                fieldName="fromAgeUnitLkey"
+                fieldType="select"
+                selectData={ageunitsLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={agegroups}
+                setRecord={setAgeGroups}
+              />
             </div>
 
-            <div style={{display:"flex",gap:"20px"}}>
-             <MyInput   width={150} fieldName="toAge" record={agegroups} setRecord={setAgeGroups} />
-             <MyInput 
-              width={100}
-              fieldName="toAgeUnitLkey"
-              fieldType="select"
-              selectData={ageunitsLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={agegroups}
-              setRecord={setAgeGroups}
-            />
+            <div style={{ display: "flex", gap: "20px" }}>
+              <MyInput width={150} fieldName="toAge" record={agegroups} setRecord={setAgeGroups} />
+              <MyInput
+                width={100}
+                fieldName="toAgeUnitLkey"
+                fieldType="select"
+                selectData={ageunitsLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={agegroups}
+                setRecord={setAgeGroups}
+              />
             </div>
           </Form>
         </Modal.Body>
         <Modal.Footer>
           <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="primary" 
-            onClick={handleSave}
+            <Button appearance="primary"
+              onClick={handleSave}
             >
               Save
             </Button>
-            <Button appearance="ghost"  onClick={() => setPopupOpen(false)}>
+            <Button appearance="ghost" onClick={() => setPopupOpen(false)}>
               Cancel
             </Button>
           </Stack>
         </Modal.Footer>
       </Modal>
-      </Panel></>);
+    </Panel></>);
 };
 export default AgeGroup;

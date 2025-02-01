@@ -47,7 +47,10 @@ import {
     useSaveWarningsMutation
 } from '@/services/observationService';
 import {
-    useGetPrescriptionInstructionQuery,
+    useGetDrugOrderMedicationQuery,
+} from '@/services/encounterService';
+import {
+    useGetPrescriptionInstructionQuery
 
 } from '@/services/medicationsSetupService';
 import { useGetGenericMedicationActiveIngredientQuery, useGetActiveIngredientQuery } from '@/services/medicationsSetupService';
@@ -191,6 +194,79 @@ const PatientSummary = ({ patient, encounter }) => {
 
         ],
     });
+    const { data: orderMedications } = useGetDrugOrderMedicationQuery({
+        ...initialListRequest,
+        filters: [
+            {
+                fieldName: "patient_key",
+                operator: "match",
+                value: patient.key
+            },
+            {
+                fieldName: "chronic_medication",
+                operator: "match",
+                value: true
+            },
+            {
+                fieldName: "status_lkey",
+                operator: "match",
+                value: "1804482322306061"
+            },
+
+
+        ],
+    });
+
+    
+    const combinedArray = [];
+
+
+    orderMedications?.object?.forEach(order => {
+       
+            combinedArray.push({
+                createdAt: order.createdAt,
+                createdBy: order.createdBy,
+                key: order.key,
+                genericMedicationsKey:order.genericMedicationsKey,
+                instructionsTypeLvalue:"Custom",
+                instructions:order.instructions,
+                notes:order.notes,
+                parametersToMonitor:order.parametersToMonitor,
+                indication:order.indicationIcd,
+                indicationUse:order.indicationUseLvalue?.lovDisplayVale??"",
+                indicationManually:order.indicationManually,
+                activeIngredient:order.activeIngredient,
+                roa:order.roaLvalue?.lovDisplayVale,
+                frequency:order.frequency,
+                dose:order.dose,
+                unit:order.doseUnitLvalue?.lovDisplayVale,
+                sourceName: 'Order',
+            });
+        
+    });
+
+    prescriptionMedications?.object?.forEach(pre => {
+       
+            combinedArray.push({
+                createdAt: pre.createdAt,
+                createdBy: pre.createdBy,
+                key: pre.key,
+                genericMedicationsKey:pre.genericMedicationsKey,
+                instructionsTypeLvalue:pre.instructionsTypeLvalue?.lovDisplayVale??"",
+                instructionsTypeLkey:pre.instructionsTypeLkey,
+                instructions:pre.instructions,
+                notes:pre.notes,
+                parametersToMonitor:pre.parametersToMonitor,
+                indication:pre.indicationIcd,
+                indicationUse:pre.indicationUseLvalue?.lovDisplayVale??"",
+                indicationManually:pre.indicationManually,
+                activeIngredient:pre.activeIngredient,
+                sourceName: 'Prescription',
+            });
+        
+    });
+
+    console.log(combinedArray)
    const [listGinricRequest, setListGinricRequest] = useState({
         ...initialListRequest,
         sortType: 'desc'
@@ -205,7 +281,7 @@ const PatientSummary = ({ patient, encounter }) => {
     setPrevencounter(encounterPatientList?.object[0]);
   },[encounterPatientList])
   useEffect(()=>{
-    console.log(prevencounter);
+   
     const updatedFilters = [
         {
             fieldName: 'patient_key',
@@ -229,7 +305,26 @@ const PatientSummary = ({ patient, encounter }) => {
     }));
  
   },[prevencounter]);
-  
+  const joinValuesFromArrayo = (objects, genericMedicationsKey) => {
+    return objects
+        .map(obj => {
+            
+            const matchingActiveIngredient = genericMedicationActiveIngredientListResponseData?.object?.find(ingredient => {
+
+                return ingredient.genericMedicationKey === genericMedicationsKey && ingredient.activeIngredientKey === obj.key;
+            });
+            
+            
+            if (matchingActiveIngredient) {
+                return `${obj.name}:${matchingActiveIngredient.strength} ${matchingActiveIngredient.unitLvalue.lovDisplayVale} `;
+            }
+           
+            return obj.name;
+        })
+        .join(', '); 
+};
+
+
     const handleopenchartModel = () => {
         setChartModelIsOpen(true);
     };
@@ -349,7 +444,7 @@ const PatientSummary = ({ patient, encounter }) => {
                             >
 
                                 <Table.Column flexGrow={1} fullText>
-                                    <Table.HeaderCell>Medication Generic Name</Table.HeaderCell>
+                                    <Table.HeaderCell>Medication Brand Name</Table.HeaderCell>
                                     <Table.Cell>{rowData =>
                                         genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName
                                     }</Table.Cell>
@@ -365,7 +460,7 @@ const PatientSummary = ({ patient, encounter }) => {
                                                 );
 
                                                 if (generic) {
-                                                    console.log("Found generic:", generic);
+                                                  
                                                 } else {
                                                     console.warn("No matching generic found for key:", rowData.instructions);
                                                 }
@@ -618,7 +713,7 @@ const PatientSummary = ({ patient, encounter }) => {
 
                     <Table
                         bordered
-                        data={prescriptionMedications?.object ?? []}
+                        data={combinedArray ?? []}
                         onRowClick={rowData => {
 
                         }}
@@ -627,29 +722,17 @@ const PatientSummary = ({ patient, encounter }) => {
                     >
 
                         <Table.Column flexGrow={1} fullText>
-                            <Table.HeaderCell>Medication Generic Name</Table.HeaderCell>
+                            <Table.HeaderCell>Medication Brand Name</Table.HeaderCell>
                             <Table.Cell>{rowData =>
                                 genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName
                             }</Table.Cell>
                         </Table.Column>
                         <Table.Column flexGrow={2} fullText>
                             <Table.HeaderCell>Medication Active Ingredient(s)</Table.HeaderCell>
-                            <Table.Cell>{rowData => {
-                               const act = genericMedicationActiveIngredientListResponseData?.object?.filter(gin => {
-                                console.log(`Checking: ${rowData.genericMedicationsKey} === ${gin.genericMedicationKey}`);  return rowData.genericMedicationsKey === gin.genericMedicationKey;
-                            });
-                             
-                             const ingredientNames = activeIngredientListResponseData?.object
-                             ?.filter((active) =>
-                                 act?.some((item) => item.activeIngredientKey === active.key)
-                             )
-                             .map((active) => active.name); // Extract only the `name` property
-                         
-                        
-                            return joinValuesFromArray(ingredientNames);
-                            
-                            }
-                                }</Table.Cell>
+                            <Table.Cell> 
+                                {rowData =>joinValuesFromArrayo(rowData.activeIngredient,rowData.genericMedicationsKey)
+                               
+                            }</Table.Cell>
                         </Table.Column>
                         <Table.Column flexGrow={1} fullText>
                             <Table.HeaderCell>Instructions</Table.HeaderCell>
@@ -661,14 +744,14 @@ const PatientSummary = ({ patient, encounter }) => {
                                         );
 
                                         if (generic) {
-                                            console.log("Found generic:", generic);
+                                           
                                         } else {
                                             console.warn("No matching generic found for key:", rowData.instructions);
                                         }
                                         return [
                                             generic?.dose,
                                             generic?.unitLvalue?.lovDisplayVale,
-
+                                            generic?.routLvalue?.lovDisplayVale,
                                             generic?.frequencyLvalue?.lovDisplayVale
                                         ]
                                             .filter(Boolean)
@@ -694,7 +777,7 @@ const PatientSummary = ({ patient, encounter }) => {
                         <Table.Column flexGrow={1} fullText>
                             <Table.HeaderCell>Instructions Type</Table.HeaderCell>
                             <Table.Cell>
-                            {rowData =>rowData.instructionsTypeLkey?rowData.instructionsTypeLvalue.lovDisplayVale:rowData.instructionsTypeLkey}
+                            {rowData =>rowData.instructionsTypeLvalue}
                                 </Table.Cell>
                         </Table.Column>
                    

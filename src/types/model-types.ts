@@ -816,6 +816,23 @@ export interface ApDrugOrderMedications {
 	indicationManually:string;
 } 
 
+export interface ApDuplicationCandidateSetup { 
+	key:string;
+	role:string;
+	dateOfBirth:boolean;
+	dob:boolean;
+	lastName:boolean;
+	documentNo:boolean;
+	mobileNumber:boolean;
+	gender:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
 export interface ApDvmRule { 
 	key:string;
 	screenMetadataKey:string;
@@ -1351,6 +1368,7 @@ export interface ApPatient {
 	secondaryMobileNumber:string;
 	roleLkey:string;
 	districtLkey:string;
+	countryId:string;
 } 
 
 export interface ApPatientAddresses { 
@@ -1638,6 +1656,21 @@ export interface ApPatientPlan {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+} 
+
+export interface ApPatientPreferredHealthProfessional { 
+	key:string;
+	practitionerKey:string;
+	facilityKey:string;
+	createdBy:string;
+	networkAffiliation:string;
+	relatedWith:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	patientKey:string;
 } 
 
 export interface ApPatientProblem { 
