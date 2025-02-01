@@ -15,6 +15,8 @@ import { newApActiveIngredient } from '@/types/model-types-constructor';
 import { ApActiveIngredient } from '@/types/model-types';
 import { useGetActiveIngredientQuery, useSaveActiveIngredientMutation } from '@/services/medicationsSetupService';
 import { initialListRequest, ListRequest } from '@/types/types';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 
   const Pharmacokinetics = ({activeIngredients, isEdit}) => {
   
@@ -23,6 +25,8 @@ import { initialListRequest, ListRequest } from '@/types/types';
     const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientMutation();
     const { data: activeIngredientListResponse } = useGetActiveIngredientQuery(listRequest);
     const [isActive, setIsActive] = useState(false);
+    const dispatch = useAppDispatch();
+    
 
     useEffect(() => {
       if (activeIngredients) {
@@ -34,7 +38,9 @@ import { initialListRequest, ListRequest } from '@/types/types';
       saveActiveIngredient({
         ...activeIngredient, 
         createdBy: 'Administrator'
-      }).unwrap();
+      }).unwrap().then(() => {
+        dispatch(notify("Saved successfully"));
+    });;
         
     };
 

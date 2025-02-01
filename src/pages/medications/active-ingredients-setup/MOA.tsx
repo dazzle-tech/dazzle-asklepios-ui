@@ -17,12 +17,16 @@ import {
   useGetActiveIngredientQuery,
   useSaveActiveIngredientMutation
      } from '@/services/medicationsSetupService';
+  import { useAppDispatch } from '@/hooks';
+  import { notify } from '@/utils/uiReducerActions';
 
   const MOA = ({activeIngredients, isEdit}) => {
     const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({ ...newApActiveIngredient });
     const [isActive, setIsActive] = useState(false);
     const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientMutation();
-   
+    const dispatch = useAppDispatch();
+    
+
     const handleSave = () => {
       setIsActive(true); 
       saveActiveIngredient(activeIngredient).unwrap();
@@ -32,7 +36,9 @@ import {
       saveActiveIngredient({
         ...activeIngredient,
         createdBy: 'Administrator'
-      }).unwrap();
+      }).unwrap().then(() => {
+        dispatch(notify("Saved successfully"));
+    });
   
     };
 

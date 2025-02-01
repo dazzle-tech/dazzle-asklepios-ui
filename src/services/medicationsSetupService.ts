@@ -340,6 +340,15 @@ export const medicationsSetupService = createApi({
       query: (listRequest: ListRequest) => ({
         url: `/medications/active-ingredient-list?${fromListRequestToQueryParams(listRequest)}`
       }),
+      saveActiveIngredient: builder.mutation({
+        query: (activeIngredient: ApActiveIngredient) => ({
+          url: `/medications/save-active-ingredient`,
+          method: 'POST',
+          body: activeIngredient
+        }),onQueryStarted: onQueryStarted,
+        transformResponse: (response: any) => {
+          return response;
+        }
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
@@ -380,6 +389,16 @@ export const medicationsSetupService = createApi({
           key
         },
         url: `/medications/brands-linked-list`
+      }),
+      getActiveIngredientDrugInteractionByKey: builder.query({
+        query: (activeKey: any) => ({
+          url: `/medications/active-ingredient-drug-interaction-by-key-list`,
+          headers: {
+            activeKey: activeKey
+          }
+        }),
+        onQueryStarted: onQueryStarted,
+        keepUnusedDataFor: 5
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
@@ -436,8 +455,8 @@ export const {
   useGetActiveIngredientQuery,
   useSaveActiveIngredientMutation,
   useGetGenericMedicationWithActiveIngredientQuery,
+  useGetActiveIngredientDrugInteractionByKeyQuery,
   useSaveLinkedBrandMedicationMutation,
   useGetLinkedBrandQuery,
   useRemoveLinkedBrandMedicationMutation
-
 } = medicationsSetupService;
