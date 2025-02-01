@@ -385,6 +385,16 @@ export const medicationsSetupService = createApi({
       keepUnusedDataFor: 5
 
     }),
+    getActiveIngredientDrugInteractionByKey: builder.query({
+      query: (activeKey: any) => ({
+        url: `/medications/active-ingredient-drug-interaction-by-key-list`,
+        headers: {
+          activeKey: activeKey
+        }
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
     removeLinkedBrandMedication: builder.mutation({
       query: (link: ApBrandMedicationSubstitutes) => ({
         url: `/medications/delete-link-brand-medication`,
@@ -438,6 +448,7 @@ export const {
   useGetGenericMedicationWithActiveIngredientQuery,
   useSaveLinkedBrandMedicationMutation,
   useGetLinkedBrandQuery,
+  useGetActiveIngredientDrugInteractionByKeyQuery,
   useRemoveLinkedBrandMedicationMutation
 
 } = medicationsSetupService;

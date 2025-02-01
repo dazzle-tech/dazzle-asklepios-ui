@@ -1,7 +1,7 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Input, Panel, Container, Row, Col } from 'rsuite';
+import { Input, Panel, Container, Row, Col, Button } from 'rsuite';
 import {
   useGetLovValuesByCodeQuery,
   useGetLovValuesByCodeAndParentQuery
@@ -32,12 +32,14 @@ import SpecialPopulation from './SpecialPopulation';
 import DoseAdjustment from './DoseAdjustment';
 import Pharmacokinetics from './Pharmacokinetics';
 import DrugFoodInteractions from './DrugFoodInteractions';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 
 const NewActiveIngredients = ({ selectedactiveIngredient, goBack, ...props })  => {
   const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({ ...newApActiveIngredient });
 
   const navigate = useNavigate();
-
+ 
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
 
   const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientMutation();
@@ -58,7 +60,7 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack, ...props })  =
   const [inputValue, setInputValue] = React.useState('');
   const [editing, setEditing] = useState(false);
   const [isControlled, setIsControlled] = useState(false);
-
+  const dispatch = useAppDispatch();
   const [validationResult, setValidationResult] = useState({});
 
 
@@ -74,7 +76,19 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack, ...props })  =
   const [specialPopulationCollapsed, setSpecialPopulationCollapsed] = useState(false);
   const [doseAdjustmentCollapsed, setDoseAdjustmentCollapsed] = useState(false);
   const [pharmacokineticsCollapsed, setPharmacokineticsCollapsed] = useState(false);
-  
+  const [input, setInput] = useState('');
+  const [list, setList] = useState([]);
+
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+  };
+
+  const handleAddItem = () => {
+    if (input.trim() !== '') {
+      setList([...list, input]);
+      setInput(''); 
+    }
+  };
 
   const [listRequestindication, setListRequestindication] = useState<ListRequest>(
     {
@@ -171,10 +185,22 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack, ...props })  =
     navigate('/ActiveIngredientsSetup');
   };
 
-  const handleSave = () => {
-    setEditing(true);
-    saveActiveIngredient(activeIngredient).unwrap();
-  };
+    const handleSave = async () => {
+      setEditing(true);
+       try {
+        const response = await  saveActiveIngredient(activeIngredient).unwrap();
+        dispatch(notify(response.msg));
+        
+      } catch (error) {
+        if (error.data && error.data.message) {
+          dispatch(notify(error.data.message));
+        } else {
+          dispatch(notify("An unexpected error occurred"));
+        }
+      }
+    };
+    
+
 
   useEffect(() => {
     if (saveActiveIngredientMutation.data) {
@@ -300,8 +326,8 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack, ...props })  =
             setRecord={setActiveIngredient}
           />
            <MyInput
-           width={260}
-           column
+            width={260}
+            column
             fieldName="drugTypeLkey"
             fieldType="select"
             selectData={MedicationTypesLovQueryResponse?.object ?? []}
@@ -310,7 +336,7 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack, ...props })  =
             record={activeIngredient}
             setRecord={setActiveIngredient}
           />
-            <MyInput  width={240} column fieldName="atcCode"  record={activeIngredient} setRecord={setActiveIngredient} />
+            <MyInput  width={240} column fieldLabel="ATC Code" fieldName="atcCode"  record={activeIngredient} setRecord={setActiveIngredient} />
           <br/>
               <MyInput
                 width={400}
@@ -332,7 +358,7 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack, ...props })  =
                   selectDataValue="key"
                   record={activeIngredient}
                   isabled={!editing}
-                  setRecord={activeIngredient}
+                  setRecord={setActiveIngredient}
                 />
               )}
          
@@ -357,6 +383,7 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack, ...props })  =
             isabled={!editing}
             setRecord={setActiveIngredient}
           />)}
+       
           <MyInput
            width={400}
             column
@@ -366,13 +393,30 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack, ...props })  =
             record={activeIngredient}
             setRecord={setActiveIngredient}
           />
-      {activeIngredient.hasSynonyms && (tags.map((item, index) => (
-        <Tag key={index} closable onClose={() => removeTag(item)}>
-          {item}
-        </Tag>
-      )))}
-      {renderInput()}
-              
+
+      { activeIngredient.hasSynonyms &&
+          (  <>
+           <input 
+             type="text" 
+             value={input} 
+             onChange={handleInputChange} 
+             placeholder="Synonyms"
+           />
+                  <Button 
+              appearance="primary" 
+              color="blue" 
+              onClick={handleAddItem}
+            >
+              Add
+            </Button>
+           
+           <ul>
+             {list.map((item, index) => (
+               <li key={index}>{item}</li>
+             ))}
+           </ul>
+         </>)
+      }
           <br/>
           {/* <IconButton
               appearance="primary"

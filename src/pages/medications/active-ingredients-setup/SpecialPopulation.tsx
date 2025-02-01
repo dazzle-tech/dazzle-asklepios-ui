@@ -17,6 +17,8 @@ import { newApActiveIngredientSpecialPopulation } from '@/types/model-types-cons
 import { ApActiveIngredientSpecialPopulation } from '@/types/model-types';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetActiveIngredientSpecialPopulationQuery, useRemoveActiveIngredientSpecialPopulationMutation, useSaveActiveIngredientSpecialPopulationMutation } from '@/services/medicationsSetupService';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 
   const SpecialPopulation = ({activeIngredients , isEdit}) => { 
   
@@ -37,7 +39,8 @@ import { useGetActiveIngredientSpecialPopulationQuery, useRemoveActiveIngredient
     const [saveActiveIngredientSpecialPopulation, saveActiveIngredientSpecialPopulationMutation] = useSaveActiveIngredientSpecialPopulationMutation();
     const { data: specialPopulationListResponseData } = useGetActiveIngredientSpecialPopulationQuery(listRequest);
     const [isActive, setIsActive] = useState(false);
-
+    const dispatch = useAppDispatch();
+    
     const handleNew = () => {
       setIsActive(true);
       setActiveIngredientSpecialPopulation({ ...newApActiveIngredientSpecialPopulation });
@@ -47,7 +50,9 @@ import { useGetActiveIngredientSpecialPopulationQuery, useRemoveActiveIngredient
       if (selectedActiveIngredientSpecialPopulation.key) {
         removeActiveIngredientSpecialPopulation({
           ...selectedActiveIngredientSpecialPopulation,
-        }).unwrap();
+        }).unwrap().then(() => {
+          dispatch(notify("Deleted successfully"));
+      });;
       }
     };
 
@@ -57,7 +62,9 @@ import { useGetActiveIngredientSpecialPopulationQuery, useRemoveActiveIngredient
         ...selectedActiveIngredientSpecialPopulation, 
         activeIngredientKey: activeIngredients.key , 
         createdBy: 'Administrator'
-      }).unwrap();
+      }).unwrap().then(() => {
+        dispatch(notify("Saved successfully"));
+    });
       setActiveIngredientSpecialPopulation({ ...newApActiveIngredientSpecialPopulation });
       setIsActive(false);
     };

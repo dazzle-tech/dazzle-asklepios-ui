@@ -23,6 +23,9 @@ import { newApActiveIngredient } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetActiveIngredientQuery, useSaveActiveIngredientMutation } from '@/services/medicationsSetupService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+
 
   const PregnancyLactation = ({activeIngredients, isEdit}) => {
   
@@ -33,7 +36,8 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
     const [isActive, setIsActive] = useState(false);
     const { data: pregnancyCategoriesLovQueryResponseData } = useGetLovValuesByCodeQuery('PREGNANCY_CATEGORIES');
     const { data: breastfeedingCategoriesLovQueryResponseData } = useGetLovValuesByCodeQuery('FR_MED_CATEGORIES');
-
+    const dispatch = useAppDispatch();
+    
     useEffect(() => {
       if (activeIngredients) {
         setActiveIngredient(activeIngredients)
@@ -44,7 +48,9 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
       saveActiveIngredient({
         ...activeIngredient, 
         createdBy: 'Administrator'
-      }).unwrap();
+      }).unwrap().then(() => {
+        dispatch(notify("Saved successfully"));
+    });
         
     };
     

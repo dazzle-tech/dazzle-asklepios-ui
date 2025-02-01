@@ -10,17 +10,24 @@ import {
     Col,
     ButtonToolbar,
     Text,
+    InputGroup,
+    Dropdown
   } from 'rsuite';
 import { Trash, InfoRound, Reload, Plus  } from '@rsuite/icons';
 import { MdSave } from 'react-icons/md';
 import { initialListRequest } from '@/types/types';
 import { newApActiveIngredientContraindication } from '@/types/model-types-constructor';
 import { ApActiveIngredientContraindication } from '@/types/model-types';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+import SearchIcon from '@rsuite/icons/Search';
 import {
   useGetActiveIngredientContraindicationQuery,
   useRemoveActiveIngredientContraindicationMutation,
   useSaveActiveIngredientContraindicationMutation
 } from '@/services/medicationsSetupService';
+import { useGetIcdListQuery } from '@/services/setupService';
+import { conjureValueBasedOnKeyFromList } from '@/utils';
 
 
   const Contraindications = ({activeIngredients, isEdit}) => {
@@ -30,7 +37,11 @@ import {
     const [selectedActiveIngredientContraindication, setSelectedActiveIngredientContraindication] = useState({
       ...newApActiveIngredientContraindication
     });
-  
+    const [listIcdRequest, setListIcdRequest] = useState({ ...initialListRequest });
+    const [searchKeyword, setSearchKeyword] = useState('');
+    const dispatch = useAppDispatch();
+    const [icdCode, setIcdCode] = useState(null);
+    const { data: icdListResponseData } = useGetIcdListQuery(listIcdRequest);
     const [activeIngredientContraindication, setActiveIngredientContraindication] = useState<ApActiveIngredientContraindication>({ ...newApActiveIngredientContraindication});
     const [listRequest, setListRequest] = useState({
       ...initialListRequest,
@@ -46,7 +57,10 @@ import {
         }
       ]
     });
-  
+    const modifiedData = (icdListResponseData?.object ?? []).map(item => ({
+      ...item,
+      combinedLabel: `${item.icdCode} - ${item.description}`
+    }));
     const { data: ContraindicationsListResponseData } = useGetActiveIngredientContraindicationQuery(listRequest);
     const [saveActiveIngredientContraindication, saveActiveIngredientContraindicationMutation] =
     useSaveActiveIngredientContraindicationMutation();
@@ -87,9 +101,41 @@ import {
         ...selectedActiveIngredientContraindication,
         activeIngredientKey: activeIngredients.key , 
         createdBy: 'Administrator'
-      }).unwrap();
+      }).unwrap().then(() => {
+              dispatch(notify("Saved successfully"));
+          });
         
     };
+
+    const handleSearch = value => {
+      setSearchKeyword(value);
+      console.log('serch' + searchKeyword);
+  
+    };
+
+      useEffect(() => {
+        if (searchKeyword.trim() !== "") {
+          setListIcdRequest(
+            {
+              ...initialListRequest,
+              filterLogic: 'or',
+              filters: [
+                {
+                  fieldName: 'icd_code',
+                  operator: 'containsIgnoreCase',
+                  value: searchKeyword
+                },
+                {
+                  fieldName: 'description',
+                  operator: 'containsIgnoreCase',
+                  value: searchKeyword
+                }
+    
+              ]
+            }
+          );
+        }
+      }, [searchKeyword]);
 
     useEffect(() => {
       if (saveActiveIngredientContraindicationMutation.isSuccess) {
@@ -118,7 +164,9 @@ import {
         removeActiveIngredientContraindication({
           ...selectedActiveIngredientContraindication,
           deletedBy: 'Administrator'
-        }).unwrap();
+        }).unwrap().then(() => {
+                dispatch(notify("Deleted successfully"));
+            });
       }
     };
 
@@ -136,6 +184,58 @@ import {
     return (
       <>
           <Grid fluid>
+          <Row gutter={15}>
+          <Col xs={4}>
+          <InputGroup inside style={{ width: '300px', zoom: 0.80 ,marginTop:'20px'}}>
+              <Input
+                disabled={!isActive}
+                placeholder={'Search ICD-10'}
+                value={searchKeyword}
+                onChange={handleSearch}
+              />
+              <InputGroup.Button>
+                <SearchIcon />
+              </InputGroup.Button>
+            </InputGroup>
+            {searchKeyword && (
+              <Dropdown.Menu className="dropdown-menuresult">
+                {modifiedData && modifiedData?.map(mod => (
+                  <Dropdown.Item
+                    key={mod.key}
+                    eventKey={mod.key}
+                    onClick={() => {
+                      setActiveIngredientContraindication({
+                        ...activeIngredientContraindication,
+                        icdCodeKey: mod.key
+                      })
+                      setIcdCode(mod)
+                      setSearchKeyword("");
+                    }
+                    }
+                  >
+                    <span style={{ marginRight: "19px" }}>{mod.icdCode}</span>
+                    <span>{mod.description}</span>
+                  </Dropdown.Item>
+                ))}
+              </Dropdown.Menu>
+            )}
+          </Col>
+          <Col xs={4}>
+          </Col>
+          <Col xs={4}>
+           <InputGroup inside style={{ width: '500px', marginTop:'20px'}}>
+          <Input
+                disabled={true}
+                style={{ zoom: 0.80, width: '300px' }}
+                value={
+                  icdListResponseData?.object.find(item => item.key === activeIngredientContraindication?.icdCodeKey)
+                  ? `${icdListResponseData.object.find(item => item.key === activeIngredientContraindication?.icdCodeKey)?.icdCode}, ${icdListResponseData.object.find(item => item.key ===  activeIngredientContraindication?.icdCodeKey)?.description}`
+                  : ""
+                }
+              />
+            </InputGroup>
+          </Col>
+         </Row>
             <Row gutter={15}>
               <Col xs={2}>
               <Input
@@ -210,6 +310,28 @@ import {
                     <Table.HeaderCell align='center'>Contraindications</Table.HeaderCell>
                     <Table.Cell>
                     {rowData => <Text>{rowData.contraindication}</Text>}
+                    </Table.Cell>
+                  </Table.Column>
+                  <Table.Column flexGrow={1}>
+                    <Table.HeaderCell align='center'>ICD Code</Table.HeaderCell>
+                    <Table.Cell>
+                      {/* {rowData => (
+                                                           <span>
+                                                             {conjureValueBasedOnKeyFromList(
+                                                               icdListResponseData?.object ?? [],
+                                                               rowData.icdCodeKey,
+                                                               'icdCode'
+                                                             )}
+                                                           </span>
+                                                         )} */}
+                                                         
+                            {/* {rowData => {
+                                const icdCode = icdListResponseData?.object?.find(item => {console.log("item Key " + item.key + "ICD ROWKey" + rowData.icdCodeKey)})
+                                console.log("HI I AM ICD" + icdCode)
+                                return icdCode;
+                            }
+                            } */}
+                             {rowData => <Text>{rowData.icdCodeKey}</Text>}
                     </Table.Cell>
                   </Table.Column>
                 </Table>
