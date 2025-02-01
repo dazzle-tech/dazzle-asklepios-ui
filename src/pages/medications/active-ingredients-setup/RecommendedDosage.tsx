@@ -31,6 +31,8 @@ import {
   useGetLovValuesByCodeQuery,
 } from '@/services/setupService';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 
 const RecommendedDosage = ({activeIngredients, isEdit}) => {
 
@@ -39,6 +41,7 @@ const RecommendedDosage = ({activeIngredients, isEdit}) => {
   const [selectedActiveIngredientRecommendedDosage, setSelectedActiveIngredientRecommendedDosage] = useState<ApActiveIngredientRecommendedDosage>({
     ...newApActiveIngredientRecommendedDosage
   });
+  const dispatch = useAppDispatch();
   const [saveActiveIngredientRecommendedDosage, saveActiveIngredientRecommendedDosageMutation] = useSaveActiveIngredientRecommendedDosageMutation();
   const isSelected = rowData => {
     if (rowData && rowData.key === selectedActiveIngredientRecommendedDosage.key) {
@@ -62,7 +65,9 @@ const RecommendedDosage = ({activeIngredients, isEdit}) => {
       ...selectedActiveIngredientRecommendedDosage, 
       activeIngredientKey: activeIngredients.key , 
       createdBy: 'Administrator'
-    }).unwrap();
+    }).unwrap().then(() => {
+      dispatch(notify("Saved successfully"));
+  });
       
   };
   

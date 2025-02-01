@@ -138,6 +138,7 @@ export interface ApActiveIngredientContraindication {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	icdCodeKey:string;
 } 
 
 export interface ApActiveIngredientDrugInteraction { 
@@ -182,6 +183,7 @@ export interface ApActiveIngredientIndication {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	icdCodeKey:string;
 } 
 
 export interface ApActiveIngredientRecommendedDosage { 
@@ -335,6 +337,19 @@ export interface ApAttachment {
 	isValid:boolean;
 	details:string;
 	accessTypeLkey:string;
+} 
+
+export interface ApBrandMedicationSubstitutes { 
+	key:string;
+	brandKey:string;
+	alternativeBrandKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	description:string;
 } 
 
 export interface ApCatalogDiagnosticTest { 
@@ -758,7 +773,7 @@ export interface ApDrugOrder {
 	isValid:boolean;
 	drugorderId:string;
 	saveDraft:boolean;
-	submittedBy :string;
+	submittedBy:string;
 	submittedAt:number;
 } 
 
@@ -1745,7 +1760,7 @@ export interface ApPrescription {
 	isValid:boolean;
 	prescriptionId:string;
 	saveDraft:boolean;
-	submittedBy :string;
+	submittedBy:string;
 	submittedAt:number;
 } 
 
@@ -2152,6 +2167,18 @@ export interface ApUser {
 	jobRoleLkey:string;
 	jobRoleKey:string;
 	mustChangePassword:boolean;
+} 
+
+export interface ApUserAccessPrivatePatient { 
+	key:string;
+	userKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	reason:string;
 } 
 
 export interface ApUserFacilities { 

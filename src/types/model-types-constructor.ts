@@ -139,6 +139,7 @@ export const newApActiveIngredientContraindication:modelTypes.ApActiveIngredient
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	icdCodeKey:undefined,
 } 
 
 export const newApActiveIngredientDrugInteraction:modelTypes.ApActiveIngredientDrugInteraction = { 
@@ -183,6 +184,7 @@ export const newApActiveIngredientIndication:modelTypes.ApActiveIngredientIndica
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	icdCodeKey:undefined,
 } 
 
 export const newApActiveIngredientRecommendedDosage:modelTypes.ApActiveIngredientRecommendedDosage = { 
@@ -316,7 +318,7 @@ export const newApAppointment:modelTypes.ApAppointment = {
 	otherReason:'',
 	noShowReasonLkey:undefined,
 	noShowReasonValue:'',
-	noShowOtherReason:'', 
+	noShowOtherReason:'',
 } 
 
 export const newApAttachment:modelTypes.ApAttachment = { 
@@ -336,6 +338,19 @@ export const newApAttachment:modelTypes.ApAttachment = {
 	isValid:undefined,
 	details:'',
 	accessTypeLkey:undefined,
+} 
+
+export const newApBrandMedicationSubstitutes:modelTypes.ApBrandMedicationSubstitutes = { 
+	key:undefined,
+	brandKey:undefined,
+	alternativeBrandKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	description:'',
 } 
 
 export const newApCatalogDiagnosticTest:modelTypes.ApCatalogDiagnosticTest = { 
@@ -759,7 +774,7 @@ export const newApDrugOrder:modelTypes.ApDrugOrder = {
 	isValid:undefined,
 	drugorderId:'',
 	saveDraft:undefined,
-	submittedBy :'',
+	submittedBy:'',
 	submittedAt:0,
 } 
 
@@ -1746,7 +1761,7 @@ export const newApPrescription:modelTypes.ApPrescription = {
 	isValid:undefined,
 	prescriptionId:'',
 	saveDraft:undefined,
-	submittedBy :'',
+	submittedBy:'',
 	submittedAt:0,
 } 
 
@@ -2155,6 +2170,18 @@ export const newApUser:modelTypes.ApUser = {
 	mustChangePassword:undefined,
 } 
 
+export const newApUserAccessPrivatePatient:modelTypes.ApUserAccessPrivatePatient = { 
+	key:undefined,
+	userKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	reason:'',
+} 
+
 export const newApUserFacilities:modelTypes.ApUserFacilities = { 
 	key:undefined,
 	userId:'',
@@ -2271,7 +2298,6 @@ export const newApVaccineDosesInterval:modelTypes.ApVaccineDosesInterval = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 } 
-
 
 export const newApVisitAllergies:modelTypes.ApVisitAllergies = { 
 	key:undefined,

@@ -349,7 +349,7 @@ export const medicationsSetupService = createApi({
           body: activeIngredient
         }),onQueryStarted: onQueryStarted,
         transformResponse: (response: any) => {
-          return response.object;
+          return response;
         }
       }),
       getGenericMedicationWithActiveIngredient: builder.query({
@@ -362,6 +362,16 @@ export const medicationsSetupService = createApi({
         onQueryStarted: onQueryStarted,
         keepUnusedDataFor: 5
   
+      }),
+      getActiveIngredientDrugInteractionByKey: builder.query({
+        query: (activeKey: any) => ({
+          url: `/medications/active-ingredient-drug-interaction-by-key-list`,
+          headers: {
+            activeKey: activeKey
+          }
+        }),
+        onQueryStarted: onQueryStarted,
+        keepUnusedDataFor: 5
       }),
     })
 });
@@ -403,6 +413,7 @@ export const {
   useSavePrescriptionInstructionMutation,
   useGetActiveIngredientQuery,
   useSaveActiveIngredientMutation,
-  useGetGenericMedicationWithActiveIngredientQuery
+  useGetGenericMedicationWithActiveIngredientQuery,
+  useGetActiveIngredientDrugInteractionByKeyQuery
  
 } = medicationsSetupService;
