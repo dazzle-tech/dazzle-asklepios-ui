@@ -128,13 +128,13 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
                 <Modal.Body>
                     <ButtonToolbar>
-                        <Button disabled={appointment?.appointmentData.appointmentStatus == "Checked-In"} onClick={handleCheckIn} style={{ width: 120, height: 40 }} color="cyan" appearance="primary">
+                        <Button disabled={["Checked-In", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={handleCheckIn} style={{ width: 120, height: 40 }} color="cyan" appearance="primary">
                             Check-In
                         </Button>
                         <Button disabled={appointment?.appointmentData.appointmentStatus == "Confirmed"} onClick={handleConfirm} style={{ width: 120, height: 40 }} color="violet" appearance="primary">
                             Confirm
                         </Button>
-                        <Button disabled={appointment?.appointmentData.appointmentStatus == "No-Show"} onClick={() => { setResonType('No-show'), setResonModal(true) }} style={{ width: 120, height: 40 }} color="blue" appearance="primary">
+                        <Button   disabled={["No-Show", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => { setResonType('No-show'), setResonModal(true) }} style={{ width: 120, height: 40 }} color="blue" appearance="primary">
                             No-show
                         </Button>
 
@@ -145,10 +145,10 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
                         <Button onClick={() => viewAppointment()} style={{ width: 120, height: 40 }} color="cyan" appearance="primary">
                             View
                         </Button>
-                        <Button onClick={() => editAppointment()} style={{ width: 120, height: 40 }} color="violet" appearance="primary">
+                        <Button  disabled={["Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => editAppointment()} style={{ width: 120, height: 40 }} color="violet" appearance="primary">
                             Change
                         </Button>
-                        <Button disabled={appointment?.appointmentData.appointmentStatus == "Canceled"} onClick={() => { setResonType('Cancel') }} style={{ width: 120, height: 40 }} color="blue" appearance="primary">
+                        <Button   disabled={["Canceled", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => { setResonType('Cancel') }} style={{ width: 120, height: 40 }} color="blue" appearance="primary">
                             Cancel
                         </Button>
 
