@@ -17,8 +17,6 @@ import { newApActiveIngredientSpecialPopulation } from '@/types/model-types-cons
 import { ApActiveIngredientSpecialPopulation } from '@/types/model-types';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetActiveIngredientSpecialPopulationQuery, useRemoveActiveIngredientSpecialPopulationMutation, useSaveActiveIngredientSpecialPopulationMutation } from '@/services/medicationsSetupService';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
 
   const SpecialPopulation = ({activeIngredients , isEdit}) => { 
   
@@ -39,8 +37,7 @@ import { notify } from '@/utils/uiReducerActions';
     const [saveActiveIngredientSpecialPopulation, saveActiveIngredientSpecialPopulationMutation] = useSaveActiveIngredientSpecialPopulationMutation();
     const { data: specialPopulationListResponseData } = useGetActiveIngredientSpecialPopulationQuery(listRequest);
     const [isActive, setIsActive] = useState(false);
-    const dispatch = useAppDispatch();
-    
+
     const handleNew = () => {
       setIsActive(true);
       setActiveIngredientSpecialPopulation({ ...newApActiveIngredientSpecialPopulation });
@@ -50,9 +47,7 @@ import { notify } from '@/utils/uiReducerActions';
       if (selectedActiveIngredientSpecialPopulation.key) {
         removeActiveIngredientSpecialPopulation({
           ...selectedActiveIngredientSpecialPopulation,
-        }).unwrap().then(() => {
-          dispatch(notify("Deleted successfully"));
-      });;
+        }).unwrap();
       }
     };
 
@@ -62,9 +57,7 @@ import { notify } from '@/utils/uiReducerActions';
         ...selectedActiveIngredientSpecialPopulation, 
         activeIngredientKey: activeIngredients.key , 
         createdBy: 'Administrator'
-      }).unwrap().then(() => {
-        dispatch(notify("Saved successfully"));
-    });
+      }).unwrap();
       setActiveIngredientSpecialPopulation({ ...newApActiveIngredientSpecialPopulation });
       setIsActive(false);
     };

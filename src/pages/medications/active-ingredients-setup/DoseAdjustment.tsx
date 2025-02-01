@@ -19,9 +19,6 @@ import { newApActiveIngredient } from '@/types/model-types-constructor';
 import { ApActiveIngredient } from '@/types/model-types';
 import { useGetActiveIngredientQuery, useSaveActiveIngredientMutation } from '@/services/medicationsSetupService';
 import { Console } from 'console';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-
 
   const DoseAdjustment = ({activeIngredients, isEdit}) => {
   
@@ -32,8 +29,7 @@ import { notify } from '@/utils/uiReducerActions';
   const [isActive, setIsActive] = useState(false); 
   const [renalDetails, setRenalDetails] = useState(false);
   const [hepaticDetails, setHepaticDetails] = useState(false);
-  const dispatch = useAppDispatch();
-    
+
   const handleHepaticAdj = () => {
     setHepaticDetails(!hepaticDetails),
     handleChangeHepatic
@@ -56,9 +52,7 @@ import { notify } from '@/utils/uiReducerActions';
     saveActiveIngredient({
       ...activeIngredient, 
       createdBy: 'Administrator'
-    }).unwrap().then(() => {
-      dispatch(notify("Added successfully"));
-  });
+    }).unwrap();
       
   };
 

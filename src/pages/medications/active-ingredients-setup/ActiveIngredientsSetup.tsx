@@ -43,7 +43,7 @@ const ActiveIngredientsSetup = () => {
   const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientMutation();
   const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
 
-  const { data: activeIngredientListResponse, refetch: activeIngredientRefetch } = useGetActiveIngredientQuery(listRequest);
+  const { data: activeIngredientListResponse } = useGetActiveIngredientQuery(listRequest);
   const { data: MedicationCategorLovQueryResponse } = useGetLovValuesByCodeQuery('MED_CATEGORY');
   const { data: MedicationClassLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ClASS');
   const { data: MedicationTypesLovQueryResponse } = useGetLovValuesByCodeQuery('MED_TYPES');
@@ -62,7 +62,19 @@ const ActiveIngredientsSetup = () => {
   };
 
 
- const handleFilterChange = (fieldName, value) => {
+  useEffect(() => {
+    if (saveActiveIngredientMutation.data) {
+      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+    }
+  }, [saveActiveIngredientMutation.data]);
+
+  const isSelected = rowData => {
+    if (rowData && activeIngredient && rowData.key === activeIngredient.key) {
+      return 'selected-row';
+    } else return '';
+  };
+
+  const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
         addFilterToListRequest(
@@ -77,24 +89,6 @@ const ActiveIngredientsSetup = () => {
     }
   };
 
-  const isSelected = rowData => {
-    if (rowData && activeIngredient && rowData.key === activeIngredient.key) {
-      return 'selected-row';
-    } else return '';
-  };
-
-  useEffect(() => {
-    if (saveActiveIngredientMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveActiveIngredientMutation.data]);
-
-
-  useEffect(() => {
-    activeIngredientRefetch();
-  }, [carouselActiveIndex]);
-
- 
   return (
     <Carousel
     style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
@@ -199,13 +193,6 @@ const ActiveIngredientsSetup = () => {
               rowData.drugTypeLvalue ? rowData.drugTypeLvalue.lovDisplayVale : rowData.drugTypeLkey
             }
           </Cell>
-        </Column> 
-        <Column sortable flexGrow={2}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('atcCode', e)} />
-            <Translate>ATC Code</Translate>
-          </HeaderCell>
-          <Cell dataKey="atcCode" />
         </Column> 
         <Column sortable flexGrow={3}>
           <HeaderCell  align="center">
