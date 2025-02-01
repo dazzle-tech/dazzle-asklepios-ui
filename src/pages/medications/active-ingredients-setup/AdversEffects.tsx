@@ -25,8 +25,6 @@ import {
 import { newApActiveIngredientAdverseEffect } from '@/types/model-types-constructor';
 import { ApActiveIngredientAdverseEffect } from '@/types/model-types';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
 
 const AdversEffects = ({activeIngredients , isEdit}) => {
 
@@ -35,7 +33,6 @@ const AdversEffects = ({activeIngredients , isEdit}) => {
   });
 
 
-  const dispatch = useAppDispatch();
   const { data: AdversEffectsLovQueryResponseData } = useGetLovValuesByCodeQuery('MED_ADVERS_EFFECTS');
   const [activeIngredientAdverseEffect, setActiveIngredientAdverseEffect] = useState<ApActiveIngredientAdverseEffect>({ ...newApActiveIngredientAdverseEffect });
   const [listRequest, setListRequest] = useState({
@@ -68,9 +65,7 @@ const AdversEffects = ({activeIngredients , isEdit}) => {
       ...selectedActiveIngredientAdverseEffect,
       activeIngredientKey: activeIngredients.key , 
       createdBy: 'Administrator'
-    }).unwrap().then(() => {
-      dispatch(notify("Saved successfully"));
-  });;;
+    }).unwrap();
 
   };
 
@@ -83,9 +78,7 @@ const AdversEffects = ({activeIngredients , isEdit}) => {
     if (selectedActiveIngredientAdverseEffect.key) {
       removeActiveIngredientAdverseEffect({
         ...selectedActiveIngredientAdverseEffect,
-      }).unwrap().then(() => {
-        dispatch(notify("Deleted successfully"));
-    });
+      }).unwrap();
     }
   };
 

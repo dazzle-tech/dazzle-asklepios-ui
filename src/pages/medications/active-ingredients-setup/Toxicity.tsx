@@ -23,8 +23,6 @@ import { useGetActiveIngredientQuery, useSaveActiveIngredientMutation } from '@/
 import { initialListRequest, ListRequest } from '@/types/types';
 import { ApActiveIngredient } from '@/types/model-types';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
 
   const Toxicity = ({activeIngredients, isEdit}) => {
   
@@ -33,15 +31,12 @@ import { notify } from '@/utils/uiReducerActions';
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientMutation();
     const { data: valueUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
-    const dispatch = useAppDispatch();
     const { data: activeIngredientListResponse } = useGetActiveIngredientQuery(listRequest);
      const save = () => {
     saveActiveIngredient({
       ...activeIngredient,
       createdBy: 'Administrator'
-    }).unwrap().then(() => {
-      dispatch(notify("Saved successfully"));
-  });;
+    }).unwrap();
 
   };
 
@@ -54,7 +49,6 @@ import { notify } from '@/utils/uiReducerActions';
       setActiveIngredient(activeIngredients)
     }
   }, [activeIngredients]);
-  
 
     return (
       <>

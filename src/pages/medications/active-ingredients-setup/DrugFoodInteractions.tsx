@@ -21,8 +21,6 @@ import {
   import { ApActiveIngredientFoodInteraction } from '@/types/model-types';
   import { newApActiveIngredientFoodInteraction} from '@/types/model-types-constructor';
   import { initialListRequest, ListRequest } from '@/types/types';
-  import { useAppDispatch } from '@/hooks';
-  import { notify } from '@/utils/uiReducerActions';
   import{
     useGetLovValuesByCodeQuery,
   } from '@/services/setupService';
@@ -60,7 +58,7 @@ import {
     const [saveActiveIngredientFoodInteraction, saveActiveIngredientFoodInteractionMutation] =  useSaveActiveIngredientFoodInteractionMutation();
     const [removeActiveIngredientFoodInteraction, removeActiveIngredientFoodInteractionMutation] =useRemoveActiveIngredientFoodInteractionMutation();
     const [isActive , setIsActive] = useState(false);
-    const dispatch = useAppDispatch();
+
     const { data: foodListResponseData} = useGetActiveIngredientFoodInteractionQuery(listRequest);
     const { data: severityLovQueryResponseData } = useGetLovValuesByCodeQuery('SEVERITY');
    
@@ -75,9 +73,7 @@ import {
         ...selectedActiveIngredientFoodInteraction, 
         activeIngredientKey: activeIngredients.key , 
         createdBy: 'Administrator'
-      }).unwrap().then(() => {
-        dispatch(notify("Saved successfully"));
-    });;;
+      }).unwrap();
         
     };
 
@@ -90,9 +86,7 @@ import {
       if (selectedActiveIngredientFoodInteraction.key) {
         removeActiveIngredientFoodInteraction({
           ...selectedActiveIngredientFoodInteraction,
-        }).unwrap().then(() => {
-          dispatch(notify("Deleted successfully"));
-      });;;
+        }).unwrap();
       }
     };
 

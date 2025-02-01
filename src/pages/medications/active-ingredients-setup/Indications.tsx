@@ -11,13 +11,10 @@ import {
   ButtonToolbar,
   Text,
   Checkbox,
-  SelectPicker,
-  InputGroup,
-  Dropdown
+  SelectPicker
 } from 'rsuite';
 import { Plus, Trash, InfoRound, Reload } from '@rsuite/icons';
 import { initialListRequest } from '@/types/types';
-import SearchIcon from '@rsuite/icons/Search';
 import {
   useGetActiveIngredientIndicationQuery,
   useRemoveActiveIngredientIndicationMutation,
@@ -27,12 +24,8 @@ import { newApActiveIngredient, newApActiveIngredientIndication } from '@/types/
 import { MdSave } from 'react-icons/md';
 import { ApActiveIngredient, ApActiveIngredientIndication } from '@/types/model-types';
 import LogDialog from '@/components/Log';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import { useGetIcdListQuery } from '@/services/setupService';
-import { conjureValueBasedOnKeyFromList } from '@/utils';
 
-const Indications = ({ selectedActiveIngredients, isEdit }) => {
+const Indications = ({ selectedActiveIngredients, isEdit}) => {
   const exampleData = {
     object: [
       { createdAt: '2024-07-31', createdBy: 'User A' },
@@ -40,11 +33,7 @@ const Indications = ({ selectedActiveIngredients, isEdit }) => {
     ]
   };
   const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({ ...newApActiveIngredient });
-  const dispatch = useAppDispatch();
-  const [icdCode, setIcdCode] = useState(null);
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [listIcdRequest, setListIcdRequest] = useState({ ...initialListRequest });
-  const { data: icdListResponseData } = useGetIcdListQuery(listIcdRequest);
+  
   const [selectedActiveIngredientIndicat, setSelectedActiveIngredientIndicat] = useState(exampleData);
   const [activeIngredientIndication, setActiveIngredientIndication] = useState<ApActiveIngredientIndication>({ ...newApActiveIngredientIndication });
   const [listRequest, setListRequest] = useState({
@@ -65,90 +54,54 @@ const Indications = ({ selectedActiveIngredients, isEdit }) => {
       }
     ]
   }
-  );
+);
 
-  useEffect(() => {
-    const updatedFilters = [
-      {
-        fieldName: 'active_ingredient_key',
-        operator: 'match',
-        value: selectedActiveIngredients.key || undefined
-      },
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ];
-    setListRequest((prevRequest) => ({
-      ...prevRequest,
-      filters: updatedFilters,
-    }));
-  }, [selectedActiveIngredients.key]);
-
-  useEffect(() => {
-    if (searchKeyword.trim() !== "") {
-      setListIcdRequest(
-        {
-          ...initialListRequest,
-          filterLogic: 'or',
-          filters: [
-            {
-              fieldName: 'icd_code',
-              operator: 'containsIgnoreCase',
-              value: searchKeyword
-            },
-            {
-              fieldName: 'description',
-              operator: 'containsIgnoreCase',
-              value: searchKeyword
-            }
-
-          ]
-        }
-      );
+useEffect(() => {
+  const updatedFilters =[
+    {
+      fieldName: 'active_ingredient_key',
+      operator: 'match',
+      value: selectedActiveIngredients.key || undefined
+    },
+    {
+      fieldName: 'deleted_at',
+      operator: 'isNull',
+      value: undefined
     }
-  }, [searchKeyword]);
+  ];
+  setListRequest((prevRequest) => ({
+    ...prevRequest,
+    filters: updatedFilters,
+  }));
+}, [selectedActiveIngredients.key]);
+
 
   const { data: indicationListResponseData } = useGetActiveIngredientIndicationQuery(listRequest);
   const [removeActiveIngredientIndication, removeActiveIngredientIndicationMutation] = useRemoveActiveIngredientIndicationMutation();
   const [saveActiveIngredientIndication, saveActiveIngredientIndicationMutation] = useSaveActiveIngredientIndicationMutation();
   const [isActive, setIsActive] = useState(false);
-  const modifiedData = (icdListResponseData?.object ?? []).map(item => ({
-    ...item,
-    combinedLabel: `${item.icdCode} - ${item.description}`
-  }));
+
 
   const save = () => {
     saveActiveIngredientIndication({
       ...activeIngredientIndication,
       activeIngredientKey: selectedActiveIngredients.key,
       createdBy: 'Administrator'
-    }).unwrap().then(() => {
-      dispatch(notify("Added successfully"));
-    });
+    }).unwrap();
 
   };
 
   const handleIndicationsNew = () => {
     setIsActive(true);
-    setActiveIngredientIndication({ ...newApActiveIngredientIndication });
+    setActiveIngredientIndication({ ...newApActiveIngredientIndication});
   };
 
   const remove = () => {
     if (activeIngredientIndication.key) {
       removeActiveIngredientIndication({
         ...activeIngredientIndication,
-      }).unwrap().then(() => {
-        dispatch(notify("Deleted successfully"));
-      });;
+      }).unwrap();
     }
-  };
-
-  const handleSearch = value => {
-    setSearchKeyword(value);
-    console.log('serch' + searchKeyword);
-
   };
 
   useEffect(() => {
@@ -156,10 +109,8 @@ const Indications = ({ selectedActiveIngredients, isEdit }) => {
       setActiveIngredientIndication(prevState => ({
         ...prevState,
         activeIngredientKey: selectedActiveIngredients.key
-
       }));
     }
-    setIcdCode(null);
   }, [selectedActiveIngredients]);
 
   useEffect(() => {
@@ -197,59 +148,7 @@ const Indications = ({ selectedActiveIngredients, isEdit }) => {
     <>
       <Grid fluid>
         <Row gutter={15}>
-          <Col xs={4}>
-            <InputGroup inside style={{ width: '300px', zoom: 0.80, marginTop: '20px' }}>
-              <Input
-                disabled={!isActive}
-                placeholder={'Search ICD-10'}
-                value={searchKeyword}
-                onChange={handleSearch}
-              />
-              <InputGroup.Button>
-                <SearchIcon />
-              </InputGroup.Button>
-            </InputGroup>
-            {searchKeyword && (
-              <Dropdown.Menu className="dropdown-menuresult">
-                {modifiedData && modifiedData?.map(mod => (
-                  <Dropdown.Item
-                    key={mod.key}
-                    eventKey={mod.key}
-                    onClick={() => {
-                      setActiveIngredientIndication({
-                        ...activeIngredientIndication,
-                        icdCodeKey: mod.key
-                      })
-                      setIcdCode(mod)
-                      setSearchKeyword("");
-                    }
-                    }
-                  >
-                    <span style={{ marginRight: "19px" }}>{mod.icdCode}</span>
-                    <span>{mod.description}</span>
-                  </Dropdown.Item>
-                ))}
-              </Dropdown.Menu>
-            )}
-          </Col>
-          <Col xs={4}>
-          </Col>
-          <Col xs={4}>
-            <InputGroup inside style={{ width: '500px', marginTop: '20px' }}>
-              <Input
-                disabled={true}
-                style={{ zoom: 0.80, width: '300px' }}
-                value={
-                  icdListResponseData?.object.find(item => item.key === activeIngredientIndication?.icdCodeKey)
-                    ? `${icdListResponseData.object.find(item => item.key === activeIngredientIndication?.icdCodeKey)?.icdCode}, ${icdListResponseData.object.find(item => item.key === activeIngredientIndication?.icdCodeKey)?.description}`
-                    : ""
-                }
-              />
-            </InputGroup>
-          </Col>
-        </Row>
-        <Row gutter={15}>
-          <Col xs={4}>
+          <Col xs={2}>
             <Input
               disabled={!isActive}
               style={{ width: '230px' }}
@@ -263,7 +162,10 @@ const Indications = ({ selectedActiveIngredients, isEdit }) => {
               }
             />
           </Col>
-          <Col xs={3}>
+          <Col xs={4}>
+
+          </Col>
+          <Col xs={1}>
           </Col>
           <Col xs={4}>
             <Checkbox
@@ -282,7 +184,7 @@ const Indications = ({ selectedActiveIngredients, isEdit }) => {
           </Col>
           <Col xs={6}></Col>
           <Col xs={5}>
-            {isEdit && <ButtonToolbar style={{ margin: '2px' }}>
+          {isEdit && <ButtonToolbar style={{ margin: '2px' }}>
               <IconButton
                 size="xs"
                 appearance="primary"
@@ -337,18 +239,6 @@ const Indications = ({ selectedActiveIngredients, isEdit }) => {
                 <Table.HeaderCell>Indication</Table.HeaderCell>
                 <Table.Cell>
                   {rowData => <Text>{rowData.indication}</Text>}
-                </Table.Cell>
-              </Table.Column>
-              <Table.Column flexGrow={1}>
-                <Table.HeaderCell align='center'>ICD Code</Table.HeaderCell>
-                <Table.Cell>
-                  {rowData => <Text>{rowData.icdCodeKey}</Text>}
-                     {/* {rowData => {
-                                const icdCode = icdListResponseData?.object?.find(icd =>icd.key == rowData.icdCodeKey)?.icdCode
-                                console.log("HI I AM ICD" + icdCode)
-                                return icdCode;
-                            }
-                            } */}
                 </Table.Cell>
               </Table.Column>
               <Table.Column flexGrow={1}>
