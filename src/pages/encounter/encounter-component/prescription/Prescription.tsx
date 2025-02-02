@@ -184,7 +184,7 @@ const Prescription = () => {
     ) ?? [];
 
     const [preKey, setPreKey] = useState(null);
-
+   console.log("pre Key:",preKey)
 
     const [prescription, setPrescription] = useState<ApPrescription>({
         ...prescriptions?.object?.find(prescription =>
@@ -915,10 +915,10 @@ const Prescription = () => {
                         appearance="primary"
                         onClick={saveDraft}
                         icon={<DocPassIcon />}
-                        disabled={
+                        disabled={preKey?
                             prescriptions?.object?.find(prescription =>
                                 prescription.key === preKey
-                            )?.statusLkey === '1804482322306061'
+                            )?.statusLkey === '1804482322306061':true
                         }
                     >
                         <Translate> Save draft</Translate>
@@ -932,10 +932,10 @@ const Prescription = () => {
                         appearance="primary"
                         onClick={cancleDraft}
                         icon={<DocPassIcon />}
-                        disabled={
+                        disabled={preKey?
                             prescriptions?.object?.find(prescription =>
                                 prescription.key === preKey
-                            )?.statusLkey === '1804482322306061'
+                            )?.statusLkey === '1804482322306061':true
                         }
                     >
                         <Translate> Cancle draft</Translate>
@@ -946,11 +946,10 @@ const Prescription = () => {
                     color="violet"
                     appearance="primary"
                     onClick={handleSubmitPres}
-
-                    disabled={
+                    disabled={preKey?
                         prescriptions?.object?.find(prescription =>
                             prescription.key === preKey
-                        )?.statusLkey === '1804482322306061'
+                        )?.statusLkey === '1804482322306061':true
                     }
 
                     icon={<CheckIcon />}
@@ -960,7 +959,11 @@ const Prescription = () => {
                 <IconButton
                     color="cyan"
                     appearance="primary"
-
+                    disabled={preKey?
+                        prescriptions?.object?.find(prescription =>
+                            prescription.key === preKey
+                        )?.statusLkey === '1804482322306061':true
+                    }
                     icon={<PageIcon />}
                 >
                     <Translate> Print Prescription</Translate>

@@ -485,7 +485,7 @@ const PatientSummary = ({ patient, encounter }) => {
 
                                             }
 
-                                            return "no";
+                                            return " ";
                                         }}
                                     </Table.Cell>
                                 </Table.Column>
@@ -535,11 +535,11 @@ const PatientSummary = ({ patient, encounter }) => {
                                         {rowData => {
                                             
                                             if (!allergensListToGetName?.object) {
-                                                return "Loading...";
+                                                return " ";
                                             }
                                             const getname = allergensListToGetName.object.find(item => item.key === rowData.allergenKey);
                                             
-                                            return getname?.allergenName || "No Name";
+                                            return getname?.allergenName || " ";
                                         }}</Table.Cell>
                                 </Table.Column>
                                 <Table.Column flexGrow={1} fullText>
@@ -769,7 +769,7 @@ const PatientSummary = ({ patient, encounter }) => {
 
                                     }
 
-                                    return "no";
+                                    return " ";
                                 }}
                             </Table.Cell>
                         </Table.Column>
