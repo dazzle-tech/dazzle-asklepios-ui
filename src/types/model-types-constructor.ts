@@ -1010,6 +1010,7 @@ export const newApFacility:modelTypes.ApFacility = {
 	facilityTypeLkey:undefined,
 	facilityType:'',
 	facilityAddress:'',
+	roolKey:undefined,
 } 
 
 export const newApGenericMedication:modelTypes.ApGenericMedication = { 

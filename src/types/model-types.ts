@@ -1009,6 +1009,7 @@ export interface ApFacility {
 	facilityTypeLkey:string;
 	facilityType:string;
 	facilityAddress:string;
+	roolKey:string;
 } 
 
 export interface ApGenericMedication { 
