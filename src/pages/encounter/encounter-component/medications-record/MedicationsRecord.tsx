@@ -342,6 +342,7 @@ const MedicationsRecord = () => {
             />
         </Cell>
     );
+    
     return (<>
         <Panel header="Prescriptions" collapsible bordered >
 
@@ -367,13 +368,13 @@ const MedicationsRecord = () => {
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Visit ID</HeaderCell>
                     <Cell  >
-                        {rowData => rowData.prescriptionId}
+                        {rowData => rowData.encounter.visitId}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Visit Date</HeaderCell>
                     <Cell  >
-                        {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : " "}
+                        {rowData => rowData.encounter.createdAt ? new Date(rowData.encounter.createdAt).toLocaleString() : " "}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
@@ -398,13 +399,6 @@ const MedicationsRecord = () => {
                     <HeaderCell>Submitted at</HeaderCell>
                     <Cell  >
                         {rowData => rowData.submittedAt ? new Date(rowData.submittedAt).toLocaleString() : " "}
-                    </Cell>
-                </Column>
-
-                <Column flexGrow={1} align="center" fullText>
-                    <HeaderCell>Show Items</HeaderCell>
-                    <Cell>
-                        {rowData => <Checkbox />}
                     </Cell>
                 </Column>
 
@@ -570,13 +564,13 @@ const MedicationsRecord = () => {
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Visit ID</HeaderCell>
                     <Cell  >
-                        {rowData => rowData.drugorderId}
+                        {rowData =>rowData.encounter.visitId }
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Visit Date</HeaderCell>
                     <Cell  >
-                        {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : " "}
+                        {rowData => rowData.encounter.createdAt ? new Date( rowData.encounter.createdAt).toLocaleString() : " "}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
@@ -604,12 +598,6 @@ const MedicationsRecord = () => {
                     </Cell>
                 </Column>
 
-                <Column flexGrow={1} align="center" fullText>
-                    <HeaderCell>Show Items</HeaderCell>
-                    <Cell>
-                        {rowData => <Checkbox />}
-                    </Cell>
-                </Column>
 
             </Table>
             {order.key &&
@@ -660,7 +648,7 @@ const MedicationsRecord = () => {
                         </HeaderCell>
                         <Cell>
                             {rowData => {
-                                return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, rowData.frequency, rowData.roaLvalue?.lovDisplayVale]);
+                                return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale,"every "+rowData.frequency+ " hours", rowData.roaLvalue?.lovDisplayVale]);
                             }
                             }
                         </Cell>
