@@ -416,7 +416,7 @@ const Referrals = () => {
 
                 proRefetch();
             });
-            handleClear();
+          
             dispatch(notify('Changed Status Successfully'));
 
 
