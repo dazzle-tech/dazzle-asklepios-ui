@@ -1217,7 +1217,7 @@ const Prescription = () => {
                     <Table.Column flexGrow={1} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
                         <Table.Cell>
-                            {rowData => rowData?.strength ?? " "}
+                        {rowData => rowData?.strength+rowData?.unitLvalue?.lovDisplayVale }
                         </Table.Cell>
                     </Table.Column>
 
