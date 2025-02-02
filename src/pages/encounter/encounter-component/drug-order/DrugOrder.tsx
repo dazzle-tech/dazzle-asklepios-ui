@@ -949,10 +949,10 @@ const DrugOrder = () => {
                         appearance="primary"
                         onClick={saveDraft}
                         icon={<DocPassIcon />}
-                        disabled={
+                        disabled={ drugKey?
                             orders?.object?.find(order =>
                                 order.key === drugKey
-                            )?.statusLkey === '1804482322306061'
+                            )?.statusLkey === '1804482322306061':true
                         }
                     >
                         <Translate> Save draft</Translate>
@@ -966,10 +966,10 @@ const DrugOrder = () => {
                         appearance="primary"
                         onClick={cancleDraft}
                         icon={<DocPassIcon />}
-                        disabled={
+                        disabled={ drugKey?
                             orders?.object?.find(order =>
                                 order.key === drugKey
-                            )?.statusLkey === '1804482322306061'
+                            )?.statusLkey === '1804482322306061':true
                         }
                     >
                         <Translate> Cancle draft</Translate>
@@ -981,10 +981,10 @@ const DrugOrder = () => {
                     appearance="primary"
                     onClick={handleSubmitPres}
 
-                    disabled={
+                    disabled={ drugKey?
                         orders?.object?.find(order =>
                             order.key === drugKey
-                        )?.statusLkey === '1804482322306061'
+                        )?.statusLkey === '1804482322306061':true
                     }
 
                     icon={<CheckIcon />}
