@@ -344,7 +344,7 @@ const DrugOrder = () => {
 
             if (foundOrder?.key != null) {
                 setDrugKey(foundOrder?.key);
-                // setPrescription(foundPrescription)
+            
             }
 
         }
@@ -359,7 +359,7 @@ const DrugOrder = () => {
     }, [drugKey]);
     useEffect(() => {
 
-        const foundOrder = orders?.object?.find(prescription => prescription.key === drugKey);
+        const foundOrder = orders?.object?.find(order => order.key === drugKey);
         if (foundOrder?.saveDraft !== isdraft) {
             setIsDraft(foundOrder?.saveDraft);
         }
@@ -527,10 +527,10 @@ const DrugOrder = () => {
                 });
 
             } catch (error) {
-                console.error("Error saving prescription:", error);
+                console.error("Error saving order:", error);
             }
         } else {
-            dispatch(notify("Patient or encounter is missing. Cannot save prescription."));
+            dispatch(notify("Patient or encounter is missing. Cannot save order."));
         }
     };
     const handleCancle = async () => {
@@ -1549,7 +1549,8 @@ const DrugOrder = () => {
                 cellBordered
                 onRowClick={rowData => {
                     setOrderMedication(rowData);
-                    setEditing(rowData.statusLkey == "3196709905099521" ? true : false)
+                    setEditing(rowData.statusLkey == "3196709905099521" ? true : false);
+                    setSelectedGeneric(genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey))
 
 
                 }}
