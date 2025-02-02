@@ -514,7 +514,7 @@ const DrugOrder = () => {
                 });
 
 
-                dispatch(notify('Start New Prescription whith ID:' + response?.data?.drugorderId));
+                dispatch(notify('Start New Order whith ID:' + response?.data?.drugorderId));
 
                 setDrugKey(response?.data?.key);
 
@@ -1261,7 +1261,7 @@ const DrugOrder = () => {
                     <Table.Column flexGrow={1} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
                         <Table.Cell>
-                            {rowData => rowData?.strength ?? " "}
+                            {rowData => rowData?.strength+rowData?.unitLvalue?.lovDisplayVale }
                         </Table.Cell>
                     </Table.Column>
 
