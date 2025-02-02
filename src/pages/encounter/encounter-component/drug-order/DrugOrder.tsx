@@ -501,7 +501,7 @@ const DrugOrder = () => {
         );
     };
     const handleSaveOrder = async () => {
-
+      handleCleare();
 
         if (patientSlice.patient && patientSlice.encounter) {
             try {
