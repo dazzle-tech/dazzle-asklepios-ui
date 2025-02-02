@@ -664,7 +664,7 @@ const Prescription = () => {
 
     }
     const handleSavePrescription = async () => {
-
+      handleCleare();
 
         if (patientSlice.patient && patientSlice.encounter) {
             try {
