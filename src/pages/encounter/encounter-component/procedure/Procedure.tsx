@@ -842,7 +842,13 @@ const Referrals = () => {
                                 setRecord={setProcedure}
                             />
                         </Form>
-                        <IconButton
+                       
+                    </div >
+                </div>
+
+                <br />
+                <div className="buttons-sect-one">
+                <IconButton
                             color="violet"
                             appearance="ghost"
                             onClick={() => { setOpenOrderModel(true) }}
@@ -851,11 +857,6 @@ const Referrals = () => {
                         >
                             <Translate>Order Related Tests</Translate>
                         </IconButton>
-                    </div >
-                </div>
-
-                <br />
-                <div className="buttons-sect-one">
                     <IconButton
                         color="violet"
                         appearance="primary"

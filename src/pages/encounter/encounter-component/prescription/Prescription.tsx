@@ -1571,8 +1571,10 @@ const Prescription = () => {
                                     return [
                                         generic?.dose,
                                         generic?.unitLvalue?.lovDisplayVale,
-
+                                        generic?.routLvalue?.lovDisplayVale,
                                         generic?.frequencyLvalue?.lovDisplayVale
+                                              
+                                     
                                     ]
                                         .filter(Boolean)
                                         .join(', ');
