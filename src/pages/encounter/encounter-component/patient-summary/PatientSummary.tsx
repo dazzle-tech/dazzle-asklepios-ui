@@ -266,7 +266,6 @@ const PatientSummary = ({ patient, encounter }) => {
         
     });
 
-    console.log(combinedArray)
    const [listGinricRequest, setListGinricRequest] = useState({
         ...initialListRequest,
         sortType: 'desc'

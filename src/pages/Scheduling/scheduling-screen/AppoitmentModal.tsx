@@ -27,10 +27,12 @@ import { notify } from "@/utils/uiReducerActions";
 
 
 
-const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, appointmentData, showOnly }) => {
+const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, appointmentData, showOnly,from }) => {
 
 
     useEffect(() => {
+    
+       
         if (appointmentData) {
             setAppoitment(appointmentData)
             console.log(appointmentData?.patient)
@@ -44,10 +46,11 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     useEffect(() => {
         if (showOnly) {
 
-            console.log(showOnly)
+            // console.log(showOnly)
         }
     }, [showOnly])
-
+    const patientSlice = useAppSelector(state => state.patient);
+  
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
 
     const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
@@ -97,7 +100,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
             setSelectedTime(date);
         }
     }, [appointmentData?.appointmentStart]);
-
+  
     useEffect(() => {
         console.log(selectedMonthDay)
         console.log(appointment?.resourceKey)
@@ -157,7 +160,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
         }
     };
     const { Column, HeaderCell, Cell } = Table;
-    const patientSlice = useAppSelector(state => state.patient);
+  
 
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -173,7 +176,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     const [saveAppointment, saveAppointmentMutation] = useSaveAppointmentMutation()
 
     useEffect(() => {
-        console.log(patientSlice)
+        console.log("patientslice",patientSlice)
         console.log(patientSlice.patient)
 
         if (patientSlice?.patient) {
@@ -252,7 +255,11 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     }
     useEffect(() => {
         calculateAge(localPatient?.dob)
+        console.log(patientSlice.patient)
         console.log(localPatient)
+        if(from==='Encounter'){
+            setLocalPatient(patientSlice.patient);
+        }
     }, [localPatient])
 
     const searchCriteriaOptions = [
@@ -659,7 +666,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
                 <Modal.Body>
 
-                    <Panel bordered>
+                { from==='Schedule'&&<Panel bordered>
                         <ButtonToolbar>
                             {conjurePatientSearchBar('primary')}
                             <Divider vertical />
@@ -685,7 +692,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
 
                         </ButtonToolbar>
-                    </Panel>
+                    </Panel>}
 
                     <br />
                     <Panel   //  ===================== > Patient Information < ===================== 
