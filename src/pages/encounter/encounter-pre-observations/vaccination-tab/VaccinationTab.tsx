@@ -496,15 +496,19 @@ const VaccinationTab = ({ disabled }) => {
             const foundItem = medAdversLovQueryResponse?.object?.find(
                 item => item.key === encounterVaccination.administrationReactions
             );
-
+    
             const displayValue = foundItem?.lovDisplayVale || '';
-
+    
             if (displayValue) {
-                setPossibleDescription(prevadminInstructions =>
-                    prevadminInstructions
-                        ? `${prevadminInstructions}, ${displayValue}`
-                        : displayValue
-                );
+                setPossibleDescription(prevadminInstructions => {
+                    if (!prevadminInstructions) {
+                        return displayValue;
+                    }
+                    if (!prevadminInstructions.includes(displayValue)) {
+                        return `${prevadminInstructions}, ${displayValue}`;
+                    }
+                    return prevadminInstructions;
+                });
             }
         }
     }, [encounterVaccination.administrationReactions]);
@@ -1003,10 +1007,14 @@ const VaccinationTab = ({ disabled }) => {
 
                         </Form>
 
-                        <Input as="textarea"
-                            disabled={true}
-                            onChange={(e) => setPossibleDescription} value={possibleDescription || encounterVaccination.administrationReactions}
-                            style={{ width: 300, marginTop: '26px' }} rows={4} />
+                        <Input 
+    as="textarea"
+    disabled={isEncounterStatusClosed || disabled}
+    onChange={(value) => setPossibleDescription(value)}  
+    value={possibleDescription || encounterVaccination.administrationReactions || ""}
+    style={{ width: 300, marginTop: '26px' }} 
+    rows={4} 
+/>
 
                     </Form>
                     <br />
