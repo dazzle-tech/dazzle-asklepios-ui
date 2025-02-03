@@ -184,7 +184,7 @@ const Prescription = () => {
     ) ?? [];
 
     const [preKey, setPreKey] = useState(null);
-   console.log("pre Key:",preKey)
+    console.log("pre Key:", preKey)
 
     const [prescription, setPrescription] = useState<ApPrescription>({
         ...prescriptions?.object?.find(prescription =>
@@ -664,7 +664,9 @@ const Prescription = () => {
 
     }
     const handleSavePrescription = async () => {
-      handleCleare();
+        handleCleare();
+        setPreKey(null);
+        setPrescription(null);
 
         if (patientSlice.patient && patientSlice.encounter) {
             try {
@@ -680,7 +682,7 @@ const Prescription = () => {
                 dispatch(notify('Start New Prescription whith ID:' + response?.data?.prescriptionId));
 
                 setPreKey(response?.data?.key);
-
+                setPrescription(response?.data);
                 preRefetch().then(() => "");
 
             } catch (error) {
@@ -730,7 +732,9 @@ const Prescription = () => {
                     labelKey="prescriptionId"
                     valueKey="key"
                     placeholder="prescription"
+                    value={preKey ?? null}
                     onChange={e => {
+                        console.log(e);
                         setPreKey(e);
                     }}
 
@@ -915,10 +919,10 @@ const Prescription = () => {
                         appearance="primary"
                         onClick={saveDraft}
                         icon={<DocPassIcon />}
-                        disabled={preKey?
+                        disabled={preKey ?
                             prescriptions?.object?.find(prescription =>
                                 prescription.key === preKey
-                            )?.statusLkey === '1804482322306061':true
+                            )?.statusLkey === '1804482322306061' : true
                         }
                     >
                         <Translate> Save draft</Translate>
@@ -932,10 +936,10 @@ const Prescription = () => {
                         appearance="primary"
                         onClick={cancleDraft}
                         icon={<DocPassIcon />}
-                        disabled={preKey?
+                        disabled={preKey ?
                             prescriptions?.object?.find(prescription =>
                                 prescription.key === preKey
-                            )?.statusLkey === '1804482322306061':true
+                            )?.statusLkey === '1804482322306061' : true
                         }
                     >
                         <Translate> Cancle draft</Translate>
@@ -946,10 +950,10 @@ const Prescription = () => {
                     color="violet"
                     appearance="primary"
                     onClick={handleSubmitPres}
-                    disabled={preKey?
+                    disabled={preKey ?
                         prescriptions?.object?.find(prescription =>
                             prescription.key === preKey
-                        )?.statusLkey === '1804482322306061':true
+                        )?.statusLkey === '1804482322306061' : true
                     }
 
                     icon={<CheckIcon />}
@@ -959,10 +963,10 @@ const Prescription = () => {
                 <IconButton
                     color="cyan"
                     appearance="primary"
-                    disabled={preKey?
+                    disabled={preKey ?
                         prescriptions?.object?.find(prescription =>
                             prescription.key === preKey
-                        )?.statusLkey === '1804482322306061':true
+                        )?.statusLkey === '1804482322306061' : true
                     }
                     icon={<PageIcon />}
                 >
@@ -1220,7 +1224,7 @@ const Prescription = () => {
                     <Table.Column flexGrow={1} fullText>
                         <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
                         <Table.Cell>
-                        {rowData => rowData?.strength+rowData?.unitLvalue?.lovDisplayVale }
+                            {rowData => rowData?.strength + rowData?.unitLvalue?.lovDisplayVale}
                         </Table.Cell>
                     </Table.Column>
 
