@@ -434,7 +434,7 @@ const PatientSummary = ({ patient, encounter }) => {
                         <Col xs={24}>
                             <Table
                                 bordered
-                                data={prescriptionMedications?.object ?? []}
+                                data={combinedArray ?? []}
                                 onRowClick={rowData => {
 
                                 }}
@@ -452,40 +452,45 @@ const PatientSummary = ({ patient, encounter }) => {
                                 <Table.Column flexGrow={1} fullText>
                                     <Table.HeaderCell>Instructions</Table.HeaderCell>
                                     <Table.Cell>
-                                        {rowData => {
-                                            if (rowData.instructionsTypeLkey === "3010591042600262") {
-                                                const generic = predefinedInstructionsListResponse?.object?.find(
-                                                    item => item.key === rowData.instructions
-                                                );
-
-                                                if (generic) {
-                                                  
-                                                } else {
-                                                    console.warn("No matching generic found for key:", rowData.instructions);
-                                                }
-                                                return [
-                                                    generic?.dose,
-                                                    generic?.unitLvalue?.lovDisplayVale,
-
-                                                    generic?.frequencyLvalue?.lovDisplayVale
-                                                ]
-                                                    .filter(Boolean)
-                                                    .join(', ');
-                                            }
-                                            if (rowData.instructionsTypeLkey === "3010573499898196") {
-                                                return rowData.instructions
-
-                                            }
-                                            if (rowData.instructionsTypeLkey === "3010606785535008") {
-                                                return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose +
-                                                    "," + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue.lovDisplayVale + "," +
-                                                    customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue.lovDisplayVale
-
-
-                                            }
-
-                                            return " ";
-                                        }}
+                                           {rowData => {
+                                if(rowData.sourceName=='Prescription'){
+                                    if (rowData.instructionsTypeLkey === "3010591042600262") {
+                                        const generic = predefinedInstructionsListResponse?.object?.find(
+                                            item => item.key === rowData.instructions
+                                        );
+    
+                                        if (generic) {
+                                         
+                                        } else {
+                                            console.warn("No matching generic found for key:", rowData.instructions);
+                                        }
+                                        return [
+                                            generic?.dose,
+                                            generic?.unitLvalue?.lovDisplayVale,
+                                            generic?.routLvalue?.lovDisplayVale,
+                                            generic?.frequencyLvalue?.lovDisplayVale
+                                        ]
+                                            .filter(Boolean)
+                                            .join(', ');
+                                    }
+                                    if (rowData.instructionsTypeLkey === "3010573499898196") {
+                                        return rowData.instructions
+    
+                                    }
+                                    if (rowData.instructionsTypeLkey === "3010606785535008") {
+                                        return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose  +","
+                                    + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.roaLvalue.lovDisplayVale + 
+                                            "," + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue.lovDisplayVale + "," +
+                                            customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue.lovDisplayVale
+    
+    
+                                    }
+    
+                                }
+                              
+                                else{return joinValuesFromArray([rowData.dose,rowData.unit,"every "+rowData.frequency+ " hours", rowData.roa]);}  
+                               
+                            }}
                                     </Table.Cell>
                                 </Table.Column>
 
@@ -736,14 +741,15 @@ const PatientSummary = ({ patient, encounter }) => {
                         <Table.Column flexGrow={1} fullText>
                             <Table.HeaderCell>Instructions</Table.HeaderCell>
                             <Table.Cell>
-                                {rowData => {
+                            {rowData => {
+                                if(rowData.sourceName=='Prescription'){
                                     if (rowData.instructionsTypeLkey === "3010591042600262") {
                                         const generic = predefinedInstructionsListResponse?.object?.find(
                                             item => item.key === rowData.instructions
                                         );
-
+    
                                         if (generic) {
-                                           
+                                         
                                         } else {
                                             console.warn("No matching generic found for key:", rowData.instructions);
                                         }
@@ -758,18 +764,22 @@ const PatientSummary = ({ patient, encounter }) => {
                                     }
                                     if (rowData.instructionsTypeLkey === "3010573499898196") {
                                         return rowData.instructions
-
+    
                                     }
                                     if (rowData.instructionsTypeLkey === "3010606785535008") {
-                                        return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose +
+                                        return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose  +","
+                                    + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.roaLvalue.lovDisplayVale + 
                                             "," + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue.lovDisplayVale + "," +
                                             customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue.lovDisplayVale
-
-
+    
+    
                                     }
-
-                                    return " ";
-                                }}
+    
+                                }
+                              
+                                else{return joinValuesFromArray([rowData.dose,rowData.unit,"every "+rowData.frequency+ " hours", rowData.roa]);}  
+                               
+                            }}
                             </Table.Cell>
                         </Table.Column>
 
