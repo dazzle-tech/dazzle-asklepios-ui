@@ -27,7 +27,7 @@ import { faPrint } from "@fortawesome/free-solid-svg-icons";
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
 import AppointmentActionsModal from "./AppointmentActionsModal";
-import { useGetResourcesAvailabilityQuery, useGetResourcesQuery, useGetAppointmentsQuery } from '@/services/appointmentService'
+import { useGetResourcesAvailabilityQuery, useGetResourcesQuery, useGetAppointmentsQuery } from '@/services/appointmentService';
 import MyInput from '@/components/MyInput';
 import Resources from "@/pages/appointment/resources";
  
@@ -47,7 +47,7 @@ const ScheduleScreen = () => {
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [appointmentsData, setAppointmentsData] = useState([])
     const [selectedAppointment, setSelectedAppointment] = useState()
-    const [showAppointmentOnly, setShowAppointmentOnly] = useState(false)
+    const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
     const [filteredResourcesList, setFilteredResourcesList] = useState([])
     const [showCanceled, setShowCanceled] = useState<boolean>(false)
     const [filteredMonth, setFilteredMonth] = useState<Date>()
@@ -487,6 +487,7 @@ const ScheduleScreen = () => {
 
 
             <AppointmentModal
+                from={'Schedule'}
                 isOpen={modalOpen}
                 onClose={() => { setModalOpen(false), setShowAppointmentOnly(false) }}
                 appointmentData={selectedEvent?.appointmentData}
