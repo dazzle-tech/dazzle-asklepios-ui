@@ -488,7 +488,7 @@ const PatientSummary = ({ patient, encounter }) => {
     
                                 }
                               
-                                else{return joinValuesFromArray([rowData.dose,rowData.unit,"every "+rowData.frequency+ " hours", rowData.roa]);}  
+                                else{return joinValuesFromArray([rowData.dose,rowData.unit,rowData.frequency>0? "every " + rowData.frequency + " hours":"STAT", rowData.roa]);}  
                                
                             }}
                                     </Table.Cell>
@@ -777,7 +777,7 @@ const PatientSummary = ({ patient, encounter }) => {
     
                                 }
                               
-                                else{return joinValuesFromArray([rowData.dose,rowData.unit,"every "+rowData.frequency+ " hours", rowData.roa]);}  
+                                else{return joinValuesFromArray([rowData.dose,rowData.unit,rowData.drugOrderTypeLkey == '2937757567806213'? "STAT":"every " + rowData.frequency + " hours", rowData.roa]);}  
                                
                             }}
                             </Table.Cell>

@@ -93,7 +93,7 @@ const ChiefComplaint = () => {
           <IconButton
             circle
             style={{ margin: "3px" }}
-            
+            disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
             icon={<CheckOutlineIcon />}
             size="xs"
             appearance="primary"
@@ -115,6 +115,7 @@ const ChiefComplaint = () => {
 
 
         <Input
+         disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
           as={'textarea'}
           rows={4}
           style={{ fontSize: '12px', maxHeight: '150px', overflowY: 'auto', resize: 'vertical' }}

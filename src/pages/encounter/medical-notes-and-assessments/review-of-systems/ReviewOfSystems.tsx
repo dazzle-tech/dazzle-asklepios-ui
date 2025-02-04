@@ -29,8 +29,6 @@ const ReviewOfSystems = () => {
 
   const [saveEncounterChanges, saveEncounterChangesMutation] = useSaveEncounterChangesMutation();
   const [localEncounter, setLocalEncounter] = useState({ ...patientSlice.encounter });
-  console.log(patientSlice.encounter);
-console.log(localEncounter);
   const { data: bodySystemsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_SYS');
   const { data: bodySystemsDetailLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
     code: 'BODY_SYS_DETAIL',

@@ -69,7 +69,7 @@ const PatientDiagnosis = () => {
   const patientDiagnoseListResponse = useGetPatientDiagnosisQuery(listRequest);
   const [listIcdRequest, setListIcdRequest] = useState({ ...initialListRequest });
   const { data: icdListResponseData } = useGetIcdListQuery(listIcdRequest);
-  console.log("icdListResponseData:", icdListResponseData);
+ 
   useEffect(() => {
     if (searchKeyword.trim() !== "") {
       setListIcdRequest(
@@ -114,14 +114,6 @@ const PatientDiagnosis = () => {
   });
 
 
-  const key =
-    patientDiagnoseListResponse?.data?.object &&
-      Array.isArray(patientDiagnoseListResponse.data.object) &&
-      patientDiagnoseListResponse.data.object.length > 0
-      ? patientDiagnoseListResponse.data.object[0].key ?? ""
-      : "";
-
-  console.log(key);
 
   useEffect(() => {
     if (patientDiagnoseListResponse.data?.object?.length > 0) {
@@ -130,6 +122,9 @@ const PatientDiagnosis = () => {
   }, [patientDiagnoseListResponse.data]);
 
   console.log(selectedDiagnose);
+  console.log( selectedDiagnose?.diagnoseCode );
+
+  // console.log(icdListResponseData.object.find(item => item.key === selectedDiagnose?.diagnoseCode)?.icdCode)
   const save = () => {
 
     try {
@@ -148,55 +143,55 @@ const PatientDiagnosis = () => {
   };
   const handleSearch = value => {
     setSearchKeyword(value);
-    console.log('serch' + searchKeyword);
+
 
   };
-  const remove = () => {
-    if (selectedDiagnose.key) {
-      removePatientDiagnose({
-        ...selectedDiagnose,
-        deletedBy: 'Administrator'
-      }).unwrap();
-    }
-  };
+  // const remove = () => {
+  //   if (selectedDiagnose.key) {
+  //     removePatientDiagnose({
+  //       ...selectedDiagnose,
+  //       deletedBy: 'Administrator'
+  //     }).unwrap();
+  //   }
+  // };
 
-  useEffect(() => {
-    if (savePatientDiagnoseMutation.isSuccess) {
-      setListRequest({
-        ...listRequest,
-        timestamp: new Date().getMilliseconds()
-      });
-      setSelectedDiagnose({ ...newApPatientDiagnose });
-    }
-  }, [savePatientDiagnoseMutation]);
+  // useEffect(() => {
+  //   if (savePatientDiagnoseMutation.isSuccess) {
+  //     setListRequest({
+  //       ...listRequest,
+  //       timestamp: new Date().getMilliseconds()
+  //     });
+  //     setSelectedDiagnose({ ...newApPatientDiagnose });
+  //   }
+  // }, [savePatientDiagnoseMutation]);
 
-  useEffect(() => {
-    if (removePatientDiagnoseMutation.isSuccess) {
-      setListRequest({
-        ...listRequest,
-        timestamp: new Date().getMilliseconds()
-      });
-      setSelectedDiagnose({ ...newApPatientDiagnose });
-    }
-  }, [removePatientDiagnoseMutation]);
+  // useEffect(() => {
+  //   if (removePatientDiagnoseMutation.isSuccess) {
+  //     setListRequest({
+  //       ...listRequest,
+  //       timestamp: new Date().getMilliseconds()
+  //     });
+  //     setSelectedDiagnose({ ...newApPatientDiagnose });
+  //   }
+  // }, [removePatientDiagnoseMutation]);
 
-  function formatDate(_date) {
-    if (!_date) return '';
+  // function formatDate(_date) {
+  //   if (!_date) return '';
 
-    const date = new Date(_date);
+  //   const date = new Date(_date);
 
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-    const day = String(date.getDate()).padStart(2, '0');
+  //   const year = date.getFullYear();
+  //   const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+  //   const day = String(date.getDate()).padStart(2, '0');
 
-    return `${year}/${month}/${day}`;
-  }
+  //   return `${year}/${month}/${day}`;
+  // }
 
-  const isSelected = rowData => {
-    if (rowData && rowData.key === selectedDiagnose.key) {
-      return 'selected-row';
-    } else return '';
-  };
+  // const isSelected = rowData => {
+  //   if (rowData && rowData.key === selectedDiagnose.key) {
+  //     return 'selected-row';
+  //   } else return '';
+  // };
   return (
     <>
       <Panel style={{ display: 'flex', flexDirection: 'column', padding: '3px' }} >
@@ -299,16 +294,18 @@ const PatientDiagnosis = () => {
               <Input
                 disabled={true}
                 style={{ zoom: 0.80, width: '300px' }}
-                value={
-                  icdListResponseData?.object.find(item => item.key === selectedDiagnose?.diagnoseCode)
-                  ? `${icdListResponseData.object.find(item => item.key === selectedDiagnose?.diagnoseCode)?.icdCode}, ${icdListResponseData.object.find(item => item.key === selectedDiagnose?.diagnoseCode)?.description}`
-                  : ""
-                }
+                value={ selectedDiagnose.diagnosis}
+                // {
+                //   icdListResponseData?.object.find(item => item.key === selectedDiagnose?.diagnoseCode)
+                //   ? `${icdListResponseData.object.find(item => item.key === selectedDiagnose?.diagnoseCode)?.icdCode}, ${icdListResponseData.object.find(item => item.key === selectedDiagnose?.diagnoseCode)?.description}`
+                //   : ""
+                // }
                 
               
 
               />
             </InputGroup>
+            {/* <p>hanan{ selectedDiagnose?.diagnosisObject.icdCode}, {selectedDiagnose?.diagnosisObject.description}</p> */}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '3px' }}>
             <Text style={{ zoom: 0.88, width: '200px' }}>Type </Text>

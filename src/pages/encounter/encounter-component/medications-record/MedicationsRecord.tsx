@@ -34,7 +34,7 @@ import {
     useGetPrescriptionsQuery,
     useGetPrescriptionMedicationsQuery,
     useGetCustomeInstructionsQuery
-    
+
 } from '@/services/encounterService';
 import {
     useGetDrugOrderQuery,
@@ -170,12 +170,12 @@ const MedicationsRecord = () => {
             return 'selected-row';
         } else return '';
     };
- const [listGinricRequest, setListGinricRequest] = useState({
+    const [listGinricRequest, setListGinricRequest] = useState({
         ...initialListRequest,
         sortType: 'desc'
- 
+
     });
-    const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({...listGinricRequest});
+    const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({ ...listGinricRequest });
     const combinedArray = [];
 
 
@@ -185,19 +185,19 @@ const MedicationsRecord = () => {
                 createdAt: order.createdAt,
                 createdBy: order.createdBy,
                 key: order.key,
-                genericMedicationsKey:order.genericMedicationsKey,
-                instructionsTypeLvalue:"Custom",
-                instructions:order.instructions,
-                notes:order.notes,
-                parametersToMonitor:order.parametersToMonitor,
-                indication:order.indicationIcd,
-                indicationUse:order.indicationUseLvalue?.lovDisplayVale??"",
-                indicationManually:order.indicationManually,
-                activeIngredient:order.activeIngredient,
-                roa:order.roaLvalue?.lovDisplayVale,
-                frequency:order.frequency,
-                dose:order.dose,
-                unit:order.doseUnitLvalue?.lovDisplayVale,
+                genericMedicationsKey: order.genericMedicationsKey,
+                instructionsTypeLvalue: "Custom",
+                instructions: order.instructions,
+                notes: order.notes,
+                parametersToMonitor: order.parametersToMonitor,
+                indication: order.indicationIcd,
+                indicationUse: order.indicationUseLvalue?.lovDisplayVale ?? "",
+                indicationManually: order.indicationManually,
+                activeIngredient: order.activeIngredient,
+                roa: order.roaLvalue?.lovDisplayVale,
+                frequency: order.frequency,
+                dose: order.dose,
+                unit: order.doseUnitLvalue?.lovDisplayVale,
                 sourceName: 'Order',
             });
         }
@@ -209,16 +209,16 @@ const MedicationsRecord = () => {
                 createdAt: pre.createdAt,
                 createdBy: pre.createdBy,
                 key: pre.key,
-                genericMedicationsKey:pre.genericMedicationsKey,
-                instructionsTypeLvalue:pre.instructionsTypeLvalue?.lovDisplayVale??"",
-                instructionsTypeLkey:pre.instructionsTypeLkey,
-                instructions:pre.instructions,
-                notes:pre.notes,
-                parametersToMonitor:pre.parametersToMonitor,
-                indication:pre.indicationIcd,
-                indicationUse:pre.indicationUseLvalue?.lovDisplayVale??"",
-                indicationManually:pre.indicationManually,
-                activeIngredient:pre.activeIngredient,
+                genericMedicationsKey: pre.genericMedicationsKey,
+                instructionsTypeLvalue: pre.instructionsTypeLvalue?.lovDisplayVale ?? "",
+                instructionsTypeLkey: pre.instructionsTypeLkey,
+                instructions: pre.instructions,
+                notes: pre.notes,
+                parametersToMonitor: pre.parametersToMonitor,
+                indication: pre.indicationIcd,
+                indicationUse: pre.indicationUseLvalue?.lovDisplayVale ?? "",
+                indicationManually: pre.indicationManually,
+                activeIngredient: pre.activeIngredient,
                 sourceName: 'Prescription',
             });
         }
@@ -242,22 +242,22 @@ const MedicationsRecord = () => {
         return values.filter(Boolean).join(', ');
     };
     const joinValuesFromArrayo = (objects, genericMedicationsKey) => {
-   
+
         return objects
             .map(obj => {
-                
+
                 const matchingActiveIngredient = genericMedicationActiveIngredientListResponseData?.object?.find(ingredient => {
                     return ingredient.genericMedicationKey === genericMedicationsKey && ingredient.activeIngredientKey === obj.key;
                 });
-                
-                
+
+
                 if (matchingActiveIngredient) {
                     return `${obj.name}:${matchingActiveIngredient.strength} ${matchingActiveIngredient.unitLvalue.lovDisplayVale} `;
                 }
-               
+
                 return obj.name;
             })
-            .join(', '); 
+            .join(', ');
     };
     const renderRowExpanded = rowData => {
         // Add this line to check children data
@@ -342,7 +342,7 @@ const MedicationsRecord = () => {
             />
         </Cell>
     );
-    
+
     return (<>
         <Panel header="Prescriptions" collapsible bordered >
 
@@ -353,7 +353,8 @@ const MedicationsRecord = () => {
                 headerHeight={30}
                 rowHeight={40}
                 data={prescriptions?.object ?? []}
-                height={200}
+                autoHeight
+                maxHeight={300}
                 onRowClick={rowData => {
                     setPrescription(rowData);
                 }}
@@ -405,17 +406,8 @@ const MedicationsRecord = () => {
             </Table>
             {prescription.key &&
                 <Table
-                    height={200}
-                    //    sortColumn={listRequest.sortBy}
-                    //    sortType={listRequest.sortType}
-                    //    onSortColumn={(sortBy, sortType) => {
-                    //        if (sortBy)
-                    //            setListRequest({
-                    //                ...listRequest,
-                    //                sortBy,
-                    //                sortType
-                    //            });
-                    //    }}
+                    autoHeight
+                    maxHeight={300}
                     headerHeight={30}
                     rowHeight={40}
                     bordered
@@ -467,8 +459,8 @@ const MedicationsRecord = () => {
 
                                 }
                                 if (rowData.instructionsTypeLkey === "3010606785535008") {
-                                    return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose +","
-                                    + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.roaLvalue.lovDisplayVale + 
+                                    return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose + ","
+                                        + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.roaLvalue.lovDisplayVale +
                                         "," + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue.lovDisplayVale + "," +
                                         customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue.lovDisplayVale
 
@@ -549,7 +541,8 @@ const MedicationsRecord = () => {
                 headerHeight={30}
                 rowHeight={40}
                 data={orders?.object ?? []}
-                height={200}
+                autoHeight
+                maxHeight={300}
                 onRowClick={rowData => {
                     setOrder(rowData);
                 }}
@@ -564,13 +557,13 @@ const MedicationsRecord = () => {
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Visit ID</HeaderCell>
                     <Cell  >
-                        {rowData =>rowData.encounter.visitId }
+                        {rowData => rowData.encounter.visitId}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Visit Date</HeaderCell>
                     <Cell  >
-                        {rowData => rowData.encounter.createdAt ? new Date( rowData.encounter.createdAt).toLocaleString() : " "}
+                        {rowData => rowData.encounter.createdAt ? new Date(rowData.encounter.createdAt).toLocaleString() : " "}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
@@ -602,7 +595,9 @@ const MedicationsRecord = () => {
             </Table>
             {order.key &&
                 <Table
-                    height={600}
+                    style={{ marginTop: '10px' }}
+                    autoHeight
+                    maxHeight={300}
                     data={orderMedications?.object || []}
                     rowKey="key"
                     expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
@@ -648,7 +643,7 @@ const MedicationsRecord = () => {
                         </HeaderCell>
                         <Cell>
                             {rowData => {
-                                return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale,"every "+rowData.frequency+ " hours", rowData.roaLvalue?.lovDisplayVale]);
+                                return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, rowData.drugOrderTypeLkey == '2937757567806213' ? "STAT" : "every " + rowData.frequency + " hours", rowData.roaLvalue?.lovDisplayVale]);
                             }
                             }
                         </Cell>
@@ -692,7 +687,7 @@ const MedicationsRecord = () => {
 
                         </Cell>
                     </Column>
-                    
+
                     <Column flexGrow={1} fullText>
                         <HeaderCell align="center">
                             <Translate>Is Chronic</Translate>
@@ -720,7 +715,8 @@ const MedicationsRecord = () => {
         </Panel>
         <Panel header="Patient’s Chronic Medications" collapsible bordered >
             <Table
-                height={200}
+                autoHeight
+                maxHeight={300}
                 headerHeight={30}
                 rowHeight={40}
                 bordered
@@ -742,102 +738,102 @@ const MedicationsRecord = () => {
                     </Cell>
                 </Column>
                 <Column flexGrow={1} width={150} fullText>
-                        <HeaderCell align="center">
+                    <HeaderCell align="center">
 
-                            <Translate>Medication Name</Translate>
-                        </HeaderCell>
+                        <Translate>Medication Name</Translate>
+                    </HeaderCell>
 
-                        <Cell >
-                            {rowData =>
-                                genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={1} width={150} fullText>
-                        <HeaderCell align="center">
+                    <Cell >
+                        {rowData =>
+                            genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={1} width={150} fullText>
+                    <HeaderCell align="center">
 
-                            <Translate>Dosage Form</Translate>
-                        </HeaderCell>
+                        <Translate>Dosage Form</Translate>
+                    </HeaderCell>
 
-                        <Cell >
-                            {rowData =>
-                                genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.dosageFormLvalue.lovDisplayVale 
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} width={200} fullText>
-                        <HeaderCell align="center">
+                    <Cell >
+                        {rowData =>
+                            genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.dosageFormLvalue.lovDisplayVale
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} width={200} fullText>
+                    <HeaderCell align="center">
 
-                            <Translate>Active Ingredients</Translate>
-                        </HeaderCell>
+                        <Translate>Active Ingredients</Translate>
+                    </HeaderCell>
 
-                        <Cell >
-                            {rowData =>joinValuesFromArrayo(rowData.activeIngredient ,rowData.genericMedicationsKey)
-                               
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={1} width={150} fullText>
-                        <HeaderCell align="center">
+                    <Cell >
+                        {rowData => joinValuesFromArrayo(rowData.activeIngredient, rowData.genericMedicationsKey)
 
-                            <Translate>Instruction Type</Translate>
-                        </HeaderCell>
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={1} width={150} fullText>
+                    <HeaderCell align="center">
 
-                        <Cell >
-                            {rowData =>
-                               
-                                   rowData.instructionsTypeLvalue            
-                            }
-                        </Cell>
-                    </Column>
-                    
-                    <Column flexGrow={2.5} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Instruction</Translate>
-                        </HeaderCell>
-                        <Cell  >
-                            {rowData => {
-                                if(rowData.sourceName=='Prescription'){
-                                    if (rowData.instructionsTypeLkey === "3010591042600262") {
-                                        const generic = predefinedInstructionsListResponse?.object?.find(
-                                            item => item.key === rowData.instructions
-                                        );
-    
-                                        if (generic) {
-                                         
-                                        } else {
-                                            console.warn("No matching generic found for key:", rowData.instructions);
-                                        }
-                                        return [
-                                            generic?.dose,
-                                            generic?.unitLvalue?.lovDisplayVale,
-                                            generic?.routLvalue?.lovDisplayVale,
-                                            generic?.frequencyLvalue?.lovDisplayVale
-                                        ]
-                                            .filter(Boolean)
-                                            .join(', ');
+                        <Translate>Instruction Type</Translate>
+                    </HeaderCell>
+
+                    <Cell >
+                        {rowData =>
+
+                            rowData.instructionsTypeLvalue
+                        }
+                    </Cell>
+                </Column>
+
+                <Column flexGrow={2.5} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Instruction</Translate>
+                    </HeaderCell>
+                    <Cell  >
+                        {rowData => {
+                            if (rowData.sourceName == 'Prescription') {
+                                if (rowData.instructionsTypeLkey === "3010591042600262") {
+                                    const generic = predefinedInstructionsListResponse?.object?.find(
+                                        item => item.key === rowData.instructions
+                                    );
+
+                                    if (generic) {
+
+                                    } else {
+                                        console.warn("No matching generic found for key:", rowData.instructions);
                                     }
-                                    if (rowData.instructionsTypeLkey === "3010573499898196") {
-                                        return rowData.instructions
-    
-                                    }
-                                    if (rowData.instructionsTypeLkey === "3010606785535008") {
-                                        return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose  +","
-                                    + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.roaLvalue.lovDisplayVale + 
-                                            "," + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue.lovDisplayVale + "," +
-                                            customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue.lovDisplayVale
-    
-    
-                                    }
-    
+                                    return [
+                                        generic?.dose,
+                                        generic?.unitLvalue?.lovDisplayVale,
+                                        generic?.routLvalue?.lovDisplayVale,
+                                        generic?.frequencyLvalue?.lovDisplayVale
+                                    ]
+                                        .filter(Boolean)
+                                        .join(', ');
                                 }
-                              
-                                else{return joinValuesFromArray([rowData.dose,rowData.unit,"every "+rowData.frequency+ " hours", rowData.roa]);}  
-                               
-                            }}
+                                if (rowData.instructionsTypeLkey === "3010573499898196") {
+                                    return rowData.instructions
 
-                        </Cell>
-                    </Column>
+                                }
+                                if (rowData.instructionsTypeLkey === "3010606785535008") {
+                                    return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose + ","
+                                        + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.roaLvalue.lovDisplayVale +
+                                        "," + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue.lovDisplayVale + "," +
+                                        customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue.lovDisplayVale
+
+
+                                }
+
+                            }
+
+                            else { return joinValuesFromArray([rowData.dose, rowData.unit, "every " + rowData.frequency + " hours", rowData.roa]); }
+
+                        }}
+
+                    </Cell>
+                </Column>
                 <Column flexGrow={2} width={200} fullText>
                     <HeaderCell align="center">
 
@@ -857,17 +853,17 @@ const MedicationsRecord = () => {
                     </Cell>
                 </Column>
                 <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Lab Monitoring Parameters</Translate>
-                        </HeaderCell>
-                        <Cell dataKey="parametersToMonitor" />
-                    </Column>
+                    <HeaderCell align="center">
+                        <Translate>Lab Monitoring Parameters</Translate>
+                    </HeaderCell>
+                    <Cell dataKey="parametersToMonitor" />
+                </Column>
                 <Column flexGrow={1} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Note</Translate>
-                        </HeaderCell>
-                        <Cell dataKey="notes" />
-                    </Column>
+                    <HeaderCell align="center">
+                        <Translate>Note</Translate>
+                    </HeaderCell>
+                    <Cell dataKey="notes" />
+                </Column>
             </Table>
         </Panel></>);
 };
