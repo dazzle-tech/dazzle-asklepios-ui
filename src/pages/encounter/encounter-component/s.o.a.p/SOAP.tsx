@@ -366,6 +366,7 @@ const SOAP = () => {
                 <Col xs={2}><Input
                   as="textarea"
                   rows={1}
+                  disabled={true}
                   style={{ width: 400 }}
                   value={patientObservationSummary.latestnotes}
 
