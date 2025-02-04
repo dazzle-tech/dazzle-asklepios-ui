@@ -135,7 +135,7 @@ export const encounterService = createApi({
         url: `/encounter/patient-diagnosis-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
-      keepUnusedDataFor:5
+      keepUnusedDataFor:0
     }),
     savePatientDiagnose: builder.mutation({
       query: (patDiag: ApPatientDiagnose) => ({
