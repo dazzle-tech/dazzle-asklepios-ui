@@ -979,6 +979,13 @@ export const setupService = createApi({
         onQueryStarted: onQueryStarted,
         keepUnusedDataFor: 5
       }),
+      getCptList: builder.query({
+        query: (listRequest: ListRequest) => ({
+          url: `/setup/cpt-list?${fromListRequestToQueryParams(listRequest)}`
+        }),
+        onQueryStarted: onQueryStarted,
+        keepUnusedDataFor: 3600
+      }),
       
    
 
@@ -1084,7 +1091,7 @@ export const {
   useRemoveProcedurePriceListMutation,
   useRemoveProcedureCodingMutation,
   useGetDuplicationCandidateSetupListQuery,
-  useSaveDuplicationCandidateSetupMutation
-
+  useSaveDuplicationCandidateSetupMutation,
+  useGetCptListQuery
 
 } = setupService;

@@ -64,7 +64,7 @@ import FacilityPatientList from './pages/patient/facility-patient-list/FacilityP
 import ScheduleScreen from './pages/Scheduling/scheduling-screen/ScheduleScreen';
 import EncounterPatientPrivateLogin from './pages/encounter/encounter-patient-private';
 import VaccinationTab from './pages/encounter/encounter-pre-observations/vaccination-tab';
-
+import CPTSetup from './pages/setup/cpt-setup';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -243,6 +243,7 @@ const App = () => {
               <Route path="dental-actions" element={<DentalActions />} />
               <Route path="cdt-setup" element={<CDTSetup />} />
               <Route path="icd10-setup" element={<ICD10Setup />} />
+              <Route path="cpt-setup" element={<CPTSetup/>} />
               <Route path="services-setup" element={<ServiceSetup />} />
               <Route path="error-404" element={<Error404Page />} />
               <Route path="error-403" element={<Error403Page />} />
