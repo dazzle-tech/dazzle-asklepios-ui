@@ -1589,7 +1589,7 @@ const DrugOrder = () => {
                     </HeaderCell>
                     <Cell>
                         {rowData => {
-                            return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, "every " + rowData.frequency + " hours", rowData.roaLvalue?.lovDisplayVale]);
+                            return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale,rowData.drugOrderTypeLkey == '2937757567806213'? "STAT":"every " + rowData.frequency + " hours", rowData.roaLvalue?.lovDisplayVale]);
                         }
                         }
                     </Cell>
