@@ -349,7 +349,7 @@ const Encounter = () => {
                   icon={<TableIcon />}
                   onClick={() => { setModalOpen(true) }}
                 >
-                  <Translate>Add Appointments</Translate>
+                  <Translate>Create Follow-up</Translate>
                 </IconButton>
                 {patientSlice.encounter.editable && (
                   <IconButton
