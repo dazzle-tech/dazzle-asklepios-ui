@@ -92,7 +92,19 @@ export const observationService = createApi({
     }),
     onQueryStarted: onQueryStarted,
     keepUnusedDataFor: 5
-  }),})
+  }),
+  getPatientVaccinationRecord: builder.query({
+    query: (data: { key: string,isCanelled:string }) => ({
+      url: `/observation/patient-vaccination-record`,
+      headers: {
+        patient_key: data.key,
+        is_cancelled:data.isCanelled
+      }
+    }),
+    onQueryStarted: onQueryStarted,
+    keepUnusedDataFor: 5
+  }),
+})
 });
 
 export const {
@@ -104,5 +116,6 @@ export const {
    useGetWarningsQuery,
    useSaveWarningsMutation,
    useSaveEncounterVaccineMutation,
-   useGetEncounterVaccineQuery
+   useGetEncounterVaccineQuery,
+   useGetPatientVaccinationRecordQuery
 } = observationService;
