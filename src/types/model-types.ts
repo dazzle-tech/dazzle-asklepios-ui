@@ -443,6 +443,20 @@ export interface ApConsultationOrder {
 	isValid:boolean;
 } 
 
+export interface ApCpt { 
+	key:string;
+	categoryLkey:string;
+	cptCode:string;
+	description:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApCustomeInstructions { 
 	key:string;
 	prescriptionMedicationsKey:string;
@@ -1168,6 +1182,20 @@ export interface ApLicenseDetails {
 	bedUsageCount:number;
 	userUsageCount:number;
 	lastUsageDate:Date;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApLoinc { 
+	key:string;
+	categoryLkey:string;
+	loincCode:string;
+	name:string;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;

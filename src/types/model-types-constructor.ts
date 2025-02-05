@@ -444,6 +444,20 @@ export const newApConsultationOrder:modelTypes.ApConsultationOrder = {
 	isValid:undefined,
 } 
 
+export const newApCpt:modelTypes.ApCpt = { 
+	key:undefined,
+	categoryLkey:undefined,
+	cptCode:'',
+	description:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApCustomeInstructions:modelTypes.ApCustomeInstructions = { 
 	key:undefined,
 	prescriptionMedicationsKey:undefined,
@@ -1169,6 +1183,20 @@ export const newApLicenseDetails:modelTypes.ApLicenseDetails = {
 	bedUsageCount:0,
 	userUsageCount:0,
 	lastUsageDate:null,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApLoinc:modelTypes.ApLoinc = { 
+	key:undefined,
+	categoryLkey:undefined,
+	loincCode:'',
+	name:'',
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',

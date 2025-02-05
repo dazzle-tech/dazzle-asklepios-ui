@@ -986,7 +986,13 @@ export const setupService = createApi({
         onQueryStarted: onQueryStarted,
         keepUnusedDataFor: 3600
       }),
-      
+      getLoincList: builder.query({
+        query: (listRequest: ListRequest) => ({
+          url: `/setup/loinc-list?${fromListRequestToQueryParams(listRequest)}`
+        }),
+        onQueryStarted: onQueryStarted,
+        keepUnusedDataFor: 3600
+      }),
    
 
   })
@@ -1092,6 +1098,7 @@ export const {
   useRemoveProcedureCodingMutation,
   useGetDuplicationCandidateSetupListQuery,
   useSaveDuplicationCandidateSetupMutation,
-  useGetCptListQuery
+  useGetCptListQuery,
+  useGetLoincListQuery
 
 } = setupService;
