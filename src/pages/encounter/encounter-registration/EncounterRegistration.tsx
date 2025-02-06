@@ -56,7 +56,7 @@ import {
   useGetPractitionersQuery,
   
 } from '@/services/setupService';
-
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
@@ -323,7 +323,7 @@ const EncounterRegistration = () => {
   };
 
   const search = target => {
-    console.log(target);
+
     setPatientSearchTarget(target);
     setSearchResultVisible(true);
     console.log(patientSearchTarget);
@@ -348,7 +348,7 @@ const EncounterRegistration = () => {
   };
 
   useEffect(() => {
-    //3623962430163299
+
   }, [paymentMethodSelected]);
   useEffect(() => {
     

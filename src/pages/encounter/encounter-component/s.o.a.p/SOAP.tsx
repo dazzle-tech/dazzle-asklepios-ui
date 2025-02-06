@@ -55,7 +55,7 @@ import { values } from 'lodash';
 import { notify } from '@/utils/uiReducerActions';
 
 
-const SOAP = () => {
+const SOAP = ({edit}) => {
   const patientSlice = useAppSelector(state => state.patient);
 
   const dispatch = useAppDispatch();
@@ -199,7 +199,7 @@ const SOAP = () => {
   };
   return (<>
     <h5>Clinical Visit</h5>
-    <div className="soap-container">
+    <div  className={`soap-container ${edit ? "disabled-panel" : ""}`}>
       <div className="column-container">
 
         <fieldset style={{ flex: "2" }} className="box-container">

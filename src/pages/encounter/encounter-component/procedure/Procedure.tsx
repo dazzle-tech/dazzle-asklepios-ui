@@ -80,7 +80,7 @@ import {
     useGetProcedureCodingListQuery
 } from '@/services/setupService';
 import Indications from '@/pages/medications/active-ingredients-setup/Indications';
-const Referrals = () => {
+const Referrals = ({edit}) => {
     const patientSlice = useAppSelector(state => state.patient);
     const dispatch = useAppDispatch();
     const [selectedRows, setSelectedRows] = useState([]);
@@ -603,7 +603,7 @@ const Referrals = () => {
     return (<>
         <h5>Procedure Order</h5>
         <br />
-        <div className='top-div'>
+        <div className={`top-div ${edit ? "disabled-panel" : ""}`}>
             <div>
                 <Form style={{ zoom: 0.85 }} layout="inline" fluid>
 

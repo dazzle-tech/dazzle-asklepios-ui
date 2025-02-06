@@ -30,7 +30,7 @@ import {
 
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
-
+import './styles.less';
 import { FaCalendar, FaClock } from 'react-icons/fa';
 import { BsCalendar2MonthFill } from 'react-icons/bs';
 import MyInput from '@/components/MyInput';
@@ -51,7 +51,7 @@ import {
 } from '@/services/observationService';
 import { ApVisitAllergies } from '@/types/model-types';
 import { newApVisitAllergies } from '@/types/model-types-constructor';
-const Allergies = () => {
+const Allergies = ({edit}) => {
     const patientSlice = useAppSelector(state => state.patient);
     console.log(patientSlice.patient)
     const { data: allergyTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGEN_TYPES');
@@ -518,8 +518,10 @@ const Allergies = () => {
     }
     return (<>
         <div>
-            <Panel header="Add Allergy " collapsible bordered defaultExpanded>
-                <div style={{ border: '1px solid #b6b7b8', padding: "5px" }}>
+            <Panel
+              className={edit? "disabled-panel" : ""}
+             header="Add Allergy " collapsible bordered defaultExpanded>
+                <div  style={{ border: '1px solid #b6b7b8', padding: "5px" }}>
                     <Form style={{ zoom: 0.85, display: 'flex' }} layout="inline" fluid>
                         <MyInput
                             column
@@ -736,7 +738,9 @@ const Allergies = () => {
                     </div>
                 </div>
             </Panel>
-            <Panel header="Patient’s Allergies " collapsible bordered>
+            <Panel
+         
+             header="Patient’s Allergies " collapsible bordered>
                 <div>
                     <IconButton
                         color="cyan"

@@ -78,7 +78,7 @@ import {
     useGetIcdListQuery,
 } from '@/services/setupService';
 import './styles.less';
-const DrugOrder = () => {
+const DrugOrder = ({edit}) => {
     const patientSlice = useAppSelector(state => state.patient);
     const dispatch = useAppDispatch();
     const [drugKey, setDrugKey] = useState(null);
@@ -863,6 +863,7 @@ const DrugOrder = () => {
                 appearance="ghost"
                 onClick={handleSaveOrder}
                 disabled={isdraft}
+                className={edit ? "disabled-panel" : ""}
                 style={{ marginLeft: 'auto' }}
                 icon={<PlusIcon />}
             >
@@ -875,7 +876,7 @@ const DrugOrder = () => {
 
         </div>
         <br />
-        <div className='top-container-p'>
+        <div className={`top-container-p ${edit ? "disabled-panel" : ""}`}>
             <div className='form-search-container-p '>
                 <Form disabled={drugKey != null ? editing : true}>
                     <Text>Medication Name</Text>
@@ -998,7 +999,7 @@ const DrugOrder = () => {
             </div>
         </div>
         <br />
-        <div className='top-container-p'>
+        <div className={`top-container-p ${edit ? "disabled-panel" : ""}`}>
             <Form style={{ zoom: 0.85, display: 'flex' }} layout="inline" fluid
                 disabled={drugKey != null ? editing : true}
 
@@ -1057,7 +1058,7 @@ const DrugOrder = () => {
             </Form>
         </div>
         <br />
-        <div className='instructions-container-p '>
+        <div className={`instructions-container-p ${edit ? "disabled-panel" : ""}`}>
             <div className='instructions-container-p ' style={{ minWidth: "800px", border: " 1px solid #b6b7b8" }}>
                 <div style={{ marginLeft: "10px", display: 'flex', flexDirection: 'column' }}>
                     <div className='form-search-container-p ' style={{ width: "710px" }}>
@@ -1298,7 +1299,7 @@ const DrugOrder = () => {
             </div>
         </div>
         <br />
-        <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid #b6b7b8' }}>
+        <div className={edit ? "disabled-panel" : ""} style={{ display: 'flex', flexDirection: 'column', border: '1px solid #b6b7b8' }}>
 
             <div style={{ display: 'flex', gap: '10px', padding: '4px' }}>
                 <Form style={{ zoom: 0.85 }} layout="inline" fluid>

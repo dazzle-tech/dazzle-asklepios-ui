@@ -63,7 +63,7 @@ import {
 } from '@/services/encounterService';
 import { ApPatientDiagnose } from '@/types/model-types';
 import { newApConsultationOrder, newApPatientDiagnose } from '@/types/model-types-constructor';
-const Consultation = () => {
+const Consultation = ({edit}) => {
     const patientSlice = useAppSelector(state => state.patient);
     const dispatch = useAppDispatch();
     const [selectedRows, setSelectedRows] = useState([]);
@@ -354,7 +354,7 @@ const Consultation = () => {
     return (<>
         <h5>Consultation Order</h5>
         <br />
-        <div className='top-div'>
+        <div className={`top-div ${edit ? "disabled-panel" : ""}`}>
             <div>
                 <Form style={{ zoom: 0.85 }} layout="inline" fluid>
 

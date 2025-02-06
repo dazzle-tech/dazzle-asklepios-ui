@@ -224,20 +224,7 @@ const MedicationsRecord = () => {
         }
     });
 
-    const handleFilterChange = (fieldName, value) => {
-        if (value) {
-            setListRequest(
-                addFilterToListRequest(
-                    fromCamelCaseToDBName(fieldName),
-                    'containsIgnoreCase',
-                    value,
-                    listRequest
-                )
-            );
-        } else {
-            setListRequest({ ...listRequest, filters: [] });
-        }
-    };
+    
     const joinValuesFromArray = (values) => {
         return values.filter(Boolean).join(', ');
     };
@@ -354,7 +341,7 @@ const MedicationsRecord = () => {
                 rowHeight={40}
                 data={prescriptions?.object ?? []}
                 autoHeight
-                maxHeight={300}
+                //  maxHeight={300}
                 onRowClick={rowData => {
                     setPrescription(rowData);
                 }}
@@ -363,19 +350,19 @@ const MedicationsRecord = () => {
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Prescription ID</HeaderCell>
                     <Cell  >
-                        {rowData => rowData.prescriptionId}
+                        {rowData => rowData?.prescriptionId??""}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Visit ID</HeaderCell>
                     <Cell  >
-                        {rowData => rowData.encounter.visitId}
+                        {rowData => rowData?.encounter?.visitId ??""}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Visit Date</HeaderCell>
                     <Cell  >
-                        {rowData => rowData.encounter.createdAt ? new Date(rowData.encounter.createdAt).toLocaleString() : " "}
+                        {rowData => rowData?.encounter.createdAt ? new Date(rowData.encounter.createdAt).toLocaleString() : " "}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
@@ -387,13 +374,13 @@ const MedicationsRecord = () => {
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Created By</HeaderCell>
                     <Cell  >
-                        {rowData => rowData.createdBy}
+                        {rowData => rowData?.createdBy??""}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Submitted By </HeaderCell>
                     <Cell  >
-                        {rowData => rowData.submittedBy}
+                        {rowData => rowData?.submittedBy||""}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
@@ -407,7 +394,7 @@ const MedicationsRecord = () => {
             {prescription.key &&
                 <Table
                     autoHeight
-                    maxHeight={300}
+                    // maxHeight={300}
                     headerHeight={30}
                     rowHeight={40}
                     bordered
@@ -424,7 +411,7 @@ const MedicationsRecord = () => {
 
                         <Cell dataKey="genericMedicationsKey" >
                             {rowData =>
-                                genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName
+                                genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName??""
                             }
                         </Cell>
                     </Column>
@@ -467,7 +454,7 @@ const MedicationsRecord = () => {
 
                                 }
 
-                                return "no";
+                                return " ";
                             }}
                         </Cell>
                     </Column>
@@ -542,7 +529,7 @@ const MedicationsRecord = () => {
                 rowHeight={40}
                 data={orders?.object ?? []}
                 autoHeight
-                maxHeight={300}
+                // maxHeight={300}
                 onRowClick={rowData => {
                     setOrder(rowData);
                 }}
@@ -551,13 +538,13 @@ const MedicationsRecord = () => {
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Order ID</HeaderCell>
                     <Cell  >
-                        {rowData => rowData.drugorderId}
+                        {rowData => rowData?.drugorderId??""}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Visit ID</HeaderCell>
                     <Cell  >
-                        {rowData => rowData.encounter.visitId}
+                        {rowData => rowData?.encounter?.visitId??""}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
@@ -597,7 +584,7 @@ const MedicationsRecord = () => {
                 <Table
                     style={{ marginTop: '10px' }}
                     autoHeight
-                    maxHeight={300}
+                    // maxHeight={300}
                     data={orderMedications?.object || []}
                     rowKey="key"
                     expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
@@ -716,7 +703,7 @@ const MedicationsRecord = () => {
         <Panel header="Patient’s Chronic Medications" collapsible bordered >
             <Table
                 autoHeight
-                maxHeight={300}
+                // maxHeight={300}
                 headerHeight={30}
                 rowHeight={40}
                 bordered
