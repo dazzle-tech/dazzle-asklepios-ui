@@ -66,6 +66,7 @@ import EncounterPatientPrivateLogin from './pages/encounter/encounter-patient-pr
 import VaccinationTab from './pages/encounter/encounter-pre-observations/vaccination-tab';
 import CPTSetup from './pages/setup/cpt-setup';
 import LOINCSetup from './pages/setup/lonic-setup';
+import PatientEMR from './pages/patient/patient-emr';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -81,7 +82,7 @@ const App = () => {
   const location = useLocation();
 
   useEffect(() => {
-    console.log('config from file');
+
     console.log(config.backendBaseURL);
     console.log(config.tenantId);
   }, [])
@@ -191,6 +192,7 @@ const App = () => {
                       style={{
                         textAlign: 'center',
                         color: 'white',
+                      
                         top: '10%',
                         position: 'absolute'
                       }}
@@ -253,6 +255,7 @@ const App = () => {
               <Route path="error-503" element={<Error503Page />} />
               <Route path="playground" element={<Playground />} />
               <Route path='schedual-screen' element={<ScheduleScreen />} />
+              <Route path='patient-EMR' element={<PatientEMR/>}/>
             </Route>
           </Route>
 

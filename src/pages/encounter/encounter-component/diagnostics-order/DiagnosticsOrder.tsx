@@ -52,7 +52,7 @@ import MyInput from '@/components/MyInput';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { newApPatientEncounterOrder } from '@/types/model-types-constructor';
 import { isValid } from 'date-fns';
-const DiagnosticsOrder = () => {
+const DiagnosticsOrder = ({edit}) => {
     const patientSlice = useAppSelector(state => state.patient);
     console.log(patientSlice.patient.key)
     const dispatch = useAppDispatch();

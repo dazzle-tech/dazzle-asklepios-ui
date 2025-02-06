@@ -72,7 +72,8 @@ import {
 import {
     useGetIcdListQuery,
 } from '@/services/setupService';
-const Prescription = () => {
+const Prescription = ({edit}) => {
+
     const patientSlice = useAppSelector(state => state.patient);
     const dispatch = useAppDispatch();
     const [searchKeyword, setSearchKeyword] = useState('');
@@ -721,7 +722,7 @@ const Prescription = () => {
             />
         );
     };
-    return (<>
+    return (< >
         <h5 style={{ marginTop: "10px" }}>Create Prescription</h5>
         <div className='top-container-p'>
             <div style={{ width: '500px' }}>
@@ -838,6 +839,7 @@ const Prescription = () => {
                 onClick={handleSavePrescription}
                 disabled={isdraft}
                 style={{ marginLeft: 'auto' }}
+                className={edit ? "disabled-panel" : ""}
                 icon={<PlusIcon />}
             >
                 <Translate>New Prescription</Translate>
@@ -849,7 +851,7 @@ const Prescription = () => {
 
         </div>
         <br />
-        <div className='top-container-p'>
+        <div   className={`top-container-p ${edit ? "disabled-panel" : ""}`}>
             <div className='form-search-container-p '>
                 <Form>
                     <Text>Medication Name</Text>
@@ -979,7 +981,7 @@ const Prescription = () => {
         </div>
         <br />
 
-        <div className='instructions-container-p '>
+        <div className={`instructions-container-p ${edit ? "disabled-panel" : ""}`}>
             <div style={{ marginLeft: "10px", display: 'flex', flexDirection: 'column', border: " 1px solid #b6b7b8" }}>
                 <div className='instructions-container-p ' style={{ minWidth: "800px" }}>
                     <div>
@@ -1263,7 +1265,7 @@ const Prescription = () => {
             </div>
         </div>
         <br />
-        <div style={{ display: 'flex', flexDirection: 'column', border: '1px solid #b6b7b8' }}>
+        <div className={edit ? "disabled-panel" : ""} style={{ display: 'flex', flexDirection: 'column', border: '1px solid #b6b7b8' }}>
 
             <div style={{ display: 'flex', gap: '10px', padding: '4px' }}>
                 <Form style={{ zoom: 0.85 }} layout="inline" fluid>

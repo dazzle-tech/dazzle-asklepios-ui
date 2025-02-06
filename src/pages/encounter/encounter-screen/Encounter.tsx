@@ -86,7 +86,7 @@ import {
 import { ApVisitAllergies } from '@/types/model-types';
 import { newApVisitAllergies } from '@/types/model-types-constructor';
 import { BlockUI } from 'primereact/blockui';
-
+import { useLocation } from 'react-router-dom';
 import EncounterMainInfoSection from '../encounter-main-info-section';
 import Warning from '../encounter-pre-observations/warning';
 
@@ -96,6 +96,10 @@ const Encounter = () => {
   const patientSlice = useAppSelector(state => state.patient);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+   const location = useLocation();
+   const propsData = location.state;
+  
+    console.log("page:", propsData.fromPage);
   const [modalOpen, setModalOpen] = useState(false);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -376,20 +380,20 @@ const Encounter = () => {
                   <List hover style={{ width: '100%', margin: 0 }}>
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
-                      onClick={() => handleMenuItemClick(<PatientSummary patient={patientSlice.patient} encounter={patientSlice.encounter} />)}>
+                      onClick={() => handleMenuItemClick(<PatientSummary patient={patientSlice.patient} encounter={patientSlice.encounter}  />)}>
                       <FontAwesomeIcon icon={faBars} style={{ margin: '3px' }} />
                       <Translate>Patient Dashboard</Translate>
                     </List.Item>
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
-                      onClick={() => handleMenuItemClick(<SOAP />)}>
+                      onClick={() => handleMenuItemClick(<SOAP edit={ propsData.fromPage=="PatientEMR"} />)}>
                       <FontAwesomeIcon icon={faUserDoctor} style={{ margin: '3px' }} />
                       <Translate>Clinical Visit</Translate>
                     </List.Item>
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
                       onClick={() =>
-                        handleMenuItemClick(<DiagnosticsOrder />)
+                        handleMenuItemClick(<DiagnosticsOrder edit={ propsData.fromPage=="PatientEMR"} />)
                       }>
                       <FontAwesomeIcon icon={faVials} style={{ margin: '3px' }} />
                       <Translate>Diagnostics Order</Translate>
@@ -397,27 +401,27 @@ const Encounter = () => {
 
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
-                      onClick={() => handleMenuItemClick(<Prescription />)}>
+                      onClick={() => handleMenuItemClick(<Prescription edit={ propsData.fromPage=="PatientEMR"}  />)}>
 
                       <FontAwesomeIcon icon={faFilePrescription} style={{ margin: '3px' }} />
                       <Translate>Prescription</Translate>
                     </List.Item>
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
-                      onClick={() => handleMenuItemClick(<DrugOrder />)}>
+                      onClick={() => handleMenuItemClick(<DrugOrder edit={ propsData.fromPage=="PatientEMR"}  />)}>
 
                       <FontAwesomeIcon icon={faPills} style={{ margin: '3px' }} />
                       <Translate>Drug Order</Translate>
                     </List.Item>
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
-                      onClick={() => handleMenuItemClick(<Consultation />)}>
+                      onClick={() => handleMenuItemClick(<Consultation edit={ propsData.fromPage=="PatientEMR"}  />)}>
                       <FontAwesomeIcon icon={faStethoscope} style={{ margin: '3px' }} />
                       <Translate>Consultation</Translate>
                     </List.Item>
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
-                      onClick={() => handleMenuItemClick(<Referrals />)}>
+                      onClick={() => handleMenuItemClick(<Referrals edit={ propsData.fromPage=="PatientEMR"}  />)}>
                       <FontAwesomeIcon icon={faNotesMedical} style={{ margin: '3px' }} />
                       <Translate>Procedures</Translate>
                     </List.Item>
@@ -429,13 +433,13 @@ const Encounter = () => {
                     </List.Item>
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
-                      onClick={() => handleMenuItemClick(<Allergies />)}>
+                      onClick={() => handleMenuItemClick(<Allergies edit={ propsData.fromPage=="PatientEMR"}  />)}>
                       <FontAwesomeIcon icon={faPersonDotsFromLine} style={{ margin: '3px' }} />
                       <Translate>Allergies</Translate>
                     </List.Item>
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
-                      onClick={() => handleMenuItemClick(<Warning />)}>
+                      onClick={() => handleMenuItemClick(<Warning edit={ propsData.fromPage=="PatientEMR"}  />)}>
                       <FontAwesomeIcon icon={faTriangleExclamation} style={{ margin: '3px' }} />
                       <Translate>Medical Warnings</Translate>
                     </List.Item>
@@ -453,7 +457,7 @@ const Encounter = () => {
                     </List.Item>
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
-                      onClick={() => handleMenuItemClick(<DiagnosticsResult />)}>
+                      onClick={() => handleMenuItemClick(<DiagnosticsResult edit={ propsData.fromPage=="PatientEMR"} />)}>
                       <FontAwesomeIcon icon={faFileWaveform} style={{ margin: '3px' }} />
                       <Translate>Diagnostics Result</Translate>
                     </List.Item>

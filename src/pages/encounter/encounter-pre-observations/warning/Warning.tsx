@@ -52,7 +52,7 @@ import {
 import { ApVisitWarning } from '@/types/model-types';
 import { newApVisitWarning } from '@/types/model-types-constructor';
 
-const Warning = () => {
+const Warning = ({edit}) => {
     const patientSlice = useAppSelector(state => state.patient);
 
     const { data: warningTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_WARNING_TYPS');
@@ -463,7 +463,7 @@ const Warning = () => {
     );
     return (
         <>
-            <Panel header="Add Warning " collapsible bordered defaultExpanded>
+            <Panel header="Add Warning " collapsible bordered defaultExpanded  className={edit? "disabled-panel" : ""}>
                 <div style={{ border: '1px solid #b6b7b8', padding: "5px" }}>
                     <Form style={{ zoom: 0.85, display: 'flex' }} layout="inline" fluid>
                         <MyInput

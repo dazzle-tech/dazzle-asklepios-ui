@@ -42,10 +42,12 @@ import { notify } from '@/utils/uiReducerActions';
 import CharacterLockIcon from '@rsuite/icons/CharacterLock';
 import PageEndIcon from '@rsuite/icons/PageEnd';
 import { timeStamp } from 'console';
+
 const EncounterList = () => {
   const patientSlice = useAppSelector(state => state.patient);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+ 
   const[localPatient,setLocalPatient]=useState<ApPatient>({...newApPatient})
   const [encounter, setLocalEncounter] = useState({ ...newApEncounter });
   const { data: icdListResponseData } = useGetIcdListQuery({
@@ -128,9 +130,9 @@ const EncounterList = () => {
     const targetPath = localPatient.privatePatient ? privatePatientPath : encounterPath;
 
     if (localPatient.privatePatient) {
-      navigate(targetPath, { state: { info: "toEncounter" } });
+      navigate(targetPath, { state: { info: "toEncounter", fromPage: "EncounterList"  } });
     } else {
-      navigate(targetPath); 
+      navigate(targetPath, { state: { info: "toEncounter", fromPage: "EncounterList"  } }); 
     }
   
     const currentDateTime = new Date().toLocaleString();
@@ -256,7 +258,7 @@ const EncounterList = () => {
           }}
           rowClassName={isSelected}
         >
-          <Column sortable flexGrow={2}>
+          <Column sortable flexGrow={2} fullText>
             <HeaderCell>
               <Input onChange={e => handleFilterChange('queueNumber', e)} />
               <Translate>Queue Number</Translate>
@@ -309,7 +311,7 @@ const EncounterList = () => {
             <Cell dataKey="patientAge" />
           </Column>
 
-          <Column sortable flexGrow={3}>
+          <Column sortable flexGrow={3} fullText fixed>
             <HeaderCell>
               <Input onChange={e => handleFilterChange('type', e)} />
               <Translate>Visit Type</Translate>
@@ -393,7 +395,7 @@ const EncounterList = () => {
 
           <Column sortable flexGrow={3}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('encounterPriorityLkey', e)} />
+              
               <Translate>Priority</Translate>
             </HeaderCell>
             <Cell>
@@ -412,7 +414,7 @@ const EncounterList = () => {
           </Column>
           <Column sortable flexGrow={3}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('encounterStatusLkey', e)} />
+            
               <Translate>Status</Translate>
             </HeaderCell>
             <Cell>
