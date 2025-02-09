@@ -1231,7 +1231,7 @@ export interface ApLovValues {
 	lovDisplayVale:string;
 	loveCustomCode:string;
 	valueDescription:string;
-	valueColor:number;
+	valueColor:string;
 	valueIcon:string;
 	valueOrder:number;
 	isdefault:boolean;

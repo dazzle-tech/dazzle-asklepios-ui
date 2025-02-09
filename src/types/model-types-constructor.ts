@@ -1232,7 +1232,7 @@ export const newApLovValues:modelTypes.ApLovValues = {
 	lovDisplayVale:'',
 	loveCustomCode:'',
 	valueDescription:'',
-	valueColor:0,
+	valueColor:'',
 	valueIcon:'',
 	valueOrder:0,
 	isdefault:undefined,
