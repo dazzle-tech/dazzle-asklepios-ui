@@ -294,12 +294,11 @@ const PatientDiagnosis = () => {
               <Input
                 disabled={true}
                 style={{ zoom: 0.80, width: '300px' }}
-                value={ selectedDiagnose.diagnosis}
-                // {
-                //   icdListResponseData?.object.find(item => item.key === selectedDiagnose?.diagnoseCode)
-                //   ? `${icdListResponseData.object.find(item => item.key === selectedDiagnose?.diagnoseCode)?.icdCode}, ${icdListResponseData.object.find(item => item.key === selectedDiagnose?.diagnoseCode)?.description}`
-                //   : ""
-                // }
+                value={
+                  icdListResponseData?.object.find(item => item.key === selectedDiagnose?.diagnoseCode)
+                  ? `${icdListResponseData.object.find(item => item.key === selectedDiagnose?.diagnoseCode)?.icdCode}, ${icdListResponseData.object.find(item => item.key === selectedDiagnose?.diagnoseCode)?.description}`
+                  : ""
+                }
                 
               
 
