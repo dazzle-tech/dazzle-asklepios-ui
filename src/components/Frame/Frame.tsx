@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Card, Text, VStack, TagGroup, Tag } from 'rsuite';
 import classNames from 'classnames';
 import {
   Container,
@@ -12,12 +13,14 @@ import {
   Divider,
   Panel
 } from 'rsuite';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHospital} from '@fortawesome/free-solid-svg-icons';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import NavToggle from './NavToggle';
 import Header from '../Header';
 import NavLink from '../NavLink';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import Logo from '../../images/ASK_LOGO_SVG copy.svg';
+import Logo from '../../images/suggested logo_2025 copy.svg';
 import { Breadcrumb } from 'rsuite';
 import Translate from '../Translate';
 import StackItem from 'rsuite/esm/Stack/StackItem';
@@ -77,16 +80,71 @@ const Frame = (props: FrameProps) => {
 
   return (
     <Container className="frame">
-      <Sidebar 
-        style={{ display: 'flex', flexDirection: 'column', height: '102vh'}}
+
+  
+      <Sidebar
+        style={{ display: 'flex', flexDirection: 'column', height: '102vh' }}
+
         width={expand ? 260 : 56}
         collapsible
       >
         <Sidenav.Header>
+
         </Sidenav.Header>
         <Sidenav expanded={expand} appearance="subtle" defaultOpenKeys={['2', '3']}>
           <Sidenav.Body style={navBodyStyle}>
             <Nav>
+              {expand&&<img
+                onClick={() => {
+                  navigate('/');
+                }}
+                style={{
+                  display: 'block',
+                  margin: 'auto',
+                  padding: '0px 0px',
+                  cursor: 'pointer'
+                }}
+                src={
+                  authSlice.tenant && authSlice.tenant.tenantLogoPath
+                    ? authSlice.tenant.tenantLogoPath
+                    : Logo
+                }
+                height={50}
+                width={ 100 }
+              />}
+            {expand&&
+               <Card 
+               direction="row"
+               style={{
+               
+                 display: 'flex',
+                 alignItems: 'center',
+                 marginLeft:'15px',
+                 padding: '12px 15px',
+                 borderRadius: '10px',
+                 boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
+                 backgroundColor: '#f9f9f9',
+                 border: '1px solid #ddd',
+                 width: '220px'
+               }}
+             >
+               {/* الأيقونة */}
+               <FontAwesomeIcon 
+                 icon={faHospital} 
+                 size="lg" 
+                 style={{ color: '#666', marginRight: '12px' }} 
+               />
+         
+               {/* النصوص */}
+               <div>
+                 <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#333' }}>
+                 Health Organization1
+                 </div>
+                 <div style={{ fontSize: '10px', color: '#777' }}>
+                   845 Euclid Avenue, CA
+                 </div>
+               </div>
+             </Card>}
               {navs.map(item => {
                 const { children, ...rest } = item;
                 if (children) {
@@ -146,13 +204,13 @@ const Frame = (props: FrameProps) => {
               display: 'inline-flex',
               color: 'black',
               zIndex: '101',
-              border: '1px solid #e1e1e1',
-              background: 'rgb(220 250 230)',
+
+              height: '50px',
               borderRadius: '0px 15px 15px 0px'
             }}
             divider={<Divider vertical />}
           >
-            <StackItem>
+            {/* <StackItem>
               <img
                 onClick={() => {
                   navigate('/');
@@ -172,7 +230,7 @@ const Frame = (props: FrameProps) => {
                 width={100}
               />
             </StackItem>
-            {/* <StackItem>
+            <StackItem>
               <small>
                 <b>Facility</b>
               </small>
@@ -189,8 +247,8 @@ const Frame = (props: FrameProps) => {
                 <b>Date</b>
               </small>
               <div>{new Date().toDateString()}</div>
-            </StackItem> */}
-            {/* {patientSlice.patient && (
+            </StackItem>
+            {patientSlice.patient && (
               <StackItem>
                 <small>
                   <b>Patient</b>
@@ -206,7 +264,7 @@ const Frame = (props: FrameProps) => {
                   </a>
                 </div>
               </StackItem>
-            )} */}
+            )}
             {patientSlice.encounter && (
               <StackItem>
                 <small>
@@ -223,7 +281,7 @@ const Frame = (props: FrameProps) => {
                   </a>
                 </div>
               </StackItem>
-            )}
+            )} */}
           </Stack>
           <Panel
             style={{ maxHeight: '90vh', overflowY: 'auto', marginTop: '5px' }}

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Button, Panel, SelectPicker, Stack, Divider, Message, Modal, ButtonToolbar } from 'rsuite';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import Logo from '../../../images/ASK_LOGO_SVG copy.svg';
-import Background from '../../../images/ASK_WALLPAPER.svg';
+import Logo from '../../../images/suggested logo_2025 copy.svg';
+import Background from '../../../images/medical-equipment-desk-with-copy-space.svg';
 import UserLogo from '../../../images/Login_ICon.svg';
 import './styles.less';
 import Translate from '@/components/Translate';
@@ -210,7 +210,7 @@ const SignIn = () => {
             </Form.Group>
  
             <Form.Group>
-              <Button color="cyan" appearance="primary" onClick={handleLogin} disabled={!authSlice.tenant}
+              <Button style={{backgroundColor:'#599ab8'}} appearance="primary" onClick={handleLogin} disabled={!authSlice.tenant}
                 className='submit-button' >
                 Sign in
               </Button>

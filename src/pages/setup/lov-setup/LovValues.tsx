@@ -13,6 +13,7 @@ import { ApLovValues } from '@/types/model-types';
 import { newApLovValues } from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
 import ArowBackIcon from '@rsuite/icons/ArowBack';
+
 import {
   addFilterToListRequest,
   conjureValueBasedOnKeyFromList,
@@ -22,29 +23,32 @@ import MyInput from '@/components/MyInput';
 import { notify } from '@/utils/uiReducerActions';
 
 const LovValues = ({ lov, goBack, ...props }) => {
-  const [lovValue, setLovValue] = useState<ApLovValues>({ ...newApLovValues });
+  const [lovValue, setLovValue] = useState<ApLovValues>({ ...newApLovValues, valueColor: "#ffffff" });
   const [lovValuePopupOpen, setLovValuePopupOpen] = useState(false);
+
    const dispatch = useAppDispatch();
+
+
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const [parentLovValueListRequest, setParentLovValueListRequest] = useState<ListRequest>({
     ...initialListRequest,
     ignore: true
   });
- 
+
   const [saveLovValue, saveLovValueMutation] = useSaveLovValueMutation();
 
   const { data: lovValueListResponse } = useGetLovValuesQuery(listRequest);
-  const [isdefault,setIsDefault]=useState(false);
+  const [isdefault, setIsDefault] = useState(false);
   const { data: parentLovValueListResponse } = useGetLovValuesQuery(parentLovValueListRequest);
 
   useEffect(() => {
     console.log(lov)
     if (lov && lov.key) {
       setListRequest(addFilterToListRequest('lov_key', 'match', lov.key, listRequest));
-  
+
     }
     setLovValuePopupOpen(false);
-    setLovValue({ ...newApLovValues });
+    setLovValue({ ...newApLovValues, valueColor: "#ffffff" });
 
     if (lov.parentLov) {
       // load the master LOV values of the parent LOV
@@ -54,21 +58,22 @@ const LovValues = ({ lov, goBack, ...props }) => {
       });
     }
   }, [lov]);
-  useEffect(()=>{
-if (lovValueListResponse?.object) {
-  const foundDefault = lovValueListResponse.object.find(Default=> {
-     
-      return Default.isdefault=== true;
-  });
-  console.log(foundDefault?.key )
-  if(foundDefault?.key !=null){
-    setIsDefault(true);}
-    else{
-      setIsDefault(false);
+  useEffect(() => {
+    if (lovValueListResponse?.object) {
+      const foundDefault = lovValueListResponse.object.find(Default => {
+
+        return Default.isdefault === true;
+      });
+      console.log(foundDefault?.key)
+      if (foundDefault?.key != null) {
+        setIsDefault(true);
+      }
+      else {
+        setIsDefault(false);
+      }
     }
-}
-console.log(isdefault);
-  },[lovValueListResponse]);
+    console.log(isdefault);
+  }, [lovValueListResponse]);
 
   useEffect(() => {
     console.log(parentLovValueListResponse);
@@ -111,14 +116,17 @@ console.log(isdefault);
         )
       );
     } else {
-      setListRequest({ ...initialListRequest,
-         filters: [
-        {fieldName:'lov_key',
-          operator:'match',
-          value: lov.key
-        }
-      ] });
-     
+      setListRequest({
+        ...initialListRequest,
+        filters: [
+          {
+            fieldName: 'lov_key',
+            operator: 'match',
+            value: lov.key
+          }
+        ]
+      });
+
     }
   };
 
@@ -269,6 +277,7 @@ console.log(isdefault);
               <Translate>New/Edit LovValue</Translate>
             </Modal.Title>
             <Modal.Body>
+
               <Form fluid>
                 <MyInput fieldName="valueCode" record={lovValue} setRecord={setLovValue} />
                 <MyInput fieldName="lovDisplayVale" record={lovValue} setRecord={setLovValue} />
@@ -285,7 +294,7 @@ console.log(isdefault);
                   setRecord={setLovValue}
                 />
                 <MyInput
-                disabled={isdefault==true?(lovValue.isdefault==true?false:true):false}
+                  disabled={isdefault == true ? (lovValue.isdefault == true ? false : true) : false}
                   fieldName="isdefault"
                   fieldType="checkbox"
                   record={lovValue}
@@ -302,13 +311,13 @@ console.log(isdefault);
                   setRecord={setLovValue}
                 />
               </Form>
+
+              select color
               <Input
                 type="color"
                 value={lovValue.valueColor}
-                onChange={(value) => {  
-                  console.log(value);  
-                  setLovValue({ ...lovValue, valueColor: value });
-                }}
+                onChange={(e) => setLovValue({ ...lovValue, valueColor: e.target.value })}
+
               />
             </Modal.Body>
             <Modal.Footer>

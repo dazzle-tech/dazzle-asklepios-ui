@@ -69,7 +69,10 @@ import LOINCSetup from './pages/setup/lonic-setup';
 
 import PatientEMR from './pages/patient/patient-emr';
 
+
 import PatientProfileCopy from './pages/patient/patient-profile/PatientProfileCopy';
+
+import Lab from './pages/lab-module';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -261,6 +264,7 @@ const App = () => {
               <Route path="playground" element={<Playground />} />
               <Route path='schedual-screen' element={<ScheduleScreen />} />
               <Route path='patient-EMR' element={<PatientEMR/>}/>
+              <Route path='lab-module' element={<Lab/>}/>
             </Route>
           </Route>
 
