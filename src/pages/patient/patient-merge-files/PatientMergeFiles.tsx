@@ -317,7 +317,7 @@ const PatientMergeFiles = () => {
 
         );
 
-
+  
     };
     const handleClearModel = () => {
         setUnDoModalOpen(false);
