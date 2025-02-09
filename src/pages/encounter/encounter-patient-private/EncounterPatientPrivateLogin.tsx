@@ -64,7 +64,7 @@ const EncounterPatientPrivateLogin = () => {
           dispatch(setEncounter(patientSlice.encounter));
           dispatch(setPatient(patientSlice.patient));
           if(propsData.info === "toNurse"){navigate('/encounter-pre-observations')}
-          else if(propsData.info === "toEncounter"){navigate('/encounter')}
+          else if(propsData.info === "toEncounter"){navigate('/encounter',{ state: { info: "toEncounter", fromPage: "EncounterList"  } })}
           
         } else {
           dispatch(notify("No matching record found"));

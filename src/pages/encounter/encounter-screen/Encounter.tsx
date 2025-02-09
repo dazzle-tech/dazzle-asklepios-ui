@@ -99,7 +99,6 @@ const Encounter = () => {
    const location = useLocation();
    const propsData = location.state;
   
-    console.log("page:", propsData.fromPage);
   const [modalOpen, setModalOpen] = useState(false);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
