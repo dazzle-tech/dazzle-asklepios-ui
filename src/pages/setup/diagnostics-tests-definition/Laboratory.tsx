@@ -176,6 +176,17 @@ const Laboratory = ({diagnosticsTest}) => {
           <MyInput
            width={250}
            column
+            fieldName="categoryLkey"
+            fieldType="select"
+            selectData={CategoriesLovQueryResponse?.object ?? []}
+             selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={diagnosticTestLaboratory} 
+            setRecord={setDiagnosticTestLaboratory}
+          />
+          <MyInput
+           width={250}
+           column
             fieldName="labCatalogKey"
             fieldType="select"
             selectData={CatalogListResponseData?.object ?? []}
@@ -184,19 +195,6 @@ const Laboratory = ({diagnosticsTest}) => {
             record={diagnosticTestLaboratory} 
             setRecord={setDiagnosticTestLaboratory}
           />
-          <MyInput
-            width={250}
-            column
-            fieldName="internationalCodingTypeLkey"
-            fieldType="select"
-            selectData={InterCodeLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={diagnosticTestLaboratory} 
-            setRecord={setDiagnosticTestLaboratory}
-          />
-          <MyInput  width={250} column fieldLabel="Code" fieldName="childCodeLkey" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-          <MyInput  width={250} column fieldLabel="LOINC Code" fieldName="loincCode"  record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
           <MyInput  width={250} column fieldName="propertyLkey"record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
           <MyInput  width={250} column fieldName="timing" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
           <MyInput  width={250} column fieldName="systemLkey" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>

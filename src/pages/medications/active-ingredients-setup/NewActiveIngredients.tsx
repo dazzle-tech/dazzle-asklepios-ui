@@ -194,9 +194,10 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack, ...props })  =
       } catch (error) {
         if (error.data && error.data.message) {
           dispatch(notify(error.data.message));
-        } else {
-          dispatch(notify("An unexpected error occurred"));
-        }
+        } 
+        // else {
+        //   dispatch(notify("An unexpected error occurred"));
+        // }
       }
     };
     

@@ -134,18 +134,6 @@ const Pathology = ({ diagnosticsTest }) => {
     >
       <hr />
       <Form layout="inline" fluid>
-         <MyInput
-            width={250}
-            column
-            fieldName="internationalCodingTypeLkey"
-            fieldType="select"
-            selectData={internationalCodesLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={diagnosticTestPathology} 
-            setRecord={setDiagnosticTestPathology}
-          />
-        <MyInput width={250} column fieldLabel="Code" fieldName="childCodeLkey" record={diagnosticTestPathology} setRecord={setDiagnosticTestPathology} />
         <MyInput
           width={250}
           column

@@ -114,18 +114,6 @@ const Radiology = ({ diagnosticsTest }) => {
         <MyInput
           width={250}
           column
-          fileldLabel="International Coding Type"
-          fieldName="InternationalCodingTypeLkey"
-          selectData={internationalCodesLovQueryResponse?.object ?? []}
-          fieldType="select"
-          selectDataLabel="lovDisplayVale"
-          selectDataValue="key"
-          record={diagnosticTestRadiology} setRecord={setDiagnosticTestRadiology}
-        />
-        <MyInput width={250} column fieldLabel="Code" fieldName="childCodeLkey" record={diagnosticTestRadiology} setRecord={setDiagnosticTestRadiology} />
-        <MyInput
-          width={250}
-          column
           fieldLabel="Category"
           fieldName="radCategoryLkey"
           fieldType="select"
