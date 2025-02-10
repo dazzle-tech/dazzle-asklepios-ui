@@ -1,6 +1,7 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '@/hooks';
 import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetLovValuesQuery, useSaveLovValueMutation } from '@/services/setupService';
@@ -18,11 +19,12 @@ import {
   fromCamelCaseToDBName
 } from '@/utils';
 import MyInput from '@/components/MyInput';
+import { notify } from '@/utils/uiReducerActions';
 
 const LovValues = ({ lov, goBack, ...props }) => {
   const [lovValue, setLovValue] = useState<ApLovValues>({ ...newApLovValues });
   const [lovValuePopupOpen, setLovValuePopupOpen] = useState(false);
-  
+   const dispatch = useAppDispatch();
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const [parentLovValueListRequest, setParentLovValueListRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -79,7 +81,11 @@ console.log(isdefault);
 
   const handleLovValueSave = () => {
     setLovValuePopupOpen(false);
-    saveLovValue(lovValue).unwrap();
+    console.log("LovValue:",lovValue);
+    saveLovValue(lovValue).unwrap().then(()=>{
+      
+       dispatch(notify({ msg: 'Saved Successfully',sev: 'success'}));
+    });
   };
 
   useEffect(() => {
@@ -296,6 +302,14 @@ console.log(isdefault);
                   setRecord={setLovValue}
                 />
               </Form>
+              <Input
+                type="color"
+                value={lovValue.valueColor}
+                onChange={(value) => {  
+                  console.log(value);  
+                  setLovValue({ ...lovValue, valueColor: value });
+                }}
+              />
             </Modal.Body>
             <Modal.Footer>
               <Stack spacing={2} divider={<Divider vertical />}>
