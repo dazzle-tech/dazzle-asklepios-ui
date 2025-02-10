@@ -577,6 +577,44 @@ export interface ApDepartment {
 	departmentCode:string;
 } 
 
+export interface ApDiagnosticOrderTests { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	orderKey:string;
+	testKey:string;
+	receivedLabLkey:string;
+	reasonLkey:string;
+	priorityLkey:string;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDiagnosticOrders { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	orderId:string;
+	saveDraft:boolean;
+	submittedBy:string;
+	submittedAt:number;
+} 
+
 export interface ApDiagnosticTest { 
 	key:string;
 	testTypeLkey:string;
