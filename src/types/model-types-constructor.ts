@@ -701,6 +701,8 @@ export const newApDiagnosticTestLaboratory:modelTypes.ApDiagnosticTestLaboratory
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	categoryLkey:undefined,
+	tubeTypeLkey:undefined,
 } 
 
 export const newApDiagnosticTestPathology:modelTypes.ApDiagnosticTestPathology = { 
