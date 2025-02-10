@@ -700,6 +700,8 @@ export interface ApDiagnosticTestLaboratory {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	categoryLkey:string;
+	tubeTypeLkey:string;
 } 
 
 export interface ApDiagnosticTestPathology { 

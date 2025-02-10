@@ -96,7 +96,8 @@ const Laboratory = ({diagnosticsTest}) => {
   const { data: CategoriesLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_CATEGORIES');
   const { data: TimeUnitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
   const { data: ValueUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
-  const { data: SampleContainerLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_TYPES');
+  const { data: SampleContainerLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_SAMPLE_CONTAINER');
+  const { data: LabTubeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_TYPES');
   const { data: TubeColorLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_COLORS');
   const [saveDiagnosticsTestLaboratory, saveDiagnosticsTestLaboratoryMutation] = useSaveDiagnosticsTestLaboratoryMutation();
   const { data: labrotoryDetailsQueryResponse } = useGetDiagnosticsTestLaboratoryListQuery(labListRequest);
@@ -194,8 +195,8 @@ const Laboratory = ({diagnosticsTest}) => {
             record={diagnosticTestLaboratory} 
             setRecord={setDiagnosticTestLaboratory}
           />
-          <MyInput  width={250} column fieldName="childCodeLkey" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-          <MyInput  width={250} column fieldName="loincCode"  record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
+          <MyInput  width={250} column fieldLabel="Code" fieldName="childCodeLkey" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
+          <MyInput  width={250} column fieldLabel="LOINC Code" fieldName="loincCode"  record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
           <MyInput  width={250} column fieldName="propertyLkey"record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
           <MyInput  width={250} column fieldName="timing" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
           <MyInput  width={250} column fieldName="systemLkey" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
@@ -271,9 +272,9 @@ const Laboratory = ({diagnosticsTest}) => {
             <MyInput
             width={250}
             column
-            fieldName="tubeColorLkey"
+            fieldName="tubeTypeLkey"
             fieldType="select"
-            selectData={TubeColorLovQueryResponse?.object ?? []}
+            selectData={LabTubeTypeLovQueryResponse?.object ?? []}
             selectDataLabel="lovDisplayVale"
             selectDataValue="key"
             record={diagnosticTestLaboratory} 
