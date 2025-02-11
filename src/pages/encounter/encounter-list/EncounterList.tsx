@@ -462,10 +462,11 @@ const EncounterList = () => {
             boundaryLinks
             maxButtons={5}
             size="xs"
-            layout={['limit', '|', 'pager']}
+            layout={['total', '-', 'limit', '|', 'pager', 'skip']}
             limitOptions={[5, 15, 30]}
             limit={listRequest.pageSize}
             activePage={listRequest.pageNumber}
+            
             onChangePage={pageNumber => {
               setListRequest({ ...listRequest, pageNumber });
             }}
