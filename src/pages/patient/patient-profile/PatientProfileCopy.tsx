@@ -19,12 +19,29 @@ import {
     Grid,
     Row,
     Col,
+    Container,
     AvatarGroup, Avatar,
     Placeholder,
     Text,
-
+    Sidebar,
+    Sidenav,
+    Nav,
 } from 'rsuite';
+import ArrowLineToggle from '@/components/Frame/ArrowLineToggle';
+import ArrowLeftLineIcon from '@rsuite/icons/ArrowLeftLine';
 
+import { ArrowRightLine, ArrowLeftLine } from "@rsuite/icons";
+import { Reload } from "@rsuite/icons";
+import MoreIcon from '@rsuite/icons/More';
+import RandomIcon from '@rsuite/icons/Random';
+import { faRepeat, faCodeMerge, faUser } from '@fortawesome/free-solid-svg-icons';
+import MemberIcon from '@rsuite/icons/Member';
+import SearchPeopleIcon from '@rsuite/icons/SearchPeople';
+import ListIcon from '@rsuite/icons/List';
+import { List } from 'rsuite';
+import { faBroom } from '@fortawesome/free-solid-svg-icons';
+import { Dropdown } from 'rsuite';
+import { More } from '@rsuite/icons';
 import { useSelector } from 'react-redux';
 import QuickPatient from './quickPatient';
 import * as icons from '@rsuite/icons';
@@ -49,6 +66,7 @@ import {
     newApPatientAdministrativeWarnings
 } from '@/types/model-types-constructor';
 import { Block, Check, DocPass, Edit, History, Icon, PlusRound, Detail } from '@rsuite/icons';
+import { faUserPen } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useRef, useState } from 'react';
 import {
     InputGroup,
@@ -67,7 +85,8 @@ import {
     Whisper,
     Tooltip,
     SelectPicker,
-    Badge
+    Badge,
+    DOMHelper
 } from 'rsuite';
 import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
 const { Column, HeaderCell, Cell } = Table;
@@ -121,8 +140,12 @@ import {
     useUpdateAttachmentDetailsMutation
 } from '@/services/attachmentService';
 import { notify } from '@/utils/uiReducerActions';
+
 import PreferredHealthProfessional from './PreferredHealthProfessional';
 import ConsentFormTab from './ConsentFormTab';
+import { MdCalculate } from 'react-icons/md';
+
+const { getHeight, on } = DOMHelper;
 const handleDownload = attachment => {
     const byteCharacters = atob(attachment.fileContent);
     const byteNumbers = new Array(byteCharacters.length);
@@ -148,6 +171,9 @@ const PatientProfileCopy = () => {
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const [btnNavigate, setBtnNavigate] = useState(false);
+    const [windowHeight, setWindowHeight] = useState(getHeight(window));
+    const [expand, setExpand] = useState(false);
     const [selectedAttachment, setSelectedAttachment] = useState(null);
     const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
     const [editing, setEditing] = useState(false);
@@ -157,7 +183,10 @@ const PatientProfileCopy = () => {
     const [selectedCriterion, setSelectedCriterion] = useState('');
     const [searchKeyword, setSearchKeyword] = useState('');
     const [deleteDocModalOpen, setDeleteDocModalOpen] = useState(false);
+    const [openSearch, setOpenSearch] = useState(false);
     const [deleteRelativeModalOpen, setDeleteRelativeModalOpen] = useState(false);
+    const [open, setOpen] = useState(false);
+    const [labelTitle, setLabelTitle] = useState(' ');
     const [selectedAttachType, setSelectedAttachType] = useState({
         accessTypeLkey: ''
     });
@@ -458,7 +487,10 @@ const PatientProfileCopy = () => {
         sortType: 'desc',
         ignore: true
     });
-
+    const enableEdit = () => {
+        setEditing(true);
+        setValidationResult(undefined);
+    };
     const encounterHistoryResponse = useGetEncountersQuery(encounterHistoryListRequest);
     const fetchPatientImageResponse = useFetchAttachmentQuery(
         {
@@ -759,10 +791,7 @@ const PatientProfileCopy = () => {
     useEffect(() => {
         dispatch(setPatient({ ...newApPatient }));
     }, []);
-    const enableEdit = () => {
-        setEditing(true);
-        setValidationResult(undefined);
-    };
+
 
     const startRegistration = () => {
         setEditing(true);
@@ -972,6 +1001,10 @@ const PatientProfileCopy = () => {
             setListRequest({ ...listRequest, filters: [] });
         }
     };
+    const handleSelect = (value) => {
+        setSelectedCriterion(value);
+        setOpen(false);
+    };
     const handleClearDocument = () => {
         setSecondaryDocumentModalOpen(false);
         setSecondaryDocument(newApPatientSecondaryDocuments);
@@ -1036,21 +1069,32 @@ const PatientProfileCopy = () => {
         setSearchKeyword('');
 
     }, [selectedCriterion]);
-
     const conjurePatientSearchBar = target => {
         return (
             <Panel>
-                <ButtonToolbar>
-                    <SelectPicker
-                        label="Search Criteria"
-                        data={searchCriteriaOptions}
-                        onChange={e => {
-                            setSelectedCriterion(e);
-                        }}
-                        style={{ width: 250 }}
-                    />
+                <ButtonToolbar style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
+                    <div>
+                        <Dropdown
+                            title={selectedCriterion ? labelTitle : "Select Search Criteria"}
+                            style={{ width: 245 }}
+                            open={open}
+                            onToggle={() => setOpen(!open)}
+                        >
+                            {searchCriteriaOptions.map(option => (
+                                <Dropdown.Item
+                                    key={option.value}
+                                    onSelect={() => { setLabelTitle(option.label); handleSelect(option.value) }}
+                                >
+                                    {option.label}
+                                </Dropdown.Item>
+                            ))}
+                        </Dropdown>
 
-                    <InputGroup inside style={{ width: '350px', direction: 'ltr' }}>
+
+                    </div>
+
+
+                    <InputGroup inside style={{ width: '245px', direction: 'ltr' }}>
                         <Input
                             onKeyDown={e => {
                                 if (e.key === 'Enter') {
@@ -1069,6 +1113,9 @@ const PatientProfileCopy = () => {
             </Panel>
         );
     };
+    const navBodyStyle: React.CSSProperties = expand
+        ? { height: windowHeight - 111, overflow: 'auto' }
+        : {};
 
     const handleNewVisit = () => {
         navigate('/encounter-registration');
@@ -1154,96 +1201,97 @@ const PatientProfileCopy = () => {
     console.log("patientListResponse?.object -->", patientListResponse?.object);
     return (
         <>
-            <Row>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
 
 
-                <Row gutter={15}>
-                   
-                    <Col>
-                        <Panel
-                            bordered
-                            style={{ zoom:0.8 }}
-                        >
-                            <Panel >
-                                <Stack>
-                                    <Stack.Item grow={1}>
+                <div style={{ width: expand ? "calc(100% - 230px)" : "100%" }}>
+
+
+                    <Panel
+                        bordered
+                        style={{ zoom: 0.8 }}
+                    >
+
+
+                        <Panel >
+                            <Stack>
+                                <Stack.Item grow={1}>
+
+                                    <Form layout="inline" fluid style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                         <div
                                             style={{
                                                 borderRadius: '5px',
                                                 border: '1px solid #e1e1e1',
-                                                margin: '2px',
-                                                position: 'relative',
-                                                bottom: 0,
-                                                width: 130
+                                                padding: '5px'
                                             }}
                                         >
-                                            {localPatient.key && (
-                                                <Whisper
-                                                    placement="top"
-                                                    controlId="control-id-click"
-                                                    trigger="hover"
-                                                    speaker={
-                                                        <Tooltip>
-                                                            {localPatient.verified ? 'Verified Patient' : 'Unverified Patient'}
-                                                        </Tooltip>
-                                                    }
-                                                >
-                                                    <div
-                                                        style={{
-                                                            fontSize: 30,
-                                                            position: 'absolute',
-                                                            left: '2%',
-                                                            top: '-3%'
-                                                        }}
-                                                    >
-                                                        {!localPatient.verified && (
-                                                            <Icon style={{ color: 'red' }} as={VscUnverified} />
-                                                        )}
-                                                        {localPatient.verified && (
-                                                            <Icon style={{ color: 'green' }} as={VscVerified} />
-                                                        )}
-                                                    </div>
-                                                </Whisper>
-                                            )}
 
-                                            {localPatient.key && (
-                                                <Whisper
-                                                    style={{ marginTop: '50px' }}
-                                                    placement="bottom"
-                                                    controlId="control-id-click"
-                                                    trigger="hover"
-                                                    speaker={
-                                                        <Tooltip>
-                                                            {localPatient.incompletePatient ? 'incomplete Patient' : 'complete Patient'}
-                                                        </Tooltip>
-                                                    }
-                                                >
-                                                    <div
-                                                        style={{
-                                                            fontSize: 30,
-                                                            position: 'absolute',
-                                                            left: '2%',
-                                                            marginTop: '30px'
-                                                        }}
-                                                    >
-                                                        {localPatient.incompletePatient && (
-                                                            <Icon style={{ color: 'red' }} as={VscUnverified} />
-                                                        )}
-                                                        {!localPatient.incompletePatient && (
-                                                            <Icon style={{ color: 'green' }} as={VscVerified} />
-                                                        )}
-                                                    </div>
-                                                </Whisper>
-                                            )}
-
-                                          
-                                             </div>
-                                             <Form>
-                                                
-                                             </Form>
-                                             <Form style={{ display: 'flex' }}>
+                                            <QuickPatient
+                                                open={quickPatientModalOpen}
+                                                localPatientData={localPatient}
+                                                onClose={() => setQuickPatientModalOpen(false)}
+                                            />
+                                            <Form style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>
                                                 <AvatarGroup spacing={6}>
-                                                    
+
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                        {localPatient.key && (
+                                                            <Whisper
+                                                                placement="top"
+                                                                controlId="control-id-click"
+                                                                trigger="hover"
+                                                                speaker={
+                                                                    <Tooltip>
+                                                                        {localPatient.verified ? 'Verified Patient' : 'Unverified Patient'}
+                                                                    </Tooltip>
+                                                                }
+                                                            >
+                                                                <div
+                                                                    style={{
+                                                                        fontSize: 30,
+                                                                        position: 'relative',
+                                                                        marginRight: '10px'
+                                                                    }}
+                                                                >
+                                                                    {!localPatient.verified && (
+                                                                        <Icon style={{ color: 'red' }} as={VscUnverified} />
+                                                                    )}
+                                                                    {localPatient.verified && (
+                                                                        <Icon style={{ color: 'green' }} as={VscVerified} />
+                                                                    )}
+                                                                </div>
+                                                            </Whisper>
+                                                        )}
+                                                        {localPatient.key && (
+                                                            <Whisper
+                                                                placement="bottom"
+                                                                controlId="control-id-click"
+                                                                trigger="hover"
+                                                                speaker={
+                                                                    <Tooltip>
+                                                                        {localPatient.incompletePatient ? 'Incomplete Patient' : 'Complete Patient'}
+                                                                    </Tooltip>
+                                                                }
+                                                            >
+                                                                <div
+                                                                    style={{
+                                                                        fontSize: 30,
+                                                                        position: 'relative',
+                                                                        marginRight: '10px'
+                                                                    }}
+                                                                >
+                                                                    {localPatient.incompletePatient && (
+                                                                        <Icon style={{ color: 'red' }} as={VscUnverified} />
+                                                                    )}
+                                                                    {!localPatient.incompletePatient && (
+                                                                        <Icon style={{ color: 'green' }} as={VscVerified} />
+                                                                    )}
+                                                                </div>
+                                                            </Whisper>
+                                                        )}
+                                                    </div>
+
+
                                                     <input
                                                         type="file"
                                                         ref={profileImageFileInputRef}
@@ -1251,1629 +1299,1420 @@ const PatientProfileCopy = () => {
                                                         onChange={handleFileChange}
                                                         accept="image/*"
                                                     />
-                                                    <Avatar size="lg" circle
-
+                                                    <Avatar
+                                                        size="xl"
+                                                        circle
+                                                        color="cyan" bordered
                                                         onClick={() => handleImageClick('PATIENT_PROFILE_PICTURE')}
                                                         src={
                                                             patientImage && patientImage.fileContent
                                                                 ? `data:${patientImage.contentType};base64,${patientImage.fileContent}`
                                                                 : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
-                                                        } alt={localPatient?.fullName} />
+                                                        }
+                                                        alt={localPatient?.fullName}
+                                                    />
+                                                    <Form style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: '8px' }}>
+                                                        <h6>{localPatient?.fullName}</h6>
+                                                        <span>{localPatient?.createdAt ? new Date(localPatient?.createdAt).toLocaleString("en-GB") : ""}</span>
+                                                        <span>{localPatient?.patientMrn}</span>
 
+                                                    </Form>
                                                 </AvatarGroup>
-                                                </Form>   
-                                        <Form layout="inline" fluid>
+
+
+                                            </Form>
+
+                                        </div>
+
                                         <ButtonToolbar>
 
+                                            <Button
+                                                disabled={editing || localPatient.key !== undefined}
+                                                onClick={startRegistration}
+                                                appearance="ghost"
+                                                style={{ border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: "3px" }}
 
-<Button
-    disabled={!editing}
-    onClick={handleSave}
-    appearance="primary"
-    style={{ border: '1px solid blue', backgroundColor: 'rgb(0, 0, 255)', color: 'white', marginLeft: "3px" }}
+                                            >
+                                                <FontAwesomeIcon icon={faUserPlus} style={{ marginRight: '5px', color: '#00b1cc' }} />
 
->
-    <FontAwesomeIcon icon={faCheckDouble} style={{ marginRight: '5px', color: 'white' }} />
-    <span>Save</span>
-</Button>
-<Button
-    disabled={editing || localPatient.key !== undefined}
-    onClick={startRegistration}
-    appearance="ghost"
-    style={{ border: '1px solid blue', backgroundColor: 'white', color: 'blue', marginLeft: "3px" }}
+                                                <span>New</span>
+                                            </Button>
+                                            <Button
+                                                disabled={!editing}
+                                                onClick={handleSave}
+                                                appearance="primary"
+                                                style={{ border: '1px solid #00b1cc', backgroundColor: '#00b1cc', color: 'white', marginLeft: "3px" }}
 
->
-    <FontAwesomeIcon icon={faUserPlus} style={{ marginRight: '5px', color: 'blue' }} />
+                                            >
+                                                <FontAwesomeIcon icon={faCheckDouble} style={{ marginRight: '5px', color: 'white' }} />
+                                                <span>Save</span>
+                                            </Button>
+                                            <Button
+                                                disabled={editing || !localPatient.key}
+                                                onClick={enableEdit}
+                                                appearance="ghost"
+                                                style={{ border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: "3px" }}
 
-    <span>New</span>
-</Button>
-<IconButton
-    disabled={editing || !localPatient.key}
-    appearance="primary"
-    color="cyan"
-    icon={<Edit />}
-    onClick={enableEdit}
->
-    <Translate>Edit</Translate>
-</IconButton>
-<IconButton
-    onClick={() => {
-        setAdministrativeWarningsModalOpen(true);
-    }}
-    disabled={editing || !localPatient.key}
-    appearance="primary"
-    color="orange"
-    icon={<icons.Danger />}
->
-    <Translate>Administrative Warnings</Translate>
-</IconButton>
+                                            >
+
+                                                <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: '#007e91' }} />
+
+                                                <span>Edit</span>
+                                            </Button>
+
+                                            <Button appearance="primary" style={{ border: '1px solid #007e91', backgroundColor: '#007e91', color: 'white', marginLeft: "3px" }} onClick={handleClear}>
+                                                <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px', color: 'white' }} />
+                                                <Translate>Clear</Translate>
+                                            </Button>
+                                            <SelectPicker
+                                                style={{ width: 170 }}
+                                                data={[
+                                                    {
+                                                        label: (
+                                                            <Button
+                                                                color='cyan'
+                                                                appearance="ghost"
+                                                                style={{ color: '#00b1cc', zoom: 0.8, textAlign: 'left', width: 170 }}
+                                                                disabled={editing || localPatient.key === undefined}
+                                                                onClick={()=>{handleEncounterHistory}}
+                                                                block
+                                                            >
+                                                                <span>Visit History</span>
+                                                            </Button>
+                                                        ),
+                                                        value: 'visitHistory',
+                                                    },
+                                                    {
+                                                        label: (
+                                                            <Button
+                                                                color='cyan'
+                                                                appearance="ghost"
+                                                                style={{ color: '#00b1cc', zoom: 0.8, textAlign: 'left', width: 170 }}
+                                                                disabled={editing || localPatient.key !== undefined}
+                                                                onClick={() => setQuickPatientModalOpen(true)}
+                                                                block
+                                                            >
+                                                                <span>Quick Patient</span>
+                                                            </Button>
+
+                                                        ),
+                                                        value: 'quickPatient',
+                                                    },
+                                                    {
+                                                        label: (
+                                                            <Button
+                                                                color='cyan'
+                                                                appearance="ghost"
+                                                                style={{ color: '#00b1cc', zoom: 0.8, textAlign: 'left', width: 170 }}
+                                                                disabled={editing || !localPatient.key}
+                                                                onClick={handleNewVisit}
+                                                                block
+                                                            >
+                                                                <span>Quick Appointment</span>
+                                                            </Button>
+                                                        ),
+                                                        value: 'quickAppointment',
+                                                    },
+
+                                                    {
+                                                        label: (
+                                                            <Button
+                                                                color='cyan'
+                                                                onClick={() => setAdministrativeWarningsModalOpen(true)}
+                                                                disabled={editing || !localPatient.key}
+                                                                appearance="ghost"
+                                                                style={{ color: '#00b1cc', zoom: 0.8, textAlign: 'left', width: 170 }}
+                                                                block
+                                                            >
+                                                                <span>Administrative Warnings</span>
+                                                            </Button>
+                                                        ),
+                                                        value: 'administrativeWarnings',
+                                                    },
+                                                ]}
+
+                                                placeholder={
+                                                    <span style={{ color: '#00b1cc' }}>
+                                                        <ListIcon style={{ marginRight: 8 }} />
+                                                        {"  "} More
+                                                    </span>
+                                                }
+                                                menuStyle={{ marginTop: 0, width: 180, padding: 5 }}
+                                            />
 
 
-</ButtonToolbar>
+                                        </ButtonToolbar >
 
-                                        </Form>
-                                    </Stack.Item>
-                                </Stack>
-                            
-                            </Panel>
 
-                            {/* Administrative Warnings */}
-                            <Modal
-                                size="lg"
-                                open={administrativeWarningsModalOpen}
-                                onClose={() => setAdministrativeWarningsModalOpen(false)}
-                            >
-                                <Modal.Header>
-                                    <Modal.Title>Administrative Warnings</Modal.Title>
-                                </Modal.Header>
-                                <Modal.Body>
-                                    <Form fluid>
+                                    </Form>
+                                </Stack.Item>
+                            </Stack>
+
+                        </Panel>
+
+                        {/* Administrative Warnings */}
+                        <Modal
+                            size="lg"
+                            open={administrativeWarningsModalOpen}
+                            onClose={() => setAdministrativeWarningsModalOpen(false)}
+                        >
+                            <Modal.Header>
+                                <Modal.Title>Administrative Warnings</Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body>
+                                <Form fluid>
+                                    <MyInput
+                                        vr={validationResult}
+                                        required
+                                        fieldLabel="Warning Type"
+                                        fieldType="select"
+                                        fieldName="warningTypeLkey"
+                                        selectData={administrativeWarningsLovQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        record={patientAdministrativeWarnings}
+                                        setRecord={setPatientAdministrativeWarnings}
+                                    />
+
+                                    <Input
+                                        // value={newAttachmentDetails || ''}
+                                        onChange={setAdministrativeWarningDetails}
+                                        as="textarea"
+                                        rows={3}
+                                        placeholder="Details"
+                                        style={{ width: 357 }}
+                                    />
+                                </Form>
+                                <br />
+                                <ButtonToolbar>
+                                    <IconButton
+                                        appearance="primary"
+                                        color="violet"
+                                        icon={<Check />}
+                                        onClick={handleSavePatientAdministrativeWarnings}
+                                    >
+                                        <Translate>Add</Translate>
+                                    </IconButton>
+
+                                    <IconButton
+                                        appearance="primary"
+                                        color="cyan"
+                                        disabled={!selectedPatientAdministrativeWarnings.isValid}
+                                        icon={<CheckOutlineIcon />}
+                                        onClick={handleUpdateAdministrativeWarningsResolved}
+                                    >
+                                        <Translate>Resolve</Translate>
+                                    </IconButton>
+                                    <IconButton
+                                        appearance="primary"
+                                        disabled={
+                                            selectedPatientAdministrativeWarnings.isValid == undefined ||
+                                            selectedPatientAdministrativeWarnings.isValid
+                                        }
+                                        icon={<ReloadIcon />}
+                                        onClick={handleUpdateAdministrativeWarningsUnDoResolved}
+                                    >
+                                        <Translate>Undo Resolve</Translate>
+                                    </IconButton>
+                                </ButtonToolbar>
+                                <br />
+                                <Panel>
+                                    <Table
+                                        height={310}
+                                        sortColumn={warningsAdmistritiveListRequest.sortBy}
+                                        sortType={warningsAdmistritiveListRequest.sortType}
+                                        onSortColumn={(sortBy, sortType) => {
+                                            if (sortBy)
+                                                setWarningsAdmistritiveListRequest({
+                                                    ...warningsAdmistritiveListRequest,
+                                                    sortBy,
+                                                    sortType
+                                                });
+                                        }}
+                                        headerHeight={80}
+                                        rowHeight={50}
+                                        bordered
+                                        cellBordered
+                                        onRowClick={rowData => {
+                                            setSelectedPatientAdministrativeWarnings(rowData);
+                                            setSelectedRowId(rowData.key);
+                                        }}
+                                        rowClassName={isSelected}
+                                        data={warnings?.object ?? []}
+                                    >
+                                        <Column sortable flexGrow={3}>
+                                            <HeaderCell>
+                                                <Input
+                                                    onChange={e =>
+                                                        handleFilterChangeInWarning('warningTypeLvalue.lovDisplayVale', e)
+                                                    }
+                                                />
+                                                <Translate>Warning Type</Translate>
+                                            </HeaderCell>
+
+                                            <Cell dataKey="warningTypeLvalue.lovDisplayVale" />
+                                        </Column>
+                                        <Column sortable flexGrow={3}>
+                                            <HeaderCell>
+                                                <Input onChange={e => handleFilterChangeInWarning('description', e)} />
+                                                <Translate>Description</Translate>
+                                            </HeaderCell>
+                                            <Cell dataKey="description" />
+                                        </Column>
+                                        <Column sortable flexGrow={4}>
+                                            <HeaderCell>
+                                                <Input onChange={e => handleFilterChangeInWarning('createdAt', e)} />
+                                                <Translate> Addition Date</Translate>
+                                            </HeaderCell>
+                                            <Cell dataKey="createdAt" />
+                                        </Column>
+                                        <Column sortable flexGrow={3}>
+                                            <HeaderCell>
+                                                <Input onChange={e => handleFilterChangeInWarning('createdBy', e)} />
+                                                <Translate> Added By</Translate>
+                                            </HeaderCell>
+                                            <Cell dataKey="createdBy" />
+                                        </Column>
+                                        <Column sortable flexGrow={3}>
+                                            <HeaderCell>
+                                                <Translate> Status </Translate>
+                                            </HeaderCell>
+
+                                            <Cell dataKey="isValid">
+                                                {rowData => (rowData.isValid ? 'Active' : 'Resolved')}
+                                            </Cell>
+                                        </Column>
+                                        <Column sortable flexGrow={4}>
+                                            <HeaderCell>
+                                                <Input onChange={e => handleFilterChangeInWarning('dateResolved', e)} />
+                                                <Translate> Resolution Date</Translate>
+                                            </HeaderCell>
+                                            <Cell dataKey="dateResolved" />
+                                        </Column>
+                                        <Column sortable flexGrow={3}>
+                                            <HeaderCell>
+                                                <Input onChange={e => handleFilterChangeInWarning('resolvedBy', e)} />
+                                                <Translate> Resolved By </Translate>
+                                            </HeaderCell>
+                                            <Cell dataKey="resolvedBy" />
+                                        </Column>
+                                        <Column sortable flexGrow={4}>
+                                            <HeaderCell>
+                                                <Input onChange={e => handleFilterChangeInWarning('resolutionUndoDate', e)} />
+                                                <Translate> Resolution Undo Date</Translate>
+                                            </HeaderCell>
+                                            <Cell dataKey="resolutionUndoDate" />
+                                        </Column>
+                                        <Column sortable flexGrow={4}>
+                                            <HeaderCell>
+                                                <Input onChange={e => handleFilterChangeInWarning('resolvedUndoBy', e)} />
+                                                <Translate>Resolution Undo By</Translate>
+                                            </HeaderCell>
+                                            <Cell dataKey="resolvedUndoBy" />
+                                        </Column>
+                                        <Column sortable flexGrow={2}>
+                                            <HeaderCell>
+                                                <Translate>Delete</Translate>
+                                            </HeaderCell>
+                                            <Cell>
+                                                {rowData => (
+                                                    <div className="deleteButton">
+                                                        <button
+                                                            onClick={() => {
+                                                                setSelectedPatientAdministrativeWarnings(rowData);
+                                                                handleDeletePatientAdministrativeWarnings();
+                                                            }}
+                                                            className="deleteButton"
+                                                            style={{
+                                                                color: selectedRowId === rowData.key ? 'black' : 'gray',
+                                                                background: "transparent",
+                                                                cursor: selectedRowId === rowData.key ? 'pointer' : 'not-allowed'
+                                                            }}
+                                                            disabled={selectedRowId !== rowData.key}
+                                                        >
+                                                            <CloseIcon />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </Cell>
+                                        </Column>
+                                    </Table>
+                                    <div style={{ padding: 20 }}>
+                                        <Pagination
+                                            prev
+                                            next
+                                            first
+                                            last
+                                            ellipsis
+                                            boundaryLinks
+                                            maxButtons={5}
+                                            size="xs"
+                                            layout={['limit', '|', 'pager']}
+                                            limitOptions={[5, 15, 30]}
+                                            limit={warningsAdmistritiveListRequest.pageSize}
+                                            activePage={warningsAdmistritiveListRequest.pageNumber}
+                                            onChangePage={pageNumber => {
+                                                setWarningsAdmistritiveListRequest({
+                                                    ...warningsAdmistritiveListRequest,
+                                                    pageNumber
+                                                });
+                                            }}
+                                            onChangeLimit={pageSize => {
+                                                setWarningsAdmistritiveListRequest({
+                                                    ...warningsAdmistritiveListRequest,
+                                                    pageSize
+                                                });
+                                            }}
+                                            total={warnings?.extraNumeric ?? 0}
+                                        />
+                                    </div>
+                                </Panel>
+                            </Modal.Body>
+                        </Modal>
+                        <br />
+
+                        <Panel
+
+                            header={
+                                <h5 className="title">
+                                    <Translate>Basic Information</Translate>
+                                </h5>
+                            }
+                        >
+                            <Stack>
+                                <Stack.Item grow={1}>
+
+
+                                </Stack.Item>
+                                <Stack.Item grow={15}>
+                                    <Form layout="inline" fluid>
                                         <MyInput
-                                            vr={validationResult}
                                             required
-                                            fieldLabel="Warning Type"
+                                            width={165}
+                                            vr={validationResult}
+                                            column
+                                            fieldName="firstName"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            required
+                                            width={165}
+                                            vr={validationResult}
+                                            column
+                                            fieldName="secondName"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            width={165}
+                                            vr={validationResult}
+                                            column
+                                            fieldName="thirdName"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            required
+                                            width={165}
+                                            vr={validationResult}
+                                            column
+                                            fieldName="lastName"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+
+
+                                        <MyInput
+                                            required
+                                            width={165}
+                                            vr={validationResult}
+                                            column
+                                            fieldLabel="Sex at Birth"
                                             fieldType="select"
-                                            fieldName="warningTypeLkey"
-                                            selectData={administrativeWarningsLovQueryResponse?.object ?? []}
+                                            fieldName="genderLkey"
+                                            selectData={genderLovQueryResponse?.object ?? []}
                                             selectDataLabel="lovDisplayVale"
                                             selectDataValue="key"
-                                            record={patientAdministrativeWarnings}
-                                            setRecord={setPatientAdministrativeWarnings}
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            width={165}
+                                            vr={validationResult}
+                                            column
+                                            fieldType="date"
+                                            fieldLabel="DOB"
+                                            fieldName="dob"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
                                         />
 
-                                        <Input
-                                            // value={newAttachmentDetails || ''}
-                                            onChange={setAdministrativeWarningDetails}
-                                            as="textarea"
-                                            rows={3}
-                                            placeholder="Details"
-                                            style={{ width: 357 }}
+                                        <MyInput
+                                            width={165}
+                                            vr={validationResult}
+                                            column
+                                            fieldLabel="Age"
+                                            fieldType="text"
+                                            disabled
+                                            fieldName="ageFormat"
+                                            record={localPatient?.dob ? ageFormatType : null}
+                                        /><MyInput
+                                            width={165}
+                                            vr={validationResult}
+                                            column
+                                            fieldLabel="Patient Category"
+                                            fieldType="text"
+
+                                            fieldName="ageGroup"
+                                            disabled
+                                            record={localPatient?.dob ? ageGroupValue : null}
+
+                                        />
+                                        <MyInput
+                                            width={165}
+                                            vr={validationResult}
+                                            column
+                                            fieldLabel="Patient Class"
+                                            fieldType="select"
+                                            fieldName="patientClassLkey"
+                                            selectData={patientClassLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+
+                                        {localPatient?.incompletePatient ? (
+                                            <MyInput
+                                                width={165}
+                                                vr={validationResult}
+                                                column
+                                                fieldLabel="Unknown Patient"
+                                                fieldType="checkbox"
+                                                fieldName="unknownPatient"
+                                                record={localPatient}
+                                                setRecord={setLocalPatient}
+                                                disabled
+                                            />
+                                        ) : null}
+                                        <MyInput
+                                            width={180}
+                                            vr={validationResult}
+                                            column
+                                            fieldLabel="Private Patient"
+                                            fieldType="checkbox"
+                                            fieldName="privatePatient"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+
+
+                                        <MyInput
+                                            required
+                                            width={165}
+                                            vr={validationResult}
+                                            column
+                                            fieldLabel="Document Type"
+                                            fieldType="select"
+                                            fieldName="documentTypeLkey"
+                                            selectData={docTypeLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            required
+                                            width={165}
+                                            vr={validationResult}
+                                            column
+                                            fieldLabel="Document Country"
+                                            fieldType="select"
+                                            fieldName="documentCountryLkey"
+                                            selectData={countryLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={localPatient.documentTypeLkey === 'NO_DOC' || !editing}
+                                        />
+                                        <MyInput
+                                            required
+                                            width={165}
+                                            vr={validationResult}
+                                            column
+                                            fieldLabel="Document Number"
+                                            fieldName="documentNo"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing || localPatient.documentTypeLkey === 'NO_DOC'}
+                                        />
+
+                                    </Form>
+                                </Stack.Item>
+                            </Stack>
+                        </Panel>
+                        <br />
+                        <Panel
+
+                            header={
+                                <h5 className="title">
+                                    <Translate>Details</Translate>
+                                </h5>
+                            }
+                        >
+                            <Tabs>
+                                <TabList >
+                                    <Tab style={{ backgroundColor: 'blue' }}>
+                                        <Translate>Demographics</Translate>
+                                    </Tab>
+                                    <Tab>
+                                        <Translate>Contact</Translate>
+                                    </Tab>
+                                    <Tab>
+                                        <Translate>Address</Translate>
+                                    </Tab>
+                                    <Tab>
+                                        <Translate>Insurance</Translate>
+                                    </Tab>
+
+                                    <Tab>
+                                        <Translate>Privacy & Security</Translate>
+                                    </Tab>
+                                    <Tab>
+                                        <Translate>Consent Forms</Translate>
+                                    </Tab>
+                                    <Tab>
+                                        <Translate>Preferred Health Professional</Translate>
+                                    </Tab>
+                                    <Tab>
+                                        <Translate>Family Members</Translate>
+                                    </Tab>
+                                    <Tab>
+                                        <Translate>Extra Details</Translate>
+                                    </Tab>
+                                    <Tab>
+                                        <Translate>Attachments</Translate>
+                                    </Tab>
+                                    <Tab>
+                                        <Translate>Follow Up & Activites</Translate>
+                                    </Tab>
+                                </TabList>
+
+                                {/* Demopgraphics */}
+                                <TabPanel>
+                                    <Form layout="inline" fluid>
+                                        <MyInput
+                                            vr={validationResult}
+                                            width={165}
+                                            column
+                                            fieldLabel="First Name (Sec. Lang)"
+                                            fieldName="firstNameOtherLang"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            width={165}
+                                            column
+                                            fieldLabel="Second Name (Sec. Lang)"
+                                            fieldName="secondNameOtherLang"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Third Name (Sec. Lang)"
+                                            fieldName="thirdNameOtherLang"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Last Name (Sec. Lang)"
+                                            fieldName="lastNameOtherLang"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Marital Status"
+                                            fieldType="select"
+                                            fieldName="maritalStatusLkey"
+                                            selectData={maritalStatusLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Nationality"
+                                            fieldType="select"
+                                            fieldName="nationalityLkey"
+                                            selectData={nationalityLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Religion"
+                                            fieldType="select"
+                                            fieldName="religionLkey"
+                                            selectData={religeonLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Ethnicity"
+                                            fieldType="select"
+                                            fieldName="ethnicityLkey"
+                                            selectData={ethnicityLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Occupation"
+                                            fieldType="select"
+                                            fieldName="occupationLkey"
+                                            selectData={occupationLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Responsible Party"
+                                            fieldType="select"
+                                            fieldName="responsiblePartyLkey"
+                                            selectData={responsiblePartyLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Educational Level"
+                                            fieldType="select"
+                                            fieldName="educationalLevelLkey"
+                                            selectData={educationalLevelLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Previous ID"
+                                            fieldName="previousId"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Archiving Number"
+                                            fieldName="archivingNumber"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
                                         />
                                     </Form>
-                                    <br />
-                                    <ButtonToolbar>
-                                        <IconButton
-                                            appearance="primary"
-                                            color="violet"
-                                            icon={<Check />}
-                                            onClick={handleSavePatientAdministrativeWarnings}
-                                        >
-                                            <Translate>Add</Translate>
-                                        </IconButton>
+                                </TabPanel>
 
-                                        <IconButton
-                                            appearance="primary"
-                                            color="cyan"
-                                            disabled={!selectedPatientAdministrativeWarnings.isValid}
-                                            icon={<CheckOutlineIcon />}
-                                            onClick={handleUpdateAdministrativeWarningsResolved}
+                                {/* Contact */}
+                                <TabPanel>
+                                    <Form layout="inline" fluid>
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            required
+                                            width={165}
+                                            fieldName="phoneNumber"
+                                            fieldLabel="Primary Mobile Number"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldType="checkbox"
+                                            fieldName="receiveSms"
+                                            fieldLabel="Receive SMS"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Secondary Mobile Number"
+                                            fieldName="secondaryMobileNumber"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldName="homePhone"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldName="workPhone"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldName="email"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldType="checkbox"
+                                            fieldName="receiveEmail"
+                                            fieldLabel="Receive Email"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Preferred Way of Contact"
+                                            fieldType="select"
+                                            fieldName="preferredContactLkey"
+                                            selectData={preferredWayOfContactLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Native Language"
+                                            fieldType="select"
+                                            fieldName="primaryLanguageLkey"
+                                            selectData={primaryLangLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldName="emergencyContactName"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <br />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Emergency Contact Relation"
+                                            fieldType="select"
+                                            fieldName="emergencyContactRelationLkey"
+                                            selectData={relationsLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldName="emergencyContactPhone"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Role"
+                                            fieldType="select"
+                                            fieldName="roleLkey"
+                                            selectData={roleLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                    </Form>
+                                </TabPanel>
+
+                                {/* Address */}
+                                <TabPanel>
+                                    <Form layout="inline" fluid>
+                                        <ButtonToolbar>
+                                            <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={!editing || !localPatient.key}>
+                                                <Icon as={FaClock} />  Address Change Log
+                                            </Button>
+                                        </ButtonToolbar>
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Country"
+                                            fieldType="select"
+                                            fieldName="countryLkey"
+                                            selectData={countryLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="State/Province"
+                                            fieldType="select"
+                                            fieldName="stateProvinceRegionLkey"
+                                            selectData={cityLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="City"
+                                            fieldType="select"
+                                            fieldName="cityLkey"
+                                            selectData={cityLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Street Name"
+                                            fieldName="streetAddressLine1"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="House/Apartment Number"
+                                            fieldName="apartmentNumber"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={true}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Postal/ZIP code"
+                                            fieldName="postalCode"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Additional Address Line"
+                                            fieldName="streetAddressLine2"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Country ID"
+                                            fieldType="text"
+                                            fieldName="countryId"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled
+                                        />
+                                    </Form>
+                                </TabPanel>
+
+                                {/* Inusrance */}
+                                <TabPanel>
+                                    <ButtonToolbar>
+
+                                        <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={!editing || !localPatient.key}
+                                            onClick={() => {
+                                                setInsuranceModalOpen(true);
+                                                setSelectedInsurance(newApPatientInsurance);
+                                            }}>
+                                            <Icon as={PlusRound} />  New Inusrance
+                                        </Button>
+
+                                        <Button
+                                            disabled={!selectedInsurance?.key}
+                                            onClick={handleEditModal}
+                                            appearance="ghost"
+                                            style={{ border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: "3px" }}
+
                                         >
-                                            <Translate>Resolve</Translate>
-                                        </IconButton>
-                                        <IconButton
+
+                                            <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: '#007e91' }} />
+
+                                            <span>Edit</span>
+                                        </Button>
+
+
+
+                                        <Button
+                                            disabled={!selectedInsurance?.key}
                                             appearance="primary"
-                                            disabled={
-                                                selectedPatientAdministrativeWarnings.isValid == undefined ||
-                                                selectedPatientAdministrativeWarnings.isValid
-                                            }
-                                            icon={<ReloadIcon />}
-                                            onClick={handleUpdateAdministrativeWarningsUnDoResolved}
+                                            style={{ backgroundColor: '#007e91' }}
+                                            onClick={() => setSpecificCoverageModalOpen(true)}
                                         >
-                                            <Translate>Undo Resolve</Translate>
-                                        </IconButton>
+                                            <FontAwesomeIcon icon={faLock} style={{ marginRight: '8px' }} />
+                                            <span>Specific Coverage</span>
+                                        </Button>
+                                        <Button
+                                            disabled={!selectedInsurance?.key}
+
+                                            style={{ border: '1px solid  #007e91', backgroundColor: 'white', color: '#007e91', display: 'flex', alignItems: 'center', gap: '5px' }}
+
+                                            onClick={handleDeleteInsurance}
+                                        >
+                                            <TrashIcon /> <Translate>Delete</Translate>
+                                        </Button>
                                     </ButtonToolbar>
                                     <br />
-                                    <Panel>
-                                        <Table
-                                            height={310}
-                                            sortColumn={warningsAdmistritiveListRequest.sortBy}
-                                            sortType={warningsAdmistritiveListRequest.sortType}
-                                            onSortColumn={(sortBy, sortType) => {
-                                                if (sortBy)
-                                                    setWarningsAdmistritiveListRequest({
-                                                        ...warningsAdmistritiveListRequest,
-                                                        sortBy,
-                                                        sortType
-                                                    });
-                                            }}
-                                            headerHeight={80}
-                                            rowHeight={50}
-                                            bordered
-                                            cellBordered
-                                            onRowClick={rowData => {
-                                                setSelectedPatientAdministrativeWarnings(rowData);
-                                                setSelectedRowId(rowData.key);
-                                            }}
-                                            rowClassName={isSelected}
-                                            data={warnings?.object ?? []}
-                                        >
-                                            <Column sortable flexGrow={3}>
-                                                <HeaderCell>
-                                                    <Input
-                                                        onChange={e =>
-                                                            handleFilterChangeInWarning('warningTypeLvalue.lovDisplayVale', e)
-                                                        }
-                                                    />
-                                                    <Translate>Warning Type</Translate>
-                                                </HeaderCell>
+                                    <br />
 
-                                                <Cell dataKey="warningTypeLvalue.lovDisplayVale" />
-                                            </Column>
-                                            <Column sortable flexGrow={3}>
-                                                <HeaderCell>
-                                                    <Input onChange={e => handleFilterChangeInWarning('description', e)} />
-                                                    <Translate>Description</Translate>
-                                                </HeaderCell>
-                                                <Cell dataKey="description" />
-                                            </Column>
-                                            <Column sortable flexGrow={4}>
-                                                <HeaderCell>
-                                                    <Input onChange={e => handleFilterChangeInWarning('createdAt', e)} />
-                                                    <Translate> Addition Date</Translate>
-                                                </HeaderCell>
-                                                <Cell dataKey="createdAt" />
-                                            </Column>
-                                            <Column sortable flexGrow={3}>
-                                                <HeaderCell>
-                                                    <Input onChange={e => handleFilterChangeInWarning('createdBy', e)} />
-                                                    <Translate> Added By</Translate>
-                                                </HeaderCell>
-                                                <Cell dataKey="createdBy" />
-                                            </Column>
-                                            <Column sortable flexGrow={3}>
-                                                <HeaderCell>
-                                                    <Translate> Status </Translate>
-                                                </HeaderCell>
+                                    <InsuranceModal
+                                        relations={patientRelationsResponse?.object ?? []}
+                                        editing={selectedInsurance ? selectedInsurance : null}
+                                        refetchInsurance={patientInsuranceResponse.refetch}
+                                        patientKey={localPatient ?? localPatient.key}
+                                        open={InsuranceModalOpen}
+                                        insuranceBrowsing={insuranceBrowsing}
+                                        onClose={() => {
+                                            setInsuranceModalOpen(false);
+                                            setInsuranceBrowsing(false);
+                                            setSelectedInsurance(newApAttachment);
+                                        }}
+                                    />
 
-                                                <Cell dataKey="isValid">
-                                                    {rowData => (rowData.isValid ? 'Active' : 'Resolved')}
-                                                </Cell>
-                                            </Column>
-                                            <Column sortable flexGrow={4}>
-                                                <HeaderCell>
-                                                    <Input onChange={e => handleFilterChangeInWarning('dateResolved', e)} />
-                                                    <Translate> Resolution Date</Translate>
-                                                </HeaderCell>
-                                                <Cell dataKey="dateResolved" />
-                                            </Column>
-                                            <Column sortable flexGrow={3}>
-                                                <HeaderCell>
-                                                    <Input onChange={e => handleFilterChangeInWarning('resolvedBy', e)} />
-                                                    <Translate> Resolved By </Translate>
-                                                </HeaderCell>
-                                                <Cell dataKey="resolvedBy" />
-                                            </Column>
-                                            <Column sortable flexGrow={4}>
-                                                <HeaderCell>
-                                                    <Input onChange={e => handleFilterChangeInWarning('resolutionUndoDate', e)} />
-                                                    <Translate> Resolution Undo Date</Translate>
-                                                </HeaderCell>
-                                                <Cell dataKey="resolutionUndoDate" />
-                                            </Column>
-                                            <Column sortable flexGrow={4}>
-                                                <HeaderCell>
-                                                    <Input onChange={e => handleFilterChangeInWarning('resolvedUndoBy', e)} />
-                                                    <Translate>Resolution Undo By</Translate>
-                                                </HeaderCell>
-                                                <Cell dataKey="resolvedUndoBy" />
-                                            </Column>
-                                            <Column sortable flexGrow={2}>
-                                                <HeaderCell>
-                                                    <Translate>Delete</Translate>
-                                                </HeaderCell>
-                                                <Cell>
-                                                    {rowData => (
-                                                        <div className="deleteButton">
-                                                            <button
-                                                                onClick={() => {
-                                                                    setSelectedPatientAdministrativeWarnings(rowData);
-                                                                    handleDeletePatientAdministrativeWarnings();
-                                                                }}
-                                                                className="deleteButton"
-                                                                style={{
-                                                                    color: selectedRowId === rowData.key ? 'black' : 'gray',
-                                                                    background: "transparent",
-                                                                    cursor: selectedRowId === rowData.key ? 'pointer' : 'not-allowed'
-                                                                }}
-                                                                disabled={selectedRowId !== rowData.key}
-                                                            >
-                                                                <CloseIcon />
-                                                            </button>
+                                    <SpecificCoverageModa
+                                        insurance={selectedInsurance?.key}
+                                        open={specificCoverageModalOpen}
+                                        onClose={() => {
+                                            setSpecificCoverageModalOpen(false);
+                                        }}
+                                    />
+
+                                    <Table
+                                        height={400}
+                                        headerHeight={40}
+                                        rowHeight={50}
+                                        bordered
+                                        cellBordered
+                                        onRowClick={setSelectedInsurance}
+                                        data={patientInsuranceResponse?.data ?? []}
+                                    >
+                                        <Column flexGrow={4}>
+                                            <HeaderCell>Insurance Provider </HeaderCell>
+                                            <Cell dataKey="insuranceProvider">
+                                                {rowData =>
+                                                    rowData.primaryInsurance ? (
+                                                        <div>
+                                                            <Badge color="blue" content={'Primary'}>
+                                                                <p>{rowData.insuranceProvider}</p>
+                                                            </Badge>
                                                         </div>
-                                                    )}
-                                                </Cell>
-                                            </Column>
-                                        </Table>
-                                        <div style={{ padding: 20 }}>
-                                            <Pagination
-                                                prev
-                                                next
-                                                first
-                                                last
-                                                ellipsis
-                                                boundaryLinks
-                                                maxButtons={5}
-                                                size="xs"
-                                                layout={['limit', '|', 'pager']}
-                                                limitOptions={[5, 15, 30]}
-                                                limit={warningsAdmistritiveListRequest.pageSize}
-                                                activePage={warningsAdmistritiveListRequest.pageNumber}
-                                                onChangePage={pageNumber => {
-                                                    setWarningsAdmistritiveListRequest({
-                                                        ...warningsAdmistritiveListRequest,
-                                                        pageNumber
-                                                    });
-                                                }}
-                                                onChangeLimit={pageSize => {
-                                                    setWarningsAdmistritiveListRequest({
-                                                        ...warningsAdmistritiveListRequest,
-                                                        pageSize
-                                                    });
-                                                }}
-                                                total={warnings?.extraNumeric ?? 0}
-                                            />
-                                        </div>
-                                    </Panel>
-                                </Modal.Body>
-                            </Modal>
-                            <br />
+                                                    ) : (
+                                                        <p>{rowData.insuranceProvider}</p>
+                                                    )
+                                                }
+                                            </Cell>
+                                        </Column>
 
-                            <Panel
+                                        <Column flexGrow={4}>
+                                            <HeaderCell>Insurance Policy Number</HeaderCell>
+                                            <Cell dataKey="insurancePolicyNumber" />
+                                        </Column>
 
-                                header={
-                                    <h5 className="title">
-                                        <Translate>Basic Information</Translate>
-                                    </h5>
-                                }
-                            >
-                                <Stack>
-                                    <Stack.Item grow={1}>
+                                        <Column flexGrow={4}>
+                                            <HeaderCell>Group Number</HeaderCell>
+                                            <Cell dataKey="groupNumber" />
+                                        </Column>
+
+                                        <Column flexGrow={4}>
+                                            <HeaderCell>Insurance Plan Type</HeaderCell>
+                                            <Cell dataKey="insurancePlanType" />
+                                        </Column>
+
+                                        <Column flexGrow={4}>
+                                            <HeaderCell>Expiration Date</HeaderCell>
+                                            <Cell dataKey="expirationDate" />
+                                        </Column>
+
+                                        <Column flexGrow={4}>
+                                            <HeaderCell>Details</HeaderCell>
+                                            <Cell>
+                                                <Button
+                                                    onClick={() => {
+                                                        handleShowInsuranceDetails();
+                                                    }}
+                                                    appearance="subtle"
+                                                >
+                                                    <FontAwesomeIcon icon={faEllipsis} style={{ marginRight: '8px' }} />
+                                                </Button>
+                                            </Cell>
+                                        </Column>
+                                    </Table>
+                                </TabPanel>
 
 
-                                    </Stack.Item>
-                                    <Stack.Item grow={15}>
-                                        <Form layout="inline" fluid>
-                                            <MyInput
-                                                required
-                                                width={165}
-                                                vr={validationResult}
-                                                column
-                                                fieldName="firstName"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                required
-                                                width={165}
-                                                vr={validationResult}
-                                                column
-                                                fieldName="secondName"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                width={165}
-                                                vr={validationResult}
-                                                column
-                                                fieldName="thirdName"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                required
-                                                width={165}
-                                                vr={validationResult}
-                                                column
-                                                fieldName="lastName"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                          
-                                          
-                                            <MyInput
-                                                required
-                                                width={165}
-                                                vr={validationResult}
-                                                column
-                                                fieldLabel="Sex at Birth"
-                                                fieldType="select"
-                                                fieldName="genderLkey"
-                                                selectData={genderLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                width={165}
-                                                vr={validationResult}
-                                                column
-                                                fieldType="date"
-                                                fieldLabel="DOB"
-                                                fieldName="dob"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
 
-                                            <MyInput
-                                                width={165}
-                                                vr={validationResult}
-                                                column
-                                                fieldLabel="Age"
-                                                fieldType="text"
-                                                disabled
-                                                fieldName="ageFormat"
-                                                record={localPatient?.dob ? ageFormatType : null}
-                                            /><MyInput
-                                                width={165}
-                                                vr={validationResult}
-                                                column
-                                                fieldLabel="Patient Category"
-                                                fieldType="text"
-
-                                                fieldName="ageGroup"
-                                                disabled
-                                                record={localPatient?.dob ? ageGroupValue : null}
-
-                                            />
-                                            <MyInput
-                                                width={165}
-                                                vr={validationResult}
-                                                column
-                                                fieldLabel="Patient Class"
-                                                fieldType="select"
-                                                fieldName="patientClassLkey"
-                                                selectData={patientClassLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-
-                                            {localPatient?.incompletePatient ? (
+                                {/* Privacy & Security */}
+                                <TabPanel>
+                                    <Modal open={verificationModalOpen} onClose={() => setVerificationModalOpen(false)}>
+                                        <Modal.Header>
+                                            <Modal.Title>Patient Verification</Modal.Title>
+                                        </Modal.Header>
+                                        <Modal.Body>
+                                            <Form fluid>
                                                 <MyInput
                                                     width={165}
                                                     vr={validationResult}
-                                                    column
-                                                    fieldLabel="Unknown Patient"
-                                                    fieldType="checkbox"
-                                                    fieldName="unknownPatient"
+                                                    fieldLabel="Primary Mobile Number"
+                                                    fieldName="phoneNumber"
                                                     record={localPatient}
                                                     setRecord={setLocalPatient}
-                                                    disabled
+                                                    disabled={true}
                                                 />
-                                            ) : null}
-  <MyInput
-                                                width={180}
-                                                vr={validationResult}
-                                                column
-                                                fieldLabel="Private Patient"
-                                                fieldType="checkbox"
-                                                fieldName="privatePatient"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            
-
-                                            <MyInput
-                                                required
-                                                width={165}
-                                                vr={validationResult}
-                                                column
-                                                fieldLabel="Document Type"
-                                                fieldType="select"
-                                                fieldName="documentTypeLkey"
-                                                selectData={docTypeLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                required
-                                                width={165}
-                                                vr={validationResult}
-                                                column
-                                                fieldLabel="Document Country"
-                                                fieldType="select"
-                                                fieldName="documentCountryLkey"
-                                                selectData={countryLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={localPatient.documentTypeLkey === 'NO_DOC' || !editing}
-                                            />
-                                            <MyInput
-                                                required
-                                                width={165}
-                                                vr={validationResult}
-                                                column
-                                                fieldLabel="Document Number"
-                                                fieldName="documentNo"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing || localPatient.documentTypeLkey === 'NO_DOC'}
-                                            />
-
-                                        </Form>
-                                    </Stack.Item>
-                                </Stack>
-                            </Panel>
-                            <br />
-                            <Panel
-
-                                header={
-                                    <h5 className="title">
-                                        <Translate>Details</Translate>
-                                    </h5>
-                                }
-                            >
-                                <Tabs>
-                                    <TabList >
-                                        <Tab style={{ backgroundColor: 'blue' }}>
-                                            <Translate>Demographics</Translate>
-                                        </Tab>
-                                        <Tab>
-                                            <Translate>Contact</Translate>
-                                        </Tab>
-                                        <Tab>
-                                            <Translate>Address</Translate>
-                                        </Tab>
-                                        <Tab>
-                                            <Translate>Insurance</Translate>
-                                        </Tab>
-
-                                        <Tab>
-                                            <Translate>Privacy & Security</Translate>
-                                        </Tab>
-                                        <Tab>
-                                            <Translate>Consent Forms</Translate>
-                                        </Tab>
-                                        <Tab>
-                                            <Translate>Preferred Health Professional</Translate>
-                                        </Tab>
-                                        <Tab>
-                                            <Translate>Family Members</Translate>
-                                        </Tab>
-                                        <Tab>
-                                            <Translate>Extra Details</Translate>
-                                        </Tab>
-                                        <Tab>
-                                            <Translate>Attachments</Translate>
-                                        </Tab>
-                                        <Tab>
-                                            <Translate>Follow Up & Activites</Translate>
-                                        </Tab>
-                                    </TabList>
-
-                                    {/* Demopgraphics */}
-                                    <TabPanel>
-                                        <Form layout="inline" fluid>
-                                            <MyInput
-                                                vr={validationResult}
-                                                width={165}
-                                                column
-                                                fieldLabel="First Name (Sec. Lang)"
-                                                fieldName="firstNameOtherLang"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                width={165}
-                                                column
-                                                fieldLabel="Second Name (Sec. Lang)"
-                                                fieldName="secondNameOtherLang"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Third Name (Sec. Lang)"
-                                                fieldName="thirdNameOtherLang"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Last Name (Sec. Lang)"
-                                                fieldName="lastNameOtherLang"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Marital Status"
-                                                fieldType="select"
-                                                fieldName="maritalStatusLkey"
-                                                selectData={maritalStatusLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Nationality"
-                                                fieldType="select"
-                                                fieldName="nationalityLkey"
-                                                selectData={nationalityLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Religion"
-                                                fieldType="select"
-                                                fieldName="religionLkey"
-                                                selectData={religeonLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Ethnicity"
-                                                fieldType="select"
-                                                fieldName="ethnicityLkey"
-                                                selectData={ethnicityLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Occupation"
-                                                fieldType="select"
-                                                fieldName="occupationLkey"
-                                                selectData={occupationLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Responsible Party"
-                                                fieldType="select"
-                                                fieldName="responsiblePartyLkey"
-                                                selectData={responsiblePartyLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Educational Level"
-                                                fieldType="select"
-                                                fieldName="educationalLevelLkey"
-                                                selectData={educationalLevelLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Previous ID"
-                                                fieldName="previousId"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Archiving Number"
-                                                fieldName="archivingNumber"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                        </Form>
-                                    </TabPanel>
-
-                                    {/* Contact */}
-                                    <TabPanel>
-                                        <Form layout="inline" fluid>
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                required
-                                                width={165}
-                                                fieldName="phoneNumber"
-                                                fieldLabel="Primary Mobile Number"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldType="checkbox"
-                                                fieldName="receiveSms"
-                                                fieldLabel="Receive SMS"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Secondary Mobile Number"
-                                                fieldName="secondaryMobileNumber"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldName="homePhone"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldName="workPhone"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldName="email"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldType="checkbox"
-                                                fieldName="receiveEmail"
-                                                fieldLabel="Receive Email"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Preferred Way of Contact"
-                                                fieldType="select"
-                                                fieldName="preferredContactLkey"
-                                                selectData={preferredWayOfContactLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Native Language"
-                                                fieldType="select"
-                                                fieldName="primaryLanguageLkey"
-                                                selectData={primaryLangLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldName="emergencyContactName"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <br />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Emergency Contact Relation"
-                                                fieldType="select"
-                                                fieldName="emergencyContactRelationLkey"
-                                                selectData={relationsLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldName="emergencyContactPhone"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Role"
-                                                fieldType="select"
-                                                fieldName="roleLkey"
-                                                selectData={roleLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                        </Form>
-                                    </TabPanel>
-
-                                    {/* Address */}
-                                    <TabPanel>
-                                        <Form layout="inline" fluid>
-                                            <ButtonToolbar>
-                                                <IconButton icon={<Icon as={FaClock} />} appearance="primary" disabled={!editing || !localPatient.key}>
-                                                    Address Change Log
-                                                </IconButton>
-                                            </ButtonToolbar>
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Country"
-                                                fieldType="select"
-                                                fieldName="countryLkey"
-                                                selectData={countryLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="State/Province"
-                                                fieldType="select"
-                                                fieldName="stateProvinceRegionLkey"
-                                                selectData={cityLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="City"
-                                                fieldType="select"
-                                                fieldName="cityLkey"
-                                                selectData={cityLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Street Name"
-                                                fieldName="streetAddressLine1"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="House/Apartment Number"
-                                                fieldName="apartmentNumber"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={true}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Postal/ZIP code"
-                                                fieldName="postalCode"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Additional Address Line"
-                                                fieldName="streetAddressLine2"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Country ID"
-                                                fieldType="text"
-                                                fieldName="countryId"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled
-                                            />
-                                        </Form>
-                                    </TabPanel>
-
-                                    {/* Inusrance */}
-                                    <TabPanel>
-                                        <ButtonToolbar>
-                                            <IconButton
-                                                appearance="primary"
-                                                color="cyan"
-                                                icon={<PlusRound />}
-                                                disabled={!editing || !localPatient.key}
-                                                onClick={() => {
-                                                    setInsuranceModalOpen(true);
-                                                    setSelectedInsurance(newApPatientInsurance);
-                                                }}
-                                            >
-                                                <Translate>New Inusrance</Translate>
-                                            </IconButton>
-
-                                            <IconButton
-                                                disabled={!selectedInsurance?.key}
-                                                appearance="primary"
-                                                color="cyan"
-                                                icon={<Edit />}
-                                                onClick={handleEditModal}
-                                            >
-                                                <Translate>Edit</Translate>
-                                            </IconButton>
-
-                                            <IconButton
-                                                disabled={!selectedInsurance?.key}
-                                                appearance="primary"
-                                                color="blue"
-                                                icon={<TrashIcon />}
-                                                onClick={handleDeleteInsurance}
-                                            >
-                                                <Translate>Delete</Translate>
-                                            </IconButton>
-
-                                            <Button
-                                                disabled={!selectedInsurance?.key}
-                                                appearance="primary"
-                                                style={{ backgroundColor: '#8034ff' }}
-                                                onClick={() => setSpecificCoverageModalOpen(true)}
-                                            >
-                                                <FontAwesomeIcon icon={faLock} style={{ marginRight: '8px' }} />
-                                                <span>Specific Coverage</span>
+                                                <MyInput
+                                                    width={165}
+                                                    vr={validationResult}
+                                                    fieldLabel="Code"
+                                                    fieldName="otp"
+                                                    record={verificationRequest}
+                                                    setRecord={setVerificationRequest}
+                                                />
+                                            </Form>
+                                        </Modal.Body>
+                                        <Modal.Footer>
+                                            <Button onClick={() => sendOtp(localPatient.key).unwrap()} appearance="subtle">
+                                                Send Code
                                             </Button>
-                                        </ButtonToolbar>
-                                        <br />
-                                        <br />
-
-                                        <InsuranceModal
-                                            relations={patientRelationsResponse?.object ?? []}
-                                            editing={selectedInsurance ? selectedInsurance : null}
-                                            refetchInsurance={patientInsuranceResponse.refetch}
-                                            patientKey={localPatient ?? localPatient.key}
-                                            open={InsuranceModalOpen}
-                                            insuranceBrowsing={insuranceBrowsing}
-                                            onClose={() => {
-                                                setInsuranceModalOpen(false);
-                                                setInsuranceBrowsing(false);
-                                                setSelectedInsurance(newApAttachment);
-                                            }}
-                                        />
-
-                                        <SpecificCoverageModa
-                                            insurance={selectedInsurance?.key}
-                                            open={specificCoverageModalOpen}
-                                            onClose={() => {
-                                                setSpecificCoverageModalOpen(false);
-                                            }}
-                                        />
-
-                                        <Table
-                                            height={400}
-                                            headerHeight={40}
-                                            rowHeight={50}
-                                            bordered
-                                            cellBordered
-                                            onRowClick={setSelectedInsurance}
-                                            data={patientInsuranceResponse?.data ?? []}
-                                        >
-                                            <Column flexGrow={4}>
-                                                <HeaderCell>Insurance Provider </HeaderCell>
-                                                <Cell dataKey="insuranceProvider">
-                                                    {rowData =>
-                                                        rowData.primaryInsurance ? (
-                                                            <div>
-                                                                <Badge color="blue" content={'Primary'}>
-                                                                    <p>{rowData.insuranceProvider}</p>
-                                                                </Badge>
-                                                            </div>
-                                                        ) : (
-                                                            <p>{rowData.insuranceProvider}</p>
-                                                        )
-                                                    }
-                                                </Cell>
-                                            </Column>
-
-                                            <Column flexGrow={4}>
-                                                <HeaderCell>Insurance Policy Number</HeaderCell>
-                                                <Cell dataKey="insurancePolicyNumber" />
-                                            </Column>
-
-                                            <Column flexGrow={4}>
-                                                <HeaderCell>Group Number</HeaderCell>
-                                                <Cell dataKey="groupNumber" />
-                                            </Column>
-
-                                            <Column flexGrow={4}>
-                                                <HeaderCell>Insurance Plan Type</HeaderCell>
-                                                <Cell dataKey="insurancePlanType" />
-                                            </Column>
-
-                                            <Column flexGrow={4}>
-                                                <HeaderCell>Expiration Date</HeaderCell>
-                                                <Cell dataKey="expirationDate" />
-                                            </Column>
-
-                                            <Column flexGrow={4}>
-                                                <HeaderCell>Details</HeaderCell>
-                                                <Cell>
-                                                    <Button
-                                                        onClick={() => {
-                                                            handleShowInsuranceDetails();
-                                                        }}
-                                                        appearance="subtle"
-                                                    >
-                                                        <FontAwesomeIcon icon={faEllipsis} style={{ marginRight: '8px' }} />
-                                                    </Button>
-                                                </Cell>
-                                            </Column>
-                                        </Table>
-                                    </TabPanel>
-
-
-
-                                    {/* Privacy & Security */}
-                                    <TabPanel>
-                                        <Modal open={verificationModalOpen} onClose={() => setVerificationModalOpen(false)}>
-                                            <Modal.Header>
-                                                <Modal.Title>Patient Verification</Modal.Title>
-                                            </Modal.Header>
-                                            <Modal.Body>
-                                                <Form fluid>
-                                                    <MyInput
-                                                        width={165}
-                                                        vr={validationResult}
-                                                        fieldLabel="Primary Mobile Number"
-                                                        fieldName="phoneNumber"
-                                                        record={localPatient}
-                                                        setRecord={setLocalPatient}
-                                                        disabled={true}
-                                                    />
-                                                    <MyInput
-                                                        width={165}
-                                                        vr={validationResult}
-                                                        fieldLabel="Code"
-                                                        fieldName="otp"
-                                                        record={verificationRequest}
-                                                        setRecord={setVerificationRequest}
-                                                    />
-                                                </Form>
-                                            </Modal.Body>
-                                            <Modal.Footer>
-                                                <Button onClick={() => sendOtp(localPatient.key).unwrap()} appearance="subtle">
-                                                    Send Code
-                                                </Button>
-                                                <Divider vertical />
-                                                <Button
-                                                    onClick={() =>
-                                                        verifyOtp({
-                                                            otp: verificationRequest.otp,
-                                                            patientId: localPatient.key
-                                                        }).unwrap()
-                                                    }
-                                                    disabled={!verificationRequest.otp}
-                                                    appearance="primary"
-                                                >
-                                                    Verify
-                                                </Button>
-                                            </Modal.Footer>
-                                        </Modal>
-
-                                        <Form layout="inline" fluid>
-                                            <ButtonToolbar>
-                                                <IconButton
-                                                    icon={<Icon as={FaQuestion} />}
-                                                    onClick={() => setVerificationModalOpen(true)}
-                                                    appearance="primary"
-                                                    disabled={!editing || !localPatient.key}
-                                                >
-                                                    <Translate>Patient Verification</Translate>
-                                                </IconButton>
-                                                <Divider vertical />
-                                                <IconButton
-                                                    icon={<Icon as={VscGitPullRequestGoToChanges} />}
-                                                    appearance="primary"
-                                                    disabled={!editing || !localPatient.key}
-                                                >
-                                                    <Translate>Amendment Requests</Translate>
-                                                </IconButton>
-                                            </ButtonToolbar>
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Security Access Level"
-                                                fieldType="select"
-                                                fieldName="securityAccessLevelLkey"
-                                                selectData={securityAccessLevelLovQueryResponse?.object ?? []}
-                                                selectDataLabel="lovDisplayVale"
-                                                selectDataValue="key"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldLabel="Social Secirty Number"
-                                                fieldName="socialSecurityNumber"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <h5 style={{ borderTop: '1px solid #e1e1e1' }}>HIPAA</h5>
-                                            <MyInput
-                                                vr={validationResult}
-                                                width={165}
-                                                fieldType="checkbox"
-                                                fieldLabel="Notice of Privacy Practices"
-                                                fieldName="noticeOfPrivacyPractice"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                width={165}
-                                                fieldType="date"
-                                                fieldLabel=" "
-                                                fieldName="noticeOfPrivacyPracticeDate"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <br />
-                                            <MyInput
-                                                width={165}
-                                                vr={validationResult}
-                                                fieldType="checkbox"
-                                                fieldLabel="Privacy Authorization"
-                                                fieldName="privacyAuthorization"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                            <MyInput
-                                                vr={validationResult}
-                                                fieldType="date"
-                                                width={165}
-                                                fieldLabel=" "
-                                                fieldName="privacyAuthorizationDate"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                        </Form>
-                                    </TabPanel>
-
-                                    {/* Consent Forms */}
-                                    <TabPanel>
-                                        <ConsentFormTab patient={localPatient} isClick={!editing || !localPatient.key} />
-                                    </TabPanel>
-                                    {/* PreferredHealthProfessional */}
-                                    <TabPanel><PreferredHealthProfessional patient={localPatient} isClick={!editing || !localPatient.key} /></TabPanel>
-                                    {/* Relations */}
-                                    <TabPanel>
-                                        <Modal open={relationModalOpen} onClose={() => setRelationModalOpen(false)}>
-                                            <Modal.Header>
-                                                <Modal.Title>New/Edit Patient Relation</Modal.Title>
-                                            </Modal.Header>
-                                            <Modal.Body>
-                                                <Form fluid>
-                                                    <MyInput
-                                                        vr={validationResult}
-                                                        required
-                                                        width={165}
-                                                        fieldLabel="Relation Type"
-                                                        fieldType="select"
-                                                        fieldName="relationTypeLkey"
-                                                        selectData={relationsLovQueryResponse?.object ?? []}
-                                                        selectDataLabel="lovDisplayVale"
-                                                        selectDataValue="key"
-                                                        record={selectedPatientRelation}
-                                                        setRecord={setSelectedPatientRelation}
-                                                    />
-                                                    <MyInput
-                                                        vr={validationResult}
-                                                        required
-                                                        width={165}
-                                                        fieldLabel="Category"
-                                                        fieldType="select"
-                                                        fieldName="categoryTypeLkey"
-                                                        selectData={categoryLovQueryResponse?.object ?? []}
-                                                        selectDataLabel="lovDisplayVale"
-                                                        selectDataValue="key"
-                                                        record={selectedPatientRelation}
-                                                        setRecord={setSelectedPatientRelation}
-                                                    />
-                                                    <Form.Group>
-                                                        <InputGroup inside style={{ width: 300, direction: 'ltr' }}>
-                                                            <Input
-                                                                width={165}
-                                                                disabled={true}
-                                                                placeholder={'Search Relative Patient'}
-                                                                value={selectedPatientRelation.relativePatientObject?.fullName ?? ''}
-                                                            />
-                                                            <InputGroup.Button onClick={() => search('relation')}>
-                                                                <SearchIcon />
-                                                            </InputGroup.Button>
-                                                        </InputGroup>
-                                                    </Form.Group>
-                                                </Form>
-                                            </Modal.Body>
-                                            <Modal.Footer>
-                                                <Button onClick={() => setRelationModalOpen(false)} appearance="subtle">
-                                                    Cancel
-                                                </Button>
-                                                <Divider vertical />
-                                                <Button
-                                                    onClick={() =>
-                                                        handleSaveFamilyMembers()
-                                                    }
-                                                    appearance="primary"
-                                                >
-                                                    Save
-                                                </Button>
-                                            </Modal.Footer>
-                                        </Modal>
-
-                                        <ButtonToolbar style={{ padding: 1 }}>
-                                            <IconButton
-                                                disabled={!editing}
-                                                icon={<Icon as={FaPlus} />}
-                                                onClick={() => {
-                                                    setSelectedPatientRelation({ ...newApPatientRelation });
-                                                    setRelationModalOpen(true);
-                                                }}
-                                                appearance="primary"
-                                            >
-                                                <Translate>New Relative</Translate>
-                                            </IconButton>
                                             <Divider vertical />
-                                            <IconButton
-                                                disabled={!selectedPatientRelation.key}
-                                                icon={<Icon as={FaPencil} />}
-                                                onClick={() => {
-                                                    setRelationModalOpen(true);
-                                                }}
+                                            <Button
+                                                onClick={() =>
+                                                    verifyOtp({
+                                                        otp: verificationRequest.otp,
+                                                        patientId: localPatient.key
+                                                    }).unwrap()
+                                                }
+                                                disabled={!verificationRequest.otp}
                                                 appearance="primary"
-                                                color="cyan"
                                             >
-                                                <Translate>Edit</Translate>
-                                            </IconButton>
+                                                Verify
+                                            </Button>
+                                        </Modal.Footer>
+                                    </Modal>
 
-                                            <Divider vertical />
-
-                                            <IconButton
-                                                disabled={!selectedPatientRelation?.key}
-                                                appearance="primary"
-                                                color="blue"
-                                                icon={<TrashIcon />}
-                                                onClick={() => { setDeleteRelativeModalOpen(true) }}
-                                            >
-                                                <Translate>Delete</Translate>
-                                            </IconButton>
-                                        </ButtonToolbar>
-
-                                        <br />
-                                        <Modal open={deleteRelativeModalOpen} onClose={handleClearRelative}>
-                                            <Modal.Header>
-                                                <Modal.Title>Confirm Delete</Modal.Title>
-
-                                            </Modal.Header>
-
-                                            <Modal.Body>
-                                                <p>
-                                                    <RemindOutlineIcon style={{ color: '#ffca61', marginRight: '8px', fontSize: '24px' }} />
-                                                    <Translate style={{ fontSize: '24px' }} >
-                                                        Are you sure you want to delete this Relation?
-                                                    </Translate>
-                                                </p>
-                                            </Modal.Body>
-                                            <Modal.Footer>
-                                                <Button onClick={handleClearRelative} appearance="ghost" color='cyan'>
-                                                    Cancel
-                                                </Button>
-                                                <Divider vertical />
-                                                <Button
-                                                    onClick={handleDeleteRelation}
-                                                    appearance="primary"
-                                                >
-                                                    Delete
-                                                </Button>
-                                            </Modal.Footer>
-                                        </Modal>
-
-                                        <Table
-                                            height={600}
-                                            sortColumn={patientRelationListRequest.sortBy}
-                                            sortType={patientRelationListRequest.sortType}
-                                            onSortColumn={(sortBy, sortType) => {
-                                                if (sortBy)
-                                                    setPatientRelationListRequest({
-                                                        ...patientRelationListRequest,
-                                                        sortBy,
-                                                        sortType
-                                                    });
-                                            }}
-                                            headerHeight={40}
-                                            rowHeight={50}
-                                            bordered
-                                            cellBordered
-                                            onRowClick={rowData => {
-                                                setSelectedPatientRelation(rowData);
-                                            }}
-                                            data={patientRelationsResponse?.object ?? []}
-                                            rowClassName={isSelectedRelation}
-
-                                        >
-                                            <Column sortable flexGrow={4}>
-                                                <HeaderCell>
-                                                    <Translate>Relation Type</Translate>
-                                                </HeaderCell>
-                                                <Cell dataKey="relationTypeLvalue.lovDisplayVale" />
-                                            </Column>
-                                            <Column sortable flexGrow={4}>
-                                                <HeaderCell>
-                                                    <Translate>Relative Patient Name</Translate>
-                                                </HeaderCell>
-                                                <Cell dataKey="relativePatientObject.fullName" />
-                                            </Column>
-                                            <Column sortable flexGrow={4}>
-                                                <HeaderCell>
-                                                    <Translate>Relation Category</Translate>
-                                                </HeaderCell>
-                                                <Cell dataKey="categoryTypeLvalue.lovDisplayVale" />
-                                            </Column>
-                                        </Table>
-                                    </TabPanel>
-
-                                    {/* Extra Details */}
-                                    <TabPanel>
-                                        <Form layout="inline" fluid>
-                                            <MyInput
-                                                width={165}
-                                                vr={validationResult}
-                                                column
-                                                fieldLabel=" Details"
-                                                fieldType="textarea"
-                                                fieldName="extraDetails"
-                                                //  selectDataLabel="Extra Details"
-                                                record={localPatient}
-                                                setRecord={setLocalPatient}
-                                                disabled={!editing}
-                                            />
-                                        </Form>
-                                        <br />
+                                    <Form layout="inline" fluid>
                                         <ButtonToolbar>
-                                            <IconButton
-                                                color="cyan"
-                                                icon={<PlusRound />}
+
+                                            <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
+                                                onClick={() => setVerificationModalOpen(true)}
+                                                disabled={!editing || !localPatient.key}>
+                                                <PlusRound />   Patient Verification
+                                            </Button>
+
+                                            <Button style={{ backgroundColor: ' #007e91', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
                                                 onClick={() => {
                                                     setSecondaryDocumentModalOpen(true);
                                                     setSelectedSecondaryDocument(newApPatientSecondaryDocuments);
                                                 }}
-                                                disabled={!editing}
-                                                appearance="primary"
-                                            >
-                                                New Secondary Document
-                                            </IconButton>
+                                                disabled={!editing}>
+                                                <Icon as={VscGitPullRequestGoToChanges} />   Amendment Requests
+                                            </Button>
 
-                                            <IconButton
-                                                disabled={!selectedSecondaryDocument?.key}
-                                                appearance="primary"
-                                                color="cyan"
-                                                icon={<Edit />}
-                                                onClick={handleEditSecondaryDocument}
-                                            >
-                                                <Translate>Edit</Translate>
-                                            </IconButton>
-
-                                            <IconButton
-                                                disabled={!selectedSecondaryDocument?.key}
-                                                appearance="primary"
-                                                color="blue"
-                                                icon={<TrashIcon />}
-                                                onClick={() => { setDeleteDocModalOpen(true) }}
-                                            >
-                                                <Translate>Delete</Translate>
-                                            </IconButton>
                                         </ButtonToolbar>
-
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Security Access Level"
+                                            fieldType="select"
+                                            fieldName="securityAccessLevelLkey"
+                                            selectData={securityAccessLevelLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            column
+                                            width={165}
+                                            fieldLabel="Social Security Number"
+                                            fieldName="socialSecurityNumber"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <h5 style={{ borderTop: '1px solid #e1e1e1' }}>HIPAA</h5>
+                                        <MyInput
+                                            vr={validationResult}
+                                            width={165}
+                                            fieldType="checkbox"
+                                            fieldLabel="Notice of Privacy Practices"
+                                            fieldName="noticeOfPrivacyPractice"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            width={165}
+                                            fieldType="date"
+                                            fieldLabel=" "
+                                            fieldName="noticeOfPrivacyPracticeDate"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
                                         <br />
-                                        <Form layout="inline" fluid>
-                                            <Table
-                                                height={600}
-                                                data={patientSecondaryDocumentsResponse?.object ?? []}
-                                                headerHeight={40}
-                                                rowHeight={50}
-                                                bordered
-                                                cellBordered
-                                                onRowClick={rowData => {
-                                                    setSelectedSecondaryDocument(rowData);
-                                                }}
-                                                rowClassName={isSelectedDocument}
-                                            >
-                                                <Column sortable flexGrow={4}>
-                                                    <HeaderCell>
-                                                        <Translate>Document Country</Translate>
-                                                    </HeaderCell>
-                                                    <Cell>
-                                                        {rowData =>
-                                                            rowData.documentCountryLvalue
-                                                                ? rowData.documentCountryLvalue.lovDisplayVale
-                                                                : rowData.documentCountryLkey
-                                                        }
+                                        <MyInput
+                                            width={165}
+                                            vr={validationResult}
+                                            fieldType="checkbox"
+                                            fieldLabel="Privacy Authorization"
+                                            fieldName="privacyAuthorization"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                        <MyInput
+                                            vr={validationResult}
+                                            fieldType="date"
+                                            width={165}
+                                            fieldLabel=" "
+                                            fieldName="privacyAuthorizationDate"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                    </Form>
+                                </TabPanel>
 
-                                                    </Cell>
-                                                </Column>
-
-                                                <Column sortable flexGrow={4}>
-                                                    <HeaderCell>
-                                                        <Translate>Document Type</Translate>
-                                                    </HeaderCell>
-                                                    <Cell>
-                                                        {rowData =>
-                                                            rowData.documentTypeLvalue
-                                                                ? rowData.documentTypeLvalue.lovDisplayVale
-                                                                : rowData.documentTypeLkey
-                                                        }
-
-                                                    </Cell>
-                                                </Column>
-
-                                                <Column sortable flexGrow={4}>
-                                                    <HeaderCell>
-                                                        <Translate>Document Number</Translate>
-                                                    </HeaderCell>
-                                                    <Cell dataKey="documentNo" />
-                                                </Column>
-                                                <Column sortable flexGrow={4}>
-                                                    <HeaderCell>
-                                                        <Translate>Created By</Translate>
-                                                    </HeaderCell>
-                                                    <Cell >
-                                                        {rowData => rowData?.createdByUser?.fullName}
-                                                    </Cell>
-
-                                                </Column>
-                                                <Column sortable flexGrow={4}>
-                                                    <HeaderCell>
-                                                        <Translate>Created At</Translate>
-                                                    </HeaderCell>
-                                                    <Cell >
-                                                        {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString("en-GB") : ""}
-
-                                                    </Cell>
-                                                </Column>
-                                                <Column sortable flexGrow={4}>
-                                                    <HeaderCell>
-                                                        <Translate>Updated By</Translate>
-                                                    </HeaderCell>
-                                                    <Cell >
-                                                        {rowData => rowData?.updatedByUser?.fullName}
-                                                    </Cell>
-                                                </Column>
-                                                <Column sortable flexGrow={4}>
-                                                    <HeaderCell>
-                                                        <Translate>Updated At</Translate>
-                                                    </HeaderCell>
-                                                    <Cell >
-
-                                                        {rowData => rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
-                                                    </Cell>
-                                                </Column>
-                                            </Table>
-                                        </Form>
-                                    </TabPanel>
-
-                                    <Modal
-                                        open={secondaryDocumentModalOpen}
-                                        onClose={() => handleCleareSecondaryDocument()}
-                                    >
+                                {/* Consent Forms */}
+                                <TabPanel>
+                                    <ConsentFormTab patient={localPatient} isClick={!editing || !localPatient.key} />
+                                </TabPanel>
+                                {/* PreferredHealthProfessional */}
+                                <TabPanel><PreferredHealthProfessional patient={localPatient} isClick={!editing || !localPatient.key} /></TabPanel>
+                                {/* Relations */}
+                                <TabPanel>
+                                    <Modal open={relationModalOpen} onClose={() => setRelationModalOpen(false)}>
                                         <Modal.Header>
-                                            <Modal.Title>Secondary Document</Modal.Title>
+                                            <Modal.Title>New/Edit Patient Relation</Modal.Title>
                                         </Modal.Header>
                                         <Modal.Body>
-                                            <Form layout="inline" fluid>
+                                            <Form fluid>
                                                 <MyInput
-                                                    required
                                                     vr={validationResult}
-                                                    column
+                                                    required
                                                     width={165}
-                                                    fieldLabel="Document Country"
+                                                    fieldLabel="Relation Type"
                                                     fieldType="select"
-                                                    fieldName="documentCountryLkey"
-                                                    selectData={countryLovQueryResponse?.object ?? []}
+                                                    fieldName="relationTypeLkey"
+                                                    selectData={relationsLovQueryResponse?.object ?? []}
                                                     selectDataLabel="lovDisplayVale"
                                                     selectDataValue="key"
-                                                    record={secondaryDocument}
-                                                    setRecord={newRecord =>
-                                                        setSecondaryDocument({
-                                                            ...secondaryDocument,
-                                                            ...newRecord
-                                                        })
-                                                    }
+                                                    record={selectedPatientRelation}
+                                                    setRecord={setSelectedPatientRelation}
                                                 />
-
                                                 <MyInput
-                                                    required
                                                     vr={validationResult}
-                                                    column
+                                                    required
                                                     width={165}
-                                                    fieldLabel="Document Type"
+                                                    fieldLabel="Category"
                                                     fieldType="select"
-                                                    fieldName="documentTypeLkey"
-                                                    selectData={docTypeLovQueryResponse?.object ?? []}
+                                                    fieldName="categoryTypeLkey"
+                                                    selectData={categoryLovQueryResponse?.object ?? []}
                                                     selectDataLabel="lovDisplayVale"
                                                     selectDataValue="key"
-                                                    record={secondaryDocument}
-                                                    setRecord={newRecord =>
-                                                        setSecondaryDocument({
-                                                            ...secondaryDocument,
-                                                            ...newRecord
-                                                        })
-                                                    }
+                                                    record={selectedPatientRelation}
+                                                    setRecord={setSelectedPatientRelation}
                                                 />
-                                                <MyInput
-                                                    required
-                                                    vr={validationResult}
-                                                    column
-                                                    width={165}
-                                                    fieldLabel="Document Number"
-                                                    fieldName="documentNo"
-                                                    record={secondaryDocument}
-                                                    setRecord={newRecord =>
-                                                        setSecondaryDocument({
-                                                            ...secondaryDocument,
-                                                            ...newRecord,
-                                                            documentNo:
-                                                                secondaryDocument.documentTypeLkey === 'NO_DOC' ? 'NO_DOC' : newRecord.documentNo
-                                                        })
-                                                    }
-                                                    disabled={secondaryDocument.documentTypeLkey === 'NO_DOC'}
-                                                />
-
+                                                <Form.Group>
+                                                    <InputGroup inside style={{ width: 300, direction: 'ltr' }}>
+                                                        <Input
+                                                            width={165}
+                                                            disabled={true}
+                                                            placeholder={'Search Relative Patient'}
+                                                            value={selectedPatientRelation.relativePatientObject?.fullName ?? ''}
+                                                        />
+                                                        <InputGroup.Button onClick={() => search('relation')}>
+                                                            <SearchIcon />
+                                                        </InputGroup.Button>
+                                                    </InputGroup>
+                                                </Form.Group>
                                             </Form>
                                         </Modal.Body>
                                         <Modal.Footer>
-                                            <Button onClick={() => handleCleareSecondaryDocument()} appearance="subtle">
+                                            <Button onClick={() => setRelationModalOpen(false)} appearance="subtle">
                                                 Cancel
                                             </Button>
                                             <Divider vertical />
                                             <Button
-                                                onClick={() => {
-                                                    handleSaveSecondaryDocument();
-                                                }}
+                                                onClick={() =>
+                                                    handleSaveFamilyMembers()
+                                                }
                                                 appearance="primary"
                                             >
                                                 Save
                                             </Button>
                                         </Modal.Footer>
                                     </Modal>
-                                    <Modal open={deleteDocModalOpen} onClose={handleClearDocument}>
+
+                                    <ButtonToolbar style={{ padding: 1 }}>
+                                        <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
+                                            onClick={() => {
+                                                setSelectedPatientRelation({ ...newApPatientRelation });
+                                                setRelationModalOpen(true);
+                                            }}
+                                            disabled={!editing}>
+                                            <PlusRound />   New Relative
+                                        </Button>
+
+
+                                        <Button
+                                            disabled={!selectedPatientRelation.key}
+                                            onClick={() => {
+                                                setRelationModalOpen(true);
+                                            }}
+                                            appearance="ghost"
+                                            style={{ border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: "3px" }}
+
+                                        >
+
+                                            <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: '#007e91' }} />
+
+                                            <span>Edit</span>
+                                        </Button>
+
+
+                                        <Button
+                                            disabled={!selectedPatientRelation?.key}
+
+                                            style={{ border: '1px solid  #007e91', backgroundColor: 'white', color: '#007e91', display: 'flex', alignItems: 'center', gap: '5px' }}
+
+                                            onClick={() => { setDeleteRelativeModalOpen(true) }}
+                                        >
+                                            <TrashIcon /> <Translate>Delete</Translate>
+                                        </Button>
+
+                                    </ButtonToolbar>
+
+                                    <br />
+                                    <Modal open={deleteRelativeModalOpen} onClose={handleClearRelative}>
                                         <Modal.Header>
                                             <Modal.Title>Confirm Delete</Modal.Title>
 
@@ -2883,17 +2722,17 @@ const PatientProfileCopy = () => {
                                             <p>
                                                 <RemindOutlineIcon style={{ color: '#ffca61', marginRight: '8px', fontSize: '24px' }} />
                                                 <Translate style={{ fontSize: '24px' }} >
-                                                    Are you sure you want to delete this Document?
+                                                    Are you sure you want to delete this Relation?
                                                 </Translate>
                                             </p>
                                         </Modal.Body>
                                         <Modal.Footer>
-                                            <Button onClick={handleClearDocument} appearance="ghost" color='cyan'>
+                                            <Button onClick={handleClearRelative} appearance="ghost" color='cyan'>
                                                 Cancel
                                             </Button>
                                             <Divider vertical />
                                             <Button
-                                                onClick={handleDeleteSecondaryDocument}
+                                                onClick={handleDeleteRelation}
                                                 appearance="primary"
                                             >
                                                 Delete
@@ -2901,469 +2740,708 @@ const PatientProfileCopy = () => {
                                         </Modal.Footer>
                                     </Modal>
 
-                                    {/* Attachments */}
-                                    <TabPanel>
+                                    <Table
+                                        height={600}
+                                        sortColumn={patientRelationListRequest.sortBy}
+                                        sortType={patientRelationListRequest.sortType}
+                                        onSortColumn={(sortBy, sortType) => {
+                                            if (sortBy)
+                                                setPatientRelationListRequest({
+                                                    ...patientRelationListRequest,
+                                                    sortBy,
+                                                    sortType
+                                                });
+                                        }}
+                                        headerHeight={40}
+                                        rowHeight={50}
+                                        bordered
+                                        cellBordered
+                                        onRowClick={rowData => {
+                                            setSelectedPatientRelation(rowData);
+                                        }}
+                                        data={patientRelationsResponse?.object ?? []}
+                                        rowClassName={isSelectedRelation}
 
-                                        <Modal open={attachmentsModalOpen} onClose={() => handleCleareAttachment()}>
-                                            <Modal.Header>
-                                                <Modal.Title>New/Edit Patient Attachments</Modal.Title>
-                                            </Modal.Header>
-                                            <Modal.Body>
-                                                <div
-                                                    style={{
-                                                        borderRadius: '5px',
-                                                        border: '1px solid #e1e1e1',
-                                                        margin: '2px',
-                                                        position: 'relative',
-                                                        bottom: 0,
-                                                        width: '99%',
-                                                        height: 400,
-                                                        display: 'flex',
-                                                        alignContent: 'center',
-                                                        justifyContent: 'center'
-                                                    }}
-                                                >
-                                                    <input
-                                                        type="file"
-                                                        ref={attachmentFileInputRef}
-                                                        style={{ display: 'none' }}
-                                                        onChange={handleFileUpload}
-                                                        accept="image/*"
-                                                    />
+                                    >
+                                        <Column sortable flexGrow={4}>
+                                            <HeaderCell>
+                                                <Translate>Relation Type</Translate>
+                                            </HeaderCell>
+                                            <Cell dataKey="relationTypeLvalue.lovDisplayVale" />
+                                        </Column>
+                                        <Column sortable flexGrow={4}>
+                                            <HeaderCell>
+                                                <Translate>Relative Patient Name</Translate>
+                                            </HeaderCell>
+                                            <Cell dataKey="relativePatientObject.fullName" />
+                                        </Column>
+                                        <Column sortable flexGrow={4}>
+                                            <HeaderCell>
+                                                <Translate>Relation Category</Translate>
+                                            </HeaderCell>
+                                            <Cell dataKey="categoryTypeLvalue.lovDisplayVale" />
+                                        </Column>
+                                    </Table>
+                                </TabPanel>
 
-                                                    {newAttachmentSrc ? (
-                                                        newAttachmentSrc ? (
-                                                            <img
+                                {/* Extra Details */}
+                                <TabPanel>
+                                    <Form layout="inline" fluid>
+                                        <MyInput
+                                            width={165}
+                                            vr={validationResult}
+                                            column
+                                            fieldLabel=" Details"
+                                            fieldType="textarea"
+                                            fieldName="extraDetails"
+                                            //  selectDataLabel="Extra Details"
+                                            record={localPatient}
+                                            setRecord={setLocalPatient}
+                                            disabled={!editing}
+                                        />
+                                    </Form>
+                                    <br />
+                                    <ButtonToolbar>
 
-                                                                alt={'Attachment Preview'}
-                                                                width={380}
-                                                                height={380}
-                                                                onClick={() =>
-                                                                    handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
-                                                                }
-                                                                src={newAttachmentSrc}
-                                                            />
-                                                        ) : (
-                                                            <FileUploadIcon
-                                                                onClick={() => {
-                                                                    handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT');
+                                        <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
+                                            onClick={() => {
+                                                setSecondaryDocumentModalOpen(true);
+                                                setSelectedSecondaryDocument(newApPatientSecondaryDocuments);
+                                            }}
+                                            disabled={!editing}>
+                                            <PlusRound />   New Secondary Document
+                                        </Button>
+                                        <Button
+                                            disabled={!selectedSecondaryDocument?.key}
+                                            onClick={handleEditSecondaryDocument}
+                                            appearance="ghost"
+                                            style={{ border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: "3px" }}
 
-                                                                }
-                                                                }
-                                                                style={{ fontSize: '250px', marginTop: '10%' }}
-                                                            />
-                                                        )
-                                                    ) : selectedPatientAttacment && selectedPatientAttacment.fileContent ? (
-                                                        selectedPatientAttacment.contentType === 'application/pdf' ? (
-                                                            <DetailIcon
-                                                                onClick={() =>
-                                                                    handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
-                                                                }
-                                                                style={{ fontSize: '250px', marginTop: '10%' }}
-                                                            />
-                                                        ) : (
-                                                            <img
-                                                                alt={'Attachment Preview'}
-                                                                width={380}
-                                                                height={380}
-                                                                onClick={() =>
-                                                                    handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
-                                                                }
-                                                                src={`data:${selectedPatientAttacment.contentType};base64,${selectedPatientAttacment.fileContent}`}
-                                                            />
-                                                        )
-                                                    ) : (
-                                                        <FileUploadIcon
-                                                            onClick={() =>
-                                                                handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
-                                                            }
-                                                            style={{ fontSize: '250px', marginTop: '10%' }}
-                                                        />
-                                                    )}
-                                                </div>
+                                        >
 
-                                                <br />
-                                                <Form>
-                                                    <MyInput
-                                                        width={550}
-                                                        fieldName="accessTypeLkey"
-                                                        fieldType="select"
-                                                        selectData={attachmentsLovQueryResponse?.object ?? []}
-                                                        selectDataLabel="lovDisplayVale"
-                                                        fieldLabel="Type"
-                                                        selectDataValue="key"
-                                                        record={selectedAttachType}
-                                                        setRecord={setSelectedAttachType}
-                                                    />
+                                            <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: '#007e91' }} />
 
-                                                </Form>
+                                            <span>Edit</span>
+                                        </Button>
+                                        <Button
+                                            disabled={!selectedSecondaryDocument?.key}
 
-                                                <br />
-                                                <Input
-                                                    value={newAttachmentDetails}
-                                                    onChange={setNewAttachmentDetails}
-                                                    as="textarea"
-                                                    rows={3}
-                                                    placeholder="Details"
-                                                />
-                                            </Modal.Body>
-                                            <Modal.Footer>
-                                                <Button onClick={() => handleCleareAttachment()} appearance="subtle">
-                                                    Cancel
-                                                </Button>
-                                                <Divider vertical />
-                                                <Button
-                                                    disabled={actionType ? false : !uploadedAttachmentOpject?.formData}
-                                                    onClick={() => {
-                                                        actionType === 'view'
-                                                            ? handleUpdateAttachmentDetails()
-                                                            : upload({
-                                                                ...uploadedAttachmentOpject,
-                                                                details: newAttachmentDetails,
-                                                                accessType: selectedAttachType.accessTypeLkey,
-                                                                createdBy: authSlice.user.key
-                                                            })
-                                                                .unwrap()
-                                                                .then(() => {
-                                                                    handleFinishUploading();
-                                                                })
-                                                    }}
-                                                    appearance="primary"
-                                                >
-                                                    Save
-                                                </Button>
-                                            </Modal.Footer>
-                                        </Modal>            <Modal open={deleteModalOpen} onClose={handleClearAttachmentDelete}>
-                                            <Modal.Header>
-                                                <Modal.Title><h6>Confirm Delete</h6></Modal.Title>
-                                            </Modal.Header>
-                                            <Modal.Body>
-                                                <p>
-                                                    <RemindOutlineIcon style={{ color: '#ffca61', marginRight: '8px', fontSize: '24px' }} />
-                                                    <Translate style={{ fontSize: '24px' }} >
-                                                        Are you sure you want to delete this Attachment?
-                                                    </Translate>
-                                                </p>
+                                            style={{ border: '1px solid  #007e91', backgroundColor: 'white', color: '#007e91', display: 'flex', alignItems: 'center', gap: '5px' }}
 
-                                            </Modal.Body>
-                                            <Modal.Footer>
-                                                <Button onClick={handleClearAttachmentDelete} appearance="ghost" color="cyan" >
-                                                    Cancel
-                                                </Button>
-                                                <Divider vertical />
-                                                <Button
-                                                    onClick={() => {
-                                                        deleteAttachment({ key: selectedAttachment.key })
-                                                            .then(() => {
-                                                                attachmentRefetch();
-                                                                fetchPatientImageResponse.refetch();
-                                                                dispatch(notify('Deleted Successfully'))
-                                                                handleClearAttachmentDelete();
-                                                            })
-                                                    }}
-                                                    appearance="primary"
-                                                >
-                                                    Delete
-                                                </Button>
-                                            </Modal.Footer>
-                                        </Modal>
+                                            onClick={() => { setDeleteDocModalOpen(true) }}
+                                        >
+                                            <TrashIcon /> <Translate>Delete</Translate>
+                                        </Button>
 
-                                        <ButtonToolbar style={{ padding: 1 }}>
-                                            <IconButton
-                                                icon={<Icon as={FaPlus} />}
 
-                                                onClick={() => {
-                                                    handleCleareAttachment();
-                                                    setAttachmentsModalOpen(true);
+                                    </ButtonToolbar>
 
-                                                }}
-                                                appearance="primary"
-                                                disabled={!editing || !localPatient.key}
-                                            >
-                                                <Translate>New Attachment </Translate>
-                                            </IconButton>
-                                            <Divider vertical />
-                                        </ButtonToolbar>
-
-                                        <br />
-
+                                    <br />
+                                    <Form layout="inline" fluid>
                                         <Table
                                             height={600}
-                                            sortColumn={patientRelationListRequest.sortBy}
-                                            sortType={patientRelationListRequest.sortType}
-                                            onSortColumn={(sortBy, sortType) => {
-                                                if (sortBy)
-                                                    setPatientRelationListRequest({
-                                                        ...patientRelationListRequest,
-                                                        sortBy,
-                                                        sortType
-                                                    });
-                                            }}
+                                            data={patientSecondaryDocumentsResponse?.object ?? []}
                                             headerHeight={40}
                                             rowHeight={50}
                                             bordered
                                             cellBordered
                                             onRowClick={rowData => {
-                                                setSelectedPatientRelation(rowData);
+                                                setSelectedSecondaryDocument(rowData);
                                             }}
-                                            data={patientAttachments ?? []}
+                                            rowClassName={isSelectedDocument}
                                         >
-                                            <Column sortable flexGrow={4} fullText>
+                                            <Column sortable flexGrow={4}>
                                                 <HeaderCell>
-                                                    <Translate>Attachment Name</Translate>
+                                                    <Translate>Document Country</Translate>
                                                 </HeaderCell>
-                                                <Cell dataKey="fileName" fullText />
-                                            </Column>
+                                                <Cell>
+                                                    {rowData =>
+                                                        rowData.documentCountryLvalue
+                                                            ? rowData.documentCountryLvalue.lovDisplayVale
+                                                            : rowData.documentCountryLkey
+                                                    }
 
-                                            <Column sortable flexGrow={4} fullText>
-                                                <HeaderCell>
-                                                    <Translate>File Type</Translate>
-                                                </HeaderCell>
-                                                <Cell dataKey="contentType" fullText />
-                                            </Column>
-
-                                            <Column sortable flexGrow={4} fullText>
-                                                <HeaderCell>
-                                                    <Translate>Details</Translate>
-                                                </HeaderCell>
-                                                <Cell dataKey="extraDetails" fullText />
-                                            </Column>
-                                            <Column sortable flexGrow={4} fullText>
-                                                <HeaderCell>
-                                                    <Translate>Source</Translate>
-                                                </HeaderCell>
-                                                <Cell fullText>
-                                                    {rowData => rowData.accessTypeLvalue
-                                                        ? rowData.accessTypeLvalue.lovDisplayVale
-                                                        : rowData.accessTypeLkey
-
-                                                    }</Cell>
-                                            </Column>
-
-                                            <Column sortable flexGrow={4} fullText>
-                                                <HeaderCell>
-                                                    <Translate>Download</Translate>
-                                                </HeaderCell>
-                                                <Cell fullText>
-                                                    {attachment => (
-                                                        <Button
-                                                            appearance="link"
-                                                            onClick={() => handleDownloadSelectedPatientAttachment(attachment.key)}
-                                                        >
-                                                            Download <FileDownloadIcon style={{ marginLeft: '10px', scale: '1.4' }} />
-                                                        </Button>
-                                                    )}
                                                 </Cell>
                                             </Column>
-                                            <Column sortable flexGrow={4} fullText>
+
+                                            <Column sortable flexGrow={4}>
+                                                <HeaderCell>
+                                                    <Translate>Document Type</Translate>
+                                                </HeaderCell>
+                                                <Cell>
+                                                    {rowData =>
+                                                        rowData.documentTypeLvalue
+                                                            ? rowData.documentTypeLvalue.lovDisplayVale
+                                                            : rowData.documentTypeLkey
+                                                    }
+
+                                                </Cell>
+                                            </Column>
+
+                                            <Column sortable flexGrow={4}>
+                                                <HeaderCell>
+                                                    <Translate>Document Number</Translate>
+                                                </HeaderCell>
+                                                <Cell dataKey="documentNo" />
+                                            </Column>
+                                            <Column sortable flexGrow={4}>
                                                 <HeaderCell>
                                                     <Translate>Created By</Translate>
                                                 </HeaderCell>
-                                                <Cell fullText>
+                                                <Cell >
                                                     {rowData => rowData?.createdByUser?.fullName}
                                                 </Cell>
 
                                             </Column>
-                                            <Column sortable flexGrow={4} fullText>
+                                            <Column sortable flexGrow={4}>
                                                 <HeaderCell>
                                                     <Translate>Created At</Translate>
                                                 </HeaderCell>
-                                                <Cell fullText>
+                                                <Cell >
                                                     {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString("en-GB") : ""}
 
                                                 </Cell>
                                             </Column>
-                                            <Column sortable flexGrow={4} fullText>
+                                            <Column sortable flexGrow={4}>
                                                 <HeaderCell>
                                                     <Translate>Updated By</Translate>
                                                 </HeaderCell>
-                                                <Cell fullText>
+                                                <Cell >
                                                     {rowData => rowData?.updatedByUser?.fullName}
                                                 </Cell>
                                             </Column>
-                                            <Column sortable flexGrow={4} fullText>
+                                            <Column sortable flexGrow={4}>
                                                 <HeaderCell>
                                                     <Translate>Updated At</Translate>
                                                 </HeaderCell>
-                                                <Cell fullText>
+                                                <Cell >
 
                                                     {rowData => rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
                                                 </Cell>
                                             </Column>
-                                            <Column sortable flexGrow={4} fullText>
-                                                <HeaderCell>
-                                                    <Translate>Actions</Translate>
-                                                </HeaderCell>
-                                                <Cell fullText>
-                                                    {attachment => (
-                                                        <div>
-                                                            <Button
-                                                                appearance="link"
-                                                                onClick={() => handleAttachmentSelected(attachment.key)}
-                                                            >
-                                                                Preview / Edit
-                                                            </Button>
-                                                        </div>
-                                                    )}
-                                                </Cell>
-                                            </Column>
-                                            <Column sortable flexGrow={3} fullText>
-                                                <HeaderCell>
-                                                    <Translate>Delete</Translate>
-                                                </HeaderCell>
-                                                <Cell fullText>
-                                                    {attachment => (
-                                                        <div>
-
-                                                            <Button
-                                                                appearance="link"
-                                                                color="blue"
-                                                                onClick={() => handleDeleteAttachment(attachment)}
-
-                                                            >
-                                                                <TrashIcon style={{ marginLeft: '10px', scale: '1.4' }} />
-                                                            </Button>
-                                                        </div>
-                                                    )}
-                                                </Cell>
-                                            </Column>
                                         </Table>
-                                    </TabPanel>
+                                    </Form>
+                                </TabPanel>
 
-                                    {/* Follow Up & Activites */}
-                                    <TabPanel></TabPanel>
-                                </Tabs>
-                            </Panel>
+                                <Modal
+                                    open={secondaryDocumentModalOpen}
+                                    onClose={() => handleCleareSecondaryDocument()}
+                                >
+                                    <Modal.Header>
+                                        <Modal.Title>Secondary Document</Modal.Title>
+                                    </Modal.Header>
+                                    <Modal.Body>
+                                        <Form layout="inline" fluid>
+                                            <MyInput
+                                                required
+                                                vr={validationResult}
+                                                column
+                                                width={165}
+                                                fieldLabel="Document Country"
+                                                fieldType="select"
+                                                fieldName="documentCountryLkey"
+                                                selectData={countryLovQueryResponse?.object ?? []}
+                                                selectDataLabel="lovDisplayVale"
+                                                selectDataValue="key"
+                                                record={secondaryDocument}
+                                                setRecord={newRecord =>
+                                                    setSecondaryDocument({
+                                                        ...secondaryDocument,
+                                                        ...newRecord
+                                                    })
+                                                }
+                                            />
+
+                                            <MyInput
+                                                required
+                                                vr={validationResult}
+                                                column
+                                                width={165}
+                                                fieldLabel="Document Type"
+                                                fieldType="select"
+                                                fieldName="documentTypeLkey"
+                                                selectData={docTypeLovQueryResponse?.object ?? []}
+                                                selectDataLabel="lovDisplayVale"
+                                                selectDataValue="key"
+                                                record={secondaryDocument}
+                                                setRecord={newRecord =>
+                                                    setSecondaryDocument({
+                                                        ...secondaryDocument,
+                                                        ...newRecord
+                                                    })
+                                                }
+                                            />
+                                            <MyInput
+                                                required
+                                                vr={validationResult}
+                                                column
+                                                width={165}
+                                                fieldLabel="Document Number"
+                                                fieldName="documentNo"
+                                                record={secondaryDocument}
+                                                setRecord={newRecord =>
+                                                    setSecondaryDocument({
+                                                        ...secondaryDocument,
+                                                        ...newRecord,
+                                                        documentNo:
+                                                            secondaryDocument.documentTypeLkey === 'NO_DOC' ? 'NO_DOC' : newRecord.documentNo
+                                                    })
+                                                }
+                                                disabled={secondaryDocument.documentTypeLkey === 'NO_DOC'}
+                                            />
+
+                                        </Form>
+                                    </Modal.Body>
+                                    <Modal.Footer>
+                                        <Button onClick={() => handleCleareSecondaryDocument()} appearance="subtle">
+                                            Cancel
+                                        </Button>
+                                        <Divider vertical />
+                                        <Button
+                                            onClick={() => {
+                                                handleSaveSecondaryDocument();
+                                            }}
+                                            appearance="primary"
+                                        >
+                                            Save
+                                        </Button>
+                                    </Modal.Footer>
+                                </Modal>
+                                <Modal open={deleteDocModalOpen} onClose={handleClearDocument}>
+                                    <Modal.Header>
+                                        <Modal.Title>Confirm Delete</Modal.Title>
+
+                                    </Modal.Header>
+
+                                    <Modal.Body>
+                                        <p>
+                                            <RemindOutlineIcon style={{ color: '#ffca61', marginRight: '8px', fontSize: '24px' }} />
+                                            <Translate style={{ fontSize: '24px' }} >
+                                                Are you sure you want to delete this Document?
+                                            </Translate>
+                                        </p>
+                                    </Modal.Body>
+                                    <Modal.Footer>
+                                        <Button onClick={handleClearDocument} appearance="ghost" color='cyan'>
+                                            Cancel
+                                        </Button>
+                                        <Divider vertical />
+                                        <Button
+                                            onClick={handleDeleteSecondaryDocument}
+                                            appearance="primary"
+                                        >
+                                            Delete
+                                        </Button>
+                                    </Modal.Footer>
+                                </Modal>
+
+                                {/* Attachments */}
+                                <TabPanel>
+
+                                    <Modal open={attachmentsModalOpen} onClose={() => handleCleareAttachment()}>
+                                        <Modal.Header>
+                                            <Modal.Title>New/Edit Patient Attachments</Modal.Title>
+                                        </Modal.Header>
+                                        <Modal.Body>
+                                            <div
+                                                style={{
+                                                    borderRadius: '5px',
+                                                    border: '1px solid #e1e1e1',
+                                                    margin: '2px',
+                                                    position: 'relative',
+                                                    bottom: 0,
+                                                    width: '99%',
+                                                    height: 400,
+                                                    display: 'flex',
+                                                    alignContent: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
+                                                <input
+                                                    type="file"
+                                                    ref={attachmentFileInputRef}
+                                                    style={{ display: 'none' }}
+                                                    onChange={handleFileUpload}
+                                                    accept="image/*"
+                                                />
+
+                                                {newAttachmentSrc ? (
+                                                    newAttachmentSrc ? (
+                                                        <img
+
+                                                            alt={'Attachment Preview'}
+                                                            width={380}
+                                                            height={380}
+                                                            onClick={() =>
+                                                                handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
+                                                            }
+                                                            src={newAttachmentSrc}
+                                                        />
+                                                    ) : (
+                                                        <FileUploadIcon
+                                                            onClick={() => {
+                                                                handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT');
+
+                                                            }
+                                                            }
+                                                            style={{ fontSize: '250px', marginTop: '10%' }}
+                                                        />
+                                                    )
+                                                ) : selectedPatientAttacment && selectedPatientAttacment.fileContent ? (
+                                                    selectedPatientAttacment.contentType === 'application/pdf' ? (
+                                                        <DetailIcon
+                                                            onClick={() =>
+                                                                handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
+                                                            }
+                                                            style={{ fontSize: '250px', marginTop: '10%' }}
+                                                        />
+                                                    ) : (
+                                                        <img
+                                                            alt={'Attachment Preview'}
+                                                            width={380}
+                                                            height={380}
+                                                            onClick={() =>
+                                                                handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
+                                                            }
+                                                            src={`data:${selectedPatientAttacment.contentType};base64,${selectedPatientAttacment.fileContent}`}
+                                                        />
+                                                    )
+                                                ) : (
+                                                    <FileUploadIcon
+                                                        onClick={() =>
+                                                            handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')
+                                                        }
+                                                        style={{ fontSize: '250px', marginTop: '10%' }}
+                                                    />
+                                                )}
+                                            </div>
+
+                                            <br />
+                                            <Form>
+                                                <MyInput
+                                                    width={550}
+                                                    fieldName="accessTypeLkey"
+                                                    fieldType="select"
+                                                    selectData={attachmentsLovQueryResponse?.object ?? []}
+                                                    selectDataLabel="lovDisplayVale"
+                                                    fieldLabel="Type"
+                                                    selectDataValue="key"
+                                                    record={selectedAttachType}
+                                                    setRecord={setSelectedAttachType}
+                                                />
+
+                                            </Form>
+
+                                            <br />
+                                            <Input
+                                                value={newAttachmentDetails}
+                                                onChange={setNewAttachmentDetails}
+                                                as="textarea"
+                                                rows={3}
+                                                placeholder="Details"
+                                            />
+                                        </Modal.Body>
+                                        <Modal.Footer>
+                                            <Button onClick={() => handleCleareAttachment()} appearance="subtle">
+                                                Cancel
+                                            </Button>
+                                            <Divider vertical />
+                                            <Button
+                                                disabled={actionType ? false : !uploadedAttachmentOpject?.formData}
+                                                onClick={() => {
+                                                    actionType === 'view'
+                                                        ? handleUpdateAttachmentDetails()
+                                                        : upload({
+                                                            ...uploadedAttachmentOpject,
+                                                            details: newAttachmentDetails,
+                                                            accessType: selectedAttachType.accessTypeLkey,
+                                                            createdBy: authSlice.user.key
+                                                        })
+                                                            .unwrap()
+                                                            .then(() => {
+                                                                handleFinishUploading();
+                                                            })
+                                                }}
+                                                appearance="primary"
+                                            >
+                                                Save
+                                            </Button>
+                                        </Modal.Footer>
+                                    </Modal>            <Modal open={deleteModalOpen} onClose={handleClearAttachmentDelete}>
+                                        <Modal.Header>
+                                            <Modal.Title><h6>Confirm Delete</h6></Modal.Title>
+                                        </Modal.Header>
+                                        <Modal.Body>
+                                            <p>
+                                                <RemindOutlineIcon style={{ color: '#ffca61', marginRight: '8px', fontSize: '24px' }} />
+                                                <Translate style={{ fontSize: '24px' }} >
+                                                    Are you sure you want to delete this Attachment?
+                                                </Translate>
+                                            </p>
+
+                                        </Modal.Body>
+                                        <Modal.Footer>
+                                            <Button onClick={handleClearAttachmentDelete} appearance="ghost" color="cyan" >
+                                                Cancel
+                                            </Button>
+                                            <Divider vertical />
+                                            <Button
+                                                onClick={() => {
+                                                    deleteAttachment({ key: selectedAttachment.key })
+                                                        .then(() => {
+                                                            attachmentRefetch();
+                                                            fetchPatientImageResponse.refetch();
+                                                            dispatch(notify('Deleted Successfully'))
+                                                            handleClearAttachmentDelete();
+                                                        })
+                                                }}
+                                                appearance="primary"
+                                            >
+                                                Delete
+                                            </Button>
+                                        </Modal.Footer>
+                                    </Modal>
+
+                                    <ButtonToolbar style={{ padding: 1 }}>
+
+
+                                        <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
+                                            onClick={() => {
+                                                handleCleareAttachment();
+                                                setAttachmentsModalOpen(true);
+
+                                            }}
+                                            disabled={!editing || !localPatient.key}>
+
+                                            <Icon as={FaPlus} /> New Attachment
+                                        </Button>
+
+                                        <Divider vertical />
+                                    </ButtonToolbar>
+
+                                    <br />
+
+                                    <Table
+                                        height={600}
+                                        sortColumn={patientRelationListRequest.sortBy}
+                                        sortType={patientRelationListRequest.sortType}
+                                        onSortColumn={(sortBy, sortType) => {
+                                            if (sortBy)
+                                                setPatientRelationListRequest({
+                                                    ...patientRelationListRequest,
+                                                    sortBy,
+                                                    sortType
+                                                });
+                                        }}
+                                        headerHeight={40}
+                                        rowHeight={50}
+                                        bordered
+                                        cellBordered
+                                        onRowClick={rowData => {
+                                            setSelectedPatientRelation(rowData);
+                                        }}
+                                        data={patientAttachments ?? []}
+                                    >
+                                        <Column sortable flexGrow={4} fullText>
+                                            <HeaderCell>
+                                                <Translate>Attachment Name</Translate>
+                                            </HeaderCell>
+                                            <Cell dataKey="fileName" fullText />
+                                        </Column>
+
+                                        <Column sortable flexGrow={4} fullText>
+                                            <HeaderCell>
+                                                <Translate>File Type</Translate>
+                                            </HeaderCell>
+                                            <Cell dataKey="contentType" fullText />
+                                        </Column>
+
+                                        <Column sortable flexGrow={4} fullText>
+                                            <HeaderCell>
+                                                <Translate>Details</Translate>
+                                            </HeaderCell>
+                                            <Cell dataKey="extraDetails" fullText />
+                                        </Column>
+                                        <Column sortable flexGrow={4} fullText>
+                                            <HeaderCell>
+                                                <Translate>Source</Translate>
+                                            </HeaderCell>
+                                            <Cell fullText>
+                                                {rowData => rowData.accessTypeLvalue
+                                                    ? rowData.accessTypeLvalue.lovDisplayVale
+                                                    : rowData.accessTypeLkey
+
+                                                }</Cell>
+                                        </Column>
+
+                                        <Column sortable flexGrow={4} fullText>
+                                            <HeaderCell>
+                                                <Translate>Download</Translate>
+                                            </HeaderCell>
+                                            <Cell fullText>
+                                                {attachment => (
+                                                    <Button
+                                                        appearance="link"
+                                                        onClick={() => handleDownloadSelectedPatientAttachment(attachment.key)}
+                                                    >
+                                                        Download <FileDownloadIcon style={{ marginLeft: '10px', scale: '1.4' }} />
+                                                    </Button>
+                                                )}
+                                            </Cell>
+                                        </Column>
+                                        <Column sortable flexGrow={4} fullText>
+                                            <HeaderCell>
+                                                <Translate>Created By</Translate>
+                                            </HeaderCell>
+                                            <Cell fullText>
+                                                {rowData => rowData?.createdByUser?.fullName}
+                                            </Cell>
+
+                                        </Column>
+                                        <Column sortable flexGrow={4} fullText>
+                                            <HeaderCell>
+                                                <Translate>Created At</Translate>
+                                            </HeaderCell>
+                                            <Cell fullText>
+                                                {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString("en-GB") : ""}
+
+                                            </Cell>
+                                        </Column>
+                                        <Column sortable flexGrow={4} fullText>
+                                            <HeaderCell>
+                                                <Translate>Updated By</Translate>
+                                            </HeaderCell>
+                                            <Cell fullText>
+                                                {rowData => rowData?.updatedByUser?.fullName}
+                                            </Cell>
+                                        </Column>
+                                        <Column sortable flexGrow={4} fullText>
+                                            <HeaderCell>
+                                                <Translate>Updated At</Translate>
+                                            </HeaderCell>
+                                            <Cell fullText>
+
+                                                {rowData => rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
+                                            </Cell>
+                                        </Column>
+                                        <Column sortable flexGrow={4} fullText>
+                                            <HeaderCell>
+                                                <Translate>Actions</Translate>
+                                            </HeaderCell>
+                                            <Cell fullText>
+                                                {attachment => (
+                                                    <div>
+                                                        <Button
+                                                            appearance="link"
+                                                            onClick={() => handleAttachmentSelected(attachment.key)}
+                                                        >
+                                                            Preview / Edit
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </Cell>
+                                        </Column>
+                                        <Column sortable flexGrow={3} fullText>
+                                            <HeaderCell>
+                                                <Translate>Delete</Translate>
+                                            </HeaderCell>
+                                            <Cell fullText>
+                                                {attachment => (
+                                                    <div>
+
+                                                        <Button
+                                                            appearance="link"
+                                                            color="blue"
+                                                            onClick={() => handleDeleteAttachment(attachment)}
+
+                                                        >
+                                                            <TrashIcon style={{ marginLeft: '10px', scale: '1.4' }} />
+                                                        </Button>
+                                                    </div>
+                                                )}
+                                            </Cell>
+                                        </Column>
+                                    </Table>
+                                </TabPanel>
+
+                                {/* Follow Up & Activites */}
+                                <TabPanel></TabPanel>
+                            </Tabs>
                         </Panel>
-                    </Col>
-                </Row>
-            </Row>
+                    </Panel>
+                </div>
+                <div style={{ flex: expand ? "220px" : "56px", height: '90vh' }}>
+                    <Sidebar
+                        style={{ display: 'flex', flexDirection: 'column', height: '90vh', zoom: 0.8 }}
+                        width={expand ? 300 : 56}
 
-
-
-
-
-
-            <Drawer
-                size="lg"
-                placement={'left'}
-                open={searchResultVisible}
-                onClose={() => {
-                    setSearchResultVisible(false);
-                }}
-            >
-                <Drawer.Header>
-                    <Drawer.Title>Patient List - Search Results</Drawer.Title>
-                    <Drawer.Actions>{conjurePatientSearchBar(patientSearchTarget)}</Drawer.Actions>
-                </Drawer.Header>
-                <Drawer.Body>
-                    <small>
-                        * <Translate>Click to select patient</Translate>
-                    </small>
-                    <Table
-                        height={600}
-                        sortColumn={listRequest.sortBy}
-                        sortType={listRequest.sortType}
-                        onSortColumn={(sortBy, sortType) => {
-                            if (sortBy)
-                                setListRequest({
-                                    ...listRequest,
-                                    sortBy,
-                                    sortType
-                                });
-                        }}
-                        headerHeight={80}
-                        rowHeight={60}
-                        bordered
-                        cellBordered
-                        onRowClick={rowData => {
-                            handleSelectPatient(rowData);
-                            setSearchKeyword(null);
-                        }}
-                        data={patientListResponse?.object ?? []}
+                        collapsible
                     >
-                        <Column sortable flexGrow={3}>
-                            <HeaderCell>
-                                <Input onChange={e => handleFilterChange('fullName', e)} />
-                                <Translate>Patient Name</Translate>
-                            </HeaderCell>
-                            <Cell dataKey="fullName" />
-                        </Column>
-                        <Column sortable flexGrow={3}>
-                            <HeaderCell>
-                                <Input onChange={e => handleFilterChange('phoneNumber', e)} />
-                                <Translate>Mobile Number</Translate>
-                            </HeaderCell>
-                            <Cell dataKey="phoneNumber" />
-                        </Column>
-                        <Column sortable flexGrow={2}>
-                            <HeaderCell>
-                                <Input onChange={e => handleFilterChange('genderLkey', e)} />
-                                <Translate>Gender</Translate>
-                            </HeaderCell>
-                            <Cell dataKey="genderLvalue.lovDisplayVale" />
-                        </Column>
-                        <Column sortable flexGrow={2}>
-                            <HeaderCell>
-                                <Input onChange={e => handleFilterChange('patientMrn', e)} />
-                                <Translate>Mrn</Translate>
-                            </HeaderCell>
-                            <Cell dataKey="patientMrn" />
-                        </Column>
-                        <Column sortable flexGrow={3}>
-                            <HeaderCell>
-                                <Input onChange={e => handleFilterChange('documentNo', e)} />
-                                <Translate>Document No</Translate>
-                            </HeaderCell>
-                            <Cell dataKey="documentNo" />
-                        </Column>
-                        <Column sortable flexGrow={3}>
-                            <HeaderCell>
-                                <Input onChange={e => handleFilterChange('archivingNumber', e)} />
-                                <Translate>Archiving Number</Translate>
-                            </HeaderCell>
-                            <Cell dataKey="archivingNumber" />
-                        </Column>
-                        <Column sortable flexGrow={3}>
-                            <HeaderCell>
-                                <Input onChange={e => handleFilterChange('dob', e)} />
-                                <Translate>Date of Birth</Translate>
-                            </HeaderCell>
-                            <Cell dataKey="dob" />
-                        </Column>
-                    </Table>
-                    <div style={{ padding: 20 }}>
-                        <Pagination
-                            prev
-                            next
-                            first
-                            last
-                            ellipsis
-                            boundaryLinks
-                            maxButtons={5}
-                            size="xs"
-                            layout={['limit', '|', 'pager']}
-                            limitOptions={[5, 15, 30]}
-                            limit={listRequest.pageSize}
-                            activePage={listRequest.pageNumber}
-                            onChangePage={pageNumber => {
-                                setListRequest({ ...listRequest, pageNumber });
-                            }}
-                            onChangeLimit={pageSize => {
-                                setListRequest({ ...listRequest, pageSize });
-                            }}
-                            total={patientListResponse?.extraNumeric ?? 0}
-                        />
-                    </div>
-                </Drawer.Body>
-            </Drawer>
+                        <Sidenav.Header>
+                        </Sidenav.Header>
+                        <Sidenav expanded={expand} appearance="subtle" defaultOpenKeys={['2', '3']}>
+                            <Sidenav.Body style={navBodyStyle}>
+                                <Nav>
+                                    {expand ? <Panel header="Search Patient" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+                                        {conjurePatientSearchBar(patientSearchTarget)}
+                                        <br />
+                                        {patientListResponse?.object?.map(patient => (<>
+                                            <div style={{
+                                                display: 'inline-block',
+                                                width: '250px',
+                                                border: '1px solid #f0f0f0',
+                                                borderRadius: '8px',
+                                                padding: '15px',
+                                                boxShadow: '3px 10px 3px rgba(0, 177, 204, 0.1)',
 
 
+                                            }}>
+                                                <Row gutter={15}>
+                                                    <Col xs={19}>
+                                                        <Row><Avatar circle src={`data:${patient?.attachmentProfilePicture?.contentType};base64,${patient?.attachmentProfilePicture?.fileContent}`} size="md" /></Row>
+                                                        <Row><span style={{ fontSize: '14x' }}>{patient.fullName} </span></Row>
+                                                        <Row><span style={{ color: 'gray', fontSize: '12x' }}>{patient?.createdAt ? new Date(localPatient?.createdAt).toLocaleString("en-GB") : ""} </span></Row>
+                                                        <Row><span style={{ color: 'gray', fontSize: '12px' }}>{patient.patientMrn} </span></Row>
+                                                    </Col>
+
+                                                    <Col xs={5}>
+                                                        <Row>
+
+                                                            <Button>
+                                                                <MoreIcon style={{ width: '10px', height: '10px' }} />
+                                                            </Button>
+                                                        </Row>
+                                                        <br />
+
+                                                        <br />
+                                                        <br />
+                                                        <Row><Button appearance="ghost" style={{ color: ' #00b1cc', border: '1px solid  #00b1cc' }} onClick={() => setLocalPatient(patient)} >
+                                                            <ArrowLeftLineIcon style={{ width: '10px', height: '10px' }} />
+                                                        </Button>
+                                                        </Row>
+                                                    </Col>
+                                                </Row>
+                                            </div>
+
+                                            <br /></>
+
+                                        ))}
+
+
+                                    </Panel> : <div style={{ display: 'flex', alignItems: 'center', width: '65px', height: '50px', padding: '10px' }}> <SearchPeopleIcon style={{ width: '25px', height: '25px' }} /></div>}
+
+                                </Nav>
+                            </Sidenav.Body>
+                        </Sidenav>
+                        <ArrowLineToggle expand={expand} onChange={() => setExpand(!expand)} />
+                    </Sidebar>
+                </div>
+            </div>
             <Drawer
                 size="lg"
                 placement={'right'}
                 open={encounterHistoryModalOpen}
-                onClose={() => setEncounterHistoryModalOpen(false)}
+              onClose={() => setEncounterHistoryModalOpen(false)}
             >
                 <Drawer.Header>
                     <Drawer.Title>Patient Visit History</Drawer.Title>
@@ -3476,6 +3554,8 @@ const PatientProfileCopy = () => {
                     </div>
                 </Drawer.Body>
             </Drawer>
+
+
         </>
     );
 };

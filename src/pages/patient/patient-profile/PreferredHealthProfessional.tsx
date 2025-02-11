@@ -19,6 +19,8 @@ import {
     useGetFacilitiesQuery
 
 } from '@/services/setupService';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUserPen } from '@fortawesome/free-solid-svg-icons';
 import {
     useSavePatientPreferredHealthProfessionalMutation,
     useGetPatientPreferredHealthProfessionalQuery,
@@ -56,7 +58,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
             }
         ]
     });
-   
+
     const { data: patientPreferredHealthProfessionalResponse, refetch: patientPreferredHealthProfessionalRefetch } =
         useGetPatientPreferredHealthProfessionalQuery(patientPreferredHealthProfessional, { skip: !patient.key });
 
@@ -254,9 +256,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
             </Modal>
 
             <ButtonToolbar style={{ padding: 1 }}>
-                <IconButton
-
-                    icon={<Icon as={FaPlus} />}
+                <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
                     onClick={() => {
                         setPatientHP({ ...newApPatientPreferredHealthProfessional });
                         setPractitioner({ ...newApPractitioner });
@@ -264,36 +264,38 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
                         setPreferredHealthModalOpen(true);
 
                     }}
-                    appearance="primary"
-                    color='cyan'
-                    disabled={isClick}
-                >
-                    <Translate>New Preferred Health Professional</Translate>
-                </IconButton>
+                    disabled={isClick}>
+                    <PlusRound />   New Preferred Health Professional
+                </Button>
 
-                <IconButton
 
-                    icon={<Icon as={FaPencil} />}
+
+
+                <Button
+                    disabled={isClick || !editable}
                     onClick={() => {
                         setPreferredHealthModalOpen(true);
                     }}
-                    disabled={isClick || !editable}
-                    appearance="primary"
-                    color="cyan"
+                    appearance="ghost"
+                    style={{ border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: "3px" }}
+
                 >
-                    <Translate>Edit</Translate>
-                </IconButton>
 
+                    <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: '#007e91' }} />
 
-                <IconButton
+                    <span>Edit</span>
+                </Button>
+
+                <Button
                     disabled={isClick || !editable}
-                    appearance="primary"
-                    color="blue"
-                    icon={<TrashIcon />}
+
+                    style={{ border: '1px solid  #007e91', backgroundColor: 'white', color: '#007e91', display: 'flex', alignItems: 'center', gap: '5px' }}
+
                     onClick={() => { setDeletePreferredHealthModalOpen(true) }}
                 >
-                    <Translate>Delete</Translate>
-                </IconButton>
+                    <TrashIcon /> <Translate>Delete</Translate>
+                </Button>
+
             </ButtonToolbar>
 
             <br />

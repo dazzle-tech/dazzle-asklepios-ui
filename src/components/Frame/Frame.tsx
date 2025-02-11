@@ -78,7 +78,7 @@ const Frame = (props: FrameProps) => {
   return (
     <Container className="frame">
       <Sidebar 
-        style={{ display: 'flex', flexDirection: 'column', height: '102vh' }}
+        style={{ display: 'flex', flexDirection: 'column', height: '102vh'}}
         width={expand ? 260 : 56}
         collapsible
       >
@@ -95,6 +95,7 @@ const Frame = (props: FrameProps) => {
                       {children.map(child => {
                         return (
                           <NavItem
+                  
                             onClick={() => {
                               dispatch(setScreenKey(child.eventKey));
                             }}
