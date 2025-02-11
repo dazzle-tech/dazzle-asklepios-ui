@@ -2,7 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApConsultationOrder, ApCustomeInstructions, ApDrugOrder, ApDrugOrderMedications, ApEncounter, ApPatientDiagnose, ApPatientEncounterOrder, ApPatientPlan, ApPrescription, ApPrescriptionMedications, ApProcedure, ApReviewOfSystem, ApVisitAllergies } from '@/types/model-types';
+import { ApConsultationOrder, ApCustomeInstructions, ApDiagnosticOrders, ApDiagnosticOrderTests, ApDrugOrder, ApDrugOrderMedications, ApEncounter, ApPatientDiagnose, ApPatientEncounterOrder, ApPatientPlan, ApPrescription, ApPrescriptionMedications, ApProcedure, ApReviewOfSystem, ApVisitAllergies } from '@/types/model-types';
 
 export const encounterService = createApi({
   reducerPath: 'encounterApi',
@@ -332,6 +332,42 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
+    getDiagnosticOrder: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/diagnostic-order-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+   saveDiagnosticOrder: builder.mutation({
+      query: (order: ApDiagnosticOrders) => ({
+        url: `/encounter/save-diagnostic-order`,
+        method: 'POST',
+        body: order
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getDiagnosticOrderTest: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/diagnostic-order-test-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+   saveDiagnosticOrderTest: builder.mutation({
+      query: (order:ApDiagnosticOrderTests) => ({
+        url: `/encounter/save-diagnostic-order-tests`,
+        method: 'POST',
+        body: order
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
 
    
   })
@@ -371,7 +407,11 @@ export const {
  useGetDrugOrderMedicationQuery,
  useSaveDrugOrderMedicationMutation,
  useGetProceduresQuery,
- useSaveProceduresMutation
+ useSaveProceduresMutation,
+ useGetDiagnosticOrderQuery,
+ useGetDiagnosticOrderTestQuery,
+ useSaveDiagnosticOrderMutation,
+ useSaveDiagnosticOrderTestMutation
 
   
 } = encounterService;
