@@ -12,7 +12,7 @@ import { AvatarGroup, Avatar } from 'rsuite';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import WarningIcon from '@rsuite/icons/legacy/Warning';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import StarIcon from '@rsuite/icons/Star';
+
 import {
   faHandDots,
   faTriangleExclamation
@@ -24,7 +24,9 @@ import {
   faComments,
   faVialCircleCheck,
   faDiagramPredecessor,
-  faFilter
+  faFilter,
+  faStar,
+  
 } from '@fortawesome/free-solid-svg-icons';
 import React from 'react';
 import './styles.less';
@@ -712,8 +714,9 @@ const Lab = () => {
                       <WarningRoundIcon style={{ fontSize: '1em', marginRight: 10 }} />
                       <CheckRoundIcon style={{ fontSize: '1em', marginRight: 10 }} />
                       <ConversionIcon style={{ fontSize: '1em', marginRight: 10 }} />
-                      <StarIcon style={{ fontSize: '1em', marginRight: 10 }} />
+                      \
                       <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: 10 }} />
+                      <FontAwesomeIcon icon={faStar} style={{ fontSize: '1em', marginRight: 10 }} />
                     </HStack>
                     // <div style={{ display: 'flex', gap: '5px' }}>
 
