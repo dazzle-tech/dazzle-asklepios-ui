@@ -113,38 +113,35 @@ const Frame = (props: FrameProps) => {
                 width={ 100 }
               />}
             {expand&&
-               <Card 
-               direction="row"
-               style={{
+               <div
                
+               style={{
                  display: 'flex',
                  alignItems: 'center',
-                 marginLeft:'15px',
+                 marginLeft: '15px',
                  padding: '12px 15px',
-                 borderRadius: '10px',
-                 boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
+                 borderRadius: '15px',
+                 boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)', 
                  backgroundColor: '#f9f9f9',
-                 border: '1px solid #ddd',
-                 width: '220px'
+                 width: '220px',
+                 border: '1px solid #ddd'
                }}
              >
-               {/* الأيقونة */}
                <FontAwesomeIcon 
                  icon={faHospital} 
                  size="lg" 
                  style={{ color: '#666', marginRight: '12px' }} 
                />
-         
-               {/* النصوص */}
+             
                <div>
                  <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#333' }}>
-                 Health Organization1
+                   Health Organization1
                  </div>
                  <div style={{ fontSize: '10px', color: '#777' }}>
                    845 Euclid Avenue, CA
                  </div>
                </div>
-             </Card>}
+             </div>}
               {navs.map(item => {
                 const { children, ...rest } = item;
                 if (children) {
