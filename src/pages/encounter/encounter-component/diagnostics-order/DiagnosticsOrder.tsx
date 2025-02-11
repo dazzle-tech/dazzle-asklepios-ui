@@ -4,6 +4,7 @@ import './styles.less';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import FileDownloadIcon from '@rsuite/icons/FileDownload';
+import DocPassIcon from '@rsuite/icons/DocPass';
 import {
     InputGroup,
     Form,
@@ -23,7 +24,7 @@ import {
     SelectPicker
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
-import { ApDiagnosticOrders, ApDiagnosticOrderTests, ApPatientEncounterOrder } from '@/types/model-types';
+import { ApDiagnosticOrders, ApDiagnosticOrderTests, ApDiagnosticTest, ApPatientEncounterOrder } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import {
     useGetLovValuesByCodeQuery,
@@ -57,13 +58,14 @@ import {
 import SearchIcon from '@rsuite/icons/Search';
 import MyInput from '@/components/MyInput';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { newApDiagnosticOrders, newApDiagnosticOrderTests, newApPatientEncounterOrder } from '@/types/model-types-constructor';
+import { newApDiagnosticOrders, newApDiagnosticOrderTests, newApDiagnosticTest, newApPatientEncounterOrder } from '@/types/model-types-constructor';
 import { isValid } from 'date-fns';
 const DiagnosticsOrder = ({ edit }) => {
     const patientSlice = useAppSelector(state => state.patient);
     const dispatch = useAppDispatch();
     const [showCanceled, setShowCanceled] = useState(true);
     const [order, setOrder] = useState<ApPatientEncounterOrder>({ ...newApPatientEncounterOrder });
+    const [test, setTest] = useState<ApDiagnosticTest>({ ...newApDiagnosticTest });
     const [searchKeyword, setSearchKeyword] = useState('');
     const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -79,11 +81,6 @@ const DiagnosticsOrder = ({ edit }) => {
                 fieldName: 'visit_key',
                 operator: 'match',
                 value: patientSlice.encounter.key
-            },
-            {
-                fieldName: 'is_valid',
-                operator: 'match',
-                value: showCanceled
             }
         ]
     });
@@ -108,7 +105,7 @@ const DiagnosticsOrder = ({ edit }) => {
         ]
     });
     const [orders, setOrders] = useState<ApDiagnosticOrders>({ ...newApDiagnosticOrders });
-    const[orderTest,setOrderTest]=useState<ApDiagnosticOrderTests>({...newApDiagnosticOrderTests});
+    const [orderTest, setOrderTest] = useState<ApDiagnosticOrderTests>({ ...newApDiagnosticOrderTests });
     const [listOrdersTestRequest, setListOrdersTestRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -120,7 +117,7 @@ const DiagnosticsOrder = ({ edit }) => {
             {
                 fieldName: 'order_key',
                 operator: 'match',
-                value:orders.key  ||undefined
+                value: orders.key || undefined
             },
             {
                 fieldName: 'is_valid',
@@ -131,11 +128,10 @@ const DiagnosticsOrder = ({ edit }) => {
     });
     const [selectedRows, setSelectedRows] = useState([]);
     const { data: testsList } = useGetDiagnosticsTestListQuery(listTestRequest);
-    // const { data: orderList, refetch: orderRefetch } = useGetPatientEncounterOrdersQuery(listOrderRequest);
     const { data: ordersList, refetch: ordersRefetch } = useGetDiagnosticOrderQuery(listOrdersRequest);
     const { data: orderTestList, refetch: orderTestRefetch } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
-   
-   
+
+
     const [savePatientOrder, savePatientOrderMutation] = useSavePatientEncounterOrderMutation();
     const [saveOrders, saveOrdersMutation] = useSaveDiagnosticOrderMutation();
     const [saveOrderTests, saveOrderTestsMutation] = useSaveDiagnosticOrderTestMutation();
@@ -168,6 +164,7 @@ const DiagnosticsOrder = ({ edit }) => {
         { key: requestedPatientAttacment },
         { skip: !requestedPatientAttacment || !order.key }
     );
+    const [isdraft, setIsDraft] = useState(false);
     const isSelected = rowData => {
         if (rowData && order && rowData.key === order.key) {
             return 'selected-row';
@@ -176,7 +173,18 @@ const DiagnosticsOrder = ({ edit }) => {
     const filteredOrders = ordersList?.object?.filter(
         (item) => item.statusLkey === "1804482322306061"
     ) ?? [];
-
+    useEffect(() => {
+        const draftOrder = ordersList?.object?.find((order) => order.saveDraft === true);
+        console.log(ordersList?.object)
+        console.log(draftOrder);
+        if (draftOrder != null) {
+            setIsDraft(true);
+            setOrders({ ...draftOrder });
+        }
+    }, [ordersList]);
+    useEffect(() => {
+        console.log("test", test)
+    }, [test])
     useEffect(() => {
         if (searchKeyword.trim() !== "") {
             setListRequest(
@@ -197,8 +205,8 @@ const DiagnosticsOrder = ({ edit }) => {
     }, [searchKeyword]);
 
     useEffect(() => {
-        console.log(showCanceled)
-        setListOrderRequest({
+
+        setListOrdersTestRequest({
             ...initialListRequest,
             filters: [
                 {
@@ -219,6 +227,42 @@ const DiagnosticsOrder = ({ edit }) => {
             ]
         })
     }, [showCanceled]);
+
+    useEffect(() => {
+        const updatedFilters = [
+            {
+                fieldName: 'patient_key',
+                operator: 'match',
+                value: patientSlice.patient.key
+            },
+            {
+                fieldName: 'order_key',
+                operator: 'match',
+                value: orders.key || undefined
+            },
+            {
+                fieldName: 'is_valid',
+                operator: 'match',
+                value: showCanceled
+            }
+        ];
+
+        setListOrdersTestRequest((prevRequest) => ({
+
+            ...prevRequest,
+            filters: updatedFilters,
+
+        }));
+
+    }, [orders])
+    useEffect(() => {
+        console.log("iam in useefect download")
+        if (isSuccess && fetchAttachmentByKeyResponce) {
+            if (actionType === 'download') {
+                handleDownload(fetchAttachmentByKeyResponce);
+            }
+        }
+    }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
     const handleDownload = async (attachment) => {
         try {
             if (!attachment?.fileContent || !attachment?.contentType || !attachment?.fileName) {
@@ -256,46 +300,11 @@ const DiagnosticsOrder = ({ edit }) => {
             console.error("Error during file download:", error);
         }
     };
-    useEffect(()=>{
-        const updatedFilters =   [
-            {
-                fieldName: 'patient_key',
-                operator: 'match',
-                value: patientSlice.patient.key
-            },
-            {
-                fieldName: 'order_key',
-                operator: 'match',
-                value:orders.key  ||undefined
-            },
-            {
-                fieldName: 'is_valid',
-                operator: 'match',
-                value: showCanceled
-            }
-        ];
-    
-        setListOrdersTestRequest((prevRequest) =>({
-           
-                ...prevRequest,
-                filters: updatedFilters,
-           
-        }));
-     
-    },[orders])
-    useEffect(() => {
-        console.log("iam in useefect download")
-        if (isSuccess && fetchAttachmentByKeyResponce) {
-            if (actionType === 'download') {
-                handleDownload(fetchAttachmentByKeyResponce);
-            }
-        }
-    }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
     const handleDownloadSelectedPatientAttachment = attachmentKey => {
 
         setRequestedPatientAttacment(attachmentKey);
         setActionType('download');
-        console.log("iam in download atach atKey= " + attachmentKey)
+
     };
 
 
@@ -335,7 +344,7 @@ const DiagnosticsOrder = ({ edit }) => {
             await saveOrderTests(orderTest).unwrap();
             setOpenDetailsModel(false);
             dispatch(notify('saved  Successfully'));
-             
+
             orderTestRefetch().then(() => {
                 console.log("Refetch complete");
             }).catch((error) => {
@@ -369,23 +378,24 @@ const DiagnosticsOrder = ({ edit }) => {
 
             dispatch(notify('All orders saved successfully'));
 
-           
+
             setSelectedRows([]);
         } catch (error) {
             console.error("Encounter save failed:", error);
             dispatch(notify('One or more saves failed'));
         }
     };
+
+
     // new Date().toISOString()
     const handleCancle = async () => {
-        console.log(selectedRows);
 
         try {
             await Promise.all(
                 selectedRows.map(item => saveOrderTests({ ...item, statusLkey: '1804447528780744', isValid: false }).unwrap())
             );
 
-            dispatch(notify('All orders deleted successfully'));
+            dispatch(notify({ msg: 'All orders deleted successfully', sev: 'success' }));
 
             orderTestRefetch().then(() => {
                 console.log("Refetch complete");
@@ -396,7 +406,7 @@ const DiagnosticsOrder = ({ edit }) => {
             CloseConfirmDeleteModel();
         } catch (error) {
             console.error("Encounter save failed:", error);
-            dispatch(notify('One or more deleted failed'));
+            dispatch(notify({ msg: 'One or more deleted failed', sev: 'error' }));
             CloseConfirmDeleteModel();
         }
     };
@@ -407,7 +417,7 @@ const DiagnosticsOrder = ({ edit }) => {
                 ...ordersList,
                 patientKey: patientSlice.patient.key,
                 visitKey: patientSlice.encounter.key,
-                orderKey:orders.key,
+                orderKey: orders.key,
                 testKey: test.key,
                 statusLkey: "164797574082125"
             }).unwrap();
@@ -465,7 +475,8 @@ const DiagnosticsOrder = ({ edit }) => {
                 submittedAt: Date.now()
             }).unwrap();
             dispatch(notify('submetid  Successfully'));
-            orderTestRefetch()
+            ordersRefetch();
+            orderTestRefetch();
             // handleCleare();
             // preRefetch().then(() => "");
             // medicRefetch().then(() => "");
@@ -475,15 +486,38 @@ const DiagnosticsOrder = ({ edit }) => {
             console.error("Error saving :", error);
         }
 
-       orderTestList?.object?.map((item) => {
+        orderTestList?.object?.map((item) => {
             saveOrderTests({ ...item, statusLkey: "1804482322306061", submitDate: Date.now() })
         })
-        orderTestRefetch().then(() => ""); 
+        orderTestRefetch().then(() => "");
 
 
 
     }
-   
+    const saveDraft = async () => {
+        try {
+            saveOrders({ ...orders, saveDraft: true }).unwrap().then
+                (() => {
+                    setIsDraft(true);
+                    dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+                })
+        }
+        catch (error) {
+
+        }
+    }
+    const cancleDraft = async () => {
+        try {
+            saveOrders({ ...orders, saveDraft: false }).unwrap().then
+                (() => {
+                    setIsDraft(false);
+                    dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+                })
+        }
+        catch (error) {
+
+        }
+    }
     return (
         <>
             <div style={{ marginLeft: '10px', padding: '5px', border: '1px solid #b6b7b8' }}>
@@ -496,23 +530,51 @@ const DiagnosticsOrder = ({ edit }) => {
                             labelKey="orderId"
                             valueKey="key"
                             placeholder="orders"
-                           
+
                             value={orders.key ?? null}
                             onChange={(value) => {
-                                const selectedItem = filteredOrders.find(item => item.key === value) || newApDiagnosticOrders; 
+                                const selectedItem = filteredOrders.find(item => item.key === value) || newApDiagnosticOrders;
                                 setOrders(selectedItem);
-                              }}
+                            }}
 
                         />
                     </Col>
                     <Col xs={8}>   <Text>Current Prescription ID : {orders.orderId}</Text></Col>
-                    <Col xs={5}></Col>
+                    <Col xs={2}></Col>
+                    <Col xs={3} >
+                        {
+                            !isdraft &&
+                            <IconButton
+                                color="cyan"
+                                appearance="primary"
+                                onClick={saveDraft}
+                                icon={<DocPassIcon />}
+                                disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
+                            >
+                                <Translate> Save draft</Translate>
+                            </IconButton>
+
+                        }
+                        {
+                            isdraft &&
+                            <IconButton
+                                color="red"
+                                appearance="primary"
+                                onClick={cancleDraft}
+                                icon={<DocPassIcon />}
+                                disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
+                            >
+                                <Translate> Cancle draft </Translate>
+                            </IconButton>
+
+                        }</Col>
+
                     <Col xs={2}>
                         <IconButton
                             color="cyan"
                             appearance="primary"
                             onClick={handleSubmitPres}
-                            disabled={orders.key === null}
+                            disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
                             icon={<CheckIcon />}
                         >
                             <Translate>Submit</Translate>
@@ -524,7 +586,7 @@ const DiagnosticsOrder = ({ edit }) => {
                             color="cyan"
                             appearance="ghost"
                             onClick={handleSaveOrders}
-                            // disabled={isdraft}
+                            disabled={isdraft}
                             style={{ marginLeft: 'auto' }}
                             // className={edit ? "disabled-panel" : ""}
                             icon={<PlusIcon />}
@@ -537,7 +599,7 @@ const DiagnosticsOrder = ({ edit }) => {
                     <Divider />
                 </Row>
                 <Row>
-                    <Col  xs={24}>
+                    <Col xs={24}>
                         <div className='top-container'>
 
                             <div className='form-search-container '>
@@ -545,7 +607,7 @@ const DiagnosticsOrder = ({ edit }) => {
                                     <Text>Add test</Text>
                                     <InputGroup inside className='input-search'>
                                         <Input
-                                            disabled={orders.key==null}
+                                            disabled={orders.key == null}
                                             placeholder={'Search Test '}
                                             value={searchKeyword}
                                             onChange={handleSearch}
@@ -571,9 +633,9 @@ const DiagnosticsOrder = ({ edit }) => {
                                     )}
                                     <Checkbox
                                         checked={!showCanceled}
-                                        disabled={orders.key==null}
+                                        disabled={orders.key == null}
                                         onChange={() => {
-                                        
+
 
                                             setShowCanceled(!showCanceled);
                                         }}
@@ -588,13 +650,13 @@ const DiagnosticsOrder = ({ edit }) => {
                             <div className='space-container'></div>
 
                             <div className="buttons-sect">
-                                
+
                                 <IconButton
                                     color="cyan"
                                     appearance="primary"
                                     onClick={OpenConfirmDeleteModel}
                                     icon={<CloseOutlineIcon />}
-                                    disabled={orders.key!==null?selectedRows.length === 0:true}
+                                    disabled={orders.key !== null ? selectedRows.length === 0 : true}
                                 >
                                     <Translate>Cancel</Translate>
                                 </IconButton>
@@ -627,6 +689,7 @@ const DiagnosticsOrder = ({ edit }) => {
                     data={orderTestList?.object ?? []}
                     onRowClick={rowData => {
                         setOrderTest(rowData);
+                        setTest(rowData.test);
                         console.log(fetchPatintAttachmentsResponce)
                     }}
                     rowClassName={isSelected}
@@ -655,15 +718,14 @@ const DiagnosticsOrder = ({ edit }) => {
                             <Translate>Order Type</Translate>
                         </HeaderCell>
                         <Cell dataKey="orderTypeLkey">
-                            {rowData =>
-                            {
-                           
-                            const matchedTest = testsList?.object?.find(item => item.testTypeLkey === rowData.test.testTypeLkey);
-                          
-                            return matchedTest ? matchedTest.
-                                testTypeLvalue
-                                .lovDisplayVale : "";
-                        }}
+                            {rowData => {
+
+                                const matchedTest = testsList?.object?.find(item => item.testTypeLkey === rowData.test.testTypeLkey);
+
+                                return matchedTest ? matchedTest.
+                                    testTypeLvalue
+                                    .lovDisplayVale : "";
+                            }}
                         </Cell>
 
                     </Column>
@@ -673,7 +735,7 @@ const DiagnosticsOrder = ({ edit }) => {
                             <Translate>Test Name</Translate>
                         </HeaderCell>
                         <Cell>
-                        {rowData =>rowData.test.testName }
+                            {rowData => rowData.test.testName}
 
                         </Cell>
                     </Column>
@@ -683,8 +745,8 @@ const DiagnosticsOrder = ({ edit }) => {
                             <Translate>Internal Code</Translate>
                         </HeaderCell>
                         <Cell dataKey="internalCode" >
-                             {rowData =>rowData.test.internalCode }
-                            </Cell>
+                            {rowData => rowData.test.internalCode}
+                        </Cell>
 
                     </Column>
                     <Column flexGrow={2}>
@@ -708,7 +770,7 @@ const DiagnosticsOrder = ({ edit }) => {
                             {rowData =>
                                 rowData.test.internationalCodeTwo
                             }
-                            
+
                             {rowData =>
                                 rowData.test.internationalCodeThree
                             }
@@ -745,7 +807,7 @@ const DiagnosticsOrder = ({ edit }) => {
                         </HeaderCell>
                         <Cell dataKey="notes" />
                     </Column>
-                  
+
                     <Column flexGrow={3}>
                         <HeaderCell align="center">
                             <Input onChange={e => handleFilterChange('createdAt', e)} />
@@ -761,7 +823,9 @@ const DiagnosticsOrder = ({ edit }) => {
 
                             <Translate>Add details</Translate>
                         </HeaderCell>
-                        <Cell  ><IconButton onClick={OpenDetailsModel} icon={<OthersIcon />} /></Cell>
+                        <Cell  >
+                            <IconButton onClick={OpenDetailsModel} icon={<OthersIcon />} />
+                        </Cell>
                     </Column>
                 </Table>
             </Row>
@@ -773,25 +837,20 @@ const DiagnosticsOrder = ({ edit }) => {
                     <div className='form-search-container '>
                         <div>
                             <Form layout="inline" fluid>
-                                <MyInput
-                                    column
+                                <Input
+                                  style={{width:150}}
                                     disabled={true}
-                                    width={150}
-                                    fieldLabel="Test Type"
-                                    fieldName={'orderTypeLkey'}
-                                    record={order}
-                                    setRecord={setOrder}
+                                  
+                                    value={test?.testTypeLvalue?.lovDisplayVale}
                                 />
 
-                                <MyInput
-                                    column
+                                <Input
+
                                     disabled={true}
-                                    width={150}
-                                    fieldLabel="Test Name"
-                                    fieldName={'testName'}
-                                    record={orderTest}
-                                    setRecord={setOrderTest}
+                                    style={{width:150}}
+                                    value={test?.testName}
                                 />
+
                             </Form>
                         </div>
                         <div>
