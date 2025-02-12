@@ -60,7 +60,6 @@ import MyInput from '@/components/MyInput';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { newApDiagnosticOrders, newApDiagnosticOrderTests, newApDiagnosticTest, newApPatientEncounterOrder } from '@/types/model-types-constructor';
 import { isValid } from 'date-fns';
-import { OrderList } from 'primereact/orderlist';
 const DiagnosticsOrder = ({ edit }) => {
     const patientSlice = useAppSelector(state => state.patient);
     const dispatch = useAppDispatch();
@@ -106,7 +105,7 @@ const DiagnosticsOrder = ({ edit }) => {
         ]
     });
     const [orders, setOrders] = useState<ApDiagnosticOrders>({ ...newApDiagnosticOrders });
-    const [orderTest, setOrderTest] = useState<ApDiagnosticOrderTests>({ ...newApDiagnosticOrderTests,processingStatusLkey:'6053140045975671' });
+    const [orderTest, setOrderTest] = useState<ApDiagnosticOrderTests>({ ...newApDiagnosticOrderTests });
     const [listOrdersTestRequest, setListOrdersTestRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -340,7 +339,7 @@ const DiagnosticsOrder = ({ edit }) => {
     const CloseConfirmDeleteModel = () => {
         setConfirmDeleteModel(false);
     }
-    const handleSaveTest = async () => {
+    const handleSaveOrder = async () => {
         try {
             await saveOrderTests(orderTest).unwrap();
             setOpenDetailsModel(false);
@@ -368,6 +367,23 @@ const DiagnosticsOrder = ({ edit }) => {
                 return [...prev, key];
             }
         });
+    };
+    const handleSubmit = async () => {
+        console.log(selectedRows);
+
+        try {
+            await Promise.all(
+                selectedRows.map(item => savePatientOrder({ ...item, submitDate: Date.now(), statusLkey: '1804482322306061' }).unwrap())
+            );
+
+            dispatch(notify('All orders saved successfully'));
+
+
+            setSelectedRows([]);
+        } catch (error) {
+            console.error("Encounter save failed:", error);
+            dispatch(notify('One or more saves failed'));
+        }
     };
 
 
@@ -397,16 +413,13 @@ const DiagnosticsOrder = ({ edit }) => {
     const handleItemClick = async (test) => {
 
         try {
-            
             await saveOrderTests({
                 ...ordersList,
                 patientKey: patientSlice.patient.key,
                 visitKey: patientSlice.encounter.key,
                 orderKey: orders.key,
                 testKey: test.key,
-                statusLkey: "164797574082125",
-                processingStatusLkey:'6053140045975671'
-
+                statusLkey: "164797574082125"
             }).unwrap();
             dispatch(notify('saved  Successfully'));
 
@@ -464,7 +477,9 @@ const DiagnosticsOrder = ({ edit }) => {
             dispatch(notify('submetid  Successfully'));
             ordersRefetch();
             orderTestRefetch();
-           
+            // handleCleare();
+            // preRefetch().then(() => "");
+            // medicRefetch().then(() => "");
 
         }
         catch (error) {
@@ -474,13 +489,8 @@ const DiagnosticsOrder = ({ edit }) => {
         orderTestList?.object?.map((item) => {
             saveOrderTests({ ...item, statusLkey: "1804482322306061", submitDate: Date.now() })
         })
-        setIsDraft(false);
-      
-        await ordersRefetch();
-        
-       orderTestRefetch().then(() => "");
-       setOrders({...newApDiagnosticOrders});
-          
+        orderTestRefetch().then(() => "");
+
 
 
     }
@@ -529,20 +539,8 @@ const DiagnosticsOrder = ({ edit }) => {
 
                         />
                     </Col>
-                    <Col xs={8}>   <Text>Current Orders ID : {orders.orderId}</Text></Col>
-                    <Col xs={2}>
-                    <Form fluid layout='inline' style={{zoom:0.80}} >
-                        <MyInput
-                        disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
-                        column
-                        fieldType='checkbox'
-                        fieldName={'isUrgent'}
-                        record={orders}
-                        setRecord={setOrders}
-                        />
-
-                        
-                        </Form></Col>
+                    <Col xs={8}>   <Text>Current Prescription ID : {orders.orderId}</Text></Col>
+                    <Col xs={2}></Col>
                     <Col xs={3} >
                         {
                             !isdraft &&
@@ -714,7 +712,7 @@ const DiagnosticsOrder = ({ edit }) => {
 
 
                     </Column>
-                    <Column flexGrow={2} fullText>
+                    <Column flexGrow={2}>
                         <HeaderCell align="center">
                             <Input onChange={e => handleFilterChange('orderType', e)} />
                             <Translate>Order Type</Translate>
@@ -741,7 +739,7 @@ const DiagnosticsOrder = ({ edit }) => {
 
                         </Cell>
                     </Column>
-                    <Column flexGrow={2} fullText>
+                    <Column flexGrow={2}>
                         <HeaderCell align="center">
                             <Input onChange={e => handleFilterChange('InternalCode', e)} />
                             <Translate>Internal Code</Translate>
@@ -751,7 +749,7 @@ const DiagnosticsOrder = ({ edit }) => {
                         </Cell>
 
                     </Column>
-                    <Column flexGrow={2} fullText>
+                    <Column flexGrow={2}>
                         <HeaderCell align="center">
                             <Input onChange={e => handleFilterChange('statusLkey', e)} />
                             <Translate>Status</Translate>
@@ -760,7 +758,7 @@ const DiagnosticsOrder = ({ edit }) => {
                             {rowData => rowData.statusLvalue.lovDisplayVale}
                         </Cell>
                     </Column>
-                    <Column flexGrow={3} fullText>
+                    <Column flexGrow={3}>
                         <HeaderCell align="center">
                             <Input onChange={e => handleFilterChange('InternationalCoding', e)} />
                             <Translate>International Coding</Translate>
@@ -778,7 +776,7 @@ const DiagnosticsOrder = ({ edit }) => {
                             }
                         </Cell>
                     </Column>
-                    <Column flexGrow={2} fullText>
+                    <Column flexGrow={2}>
                         <HeaderCell align="center">
                             <Input onChange={e => handleFilterChange('receivedLabLkey', e)} />
                             <Translate>Received Lab</Translate>
@@ -787,23 +785,14 @@ const DiagnosticsOrder = ({ edit }) => {
                             {rowData => rowData.receivedLabLvalue?.lovDisplayVale || ""}
                         </Cell>
                     </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('receivedLabLkey', e)} />
-                            <Translate> Processing Status</Translate>
-                        </HeaderCell>
-                        <Cell  >
-                            {rowData => rowData. processingStatusLvalue? rowData.processingStatusLvalue?.lovDisplayVale:rowData.processingStatusLkey}
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
+                    <Column flexGrow={2}>
                         <HeaderCell align="center">
                             <Input onChange={e => handleFilterChange('reasonLkey', e)} />
                             <Translate>Reason </Translate>
                         </HeaderCell>
                         <Cell >{rowData => rowData.reasonLvalue?.lovDisplayVale || ""}</Cell>
                     </Column>
-                    <Column flexGrow={2} fullText>
+                    <Column flexGrow={2}>
                         <HeaderCell align="center">
                             <Input onChange={e => handleFilterChange('priorityLkey', e)} />
                             <Translate>Priority</Translate>
@@ -811,7 +800,7 @@ const DiagnosticsOrder = ({ edit }) => {
                         <Cell >{rowData => rowData.priorityLvalue?.lovDisplayVale || ''}
                         </Cell>
                     </Column>
-                    <Column flexGrow={2} fullText>
+                    <Column flexGrow={2}>
                         <HeaderCell align="center">
                             <Input onChange={e => handleFilterChange('notes', e)} />
                             <Translate>Notes</Translate>
@@ -819,7 +808,7 @@ const DiagnosticsOrder = ({ edit }) => {
                         <Cell dataKey="notes" />
                     </Column>
 
-                    <Column flexGrow={3} fullText>
+                    <Column flexGrow={3}>
                         <HeaderCell align="center">
                             <Input onChange={e => handleFilterChange('createdAt', e)} />
                             <Translate>Submit Date</Translate>
@@ -829,7 +818,7 @@ const DiagnosticsOrder = ({ edit }) => {
 
                         </Cell>
                     </Column>
-                    <Column flexGrow={2} fullText>
+                    <Column flexGrow={2}>
                         <HeaderCell align="center">
 
                             <Translate>Add details</Translate>
@@ -948,7 +937,7 @@ const DiagnosticsOrder = ({ edit }) => {
                 </Modal.Body>
                 <Modal.Footer>
                     <Stack spacing={2} divider={<Divider vertical />}>
-                        <Button appearance="primary" disabled={orderTest.statusLkey !== '164797574082125'} onClick={handleSaveTest}>
+                        <Button appearance="primary" disabled={orderTest.statusLkey !== '164797574082125'} onClick={handleSaveOrder}>
                             Save
                         </Button>
                         <Button appearance="ghost" color="cyan" onClick={CloseDetailsModel}>

@@ -596,8 +596,6 @@ export const newApDiagnosticOrderTests:modelTypes.ApDiagnosticOrderTests = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
-	processingStatusLkey:undefined,
-	submitDate:0,
 } 
 
 export const newApDiagnosticOrders:modelTypes.ApDiagnosticOrders = { 
@@ -616,7 +614,6 @@ export const newApDiagnosticOrders:modelTypes.ApDiagnosticOrders = {
 	saveDraft:undefined,
 	submittedBy:'',
 	submittedAt:0,
-	isUrgent:undefined,
 } 
 
 export const newApDiagnosticTest:modelTypes.ApDiagnosticTest = { 
@@ -997,7 +994,6 @@ export const newApEncounter:modelTypes.ApEncounter = {
 	planInstructions:'',
 	visitTypeLkey:undefined,
 	physicianKey:undefined,
-	insuranceKey:undefined,
 } 
 
 export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService = { 
