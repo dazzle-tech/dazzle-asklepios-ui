@@ -454,9 +454,9 @@ const DiagnosticsOrder = ({ edit }) => {
 
                 dispatch(notify('Start New Order whith ID:' + response?.data?.orderId));
 
-                // setPreKey(response?.data?.key);
+         
                 setOrders(response?.data);
-                // preRefetch().then(() => "");
+                
 
             } catch (error) {
                 console.error("Error saving prescription:", error);
