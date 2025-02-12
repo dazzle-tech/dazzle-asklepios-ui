@@ -714,35 +714,11 @@ const Lab = () => {
                       <WarningRoundIcon style={{ fontSize: '1em', marginRight: 10 }} />
                       <CheckRoundIcon style={{ fontSize: '1em', marginRight: 10 }} />
                       <ConversionIcon style={{ fontSize: '1em', marginRight: 10 }} />
-                      \
+                      
                       <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: 10 }} />
                       <FontAwesomeIcon icon={faStar} style={{ fontSize: '1em', marginRight: 10 }} />
                     </HStack>
-                    // <div style={{ display: 'flex', gap: '5px' }}>
-
-                    //   <IconButton 
-                    //     icon={<WarningRoundIcon  />} 
-
-                    //     appearance="subtle" 
-                    //   //   onClick={() => handleDelete(rowData)}
-                    //   />
-
-
-                    //   <IconButton 
-                    //     icon={<CheckRoundIcon />} 
-
-                    //     appearance="subtle" 
-                    //   //   onClick={() => handleCheck(rowData)}
-                    //   />
-
-
-                    //   <IconButton 
-                    //     icon={<ConversionIcon />} 
-
-                    //     appearance="subtle" 
-                    //   //   onClick={() => handleRollback(rowData)}
-                    //   />
-                    // </div>
+              
                   )}
                 </Cell>
 
