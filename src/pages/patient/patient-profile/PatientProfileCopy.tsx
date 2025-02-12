@@ -145,8 +145,9 @@ import PreferredHealthProfessional from './PreferredHealthProfessional';
 import ConsentFormTab from './ConsentFormTab';
 import { MdCalculate } from 'react-icons/md';
 import PatientQuickAppointment from './PatientQuickAppointment';
-
+import PatientVisitHistory from './PatientVisitHistory';
 const { getHeight, on } = DOMHelper;
+import { newApEncounter} from '@/types/model-types-constructor';
 const handleDownload = attachment => {
     const byteCharacters = atob(attachment.fileContent);
     const byteNumbers = new Array(byteCharacters.length);
@@ -172,6 +173,7 @@ const PatientProfileCopy = () => {
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+      const [localVisit, setLocalVisit] = useState({ ...newApEncounter });
     const [btnNavigate, setBtnNavigate] = useState(false);
     const [windowHeight, setWindowHeight] = useState(getHeight(window));
     const [expand, setExpand] = useState(false);
@@ -190,6 +192,7 @@ const PatientProfileCopy = () => {
     const [labelTitle, setLabelTitle] = useState(' ');
     //////////
     const [quickAppointmentModel,setQuickAppointmentModel] =  useState(false);
+    const [visitHistoryModel,setVisitHistoryModel] =  useState(false);
     const [selectedAttachType, setSelectedAttachType] = useState({
         accessTypeLkey: ''
     });
@@ -1376,7 +1379,7 @@ const PatientProfileCopy = () => {
                                                                 appearance="ghost"
                                                                 style={{ color: '#00b1cc', zoom: 0.8, textAlign: 'left', width: 170 }}
                                                                 disabled={editing || localPatient.key === undefined}
-                                                                onClick={()=>{handleEncounterHistory}}
+                                                                onClick={()=>setVisitHistoryModel(true)}
                                                                 block
                                                             >
                                                                 <span>Visit History</span>
@@ -3443,125 +3446,9 @@ const PatientProfileCopy = () => {
                     </Sidebar>
                 </div>
             </div>
-            <Drawer
-                size="lg"
-                placement={'right'}
-                open={encounterHistoryModalOpen}
-              onClose={() => setEncounterHistoryModalOpen(false)}
-            >
-                <Drawer.Header>
-                    <Drawer.Title>Patient Visit History</Drawer.Title>
-                </Drawer.Header>
-                <Drawer.Body>
-                    <Table
-                        height={600}
-                        sortColumn={encounterHistoryListRequest.sortBy}
-                        sortType={encounterHistoryListRequest.sortType}
-                        onSortColumn={(sortBy, sortType) => {
-                            if (sortBy)
-                                setEncounterHistoryListRequest({
-                                    ...encounterHistoryListRequest,
-                                    sortBy,
-                                    sortType
-                                });
-                        }}
-                        headerHeight={80}
-                        rowHeight={60}
-                        bordered
-                        cellBordered
-                        data={encounterHistoryResponse?.data?.object ?? [] ?? []}
-                    >
-                        <Column sortable flexGrow={4}>
-                            <HeaderCell>
-                                <Translate>key</Translate>
-                            </HeaderCell>
-                            <Cell>
-                                {rowData => (
-                                    <a
-                                        style={{ cursor: 'pointer' }}
-                                        onClick={() => {
-                                            dispatch(setEncounter(rowData));
-                                            // navigate('/encounter');
-                                            setVisit(rowData);
-
-                                            navigate('/encounter-registration');
-                                        }}
-                                    >
-                                        {rowData.key}
-                                    </a>
-                                )}
-                            </Cell>
-                        </Column>
-                        <Column sortable flexGrow={4}>
-                            <HeaderCell>
-                                <Translate>Date</Translate>
-                            </HeaderCell>
-                            <Cell dataKey="plannedStartDate" />
-                        </Column>
-                        <Column sortable flexGrow={4}>
-                            <HeaderCell>
-                                <Translate>Department</Translate>
-                            </HeaderCell>
-                            <Cell dataKey="departmentName" />
-                        </Column>
-                        <Column sortable flexGrow={4}>
-                            <HeaderCell>
-                                <Translate>Physician</Translate>
-                            </HeaderCell>
-                            <Cell dataKey="responsiblePhysicianKey" />
-                        </Column>
-                        <Column sortable flexGrow={4}>
-                            <HeaderCell>
-                                <Translate>Priority</Translate>
-                            </HeaderCell>
-                            <Cell>
-                                {rowData =>
-                                    rowData.encounterPriorityLvalue
-                                        ? rowData.encounterPriorityLvalue.lovDisplayVale
-                                        : rowData.encounterPriorityLkey
-                                }
-                            </Cell>
-                        </Column>
-                        <Column sortable flexGrow={4}>
-                            <HeaderCell>
-                                <Translate>Status</Translate>
-                            </HeaderCell>
-                            <Cell>
-                                {rowData =>
-                                    rowData.encounterStatusLvalue
-                                        ? rowData.encounterStatusLvalue.lovDisplayVale
-                                        : rowData.encounterStatusLkey
-                                }
-                            </Cell>
-                        </Column>
-                    </Table>
-                    <div style={{ padding: 20 }}>
-                        <Pagination
-                            prev
-                            next
-                            first
-                            last
-                            ellipsis
-                            boundaryLinks
-                            maxButtons={5}
-                            size="xs"
-                            layout={['limit', '|', 'pager']}
-                            limitOptions={[10, 20, 50]}
-                            limit={encounterHistoryListRequest.pageSize}
-                            activePage={encounterHistoryListRequest.pageNumber}
-                            onChangePage={pageNumber => {
-                                setEncounterHistoryListRequest({ ...encounterHistoryListRequest, pageNumber });
-                            }}
-                            onChangeLimit={pageSize => {
-                                setEncounterHistoryListRequest({ ...encounterHistoryListRequest, pageSize });
-                            }}
-                            total={encounterHistoryResponse?.data?.extraNumeric ?? 0 ?? 0}
-                        />
-                    </div>
-                </Drawer.Body>
-            </Drawer>
-            {quickAppointmentModel ? <PatientQuickAppointment quickAppointmentModel ={quickAppointmentModel} localPatient={localPatient} setQuickAppointmentModel={setQuickAppointmentModel}/>: <></>}
-
+            
+            {quickAppointmentModel ? <PatientQuickAppointment quickAppointmentModel ={quickAppointmentModel} localPatient={localPatient} setQuickAppointmentModel={setQuickAppointmentModel} localVisit={localVisit}/>: <></>}
+            {visitHistoryModel ? <PatientVisitHistory visitHistoryModel ={visitHistoryModel} quickAppointmentModel ={quickAppointmentModel} localPatient={localPatient} setVisitHistoryModel={setVisitHistoryModel} setQuickAppointmentModel={setQuickAppointmentModel}/>: <></>}
         </>
     );
 };

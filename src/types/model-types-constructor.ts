@@ -598,6 +598,7 @@ export const newApDiagnosticOrderTests:modelTypes.ApDiagnosticOrderTests = {
 	isValid:undefined,
 	processingStatusLkey:undefined,
 	submitDate:0,
+	orderTypeLkey:undefined,
 } 
 
 export const newApDiagnosticOrders:modelTypes.ApDiagnosticOrders = { 

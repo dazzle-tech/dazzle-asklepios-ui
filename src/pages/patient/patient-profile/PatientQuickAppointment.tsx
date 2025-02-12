@@ -42,7 +42,8 @@ import {
 } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import MyLabel from '@/components/MyLabel';
-const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuickAppointmentModel }) => {
+const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuickAppointmentModel, localVisit }) => {
+    console.log(localVisit);
     const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
     const dispatch = useAppDispatch();
     const [openModelPayment, setOpenModelPayment] = React.useState(false);
@@ -50,6 +51,8 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
     const [validationResult, setValidationResult] = useState({});
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
+    const [isReadOnly, setIsReadOnly] = useState(false);
+    
     const { data: patientInsuranceResponse } = useGetPatientInsuranceQuery(
         {
             patientKey: localPatient?.key
@@ -118,6 +121,13 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
             setValidationResult(saveEncounterMutation.error);
         }
     }, [saveEncounterMutation]);
+    useEffect(() => {
+        console.log(localVisit);
+        if (localVisit?.key != undefined) {
+            setLocalEncounter({ ...localVisit });
+            setIsReadOnly(true);
+        }
+    }, [localVisit]);
     return (
         <>
             <Panel>
@@ -135,13 +145,15 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
 
                                     <ButtonToolbar style={{ display: 'flex', marginLeft: 'auto' }}>       <Button
                                         onClick={handleSave}
-                                        style={{ display: 'flex', border: '1px solid #00b1cc', backgroundColor: '#00b1cc', color: 'white', marginLeft: 'auto' }}
+                                        style={{ display: 'flex', border: '1px solid #00b1cc', backgroundColor: '#00b1cc', color: 'white', marginLeft: 'auto' ,zoom:.8}}
+                                        disabled={isReadOnly}
                                     >
                                         <FontAwesomeIcon icon={faCheckDouble} style={{ marginRight: '5px', color: 'white' }} />
                                         <span>Save</span></Button>
                                         <Button
                                             onClick={handleClear}
-                                            style={{ display: 'flex', border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: 'auto' }}
+                                            style={{ display: 'flex', border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: 'auto'  ,zoom:.8}}
+                                            disabled={isReadOnly}
                                         >
                                             <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px', color: ' #00b1cc' }} />
                                             <span>Clear</span>
@@ -165,6 +177,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                     selectDataLabel="lovDisplayVale"
                                                     selectDataValue="key"
                                                     record={{}}
+                                                    disabled={isReadOnly}
                                                     setRecord={(newValue) => {
                                                         setPaymentMethodSelected(newValue.PaymentMethod);
                                                     }}
@@ -430,6 +443,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                 fieldName="visitId"
                                                 record={localEncounter}
                                                 setRecord={setLocalEncounter}
+
                                             />
 
                                             <MyInput
@@ -456,7 +470,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                 record={localEncounter}
                                                 setRecord={setLocalEncounter}
                                                 menuStyle={{ marginTop: '100px', marginLeft: '160px' }}
-
+                                                disabled={isReadOnly}
                                             />
                                             <MyInput
                                                 vr={validationResult}
@@ -470,6 +484,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                 selectDataValue="key"
                                                 record={localEncounter}
                                                 setRecord={setLocalEncounter}
+                                                disabled={isReadOnly}
                                             />
                                             <MyInput
                                                 vr={validationResult}
@@ -482,6 +497,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                 selectDataValue="key"
                                                 record={localEncounter}
                                                 setRecord={setLocalEncounter}
+                                                disabled={isReadOnly}
                                             />
 
                                             <MyInput
@@ -496,6 +512,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                 selectDataValue="key"
                                                 record={localEncounter}
                                                 setRecord={setLocalEncounter}
+                                                disabled={isReadOnly}
                                             />
 
 
@@ -511,6 +528,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                 selectDataValue="key"
                                                 record={localEncounter}
                                                 setRecord={setLocalEncounter}
+                                                disabled={isReadOnly}
                                             />
                                             <MyInput
                                                 vr={validationResult}
@@ -523,6 +541,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                 selectDataValue="key"
                                                 record={localEncounter}
                                                 setRecord={setLocalEncounter}
+                                                disabled={isReadOnly}
                                             />
                                             <MyInput
                                                 vr={validationResult}
@@ -535,6 +554,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                 selectDataValue="key"
                                                 record={localEncounter}
                                                 setRecord={setLocalEncounter}
+                                                disabled={isReadOnly}
                                             />
                                             <MyInput
                                                 vr={validationResult}
@@ -544,17 +564,18 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                 fieldName="sourceName"
                                                 record={localEncounter}
                                                 setRecord={setLocalEncounter}
+                                                disabled={isReadOnly}
                                             />
                                             <MyInput
                                                 width={250}
                                                 column
 
-                                                disabled={false}
+
                                                 fieldType='textarea'
                                                 fieldLabel="Note"
                                                 fieldName='encounterNotes'
                                                 setRecord={setLocalEncounter}
-
+                                                disabled={isReadOnly}
                                                 record={localEncounter}
 
                                             />
@@ -613,7 +634,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                 selectDataValue="key"
                                                 record={localEncounter}
                                                 setRecord={setLocalEncounter}
-
+                                                disabled={isReadOnly}
                                             />
 
 
@@ -621,7 +642,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                 onClick={() => handleOpenPaymentModel()}
                                                 appearance="ghost"
                                                 style={{ border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: "3px", marginTop: '25px', zoom: 0.9 }}
-
+                                                disabled={isReadOnly}
                                             >
                                                 <AddOutlineIcon style={{ marginRight: '5px', color: '#00b1cc' }} />
                                                 <span>Add payment</span>

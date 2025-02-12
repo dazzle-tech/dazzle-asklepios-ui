@@ -597,6 +597,7 @@ export interface ApDiagnosticOrderTests {
 	isValid:boolean;
 	processingStatusLkey:string;
 	submitDate:number;
+	orderTypeLkey:string;
 } 
 
 export interface ApDiagnosticOrders { 
