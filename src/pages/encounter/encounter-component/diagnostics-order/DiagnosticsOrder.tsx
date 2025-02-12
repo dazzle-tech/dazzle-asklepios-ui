@@ -419,7 +419,10 @@ const DiagnosticsOrder = ({ edit }) => {
                 visitKey: patientSlice.encounter.key,
                 orderKey: orders.key,
                 testKey: test.key,
-                statusLkey: "164797574082125"
+
+                statusLkey: "164797574082125",
+                processingStatusLkey:"6053140045975671"
+
             }).unwrap();
             dispatch(notify('saved  Successfully'));
 
@@ -454,9 +457,9 @@ const DiagnosticsOrder = ({ edit }) => {
 
                 dispatch(notify('Start New Order whith ID:' + response?.data?.orderId));
 
-         
+                // setPreKey(response?.data?.key);
                 setOrders(response?.data);
-                
+                // preRefetch().then(() => "");
 
             } catch (error) {
                 console.error("Error saving prescription:", error);
@@ -476,10 +479,7 @@ const DiagnosticsOrder = ({ edit }) => {
             }).unwrap();
             dispatch(notify('submetid  Successfully'));
             ordersRefetch();
-            orderTestRefetch();
-            // handleCleare();
-            // preRefetch().then(() => "");
-            // medicRefetch().then(() => "");
+            orderTestRefetch(); 
 
         }
         catch (error) {
