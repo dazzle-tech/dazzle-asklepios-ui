@@ -316,7 +316,7 @@ const LovValues = ({ lov, goBack, ...props }) => {
               <Input
                 type="color"
                 value={lovValue.valueColor}
-                onChange={(e) => setLovValue({ ...lovValue, valueColor: e.target.value })}
+                onChange={(value) => setLovValue({ ...lovValue, valueColor: value })}
 
               />
             </Modal.Body>
