@@ -329,6 +329,7 @@ const Indications = ({ selectedActiveIngredients, isEdit }) => {
               bordered
               onRowClick={rowData => {
                 setActiveIngredientIndication(rowData);
+                setIcdCode(rowData.icdObject)
               }}
               rowClassName={isSelected}
               data={indicationListResponseData?.object ?? []}
@@ -339,16 +340,10 @@ const Indications = ({ selectedActiveIngredients, isEdit }) => {
                   {rowData => <Text>{rowData.indication}</Text>}
                 </Table.Cell>
               </Table.Column>
-              <Table.Column flexGrow={1}>
+              <Table.Column flexGrow={2}>
                 <Table.HeaderCell align='center'>ICD Code</Table.HeaderCell>
                 <Table.Cell>
-                  {rowData => <Text>{rowData.icdCodeKey}</Text>}
-                     {/* {rowData => {
-                                const icdCode = icdListResponseData?.object?.find(icd =>icd.key == rowData.icdCodeKey)?.icdCode
-                                console.log("HI I AM ICD" + icdCode)
-                                return icdCode;
-                            }
-                            } */}
+                {rowData => <Text>{rowData.icdObject}</Text> }
                 </Table.Cell>
               </Table.Column>
               <Table.Column flexGrow={1}>

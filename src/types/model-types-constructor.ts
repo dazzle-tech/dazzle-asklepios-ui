@@ -578,6 +578,48 @@ export const newApDepartment:modelTypes.ApDepartment = {
 	departmentCode:'',
 } 
 
+export const newApDiagnosticOrderTests:modelTypes.ApDiagnosticOrderTests = { 
+	key:undefined,
+	patientKey:undefined,
+	visitKey:undefined,
+	statusLkey:undefined,
+	orderKey:undefined,
+	testKey:undefined,
+	receivedLabLkey:undefined,
+	reasonLkey:undefined,
+	priorityLkey:undefined,
+	notes:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+	processingStatusLkey:undefined,
+	submitDate:0,
+	orderTypeLkey:undefined,
+} 
+
+export const newApDiagnosticOrders:modelTypes.ApDiagnosticOrders = { 
+	key:undefined,
+	patientKey:undefined,
+	visitKey:undefined,
+	statusLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+	orderId:'',
+	saveDraft:undefined,
+	submittedBy:'',
+	submittedAt:0,
+	isUrgent:undefined,
+} 
+
 export const newApDiagnosticTest:modelTypes.ApDiagnosticTest = { 
 	key:undefined,
 	testTypeLkey:undefined,
@@ -956,6 +998,7 @@ export const newApEncounter:modelTypes.ApEncounter = {
 	planInstructions:'',
 	visitTypeLkey:undefined,
 	physicianKey:undefined,
+	insuranceKey:undefined,
 } 
 
 export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService = { 

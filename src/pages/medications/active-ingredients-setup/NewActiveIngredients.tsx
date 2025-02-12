@@ -189,15 +189,16 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack, ...props })  =
       setEditing(true);
        try {
         const response = await  saveActiveIngredient(activeIngredient).unwrap();
-        dispatch(notify(response.msg));
-        
-      } catch (error) {
+        dispatch(notify({ msg: response.msg, sev: 'success' }));
+        console.log(response.msg)
+      }
+       catch (error) {
         if (error.data && error.data.message) {
           dispatch(notify(error.data.message));
         } 
-        // else {
-        //   dispatch(notify("An unexpected error occurred"));
-        // }
+        else {
+          dispatch(notify("An unexpected error occurred"));
+        }
       }
     };
     
