@@ -94,6 +94,7 @@ import { conjureValueBasedOnKeyFromList } from '@/utils';
           activeIngredientKey: activeIngredients.key
         }));
       }
+      setIcdCode(null);
     }, [activeIngredients]);
 
     const save = () => {
@@ -104,6 +105,7 @@ import { conjureValueBasedOnKeyFromList } from '@/utils';
       }).unwrap().then(() => {
               dispatch(notify("Saved successfully"));
           });
+          console.log(selectedActiveIngredientContraindication.icdCodeKey);
         
     };
 
@@ -186,7 +188,7 @@ import { conjureValueBasedOnKeyFromList } from '@/utils';
           <Grid fluid>
           <Row gutter={15}>
           <Col xs={4}>
-          <InputGroup inside style={{ width: '300px', zoom: 0.80 ,marginTop:'20px'}}>
+            <InputGroup inside style={{ width: '300px', zoom: 0.80, marginTop: '20px' }}>
               <Input
                 disabled={!isActive}
                 placeholder={'Search ICD-10'}
@@ -204,8 +206,8 @@ import { conjureValueBasedOnKeyFromList } from '@/utils';
                     key={mod.key}
                     eventKey={mod.key}
                     onClick={() => {
-                      setActiveIngredientContraindication({
-                        ...activeIngredientContraindication,
+                      setSelectedActiveIngredientContraindication({
+                        ...selectedActiveIngredientContraindication,
                         icdCodeKey: mod.key
                       })
                       setIcdCode(mod)
@@ -228,8 +230,8 @@ import { conjureValueBasedOnKeyFromList } from '@/utils';
                 disabled={true}
                 style={{ zoom: 0.80, width: '300px' }}
                 value={
-                  icdListResponseData?.object.find(item => item.key === activeIngredientContraindication?.icdCodeKey)
-                  ? `${icdListResponseData.object.find(item => item.key === activeIngredientContraindication?.icdCodeKey)?.icdCode}, ${icdListResponseData.object.find(item => item.key ===  activeIngredientContraindication?.icdCodeKey)?.description}`
+                  icdListResponseData?.object.find(item => item.key === selectedActiveIngredientContraindication?.icdCodeKey)
+                  ? `${icdListResponseData.object.find(item => item.key === selectedActiveIngredientContraindication?.icdCodeKey)?.icdCode}, ${icdListResponseData.object.find(item => item.key ===  selectedActiveIngredientContraindication?.icdCodeKey)?.description}`
                   : ""
                 }
               />
@@ -315,23 +317,7 @@ import { conjureValueBasedOnKeyFromList } from '@/utils';
                   <Table.Column flexGrow={1}>
                     <Table.HeaderCell align='center'>ICD Code</Table.HeaderCell>
                     <Table.Cell>
-                      {/* {rowData => (
-                                                           <span>
-                                                             {conjureValueBasedOnKeyFromList(
-                                                               icdListResponseData?.object ?? [],
-                                                               rowData.icdCodeKey,
-                                                               'icdCode'
-                                                             )}
-                                                           </span>
-                                                         )} */}
-                                                         
-                            {/* {rowData => {
-                                const icdCode = icdListResponseData?.object?.find(item => {console.log("item Key " + item.key + "ICD ROWKey" + rowData.icdCodeKey)})
-                                console.log("HI I AM ICD" + icdCode)
-                                return icdCode;
-                            }
-                            } */}
-                             {rowData => <Text>{rowData.icdCodeKey}</Text>}
+                       {rowData => <Text>{rowData.icdObject}</Text> }
                     </Table.Cell>
                   </Table.Column>
                 </Table>

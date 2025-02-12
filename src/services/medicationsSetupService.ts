@@ -350,7 +350,7 @@ export const medicationsSetupService = createApi({
         body: activeIngredient
       }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
-        return response.object;
+        return response;
       }
     }),
     getGenericMedicationWithActiveIngredient: builder.query({
