@@ -144,6 +144,7 @@ import { notify } from '@/utils/uiReducerActions';
 import PreferredHealthProfessional from './PreferredHealthProfessional';
 import ConsentFormTab from './ConsentFormTab';
 import { MdCalculate } from 'react-icons/md';
+import PatientQuickAppointment from './PatientQuickAppointment';
 
 const { getHeight, on } = DOMHelper;
 const handleDownload = attachment => {
@@ -187,6 +188,8 @@ const PatientProfileCopy = () => {
     const [deleteRelativeModalOpen, setDeleteRelativeModalOpen] = useState(false);
     const [open, setOpen] = useState(false);
     const [labelTitle, setLabelTitle] = useState(' ');
+    //////////
+    const [quickAppointmentModel,setQuickAppointmentModel] =  useState(false);
     const [selectedAttachType, setSelectedAttachType] = useState({
         accessTypeLkey: ''
     });
@@ -1118,7 +1121,7 @@ const PatientProfileCopy = () => {
         : {};
 
     const handleNewVisit = () => {
-        navigate('/encounter-registration');
+     setQuickAppointmentModel(true);
     };
 
     const handleEncounterHistory = () => {
@@ -1325,7 +1328,6 @@ const PatientProfileCopy = () => {
                                         </div>
 
                                         <ButtonToolbar>
-
                                             <Button
                                                 disabled={editing || localPatient.key !== undefined}
                                                 onClick={startRegistration}
@@ -3398,9 +3400,13 @@ const PatientProfileCopy = () => {
                                             }}>
                                                 <Row gutter={15}>
                                                     <Col xs={19}>
-                                                        <Row><Avatar circle src={`data:${patient?.attachmentProfilePicture?.contentType};base64,${patient?.attachmentProfilePicture?.fileContent}`} size="md" /></Row>
+                                                        <Row><Avatar circle color="cyan" src={
+                                                             patient?.attachmentProfilePicture?.fileContent
+                                                                ? `data:${patient?.attachmentProfilePicture?.contentType};base64,${patient?.attachmentProfilePicture?.fileContent}`
+                                                                : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
+                                                        } size="md" /></Row>
                                                         <Row><span style={{ fontSize: '14x' }}>{patient.fullName} </span></Row>
-                                                        <Row><span style={{ color: 'gray', fontSize: '12x' }}>{patient?.createdAt ? new Date(localPatient?.createdAt).toLocaleString("en-GB") : ""} </span></Row>
+                                                        <Row><span style={{ color: 'gray', fontSize: '12x' }}>{patient.createdAt ? new Date(patient?.createdAt).toLocaleString("en-GB") : ""} </span></Row>
                                                         <Row><span style={{ color: 'gray', fontSize: '12px' }}>{patient.patientMrn} </span></Row>
                                                     </Col>
 
@@ -3554,7 +3560,7 @@ const PatientProfileCopy = () => {
                     </div>
                 </Drawer.Body>
             </Drawer>
-
+            {quickAppointmentModel ? <PatientQuickAppointment quickAppointmentModel ={quickAppointmentModel} localPatient={localPatient} setQuickAppointmentModel={setQuickAppointmentModel}/>: <></>}
 
         </>
     );

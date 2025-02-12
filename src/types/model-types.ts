@@ -595,6 +595,8 @@ export interface ApDiagnosticOrderTests {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	processingStatusLkey:string;
+	submitDate:number;
 } 
 
 export interface ApDiagnosticOrders { 
@@ -613,6 +615,7 @@ export interface ApDiagnosticOrders {
 	saveDraft:boolean;
 	submittedBy:string;
 	submittedAt:number;
+	isUrgent:boolean;
 } 
 
 export interface ApDiagnosticTest { 
@@ -993,6 +996,7 @@ export interface ApEncounter {
 	planInstructions:string;
 	visitTypeLkey:string;
 	physicianKey:string;
+	insuranceKey:string;
 } 
 
 export interface ApEncounterAppliedService { 

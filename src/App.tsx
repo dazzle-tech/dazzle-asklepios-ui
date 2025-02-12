@@ -66,7 +66,7 @@ import EncounterPatientPrivateLogin from './pages/encounter/encounter-patient-pr
 import VaccinationTab from './pages/encounter/encounter-pre-observations/vaccination-tab';
 import CPTSetup from './pages/setup/cpt-setup';
 import LOINCSetup from './pages/setup/lonic-setup';
-
+import PatientQuickAppointment from './pages/patient/patient-profile/PatientQuickAppointment';
 import PatientEMR from './pages/patient/patient-emr';
 
 
@@ -219,6 +219,7 @@ const App = () => {
             <Route path="/" element={<Frame navs={navigationMap} />}>
               <Route index element={<Dashboard />} />
               <Route path="patient-profile" element={<PatientProfile />} />
+              <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />
               <Route path="patient-profile-copy" element={<PatientProfileCopy />} />
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />

@@ -173,10 +173,10 @@ const MyInput = ({
 
   return (
     <>
-      <Form.Group>
+      <Form.Group style={{ zoom: 0.8 }}>
         <Form.ControlLabel>
           {props.required && (
-            <span style={{ color: 'red', fontSize: '110%', margin: '2px' }}>*</span>
+            <span style={{ color: 'red', fontSize: '110%', margin: '2px'  }}>*</span>
           )}
           <MyLabel label={fieldLabel} error={validationResult} />
         </Form.ControlLabel>
