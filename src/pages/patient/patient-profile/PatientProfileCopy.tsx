@@ -25,7 +25,6 @@ import SearchPeopleIcon from '@rsuite/icons/SearchPeople';
 import ListIcon from '@rsuite/icons/List';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import { Dropdown } from 'rsuite';
-import QuickPatient from './quickPatient';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { faLock } from '@fortawesome/free-solid-svg-icons';
 import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
@@ -109,6 +108,7 @@ import { newApEncounter} from '@/types/model-types-constructor';
 import PatientAttachment from './PatientAttachment';
 import PatientExtraDetails from './PatientExtraDetails';
 import SearchIcon from '@rsuite/icons/Search';
+import PatientFamilyMembers from './PatientFamilyMembers';
 const handleDownload = attachment => {
     const byteCharacters = atob(attachment.fileContent);
     const byteNumbers = new Array(byteCharacters.length);
@@ -117,7 +117,6 @@ const handleDownload = attachment => {
     }
     const byteArray = new Uint8Array(byteNumbers);
     const blob = new Blob([byteArray], { type: attachment.contentType });
-
     // Create a temporary  element and trigger the download
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -128,7 +127,6 @@ const handleDownload = attachment => {
     a.click();
     window.URL.revokeObjectURL(url);
 };
-
 const PatientProfileCopy = () => {
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
@@ -140,7 +138,6 @@ const PatientProfileCopy = () => {
     const [patientSearchTarget, setPatientSearchTarget] = useState('primary'); // primary, relation, etc..
     const [selectedCriterion, setSelectedCriterion] = useState('');
     const [searchKeyword, setSearchKeyword] = useState('');
-    const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
     const [specificCoverageModalOpen, setSpecificCoverageModalOpen] = useState(false);
     const [deleteRelativeModalOpen, setDeleteRelativeModalOpen] = useState(false);
     const [open, setOpen] = useState(false);
@@ -166,7 +163,6 @@ const PatientProfileCopy = () => {
     const [deleteRelation, deleteRelationMutation] = useDeletePatientRelationMutation();
     const [validationResult, setValidationResult] = useState({});
     const profileImageFileInputRef = useRef(null);
-    const [encounterHistoryModalOpen, setEncounterHistoryModalOpen] = useState(false);
     const [InsuranceModalOpen, setInsuranceModalOpen] = useState(false);
     const [selectedInsurance, setSelectedInsurance] = useState();
     const [insuranceBrowsing, setInsuranceBrowsing] = useState(false);
@@ -182,7 +178,6 @@ const PatientProfileCopy = () => {
     const { data: ethnicityLovQueryResponse } = useGetLovValuesByCodeQuery('ETH');
     const { data: occupationLovQueryResponse } = useGetLovValuesByCodeQuery('OCCP');
     const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
-    const { data: categoryLovQueryResponse } = useGetLovValuesByCodeQuery('FAMILY_MMBR_CAT');
     const { data: roleLovQueryResponse } = useGetLovValuesByCodeQuery('ER_CONTACTP_ROLE');
     const { data: administrativeWarningsLovQueryResponse } = useGetLovValuesByCodeQuery('ADMIN_WARNINGS');
     const { data: preferredWayOfContactLovQueryResponse } = useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
@@ -300,18 +295,6 @@ const PatientProfileCopy = () => {
             return 'selected-row';
         } else return '';
     };
-    const handleDeleteRelation = () => {
-        deleteRelation({
-            key: selectedPatientRelation.key
-        }).then(
-            () => (
-                patientRelationsRefetch(),
-                dispatch(notify('Relation Deleted')),
-                setSelectedPatientRelation(newApPatientRelation),
-                setDeleteRelativeModalOpen(false)
-            )
-        );
-    };
     const handleDeleteInsurance = () => {
         deleteInsurance({
             key: selectedInsurance.key
@@ -334,16 +317,6 @@ const PatientProfileCopy = () => {
         { key: requestedPatientAttacment },
         { skip: !requestedPatientAttacment || !localPatient.key }
     );
-    const handleSaveFamilyMembers = () => {
-        savePatientRelation({
-            ...selectedPatientRelation,
-            patientKey: localPatient.key,
-        }).unwrap()
-            .then(() => {
-                patientRelationsRefetch();
-            })
-        patientRelationsRefetch();
-    }
     const handleUpdateAdministrativeWarningsUnDoResolved = () => {
         updatePatientAdministrativeWarnings({
             ...selectedPatientAdministrativeWarnings,
@@ -454,7 +427,7 @@ const PatientProfileCopy = () => {
                     createdBy: authSlice.user.key
                 })
                     .unwrap()
-                    .then(() => attachmentRefetch());
+                    .then();
             }
         }
     };
@@ -462,10 +435,6 @@ const PatientProfileCopy = () => {
         setSelectedCriterion(value);
         setOpen(false);
     };
-    const handleClearRelative = () => {
-        setSelectedPatientRelation(newApPatientRelation);
-        setDeleteRelativeModalOpen(false);
-    }
     const handleFilterChangeInWarning = (fieldName, value) => {
         if (value) {
             setWarningsAdmistritiveListRequest(
@@ -570,11 +539,6 @@ const PatientProfileCopy = () => {
     const patientInsuranceResponse = useGetPatientInsuranceQuery({
         patientKey: localPatient.key
     });
-    const isSelectedRelation = rowData => {
-        if (rowData && selectedPatientRelation && selectedPatientRelation.key === rowData.key) {
-            return 'selected-row';
-        } else return '';
-    };
     //useEffect
     useEffect(() => {
         dispatch(setPatient({ ...newApPatient }));
@@ -657,12 +621,11 @@ const PatientProfileCopy = () => {
         if (savePatientMutation && savePatientMutation.status === 'fulfilled') {
             setLocalPatient(savePatientMutation.data);
             dispatch(setPatient(savePatientMutation.data));
-            setEditing(false);
             setValidationResult(undefined);
         } else if (savePatientMutation && savePatientMutation.status === 'rejected') {
             setValidationResult(savePatientMutation.error.data.validationResult);
         }
-    }, [savePatientMutation]);
+    }, [savePatientMutation])
     useEffect(() => {
         if (uploadMutation.status === 'fulfilled') {
             dispatch(notify('patient image uploaded'));
@@ -707,7 +670,7 @@ const PatientProfileCopy = () => {
         }
     }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
     return (
-        <>
+        <Panel style={{padding:expand ?'10px':'0px'}}>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
                 <div style={{ width: expand ? "calc(100% - 230px)" : "100%" }}>
                     <Panel
@@ -725,11 +688,6 @@ const PatientProfileCopy = () => {
                                                 padding: '5px'
                                             }}
                                         >
-                                            <QuickPatient
-                                                open={quickPatientModalOpen}
-                                                localPatientData={localPatient}
-                                                onClose={() => setQuickPatientModalOpen(false)}
-                                            />
                                             <Form style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>
                                                 <AvatarGroup spacing={6}>
                                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -831,7 +789,7 @@ const PatientProfileCopy = () => {
                                                 <Translate>Clear</Translate>
                                             </Button>
                                             <SelectPicker
-                                                style={{ width: 170 }}
+                                                style={{ width: 185 }}
                                                 data={[
                                                     {
                                                         label: (
@@ -848,22 +806,7 @@ const PatientProfileCopy = () => {
                                                         ),
                                                         value: 'visitHistory',
                                                     },
-                                                    {
-                                                        label: (
-                                                            <Button
-                                                                color='cyan'
-                                                                appearance="ghost"
-                                                                style={{ color: '#00b1cc', zoom: 0.8, textAlign: 'left', width: 170 }}
-                                                                disabled={ localPatient.key !== undefined}
-                                                                onClick={() => setQuickPatientModalOpen(true)}
-                                                                block
-                                                            >
-                                                                <span>Quick Patient</span>
-                                                            </Button>
-
-                                                        ),
-                                                        value: 'quickPatient',
-                                                    },
+                                                     
                                                     {
                                                         label: (
                                                             <Button
@@ -1969,178 +1912,9 @@ const PatientProfileCopy = () => {
                                 {/* PreferredHealthProfessional */}
                                 <TabPanel><PreferredHealthProfessional patient={localPatient} isClick={ !localPatient.key} /></TabPanel>
                                 {/* Relations */}
-                                <TabPanel>
-                                    <Modal open={relationModalOpen} onClose={() => setRelationModalOpen(false)}>
-                                        <Modal.Header>
-                                            <Modal.Title>New/Edit Patient Relation</Modal.Title>
-                                        </Modal.Header>
-                                        <Modal.Body>
-                                            <Form fluid>
-                                                <MyInput
-                                                    vr={validationResult}
-                                                    required
-                                                    width={165}
-                                                    fieldLabel="Relation Type"
-                                                    fieldType="select"
-                                                    fieldName="relationTypeLkey"
-                                                    selectData={relationsLovQueryResponse?.object ?? []}
-                                                    selectDataLabel="lovDisplayVale"
-                                                    selectDataValue="key"
-                                                    record={selectedPatientRelation}
-                                                    setRecord={setSelectedPatientRelation}
-                                                />
-                                                <MyInput
-                                                    vr={validationResult}
-                                                    required
-                                                    width={165}
-                                                    fieldLabel="Category"
-                                                    fieldType="select"
-                                                    fieldName="categoryTypeLkey"
-                                                    selectData={categoryLovQueryResponse?.object ?? []}
-                                                    selectDataLabel="lovDisplayVale"
-                                                    selectDataValue="key"
-                                                    record={selectedPatientRelation}
-                                                    setRecord={setSelectedPatientRelation}
-                                                />
-                                                <Form.Group>
-                                                    <InputGroup inside style={{ width: 300, direction: 'ltr' }}>
-                                                        <Input
-                                                            width={165}
-                                                            disabled={true}
-                                                            placeholder={'Search Relative Patient'}
-                                                            value={selectedPatientRelation.relativePatientObject?.fullName ?? ''}
-                                                        />
-                                                        <InputGroup.Button onClick={() => search('relation')}>
-                                                            <SearchIcon />
-                                                        </InputGroup.Button>
-                                                    </InputGroup>
-                                                </Form.Group>
-                                            </Form>
-                                        </Modal.Body>
-                                        <Modal.Footer>
-                                            <Button onClick={() => setRelationModalOpen(false)} appearance="subtle">
-                                                Cancel
-                                            </Button>
-                                            <Divider vertical />
-                                            <Button
-                                                onClick={() =>
-                                                    handleSaveFamilyMembers()
-                                                }
-                                                appearance="primary"
-                                            >
-                                                Save
-                                            </Button>
-                                        </Modal.Footer>
-                                    </Modal>
-
-                                    <ButtonToolbar style={{ padding: 1 }}>
-                                        <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
-                                            onClick={() => {
-                                                setSelectedPatientRelation({ ...newApPatientRelation });
-                                                setRelationModalOpen(true);
-                                            }}
-                                           >
-                                            <PlusRound />   New Relative
-                                        </Button>
-
-
-                                        <Button
-                                            disabled={!selectedPatientRelation.key}
-                                            onClick={() => {
-                                                setRelationModalOpen(true);
-                                            }}
-                                            appearance="ghost"
-                                            style={{ border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: "3px" }}
-                                        >
-                                            <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: '#007e91' }} />
-                                            <span>Edit</span>
-                                        </Button>
-
-
-                                        <Button
-                                            disabled={!selectedPatientRelation?.key}
-
-                                            style={{ border: '1px solid  #007e91', backgroundColor: 'white', color: '#007e91', display: 'flex', alignItems: 'center', gap: '5px' }}
-
-                                            onClick={() => { setDeleteRelativeModalOpen(true) }}
-                                        >
-                                            <TrashIcon /> <Translate>Delete</Translate>
-                                        </Button>
-
-                                    </ButtonToolbar>
-
-                                    <br />
-                                    <Modal open={deleteRelativeModalOpen} onClose={handleClearRelative}>
-                                        <Modal.Header>
-                                            <Modal.Title>Confirm Delete</Modal.Title>
-
-                                        </Modal.Header>
-
-                                        <Modal.Body>
-                                            <p>
-                                                <RemindOutlineIcon style={{ color: '#ffca61', marginRight: '8px', fontSize: '24px' }} />
-                                                <Translate style={{ fontSize: '24px' }} >
-                                                    Are you sure you want to delete this Relation?
-                                                </Translate>
-                                            </p>
-                                        </Modal.Body>
-                                        <Modal.Footer>
-                                            <Button onClick={handleClearRelative} appearance="ghost" color='cyan'>
-                                                Cancel
-                                            </Button>
-                                            <Divider vertical />
-                                            <Button
-                                                onClick={handleDeleteRelation}
-                                                appearance="primary"
-                                            >
-                                                Delete
-                                            </Button>
-                                        </Modal.Footer>
-                                    </Modal>
-
-                                    <Table
-                                        height={600}
-                                        sortColumn={patientRelationListRequest.sortBy}
-                                        sortType={patientRelationListRequest.sortType}
-                                        onSortColumn={(sortBy, sortType) => {
-                                            if (sortBy)
-                                                setPatientRelationListRequest({
-                                                    ...patientRelationListRequest,
-                                                    sortBy,
-                                                    sortType
-                                                });
-                                        }}
-                                        headerHeight={40}
-                                        rowHeight={50}
-                                        bordered
-                                        cellBordered
-                                        onRowClick={rowData => {
-                                            setSelectedPatientRelation(rowData);
-                                        }}
-                                        data={patientRelationsResponse?.object ?? []}
-                                        rowClassName={isSelectedRelation}
-
-                                    >
-                                        <Column sortable flexGrow={4}>
-                                            <HeaderCell>
-                                                <Translate>Relation Type</Translate>
-                                            </HeaderCell>
-                                            <Cell dataKey="relationTypeLvalue.lovDisplayVale" />
-                                        </Column>
-                                        <Column sortable flexGrow={4}>
-                                            <HeaderCell>
-                                                <Translate>Relative Patient Name</Translate>
-                                            </HeaderCell>
-                                            <Cell dataKey="relativePatientObject.fullName" />
-                                        </Column>
-                                        <Column sortable flexGrow={4}>
-                                            <HeaderCell>
-                                                <Translate>Relation Category</Translate>
-                                            </HeaderCell>
-                                            <Cell dataKey="categoryTypeLvalue.lovDisplayVale" />
-                                        </Column>
-                                    </Table>
-                                </TabPanel>
+                             <TabPanel>
+                                <PatientFamilyMembers localPatient={localPatient} />
+                             </TabPanel>
 
                                 {/* Extra Details */}
                                 <TabPanel>
@@ -2244,7 +2018,7 @@ const PatientProfileCopy = () => {
             
             {quickAppointmentModel ? <PatientQuickAppointment quickAppointmentModel ={quickAppointmentModel} localPatient={localPatient} setQuickAppointmentModel={setQuickAppointmentModel} localVisit={localVisit}/>: <></>}
             {visitHistoryModel ? <PatientVisitHistory visitHistoryModel ={visitHistoryModel} quickAppointmentModel ={quickAppointmentModel} localPatient={localPatient} setVisitHistoryModel={setVisitHistoryModel} setQuickAppointmentModel={setQuickAppointmentModel}/>: <></>}
-        </>
+        </Panel>
     );
 };
 
