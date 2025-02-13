@@ -5,67 +5,43 @@ import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import {
     ApAttachment,
     ApPatient,
-    ApPatientRelation,
-    ApPatientSecondaryDocuments,
     ApPatientAdministrativeWarnings
 } from '@/types/model-types';
 import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
 import CloseIcon from '@rsuite/icons/Close';
-import FileDownloadIcon from '@rsuite/icons/FileDownload';
 import TrashIcon from '@rsuite/icons/Trash';
-import DetailIcon from '@rsuite/icons/Detail';
 import {
-    FlexboxGrid,
-    Grid,
     Row,
     Col,
-    Container,
     AvatarGroup, Avatar,
-    Placeholder,
-    Text,
     Sidebar,
     Sidenav,
     Nav,
 } from 'rsuite';
 import ArrowLineToggle from '@/components/Frame/ArrowLineToggle';
 import ArrowLeftLineIcon from '@rsuite/icons/ArrowLeftLine';
-
-import { ArrowRightLine, ArrowLeftLine } from "@rsuite/icons";
-import { Reload } from "@rsuite/icons";
 import MoreIcon from '@rsuite/icons/More';
-import RandomIcon from '@rsuite/icons/Random';
-import { faRepeat, faCodeMerge, faUser } from '@fortawesome/free-solid-svg-icons';
-import MemberIcon from '@rsuite/icons/Member';
 import SearchPeopleIcon from '@rsuite/icons/SearchPeople';
 import ListIcon from '@rsuite/icons/List';
-import { List } from 'rsuite';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import { Dropdown } from 'rsuite';
-import { More } from '@rsuite/icons';
-import { useSelector } from 'react-redux';
 import QuickPatient from './quickPatient';
-import * as icons from '@rsuite/icons';
-import { faBolt } from '@fortawesome/free-solid-svg-icons';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { faLock } from '@fortawesome/free-solid-svg-icons';
 import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
 import InsuranceModal from './InsuranceModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
-
 import SpecificCoverageModa from './SpecificCoverageModa';
 import ReloadIcon from '@rsuite/icons/Reload';
-
-import { saveAs } from 'file-saver';
 import {
-    newApAttachment,
     newApPatient,
     newApPatientInsurance,
     newApPatientRelation,
     newApPatientSecondaryDocuments,
     newApPatientAdministrativeWarnings
 } from '@/types/model-types-constructor';
-import { Block, Check, DocPass, Edit, History, Icon, PlusRound, Detail } from '@rsuite/icons';
+import {  Check ,Icon, PlusRound } from '@rsuite/icons';
 import { faUserPen } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -77,7 +53,6 @@ import {
     Panel,
     Stack,
     Divider,
-    Drawer,
     Table,
     Pagination,
     Button,
@@ -88,15 +63,9 @@ import {
     Badge,
     DOMHelper
 } from 'rsuite';
-import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
 const { Column, HeaderCell, Cell } = Table;
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
-import SearchIcon from '@rsuite/icons/Search';
-import PageIcon from '@rsuite/icons/Page';
-import PieChartIcon from '@rsuite/icons/PieChart';
-import FileUploadIcon from '@rsuite/icons/FileUpload';
-import { RootState } from '@/store';
 import { calculateAgeFormat } from '@/utils';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
@@ -106,20 +75,16 @@ import {
     useSavePatientRelationMutation,
     useSendVerificationOtpMutation,
     useVerifyVerificationOtpMutation,
-    useGetPatientAllergiesViewQuery,
-    useGetPatientSecondaryDocumentsQuery,
-    useSaveNewSecondaryDocumentMutation,
     useGetPatientInsuranceQuery,
     useDeletePatientInsuranceMutation,
     useDeletePatientRelationMutation,
-    useDeletePatientSecondaryDocumentMutation,
     useSavePatientAdministrativeWarningsMutation,
     useGetPatientAdministrativeWarningsQuery,
     useUpdatePatientAdministrativeWarningsMutation,
     useDeletePatientAdministrativeWarningsMutation,
     useGetAgeGroupValueQuery
 } from '@/services/patientService';
-import { FaClock, FaPencil, FaPlus, FaQuestion } from 'react-icons/fa6';
+import { FaClock } from 'react-icons/fa6';
 import { VscGitPullRequestGoToChanges } from 'react-icons/vsc';
 import { VscUnverified } from 'react-icons/vsc';
 import { VscVerified } from 'react-icons/vsc';
@@ -128,28 +93,22 @@ import {
     useGetLovValuesByCodeAndParentQuery,
     useGetLovValuesByCodeQuery
 } from '@/services/setupService';
-import { useNavigate } from 'react-router-dom';
-import { useGetEncountersQuery } from '@/services/encounterService';
 import {
     useFetchAttachmentQuery,
-    useFetchAttachmentLightQuery,
-    useGetPatientAttachmentsListQuery,
     useFetchAttachmentByKeyQuery,
     useUploadMutation,
-    useDeleteAttachmentMutation,
-    useUpdateAttachmentDetailsMutation
+
 } from '@/services/attachmentService';
 import { notify } from '@/utils/uiReducerActions';
-
 import PreferredHealthProfessional from './PreferredHealthProfessional';
 import ConsentFormTab from './ConsentFormTab';
 import { MdCalculate } from 'react-icons/md';
-import PatientQuickAppointment from './PatientQuickAppointment';
-import PatientVisitHistory from './PatientVisitHistory';
+import PatientQuickAppointment from './PatientQuickAppointment';import PatientVisitHistory from './PatientVisitHistory';
 const { getHeight, on } = DOMHelper;
 import { newApEncounter} from '@/types/model-types-constructor';
 import PatientAttachment from './PatientAttachment';
 import PatientExtraDetails from './PatientExtraDetails';
+import SearchIcon from '@rsuite/icons/Search';
 const handleDownload = attachment => {
     const byteCharacters = atob(attachment.fileContent);
     const byteNumbers = new Array(byteCharacters.length);
@@ -171,33 +130,66 @@ const handleDownload = attachment => {
 };
 
 const PatientProfileCopy = () => {
-    const patientSlice = useAppSelector(state => state.patient);
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
-    const navigate = useNavigate();
-      const [localVisit, setLocalVisit] = useState({ ...newApEncounter });
-    const [btnNavigate, setBtnNavigate] = useState(false);
+    const [localVisit, setLocalVisit] = useState({ ...newApEncounter });
     const [windowHeight, setWindowHeight] = useState(getHeight(window));
     const [expand, setExpand] = useState(false);
-    const [selectedAttachment, setSelectedAttachment] = useState(null);
     const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
-    const [editing, setEditing] = useState(false);
     const [searchResultVisible, setSearchResultVisible] = useState(false);
     const [patientSearchTarget, setPatientSearchTarget] = useState('primary'); // primary, relation, etc..
-    const [patientAttachments, setPatientAttachments] = useState([]);
     const [selectedCriterion, setSelectedCriterion] = useState('');
     const [searchKeyword, setSearchKeyword] = useState('');
-    const [deleteDocModalOpen, setDeleteDocModalOpen] = useState(false);
-    const [openSearch, setOpenSearch] = useState(false);
+    const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
+    const [specificCoverageModalOpen, setSpecificCoverageModalOpen] = useState(false);
     const [deleteRelativeModalOpen, setDeleteRelativeModalOpen] = useState(false);
     const [open, setOpen] = useState(false);
     const [labelTitle, setLabelTitle] = useState(' ');
-    //////////
+    const [administrativeWarningDetails, setAdministrativeWarningDetails] = useState('');
     const [quickAppointmentModel,setQuickAppointmentModel] =  useState(false);
     const [visitHistoryModel,setVisitHistoryModel] =  useState(false);
     const [selectedAttachType, setSelectedAttachType] = useState({
-        accessTypeLkey: ''
-    });
+        accessTypeLkey: ''});
+    const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
+    const [savePatientRelation, savePatientRelationMutation] = useSavePatientRelationMutation();
+    const [relationModalOpen, setRelationModalOpen] = useState(false);
+    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+    const [administrativeWarningsModalOpen, setAdministrativeWarningsModalOpen] = useState(false);
+    const [savePatient, savePatientMutation] = useSavePatientMutation();
+    const [savePatientAdministrativeWarnings, setSavePatientAdministrativeWarnings] = useSavePatientAdministrativeWarningsMutation();
+    const [updatePatientAdministrativeWarnings, setUpdatePatientAdministrativeWarnings] = useUpdatePatientAdministrativeWarningsMutation();
+    const [deletePatientAdministrativeWarnings, setDeletePatientAdministrativeWarnings] = useDeletePatientAdministrativeWarningsMutation();
+    const [sendOtp, sendOtpMutation] = useSendVerificationOtpMutation();
+    const [verifyOtp, verifyOtpMutation] = useVerifyVerificationOtpMutation();
+    const [upload, uploadMutation] = useUploadMutation();
+    const [deleteInsurance, deleteInsuranceMutation] = useDeletePatientInsuranceMutation();
+    const [deleteRelation, deleteRelationMutation] = useDeletePatientRelationMutation();
+    const [validationResult, setValidationResult] = useState({});
+    const profileImageFileInputRef = useRef(null);
+    const [encounterHistoryModalOpen, setEncounterHistoryModalOpen] = useState(false);
+    const [InsuranceModalOpen, setInsuranceModalOpen] = useState(false);
+    const [selectedInsurance, setSelectedInsurance] = useState();
+    const [insuranceBrowsing, setInsuranceBrowsing] = useState(false);
+    //LOV
+    const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+    const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
+    const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({code:'CITY',parentValueKey: localPatient.countryLkey});
+    const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
+    const { data: maritalStatusLovQueryResponse } = useGetLovValuesByCodeQuery('MARI_STATUS');
+    const { data: nationalityLovQueryResponse } = useGetLovValuesByCodeQuery('NAT');
+    const { data: primaryLangLovQueryResponse } = useGetLovValuesByCodeQuery('LANG');
+    const { data: religeonLovQueryResponse } = useGetLovValuesByCodeQuery('REL');
+    const { data: ethnicityLovQueryResponse } = useGetLovValuesByCodeQuery('ETH');
+    const { data: occupationLovQueryResponse } = useGetLovValuesByCodeQuery('OCCP');
+    const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
+    const { data: categoryLovQueryResponse } = useGetLovValuesByCodeQuery('FAMILY_MMBR_CAT');
+    const { data: roleLovQueryResponse } = useGetLovValuesByCodeQuery('ER_CONTACTP_ROLE');
+    const { data: administrativeWarningsLovQueryResponse } = useGetLovValuesByCodeQuery('ADMIN_WARNINGS');
+    const { data: preferredWayOfContactLovQueryResponse } = useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
+    const { data: patientClassLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_CLASS');
+    const { data: educationalLevelLovQueryResponse } = useGetLovValuesByCodeQuery('EDU_LEVEL');
+    const { data: responsiblePartyLovQueryResponse } = useGetLovValuesByCodeQuery('RESP_PARTY');
+    const { data: securityAccessLevelLovQueryResponse } = useGetLovValuesByCodeQuery('SEC_ACCESS_LEVEL');
     const [warningsAdmistritiveListRequest, setWarningsAdmistritiveListRequest] =
         useState<ListRequest>({
             ...initialListRequest,
@@ -214,32 +206,13 @@ const PatientProfileCopy = () => {
                 }
             ]
         });
-
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         ignore: !searchKeyword || searchKeyword.length < 3
     });
-    const [documenstListRequest, setDocumentsListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined
-            }
-        ]
-    });
-    const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined
-            }
-        ]
-    });
-    //Administrative Warning
+    const { data: warnings, refetch: warningsRefetch } = useGetPatientAdministrativeWarningsQuery(
+        warningsAdmistritiveListRequest
+    );
     const [patientAdministrativeWarnings, setPatientAdministrativeWarnings] =
         useState<ApPatientAdministrativeWarnings>({ ...newApPatientAdministrativeWarnings });
     const searchCriteriaOptions = [
@@ -250,19 +223,16 @@ const PatientProfileCopy = () => {
         { label: 'Primary Phone Number', value: 'phoneNumber' },
         { label: 'Date of Birth', value: 'dob' }
     ];
-
     const {
         data: patientListResponse,
         isLoading: isGettingPatients,
         isFetching: isFetchingPatients,
         refetch: refetchPatients
     } = useGetPatientsQuery({ ...listRequest, filterLogic: 'or' });
-
     const [patientRelationListRequest, setPatientRelationListRequest] = useState<ListRequest>({
         ...initialListRequest,
         pageSize: 1000
     });
-
     const { data: patientRelationsResponse, refetch: patientRelationsRefetch } =
         useGetPatientRelationsQuery(
             {
@@ -271,7 +241,6 @@ const PatientProfileCopy = () => {
             },
             { skip: !localPatient.key }
         );
-
     const { data: patientAgeGroupResponse, refetch: patientAgeGroupRefetch } =
         useGetAgeGroupValueQuery(
             {
@@ -279,123 +248,12 @@ const PatientProfileCopy = () => {
             },
             { skip: !localPatient?.dob }
         );
-
     const [ageGroupValue, setAgeGroupValue] = useState({
         ageGroup: "",
     });
     const [ageFormatType, setAgeFormatType] = useState({
         ageFormat: "",
     });
-
-    useEffect(() => {
-        if (patientAgeGroupResponse?.object?.lovDisplayVale) {
-            setAgeGroupValue({
-                ageGroup: patientAgeGroupResponse.object.lovDisplayVale,
-            });
-        }
-    }, [patientAgeGroupResponse]);
-    useEffect(() => {
-        if (localPatient?.dob) {
-            const calculatedFormat = calculateAgeFormat(localPatient.dob);
-            setAgeFormatType(prevState => ({
-                ...prevState,
-                ageFormat: calculatedFormat,
-            }));
-        } else {
-            setAgeFormatType(prevState => ({
-                ...prevState,
-                ageFormat: '',
-            }));
-        }
-    }, [localPatient?.dob]);
-    const patientKey = localPatient?.key?.toString();
-    const { data: warnings, refetch: warningsRefetch } = useGetPatientAdministrativeWarningsQuery(
-        warningsAdmistritiveListRequest
-    );
-
-    const { data: patientSecondaryDocumentsResponse, refetch: patientSecondaryDocuments } = useGetPatientSecondaryDocumentsQuery(documenstListRequest, { skip: !localPatient.key });
-
-    useEffect(() => {
-        setDocumentsListRequest((prev) => ({
-            ...prev,
-            filters: [
-                {
-                    fieldName: 'deleted_at',
-                    operator: 'isNull',
-                    value: undefined,
-                },
-                ...(localPatient?.key
-                    ? [
-                        {
-                            fieldName: 'patient_key',
-                            operator: 'match',
-                            value: localPatient.key,
-                        },
-                    ]
-                    : []),
-            ],
-        }));
-    }, [localPatient.key]);
-
-    useEffect(() => {
-        const updatedFilters = [
-            {
-                fieldName: 'patient_key',
-                operator: 'match',
-                value: localPatient.key || undefined
-            },
-            {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined
-            }
-        ];
-        setWarningsAdmistritiveListRequest(prevRequest => ({
-            ...prevRequest,
-            filters: updatedFilters
-        }));
-    }, [localPatient.key]);
-
-    const handleSaveSecondaryDocument = () => {
-        if (secondaryDocument.key === undefined) {
-            saveSecondaryDocument({
-                ...secondaryDocument,
-                patientKey: localPatient.key,
-                createdBy: authSlice.user.key,
-                documentNo:
-                    secondaryDocument.documentTypeLkey === 'NO_DOC'
-                        ? 'No Document '
-                        : secondaryDocument.documentNo
-
-            })
-                .unwrap()
-                .then(() => {
-                    dispatch(notify('Document Added Successfully'));
-                    patientSecondaryDocuments();
-                    handleCleareSecondaryDocument();
-                });
-        }
-        else if (secondaryDocument.key) {
-            saveSecondaryDocument({
-                ...secondaryDocument,
-                patientKey: localPatient.key,
-                updatedBy: authSlice.user.key,
-                documentNo:
-                    secondaryDocument.documentTypeLkey === 'NO_DOC'
-                        ? 'No Document '
-                        : secondaryDocument.documentNo
-
-            })
-                .unwrap()
-                .then(() => {
-                    dispatch(notify('Document Updated Successfully'));
-                    patientSecondaryDocuments();
-                    handleCleareSecondaryDocument();
-                });
-        }
-
-    };
-
     const [selectedPatientRelation, setSelectedPatientRelation] = useState<any>({
         ...newApPatientRelation
     });
@@ -403,103 +261,6 @@ const PatientProfileCopy = () => {
         useState<any>({
             ...newApPatientAdministrativeWarnings
         });
-
-    const [selectedSecondaryDocument, setSelectedSecondaryDocument] = useState<any>({
-        ...newApPatientSecondaryDocuments
-    });
-
-    const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
-    const [selectedPatientAttacment, setSelectedPatientAttacment] = useState<any>({
-        ...newApPatientInsurance
-    });
-
-    const [patientAllergies, setPatientAllergies] = useState();
-
-    const [savePatientRelation, savePatientRelationMutation] = useSavePatientRelationMutation();
-    const [relationModalOpen, setRelationModalOpen] = useState(false);
-    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-    const [administrativeWarningsModalOpen, setAdministrativeWarningsModalOpen] = useState(false);
-    const [secondaryDocumentModalOpen, setSecondaryDocumentModalOpen] = useState(false);
-
-    const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-    const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
-    const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
-        code: 'CITY',
-        parentValueKey: localPatient.countryLkey
-    });
-    const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
-    const { data: maritalStatusLovQueryResponse } = useGetLovValuesByCodeQuery('MARI_STATUS');
-    const { data: nationalityLovQueryResponse } = useGetLovValuesByCodeQuery('NAT');
-    const { data: primaryLangLovQueryResponse } = useGetLovValuesByCodeQuery('LANG');
-    const { data: religeonLovQueryResponse } = useGetLovValuesByCodeQuery('REL');
-    const { data: ethnicityLovQueryResponse } = useGetLovValuesByCodeQuery('ETH');
-    const { data: occupationLovQueryResponse } = useGetLovValuesByCodeQuery('OCCP');
-    const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
-    const { data: categoryLovQueryResponse } = useGetLovValuesByCodeQuery('FAMILY_MMBR_CAT');
-    const { data: attachmentsLovQueryResponse } = useGetLovValuesByCodeQuery('ATTACH_TYPE');
-    const { data: roleLovQueryResponse } = useGetLovValuesByCodeQuery('ER_CONTACTP_ROLE');
-    const { data: administrativeWarningsLovQueryResponse } =
-        useGetLovValuesByCodeQuery('ADMIN_WARNINGS');
-
-    const [attachmentType, setAttachmnetType] = useState();
-
-    const { data: preferredWayOfContactLovQueryResponse } =
-        useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
-    const { data: patientClassLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_CLASS');
-    const { data: educationalLevelLovQueryResponse } = useGetLovValuesByCodeQuery('EDU_LEVEL');
-    const { data: responsiblePartyLovQueryResponse } = useGetLovValuesByCodeQuery('RESP_PARTY');
-    const { data: securityAccessLevelLovQueryResponse } =
-        useGetLovValuesByCodeQuery('SEC_ACCESS_LEVEL');
-
-    const [savePatient, savePatientMutation] = useSavePatientMutation();
-    const [saveSecondaryDocument, setSaveSecondaryDocument] = useSaveNewSecondaryDocumentMutation();
-    const [savePatientAdministrativeWarnings, setSavePatientAdministrativeWarnings] =
-        useSavePatientAdministrativeWarningsMutation();
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-    const [updatePatientAdministrativeWarnings, setUpdatePatientAdministrativeWarnings] =
-        useUpdatePatientAdministrativeWarningsMutation();
-    const [deletePatientAdministrativeWarnings, setDeletePatientAdministrativeWarnings] =
-        useDeletePatientAdministrativeWarningsMutation();
-    const [sendOtp, sendOtpMutation] = useSendVerificationOtpMutation();
-    const [verifyOtp, verifyOtpMutation] = useVerifyVerificationOtpMutation();
-    const [upload, uploadMutation] = useUploadMutation();
-    const [deleteAttachment, deleteAttachmentMutation] = useDeleteAttachmentMutation();
-    const [deleteInsurance, deleteInsuranceMutation] = useDeletePatientInsuranceMutation();
-    const [deleteSecondaryDocument, deleteSecondaryDocumentMutation] =
-        useDeletePatientSecondaryDocumentMutation();
-
-    const [deleteRelation, deleteRelationMutation] = useDeletePatientRelationMutation();
-
-    const [Update, UpdateMutation] = useUpdateAttachmentDetailsMutation();
-    const [validationResult, setValidationResult] = useState({});
-    const profileImageFileInputRef = useRef(null);
-    const attachmentFileInputRef = useRef(null);
-
-    const [encounterHistoryModalOpen, setEncounterHistoryModalOpen] = useState(false);
-    const [InsuranceModalOpen, setInsuranceModalOpen] = useState(false);
-
-    const [selectedInsurance, setSelectedInsurance] = useState();
-    const [insuranceBrowsing, setInsuranceBrowsing] = useState(false);
-    //Administrative Details
-    const [administrativeWarningDetails, setAdministrativeWarningDetails] = useState('');
-
-    const handleShowInsuranceDetails = () => {
-        setInsuranceModalOpen(true);
-        setInsuranceBrowsing(true);
-    };
-
-    const [encounterHistoryListRequest, setEncounterHistoryListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        pageSize: 50,
-        sortBy: 'plannedStartDate',
-        sortType: 'desc',
-        ignore: true
-    });
-    const enableEdit = () => {
-        setEditing(true);
-        setValidationResult(undefined);
-    };
-    const encounterHistoryResponse = useGetEncountersQuery(encounterHistoryListRequest);
     const fetchPatientImageResponse = useFetchAttachmentQuery(
         {
             type: 'PATIENT_PROFILE_PICTURE',
@@ -507,168 +268,29 @@ const PatientProfileCopy = () => {
         },
         { skip: !localPatient.key }
     );
-
-    const handleSelectPatient = data => {
-        if (patientSearchTarget === 'primary') {
-            // selecteing primary patient (localPatient)
-            setLocalPatient(data);
-            // dispatch(setPatient(data));
-        } else if (patientSearchTarget === 'relation') {
-            // selecting patient for relation patient key
-            setSelectedPatientRelation({
-                ...selectedPatientRelation,
-                relativePatientKey: data.key,
-                relativePatientObject: data
-            });
-        }
-        refetchPatients({ ...listRequest, clearResults: true });
-        setSearchResultVisible(false);
-    };
-
-    const {
-        data: patientAllergiesViewResponse,
-        error: allergiesError,
-        isLoading: isLoadingAllergies,
-        isSuccess: isSuccessAllergies
-    } = useGetPatientAllergiesViewQuery({ key: localPatient?.key }, { skip: !localPatient?.key });
-
-    const patientInsuranceResponse = useGetPatientInsuranceQuery({
-        patientKey: localPatient.key
-    });
-
-
-
-    useEffect(() => {
-        if (selectedSecondaryDocument) {
-            setSecondaryDocument(selectedSecondaryDocument);
-        }
-    }, [selectedSecondaryDocument]);
-
-    useEffect(() => {
-        if (isSuccessAllergies && patientAllergiesViewResponse) {
-            setPatientAllergies(patientAllergiesViewResponse.object);
-        }
-    }, [
-        localPatient,
-        isLoadingAllergies,
-        allergiesError,
-        isSuccessAllergies,
-        patientAllergiesViewResponse
-    ]);
-    const isSelectedDocument = rowData => {
-        if (rowData && secondaryDocument && secondaryDocument.key === rowData.key) {
-            return 'selected-row';
-        } else return '';
-    };
-    const isSelectedRelation = rowData => {
-        if (rowData && selectedPatientRelation && selectedPatientRelation.key === rowData.key) {
-            return 'selected-row';
-        } else return '';
-    };
-    const [skipQuery, setSkipQuery] = useState(true);
     const [actionType, setActionType] = useState(null); // 'view' or 'download'
-    const [visit, setVisit] = useState();
-    const handleDeleteInsurance = () => {
-        deleteInsurance({
-            key: selectedInsurance.key
-        }).then(
-            () => (
-                patientInsuranceResponse.refetch(),
-                dispatch(notify('Insurance Deleted')),
-                setSelectedInsurance(null)
-            )
-        );
-    };
-
-    const {
-        data: fetchAttachmentByKeyResponce,
-        error,
-        isLoading,
-        isFetching,
-        isSuccess,
-        refetch
-    } = useFetchAttachmentByKeyQuery(
-        { key: requestedPatientAttacment },
-        { skip: !requestedPatientAttacment || !localPatient.key }
-    );
-
-    const handleDownloadSelectedPatientAttachment = attachmentKey => {
-        setRequestedPatientAttacment(attachmentKey);
-        setActionType('download');
-    };
-
-    const handleAttachmentSelected = attachmentKey => {
-        setRequestedPatientAttacment(attachmentKey);
-        setActionType('view');
-    };
-
-
-    const handleCleareSecondaryDocument = () => {
-        setSecondaryDocumentModalOpen(false);
-        setSecondaryDocument(newApPatientSecondaryDocuments);
-    };
-
-
-    const handleSaveFamilyMembers = () => {
-        savePatientRelation({
-            ...selectedPatientRelation,
-            patientKey: localPatient.key,
-        }).unwrap()
-            .then(() => {
-                patientRelationsRefetch();
-            })
-        patientRelationsRefetch();
-    }
-
-
-
-
-
-    useEffect(() => {
-        if (isSuccess && fetchAttachmentByKeyResponce) {
-            if (actionType === 'download') {
-                handleDownload(fetchAttachmentByKeyResponce);
-            } else if (actionType === 'view') {
-                setAttachmentsModalOpen(true);
-                setSelectedPatientAttacment(fetchAttachmentByKeyResponce);
-                setNewAttachmentDetails(fetchAttachmentByKeyResponce.extraDetails);
-                setSelectedAttachType({ accessTypeLkey: fetchAttachmentByKeyResponce.accessTypeLkey })
-            }
-        }
-    }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
-
     const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
     const [verificationModalOpen, setVerificationModalOpen] = useState(false);
     const [verificationRequest, setVerificationRequest] = useState({
         otp: ''
     });
-
-    const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch } =
-        useGetPatientAttachmentsListQuery(attachmentsListRequest, { skip: !localPatient?.key });
-
-    useEffect(() => {
-        if (patientSlice.patient) {
-            setLocalPatient(patientSlice.patient);
-
-            setPatientRelationListRequest({
-                ...patientRelationListRequest,
-                filters: [
-                    {
-                        fieldName: 'patient_key',
-                        operator: 'match',
-                        value: localPatient.key
-                    }
-                ]
-            });
-
-        }
-    }, []);
-
-    useEffect(() => {
-        if (patientSlice.patient) {
-            setLocalPatient(patientSlice.patient);
-        }
-    }, [patientSlice]);
+    const [selectedRowId, setSelectedRowId] = useState(null);
+    const [newAttachmentType, setNewAttachmentType] = useState();
+    const [newAttachmentDetails, setNewAttachmentDetails] = useState('');
+    const navBodyStyle: React.CSSProperties = expand
+        ? { height: windowHeight - 111, overflow: 'auto' }
+        : {};
+    //handleFun
+    const handleSave = () => {
+        // save changes
+        savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false }).unwrap().then(() => {
+            dispatch(notify('Patient Added Successfully'));
+        });
+    };
+    const handleImageClick = type => {
+        setNewAttachmentType(type); // PATIENT_PROFILE_ATTACHMENT or PATIENT_PROFILE_PICTURE
+        if (localPatient.key) profileImageFileInputRef.current.click();
+    };
     const isSelected = rowData => {
         if (
             rowData &&
@@ -678,161 +300,7 @@ const PatientProfileCopy = () => {
             return 'selected-row';
         } else return '';
     };
-    useEffect(() => {
-        if (fetchPatintAttachmentsResponce)
-            if (fetchPatintAttachmentsResponce && localPatient.key) {
-                setPatientAttachments(fetchPatintAttachmentsResponce?.object);
-            } else {
-                setPatientAttachments(undefined);
-            }
-    }, [fetchPatintAttachmentsResponce]);
-
-    useEffect(() => {
-        if (
-            fetchPatientImageResponse.isSuccess &&
-            fetchPatientImageResponse.data &&
-            fetchPatientImageResponse.data.key
-        ) {
-            setPatientImage(fetchPatientImageResponse.data);
-        } else {
-            setPatientImage(undefined);
-        }
-    }, [fetchPatientImageResponse]);
-
-    const handleImageClick = type => {
-        setNewAttachmentType(type); // PATIENT_PROFILE_ATTACHMENT or PATIENT_PROFILE_PICTURE
-
-        if (patientSlice.patient && editing) profileImageFileInputRef.current.click();
-    };
-
-    const handleAttachmentFileUploadClick = type => {
-        setNewAttachmentType(type); // PATIENT_PROFILE_ATTACHMENT or PATIENT_PROFILE_PICTURE
-        if (patientSlice.patient && attachmentsModalOpen) attachmentFileInputRef.current.click();
-    };
-
-    useEffect(() => {
-        if (uploadMutation.status === 'fulfilled') {
-            dispatch(notify('patient image uploaded'));
-            if (!attachmentsModalOpen) setPatientImage(uploadMutation.data);
-        }
-    }, [uploadMutation]);
-
-    const handleFileChange = async event => {
-        if (!localPatient) return;
-
-        const selectedFile = event.target.files[0];
-        if (selectedFile) {
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-
-            if (attachmentsModalOpen) {
-            } else {
-                upload({
-                    formData: formData,
-                    type: 'PATIENT_PROFILE_PICTURE',
-                    refKey: localPatient.key,
-                    details: `Profile Picture for ${localPatient.fullName}`,
-                    accessType: '',
-                    createdBy: authSlice.user.key
-                })
-                    .unwrap()
-                    .then(() => attachmentRefetch());
-            }
-        }
-    };
-
-    const [secondaryDocument, setSecondaryDocument] = useState(newApPatientSecondaryDocuments);
-    useEffect(() => {
-
-    }, [secondaryDocument]);
-    const [selectedRowId, setSelectedRowId] = useState(null);
-
-    const [newAttachmentSrc, setNewAttachmentSrc] = useState(null);
-    const [newAttachmentType, setNewAttachmentType] = useState();
-    const [newAttachmentDetails, setNewAttachmentDetails] = useState('');
-    const [uploadedAttachmentOpject, setUploadedAttachmentOpject] = useState({
-        formData: null,
-        type: null,
-        refKey: null,
-
-    });
-
-    const handleFileUpload = async event => {
-        if (!patientSlice.patient) return;
-
-        const selectedFile = event.target.files[0];
-        if (selectedFile) {
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-
-            if (attachmentsModalOpen) {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    setNewAttachmentSrc(reader.result);
-                };
-                reader.readAsDataURL(selectedFile);
-
-                setUploadedAttachmentOpject({
-                    formData: formData,
-                    type: newAttachmentType,
-                    refKey: localPatient.key
-                });
-            }
-        }
-    };
-    const handleFinishUploading = () => {
-        setUploadedAttachmentOpject({
-            formData: null,
-            type: null,
-            refKey: null
-        });
-        setNewAttachmentSrc(null);
-        setNewAttachmentType(null);
-        setNewAttachmentDetails('');
-        setAttachmentsModalOpen(false);
-        attachmentRefetch();
-        setSelectedPatientAttacment(null);
-        handleAttachmentSelected(null);
-        setActionType(null);
-        setSelectedAttachType(null);
-    };
-    useEffect(() => {
-        dispatch(setPatient({ ...newApPatient }));
-    }, []);
-
-
-    const startRegistration = () => {
-        setEditing(true);
-        setValidationResult(undefined);
-    };
-
-    const handleSave = () => {
-        // save changes
-        savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false }).unwrap().then(() => {
-            dispatch(notify('Patient Added Successfully'));
-        });
-    };
-
-    const handleDeleteSecondaryDocument = () => {
-        deleteSecondaryDocument({
-            key: selectedSecondaryDocument.key
-        }).then(
-            () => (
-                patientSecondaryDocuments(),
-                dispatch(notify('Secondary Document Deleted')),
-                setSelectedInsurance(null),
-                setDeleteDocModalOpen(false)
-            )
-        );
-    };
-    const handleDeleteAttachment = (attachment) => {
-        setSelectedAttachment(attachment);
-        setDeleteModalOpen(true);
-    };
-
     const handleDeleteRelation = () => {
-
-
         deleteRelation({
             key: selectedPatientRelation.key
         }).then(
@@ -844,8 +312,38 @@ const PatientProfileCopy = () => {
             )
         );
     };
-
-
+    const handleDeleteInsurance = () => {
+        deleteInsurance({
+            key: selectedInsurance.key
+        }).then(
+            () => (
+                patientInsuranceResponse.refetch(),
+                dispatch(notify('Insurance Deleted')),
+                setSelectedInsurance(null)
+            )
+        );
+    };
+    const {
+        data: fetchAttachmentByKeyResponce,
+        error,
+        isLoading,
+        isFetching,
+        isSuccess,
+        refetch
+    } = useFetchAttachmentByKeyQuery(
+        { key: requestedPatientAttacment },
+        { skip: !requestedPatientAttacment || !localPatient.key }
+    );
+    const handleSaveFamilyMembers = () => {
+        savePatientRelation({
+            ...selectedPatientRelation,
+            patientKey: localPatient.key,
+        }).unwrap()
+            .then(() => {
+                patientRelationsRefetch();
+            })
+        patientRelationsRefetch();
+    }
     const handleUpdateAdministrativeWarningsUnDoResolved = () => {
         updatePatientAdministrativeWarnings({
             ...selectedPatientAdministrativeWarnings,
@@ -874,7 +372,6 @@ const PatientProfileCopy = () => {
                 setSelectedPatientAdministrativeWarnings({ ...newApPatientAdministrativeWarnings });
             });
     };
-
     const handleSavePatientAdministrativeWarnings = () => {
         savePatientAdministrativeWarnings({
             ...patientAdministrativeWarnings,
@@ -894,8 +391,6 @@ const PatientProfileCopy = () => {
                 setPatientAdministrativeWarnings({ ...newApPatientAdministrativeWarnings });
             });
     };
-
-
     const handleDeletePatientAdministrativeWarnings = () => {
         deletePatientAdministrativeWarnings({
             ...selectedPatientAdministrativeWarnings
@@ -908,17 +403,6 @@ const PatientProfileCopy = () => {
                 setSelectedPatientAdministrativeWarnings({ ...newApPatientAdministrativeWarnings });
             });
     };
-    const handleUpdateAttachmentDetails = () => {
-        Update({
-            key: selectedPatientAttacment.key,
-            attachmentDetails: newAttachmentDetails,
-            updatedBy: authSlice.user.key,
-            accessType: selectedAttachType.accessTypeLkey
-        })
-            .unwrap()
-            .then(() => handleFinishUploading());
-    };
-
     const handleClear = () => {
         setLocalPatient({
             ...newApPatient,
@@ -943,86 +427,44 @@ const PatientProfileCopy = () => {
             preferredContactLkey: null,
             roleLkey: null,
         });
-        setEditing(false);
         setValidationResult(undefined);
         dispatch(setPatient(null));
         dispatch(setEncounter(null));
         setPatientImage(undefined);
-        setSelectedPatientAttacment(null);
         setRequestedPatientAttacment(null);
-        setPatientAttachments([]);
         setActionType(null);
-        setPatientAllergies(null);
         setSelectedCriterion('');
     };
+    const handleFileChange = async event => {
+        if (!localPatient) return;
 
-    useEffect(() => {
-        if (savePatientMutation && savePatientMutation.status === 'fulfilled') {
-            setLocalPatient(savePatientMutation.data);
-            dispatch(setPatient(savePatientMutation.data));
-            setEditing(false);
-            setValidationResult(undefined);
-        } else if (savePatientMutation && savePatientMutation.status === 'rejected') {
-            setValidationResult(savePatientMutation.error.data.validationResult);
-        }
-    }, [savePatientMutation]);
+        const selectedFile = event.target.files[0];
+        if (selectedFile) {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
 
-    useEffect(() => {
-        if (savePatientRelationMutation.status === 'fulfilled') {
-            setSelectedPatientRelation(savePatientRelationMutation.data);
-            setPatientRelationListRequest({ ...patientRelationListRequest, timestamp: Date.now() });
-            setRelationModalOpen(false);
-            dispatch(notify('Relation saved'));
-        }
-    }, [savePatientRelationMutation]);
-
-    useEffect(() => {
-        if (sendOtpMutation.status === 'fulfilled') {
-            dispatch(notify('OTP sent'));
-        }
-    }, [sendOtpMutation]);
-
-    useEffect(() => {
-        if (verifyOtpMutation.status === 'fulfilled') {
-            dispatch(notify('Patient verified success'));
-            setLocalPatient(verifyOtpMutation.data);
-            dispatch(setPatient(verifyOtpMutation.data));
-            setVerificationModalOpen(false);
-        }
-    }, [verifyOtpMutation]);
-    const handleClearAttachmentDelete = () => {
-        setDeleteModalOpen(false);
-        handleCleareAttachment();
-
-    };
-    const handleFilterChange = (fieldName, value) => {
-        if (value) {
-            setListRequest(
-                addFilterToListRequest(
-                    fromCamelCaseToDBName(fieldName),
-                    'containsIgnoreCase',
-                    value,
-                    listRequest
-                )
-            );
-        } else {
-            setListRequest({ ...listRequest, filters: [] });
+            if (attachmentsModalOpen) {
+            } else {
+                upload({
+                    formData: formData,
+                    type: 'PATIENT_PROFILE_PICTURE',
+                    refKey: localPatient.key,
+                    details: `Profile Picture for ${localPatient.fullName}`,
+                    accessType: '',
+                    createdBy: authSlice.user.key
+                })
+                    .unwrap()
+                    .then(() => attachmentRefetch());
+            }
         }
     };
     const handleSelect = (value) => {
         setSelectedCriterion(value);
         setOpen(false);
     };
-    const handleClearDocument = () => {
-        setSecondaryDocumentModalOpen(false);
-        setSecondaryDocument(newApPatientSecondaryDocuments);
-        setDeleteDocModalOpen(false);
-
-    };
     const handleClearRelative = () => {
         setSelectedPatientRelation(newApPatientRelation);
         setDeleteRelativeModalOpen(false);
-
     }
     const handleFilterChangeInWarning = (fieldName, value) => {
         if (value) {
@@ -1051,7 +493,6 @@ const PatientProfileCopy = () => {
             });
         }
     };
-
     const search = target => {
         setPatientSearchTarget(target);
         setSearchResultVisible(true);
@@ -1069,14 +510,7 @@ const PatientProfileCopy = () => {
                 ]
             });
         }
-    };
-
-
-
-    useEffect(() => {
-        setSearchKeyword('');
-
-    }, [selectedCriterion]);
+    }; 
     const conjurePatientSearchBar = target => {
         return (
             <Panel>
@@ -1121,110 +555,168 @@ const PatientProfileCopy = () => {
             </Panel>
         );
     };
-    const navBodyStyle: React.CSSProperties = expand
-        ? { height: windowHeight - 111, overflow: 'auto' }
-        : {};
-
     const handleNewVisit = () => {
      setQuickAppointmentModel(true);
-    };
-
-    const handleEncounterHistory = () => {
-        if (patientSlice.patient) {
-            setEncounterHistoryListRequest(
-                addFilterToListRequest('patient_key', 'containsIgnoreCase', patientSlice.patient.key, {
-                    ...encounterHistoryListRequest,
-                    ignore: false
-                })
-            );
-            setEncounterHistoryModalOpen(true);
-        }
-    };
-    const handleCleareAttachment = () => {
-        setAttachmentsModalOpen(false);
-        setRequestedPatientAttacment(null);
-        setRequestedPatientAttacment(null);
-        setNewAttachmentSrc(null);
-        setNewAttachmentType(null);
-        setNewAttachmentDetails('');
-        attachmentRefetch();
-        setSelectedPatientAttacment(null);
-        handleAttachmentSelected(null);
-        setActionType(null);
     };
     const handleEditModal = () => {
         if (selectedInsurance) {
             setInsuranceModalOpen(true);
         }
     };
-
-    const handleEditSecondaryDocument = () => {
-        if (selectedSecondaryDocument) {
-            setSecondaryDocumentModalOpen(true);
-        }
+    const handleShowInsuranceDetails = () => {
+        setInsuranceModalOpen(true);
+        setInsuranceBrowsing(true);
     };
-
-
-
-    const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
-    const [specificCoverageModalOpen, setSpecificCoverageModalOpen] = useState(false);
+    const patientInsuranceResponse = useGetPatientInsuranceQuery({
+        patientKey: localPatient.key
+    });
+    const isSelectedRelation = rowData => {
+        if (rowData && selectedPatientRelation && selectedPatientRelation.key === rowData.key) {
+            return 'selected-row';
+        } else return '';
+    };
+    //useEffect
+    useEffect(() => {
+        dispatch(setPatient({ ...newApPatient }));
+    }, []);
+    useEffect(() => {
+        if (patientAgeGroupResponse?.object?.lovDisplayVale) {
+            setAgeGroupValue({
+                ageGroup: patientAgeGroupResponse.object.lovDisplayVale,
+            });
+        }
+    }, [patientAgeGroupResponse]);
+    useEffect(() => {
+        if (localPatient?.dob) {
+            const calculatedFormat = calculateAgeFormat(localPatient.dob);
+            setAgeFormatType(prevState => ({
+                ...prevState,
+                ageFormat: calculatedFormat,
+            }));
+        } else {
+            setAgeFormatType(prevState => ({
+                ...prevState,
+                ageFormat: '',
+            }));
+        }
+    }, [localPatient?.dob]);
+    useEffect(() => {
+        const updatedFilters = [
+            {
+                fieldName: 'patient_key',
+                operator: 'match',
+                value: localPatient.key || undefined
+            },
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
+            }
+        ];
+        setWarningsAdmistritiveListRequest(prevRequest => ({
+            ...prevRequest,
+            filters: updatedFilters
+        }));
+    }, [localPatient.key]);
     useEffect(() => {
         if (isSuccess && fetchAttachmentByKeyResponce) {
             if (actionType === 'download') {
                 handleDownload(fetchAttachmentByKeyResponce);
             } else if (actionType === 'view') {
                 setAttachmentsModalOpen(true);
-                setSelectedPatientAttacment(fetchAttachmentByKeyResponce);
                 setNewAttachmentDetails(fetchAttachmentByKeyResponce.extraDetails);
                 setSelectedAttachType({ accessTypeLkey: fetchAttachmentByKeyResponce.accessTypeLkey });
             }
         }
     }, [fetchAttachmentByKeyResponce, actionType]);
-
-
     useEffect(() => {
-        setAttachmentsListRequest((prev) => ({
-            ...prev,
-            filters: [
-                {
-                    fieldName: 'deleted_at',
-                    operator: 'isNull',
-                    value: undefined,
-                },
-                ...(localPatient?.key
-                    ? [
-                        {
-                            fieldName: 'reference_object_key',
-                            operator: 'match',
-                            value: localPatient.key,
-                        },
-                    ]
-                    : []),
-            ],
-        }));
-    }, [localPatient.key]);
+        setSearchKeyword('');
+    }, [selectedCriterion]);
+    useEffect(() => {
+        if (savePatientRelationMutation.status === 'fulfilled') {
+            setSelectedPatientRelation(savePatientRelationMutation.data);
+            setPatientRelationListRequest({ ...patientRelationListRequest, timestamp: Date.now() });
+            setRelationModalOpen(false);
+            dispatch(notify('Relation saved'));
+        }
+    }, [savePatientRelationMutation]);
+    useEffect(() => {
+        if (sendOtpMutation.status === 'fulfilled') {
+            dispatch(notify('OTP sent'));
+        }
+    }, [sendOtpMutation]);
+    useEffect(() => {
+        if (verifyOtpMutation.status === 'fulfilled') {
+            dispatch(notify('Patient verified success'));
+            setLocalPatient(verifyOtpMutation.data);
+            dispatch(setPatient(verifyOtpMutation.data));
+            setVerificationModalOpen(false);
+        }
+    }, [verifyOtpMutation]);
+    useEffect(() => {
+        if (savePatientMutation && savePatientMutation.status === 'fulfilled') {
+            setLocalPatient(savePatientMutation.data);
+            dispatch(setPatient(savePatientMutation.data));
+            setEditing(false);
+            setValidationResult(undefined);
+        } else if (savePatientMutation && savePatientMutation.status === 'rejected') {
+            setValidationResult(savePatientMutation.error.data.validationResult);
+        }
+    }, [savePatientMutation]);
+    useEffect(() => {
+        if (uploadMutation.status === 'fulfilled') {
+            dispatch(notify('patient image uploaded'));
+            if (!attachmentsModalOpen) setPatientImage(uploadMutation.data);
+        }
+    }, [uploadMutation]);
+    useEffect(() => {
+        if (localPatient) {
+            setPatientRelationListRequest({
+                ...patientRelationListRequest,
+                filters: [
+                    {
+                        fieldName: 'patient_key',
+                        operator: 'match',
+                        value: localPatient.key
+                    }
+                ]
+            });
 
-
-
-    console.log("patientListResponse?.object -->", patientListResponse?.object);
+        }
+    }, []);
+    useEffect(() => {
+        if (
+            fetchPatientImageResponse.isSuccess &&
+            fetchPatientImageResponse.data &&
+            fetchPatientImageResponse.data.key
+        ) {
+            setPatientImage(fetchPatientImageResponse.data);
+        } else {
+            setPatientImage(undefined);
+        }
+    }, [fetchPatientImageResponse]);
+    useEffect(() => {
+        if (isSuccess && fetchAttachmentByKeyResponce) {
+            if (actionType === 'download') {
+                handleDownload(fetchAttachmentByKeyResponce);
+            } else if (actionType === 'view') {
+                setAttachmentsModalOpen(true);
+                setNewAttachmentDetails(fetchAttachmentByKeyResponce.extraDetails);
+                setSelectedAttachType({ accessTypeLkey: fetchAttachmentByKeyResponce.accessTypeLkey })
+            }
+        }
+    }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
     return (
         <>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-
-
                 <div style={{ width: expand ? "calc(100% - 230px)" : "100%" }}>
-
-
                     <Panel
                         bordered
                         style={{ zoom: 0.8 }}
                     >
-
-
                         <Panel >
                             <Stack>
                                 <Stack.Item grow={1}>
-
                                     <Form layout="inline" fluid style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                         <div
                                             style={{
@@ -1233,7 +725,6 @@ const PatientProfileCopy = () => {
                                                 padding: '5px'
                                             }}
                                         >
-
                                             <QuickPatient
                                                 open={quickPatientModalOpen}
                                                 localPatientData={localPatient}
@@ -1241,7 +732,6 @@ const PatientProfileCopy = () => {
                                             />
                                             <Form style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>
                                                 <AvatarGroup spacing={6}>
-
                                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                                         {localPatient.key && (
                                                             <Whisper
@@ -1298,8 +788,6 @@ const PatientProfileCopy = () => {
                                                             </Whisper>
                                                         )}
                                                     </div>
-
-
                                                     <input
                                                         type="file"
                                                         ref={profileImageFileInputRef}
@@ -1323,29 +811,13 @@ const PatientProfileCopy = () => {
                                                         <h6>{localPatient?.fullName}</h6>
                                                         <span>{localPatient?.createdAt ? new Date(localPatient?.createdAt).toLocaleString("en-GB") : ""}</span>
                                                         <span>{localPatient?.patientMrn}</span>
-
                                                     </Form>
                                                 </AvatarGroup>
-
-
                                             </Form>
-
                                         </div>
-
-                                        <ButtonToolbar>
+                                       <ButtonToolbar>
                                             <Button
-                                                disabled={editing || localPatient.key !== undefined}
-                                                onClick={startRegistration}
-                                                appearance="ghost"
-                                                style={{ border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: "3px" }}
-
-                                            >
-                                                <FontAwesomeIcon icon={faUserPlus} style={{ marginRight: '5px', color: '#00b1cc' }} />
-
-                                                <span>New</span>
-                                            </Button>
-                                            <Button
-                                                disabled={!editing}
+                                               
                                                 onClick={handleSave}
                                                 appearance="primary"
                                                 style={{ border: '1px solid #00b1cc', backgroundColor: '#00b1cc', color: 'white', marginLeft: "3px" }}
@@ -1354,19 +826,6 @@ const PatientProfileCopy = () => {
                                                 <FontAwesomeIcon icon={faCheckDouble} style={{ marginRight: '5px', color: 'white' }} />
                                                 <span>Save</span>
                                             </Button>
-                                            <Button
-                                                disabled={editing || !localPatient.key}
-                                                onClick={enableEdit}
-                                                appearance="ghost"
-                                                style={{ border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: "3px" }}
-
-                                            >
-
-                                                <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: '#007e91' }} />
-
-                                                <span>Edit</span>
-                                            </Button>
-
                                             <Button appearance="primary" style={{ border: '1px solid #007e91', backgroundColor: '#007e91', color: 'white', marginLeft: "3px" }} onClick={handleClear}>
                                                 <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px', color: 'white' }} />
                                                 <Translate>Clear</Translate>
@@ -1380,7 +839,7 @@ const PatientProfileCopy = () => {
                                                                 color='cyan'
                                                                 appearance="ghost"
                                                                 style={{ color: '#00b1cc', zoom: 0.8, textAlign: 'left', width: 170 }}
-                                                                disabled={editing || localPatient.key === undefined}
+                                                                disabled={ localPatient.key === undefined}
                                                                 onClick={()=>setVisitHistoryModel(true)}
                                                                 block
                                                             >
@@ -1395,7 +854,7 @@ const PatientProfileCopy = () => {
                                                                 color='cyan'
                                                                 appearance="ghost"
                                                                 style={{ color: '#00b1cc', zoom: 0.8, textAlign: 'left', width: 170 }}
-                                                                disabled={editing || localPatient.key !== undefined}
+                                                                disabled={ localPatient.key !== undefined}
                                                                 onClick={() => setQuickPatientModalOpen(true)}
                                                                 block
                                                             >
@@ -1411,7 +870,7 @@ const PatientProfileCopy = () => {
                                                                 color='cyan'
                                                                 appearance="ghost"
                                                                 style={{ color: '#00b1cc', zoom: 0.8, textAlign: 'left', width: 170 }}
-                                                                disabled={editing || !localPatient.key}
+                                                                disabled={ !localPatient.key}
                                                                 onClick={handleNewVisit}
                                                                 block
                                                             >
@@ -1420,13 +879,12 @@ const PatientProfileCopy = () => {
                                                         ),
                                                         value: 'quickAppointment',
                                                     },
-
                                                     {
                                                         label: (
                                                             <Button
                                                                 color='cyan'
                                                                 onClick={() => setAdministrativeWarningsModalOpen(true)}
-                                                                disabled={editing || !localPatient.key}
+                                                                disabled={!localPatient.key}
                                                                 appearance="ghost"
                                                                 style={{ color: '#00b1cc', zoom: 0.8, textAlign: 'left', width: 170 }}
                                                                 block
@@ -1437,7 +895,6 @@ const PatientProfileCopy = () => {
                                                         value: 'administrativeWarnings',
                                                     },
                                                 ]}
-
                                                 placeholder={
                                                     <span style={{ color: '#00b1cc' }}>
                                                         <ListIcon style={{ marginRight: 8 }} />
@@ -1446,17 +903,11 @@ const PatientProfileCopy = () => {
                                                 }
                                                 menuStyle={{ marginTop: 0, width: 180, padding: 5 }}
                                             />
-
-
                                         </ButtonToolbar >
-
-
                                     </Form>
                                 </Stack.Item>
                             </Stack>
-
                         </Panel>
-
                         {/* Administrative Warnings */}
                         <Modal
                             size="lg"
@@ -1677,9 +1128,7 @@ const PatientProfileCopy = () => {
                             </Modal.Body>
                         </Modal>
                         <br />
-
                         <Panel
-
                             header={
                                 <h5 className="title">
                                     <Translate>Basic Information</Translate>
@@ -1688,8 +1137,6 @@ const PatientProfileCopy = () => {
                         >
                             <Stack>
                                 <Stack.Item grow={1}>
-
-
                                 </Stack.Item>
                                 <Stack.Item grow={15}>
                                     <Form layout="inline" fluid>
@@ -1701,7 +1148,6 @@ const PatientProfileCopy = () => {
                                             fieldName="firstName"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             required
@@ -1711,7 +1157,6 @@ const PatientProfileCopy = () => {
                                             fieldName="secondName"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             width={165}
@@ -1720,7 +1165,6 @@ const PatientProfileCopy = () => {
                                             fieldName="thirdName"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             required
@@ -1730,10 +1174,7 @@ const PatientProfileCopy = () => {
                                             fieldName="lastName"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
-
-
                                         <MyInput
                                             required
                                             width={165}
@@ -1747,7 +1188,6 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             width={165}
@@ -1758,9 +1198,7 @@ const PatientProfileCopy = () => {
                                             fieldName="dob"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
-
                                         <MyInput
                                             width={165}
                                             vr={validationResult}
@@ -1776,11 +1214,9 @@ const PatientProfileCopy = () => {
                                             column
                                             fieldLabel="Patient Category"
                                             fieldType="text"
-
                                             fieldName="ageGroup"
                                             disabled
                                             record={localPatient?.dob ? ageGroupValue : null}
-
                                         />
                                         <MyInput
                                             width={165}
@@ -1794,9 +1230,7 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
-
                                         {localPatient?.incompletePatient ? (
                                             <MyInput
                                                 width={165}
@@ -1819,10 +1253,7 @@ const PatientProfileCopy = () => {
                                             fieldName="privatePatient"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
-
-
                                         <MyInput
                                             required
                                             width={165}
@@ -1836,7 +1267,6 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             required
@@ -1851,7 +1281,7 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={localPatient.documentTypeLkey === 'NO_DOC' || !editing}
+                                            disabled={localPatient.documentTypeLkey === 'NO_DOC'}
                                         />
                                         <MyInput
                                             required
@@ -1862,16 +1292,14 @@ const PatientProfileCopy = () => {
                                             fieldName="documentNo"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing || localPatient.documentTypeLkey === 'NO_DOC'}
+                                            disabled={ localPatient.documentTypeLkey === 'NO_DOC'}
                                         />
-
                                     </Form>
                                 </Stack.Item>
                             </Stack>
                         </Panel>
                         <br />
                         <Panel
-
                             header={
                                 <h5 className="title">
                                     <Translate>Details</Translate>
@@ -1892,7 +1320,6 @@ const PatientProfileCopy = () => {
                                     <Tab>
                                         <Translate>Insurance</Translate>
                                     </Tab>
-
                                     <Tab>
                                         <Translate>Privacy & Security</Translate>
                                     </Tab>
@@ -1915,7 +1342,6 @@ const PatientProfileCopy = () => {
                                         <Translate>Follow Up & Activites</Translate>
                                     </Tab>
                                 </TabList>
-
                                 {/* Demopgraphics */}
                                 <TabPanel>
                                     <Form layout="inline" fluid>
@@ -1927,7 +1353,6 @@ const PatientProfileCopy = () => {
                                             fieldName="firstNameOtherLang"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -1937,7 +1362,6 @@ const PatientProfileCopy = () => {
                                             fieldName="secondNameOtherLang"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -1947,7 +1371,6 @@ const PatientProfileCopy = () => {
                                             fieldName="thirdNameOtherLang"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -1957,7 +1380,6 @@ const PatientProfileCopy = () => {
                                             fieldName="lastNameOtherLang"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -1971,7 +1393,6 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -1985,7 +1406,6 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -1999,7 +1419,6 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2013,7 +1432,6 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2027,7 +1445,6 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2041,7 +1458,6 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2055,7 +1471,6 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2065,7 +1480,6 @@ const PatientProfileCopy = () => {
                                             fieldName="previousId"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2075,11 +1489,9 @@ const PatientProfileCopy = () => {
                                             fieldName="archivingNumber"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                     </Form>
                                 </TabPanel>
-
                                 {/* Contact */}
                                 <TabPanel>
                                     <Form layout="inline" fluid>
@@ -2092,7 +1504,6 @@ const PatientProfileCopy = () => {
                                             fieldLabel="Primary Mobile Number"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2103,7 +1514,6 @@ const PatientProfileCopy = () => {
                                             fieldLabel="Receive SMS"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2113,7 +1523,6 @@ const PatientProfileCopy = () => {
                                             fieldName="secondaryMobileNumber"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2122,7 +1531,6 @@ const PatientProfileCopy = () => {
                                             fieldName="homePhone"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2131,7 +1539,6 @@ const PatientProfileCopy = () => {
                                             fieldName="workPhone"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2140,7 +1547,6 @@ const PatientProfileCopy = () => {
                                             fieldName="email"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2151,7 +1557,6 @@ const PatientProfileCopy = () => {
                                             fieldLabel="Receive Email"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2165,7 +1570,6 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2179,9 +1583,7 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
-
                                         <MyInput
                                             vr={validationResult}
                                             column
@@ -2189,7 +1591,6 @@ const PatientProfileCopy = () => {
                                             fieldName="emergencyContactName"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <br />
                                         <MyInput
@@ -2204,7 +1605,6 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2213,7 +1613,6 @@ const PatientProfileCopy = () => {
                                             fieldName="emergencyContactPhone"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2227,16 +1626,14 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                     </Form>
                                 </TabPanel>
-
                                 {/* Address */}
                                 <TabPanel>
                                     <Form layout="inline" fluid>
                                         <ButtonToolbar>
-                                            <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={!editing || !localPatient.key}>
+                                            <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={ !localPatient.key}>
                                                 <Icon as={FaClock} />  Address Change Log
                                             </Button>
                                         </ButtonToolbar>
@@ -2252,7 +1649,6 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2266,7 +1662,6 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2280,9 +1675,7 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
-
                                         <MyInput
                                             vr={validationResult}
                                             column
@@ -2291,7 +1684,6 @@ const PatientProfileCopy = () => {
                                             fieldName="streetAddressLine1"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2311,9 +1703,7 @@ const PatientProfileCopy = () => {
                                             fieldName="postalCode"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
-
                                         <MyInput
                                             vr={validationResult}
                                             column
@@ -2322,7 +1712,6 @@ const PatientProfileCopy = () => {
                                             fieldName="streetAddressLine2"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2337,34 +1726,25 @@ const PatientProfileCopy = () => {
                                         />
                                     </Form>
                                 </TabPanel>
-
                                 {/* Inusrance */}
                                 <TabPanel>
                                     <ButtonToolbar>
-
-                                        <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={!editing || !localPatient.key}
+                                        <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={ !localPatient.key}
                                             onClick={() => {
                                                 setInsuranceModalOpen(true);
                                                 setSelectedInsurance(newApPatientInsurance);
                                             }}>
                                             <Icon as={PlusRound} />  New Inusrance
                                         </Button>
-
                                         <Button
                                             disabled={!selectedInsurance?.key}
                                             onClick={handleEditModal}
                                             appearance="ghost"
                                             style={{ border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: "3px" }}
-
                                         >
-
                                             <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: '#007e91' }} />
-
                                             <span>Edit</span>
                                         </Button>
-
-
-
                                         <Button
                                             disabled={!selectedInsurance?.key}
                                             appearance="primary"
@@ -2376,9 +1756,7 @@ const PatientProfileCopy = () => {
                                         </Button>
                                         <Button
                                             disabled={!selectedInsurance?.key}
-
                                             style={{ border: '1px solid  #007e91', backgroundColor: 'white', color: '#007e91', display: 'flex', alignItems: 'center', gap: '5px' }}
-
                                             onClick={handleDeleteInsurance}
                                         >
                                             <TrashIcon /> <Translate>Delete</Translate>
@@ -2386,8 +1764,7 @@ const PatientProfileCopy = () => {
                                     </ButtonToolbar>
                                     <br />
                                     <br />
-
-                                    <InsuranceModal
+                                   <InsuranceModal
                                         relations={patientRelationsResponse?.object ?? []}
                                         editing={selectedInsurance ? selectedInsurance : null}
                                         refetchInsurance={patientInsuranceResponse.refetch}
@@ -2400,7 +1777,6 @@ const PatientProfileCopy = () => {
                                             setSelectedInsurance(newApAttachment);
                                         }}
                                     />
-
                                     <SpecificCoverageModa
                                         insurance={selectedInsurance?.key}
                                         open={specificCoverageModalOpen}
@@ -2408,7 +1784,6 @@ const PatientProfileCopy = () => {
                                             setSpecificCoverageModalOpen(false);
                                         }}
                                     />
-
                                     <Table
                                         height={400}
                                         headerHeight={40}
@@ -2434,27 +1809,22 @@ const PatientProfileCopy = () => {
                                                 }
                                             </Cell>
                                         </Column>
-
                                         <Column flexGrow={4}>
                                             <HeaderCell>Insurance Policy Number</HeaderCell>
                                             <Cell dataKey="insurancePolicyNumber" />
                                         </Column>
-
                                         <Column flexGrow={4}>
                                             <HeaderCell>Group Number</HeaderCell>
                                             <Cell dataKey="groupNumber" />
                                         </Column>
-
                                         <Column flexGrow={4}>
                                             <HeaderCell>Insurance Plan Type</HeaderCell>
                                             <Cell dataKey="insurancePlanType" />
                                         </Column>
-
                                         <Column flexGrow={4}>
                                             <HeaderCell>Expiration Date</HeaderCell>
                                             <Cell dataKey="expirationDate" />
                                         </Column>
-
                                         <Column flexGrow={4}>
                                             <HeaderCell>Details</HeaderCell>
                                             <Cell>
@@ -2470,9 +1840,6 @@ const PatientProfileCopy = () => {
                                         </Column>
                                     </Table>
                                 </TabPanel>
-
-
-
                                 {/* Privacy & Security */}
                                 <TabPanel>
                                     <Modal open={verificationModalOpen} onClose={() => setVerificationModalOpen(false)}>
@@ -2519,25 +1886,16 @@ const PatientProfileCopy = () => {
                                             </Button>
                                         </Modal.Footer>
                                     </Modal>
-
                                     <Form layout="inline" fluid>
                                         <ButtonToolbar>
-
                                             <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
                                                 onClick={() => setVerificationModalOpen(true)}
-                                                disabled={!editing || !localPatient.key}>
+                                                disabled={!localPatient.key}>
                                                 <PlusRound />   Patient Verification
                                             </Button>
-
-                                            <Button style={{ backgroundColor: ' #007e91', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
-                                                onClick={() => {
-                                                    setSecondaryDocumentModalOpen(true);
-                                                    setSelectedSecondaryDocument(newApPatientSecondaryDocuments);
-                                                }}
-                                                disabled={!editing}>
+                                            <Button style={{ backgroundColor: ' #007e91', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} >
                                                 <Icon as={VscGitPullRequestGoToChanges} />   Amendment Requests
                                             </Button>
-
                                         </ButtonToolbar>
                                         <MyInput
                                             vr={validationResult}
@@ -2551,7 +1909,6 @@ const PatientProfileCopy = () => {
                                             selectDataValue="key"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2561,7 +1918,6 @@ const PatientProfileCopy = () => {
                                             fieldName="socialSecurityNumber"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <h5 style={{ borderTop: '1px solid #e1e1e1' }}>HIPAA</h5>
                                         <MyInput
@@ -2572,7 +1928,7 @@ const PatientProfileCopy = () => {
                                             fieldName="noticeOfPrivacyPractice"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
+                                         
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2582,7 +1938,7 @@ const PatientProfileCopy = () => {
                                             fieldName="noticeOfPrivacyPracticeDate"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
+                                        
                                         />
                                         <br />
                                         <MyInput
@@ -2593,7 +1949,6 @@ const PatientProfileCopy = () => {
                                             fieldName="privacyAuthorization"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -2603,17 +1958,16 @@ const PatientProfileCopy = () => {
                                             fieldName="privacyAuthorizationDate"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
+                                            
                                         />
                                     </Form>
                                 </TabPanel>
-
                                 {/* Consent Forms */}
                                 <TabPanel>
-                                    <ConsentFormTab patient={localPatient} isClick={!editing || !localPatient.key} />
+                                    <ConsentFormTab patient={localPatient} isClick={ !localPatient.key} />
                                 </TabPanel>
                                 {/* PreferredHealthProfessional */}
-                                <TabPanel><PreferredHealthProfessional patient={localPatient} isClick={!editing || !localPatient.key} /></TabPanel>
+                                <TabPanel><PreferredHealthProfessional patient={localPatient} isClick={ !localPatient.key} /></TabPanel>
                                 {/* Relations */}
                                 <TabPanel>
                                     <Modal open={relationModalOpen} onClose={() => setRelationModalOpen(false)}>
@@ -2685,7 +2039,7 @@ const PatientProfileCopy = () => {
                                                 setSelectedPatientRelation({ ...newApPatientRelation });
                                                 setRelationModalOpen(true);
                                             }}
-                                            disabled={!editing}>
+                                           >
                                             <PlusRound />   New Relative
                                         </Button>
 
@@ -2697,11 +2051,8 @@ const PatientProfileCopy = () => {
                                             }}
                                             appearance="ghost"
                                             style={{ border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: "3px" }}
-
                                         >
-
                                             <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: '#007e91' }} />
-
                                             <span>Edit</span>
                                         </Button>
 
@@ -2804,20 +2155,15 @@ const PatientProfileCopy = () => {
                                             //  selectDataLabel="Extra Details"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={!editing}
+                                          
                                         />
                                     </Form>
                                 <PatientExtraDetails localPatient={localPatient}/>
                                 </TabPanel>
-
-                               
-
                                 {/* Attachments */}
                                 <TabPanel>
-
                                    <PatientAttachment localPatient={localPatient}/>
                                 </TabPanel>
-
                                 {/* Follow Up & Activites */}
                                 <TabPanel></TabPanel>
                             </Tabs>
