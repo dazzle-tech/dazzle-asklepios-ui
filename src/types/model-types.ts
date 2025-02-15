@@ -2301,6 +2301,8 @@ export interface ApUserFacilities {
 	isValid:boolean;
 	userKey:string;
 	facilityKey:string;
+	roleInFacility:string;
+	isPrimaryFacility:boolean;
 } 
 
 export interface ApUserFacilitiyDepartments { 

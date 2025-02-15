@@ -146,7 +146,7 @@ const Users = () => {
   const [removeUser, { isLoading, isSuccess, isError }] = useRemoveUserMutation();
   const [selectedFacilityDepartment, setSelectedFacilityDepartment] = useState()
 
- 
+
 
   const handleSaveLicense = () => {
     saveUserMidicalLicense({
@@ -175,20 +175,21 @@ const Users = () => {
   const [newDepartmentPopupOpen, setNewDepartmentPopupOpen] = useState(false)
 
   const handleSave = () => {
-    saveUser({ ...user, selectedDepartmentsFacilityKey: selectedFacility?.key }).unwrap().then(() => {
+    saveUser({ ...user, selectedDepartmentsFacilityKey: selectedFacility?.key, username: readyUser?.username }).unwrap().then(() => {
       setEditing(false)
       refetchUsers()
       refetchFacility()
       setUser({ ...user, _depratmentsInput: [] })
       setNewDepartmentPopupOpen(false)
       refetchDepartments()
-
+      setPopupOpen(false)
+    }).then(() => (setUser({ ...user, username: readyUser?.username }))).then(() => {
+      console.log(user)
     })
-    // if (!detailsPanle) {
-    //   setUser(newApUser)
+    if (!detailsPanle) {
+      setUser(newApUser)
 
-    // }
-    console.log(user)
+    }
 
   };
 
@@ -255,7 +256,7 @@ const Users = () => {
   };
 
 
-  
+
   const handleAddNew = () => {
     setPopupOpen(true);
     setReadyUser(newApUser)
@@ -305,6 +306,7 @@ const Users = () => {
         <Form layout='inline' fluid>
 
           <MyInput disabled={!editing} column fieldName="username" required record={readyUser} setRecord={setReadyUser} />
+
           <MyInput disabled={!editing}
             column
             fieldName="password"
@@ -420,8 +422,10 @@ const Users = () => {
       setReadyUser({
         ...user,
         fullName: user.firstName + ' ' + user.lastName,
-        username: (user.firstName.slice(0, 1) + user.lastName).toLowerCase()
+        username: user.username ? user?.username : (user.firstName.slice(0, 1) + user.lastName).toLowerCase()
       })
+
+
   }, [user])
 
 
