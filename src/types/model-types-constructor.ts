@@ -2302,6 +2302,8 @@ export const newApUserFacilities:modelTypes.ApUserFacilities = {
 	isValid:undefined,
 	userKey:undefined,
 	facilityKey:undefined,
+	roleInFacility:'',
+	isPrimaryFacility:undefined,
 } 
 
 export const newApUserFacilitiyDepartments:modelTypes.ApUserFacilitiyDepartments = { 
