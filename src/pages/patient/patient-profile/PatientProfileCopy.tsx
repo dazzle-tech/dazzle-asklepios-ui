@@ -2006,7 +2006,7 @@ const PatientProfileCopy = () => {
                                         ))}
 
 
-                                    </Panel> : <div style={{ display: 'flex', alignItems: 'center', width: '65px', height: '50px', padding: '10px' }}> <SearchPeopleIcon style={{ width: '25px', height: '25px' }} /></div>}
+                                    </Panel> :<></> }
 
                                 </Nav>
                             </Sidenav.Body>
