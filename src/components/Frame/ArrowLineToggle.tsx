@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navbar, Nav } from 'rsuite';
-import ArrowLeftLineIcon from '@rsuite/icons/ArrowLeftLine';
+import ArrowRightLineIcon from '@rsuite/icons/ArrowRightLine';
 import SearchPeopleIcon from '@rsuite/icons/SearchPeople';
 interface NavToggleProps {
   expand?: boolean;
@@ -14,7 +14,7 @@ const ArrowLineToggle = ({ expand, onChange }: NavToggleProps) => {
         <Nav.Item
           onClick={onChange}
           style={{ textAlign: 'center' }} 
-          icon={expand ? <ArrowLeftLineIcon />:  <SearchPeopleIcon/>  }
+          icon={expand ? <ArrowRightLineIcon />:  <SearchPeopleIcon/>  }
         />
       </Nav>
     </Navbar>
