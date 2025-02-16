@@ -599,6 +599,42 @@ export const newApDiagnosticOrderTests:modelTypes.ApDiagnosticOrderTests = {
 	processingStatusLkey:undefined,
 	submitDate:0,
 	orderTypeLkey:undefined,
+	acceptedAt:0,
+	acceptedBy:'',
+	rejectedAt:0,
+	rejectedBy:'',
+	rejectedReason:'',
+} 
+
+export const newApDiagnosticOrderTestsNotes:modelTypes.ApDiagnosticOrderTestsNotes = { 
+	key:undefined,
+	orderKey:undefined,
+	testKey:undefined,
+	notes:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApDiagnosticOrderTestsSamples:modelTypes.ApDiagnosticOrderTestsSamples = { 
+	key:undefined,
+	orderKey:undefined,
+	testKey:undefined,
+	notes:'',
+	unitLkey:undefined,
+	quantity:0,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	sampleCollectedAt:0,
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
 } 
 
 export const newApDiagnosticOrders:modelTypes.ApDiagnosticOrders = { 
@@ -618,6 +654,8 @@ export const newApDiagnosticOrders:modelTypes.ApDiagnosticOrders = {
 	submittedBy:'',
 	submittedAt:0,
 	isUrgent:undefined,
+	labStatusLkey:undefined,
+	radStatusLkey:undefined,
 } 
 
 export const newApDiagnosticTest:modelTypes.ApDiagnosticTest = { 
@@ -745,6 +783,49 @@ export const newApDiagnosticTestLaboratory:modelTypes.ApDiagnosticTestLaboratory
 	isValid:undefined,
 	categoryLkey:undefined,
 	tubeTypeLkey:undefined,
+} 
+
+export const newApDiagnosticTestNormalRange:modelTypes.ApDiagnosticTestNormalRange = { 
+	key:undefined,
+	testKey:undefined,
+	genderLkey:undefined,
+	ageFrom:0,
+	ageFromUnitLkey:undefined,
+	ageTo:0,
+	ageToUnitLkey:undefined,
+	conditionLkey:undefined,
+	resultTypeLkey:undefined,
+	resultText:'',
+	resultLovKey:undefined,
+	normalRangeTypeLkey:undefined,
+	rangeFrom:0,
+	rangeTo:0,
+	scaleLkey:undefined,
+	reagentsLkey:undefined,
+	criticalValue:undefined,
+	criticalValueLessThan:0,
+	criticalValueMoreThan:0,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApDiagnosticTestNormalRangeLov:modelTypes.ApDiagnosticTestNormalRangeLov = { 
+	key:undefined,
+	testKey:undefined,
+	normalRangeKey:undefined,
+	lovLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
 } 
 
 export const newApDiagnosticTestPathology:modelTypes.ApDiagnosticTestPathology = { 

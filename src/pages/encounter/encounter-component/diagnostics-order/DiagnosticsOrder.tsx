@@ -106,7 +106,7 @@ const DiagnosticsOrder = ({ edit }) => {
         ]
     });
     const [orders, setOrders] = useState<ApDiagnosticOrders>({ ...newApDiagnosticOrders });
-    const [orderTest, setOrderTest] = useState<ApDiagnosticOrderTests>({ ...newApDiagnosticOrderTests,processingStatusLkey:'6053140045975671' });
+    const [orderTest, setOrderTest] = useState<ApDiagnosticOrderTests>({ ...newApDiagnosticOrderTests,processingStatusLkey:'6055029972709625' });
     const [listOrdersTestRequest, setListOrdersTestRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -405,7 +405,9 @@ const DiagnosticsOrder = ({ edit }) => {
                 orderKey: orders.key,
                 testKey: test.key,
                 statusLkey: "164797574082125",
-                processingStatusLkey:'6053140045975671'
+                processingStatusLkey:'6055029972709625',
+                orderTypeLkey:test.testTypeLkey
+
 
             }).unwrap();
             dispatch(notify('saved  Successfully'));
@@ -436,6 +438,7 @@ const DiagnosticsOrder = ({ edit }) => {
                     patientKey: patientSlice.patient.key,
                     visitKey: patientSlice.encounter.key,
                     statusLkey: "164797574082125",
+                    labStatusLkey:"6055029972709625"
                 });
 
 
