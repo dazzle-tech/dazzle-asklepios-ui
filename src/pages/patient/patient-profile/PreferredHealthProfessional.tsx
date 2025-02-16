@@ -345,7 +345,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
                     <HeaderCell>
                         <Translate>Name of the HP</Translate>
                     </HeaderCell>
-                    <Cell>{rowData => rowData.practitioner.practitionerFullName}</Cell>
+                    <Cell>{rowData => rowData?.practitioner?.practitionerFullName ?  rowData?.practitioner?.practitionerFullName :' '}</Cell>
                 </Column>
                 <Column sortable flexGrow={4}>
                     <HeaderCell>
@@ -360,18 +360,18 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
                 <Column sortable flexGrow={4}>
                     <HeaderCell>
                         <Translate>Telephone no.</Translate>
-                    </HeaderCell><Cell>{rowData => rowData.practitioner.practitionerPhoneNumber}</Cell>
+                    </HeaderCell><Cell>{rowData => rowData?.practitioner?.practitionerPhoneNumber ? rowData?.practitioner?.practitionerPhoneNumber:' '}</Cell>
                 </Column>
                 <Column sortable flexGrow={4}>
                     <HeaderCell>
                         <Translate>Email</Translate>
-                    </HeaderCell><Cell>{rowData => rowData.practitioner.practitionerEmail}</Cell>
+                    </HeaderCell><Cell>{rowData => rowData?.practitioner?.practitionerEmail ?rowData?.practitioner?.practitionerEmail:' '}</Cell>
                 </Column>
                 <Column sortable flexGrow={4}>
                     <HeaderCell>
                         <Translate>HP Organization</Translate>
                     </HeaderCell>
-                    <Cell>{rowData => rowData.facility.facilityName}</Cell>
+                    <Cell>{rowData => rowData?.facility?.facilityName ?rowData?.facility?.facilityName :' '}</Cell>
                 </Column>
                 <Column sortable flexGrow={4}>
                     <HeaderCell>
