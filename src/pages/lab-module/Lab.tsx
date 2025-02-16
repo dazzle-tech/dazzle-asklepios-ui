@@ -95,7 +95,7 @@ import {
 } from '@/services/encounterService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { ApDiagnosticTestLaboratory } from '@/types/model-types';
-import PatientSide from './patienSide';
+import PatientSide from './PatienSide';
 const Lab = () => {
   const dispatch = useAppDispatch();
   const [selectedCriterion, setSelectedCriterion] = useState('');
