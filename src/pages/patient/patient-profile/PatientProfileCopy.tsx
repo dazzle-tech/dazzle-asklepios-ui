@@ -275,8 +275,8 @@ const PatientProfileCopy = () => {
     const [newAttachmentType, setNewAttachmentType] = useState();
     const [newAttachmentDetails, setNewAttachmentDetails] = useState('');
     const navBodyStyle: React.CSSProperties = expand
-        ? { height: windowHeight - 111, overflow: 'auto' }
-        : {};
+        ? { height: windowHeight , overflow: 'auto' }
+        : { height: windowHeight };
     //handleFun
     const handleSave = () => {
         // save changes
@@ -672,12 +672,11 @@ const PatientProfileCopy = () => {
         }
     }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
     return (
-        <Panel style={{ padding: expand ? '10px' : '0px'}}>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                <div style={{ width: expand ? "calc(100% - 230px)" : "100%" }}>
+        <Panel>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px'  }}>
+                <div style={{ width: expand ? "calc(100% - 240px)" : "100%" }}>
                     <Panel
                         bordered
-                       
                     >
                         <Panel >
                             <Stack>
@@ -1399,6 +1398,10 @@ const PatientProfileCopy = () => {
                                             record={localPatient}
                                             setRecord={setLocalPatient}
                                         />
+                                        <br/>
+                                        <br/>
+                                        <br/>
+                                      
                                     </Form>
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="2" title="Contact">
@@ -1500,7 +1503,6 @@ const PatientProfileCopy = () => {
                                             record={localPatient}
                                             setRecord={setLocalPatient}
                                         />
-                                        <br />
                                         <MyInput
                                             vr={validationResult}
                                             column
@@ -1535,6 +1537,9 @@ const PatientProfileCopy = () => {
                                             record={localPatient}
                                             setRecord={setLocalPatient}
                                         />
+                                        <br/>
+                                        <br/>
+                                        <br/>
                                     </Form>
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="3" title="Address">
@@ -1630,7 +1635,13 @@ const PatientProfileCopy = () => {
                                             setRecord={setLocalPatient}
                                             disabled
                                         />
-                                    </Form>      </Tabs.Tab>
+                                    </Form> 
+                                        <br/>
+                                        <br/>
+                                        <br/>
+                                    
+                                    
+                                        </Tabs.Tab>
 
 
                                 <Tabs.Tab eventKey="4" title="Insurance">
@@ -1896,21 +1907,18 @@ const PatientProfileCopy = () => {
                                 <Tabs.Tab eventKey="10" title="Attachments">
                                     <PatientAttachment localPatient={localPatient} />
                                 </Tabs.Tab>
-                                <Tabs.Tab eventKey="11" title="Follow Up & Activites">
-                                    <></>
-                                </Tabs.Tab>
                             </Tabs>
                             
                         </Panel>
                     </Panel>
                 </div>
-                <div style={{ flex: expand ? "220px" : "56px", height: '90vh' }}>
-                    <Sidebar
-                        style={{ display: 'flex', flexDirection: 'column', height: '90vh', zoom: 0.8 }}
-                        width={expand ? 300 : 56}
-
-                        collapsible
-                    >
+                <div style={{ flex: expand ? "240px" : "56px", height: '90vh', display: 'flex', flexDirection: 'row-reverse'}}>
+               <Sidebar
+    style={{ display: 'flex', flexDirection: 'column', height: '90vh', zoom: 0.8}}
+    width={expand ? 300 : 56}
+    collapsible
+  
+>
                         <Sidenav.Header>
                         </Sidenav.Header>
                         <Sidenav expanded={expand} appearance="subtle" defaultOpenKeys={['2', '3']}>
