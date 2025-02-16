@@ -8,6 +8,7 @@ import { Block, Check, DocPass, Edit, History, Icon, PlusRound, Detail } from '@
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import ReloadIcon from '@rsuite/icons/Reload';
 import GearIcon from '@rsuite/icons/Gear';
+import UserChangeIcon from '@rsuite/icons/UserChange';
 
 import {
   useGetAccessRolesQuery,
@@ -21,7 +22,8 @@ import {
   useGetUserDepartmentsQuery,
   useResetUserPasswordMutation,
   useSaveFacilityDepartmentMutation,
-  useRemoveUserFacilityDepartmentMutation
+  useRemoveUserFacilityDepartmentMutation,
+  useDeactivateUserMutation
 } from '@/services/setupService';
 import { Button, ButtonToolbar, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -50,7 +52,7 @@ const Users = () => {
   // const [facilities, setFacilities] = useState([])
 
   const [user, setUser] = useState<ApUser>({
-    ...newApUser
+    ...newApUser, isValid: true
   });
 
   const [userLicense, setUserLicense] = useState<ApUserMedicalLicense>({
@@ -128,10 +130,17 @@ const Users = () => {
   const [editing, setEditing] = useState();
   const [filteredFacilities, setFilteredFacilities] = useState([]);
   const [filteredDepartments, setFilteredDepartments] = useState([]);
+  const [filteredlicense, setFilteredlicense] = useState([]);
 
   useEffect(() => {
-    console.log(filteredDepartments)
-  }, [filteredDepartments])
+    if (user?.key && licenseListResponse?.object) {
+      const filteredLicenses = licenseListResponse.object.filter(license => license.userKey === user.key);
+      setFilteredlicense(filteredLicenses)
+      console.log("Filtered Licenses:", filteredLicenses);
+    } else {
+      console.log("No user or license list to filter.");
+    }
+  }, [user, licenseListResponse]);
 
 
 
@@ -144,6 +153,8 @@ const Users = () => {
   }, [facilityListResponse?.object, user._facilitiesInput]);
 
   const [removeUser, { isLoading, isSuccess, isError }] = useRemoveUserMutation();
+  const [deactivateActivateUser] = useDeactivateUserMutation();
+
   const [selectedFacilityDepartment, setSelectedFacilityDepartment] = useState()
 
 
@@ -279,6 +290,23 @@ const Users = () => {
     }
   };
 
+  const handleDactivateUser = async (data) => {
+    console.log('Dactivate User ' + data.key)
+    try {
+      const response = await deactivateActivateUser({
+        user: { ...data, isValid: !data.isValid }
+      }).unwrap().then(() => {
+        refetchUsers()
+        console.log({ ...data, isValid: !data.isValid })
+      });
+
+      console.log('user Dactivated successfully:', response);
+    } catch (error) {
+      console.error('Error Dactivate user:', error);
+    }
+  };
+
+
   const handleRemoveUserFacilityDepartment = () => {
     if (selectedDepartmentFromTable) {
       removeUserFacilityDepartment(selectedDepartmentFromTable).unwrap().then(() => {
@@ -399,15 +427,6 @@ const Users = () => {
           <MyInput disabled={!editing} column fieldName="jobDescription" required record={user} setRecord={setUser} />
 
 
-          <MyInput disabled={!editing}
-            width={165}
-            column
-            fieldLabel="Active User"
-            fieldType="checkbox"
-            fieldName="isValid"
-            record={user}
-            setRecord={setUser}
-          />
         </Form>
       </div>
     )
@@ -504,13 +523,7 @@ const Users = () => {
                     <Translate>Privilege</Translate>
                   </Tab>
                   <Tab>
-                    <Translate>Licenses & Creftificated</Translate>
-                  </Tab>
-                  <Tab>
-                    <Translate>Shifts</Translate>
-                  </Tab>
-                  <Tab>
-                    <Translate>Cloned Users</Translate>
+                    <Translate>Licenses & Certifications</Translate>
                   </Tab>
                   <Tab>
                     <Translate>Edit Log</Translate>
@@ -639,7 +652,7 @@ const Users = () => {
                     bordered
                     cellBordered
                     data={
-                      licenseListResponse.object ?? []
+                      filteredlicense
                     }
                   >
                     <Column sortable flexGrow={4}>
@@ -705,12 +718,12 @@ const Users = () => {
                 <IconButton
                   disabled={!user.key}
                   appearance="primary"
-                  color="red"
-                  icon={<TrashIcon />}
-                  onClick={() => handleRemoveUser(user)}
+                  color={user.isValid ? "red" : "green"}
+                  icon={user.isValid ? <TrashIcon /> : <UserChangeIcon />}
+                  onClick={() => { handleDactivateUser(user), setUser(newApUser) }}
 
                 >
-                  Delete Selected
+                  {user.isValid ? 'Deactivate User' : 'Activate User'}
                 </IconButton>
 
               </ButtonToolbar>
@@ -772,10 +785,15 @@ const Users = () => {
 
                 <Column sortable flexGrow={4}>
                   <HeaderCell>
-                    <Input onChange={e => handleFilterChange('jobDescription', e)} />
-                    <Translate>Job Description</Translate>
+                    <Input onChange={e => handleFilterChange('jobRoleLvalue', e)} />
+                    <Translate>Job Role</Translate>
                   </HeaderCell>
-                  <Cell dataKey="jobDescription" />
+
+                  <Cell dataKey="jobRoleLvalue">
+                    {rowData =>
+                      rowData.jobRoleLvalue ? rowData.jobRoleLvalue.lovDisplayVale : rowData.jobRoleLkey
+                    }
+                  </Cell>
                 </Column>
 
                 <Column sortable flexGrow={4}>
@@ -813,6 +831,17 @@ const Users = () => {
                   </Cell>
                 </Column>
 
+                <Column sortable flexGrow={3}>
+                  <HeaderCell align="center">
+                    <Input onChange={e => handleFilterChange('isValid', e)} />
+                    <Translate>Status</Translate>
+                  </HeaderCell>
+                  <Cell>
+                    {rowData =>
+                      rowData.isValid ? 'Active' : 'InActive'
+                    }
+                  </Cell>
+                </Column>
 
               </Table>
               <div style={{ padding: 20 }}>
