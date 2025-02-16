@@ -40,7 +40,7 @@ import {
     newApPatientSecondaryDocuments,
     newApPatientAdministrativeWarnings
 } from '@/types/model-types-constructor';
-import {  Check ,Icon, PlusRound } from '@rsuite/icons';
+import { Check, Icon, PlusRound } from '@rsuite/icons';
 import { faUserPen } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -63,7 +63,8 @@ import {
     DOMHelper
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import { Tab, TabList, TabPanel } from 'react-tabs';
+import { Tabs, Placeholder } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { calculateAgeFormat } from '@/utils';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -102,9 +103,9 @@ import { notify } from '@/utils/uiReducerActions';
 import PreferredHealthProfessional from './PreferredHealthProfessional';
 import ConsentFormTab from './ConsentFormTab';
 import { MdCalculate } from 'react-icons/md';
-import PatientQuickAppointment from './PatientQuickAppointment';import PatientVisitHistory from './PatientVisitHistory';
+import PatientQuickAppointment from './PatientQuickAppointment'; import PatientVisitHistory from './PatientVisitHistory';
 const { getHeight, on } = DOMHelper;
-import { newApEncounter} from '@/types/model-types-constructor';
+import { newApEncounter } from '@/types/model-types-constructor';
 import PatientAttachment from './PatientAttachment';
 import PatientExtraDetails from './PatientExtraDetails';
 import SearchIcon from '@rsuite/icons/Search';
@@ -143,10 +144,11 @@ const PatientProfileCopy = () => {
     const [open, setOpen] = useState(false);
     const [labelTitle, setLabelTitle] = useState(' ');
     const [administrativeWarningDetails, setAdministrativeWarningDetails] = useState('');
-    const [quickAppointmentModel,setQuickAppointmentModel] =  useState(false);
-    const [visitHistoryModel,setVisitHistoryModel] =  useState(false);
+    const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
+    const [visitHistoryModel, setVisitHistoryModel] = useState(false);
     const [selectedAttachType, setSelectedAttachType] = useState({
-        accessTypeLkey: ''});
+        accessTypeLkey: ''
+    });
     const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
     const [savePatientRelation, savePatientRelationMutation] = useSavePatientRelationMutation();
     const [relationModalOpen, setRelationModalOpen] = useState(false);
@@ -169,7 +171,7 @@ const PatientProfileCopy = () => {
     //LOV
     const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
     const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
-    const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({code:'CITY',parentValueKey: localPatient.countryLkey});
+    const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({ code: 'CITY', parentValueKey: localPatient.countryLkey });
     const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
     const { data: maritalStatusLovQueryResponse } = useGetLovValuesByCodeQuery('MARI_STATUS');
     const { data: nationalityLovQueryResponse } = useGetLovValuesByCodeQuery('NAT');
@@ -479,7 +481,7 @@ const PatientProfileCopy = () => {
                 ]
             });
         }
-    }; 
+    };
     const conjurePatientSearchBar = target => {
         return (
             <Panel>
@@ -525,7 +527,7 @@ const PatientProfileCopy = () => {
         );
     };
     const handleNewVisit = () => {
-     setQuickAppointmentModel(true);
+        setQuickAppointmentModel(true);
     };
     const handleEditModal = () => {
         if (selectedInsurance) {
@@ -670,7 +672,7 @@ const PatientProfileCopy = () => {
         }
     }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
     return (
-        <Panel style={{padding:expand ?'10px':'0px'}}>
+        <Panel style={{ padding: expand ? '10px' : '0px' }}>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
                 <div style={{ width: expand ? "calc(100% - 230px)" : "100%" }}>
                     <Panel
@@ -773,9 +775,9 @@ const PatientProfileCopy = () => {
                                                 </AvatarGroup>
                                             </Form>
                                         </div>
-                                       <ButtonToolbar>
+                                        <ButtonToolbar>
                                             <Button
-                                               
+
                                                 onClick={handleSave}
                                                 appearance="primary"
                                                 style={{ border: '1px solid #00b1cc', backgroundColor: '#00b1cc', color: 'white', marginLeft: "3px" }}
@@ -797,8 +799,8 @@ const PatientProfileCopy = () => {
                                                                 color='cyan'
                                                                 appearance="ghost"
                                                                 style={{ color: '#00b1cc', zoom: 0.8, textAlign: 'left', width: 170 }}
-                                                                disabled={ localPatient.key === undefined}
-                                                                onClick={()=>setVisitHistoryModel(true)}
+                                                                disabled={localPatient.key === undefined}
+                                                                onClick={() => setVisitHistoryModel(true)}
                                                                 block
                                                             >
                                                                 <span>Visit History</span>
@@ -806,14 +808,14 @@ const PatientProfileCopy = () => {
                                                         ),
                                                         value: 'visitHistory',
                                                     },
-                                                     
+
                                                     {
                                                         label: (
                                                             <Button
                                                                 color='cyan'
                                                                 appearance="ghost"
                                                                 style={{ color: '#00b1cc', zoom: 0.8, textAlign: 'left', width: 170 }}
-                                                                disabled={ !localPatient.key}
+                                                                disabled={!localPatient.key}
                                                                 onClick={handleNewVisit}
                                                                 block
                                                             >
@@ -1235,7 +1237,7 @@ const PatientProfileCopy = () => {
                                             fieldName="documentNo"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={ localPatient.documentTypeLkey === 'NO_DOC'}
+                                            disabled={localPatient.documentTypeLkey === 'NO_DOC'}
                                         />
                                     </Form>
                                 </Stack.Item>
@@ -1249,44 +1251,8 @@ const PatientProfileCopy = () => {
                                 </h5>
                             }
                         >
-                            <Tabs>
-                                <TabList >
-                                    <Tab style={{ backgroundColor: 'blue' }}>
-                                        <Translate>Demographics</Translate>
-                                    </Tab>
-                                    <Tab>
-                                        <Translate>Contact</Translate>
-                                    </Tab>
-                                    <Tab>
-                                        <Translate>Address</Translate>
-                                    </Tab>
-                                    <Tab>
-                                        <Translate>Insurance</Translate>
-                                    </Tab>
-                                    <Tab>
-                                        <Translate>Privacy & Security</Translate>
-                                    </Tab>
-                                    <Tab>
-                                        <Translate>Consent Forms</Translate>
-                                    </Tab>
-                                    <Tab>
-                                        <Translate>Preferred Health Professional</Translate>
-                                    </Tab>
-                                    <Tab>
-                                        <Translate>Family Members</Translate>
-                                    </Tab>
-                                    <Tab>
-                                        <Translate>Extra Details</Translate>
-                                    </Tab>
-                                    <Tab>
-                                        <Translate>Attachments</Translate>
-                                    </Tab>
-                                    <Tab>
-                                        <Translate>Follow Up & Activites</Translate>
-                                    </Tab>
-                                </TabList>
-                                {/* Demopgraphics */}
-                                <TabPanel>
+                            <Tabs defaultActiveKey="1" appearance="subtle">
+                                <Tabs.Tab eventKey="1" title="Demographics">
                                     <Form layout="inline" fluid>
                                         <MyInput
                                             vr={validationResult}
@@ -1434,9 +1400,8 @@ const PatientProfileCopy = () => {
                                             setRecord={setLocalPatient}
                                         />
                                     </Form>
-                                </TabPanel>
-                                {/* Contact */}
-                                <TabPanel>
+                                </Tabs.Tab>
+                                <Tabs.Tab eventKey="2" title="Contact">
                                     <Form layout="inline" fluid>
                                         <MyInput
                                             vr={validationResult}
@@ -1571,12 +1536,11 @@ const PatientProfileCopy = () => {
                                             setRecord={setLocalPatient}
                                         />
                                     </Form>
-                                </TabPanel>
-                                {/* Address */}
-                                <TabPanel>
+                                </Tabs.Tab>
+                                <Tabs.Tab eventKey="3" title="Address">
                                     <Form layout="inline" fluid>
                                         <ButtonToolbar>
-                                            <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={ !localPatient.key}>
+                                            <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={!localPatient.key}>
                                                 <Icon as={FaClock} />  Address Change Log
                                             </Button>
                                         </ButtonToolbar>
@@ -1666,12 +1630,12 @@ const PatientProfileCopy = () => {
                                             setRecord={setLocalPatient}
                                             disabled
                                         />
-                                    </Form>
-                                </TabPanel>
-                                {/* Inusrance */}
-                                <TabPanel>
+                                    </Form>      </Tabs.Tab>
+
+
+                                <Tabs.Tab eventKey="4" title="Insurance">
                                     <ButtonToolbar>
-                                        <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={ !localPatient.key}
+                                        <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={!localPatient.key}
                                             onClick={() => {
                                                 setInsuranceModalOpen(true);
                                                 setSelectedInsurance(newApPatientInsurance);
@@ -1706,7 +1670,7 @@ const PatientProfileCopy = () => {
                                     </ButtonToolbar>
                                     <br />
                                     <br />
-                                   <InsuranceModal
+                                    <InsuranceModal
                                         relations={patientRelationsResponse?.object ?? []}
                                         editing={selectedInsurance ? selectedInsurance : null}
                                         refetchInsurance={patientInsuranceResponse.refetch}
@@ -1781,9 +1745,8 @@ const PatientProfileCopy = () => {
                                             </Cell>
                                         </Column>
                                     </Table>
-                                </TabPanel>
-                                {/* Privacy & Security */}
-                                <TabPanel>
+                                </Tabs.Tab>
+                                <Tabs.Tab eventKey="5" title="Privacy & Security">
                                     <Modal open={verificationModalOpen} onClose={() => setVerificationModalOpen(false)}>
                                         <Modal.Header>
                                             <Modal.Title>Patient Verification</Modal.Title>
@@ -1870,7 +1833,7 @@ const PatientProfileCopy = () => {
                                             fieldName="noticeOfPrivacyPractice"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                         
+
                                         />
                                         <MyInput
                                             vr={validationResult}
@@ -1880,7 +1843,7 @@ const PatientProfileCopy = () => {
                                             fieldName="noticeOfPrivacyPracticeDate"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                        
+
                                         />
                                         <br />
                                         <MyInput
@@ -1900,23 +1863,20 @@ const PatientProfileCopy = () => {
                                             fieldName="privacyAuthorizationDate"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            
+
                                         />
                                     </Form>
-                                </TabPanel>
-                                {/* Consent Forms */}
-                                <TabPanel>
-                                    <ConsentFormTab patient={localPatient} isClick={ !localPatient.key} />
-                                </TabPanel>
-                                {/* PreferredHealthProfessional */}
-                                <TabPanel><PreferredHealthProfessional patient={localPatient} isClick={ !localPatient.key} /></TabPanel>
-                                {/* Relations */}
-                             <TabPanel>
-                                <PatientFamilyMembers localPatient={localPatient} />
-                             </TabPanel>
-
-                                {/* Extra Details */}
-                                <TabPanel>
+                                </Tabs.Tab>
+                                <Tabs.Tab eventKey="6" title="Consent Forms">
+                                    <ConsentFormTab patient={localPatient} isClick={!localPatient.key} />
+                                </Tabs.Tab>
+                                <Tabs.Tab eventKey="7" title="Preferred Health Professional">
+                                    <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.key} />
+                                </Tabs.Tab>
+                                <Tabs.Tab eventKey="8" title="Family Members">
+                                    <PatientFamilyMembers localPatient={localPatient} />
+                                </Tabs.Tab>
+                                <Tabs.Tab eventKey="9" title="Extra Details">
                                     <Form layout="inline" fluid>
                                         <MyInput
                                             width={165}
@@ -1928,18 +1888,19 @@ const PatientProfileCopy = () => {
                                             //  selectDataLabel="Extra Details"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                          
+
                                         />
                                     </Form>
-                                <PatientExtraDetails localPatient={localPatient}/>
-                                </TabPanel>
-                                {/* Attachments */}
-                                <TabPanel>
-                                   <PatientAttachment localPatient={localPatient}/>
-                                </TabPanel>
-                                {/* Follow Up & Activites */}
-                                <TabPanel></TabPanel>
+                                    <PatientExtraDetails localPatient={localPatient} />
+                                </Tabs.Tab>
+                                <Tabs.Tab eventKey="10" title="Attachments">
+                                    <PatientAttachment localPatient={localPatient} />
+                                </Tabs.Tab>
+                                <Tabs.Tab eventKey="11" title="Follow Up & Activites">
+                                    <></>
+                                </Tabs.Tab>
                             </Tabs>
+                            
                         </Panel>
                     </Panel>
                 </div>
@@ -1972,7 +1933,7 @@ const PatientProfileCopy = () => {
                                                 <Row gutter={15}>
                                                     <Col xs={19}>
                                                         <Row><Avatar circle color="cyan" src={
-                                                             patient?.attachmentProfilePicture?.fileContent
+                                                            patient?.attachmentProfilePicture?.fileContent
                                                                 ? `data:${patient?.attachmentProfilePicture?.contentType};base64,${patient?.attachmentProfilePicture?.fileContent}`
                                                                 : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
                                                         } size="md" /></Row>
@@ -2005,7 +1966,7 @@ const PatientProfileCopy = () => {
                                         ))}
 
 
-                                    </Panel> :<></> }
+                                    </Panel> : <></>}
 
                                 </Nav>
                             </Sidenav.Body>
@@ -2014,9 +1975,9 @@ const PatientProfileCopy = () => {
                     </Sidebar>
                 </div>
             </div>
-            
-            {quickAppointmentModel ? <PatientQuickAppointment quickAppointmentModel ={quickAppointmentModel} localPatient={localPatient} setQuickAppointmentModel={setQuickAppointmentModel} localVisit={localVisit}/>: <></>}
-            {visitHistoryModel ? <PatientVisitHistory visitHistoryModel ={visitHistoryModel} quickAppointmentModel ={quickAppointmentModel} localPatient={localPatient} setVisitHistoryModel={setVisitHistoryModel} setQuickAppointmentModel={setQuickAppointmentModel}/>: <></>}
+
+            {quickAppointmentModel ? <PatientQuickAppointment quickAppointmentModel={quickAppointmentModel} localPatient={localPatient} setQuickAppointmentModel={setQuickAppointmentModel} localVisit={localVisit} /> : <></>}
+            {visitHistoryModel ? <PatientVisitHistory visitHistoryModel={visitHistoryModel} quickAppointmentModel={quickAppointmentModel} localPatient={localPatient} setVisitHistoryModel={setVisitHistoryModel} setQuickAppointmentModel={setQuickAppointmentModel} /> : <></>}
         </Panel>
     );
 };
