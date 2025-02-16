@@ -43,7 +43,7 @@ export const fromListRequestToQueryParams = listRequest => {
 export const addFilterToListRequest = (
   fieldName: string,
   operator: string,
-  value: string,
+  value: any,
   listRequest: ListRequest
 ) => {
   const filters = [...listRequest.filters];
@@ -174,4 +174,18 @@ export const formatDate = date => {
   const day = String(date.getDate()).padStart(2, '0');
 
   return `${year}-${month}-${day}`;
+};
+
+export const getNumericTimestamp = (date, startOfDay = true) => {
+  if (!date) return null;
+  const d = new Date(date);
+
+  if (startOfDay) {
+      d.setHours(0, 0, 0, 0);
+  } else {
+      d.setHours(23, 59, 59, 999);
+  }
+
+
+  return d.getTime();
 };

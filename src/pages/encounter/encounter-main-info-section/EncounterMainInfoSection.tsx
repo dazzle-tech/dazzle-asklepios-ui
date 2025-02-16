@@ -3,7 +3,7 @@ import { useAppSelector } from '@/hooks';
 import React, { useEffect, useRef, useState } from 'react';
 import { ApPatientObservationSummary } from '@/types/model-types';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetObservationSummariesQuery } from '../../../services/observationService'
+import { useGetObservationSummariesQuery } from '../../../services/observationService';
 import {
   newApPatientObservationSummary
 } from '@/types/model-types-constructor';
