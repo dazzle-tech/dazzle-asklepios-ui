@@ -1636,7 +1636,6 @@ const PatientProfileCopy = () => {
                                             fieldName="apartmentNumber"
                                             record={localPatient}
                                             setRecord={setLocalPatient}
-                                            disabled={true}
                                         />
                                         <MyInput
                                             vr={validationResult}
