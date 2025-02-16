@@ -672,12 +672,12 @@ const PatientProfileCopy = () => {
         }
     }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
     return (
-        <Panel style={{ padding: expand ? '10px' : '0px' }}>
+        <Panel style={{ padding: expand ? '10px' : '0px'}}>
             <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
                 <div style={{ width: expand ? "calc(100% - 230px)" : "100%" }}>
                     <Panel
                         bordered
-                        style={{ zoom: 0.8 }}
+                       
                     >
                         <Panel >
                             <Stack>
@@ -775,7 +775,7 @@ const PatientProfileCopy = () => {
                                                 </AvatarGroup>
                                             </Form>
                                         </div>
-                                        <ButtonToolbar>
+                                        <ButtonToolbar style={{zoom:.8}}>
                                             <Button
 
                                                 onClick={handleSave}
@@ -1539,7 +1539,7 @@ const PatientProfileCopy = () => {
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="3" title="Address">
                                     <Form layout="inline" fluid>
-                                        <ButtonToolbar>
+                                        <ButtonToolbar style={{zoom:.8}}>
                                             <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={!localPatient.key}>
                                                 <Icon as={FaClock} />  Address Change Log
                                             </Button>
@@ -1634,7 +1634,7 @@ const PatientProfileCopy = () => {
 
 
                                 <Tabs.Tab eventKey="4" title="Insurance">
-                                    <ButtonToolbar>
+                                    <ButtonToolbar style={{zoom:.8}}>
                                         <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={!localPatient.key}
                                             onClick={() => {
                                                 setInsuranceModalOpen(true);
@@ -1792,7 +1792,7 @@ const PatientProfileCopy = () => {
                                         </Modal.Footer>
                                     </Modal>
                                     <Form layout="inline" fluid>
-                                        <ButtonToolbar>
+                                        <ButtonToolbar style={{zoom:.8}}>
                                             <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
                                                 onClick={() => setVerificationModalOpen(true)}
                                                 disabled={!localPatient.key}>

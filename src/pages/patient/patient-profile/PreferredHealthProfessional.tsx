@@ -255,7 +255,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
                 </Modal.Footer>
             </Modal>
 
-            <ButtonToolbar style={{ padding: 1 }}>
+            <ButtonToolbar style={{ padding: 1 , zoom:.8}}>
                 <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
                     onClick={() => {
                         setPatientHP({ ...newApPatientPreferredHealthProfessional });
