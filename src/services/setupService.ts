@@ -179,6 +179,13 @@ export const setupService = createApi({
         body: user,
       }),
     }),
+    deactivateUser: builder.mutation({
+      query: ({ user }) => ({
+        url: `/setup/deactivate-activate-user`,
+        method: 'POST',
+        body: user,
+      }),
+    }),
     getUsers: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/user-list?${fromListRequestToQueryParams(listRequest)}`
@@ -1099,6 +1106,6 @@ export const {
   useGetDuplicationCandidateSetupListQuery,
   useSaveDuplicationCandidateSetupMutation,
   useGetCptListQuery,
-  useGetLoincListQuery
-
+  useGetLoincListQuery,
+  useDeactivateUserMutation
 } = setupService;
