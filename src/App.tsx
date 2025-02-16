@@ -218,9 +218,9 @@ const App = () => {
             {/* TODO load them dynamically based on user authorization matrix */}
             <Route path="/" element={<Frame navs={navigationMap} />}>
               <Route index element={<Dashboard />} />
-              <Route path="patient-profile" element={<PatientProfile />} />
+              <Route path="patient-profile-old" element={<PatientProfile />} />
               <Route path="patient-quick-appointment" element={<PatientQuickAppointment />} />
-              <Route path="patient-profile-copy" element={<PatientProfileCopy />} />
+              <Route path="patient-profile" element={<PatientProfileCopy />} />
               <Route path="patient-chart" element={<PatientChart />} />
               <Route path="patient-list" element={<PatientList />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
