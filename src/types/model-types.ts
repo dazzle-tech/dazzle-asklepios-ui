@@ -600,6 +600,37 @@ export interface ApDiagnosticOrderTests {
 	orderTypeLkey:string;
 } 
 
+export interface ApDiagnosticOrderTestsNotes { 
+	key:string;
+	orderKey:string;
+	testKey:string;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDiagnosticOrderTestsSamples { 
+	key:string;
+	orderKey:string;
+	testKey:string;
+	notes:string;
+	unitLkey:string;
+	quantity:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	sampleCollectedAt:number;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApDiagnosticOrders { 
 	key:string;
 	patientKey:string;
@@ -744,6 +775,49 @@ export interface ApDiagnosticTestLaboratory {
 	isValid:boolean;
 	categoryLkey:string;
 	tubeTypeLkey:string;
+} 
+
+export interface ApDiagnosticTestNormalRange { 
+	key:string;
+	testKey:string;
+	genderLkey:string;
+	ageFrom:number;
+	ageFromUnitLkey:string;
+	ageTo:number;
+	ageToUnitLkey:string;
+	conditionLkey:string;
+	resultTypeLkey:string;
+	resultText:string;
+	resultLovKey:string;
+	normalRangeTypeLkey:string;
+	rangeFrom:number;
+	rangeTo:number;
+	scaleLkey:string;
+	reagentsLkey:string;
+	criticalValue:boolean;
+	criticalValueLessThan:number;
+	criticalValueMoreThan:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDiagnosticTestNormalRangeLov { 
+	key:string;
+	testKey:string;
+	normalRangeKey:string;
+	lovLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
 } 
 
 export interface ApDiagnosticTestPathology { 
@@ -2301,6 +2375,8 @@ export interface ApUserFacilities {
 	isValid:boolean;
 	userKey:string;
 	facilityKey:string;
+	roleInFacility:string;
+	isPrimaryFacility:boolean;
 } 
 
 export interface ApUserFacilitiyDepartments { 

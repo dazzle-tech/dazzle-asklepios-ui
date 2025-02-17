@@ -14,6 +14,7 @@ import {
   ApDiagnosticTest,
   ApDiagnosticTestGenetics,
   ApDiagnosticTestLaboratory,
+  ApDiagnosticTestNormalRange,
   ApDiagnosticTestRadiology,
   ApDiagnosticTestSpecialPopulation,
   ApDuplicationCandidateSetup,
@@ -507,6 +508,27 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 3600
     }),
+    getDiagnosticsTestNormalRangeList: builder.query({
+          query: (listRequest: ListRequest) => ({
+            url: `/setup/diagnostic-test-normal-range-list?${fromListRequestToQueryParams(listRequest)}`
+          }),
+          onQueryStarted: onQueryStarted,
+          keepUnusedDataFor: 5
+        }),
+        saveDiagnosticsTestNormalRange: builder.mutation({
+          query: (data: { diagnosticTestNormalRange: ApDiagnosticTestNormalRange; lov; }) => {
+            const param = data.lov;
+            return {
+              url: `/setup/save-diagnostic-test-normal-range?lov=${param}`,
+              method: 'POST',
+              body: data.diagnosticTestNormalRange,
+            }
+    
+          }, onQueryStarted: onQueryStarted,
+          transformResponse: (response: any) => {
+            return response.object;
+          }
+        }),
     getDiagnosticsTestList: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/diagnostic-test-list?${fromListRequestToQueryParams(listRequest)}`
@@ -1047,6 +1069,8 @@ export const {
   useLinkCdtServiceMutation,
   useUnlinkCdtServiceMutation,
   useGetIcdListQuery,
+  useGetDiagnosticsTestNormalRangeListQuery,
+  useSaveDiagnosticsTestNormalRangeMutation,
   useSaveDiagnosticsTestMutation,
   useGetDiagnosticsTestListQuery,
   useGetDiagnosticsTestTypeQuery,
@@ -1079,7 +1103,7 @@ export const {
   useSaveVaccineBrandMutation,
   useGetVaccineBrandsListQuery,
   useDeactiveActivVaccineBrandsMutation,
-
+ 
   useGetDoseNumbersListQuery,
   useSaveVaccineDoseMutation,
   useGetVaccineDosesListQuery,
