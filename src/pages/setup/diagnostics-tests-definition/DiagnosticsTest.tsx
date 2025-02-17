@@ -18,10 +18,12 @@ import { ApDiagnosticTest } from '@/types/model-types';
 import { newApDiagnosticTest } from '@/types/model-types-constructor';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import NewDiagnosticsTest from './NewDiagnosticsTest';
+import FunnelTimeIcon from '@rsuite/icons/FunnelTime';
 import Genetics from './Genetics';
 import Pathology from './Pathology';
 import Radiology from './Radiology';
 import Laboratory from './Laboratory';
+import NormalRangeSetup from './NormalRangeSetup';
 
 const DiagnosticsTest = () => {
  const [diagnosticsTest, setDiagnosticsTest] = useState<ApDiagnosticTest>({...newApDiagnosticTest});
@@ -30,10 +32,15 @@ const DiagnosticsTest = () => {
  const [saveDiagnosticsTest, saveDiagnosticsTestMutation] = useSaveDiagnosticsTestMutation();
  const [carouselActiveIndex, setCarouselActiveIndex] = useState(0); 
 
+ const [normalRangePopupOpen, setNormalRangePopupOpen] = useState(false);
+
   const handleNew = () => {
     setDiagnosticsTest({ ...newApDiagnosticTest});
   };
 
+  const handleButtonClickPackages = () => {
+    setNormalRangePopupOpen(true);  // Open the modal when the button is clicked
+  };
 
   
   const isSelected = rowData => {
@@ -109,7 +116,8 @@ const DiagnosticsTest = () => {
           disabled={diagnosticsTest?.testTypeLkey !== '862810597620632'}
           appearance="primary"
           color="violet"
-          icon={<EditIcon />}
+          onClick={handleButtonClickPackages}
+          icon={<FunnelTimeIcon />}
         >
            Normal Range Setup
         </IconButton>
@@ -216,6 +224,8 @@ const DiagnosticsTest = () => {
         
        
       />
+       <NormalRangeSetup popUpOpen={normalRangePopupOpen} setPopUpOpen={setNormalRangePopupOpen} diagnosticsTest={diagnosticsTest} />
+      
     </Carousel>
     
    

@@ -636,6 +636,37 @@ export interface ApDiagnosticOrderTestsSamples {
 	isValid:boolean;
 } 
 
+export interface ApDiagnosticOrderTestsNotes { 
+	key:string;
+	orderKey:string;
+	testKey:string;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDiagnosticOrderTestsSamples { 
+	key:string;
+	orderKey:string;
+	testKey:string;
+	notes:string;
+	unitLkey:string;
+	quantity:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	sampleCollectedAt:number;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApDiagnosticOrders { 
 	key:string;
 	patientKey:string;
