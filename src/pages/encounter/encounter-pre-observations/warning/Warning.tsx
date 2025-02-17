@@ -52,8 +52,7 @@ import {
 import { ApVisitWarning } from '@/types/model-types';
 import { newApVisitWarning } from '@/types/model-types-constructor';
 
-const Warning = ({edit}) => {
-    const patientSlice = useAppSelector(state => state.patient);
+const Warning = ({edit ,patient ,encounter}) => {
 
     const { data: warningTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_WARNING_TYPS');
     const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
@@ -73,7 +72,7 @@ const Warning = ({edit}) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patientSlice.patient.key
+                value:patient.key
             },
             {
                 fieldName: "status_lkey",
@@ -134,7 +133,7 @@ const Warning = ({edit}) => {
                 {
                     fieldName: 'patient_key',
                     operator: 'match',
-                    value: patientSlice.patient.key
+                    value: patient.key
                 },
                 {
                     fieldName: "status_lkey",
@@ -144,7 +143,7 @@ const Warning = ({edit}) => {
                 {
                     fieldName: 'visit_key',
                     operator: 'match',
-                    value: patientSlice.encounter.key
+                    value:encounter.key
                 }
 
             ];
@@ -159,7 +158,7 @@ const Warning = ({edit}) => {
                 {
                     fieldName: 'patient_key',
                     operator: 'match',
-                    value: patientSlice.patient.key
+                    value: patient.key
                 },
                 {
                     fieldName: "status_lkey",
@@ -181,7 +180,7 @@ const Warning = ({edit}) => {
                 {
                     fieldName: 'patient_key',
                     operator: 'match',
-                    value: patientSlice.patient.key
+                    value: patient.key
                 },
                 {
                     fieldName: "status_lkey",
@@ -191,7 +190,7 @@ const Warning = ({edit}) => {
                 {
                     fieldName: 'visit_key',
                     operator: 'match',
-                    value: patientSlice.encounter.key
+                    value: encounter.key
                 }
 
             ];
@@ -206,7 +205,7 @@ const Warning = ({edit}) => {
                 {
                     fieldName: 'patient_key',
                     operator: 'match',
-                    value: patientSlice.patient.key
+                    value: patient.key
                 },
                 {
                     fieldName: "status_lkey",
@@ -246,8 +245,8 @@ const Warning = ({edit}) => {
         try {
             saveWarning({
                 ...warning
-                , patientKey: patientSlice.patient.key
-                , visitKey: patientSlice.encounter.key
+                , patientKey:patient.key
+                , visitKey:encounter.key
                 , statusLkey: '9766169155908512',
                 firstTimeRecorded: selectedFirstDate ? selectedFirstDate.getTime() : null
             }).unwrap();

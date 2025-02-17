@@ -50,23 +50,30 @@ import {
   useCompleteEncounterMutation,
 
 } from '@/services/encounterService';
+import { ApPatient } from '@/types/model-types';
+import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
+import { useLocation } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useNavigate } from 'react-router-dom';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import VaccinationTab from './vaccination-tab';
 const EncounterPreObservations = () => {
-  const patientSlice = useAppSelector(state => state.patient);
+  const location = useLocation();
+  const propsData = location.state;
+  const[localPatient,setLocalPatient]=useState<ApPatient>({...propsData.patient})
   const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
   const dispatch = useAppDispatch();
   const [activeTab, setActiveTab] = useState(0);
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
   const navigate = useNavigate();
-  const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...patientSlice.encounter })
+  const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...propsData.encounter })
   const [bmi, setBmi] = useState('');
   const [bsa, setBsa] = useState('');
   const [saveObservationSummary, setSaveObservationSummary] = useSaveObservationSummaryMutation();
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
+  console.log("localPatient:",localPatient);
+  console.log("localEncounter:",localEncounter);
   const [patientLastVisitObservationsListRequest, setPatientLastVisitObservationsListRequest] =
     useState<ListRequest>({
       ...initialListRequest,
@@ -76,21 +83,21 @@ const EncounterPreObservations = () => {
         {
           fieldName: 'patient_key',
           operator: 'match',
-          value: patientSlice?.patient?.key
+          value: localPatient?.key
         }
       ]
     });
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   // TODO update status to be a LOV value
   useEffect(() => {
-    if (patientSlice?.encounter?.encounterStatusLkey === '91109811181900') {
+    if (localEncounter?.encounterStatusLkey === '91109811181900') {
       setIsEncounterStatusClosed(true);
     }
-  }, [patientSlice.encounter?.encounterStatusLkey]);
+  }, [localEncounter?.encounterStatusLkey]);
 
   const handleCompleteEncounter = () => {
-    if (patientSlice.encounter) {
-      completeEncounter(patientSlice.encounter).unwrap();
+    if (localEncounter) {
+      completeEncounter(localEncounter).unwrap();
       setReadOnly(true);
     }
   };
@@ -102,17 +109,16 @@ const EncounterPreObservations = () => {
         {
           fieldName: 'patient_key',
           operator: 'match',
-          value: patientSlice.patient?.key
+          value: localPatient?.key
         }
         ,
         {
           fieldName: 'visit_key',
           operator: 'match',
-          value: patientSlice.encounter?.key
+          value: localEncounter?.key
         }
       ]
     });
-  console.log("patientSlice.encounter.key", patientSlice.encounter);
   const { data: getObservationSummaries } = useGetObservationSummariesQuery({
     ...patientLastVisitObservationsListRequest,
 
@@ -165,8 +171,8 @@ const EncounterPreObservations = () => {
     saveObservationSummary({
       observation: {
         ...patientObservationSummary,
-        visitKey: patientSlice.encounter.key,
-        patientKey: patientSlice.patient.key,
+        visitKey: localEncounter.key,
+        patientKey: localPatient.key,
         createdBy: 'Administrator',
         key: currentObservationSummary?.key,
         lastDate: new Date(),
@@ -217,10 +223,10 @@ const EncounterPreObservations = () => {
 
   return (
     <>
-      {patientSlice.patient && patientSlice.encounter && (
+      {propsData?.patient && propsData?.encounter && (
         <div >
           <h4>Nurse Station</h4>
-          <Panel header={<EncounterMainInfoSection patient={patientSlice.patient} encounter={patientSlice.encounter} />}>
+          <Panel header={<EncounterMainInfoSection patient={propsData.patient} encounter={propsData.encounter} />}>
           </Panel>
 
           <Panel>
@@ -614,13 +620,13 @@ const EncounterPreObservations = () => {
                 </ButtonToolbar>
               </TabPanel>
               <TabPanel>
-                {activeTab === 1 && <Allergies />}
+                {activeTab === 1 && <Allergies edit={false} patient={propsData.patient} encounter={propsData.encounter} />}
               </TabPanel>
               <TabPanel>
-          {activeTab === 2&& <Warning/>}
+          {activeTab === 2&& <Warning edit={false} patient={propsData.patient} encounter={propsData.encounter} />}
         </TabPanel>
         <TabPanel>
-          {activeTab === 3&& <VaccinationTab   disabled={isEncounterStatusClosed || readOnly}/>}
+          {activeTab === 3&& <VaccinationTab   disabled={isEncounterStatusClosed || readOnly} patient={propsData.patient} encounter={propsData.encounter} />}
         </TabPanel>
             </Tabs>
           </Panel>

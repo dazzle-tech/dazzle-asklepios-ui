@@ -51,9 +51,8 @@ import {
 } from '@/services/observationService';
 import { ApVisitAllergies } from '@/types/model-types';
 import { newApVisitAllergies } from '@/types/model-types-constructor';
-const Allergies = ({edit}) => {
-    const patientSlice = useAppSelector(state => state.patient);
-    console.log(patientSlice.patient)
+const Allergies = ({edit ,patient , encounter}) => {
+
     const { data: allergyTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGEN_TYPES');
     const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
     const { data: onsetLovQueryResponse } = useGetLovValuesByCodeQuery('ONSET');
@@ -72,7 +71,7 @@ const Allergies = ({edit}) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patientSlice.patient.key
+                value: patient.key
             },
             {
                 fieldName: "status_lkey",
@@ -84,7 +83,6 @@ const Allergies = ({edit}) => {
 
 
     const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({ ...listRequestallerg });
-
     const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
     const [openConfirmResolvedModel, setOpenConfirmResolvedModel] = useState(false);
     const [openConfirmUndoResolvedModel, setOpenConfirmUndoResolvedModel] = useState(false);
@@ -154,7 +152,7 @@ const Allergies = ({edit}) => {
                 {
                     fieldName: 'patient_key',
                     operator: 'match',
-                    value: patientSlice.patient.key
+                    value: patient.key
                 },
                 {
                     fieldName: "status_lkey",
@@ -164,7 +162,7 @@ const Allergies = ({edit}) => {
                 {
                     fieldName: 'visit_key',
                     operator: 'match',
-                    value: patientSlice.encounter.key
+                    value: encounter.key
                 }
 
 
@@ -180,7 +178,7 @@ const Allergies = ({edit}) => {
                 {
                     fieldName: 'patient_key',
                     operator: 'match',
-                    value: patientSlice.patient.key
+                    value: patient.key
                 },
                 {
                     fieldName: "status_lkey",
@@ -211,7 +209,7 @@ const Allergies = ({edit}) => {
                 {
                     fieldName: 'patient_key',
                     operator: 'match',
-                    value: patientSlice.patient.key
+                    value: patient.key
                 },
                 {
                     fieldName: "status_lkey",
@@ -221,7 +219,7 @@ const Allergies = ({edit}) => {
                 {
                     fieldName: 'visit_key',
                     operator: 'match',
-                    value: patientSlice.encounter.key
+                    value: encounter.key
                 }
 
             ];
@@ -236,7 +234,7 @@ const Allergies = ({edit}) => {
                 {
                     fieldName: 'patient_key',
                     operator: 'match',
-                    value: patientSlice.patient.key
+                    value: patient.key
                 },
                 {
                     fieldName: "status_lkey",
@@ -415,8 +413,8 @@ const Allergies = ({edit}) => {
         try {
             await saveAllergies({
                 ...allerges,
-                patientKey: patientSlice.patient.key,
-                visitKey: patientSlice.encounter.key,
+                patientKey: patient.key,
+                visitKey: encounter.key,
                 statusLkey: '9766169155908512',
                 reactionDescription: reactionDescription,
                 onsetDate: selectedOnsetDate ? selectedOnsetDate.getTime() : null

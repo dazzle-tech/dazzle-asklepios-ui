@@ -58,14 +58,14 @@ import { useSaveEncounterVaccineMutation, useGetEncounterVaccineQuery } from '@/
 import { ApVaccine, ApVaccineBrands, ApVaccineDose, ApVaccineDosesInterval, ApEncounterVaccination } from '@/types/model-types';
 import { newApVaccine, newApVaccineBrands, newApVaccineDose, newApVaccineDosesInterval, newApEncounterVaccination } from '@/types/model-types-constructor';
 const { Column, HeaderCell, Cell } = Table;
-const VaccinationTab = ({ disabled }) => {
+const VaccinationTab = ({ disabled ,patient,encounter }) => {
     const patientSlice = useAppSelector(state => state.patient);
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
     const [vaccine, setVaccine] = useState<ApVaccine>({ ...newApVaccine });
     const [searchKeyword, setSearchKeyword] = useState('');
     const [vaccineBrand, setVaccineBrand] = useState<ApVaccineBrands>({ ...newApVaccineBrands, volume: null });
-    const [vaccineDose, setVaccineDose] = useState<ApVaccineDose>({ ...newApVaccineDose });
+    const [vaccineDose, setVaccineDose] = useState<any>({ ...newApVaccineDose });
     const [encounterVaccination, setEncounterVaccination] = useState<ApEncounterVaccination>({ ...newApEncounterVaccination });
 
     const [vaccineDoseInterval, setVaccineDoseInterval] = useState<ApVaccineDosesInterval>({ ...newApVaccineDosesInterval });
@@ -131,12 +131,12 @@ const VaccinationTab = ({ disabled }) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patientSlice?.patient?.key
+                value: patient?.key
             },
             {
                 fieldName: 'encounter_key',
                 operator: 'match',
-                value: patientSlice?.encounter?.key
+                value: encounter?.key
             }
         ],
     });
@@ -336,14 +336,14 @@ const VaccinationTab = ({ disabled }) => {
     };
     const handleSaveEncounterVaccine = () => {
         if (encounterVaccination.key === undefined) {
-            saveEncounterVaccine({ ...encounterVaccination, vaccineKey: vaccine.key, vaccineBrandKey: vaccineBrand.key, vaccineDoseKey: vaccineDose.key, patientKey: patientSlice.patient.key, encounterKey: patientSlice.encounter.key, administrationReactions: possibleDescription, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
+            saveEncounterVaccine({ ...encounterVaccination, vaccineKey: vaccine.key, vaccineBrandKey: vaccineBrand.key, vaccineDoseKey: vaccineDose.key, patientKey: patient.key, encounterKey: encounter.key, administrationReactions: possibleDescription, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
                 dispatch(notify('Encounter Vaccine Added Successfully'));
                 setEncounterVaccination({ ...newApEncounterVaccination, statusLkey: null })
                 encounterVaccine();
                 handleClearField();
             });
         } else if (encounterVaccination.key) {
-            saveEncounterVaccine({ ...encounterVaccination, vaccineKey: vaccine.key, vaccineBrandKey: vaccineBrand.key, vaccineDoseKey: vaccineDose.key, patientKey: patientSlice.patient.key, encounterKey: patientSlice.encounter.key, administrationReactions: possibleDescription, updatedBy: authSlice.user.key }).unwrap().then(() => {
+            saveEncounterVaccine({ ...encounterVaccination, vaccineKey: vaccine.key, vaccineBrandKey: vaccineBrand.key, vaccineDoseKey: vaccineDose.key, patientKey: patient.key, encounterKey: encounter.key, administrationReactions: possibleDescription, updatedBy: authSlice.user.key }).unwrap().then(() => {
                 dispatch(notify('Encounter Vaccine Updated Successfully'));
                 encounterVaccine();
                 handleClearField();
@@ -367,13 +367,13 @@ const VaccinationTab = ({ disabled }) => {
     /// useEffects 
     // TODO update status to be a LOV value
     useEffect(() => {
-        if (patientSlice?.encounter?.encounterStatusLkey === '91109811181900') {
+        if (encounter?.encounterStatusLkey === '91109811181900') {
             setIsEncounterStatusClosed(true);
         }
-    }, [patientSlice.encounter?.encounterStatusLkey]);
+    }, [encounter?.encounterStatusLkey]);
     useEffect(() => {
         console.log(isEncounterStatusClosed)
-    }, [isEncounterStatusClosed, patientSlice?.encounter?.encounterStatusLkey, disabled]);
+    }, [isEncounterStatusClosed,encounter?.encounterStatusLkey, disabled]);
 
     useEffect(() => {
         if (searchKeyword.trim() !== "") {
@@ -542,23 +542,23 @@ const VaccinationTab = ({ disabled }) => {
                     operator: 'isNull',
                     value: undefined,
                 },
-                ...(patientSlice.patient?.key && patientSlice.encounter?.key
+                ...(patient?.key && encounter?.key
                     ? [
                         {
                             fieldName: 'patient_key',
                             operator: 'match',
-                            value: patientSlice.patient?.key
+                            value: patient?.key
                         },
                         {
                             fieldName: 'encounter_key',
                             operator: 'match',
-                            value: patientSlice.encounter?.key
+                            value: encounter?.key
                         },
                     ]
                     : []),
             ],
         }));
-    }, [patientSlice.patient?.key, patientSlice.encounter?.key]);
+    }, [patient?.key, encounter?.key]);
     useEffect(() => {
         encounterVaccine();
     }, [handleReviewe, saveEncounterVaccine])
@@ -579,14 +579,14 @@ const VaccinationTab = ({ disabled }) => {
                         {
                             fieldName: 'patient_key',
                             operator: 'match',
-                            value: patientSlice?.patient?.key,
+                            value: patient?.key,
                         },
                         ...(allData === false
                             ? [
                                 {
                                     fieldName: 'encounter_key',
                                     operator: 'match',
-                                    value: patientSlice?.encounter?.key,
+                                    value: encounter?.key,
                                 },
                             ]
                             : []),
@@ -600,14 +600,14 @@ const VaccinationTab = ({ disabled }) => {
                         {
                             fieldName: 'patient_key',
                             operator: 'match',
-                            value: patientSlice?.patient?.key,
+                            value: patient?.key,
                         },
                         ...(allData === false
                             ? [
                                 {
                                     fieldName: 'encounter_key',
                                     operator: 'match',
-                                    value: patientSlice?.encounter?.key,
+                                    value: encounter?.key,
                                 },
                             ]
                             : []),
@@ -626,7 +626,7 @@ const VaccinationTab = ({ disabled }) => {
                         {
                             fieldName: 'patient_key',
                             operator: 'match',
-                            value: patientSlice?.patient?.key
+                            value: patient?.key
                         },
                     ]
                     : encounterStatus === '' && allData
@@ -639,7 +639,7 @@ const VaccinationTab = ({ disabled }) => {
                             {
                                 fieldName: 'patient_key',
                                 operator: 'match',
-                                value: patientSlice?.patient?.key
+                                value: patient?.key
                             },
                         ]
                         : prev.filters;
@@ -1023,7 +1023,7 @@ const VaccinationTab = ({ disabled }) => {
                         appearance="primary"
                         onClick={() => handleSaveEncounterVaccine()}
 
-                        disabled={encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? patientSlice.encounter.key != encounterVaccination.encounterKey: false}
+                        disabled={encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey: false}
                         icon={<CheckIcon />}
                     >
                         <Translate>Save</Translate>
@@ -1049,7 +1049,7 @@ const VaccinationTab = ({ disabled }) => {
                         appearance="primary"
                         onClick={() => { setPopupCancelOpen(true) }}
                         icon={<CloseOutlineIcon />}
-                        disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? patientSlice.encounter.key != encounterVaccination.encounterKey: false}
+                        disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey: false}
 
                     >
                         <Translate>Cancel</Translate>
@@ -1060,7 +1060,7 @@ const VaccinationTab = ({ disabled }) => {
                         onClick={handleReviewe}
                         style={{ marginLeft: '4px' }}
                         icon={<CheckOutlineIcon />}
-                        disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3721622082897301' || encounterVaccination.statusLkey === '3196709905099521' || encounterVaccination.key != undefined ? patientSlice.encounter.key != encounterVaccination.encounterKey: false || isEncounterStatusClosed || disabled }
+                        disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3721622082897301' || encounterVaccination.statusLkey === '3196709905099521' || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey: false || isEncounterStatusClosed || disabled }
                     >
                         <Translate>Review</Translate>
                     </IconButton>
