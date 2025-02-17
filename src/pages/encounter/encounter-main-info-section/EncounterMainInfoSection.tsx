@@ -11,8 +11,8 @@ import { Form, Input,Text } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
-
 const EncounterMainInfoSection = ({ patient, encounter }) => {
+  console.log("encounter--.",encounter);
   const [PatientObservationSummary, setPatientObservationSummary] = useState<ApPatientObservationSummary>({ ...newApPatientObservationSummary, latestweight: null, latestheight: null, latestheadcircumference: null, latestbmi: null });
   const { data: encounterStatusLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_STATUS');
   const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
@@ -21,10 +21,8 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
   const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
   const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-   const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
+  const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
   const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
-  
- 
   const { data: patirntObservationlist } = useGetObservationSummariesQuery({
     ...initialListRequest,
     sortBy: 'createdAt',
@@ -35,11 +33,8 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         operator: "match",
         value: patient.key,
       }
-    
     ],
-
   });
-
   const [bodyMeasurements,setBodyMeasurements]=useState({
     height:null,
     weight:null,
@@ -53,9 +48,9 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
     })
   },[patirntObservationlist])
   return (
-    <Form disabled style={{ zoom: 0.70}} layout="inline" fluid >
+    <Form disabled style={{ zoom: 0.85}} layout="inline" fluid >
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><MyInput width={150} column fieldLabel="MRN" fieldName={'patientMrn'} record={patient} />
-      <MyInput width={150} column fieldLabel="Patient Name" fieldName={'patientFullName'} record={encounter} />
+      <MyInput width={150} column fieldLabel="Patient Name" fieldName={'fullName'} record={patient} />
       <MyInput width={150} column fieldName={'documentNo'} record={patient} />
       <MyInput
         width={150}
@@ -67,10 +62,9 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
         record={patient}
-
         disabled={true}
       />
-      <MyInput width={150} column fieldLabel="Age" fieldName={'age'} record={patirntObservationlist?.object[0]} />
+      <MyInput width={150} column fieldLabel="Age" fieldName={'patientAge'} record={encounter} />
       <MyInput
         width={150}
         column
@@ -81,7 +75,6 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"
         record={patient}
-
         disabled={true}
       />
       <MyInput width={150} column fieldLabel="Weight" fieldName={'weight'} record={bodyMeasurements} />
@@ -92,13 +85,8 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
       <Text>BSA</Text>
       <Input disabled value={Math.sqrt((bodyMeasurements.weight *bodyMeasurements.height) / 3600).toFixed(2)}  style={{ width: 150 }}/>
       </div>
-      
       <MyInput width={150} column fieldLabel="Blood Group" fieldName={'patientFullName'} record={patirntObservationlist?.object[0]} />
-
 </div>
-      
-    
-
       <br />
       <MyInput
         column

@@ -42,17 +42,16 @@ import {
 } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import MyLabel from '@/components/MyLabel';
+import { calculateAgeFormat, fromCamelCaseToDBName } from '@/utils';
 const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuickAppointmentModel, localVisit }) => {
-    console.log(localVisit);
     const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
     const dispatch = useAppDispatch();
     const [openModelPayment, setOpenModelPayment] = React.useState(false);
-    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter, patientKey: localPatient.key, plannedStartDate: new Date() });
+    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter, patientKey: localPatient.key, plannedStartDate: new Date() ,patientAge:calculateAgeFormat(localPatient.dob) });
     const [validationResult, setValidationResult] = useState({});
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
     const [isReadOnly, setIsReadOnly] = useState(false);
-    
     const { data: patientInsuranceResponse } = useGetPatientInsuranceQuery(
         {
             patientKey: localPatient?.key
@@ -85,7 +84,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
     };
     const handleSave = () => {
         if (localEncounter && localEncounter.patientKey) {
-            saveEncounter({ ...localEncounter, patientKey: localPatient.key, plannedStartDate: new Date() }).unwrap();
+            saveEncounter({ ...localEncounter, patientKey: localPatient.key, plannedStartDate: new Date() ,patientAge:calculateAgeFormat(localPatient.dob)}).unwrap();
         } else {
             dispatch(notify({ msg: 'encounter not linked to patient', sev: 'error' }));
         }

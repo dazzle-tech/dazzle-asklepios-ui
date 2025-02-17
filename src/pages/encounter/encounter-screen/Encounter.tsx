@@ -98,6 +98,8 @@ const Encounter = () => {
   const navigate = useNavigate();
    const location = useLocation();
    const propsData = location.state;
+   const[localPatient,setLocalPatient]=useState<ApPatient>({...propsData.patient})
+   const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...propsData.encounter })
   
   const [modalOpen, setModalOpen] = useState(false);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
@@ -432,13 +434,13 @@ const Encounter = () => {
                     </List.Item>
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
-                      onClick={() => handleMenuItemClick(<Allergies edit={ propsData.fromPage=="PatientEMR"}  />)}>
+                      onClick={() => handleMenuItemClick(<Allergies edit={ propsData.fromPage=="PatientEMR"}  patient={propsData.patient} encounter={propsData.encounter} />)}>
                       <FontAwesomeIcon icon={faPersonDotsFromLine} style={{ margin: '3px' }} />
                       <Translate>Allergies</Translate>
                     </List.Item>
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
-                      onClick={() => handleMenuItemClick(<Warning edit={ propsData.fromPage=="PatientEMR"}  />)}>
+                      onClick={() => handleMenuItemClick(<Warning edit={ propsData.fromPage=="PatientEMR"} patient={propsData.patient} encounter={propsData.encounter}  />)}>
                       <FontAwesomeIcon icon={faTriangleExclamation} style={{ margin: '3px' }} />
                       <Translate>Medical Warnings</Translate>
                     </List.Item>

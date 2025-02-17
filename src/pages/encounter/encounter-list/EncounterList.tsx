@@ -130,9 +130,9 @@ const EncounterList = () => {
     const targetPath = localPatient.privatePatient ? privatePatientPath : encounterPath;
 
     if (localPatient.privatePatient) {
-      navigate(targetPath, { state: { info: "toEncounter", fromPage: "EncounterList"  } });
+      navigate(targetPath, { state: { info: "toEncounter", fromPage: "EncounterList" ,patient:localPatient ,encounter:encounter   } });
     } else {
-      navigate(targetPath, { state: { info: "toEncounter", fromPage: "EncounterList"  } }); 
+      navigate(targetPath, { state: { info: "toEncounter", fromPage: "EncounterList",patient:localPatient ,encounter:encounter   } }); 
     }
   
     const currentDateTime = new Date().toLocaleString();
@@ -140,17 +140,15 @@ const EncounterList = () => {
   };
   
   const goToPreVisitObservations = () => {
-    if (encounter && encounter.key) {
-      dispatch(setEncounter(encounter));
-      dispatch(setPatient(encounter['patientObject']));
-    }
+    
     const privatePatientPath = '/user-access-patient-private';
     const preObservationsPath = '/encounter-pre-observations';
     const targetPath = localPatient.privatePatient ? privatePatientPath : preObservationsPath;
     if (localPatient.privatePatient) {
-      navigate(targetPath, { state: { info: "toNurse" } });
+      navigate(targetPath, { state: { info: "toNurse" ,patient:localPatient ,encounter:encounter } });
     } else {
-      navigate(targetPath); 
+      navigate(targetPath, { state: { patient: localPatient, encounter: encounter } });
+
     }
   
     
