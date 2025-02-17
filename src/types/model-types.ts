@@ -650,6 +650,50 @@ export interface ApDiagnosticOrderTestsNotes {
 	isValid:boolean;
 } 
 
+export interface ApDiagnosticOrderTestsResult { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	orderKey:string;
+	medicalTestKey:string;
+	orderTestKey:string;
+	normalRangeKey:string;
+	resultType:string;
+	resultLkey:string;
+	resultValueNumber:number;
+	marker:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	processingStatusLkey:string;
+	orderTypeLkey:string;
+	approvedAt:number;
+	approvedBy:string;
+	rejectedAt:number;
+	rejectedBy:string;
+	rejectedReason:string;
+} 
+
+export interface ApDiagnosticOrderTestsResultNotes { 
+	key:string;
+	orderKey:string;
+	testKey:string;
+	resultKey:string;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApDiagnosticOrderTestsSamples { 
 	key:string;
 	orderKey:string;
@@ -830,8 +874,6 @@ export interface ApDiagnosticTestNormalRange {
 	normalRangeTypeLkey:string;
 	rangeFrom:number;
 	rangeTo:number;
-	scaleLkey:string;
-	reagentsLkey:string;
 	criticalValue:boolean;
 	criticalValueLessThan:number;
 	criticalValueMoreThan:number;

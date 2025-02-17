@@ -606,6 +606,7 @@ export const newApDiagnosticOrderTests:modelTypes.ApDiagnosticOrderTests = {
 	rejectedReason:'',
 } 
 
+
 export const newApDiagnosticOrderTestsNotes:modelTypes.ApDiagnosticOrderTestsNotes = { 
 	key:undefined,
 	orderKey:undefined,
@@ -620,27 +621,40 @@ export const newApDiagnosticOrderTestsNotes:modelTypes.ApDiagnosticOrderTestsNot
 	isValid:undefined,
 } 
 
-export const newApDiagnosticOrderTestsSamples:modelTypes.ApDiagnosticOrderTestsSamples = { 
+export const newApDiagnosticOrderTestsResult:modelTypes.ApDiagnosticOrderTestsResult = { 
 	key:undefined,
+	patientKey:undefined,
+	visitKey:undefined,
+	statusLkey:undefined,
 	orderKey:undefined,
-	testKey:undefined,
-	notes:'',
-	unitLkey:undefined,
-	quantity:0,
+	medicalTestKey:undefined,
+	orderTestKey:undefined,
+	normalRangeKey:undefined,
+	resultType:'',
+	resultLkey:undefined,
+	resultValueNumber:0,
+	marker:'',
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',
-	sampleCollectedAt:0,
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	processingStatusLkey:undefined,
+	orderTypeLkey:undefined,
+	approvedAt:0,
+	approvedBy:'',
+	rejectedAt:0,
+	rejectedBy:'',
+	rejectedReason:'',
 } 
 
-export const newApDiagnosticOrderTestsNotes:modelTypes.ApDiagnosticOrderTestsNotes = { 
+export const newApDiagnosticOrderTestsResultNotes:modelTypes.ApDiagnosticOrderTestsResultNotes = { 
 	key:undefined,
 	orderKey:undefined,
 	testKey:undefined,
+	resultKey:undefined,
 	notes:'',
 	createdBy:'',
 	updatedBy:'',
@@ -831,8 +845,6 @@ export const newApDiagnosticTestNormalRange:modelTypes.ApDiagnosticTestNormalRan
 	normalRangeTypeLkey:undefined,
 	rangeFrom:0,
 	rangeTo:0,
-	scaleLkey:undefined,
-	reagentsLkey:undefined,
 	criticalValue:undefined,
 	criticalValueLessThan:0,
 	criticalValueMoreThan:0,
