@@ -11,7 +11,10 @@ export const notify = createAction('ui/notify', payload => ({
     life: payload.life ? payload.life : 2000
   }
 }));
-
+export const openChangePassword = createAction('ui/openChangePassword');
+export const closeChangePassword = createAction('ui/closeChangePassword');
+export const openEditProfile = createAction('ui/openEditProfile');
+export const closeEditProfile = createAction('ui/closeEditProfile');
 export const clearNotification = createAction('ui/clearNotification');
 export const showLoading = createAction('ui/showLoading');
 export const hideLoading = createAction('ui/hideLoading');
