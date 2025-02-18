@@ -2,7 +2,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApConsultationOrder, ApCustomeInstructions, ApDiagnosticOrders, ApDiagnosticOrderTests, ApDiagnosticOrderTestsNotes, ApDiagnosticOrderTestsSamples, ApDrugOrder, ApDrugOrderMedications, ApEncounter, ApPatientDiagnose, ApPatientEncounterOrder, ApPatientPlan, ApPrescription, ApPrescriptionMedications, ApProcedure, ApReviewOfSystem, ApVisitAllergies } from '@/types/model-types';
+import { ApConsultationOrder, ApCustomeInstructions, ApDiagnosticOrders, ApDiagnosticOrderTests, ApDiagnosticOrderTestsNotes, ApDiagnosticOrderTestsResult, ApDiagnosticOrderTestsSamples, ApDrugOrder, ApDrugOrderMedications, ApEncounter, ApPatientDiagnose, ApPatientEncounterOrder, ApPatientPlan, ApPrescription, ApPrescriptionMedications, ApProcedure, ApReviewOfSystem, ApVisitAllergies } from '@/types/model-types';
 
 export const encounterService = createApi({
   reducerPath: 'encounterApi',
@@ -413,6 +413,54 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
+    getOrderTestResultNotesByResultId: builder.query({
+      query: (resultid: string) => ({
+        headers: {
+          resultid
+        },
+        url: `/encounter/diagnostic-order-tests-result-notes-list`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+
+    }),
+    saveDiagnosticOrderTestResultsNotes: builder.mutation({
+      query: (note:ApDiagnosticOrderTestsSamples) => ({
+        url: `/encounter/save-diagnostic-order-tests-result-notes`,
+        method: 'POST',
+        body:note
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getDiagnosticOrderTestResult: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/diagnostic-order-test-result-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+   saveDiagnosticOrderTestResult: builder.mutation({
+      query: (order:ApDiagnosticOrderTestsResult) => ({
+        url: `/encounter/save-diagnostic-order-tests-result`,
+        method: 'POST',
+        body: order
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getResultNormalRange: builder.query({
+      query: ({ patientKey, testKey }) => ({
+        url: `/encounter/get-result-normal-range?patientKey=${encodeURIComponent(patientKey)}&testKey=${encodeURIComponent(testKey)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => response.object,
+      keepUnusedDataFor: 5
+    }),
   })
 });
 
@@ -458,7 +506,13 @@ export const {
  useGetOrderTestNotesByTestIdQuery,
  useSaveDiagnosticOrderTestNotesMutation,
  useGetOrderTestSamplesByTestIdQuery,
- useSaveDiagnosticOrderTestSamplesMutation
+ useSaveDiagnosticOrderTestSamplesMutation,
+ useGetOrderTestResultNotesByResultIdQuery,
+ useSaveDiagnosticOrderTestResultsNotesMutation,
+ useGetDiagnosticOrderTestResultQuery,
+ useSaveDiagnosticOrderTestResultMutation,
+ useGetResultNormalRangeQuery
+
 
   
 } = encounterService;

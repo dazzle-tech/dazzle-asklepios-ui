@@ -47,7 +47,7 @@ import React from 'react';
 import './styles.less';
 import { Badge } from 'rsuite';
 
-import { FaWeight, FaRulerVertical, FaUserCircle, FaDumbbell, FaUserAlt, FaTint, FaMars, FaVenus,  FaCalendar } from 'react-icons/fa';
+import { FaWeight, FaRulerVertical, FaUserCircle, FaDumbbell, FaUserAlt, FaTint, FaMars, FaVenus, FaCalendar } from 'react-icons/fa';
 import {
   InputGroup,
   ButtonToolbar,
@@ -81,7 +81,15 @@ import {
   Panel, FlexboxGrid, Col, List, Stack, Button, Timeline
   , Steps
 } from 'rsuite';
-import { newApDiagnosticOrders, newApDiagnosticOrderTests, newApDiagnosticOrderTestsNotes, newApDiagnosticOrderTestsSamples, newApDiagnosticTestLaboratory, newApEncounter, newApPatient } from '@/types/model-types-constructor';
+import {
+  newApDiagnosticOrders,
+  newApDiagnosticOrderTests,
+  newApDiagnosticOrderTestsNotes,
+  newApDiagnosticOrderTestsSamples,
+  newApDiagnosticTestLaboratory,
+  newApEncounter,
+  newApPatient
+} from '@/types/model-types-constructor';
 const { Column, HeaderCell, Cell } = Table;
 import {
   useGetDiagnosticOrderQuery,
@@ -91,7 +99,12 @@ import {
   useGetOrderTestNotesByTestIdQuery,
   useSaveDiagnosticOrderTestNotesMutation,
   useGetOrderTestSamplesByTestIdQuery,
-  useSaveDiagnosticOrderTestSamplesMutation
+  useSaveDiagnosticOrderTestSamplesMutation,
+  useGetOrderTestResultNotesByResultIdQuery,
+  useSaveDiagnosticOrderTestResultsNotesMutation,
+  useGetDiagnosticOrderTestResultQuery,
+  useSaveDiagnosticOrderTestResultMutation,
+  useGetResultNormalRangeQuery
 } from '@/services/encounterService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { ApDiagnosticTestLaboratory } from '@/types/model-types';
@@ -123,6 +136,12 @@ const Lab = () => {
   const { data: TubeColorLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_COLORS');
   const { data: messagesList, refetch: fecthNotes } = useGetOrderTestNotesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
   const { data: samplesList, refetch: fecthSample } = useGetOrderTestSamplesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
+  const { data: normalRange } = useGetResultNormalRangeQuery(
+    { patientKey: patient?.key, testKey: test?.key },
+    { skip: !test.key || !patient.key } 
+  );
+
+  console.log(normalRange)
   const [listOrdersTestResponse, setListOrdersTestResponse] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -147,7 +166,7 @@ const Lab = () => {
   });
   const [openNoteModal, setOpenNoteModal] = useState(false);
   const [openSampleModal, setOpenSampleModal] = useState(false);
-  const { data: ordersList,refetch:orderFetch } = useGetDiagnosticOrderQuery({ ...listOrdersResponse });
+  const { data: ordersList, refetch: orderFetch } = useGetDiagnosticOrderQuery({ ...listOrdersResponse });
   const { data: testsList, refetch: fetchTest } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestResponse });
   const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
     ...initialListRequest
@@ -164,7 +183,7 @@ const Lab = () => {
       return 'selected-row';
     } else return '';
   };
- 
+
   const { data: patirntObservationlist } = useGetObservationSummariesQuery({
     ...initialListRequest,
     sortBy: 'createdAt',
@@ -272,7 +291,7 @@ const Lab = () => {
       setListOrdersResponse({ ...listOrdersResponse, filters: [] });
     }
   }, [dateFilter]);
-  useEffect(() => {
+  useEffect(() => { 
     const cat = laboratoryList?.object?.find((item) => item.testKey === test.testKey);
     setLabDetails(cat);
     setCurrentStep(test.processingStatusLkey)
@@ -321,7 +340,7 @@ const Lab = () => {
   }
   const handleRejectedTest = async () => {
     try {
-      const Response = await saveTest({ ...test, processingStatusLkey: "6055192099058457", rejectedAt:Date.now() }).unwrap();
+      const Response = await saveTest({ ...test, processingStatusLkey: "6055192099058457", rejectedAt: Date.now() }).unwrap();
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
       setOpenRejectedModal(false);
       setTest({ ...newApDiagnosticOrderTests });
@@ -336,7 +355,7 @@ const Lab = () => {
   const handleAcceptTest = async () => {
     try {
 
-      const Response = await saveTest({ ...test, processingStatusLkey: "6055074111734636", acceptedAt:Date.now() }).unwrap();
+      const Response = await saveTest({ ...test, processingStatusLkey: "6055074111734636", acceptedAt: Date.now() }).unwrap();
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
       setTest({ ...newApDiagnosticOrderTests });
       await fetchTest();
@@ -395,91 +414,91 @@ const Lab = () => {
     return (
 
 
-        <Table
-            data={[rowData]} 
-            bordered
-            cellBordered
-            headerHeight={30}
-            rowHeight={40}
-            style={{ width: '100%', marginTop: '5px',marginBottom:'5px' }}
-            height={100}
-        >
-            <Column flexGrow={1} align="center" fullText>
-                <HeaderCell>ACCEPTED AT</HeaderCell>
-                <Cell dataKey="acceptedAt" >
-                    {rowData => rowData.acceptedAt ? new Date(rowData.acceptedAt).toLocaleString() : ""}
-                </Cell>
-            </Column>
-            <Column flexGrow={1} align="center" fullText>
-                <HeaderCell>ACCEPTED BY</HeaderCell>
-                <Cell dataKey="acceptedBy" />
-            </Column>
-            <Column flexGrow={1} align="center" fullText>
-                <HeaderCell>REJECTED AT</HeaderCell>
-                <Cell dataKey="rejectedAt" >
-                    {rowData => rowData.rejectedAt? new Date(rowData.rejectedAt).toLocaleString() : ""}
-                </Cell>
-            </Column>
-            <Column flexGrow={1} align="center" fullText>
-                <HeaderCell>REJECTED BY</HeaderCell>
-                <Cell dataKey="rejectedBy" />
-            </Column>
-            <Column flexGrow={2} align="center" fullText>
-                <HeaderCell>REJECTED REASON</HeaderCell>
-                <Cell dataKey="rejectedReason" >
-                    {rowData => rowData.rejectedReason}
-                </Cell>
-            </Column>
-            <Column flexGrow={1} align="center" fullText>
-                <HeaderCell>ATTACHMENT</HeaderCell>
-                <Cell  />
-            </Column>
-           
-        </Table>
+      <Table
+        data={[rowData]}
+        bordered
+        cellBordered
+        headerHeight={30}
+        rowHeight={40}
+        style={{ width: '100%', marginTop: '5px', marginBottom: '5px' }}
+        height={100}
+      >
+        <Column flexGrow={1} align="center" fullText>
+          <HeaderCell>ACCEPTED AT</HeaderCell>
+          <Cell dataKey="acceptedAt" >
+            {rowData => rowData.acceptedAt ? new Date(rowData.acceptedAt).toLocaleString() : ""}
+          </Cell>
+        </Column>
+        <Column flexGrow={1} align="center" fullText>
+          <HeaderCell>ACCEPTED BY</HeaderCell>
+          <Cell dataKey="acceptedBy" />
+        </Column>
+        <Column flexGrow={1} align="center" fullText>
+          <HeaderCell>REJECTED AT</HeaderCell>
+          <Cell dataKey="rejectedAt" >
+            {rowData => rowData.rejectedAt ? new Date(rowData.rejectedAt).toLocaleString() : ""}
+          </Cell>
+        </Column>
+        <Column flexGrow={1} align="center" fullText>
+          <HeaderCell>REJECTED BY</HeaderCell>
+          <Cell dataKey="rejectedBy" />
+        </Column>
+        <Column flexGrow={2} align="center" fullText>
+          <HeaderCell>REJECTED REASON</HeaderCell>
+          <Cell dataKey="rejectedReason" >
+            {rowData => rowData.rejectedReason}
+          </Cell>
+        </Column>
+        <Column flexGrow={1} align="center" fullText>
+          <HeaderCell>ATTACHMENT</HeaderCell>
+          <Cell />
+        </Column>
+
+      </Table>
 
 
     );
-};
+  };
 
-const handleExpanded = (rowData) => {
+  const handleExpanded = (rowData) => {
     let open = false;
     const nextExpandedRowKeys = [];
 
     expandedRowKeys.forEach(key => {
-        if (key === rowData.key) {
-            open = true;
-        } else {
-            nextExpandedRowKeys.push(key);
-        }
+      if (key === rowData.key) {
+        open = true;
+      } else {
+        nextExpandedRowKeys.push(key);
+      }
     });
 
     if (!open) {
-        nextExpandedRowKeys.push(rowData.key);
+      nextExpandedRowKeys.push(rowData.key);
     }
 
 
 
     console.log(nextExpandedRowKeys)
     setExpandedRowKeys(nextExpandedRowKeys);
-};
+  };
 
-const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
+  const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
     <Cell {...props} style={{ padding: 5 }}>
-        <IconButton
-            appearance="subtle"
-            onClick={() => {
-                onChange(rowData);
-            }}
-            icon={
-                expandedRowKeys.some(key => key === rowData["key"]) ? (
-                    <CollaspedOutlineIcon />
-                ) : (
-                    <ExpandOutlineIcon />
-                )
-            }
-        />
+      <IconButton
+        appearance="subtle"
+        onClick={() => {
+          onChange(rowData);
+        }}
+        icon={
+          expandedRowKeys.some(key => key === rowData["key"]) ? (
+            <CollaspedOutlineIcon />
+          ) : (
+            <ExpandOutlineIcon />
+          )
+        }
+      />
     </Cell>
-);
+  );
   const stepsData = [
     { key: "6055207372976955", value: "Sample Collected", time: "10:30 AM" },
     { key: "6055074111734636", value: "Accepted", time: "5:00 PM" },
@@ -576,7 +595,7 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                     <Translate>PATIENT NAME</Translate>
                   </HeaderCell>
                   <Cell  >
-                    {rowData => rowData.orderId}
+                    {rowData => rowData.patient?.fullName}
                   </Cell>
                 </Column>
 
@@ -588,7 +607,7 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                     <Translate>SATUTS</Translate>
                   </HeaderCell>
                   <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {rowData =>rowData.labStatusLvalue?rowData.labStatusLvalue.lovDisplayVale:rowData.labStatusLkey}
+                    {rowData => rowData.labStatusLvalue ? rowData.labStatusLvalue.lovDisplayVale : rowData.labStatusLkey}
                   </Cell>
                 </Column>
 
@@ -704,251 +723,251 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
         </Row>
         <Row>
           {openorders &&
-           <Panel header="Order's Tests" collapsible defaultExpanded style={{ border: '1px solid #e5e5ea', borderRadius: '25px', zoom: 0.93 }}>
-            <Table
+            <Panel header="Order's Tests" collapsible defaultExpanded style={{ border: '1px solid #e5e5ea', borderRadius: '25px', zoom: 0.93 }}>
+              <Table
 
-              height={200}
-              sortColumn={listOrdersTestResponse.sortBy}
-              sortType={listOrdersTestResponse.sortType}
-              onSortColumn={(sortBy, sortType) => {
-                if (sortBy)
-                  setListOrdersTestResponse({
-                    ...listOrdersTestResponse,
-                    sortBy,
-                    sortType
-                  });
-              }}
-              headerHeight={35}
-              rowHeight={40}
-              rowKey="key"
-              expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
-              renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
-              shouldUpdateScroll={false}
-              data={testsList?.object ?? []}
-              onRowClick={rowData => {
-                setOpenResults(true);
-                setTest(rowData)
-              }}
-              rowClassName={isTestSelected}
-            >
-                  <Column width={70} align="center">
-                        <HeaderCell>#</HeaderCell>
-                        <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-                    </Column>
+                height={200}
+                sortColumn={listOrdersTestResponse.sortBy}
+                sortType={listOrdersTestResponse.sortType}
+                onSortColumn={(sortBy, sortType) => {
+                  if (sortBy)
+                    setListOrdersTestResponse({
+                      ...listOrdersTestResponse,
+                      sortBy,
+                      sortType
+                    });
+                }}
+                headerHeight={35}
+                rowHeight={40}
+                rowKey="key"
+                expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
+                renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
+                shouldUpdateScroll={false}
+                data={testsList?.object ?? []}
+                onRowClick={rowData => {
+                  setOpenResults(true);
+                  setTest(rowData)
+                }}
+                rowClassName={isTestSelected}
+              >
+                <Column width={70} align="center">
+                  <HeaderCell>#</HeaderCell>
+                  <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
+                </Column>
 
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
-                  <Translate>TEST CATEGORY</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => {
-                    const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)
-                    if (cat) {
-                      return cat.categoryLvalue.lovDisplayVale
-                    }
-                    return "";
-                  }}
-                </Cell>
-              </Column>
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
-                  <Translate>TEST NAME</Translate>
-                </HeaderCell>
-                <Cell  >
-                  {rowData => rowData.test.testName}
-                </Cell>
-              </Column>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
+                    <Translate>TEST CATEGORY</Translate>
+                  </HeaderCell>
+                  <Cell >
+                    {rowData => {
+                      const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)
+                      if (cat) {
+                        return cat.categoryLvalue.lovDisplayVale
+                      }
+                      return "";
+                    }}
+                  </Cell>
+                </Column>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
+                    <Translate>TEST NAME</Translate>
+                  </HeaderCell>
+                  <Cell  >
+                    {rowData => rowData.test.testName}
+                  </Cell>
+                </Column>
 
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
-                  <Translate>IS PROFILE</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData => {
-                    const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)?.isProfile
-                    return cat?.isProfile ? "Yes" : "NO"
-                  }}
-                </Cell>
-              </Column>
-              <Column sortable flexGrow={1} fullText>
-                <HeaderCell>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
+                    <Translate>IS PROFILE</Translate>
+                  </HeaderCell>
+                  <Cell>
+                    {rowData => {
+                      const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)?.isProfile
+                      return cat?.isProfile ? "Yes" : "NO"
+                    }}
+                  </Cell>
+                </Column>
+                <Column sortable flexGrow={1} fullText>
+                  <HeaderCell>
 
-                  <Translate>REASON</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => rowData.reasonLvalue ? rowData.reasonLvalue.lovDisplayVale : rowData.reasonLkey}
-                </Cell>
-              </Column>
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
+                    <Translate>REASON</Translate>
+                  </HeaderCell>
+                  <Cell >
+                    {rowData => rowData.reasonLvalue ? rowData.reasonLvalue.lovDisplayVale : rowData.reasonLkey}
+                  </Cell>
+                </Column>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
 
-                  <Translate>PROIRITY</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => rowData.priorityLvalue ? rowData.priorityLvalue.lovDisplayVale : rowData.priorityLkey}
-                </Cell>
-              </Column>
+                    <Translate>PROIRITY</Translate>
+                  </HeaderCell>
+                  <Cell >
+                    {rowData => rowData.priorityLvalue ? rowData.priorityLvalue.lovDisplayVale : rowData.priorityLkey}
+                  </Cell>
+                </Column>
 
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
 
-                  <Translate>DURATION</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => {
-                    const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)
-                    if (cat) {
-                      return cat?.testDurationTime + " " + cat?.timeUnitLvalue?.lovDisplayVale
-                    }
-                    return "";
+                    <Translate>DURATION</Translate>
+                  </HeaderCell>
+                  <Cell >
+                    {rowData => {
+                      const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)
+                      if (cat) {
+                        return cat?.testDurationTime + " " + cat?.timeUnitLvalue?.lovDisplayVale
+                      }
+                      return "";
 
-                  }}
-                </Cell>
-              </Column>
+                    }}
+                  </Cell>
+                </Column>
 
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
 
-                  <Translate>PHYSICIAN</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData => { return rowData.createdBy, " At", rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "" }}
+                    <Translate>PHYSICIAN</Translate>
+                  </HeaderCell>
+                  <Cell>
+                    {rowData => { return rowData.createdBy, " At", rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "" }}
 
-                </Cell>
+                  </Cell>
 
-              </Column>
+                </Column>
 
 
 
-              
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
 
-                  <Translate>ORDERS NOTES</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData => rowData.notes}
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
 
-                </Cell>
+                    <Translate>ORDERS NOTES</Translate>
+                  </HeaderCell>
+                  <Cell>
+                    {rowData => rowData.notes}
 
-              </Column>
+                  </Cell>
 
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
+                </Column>
 
-                  <Translate>Technician Notes</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => (
-                    <HStack spacing={10}>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
 
-                      <FontAwesomeIcon icon={faComment} style={{ fontSize: '1em' }} onClick={() => setOpenNoteModal(true)} />
+                    <Translate>Technician Notes</Translate>
+                  </HeaderCell>
+                  <Cell >
+                    {rowData => (
+                      <HStack spacing={10}>
 
-                    </HStack>
+                        <FontAwesomeIcon icon={faComment} style={{ fontSize: '1em' }} onClick={() => setOpenNoteModal(true)} />
 
-                  )}
-                </Cell>
+                      </HStack>
 
-              </Column>
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
+                    )}
+                  </Cell>
 
-                  <Translate>COLLECT SAMPLE</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => (
-                    <HStack spacing={10}>
+                </Column>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
 
-                      <FontAwesomeIcon icon={faVialCircleCheck} style={{ fontSize: '1em' }} onClick={() => setOpenSampleModal(true)} />
+                    <Translate>COLLECT SAMPLE</Translate>
+                  </HeaderCell>
+                  <Cell >
+                    {rowData => (
+                      <HStack spacing={10}>
 
-                    </HStack>
+                        <FontAwesomeIcon icon={faVialCircleCheck} style={{ fontSize: '1em' }} onClick={() => setOpenSampleModal(true)} />
 
-                  )}
-                </Cell>
+                      </HStack>
 
-              </Column>
-              <Column sortable flexGrow={2} fullText >
-                <HeaderCell>
-                  <Translate>SATUTS</Translate>
-                </HeaderCell>
-                <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {rowData => rowData.processingStatusLvalue ? rowData.processingStatusLvalue.lovDisplayVale : rowData.processingStatusLkey}
-                </Cell>
-              </Column>
-              <Column sortable flexGrow={4} fullText>
-                <HeaderCell>
+                    )}
+                  </Cell>
 
-                  <Translate>ACTION</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => (
-                    <HStack spacing={10}>
-                       <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>Accepted</Tooltip>}
-                      >
-                      <CheckRoundIcon
-                        onClick={() => (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") && handleAcceptTest()}
-                        style={{
-                          fontSize: '1em',
-                          marginRight: 10,
-                          color: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'gray' : 'inherit',
-                          cursor: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'not-allowed' : 'pointer',
-                        }}
-                      />
-                      </Whisper>
-                      <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>Rejected</Tooltip>}
-                      >
-                      <WarningRoundIcon
-                        onClick={() => (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") && setOpenRejectedModal(true)}
-                        style={{
-                          fontSize: '1em', marginRight: 10,
-                          color: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'gray' : 'inherit',
-                          cursor: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'not-allowed' : 'pointer',
-                        }} />
-                         </Whisper>
-                         <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>Send to External Lab</Tooltip>}
-                      >
-                         <FontAwesomeIcon icon={faRightFromBracket} style={{ fontSize: '1em', marginRight: 10 }} />
-                         </Whisper>
-                    </HStack>
+                </Column>
+                <Column sortable flexGrow={2} fullText >
+                  <HeaderCell>
+                    <Translate>SATUTS</Translate>
+                  </HeaderCell>
+                  <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {rowData => rowData.processingStatusLvalue ? rowData.processingStatusLvalue.lovDisplayVale : rowData.processingStatusLkey}
+                  </Cell>
+                </Column>
+                <Column sortable flexGrow={4} fullText>
+                  <HeaderCell>
 
-                  )}
-                </Cell>
+                    <Translate>ACTION</Translate>
+                  </HeaderCell>
+                  <Cell >
+                    {rowData => (
+                      <HStack spacing={10}>
+                        <Whisper
+                          placement="top"
+                          trigger="hover"
+                          speaker={<Tooltip>Accepted</Tooltip>}
+                        >
+                          <CheckRoundIcon
+                            onClick={() => (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") && handleAcceptTest()}
+                            style={{
+                              fontSize: '1em',
+                              marginRight: 10,
+                              color: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'gray' : 'inherit',
+                              cursor: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'not-allowed' : 'pointer',
+                            }}
+                          />
+                        </Whisper>
+                        <Whisper
+                          placement="top"
+                          trigger="hover"
+                          speaker={<Tooltip>Rejected</Tooltip>}
+                        >
+                          <WarningRoundIcon
+                            onClick={() => (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") && setOpenRejectedModal(true)}
+                            style={{
+                              fontSize: '1em', marginRight: 10,
+                              color: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'gray' : 'inherit',
+                              cursor: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'not-allowed' : 'pointer',
+                            }} />
+                        </Whisper>
+                        <Whisper
+                          placement="top"
+                          trigger="hover"
+                          speaker={<Tooltip>Send to External Lab</Tooltip>}
+                        >
+                          <FontAwesomeIcon icon={faRightFromBracket} style={{ fontSize: '1em', marginRight: 10 }} />
+                        </Whisper>
+                      </HStack>
 
-              </Column>
-            </Table>
-            <Divider style={{ margin: '4px 4px' }} />
-            <Pagination
-              prev
-              next
-              first
-              last
-              ellipsis
-              boundaryLinks
-              maxButtons={5}
-              size="xs"
-              layout={['total', '-', 'limit', '|', 'pager', 'skip']}
-              limitOptions={[5, 15, 30]}
-              //  limit={listRequest.pageSize}
-              //  activePage={listRequest.pageNumber}
+                    )}
+                  </Cell>
 
-              //  onChangePage={pageNumber => {
-              //    setListRequest({ ...listRequest, pageNumber });
-              //  }}
-              //  onChangeLimit={pageSize => {
-              //    setListRequest({ ...listRequest, pageSize });
-              //  }}
-              total={testsList?.object?.length || 0}
-            />
-          </Panel>}
+                </Column>
+              </Table>
+              <Divider style={{ margin: '4px 4px' }} />
+              <Pagination
+                prev
+                next
+                first
+                last
+                ellipsis
+                boundaryLinks
+                maxButtons={5}
+                size="xs"
+                layout={['total', '-', 'limit', '|', 'pager', 'skip']}
+                limitOptions={[5, 15, 30]}
+                //  limit={listRequest.pageSize}
+                //  activePage={listRequest.pageNumber}
+
+                //  onChangePage={pageNumber => {
+                //    setListRequest({ ...listRequest, pageNumber });
+                //  }}
+                //  onChangeLimit={pageSize => {
+                //    setListRequest({ ...listRequest, pageSize });
+                //  }}
+                total={testsList?.object?.length || 0}
+              />
+            </Panel>}
         </Row>
         <Row>
           {openresults && <Panel header="Test's Results Processing" collapsible defaultExpanded style={{ border: '1px solid #e5e5ea', borderRadius: '25px', zoom: 0.93 }}>

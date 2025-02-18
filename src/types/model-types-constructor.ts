@@ -622,6 +622,7 @@ export const newApDiagnosticOrderTestsNotes:modelTypes.ApDiagnosticOrderTestsNot
 } 
 
 export const newApDiagnosticOrderTestsResult:modelTypes.ApDiagnosticOrderTestsResult = { 
+
 	key:undefined,
 	patientKey:undefined,
 	visitKey:undefined,
@@ -664,6 +665,8 @@ export const newApDiagnosticOrderTestsResultNotes:modelTypes.ApDiagnosticOrderTe
 	deletedAt:undefined,
 	isValid:undefined,
 } 
+
+
 
 export const newApDiagnosticOrderTestsSamples:modelTypes.ApDiagnosticOrderTestsSamples = { 
 	key:undefined,
