@@ -1,10 +1,17 @@
 import DynamicLineChart from '@/components/Charts/DynamicLineChart/DynamicLineChart';
 import MyLabel from '@/components/MyLabel';
 import Translate from '@/components/Translate';
-import React from 'react';
+import { useAppSelector } from '@/hooks';
+import authSlice from '@/reducers/authSlice';
+import React, { useEffect } from 'react';
 import { Panel, FlexboxGrid, Col, List, Stack, Button, Timeline } from 'rsuite';
 
+
+
+
 const Dashboard = () => {
+ 
+
   return (
     <Panel header={<h3 className="title">Dashboard</h3>}>
       <FlexboxGrid>

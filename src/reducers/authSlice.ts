@@ -14,6 +14,9 @@ const authSlice = createSlice({
   reducers: {
     setSessionExpiredBackdrop: (state, action) => {
       state.sessionExpiredBackdrop = action.payload;
+    },
+    setUser:(state,action) =>{
+      state.user = action.payload
     }
   },
   extraReducers: builder => {
@@ -47,5 +50,5 @@ const authSlice = createSlice({
   }
 });
 
-export const { setSessionExpiredBackdrop } = authSlice.actions;
+export const { setSessionExpiredBackdrop,setUser } = authSlice.actions;
 export default authSlice;

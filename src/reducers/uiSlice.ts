@@ -8,7 +8,9 @@ const initialState = {
   lang: 'en',
   translations: {},
   screenKey: '',
-  loading: false
+  loading: false,
+  showChangePassword: false,
+  showEditProfile:false
 };
 
 export const uiSlice = createSlice({
@@ -33,7 +35,19 @@ export const uiSlice = createSlice({
     },
     hideLoading: state => {
       state.loading = false
-    }
+    },
+    openChangePassword: state => {
+      state.showChangePassword = true;
+    },
+    closeChangePassword: state => {
+      state.showChangePassword = false;
+    },
+    openEditProfile: state => {
+      state.showEditProfile = true;
+    },
+    closeEditProfile: state => {
+      state.showEditProfile = false;
+    },
   },
   extraReducers: builder => {
     /* changeLang */
