@@ -49,9 +49,6 @@ const EncounterPatientPrivateLogin = () => {
   useEffect(() => {
     setReason(localLoginUser.reason)
   }, [localLoginUser])
-
-
-
   const handleSave = async() => {
     try {
       const response = await saveUserAccessLoginPrivatePatient({
@@ -61,10 +58,8 @@ const EncounterPatientPrivateLogin = () => {
         .unwrap()
         if (response?.msg=== "success") {
           dispatch(notify(`Welcome ${localUser.username}`));
-          dispatch(setEncounter(patientSlice.encounter));
-          dispatch(setPatient(patientSlice.patient));
-          if(propsData.info === "toNurse"){navigate('/encounter-pre-observations')}
-          else if(propsData.info === "toEncounter"){navigate('/encounter',{ state: { info: "toEncounter", fromPage: "EncounterList"  } })}
+          if(propsData.info === "toNurse"){navigate('/encounter-pre-observations',{ state: { patient:propsData.patient ,encounter:propsData.encounter } })}
+          else if(propsData.info === "toEncounter"){navigate('/encounter',{ state: { info: "toEncounter", fromPage: "EncounterList" ,patient:propsData.patient ,encounter:propsData.encounter } } )}
           
         } else {
           dispatch(notify("No matching record found"));
