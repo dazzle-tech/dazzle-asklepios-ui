@@ -79,11 +79,11 @@ const Frame = (props: FrameProps) => {
     : {};
 
   return (
-    <Container className="frame">
+    <Container className="frame" >
 
   
       <Sidebar
-        style={{ display: 'flex', flexDirection: 'column', height: '102vh' }}
+        style={{ display: 'flex', flexDirection: 'column', height: '102vh'}}
 
         width={expand ? 260 : 56}
         collapsible
@@ -179,8 +179,8 @@ const Frame = (props: FrameProps) => {
         <NavToggle expand={expand} onChange={() => setExpand(!expand)} />
       </Sidebar>
 
-      <Container className={containerClasses}>
-        <Header />
+      <Container className={containerClasses}  >
+        <Header expand={expand} setExpand={setExpand} />
         <Content style={{ marginTop: '15px' }}>
           {/* <Breadcrumb>
             <Breadcrumb.Item onClick={() => navigate('/')}>
