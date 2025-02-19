@@ -1983,12 +1983,12 @@ const PatientProfileCopy = () => {
                                         ))}
 
 
-                                    </Panel> : <></>}
+                                    </Panel> : <Button onClick={()=>{setExpand(true)}}><SearchPeopleIcon style={{width:'30px',height:'30px',background: 'none',backgroundColor: 'transparent'}}/> </Button> }
 
                                 </Nav>
                             </Sidenav.Body>
                         </Sidenav>
-                        <ArrowLineToggle expand={expand} onChange={() => setExpand(!expand)} />
+                        <ArrowLineToggle expand={expand} onChange={() => setExpand(false)} />
                     </Sidebar>
                 </div>
             </div>

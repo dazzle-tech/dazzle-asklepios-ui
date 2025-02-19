@@ -14,7 +14,7 @@ const ArrowLineToggle = ({ expand, onChange }: NavToggleProps) => {
         <Nav.Item
           onClick={onChange}
           style={{ textAlign: 'center' }} 
-          icon={expand ? <ArrowRightLineIcon />:  <SearchPeopleIcon/>  }
+          icon={expand ? <ArrowRightLineIcon />:  <></> }
         />
       </Nav>
     </Navbar>
