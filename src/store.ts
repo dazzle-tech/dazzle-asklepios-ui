@@ -13,6 +13,7 @@ import { observationService } from '@/services/observationService';
 import { medicationsSetupService } from './services/medicationsSetupService';
 import { attachmentService } from '@/services/attachmentService';
 import { appointmentService } from './services/appointmentService';
+import divSlice from './reducers/divSlice';
 
 export const store = configureStore({
   reducer: {
@@ -27,7 +28,7 @@ export const store = configureStore({
     // patient
     [patientSlice.name]: patientSlice.reducer,
     [patientService.reducerPath]: patientService.reducer,
-
+    
     //setup
     [setupService.reducerPath]: setupService.reducer,
 
@@ -50,8 +51,10 @@ export const store = configureStore({
     [observationService.reducerPath]: observationService.reducer,
 
     //attachment
-    [attachmentService.reducerPath]: attachmentService.reducer
+    [attachmentService.reducerPath]: attachmentService.reducer,
     
+    // div slice 
+    [divSlice.name]: divSlice.reducer 
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -69,6 +72,7 @@ export const store = configureStore({
       attachmentService.middleware
     ])
 });
+
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof store.getState>;

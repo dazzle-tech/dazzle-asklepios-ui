@@ -110,6 +110,7 @@ import PatientAttachment from './PatientAttachment';
 import PatientExtraDetails from './PatientExtraDetails';
 import SearchIcon from '@rsuite/icons/Search';
 import PatientFamilyMembers from './PatientFamilyMembers';
+import { useLocation } from 'react-router-dom';
 const handleDownload = attachment => {
     const byteCharacters = atob(attachment.fileContent);
     const byteNumbers = new Array(byteCharacters.length);
@@ -149,6 +150,8 @@ const PatientProfileCopy = () => {
     const [selectedAttachType, setSelectedAttachType] = useState({
         accessTypeLkey: ''
     });
+      const location = useLocation();
+      const propsData = location.state;
     const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
     const [savePatientRelation, savePatientRelationMutation] = useSavePatientRelationMutation();
     const [relationModalOpen, setRelationModalOpen] = useState(false);
@@ -545,6 +548,12 @@ const PatientProfileCopy = () => {
     useEffect(() => {
         dispatch(setPatient({ ...newApPatient }));
     }, []);
+    useEffect(() => {
+        if (propsData && propsData.patient) {
+            setLocalPatient(propsData.patient);
+        }
+    }, [propsData]);
+    
     useEffect(() => {
         if (patientAgeGroupResponse?.object?.lovDisplayVale) {
             setAgeGroupValue({

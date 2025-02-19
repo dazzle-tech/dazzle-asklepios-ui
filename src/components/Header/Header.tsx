@@ -21,11 +21,10 @@ import ChangePassword from './ChangePassword';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { openChangePassword, closeChangePassword,openEditProfile,closeEditProfile } from '@/utils/uiReducerActions';
-import EditProfile from './EditProfile';
+import EditProfile from './EditProfile'; 
+import RegistrationWizard from '@/pages/patient/facility-patient-list/RegistrationWizard';
 
-
-
-const Header = () => {
+const Header = ({expand, setExpand}) => {
   const dispatch = useDispatch();
 
   const showChangePassword = useSelector((state: RootState) => state.ui.showChangePassword);
@@ -183,10 +182,15 @@ const Header = () => {
 
 
   const trigger = useRef<WhisperInstance>(null);
-
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const pageCode = useSelector((state: RootState) => state.div?.pageCode);
   return (
     <div>
-      <Stack className="header" spacing={8}>
+      <Stack className="header" spacing={8} style={{width: expand ? "calc(93% - 200px)" : "93%"}}>
+      <div dangerouslySetInnerHTML={{ __html: divElement }}/>
+           <div className="headerItem" >
+           {pageCode === 'P_Facility' ? <RegistrationWizard/> :<></>}
+           
         <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderLangSpeaker}>
           <IconButton icon={<FaGlobe style={{ fontSize: 20 }} />} />
         </Whisper>
@@ -210,6 +214,7 @@ const Header = () => {
             style={{ marginLeft: 8 }}
           />
         </Whisper>
+        </div>
       </Stack>
 
       <ChangePassword
