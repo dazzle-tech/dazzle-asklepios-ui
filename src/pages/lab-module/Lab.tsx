@@ -3,17 +3,12 @@ import { useState, useEffect, useRef } from 'react';
 import Translate from '@/components/Translate';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import ConversionIcon from '@rsuite/icons/Conversion';
-import SortUpIcon from '@rsuite/icons/SortUp';
 import { HStack } from 'rsuite';
-import { Avatar } from 'rsuite';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import { Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
-import ReloadIcon from '@rsuite/icons/Reload';
-import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import {
@@ -35,19 +30,19 @@ import {
   faFilter,
   faStar,
   faLandMineOn,
-  faIdCard,
-  faUserNinja,
+  faArrowUp,
+  faArrowDown,
   faPaperPlane,
-  faCalendar,
+  faCircleExclamation,
   faRightFromBracket
 
 
 } from '@fortawesome/free-solid-svg-icons';
 import React from 'react';
 import './styles.less';
-import { Badge } from 'rsuite';
+import { Badge, SelectPicker } from 'rsuite';
 
-import { FaWeight, FaRulerVertical, FaUserCircle, FaDumbbell, FaUserAlt, FaTint, FaMars, FaVenus,  FaCalendar } from 'react-icons/fa';
+import { FaCalendar } from 'react-icons/fa';
 import {
   InputGroup,
   ButtonToolbar,
@@ -67,33 +62,49 @@ import {
 
 } from 'rsuite';
 import {
-  useGetFacilitiesQuery,
-  useGetLovValuesByCodeQuery
+
+  useGetLovValuesByCodeQuery,
+  useGetLovAllValuesQuery
 } from '@/services/setupService';
-import { useGetEncountersQuery } from '@/services/encounterService';
-import { useGetObservationSummariesQuery } from '@/services/observationService';
+
+import{
+  useGetOrderTestNotesByTestIdQuery,
+    useSaveDiagnosticOrderTestNotesMutation,
+    useGetOrderTestSamplesByTestIdQuery,
+    useSaveDiagnosticOrderTestSamplesMutation,
+    useGetOrderTestResultNotesByResultIdQuery,
+    useSaveDiagnosticOrderTestResultsNotesMutation,
+    useGetDiagnosticOrderTestResultQuery,
+    useSaveDiagnosticOrderTestResultMutation,
+    useGetResultNormalRangeQuery
+}from '@/services/labService';
 import { addFilterToListRequest, formatDate, fromCamelCaseToDBName, getNumericTimestamp } from '@/utils';
 
-import ArrowDownIcon from '@rsuite/icons/ArrowDown';
+
 import MyInput from '@/components/MyInput';
 import SearchIcon from '@rsuite/icons/Search';
 import {
   Panel, FlexboxGrid, Col, List, Stack, Button, Timeline
   , Steps
 } from 'rsuite';
-import { newApDiagnosticOrders, newApDiagnosticOrderTests, newApDiagnosticOrderTestsNotes, newApDiagnosticOrderTestsSamples, newApDiagnosticTestLaboratory, newApEncounter, newApPatient } from '@/types/model-types-constructor';
+import {
+  newApDiagnosticOrders,
+  newApDiagnosticOrderTests,
+  newApDiagnosticOrderTestsNotes,
+  newApDiagnosticOrderTestsResult,
+  newApDiagnosticOrderTestsSamples,
+  newApDiagnosticTestLaboratory,
+  newApEncounter,
+  newApPatient
+} from '@/types/model-types-constructor';
 const { Column, HeaderCell, Cell } = Table;
 import {
   useGetDiagnosticOrderQuery,
   useGetDiagnosticOrderTestQuery,
   useSaveDiagnosticOrderMutation,
-  useSaveDiagnosticOrderTestMutation,
-  useGetOrderTestNotesByTestIdQuery,
-  useSaveDiagnosticOrderTestNotesMutation,
-  useGetOrderTestSamplesByTestIdQuery,
-  useSaveDiagnosticOrderTestSamplesMutation
+  useSaveDiagnosticOrderTestMutation
 } from '@/services/encounterService';
-import { initialListRequest, ListRequest } from '@/types/types';
+import { initialListRequest, ListRequest, ListRequestAllValues, initialListRequestAllValues } from '@/types/types';
 import { ApDiagnosticTestLaboratory } from '@/types/model-types';
 import PatientSide from './PatienSide';
 const Lab = () => {
@@ -103,6 +114,7 @@ const Lab = () => {
   const [openorders, setOpenOrders] = useState(false);
   const [openresults, setOpenResults] = useState(false);
   const [openRejectedModal, setOpenRejectedModal] = useState(false);
+  const [openRejectedResultModal, setOpenRejectedResultModal] = useState(false);
   const [currentStep, setCurrentStep] = useState("6055029972709625");
   const [encounter, setEncounter] = useState({ ...newApEncounter });
   const [showFilterInput, setShowFilterInput] = useState(false);
@@ -111,6 +123,8 @@ const Lab = () => {
   const [test, setTest] = useState({ ...newApDiagnosticOrderTests });
   const [note, setNote] = useState({ ...newApDiagnosticOrderTestsNotes });
   const [sample, setSample] = useState({ ...newApDiagnosticOrderTestsSamples });
+  const [result, setResult] = useState({ ...newApDiagnosticOrderTestsResult })
+  console.log(result)
   const [selectedSampleDate, setSelectedSampleDate] = useState(null);
   const [listOrdersResponse, setListOrdersResponse] = useState<ListRequest>({
     ...initialListRequest,
@@ -121,8 +135,14 @@ const Lab = () => {
   const { data: SampleContainerLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_SAMPLE_CONTAINER');
   const { data: LabTubeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_TYPES');
   const { data: TubeColorLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_COLORS');
+  const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
   const { data: messagesList, refetch: fecthNotes } = useGetOrderTestNotesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
+  const { data: messagesResultList, refetch: fecthResultNotes } = useGetOrderTestResultNotesByResultIdQuery(result?.key || undefined, { skip: result.key == null });
   const { data: samplesList, refetch: fecthSample } = useGetOrderTestSamplesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
+  const { data: normalRange } = useGetResultNormalRangeQuery(
+    { patientKey: patient?.key, testKey: test?.testKey },
+    { skip: !test.key || !patient.key }
+  );
   const [listOrdersTestResponse, setListOrdersTestResponse] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -146,13 +166,47 @@ const Lab = () => {
     toDate: new Date()
   });
   const [openNoteModal, setOpenNoteModal] = useState(false);
+  const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
   const [openSampleModal, setOpenSampleModal] = useState(false);
-  const { data: ordersList,refetch:orderFetch } = useGetDiagnosticOrderQuery({ ...listOrdersResponse });
+  const { data: ordersList, refetch: orderFetch } = useGetDiagnosticOrderQuery({ ...listOrdersResponse });
   const { data: testsList, refetch: fetchTest } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestResponse });
   const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
     ...initialListRequest
     , pageSize: 100
   })
+  const [listResultResponse, setListResultResponse] = useState<ListRequest>({
+    ...initialListRequest,
+    filters: [
+      {
+        fieldName: "order_test_key",
+        operator: "match",
+        value: test?.key || undefined,
+      }
+
+
+    ],
+  });
+  const [listPrevResultResponse, setListPrevResultResponse] = useState<ListRequest>({
+    ...initialListRequest,
+    sortBy: "createdAt",
+    sortType: 'desc',
+    filters: [
+      {
+        fieldName: "patient_key",
+        operator: "match",
+        value: patient?.key || undefined,
+      },
+      {
+        fieldName: "medical_test_key",
+        operator: "match",
+        value: test?.testKey || undefined,
+      }
+
+
+    ],
+  });
+  const { data: resultsList, refetch: resultFetch } = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
+  const { data: prevResultsList, refetch: prevResultFetch } = useGetDiagnosticOrderTestResultQuery({ ...listPrevResultResponse });
   const [labDetails, setLabDetails] = useState<ApDiagnosticTestLaboratory>({ ...newApDiagnosticTestLaboratory })
   const isSelected = rowData => {
     if (rowData && order && rowData.key === order.key) {
@@ -164,32 +218,19 @@ const Lab = () => {
       return 'selected-row';
     } else return '';
   };
- 
-  const { data: patirntObservationlist } = useGetObservationSummariesQuery({
-    ...initialListRequest,
-    sortBy: 'createdAt',
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: "patient_key",
-        operator: "match",
-        value: patient?.key ?? undefined,
-      }
+  const isResultSelected = rowData => {
+    if (rowData && result && rowData.key === result.key) {
+      return 'selected-row';
+    } else return '';
+  };
 
-    ],
-
-  });
-
-  const [bodyMeasurements, setBodyMeasurements] = useState({
-    height: null,
-    weight: null,
-    headcircumference: null
-  });
   const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [savenotes] = useSaveDiagnosticOrderTestNotesMutation();
   const [saveSample] = useSaveDiagnosticOrderTestSamplesMutation();
   const [saveTest] = useSaveDiagnosticOrderTestMutation();
+  const [saveResult] = useSaveDiagnosticOrderTestResultMutation();
+  const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -202,15 +243,8 @@ const Lab = () => {
 
   });
 
-  useEffect(() => {
-    setBodyMeasurements({
-      height: patirntObservationlist?.object?.find((item) => item.latestheight != null)?.latestheight,
-      weight: patirntObservationlist?.object?.find((item) => item.latestweight != null)?.latestweight,
-      headcircumference: patirntObservationlist?.object?.find((item) => item.latestheadcircumference != null)?.latestheadcircumference
-    })
-  }, [patirntObservationlist])
-  const endOfMessagesRef = useRef(null);
 
+  const endOfMessagesRef = useRef(null);
 
   useEffect(() => {
     if (endOfMessagesRef.current) {
@@ -275,9 +309,44 @@ const Lab = () => {
   useEffect(() => {
     const cat = laboratoryList?.object?.find((item) => item.testKey === test.testKey);
     setLabDetails(cat);
-    setCurrentStep(test.processingStatusLkey)
+    setCurrentStep(test.processingStatusLkey);
+    const updatedFilters = [
+      {
+        fieldName: "order_test_key",
+        operator: "match",
+        value: test?.key || undefined,
+      }
+
+
+    ];
+    setListResultResponse((prevRequest) => ({
+      ...prevRequest,
+      filters: updatedFilters,
+    }));
+    const updatedPrevFilters = [
+      {
+        fieldName: "patient_key",
+        operator: "match",
+        value: patient?.key || undefined,
+      },
+      {
+        fieldName: "medical_test_key",
+        operator: "match",
+        value: test?.testKey || undefined,
+      }
+
+
+    ];
+    setListPrevResultResponse((prevRequest) => ({
+      ...prevRequest,
+      filters: updatedPrevFilters,
+    }));
+
   }, [test]);
 
+  useEffect(() => {
+    console.log(result);
+  }, [result.resultLkey])
   const handleSendMessage = async (value) => {
     try {
       await savenotes({ ...note, notes: newMessage, testKey: test.key, orderKey: order.key }).unwrap();
@@ -288,6 +357,18 @@ const Lab = () => {
       dispatch(notify({ msg: 'Send Faild', sev: 'error' }));
     }
     fecthNotes();
+
+  };
+  const handleSendResultMessage = async (value) => {
+    try {
+      await saveResultNote({ ...note, notes: newMessage, testKey: test.key, orderKey: order.key, resultKey: result.key }).unwrap();
+      dispatch(notify({ msg: 'Send successfully', sev: 'success' }));
+      await setNewMessage("");
+    }
+    catch (error) {
+      dispatch(notify({ msg: 'Send Faild', sev: 'error' }));
+    }
+    fecthResultNotes();
 
   };
   const handleDateChange = (date) => {
@@ -321,7 +402,7 @@ const Lab = () => {
   }
   const handleRejectedTest = async () => {
     try {
-      const Response = await saveTest({ ...test, processingStatusLkey: "6055192099058457", rejectedAt:Date.now() }).unwrap();
+      const Response = await saveTest({ ...test, processingStatusLkey: "6055192099058457", rejectedAt: Date.now() }).unwrap();
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
       setOpenRejectedModal(false);
       setTest({ ...newApDiagnosticOrderTests });
@@ -333,19 +414,30 @@ const Lab = () => {
       dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
     }
   }
-  const handleAcceptTest = async () => {
-    try {
 
-      const Response = await saveTest({ ...test, processingStatusLkey: "6055074111734636", acceptedAt:Date.now() }).unwrap();
-      dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-      setTest({ ...newApDiagnosticOrderTests });
-      await fetchTest();
-      orderFetch();
-      setTest({ ...Response });
+  const handleAcceptTest = async () => {
+    if (samplesList?.object?.length > 0) {
+      try {
+
+        const Response = await saveTest({ ...test, processingStatusLkey: "6055074111734636", acceptedAt: Date.now() }).unwrap();
+        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+        saveResult({
+          ...result, orderKey: order.key, orderTestKey: test.key, medicalTestKey: test.testKey, patientKey: patient.key, visitKey: encounter.key,
+          statusLkey: '6055029972709625', normalRangeKey: normalRange?.key || null
+        }).unwrap();
+        setTest({ ...newApDiagnosticOrderTests });
+        await fetchTest();
+        orderFetch();
+        setTest({ ...Response });
+      }
+      catch (error) {
+        dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+      }
     }
-    catch (error) {
-      dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+    else {
+      dispatch(notify({ msg: 'Collect a sample first.' }));
     }
+
   }
   const handleFilterChange = (fieldName, value) => {
     if (value) {
@@ -391,95 +483,125 @@ const Lab = () => {
     }
   };
   const renderRowExpanded = rowData => {
-    console.log(rowData);
+
     return (
 
 
-        <Table
-            data={[rowData]} 
-            bordered
-            cellBordered
-            headerHeight={30}
-            rowHeight={40}
-            style={{ width: '100%', marginTop: '5px',marginBottom:'5px' }}
-            height={100}
-        >
-            <Column flexGrow={1} align="center" fullText>
-                <HeaderCell>ACCEPTED AT</HeaderCell>
-                <Cell dataKey="acceptedAt" >
-                    {rowData => rowData.acceptedAt ? new Date(rowData.acceptedAt).toLocaleString() : ""}
-                </Cell>
-            </Column>
-            <Column flexGrow={1} align="center" fullText>
-                <HeaderCell>ACCEPTED BY</HeaderCell>
-                <Cell dataKey="acceptedBy" />
-            </Column>
-            <Column flexGrow={1} align="center" fullText>
-                <HeaderCell>REJECTED AT</HeaderCell>
-                <Cell dataKey="rejectedAt" >
-                    {rowData => rowData.rejectedAt? new Date(rowData.rejectedAt).toLocaleString() : ""}
-                </Cell>
-            </Column>
-            <Column flexGrow={1} align="center" fullText>
-                <HeaderCell>REJECTED BY</HeaderCell>
-                <Cell dataKey="rejectedBy" />
-            </Column>
-            <Column flexGrow={2} align="center" fullText>
-                <HeaderCell>REJECTED REASON</HeaderCell>
-                <Cell dataKey="rejectedReason" >
-                    {rowData => rowData.rejectedReason}
-                </Cell>
-            </Column>
-            <Column flexGrow={1} align="center" fullText>
-                <HeaderCell>ATTACHMENT</HeaderCell>
-                <Cell  />
-            </Column>
-           
-        </Table>
+      <Table
+        data={[rowData]}
+        bordered
+        cellBordered
+        headerHeight={30}
+        rowHeight={40}
+        style={{ width: '100%', marginTop: '5px', marginBottom: '5px' }}
+        height={100}
+      >
+        <Column flexGrow={1} align="center" fullText>
+          <HeaderCell>ACCEPTED AT</HeaderCell>
+          <Cell dataKey="acceptedAt" >
+            {rowData => rowData.acceptedAt ? new Date(rowData.acceptedAt).toLocaleString() : ""}
+          </Cell>
+        </Column>
+        <Column flexGrow={1} align="center" fullText>
+          <HeaderCell>ACCEPTED BY</HeaderCell>
+          <Cell dataKey="acceptedBy" />
+        </Column>
+        <Column flexGrow={1} align="center" fullText>
+          <HeaderCell>REJECTED AT</HeaderCell>
+          <Cell dataKey="rejectedAt" >
+            {rowData => rowData.rejectedAt ? new Date(rowData.rejectedAt).toLocaleString() : ""}
+          </Cell>
+        </Column>
+        <Column flexGrow={1} align="center" fullText>
+          <HeaderCell>REJECTED BY</HeaderCell>
+          <Cell dataKey="rejectedBy" />
+        </Column>
+        <Column flexGrow={2} align="center" fullText>
+          <HeaderCell>REJECTED REASON</HeaderCell>
+          <Cell dataKey="rejectedReason" >
+            {rowData => rowData.rejectedReason}
+          </Cell>
+        </Column>
+        <Column flexGrow={1} align="center" fullText>
+          <HeaderCell>ATTACHMENT</HeaderCell>
+          <Cell />
+        </Column>
+
+      </Table>
 
 
     );
-};
+  };
 
-const handleExpanded = (rowData) => {
+  const handleExpanded = (rowData) => {
     let open = false;
     const nextExpandedRowKeys = [];
 
     expandedRowKeys.forEach(key => {
-        if (key === rowData.key) {
-            open = true;
-        } else {
-            nextExpandedRowKeys.push(key);
-        }
+      if (key === rowData.key) {
+        open = true;
+      } else {
+        nextExpandedRowKeys.push(key);
+      }
     });
 
     if (!open) {
-        nextExpandedRowKeys.push(rowData.key);
+      nextExpandedRowKeys.push(rowData.key);
     }
 
 
 
     console.log(nextExpandedRowKeys)
     setExpandedRowKeys(nextExpandedRowKeys);
-};
+  };
 
-const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
+  const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
     <Cell {...props} style={{ padding: 5 }}>
-        <IconButton
-            appearance="subtle"
-            onClick={() => {
-                onChange(rowData);
-            }}
-            icon={
-                expandedRowKeys.some(key => key === rowData["key"]) ? (
-                    <CollaspedOutlineIcon />
-                ) : (
-                    <ExpandOutlineIcon />
-                )
-            }
-        />
+      <IconButton
+        appearance="subtle"
+        onClick={() => {
+          onChange(rowData);
+        }}
+        icon={
+          expandedRowKeys.some(key => key === rowData["key"]) ? (
+            <CollaspedOutlineIcon />
+          ) : (
+            <ExpandOutlineIcon />
+          )
+        }
+      />
     </Cell>
-);
+  );
+  const joinValuesFromArray = (keys) => {
+
+    return keys
+      .map(key => lovValues?.object?.find(lov => lov.key === key))
+      .filter(obj => obj !== undefined)
+      .map(obj => obj.lovDisplayVale)
+      .join(', ');
+  };
+  const handleValueChange = async (value) => {
+    console.log(value);
+
+    await saveResult({ ...result, resultLkey: value }).unwrap();
+    setResult({ ...newApDiagnosticOrderTestsResult })
+
+    const v = normalRange.lovList.find((item) => item == value);
+    if (v) {
+
+      saveResult({ ...result, marker: "6731498382453316" }).unwrap();
+      resultFetch();
+    }
+    else {
+
+      saveResult({ ...result, marker: "6730122218786367" }).unwrap();
+      resultFetch();
+    }
+    await resultFetch().then(() => {
+      console.log("in fetch")
+    });
+  };
+
   const stepsData = [
     { key: "6055207372976955", value: "Sample Collected", time: "10:30 AM" },
     { key: "6055074111734636", value: "Accepted", time: "5:00 PM" },
@@ -576,7 +698,7 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                     <Translate>PATIENT NAME</Translate>
                   </HeaderCell>
                   <Cell  >
-                    {rowData => rowData.orderId}
+                    {rowData => rowData.patient?.fullName}
                   </Cell>
                 </Column>
 
@@ -588,7 +710,7 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                     <Translate>SATUTS</Translate>
                   </HeaderCell>
                   <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {rowData =>rowData.labStatusLvalue?rowData.labStatusLvalue.lovDisplayVale:rowData.labStatusLkey}
+                    {rowData => rowData.labStatusLvalue ? rowData.labStatusLvalue.lovDisplayVale : rowData.labStatusLkey}
                   </Cell>
                 </Column>
 
@@ -704,257 +826,258 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
         </Row>
         <Row>
           {openorders &&
-           <Panel header="Order's Tests" collapsible defaultExpanded style={{ border: '1px solid #e5e5ea', borderRadius: '25px', zoom: 0.93 }}>
-            <Table
+            <Panel header="Order's Tests" collapsible defaultExpanded style={{ border: '1px solid #e5e5ea', borderRadius: '25px', zoom: 0.93 }}>
+              <Table
 
-              height={200}
-              sortColumn={listOrdersTestResponse.sortBy}
-              sortType={listOrdersTestResponse.sortType}
-              onSortColumn={(sortBy, sortType) => {
-                if (sortBy)
-                  setListOrdersTestResponse({
-                    ...listOrdersTestResponse,
-                    sortBy,
-                    sortType
-                  });
-              }}
-              headerHeight={35}
-              rowHeight={40}
-              rowKey="key"
-              expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
-              renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
-              shouldUpdateScroll={false}
-              data={testsList?.object ?? []}
-              onRowClick={rowData => {
-                setOpenResults(true);
-                setTest(rowData)
-              }}
-              rowClassName={isTestSelected}
-            >
-                  <Column width={70} align="center">
-                        <HeaderCell>#</HeaderCell>
-                        <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-                    </Column>
+                height={200}
+                sortColumn={listOrdersTestResponse.sortBy}
+                sortType={listOrdersTestResponse.sortType}
+                onSortColumn={(sortBy, sortType) => {
+                  if (sortBy)
+                    setListOrdersTestResponse({
+                      ...listOrdersTestResponse,
+                      sortBy,
+                      sortType
+                    });
+                }}
+                headerHeight={35}
+                rowHeight={40}
+                rowKey="key"
+                expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
+                renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
+                shouldUpdateScroll={false}
+                data={testsList?.object ?? []}
+                onRowClick={rowData => {
+                  setOpenResults(true);
+                  setTest(rowData)
+                }}
+                rowClassName={isTestSelected}
+              >
+                <Column width={70} align="center">
+                  <HeaderCell>#</HeaderCell>
+                  <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
+                </Column>
 
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
-                  <Translate>TEST CATEGORY</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => {
-                    const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)
-                    if (cat) {
-                      return cat.categoryLvalue.lovDisplayVale
-                    }
-                    return "";
-                  }}
-                </Cell>
-              </Column>
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
-                  <Translate>TEST NAME</Translate>
-                </HeaderCell>
-                <Cell  >
-                  {rowData => rowData.test.testName}
-                </Cell>
-              </Column>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
+                    <Translate>TEST CATEGORY</Translate>
+                  </HeaderCell>
+                  <Cell >
+                    {rowData => {
+                      const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)
+                      if (cat) {
+                        return cat.categoryLvalue.lovDisplayVale
+                      }
+                      return "";
+                    }}
+                  </Cell>
+                </Column>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
+                    <Translate>TEST NAME</Translate>
+                  </HeaderCell>
+                  <Cell  >
+                    {rowData => rowData.test.testName}
+                  </Cell>
+                </Column>
 
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
-                  <Translate>IS PROFILE</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData => {
-                    const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)?.isProfile
-                    return cat?.isProfile ? "Yes" : "NO"
-                  }}
-                </Cell>
-              </Column>
-              <Column sortable flexGrow={1} fullText>
-                <HeaderCell>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
+                    <Translate>IS PROFILE</Translate>
+                  </HeaderCell>
+                  <Cell>
+                    {rowData => {
+                      const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)?.isProfile
+                      return cat?.isProfile ? "Yes" : "NO"
+                    }}
+                  </Cell>
+                </Column>
+                <Column sortable flexGrow={1} fullText>
+                  <HeaderCell>
 
-                  <Translate>REASON</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => rowData.reasonLvalue ? rowData.reasonLvalue.lovDisplayVale : rowData.reasonLkey}
-                </Cell>
-              </Column>
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
+                    <Translate>REASON</Translate>
+                  </HeaderCell>
+                  <Cell >
+                    {rowData => rowData.reasonLvalue ? rowData.reasonLvalue.lovDisplayVale : rowData.reasonLkey}
+                  </Cell>
+                </Column>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
 
-                  <Translate>PROIRITY</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => rowData.priorityLvalue ? rowData.priorityLvalue.lovDisplayVale : rowData.priorityLkey}
-                </Cell>
-              </Column>
+                    <Translate>PROIRITY</Translate>
+                  </HeaderCell>
+                  <Cell >
+                    {rowData => rowData.priorityLvalue ? rowData.priorityLvalue.lovDisplayVale : rowData.priorityLkey}
+                  </Cell>
+                </Column>
 
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
 
-                  <Translate>DURATION</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => {
-                    const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)
-                    if (cat) {
-                      return cat?.testDurationTime + " " + cat?.timeUnitLvalue?.lovDisplayVale
-                    }
-                    return "";
+                    <Translate>DURATION</Translate>
+                  </HeaderCell>
+                  <Cell >
+                    {rowData => {
+                      const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)
+                      if (cat) {
+                        return cat?.testDurationTime + " " + cat?.timeUnitLvalue?.lovDisplayVale
+                      }
+                      return "";
 
-                  }}
-                </Cell>
-              </Column>
+                    }}
+                  </Cell>
+                </Column>
 
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
 
-                  <Translate>PHYSICIAN</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData => { return rowData.createdBy, " At", rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "" }}
+                    <Translate>PHYSICIAN</Translate>
+                  </HeaderCell>
+                  <Cell>
+                    {rowData => { return rowData.createdBy, " At", rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "" }}
 
-                </Cell>
+                  </Cell>
 
-              </Column>
+                </Column>
 
 
 
-              
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
 
-                  <Translate>ORDERS NOTES</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData => rowData.notes}
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
 
-                </Cell>
+                    <Translate>ORDERS NOTES</Translate>
+                  </HeaderCell>
+                  <Cell>
+                    {rowData => rowData.notes}
 
-              </Column>
+                  </Cell>
 
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
+                </Column>
 
-                  <Translate>Technician Notes</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => (
-                    <HStack spacing={10}>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
 
-                      <FontAwesomeIcon icon={faComment} style={{ fontSize: '1em' }} onClick={() => setOpenNoteModal(true)} />
+                    <Translate>Technician Notes</Translate>
+                  </HeaderCell>
+                  <Cell >
+                    {rowData => (
+                      <HStack spacing={10}>
 
-                    </HStack>
+                        <FontAwesomeIcon icon={faComment} style={{ fontSize: '1em' }} onClick={() => setOpenNoteModal(true)} />
 
-                  )}
-                </Cell>
+                      </HStack>
 
-              </Column>
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
+                    )}
+                  </Cell>
 
-                  <Translate>COLLECT SAMPLE</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => (
-                    <HStack spacing={10}>
+                </Column>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
 
-                      <FontAwesomeIcon icon={faVialCircleCheck} style={{ fontSize: '1em' }} onClick={() => setOpenSampleModal(true)} />
+                    <Translate>COLLECT SAMPLE</Translate>
+                  </HeaderCell>
+                  <Cell >
+                    {rowData => (
+                      <HStack spacing={10}>
 
-                    </HStack>
+                        <FontAwesomeIcon icon={faVialCircleCheck} style={{ fontSize: '1em' }} onClick={() => setOpenSampleModal(true)} />
 
-                  )}
-                </Cell>
+                      </HStack>
 
-              </Column>
-              <Column sortable flexGrow={2} fullText >
-                <HeaderCell>
-                  <Translate>SATUTS</Translate>
-                </HeaderCell>
-                <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {rowData => rowData.processingStatusLvalue ? rowData.processingStatusLvalue.lovDisplayVale : rowData.processingStatusLkey}
-                </Cell>
-              </Column>
-              <Column sortable flexGrow={4} fullText>
-                <HeaderCell>
+                    )}
+                  </Cell>
 
-                  <Translate>ACTION</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => (
-                    <HStack spacing={10}>
-                       <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>Accepted</Tooltip>}
-                      >
-                      <CheckRoundIcon
-                        onClick={() => (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") && handleAcceptTest()}
-                        style={{
-                          fontSize: '1em',
-                          marginRight: 10,
-                          color: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'gray' : 'inherit',
-                          cursor: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'not-allowed' : 'pointer',
-                        }}
-                      />
-                      </Whisper>
-                      <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>Rejected</Tooltip>}
-                      >
-                      <WarningRoundIcon
-                        onClick={() => (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") && setOpenRejectedModal(true)}
-                        style={{
-                          fontSize: '1em', marginRight: 10,
-                          color: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'gray' : 'inherit',
-                          cursor: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'not-allowed' : 'pointer',
-                        }} />
-                         </Whisper>
-                         <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>Send to External Lab</Tooltip>}
-                      >
-                         <FontAwesomeIcon icon={faRightFromBracket} style={{ fontSize: '1em', marginRight: 10 }} />
-                         </Whisper>
-                    </HStack>
+                </Column>
+                <Column sortable flexGrow={2} fullText >
+                  <HeaderCell>
+                    <Translate>SATUTS</Translate>
+                  </HeaderCell>
+                  <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {rowData => rowData.processingStatusLvalue ? rowData.processingStatusLvalue.lovDisplayVale : rowData.processingStatusLkey}
+                  </Cell>
+                </Column>
+                <Column sortable flexGrow={4} fullText>
+                  <HeaderCell>
 
-                  )}
-                </Cell>
+                    <Translate>ACTION</Translate>
+                  </HeaderCell>
+                  <Cell >
+                    {rowData => (
+                      <HStack spacing={10}>
+                        <Whisper
+                          placement="top"
+                          trigger="hover"
+                          speaker={<Tooltip>Accepted</Tooltip>}
+                        >
+                          <CheckRoundIcon
+                            onClick={() => (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") && handleAcceptTest()}
+                            style={{
+                              fontSize: '1em',
+                              marginRight: 10,
+                              color: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'gray' : 'inherit',
+                              cursor: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'not-allowed' : 'pointer',
+                            }}
+                          />
+                        </Whisper>
+                        <Whisper
+                          placement="top"
+                          trigger="hover"
+                          speaker={<Tooltip>Rejected</Tooltip>}
+                        >
+                          <WarningRoundIcon
+                            onClick={() => (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") && setOpenRejectedModal(true)}
+                            style={{
+                              fontSize: '1em', marginRight: 10,
+                              color: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'gray' : 'inherit',
+                              cursor: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'not-allowed' : 'pointer',
+                            }} />
+                        </Whisper>
+                        <Whisper
+                          placement="top"
+                          trigger="hover"
+                          speaker={<Tooltip>Send to External Lab</Tooltip>}
+                        >
+                          <FontAwesomeIcon icon={faRightFromBracket} style={{ fontSize: '1em', marginRight: 10 }} />
+                        </Whisper>
+                      </HStack>
 
-              </Column>
-            </Table>
-            <Divider style={{ margin: '4px 4px' }} />
-            <Pagination
-              prev
-              next
-              first
-              last
-              ellipsis
-              boundaryLinks
-              maxButtons={5}
-              size="xs"
-              layout={['total', '-', 'limit', '|', 'pager', 'skip']}
-              limitOptions={[5, 15, 30]}
-              //  limit={listRequest.pageSize}
-              //  activePage={listRequest.pageNumber}
+                    )}
+                  </Cell>
 
-              //  onChangePage={pageNumber => {
-              //    setListRequest({ ...listRequest, pageNumber });
-              //  }}
-              //  onChangeLimit={pageSize => {
-              //    setListRequest({ ...listRequest, pageSize });
-              //  }}
-              total={testsList?.object?.length || 0}
-            />
-          </Panel>}
+                </Column>
+              </Table>
+              <Divider style={{ margin: '4px 4px' }} />
+              <Pagination
+                prev
+                next
+                first
+                last
+                ellipsis
+                boundaryLinks
+                maxButtons={5}
+                size="xs"
+                layout={['total', '-', 'limit', '|', 'pager', 'skip']}
+                limitOptions={[5, 15, 30]}
+                //  limit={listRequest.pageSize}
+                //  activePage={listRequest.pageNumber}
+
+                //  onChangePage={pageNumber => {
+                //    setListRequest({ ...listRequest, pageNumber });
+                //  }}
+                //  onChangeLimit={pageSize => {
+                //    setListRequest({ ...listRequest, pageSize });
+                //  }}
+                total={testsList?.object?.length || 0}
+              />
+            </Panel>}
         </Row>
         <Row>
           {openresults && <Panel header="Test's Results Processing" collapsible defaultExpanded style={{ border: '1px solid #e5e5ea', borderRadius: '25px', zoom: 0.93 }}>
             <Table
 
               height={200}
+
               //   sortColumn={listRequest.sortBy}
               //   sortType={listRequest.sortType}
               //   onSortColumn={(sortBy, sortType) => {
@@ -968,29 +1091,159 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
               headerHeight={35}
               rowHeight={40}
 
-              data={[{ name: "hanan", hasObservation: true, patientAge: "34" }
-                ,
-              { name: "hanan", hasObservation: true, patientAge: "34" }
-                ,
-              { name: "hanan", hasObservation: true, patientAge: "34" }
-              ]}
-            //   onRowClick={rowData => {
-            //     setLocalEncounter(rowData);
-            //     setLocalPatient(rowData.patientObject)
-            //   }}
-            //   rowClassName={isSelected}
+              data={resultsList?.object ?? []}
+              onRowClick={rowData => {
+                setResult(rowData);
+              }}
+              rowClassName={isResultSelected}
             >
               <Column sortable flexGrow={2} fullText>
                 <HeaderCell>
                   <Translate>TEST RESULT,UNIT</Translate>
                 </HeaderCell>
-                <Cell dataKey="queueNumber" />
+                <Cell >
+                  {rowData => {
+                    if (rowData.normalRangeKey) {
+                      if (normalRange?.resultTypeLkey == "6209578532136054") {
+                        const list = lovValues?.object.filter((item) => item.lovKey == normalRange.resultLovKey)
+                        return <SelectPicker
+                          data={list ?? []}
+                          value={rowData.resultLkey}
+                          valueKey='key'
+                          labelKey='lovDisplayVale'
+                          onChange={handleValueChange}
+                          style={{ width: 100, zoom: 0.8 }} />
+
+                      }
+                      else if (normalRange?.resultTypeLkey == "6209569237704618") {
+                        return <Input
+                          style={{ zoom: 0.8 }}
+                          type='number'
+                          value={result.resultValueNumber}
+                          onChange={(value) => {
+                            setResult({ ...result, resultValueNumber: Number(value) })
+                          }}
+                          onBlur={async (event) => {
+                            await saveResult({ ...result, resultValueNumber: Number(event.target.value) }).unwrap();
+                            resultFetch();
+                            if (normalRange.normalRangeTypeLkey == "6221150241292558") {
+                              console.log("case range")
+                              if (result.resultValueNumber > normalRange.rangeFrom && result.resultValueNumber < normalRange.rangeTo) {
+                                console.log("range and it normal " + result.resultValueNumber)
+                                await saveResult({ ...result, marker: "6731498382453316" }).unwrap()
+                                resultFetch();
+                              }
+                              else if (result.resultValueNumber < normalRange.rangeFrom) {
+
+                                if (normalRange.criticalValue) {
+                                  if (result.resultValueNumber < normalRange.criticalValueLessThan) {
+                                    console.log("Less than and critical  " + result.resultValueNumber + "<" + normalRange.criticalValueLessThan)
+                                    await saveResult({ ...result, marker: "6730652890616978" }).unwrap();
+
+                                  }
+                                }
+                                else {
+                                  console.log("Less than not critical " + result.resultValueNumber)
+                                  await saveResult({ ...result, marker: "6730094497387122" }).unwrap();
+                                }
+                              }
+                              else if (result.resultValueNumber > normalRange.rangeTo) {
+                                console.log("More than" + normalRange.rangeTo);
+                                if (normalRange.criticalValue) {
+                                  if (result.resultValueNumber > normalRange.criticalValueMoreThan) {
+                                    console.log("more than and critical" + ">" + normalRange.criticalValueMoreThan)
+                                    await saveResult({ ...result, marker: "6730104027458969" }).unwrap();
+                                  }
+                                  else {
+                                    console.log("More than not critical")
+                                    await saveResult({ ...result, marker: "6730083474405013" }).unwrap();
+                                  }
+                                }
+
+                              }
+
+                            }
+                            else if (normalRange.normalRangeTypeLkey == "6221162489019880") {
+                              if (result.resultValueNumber < normalRange.rangeFrom) {
+
+                                if (normalRange.criticalValue) {
+                                  if (result.resultValueNumber < normalRange.criticalValueLessThan) {
+                                    await saveResult({ ...result, marker: "6730652890616978" }).unwrap();
+
+                                  }
+                                }
+                                else {
+                                  await saveResult({ ...result, marker: "6730094497387122" }).unwrap();
+                                }
+                              }
+                              else {
+                                await saveResult({ ...result, marker: "6731498382453316" }).unwrap()
+                              }
+                              console.log("Less than")
+                            }
+                            else if (normalRange.normalRangeTypeLkey == "6221175556193180") {
+                              if (result.resultValueNumber > normalRange.rangeTo) {
+                                if (normalRange.criticalValue) {
+                                  if (result.resultValueNumber > normalRange.criticalValueMoreThan) {
+                                    await saveResult({ ...result, marker: "6730104027458969" }).unwrap();
+                                  }
+                                  else {
+                                    await saveResult({ ...result, marker: "6730083474405013" }).unwrap();
+                                  }
+                                }
+
+                              }
+                              else {
+                                await saveResult({ ...result, marker: "6731498382453316" }).unwrap()
+                              }
+
+                            }
+                          }}
+
+                        ></Input>
+
+                      }
+
+                    }
+                    else {
+                      return <Input></Input>
+                    }
+                  }}
+                </Cell>
               </Column>
               <Column sortable flexGrow={2} fullText>
                 <HeaderCell>
                   <Translate>NORMAL RANGE</Translate>
                 </HeaderCell>
-                <Cell dataKey="visitId" />
+                <Cell>
+                  {rowData => {
+                    if (rowData.normalRangeKey) {
+                      if (normalRange?.resultTypeLkey == "6209578532136054") {
+
+                        return joinValuesFromArray(normalRange.lovList);
+
+                      }
+                      else if (normalRange?.resultTypeLkey == "6209569237704618") {
+                        if (normalRange.normalRangeTypeLkey == "6221150241292558") {
+                          return normalRange.rangeFrom + "_" + normalRange.rangeTo;
+
+                        }
+                        else if (normalRange.normalRangeTypeLkey == "6221162489019880") {
+                          return normalRange.rangeFrom;
+                        }
+                        else if (normalRange.normalRangeTypeLkey == "6221175556193180") {
+                          return normalRange.rangeTo;
+
+                        }
+
+                      }
+
+                    }
+                    else {
+                      return "Normal Range Not Defined";
+                    }
+                  }}
+                </Cell>
               </Column>
 
               <Column sortable flexGrow={2} fullText>
@@ -998,7 +1251,36 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                   <Translate>MARKER</Translate>
                 </HeaderCell>
                 <Cell>
-                  YES
+                  {rowData => {
+                    if (rowData.marker == "6730122218786367") {
+                      return <FontAwesomeIcon icon={faCircleExclamation} style={{ fontSize: '1em' }} />
+
+                    }
+                    else if (rowData.marker == "6731498382453316") {
+                      return "Normal"
+                    }
+                    else if (rowData.marker == "6730083474405013") {
+                      return <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: '1em' }} />;
+                    }
+                    else if (rowData.marker == "6730094497387122") {
+                      return <FontAwesomeIcon icon={faArrowDown} style={{ fontSize: '1em' }} />;
+                    }
+                    else if (rowData.marker == "6730104027458969") {
+                      return <HStack spacing={10}>
+                        <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} />
+                        <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: '1em' }} />
+
+                      </HStack>;
+                    }
+                    else if (rowData.marker == "6730652890616978") {
+                      return <HStack spacing={10}>
+                        <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} />
+                        <FontAwesomeIcon icon={faArrowDown} style={{ fontSize: '1em' }} />
+
+                      </HStack>;
+                    }
+                  }
+                  }
                 </Cell>
               </Column>
               <Column sortable flexGrow={2} fullText>
@@ -1010,7 +1292,7 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                   {rowData => (
                     <HStack spacing={10}>
 
-                      <FontAwesomeIcon icon={faComments} style={{ fontSize: '1em' }} />
+                      <FontAwesomeIcon icon={faComment} style={{ fontSize: '1em' }} onClick={() => setOpenNoteResultModal(true)} />
 
                     </HStack>
 
@@ -1025,7 +1307,19 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                   <Translate>PREVIOUS RESULT</Translate>
                 </HeaderCell>
                 <Cell>
-                  l</Cell>
+                  {prevResultsList?.object[0]?.normalRangeKey === "6209578532136054" && (
+                    prevResultsList?.object[0]?.reasonLvalue?prevResultsList?.object[0]?.reasonLvalue.lovDisplayVale:prevResultsList?.object[0].reasonLkey
+                  )}
+
+                  {prevResultsList?.object[0]?.normalRangeKey === "6209569237704618" && (
+                   prevResultsList?.object[0]?.resultValueNumber
+                  )}
+
+                  {!["6209578532136054", "6209569237704618"].includes(prevResultsList?.object[0]?.normalRangeKey) &&
+                   (
+                    <></>
+                  )}
+                </Cell>
               </Column>
               <Column sortable flexGrow={2} fullText>
                 <HeaderCell>
@@ -1033,8 +1327,7 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                   <Translate>PREVIOUS RESULT DATE</Translate>
                 </HeaderCell>
                 <Cell>
-                  ll
-
+                  {prevResultsList?.object[0] ? new Date(prevResultsList?.object[0]?.createdAt).toLocaleString() : ""}
                 </Cell>
 
               </Column>
@@ -1071,24 +1364,7 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                   <Translate> RESULT SATUTS</Translate>
                 </HeaderCell>
                 <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {rowData => (rowData.hasObservation ? <Badge content="YES" style={{
-                    backgroundColor: '#bcf4f7',
-                    color: '#008aa6',
-                    padding: '5px 19px',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    fontWeight: "bold"
-                  }} /> : <Badge
-                    style={{
-                      backgroundColor: 'rgba(238, 130, 238, 0.2)',
-                      color: '#4B0082',
-                      padding: '5px 19px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: "bold"
-                    }}
-                    content="NO"
-                  />)}
+                  {rowData => rowData.statusLvalue ? rowData.statusLvalue.lovDisplayVale : rowData.statusLkey}
                 </Cell>
               </Column>
               <Column sortable flexGrow={2} fullText>
@@ -1132,12 +1408,38 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
                 <Cell >
                   {rowData => (
                     <HStack spacing={10}>
-                      <WarningRoundIcon style={{ fontSize: '1em', marginRight: 10 }} />
-                      <CheckRoundIcon style={{ fontSize: '1em', marginRight: 10 }} />
-                      <ConversionIcon style={{ fontSize: '1em', marginRight: 10 }} />
+                      <WarningRoundIcon style={{ fontSize: '1em', marginRight: 10 }} onClick={() => setOpenRejectedResultModal(true)} />
+                      <CheckRoundIcon style={{ fontSize: '1em', marginRight: 10 }}
+                        onClick={async () => {
+                          try {
+                            await saveResult({ ...result, statusLkey: '265089168359400', approvedAt: Date.now() }).unwrap();
+                            dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                            resultFetch();
+                          }
+                          catch (error) {
+                            dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+                          }
+                        }} />
+                      <ConversionIcon style={{ fontSize: '1em', marginRight: 10 }} onClick={async () => {
+                        await setOpenSampleModal(true);
+                        saveResult({
+                          ...result, orderKey: order.key, orderTestKey: test.key, medicalTestKey: test.testKey, patientKey: patient.key, visitKey: encounter.key,
+                          statusLkey: '6055029972709625', normalRangeKey: normalRange?.key || null
+                        }).unwrap();
+                        resultFetch();
+                      }} />
 
                       <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: 10 }} />
-                      <FontAwesomeIcon icon={faStar} style={{ fontSize: '1em', marginRight: 10 }} />
+                      <FontAwesomeIcon icon={faStar} style={{ fontSize: '1em', marginRight: 10, color: rowData.reviewAt ? '#e0a500' : "#343434" }} onClick={async () => {
+                        try {
+                          await saveResult({ ...result, reviewAt: Date.now() }).unwrap();
+                          dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                          resultFetch();
+                        }
+                        catch (error) {
+                          dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+                        }
+                      }} />
                     </HStack>
 
                   )}
@@ -1220,6 +1522,52 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
             onPressEnter={(value) => handleSendMessage(value)}
           />
           <Button appearance="primary" onClick={(value) => handleSendMessage(value)}>
+            <FontAwesomeIcon icon={faPaperPlane} />
+          </Button>
+        </div>
+      </Modal.Footer>
+    </Modal>
+    <Modal open={openNoteResultModal} onClose={() => setOpenNoteResultModal(false)} size="xs">
+      <Modal.Header>
+        <Modal.Title>💬Technician Notes</Modal.Title>
+      </Modal.Header>
+      <Modal.Body style={{ maxHeight: "300px", overflowY: "auto", padding: "10px" }}>
+        {messagesResultList?.object.length > 0 ? (
+          messagesResultList?.object.map((msg, index) => (
+            <div key={index} style={{ textAlign: "right", marginBottom: "8px" }}>
+              <span
+                style={{
+                  display: "inline-block",
+                  padding: "8px 12px",
+                  borderRadius: "10px",
+                  backgroundColor: "#007bff",
+                  color: "white",
+                  maxWidth: "70%",
+                }}
+              >
+                {msg.notes}
+              </span>
+              <div style={{ fontSize: "10px", color: "gray", marginTop: "4px" }}>
+                {new Date(msg.createdAt).toLocaleString()}
+              </div>
+            </div>
+          ))
+        ) : (
+          <p style={{ textAlign: "center", color: "gray" }}>Not found Notes Yet</p>
+        )}
+
+        <div ref={endOfMessagesRef}></div>
+      </Modal.Body>
+      <Modal.Footer>
+        <div style={{ display: 'flex' }}>
+          <Input
+            value={newMessage}
+            onChange={setNewMessage}
+            placeholder="write note.."
+            style={{ width: "80%", marginRight: "10px" }}
+            onPressEnter={(value) => handleSendResultMessage(value)}
+          />
+          <Button appearance="primary" onClick={(value) => handleSendResultMessage(value)}>
             <FontAwesomeIcon icon={faPaperPlane} />
           </Button>
         </div>
@@ -1468,6 +1816,51 @@ const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) =
           appearance="ghost"
           color="cyan"
           onClick={() => setOpenRejectedModal(false)}
+        >
+          Cancel
+        </Button>
+      </Modal.Footer>
+    </Modal>
+    <Modal open={openRejectedResultModal} onClose={() => setOpenRejectedResultModal(false)} size="xs">
+      <Modal.Header>
+        <Modal.Title>Why do you want to reject the Test? </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form style={{ zoom: 0.85 }}>
+          <MyInput
+            disabled={false}
+            fieldType={"textarea"}
+            fieldName={"rejectedReason"}
+            record={result}
+            setRecord={setResult}
+
+          /></Form>
+      </Modal.Body>
+      <Modal.Footer style={{ display: "flex", justifyContent: 'flex-end' }}>
+        <Button
+          appearance="primary"
+          color="cyan"
+          onClick={async () => {
+            {
+              try {
+                await saveResult({ ...result, statusLkey: '6488555526802885', rejectedAt: Date.now() }).unwrap();
+                dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                resultFetch();
+                setOpenNoteResultModal(false);
+              }
+              catch (error) {
+                dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+              }
+            }
+          }
+          }
+        >
+          Save
+        </Button>
+        <Button
+          appearance="ghost"
+          color="cyan"
+          onClick={() => setOpenRejectedResultModal(false)}
         >
           Cancel
         </Button>

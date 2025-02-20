@@ -619,6 +619,53 @@ export interface ApDiagnosticOrderTestsNotes {
 	isValid:boolean;
 } 
 
+export interface ApDiagnosticOrderTestsResult { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	orderKey:string;
+	medicalTestKey:string;
+	orderTestKey:string;
+	normalRangeKey:string;
+	resultType:string;
+	resultLkey:string;
+	resultValueNumber:number;
+	marker:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	processingStatusLkey:string;
+	orderTypeLkey:string;
+	approvedAt:number;
+	approvedBy:string;
+	rejectedAt:number;
+	rejectedBy:string;
+	rejectedReason:string;
+	reviewAt:number;
+	reviewBy:string;
+	resultText:string;
+} 
+
+export interface ApDiagnosticOrderTestsResultNotes { 
+	key:string;
+	orderKey:string;
+	testKey:string;
+	resultKey:string;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApDiagnosticOrderTestsSamples { 
 	key:string;
 	orderKey:string;
@@ -635,6 +682,7 @@ export interface ApDiagnosticOrderTestsSamples {
 	deletedAt:number;
 	isValid:boolean;
 } 
+
 
 export interface ApDiagnosticOrderTestsNotes { 
 	key:string;
@@ -710,6 +758,7 @@ export interface ApDiagnosticOrderTestsSamples {
 	deletedAt:number;
 	isValid:boolean;
 } 
+
 
 export interface ApDiagnosticOrders { 
 	key:string;
@@ -884,6 +933,8 @@ export interface ApDiagnosticTestNormalRange {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	profileTestKey:string;
+	isProfile:boolean;
 } 
 
 export interface ApDiagnosticTestNormalRangeLov { 
@@ -924,6 +975,20 @@ export interface ApDiagnosticTestPathology {
 	preparationRequirements:string;
 	associatedRisks:string;
 	pathCatalogKey:string;
+} 
+
+export interface ApDiagnosticTestProfile { 
+	key:string;
+	diagnosticTestKey:string;
+	testName:string;
+	resultUnitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
 } 
 
 export interface ApDiagnosticTestRadiology { 

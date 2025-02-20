@@ -1,7 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
-import { ListRequest } from '@/types/types';
-import { fromListRequestToQueryParams } from '@/utils';
+import { ListRequest, ListRequestAllValues } from '@/types/types';
+import { fromListRequestToQueryParams,fromListRequestAllValueToQueryParams } from '@/utils';
 import {
   ApAccessRole,
   ApAccessRoleScreen,
@@ -310,6 +310,13 @@ export const setupService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       }
+    }),
+    getLovAllValues: builder.query({
+      query: (listRequest: ListRequestAllValues) => ({
+        url: `/utility/get-lov-all-values?${fromListRequestAllValueToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
     }),
     getLovValuesByCode: builder.query({
       query: (code: String) => ({
@@ -1052,6 +1059,7 @@ export const {
   useSaveScreenMutation,
   useGetScreenAccessMatrixQuery,
   useSaveScreenAccessMatrixMutation,
+  useGetLovAllValuesQuery,
   useGetLovValuesByCodeQuery,
   useGetLovValuesByCodeAndParentQuery,
   useGetMetadataQuery,

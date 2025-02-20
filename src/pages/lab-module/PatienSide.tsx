@@ -53,7 +53,6 @@ import { useGetObservationSummariesQuery } from '@/services/observationService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { newApEncounter } from '@/types/model-types-constructor';
 const PatientSide = ({ patient, encounter}) => {
-   console.log(patient?.hasAllergy)
    const [openAllargyModal, setOpenAllargyModal] = useState(false);
      const [openWarningModal, setOpenWarningModal] = useState(false);
      const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
