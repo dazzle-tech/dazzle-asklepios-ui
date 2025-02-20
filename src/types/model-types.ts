@@ -646,6 +646,9 @@ export interface ApDiagnosticOrderTestsResult {
 	rejectedAt:number;
 	rejectedBy:string;
 	rejectedReason:string;
+	reviewAt:number;
+	reviewBy:string;
+	resultText:string;
 } 
 
 export interface ApDiagnosticOrderTestsResultNotes { 
@@ -679,6 +682,7 @@ export interface ApDiagnosticOrderTestsSamples {
 	deletedAt:number;
 	isValid:boolean;
 } 
+
 
 export interface ApDiagnosticOrderTestsNotes { 
 	key:string;
@@ -754,6 +758,7 @@ export interface ApDiagnosticOrderTestsSamples {
 	deletedAt:number;
 	isValid:boolean;
 } 
+
 
 export interface ApDiagnosticOrders { 
 	key:string;
@@ -928,6 +933,8 @@ export interface ApDiagnosticTestNormalRange {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	profileTestKey:string;
+	isProfile:boolean;
 } 
 
 export interface ApDiagnosticTestNormalRangeLov { 
@@ -968,6 +975,20 @@ export interface ApDiagnosticTestPathology {
 	preparationRequirements:string;
 	associatedRisks:string;
 	pathCatalogKey:string;
+} 
+
+export interface ApDiagnosticTestProfile { 
+	key:string;
+	diagnosticTestKey:string;
+	testName:string;
+	resultUnitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
 } 
 
 export interface ApDiagnosticTestRadiology { 

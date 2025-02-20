@@ -39,6 +39,27 @@ export const fromListRequestToQueryParams = listRequest => {
   if (listRequest.skipDetails) final += `&skipDetails=true`;
   return final;
 };
+export const fromListRequestAllValueToQueryParams = listRequest => {
+  let final = '';
+  final += `&sortBy=${fromCamelCaseToDBName(listRequest.sortBy)}`;
+  final += `&sortType=${listRequest.sortType}`;
+  final += `&filterLogic=${listRequest.filterLogic}`;
+
+  // construct a parsable filter query param from fitlers array
+  let filtersString = '';
+  listRequest.filters.map((filter, i) => {
+    filtersString += `${filter.fieldName},${filter.operator},${filter.value}`;
+    if (i + 1 < listRequest.filters.length) {
+      filtersString += '_fspr_';
+    }
+  });
+
+  if (filtersString.length > 0) final += `&filters=${filtersString}`;
+
+  if (listRequest.ignore) final += `&ignore=true`;
+  if (listRequest.skipDetails) final += `&skipDetails=true`;
+  return final;
+}
 
 export const addFilterToListRequest = (
   fieldName: string,

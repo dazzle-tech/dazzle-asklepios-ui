@@ -2,7 +2,17 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
-import { ApConsultationOrder, ApCustomeInstructions, ApDiagnosticOrders, ApDiagnosticOrderTests, ApDiagnosticOrderTestsNotes, ApDiagnosticOrderTestsResult, ApDiagnosticOrderTestsSamples, ApDrugOrder, ApDrugOrderMedications, ApEncounter, ApPatientDiagnose, ApPatientEncounterOrder, ApPatientPlan, ApPrescription, ApPrescriptionMedications, ApProcedure, ApReviewOfSystem, ApVisitAllergies } from '@/types/model-types';
+import {
+  ApConsultationOrder,
+  ApCustomeInstructions,
+  ApDiagnosticOrders,
+  ApDiagnosticOrderTests,
+  ApDrugOrder, ApDrugOrderMedications,
+  ApEncounter, ApPatientDiagnose,
+  ApPatientEncounterOrder,
+  ApPatientPlan, ApPrescription,
+  ApPrescriptionMedications, ApProcedure, ApReviewOfSystem, ApVisitAllergies
+} from '@/types/model-types';
 
 export const encounterService = createApi({
   reducerPath: 'encounterApi',
@@ -135,7 +145,7 @@ export const encounterService = createApi({
         url: `/encounter/patient-diagnosis-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
-      keepUnusedDataFor:0
+      keepUnusedDataFor: 0
     }),
     savePatientDiagnose: builder.mutation({
       query: (patDiag: ApPatientDiagnose) => ({
@@ -203,7 +213,7 @@ export const encounterService = createApi({
       }),
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
-        return response.object;   
+        return response.object;
       }
     }),
     GetPrescriptions: builder.query({
@@ -267,7 +277,7 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-   saveConsultationOrders: builder.mutation({
+    saveConsultationOrders: builder.mutation({
       query: (consultation: ApConsultationOrder) => ({
         url: `/encounter/save-consultation-orders`,
         method: 'POST',
@@ -303,7 +313,7 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-   saveDrugOrderMedication: builder.mutation({
+    saveDrugOrderMedication: builder.mutation({
       query: (order: ApDrugOrderMedications) => ({
         url: `/encounter/save-drug-order-medic`,
         method: 'POST',
@@ -321,7 +331,7 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-   saveProcedures: builder.mutation({
+    saveProcedures: builder.mutation({
       query: (order: ApProcedure) => ({
         url: `/encounter/save-procedures`,
         method: 'POST',
@@ -339,7 +349,7 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-   saveDiagnosticOrder: builder.mutation({
+    saveDiagnosticOrder: builder.mutation({
       query: (order: ApDiagnosticOrders) => ({
         url: `/encounter/save-diagnostic-order`,
         method: 'POST',
@@ -357,8 +367,8 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-   saveDiagnosticOrderTest: builder.mutation({
-      query: (order:ApDiagnosticOrderTests) => ({
+    saveDiagnosticOrderTest: builder.mutation({
+      query: (order: ApDiagnosticOrderTests) => ({
         url: `/encounter/save-diagnostic-order-tests`,
         method: 'POST',
         body: order
@@ -369,98 +379,6 @@ export const encounterService = createApi({
       }
     }),
 
-    getOrderTestNotesByTestId: builder.query({
-      query: (testid: string) => ({
-        headers: {
-          testid
-        },
-        url: `/encounter/diagnostic-order-test-notes-list`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-
-    }),
-    saveDiagnosticOrderTestNotes: builder.mutation({
-      query: (note:ApDiagnosticOrderTestsNotes) => ({
-        url: `/encounter/save-diagnostic-order-tests-notes`,
-        method: 'POST',
-        body:note
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
-    getOrderTestSamplesByTestId: builder.query({
-      query: (testid: string) => ({
-        headers: {
-          testid
-        },
-        url: `/encounter/diagnostic-order-test-samples-list`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-
-    }),
-    saveDiagnosticOrderTestSamples: builder.mutation({
-      query: (note:ApDiagnosticOrderTestsSamples) => ({
-        url: `/encounter/save-diagnostic-order-tests-sample`,
-        method: 'POST',
-        body:note
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
-    getOrderTestResultNotesByResultId: builder.query({
-      query: (resultid: string) => ({
-        headers: {
-          resultid
-        },
-        url: `/encounter/diagnostic-order-tests-result-notes-list`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-
-    }),
-    saveDiagnosticOrderTestResultsNotes: builder.mutation({
-      query: (note:ApDiagnosticOrderTestsSamples) => ({
-        url: `/encounter/save-diagnostic-order-tests-result-notes`,
-        method: 'POST',
-        body:note
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
-    getDiagnosticOrderTestResult: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/encounter/diagnostic-order-test-result-list?${fromListRequestToQueryParams(listRequest)}`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-   saveDiagnosticOrderTestResult: builder.mutation({
-      query: (order:ApDiagnosticOrderTestsResult) => ({
-        url: `/encounter/save-diagnostic-order-tests-result`,
-        method: 'POST',
-        body: order
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
-    getResultNormalRange: builder.query({
-      query: ({ patientKey, testKey }) => ({
-        url: `/encounter/get-result-normal-range?patientKey=${encodeURIComponent(patientKey)}&testKey=${encodeURIComponent(testKey)}`
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => response.object,
-      keepUnusedDataFor: 5
-    }),
   })
 });
 
@@ -486,34 +404,23 @@ export const {
   useGetPatientEncounterOrdersQuery,
   useRemovePatientEncounterOrderMutation,
   useGetPrescriptionsQuery,
- useSavePrescriptionMutation,
- useGetPrescriptionMedicationsQuery,
- useSavePrescriptionMedicationMutation,
- useGetCustomeInstructionsQuery,
- useSaveCustomeInstructionsMutation,
- useGetConsultationOrdersQuery,
- useSaveConsultationOrdersMutation,
- useGetDrugOrderQuery,
- useSaveDrugOrderMutation,
- useGetDrugOrderMedicationQuery,
- useSaveDrugOrderMedicationMutation,
- useGetProceduresQuery,
- useSaveProceduresMutation,
- useGetDiagnosticOrderQuery,
- useGetDiagnosticOrderTestQuery,
- useSaveDiagnosticOrderMutation,
- useSaveDiagnosticOrderTestMutation,
- useGetOrderTestNotesByTestIdQuery,
- useSaveDiagnosticOrderTestNotesMutation,
- useGetOrderTestSamplesByTestIdQuery,
- useSaveDiagnosticOrderTestSamplesMutation,
- useGetOrderTestResultNotesByResultIdQuery,
- useSaveDiagnosticOrderTestResultsNotesMutation,
- useGetDiagnosticOrderTestResultQuery,
- useSaveDiagnosticOrderTestResultMutation,
- useGetResultNormalRangeQuery
+  useSavePrescriptionMutation,
+  useGetPrescriptionMedicationsQuery,
+  useSavePrescriptionMedicationMutation,
+  useGetCustomeInstructionsQuery,
+  useSaveCustomeInstructionsMutation,
+  useGetConsultationOrdersQuery,
+  useSaveConsultationOrdersMutation,
+  useGetDrugOrderQuery,
+  useSaveDrugOrderMutation,
+  useGetDrugOrderMedicationQuery,
+  useSaveDrugOrderMedicationMutation,
+  useGetProceduresQuery,
+  useSaveProceduresMutation,
+  useGetDiagnosticOrderQuery,
+  useGetDiagnosticOrderTestQuery,
+  useSaveDiagnosticOrderMutation,
+  useSaveDiagnosticOrderTestMutation
 
-
-  
 } = encounterService;
 

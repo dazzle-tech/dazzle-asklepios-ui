@@ -14,6 +14,7 @@ import { medicationsSetupService } from './services/medicationsSetupService';
 import { attachmentService } from '@/services/attachmentService';
 import { appointmentService } from './services/appointmentService';
 import divSlice from './reducers/divSlice';
+import { labService } from './services/labService';
 
 export const store = configureStore({
   reducer: {
@@ -52,9 +53,12 @@ export const store = configureStore({
 
     //attachment
     [attachmentService.reducerPath]: attachmentService.reducer,
+
+    [labService.reducerPath]:labService.reducer
+
     
     // div slice 
-    [divSlice.name]: divSlice.reducer 
+    [divSlice.name]:divSlice.reducer 
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -69,7 +73,10 @@ export const store = configureStore({
       encounterService.middleware,
       dentalService.middleware,
       observationService.middleware,
-      attachmentService.middleware
+      attachmentService.middleware,
+      labService.middleware,
+      
+  
     ])
 });
 

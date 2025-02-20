@@ -649,6 +649,9 @@ export const newApDiagnosticOrderTestsResult:modelTypes.ApDiagnosticOrderTestsRe
 	rejectedAt:0,
 	rejectedBy:'',
 	rejectedReason:'',
+	reviewAt:0,
+	reviewBy:'',
+	resultText:'',
 } 
 
 export const newApDiagnosticOrderTestsResultNotes:modelTypes.ApDiagnosticOrderTestsResultNotes = { 
@@ -668,6 +671,7 @@ export const newApDiagnosticOrderTestsResultNotes:modelTypes.ApDiagnosticOrderTe
 
 
 
+
 export const newApDiagnosticOrderTestsSamples:modelTypes.ApDiagnosticOrderTestsSamples = { 
 	key:undefined,
 	orderKey:undefined,
@@ -684,6 +688,7 @@ export const newApDiagnosticOrderTestsSamples:modelTypes.ApDiagnosticOrderTestsS
 	deletedAt:undefined,
 	isValid:undefined,
 } 
+
 
 export const newApDiagnosticOrders:modelTypes.ApDiagnosticOrders = { 
 	key:undefined,
@@ -858,6 +863,8 @@ export const newApDiagnosticTestNormalRange:modelTypes.ApDiagnosticTestNormalRan
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	profileTestKey:undefined,
+	isProfile:undefined,
 } 
 
 export const newApDiagnosticTestNormalRangeLov:modelTypes.ApDiagnosticTestNormalRangeLov = { 
@@ -898,6 +905,20 @@ export const newApDiagnosticTestPathology:modelTypes.ApDiagnosticTestPathology =
 	preparationRequirements:'',
 	associatedRisks:'',
 	pathCatalogKey:undefined,
+} 
+
+export const newApDiagnosticTestProfile:modelTypes.ApDiagnosticTestProfile = { 
+	key:undefined,
+	diagnosticTestKey:undefined,
+	testName:'',
+	resultUnitLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
 } 
 
 export const newApDiagnosticTestRadiology:modelTypes.ApDiagnosticTestRadiology = { 

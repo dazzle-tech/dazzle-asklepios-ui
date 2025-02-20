@@ -3,17 +3,12 @@ import { useState, useEffect, useRef } from 'react';
 import Translate from '@/components/Translate';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import ConversionIcon from '@rsuite/icons/Conversion';
-import SortUpIcon from '@rsuite/icons/SortUp';
 import { HStack } from 'rsuite';
-import { Avatar } from 'rsuite';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import { Tooltip, Whisper } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
-import ReloadIcon from '@rsuite/icons/Reload';
-import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import {
@@ -35,19 +30,19 @@ import {
   faFilter,
   faStar,
   faLandMineOn,
-  faIdCard,
-  faUserNinja,
+  faArrowUp,
+  faArrowDown,
   faPaperPlane,
-  faCalendar,
+  faCircleExclamation,
   faRightFromBracket
 
 
 } from '@fortawesome/free-solid-svg-icons';
 import React from 'react';
 import './styles.less';
-import { Badge } from 'rsuite';
+import { Badge, SelectPicker } from 'rsuite';
 
-import { FaWeight, FaRulerVertical, FaUserCircle, FaDumbbell, FaUserAlt, FaTint, FaMars, FaVenus, FaCalendar } from 'react-icons/fa';
+import { FaCalendar } from 'react-icons/fa';
 import {
   InputGroup,
   ButtonToolbar,
@@ -67,14 +62,25 @@ import {
 
 } from 'rsuite';
 import {
-  useGetFacilitiesQuery,
-  useGetLovValuesByCodeQuery
+
+  useGetLovValuesByCodeQuery,
+  useGetLovAllValuesQuery
 } from '@/services/setupService';
-import { useGetEncountersQuery } from '@/services/encounterService';
-import { useGetObservationSummariesQuery } from '@/services/observationService';
+
+import{
+  useGetOrderTestNotesByTestIdQuery,
+    useSaveDiagnosticOrderTestNotesMutation,
+    useGetOrderTestSamplesByTestIdQuery,
+    useSaveDiagnosticOrderTestSamplesMutation,
+    useGetOrderTestResultNotesByResultIdQuery,
+    useSaveDiagnosticOrderTestResultsNotesMutation,
+    useGetDiagnosticOrderTestResultQuery,
+    useSaveDiagnosticOrderTestResultMutation,
+    useGetResultNormalRangeQuery
+}from '@/services/labService';
 import { addFilterToListRequest, formatDate, fromCamelCaseToDBName, getNumericTimestamp } from '@/utils';
 
-import ArrowDownIcon from '@rsuite/icons/ArrowDown';
+
 import MyInput from '@/components/MyInput';
 import SearchIcon from '@rsuite/icons/Search';
 import {
@@ -85,6 +91,7 @@ import {
   newApDiagnosticOrders,
   newApDiagnosticOrderTests,
   newApDiagnosticOrderTestsNotes,
+  newApDiagnosticOrderTestsResult,
   newApDiagnosticOrderTestsSamples,
   newApDiagnosticTestLaboratory,
   newApEncounter,
@@ -95,18 +102,9 @@ import {
   useGetDiagnosticOrderQuery,
   useGetDiagnosticOrderTestQuery,
   useSaveDiagnosticOrderMutation,
-  useSaveDiagnosticOrderTestMutation,
-  useGetOrderTestNotesByTestIdQuery,
-  useSaveDiagnosticOrderTestNotesMutation,
-  useGetOrderTestSamplesByTestIdQuery,
-  useSaveDiagnosticOrderTestSamplesMutation,
-  useGetOrderTestResultNotesByResultIdQuery,
-  useSaveDiagnosticOrderTestResultsNotesMutation,
-  useGetDiagnosticOrderTestResultQuery,
-  useSaveDiagnosticOrderTestResultMutation,
-  useGetResultNormalRangeQuery
+  useSaveDiagnosticOrderTestMutation
 } from '@/services/encounterService';
-import { initialListRequest, ListRequest } from '@/types/types';
+import { initialListRequest, ListRequest, ListRequestAllValues, initialListRequestAllValues } from '@/types/types';
 import { ApDiagnosticTestLaboratory } from '@/types/model-types';
 import PatientSide from './PatienSide';
 const Lab = () => {
@@ -116,6 +114,7 @@ const Lab = () => {
   const [openorders, setOpenOrders] = useState(false);
   const [openresults, setOpenResults] = useState(false);
   const [openRejectedModal, setOpenRejectedModal] = useState(false);
+  const [openRejectedResultModal, setOpenRejectedResultModal] = useState(false);
   const [currentStep, setCurrentStep] = useState("6055029972709625");
   const [encounter, setEncounter] = useState({ ...newApEncounter });
   const [showFilterInput, setShowFilterInput] = useState(false);
@@ -124,6 +123,8 @@ const Lab = () => {
   const [test, setTest] = useState({ ...newApDiagnosticOrderTests });
   const [note, setNote] = useState({ ...newApDiagnosticOrderTestsNotes });
   const [sample, setSample] = useState({ ...newApDiagnosticOrderTestsSamples });
+  const [result, setResult] = useState({ ...newApDiagnosticOrderTestsResult })
+  console.log(result)
   const [selectedSampleDate, setSelectedSampleDate] = useState(null);
   const [listOrdersResponse, setListOrdersResponse] = useState<ListRequest>({
     ...initialListRequest,
@@ -134,14 +135,14 @@ const Lab = () => {
   const { data: SampleContainerLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_SAMPLE_CONTAINER');
   const { data: LabTubeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_TYPES');
   const { data: TubeColorLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_COLORS');
+  const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
   const { data: messagesList, refetch: fecthNotes } = useGetOrderTestNotesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
+  const { data: messagesResultList, refetch: fecthResultNotes } = useGetOrderTestResultNotesByResultIdQuery(result?.key || undefined, { skip: result.key == null });
   const { data: samplesList, refetch: fecthSample } = useGetOrderTestSamplesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
   const { data: normalRange } = useGetResultNormalRangeQuery(
-    { patientKey: patient?.key, testKey: test?.key },
-    { skip: !test.key || !patient.key } 
+    { patientKey: patient?.key, testKey: test?.testKey },
+    { skip: !test.key || !patient.key }
   );
-
-  console.log(normalRange)
   const [listOrdersTestResponse, setListOrdersTestResponse] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -165,6 +166,7 @@ const Lab = () => {
     toDate: new Date()
   });
   const [openNoteModal, setOpenNoteModal] = useState(false);
+  const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
   const [openSampleModal, setOpenSampleModal] = useState(false);
   const { data: ordersList, refetch: orderFetch } = useGetDiagnosticOrderQuery({ ...listOrdersResponse });
   const { data: testsList, refetch: fetchTest } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestResponse });
@@ -172,6 +174,39 @@ const Lab = () => {
     ...initialListRequest
     , pageSize: 100
   })
+  const [listResultResponse, setListResultResponse] = useState<ListRequest>({
+    ...initialListRequest,
+    filters: [
+      {
+        fieldName: "order_test_key",
+        operator: "match",
+        value: test?.key || undefined,
+      }
+
+
+    ],
+  });
+  const [listPrevResultResponse, setListPrevResultResponse] = useState<ListRequest>({
+    ...initialListRequest,
+    sortBy: "createdAt",
+    sortType: 'desc',
+    filters: [
+      {
+        fieldName: "patient_key",
+        operator: "match",
+        value: patient?.key || undefined,
+      },
+      {
+        fieldName: "medical_test_key",
+        operator: "match",
+        value: test?.testKey || undefined,
+      }
+
+
+    ],
+  });
+  const { data: resultsList, refetch: resultFetch } = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
+  const { data: prevResultsList, refetch: prevResultFetch } = useGetDiagnosticOrderTestResultQuery({ ...listPrevResultResponse });
   const [labDetails, setLabDetails] = useState<ApDiagnosticTestLaboratory>({ ...newApDiagnosticTestLaboratory })
   const isSelected = rowData => {
     if (rowData && order && rowData.key === order.key) {
@@ -183,32 +218,19 @@ const Lab = () => {
       return 'selected-row';
     } else return '';
   };
+  const isResultSelected = rowData => {
+    if (rowData && result && rowData.key === result.key) {
+      return 'selected-row';
+    } else return '';
+  };
 
-  const { data: patirntObservationlist } = useGetObservationSummariesQuery({
-    ...initialListRequest,
-    sortBy: 'createdAt',
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: "patient_key",
-        operator: "match",
-        value: patient?.key ?? undefined,
-      }
-
-    ],
-
-  });
-
-  const [bodyMeasurements, setBodyMeasurements] = useState({
-    height: null,
-    weight: null,
-    headcircumference: null
-  });
   const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [savenotes] = useSaveDiagnosticOrderTestNotesMutation();
   const [saveSample] = useSaveDiagnosticOrderTestSamplesMutation();
   const [saveTest] = useSaveDiagnosticOrderTestMutation();
+  const [saveResult] = useSaveDiagnosticOrderTestResultMutation();
+  const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -221,15 +243,8 @@ const Lab = () => {
 
   });
 
-  useEffect(() => {
-    setBodyMeasurements({
-      height: patirntObservationlist?.object?.find((item) => item.latestheight != null)?.latestheight,
-      weight: patirntObservationlist?.object?.find((item) => item.latestweight != null)?.latestweight,
-      headcircumference: patirntObservationlist?.object?.find((item) => item.latestheadcircumference != null)?.latestheadcircumference
-    })
-  }, [patirntObservationlist])
-  const endOfMessagesRef = useRef(null);
 
+  const endOfMessagesRef = useRef(null);
 
   useEffect(() => {
     if (endOfMessagesRef.current) {
@@ -291,12 +306,47 @@ const Lab = () => {
       setListOrdersResponse({ ...listOrdersResponse, filters: [] });
     }
   }, [dateFilter]);
-  useEffect(() => { 
+  useEffect(() => {
     const cat = laboratoryList?.object?.find((item) => item.testKey === test.testKey);
     setLabDetails(cat);
-    setCurrentStep(test.processingStatusLkey)
+    setCurrentStep(test.processingStatusLkey);
+    const updatedFilters = [
+      {
+        fieldName: "order_test_key",
+        operator: "match",
+        value: test?.key || undefined,
+      }
+
+
+    ];
+    setListResultResponse((prevRequest) => ({
+      ...prevRequest,
+      filters: updatedFilters,
+    }));
+    const updatedPrevFilters = [
+      {
+        fieldName: "patient_key",
+        operator: "match",
+        value: patient?.key || undefined,
+      },
+      {
+        fieldName: "medical_test_key",
+        operator: "match",
+        value: test?.testKey || undefined,
+      }
+
+
+    ];
+    setListPrevResultResponse((prevRequest) => ({
+      ...prevRequest,
+      filters: updatedPrevFilters,
+    }));
+
   }, [test]);
 
+  useEffect(() => {
+    console.log(result);
+  }, [result.resultLkey])
   const handleSendMessage = async (value) => {
     try {
       await savenotes({ ...note, notes: newMessage, testKey: test.key, orderKey: order.key }).unwrap();
@@ -307,6 +357,18 @@ const Lab = () => {
       dispatch(notify({ msg: 'Send Faild', sev: 'error' }));
     }
     fecthNotes();
+
+  };
+  const handleSendResultMessage = async (value) => {
+    try {
+      await saveResultNote({ ...note, notes: newMessage, testKey: test.key, orderKey: order.key, resultKey: result.key }).unwrap();
+      dispatch(notify({ msg: 'Send successfully', sev: 'success' }));
+      await setNewMessage("");
+    }
+    catch (error) {
+      dispatch(notify({ msg: 'Send Faild', sev: 'error' }));
+    }
+    fecthResultNotes();
 
   };
   const handleDateChange = (date) => {
@@ -352,19 +414,30 @@ const Lab = () => {
       dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
     }
   }
-  const handleAcceptTest = async () => {
-    try {
 
-      const Response = await saveTest({ ...test, processingStatusLkey: "6055074111734636", acceptedAt: Date.now() }).unwrap();
-      dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-      setTest({ ...newApDiagnosticOrderTests });
-      await fetchTest();
-      orderFetch();
-      setTest({ ...Response });
+  const handleAcceptTest = async () => {
+    if (samplesList?.object?.length > 0) {
+      try {
+
+        const Response = await saveTest({ ...test, processingStatusLkey: "6055074111734636", acceptedAt: Date.now() }).unwrap();
+        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+        saveResult({
+          ...result, orderKey: order.key, orderTestKey: test.key, medicalTestKey: test.testKey, patientKey: patient.key, visitKey: encounter.key,
+          statusLkey: '6055029972709625', normalRangeKey: normalRange?.key || null
+        }).unwrap();
+        setTest({ ...newApDiagnosticOrderTests });
+        await fetchTest();
+        orderFetch();
+        setTest({ ...Response });
+      }
+      catch (error) {
+        dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+      }
     }
-    catch (error) {
-      dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+    else {
+      dispatch(notify({ msg: 'Collect a sample first.' }));
     }
+
   }
   const handleFilterChange = (fieldName, value) => {
     if (value) {
@@ -410,7 +483,7 @@ const Lab = () => {
     }
   };
   const renderRowExpanded = rowData => {
-    console.log(rowData);
+
     return (
 
 
@@ -499,6 +572,36 @@ const Lab = () => {
       />
     </Cell>
   );
+  const joinValuesFromArray = (keys) => {
+
+    return keys
+      .map(key => lovValues?.object?.find(lov => lov.key === key))
+      .filter(obj => obj !== undefined)
+      .map(obj => obj.lovDisplayVale)
+      .join(', ');
+  };
+  const handleValueChange = async (value) => {
+    console.log(value);
+
+    await saveResult({ ...result, resultLkey: value }).unwrap();
+    setResult({ ...newApDiagnosticOrderTestsResult })
+
+    const v = normalRange.lovList.find((item) => item == value);
+    if (v) {
+
+      saveResult({ ...result, marker: "6731498382453316" }).unwrap();
+      resultFetch();
+    }
+    else {
+
+      saveResult({ ...result, marker: "6730122218786367" }).unwrap();
+      resultFetch();
+    }
+    await resultFetch().then(() => {
+      console.log("in fetch")
+    });
+  };
+
   const stepsData = [
     { key: "6055207372976955", value: "Sample Collected", time: "10:30 AM" },
     { key: "6055074111734636", value: "Accepted", time: "5:00 PM" },
@@ -974,6 +1077,7 @@ const Lab = () => {
             <Table
 
               height={200}
+
               //   sortColumn={listRequest.sortBy}
               //   sortType={listRequest.sortType}
               //   onSortColumn={(sortBy, sortType) => {
@@ -987,29 +1091,159 @@ const Lab = () => {
               headerHeight={35}
               rowHeight={40}
 
-              data={[{ name: "hanan", hasObservation: true, patientAge: "34" }
-                ,
-              { name: "hanan", hasObservation: true, patientAge: "34" }
-                ,
-              { name: "hanan", hasObservation: true, patientAge: "34" }
-              ]}
-            //   onRowClick={rowData => {
-            //     setLocalEncounter(rowData);
-            //     setLocalPatient(rowData.patientObject)
-            //   }}
-            //   rowClassName={isSelected}
+              data={resultsList?.object ?? []}
+              onRowClick={rowData => {
+                setResult(rowData);
+              }}
+              rowClassName={isResultSelected}
             >
               <Column sortable flexGrow={2} fullText>
                 <HeaderCell>
                   <Translate>TEST RESULT,UNIT</Translate>
                 </HeaderCell>
-                <Cell dataKey="queueNumber" />
+                <Cell >
+                  {rowData => {
+                    if (rowData.normalRangeKey) {
+                      if (normalRange?.resultTypeLkey == "6209578532136054") {
+                        const list = lovValues?.object.filter((item) => item.lovKey == normalRange.resultLovKey)
+                        return <SelectPicker
+                          data={list ?? []}
+                          value={rowData.resultLkey}
+                          valueKey='key'
+                          labelKey='lovDisplayVale'
+                          onChange={handleValueChange}
+                          style={{ width: 100, zoom: 0.8 }} />
+
+                      }
+                      else if (normalRange?.resultTypeLkey == "6209569237704618") {
+                        return <Input
+                          style={{ zoom: 0.8 }}
+                          type='number'
+                          value={result.resultValueNumber}
+                          onChange={(value) => {
+                            setResult({ ...result, resultValueNumber: Number(value) })
+                          }}
+                          onBlur={async (event) => {
+                            await saveResult({ ...result, resultValueNumber: Number(event.target.value) }).unwrap();
+                            resultFetch();
+                            if (normalRange.normalRangeTypeLkey == "6221150241292558") {
+                              console.log("case range")
+                              if (result.resultValueNumber > normalRange.rangeFrom && result.resultValueNumber < normalRange.rangeTo) {
+                                console.log("range and it normal " + result.resultValueNumber)
+                                await saveResult({ ...result, marker: "6731498382453316" }).unwrap()
+                                resultFetch();
+                              }
+                              else if (result.resultValueNumber < normalRange.rangeFrom) {
+
+                                if (normalRange.criticalValue) {
+                                  if (result.resultValueNumber < normalRange.criticalValueLessThan) {
+                                    console.log("Less than and critical  " + result.resultValueNumber + "<" + normalRange.criticalValueLessThan)
+                                    await saveResult({ ...result, marker: "6730652890616978" }).unwrap();
+
+                                  }
+                                }
+                                else {
+                                  console.log("Less than not critical " + result.resultValueNumber)
+                                  await saveResult({ ...result, marker: "6730094497387122" }).unwrap();
+                                }
+                              }
+                              else if (result.resultValueNumber > normalRange.rangeTo) {
+                                console.log("More than" + normalRange.rangeTo);
+                                if (normalRange.criticalValue) {
+                                  if (result.resultValueNumber > normalRange.criticalValueMoreThan) {
+                                    console.log("more than and critical" + ">" + normalRange.criticalValueMoreThan)
+                                    await saveResult({ ...result, marker: "6730104027458969" }).unwrap();
+                                  }
+                                  else {
+                                    console.log("More than not critical")
+                                    await saveResult({ ...result, marker: "6730083474405013" }).unwrap();
+                                  }
+                                }
+
+                              }
+
+                            }
+                            else if (normalRange.normalRangeTypeLkey == "6221162489019880") {
+                              if (result.resultValueNumber < normalRange.rangeFrom) {
+
+                                if (normalRange.criticalValue) {
+                                  if (result.resultValueNumber < normalRange.criticalValueLessThan) {
+                                    await saveResult({ ...result, marker: "6730652890616978" }).unwrap();
+
+                                  }
+                                }
+                                else {
+                                  await saveResult({ ...result, marker: "6730094497387122" }).unwrap();
+                                }
+                              }
+                              else {
+                                await saveResult({ ...result, marker: "6731498382453316" }).unwrap()
+                              }
+                              console.log("Less than")
+                            }
+                            else if (normalRange.normalRangeTypeLkey == "6221175556193180") {
+                              if (result.resultValueNumber > normalRange.rangeTo) {
+                                if (normalRange.criticalValue) {
+                                  if (result.resultValueNumber > normalRange.criticalValueMoreThan) {
+                                    await saveResult({ ...result, marker: "6730104027458969" }).unwrap();
+                                  }
+                                  else {
+                                    await saveResult({ ...result, marker: "6730083474405013" }).unwrap();
+                                  }
+                                }
+
+                              }
+                              else {
+                                await saveResult({ ...result, marker: "6731498382453316" }).unwrap()
+                              }
+
+                            }
+                          }}
+
+                        ></Input>
+
+                      }
+
+                    }
+                    else {
+                      return <Input></Input>
+                    }
+                  }}
+                </Cell>
               </Column>
               <Column sortable flexGrow={2} fullText>
                 <HeaderCell>
                   <Translate>NORMAL RANGE</Translate>
                 </HeaderCell>
-                <Cell dataKey="visitId" />
+                <Cell>
+                  {rowData => {
+                    if (rowData.normalRangeKey) {
+                      if (normalRange?.resultTypeLkey == "6209578532136054") {
+
+                        return joinValuesFromArray(normalRange.lovList);
+
+                      }
+                      else if (normalRange?.resultTypeLkey == "6209569237704618") {
+                        if (normalRange.normalRangeTypeLkey == "6221150241292558") {
+                          return normalRange.rangeFrom + "_" + normalRange.rangeTo;
+
+                        }
+                        else if (normalRange.normalRangeTypeLkey == "6221162489019880") {
+                          return normalRange.rangeFrom;
+                        }
+                        else if (normalRange.normalRangeTypeLkey == "6221175556193180") {
+                          return normalRange.rangeTo;
+
+                        }
+
+                      }
+
+                    }
+                    else {
+                      return "Normal Range Not Defined";
+                    }
+                  }}
+                </Cell>
               </Column>
 
               <Column sortable flexGrow={2} fullText>
@@ -1017,7 +1251,36 @@ const Lab = () => {
                   <Translate>MARKER</Translate>
                 </HeaderCell>
                 <Cell>
-                  YES
+                  {rowData => {
+                    if (rowData.marker == "6730122218786367") {
+                      return <FontAwesomeIcon icon={faCircleExclamation} style={{ fontSize: '1em' }} />
+
+                    }
+                    else if (rowData.marker == "6731498382453316") {
+                      return "Normal"
+                    }
+                    else if (rowData.marker == "6730083474405013") {
+                      return <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: '1em' }} />;
+                    }
+                    else if (rowData.marker == "6730094497387122") {
+                      return <FontAwesomeIcon icon={faArrowDown} style={{ fontSize: '1em' }} />;
+                    }
+                    else if (rowData.marker == "6730104027458969") {
+                      return <HStack spacing={10}>
+                        <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} />
+                        <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: '1em' }} />
+
+                      </HStack>;
+                    }
+                    else if (rowData.marker == "6730652890616978") {
+                      return <HStack spacing={10}>
+                        <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} />
+                        <FontAwesomeIcon icon={faArrowDown} style={{ fontSize: '1em' }} />
+
+                      </HStack>;
+                    }
+                  }
+                  }
                 </Cell>
               </Column>
               <Column sortable flexGrow={2} fullText>
@@ -1029,7 +1292,7 @@ const Lab = () => {
                   {rowData => (
                     <HStack spacing={10}>
 
-                      <FontAwesomeIcon icon={faComments} style={{ fontSize: '1em' }} />
+                      <FontAwesomeIcon icon={faComment} style={{ fontSize: '1em' }} onClick={() => setOpenNoteResultModal(true)} />
 
                     </HStack>
 
@@ -1044,7 +1307,19 @@ const Lab = () => {
                   <Translate>PREVIOUS RESULT</Translate>
                 </HeaderCell>
                 <Cell>
-                  l</Cell>
+                  {prevResultsList?.object[0]?.normalRangeKey === "6209578532136054" && (
+                    prevResultsList?.object[0]?.reasonLvalue?prevResultsList?.object[0]?.reasonLvalue.lovDisplayVale:prevResultsList?.object[0].reasonLkey
+                  )}
+
+                  {prevResultsList?.object[0]?.normalRangeKey === "6209569237704618" && (
+                   prevResultsList?.object[0]?.resultValueNumber
+                  )}
+
+                  {!["6209578532136054", "6209569237704618"].includes(prevResultsList?.object[0]?.normalRangeKey) &&
+                   (
+                    <></>
+                  )}
+                </Cell>
               </Column>
               <Column sortable flexGrow={2} fullText>
                 <HeaderCell>
@@ -1052,8 +1327,7 @@ const Lab = () => {
                   <Translate>PREVIOUS RESULT DATE</Translate>
                 </HeaderCell>
                 <Cell>
-                  ll
-
+                  {prevResultsList?.object[0] ? new Date(prevResultsList?.object[0]?.createdAt).toLocaleString() : ""}
                 </Cell>
 
               </Column>
@@ -1090,24 +1364,7 @@ const Lab = () => {
                   <Translate> RESULT SATUTS</Translate>
                 </HeaderCell>
                 <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {rowData => (rowData.hasObservation ? <Badge content="YES" style={{
-                    backgroundColor: '#bcf4f7',
-                    color: '#008aa6',
-                    padding: '5px 19px',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    fontWeight: "bold"
-                  }} /> : <Badge
-                    style={{
-                      backgroundColor: 'rgba(238, 130, 238, 0.2)',
-                      color: '#4B0082',
-                      padding: '5px 19px',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                      fontWeight: "bold"
-                    }}
-                    content="NO"
-                  />)}
+                  {rowData => rowData.statusLvalue ? rowData.statusLvalue.lovDisplayVale : rowData.statusLkey}
                 </Cell>
               </Column>
               <Column sortable flexGrow={2} fullText>
@@ -1151,12 +1408,38 @@ const Lab = () => {
                 <Cell >
                   {rowData => (
                     <HStack spacing={10}>
-                      <WarningRoundIcon style={{ fontSize: '1em', marginRight: 10 }} />
-                      <CheckRoundIcon style={{ fontSize: '1em', marginRight: 10 }} />
-                      <ConversionIcon style={{ fontSize: '1em', marginRight: 10 }} />
+                      <WarningRoundIcon style={{ fontSize: '1em', marginRight: 10 }} onClick={() => setOpenRejectedResultModal(true)} />
+                      <CheckRoundIcon style={{ fontSize: '1em', marginRight: 10 }}
+                        onClick={async () => {
+                          try {
+                            await saveResult({ ...result, statusLkey: '265089168359400', approvedAt: Date.now() }).unwrap();
+                            dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                            resultFetch();
+                          }
+                          catch (error) {
+                            dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+                          }
+                        }} />
+                      <ConversionIcon style={{ fontSize: '1em', marginRight: 10 }} onClick={async () => {
+                        await setOpenSampleModal(true);
+                        saveResult({
+                          ...result, orderKey: order.key, orderTestKey: test.key, medicalTestKey: test.testKey, patientKey: patient.key, visitKey: encounter.key,
+                          statusLkey: '6055029972709625', normalRangeKey: normalRange?.key || null
+                        }).unwrap();
+                        resultFetch();
+                      }} />
 
                       <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: 10 }} />
-                      <FontAwesomeIcon icon={faStar} style={{ fontSize: '1em', marginRight: 10 }} />
+                      <FontAwesomeIcon icon={faStar} style={{ fontSize: '1em', marginRight: 10, color: rowData.reviewAt ? '#e0a500' : "#343434" }} onClick={async () => {
+                        try {
+                          await saveResult({ ...result, reviewAt: Date.now() }).unwrap();
+                          dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                          resultFetch();
+                        }
+                        catch (error) {
+                          dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+                        }
+                      }} />
                     </HStack>
 
                   )}
@@ -1239,6 +1522,52 @@ const Lab = () => {
             onPressEnter={(value) => handleSendMessage(value)}
           />
           <Button appearance="primary" onClick={(value) => handleSendMessage(value)}>
+            <FontAwesomeIcon icon={faPaperPlane} />
+          </Button>
+        </div>
+      </Modal.Footer>
+    </Modal>
+    <Modal open={openNoteResultModal} onClose={() => setOpenNoteResultModal(false)} size="xs">
+      <Modal.Header>
+        <Modal.Title>💬Technician Notes</Modal.Title>
+      </Modal.Header>
+      <Modal.Body style={{ maxHeight: "300px", overflowY: "auto", padding: "10px" }}>
+        {messagesResultList?.object.length > 0 ? (
+          messagesResultList?.object.map((msg, index) => (
+            <div key={index} style={{ textAlign: "right", marginBottom: "8px" }}>
+              <span
+                style={{
+                  display: "inline-block",
+                  padding: "8px 12px",
+                  borderRadius: "10px",
+                  backgroundColor: "#007bff",
+                  color: "white",
+                  maxWidth: "70%",
+                }}
+              >
+                {msg.notes}
+              </span>
+              <div style={{ fontSize: "10px", color: "gray", marginTop: "4px" }}>
+                {new Date(msg.createdAt).toLocaleString()}
+              </div>
+            </div>
+          ))
+        ) : (
+          <p style={{ textAlign: "center", color: "gray" }}>Not found Notes Yet</p>
+        )}
+
+        <div ref={endOfMessagesRef}></div>
+      </Modal.Body>
+      <Modal.Footer>
+        <div style={{ display: 'flex' }}>
+          <Input
+            value={newMessage}
+            onChange={setNewMessage}
+            placeholder="write note.."
+            style={{ width: "80%", marginRight: "10px" }}
+            onPressEnter={(value) => handleSendResultMessage(value)}
+          />
+          <Button appearance="primary" onClick={(value) => handleSendResultMessage(value)}>
             <FontAwesomeIcon icon={faPaperPlane} />
           </Button>
         </div>
@@ -1487,6 +1816,51 @@ const Lab = () => {
           appearance="ghost"
           color="cyan"
           onClick={() => setOpenRejectedModal(false)}
+        >
+          Cancel
+        </Button>
+      </Modal.Footer>
+    </Modal>
+    <Modal open={openRejectedResultModal} onClose={() => setOpenRejectedResultModal(false)} size="xs">
+      <Modal.Header>
+        <Modal.Title>Why do you want to reject the Test? </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Form style={{ zoom: 0.85 }}>
+          <MyInput
+            disabled={false}
+            fieldType={"textarea"}
+            fieldName={"rejectedReason"}
+            record={result}
+            setRecord={setResult}
+
+          /></Form>
+      </Modal.Body>
+      <Modal.Footer style={{ display: "flex", justifyContent: 'flex-end' }}>
+        <Button
+          appearance="primary"
+          color="cyan"
+          onClick={async () => {
+            {
+              try {
+                await saveResult({ ...result, statusLkey: '6488555526802885', rejectedAt: Date.now() }).unwrap();
+                dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                resultFetch();
+                setOpenNoteResultModal(false);
+              }
+              catch (error) {
+                dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+              }
+            }
+          }
+          }
+        >
+          Save
+        </Button>
+        <Button
+          appearance="ghost"
+          color="cyan"
+          onClick={() => setOpenRejectedResultModal(false)}
         >
           Cancel
         </Button>
