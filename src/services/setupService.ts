@@ -15,6 +15,7 @@ import {
   ApDiagnosticTestGenetics,
   ApDiagnosticTestLaboratory,
   ApDiagnosticTestNormalRange,
+  ApDiagnosticTestProfile,
   ApDiagnosticTestRadiology,
   ApDiagnosticTestSpecialPopulation,
   ApDuplicationCandidateSetup,
@@ -543,12 +544,41 @@ export const setupService = createApi({
             return response.object;
           }
         }),
+        removeDiagnosticsTestNormalRange: builder.mutation({
+          query: (diagnosticTestNormalRange: ApDiagnosticTestNormalRange) => ({
+            url: `/setup/remove-diagnostic-test-normal-range`,
+            method: 'POST',
+            body: diagnosticTestNormalRange
+          }),
+          onQueryStarted: onQueryStarted,
+          transformResponse: (response: any) => {
+            return response.object;
+          }
+        }),
     getDiagnosticsTestList: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/diagnostic-test-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
+    }),
+    getDiagnosticsTestProfileList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/diagnostic-test-profile-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeDiagnosticsTestProfile: builder.mutation({
+      query: (diagnosticTestProfile: ApDiagnosticTestProfile) => ({
+        url: `/setup/remove-diagnostic-test-profile`,
+        method: 'POST',
+        body: diagnosticTestProfile
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
     }),
     getDiagnosticsTestLaboratoryList: builder.query({
       query: (listRequest: ListRequest) => ({
@@ -579,6 +609,16 @@ export const setupService = createApi({
         url: `/setup/save-diagnostic-test`,
         method: 'POST',
         body: diagnosticTest,
+      }), onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.data;
+      }
+    }),
+    saveDiagnosticsTestProfile: builder.mutation({
+      query: (diagnosticTestProfile: ApDiagnosticTestProfile) => ({
+        url: `/setup/save-diagnostic-test-profile`,
+        method: 'POST',
+        body: diagnosticTestProfile,
       }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.data;
@@ -1086,6 +1126,7 @@ export const {
   useGetIcdListQuery,
   useGetDiagnosticsTestNormalRangeListQuery,
   useSaveDiagnosticsTestNormalRangeMutation,
+  useRemoveDiagnosticsTestNormalRangeMutation,
   useSaveDiagnosticsTestMutation,
   useGetDiagnosticsTestListQuery,
   useGetDiagnosticsTestTypeQuery,
@@ -1118,7 +1159,9 @@ export const {
   useSaveVaccineBrandMutation,
   useGetVaccineBrandsListQuery,
   useDeactiveActivVaccineBrandsMutation,
- 
+  useGetDiagnosticsTestProfileListQuery,
+  useSaveDiagnosticsTestProfileMutation,
+  useRemoveDiagnosticsTestProfileMutation,
   useGetDoseNumbersListQuery,
   useSaveVaccineDoseMutation,
   useGetVaccineDosesListQuery,

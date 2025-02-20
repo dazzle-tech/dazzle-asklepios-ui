@@ -606,7 +606,6 @@ export const newApDiagnosticOrderTests:modelTypes.ApDiagnosticOrderTests = {
 	rejectedReason:'',
 } 
 
-
 export const newApDiagnosticOrderTestsNotes:modelTypes.ApDiagnosticOrderTestsNotes = { 
 	key:undefined,
 	orderKey:undefined,
