@@ -51,7 +51,8 @@ const RegistrationWizard = () => {
   const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
   const [savePatient, savePatientMutation] = useSavePatientMutation();
   const navigate = useNavigate();
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {setOpen(false)
+    ;setCurrentStep(0)};
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
@@ -432,7 +433,7 @@ const RegistrationWizard = () => {
           <FontAwesomeIcon icon={faBolt} /> Quick Patient
         </Button>
       </ButtonToolbar>
-      <Modal open={open} onClose={handleClose} size="450px" >
+      <Modal open={open} onClose={handleClose} size="450px"  >
         <Modal.Header>
           <Modal.Title>Create New Patient</Modal.Title>
         </Modal.Header>
