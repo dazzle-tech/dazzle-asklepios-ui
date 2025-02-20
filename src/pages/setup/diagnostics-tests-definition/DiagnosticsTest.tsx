@@ -19,11 +19,13 @@ import { newApDiagnosticTest } from '@/types/model-types-constructor';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import NewDiagnosticsTest from './NewDiagnosticsTest';
 import FunnelTimeIcon from '@rsuite/icons/FunnelTime';
+import ListIcon from '@rsuite/icons/List';
 import Genetics from './Genetics';
 import Pathology from './Pathology';
 import Radiology from './Radiology';
 import Laboratory from './Laboratory';
 import NormalRangeSetup from './NormalRangeSetup';
+import ProfileSetup from './ProfileSetup';
 
 const DiagnosticsTest = () => {
  const [diagnosticsTest, setDiagnosticsTest] = useState<ApDiagnosticTest>({...newApDiagnosticTest});
@@ -33,15 +35,11 @@ const DiagnosticsTest = () => {
  const [carouselActiveIndex, setCarouselActiveIndex] = useState(0); 
 
  const [normalRangePopupOpen, setNormalRangePopupOpen] = useState(false);
+ const [profilePopupOpen, setProfilePopupOpen] = useState(false);
 
   const handleNew = () => {
     setDiagnosticsTest({ ...newApDiagnosticTest});
   };
-
-  const handleButtonClickPackages = () => {
-    setNormalRangePopupOpen(true);  // Open the modal when the button is clicked
-  };
-
   
   const isSelected = rowData => {
     if (rowData && diagnosticsTest && rowData.key === diagnosticsTest.key) {
@@ -113,13 +111,22 @@ const DiagnosticsTest = () => {
           Linked Services
         </IconButton>
         <IconButton
-          disabled={diagnosticsTest?.testTypeLkey !== '862810597620632'}
+          disabled={diagnosticsTest?.testTypeLkey !== '862810597620632' || diagnosticsTest?.profile}
           appearance="primary"
           color="violet"
-          onClick={handleButtonClickPackages}
+          onClick={() => setNormalRangePopupOpen(true)}
           icon={<FunnelTimeIcon />}
         >
            Normal Range Setup
+        </IconButton>
+        <IconButton
+          disabled={!diagnosticsTest?.profile}
+           appearance="ghost"
+           onClick={() => setProfilePopupOpen(true)}
+           color="blue"
+          icon={<ListIcon  />}
+        >
+          Profile Setup
         </IconButton>
       </ButtonToolbar>
       <hr />
@@ -177,7 +184,18 @@ const DiagnosticsTest = () => {
             </HeaderCell>
             <Cell dataKey="internationalCodeOne"/>
           </Column>
-          <Column sortable flexGrow={3}>
+          <Column sortable flexGrow={1}>
+            <HeaderCell align="center">
+              <Input onChange={e => handleFilterChange('internationalCodeOne', e)} />
+              <Translate>Is Profile</Translate>
+            </HeaderCell>
+            <Cell > 
+            {rowData =>
+              rowData.profile ? 'Yes' : 'No' 
+            }
+            </Cell>
+          </Column>
+          <Column sortable flexGrow={2}>
             <HeaderCell  align="center">
               <Input onChange={e => handleFilterChange('deleted_at', e)} />
               <Translate>Status</Translate>
@@ -225,6 +243,7 @@ const DiagnosticsTest = () => {
        
       />
        <NormalRangeSetup popUpOpen={normalRangePopupOpen} setPopUpOpen={setNormalRangePopupOpen} diagnosticsTest={diagnosticsTest} />
+       <ProfileSetup popUpOpen={profilePopupOpen} setPopUpOpen={setProfilePopupOpen} diagnosticsTest={diagnosticsTest} />
       
     </Carousel>
     
