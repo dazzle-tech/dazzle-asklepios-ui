@@ -433,7 +433,7 @@ const RegistrationWizard = () => {
           <FontAwesomeIcon icon={faBolt} /> Quick Patient
         </Button>
       </ButtonToolbar>
-      <Modal open={open} onClose={handleClose} size="450px"  >
+      <Modal open={open} onClose={handleClose} size="450px"  className='left-modal'>
         <Modal.Header>
           <Modal.Title>Create New Patient</Modal.Title>
         </Modal.Header>
