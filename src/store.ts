@@ -54,7 +54,7 @@ export const store = configureStore({
     //attachment
     [attachmentService.reducerPath]: attachmentService.reducer,
 
-    [labService.reducerPath]:labService.reducer
+    [labService.reducerPath]:labService.reducer,
 
     
     // div slice 
