@@ -665,6 +665,7 @@ export interface ApDiagnosticOrderTestsReportNotes {
 	isValid:boolean;
 } 
 
+
 export interface ApDiagnosticOrderTestsResult { 
 	key:string;
 	patientKey:string;
