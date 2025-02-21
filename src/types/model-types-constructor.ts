@@ -576,6 +576,9 @@ export const newApDepartment:modelTypes.ApDepartment = {
 	appointable:undefined,
 	hasTriage:undefined,
 	departmentCode:'',
+	phoneNumber:'',
+	email:'',
+	encountertypelkey:undefined,
 } 
 
 export const newApDiagnosticOrderTests:modelTypes.ApDiagnosticOrderTests = { 
@@ -604,6 +607,8 @@ export const newApDiagnosticOrderTests:modelTypes.ApDiagnosticOrderTests = {
 	rejectedAt:0,
 	rejectedBy:'',
 	rejectedReason:'',
+	patientArrivedAt:0,
+	patientArrivedNoteRad:'',
 } 
 
 export const newApDiagnosticOrderTestsNotes:modelTypes.ApDiagnosticOrderTestsNotes = { 
@@ -620,8 +625,48 @@ export const newApDiagnosticOrderTestsNotes:modelTypes.ApDiagnosticOrderTestsNot
 	isValid:undefined,
 } 
 
-export const newApDiagnosticOrderTestsResult:modelTypes.ApDiagnosticOrderTestsResult = { 
+export const newApDiagnosticOrderTestsRadReport:modelTypes.ApDiagnosticOrderTestsRadReport = { 
+	key:undefined,
+	patientKey:undefined,
+	visitKey:undefined,
+	statusLkey:undefined,
+	orderKey:undefined,
+	medicalTestKey:undefined,
+	orderTestKey:undefined,
+	reportValue:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+	orderTypeLkey:undefined,
+	approvedAt:0,
+	approvedBy:'',
+	rejectedAt:0,
+	rejectedBy:'',
+	rejectedReason:'',
+	reviewAt:0,
+	reviewBy:'',
+} 
 
+export const newApDiagnosticOrderTestsReportNotes:modelTypes.ApDiagnosticOrderTestsReportNotes = { 
+	key:undefined,
+	orderKey:undefined,
+	testKey:undefined,
+	reportKey:undefined,
+	notes:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApDiagnosticOrderTestsResult:modelTypes.ApDiagnosticOrderTestsResult = { 
 	key:undefined,
 	patientKey:undefined,
 	visitKey:undefined,
@@ -668,9 +713,6 @@ export const newApDiagnosticOrderTestsResultNotes:modelTypes.ApDiagnosticOrderTe
 	isValid:undefined,
 } 
 
-
-
-
 export const newApDiagnosticOrderTestsSamples:modelTypes.ApDiagnosticOrderTestsSamples = { 
 	key:undefined,
 	orderKey:undefined,
@@ -687,7 +729,6 @@ export const newApDiagnosticOrderTestsSamples:modelTypes.ApDiagnosticOrderTestsS
 	deletedAt:undefined,
 	isValid:undefined,
 } 
-
 
 export const newApDiagnosticOrders:modelTypes.ApDiagnosticOrders = { 
 	key:undefined,
@@ -2137,6 +2178,30 @@ export const newApProcedureSetup:modelTypes.ApProcedureSetup = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
+} 
+
+export const newApPsychologicalExam:modelTypes.ApPsychologicalExam = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	testTypeLkey:undefined,
+	reason:'',
+	testDuration:0,
+	unitLkey:undefined,
+	scoreLkey:undefined,
+	resultInterpretationLkey:undefined,
+	clinicalObservations:'',
+	treatmentPlan:'',
+	additionalNotes:'',
+	requireFollowUp:undefined,
+	followUpDate:0,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	cancellationReason:'',
 } 
 
 export const newApResources:modelTypes.ApResources = { 

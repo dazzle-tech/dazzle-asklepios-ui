@@ -13,7 +13,7 @@ const CustomDatePicker = React.forwardRef((props, ref: any) => (
 ));
 
 const MyInput = ({
-  fieldName,
+   fieldName,
   fieldType = 'text',
   record,
   setRecord = undefined,
