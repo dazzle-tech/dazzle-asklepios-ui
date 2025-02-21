@@ -575,6 +575,9 @@ export interface ApDepartment {
 	appointable:boolean;
 	hasTriage:boolean;
 	departmentCode:string;
+	phoneNumber:string;
+	email:string;
+	encountertypelkey:string;
 } 
 
 export interface ApDiagnosticOrderTests { 
@@ -603,12 +606,55 @@ export interface ApDiagnosticOrderTests {
 	rejectedAt:number;
 	rejectedBy:string;
 	rejectedReason:string;
+	patientArrivedAt:number;
+	patientArrivedNoteRad:string;
 } 
 
 export interface ApDiagnosticOrderTestsNotes { 
 	key:string;
 	orderKey:string;
 	testKey:string;
+	notes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApDiagnosticOrderTestsRadReport { 
+	key:string;
+	patientKey:string;
+	visitKey:string;
+	statusLkey:string;
+	orderKey:string;
+	medicalTestKey:string;
+	orderTestKey:string;
+	reportValue:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	orderTypeLkey:string;
+	approvedAt:number;
+	approvedBy:string;
+	rejectedAt:number;
+	rejectedBy:string;
+	rejectedReason:string;
+	reviewAt:number;
+	reviewBy:string;
+} 
+
+export interface ApDiagnosticOrderTestsReportNotes { 
+	key:string;
+	orderKey:string;
+	testKey:string;
+	reportKey:string;
 	notes:string;
 	createdBy:string;
 	updatedBy:string;
@@ -682,83 +728,6 @@ export interface ApDiagnosticOrderTestsSamples {
 	deletedAt:number;
 	isValid:boolean;
 } 
-
-
-export interface ApDiagnosticOrderTestsNotes { 
-	key:string;
-	orderKey:string;
-	testKey:string;
-	notes:string;
-	createdBy:string;
-	updatedBy:string;
-	deletedBy:string;
-	createdAt:number;
-	updatedAt:number;
-	deletedAt:number;
-	isValid:boolean;
-} 
-
-export interface ApDiagnosticOrderTestsResult { 
-	key:string;
-	patientKey:string;
-	visitKey:string;
-	statusLkey:string;
-	orderKey:string;
-	medicalTestKey:string;
-	orderTestKey:string;
-	normalRangeKey:string;
-	resultType:string;
-	resultLkey:string;
-	resultValueNumber:number;
-	marker:string;
-	createdBy:string;
-	updatedBy:string;
-	deletedBy:string;
-	createdAt:number;
-	updatedAt:number;
-	deletedAt:number;
-	isValid:boolean;
-	processingStatusLkey:string;
-	orderTypeLkey:string;
-	approvedAt:number;
-	approvedBy:string;
-	rejectedAt:number;
-	rejectedBy:string;
-	rejectedReason:string;
-} 
-
-export interface ApDiagnosticOrderTestsResultNotes { 
-	key:string;
-	orderKey:string;
-	testKey:string;
-	resultKey:string;
-	notes:string;
-	createdBy:string;
-	updatedBy:string;
-	deletedBy:string;
-	createdAt:number;
-	updatedAt:number;
-	deletedAt:number;
-	isValid:boolean;
-} 
-
-export interface ApDiagnosticOrderTestsSamples { 
-	key:string;
-	orderKey:string;
-	testKey:string;
-	notes:string;
-	unitLkey:string;
-	quantity:number;
-	createdBy:string;
-	updatedBy:string;
-	deletedBy:string;
-	sampleCollectedAt:number;
-	createdAt:number;
-	updatedAt:number;
-	deletedAt:number;
-	isValid:boolean;
-} 
-
 
 export interface ApDiagnosticOrders { 
 	key:string;
@@ -2208,6 +2177,30 @@ export interface ApProcedureSetup {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
+} 
+
+export interface ApPsychologicalExam { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	testTypeLkey:string;
+	reason:string;
+	testDuration:number;
+	unitLkey:string;
+	scoreLkey:string;
+	resultInterpretationLkey:string;
+	clinicalObservations:string;
+	treatmentPlan:string;
+	additionalNotes:string;
+	requireFollowUp:boolean;
+	followUpDate:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
 } 
 
 export interface ApResources { 

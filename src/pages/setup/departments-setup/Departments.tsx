@@ -1,7 +1,7 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
-import React, { useState, useEffect } from 'react';
-import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
+import React, { useState, useEffect, useRef } from 'react';
+import { Input, Modal, Pagination, Panel, Schema, Table } from 'rsuite';
 import CheckIcon from '@rsuite/icons/Check';
 import CloseIcon from '@rsuite/icons/Close';
 
@@ -23,10 +23,19 @@ import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import {
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
+import { SchemaModel, StringType } from 'schema-typed';
+import { notify } from '@/utils/uiReducerActions';
+import { useDispatch } from 'react-redux';
+import CombinationIcon from '@rsuite/icons/Combination';
+
 const Departments = () => {
+
   const [department, setDepartment] = useState<ApDepartment>({ ...newApDepartment });
   const [popupOpen, setPopupOpen] = useState(false);
   const [generateCode, setGenerateCode] = useState();
+  const inputRef = useRef(null);
+  const formRef = React.useRef();
+  const dispatch = useDispatch();
 
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const [facilityListRequest, setFacilityListRequest] = useState<ListRequest>({
@@ -35,10 +44,13 @@ const Departments = () => {
 
   const [saveDepartment, saveDepartmentMutation] = useSaveDepartmentMutation();
   const { data: depTTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
+  const { data: encTypesLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
 
 
   const { data: facilityListResponse } = useGetFacilitiesQuery(facilityListRequest);
   const { data: departmentListResponse } = useGetDepartmentsQuery(listRequest);
+
+
 
   const handleNew = () => {
     generateFiveDigitCode()
@@ -47,9 +59,15 @@ const Departments = () => {
     console.log(depTTypesLovQueryResponse)
   };
 
+
+
   const handleSave = () => {
+
     setPopupOpen(false);
-    saveDepartment({ ...department, departmentCode: generateCode }).unwrap();
+    saveDepartment({ ...department, departmentCode: generateCode }).unwrap().then(() => {
+      dispatch(notify({ msg: 'Departments Saved successfully' }));
+
+    })
   };
 
   useEffect(() => {
@@ -82,6 +100,25 @@ const Departments = () => {
     const code = Math.floor(10000 + Math.random() * 90000);
     setGenerateCode(code);
   };
+
+
+  const model = SchemaModel({
+    facilityKey: StringType().isRequiredOrEmpty('Facility is Required'),
+
+  });
+
+  const handleSubmit = async (values: any) => {
+    const errors = model.getErrorMessages();
+    if (errors.length > 0) {
+      console.log("Validation failed", errors);
+      return
+    } else {
+      console.log("Validation succeeded", values);
+      handleSave()
+    }
+  };
+
+
   return (
     <Panel
       header={
@@ -110,6 +147,13 @@ const Departments = () => {
           icon={<TrashIcon />}
         >
           Delete Selected
+        </IconButton>
+        <IconButton
+          disabled={!['5673990729647001', '5673990729647002', '5673990729647005'].includes(department?.departmentTypeLkey)}
+          appearance="primary"
+          icon={<CombinationIcon />}
+        >
+          Screen Components
         </IconButton>
       </ButtonToolbar>
       <hr />
@@ -151,6 +195,21 @@ const Departments = () => {
           <Cell dataKey="name" />
         </Column>
 
+        <Column sortable flexGrow={4}>
+          <HeaderCell>
+            <Input onChange={e => handleFilterChange('phoneNumber', e)} />
+            <Translate>Phone Number</Translate>
+          </HeaderCell>
+          <Cell dataKey="phoneNumber" />
+        </Column>
+
+        <Column sortable flexGrow={4}>
+          <HeaderCell>
+            <Input onChange={e => handleFilterChange('email', e)} />
+            <Translate>Email</Translate>
+          </HeaderCell>
+          <Cell dataKey="email" />
+        </Column>
         <Column sortable flexGrow={1}>
           <HeaderCell align="center">
             <Input onChange={e => handleFilterChange('departmentCode', e)} />
@@ -170,7 +229,7 @@ const Departments = () => {
           }
           </Cell>
         </Column>         */}
-   
+
 
 
       </Table>
@@ -203,54 +262,73 @@ const Departments = () => {
           <Translate>New/Edit Department</Translate>
         </Modal.Title>
         <Modal.Body>
-          <Form fluid>
-            <MyInput
-              fieldName="facilityKey"
-              fieldType="select"
-              selectData={facilityListResponse?.object ?? []}
-              selectDataLabel="facilityName"
-              selectDataValue="key"
-              record={department}
-              setRecord={setDepartment}
-            />
-            <MyInput fieldName="name" record={department} setRecord={setDepartment} />
+          <Form ref={formRef} model={model} formValue={department} onSubmit={handleSubmit} fluid>
+
+            <Stack direction="row" spacing={10}>
+              <MyInput
+                width={290}
+                fieldName="facilityKey"
+                required
+                fieldType="select"
+                selectData={facilityListResponse?.object ?? []}
+                selectDataLabel="facilityName"
+                selectDataValue="key"
+                record={department}
+                setRecord={setDepartment}
+              />
+
+              <MyInput
+                width={290}
+
+                fieldName="departmentTypeLkey"
+                fieldLabel="Department Type"
+                fieldType="select"
+                selectData={depTTypesLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={department}
+                setRecord={setDepartment}
+              />
+            </Stack>
+            <br />
+
+            <Stack direction="row" spacing={10}>
+              <MyInput width={200} fieldName="name" record={department} setRecord={setDepartment} />
+              <MyInput width={170} fieldName="phoneNumber" record={department} setRecord={setDepartment} />
+              <MyInput width={200} fieldName="email" record={department} setRecord={setDepartment} />
+            </Stack>
+            <br />
+
+
             <label>Department Code</label>
-            <Input style={{ width: 260 }} disabled value={generateCode} />
+            <Input style={{ width: 260 }} disabled value={department?.departmentCode ?? generateCode} />
+            <br />
+
+
 
             <MyInput
-              fieldName="departmentTypeLkey"
-              fieldLabel="Department Type"
-              fieldType="select"
-              selectData={depTTypesLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={department}
-              setRecord={setDepartment}
-
-            />
-          </Form>
-          <Form fluid layout='inline'>
-            <MyInput
-              width={165}
-              column
               fieldLabel="Appointable"
               fieldType="checkbox"
               fieldName="appointable"
               record={department}
               setRecord={setDepartment}
             />
+            {
+              department?.appointable ?
+                <MyInput
+                  fieldName="encountertypelkey"
+                  fieldType="select"
+                  fieldLabel="Encounter Type"
+                  selectData={encTypesLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  record={department}
+                  setRecord={setDepartment}
+                />
+                : null
+            }
+
             <MyInput
-              width={165}
-              column
-              fieldLabel="Has Triage"
-              fieldType="checkbox"
-              fieldName="hasTriage"
-              record={department}
-              setRecord={setDepartment}
-            />
-            <MyInput
-              width={165}
-              column
               fieldLabel="Is Valid"
               checkedLabel="Valid"
               unCheckedLabel="inValid"
@@ -259,18 +337,19 @@ const Departments = () => {
               record={department}
               setRecord={setDepartment}
             />
+
+            <Stack spacing={2} divider={<Divider vertical />}>
+              <Button appearance="primary" type='submit'
+              >
+                Save
+              </Button>
+              <Button appearance="primary" color="red" onClick={() => setPopupOpen(false)}>
+                Cancel
+              </Button>
+            </Stack>
           </Form>
         </Modal.Body>
-        <Modal.Footer>
-          <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="primary" onClick={handleSave}>
-              Save
-            </Button>
-            <Button appearance="primary" color="red" onClick={() => setPopupOpen(false)}>
-              Cancel
-            </Button>
-          </Stack>
-        </Modal.Footer>
+
       </Modal>
     </Panel>
   );
