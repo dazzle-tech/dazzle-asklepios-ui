@@ -90,16 +90,16 @@ const Facilities = () => {
     } else return '';
   };
 
-  const inputForms = () => {
+  const inputForms = (newEntry) => {
     return (
       <div>
         <Form layout="inline" fluid>
 
-          <MyInput disabled={!editing} fieldLabel="Facility ID" column fieldName="facilityId" required record={facility} setRecord={setFacility} />
+          <MyInput disabled={!editing && !newEntry} fieldLabel="Facility ID" column fieldName="facilityId" required record={facility} setRecord={setFacility} />
 
-          <MyInput disabled={!editing} column fieldName="facilityName" record={facility} setRecord={setFacility} />
+          <MyInput disabled={!editing && !newEntry} column fieldName="facilityName" record={facility} setRecord={setFacility} />
           <MyInput
-            disabled={!editing}
+            disabled={!editing && !newEntry}
             column
             fieldName="facilityRegistrationDate"
             fieldType="date"
@@ -107,7 +107,7 @@ const Facilities = () => {
             setRecord={setFacility}
           />
           <MyInput
-            disabled={!editing}
+            disabled={!editing && !newEntry}
             required
             width={165}
             vr={validationResult}
@@ -126,7 +126,7 @@ const Facilities = () => {
         {/* ==================Adresses================= */}
         <Form layout="inline" fluid>
           <MyInput
-            disabled={!editing}
+            disabled={!editing && !newEntry}
             required
             width={165}
             vr={validationResult}
@@ -140,9 +140,9 @@ const Facilities = () => {
             record={address} setRecord={setAddress}
           />
 
-          <MyInput disabled={!editing} column fieldLabel="facilityPostal/ZIP" fieldName="postalCode" record={address} setRecord={setAddress} />
+          <MyInput disabled={!editing && !newEntry} column fieldLabel="facilityPostal/ZIP" fieldName="postalCode" record={address} setRecord={setAddress} />
           <MyInput
-            disabled={!editing}
+            disabled={!editing && !newEntry}
             required
             width={165}
             vr={validationResult}
@@ -156,7 +156,7 @@ const Facilities = () => {
             record={address} setRecord={setAddress}
           />
           <MyInput
-            disabled={!editing}
+            disabled={!editing && !newEntry}
             required
             width={165}
             vr={validationResult}
@@ -169,20 +169,20 @@ const Facilities = () => {
             selectDataValue="key"
             record={address} setRecord={setAddress}
           />
-          <MyInput disabled={!editing} column fieldLabel="Street" fieldName="streetAddressLine1" required record={address} setRecord={setAddress} />
+          <MyInput disabled={!editing && !newEntry} column fieldLabel="Street" fieldName="streetAddressLine1" required record={address} setRecord={setAddress} />
         </Form>
         <br />
         {/* ==================Adresses================= */}
 
 
         <Form layout="inline" fluid>
-          <MyInput disabled={!editing} column fieldName="facilityPhone1" required record={facility} setRecord={setFacility} />
-          <MyInput disabled={!editing} column fieldName="facilityPhone2" required record={facility} setRecord={setFacility} />
-          <MyInput disabled={!editing} column fieldName="facilityEmailAddress" record={facility} setRecord={setFacility} />
-          <MyInput disabled={!editing} column fieldName="facilityFax" required record={facility} setRecord={setFacility} />
+          <MyInput disabled={!editing && !newEntry} column fieldName="facilityPhone1" required record={facility} setRecord={setFacility} />
+          <MyInput disabled={!editing && !newEntry} column fieldName="facilityPhone2" required record={facility} setRecord={setFacility} />
+          <MyInput disabled={!editing && !newEntry} column fieldName="facilityEmailAddress" record={facility} setRecord={setFacility} />
+          <MyInput disabled={!editing && !newEntry} column fieldName="facilityFax" required record={facility} setRecord={setFacility} />
 
           <MyInput
-            disabled={!editing}
+            disabled={!editing && !newEntry}
             column
             fieldName="facilityBriefDesc"
             fieldType="textarea"
@@ -224,7 +224,7 @@ const Facilities = () => {
           >
             <ButtonToolbar>
               <IconButton appearance="primary" icon={<ArowBackIcon />}
-                onClick={() => setDetailsPanle(false)}>
+                onClick={() => {setDetailsPanle(false),setEditing(false)}}>
                 Back
               </IconButton>
               <IconButton
@@ -249,7 +249,7 @@ const Facilities = () => {
 
             </ButtonToolbar>
             <hr />
-            {inputForms()}
+            {inputForms(false)}
 
             <Tabs>
               <TabList>
