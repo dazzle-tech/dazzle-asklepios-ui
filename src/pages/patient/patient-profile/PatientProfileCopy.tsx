@@ -150,8 +150,8 @@ const PatientProfileCopy = () => {
     const [selectedAttachType, setSelectedAttachType] = useState({
         accessTypeLkey: ''
     });
-      const location = useLocation();
-      const propsData = location.state;
+    const location = useLocation();
+    const propsData = location.state;
     const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
     const [savePatientRelation, savePatientRelationMutation] = useSavePatientRelationMutation();
     const [relationModalOpen, setRelationModalOpen] = useState(false);
@@ -278,7 +278,7 @@ const PatientProfileCopy = () => {
     const [newAttachmentType, setNewAttachmentType] = useState();
     const [newAttachmentDetails, setNewAttachmentDetails] = useState('');
     const navBodyStyle: React.CSSProperties = expand
-        ? { height: windowHeight , overflow: 'auto' }
+        ? { height: windowHeight, overflow: 'auto' }
         : { height: windowHeight };
     //handleFun
     const handleSave = () => {
@@ -550,10 +550,11 @@ const PatientProfileCopy = () => {
     }, []);
     useEffect(() => {
         if (propsData && propsData.patient) {
+            console.log("propsData.patient-->",propsData.patient.key);
             setLocalPatient(propsData.patient);
         }
     }, [propsData]);
-    
+
     useEffect(() => {
         if (patientAgeGroupResponse?.object?.lovDisplayVale) {
             setAgeGroupValue({
@@ -682,7 +683,7 @@ const PatientProfileCopy = () => {
     }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
     return (
         <Panel>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px'  }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
                 <div style={{ width: expand ? "calc(100% - 240px)" : "100%" }}>
                     <Panel
                         bordered
@@ -783,7 +784,7 @@ const PatientProfileCopy = () => {
                                                 </AvatarGroup>
                                             </Form>
                                         </div>
-                                        <ButtonToolbar style={{zoom:.8}}>
+                                        <ButtonToolbar style={{ zoom: .8 }}>
                                             <Button
 
                                                 onClick={handleSave}
@@ -1407,10 +1408,10 @@ const PatientProfileCopy = () => {
                                             record={localPatient}
                                             setRecord={setLocalPatient}
                                         />
-                                        <br/>
-                                        <br/>
-                                        <br/>
-                                      
+                                        <br />
+                                        <br />
+                                        <br />
+
                                     </Form>
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="2" title="Contact">
@@ -1546,14 +1547,14 @@ const PatientProfileCopy = () => {
                                             record={localPatient}
                                             setRecord={setLocalPatient}
                                         />
-                                        <br/>
-                                        <br/>
-                                        <br/>
+                                        <br />
+                                        <br />
+                                        <br />
                                     </Form>
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="3" title="Address">
                                     <Form layout="inline" fluid>
-                                        <ButtonToolbar style={{zoom:.8}}>
+                                        <ButtonToolbar style={{ zoom: .8 }}>
                                             <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={!localPatient.key}>
                                                 <Icon as={FaClock} />  Address Change Log
                                             </Button>
@@ -1644,17 +1645,17 @@ const PatientProfileCopy = () => {
                                             setRecord={setLocalPatient}
                                             disabled
                                         />
-                                    </Form> 
-                                        <br/>
-                                        <br/>
-                                        <br/>
-                                    
-                                    
-                                        </Tabs.Tab>
+                                    </Form>
+                                    <br />
+                                    <br />
+                                    <br />
+
+
+                                </Tabs.Tab>
 
 
                                 <Tabs.Tab eventKey="4" title="Insurance">
-                                    <ButtonToolbar style={{zoom:.8}}>
+                                    <ButtonToolbar style={{ zoom: .8 }}>
                                         <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={!localPatient.key}
                                             onClick={() => {
                                                 setInsuranceModalOpen(true);
@@ -1812,7 +1813,7 @@ const PatientProfileCopy = () => {
                                         </Modal.Footer>
                                     </Modal>
                                     <Form layout="inline" fluid>
-                                        <ButtonToolbar style={{zoom:.8}}>
+                                        <ButtonToolbar style={{ zoom: .8 }}>
                                             <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
                                                 onClick={() => setVerificationModalOpen(true)}
                                                 disabled={!localPatient.key}>
@@ -1917,17 +1918,17 @@ const PatientProfileCopy = () => {
                                     <PatientAttachment localPatient={localPatient} />
                                 </Tabs.Tab>
                             </Tabs>
-                            
+
                         </Panel>
                     </Panel>
                 </div>
-                <div style={{ flex: expand ? "240px" : "56px", height: '90vh', display: 'flex', flexDirection: 'row-reverse'}}>
-               <Sidebar
-    style={{ display: 'flex', flexDirection: 'column', height: '90vh', zoom: 0.8}}
-    width={expand ? 300 : 56}
-    collapsible
-  
->
+                <div style={{ flex: expand ? "240px" : "56px", height: '90vh', display: 'flex', flexDirection: 'row-reverse' }}>
+                    <Sidebar
+                        style={{ display: 'flex', flexDirection: 'column', height: '90vh', zoom: 0.8 }}
+                        width={expand ? 300 : 56}
+                        collapsible
+
+                    >
                         <Sidenav.Header>
                         </Sidenav.Header>
                         <Sidenav expanded={expand} appearance="subtle" defaultOpenKeys={['2', '3']}>
@@ -1983,7 +1984,7 @@ const PatientProfileCopy = () => {
                                         ))}
 
 
-                                    </Panel> : <Button onClick={()=>{setExpand(true)}}><SearchPeopleIcon style={{width:'30px',height:'30px',background: 'none',backgroundColor: 'transparent'}}/> </Button> }
+                                    </Panel> : <Button onClick={() => { setExpand(true) }}><SearchPeopleIcon style={{ width: '30px', height: '30px', background: 'none', backgroundColor: 'transparent' }} /> </Button>}
 
                                 </Nav>
                             </Sidenav.Body>
