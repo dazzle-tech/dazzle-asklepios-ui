@@ -664,8 +664,6 @@ export interface ApDiagnosticOrderTestsReportNotes {
 	deletedAt:number;
 	isValid:boolean;
 } 
-
-
 export interface ApDiagnosticOrderTestsResult { 
 	key:string;
 	patientKey:string;
@@ -2202,6 +2200,8 @@ export interface ApPsychologicalExam {
 	updatedAt:number;
 	deletedAt:number;
 	cancellationReason:string;
+	statusLkey:string;
+
 } 
 
 export interface ApResources { 

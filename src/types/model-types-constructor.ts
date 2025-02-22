@@ -2202,6 +2202,8 @@ export const newApPsychologicalExam:modelTypes.ApPsychologicalExam = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	cancellationReason:'',
+	statusLkey:undefined,
+
 } 
 
 export const newApResources:modelTypes.ApResources = { 

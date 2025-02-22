@@ -89,6 +89,7 @@ import { BlockUI } from 'primereact/blockui';
 import { useLocation } from 'react-router-dom';
 import EncounterMainInfoSection from '../encounter-main-info-section';
 import Warning from '../encounter-pre-observations/warning';
+import PsychologicalExam from '../encounter-component/psychological-exam';
 
 
 const Encounter = () => {
@@ -449,6 +450,12 @@ const Encounter = () => {
                       onClick={() => handleMenuItemClick(<MedicationsRecord />)}>
                       <FontAwesomeIcon icon={faPills} style={{ margin: '3px' }} />
                       <Translate>Medications Record</Translate>
+                    </List.Item>
+                    <List.Item
+                      style={{ display: 'flex', alignItems: 'center' }}
+                      onClick={() => handleMenuItemClick(<PsychologicalExam patient={propsData.patient} encounter={propsData.encounter}/>)}>
+                      <FontAwesomeIcon icon={faSyringe} style={{ margin: '3px' }} />
+                      <Translate>Psychological Exam</Translate>
                     </List.Item>
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
