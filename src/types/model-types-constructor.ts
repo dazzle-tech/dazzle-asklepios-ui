@@ -340,6 +340,36 @@ export const newApAttachment:modelTypes.ApAttachment = {
 	accessTypeLkey:undefined,
 } 
 
+export const newApAudiometryPuretone:modelTypes.ApAudiometryPuretone = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	testEnvironment:'',
+	testReason:'',
+	earExamFindingsLkey:undefined,
+	airConductionFrequenciesLeft:0,
+	airConductionFrequenciesRight:0,
+	hearingThresholdsLeft:0,
+	hearingThresholdsRight:0,
+	boneConductionFrequenciesLeft:0,
+	boneConductionFrequenciesRight:0,
+	boneConductionThresholdsLeft:0,
+	boneConductionThresholdsRight:0,
+	maskedUsed:undefined,
+	hearingLossTypeLkey:undefined,
+	hearingLossDegreeLkey:undefined,
+	recommendations:'',
+	additionalNotes:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	cancellationReason:'',
+	statusLkey:undefined,
+} 
+
 export const newApBrandMedicationSubstitutes:modelTypes.ApBrandMedicationSubstitutes = { 
 	key:undefined,
 	brandKey:undefined,
@@ -649,6 +679,7 @@ export const newApDiagnosticOrderTestsRadReport:modelTypes.ApDiagnosticOrderTest
 	rejectedReason:'',
 	reviewAt:0,
 	reviewBy:'',
+	severityLkey:undefined,
 } 
 
 export const newApDiagnosticOrderTestsReportNotes:modelTypes.ApDiagnosticOrderTestsReportNotes = { 
@@ -2203,7 +2234,6 @@ export const newApPsychologicalExam:modelTypes.ApPsychologicalExam = {
 	deletedAt:undefined,
 	cancellationReason:'',
 	statusLkey:undefined,
-
 } 
 
 export const newApResources:modelTypes.ApResources = { 

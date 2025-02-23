@@ -90,8 +90,9 @@ import { useLocation } from 'react-router-dom';
 import EncounterMainInfoSection from '../encounter-main-info-section';
 import Warning from '../encounter-pre-observations/warning';
 import PsychologicalExam from '../encounter-component/psychological-exam';
-
-
+import AudiometryPuretone from '../encounter-component/audiometry-puretone';
+import { faEarListen } from "@fortawesome/free-solid-svg-icons";
+import { faBrain } from "@fortawesome/free-solid-svg-icons";
 const Encounter = () => {
   const encounterStatusNew = '91063195286200'; // TODO change this to be fetched from redis based on LOV CODE
   const patientSlice = useAppSelector(state => state.patient);
@@ -454,8 +455,14 @@ const Encounter = () => {
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
                       onClick={() => handleMenuItemClick(<PsychologicalExam patient={propsData.patient} encounter={propsData.encounter}/>)}>
-                      <FontAwesomeIcon icon={faSyringe} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faBrain}  style={{ margin: '3px' }}/>
                       <Translate>Psychological Exam</Translate>
+                    </List.Item>
+                    <List.Item
+                      style={{ display: 'flex', alignItems: 'center' }}
+                      onClick={() => handleMenuItemClick(<AudiometryPuretone patient={propsData.patient} encounter={propsData.encounter}/>)}>
+                       <FontAwesomeIcon icon={faEarListen} style={{ margin: '3px' }}/>
+                      <Translate>Audiometry Puretone</Translate>
                     </List.Item>
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
@@ -471,10 +478,8 @@ const Encounter = () => {
                     </List.Item>
                   </List>
                 </Drawer.Body>
-
               </Drawer>
               {activeContent} {/* Render the selected content */}
-
             </Panel>
             <Modal size="lg" open={openAllargyModal} onClose={CloseAllargyModal} overflow  >
               <Modal.Title>
@@ -485,15 +490,11 @@ const Encounter = () => {
                   <Checkbox
                     checked={!showCanceled}
                     onChange={() => {
-
-
                       setShowCanceled(!showCanceled);
                     }}
                   >
                     Show Cancelled
                   </Checkbox>
-
-
                 </div>
                 <Table
 
