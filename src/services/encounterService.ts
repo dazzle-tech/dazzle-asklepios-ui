@@ -1,3 +1,4 @@
+import { ApAudiometryPuretone } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -439,6 +440,24 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    saveAudiometryPuretone: builder.mutation({
+      query: (audiometryPuretone: ApAudiometryPuretone) => ({
+        url: `/encounter/save-audiometry-puretone`,
+        method: 'POST',
+        body: audiometryPuretone
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getAudiometryPuretones: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/audiometry-puretone-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 });
 
@@ -486,7 +505,9 @@ export const {
   useGetOrderTestSamplesByTestIdQuery,
   useSaveDiagnosticOrderTestSamplesMutation,
   useSavePsychologicalExamsMutation,
-  useGetPsychologicalExamsQuery
+  useGetPsychologicalExamsQuery,
+  useSaveAudiometryPuretoneMutation,
+  useGetAudiometryPuretonesQuery
 
 } = encounterService;
 

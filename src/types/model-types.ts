@@ -339,6 +339,36 @@ export interface ApAttachment {
 	accessTypeLkey:string;
 } 
 
+export interface ApAudiometryPuretone { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	testEnvironment:string;
+	testReason:string;
+	earExamFindingsLkey:string;
+	airConductionFrequenciesLeft:number;
+	airConductionFrequenciesRight:number;
+	hearingThresholdsLeft:number;
+	hearingThresholdsRight:number;
+	boneConductionFrequenciesLeft:number;
+	boneConductionFrequenciesRight:number;
+	boneConductionThresholdsLeft:number;
+	boneConductionThresholdsRight:number;
+	maskedUsed:boolean;
+	hearingLossTypeLkey:string;
+	hearingLossDegreeLkey:string;
+	recommendations:string;
+	additionalNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	statusLkey:string;
+} 
+
 export interface ApBrandMedicationSubstitutes { 
 	key:string;
 	brandKey:string;
@@ -648,6 +678,7 @@ export interface ApDiagnosticOrderTestsRadReport {
 	rejectedReason:string;
 	reviewAt:number;
 	reviewBy:string;
+	severityLkey:string;
 } 
 
 export interface ApDiagnosticOrderTestsReportNotes { 
@@ -664,6 +695,7 @@ export interface ApDiagnosticOrderTestsReportNotes {
 	deletedAt:number;
 	isValid:boolean;
 } 
+
 export interface ApDiagnosticOrderTestsResult { 
 	key:string;
 	patientKey:string;
@@ -2201,7 +2233,6 @@ export interface ApPsychologicalExam {
 	deletedAt:number;
 	cancellationReason:string;
 	statusLkey:string;
-
 } 
 
 export interface ApResources { 
