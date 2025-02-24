@@ -1,2 +1,2 @@
-import Rad from "./rad";
+import Rad from "./Rad";
 export default Rad;
