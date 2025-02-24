@@ -640,7 +640,6 @@ export interface ApDiagnosticOrderTests {
 	patientArrivedNoteRad:string;
 	readyAt:number;
 	approvedAt:number;
-
 } 
 
 export interface ApDiagnosticOrderTestsNotes { 
@@ -2524,6 +2523,36 @@ export interface ApTranslation {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+} 
+
+export interface ApTreadmillStress { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	indication:string;
+	preTestSystolicBp:number;
+	preTestDiastolicBp:number;
+	baselineEcgFindingsLkey:string;
+	bruceProtocolStageLkey:string;
+	exerciseDuration:number;
+	maximumHeartRateAchieved:number;
+	targetHeartRate:number;
+	segmentChangeLkey:string;
+	arrhythmiaNoted:boolean;
+	typeLkey:string;
+	testOutcomeLkey:string;
+	postTestSystolicBp:number;
+	postTestDiastolicBp:number;
+	recoveryTime:number;
+	createdBy:string;
+	cardiologistNotes:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	statusLkey:string;
 } 
 
 export interface ApUomGroups { 
