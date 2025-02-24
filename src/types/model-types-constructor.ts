@@ -2526,6 +2526,36 @@ export const newApTranslation:modelTypes.ApTranslation = {
 	isValid:undefined,
 } 
 
+export const newApTreadmillStress:modelTypes.ApTreadmillStress = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	indication:'',
+	preTestSystolicBp:0,
+	preTestDiastolicBp:0,
+	baselineEcgFindingsLkey:undefined,
+	bruceProtocolStageLkey:undefined,
+	exerciseDuration:0,
+	maximumHeartRateAchieved:0,
+	targetHeartRate:0,
+	segmentChangeLkey:undefined,
+	arrhythmiaNoted:undefined,
+	typeLkey:undefined,
+	testOutcomeLkey:undefined,
+	postTestSystolicBp:0,
+	postTestDiastolicBp:0,
+	recoveryTime:0,
+	createdBy:'',
+	cardiologistNotes:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	cancellationReason:'',
+	statusLkey:undefined,
+} 
+
 export const newApUomGroups:modelTypes.ApUomGroups = { 
 	key:undefined,
 	description:'',

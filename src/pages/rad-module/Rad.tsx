@@ -132,18 +132,10 @@ const Rad =()=>{
   
     });
   
-    const { data: ValueUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
-    const { data: SampleContainerLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_SAMPLE_CONTAINER');
-    const { data: LabTubeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_TYPES');
-    const { data: TubeColorLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_COLORS');
     const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
-    const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
     const { data: messagesList, refetch: fecthNotes } = useGetOrderTestNotesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
     const { data: messagesResultList, refetch: fecthResultNotes } = useGetDiagnosticOrderTestReportNotesByReportIdQuery(report?.key || undefined, { skip: report.key == null });
-    const { data: normalRange } = useGetResultNormalRangeQuery(
-      { patientKey: patient?.key, testKey: test?.testKey },
-      { skip: !test.key || !patient.key }
-    );
+
     const [listOrdersTestResponse, setListOrdersTestResponse] = useState<ListRequest>({
       ...initialListRequest,
       filters: [
@@ -170,6 +162,7 @@ const Rad =()=>{
     const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
     const [openSampleModal, setOpenSampleModal] = useState(false);
     const { data: ordersList, refetch: orderFetch } = useGetDiagnosticOrderQuery({ ...listOrdersResponse });
+  
     const filterdOrderList=ordersList?.object.filter((item)=>item.hasRadiology===true);
     const { data: testsList, refetch: fetchTest } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestResponse });
     const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
@@ -209,7 +202,6 @@ const Rad =()=>{
     });
     const { data: reportList, refetch: resultFetch } = useGetDiagnosticOrderTestRadReportListQuery({ ...listResultResponse });
     const { data: prevResultsList, refetch: prevResultFetch } = useGetDiagnosticOrderTestRadReportListQuery({ ...listPrevResultResponse });
-    const [labDetails, setLabDetails] = useState<ApDiagnosticTestLaboratory>({ ...newApDiagnosticTestLaboratory })
     const isSelected = rowData => {
       if (rowData && order && rowData.key === order.key) {
         return 'selected-row';
@@ -297,7 +289,7 @@ const Rad =()=>{
     }, [dateFilter]);
     useEffect(() => {
       const cat = laboratoryList?.object?.find((item) => item.testKey === test.testKey);
-      setLabDetails(cat);
+    
       setCurrentStep(test.processingStatusLkey);
       const updatedFilters = [
         {
@@ -310,7 +302,7 @@ const Rad =()=>{
       ];
       setListResultResponse((prevRequest) => ({
         ...prevRequest,
-        filters: updatedFilters,
+        filters: [...updatedFilters],
       }));
       const updatedPrevFilters = [
         {
@@ -381,32 +373,42 @@ const Rad =()=>{
       }
     }
   
-    const handleAcceptTest = async () => {
-     if(test.patientArrivedAt!==null){
+    const handleAcceptTest = async (rowData) => { 
+      if (rowData.patientArrivedAt !== null) {
         try {
-  
-          const Response = await saveTest({ ...test, processingStatusLkey: "6055074111734636", acceptedAt: Date.now() }).unwrap();
-          dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-        await  saveReport({
-            ...report, orderKey: order.key, orderTestKey: test.key, medicalTestKey: test.testKey, patientKey: patient.key, visitKey: encounter.key,
+          saveReport({
+            ...report, 
+            orderKey: order.key, 
+            orderTestKey: test.key, 
+            medicalTestKey: test.testKey, 
+            patientKey: patient.key, 
+            visitKey: encounter.key,
             statusLkey: '6055029972709625'
           }).unwrap();
-          setTest({ ...newApDiagnosticOrderTests });
+    const Response=  await saveTest({ 
+            ...rowData, 
+            processingStatusLkey: "6055074111734636", 
+            acceptedAt: Date.now() 
+          }).unwrap();
+          setTest({...newApDiagnosticOrderTests})
+          dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+          setTest({...Response});
+        
+       
+         
           await fetchTest();
-          orderFetch();
-          setTest({ ...Response });
-          resultFetch();
+
+          await resultFetch();  
+    
+        } catch (error) {
+          dispatch(notify({ msg: 'Saved Failed', sev: 'error' }));
+          console.error("Error saving test or report:", error);
         }
-        catch (error) {
-          dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-        }}
-        else{
-          dispatch(notify( 'Wait for the patient to arrive'));
-        }
-      
-      
-  
-    }
+      } else {
+        dispatch(notify({ msg: 'Wait for the patient to arrive', sev: 'warning' }));
+      }
+    };
+    
     const handleFilterChange = (fieldName, value) => {
       if (value) {
         setListOrdersResponse(
@@ -588,6 +590,8 @@ const Rad =()=>{
                         onRowClick={rowData => {
                           setOrder(rowData);
                           setOpenOrders(true);
+                          setTest({...newApDiagnosticOrderTests});
+                          setReport({...newApDiagnosticOrderTestsRadReport})
                         }}
                         rowClassName={isSelected}
                       >
@@ -791,7 +795,8 @@ const Rad =()=>{
                         data={testsList?.object ?? []}
                         onRowClick={rowData => {
                           setOpenResults(true);
-                          setTest(rowData)
+                          setTest(rowData);
+                          setReport({...newApDiagnosticOrderTestsRadReport})
                         }}
                         rowClassName={isTestSelected}
                       >
@@ -942,7 +947,7 @@ const Rad =()=>{
                                   speaker={<Tooltip>Accepted</Tooltip>}
                                 >
                                   <CheckRoundIcon
-                                    onClick={() => (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey =="6816324725527414") && handleAcceptTest()}
+                                    onClick={() => (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey =="6816324725527414") && handleAcceptTest(rowData)}
                                     style={{
                                       fontSize: '1em',
                                       marginRight: 10,
@@ -1167,16 +1172,16 @@ const Rad =()=>{
                               <CheckRoundIcon style={{ fontSize: '1em', marginRight: 10 }}
                                 onClick={async () => {
                                   try {
-                                    await saveReport({ ...rowData, statusLkey: '265089168359400', approvedAt: Date.now() }).unwrap();
-
+                                    saveReport({ ...rowData, statusLkey: '265089168359400', approvedAt: Date.now() }).unwrap();
+                                    const Response=await saveTest({...test,processingStatusLkey:'265089168359400',approvedAt: Date.now() }).unwrap();
+                                     
+                                   setTest({...newApDiagnosticOrderTests})
                                     dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                    const Response = await saveTest({...test,processingStatusLkey:'265089168359400',approvedAt: Date.now() }).unwrap();
-              
-                                     setTest({ ...newApDiagnosticOrderTests });
+                                    setTest({...Response})
                                      await fetchTest();
-                                     orderFetch();
-                                      setTest({ ...Response});
-                                    resultFetch();
+                                   
+                                    
+                                   await resultFetch();
                                   }
                                   catch (error) {
                                     dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
@@ -1445,7 +1450,7 @@ const Rad =()=>{
                         await saveReport({ ...report, statusLkey: '6488555526802885', rejectedAt: Date.now() }).unwrap();
                         dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                         resultFetch();
-                        setOpenNoteResultModal(false);
+                        setOpenRejectedResultModal(false)
                       }
                       catch (error) {
                         dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
@@ -1513,17 +1518,20 @@ const Rad =()=>{
                   appearance="primary"
                   color="cyan"
                   onClick={async()=>{
-                    await saveReport({...report,statusLkey:'265123250697000'}).unwrap();
-                    setOpenReportModal(false);
+                    
+                    
+                     saveReport({...report,statusLkey:'265123250697000'}).unwrap();
+                    
                     const Response = await saveTest({...test,processingStatusLkey:'265123250697000'}).unwrap();
-              
-                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                     setTest({ ...newApDiagnosticOrderTests });
-                     await fetchTest();
-                     orderFetch();
-                      setTest({ ...Response});
                    
-                    await  resultFetch();
+                     setTest({ ...newApDiagnosticOrderTests });
+                     dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                     setTest({ ...Response});
+                     await fetchTest();
+                     await resultFetch();
+                      
+                      setOpenReportModal(false);
+                   
                     
                   }
                   }

@@ -334,7 +334,7 @@ const Lab = () => {
   }, [test]);
 
   useEffect(() => {
-    console.log(result.testProfileKey);
+    resultFetch();
   }, [result])
   const handleSendMessage = async (value) => {
     try {
@@ -411,7 +411,6 @@ const Lab = () => {
         const Response = await saveTest({ ...test, processingStatusLkey: "6055074111734636", acceptedAt: Date.now() }).unwrap();
         dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
         if (laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)?.isProfile) {
-          console.log("case is Profile");
           rowData.profileList.forEach((item) => {
             saveResult({
               ...result, orderKey: order.key, orderTestKey: test.key, medicalTestKey: test.testKey, patientKey: patient.key, visitKey: encounter.key,
@@ -422,8 +421,7 @@ const Lab = () => {
 
         }
         else {
-          console.log("case is not profile");
-          saveResult({
+         await saveResult({
             ...result, orderKey: order.key, orderTestKey: test.key, medicalTestKey: test.testKey, patientKey: patient.key, visitKey: encounter.key,
             statusLkey: '6055029972709625', normalRangeKey: normalRange?.key || null, isProfile: false
           }).unwrap();
@@ -1580,14 +1578,14 @@ const Lab = () => {
                         onClick={async () => {
                           try {
                             await saveResult({ ...result, statusLkey: '265089168359400', approvedAt: Date.now() }).unwrap();
-                            const Response = await saveTest({ ...test, approvedAt: Date.now() }).unwrap();
+                            const Response = await saveTest({ ...test,processingStatusLkey:'265089168359400' ,approvedAt: Date.now() }).unwrap();
 
                             dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                             setTest({ ...newApDiagnosticOrderTests });
                             await fetchTest();
                             orderFetch();
                             setTest({ ...Response });
-                            resultFetch();
+                            await resultFetch();
                           }
                           catch (error) {
                             dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
@@ -1599,7 +1597,7 @@ const Lab = () => {
                           ...result, orderKey: order.key, orderTestKey: test.key, medicalTestKey: test.testKey, patientKey: patient.key, visitKey: encounter.key,
                           statusLkey: '6055029972709625', normalRangeKey: normalRange?.key || null
                         }).unwrap();
-                        resultFetch();
+                       await resultFetch();
                       }} />
 
                       <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight:'5px'  }} />
