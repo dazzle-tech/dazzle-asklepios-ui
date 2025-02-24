@@ -15,7 +15,7 @@ import { attachmentService } from '@/services/attachmentService';
 import { appointmentService } from './services/appointmentService';
 import divSlice from './reducers/divSlice';
 import { labService } from './services/labService';
-
+import {radService}from '@/services/radService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -56,7 +56,7 @@ export const store = configureStore({
 
     [labService.reducerPath]:labService.reducer,
 
-    
+    [radService.reducerPath]:radService.reducer,
     // div slice 
     [divSlice.name]:divSlice.reducer 
   },
@@ -75,7 +75,7 @@ export const store = configureStore({
       observationService.middleware,
       attachmentService.middleware,
       labService.middleware,
-      
+      radService.middleware
   
     ])
 });

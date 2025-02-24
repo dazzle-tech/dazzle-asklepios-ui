@@ -438,7 +438,8 @@ const DiagnosticsOrder = ({ edit }) => {
                     patientKey: patientSlice.patient.key,
                     visitKey: patientSlice.encounter.key,
                     statusLkey: "164797574082125",
-                    labStatusLkey:"6055029972709625"
+                    labStatusLkey:"6055029972709625",
+                    radStatusLkey:"6055029972709625",
                 });
 
 
@@ -631,7 +632,7 @@ const DiagnosticsOrder = ({ edit }) => {
 
                                                 >
                                                     <span style={{ marginRight: "19px" }}>{test.testName}</span>
-                                                    <span>{test.testTypeLvalue.lovDisplayVale}</span>
+                                                    <span>{test?.testTypeLvalue?.lovDisplayVale}</span>
                                                 </Dropdown.Item>
                                             ))}
                                         </Dropdown.Menu>

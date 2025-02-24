@@ -25,7 +25,7 @@ import {
     useGetAllergiesQuery,
     useSaveAllergiesMutation,
     useGetWarningsQuery
-  } from '@/services/observationService';
+} from '@/services/observationService';
 import React from 'react';
 import {
     InputGroup,
@@ -46,34 +46,43 @@ import {
     Col
 
 } from 'rsuite';
+import {
+    useUploadMutation,
+    useFetchAttachmentQuery,
+} from '@/services/attachmentService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { FaWeight, FaRulerVertical, FaUserCircle, FaDumbbell, FaUserAlt, FaTint, FaMars, FaVenus, FaUserNinja, FaCalendar } from 'react-icons/fa';
 import { calculateAgeFormat } from '@/utils';
 import { useGetObservationSummariesQuery } from '@/services/observationService';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { newApEncounter } from '@/types/model-types-constructor';
-const PatientSide = ({ patient, encounter}) => {
-   const [openAllargyModal, setOpenAllargyModal] = useState(false);
-     const [openWarningModal, setOpenWarningModal] = useState(false);
-     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
-     const [showCanceled, setShowCanceled] = useState(true);
-   
-     const filters = [
-       {
-         fieldName: 'patient_key',
-         operator: 'match',
-         value:patient?.key||undefined
-       },
-       {
-         fieldName: "status_lkey",
-         operator: showCanceled ? "notMatch" : "match",
-         value: "3196709905099521",
-       }
-     ];
-   
-   
-     const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({ ...initialListRequest, filters });
-     const { data: warningsListResponse, refetch: fetchwarning } = useGetWarningsQuery({ ...initialListRequest, filters });
+import { ApAttachment } from '@/types/model-types';
+const PatientSide = ({ patient, encounter }) => {
+    const [openAllargyModal, setOpenAllargyModal] = useState(false);
+    const [openWarningModal, setOpenWarningModal] = useState(false);
+    const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
+    const profileImageFileInputRef = useRef(null);
+    const [upload, uploadMutation] = useUploadMutation();
+    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+    const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
+    const [showCanceled, setShowCanceled] = useState(true);
+
+    const filters = [
+        {
+            fieldName: 'patient_key',
+            operator: 'match',
+            value: patient?.key || undefined
+        },
+        {
+            fieldName: "status_lkey",
+            operator: showCanceled ? "notMatch" : "match",
+            value: "3196709905099521",
+        }
+    ];
+
+
+    const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({ ...initialListRequest, filters });
+    const { data: warningsListResponse, refetch: fetchwarning } = useGetWarningsQuery({ ...initialListRequest, filters });
     const { data: patirntObservationlist } = useGetObservationSummariesQuery({
         ...initialListRequest,
         sortBy: 'createdAt',
@@ -93,11 +102,13 @@ const PatientSide = ({ patient, encounter}) => {
         weight: null,
         headcircumference: null
     });
-    const [listRequest, setListRequest] = useState<ListRequest>({
-        ...initialListRequest
-        
-    });
-
+     const fetchPatientImageResponse = useFetchAttachmentQuery(
+            {
+                type: 'PATIENT_PROFILE_PICTURE',
+                refKey: patient?.key,
+            },
+            { skip: !patient?.key }
+        );
 
     useEffect(() => {
         setBodyMeasurements({
@@ -105,11 +116,38 @@ const PatientSide = ({ patient, encounter}) => {
             weight: patirntObservationlist?.object?.find((item) => item.latestweight != null)?.latestweight,
             headcircumference: patirntObservationlist?.object?.find((item) => item.latestheadcircumference != null)?.latestheadcircumference
         })
-    }, [patirntObservationlist])
+    }, [patirntObservationlist]);
+ 
+         useEffect(() => {
+                if (
+                    fetchPatientImageResponse.isSuccess &&
+                    fetchPatientImageResponse.data &&
+                    fetchPatientImageResponse.data.key
+                ) {
+                    setPatientImage(fetchPatientImageResponse.data);
+                } else {
+                    setPatientImage(undefined);
+                }
+            }, [fetchPatientImageResponse]);
+    const handleImageClick = type => {
+        // setNewAttachmentType(type); // PATIENT_PROFILE_ATTACHMENT or PATIENT_PROFILE_PICTURE
+        if (patient.key) profileImageFileInputRef.current.click();
+    };
     return (<>
         <Row style={{ alignItems: 'center', marginTop: '4px' }}>
             <Col xs={6}>
-                <Avatar src="https://i.pravatar.cc/150?u=2" circle size="lg" />
+                <Avatar
+                    size="lg"
+                    circle
+                    color="cyan" bordered
+                    onClick={() => handleImageClick('PATIENT_PROFILE_PICTURE')}
+                    src={
+                        patientImage && patientImage.fileContent
+                            ? `data:${patientImage.contentType};base64,${patientImage.fileContent}`
+                            : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
+                    }
+                    alt={patient?.fullName}
+                />
             </Col>
             <Col style={{ flexGrow: 1, marginLeft: 10, marginTop: '10px' }}>
                 <div style={{ fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
@@ -119,7 +157,7 @@ const PatientSide = ({ patient, encounter}) => {
 
                 </div>
                 <div style={{ fontSize: '12px', color: '#666' }}>
-                    {patient?.patientMrn ?? "MRN"}-  {patient?.dob ? calculateAgeFormat(patient?.dob) + '' : 'Age'}
+                    {patient?.patientMrn ?? "MRN"} -  {patient?.dob ? calculateAgeFormat(patient?.dob) + '' : 'Age'}
                 </div>
             </Col>
         </Row>
@@ -135,7 +173,7 @@ const PatientSide = ({ patient, encounter}) => {
 
         </Row>
         <Row style={{ paddingLeft: '14px' }}>
-          <span style={{fontWeight:'bold'}}> Diagnosis:</span> {encounter?.diagnosis}
+            <span style={{ fontWeight: 'bold' }}> Diagnosis:</span> {encounter?.diagnosis}
 
         </Row>
         <Row style={{ paddingLeft: '14px' }}>
@@ -200,7 +238,7 @@ const PatientSide = ({ patient, encounter}) => {
             <Col xs={10}>
                 <Button appearance="primary"
                     // onClick={OpenAllargyModal}
-                     color={patient?.hasAllergy ? "red" : "cyan"} 
+                    color={patient?.hasAllergy ? "red" : "cyan"}
                     style={{ backgroundColor: "#00b1cc", borderColor: "#00b1cc", color: "white" }}
                 >
                     <FontAwesomeIcon icon={faHandDots} />

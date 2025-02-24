@@ -73,7 +73,7 @@ import PatientEMR from './pages/patient/patient-emr';
 import PatientProfileCopy from './pages/patient/patient-profile/PatientProfileCopy';
 
 import Lab from './pages/lab-module';
-
+import Rad from './pages/rad-module';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -266,6 +266,7 @@ const App = () => {
               <Route path='schedual-screen' element={<ScheduleScreen />} />
               <Route path='patient-EMR' element={<PatientEMR/>}/>
               <Route path='lab-module' element={<Lab/>}/>
+              <Route path='rad-module' element={<Rad/>}/>
             </Route>
           </Route>
 
