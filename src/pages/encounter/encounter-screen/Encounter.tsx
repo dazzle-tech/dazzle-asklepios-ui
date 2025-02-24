@@ -93,6 +93,8 @@ import PsychologicalExam from '../encounter-component/psychological-exam';
 import AudiometryPuretone from '../encounter-component/audiometry-puretone';
 import { faEarListen } from "@fortawesome/free-solid-svg-icons";
 import { faBrain } from "@fortawesome/free-solid-svg-icons";
+import { faEye } from "@fortawesome/free-solid-svg-icons";
+import OptometricExam from '../encounter-component/optometric-exam/OptometricExam';
 const Encounter = () => {
   const encounterStatusNew = '91063195286200'; // TODO change this to be fetched from redis based on LOV CODE
   const patientSlice = useAppSelector(state => state.patient);
@@ -463,6 +465,12 @@ const Encounter = () => {
                       onClick={() => handleMenuItemClick(<AudiometryPuretone patient={propsData.patient} encounter={propsData.encounter}/>)}>
                        <FontAwesomeIcon icon={faEarListen} style={{ margin: '3px' }}/>
                       <Translate>Audiometry Puretone</Translate>
+                    </List.Item>
+                    <List.Item
+                      style={{ display: 'flex', alignItems: 'center' }}
+                      onClick={() => handleMenuItemClick(<OptometricExam patient={propsData.patient} encounter={propsData.encounter}/>)}>
+                       <FontAwesomeIcon icon={faEye} style={{ margin: '3px' }}/>
+                      <Translate>Optometric Exam</Translate>
                     </List.Item>
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
