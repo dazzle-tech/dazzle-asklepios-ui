@@ -1,4 +1,4 @@
-import { ApAudiometryPuretone } from './../types/model-types';
+import { ApAudiometryPuretone, ApOptometricExam } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -458,6 +458,24 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    saveOptometricExam: builder.mutation({
+      query: (optometricExam: ApOptometricExam) => ({
+        url: `/encounter/save-optometric-exam`,
+        method: 'POST',
+        body: optometricExam
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getOptometricExams: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/optometric-exam-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 });
 
@@ -507,7 +525,9 @@ export const {
   useSavePsychologicalExamsMutation,
   useGetPsychologicalExamsQuery,
   useSaveAudiometryPuretoneMutation,
-  useGetAudiometryPuretonesQuery
+  useGetAudiometryPuretonesQuery,
+  useSaveOptometricExamMutation,
+  useGetOptometricExamsQuery
 
 } = encounterService;
 
