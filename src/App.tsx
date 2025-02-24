@@ -68,10 +68,7 @@ import CPTSetup from './pages/setup/cpt-setup';
 import LOINCSetup from './pages/setup/lonic-setup';
 import PatientQuickAppointment from './pages/patient/patient-profile/PatientQuickAppointment';
 import PatientEMR from './pages/patient/patient-emr';
-
-
 import PatientProfileCopy from './pages/patient/patient-profile/PatientProfileCopy';
-
 import Lab from './pages/lab-module';
 import Rad from './pages/rad-module';
 const App = () => {
