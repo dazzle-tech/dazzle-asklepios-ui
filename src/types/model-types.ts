@@ -638,6 +638,9 @@ export interface ApDiagnosticOrderTests {
 	rejectedReason:string;
 	patientArrivedAt:number;
 	patientArrivedNoteRad:string;
+	readyAt:number;
+	approvedAt:number;
+
 } 
 
 export interface ApDiagnosticOrderTestsNotes { 
@@ -726,6 +729,8 @@ export interface ApDiagnosticOrderTestsResult {
 	reviewAt:number;
 	reviewBy:string;
 	resultText:string;
+	testProfileKey:string;
+	isProfile:boolean;
 } 
 
 export interface ApDiagnosticOrderTestsResultNotes { 
@@ -1573,6 +1578,53 @@ export interface ApModule {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+} 
+
+export interface ApOptometricExam { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	medicalHistoryLkey:string;
+	testReason:string;
+	performedWithLkey:string;
+	distanceAcuity:number;
+	rightEyeOd:number;
+	leftEyeOd:number;
+	rightEyeOs:number;
+	leftEyeOs:number;
+	nearAcuity:number;
+	pinholeTestResultLkey:string;
+	numberOfPlatesTested:number;
+	correctAnswersCount:number;
+	deficiencyTypeLkey:string;
+	rightEyeSphere:number;
+	leftEyeSphere:number;
+	rightCylinder:number;
+	leftCylinder:number;
+	rightAxis:number;
+	leftAxis:number;
+	rightEye:number;
+	leftEye:number;
+	measurementMethod:string;
+	timeOfMeasurement:number;
+	cornealThickness:number;
+	glaucomaRiskAssessmentLkey:string;
+	fundoscopySlitlampDone:boolean;
+	examFindings:string;
+	visionDiagnosis:string;
+	colorVisionDiagnosis:string;
+	recommendations:string;
+	additionalNotes:string;
+	followUpRequired:boolean;
+	followUpDate:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	statusLkey:string;
 } 
 
 export interface ApPatient { 

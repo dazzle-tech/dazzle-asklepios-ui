@@ -639,6 +639,8 @@ export const newApDiagnosticOrderTests:modelTypes.ApDiagnosticOrderTests = {
 	rejectedReason:'',
 	patientArrivedAt:0,
 	patientArrivedNoteRad:'',
+	readyAt:0,
+	approvedAt:0,
 } 
 
 export const newApDiagnosticOrderTestsNotes:modelTypes.ApDiagnosticOrderTestsNotes = { 
@@ -727,6 +729,8 @@ export const newApDiagnosticOrderTestsResult:modelTypes.ApDiagnosticOrderTestsRe
 	reviewAt:0,
 	reviewBy:'',
 	resultText:'',
+	testProfileKey:undefined,
+	isProfile:undefined,
 } 
 
 export const newApDiagnosticOrderTestsResultNotes:modelTypes.ApDiagnosticOrderTestsResultNotes = { 
@@ -1574,6 +1578,53 @@ export const newApModule:modelTypes.ApModule = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+} 
+
+export const newApOptometricExam:modelTypes.ApOptometricExam = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	medicalHistoryLkey:undefined,
+	testReason:'',
+	performedWithLkey:undefined,
+	distanceAcuity:0,
+	rightEyeOd:0,
+	leftEyeOd:0,
+	rightEyeOs:0,
+	leftEyeOs:0,
+	nearAcuity:0,
+	pinholeTestResultLkey:undefined,
+	numberOfPlatesTested:0,
+	correctAnswersCount:0,
+	deficiencyTypeLkey:undefined,
+	rightEyeSphere:0,
+	leftEyeSphere:0,
+	rightCylinder:0,
+	leftCylinder:0,
+	rightAxis:0,
+	leftAxis:0,
+	rightEye:0,
+	leftEye:0,
+	measurementMethod:'',
+	timeOfMeasurement:0,
+	cornealThickness:0,
+	glaucomaRiskAssessmentLkey:undefined,
+	fundoscopySlitlampDone:undefined,
+	examFindings:'',
+	visionDiagnosis:'',
+	colorVisionDiagnosis:'',
+	recommendations:'',
+	additionalNotes:'',
+	followUpRequired:undefined,
+	followUpDate:0,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	cancellationReason:'',
+	statusLkey:undefined,
 } 
 
 export const newApPatient:modelTypes.ApPatient = { 

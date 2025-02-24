@@ -3,18 +3,9 @@ import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
 import {
-    ApConsultationOrder,
-    ApCustomeInstructions,
-    ApDiagnosticOrders,
-    ApDiagnosticOrderTests,
     ApDiagnosticOrderTestsNotes,
     ApDiagnosticOrderTestsResult,
     ApDiagnosticOrderTestsSamples,
-    ApDrugOrder, ApDrugOrderMedications,
-    ApEncounter, ApPatientDiagnose,
-    ApPatientEncounterOrder,
-    ApPatientPlan, ApPrescription,
-    ApPrescriptionMedications, ApProcedure, ApReviewOfSystem, ApVisitAllergies
 } from '@/types/model-types';
 export const labService = createApi({
     reducerPath: 'labApi',
