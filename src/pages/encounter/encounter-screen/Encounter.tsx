@@ -83,6 +83,7 @@ import {
   useSaveAllergiesMutation,
   useGetWarningsQuery
 } from '@/services/observationService';
+import { faHeartPulse } from '@fortawesome/free-solid-svg-icons';
 import { faRunning, faHeartbeat } from '@fortawesome/free-solid-svg-icons';
 import { ApVisitAllergies } from '@/types/model-types';
 import { newApVisitAllergies } from '@/types/model-types-constructor';
@@ -97,6 +98,7 @@ import { faBrain } from "@fortawesome/free-solid-svg-icons";
 import { faEye } from "@fortawesome/free-solid-svg-icons";
 import OptometricExam from '../encounter-component/optometric-exam/OptometricExam';
 import TreadmillStress from '../encounter-component/treadm-stress/TreadmillStress';
+import Cardiology from '../encounter-component/cardiology/Cardiology';
 const Encounter = () => {
   const encounterStatusNew = '91063195286200'; // TODO change this to be fetched from redis based on LOV CODE
   const patientSlice = useAppSelector(state => state.patient);
@@ -476,9 +478,9 @@ const Encounter = () => {
                     </List.Item>
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
-                      onClick={() => handleMenuItemClick(<TreadmillStress patient={propsData.patient} encounter={propsData.encounter}/>)}>
-                       <FontAwesomeIcon icon={faRunning} style={{ margin: '3px' }}/>
-                      <Translate>Treadmill Stress Test (TMST)</Translate>
+                      onClick={() => handleMenuItemClick(<Cardiology patient={propsData.patient} encounter={propsData.encounter}/>)}>
+                       <FontAwesomeIcon icon={faHeartPulse} style={{ margin: '3px' }}/>
+                      <Translate>Cardiology</Translate>
                     </List.Item>
                     <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
