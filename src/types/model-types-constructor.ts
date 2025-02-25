@@ -450,6 +450,30 @@ export const newApClinicalDocumentation:modelTypes.ApClinicalDocumentation = {
 	isValid:undefined,
 } 
 
+export const newApComplaintSymptoms:modelTypes.ApComplaintSymptoms = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	chiefComplaint:'',
+	onsetDate:0,
+	duration:0,
+	unitLkey:undefined,
+	painCharacteristics:'',
+	painLocationLkey:undefined,
+	radiation:'',
+	aggravatingFactors:'',
+	relievingFactors:'',
+	associatedSymptoms:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	cancellationReason:'',
+	statusLkey:undefined,
+} 
+
 export const newApConsultationOrder:modelTypes.ApConsultationOrder = { 
 	key:undefined,
 	patientKey:undefined,

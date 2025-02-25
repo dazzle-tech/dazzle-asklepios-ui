@@ -449,6 +449,30 @@ export interface ApClinicalDocumentation {
 	isValid:boolean;
 } 
 
+export interface ApComplaintSymptoms { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	chiefComplaint:string;
+	onsetDate:number;
+	duration:number;
+	unitLkey:string;
+	painCharacteristics:string;
+	painLocationLkey:string;
+	radiation:string;
+	aggravatingFactors:string;
+	relievingFactors:string;
+	associatedSymptoms:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	statusLkey:string;
+} 
+
 export interface ApConsultationOrder { 
 	key:string;
 	patientKey:string;

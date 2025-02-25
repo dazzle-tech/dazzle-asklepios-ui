@@ -340,7 +340,7 @@ const TreadmillStress = ({ patient, encounter }) => {
         });
     }, [allData, treadmillStressStatus]);
     return (
-        <Panel header={"Treadmill Stress Test (TMST)"}>
+        <Panel>
             <Panel bordered style={{ padding: '10px' }}>
                 <Form fluid layout='inline' style={{ display: 'flex' }}>
 
@@ -601,7 +601,7 @@ const TreadmillStress = ({ patient, encounter }) => {
                     </Button>
                 </ButtonToolbar>
             </Panel>
-            <Panel header={"Patient's Treadmill Stress Test (TMST)"} collapsible bordered>
+         
                 <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <ButtonToolbar>
                         <Button
@@ -749,7 +749,7 @@ const TreadmillStress = ({ patient, encounter }) => {
                         </Cell>
                     </Column>
                 </Table>
-            </Panel>
+            
             <Modal
                 open={popupCancelOpen}
                 onClose={() => setPopupCancelOpen(false)}
