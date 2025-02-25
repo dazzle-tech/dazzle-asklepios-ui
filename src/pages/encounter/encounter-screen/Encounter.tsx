@@ -37,7 +37,7 @@ import {
   faSyringe,
   faFileWaveform,
   faHandDots,
-
+  faTooth
 
 } from '@fortawesome/free-solid-svg-icons';
 import { faBars } from '@fortawesome/free-solid-svg-icons';
@@ -483,6 +483,13 @@ const Encounter = () => {
                       onClick={() => handleMenuItemClick(<DiagnosticsResult edit={ propsData.fromPage=="PatientEMR"} />)}>
                       <FontAwesomeIcon icon={faFileWaveform} style={{ margin: '3px' }} />
                       <Translate>Diagnostics Result</Translate>
+                    </List.Item>
+                    <List.Item
+                      style={{ display: 'flex', alignItems: 'center' }}
+                      //!patientSlice.encounter.editable
+                      onClick={() => handleMenuItemClick(  <Dental disabled={true} />)}>
+                      <FontAwesomeIcon icon={faTooth} style={{ margin: '3px' }} />
+                      <Translate>Dental Care</Translate>
                     </List.Item>
                   </List>
                 </Drawer.Body>
