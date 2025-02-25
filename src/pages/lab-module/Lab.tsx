@@ -370,17 +370,18 @@ const Lab = () => {
   };
   const handleSaveSample = async () => {
     try {
-      await saveSample({
+     const Response= await saveTest({ ...test, processingStatusLkey: "6055207372976955" }).unwrap();
+      saveSample({
         ...sample,
         orderKey: order.key,
         testKey: test.key,
         sampleCollectedAt: selectedSampleDate ? selectedSampleDate.getTime() : null
       }).unwrap();
+      setTest({...newApDiagnosticOrderTests})
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-      await saveTest({ ...test, processingStatusLkey: "6055207372976955" }).unwrap();
-      fecthSample();
-      fetchTest();
-      orderFetch();
+      setTest({...Response});
+      await fetchTest();
+      await fecthSample();
       setOpenSampleModal(false);
       setSample({ ...newApDiagnosticOrderTestsSamples });
       setSelectedSampleDate(null);
@@ -392,12 +393,12 @@ const Lab = () => {
   const handleRejectedTest = async () => {
     try {
       const Response = await saveTest({ ...test, processingStatusLkey: "6055192099058457", rejectedAt: Date.now() }).unwrap();
-      dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+     
       setOpenRejectedModal(false);
       setTest({ ...newApDiagnosticOrderTests });
-      await fetchTest();
-      orderFetch();
+      dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
       setTest({ ...Response });
+      await fetchTest();
     }
     catch (error) {
       dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
@@ -409,7 +410,7 @@ const Lab = () => {
       try {
 
         const Response = await saveTest({ ...test, processingStatusLkey: "6055074111734636", acceptedAt: Date.now() }).unwrap();
-        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+       
         if (laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)?.isProfile) {
           rowData.profileList.forEach((item) => {
             saveResult({
@@ -417,20 +418,25 @@ const Lab = () => {
               statusLkey: '6055029972709625', normalRangeKey: normalRange?.key || null, isProfile: true, profileTestKey: item.key
             }).unwrap();
           })
-          resultFetch();
-
+          setTest({ ...newApDiagnosticOrderTests });
+          dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+          setTest({ ...Response });
+          await fetchTest();
+          await resultFetch();
         }
         else {
-         await saveResult({
+         saveResult({
             ...result, orderKey: order.key, orderTestKey: test.key, medicalTestKey: test.testKey, patientKey: patient.key, visitKey: encounter.key,
             statusLkey: '6055029972709625', normalRangeKey: normalRange?.key || null, isProfile: false
           }).unwrap();
+          setTest({ ...newApDiagnosticOrderTests });
+          dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+          setTest({ ...Response });
+          await fetchTest();
+          await resultFetch();
         }
-        setTest({ ...newApDiagnosticOrderTests });
-        await fetchTest();
-        orderFetch();
-        setTest({ ...Response });
-        resultFetch();
+       
+        
       }
       catch (error) {
         dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
@@ -586,7 +592,7 @@ const Lab = () => {
 
     console.log(value);
 
-    await saveResult({ ...result, resultLkey:value} ).unwrap();
+    await saveResult({ ...result, orderTypeLkey:value} ).unwrap();
     setResult({ ...newApDiagnosticOrderTestsResult })
 
     const v = normalRange.lovList.find((item) => item == value);
@@ -1141,7 +1147,7 @@ const Lab = () => {
                         return showResultInput ? (
                           <SelectPicker
                             data={list ?? []}
-                            value={rowData.resultLkey}
+                            value={rowData.orderTypeLkey}
                             valueKey="key"
                             labelKey="lovDisplayVale"
                             onChange={handleValueChange}
@@ -1149,7 +1155,7 @@ const Lab = () => {
                           />
                         ) : (
                           <span>
-                            {rowData.resultLvalue ? rowData.resultLvalue.lovDisplayVale : rowData.resultLkey}
+                            {rowData.orderTypeLvalue ? rowData.orderTypeLvalue .lovDisplayVale : rowData.orderTypeLkey}
                             <FontAwesomeIcon onClick={()=>setShowResultInput(true)} icon={faPenToSquare} style={{ fontSize: "1em", marginLeft: "5px", cursor: "pointer" }} />
                           </span>
                         );
@@ -1165,52 +1171,43 @@ const Lab = () => {
                           
                           }}
                           onBlur={async (event) => {
-                            await saveResult({...result}).unwrap();
+                           saveResult({...result}).unwrap();
                             setShowResultInput(false);
                             if (normalRange.normalRangeTypeLkey == "6221150241292558") {
                               console.log("case range")
                               if (result.resultValueNumber > normalRange.rangeFrom && result.resultValueNumber < normalRange.rangeTo) {
                                 console.log("range and it normal " + result.resultValueNumber)
-                                await saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' }).unwrap()
                                 const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000',readyAt:Date.now()}).unwrap();
-
+                                 saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' }).unwrap()
+                                 setTest({ ...newApDiagnosticOrderTests });
                                 dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                setTest({ ...newApDiagnosticOrderTests });
-                                await fetchTest();
-                                orderFetch();
                                 setTest({ ...Response });
-                                
-                                 resultFetch();
+                                await fetchTest();
+                               await  resultFetch();
                               }
                               else if (result.resultValueNumber < normalRange.rangeFrom) {
 
                                 if (normalRange.criticalValue) {
                                   if (result.resultValueNumber < normalRange.criticalValueLessThan) {
                                     console.log("Less than and critical  " + result.resultValueNumber + "<" + normalRange.criticalValueLessThan)
-                                    await saveResult({ ...result, marker: "6730652890616978" , statusLkey: '265123250697000'}).unwrap();
                                     const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000',readyAt:Date.now()}).unwrap();
-
-                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                                    saveResult({ ...result, marker: "6730652890616978" , statusLkey: '265123250697000'}).unwrap();
                                     setTest({ ...newApDiagnosticOrderTests });
-                                    await fetchTest();
-                                    orderFetch();
+                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                                     setTest({ ...Response });
-          
-                                     resultFetch();
+                                    await fetchTest();
+                                    await resultFetch();
                                   }
                                 }
                                 else {
                                   console.log("Less than not critical " + result.resultValueNumber)
-                                  await saveResult({ ...result, marker: "6730094497387122" , statusLkey: '265123250697000'}).unwrap();
                                   const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000',readyAt:Date.now()}).unwrap();
-
-                                  dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                                  saveResult({ ...result, marker: "6730094497387122" , statusLkey: '265123250697000'}).unwrap();
                                   setTest({ ...newApDiagnosticOrderTests });
+                                  dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                                  setTest({ ...Response });                           
                                   await fetchTest();
-                                  orderFetch();
-                                  setTest({ ...Response });
-        
-                                   resultFetch();
+                                  await  resultFetch();
                                 }
                               }
                               else if (result.resultValueNumber > normalRange.rangeTo) {
@@ -1218,29 +1215,23 @@ const Lab = () => {
                                 if (normalRange.criticalValue) {
                                   if (result.resultValueNumber > normalRange.criticalValueMoreThan) {
                                     console.log("more than and critical" + ">" + normalRange.criticalValueMoreThan)
-                                    await saveResult({ ...result, marker: "6730104027458969" , statusLkey: '265123250697000'}).unwrap();
                                     const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000',readyAt:Date.now()}).unwrap();
-
+                                     saveResult({ ...result, marker: "6730104027458969" , statusLkey: '265123250697000'}).unwrap();
+                                     setTest({ ...newApDiagnosticOrderTests });
                                     dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                    setTest({ ...newApDiagnosticOrderTests });
-                                    await fetchTest();
-                                    orderFetch();
                                     setTest({ ...Response });
-          
-                                     resultFetch();
+                                    await fetchTest();
+                                    await  resultFetch();
                                   }
                                   else {
                                     console.log("More than not critical")
-                                    await saveResult({ ...result, marker: "6730083474405013" , statusLkey: '265123250697000'}).unwrap();
                                     const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000',readyAt:Date.now()}).unwrap();
-
-                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                                    saveResult({ ...result, marker: "6730083474405013" , statusLkey: '265123250697000'}).unwrap();
                                     setTest({ ...newApDiagnosticOrderTests });
-                                    await fetchTest();
-                                    orderFetch();
+                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                                     setTest({ ...Response });
-          
-                                     resultFetch();
+                                    await fetchTest();
+                                    await resultFetch();
                                   }
                                 }
 
@@ -1252,42 +1243,34 @@ const Lab = () => {
 
                                 if (normalRange.criticalValue) {
                                   if (result.resultValueNumber < normalRange.criticalValueLessThan) {
-                                    await saveResult({ ...result, marker: "6730652890616978" , statusLkey: '265123250697000'}).unwrap();
                                     const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000',readyAt:Date.now()}).unwrap();
-
-                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                                    saveResult({ ...result, marker: "6730652890616978" , statusLkey: '265123250697000'}).unwrap();
                                     setTest({ ...newApDiagnosticOrderTests });
-                                    await fetchTest();
-                                    orderFetch();
+                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                                     setTest({ ...Response });
-          
+                                    await fetchTest();
                                     await resultFetch();
 
                                   }
                                 }
                                 else {
-                                  await saveResult({ ...result, marker: "6730094497387122" , statusLkey: '265123250697000'}).unwrap();
                                   const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000',readyAt:Date.now()}).unwrap();
-
-                                  dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                                  saveResult({ ...result, marker: "6730094497387122" , statusLkey: '265123250697000'}).unwrap();
                                   setTest({ ...newApDiagnosticOrderTests });
-                                  await fetchTest();
-                                  orderFetch();
+                                  dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                                   setTest({ ...Response });
-        
+                                  await fetchTest();
                                   await resultFetch();
                                 }
                               }
                               else {
-                                await saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' }).unwrap();
                                 const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000',readyAt:Date.now()}).unwrap();
-
-                                dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                                saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' }).unwrap();
                                 setTest({ ...newApDiagnosticOrderTests });
-                                await fetchTest();
-                                orderFetch();
+                                dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                                 setTest({ ...Response });
-      
+                                await fetchTest();
+                              
                                 await resultFetch();
                               }
                               console.log("Less than")
@@ -1296,42 +1279,33 @@ const Lab = () => {
                               if (result.resultValueNumber > normalRange.rangeTo) {
                                 if (normalRange.criticalValue) {
                                   if (result.resultValueNumber > normalRange.criticalValueMoreThan) {
-                                    await saveResult({ ...result, marker: "6730104027458969", statusLkey: '265123250697000' }).unwrap();
                                     const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000',readyAt:Date.now()}).unwrap();
-
-                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                                    saveResult({ ...result, marker: "6730104027458969", statusLkey: '265123250697000' }).unwrap();
                                     setTest({ ...newApDiagnosticOrderTests });
-                                    await fetchTest();
-                                    orderFetch();
+                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                                     setTest({ ...Response });
-          
+                                    await fetchTest();
                                     await resultFetch();
                                   }
                                   else {
-                                    await saveResult({ ...result, marker: "6730083474405013" , statusLkey: '265123250697000'}).unwrap();
                                     const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000',readyAt:Date.now()}).unwrap();
-
+                                   saveResult({ ...result, marker: "6730083474405013" , statusLkey: '265123250697000'}).unwrap();
+                                   setTest({ ...newApDiagnosticOrderTests });
                                     dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                    setTest({ ...newApDiagnosticOrderTests });
-                                    await fetchTest();
-                                    orderFetch();
                                     setTest({ ...Response });
-          
+                                    await fetchTest();
                                     await resultFetch();
                                   }
                                 }
 
                               }
                               else {
-                                await saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' }).unwrap();
                                 const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000',readyAt:Date.now()}).unwrap();
-
+                             saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' }).unwrap();
+                             setTest({ ...newApDiagnosticOrderTests });
                                 dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                setTest({ ...newApDiagnosticOrderTests });
-                                await fetchTest();
-                                orderFetch();
                                 setTest({ ...Response });
-      
+                                await fetchTest(); 
                                 await resultFetch();
                               }
 
@@ -1361,13 +1335,11 @@ const Lab = () => {
 
 
                           const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000',readyAt:Date.now()}).unwrap();
-
-                          dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                           setTest({ ...newApDiagnosticOrderTests });
-                          await fetchTest();
-                          orderFetch();
+                          dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                           setTest({ ...Response });
-
+                         
+                          await fetchTest();
                           await resultFetch();
 
 
