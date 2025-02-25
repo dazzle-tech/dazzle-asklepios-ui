@@ -364,6 +364,42 @@ const TreadmillStress = ({ patient, encounter }) => {
                         record={treadmillStress}
                         setRecord={setTreadmillStress}
                     />
+                     <Form style={{ display: 'flex', flexDirection: 'column', zoom: .8 }}>
+                        <MyLabel label="Pre-Test Blood Pressure" />
+                        <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px', width: 300 }}>
+
+                            <Input
+                                width={100}
+
+                                type="number"
+                                value={treadmillStress.preTestSystolicBp}
+                                onChange={e =>
+                                    setTreadmillStress({
+                                        ...treadmillStress,
+                                        preTestSystolicBp: Number(e)
+                                    })} />
+                            <span style={{ textAlign: 'center' }}>/</span>
+                            <Input
+                                width={100}
+                                type="number"
+                                value={treadmillStress.preTestDiastolicBp}
+                                onChange={e =>
+                                    setTreadmillStress({
+                                        ...treadmillStress,
+                                        preTestDiastolicBp: Number(e)
+                                    })} />
+                            <Input
+                                disabled
+                                width={100}
+                                value={
+                                    treadmillStress.preTestDiastolicBp != null && treadmillStress.preTestSystolicBp != null
+                                        ? ((2 * treadmillStress.preTestDiastolicBp + treadmillStress.preTestSystolicBp) / 3).toFixed(2)
+                                        : ''
+                                }
+                            />
+                        </Form>
+                    </Form>
+
                     <MyInput
                         column
                         width={165}
@@ -422,42 +458,7 @@ const TreadmillStress = ({ patient, encounter }) => {
                         record={treadmillStress}
                         setRecord={setTreadmillStress}
                     />
-                    <Form style={{ display: 'flex', flexDirection: 'column', zoom: .8 }}>
-                        <MyLabel label="Pre-Test Blood Pressure" />
-                        <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px', width: 300 }}>
-
-                            <Input
-                                width={100}
-
-                                type="number"
-                                value={treadmillStress.preTestSystolicBp}
-                                onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        preTestSystolicBp: Number(e)
-                                    })} />
-                            <span style={{ textAlign: 'center' }}>/</span>
-                            <Input
-                                width={100}
-                                type="number"
-                                value={treadmillStress.preTestDiastolicBp}
-                                onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        preTestDiastolicBp: Number(e)
-                                    })} />
-                            <Input
-                                disabled
-                                width={100}
-                                value={
-                                    treadmillStress.preTestDiastolicBp != null && treadmillStress.preTestSystolicBp != null
-                                        ? ((2 * treadmillStress.preTestDiastolicBp + treadmillStress.preTestSystolicBp) / 3).toFixed(2)
-                                        : ''
-                                }
-                            />
-                        </Form>
-                    </Form>
-
+                   
 
                 </Form>
                 <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px', zoom: .8 }}>
