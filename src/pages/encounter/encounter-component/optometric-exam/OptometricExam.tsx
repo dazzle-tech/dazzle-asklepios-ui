@@ -439,7 +439,7 @@ const OptometricExam = ({ patient, encounter }) => {
                                 </InputGroup>
                             </div>
                             <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px', zoom: .75 }}>
-                                <MyLabel label="Right Eye (OD)" />
+                                <MyLabel label="Right Eye" />
                                 <InputGroup style={{ width: 210 }}>
                                     <InputGroup.Addon><Text>20/</Text></InputGroup.Addon>
                                     <Input
@@ -456,7 +456,7 @@ const OptometricExam = ({ patient, encounter }) => {
                                 </InputGroup>
                             </div>
                             <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px', zoom: .75 }}>
-                                <MyLabel label="Left Eye (OD)" />
+                                <MyLabel label="Left Eye " />
                                 <InputGroup style={{ width: 210 }}>
                                     <InputGroup.Addon><Text>20/</Text></InputGroup.Addon>
                                     <Input
@@ -494,9 +494,9 @@ const OptometricExam = ({ patient, encounter }) => {
                                 </InputGroup>
                             </div>
                             <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px', zoom: .75 }}>
-                                <MyLabel label="Right Eye (OS)" />
+                                <MyLabel label="Right Eye " />
                                 <InputGroup style={{ width: 210 }}>
-                                    <InputGroup.Addon><Text>20/</Text></InputGroup.Addon>
+                                    <InputGroup.Addon><Text>J</Text></InputGroup.Addon>
                                     <Input
                                         type="number"
                                         width={165}
@@ -511,9 +511,9 @@ const OptometricExam = ({ patient, encounter }) => {
                                 </InputGroup>
                             </div>
                             <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px', zoom: .75 }}>
-                                <MyLabel label="Left Eye (OS)" />
+                                <MyLabel label="Left Eye" />
                                 <InputGroup style={{ width: 210 }}>
-                                    <InputGroup.Addon><Text>20/</Text></InputGroup.Addon>
+                                    <InputGroup.Addon><Text>J</Text></InputGroup.Addon>
                                     <Input
                                         type="number"
                                         width={165}
@@ -573,7 +573,7 @@ const OptometricExam = ({ patient, encounter }) => {
                                 width={210}
                                 column
                                 fieldType="number"
-                                fieldLabel="Right Eye (OD) Sphere"
+                                fieldLabel="Sphere"
                                 fieldName="rightEyeSphere"
                                 record={optometricExam}
                                 setRecord={setOptometricExam}
@@ -604,7 +604,7 @@ const OptometricExam = ({ patient, encounter }) => {
                                 width={210}
                                 column
                                 fieldType="number"
-                                fieldLabel="Left Eye (OS) Sphere"
+                                fieldLabel="Sphere"
                                 fieldName="leftEyeSphere"
                                 record={optometricExam}
                                 setRecord={setOptometricExam}
@@ -985,14 +985,14 @@ const OptometricExam = ({ patient, encounter }) => {
                     </Column>
 
                     <Column width={100} resizable>
-                        <HeaderCell>Right Eye OD</HeaderCell>
+                        <HeaderCell>Right Eye</HeaderCell>
                         <Cell>
                             {rowData => <>{"20/ "}{rowData?.rightEyeOd}</>
                             }
                         </Cell>
                     </Column>
                     <Column width={100}>
-                        <HeaderCell>Left Eye OD</HeaderCell>
+                        <HeaderCell>Left Eye</HeaderCell>
                         <Cell>
                             {rowData => <>{"20/ "}{rowData?.leftEyeOd}</>
                             }
@@ -1006,14 +1006,14 @@ const OptometricExam = ({ patient, encounter }) => {
                         </Cell>
                     </Column>
                     <Column width={100}>
-                        <HeaderCell>Right Eye OS</HeaderCell>
+                        <HeaderCell>Right Eye </HeaderCell>
                         <Cell>
                             {rowData => <>{"J "}{rowData?.rightEyeOs}</>
                             }
                         </Cell>
                     </Column>
                     <Column width={100}>
-                        <HeaderCell>Left Eye OS</HeaderCell>
+                        <HeaderCell>Left Eye </HeaderCell>
                         <Cell>
                             {rowData => <>{"J "}{rowData?.leftEyeOs}</>
                             }
