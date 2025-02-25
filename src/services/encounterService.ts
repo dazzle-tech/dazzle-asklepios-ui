@@ -1,4 +1,4 @@
-import { ApAudiometryPuretone, ApOptometricExam } from './../types/model-types';
+import { ApAudiometryPuretone, ApOptometricExam, ApTreadmillStress } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -476,6 +476,24 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    saveTreadmillStresse: builder.mutation({
+      query: (treadmillStress: ApTreadmillStress) => ({
+        url: `/encounter/save-treadmill-stress`,
+        method: 'POST',
+        body: treadmillStress
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getTreadmillStresses: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/treadmill-stress-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 });
 
@@ -527,7 +545,9 @@ export const {
   useSaveAudiometryPuretoneMutation,
   useGetAudiometryPuretonesQuery,
   useSaveOptometricExamMutation,
-  useGetOptometricExamsQuery
+  useGetOptometricExamsQuery,
+  useSaveTreadmillStresseMutation,
+  useGetTreadmillStressesQuery
 
 } = encounterService;
 
