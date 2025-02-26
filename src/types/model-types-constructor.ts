@@ -1571,6 +1571,7 @@ export const newApMedicalSheets:modelTypes.ApMedicalSheets = {
 	deletedAt:undefined,
 	isValid:undefined,
 	observation:undefined,
+	vaccination:undefined,
 } 
 
 export const newApMessages:modelTypes.ApMessages = { 

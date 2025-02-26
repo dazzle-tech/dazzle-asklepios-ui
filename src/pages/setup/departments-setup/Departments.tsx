@@ -52,7 +52,8 @@ const Departments = () => {
 	medicalWarnings:true,
 	medicationsRecord:true,
 	vaccineReccord:true,
-	diagnosticsResult:true
+	diagnosticsResult:true,
+  observation:true
 
   });
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
@@ -121,7 +122,8 @@ const Departments = () => {
 	medicalWarnings:true,
 	medicationsRecord:true,
 	vaccineReccord:true,
-	diagnosticsResult:true
+	diagnosticsResult:true,
+  observation:true
 
   })}
  },[medicalSheet]) ;
@@ -407,8 +409,8 @@ const Departments = () => {
         </Modal.Header>
         <Modal.Body>
           <Form>
-            <Panel style={{border:'1px solid #87e6ed' ,borderRadius:'10px'  ,padding:'5px' }}>
-            <Row>
+            <Panel style={{border:'1px solid #87e6ed' ,borderRadius:'10px' ,paddingLeft:'5px' }}>
+            <Row >
               <Col xs={6}>
                 <MyInput
                   fieldType='check'
@@ -444,7 +446,7 @@ const Departments = () => {
               
 
             </Row>
-            <Row>
+            <Row >
               <Col xs={6}>
                 <MyInput
                   fieldType='check'
@@ -480,7 +482,7 @@ const Departments = () => {
               
 
             </Row>
-            <Row>
+            <Row  >
               <Col xs={6}>
                 <MyInput
                   fieldType='check'
@@ -515,8 +517,8 @@ const Departments = () => {
               </Col>
              
 
-            </Row>
-            <Row>
+            </Row >
+            <Row  >
             <Col xs={6}>
                 <MyInput
                   fieldType='check'
@@ -551,7 +553,7 @@ const Departments = () => {
               </Col>
               
             </Row>
-            <Row>
+            <Row >
             <Col xs={6}>
                 <MyInput
                   fieldType='check'
@@ -559,6 +561,24 @@ const Departments = () => {
                   showLabel={false}
                   record={showScreen}
                   setRecord={setShowScreen} />
+              </Col>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'observation'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'vaccination'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              <Col xs={6}>
               </Col>
             </Row>
             </Panel>

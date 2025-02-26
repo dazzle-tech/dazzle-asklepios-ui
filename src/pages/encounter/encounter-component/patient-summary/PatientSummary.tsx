@@ -357,7 +357,7 @@ const PatientSummary = ({ patient, encounter }) => {
 
 
                     Previuos Visit
-                    <Form disabled style={{ zoom: 0.85 }} layout="inline" fluid >
+                    <Form disabled  layout="inline" fluid >
                         <MyInput
                             column
                             width={140}
