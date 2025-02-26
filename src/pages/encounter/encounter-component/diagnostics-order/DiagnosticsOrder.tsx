@@ -44,7 +44,8 @@ import OthersIcon from '@rsuite/icons/Others';
 import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
 import AttachmentModal from "@/pages/patient/patient-profile/AttachmentUploadModal";
 import {
-    useGetDiagnosticsTestListQuery
+    useGetDiagnosticsTestListQuery,
+    useGetDepartmentListByTypeQuery
 } from '@/services/setupService';
 import {
     useSavePatientEncounterOrderMutation,
@@ -127,12 +128,13 @@ const DiagnosticsOrder = ({ edit }) => {
             }
         ]
     });
+    const [receivedType,setReceivedType]=useState("");
     const [selectedRows, setSelectedRows] = useState([]);
     const { data: testsList } = useGetDiagnosticsTestListQuery(listTestRequest);
     const { data: ordersList, refetch: ordersRefetch } = useGetDiagnosticOrderQuery(listOrdersRequest);
     const { data: orderTestList, refetch: orderTestRefetch } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
-
-
+    const {data:receivedLabList}=useGetDepartmentListByTypeQuery(receivedType)
+    console.log(receivedLabList?.object);
     const [savePatientOrder, savePatientOrderMutation] = useSavePatientEncounterOrderMutation();
     const [saveOrders, saveOrdersMutation] = useSaveDiagnosticOrderMutation();
     const [saveOrderTests, saveOrderTestsMutation] = useSaveDiagnosticOrderTestMutation();
@@ -185,7 +187,24 @@ const DiagnosticsOrder = ({ edit }) => {
     }, [ordersList]);
     useEffect(() => {
         console.log("test", test)
-    }, [test])
+        console.log(test?.testTypeLkey)
+        if(test?.testTypeLkey=='862810597620632'){
+            setReceivedType('5673990729647007');
+
+        }
+        else if(test?.testTypeLkey=='862828331135792'){
+            setReceivedType('5673990729647008');
+        }
+        else if(test?.testTypeLkey=='862842242812880'){
+            setReceivedType('5673990729647009');
+        }
+        else {
+            setReceivedType('');
+        }
+    }, [test]);
+    useEffect(()=>{
+        console.log(receivedType)
+    },[receivedType])
     useEffect(() => {
         if (searchKeyword.trim() !== "") {
             setListRequest(
@@ -696,7 +715,7 @@ const DiagnosticsOrder = ({ edit }) => {
                     onRowClick={rowData => {
                         setOrderTest(rowData);
                         setTest(rowData.test);
-                        console.log(fetchPatintAttachmentsResponce)
+                      
                     }}
                     rowClassName={isSelected}
                 >
@@ -784,11 +803,11 @@ const DiagnosticsOrder = ({ edit }) => {
                     </Column>
                     <Column flexGrow={2} fullText>
                         <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('receivedLabLkey', e)} />
+                            <Input onChange={e => handleFilterChange('receivedLabkey', e)} />
                             <Translate>Received Lab</Translate>
                         </HeaderCell>
                         <Cell  >
-                            {rowData => rowData.receivedLabLvalue?.lovDisplayVale || ""}
+                            {rowData => rowData.receivedLabkey || ""}
                         </Cell>
                     </Column>
                     <Column flexGrow={2} fullText>
@@ -903,10 +922,10 @@ const DiagnosticsOrder = ({ edit }) => {
                                     width={150}
                                     fieldType="select"
                                     fieldLabel="Received Lab"
-                                    selectData={departmentTypeLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
+                                    selectData={receivedLabList?.object ?? []}
+                                    selectDataLabel="name"
                                     selectDataValue="key"
-                                    fieldName={'receivedLabLkey'}
+                                    fieldName={'receivedLabKey'}
                                     record={orderTest}
                                     setRecord={setOrderTest}
                                 />

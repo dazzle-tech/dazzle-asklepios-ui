@@ -105,7 +105,6 @@ const Encounter = () => {
   const patientSlice = useAppSelector(state => state.patient);
   const authSlice = useAppSelector(state => state.auth);
   const [localUser, setLocalUser] = useState<ApUser>({ ...newApUser });
-  console.log(localUser);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
