@@ -22,7 +22,8 @@ import {
   Table,
   Pagination,
   Button,
-  DatePicker
+  DatePicker,
+  SelectPicker
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import PageIcon from '@rsuite/icons/Page';
@@ -32,6 +33,7 @@ import CharacterAuthorizeIcon from '@rsuite/icons/CharacterAuthorize';
 // import PeoplesTimeIcon from '@rsuite/icons/PeoplesTime';
 import { addFilterToListRequest, calculateAge, formatDate, fromCamelCaseToDBName } from '@/utils';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
+import ListIcon from '@rsuite/icons/List';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import SendIcon from '@rsuite/icons/Send';
 import { useGetIcdListQuery } from '@/services/setupService';
@@ -40,15 +42,27 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
 import { notify } from '@/utils/uiReducerActions';
 import CharacterLockIcon from '@rsuite/icons/CharacterLock';
+import { useLocation } from "react-router-dom";
 import PageEndIcon from '@rsuite/icons/PageEnd';
 import { timeStamp } from 'console';
-
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import ReactDOMServer from 'react-dom/server';
 const EncounterList = () => {
   const patientSlice = useAppSelector(state => state.patient);
-  const dispatch = useAppDispatch();
+  const location = useLocation();
   const navigate = useNavigate();
- 
-  const[localPatient,setLocalPatient]=useState<ApPatient>({...newApPatient})
+  const dispatch = useDispatch();
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Patients Visit List</h5>
+    </div>
+  );
+
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('P_Encounters'));
+  dispatch(setDivContent(divContentHTML));
+  const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient })
   const [encounter, setLocalEncounter] = useState({ ...newApEncounter });
   const { data: icdListResponseData } = useGetIcdListQuery({
     ...initialListRequest,
@@ -124,64 +138,59 @@ const EncounterList = () => {
       dispatch(setEncounter(encounter));
       dispatch(setPatient(encounter['patientObject']));
     }
-  
+
     const privatePatientPath = '/user-access-patient-private';
     const encounterPath = '/encounter';
     const targetPath = localPatient.privatePatient ? privatePatientPath : encounterPath;
 
     if (localPatient.privatePatient) {
-      navigate(targetPath, { state: { info: "toEncounter", fromPage: "EncounterList" ,patient:localPatient ,encounter:encounter   } });
+      navigate(targetPath, { state: { info: "toEncounter", fromPage: "EncounterList", patient: localPatient, encounter: encounter } });
     } else {
-      navigate(targetPath, { state: { info: "toEncounter", fromPage: "EncounterList",patient:localPatient ,encounter:encounter   } }); 
+      navigate(targetPath, { state: { info: "toEncounter", fromPage: "EncounterList", patient: localPatient, encounter: encounter } });
     }
-  
+
     const currentDateTime = new Date().toLocaleString();
     setDateClickToVisit(currentDateTime);
   };
-  
+
   const goToPreVisitObservations = () => {
-    
+
     const privatePatientPath = '/user-access-patient-private';
     const preObservationsPath = '/encounter-pre-observations';
     const targetPath = localPatient.privatePatient ? privatePatientPath : preObservationsPath;
     if (localPatient.privatePatient) {
-      navigate(targetPath, { state: { info: "toNurse" ,patient:localPatient ,encounter:encounter } });
+      navigate(targetPath, { state: { info: "toNurse", patient: localPatient, encounter: encounter } });
     } else {
       navigate(targetPath, { state: { patient: localPatient, encounter: encounter } });
 
     }
-  
-    
   };
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(null));
+    };
+  }, [location.key]);
   return (
     <>
       <Panel
-        header={
-          <h3 className="title">
-            <Translate>Patients Visit List</Translate>
-          </h3>
-        }
+
       >
-        <Panel>
+        <Panel style={{ zoom: .85 }}>
           <ButtonToolbar>
-            <IconButton
-              appearance="primary"
-              color="cyan"
-              disabled={!encounter.key}
-              onClick={goToVisit}
-              icon={<icons.ArrowRight />}
-            >
+
+            <Button appearance="primary" onClick={goToVisit} style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: "3px" }} >
+
+              <icons.ArrowRight style={{ marginRight: '5px', color: 'white' }} />
               <Translate>Go to Visit</Translate>
-            </IconButton>
-
+            </Button>
             <Divider vertical />
-
             <DatePicker
-
               oneTap
               placeholder="From Date"
               value={dateFilter.fromDate}
               onChange={e => setDateFilter({ ...dateFilter, fromDate: e })}
+
               style={{ width: '234px' }}
             />
             <DatePicker
@@ -191,45 +200,46 @@ const EncounterList = () => {
               onChange={e => setDateFilter({ ...dateFilter, toDate: e })}
               style={{ width: '234px' }}
             />
-            <IconButton appearance="primary" icon={<icons.Search />} onClick={handleManualSearch}>
+
+            <Button appearance="primary" onClick={handleManualSearch} style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: "3px" }} >
+
+              <icons.Search style={{ marginRight: '5px', color: 'white' }} />
               <Translate>Search</Translate>
-            </IconButton>
+            </Button>
 
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Button onClick={goToPreVisitObservations} appearance="ghost" style={{ borderColor: 'var(--primary-blue)', color: 'var(--primary-blue)', display: 'flex', marginLeft: "3px" }}>
 
-
-          </ButtonToolbar>
-          <br />
-          <ButtonToolbar>
-            <IconButton
-              appearance="primary"
-              color="violet"
-              icon={<PageIcon />}
-            >
-              <Translate>My Appointments</Translate>
-            </IconButton>
-            <IconButton appearance="ghost" color="violet" icon={<SendIcon />} >
-              <Translate>Create Appointment</Translate>
-            </IconButton>
-            <IconButton appearance="primary" color="cyan" icon={<CharacterLockIcon />} >
-              <Translate>EMR</Translate>
-            </IconButton>
-            <IconButton appearance="ghost" color="cyan" icon={<CharacterAuthorizeIcon />} >
-              <Translate>Order Results</Translate>
-            </IconButton>
-            <IconButton appearance="primary" color="blue" icon={<CharacterAuthorizeIcon />} >
-              <Translate>Waiting list</Translate>
-            </IconButton>
-
-            <div style={{ marginLeft: 'auto' }}>
-              <IconButton
-                appearance="primary"
-                color="violet"
-                disabled={!encounter.key}
-                onClick={goToPreVisitObservations}
-                icon={<PageEndIcon />}
-              >
+                <PageEndIcon style={{ marginRight: '5px', color: 'var(--primary-blue)' }} />
                 <Translate>Nurse Station</Translate>
-              </IconButton>
+              </Button>
+              <SelectPicker
+                style={{ width: 185 }}
+                data={[
+                  {
+                    label: (
+                      <Button
+                        color='cyan'
+                        appearance="ghost"
+                        style={{ color: 'var(--primary-blue', zoom: 0.8, textAlign: 'left', width: 170 }}
+                        disabled={localPatient.key === undefined}
+                        block
+                      >
+                        <span>Visit History</span>
+                      </Button>
+                    ),
+                    value: 'visitHistory',
+                  },
+                ]}
+                placeholder={
+                  <span style={{ color: 'var(--primary-blue' }}>
+                    <ListIcon style={{ marginRight: 8 }} />
+                    {"  "} More
+                  </span>
+                }
+                menuStyle={{ marginTop: 0, width: 180, padding: 5 }}
+              />
+
             </div>
           </ButtonToolbar>
         </Panel>
@@ -245,8 +255,7 @@ const EncounterList = () => {
                 sortType
               });
           }}
-          headerHeight={80}
-          rowHeight={60}
+          rowHeight={40}
           bordered
           cellBordered
           data={encounterListResponse?.object ?? []}
@@ -254,25 +263,25 @@ const EncounterList = () => {
             setLocalEncounter(rowData);
             setLocalPatient(rowData.patientObject)
           }}
-          rowClassName={isSelected}
+          rowClassName={(rowData, rowIndex) => {
+            if (rowIndex === -1) return "first-row";
+            return isSelected(rowData);
+          }}
         >
           <Column sortable flexGrow={2} fullText>
-            <HeaderCell>
-              <Input onChange={e => handleFilterChange('queueNumber', e)} />
-              <Translate>Queue Number</Translate>
+            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
+              <Translate>#</Translate>
             </HeaderCell>
             <Cell dataKey="queueNumber" />
           </Column>
           <Column sortable flexGrow={3}>
-            <HeaderCell>
-              <Input onChange={e => handleFilterChange('visitId', e)} />
+            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
               <Translate>Visit ID</Translate>
             </HeaderCell>
             <Cell dataKey="visitId" />
           </Column>
           <Column sortable flexGrow={6} fullText>
-            <HeaderCell fullText>
-              <Input onChange={e => handleFilterChange('patientFullName', e)} />
+            <HeaderCell fullText style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
               <Translate>Patient Name</Translate>
             </HeaderCell>
             <Cell dataKey="patientFullName" fullText>
@@ -289,10 +298,7 @@ const EncounterList = () => {
             </Cell>
           </Column>
           <Column sortable flexGrow={3}>
-            <HeaderCell>
-              <Input
-                onChange={(e) => handleFilterChange('patientKey', e)}
-              />
+            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
               <Translate>MRN</Translate>
             </HeaderCell>
             <Cell>
@@ -302,22 +308,20 @@ const EncounterList = () => {
             </Cell>
           </Column>
           <Column sortable flexGrow={3}>
-            <HeaderCell>
-              <Input onChange={e => handleFilterChange('patientAge', e)} />
+            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
               <Translate>Age</Translate>
             </HeaderCell>
             <Cell dataKey="patientAge" />
           </Column>
 
           <Column sortable flexGrow={3} fullText fixed>
-            <HeaderCell>
-              <Input onChange={e => handleFilterChange('type', e)} />
+            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
               <Translate>Visit Type</Translate>
             </HeaderCell>
             <Cell dataKey="type" />
           </Column>
           <Column sortable flexGrow={4} fullText>
-            <HeaderCell>
+            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
 
               <Translate> Chief Complain </Translate>
             </HeaderCell>
@@ -327,7 +331,7 @@ const EncounterList = () => {
               }</Cell>
           </Column>
           <Column sortable flexGrow={5} fullText>
-            <HeaderCell>
+            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
 
               <Translate>Diagnosis</Translate>
             </HeaderCell>
@@ -339,7 +343,7 @@ const EncounterList = () => {
 
           </Column>
           <Column sortable flexGrow={3} fullText>
-            <HeaderCell>
+            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
 
               <Translate>Prescription </Translate>
             </HeaderCell>
@@ -365,7 +369,7 @@ const EncounterList = () => {
             }</Cell>
           </Column>
           <Column sortable flexGrow={3}>
-            <HeaderCell>
+            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
 
               <Translate> Has order</Translate>
             </HeaderCell>
@@ -392,8 +396,8 @@ const EncounterList = () => {
           </Column>
 
           <Column sortable flexGrow={3}>
-            <HeaderCell>
-              
+            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
+
               <Translate>Priority</Translate>
             </HeaderCell>
             <Cell>
@@ -405,14 +409,14 @@ const EncounterList = () => {
             </Cell>
           </Column>
           <Column sortable flexGrow={3}>
-            <HeaderCell>
+            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
               <Translate>Date</Translate>
             </HeaderCell>
             <Cell dataKey="plannedStartDate" />
           </Column>
           <Column sortable flexGrow={3}>
-            <HeaderCell>
-            
+            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
+
               <Translate>Status</Translate>
             </HeaderCell>
             <Cell>
@@ -425,7 +429,7 @@ const EncounterList = () => {
           </Column>
 
           <Column >
-            <HeaderCell>
+            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
               <Translate>Is Observed</Translate>
             </HeaderCell>
             <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -464,7 +468,7 @@ const EncounterList = () => {
             limitOptions={[5, 15, 30]}
             limit={listRequest.pageSize}
             activePage={listRequest.pageNumber}
-            
+
             onChangePage={pageNumber => {
               setListRequest({ ...listRequest, pageNumber });
             }}
