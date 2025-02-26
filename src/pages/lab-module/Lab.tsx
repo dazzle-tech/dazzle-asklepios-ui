@@ -1989,7 +1989,7 @@ const Lab = () => {
                 await saveResult({ ...result, statusLkey: '6488555526802885', rejectedAt: Date.now() }).unwrap();
                 dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                 resultFetch();
-                setOpenNoteResultModal(false);
+                setOpenRejectedResultModal(false)
               }
               catch (error) {
                 dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));

@@ -1,7 +1,7 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect, useRef } from 'react';
-import { Input, Modal, Pagination, Panel, Schema, Table } from 'rsuite';
+import { Input, Modal, Pagination, Panel, Schema, Table, Col, Row } from 'rsuite';
 import CheckIcon from '@rsuite/icons/Check';
 import CloseIcon from '@rsuite/icons/Close';
 
@@ -16,7 +16,7 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import EditIcon from '@rsuite/icons/Edit';
 import TrashIcon from '@rsuite/icons/Trash';
 import { ApDepartment } from '@/types/model-types';
-import { newApDepartment } from '@/types/model-types-constructor';
+import { newApDepartment, newApMedicalSheets } from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
@@ -27,26 +27,47 @@ import { SchemaModel, StringType } from 'schema-typed';
 import { notify } from '@/utils/uiReducerActions';
 import { useDispatch } from 'react-redux';
 import CombinationIcon from '@rsuite/icons/Combination';
-
+import {useSaveMedicalSheetMutation,useGetMedicalSheetsByDepartmentIdQuery} from '@/services/setupService';
 const Departments = () => {
 
   const [department, setDepartment] = useState<ApDepartment>({ ...newApDepartment });
   const [popupOpen, setPopupOpen] = useState(false);
+  const [openScreensPopup, setOpenScreensPopup] = useState(false);
   const [generateCode, setGenerateCode] = useState();
   const inputRef = useRef(null);
   const formRef = React.useRef();
   const dispatch = useDispatch();
+  const [showScreen,setShowScreen]=useState({...newApMedicalSheets,
+    departmentKey:department.key,
+    facilityKey:department.facilityKey,
+    patientDashboard:true,
+	clinicalVisit:true,
+	diagnosticsOrder:true,
+	prescription:true,
+	drugOrder:true,
+	consultation:true,
+	procedures:true,
+	patientHistory:true,
+	allergies:true,
+	medicalWarnings:true,
+	medicationsRecord:true,
+	vaccineReccord:true,
+	diagnosticsResult:true
 
+  });
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const [facilityListRequest, setFacilityListRequest] = useState<ListRequest>({
     ...initialListRequest
   });
 
   const [saveDepartment, saveDepartmentMutation] = useSaveDepartmentMutation();
+  const[saveMedicalSheet]=useSaveMedicalSheetMutation();
   const { data: depTTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
   const { data: encTypesLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
-
-
+  const { data: medicalSheet} = useGetMedicalSheetsByDepartmentIdQuery(
+       department?.key,
+      { skip: !department.key}
+    );
   const { data: facilityListResponse } = useGetFacilitiesQuery(facilityListRequest);
   const { data: departmentListResponse } = useGetDepartmentsQuery(listRequest);
 
@@ -81,6 +102,32 @@ const Departments = () => {
       return 'selected-row';
     } else return '';
   };
+ useEffect(()=>{
+  console.log("medical"+department.key)
+  if(medicalSheet?.object?.key!==null){
+  setShowScreen({...medicalSheet?.object});}
+  else{setShowScreen({...newApMedicalSheets,
+    departmentKey:department.key,
+    facilityKey:department.facilityKey,
+    patientDashboard:true,
+	clinicalVisit:true,
+	diagnosticsOrder:true,
+	prescription:true,
+	drugOrder:true,
+	consultation:true,
+	procedures:true,
+	patientHistory:true,
+	allergies:true,
+	medicalWarnings:true,
+	medicationsRecord:true,
+	vaccineReccord:true,
+	diagnosticsResult:true
+
+  })}
+ },[medicalSheet]) ;
+ useEffect(()=>{
+  console.log("sh",showScreen)
+ },[showScreen]);
 
   const handleFilterChange = (fieldName, value) => {
     if (value) {
@@ -152,6 +199,7 @@ const Departments = () => {
           disabled={!['5673990729647001', '5673990729647002', '5673990729647005'].includes(department?.departmentTypeLkey)}
           appearance="primary"
           icon={<CombinationIcon />}
+          onClick={() => setOpenScreensPopup(true)}
         >
           Screen Components
         </IconButton>
@@ -176,6 +224,7 @@ const Departments = () => {
         data={departmentListResponse?.object ?? []}
         onRowClick={rowData => {
           setDepartment(rowData);
+          
         }}
         rowClassName={isSelected}
       >
@@ -350,6 +399,196 @@ const Departments = () => {
           </Form>
         </Modal.Body>
 
+      </Modal>
+      <Modal open={openScreensPopup} onClose={() => setOpenScreensPopup(false)} size="lg">
+        <Modal.Header>
+          <Modal.Title>
+            Choose the screens you want to appear</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Panel style={{border:'1px solid #87e6ed' ,borderRadius:'10px'  ,padding:'5px' }}>
+            <Row>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'patientDashboard'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'clinicalVisit'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'diagnosticsOrder'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'prescription'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              
+
+            </Row>
+            <Row>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'procedures'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'patientHistory'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'allergies'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'medicalWarnings'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              
+
+            </Row>
+            <Row>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'optometricExam'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'vaccineReccord'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'diagnosticsResult'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'dentalCare'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+             
+
+            </Row>
+            <Row>
+            <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'drugOrder'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'consultation'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'cardiology'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'audiometryPuretone'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+              
+            </Row>
+            <Row>
+            <Col xs={6}>
+                <MyInput
+                  fieldType='check'
+                  fieldName={'psychologicalExam'}
+                  showLabel={false}
+                  record={showScreen}
+                  setRecord={setShowScreen} />
+              </Col>
+            </Row>
+            </Panel>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer style={{ display: "flex", justifyContent: 'flex-end' }}>
+          <Button
+            appearance="primary"
+            color="cyan"
+            onClick={() =>{
+              try{
+              saveMedicalSheet({...showScreen,departmentKey:department.key}).unwrap();
+              dispatch(notify({ msg: 'Saved successfully',sev:"success" }));
+              setOpenScreensPopup(false);}
+              catch(error){
+                dispatch(notify({ msg: 'Saved Faild',sev:"error" }));
+              }
+            }
+            }
+          >
+            Save
+          </Button>
+          <Button
+            appearance="ghost"
+            color="cyan"
+            onClick={() => setOpenScreensPopup(false)}
+          >
+            Cancel
+          </Button>
+        </Modal.Footer>
       </Modal>
     </Panel>
   );

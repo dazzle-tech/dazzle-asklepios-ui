@@ -12,7 +12,6 @@ import 'react-tabs/style/react-tabs.css';
 
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 const EncounterMainInfoSection = ({ patient, encounter }) => {
-  console.log("encounter--.",encounter);
   const [PatientObservationSummary, setPatientObservationSummary] = useState<ApPatientObservationSummary>({ ...newApPatientObservationSummary, latestweight: null, latestheight: null, latestheadcircumference: null, latestbmi: null });
   const { data: encounterStatusLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_STATUS');
   const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');

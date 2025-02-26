@@ -1540,6 +1540,37 @@ export interface ApLovValues {
 	isValid:boolean;
 } 
 
+export interface ApMedicalSheets { 
+	key:string;
+	departmentKey:string;
+	facilityKey:string;
+	patientDashboard:boolean;
+	clinicalVisit:boolean;
+	diagnosticsOrder:boolean;
+	prescription:boolean;
+	drugOrder:boolean;
+	consultation:boolean;
+	procedures:boolean;
+	patientHistory:boolean;
+	allergies:boolean;
+	medicalWarnings:boolean;
+	medicationsRecord:boolean;
+	psychologicalExam:boolean;
+	audiometryPuretone:boolean;
+	optometricExam:boolean;
+	vaccineReccord:boolean;
+	diagnosticsResult:boolean;
+	dentalCare:boolean;
+	cardiology:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApMessages { 
 	key:string;
 	messageId:string;
