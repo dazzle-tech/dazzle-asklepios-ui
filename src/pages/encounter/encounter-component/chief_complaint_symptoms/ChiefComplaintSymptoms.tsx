@@ -88,29 +88,6 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
     const { data: complaintSymptomsResponse, refetch: refetchComplaintSymptoms } = useGetComplaintSymptomsQuery(complaintSymptomsListRequest, {
         skip: !patient?.key || !encounter?.key,
     });
-    // const isSelected = rowData => {
-    //     if (rowData && treadmillStress && treadmillStress.key === rowData.key) {
-    //         return 'selected-row';
-    //     } else return '';
-    // };
-    // const handleSave = () => {
-    //     if (treadmillStress.key === undefined) {
-    //         saveTreadmillStress({ ...treadmillStress, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
-    //             dispatch(notify('Patient Treadmill Stress Added Successfully'));
-    //         });
-    //         setTreadmillStress({ ...newApTreadmillStress, statusLkey: "9766169155908512" })
-    //         refetchTreadmillStress();
-    //         handleClearField();
-    //     }
-    //     else if (treadmillStress.key) {
-    //         saveTreadmillStress({ ...treadmillStress, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap().then(() => {
-    //             dispatch(notify('Patient Treadmill Stress Updated Successfully'));
-    //             setTreadmillStress({ ...newApTreadmillStress })
-    //             refetchTreadmillStress();
-    //             handleClearField();
-    //         });
-    //     }
-    // };
     const handleExpanded = (rowData) => {
         let open = false;
         const nextExpandedRowKeys = [];
