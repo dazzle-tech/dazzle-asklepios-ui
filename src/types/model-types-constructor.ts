@@ -1570,6 +1570,7 @@ export const newApMedicalSheets:modelTypes.ApMedicalSheets = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	observation:undefined,
 } 
 
 export const newApMessages:modelTypes.ApMessages = { 
