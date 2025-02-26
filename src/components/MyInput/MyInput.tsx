@@ -17,7 +17,8 @@ const MyInput = ({
   fieldType = 'text',
   record,
   setRecord = undefined,
-  vr = undefined, // form validation result
+  vr = undefined,
+  showLabel = true, // form validation result
   ...props
 }) => {
   const [validationResult, setValidationResult] = useState(undefined);
@@ -129,6 +130,18 @@ const MyInput = ({
             placeholder={props.placeholder}
           />
         );
+        case 'check':
+          return (
+            <Checkbox
+              checked={record[fieldName] ?? false}
+              onChange={(_, checked) => handleValueChange(checked)}
+              disabled={props.disabled}
+              color="cyan"
+              style={{ fontSize:'13px' ,transform: 'scale(1.3)' }} 
+            >
+              {props.label ?? fieldLabel}
+            </Checkbox>
+          );
       default:
         return (
           <Form.Control
@@ -178,7 +191,7 @@ const MyInput = ({
           {props.required && (
             <span style={{ color: 'red', fontSize: '110%', margin: '2px'  }}>*</span>
           )}
-          <MyLabel label={fieldLabel} error={validationResult} />
+     {showLabel&&<MyLabel label={fieldLabel} error={validationResult} />}
         </Form.ControlLabel>
         {props.column && <br />}
         {conjureFormControl()}

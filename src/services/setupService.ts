@@ -22,6 +22,7 @@ import {
   ApFacility,
   ApLov,
   ApLovValues,
+  ApMedicalSheets,
   ApModule,
   ApPractitioner,
   ApProcedureCoding,
@@ -1069,7 +1070,28 @@ export const setupService = createApi({
         onQueryStarted: onQueryStarted,
         keepUnusedDataFor: 3600
       }),
-   
+      saveMedicalSheet: builder.mutation({
+        query: (records: ApMedicalSheets) => ({
+          url: `/setup/save-medical-sheet`,
+          method: 'POST',
+          body: records
+        }),
+        onQueryStarted: onQueryStarted,
+        transformResponse: (response: any) => {
+          return response.object;
+        }
+      }),
+      getMedicalSheetsByDepartmentId: builder.query({
+        query: (departmentid: string) => ({
+            headers: {
+              departmentid
+            },
+            url: `/setup/medical-sheets-by-department-id`
+        }),
+        onQueryStarted: onQueryStarted,
+        keepUnusedDataFor: 5
+
+    }),
 
   })
 
@@ -1182,5 +1204,7 @@ export const {
   useSaveDuplicationCandidateSetupMutation,
   useGetCptListQuery,
   useGetLoincListQuery,
-  useDeactivateUserMutation
+  useDeactivateUserMutation,
+  useSaveMedicalSheetMutation,
+  useGetMedicalSheetsByDepartmentIdQuery
 } = setupService;

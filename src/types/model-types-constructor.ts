@@ -1541,6 +1541,37 @@ export const newApLovValues:modelTypes.ApLovValues = {
 	isValid:undefined,
 } 
 
+export const newApMedicalSheets:modelTypes.ApMedicalSheets = { 
+	key:undefined,
+	departmentKey:undefined,
+	facilityKey:undefined,
+	patientDashboard:undefined,
+	clinicalVisit:undefined,
+	diagnosticsOrder:undefined,
+	prescription:undefined,
+	drugOrder:undefined,
+	consultation:undefined,
+	procedures:undefined,
+	patientHistory:undefined,
+	allergies:undefined,
+	medicalWarnings:undefined,
+	medicationsRecord:undefined,
+	psychologicalExam:undefined,
+	audiometryPuretone:undefined,
+	optometricExam:undefined,
+	vaccineReccord:undefined,
+	diagnosticsResult:undefined,
+	dentalCare:undefined,
+	cardiology:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApMessages:modelTypes.ApMessages = { 
 	key:undefined,
 	messageId:'',
