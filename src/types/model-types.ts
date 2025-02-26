@@ -1570,6 +1570,7 @@ export interface ApMedicalSheets {
 	deletedAt:number;
 	isValid:boolean;
 	observation:boolean;
+	vaccination:boolean;
 } 
 
 export interface ApMessages { 

@@ -137,7 +137,7 @@ const MyInput = ({
               onChange={(_, checked) => handleValueChange(checked)}
               disabled={props.disabled}
               color="cyan"
-              style={{ fontSize:'13px' ,transform: 'scale(1.3)' }} 
+              style={{ fontSize:'13px' ,transform: 'scale(1.3)' ,width:'150px'}} 
             >
               {props.label ?? fieldLabel}
             </Checkbox>
