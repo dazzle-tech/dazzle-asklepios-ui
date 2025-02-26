@@ -420,6 +420,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                     ? appointment.appointmentStatus
                     : "New-Appointment",
             });
+
             saveAppointment({
                 ...appointment,
                 patientKey: localPatient.key,
@@ -429,11 +430,24 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                 appointmentStatus: appointment.appointmentStatus
                     ? appointment.appointmentStatus
                     : "New-Appointment",
-            }).unwrap().then(() => {
-                closeModal()
-                handleClear()
-                onSave()
             })
+            .unwrap()
+            .then(() => {
+                closeModal();
+                handleClear();
+                onSave();
+            })
+            .catch((e) => {
+                if (e.status === 422) {
+                    console.log("Validation error: Unprocessable Entity", e);
+                    dispatch(notify({ msg: 'The patient already has an appointment on this day.', sev: 'warn' }));
+
+                } else {
+                    console.log("An unexpected error occurred", e);
+                    dispatch(notify({ msg: '"An unexpected error occurred', sev: 'warn' }));
+
+                }
+            });
         } else {
             dispatch(notify({ msg: 'Please make sure to fill in the required fields.', sev: 'warn' }));
 
