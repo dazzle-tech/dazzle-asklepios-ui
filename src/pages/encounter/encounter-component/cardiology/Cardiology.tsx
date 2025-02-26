@@ -3,12 +3,14 @@ import {
     Panel,
 } from 'rsuite';
 import TreadmillStress from '../treadm-stress/TreadmillStress';
+import ChiefComplaintSymptoms from '../chief_complaint_symptoms/ChiefComplaintSymptoms';
 
 const Cardiology = ({ patient, encounter }) => {
     
     return (
         <Panel header={"Cardiology"}>
-            <Panel header={"Chief Complaint & Symptoms"} collapsible bordered>   
+            <Panel header={"Chief Complaint & Symptoms"} collapsible bordered>  
+            <ChiefComplaintSymptoms patient={patient} encounter={encounter}/>  
             </Panel>
             <Panel header={"Treadmill Stress Test (TMST)"} collapsible bordered>
              <TreadmillStress patient={patient} encounter={encounter}/>     

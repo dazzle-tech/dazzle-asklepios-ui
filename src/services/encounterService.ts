@@ -494,6 +494,24 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    saveComplaintSymptoms: builder.mutation({
+      query: (treadmillStress: ApTreadmillStress) => ({
+        url: `/encounter/save-complaint-symptoms`,
+        method: 'POST',
+        body: treadmillStress
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getComplaintSymptoms: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/complaint-symptoms-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 });
 
@@ -547,7 +565,9 @@ export const {
   useSaveOptometricExamMutation,
   useGetOptometricExamsQuery,
   useSaveTreadmillStresseMutation,
-  useGetTreadmillStressesQuery
+  useGetTreadmillStressesQuery,
+  useSaveComplaintSymptomsMutation,
+  useGetComplaintSymptomsQuery
 
 } = encounterService;
 
