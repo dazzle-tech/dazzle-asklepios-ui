@@ -641,7 +641,7 @@ export interface ApDiagnosticOrderTests {
 	statusLkey:string;
 	orderKey:string;
 	testKey:string;
-	receivedLabLkey:string;
+	receivedLabKey:string;
 	reasonLkey:string;
 	priorityLkey:string;
 	notes:string;

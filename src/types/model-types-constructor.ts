@@ -642,7 +642,7 @@ export const newApDiagnosticOrderTests:modelTypes.ApDiagnosticOrderTests = {
 	statusLkey:undefined,
 	orderKey:undefined,
 	testKey:undefined,
-	receivedLabLkey:undefined,
+	receivedLabKey:undefined,
 	reasonLkey:undefined,
 	priorityLkey:undefined,
 	notes:'',

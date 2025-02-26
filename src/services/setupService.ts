@@ -1092,6 +1092,17 @@ export const setupService = createApi({
         keepUnusedDataFor: 5
 
     }),
+    getDepartmentListByType: builder.query({
+      query: (departmentTypeKey: string) => ({
+          headers: {
+            departmentTypeKey
+          },
+          url: `/setup/department-list-by-type`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+
+  }),
 
   })
 
@@ -1206,5 +1217,6 @@ export const {
   useGetLoincListQuery,
   useDeactivateUserMutation,
   useSaveMedicalSheetMutation,
-  useGetMedicalSheetsByDepartmentIdQuery
+  useGetMedicalSheetsByDepartmentIdQuery,
+  useGetDepartmentListByTypeQuery
 } = setupService;
