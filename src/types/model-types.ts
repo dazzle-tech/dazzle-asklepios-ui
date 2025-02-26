@@ -1569,6 +1569,7 @@ export interface ApMedicalSheets {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	observation:boolean;
 } 
 
 export interface ApMessages { 
