@@ -276,13 +276,13 @@ const EncounterList = () => {
           </Column>
           <Column sortable flexGrow={3}>
             <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-              <Translate>Visit ID</Translate>
+              <Translate>VISIT ID</Translate>
             </HeaderCell>
             <Cell dataKey="visitId" />
           </Column>
           <Column sortable flexGrow={6} fullText>
             <HeaderCell fullText style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-              <Translate>Patient Name</Translate>
+              <Translate>PATIENT NAME</Translate>
             </HeaderCell>
             <Cell dataKey="patientFullName" fullText>
               {rowData => rowData?.patientObject?.privatePatient ? (
@@ -309,21 +309,23 @@ const EncounterList = () => {
           </Column>
           <Column sortable flexGrow={3}>
             <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-              <Translate>Age</Translate>
+              <Translate>AGE</Translate>
             </HeaderCell>
             <Cell dataKey="patientAge" />
           </Column>
 
           <Column sortable flexGrow={3} fullText fixed>
             <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-              <Translate>Visit Type</Translate>
+              <Translate>VISIT TYPE</Translate>
             </HeaderCell>
-            <Cell dataKey="type" />
+            <Cell >
+              {rowData=>rowData.encounterTypeLvalue?rowData.encounterTypeLvalue.lovDisplayVale:rowData.encounterTypeLkey}
+            </Cell>
           </Column>
           <Column sortable flexGrow={4} fullText>
             <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
 
-              <Translate> Chief Complain </Translate>
+              <Translate> CHIEF COMPLAIN </Translate>
             </HeaderCell>
             <Cell>
               {rowData =>
@@ -333,7 +335,7 @@ const EncounterList = () => {
           <Column sortable flexGrow={5} fullText>
             <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
 
-              <Translate>Diagnosis</Translate>
+              <Translate>DIAGNOSIS</Translate>
             </HeaderCell>
             <Cell>
               {rowData =>
@@ -345,7 +347,7 @@ const EncounterList = () => {
           <Column sortable flexGrow={3} fullText>
             <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
 
-              <Translate>Prescription </Translate>
+              <Translate>PRESCRIPTION</Translate>
             </HeaderCell>
             <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
               rowData.hasPrescription ? <Badge content="YES" style={{
@@ -371,7 +373,7 @@ const EncounterList = () => {
           <Column sortable flexGrow={3}>
             <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
 
-              <Translate> Has order</Translate>
+              <Translate>HAS ORDER</Translate>
             </HeaderCell>
             <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
               rowData.hasOrder ? <Badge content="YES" style={{
@@ -398,7 +400,7 @@ const EncounterList = () => {
           <Column sortable flexGrow={3}>
             <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
 
-              <Translate>Priority</Translate>
+              <Translate>PRIORITY</Translate>
             </HeaderCell>
             <Cell>
               {rowData =>
@@ -410,14 +412,14 @@ const EncounterList = () => {
           </Column>
           <Column sortable flexGrow={3}>
             <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-              <Translate>Date</Translate>
+              <Translate>DATE</Translate>
             </HeaderCell>
             <Cell dataKey="plannedStartDate" />
           </Column>
           <Column sortable flexGrow={3}>
             <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
 
-              <Translate>Status</Translate>
+              <Translate>STATUS</Translate>
             </HeaderCell>
             <Cell>
               {rowData =>
@@ -430,7 +432,7 @@ const EncounterList = () => {
 
           <Column >
             <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-              <Translate>Is Observed</Translate>
+              <Translate>IS OBSERVED</Translate>
             </HeaderCell>
             <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {rowData => (rowData.hasObservation ? <Badge content="YES" style={{
