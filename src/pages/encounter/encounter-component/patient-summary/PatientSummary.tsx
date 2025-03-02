@@ -57,7 +57,7 @@ import { useGetGenericMedicationActiveIngredientQuery, useGetActiveIngredientQue
 
 const PatientSummary = ({ patient, encounter }) => {
     const patientSlice = useAppSelector(state => state.patient);
-    const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
+    const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
     const { data: encounterReasonLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_REASON');
     const[prevencounter,setPrevencounter]=useState<ApEncounter>({...newApEncounter});
     const { data: allergensListToGetName } = useGetAllergensQuery({
@@ -371,7 +371,7 @@ const PatientSummary = ({ patient, encounter }) => {
                             width={140}
                             fieldType="select"
                             fieldLabel="Visit Type"
-                            fieldName="encounterTypeLkey"
+                            fieldName="visitTypeLkey"
                             selectData={encounterTypeLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
