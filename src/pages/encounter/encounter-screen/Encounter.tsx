@@ -356,7 +356,7 @@ const Encounter = () => {
                   icon={<icons.Menu />}
                   onClick={() => setIsDrawerOpen(true)}
                 >
-                  <Translate>Encounter  Menu</Translate>
+                  <Translate>Medical Sheets</Translate>
                 </IconButton>
                 <Button appearance="primary"
                   onClick={OpenAllargyModal}
