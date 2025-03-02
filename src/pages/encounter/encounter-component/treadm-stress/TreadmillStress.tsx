@@ -388,15 +388,7 @@ const TreadmillStress = ({ patient, encounter }) => {
                                         ...treadmillStress,
                                         preTestDiastolicBp: Number(e)
                                     })} />
-                            <Input
-                                disabled
-                                width={100}
-                                value={
-                                    treadmillStress.preTestDiastolicBp != null && treadmillStress.preTestSystolicBp != null
-                                        ? ((2 * treadmillStress.preTestDiastolicBp + treadmillStress.preTestSystolicBp) / 3).toFixed(2)
-                                        : ''
-                                }
-                            />
+                                
                         </Form>
                     </Form>
 
@@ -556,19 +548,11 @@ const TreadmillStress = ({ patient, encounter }) => {
                                         ...treadmillStress,
                                         postTestDiastolicBp: Number(e)
                                     })} />
-                            <Input
-                                disabled
-                                width={100}
-                                value={
-                                    treadmillStress.postTestDiastolicBp != null && treadmillStress.postTestSystolicBp != null
-                                        ? ((2 * treadmillStress.postTestDiastolicBp + treadmillStress.postTestSystolicBp) / 3).toFixed(2)
-                                        : ''
-                                }
-                            />
+                
                         </Form>
                     </Form>
                 </Form>
-                <Form style={{ display: 'flex', flexDirection: 'column' }}>
+                <Form style={{ display: 'flex', flexDirection: 'column',zoom:.8 }}>
                     <MyLabel label="Cardiologist Notes" />
                     <Input
                         as="textarea"
