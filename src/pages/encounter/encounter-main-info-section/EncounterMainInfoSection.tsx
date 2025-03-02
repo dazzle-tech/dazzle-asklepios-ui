@@ -17,7 +17,7 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
   const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
   const { data: encounterReasonLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_REASON');
   const { data: encounterPymentMethodLovQueryResponse } = useGetLovValuesByCodeQuery('PAY_TYPS');
-  const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
+  const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
   const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
@@ -110,7 +110,7 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
         width={150}
         fieldType="select"
         fieldLabel="Visit Type"
-        fieldName="encounterTypeLkey"
+        fieldName="visitTypeLkey"
         selectData={encounterTypeLovQueryResponse?.object ?? []}
         selectDataLabel="lovDisplayVale"
         selectDataValue="key"

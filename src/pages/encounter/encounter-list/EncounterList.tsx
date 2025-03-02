@@ -319,7 +319,7 @@ const EncounterList = () => {
               <Translate>VISIT TYPE</Translate>
             </HeaderCell>
             <Cell >
-              {rowData=>rowData.encounterTypeLvalue?rowData.encounterTypeLvalue.lovDisplayVale:rowData.encounterTypeLkey}
+              {rowData=>rowData.visitTypeLvalue?rowData.visitTypeLvalue.lovDisplayVale:rowData.visitTypeLkey}
             </Cell>
           </Column>
           <Column sortable flexGrow={4} fullText>
