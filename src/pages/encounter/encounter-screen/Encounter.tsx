@@ -415,6 +415,13 @@ const Encounter = () => {
                         <Translate>Clinical Visit</Translate>
                       </List.Item>
                     }
+                    {medicalSheet?.object?.observation && <List.Item
+                      style={{ display: 'flex', alignItems: 'center' }}
+                      //!patientSlice.encounter.editable
+                      onClick={() => handleMenuItemClick(<Observations patient={propsData.patient} encounter={propsData.encounter} />)}>
+                      <FontAwesomeIcon icon={faBedPulse} style={{ margin: '3px' }} />
+                      <Translate>Observations</Translate>
+                    </List.Item>}
                     {medicalSheet?.object?.allergies && <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
                       onClick={() => handleMenuItemClick(<Allergies edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
@@ -433,13 +440,7 @@ const Encounter = () => {
                       <FontAwesomeIcon icon={faHeartPulse} style={{ margin: '3px' }} />
                       <Translate>Cardiology</Translate>
                     </List.Item>}
-                    {medicalSheet?.object?.observation && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
-                      //!patientSlice.encounter.editable
-                      onClick={() => handleMenuItemClick(<Observations patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faBedPulse} style={{ margin: '3px' }} />
-                      <Translate>Observations</Translate>
-                    </List.Item>}
+                    
                     {medicalSheet?.object?.dentalCare && <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
                       //!patientSlice.encounter.editable

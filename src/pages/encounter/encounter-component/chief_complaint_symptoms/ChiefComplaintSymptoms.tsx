@@ -344,6 +344,49 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
     return (
         <Panel>
             <Panel bordered style={{ padding: '10px' }}>
+            <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px' ,zoom:.8}}>
+                    <Form style={{ display: 'flex', flexDirection: 'column', gap: '7px', marginTop: '10px' }}>
+                        <MyLabel label="Chief Complaint" />
+                        <Input
+                            as="textarea"
+                            value={complaintSymptoms.chiefComplaint}
+                            onChange={(e) => setComplaintSymptoms({
+                                ...complaintSymptoms,
+                                chiefComplaint: e
+                            })}
+                            style={{ width: 330 }}
+                            rows={3}
+                        />
+                    </Form>
+
+                    <Form fluid layout='inline' style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                        <MyInput
+                            width={360}
+                            column
+                            fieldLabel="Associated Symptoms"
+                            fieldType="select"
+                            fieldName='associatedSymptomsLkey'
+                            selectData={adversLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            record={associatedSymptoms}
+                            setRecord={setAssociatedSymptoms}
+                        />
+                        <Input
+                            as="textarea"
+                            value={complaintSymptoms.associatedSymptoms || ""}
+                            onChange={(value) =>
+                                setComplaintSymptoms((prev) => ({
+                                    ...prev,
+                                    associatedSymptoms: value
+                                }))
+                            }
+                            style={{ width: 300, marginTop: 0 }}
+                            rows={3}
+                        />
+
+                    </Form>
+                </Form>
                 <Form fluid layout='inline' style={{ display: 'flex' }}>
                     <MyInput
                         width={165}
@@ -422,49 +465,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
 
                 </Form>
 
-                <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Form style={{ display: 'flex', flexDirection: 'column', gap: '7px', marginTop: '10px' }}>
-                        <MyLabel label="Chief Complaint" />
-                        <Input
-                            as="textarea"
-                            value={complaintSymptoms.chiefComplaint}
-                            onChange={(e) => setComplaintSymptoms({
-                                ...complaintSymptoms,
-                                chiefComplaint: e
-                            })}
-                            style={{ width: 330 }}
-                            rows={3}
-                        />
-                    </Form>
-
-                    <Form fluid layout='inline' style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                        <MyInput
-                            width={360}
-                            column
-                            fieldLabel="Associated Symptoms"
-                            fieldType="select"
-                            fieldName='associatedSymptomsLkey'
-                            selectData={adversLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            record={associatedSymptoms}
-                            setRecord={setAssociatedSymptoms}
-                        />
-                        <Input
-                            as="textarea"
-                            value={complaintSymptoms.associatedSymptoms || ""}
-                            onChange={(value) =>
-                                setComplaintSymptoms((prev) => ({
-                                    ...prev,
-                                    associatedSymptoms: value
-                                }))
-                            }
-                            style={{ width: 300, marginTop: 0 }}
-                            rows={3}
-                        />
-
-                    </Form>
-                </Form>
+             
                 <ButtonToolbar style={{ zoom: .8, marginTop: '10px' }}>
                     <Button
                         appearance="primary"
