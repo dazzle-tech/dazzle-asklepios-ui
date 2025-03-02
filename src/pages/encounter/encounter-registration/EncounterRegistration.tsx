@@ -255,7 +255,7 @@ const EncounterRegistration = () => {
 
     if (localEncounter && localEncounter.patientKey) {
 
-      saveEncounter(localEncounter).unwrap();
+      saveEncounter(localEncounter).unwrap() 
 
     } else {
       dispatch(notify({ msg: 'encounter not linked to patient', sev: 'error' }));

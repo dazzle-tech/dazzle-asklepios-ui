@@ -85,7 +85,17 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
     };
     const handleSave = () => {
         if (localEncounter && localEncounter.patientKey) {
-            saveEncounter({ ...localEncounter, patientKey: localPatient.key, plannedStartDate: new Date() ,encounterStatusLkey:encounterStatusNew,patientAge:calculateAgeFormat(localPatient.dob)}).unwrap();
+            saveEncounter({ ...localEncounter, patientKey: localPatient.key, plannedStartDate: new Date() ,encounterStatusLkey:encounterStatusNew,patientAge:calculateAgeFormat(localPatient.dob)}).unwrap().catch((e) => {
+                                  if (e.status === 422) {
+                                      console.log("Validation error: Unprocessable Entity", e);
+                                      dispatch(notify({ msg: 'Patient Already Registered on this Resource.', sev: 'error' }));
+                  
+                                  } else {
+                                      console.log("An unexpected error occurred", e);
+                                      dispatch(notify({ msg: '"An unexpected error occurred', sev: 'warn' }));
+                  
+                                  }
+                              });;
         } else {
             dispatch(notify({ msg: 'encounter not linked to patient', sev: 'error' }));
         }

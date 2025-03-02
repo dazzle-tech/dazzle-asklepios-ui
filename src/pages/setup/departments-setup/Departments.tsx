@@ -27,7 +27,7 @@ import { SchemaModel, StringType } from 'schema-typed';
 import { notify } from '@/utils/uiReducerActions';
 import { useDispatch } from 'react-redux';
 import CombinationIcon from '@rsuite/icons/Combination';
-import {useSaveMedicalSheetMutation,useGetMedicalSheetsByDepartmentIdQuery} from '@/services/setupService';
+import { useSaveMedicalSheetMutation, useGetMedicalSheetsByDepartmentIdQuery } from '@/services/setupService';
 const Departments = () => {
 
   const [department, setDepartment] = useState<ApDepartment>({ ...newApDepartment });
@@ -37,23 +37,24 @@ const Departments = () => {
   const inputRef = useRef(null);
   const formRef = React.useRef();
   const dispatch = useDispatch();
-  const [showScreen,setShowScreen]=useState({...newApMedicalSheets,
-    departmentKey:department.key,
-    facilityKey:department.facilityKey,
-    patientDashboard:true,
-	clinicalVisit:true,
-	diagnosticsOrder:true,
-	prescription:true,
-	drugOrder:true,
-	consultation:true,
-	procedures:true,
-	patientHistory:true,
-	allergies:true,
-	medicalWarnings:true,
-	medicationsRecord:true,
-	vaccineReccord:true,
-	diagnosticsResult:true,
-  observation:true
+  const [showScreen, setShowScreen] = useState({
+    ...newApMedicalSheets,
+    departmentKey: department.key,
+    facilityKey: department.facilityKey,
+    patientDashboard: true,
+    clinicalVisit: true,
+    diagnosticsOrder: true,
+    prescription: true,
+    drugOrder: true,
+    consultation: true,
+    procedures: true,
+    patientHistory: true,
+    allergies: true,
+    medicalWarnings: true,
+    medicationsRecord: true,
+    vaccineReccord: true,
+    diagnosticsResult: true,
+    observation: true
 
   });
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
@@ -62,13 +63,13 @@ const Departments = () => {
   });
 
   const [saveDepartment, saveDepartmentMutation] = useSaveDepartmentMutation();
-  const[saveMedicalSheet]=useSaveMedicalSheetMutation();
+  const [saveMedicalSheet] = useSaveMedicalSheetMutation();
   const { data: depTTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
   const { data: encTypesLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
-  const { data: medicalSheet} = useGetMedicalSheetsByDepartmentIdQuery(
-       department?.key,
-      { skip: !department.key}
-    );
+  const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
+    department?.key,
+    { skip: !department.key }
+  );
   const { data: facilityListResponse } = useGetFacilitiesQuery(facilityListRequest);
   const { data: departmentListResponse } = useGetDepartmentsQuery(listRequest);
 
@@ -103,33 +104,37 @@ const Departments = () => {
       return 'selected-row';
     } else return '';
   };
- useEffect(()=>{
-  console.log("medical"+department.key)
-  if(medicalSheet?.object?.key!==null){
-  setShowScreen({...medicalSheet?.object});}
-  else{setShowScreen({...newApMedicalSheets,
-    departmentKey:department.key,
-    facilityKey:department.facilityKey,
-    patientDashboard:true,
-	clinicalVisit:true,
-	diagnosticsOrder:true,
-	prescription:true,
-	drugOrder:true,
-	consultation:true,
-	procedures:true,
-	patientHistory:true,
-	allergies:true,
-	medicalWarnings:true,
-	medicationsRecord:true,
-	vaccineReccord:true,
-	diagnosticsResult:true,
-  observation:true
+  useEffect(() => {
+    console.log("medical" + department.key)
+    if (medicalSheet?.object?.key !== null) {
+      setShowScreen({ ...medicalSheet?.object });
+    }
+    else {
+      setShowScreen({
+        ...newApMedicalSheets,
+        departmentKey: department.key,
+        facilityKey: department.facilityKey,
+        patientDashboard: true,
+        clinicalVisit: true,
+        diagnosticsOrder: true,
+        prescription: true,
+        drugOrder: true,
+        consultation: true,
+        procedures: true,
+        patientHistory: true,
+        allergies: true,
+        medicalWarnings: true,
+        medicationsRecord: true,
+        vaccineReccord: true,
+        diagnosticsResult: true,
+        observation: true
 
-  })}
- },[medicalSheet]) ;
- useEffect(()=>{
-  console.log("sh",showScreen)
- },[showScreen]);
+      })
+    }
+  }, [medicalSheet]);
+  useEffect(() => {
+    console.log("sh", showScreen)
+  }, [showScreen]);
 
   const handleFilterChange = (fieldName, value) => {
     if (value) {
@@ -226,7 +231,7 @@ const Departments = () => {
         data={departmentListResponse?.object ?? []}
         onRowClick={rowData => {
           setDepartment(rowData);
-          
+
         }}
         rowClassName={isSelected}
       >
@@ -244,6 +249,20 @@ const Departments = () => {
             <Translate>Department Name</Translate>
           </HeaderCell>
           <Cell dataKey="name" />
+        </Column>
+
+        <Column sortable flexGrow={4}>
+          <HeaderCell>
+            <Input onChange={e => handleFilterChange('name', e)} />
+            <Translate>Department Type</Translate>
+          </HeaderCell>
+          <Cell>
+            {rowData => (
+              <Translate>{rowData?.departmentTypeLvalue.lovDisplayVale}</Translate>
+            )}
+
+          </Cell>
+ 
         </Column>
 
         <Column sortable flexGrow={4}>
@@ -409,178 +428,178 @@ const Departments = () => {
         </Modal.Header>
         <Modal.Body>
           <Form>
-            <Panel style={{border:'1px solid #87e6ed' ,borderRadius:'10px' ,paddingLeft:'5px' }}>
-            <Row >
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'patientDashboard'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'clinicalVisit'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'diagnosticsOrder'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'prescription'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              
+            <Panel style={{ border: '1px solid #87e6ed', borderRadius: '10px', paddingLeft: '5px' }}>
+              <Row >
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'patientDashboard'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'clinicalVisit'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'diagnosticsOrder'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'prescription'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
 
-            </Row>
-            <Row >
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'procedures'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'patientHistory'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'allergies'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'medicalWarnings'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              
 
-            </Row>
-            <Row  >
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'optometricExam'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'vaccineReccord'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'diagnosticsResult'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'dentalCare'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-             
+              </Row>
+              <Row >
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'procedures'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'patientHistory'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'allergies'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'medicalWarnings'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
 
-            </Row >
-            <Row  >
-            <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'drugOrder'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'consultation'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'cardiology'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'audiometryPuretone'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              
-            </Row>
-            <Row >
-            <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'psychologicalExam'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'observation'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              <Col xs={6}>
-                <MyInput
-                  fieldType='check'
-                  fieldName={'vaccination'}
-                  showLabel={false}
-                  record={showScreen}
-                  setRecord={setShowScreen} />
-              </Col>
-              <Col xs={6}>
-              </Col>
-            </Row>
+
+              </Row>
+              <Row  >
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'optometricExam'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'vaccineReccord'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'diagnosticsResult'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'dentalCare'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+
+
+              </Row >
+              <Row  >
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'drugOrder'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'consultation'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'cardiology'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'audiometryPuretone'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+
+              </Row>
+              <Row >
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'psychologicalExam'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'observation'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+                <Col xs={6}>
+                  <MyInput
+                    fieldType='check'
+                    fieldName={'vaccination'}
+                    showLabel={false}
+                    record={showScreen}
+                    setRecord={setShowScreen} />
+                </Col>
+                <Col xs={6}>
+                </Col>
+              </Row>
             </Panel>
           </Form>
         </Modal.Body>
@@ -588,13 +607,14 @@ const Departments = () => {
           <Button
             appearance="primary"
             color="cyan"
-            onClick={() =>{
-              try{
-              saveMedicalSheet({...showScreen,departmentKey:department.key}).unwrap();
-              dispatch(notify({ msg: 'Saved successfully',sev:"success" }));
-              setOpenScreensPopup(false);}
-              catch(error){
-                dispatch(notify({ msg: 'Saved Faild',sev:"error" }));
+            onClick={() => {
+              try {
+                saveMedicalSheet({ ...showScreen, departmentKey: department.key }).unwrap();
+                dispatch(notify({ msg: 'Saved successfully', sev: "success" }));
+                setOpenScreensPopup(false);
+              }
+              catch (error) {
+                dispatch(notify({ msg: 'Saved Faild', sev: "error" }));
               }
             }
             }
