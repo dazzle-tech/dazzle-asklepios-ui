@@ -78,13 +78,14 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
     const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
     const [paymentMethodSelected, setPaymentMethodSelected] = useState(null);
     const handleOpenPaymentModel = () => setOpenModelPayment(true);
+    const encounterStatusNew = '91063195286200'; // TODO change this to be fetched from redis based on LOV CODE
     const handleClosePaymentModel = () => setOpenModelPayment(false);
     const handleSavePayment = () => {
         setOpenModelPayment(false);
     };
     const handleSave = () => {
         if (localEncounter && localEncounter.patientKey) {
-            saveEncounter({ ...localEncounter, patientKey: localPatient.key, plannedStartDate: new Date() ,patientAge:calculateAgeFormat(localPatient.dob)}).unwrap();
+            saveEncounter({ ...localEncounter, patientKey: localPatient.key, plannedStartDate: new Date() ,encounterStatusLkey:encounterStatusNew,patientAge:calculateAgeFormat(localPatient.dob)}).unwrap();
         } else {
             dispatch(notify({ msg: 'encounter not linked to patient', sev: 'error' }));
         }
