@@ -635,6 +635,19 @@ export const newApDepartment:modelTypes.ApDepartment = {
 	encountertypelkey:undefined,
 } 
 
+export const newApDiagnosticCoding:modelTypes.ApDiagnosticCoding = { 
+	key:undefined,
+	diagnosticsKey:undefined,
+	codeTypeLkey:undefined,
+	internationalCodeKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
 export const newApDiagnosticOrderTests:modelTypes.ApDiagnosticOrderTests = { 
 	key:undefined,
 	patientKey:undefined,

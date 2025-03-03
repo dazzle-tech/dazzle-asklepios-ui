@@ -1,12 +1,17 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
+import { MdSave } from 'react-icons/md';
+import TrashIcon from '@rsuite/icons/Trash';
 import { Input, Panel, Container, Row, Col, Table, Button, InlineEdit, TagPicker } from 'rsuite';
 import {
   useGetDiagnosticsTestTypeQuery,
   useGetLovValuesByCodeQuery,
   useSaveDiagnosticsTestMutation,
-  useSaveDiagnosticsTestSpecialPopulationMutation
+  useSaveDiagnosticsTestSpecialPopulationMutation,
+  useGetDiagnosticsCodingListQuery,
+  useSaveDiagnosticsCodingMutation,
+  useRemoveDiagnosticsCodingMutation
 } from '@/services/setupService';
 import {
   useGetActiveIngredientQuery,
@@ -16,7 +21,7 @@ import { Accordion, ButtonToolbar, IconButton, Checkbox, TagGroup, Tag, Modal, C
 import { Block, Check, Edit, PlusRound, ArrowDown, ArrowUp } from '@rsuite/icons';
 import PlusIcon from '@rsuite/icons/Plus';
 import { ApActiveIngredient, ApDiagnosticTest, ApDiagnosticTestSpecialPopulation } from '@/types/model-types';
-import { newApActiveIngredient, newApDiagnosticTest, newApDiagnosticTestSpecialPopulation } from '@/types/model-types-constructor';
+import { newApActiveIngredient, newApDiagnosticCoding, newApDiagnosticTest, newApDiagnosticTestSpecialPopulation } from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useNavigate } from 'react-router-dom';
@@ -28,26 +33,41 @@ import Radiology from './Radiology';
 import Genetics from './Genetics';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import DiagnosticsTest from './DiagnosticsTest';
 // import EyeExam from './EyeExam';
 
 const { Column, HeaderCell, Cell } = Table;
-const NewDiagnosticsTest = ({selectedDiagnosticsTest, goBack, ...props }) => {
+const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [basicDataSaved, setBasicDataSaved] = useState(false);
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+
   const [diagnosticsTest, setDiagnosticsTest] = useState<ApDiagnosticTest>({ ...newApDiagnosticTest });
+  
+  const [listCodingRequest, setListCosingRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    filters: [{
+      fieldName:'diagnostics_key',
+      operator: 'match',
+      value: diagnosticsTest?.key
+    }]
+  });
+
   const [saveDiagnosticsTest, saveDiagnosticsTestMutation] = useSaveDiagnosticsTestMutation();
-  const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] = useState<ApDiagnosticTestSpecialPopulation>({...newApDiagnosticTestSpecialPopulation});
+  const [saveCoding, saveCodingMutation] = useSaveDiagnosticsCodingMutation();
+  const [removeDiagnosticCoding, removeDiagnosticCodingMutation] = useRemoveDiagnosticsCodingMutation();
+  const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] = useState<ApDiagnosticTestSpecialPopulation>({ ...newApDiagnosticTestSpecialPopulation });
   const [saveDiagnosticsTestSpecialPopulation, saveDiagnosticsTestpecialPopulationMutation] = useSaveDiagnosticsTestSpecialPopulationMutation();
-  
+
   const { data: DiagnosticsTestTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_TEST-TYPES');
-  
+  const { data: CodingList,refetch:fetchCoding } = useGetDiagnosticsCodingListQuery({ ...listCodingRequest });
   const { data: CurrencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
   const { data: GenderLovQueryResponse } = useGetLovValuesByCodeQuery('MEDICAL_GNDR');
   const { data: SpecialPopulationLovQueryResponse } = useGetLovValuesByCodeQuery('SPECIAL_POPULATION_GROUPS');
   const { data: AgeGroupLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_GROUPS');
   const { data: LabReagentsLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_REAGENTS');
+   const { data: codeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('INTERNATIONAL_CODES');
   const [tags, setTags] = useState([]);
   const [typing, setTyping] = React.useState(false);
   const [inputValue, setInputValue] = React.useState('');
@@ -56,21 +76,20 @@ const NewDiagnosticsTest = ({selectedDiagnosticsTest, goBack, ...props }) => {
   const [genderDetails, setGenderDetails] = useState(false);
   const [specialPopulationDetails, setSpecialPopulationDetails] = useState(false);
   const [ageGroupSpecificDetails, setAgeGroupSpecificDetailsDetails] = useState(false);
+  const[diagnosticCoding,setDiagnosticCoding]=useState({...newApDiagnosticCoding});
   const [popupOpen, setPopupOpen] = useState(false);
-  const [componentToDisplay, setComponentToDisplay ] =useState("");
+  const [componentToDisplay, setComponentToDisplay] = useState("");
   const removeTag = tag => {
     const nextTags = tags.filter(item => item !== tag);
     setTags(nextTags);
   };
 
-  const matchingItem =  useGetDiagnosticsTestTypeQuery(diagnosticsTest.testTypeLkey || '');
-
-  // const addTag = () => {
-  //   const nextTags = inputValue ? [...tags, inputValue] : tags;
-  //   setTags(nextTags);
-  //   setTyping(false);
-  //   setInputValue('');
-  // };
+  const matchingItem = useGetDiagnosticsTestTypeQuery(diagnosticsTest.testTypeLkey || '');
+  const isSelectedcode = rowData => {
+    if (rowData && diagnosticCoding && rowData.key === diagnosticCoding.key) {
+      return 'selected-row';
+    } else return '';
+  };
 
   const handleButtonClick = () => {
     setTyping(true);
@@ -85,8 +104,8 @@ const NewDiagnosticsTest = ({selectedDiagnosticsTest, goBack, ...props }) => {
           style={{ width: 70 }}
           value={inputValue}
           onChange={setInputValue}
-          // onBlur={addTag}
-          // onPressEnter={addTag}
+        // onBlur={addTag}
+        // onPressEnter={addTag}
         />
       );
     }
@@ -112,7 +131,17 @@ const NewDiagnosticsTest = ({selectedDiagnosticsTest, goBack, ...props }) => {
       dispatch(notify('Saved Successfully'));
     }
   }, [saveDiagnosticsTestMutation.data]);
-
+ useEffect(()=>{
+  const updatedFilters =[{
+    fieldName:'diagnostics_key',
+    operator: 'match',
+    value: diagnosticsTest?.key
+  }];
+  setListCosingRequest((prevRequest) => ({
+    ...prevRequest,
+    filters: updatedFilters,
+  }));
+ },[diagnosticsTest.key])
 
   useEffect(() => {
     if (selectedDiagnosticsTest) {
@@ -147,46 +176,54 @@ const NewDiagnosticsTest = ({selectedDiagnosticsTest, goBack, ...props }) => {
 
   const handleSaveBasicInfo = async () => {
     try {
-      await saveDiagnosticsTest({
-     ...diagnosticsTest, 
-      createdBy: 'Administrator'
-   }).unwrap();
-   dispatch(notify('Saved Successfully'));
-         setBasicDataSaved(true);
-        } catch (error) {
-          console.error("Error saving diagnostics test:", error);
-          dispatch(notify('Error saving diagnostics test'));
-         }
+    const Response=  await saveDiagnosticsTest({
+        ...diagnosticsTest,
+        createdBy: 'Administrator'
+      }).unwrap();
+      dispatch(notify('Saved Successfully'));
+      setBasicDataSaved(true);
+      setDiagnosticsTest({...Response});
+    } catch (error) {
+      console.error("Error saving diagnostics test:", error);
+      dispatch(notify('Error saving diagnostics test'));
+    }
     if (diagnosticsTest.testTypeLkey === null) {
       return null;
     }
   };
-  
+  const handleSaveCoding=async()=>{
+    try{
+      await saveCoding({...diagnosticCoding,diagnosticsKey:diagnosticsTest.key}).unwrap();
+      dispatch(notify({msg:'Saved Successfully',sev:'Success'}));
+      fetchCoding();
+    }
+    catch{
+
+    }
+  }
   const handleShowComponent = () => {
-    
-    console.log(matchingItem.data?.object);
     switch (matchingItem.data?.object) {
       case 'Laboratory':
-        console.log("lab");
-       return <Laboratory diagnosticsTest={diagnosticsTest} />;
+      
+        return <Laboratory diagnosticsTest={diagnosticsTest} />;
       case 'Radiology':
-        console.log("Rad");
-        return <Radiology diagnosticsTest={diagnosticsTest}/>;
-        case 'Pathology':
-          console.log("Path");
-          return <Pathology diagnosticsTest={diagnosticsTest} />;
-          case 'Genetics':
-            console.log("Gen");
-            return <Genetics diagnosticsTest={diagnosticsTest}/>;
-            // case 'Eye Exam':
-            //   console.log("Ete");
-            //   return <EyeExam/>;
-              default:
-            return <div>No component available</div> ;
+     
+        return <Radiology diagnosticsTest={diagnosticsTest} />;
+      case 'Pathology':
+       
+        return <Pathology diagnosticsTest={diagnosticsTest} />;
+      case 'Genetics':
+       
+        return <Genetics diagnosticsTest={diagnosticsTest} />;
+      // case 'Eye Exam':
+      //   console.log("Ete");
+      //   return <EyeExam/>;
+      default:
+        return <div>No component available</div>;
     }
 
   }
-  
+
   return (
     <Panel
       header={
@@ -201,15 +238,15 @@ const NewDiagnosticsTest = ({selectedDiagnosticsTest, goBack, ...props }) => {
         </IconButton>
         <Divider vertical />
 
-        
+
         <IconButton
-                onClick={handleSaveBasicInfo}
-                appearance="primary"
-                color="green"
-                icon={<Check />}
-              >
-                <Translate> {"Save"} </Translate>
-              </IconButton>
+          onClick={handleSaveBasicInfo}
+          appearance="primary"
+          color="green"
+          icon={<Check />}
+        >
+          <Translate> {"Save"} </Translate>
+        </IconButton>
 
         <IconButton appearance="primary" color="red" icon={<Block />}>
           <Translate>Clear</Translate>
@@ -265,8 +302,8 @@ const NewDiagnosticsTest = ({selectedDiagnosticsTest, goBack, ...props }) => {
                 isabled={!editing}
                 setRecord={setDiagnosticsTest}
               />
-                <br/>
-               <MyInput
+              <br />
+              <MyInput
                 width={400}
                 column
                 fieldName="genderSpecific"
@@ -277,21 +314,21 @@ const NewDiagnosticsTest = ({selectedDiagnosticsTest, goBack, ...props }) => {
                 setRecord={setDiagnosticsTest}
               />
               {diagnosticsTest.genderSpecific && (
-                 <MyInput
-                 width={200}
-                 column
-                 fieldName="genderLkey"
-                 fieldType="select"
-                 selectData={GenderLovQueryResponse?.object ?? []}
-                 selectDataLabel="lovDisplayVale"
-                 selectDataValue="key"
-                 record={diagnosticsTest}
-                 isabled={!editing}
-                 setRecord={setDiagnosticsTest}
-               />
-               
+                <MyInput
+                  width={200}
+                  column
+                  fieldName="genderLkey"
+                  fieldType="select"
+                  selectData={GenderLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  record={diagnosticsTest}
+                  isabled={!editing}
+                  setRecord={setDiagnosticsTest}
+                />
+
               )}
-               <MyInput
+              <MyInput
                 width={400}
                 column
                 fieldName="specialPopulation"
@@ -302,26 +339,26 @@ const NewDiagnosticsTest = ({selectedDiagnosticsTest, goBack, ...props }) => {
                 setRecord={setDiagnosticsTest}
               />
               {diagnosticsTest.specialPopulation && (
-                  <InlineEdit
-                    placeholder="Special Pouplation"
-                    style={{ width: 200 }}
+                <InlineEdit
+                  placeholder="Special Pouplation"
+                  style={{ width: 200 }}
 
-                  >
-                    <TagPicker data={SpecialPopulationLovQueryResponse?.object ?? []}
-                      labelKey="lovDisplayVale" valueKey="key"  block
-                      value={diagnosticTestSpecialPopulation.testKey}
-                      onChange={e =>
-                        setDiagnosticTestSpecialPopulation({
-                          ...diagnosticTestSpecialPopulation,
-                          testKey: String(e)
-                        })
-                      }
+                >
+                  <TagPicker data={SpecialPopulationLovQueryResponse?.object ?? []}
+                    labelKey="lovDisplayVale" valueKey="key" block
+                    value={diagnosticTestSpecialPopulation.testKey}
+                    onChange={e =>
+                      setDiagnosticTestSpecialPopulation({
+                        ...diagnosticTestSpecialPopulation,
+                        testKey: String(e)
+                      })
+                    }
 
-                      />
-                  </InlineEdit>
-                )
-                }
-                <MyInput
+                  />
+                </InlineEdit>
+              )
+              }
+              <MyInput
                 width={400}
                 column
                 fieldName="ageSpecific"
@@ -332,18 +369,18 @@ const NewDiagnosticsTest = ({selectedDiagnosticsTest, goBack, ...props }) => {
                 setRecord={setDiagnosticsTest}
               />
               {diagnosticsTest.ageSpecific && (
-                
-                  <InlineEdit
-                    placeholder="Age Group"
-                    style={{ width: 200 }}
-                  >
-                    <TagPicker data={AgeGroupLovQueryResponse?.object ?? []}
-                      labelKey="lovDisplayVale" valueKey="key" block 
-                      />
-                  </InlineEdit>
-                )
-                }
-                <MyInput
+
+                <InlineEdit
+                  placeholder="Age Group"
+                  style={{ width: 200 }}
+                >
+                  <TagPicker data={AgeGroupLovQueryResponse?.object ?? []}
+                    labelKey="lovDisplayVale" valueKey="key" block
+                  />
+                </InlineEdit>
+              )
+              }
+              <MyInput
                 width={400}
                 column
                 fieldName="appointable"
@@ -355,20 +392,124 @@ const NewDiagnosticsTest = ({selectedDiagnosticsTest, goBack, ...props }) => {
 
 
             </Form>
+            <div className={diagnosticsTest.key ? "" :"disabled-panel"} style={{ display: 'flex', flexDirection: 'column' ,border:'1px solid #e5e5ea',borderRadius:'10px', width:'450px',paddingLeft:'10px'}}>
+              <Panel style={{ display: 'flex' }} >
+                <Form layout="inline" fluid style={{ display: 'flex' }} >
+                  <MyInput
+                    column
+                    width={150}
+                    fieldType="select"
+                    fieldLabel="Code Type"
+                    selectData={codeTypeLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    fieldName={'codeTypeLkey'}
+                    record={diagnosticCoding}
+                    setRecord={setDiagnosticCoding}
+                  />
+                  <MyInput
+                    column
+                    width={150}
+                    fieldType="select"
+                    fieldLabel="Code"
+                    selectData={[]}
+                    selectDataLabel="name"
+                    selectDataValue="key"
+                    fieldName={'internationalCodeKey'}
+                    record={diagnosticCoding}
+                    setRecord={setDiagnosticCoding}
+                  />
+                  <ButtonToolbar zoom={.8} style={{ padding: '6px', display: 'flex', marginTop: '20px' }}>
+                    <IconButton
+                      size="xs"
+                      onClick={handleSaveCoding}
+                      appearance="primary"
+                      color="violet"
+                      icon={<MdSave />}
+                    >
+
+                    </IconButton>
+
+                    <IconButton
+                      size="xs"
+                      appearance="primary"
+                      color="blue"
+                      onClick={() => {
+                        
+                        removeDiagnosticCoding({ ...diagnosticCoding}).unwrap().then(() => {
+                          fetchCoding();
+                          dispatch(notify("deleted succsessfuly"))
+                        });
+
+                      }}
+                      icon={<TrashIcon />}
+                    >
+
+                    </IconButton>
+
+
+
+                  </ButtonToolbar>
+                </Form>
+              </Panel>
+              <div>
+                <Table
+                  height={200}
+                  width={400}
+                  onSortColumn={(sortBy, sortType) => {
+                    if (sortBy)
+                      setListRequest({
+                        ...listRequest,
+                        sortBy,
+                        sortType
+                      });
+                  }}
+                  headerHeight={33}
+                  rowHeight={40}
+
+                  data={CodingList?.object ?? []}
+                  onRowClick={rowData => {
+                    setDiagnosticCoding(rowData);
+                  }}
+                  rowClassName={isSelectedcode}
+                >
+                  <Column sortable flexGrow={1}>
+                    <HeaderCell align="center">
+
+                      <Translate>Code Type</Translate>
+                    </HeaderCell>
+                    <Cell align="center">
+                      {rowData => rowData.codeTypeLkey ? rowData.codeTypeLvalue.lovDisplayVale : rowData.codeTypeLkey}
+                    </Cell  >
+                  </Column>
+                  <Column sortable flexGrow={2}>
+                    <HeaderCell align="center">
+
+                      <Translate>international Code</Translate>
+                    </HeaderCell>
+                    <Cell align="center">
+                      {rowData => rowData.internationalCodeKey}
+                    </Cell  >
+                  </Column>
+
+
+                </Table>
+              </div>
+            </div>
           </Stack.Item>
         </Stack>
-   
+
       </Panel>
-      {basicDataSaved  && (
+      {basicDataSaved && (
         <Panel>
-           {/* {console.log("the value is " + handleShowComponent() + basicDataSaved)} */}
-           {handleShowComponent()} 
+          {/* {console.log("the value is " + handleShowComponent() + basicDataSaved)} */}
+          {handleShowComponent()}
         </Panel>
-)}
+      )}
     </Panel>
-   
+
   );
-  
+
 };
 
 export default NewDiagnosticsTest;
