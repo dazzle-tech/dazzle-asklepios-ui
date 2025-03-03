@@ -11,6 +11,7 @@ import {
   ApCdtDentalAction,
   ApDentalAction,
   ApDepartment,
+  ApDiagnosticCoding,
   ApDiagnosticTest,
   ApDiagnosticTestGenetics,
   ApDiagnosticTestLaboratory,
@@ -612,7 +613,7 @@ export const setupService = createApi({
         body: diagnosticTest,
       }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
-        return response.data;
+        return response.object;
       }
     }),
     saveDiagnosticsTestProfile: builder.mutation({
@@ -622,7 +623,7 @@ export const setupService = createApi({
         body: diagnosticTestProfile,
       }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
-        return response.data;
+        return response.object;
       }
     }),
     saveDiagnosticsTestLaboratory: builder.mutation({
@@ -632,7 +633,7 @@ export const setupService = createApi({
         body: diagnosticTestLaboratory,
       }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
-        return response.data;
+        return response.object;
       }
     }),
     saveDiagnosticsTestPathology: builder.mutation({
@@ -642,7 +643,7 @@ export const setupService = createApi({
         body: diagnosticTestLaboratory,
       }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
-        return response.data;
+        return response.object;
       }
     }),
     removeCatalogDiagnosticTest: builder.mutation({
@@ -673,7 +674,7 @@ export const setupService = createApi({
         body: diagnosticTestGenetics,
       }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
-        return response.data;
+        return response.object;
       }
     }),
     getDiagnosticsTestRadiologyList: builder.query({
@@ -690,7 +691,7 @@ export const setupService = createApi({
         body: diagnosticTestRadiology,
       }), onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
-        return response.data;
+        return response.object;
       }
     }),
     getDiagnosticsTestCatalogHeaderList: builder.query({
@@ -1103,6 +1104,35 @@ export const setupService = createApi({
       keepUnusedDataFor: 5
 
   }),
+  saveDiagnosticsCoding: builder.mutation({
+    query: (p: ApDiagnosticCoding) => ({
+      url: `/setup/save-diagnostics-coding`,
+      method: 'POST',
+      body: p
+
+    }),
+    onQueryStarted: onQueryStarted,
+    transformResponse: (response: any) => {
+      return response.object;
+    }
+
+  }),
+  getDiagnosticsCodingList: builder.query({
+    query: (listRequest: ListRequest) => ({
+       url: `/setup/diagnostics-coding-list?${fromListRequestToQueryParams(listRequest)}`
+
+    }),
+    onQueryStarted: onQueryStarted,
+    keepUnusedDataFor: 5
+  }),
+
+  removeDiagnosticsCoding: builder.mutation({
+    query: (P: ApDiagnosticCoding) => ({
+      url: `/setup/remove-diagnostics-coding`,
+      method: 'POST',
+      body: P,
+    }),}),
+
 
   })
 
@@ -1218,5 +1248,8 @@ export const {
   useDeactivateUserMutation,
   useSaveMedicalSheetMutation,
   useGetMedicalSheetsByDepartmentIdQuery,
-  useGetDepartmentListByTypeQuery
+  useGetDepartmentListByTypeQuery,
+  useGetDiagnosticsCodingListQuery,
+  useSaveDiagnosticsCodingMutation,
+  useRemoveDiagnosticsCodingMutation
 } = setupService;

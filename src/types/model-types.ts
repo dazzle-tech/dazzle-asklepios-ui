@@ -634,6 +634,19 @@ export interface ApDepartment {
 	encountertypelkey:string;
 } 
 
+export interface ApDiagnosticCoding { 
+	key:string;
+	diagnosticsKey:string;
+	codeTypeLkey:string;
+	internationalCodeKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
 export interface ApDiagnosticOrderTests { 
 	key:string;
 	patientKey:string;

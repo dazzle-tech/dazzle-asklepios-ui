@@ -42,7 +42,6 @@ import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import {
     useGetLovValuesByCodeQuery
 } from '@/services/setupService';
-import { useGetPrincipalItemListQuery, useGetPrincipalPackageItemsKeyQuery, useGetPrincipalPackageItemsQuery, useGetPrincipalPackagesRuleQuery, useGetPrincipalPriceListQuery, useSavePrincipalPackageMutation, useSavePrincipalPackagesRuleMutation, useSavePrincipalPriceListMutation } from '@/services/principalService';
 import { ApDiagnosticTestNormalRange } from '@/types/model-types';
 import { newApDiagnosticTestNormalRange } from '@/types/model-types-constructor';
 const NormalRangeSetup = ({ popUpOpen, setPopUpOpen, diagnosticsTest }) => {

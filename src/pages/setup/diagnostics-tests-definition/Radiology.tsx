@@ -70,7 +70,6 @@ const Radiology = ({ diagnosticsTest }) => {
 
   useEffect(() => {
     if (diagnosticsTest) {
-      console.log("hellllllllo" + diagnosticsTest.key)
       setDiagnosticTestRadiology(prevState => ({
         ...prevState,
         testKey: diagnosticsTest.key
