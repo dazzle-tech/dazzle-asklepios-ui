@@ -78,9 +78,13 @@ const EncounterMainInfoSection = ({ patient, encounter }) => {
       />
       <MyInput width={150} column fieldLabel="Weight" fieldName={'weight'} record={bodyMeasurements} />
       <MyInput width={150} column fieldLabel="Height" fieldName={'height'} record={bodyMeasurements} />
-      <MyInput width={150} column fieldLabel="H.C" fieldName={'headcircumference'} record={bodyMeasurements} />
-      <MyInput width={150} column fieldLabel="BMI" fieldName={'latestbmi'} record={patirntObservationlist?.object[0]} />
-     <div style={{display:'flex',flexDirection:'column'}}>
+      <MyInput width={150} column fieldLabel="H.C" fieldName={'headcircumference'} record={bodyMeasurements} />    
+      {/* <MyInput width={150} column fieldLabel="BMI" fieldName={'latestbmi'} record={patirntObservationlist?.object[0]} /> */}
+      <div style={{display:'flex',flexDirection:'column' ,zoom:0.85}}>
+      <Text>BMI</Text>
+      <Input disabled value={ (bodyMeasurements.weight / ((bodyMeasurements.height / 100) ** 2)).toFixed(2)}  style={{ width: 150 }}/>
+      </div>
+     <div style={{display:'flex',flexDirection:'column' ,zoom:0.85}}>
       <Text>BSA</Text>
       <Input disabled value={Math.sqrt((bodyMeasurements.weight *bodyMeasurements.height) / 3600).toFixed(2)}  style={{ width: 150 }}/>
       </div>
