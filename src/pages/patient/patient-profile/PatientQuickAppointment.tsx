@@ -43,11 +43,12 @@ import {
 import { initialListRequest, ListRequest } from '@/types/types';
 import MyLabel from '@/components/MyLabel';
 import { calculateAgeFormat, fromCamelCaseToDBName } from '@/utils';
+import { useGetResourcesQuery } from '@/services/appointmentService';
 const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuickAppointmentModel, localVisit }) => {
     const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
     const dispatch = useAppDispatch();
     const [openModelPayment, setOpenModelPayment] = React.useState(false);
-    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter, patientKey: localPatient.key, plannedStartDate: new Date() ,patientAge:calculateAgeFormat(localPatient.dob) });
+    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter, patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob) });
     const [validationResult, setValidationResult] = useState({});
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
@@ -63,8 +64,10 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
         value: item.key,
         patientInsurance: item
     }));
+    const [resourcesListRequest, setResourcesListRequest] = useState<ListRequest>({ ...initialListRequest });
 
     /* load page LOV */
+    const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
     const { data: encounterPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
     const { data: encounterReasonLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_REASON');
     const { data: visitTypeLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
@@ -76,6 +79,9 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
     const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
     const { data: practitionerListResponse } = useGetPractitionersQuery({ ...initialListRequest });
     const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
+    const { data: resourcesListResponse } = useGetResourcesQuery(resourcesListRequest);
+    const [filteredResourcesList, setFilteredResourcesList] = useState([])
+
     const [paymentMethodSelected, setPaymentMethodSelected] = useState(null);
     const handleOpenPaymentModel = () => setOpenModelPayment(true);
     const encounterStatusNew = '91063195286200'; // TODO change this to be fetched from redis based on LOV CODE
@@ -83,19 +89,36 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
     const handleSavePayment = () => {
         setOpenModelPayment(false);
     };
+
+    useEffect(() => {
+        if (localEncounter?.resourceTypeLkey) {
+            const filtered = resourcesListResponse.object.filter(resource => resource.resourceTypeLkey === localEncounter?.resourceTypeLkey);
+            setFilteredResourcesList(filtered);
+        }
+    }, [resourcesListResponse, localEncounter?.resourceTypeLkey]);
+
     const handleSave = () => {
         if (localEncounter && localEncounter.patientKey) {
-            saveEncounter({ ...localEncounter, patientKey: localPatient.key, plannedStartDate: new Date() ,encounterStatusLkey:encounterStatusNew,patientAge:calculateAgeFormat(localPatient.dob)}).unwrap().catch((e) => {
-                                  if (e.status === 422) {
-                                      console.log("Validation error: Unprocessable Entity", e);
-                                      dispatch(notify({ msg: 'Patient Already Registered on this Resource.', sev: 'error' }));
-                  
-                                  } else {
-                                      console.log("An unexpected error occurred", e);
-                                      dispatch(notify({ msg: '"An unexpected error occurred', sev: 'warn' }));
-                  
-                                  }
-                              });;
+            saveEncounter({ ...localEncounter,
+                 patientKey: localPatient.key,
+                  plannedStartDate: new Date(),
+                   encounterStatusLkey: encounterStatusNew,
+                    patientAge: calculateAgeFormat(localPatient.dob),
+                    visitTypeLkey: ['2039534205961578', '2039516279378421'].includes(localEncounter.resourceTypeLkey) ? '2041082245699228' : null
+
+                
+                }).unwrap().catch((e) => {
+                
+                    if (e.status === 422) {
+                    console.log("Validation error: Unprocessable Entity", e);
+                    dispatch(notify({ msg: 'Patient Already Registered on this Resource.', sev: 'error' }));
+
+                } else {
+                    console.log("An unexpected error occurred", e);
+                    dispatch(notify({ msg: '"An unexpected error occurred', sev: 'warn' }));
+
+                }
+            });;
         } else {
             dispatch(notify({ msg: 'encounter not linked to patient', sev: 'error' }));
         }
@@ -155,14 +178,14 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
 
                                     <ButtonToolbar style={{ display: 'flex', marginLeft: 'auto' }}>       <Button
                                         onClick={handleSave}
-                                        style={{ display: 'flex', border: '1px solid #00b1cc', backgroundColor: '#00b1cc', color: 'white', marginLeft: 'auto' ,zoom:.8}}
+                                        style={{ display: 'flex', border: '1px solid #00b1cc', backgroundColor: '#00b1cc', color: 'white', marginLeft: 'auto', zoom: .8 }}
                                         disabled={isReadOnly}
                                     >
                                         <FontAwesomeIcon icon={faCheckDouble} style={{ marginRight: '5px', color: 'white' }} />
                                         <span>Save</span></Button>
                                         <Button
                                             onClick={handleClear}
-                                            style={{ display: 'flex', border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: 'auto'  ,zoom:.8}}
+                                            style={{ display: 'flex', border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: 'auto', zoom: .8 }}
                                             disabled={isReadOnly}
                                         >
                                             <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px', color: ' #00b1cc' }} />
@@ -468,19 +491,32 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                 setRecord={setLocalEncounter}
                                             />
                                             <MyInput
+                                                required
+                                                width={165}
                                                 vr={validationResult}
                                                 column
-                                                width={165}
+                                                fieldLabel="Resource Type"
                                                 fieldType="select"
-                                                fieldLabel="Encounter Type"
-                                                fieldName="encounterTypeLkey"
-                                                selectData={encounterTypeLovQueryResponse?.object ?? []}
+                                                fieldName="resourceTypeLkey"
+                                                selectData={resourceTypeQueryResponse?.object ?? []}
                                                 selectDataLabel="lovDisplayVale"
                                                 selectDataValue="key"
                                                 record={localEncounter}
                                                 setRecord={setLocalEncounter}
-                                                menuStyle={{ marginTop: '100px', marginLeft: '160px' }}
-                                                disabled={isReadOnly}
+                                            />
+
+
+                                            <MyInput
+                                                width={300}
+                                                column
+                                                fieldLabel="Resources"
+                                                selectData={filteredResourcesList.length > 0 ? filteredResourcesList : !localEncounter?.resourceTypeLkey ? resourcesListResponse?.object : []}
+                                                fieldType="select"
+                                                selectDataLabel="resourceName"
+                                                selectDataValue="key"
+                                                fieldName="resourceKey"
+                                                record={localEncounter}
+                                                setRecord={setLocalEncounter}
                                             />
                                             <MyInput
                                                 vr={validationResult}

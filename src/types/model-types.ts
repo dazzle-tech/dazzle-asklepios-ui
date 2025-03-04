@@ -1258,6 +1258,8 @@ export interface ApEncounter {
 	visitTypeLkey:string;
 	physicianKey:string;
 	insuranceKey:string;
+	resourceTypeLkey:string;
+	resourceKey:string;
 } 
 
 export interface ApEncounterAppliedService { 

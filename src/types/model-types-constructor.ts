@@ -1259,6 +1259,8 @@ export const newApEncounter:modelTypes.ApEncounter = {
 	visitTypeLkey:undefined,
 	physicianKey:undefined,
 	insuranceKey:undefined,
+	resourceTypeLkey:undefined,
+	resourceKey:undefined,
 } 
 
 export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService = { 
