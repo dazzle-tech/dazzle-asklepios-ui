@@ -243,18 +243,20 @@ const Warning = ({edit ,patient ,encounter}) => {
     const handleSave = async () => {
         setShowPrev(true);
         try {
-            saveWarning({
+      const Response=    await  saveWarning({
                 ...warning
                 , patientKey:patient.key
                 , visitKey:encounter.key
                 , statusLkey: '9766169155908512',
                 firstTimeRecorded: selectedFirstDate ? selectedFirstDate.getTime() : null
             }).unwrap();
+            setWarning({...newApVisitWarning});
             dispatch(notify('saved  Successfully'));
+           
           setShowPrev(false);
           await  fetchwarnings();
          
-           await  handleClear();
+             handleClear();
            setShowPrev(true);
         } catch (error) {
             dispatch(notify('Save Failed'));
@@ -464,7 +466,7 @@ const Warning = ({edit ,patient ,encounter}) => {
         <>
             <Panel header="Add Warning " collapsible bordered defaultExpanded  className={edit? "disabled-panel" : ""}>
                 <div style={{ border: '1px solid #b6b7b8', padding: "5px" }}>
-                    <Form style={{ zoom: 0.85, display: 'flex' }} layout="inline" fluid>
+                    <Form style={{ display: 'flex' }} layout="inline" fluid>
                         <MyInput
                             column
                             disabled={editing}
@@ -487,7 +489,34 @@ const Warning = ({edit ,patient ,encounter}) => {
                             record={warning}
                             setRecord={setWarning}
                         />
+                              <MyInput
+                            column
+                            disabled={editSourceof}
+                            width={150}
+                            fieldType="select"
+                            fieldLabel="Source of Information"
+                            selectData={sourceofinformationLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            fieldName={'sourceOfInformationLkey'}
+                            record={warning}
+                            setRecord={setWarning}
+                        />
 
+                        <div style={{zoom:0.85}}>
+                            <Text style={{ marginTop: '3px', fontWeight: 'bold' }}>By Patient</Text>
+                            <Toggle
+                                checked={editSourceof}
+                                onChange={(checked) => {
+                                    seteditSourceof(checked);
+                                    setWarning({ ...warning, sourceOfInformationLkey: null })
+
+                                }}
+                                checkedChildren="Yes"
+                                unCheckedChildren="No"
+                                style={{ width: 100 }}
+
+                            /></div>
                         <MyInput
                             column
                             disabled={editing}
@@ -502,7 +531,7 @@ const Warning = ({edit ,patient ,encounter}) => {
                             setRecord={setWarning}
                         />
 
-                        <div>
+                        <div style={{zoom:0.85}}>
                             <Text style={{ marginTop: '3px', fontWeight: 'bold' }}>First Time Recorded</Text>
                             <DatePicker
                                 format="MM/dd/yyyy hh:mm aa"
@@ -511,7 +540,7 @@ const Warning = ({edit ,patient ,encounter}) => {
                                 onChange={handleDateChange}
                                 disabled={editDate} />
                         </div>
-                        <div>
+                        <div style={{zoom:0.85}}>
                             <Text style={{ marginTop: '3px', fontWeight: 'bold' }}> Undefined</Text>
                             <Toggle
                                 checked={editDate}
@@ -528,37 +557,10 @@ const Warning = ({edit ,patient ,encounter}) => {
 
                             /></div>
 
-                        <MyInput
-                            column
-                            disabled={editSourceof}
-                            width={150}
-                            fieldType="select"
-                            fieldLabel="Source of Information"
-                            selectData={sourceofinformationLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            fieldName={'sourceOfInformationLkey'}
-                            record={warning}
-                            setRecord={setWarning}
-                        />
-
-                        <div>
-                            <Text style={{ marginTop: '3px', fontWeight: 'bold' }}>By Patient</Text>
-                            <Toggle
-                                checked={editSourceof}
-                                onChange={(checked) => {
-                                    seteditSourceof(checked);
-                                    setWarning({ ...warning, sourceOfInformationLkey: null })
-
-                                }}
-                                checkedChildren="Yes"
-                                unCheckedChildren="No"
-                                style={{ width: 100 }}
-
-                            /></div>
+                   
 
                     </Form>
-                    <Form style={{ zoom: 0.85, display: 'flex' }} layout="inline" fluid>
+                    <Form style={{ display: 'flex' }} layout="inline" fluid>
                         <MyInput
                             width={250}
 
