@@ -9,7 +9,8 @@ import {
   Avatar,
   IconButton,
   List,
-  Button
+  Button,
+  Divider
 } from 'rsuite';
 import NoticeIcon from '@rsuite/icons/Notice';
 import { useAppDispatch, useAppSelector } from '@/hooks';
@@ -20,11 +21,13 @@ import { useChangeLangMutation } from '@/services/uiService';
 import ChangePassword from './ChangePassword';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { openChangePassword, closeChangePassword,openEditProfile,closeEditProfile } from '@/utils/uiReducerActions';
-import EditProfile from './EditProfile'; 
+import { openChangePassword, closeChangePassword, openEditProfile, closeEditProfile } from '@/utils/uiReducerActions';
+import EditProfile from './EditProfile';
 import RegistrationWizard from '@/pages/patient/facility-patient-list/RegistrationWizard';
+import authSlice from '@/reducers/authSlice';
+import ArrowDownLineIcon from '@rsuite/icons/ArrowDownLine';
 
-const Header = ({expand, setExpand}) => {
+const Header = ({ expand, setExpand }) => {
   const dispatch = useDispatch();
 
   const showChangePassword = useSelector((state: RootState) => state.ui.showChangePassword);
@@ -37,9 +40,9 @@ const Header = ({expand, setExpand}) => {
     dispatch(closeEditProfile());
   };
 
+  const authSlice = useAppSelector(state => state.auth);
 
   const renderAdminSpeaker = ({ onClose, left, top, className, open }: any, ref) => {
-    const authSlice = useAppSelector(state => state.auth);
 
     const dispatch = useDispatch();
 
@@ -186,34 +189,46 @@ const Header = ({expand, setExpand}) => {
   const pageCode = useSelector((state: RootState) => state.div?.pageCode);
   return (
     <div>
-      <Stack className="header" spacing={8} style={{width: expand ? "calc(93% - 200px)" : "93%"}}>
-      <div dangerouslySetInnerHTML={{ __html: divElement }}/>
-           <div className="headerItem" >
-           {pageCode === 'P_Facility' ? <RegistrationWizard/> :<></>}
-           
-        <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderLangSpeaker}>
-          <IconButton icon={<FaGlobe style={{ fontSize: 20 }} />} />
-        </Whisper>
+      <Stack className="header" spacing={8} style={{ width: expand ? "calc(93% - 200px)" : "93%" }}>
+        <div dangerouslySetInnerHTML={{ __html: divElement }} />
+        <div className="headerItem" >
+          {pageCode === 'P_Facility' ? <RegistrationWizard /> : <></>}
 
-        <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderNoticeSpeaker}>
-          <IconButton
-            icon={
-              <Badge content={2}>
-                <NoticeIcon style={{ fontSize: 20 }} />
-              </Badge>
-            }
-          />
-        </Whisper>
+          <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderLangSpeaker}>
+            <IconButton icon={<FaGlobe style={{ fontSize: 20 }} />} />
+          </Whisper>
 
-        <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderAdminSpeaker}>
-          <Avatar
-            size="sm"
-            circle
-            src="https://avatars.githubusercontent.com/u/1203827"
-            alt="@simonguo"
-            style={{ marginLeft: 8 }}
-          />
-        </Whisper>
+          <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderNoticeSpeaker}>
+            <IconButton
+              icon={
+                <Badge content={2}>
+                  <NoticeIcon style={{ fontSize: 20 }} />
+                </Badge>
+              }
+            />
+          </Whisper>
+          <Divider style={{ height: "31px", fontSize: "4px" }} vertical />
+
+          <Whisper  placement="bottomEnd" trigger="click" ref={trigger} speaker={renderAdminSpeaker}>
+            <div style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
+              <Avatar
+                size="md"
+                circle
+                src="https://avatars.githubusercontent.com/u/1203827"
+                alt="@simonguo"
+               />
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "start", marginLeft: 8 }}>
+                <span style={{ fontWeight: "bold", fontSize: "14px" }}>
+                  {authSlice.user?.fullName}
+                </span>
+                <span style={{ color: "#9E9E9E", fontSize: "12px" }}>
+                  {authSlice.user?.jobRoleLvalue?.lovDisplayVale}
+                </span>
+              </div>
+              <ArrowDownLineIcon style={{ marginLeft: 8 }} />
+            </div>
+          </Whisper>
+
         </div>
       </Stack>
 
