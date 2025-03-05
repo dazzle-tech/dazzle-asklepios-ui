@@ -104,6 +104,7 @@ const AudiometryPuretone = ({ patient, encounter }) => {
         } else return '';
     };
     const handleSave = () => {
+        //TODO convert key to code
         if (audiometryPuretone.key === undefined) {
             saveAudiometryPureton({ ...audiometryPuretone, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
                 dispatch(notify('Patient Audiometry Pureton Added Successfully'));
@@ -212,6 +213,7 @@ const AudiometryPuretone = ({ patient, encounter }) => {
         </Cell>
     );
     const handleCancle = () => {
+        //TODO convert key to code
         saveAudiometryPureton({ ...audiometryPuretone, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
             dispatch(notify('Audiometry Pureton Canceled Successfully'));
             refetchAudiometryPureton();
@@ -625,6 +627,7 @@ const AudiometryPuretone = ({ patient, encounter }) => {
                     <Checkbox
                         onChange={(value, checked) => {
                             if (checked) {
+                                //TODO convert key to code
                                 setAudiometryPuretonStatus('3196709905099521');
                             }
                             else {
@@ -768,12 +771,14 @@ const AudiometryPuretone = ({ patient, encounter }) => {
                             height={120}
                             record={audiometryPuretone}
                             setRecord={setAudiometryPuretone}
+                            //TODO convert key to code
                             disabled={audiometryPuretone?.statusLkey === "3196709905099521"}
                         />
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button appearance="primary" onClick={handleCancle}
+                    //TODO convert key to code
                         disabled={audiometryPuretone?.statusLkey === "3196709905099521"}
                         style={{ backgroundColor: 'var(--primary-blue)', color: 'white', zoom: .8 }}
                     >

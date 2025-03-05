@@ -1176,6 +1176,30 @@ export interface ApDvmRule {
 	isValid:boolean;
 } 
 
+export interface ApElectrocardiogramEcg { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	indication:string;
+	ecgLeadType:string;
+	heartRate:number;
+	prInterval:number;
+	qrsDuration:number;
+	qtInterval:number;
+	stSegmentChangesLkey:string;
+	waveAbnormalitiesLkey:string;
+	rhythmAnalysis:string;
+	ecgInterpretation:string;
+	cancellationReason:string;
+	statusLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
 export interface ApEncounter { 
 	key:string;
 	patientKey:string;
@@ -1258,6 +1282,8 @@ export interface ApEncounter {
 	visitTypeLkey:string;
 	physicianKey:string;
 	insuranceKey:string;
+	resourceTypeLkey:string;
+	resourceKey:string;
 } 
 
 export interface ApEncounterAppliedService { 

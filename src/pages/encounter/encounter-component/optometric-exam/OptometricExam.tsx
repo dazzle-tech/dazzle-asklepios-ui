@@ -137,6 +137,7 @@ const OptometricExam = ({ patient, encounter }) => {
         } else return '';
     };
     const handleSave = () => {
+        //TODO convert key to code
         if (optometricExam.key === undefined) {
             saveOptometricExam({ ...optometricExam, patientKey: patient.key, encounterKey: encounter.key, followUpDate: optometricExam?.followUpDate ? new Date(optometricExam.followUpDate).getTime() : 0, statusLkey: "9766169155908512", createdBy: authSlice.user.key, timeOfMeasurement: time.time.split(':').reduce((acc, time) => acc * 60 + Number(time), 0) * 60 }).unwrap().then(() => {
                 dispatch(notify('Patient Optometric Exam Added Successfully'));
@@ -152,6 +153,7 @@ const OptometricExam = ({ patient, encounter }) => {
         }
     };
     const handleCancle = () => {
+        //TODO convert key to code
         saveOptometricExam({ ...optometricExam, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
             dispatch(notify('Optometric Exam Canceled Successfully'));
             refetchOptometricExam();
@@ -911,6 +913,7 @@ const OptometricExam = ({ patient, encounter }) => {
                     <Checkbox
                         onChange={(value, checked) => {
                             if (checked) {
+                                //TODO convert key to code
                                 setOptometricExamStatus('3196709905099521');
                             }
                             else {
@@ -1149,12 +1152,14 @@ const OptometricExam = ({ patient, encounter }) => {
                             height={120}
                             record={optometricExam}
                             setRecord={setOptometricExam}
+                            //TODO convert key to code
                             disabled={optometricExam?.statusLkey === "3196709905099521"}
                         />
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button appearance="primary" onClick={handleCancle}
+                    //TODO convert key to code
                         disabled={optometricExam?.statusLkey === "3196709905099521"}
                         style={{ backgroundColor: 'var(--primary-blue)', color: 'white', zoom: .8 }}
                     >

@@ -1177,6 +1177,30 @@ export const newApDvmRule:modelTypes.ApDvmRule = {
 	isValid:undefined,
 } 
 
+export const newApElectrocardiogramEcg:modelTypes.ApElectrocardiogramEcg = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	indication:'',
+	ecgLeadType:'',
+	heartRate:0,
+	prInterval:0,
+	qrsDuration:0,
+	qtInterval:0,
+	stSegmentChangesLkey:undefined,
+	waveAbnormalitiesLkey:undefined,
+	rhythmAnalysis:'',
+	ecgInterpretation:'',
+	cancellationReason:'',
+	statusLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
 export const newApEncounter:modelTypes.ApEncounter = { 
 	key:undefined,
 	patientKey:undefined,
@@ -1259,6 +1283,8 @@ export const newApEncounter:modelTypes.ApEncounter = {
 	visitTypeLkey:undefined,
 	physicianKey:undefined,
 	insuranceKey:undefined,
+	resourceTypeLkey:undefined,
+	resourceKey:undefined,
 } 
 
 export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService = { 

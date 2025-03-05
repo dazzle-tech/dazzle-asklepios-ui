@@ -1,4 +1,4 @@
-import { ApAudiometryPuretone, ApOptometricExam, ApTreadmillStress } from './../types/model-types';
+import { ApAudiometryPuretone, ApElectrocardiogramEcg, ApOptometricExam, ApTreadmillStress } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -512,6 +512,24 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    saveElectrocardiogramECG: builder.mutation({
+      query: (electrocardiogramEcg: ApElectrocardiogramEcg) => ({
+        url: `/encounter/save-electrocardiogram-ecg`,
+        method: 'POST',
+        body: electrocardiogramEcg
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getElectrocardiogramECGs: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/electrocardiogram-ecg-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 });
 
@@ -567,7 +585,9 @@ export const {
   useSaveTreadmillStresseMutation,
   useGetTreadmillStressesQuery,
   useSaveComplaintSymptomsMutation,
-  useGetComplaintSymptomsQuery
+  useGetComplaintSymptomsQuery,
+  useSaveElectrocardiogramECGMutation,
+  useGetElectrocardiogramECGsQuery
 
 } = encounterService;
 
