@@ -338,7 +338,7 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
                 <Form fluid layout='inline' style={{ display: 'flex' }}>
 
                     <MyInput
-                        width={165}
+                        width={180}
                         column
                         fieldLabel="Indication"
                         fieldName="indication"
@@ -346,7 +346,7 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
                         setRecord={setElectrocardiogramEcg}
                     />
                       <MyInput
-                        width={165}
+                        width={180}
                         column
                         fieldLabel="ECG Lead Type"
                         fieldName="ecgLeadType"
@@ -355,7 +355,7 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
                     />
                   
                     <MyInput
-                        width={165}
+                        width={180}
                         column
                         fieldLabel="Segment Changes"
                         fieldType="select"
@@ -367,7 +367,7 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
                         setRecord={setElectrocardiogramEcg}
                     />
                     <MyInput
-                        width={165}
+                        width={180}
                         column
                         fieldLabel="T Wave Abnormalities"
                         fieldType="select"
@@ -379,7 +379,7 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
                         setRecord={setElectrocardiogramEcg}
                     />
                       <MyInput
-                        width={165}
+                        width={180}
                         column
                         fieldLabel="Rhythm Analysis"
                         fieldName="rhythmAnalysis"
@@ -405,7 +405,11 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
                             <InputGroup.Addon><Text>BPM</Text></InputGroup.Addon>
                         </InputGroup>
                     </Form>
-                    <Form style={{ display: 'flex', flexDirection: 'column' }}>
+                  
+                    </Form>
+                </Form>
+                <Form fluid layout='inline' style={{ display: 'flex', gap: '5px', zoom: .77 ,marginTop:"5px"}}>
+                <Form style={{ display: 'flex', flexDirection: 'column' }}>
                         <MyLabel label="PR Interval" />
                         <InputGroup style={{ width: 210 }}>
 
@@ -441,7 +445,8 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
                             <InputGroup.Addon><Text>ms</Text></InputGroup.Addon>
                         </InputGroup>
                     </Form>
-                    <Form style={{ display: 'flex', flexDirection: 'column' }}>
+                  
+                <Form style={{ display: 'flex', flexDirection: 'column' }}>
                         <MyLabel label="QT Interval" />
                         <InputGroup style={{ width: 210 }}>
 
@@ -459,9 +464,7 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
                             <InputGroup.Addon><Text>ms</Text></InputGroup.Addon>
                         </InputGroup>
                     </Form>
-                    </Form>
-                </Form>
-                <Form style={{ display: 'flex', flexDirection: 'column',zoom:.8 }}>
+                <Form style={{ display: 'flex', flexDirection: 'column' }}>
                         <MyLabel label="ECG Interpretation" />
                         <Input
                             as="textarea"
@@ -474,7 +477,7 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
                             rows={3}
                         />
                     </Form>
-
+</Form>
                    
                 
                 <ButtonToolbar style={{ zoom: .8, marginTop: '10px' }}>
