@@ -4,6 +4,7 @@ import {
 } from 'rsuite';
 import TreadmillStress from '../treadm-stress/TreadmillStress';
 import ChiefComplaintSymptoms from '../chief_complaint_symptoms/ChiefComplaintSymptoms';
+import ElectrocardiogramECG from '../electrocardiogram-ecg/ElectrocardiogramECG';
 
 const Cardiology = ({ patient, encounter }) => {
     
@@ -15,7 +16,8 @@ const Cardiology = ({ patient, encounter }) => {
             <Panel header={"Treadmill Stress Test (TMST)"} collapsible bordered>
              <TreadmillStress patient={patient} encounter={encounter}/>     
             </Panel>
-            <Panel header={"Electrocardiography (ECG)"} collapsible bordered>      
+            <Panel header={"Electrocardiography (ECG)"} collapsible bordered>   
+            <ElectrocardiogramECG patient={patient} encounter={encounter}/>        
             </Panel>
             <Panel header={"Echocardiography (ECHO)"} collapsible bordered>  
             </Panel>

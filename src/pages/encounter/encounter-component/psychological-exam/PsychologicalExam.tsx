@@ -91,6 +91,7 @@ const PsychologicalExam = ({ patient, encounter }) => {
         } else return '';
     };
     const handleSave = () => {
+        //TODO convert key to code
         if (psychologicalExam.key === undefined) {
             savePsychologicalExam({ ...psychologicalExam, patientKey: patient.key, encounterKey: encounter.key, followUpDate: psychologicalExam?.followUpDate ? new Date(psychologicalExam.followUpDate).getTime() : 0, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
                 dispatch(notify('Patient Psychological Exam Added Successfully'));
@@ -197,6 +198,7 @@ const PsychologicalExam = ({ patient, encounter }) => {
         </Cell>
     );
     const handleCancle = () => {
+        //TODO convert key to code
         savePsychologicalExam({ ...psychologicalExam, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
             dispatch(notify('Psychological Exam Canceled Successfully'));
             refetchPsychologicalExam();
@@ -493,6 +495,7 @@ const PsychologicalExam = ({ patient, encounter }) => {
                     <Checkbox
                         onChange={(value, checked) => {
                             if (checked) {
+                                //TODO convert key to code
                                 setPsychologicalExamStatus('3196709905099521');
                             }
                             else {
@@ -656,12 +659,14 @@ const PsychologicalExam = ({ patient, encounter }) => {
                             height={120}
                             record={psychologicalExam}
                             setRecord={setPsychologicalExam}
+                            //TODO convert key to code
                             disabled={psychologicalExam?.statusLkey === "3196709905099521"}
                         />
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button appearance="primary" onClick={handleCancle}
+                    //TODO convert key to code
                      disabled={psychologicalExam?.statusLkey === "3196709905099521"} 
                      style={{ backgroundColor: 'var(--primary-blue)', color: 'white', zoom: .8 }}
                     >

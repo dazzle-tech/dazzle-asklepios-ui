@@ -28,8 +28,8 @@ import {
     useGetLovValuesByCodeQuery,
 } from '@/services/setupService';
 import {
-    useSaveTreadmillStresseMutation,
-    useGetTreadmillStressesQuery
+    useSaveElectrocardiogramECGMutation,
+  useGetElectrocardiogramECGsQuery
 } from '@/services/encounterService';
 import MyInput from '@/components/MyInput';
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
@@ -37,10 +37,10 @@ import Translate from '@/components/Translate';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
 import MyLabel from '@/components/MyLabel';
 import {
-    newApTreadmillStress
+    newApElectrocardiogramEcg
 } from '@/types/model-types-constructor';
 import {
-    ApTreadmillStress
+    ApElectrocardiogramEcg
 } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
@@ -48,26 +48,24 @@ import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
 const { Column, HeaderCell, Cell } = Table
-const TreadmillStress = ({ patient, encounter }) => {
+const ElectrocardiogramECG = ({ patient, encounter }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
-    const [treadmillStress, setTreadmillStress] = useState<ApTreadmillStress>({
-        ...newApTreadmillStress,
-        preTestSystolicBp: null,
-        preTestDiastolicBp: null,
-        exerciseDuration: null,
-        maximumHeartRateAchieved: null,
-        targetHeartRate: null,
-        postTestSystolicBp: null,
-        postTestDiastolicBp: null,
-        recoveryTime: null,
+    const [electrocardiogramEcg, setElectrocardiogramEcg] = useState<ApElectrocardiogramEcg>({
+        ...newApElectrocardiogramEcg,
+        stSegmentChangesLkey:null,
+        waveAbnormalitiesLkey:null,
+        heartRate:null,
+	prInterval:null,
+	qrsDuration:null,
+	qtInterval:null
     });
-    const [saveTreadmillStress, saveTreadmillStressMutation] = useSaveTreadmillStresseMutation();
+    const [saveElectrocardiogramECG, saveElectrocardiogramECGMutation] = useSaveElectrocardiogramECGMutation();
     const [popupCancelOpen, setPopupCancelOpen] = useState(false);
-    const [treadmillStressStatus, setTreadmillStressStatus] = useState('');
+    const [electrocardiogramEcgStatus, setElectrocardiogramEcgStatus] = useState('');
     const [allData, setAllData] = useState(false);
     const dispatch = useAppDispatch()
-    const [treadmillStressListRequest, setTreadmillStressListRequest] = useState<ListRequest>({
+    const [electrocardiogramEcgListRequest, setElectrocardiogramEcgListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
             {
@@ -88,34 +86,32 @@ const TreadmillStress = ({ patient, encounter }) => {
         ],
     });
     //LOV
-    const { data: baselineECGFindingsLovQueryResponse } = useGetLovValuesByCodeQuery('CARDIAC_ECG_FINDINGS');
-    const { data: numbersLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
-    const { data: cardiacLovQueryResponse } = useGetLovValuesByCodeQuery('CARDIAC_ST_CHANGES');
-    const { data: arrythmiasLovQueryResponse } = useGetLovValuesByCodeQuery('ARRYTHMIAS');
-    const { data: treadmillLovQueryResponse } = useGetLovValuesByCodeQuery('TREADMILL_OUTCOMES');
-    const { data: treadmillStressResponse, refetch: refetchTreadmillStress } = useGetTreadmillStressesQuery(treadmillStressListRequest, {
+    const { data: segmentChangesLovQueryResponse } = useGetLovValuesByCodeQuery('CARDIAC_ST_CHANGES');
+    const { data: waveAbnormalitiesLovQueryResponse } = useGetLovValuesByCodeQuery('TWAVE_ABNORMAL');
+    
+    const { data: electrocardiogramEcgResponse, refetch: refetchelectrocardiogramEcg } = useGetElectrocardiogramECGsQuery(electrocardiogramEcgListRequest, {
         skip: !patient?.key || !encounter?.key,
     });
     const isSelected = rowData => {
-        if (rowData && treadmillStress && treadmillStress.key === rowData.key) {
+        if (rowData && electrocardiogramEcg && electrocardiogramEcg.key === rowData.key) {
             return 'selected-row';
         } else return '';
     };
     const handleSave = () => {
         //TODO convert key to code
-        if (treadmillStress.key === undefined) {
-            saveTreadmillStress({ ...treadmillStress, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
-                dispatch(notify('Patient Treadmill Stress Added Successfully'));
+        if (electrocardiogramEcg.key === undefined) {
+            saveElectrocardiogramECG({ ...electrocardiogramEcg, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
+                dispatch(notify('Patient ECG Added Successfully'));
             });
-            setTreadmillStress({ ...newApTreadmillStress, statusLkey: "9766169155908512" })
-            refetchTreadmillStress();
+            setElectrocardiogramEcg({ ...newApElectrocardiogramEcg, statusLkey: "9766169155908512" })
+            refetchelectrocardiogramEcg();
             handleClearField();
         }
-        else if (treadmillStress.key) {
-            saveTreadmillStress({ ...treadmillStress, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap().then(() => {
-                dispatch(notify('Patient Treadmill Stress Updated Successfully'));
-                setTreadmillStress({ ...newApTreadmillStress })
-                refetchTreadmillStress();
+        else if (electrocardiogramEcg.key) {
+            saveElectrocardiogramECG({ ...electrocardiogramEcg, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap().then(() => {
+                dispatch(notify('Patient ECG Updated Successfully'));
+                setElectrocardiogramEcg({ ...newApElectrocardiogramEcg })
+                refetchelectrocardiogramEcg();
                 handleClearField();
             });
         }
@@ -213,27 +209,22 @@ const TreadmillStress = ({ patient, encounter }) => {
     );
     const handleCancle = () => {
         //TODO convert key to code
-        saveTreadmillStress({ ...treadmillStress, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
-            dispatch(notify('Treadmill Stress Canceled Successfully'));
-            refetchTreadmillStress();
+        saveElectrocardiogramECG({ ...electrocardiogramEcg, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
+            dispatch(notify('ECG Canceled Successfully'));
+            refetchelectrocardiogramEcg();
         });
     };
     const handleClearField = () => {
         setPopupCancelOpen(false);
-        setTreadmillStress({
-            ...newApTreadmillStress,
-            baselineEcgFindingsLkey: null,
-            bruceProtocolStageLkey: null,
-            segmentChangeLkey: null,
-            typeLkey: null,
-            statusLkey: null,
-            testOutcomeLkey: null,
-            arrhythmiaNoted: false
+        setElectrocardiogramEcg({
+            ...newApElectrocardiogramEcg,
+            stSegmentChangesLkey:null,
+            waveAbnormalitiesLkey:null
         });
     };
     ///useEffect
     useEffect(() => {
-        setTreadmillStressListRequest((prev) => ({
+           setElectrocardiogramEcgListRequest((prev) => ({
             ...prev,
             filters: [
                 {
@@ -259,15 +250,15 @@ const TreadmillStress = ({ patient, encounter }) => {
         }));
     }, [patient?.key, encounter?.key]);
     useEffect(() => {
-        setTreadmillStressListRequest((prev) => ({
+        setElectrocardiogramEcgListRequest((prev) => ({
             ...prev,
             filters: [
-                ...(treadmillStressStatus !== ''
+                ...(electrocardiogramEcgStatus !== ''
                     ? [
                         {
                             fieldName: 'status_lkey',
                             operator: 'match',
-                            value: treadmillStressStatus,
+                            value: electrocardiogramEcgStatus,
                         },
                         {
                             fieldName: 'patient_key',
@@ -307,11 +298,11 @@ const TreadmillStress = ({ patient, encounter }) => {
                     ]),
             ],
         }));
-    }, [treadmillStressStatus, allData]);
+    }, [electrocardiogramEcgStatus, allData]);
     useEffect(() => {
-        setTreadmillStressListRequest((prev) => {
+        setElectrocardiogramEcgListRequest((prev) => {
             const filters =
-                treadmillStressStatus != '' && allData
+            electrocardiogramEcgStatus != '' && allData
                     ? [
 
                         {
@@ -320,7 +311,7 @@ const TreadmillStress = ({ patient, encounter }) => {
                             value: patient?.key
                         },
                     ]
-                    : treadmillStressStatus === '' && allData
+                    : electrocardiogramEcgStatus === '' && allData
                         ? [
                             {
                                 fieldName: 'deleted_at',
@@ -340,7 +331,7 @@ const TreadmillStress = ({ patient, encounter }) => {
                 filters,
             };
         });
-    }, [allData, treadmillStressStatus]);
+    }, [allData, electrocardiogramEcgStatus]);
     return (
         <Panel>
             <Panel bordered style={{ padding: '10px' }}>
@@ -349,143 +340,65 @@ const TreadmillStress = ({ patient, encounter }) => {
                     <MyInput
                         width={165}
                         column
-                        fieldLabel="Test Indication"
+                        fieldLabel="Indication"
                         fieldName="indication"
-                        record={treadmillStress}
-                        setRecord={setTreadmillStress}
+                        record={electrocardiogramEcg}
+                        setRecord={setElectrocardiogramEcg}
                     />
-                    <MyInput
-                        column
+                      <MyInput
                         width={165}
-                        fieldLabel="Baseline ECG Findings"
+                        column
+                        fieldLabel="ECG Lead Type"
+                        fieldName="ecgLeadType"
+                        record={electrocardiogramEcg}
+                        setRecord={setElectrocardiogramEcg}
+                    />
+                  
+                    <MyInput
+                        width={165}
+                        column
+                        fieldLabel="Segment Changes"
                         fieldType="select"
-                        fieldName="baselineEcgFindingsLkey"
-                        selectData={baselineECGFindingsLovQueryResponse?.object ?? []}
+                        fieldName="stSegmentChangesLkey"
+                        selectData={segmentChangesLovQueryResponse?.object ?? []}
                         selectDataLabel="lovDisplayVale"
                         selectDataValue="key"
-                        record={treadmillStress}
-                        setRecord={setTreadmillStress}
+                        record={electrocardiogramEcg}
+                        setRecord={setElectrocardiogramEcg}
                     />
-                     <Form style={{ display: 'flex', flexDirection: 'column', zoom: .8 }}>
-                        <MyLabel label="Pre-Test Blood Pressure" />
-                        <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px', width: 300 }}>
-
-                            <Input
-                                width={100}
-
-                                type="number"
-                                value={treadmillStress.preTestSystolicBp}
-                                onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        preTestSystolicBp: Number(e)
-                                    })} />
-                            <span style={{ textAlign: 'center' }}>/</span>
-                            <Input
-                                width={100}
-                                type="number"
-                                value={treadmillStress.preTestDiastolicBp}
-                                onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        preTestDiastolicBp: Number(e)
-                                    })} />
-                                
-                        </Form>
-                    </Form>
-
                     <MyInput
-                        column
                         width={165}
-                        fieldLabel="Bruce Protocol Stage "
+                        column
+                        fieldLabel="T Wave Abnormalities"
                         fieldType="select"
-                        fieldName="bruceProtocolStageLkey"
-                        selectData={numbersLovQueryResponse?.object ?? []}
+                        fieldName="waveAbnormalitiesLkey"
+                        selectData={waveAbnormalitiesLovQueryResponse?.object ?? []}
                         selectDataLabel="lovDisplayVale"
                         selectDataValue="key"
-                        record={treadmillStress}
-                        setRecord={setTreadmillStress}
+                        record={electrocardiogramEcg}
+                        setRecord={setElectrocardiogramEcg}
                     />
-                    <MyInput
-                        column
-                        width={165}
-                        fieldLabel="ST Segment Change"
-                        fieldType="select"
-                        fieldName="segmentChangeLkey"
-                        selectData={cardiacLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={treadmillStress}
-                        setRecord={setTreadmillStress}
-                    />
-                    <MyInput
+                      <MyInput
                         width={165}
                         column
-                        fieldLabel="Arrhythmia Noted"
-                        fieldType="checkbox"
-                        fieldName="arrhythmiaNoted"
-                        record={treadmillStress}
-                        setRecord={setTreadmillStress}
+                        fieldLabel="Rhythm Analysis"
+                        fieldName="rhythmAnalysis"
+                        record={electrocardiogramEcg}
+                        setRecord={setElectrocardiogramEcg}
                     />
-                    <MyInput
-                        width={165}
-                        column
-                        fieldLabel="Type"
-                        fieldType="select"
-                        fieldName="typeLkey"
-                        selectData={arrythmiasLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={treadmillStress}
-                        setRecord={setTreadmillStress}
-                        disabled={!treadmillStress?.arrhythmiaNoted}
-                    />
-                    <MyInput
-                        width={165}
-                        column
-                        fieldLabel="Test Outcome "
-                        fieldType="select"
-                        fieldName="testOutcomeLkey"
-                        selectData={treadmillLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={treadmillStress}
-                        setRecord={setTreadmillStress}
-                    />
-                   
-
-                </Form>
-                <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px', zoom: .8 }}>
-                    <Form style={{ display: 'flex', flexDirection: 'column' }}>
-                        <MyLabel label="Exercise Duration" />
+                           <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px', zoom: .77 ,marginTop:"5px"}}>
+                      <Form style={{ display: 'flex', flexDirection: 'column' }}>
+                        <MyLabel label="Heart Rate" />
                         <InputGroup style={{ width: 210 }}>
 
                             <Input
                                 type="number"
                                 width={165}
-                                value={treadmillStress.exerciseDuration}
+                                value={electrocardiogramEcg.heartRate}
                                 onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        exerciseDuration: Number(e),
-                                    })
-                                }
-                            />
-                            <InputGroup.Addon><Text>Minutes</Text></InputGroup.Addon>
-                        </InputGroup>
-                    </Form>
-                    <Form style={{ display: 'flex', flexDirection: 'column' }}>
-                        <MyLabel label="Maximum Heart Rate Achieved" />
-                        <InputGroup style={{ width: 210 }}>
-
-                            <Input
-                                type="number"
-                                width={165}
-                                value={treadmillStress.maximumHeartRateAchieved}
-                                onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        maximumHeartRateAchieved: Number(e),
+                                    setElectrocardiogramEcg({
+                                        ...electrocardiogramEcg,
+                                        heartRate: Number(e),
                                     })
                                 }
                             />
@@ -493,80 +406,77 @@ const TreadmillStress = ({ patient, encounter }) => {
                         </InputGroup>
                     </Form>
                     <Form style={{ display: 'flex', flexDirection: 'column' }}>
-                        <MyLabel label="Target Heart Rate" />
+                        <MyLabel label="PR Interval" />
                         <InputGroup style={{ width: 210 }}>
+
                             <Input
                                 type="number"
                                 width={165}
-                                value={treadmillStress.targetHeartRate}
+                                value={electrocardiogramEcg.prInterval}
                                 onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        targetHeartRate: Number(e),
+                                    setElectrocardiogramEcg({
+                                        ...electrocardiogramEcg,
+                                        prInterval: Number(e),
                                     })
                                 }
                             />
-                            <InputGroup.Addon><Text>% of Max HR</Text></InputGroup.Addon>
+                            <InputGroup.Addon><Text>ms</Text></InputGroup.Addon>
                         </InputGroup>
                     </Form>
                     <Form style={{ display: 'flex', flexDirection: 'column' }}>
-                        <MyLabel label="Recovery Time" />
+                        <MyLabel label="QRS Duration " />
                         <InputGroup style={{ width: 210 }}>
+
                             <Input
                                 type="number"
                                 width={165}
-                                value={treadmillStress.recoveryTime}
+                                value={electrocardiogramEcg.qrsDuration}
                                 onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        recoveryTime: Number(e),
+                                    setElectrocardiogramEcg({
+                                        ...electrocardiogramEcg,
+                                        qrsDuration: Number(e),
                                     })
                                 }
                             />
-                            <InputGroup.Addon><Text>Minutes</Text></InputGroup.Addon>
+                            <InputGroup.Addon><Text>ms</Text></InputGroup.Addon>
                         </InputGroup>
                     </Form>
-                    <Form style={{ display: 'flex', flexDirection: 'column', marginTop: '10px' }}>
-                        <MyLabel label="Post-Test BP " />
-                        <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px', width: 300 }}>
+                    <Form style={{ display: 'flex', flexDirection: 'column' }}>
+                        <MyLabel label="QT Interval" />
+                        <InputGroup style={{ width: 210 }}>
 
                             <Input
-                                width={100}
-
                                 type="number"
-                                value={treadmillStress.postTestSystolicBp}
+                                width={165}
+                                value={electrocardiogramEcg.qtInterval}
                                 onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        postTestSystolicBp: Number(e)
-                                    })} />
-                            <span style={{ textAlign: 'center' }}>/</span>
-                            <Input
-                                width={100}
-                                type="number"
-                                value={treadmillStress.postTestDiastolicBp}
-                                onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        postTestDiastolicBp: Number(e)
-                                    })} />
-                
-                        </Form>
+                                    setElectrocardiogramEcg({
+                                        ...electrocardiogramEcg,
+                                        qtInterval: Number(e),
+                                    })
+                                }
+                            />
+                            <InputGroup.Addon><Text>ms</Text></InputGroup.Addon>
+                        </InputGroup>
+                    </Form>
                     </Form>
                 </Form>
                 <Form style={{ display: 'flex', flexDirection: 'column',zoom:.8 }}>
-                    <MyLabel label="Cardiologist Notes" />
-                    <Input
-                        as="textarea"
-                        value={treadmillStress.cardiologistNotes}
-                        onChange={(e) => setTreadmillStress({
-                            ...treadmillStress,
-                            cardiologistNotes: e
-                        })}
-                        style={{ width: 330 }}
-                        rows={3}
-                    />
-                </Form>
+                        <MyLabel label="ECG Interpretation" />
+                        <Input
+                            as="textarea"
+                            value={electrocardiogramEcg.ecgInterpretation}
+                            onChange={(e) => setElectrocardiogramEcg({
+                                ...electrocardiogramEcg,
+                                ecgInterpretation: e
+                            })}
+                            style={{ width: 330 }}
+                            rows={3}
+                        />
+                    </Form>
+
+                   
+                
                 <ButtonToolbar style={{ zoom: .8, marginTop: '10px' }}>
                     <Button
                         appearance="primary"
@@ -594,7 +504,7 @@ const TreadmillStress = ({ patient, encounter }) => {
                             appearance="primary"
                             style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: "5px", zoom: .8 }}
                             onClick={() => { setPopupCancelOpen(true) }}
-                            disabled={!treadmillStress?.key}
+                            disabled={!electrocardiogramEcg?.key}
                         >
                             <CloseOutlineIcon style={{ marginRight: '7px' }} />
                             <Translate>Cancel</Translate>
@@ -605,10 +515,10 @@ const TreadmillStress = ({ patient, encounter }) => {
                         onChange={(value, checked) => {
                             if (checked) {
                                 //TODO convert key to code
-                                setTreadmillStressStatus('3196709905099521');
+                                setElectrocardiogramEcgStatus('3196709905099521');
                             }
                             else {
-                                setTreadmillStressStatus('');
+                                setElectrocardiogramEcgStatus('');
                             }
                         }}
                     >
@@ -629,7 +539,7 @@ const TreadmillStress = ({ patient, encounter }) => {
                 </Form>
                 <Table
                     height={600}
-                    data={treadmillStressResponse?.object ?? []}
+                    data={electrocardiogramEcgResponse?.object ?? []}
                     rowKey="key"
                     expandedRowKeys={expandedRowKeys}
                     renderRowExpanded={renderRowExpanded}
@@ -637,7 +547,7 @@ const TreadmillStress = ({ patient, encounter }) => {
                     bordered
                     cellBordered
                     onRowClick={rowData => {
-                        setTreadmillStress({
+                        setElectrocardiogramEcg({
                             ...rowData
                         });
                     }}
@@ -650,7 +560,7 @@ const TreadmillStress = ({ patient, encounter }) => {
 
                     <Column flexGrow={2} fullText>
                         <HeaderCell align="center">
-                            <Translate>Test Indication</Translate>
+                            <Translate>Indication</Translate>
                         </HeaderCell>
                         <Cell>
                             {rowData => rowData?.indication}
@@ -658,81 +568,86 @@ const TreadmillStress = ({ patient, encounter }) => {
                     </Column >
                     <Column flexGrow={3} fullText>
                         <HeaderCell align="center">
-                            <Translate>Baseline ECG Findings</Translate>
+                            <Translate>ECG Lead Type</Translate>
                         </HeaderCell>
                         <Cell>
-                            {rowData =>
-                                rowData?.baselineEcgFindingsLvalue
-                                    ? rowData?.baselineEcgFindingsLvalue.lovDisplayVale
-                                    : rowData?.baselineEcgFindingsLkey
+                            {rowData =>rowData?.ecgLeadType}
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={3} fullText>
+                        <HeaderCell align="center">
+                            <Translate>Heart Rate</Translate>
+                        </HeaderCell>
+                        <Cell>
+                        {rowData => 
+                               <> 
+                              {rowData?.heartRate}
+                              {" BPM"}
+                            </>}
+                            
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>PR Interval </Translate>
+                        </HeaderCell>
+                        <Cell>
+                        {rowData => 
+                               <> 
+                        {rowData?.prInterval}
+                            {" ms"}
+                            </>}
+                        
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>QRS Duration </Translate>
+                        </HeaderCell>
+                        <Cell>
+                        
+                            {rowData => 
+                               <> 
+                        {rowData?.qrsDuration}
+                            {" ms"}
+                            </>}
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={2} fullText>
+                        <HeaderCell align="center">
+                            <Translate>QT Interval</Translate>
+                        </HeaderCell>
+                        <Cell>
+                        {rowData => 
+                               <> 
+                        {rowData?.qtInterval}
+                            {" ms"}
+                            </>}
+                       
+                        </Cell>
+                    </Column>
+                    <Column flexGrow={3} fullText>
+                        <HeaderCell align="center">
+                            <Translate>ST Segment Changes</Translate>
+                        </HeaderCell>
+                        <Cell>
+                        {rowData =>
+                                rowData?.stSegmentChangesLvalue
+                                    ? rowData?.stSegmentChangesLvalue.lovDisplayVale
+                                    : rowData?.stSegmentChangesLkey
                             }
                         </Cell>
                     </Column>
                     <Column flexGrow={3} fullText>
                         <HeaderCell align="center">
-                            <Translate>Bruce Protocol Stage</Translate>
+                            <Translate>T Wave Abnormalities</Translate>
                         </HeaderCell>
                         <Cell>
-                            {rowData =>
-                                rowData?.bruceProtocolStageLvalue
-                                    ? rowData?.bruceProtocolStageLvalue.lovDisplayVale
-                                    : rowData?.bruceProtocolStageLkey
+                        {rowData =>
+                                rowData?.waveAbnormalitiesLvalue
+                                    ? rowData?.waveAbnormalitiesLvalue.lovDisplayVale
+                                    : rowData?.waveAbnormalitiesLkey
                             }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Exercise Duration</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                <> {rowData?.exerciseDuration} {" Minutes"}
-
-                                </>
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={4} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Maximum Heart Rate Achieved</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                <> {rowData?.maximumHeartRateAchieved} {" BPM"}
-
-                                </>
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Recovery Time </Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                <> {rowData?.recoveryTime} {" Minutes"}
-                                </>
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Pre-Test BP</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.preTestDiastolicBp != null && rowData?.preTestSystolicBp != null
-                                ? ((2 * rowData?.preTestDiastolicBp + rowData?.preTestSystolicBp) / 3).toFixed(2)
-                                : ''}
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Post-Test BP </Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.postTestDiastolicBp != null && rowData?.postTestSystolicBp != null
-                                ? ((2 * rowData?.postTestDiastolicBp + rowData?.postTestSystolicBp) / 3).toFixed(2)
-                                : ''}
                         </Cell>
                     </Column>
                 </Table>
@@ -754,17 +669,17 @@ const TreadmillStress = ({ patient, encounter }) => {
                             fieldType="textarea"
                             fieldName="cancellationReason"
                             height={120}
-                            record={treadmillStress}
-                            setRecord={setTreadmillStress}
+                            record={electrocardiogramEcg}
+                            setRecord={setElectrocardiogramEcg}
                             //TODO convert key to code
-                            disabled={treadmillStress?.statusLkey === "3196709905099521"}
+                            disabled={electrocardiogramEcg?.statusLkey === "3196709905099521"}
                         />
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button appearance="primary" onClick={handleCancle}
                     //TODO convert key to code
-                        disabled={treadmillStress?.statusLkey === "3196709905099521"}
+                        disabled={electrocardiogramEcg?.statusLkey === "3196709905099521"}
                         style={{ backgroundColor: 'var(--primary-blue)', color: 'white', zoom: .8 }}
                     >
                         Cancel
@@ -781,4 +696,4 @@ const TreadmillStress = ({ patient, encounter }) => {
 
     );
 };
-export default TreadmillStress;
+export default ElectrocardiogramECG;

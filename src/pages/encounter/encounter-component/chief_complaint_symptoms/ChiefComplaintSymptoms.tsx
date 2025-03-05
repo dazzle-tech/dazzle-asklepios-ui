@@ -184,6 +184,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
         } else return '';
     };
     const handleSave = () => {
+        //TODO convert key to code
         if (complaintSymptoms.key === undefined) {
             saveComplaintSymptoms({ ...complaintSymptoms, patientKey: patient.key, encounterKey: encounter.key, onsetDate: complaintSymptoms?.onsetDate ? new Date(complaintSymptoms.onsetDate).getTime() : 0, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
                 dispatch(notify('Patient Complaint Symptoms Added Successfully'));
@@ -201,6 +202,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
         }
     };
     const handleCancle = () => {
+        //TODO convert key to code
         saveComplaintSymptoms({ ...complaintSymptoms, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
             dispatch(notify('Treadmill Complaint Symptoms Successfully'));
             refetchComplaintSymptoms();
@@ -504,6 +506,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
                     onChange={(value, checked) => {
                         if (checked) {
                             setComplaintSymptomsStatus('3196709905099521');
+                            //TODO convert key to code
                         }
                         else {
                             setComplaintSymptomsStatus('');
@@ -636,12 +639,14 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
                             height={120}
                             record={complaintSymptoms}
                             setRecord={setComplaintSymptoms}
+                            //TODO convert key to code
                             disabled={complaintSymptoms?.statusLkey === "3196709905099521"}
                         />
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button appearance="primary" onClick={handleCancle}
+                    //TODO convert key to code
                         disabled={complaintSymptoms?.statusLkey === "3196709905099521"}
                         style={{ backgroundColor: 'var(--primary-blue)', color: 'white', zoom: .8 }}
                     >
