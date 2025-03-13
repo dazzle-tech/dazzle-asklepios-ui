@@ -107,7 +107,7 @@ const PatientEMR = () => {
     const [selectedPatientRelation, setSelectedPatientRelation] = useState<any>({
         ...newApPatientRelation
     });
-    const { data: encounterListResponse } = useGetEncountersQuery(listEncounterRequest);
+    const { data: encounterListResponse,isFetching } = useGetEncountersQuery(listEncounterRequest);
     const isSelected = rowData => {
         if (rowData && encounter && rowData.key === encounter.key) {
           return 'selected-row';
@@ -253,8 +253,7 @@ const PatientEMR = () => {
         );
     };
      const goToVisit = async(rowData) => {
-        console.log("iam in go to visit")
-        console.log(rowData);
+
         await setLocalEncounter(rowData);
         if (encounter && encounter.key) {
           dispatch(setEncounter(encounter));
@@ -308,9 +307,8 @@ const PatientEMR = () => {
                             });
                     }}
                     headerHeight={80}
-                    rowHeight={60}
-                    bordered
-                    cellBordered
+                    
+                   
                     onRowClick={rowData => {
                         handleSelectPatient(rowData);
                         setSearchKeyword(null);
@@ -405,9 +403,7 @@ const PatientEMR = () => {
                     });
             }}
             headerHeight={80}
-            rowHeight={60}
-            bordered
-            cellBordered
+           
 
             data={encounterListResponse?.object ?? []}
         onRowClick={rowData => {
@@ -415,13 +411,14 @@ const PatientEMR = () => {
             setLocalPatient(rowData.patientObject)
         }}
         rowClassName={isSelected}
+        loading={isFetching}
         >
 
 
             <Column flexGrow={2}>
                 <HeaderCell align="center">
                     <Input onChange={e => handleFilterChange('visitId', e)} />
-                    <Translate>Visit Id</Translate>
+                    <Translate>VISIT ID</Translate>
                 </HeaderCell>
                 <Cell>
                     {rowData => (
@@ -442,18 +439,33 @@ const PatientEMR = () => {
             <Column sortable flexGrow={3}>
                 <HeaderCell>
                 <Input onChange={e => handleFilterChange('plannedStartDate', e)} />
-                    <Translate>Date</Translate>
+                    <Translate>DATE</Translate>
                 </HeaderCell>
                 <Cell dataKey="plannedStartDate" />
             </Column>
-            <Column sortable flexGrow={5} fullText>
+            <Column sortable flexGrow={3} fullText>
                 <HeaderCell>
                     
-                    <Translate>Diagnosis</Translate>
+                    <Translate>DIAGNOSIS</Translate>
                 </HeaderCell>
                 <Cell>
                     {rowData =>
                         rowData.diagnosis}
+
+                </Cell>
+
+            </Column>
+            <Column sortable flexGrow={3} fullText>
+                <HeaderCell>
+                    
+                    <Translate>STATUS</Translate>
+                </HeaderCell>
+                <Cell>
+                {rowData =>
+                rowData.encounterStatusLvalue
+                  ? rowData.encounterStatusLvalue.lovDisplayVale
+                  : rowData.encounterStatusLkey
+              }
 
                 </Cell>
 
