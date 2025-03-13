@@ -741,7 +741,7 @@ const Lab = () => {
   return (<div>
 
     <Row>
-      <Col xs={20} >
+      <Col xs={21} >
 
         <Row>
           <h5 style={{ marginLeft: '5px' }}> Clinical Laboratory</h5>
@@ -899,12 +899,7 @@ const Lab = () => {
                 onChange={e => setDateFilter({ ...dateFilter, toDate: e })}
                 style={{ width: '230px', marginRight: '5px' }}
               />
-              <IconButton appearance="primary"
-                style={{ backgroundColor: "#00b1cc", borderColor: "#00b1cc", color: "white" }}
-                onClick={() => handleManualSearch}
-                icon={<SearchIcon />} >
-
-              </IconButton>
+             
             </Row>
 
 
@@ -1743,7 +1738,7 @@ const Lab = () => {
 
       </Col>
 
-      <Col style={{ border: '1px solid #e5e5ea', height: '87vh' }} xs={4}>
+      <Col style={{ border: '1px solid #e5e5ea', height: '87vh' }} xs={3}>
         <PatientSide patient={patient} encounter={encounter} />
       </Col>
     </Row>

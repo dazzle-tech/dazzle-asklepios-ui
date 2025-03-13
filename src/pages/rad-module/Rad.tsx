@@ -163,10 +163,10 @@ const Rad = () => {
   const [openNoteModal, setOpenNoteModal] = useState(false);
   const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
   const [openSampleModal, setOpenSampleModal] = useState(false);
-  const { data: ordersList, refetch: orderFetch } = useGetDiagnosticOrderQuery({ ...listOrdersResponse });
+  const { data: ordersList, refetch: orderFetch ,isFetching:isOrderFetching} = useGetDiagnosticOrderQuery({ ...listOrdersResponse });
 
   const filterdOrderList = ordersList?.object.filter((item) => item.hasRadiology === true);
-  const { data: testsList, refetch: fetchTest } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestResponse });
+  const { data: testsList, refetch: fetchTest,isFetching:isTestFetching } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestResponse });
   const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
     ...initialListRequest
     , pageSize: 100
@@ -565,7 +565,7 @@ const Rad = () => {
   return (<div>
 
     <Row>
-      <Col xs={20} >
+      <Col xs={21} >
 
         <Row>
           <h5 style={{ marginLeft: '5px' }}>Radiology</h5>
@@ -597,6 +597,7 @@ const Rad = () => {
                   setReport({ ...newApDiagnosticOrderTestsRadReport })
                 }}
                 rowClassName={isSelected}
+                loading={isOrderFetching}
               >
                 <Column sortable flexGrow={2} fullText>
                   <HeaderCell>
@@ -725,12 +726,7 @@ const Rad = () => {
                 onChange={e => setDateFilter({ ...dateFilter, toDate: e })}
                 style={{ width: '230px', marginRight: '5px' }}
               />
-              <IconButton appearance="primary"
-                style={{ backgroundColor: "#00b1cc", borderColor: "#00b1cc", color: "white" }}
-                onClick={() => handleManualSearch}
-                icon={<SearchIcon />} >
-
-              </IconButton>
+             
             </Row>
 
 
@@ -802,6 +798,7 @@ const Rad = () => {
                   setReport({ ...newApDiagnosticOrderTestsRadReport })
                 }}
                 rowClassName={isTestSelected}
+                loading={isTestFetching}
               >
                 <Column width={70} align="center">
                   <HeaderCell>#</HeaderCell>
@@ -1240,7 +1237,7 @@ const Rad = () => {
 
       </Col>
 
-      <Col style={{ border: '1px solid #e5e5ea', height: '87vh' }} xs={4}>
+      <Col style={{ border: '1px solid #e5e5ea', height: '87vh' }} xs={3}>
         <PatientSide patient={patient} encounter={encounter} />
       </Col>
     </Row>
