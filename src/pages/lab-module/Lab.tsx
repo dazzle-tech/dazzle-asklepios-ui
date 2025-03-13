@@ -171,13 +171,28 @@ const Lab = () => {
   const [openNoteModal, setOpenNoteModal] = useState(false);
   const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
   const [openSampleModal, setOpenSampleModal] = useState(false);
-  const { data: ordersList, refetch: orderFetch } = useGetDiagnosticOrderQuery({ ...listOrdersResponse });
+  const { data: ordersList, refetch: orderFetch,isFetching:isOrderFetcheng } = useGetDiagnosticOrderQuery({ ...listOrdersResponse });
   const filterdOrderList = ordersList?.object.filter((item) => item.hasLaboratory === true);
-  const { data: testsList, refetch: fetchTest } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestResponse });
+  const { data: testsList, refetch: fetchTest,isFetching:isTestsFetching } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestResponse });
   const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
     ...initialListRequest
-    , pageSize: 100
-  })
+    
+  });
+  const [selectedCatValue,setSelectedCatValue]=useState(null)
+  const { data: laboratoryListToFilter } = useGetDiagnosticsTestLaboratoryListQuery({
+    ...initialListRequest,
+    filters: [
+      {
+        fieldName: "category_lkey",
+        operator: "match",
+        value: selectedCatValue,
+      }
+    ]
+    
+  },{
+    skip:!selectedCatValue
+  });
+
   const [listResultResponse, setListResultResponse] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -209,7 +224,7 @@ const Lab = () => {
 
     ],
   });
-  const { data: resultsList, refetch: resultFetch } = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
+  const { data: resultsList, refetch: resultFetch,isResultsFetcing } = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
   const { data: prevResultsList, refetch: prevResultFetch } = useGetDiagnosticOrderTestResultQuery({ ...listPrevResultResponse });
   const [labDetails, setLabDetails] = useState<ApDiagnosticTestLaboratory>({ ...newApDiagnosticTestLaboratory })
   const isSelected = rowData => {
@@ -337,7 +352,30 @@ const Lab = () => {
 
   useEffect(() => {
     resultFetch();
-  }, [result])
+  }, [result]);
+  useEffect(() => {
+    handleManualSearch();
+  }, []);
+  useEffect(() => {
+    if (selectedCatValue!= null && selectedCatValue !== ""&&laboratoryListToFilter?.object.length>0) {
+      
+      const value = laboratoryListToFilter?.object
+        ?.map(cat => `(${cat.testKey})`)
+        .join(" ");
+  
+        setListOrdersTestResponse(
+        addFilterToListRequest(
+          fromCamelCaseToDBName("testKey"),
+          "in",
+          value,
+          listOrdersTestResponse
+        )
+      );
+    }
+    else {
+      setListOrdersTestResponse({...listOrdersTestResponse,filters:[]})
+    }
+  }, [selectedCatValue,laboratoryListToFilter]);
   const handleSendMessage = async (value) => {
     try {
       await savenotes({ ...note, notes: newMessage, testKey: test.key, orderKey: order.key }).unwrap();
@@ -350,6 +388,7 @@ const Lab = () => {
     fecthNotes();
 
   };
+  
   const handleSendResultMessage = async (value) => {
     try {
       await saveResultNote({ ...note, notes: newMessage, testKey: test.key, orderKey: order.key, resultKey: result.key }).unwrap();
@@ -731,6 +770,7 @@ const Lab = () => {
                   setOpenOrders(true);
                 }}
                 rowClassName={isSelected}
+                loading={isOrderFetcheng}
               >
                 <Column sortable flexGrow={2} fullText>
                   <HeaderCell>
@@ -933,6 +973,7 @@ const Lab = () => {
                   setTest(rowData)
                 }}
                 rowClassName={isTestSelected}
+                loading={isTestsFetching}
               >
                 <Column width={70} align="center">
                   <HeaderCell>#</HeaderCell>
@@ -949,6 +990,7 @@ const Lab = () => {
                         labelKey="lovDisplayVale"
                         valueKey="key"
                         onSelect={(value) => {
+                          setSelectedCatValue(value);
                           handleFilterResultChange('testKey',value)}}
                          
                           onClean={()=>{

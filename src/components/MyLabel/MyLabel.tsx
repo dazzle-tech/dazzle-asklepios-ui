@@ -45,7 +45,7 @@ const MyLabel = props => {
     return {
       fontSize,
       color: props.color,
-      fontWeight: 'bold'
+    
     };
   };
 
