@@ -3,21 +3,9 @@ import Translate from '@/components/Translate';
 import {
     faHandDots,
     faTriangleExclamation
-    , faClipboardList,
-    faComment
-    ,
-    faPrint
-    ,
-    faComments,
-    faVialCircleCheck,
-    faDiagramPredecessor,
-    faFilter,
-    faStar,
-    faLandMineOn,
+   ,
     faIdCard,
-    faUserNinja,
-    faPaperPlane,
-    faCalendar
+  
 
 } from '@fortawesome/free-solid-svg-icons';
 import { useGetEncountersQuery } from '@/services/encounterService';
@@ -28,21 +16,11 @@ import {
 } from '@/services/observationService';
 import React from 'react';
 import {
-    InputGroup,
-    Button,
-    Form,
-    IconButton,
-    Input,
-    Divider,
-    Drawer,
+    Button, 
     Panel,
-    Pagination,
     Row,
     Avatar,
-    DatePicker,
-    Dropdown,
     Text,
-    Modal,
     Col
 
 } from 'rsuite';
@@ -137,9 +115,9 @@ const PatientSide = ({ patient, encounter }) => {
         <Row style={{ alignItems: 'center', marginTop: '4px' }}>
             <Col xs={6}>
                 <Avatar
-                    size="lg"
+                    size="md"
                     circle
-                    color="cyan" bordered
+                    bordered
                     onClick={() => handleImageClick('PATIENT_PROFILE_PICTURE')}
                     src={
                         patientImage && patientImage.fileContent
@@ -150,7 +128,7 @@ const PatientSide = ({ patient, encounter }) => {
                 />
             </Col>
             <Col style={{ flexGrow: 1, marginLeft: 10, marginTop: '10px' }}>
-                <div style={{ fontSize: '16px', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+                <div style={{ fontSize: '13px', fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
                     <Text style={{ fontSize: '12px' }}>{patient?.fullName ?? "Patient Name"}</Text>
                     {patient?.genderLkey == '1' && <FaMars style={{ marginLeft: 8, color: '#007bff' }} />}
                     {patient?.genderLkey == '2' && <FaVenus style={{ marginLeft: 8, color: '#fccfcf' }} />}
@@ -178,29 +156,29 @@ const PatientSide = ({ patient, encounter }) => {
         </Row>
         <Row style={{ paddingLeft: '14px' }}>
             <Col xs={10}>
-                <Panel bordered shaded style={{ padding: '10px', borderRadius: '10px', textAlign: 'center' }}>
-                    <FaWeight size={15} color="#00b1cc" /> <br />
+                <Panel bordered shaded style={{ padding: '5px', borderRadius: '10px', textAlign: 'center' }}>
+                    <FaWeight size={15} color="#666" /> <br />
                     <strong>{bodyMeasurements?.weight ?? 'Weight'}</strong>
                 </Panel>
             </Col>
             <Col xs={10}>
-                <Panel bordered shaded style={{ padding: '10px', borderRadius: '10px', textAlign: 'center' }}>
-                    <FaRulerVertical size={15} color="#00b1cc" /> <br />
+                <Panel bordered shaded style={{ padding: '5px', borderRadius: '10px', textAlign: 'center' }}>
+                    <FaRulerVertical size={15} color="#666" /> <br />
                     <strong>{bodyMeasurements?.height ?? 'Height'}</strong>
                 </Panel>
             </Col>
         </Row>
         <Row style={{ paddingLeft: '14px' }}>
             <Col xs={10}>
-                <Panel bordered shaded style={{ padding: '10px', borderRadius: '10px', textAlign: 'center' }}>
-                    <FaUserNinja size={15} color="#00b1cc" />
+                <Panel bordered shaded style={{ padding: '5px', borderRadius: '10px', textAlign: 'center' }}>
+                    <FaUserNinja size={15} color="#666" />
                     <br />
                     <strong>{bodyMeasurements?.headcircumference ?? 'H.C'}</strong>
                 </Panel>
             </Col>
             <Col xs={10}>
-                <Panel bordered shaded style={{ padding: '10px', borderRadius: '10px', textAlign: 'center' }}>
-                    <FaTint size={15} color="red" /> <br />
+                <Panel bordered shaded style={{ padding: '5px', borderRadius: '10px', textAlign: 'center' }}>
+                    <FaTint size={15} color="#666" /> <br />
                     A
                 </Panel>
 
@@ -209,13 +187,13 @@ const PatientSide = ({ patient, encounter }) => {
         </Row>
         <Row style={{ paddingLeft: '14px' }}>
             <Col xs={10}>
-                <Panel bordered shaded style={{ padding: '10px', borderRadius: '10px', textAlign: 'center' }}>
+                <Panel bordered shaded style={{ padding: '5px', borderRadius: '10px', textAlign: 'center' }}>
 
                     <strong>BSA:</strong> {Math.sqrt((bodyMeasurements?.weight * bodyMeasurements?.height) / 3600).toFixed(2) ?? ""}
                 </Panel>
             </Col>
             <Col xs={10}>
-                <Panel bordered shaded style={{ padding: '10px', borderRadius: '10px', textAlign: 'center' }}>
+                <Panel bordered shaded style={{ padding: '5px', borderRadius: '10px', textAlign: 'center' }}>
 
                     <strong>BMI:</strong> {(bodyMeasurements?.weight / ((bodyMeasurements?.height / 100) ** 2)).toFixed(2) ?? ""}
 
@@ -224,11 +202,11 @@ const PatientSide = ({ patient, encounter }) => {
 
         </Row>
 
-        <Row style={{ paddingLeft: '14px' }}>
+        <Row >
             <Col xs={10}>
                 <Button appearance="primary"
                     // onClick={OpenWarningModal}
-                    style={{ backgroundColor: "#00b1cc", borderColor: "#00b1cc", color: "white" }}
+                    style={{ backgroundColor: "var(--primary-blue)",  color: "white" ,zoom:0.8 }}
 
                 >
                     <FontAwesomeIcon icon={faTriangleExclamation} />
@@ -239,7 +217,7 @@ const PatientSide = ({ patient, encounter }) => {
                 <Button appearance="primary"
                     // onClick={OpenAllargyModal}
                     color={patient?.hasAllergy ? "red" : "cyan"}
-                    style={{ backgroundColor: "#00b1cc", borderColor: "#00b1cc", color: "white" }}
+                    style={{ backgroundColor: "var(--primary-blue)",  color: "white" ,zoom:0.8}}
                 >
                     <FontAwesomeIcon icon={faHandDots} />
                     <Translate>Allergy</Translate>
