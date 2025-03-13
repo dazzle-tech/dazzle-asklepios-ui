@@ -74,7 +74,7 @@ const EncounterList = () => {
   });
 
 
-  const { data: encounterListResponse } = useGetEncountersQuery(listRequest);
+  const { data: encounterListResponse,isFetching } = useGetEncountersQuery(listRequest);
 
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(),//new Date(),
@@ -256,8 +256,7 @@ const EncounterList = () => {
               });
           }}
           rowHeight={40}
-          bordered
-          cellBordered
+        
           data={encounterListResponse?.object ?? []}
           onRowClick={rowData => {
             setLocalEncounter(rowData);
@@ -267,6 +266,7 @@ const EncounterList = () => {
             if (rowIndex === -1) return "first-row";
             return isSelected(rowData);
           }}
+          loading={isFetching}
         >
           <Column sortable flexGrow={2} fullText>
             <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
