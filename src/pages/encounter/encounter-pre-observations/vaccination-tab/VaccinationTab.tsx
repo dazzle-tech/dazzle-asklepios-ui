@@ -658,7 +658,7 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
                     <Form style={{ zoom: 0.85 }} layout="inline" fluid>
                         <div style={{ zoom: 0.9, display: 'flex', gap: '10px', flexWrap: "wrap" }}>
 
-                            <div>
+                            <div style={{ position: "relative" }}>
                                 <Text style={{ fontWeight: '800', fontSize: '16px' }}>Vaccine Name</Text>
                                 <InputGroup inside style={{ width: '230px' }}>
                                     <Input
@@ -672,7 +672,7 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
                                     </InputGroup.Button>
                                 </InputGroup>
                                 {searchKeyword && (
-                                    <Dropdown.Menu className="dropdown-menuresult">
+                                    <Dropdown.Menu className="dropdown-menuresult" >
                                         {modifiedData?.map(mod => (
                                             <Dropdown.Item
                                                 key={mod.key}
