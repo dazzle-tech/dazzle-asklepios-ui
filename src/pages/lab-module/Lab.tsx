@@ -183,6 +183,7 @@ const Lab = () => {
     ...initialListRequest,
     filters: [
       {
+
         fieldName: "category_lkey",
         operator: "match",
         value: selectedCatValue,
@@ -357,13 +358,24 @@ const Lab = () => {
     handleManualSearch();
   }, []);
   useEffect(() => {
-    if (selectedCatValue!= null && selectedCatValue !== ""&&laboratoryListToFilter?.object.length>0) {
+    if (selectedCatValue!= null && selectedCatValue !== "") {
       
-      const value = laboratoryListToFilter?.object
-        ?.map(cat => `(${cat.testKey})`)
-        .join(" ");
-  
+      if(laboratoryListToFilter?.object?.length==0){
+        const value=undefined;
         setListOrdersTestResponse(
+          addFilterToListRequest(
+            fromCamelCaseToDBName("testKey"),
+            "in",
+            value,
+            listOrdersTestResponse
+          )
+        );
+      }
+      else{
+      const value = laboratoryListToFilter?.object
+      ?.map(cat => `(${cat.testKey})`)
+      .join(" ") ;
+      setListOrdersTestResponse(
         addFilterToListRequest(
           fromCamelCaseToDBName("testKey"),
           "in",
@@ -372,10 +384,27 @@ const Lab = () => {
         )
       );
     }
+  
+       
+      
+    }
     else {
-      setListOrdersTestResponse({...listOrdersTestResponse,filters:[]})
+      setListOrdersTestResponse({...listOrdersTestResponse,filters:[
+         {
+        fieldName: "order_key",
+        operator: "match",
+        value: order?.key ?? undefined,
+      },
+      {
+        fieldName: "order_type_lkey",
+        operator: "match",
+        value: "862810597620632",
+      }]})
     }
   }, [selectedCatValue,laboratoryListToFilter]);
+  useEffect(()=>{
+    console.log(listOrdersTestResponse.filters)
+  },[listOrdersTestResponse])
   const handleSendMessage = async (value) => {
     try {
       await savenotes({ ...note, notes: newMessage, testKey: test.key, orderKey: order.key }).unwrap();
@@ -748,7 +777,7 @@ const Lab = () => {
         </Row>
         <Row>
           <Col xs={14}>
-            <Panel style={{ border: '1px solid #e5e5ea', borderRadius: '25px' }}>
+            <Panel style={{ border: '1px solid #e5e5ea'}}>
               <Table
                 height={200}
                 width={700}
@@ -944,7 +973,7 @@ const Lab = () => {
         </Row>
         <Row>
           {openorders &&
-            <Panel header="Order's Tests" collapsible defaultExpanded style={{ border: '1px solid #e5e5ea', borderRadius: '25px' }}>
+            <Panel header="Order's Tests" collapsible defaultExpanded style={{ border: '1px solid #e5e5ea'}}>
               <Table
 
                 height={200}
@@ -1218,7 +1247,7 @@ const Lab = () => {
             </Panel>}
         </Row>
         <Row>
-          {openresults && <Panel header="Test's Results Processing" collapsible defaultExpanded style={{ border: '1px solid #e5e5ea', borderRadius: '25px' }}>
+          {openresults && <Panel header="Test's Results Processing" collapsible defaultExpanded style={{ border: '1px solid #e5e5ea'}}>
             <Table
 
               height={200}
