@@ -118,9 +118,7 @@ const OptometricExam = ({ patient, encounter }) => {
     const { data: improvmentsStatusLovQueryResponse } = useGetLovValuesByCodeQuery('IMPROVEMENTS_STATUS');
     const { data: colorBlindTestLovQueryResponse } = useGetLovValuesByCodeQuery('COLOR_BLIND_TEST');
     const { data: lowModHighLovQueryResponse } = useGetLovValuesByCodeQuery('LOW_MOD_HIGH');
-    const { data: optometricExamResponse, refetch: refetchOptometricExam } = useGetOptometricExamsQuery(optometricExamListRequest, {
-        skip: !patient?.key || !encounter?.key,
-    });
+    const { data: optometricExamResponse, refetch: refetchOptometricExam } = useGetOptometricExamsQuery(optometricExamListRequest);
     const [listIcdRequest, setListIcdRequest] = useState({ ...initialListRequest });
     const { data: icdListResponseData } = useGetIcdListQuery(listIcdRequest);
     const modifiedData = (icdListResponseData?.object ?? []).map(item => ({

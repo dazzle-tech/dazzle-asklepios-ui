@@ -93,9 +93,7 @@ const TreadmillStress = ({ patient, encounter }) => {
     const { data: cardiacLovQueryResponse } = useGetLovValuesByCodeQuery('CARDIAC_ST_CHANGES');
     const { data: arrythmiasLovQueryResponse } = useGetLovValuesByCodeQuery('ARRYTHMIAS');
     const { data: treadmillLovQueryResponse } = useGetLovValuesByCodeQuery('TREADMILL_OUTCOMES');
-    const { data: treadmillStressResponse, refetch: refetchTreadmillStress } = useGetTreadmillStressesQuery(treadmillStressListRequest, {
-        skip: !patient?.key || !encounter?.key,
-    });
+    const { data: treadmillStressResponse, refetch: refetchTreadmillStress } = useGetTreadmillStressesQuery(treadmillStressListRequest);
     const isSelected = rowData => {
         if (rowData && treadmillStress && treadmillStress.key === rowData.key) {
             return 'selected-row';

@@ -82,9 +82,7 @@ const PsychologicalExam = ({ patient, encounter }) => {
         const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
         const { data: scoreLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
         const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
-    const { data: psychologicalExamResponse, refetch: refetchPsychologicalExam } = useGetPsychologicalExamsQuery(psychologicalExamListRequest, {
-        skip: !patient?.key || !encounter?.key,
-    });
+    const { data: psychologicalExamResponse, refetch: refetchPsychologicalExam } = useGetPsychologicalExamsQuery(psychologicalExamListRequest);
     const isSelected = rowData => {
         if (rowData && psychologicalExam && psychologicalExam.key === rowData.key) {
             return 'selected-row';
