@@ -146,7 +146,8 @@ const Frame = (props: FrameProps) => {
                 const { children, ...rest } = item;
                 if (children) {
                   return (
-                    <Nav.Menu key={item.eventKey} placement="rightStart" trigger="hover" {...rest}>
+                    <Nav.Menu key={item.eventKey} placement="rightStart" trigger="hover" {...rest} style={{ zoom: expand ? 0.8 : 1 }}
+>
                       {children.map(child => {
                         return (
                           <NavItem
