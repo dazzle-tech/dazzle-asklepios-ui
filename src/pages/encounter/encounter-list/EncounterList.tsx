@@ -74,7 +74,7 @@ const EncounterList = () => {
   });
 
 
-  const { data: encounterListResponse,isFetching } = useGetEncountersQuery(listRequest);
+  const { data: encounterListResponse,isFetching ,isLoading} = useGetEncountersQuery(listRequest);
 
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(),//new Date(),
@@ -166,11 +166,10 @@ const EncounterList = () => {
     }
   };
   useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent(null));
-    };
-  }, [location.key]);
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(" "));
+   
+  }, [location.pathname, dispatch ,isLoading]);
   return (
     <>
       <Panel
@@ -256,7 +255,6 @@ const EncounterList = () => {
               });
           }}
           rowHeight={40}
-        
           data={encounterListResponse?.object ?? []}
           onRowClick={rowData => {
             setLocalEncounter(rowData);
@@ -266,7 +264,7 @@ const EncounterList = () => {
             if (rowIndex === -1) return "first-row";
             return isSelected(rowData);
           }}
-          loading={isFetching}
+          loading={isLoading}
         >
           <Column sortable flexGrow={2} fullText>
             <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
