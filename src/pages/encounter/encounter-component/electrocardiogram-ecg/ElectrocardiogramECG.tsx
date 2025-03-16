@@ -89,9 +89,7 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
     const { data: segmentChangesLovQueryResponse } = useGetLovValuesByCodeQuery('CARDIAC_ST_CHANGES');
     const { data: waveAbnormalitiesLovQueryResponse } = useGetLovValuesByCodeQuery('TWAVE_ABNORMAL');
     
-    const { data: electrocardiogramEcgResponse, refetch: refetchelectrocardiogramEcg } = useGetElectrocardiogramECGsQuery(electrocardiogramEcgListRequest, {
-        skip: !patient?.key || !encounter?.key,
-    });
+    const { data: electrocardiogramEcgResponse, refetch: refetchelectrocardiogramEcg } = useGetElectrocardiogramECGsQuery(electrocardiogramEcgListRequest);
     const isSelected = rowData => {
         if (rowData && electrocardiogramEcg && electrocardiogramEcg.key === rowData.key) {
             return 'selected-row';

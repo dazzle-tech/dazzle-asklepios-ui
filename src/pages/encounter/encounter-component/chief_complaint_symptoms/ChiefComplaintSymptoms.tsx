@@ -85,9 +85,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
     const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
     const { data: bodyPartsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
     const { data: adversLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ADVERS_EFFECTS');
-    const { data: complaintSymptomsResponse, refetch: refetchComplaintSymptoms } = useGetComplaintSymptomsQuery(complaintSymptomsListRequest, {
-        skip: !patient?.key || !encounter?.key,
-    });
+    const { data: complaintSymptomsResponse, refetch: refetchComplaintSymptoms } = useGetComplaintSymptomsQuery(complaintSymptomsListRequest);
     const handleExpanded = (rowData) => {
         let open = false;
         const nextExpandedRowKeys = [];

@@ -95,9 +95,7 @@ const AudiometryPuretone = ({ patient, encounter }) => {
     const { data: earExamFindingsLovQueryResponse } = useGetLovValuesByCodeQuery('EAR_EXAM_FINDINGS');
     const { data: hearingLossTypeLovQueryResponse } = useGetLovValuesByCodeQuery('HEARING_LOSS_TYPES');
     const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
-    const { data: audiometryPuretonResponse, refetch: refetchAudiometryPureton } = useGetAudiometryPuretonesQuery(audiometryPuretoneListRequest, {
-        skip: !patient?.key || !encounter?.key,
-    });
+    const { data: audiometryPuretonResponse, refetch: refetchAudiometryPureton } = useGetAudiometryPuretonesQuery(audiometryPuretoneListRequest);
     const isSelected = rowData => {
         if (rowData && audiometryPuretone && audiometryPuretone.key === rowData.key) {
             return 'selected-row';
