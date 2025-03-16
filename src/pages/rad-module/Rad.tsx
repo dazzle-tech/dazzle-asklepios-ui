@@ -572,7 +572,7 @@ const Rad = () => {
         </Row>
         <Row>
           <Col xs={14}>
-            <Panel style={{ border: '1px solid #e5e5ea', borderRadius: '25px', zoom: 0.93 }}>
+            <Panel style={{ border: '1px solid #e5e5ea' }}>
               <Table
                 height={200}
                 width={700}
@@ -771,7 +771,7 @@ const Rad = () => {
         </Row>
         <Row>
           {openorders &&
-            <Panel header="Order's Tests" collapsible defaultExpanded style={{ border: '1px solid #e5e5ea', borderRadius: '25px', zoom: 0.93 }}>
+            <Panel header="Order's Tests" collapsible defaultExpanded style={{ border: '1px solid #e5e5ea' }}>
               <Table
 
                 height={200}
@@ -1009,7 +1009,7 @@ const Rad = () => {
             </Panel>}
         </Row>
         <Row>
-          {openresults && <Panel header="Test's Results Processing" collapsible defaultExpanded style={{ border: '1px solid #e5e5ea', borderRadius: '25px', zoom: 0.93 }}>
+          {openresults && <Panel header="Test's Results Processing" collapsible defaultExpanded style={{ border: '1px solid #e5e5ea' }}>
             <Table
 
               height={200}
