@@ -35,19 +35,7 @@ const Laboratory = ({diagnosticsTest}) => {
   const dispatch = useAppDispatch();
   const [popupOpen, setPopupOpen] = useState(false);
   const [diagnosticTestLaboratory, setDiagnosticTestLaboratory] = useState<ApDiagnosticTestLaboratory>({ ...newApDiagnosticTestLaboratory });
-  const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    pageSize: 15
-  });
-
-
-
-  const { data: serviceListResponse } = useGetServicesQuery({
-    ...initialListRequest,
-    pageSize: 1000,
-    skipDetails: true
-  });
-
+ console.log("test",diagnosticsTest)
   const [catalogListRequest, setCatalogListRequest] = useState({
     ...initialListRequest,
     pageSize: 100,
@@ -102,7 +90,6 @@ const Laboratory = ({diagnosticsTest}) => {
   const [saveDiagnosticsTestLaboratory, saveDiagnosticsTestLaboratoryMutation] = useSaveDiagnosticsTestLaboratoryMutation();
   const { data: labrotoryDetailsQueryResponse } = useGetDiagnosticsTestLaboratoryListQuery(labListRequest);
 
-  const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
 
 
   useEffect(() => {
@@ -150,15 +137,12 @@ const Laboratory = ({diagnosticsTest}) => {
      }
   }, [labrotoryDetailsQueryResponse]);
 
-  const handleSaveLab = () => {
-      
-    setDiagnosticTestLaboratory({
-      ...diagnosticTestLaboratory,
+  const handleSaveLab = async() => {
+    
+ 
+   await saveDiagnosticsTestLaboratory({...diagnosticTestLaboratory, 
       createdBy: 'Administrator',
-      testKey: diagnosticsTest.key
-
-    });
-    saveDiagnosticsTestLaboratory(diagnosticTestLaboratory).unwrap();
+      testKey:diagnosticsTest?.key}).unwrap();
      dispatch(notify('Laboratory Details Saved Successfully'));
                 };   
   

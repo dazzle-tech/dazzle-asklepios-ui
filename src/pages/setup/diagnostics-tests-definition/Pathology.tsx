@@ -111,15 +111,13 @@ const Pathology = ({ diagnosticsTest }) => {
     }
   }, [pathologyDetailsQueryResponse]);
 
-  const handleSavePath = () => {
+  const handleSavePath = async() => {
 
-    setDiagnosticTestPathology({
-      ...diagnosticTestPathology,
+   
+  await  saveDiagnosticsTestPathology({...diagnosticTestPathology,
       createdBy: 'Administrator',
       testKey: diagnosticsTest.key
-
-    });
-    saveDiagnosticsTestPathology(diagnosticTestPathology).unwrap();
+    }).unwrap();
     dispatch(notify('Pathology Details Saved Successfully'));
   };
 

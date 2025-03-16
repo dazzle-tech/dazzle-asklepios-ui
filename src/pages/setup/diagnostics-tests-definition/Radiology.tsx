@@ -87,15 +87,12 @@ const Radiology = ({ diagnosticsTest }) => {
   }, [radiologyDetailsQueryResponse]);
 
 
-  const handleSaveRad = () => {
+  const handleSaveRad = async () => {
 
-    setDiagnosticTestRadiology({
-      ...diagnosticTestRadiology,
+   await saveDiagnosticsTestRadiology({...diagnosticTestRadiology,
       createdBy: 'Administrator',
       testKey: diagnosticsTest.key
-
-    });
-    saveDiagnosticsTestRadiology(diagnosticTestRadiology).unwrap();
+    }).unwrap();
     dispatch(notify('Radiology Details Saved Successfully'));
   };
 

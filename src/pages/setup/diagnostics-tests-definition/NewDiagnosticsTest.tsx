@@ -500,7 +500,7 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
         </Stack>
 
       </Panel>
-      {basicDataSaved && (
+      {diagnosticsTest.key && (
         <Panel>
           {/* {console.log("the value is " + handleShowComponent() + basicDataSaved)} */}
           {handleShowComponent()}
