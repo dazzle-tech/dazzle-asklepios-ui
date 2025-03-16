@@ -1321,9 +1321,9 @@ const Lab = () => {
                             saveResult({ ...result }).unwrap();
                             setShowResultInput(false);
                             if (normalRange.normalRangeTypeLkey == "6221150241292558") {
-                              console.log("case range")
+                              
                               if (result.resultValueNumber > normalRange.rangeFrom && result.resultValueNumber < normalRange.rangeTo) {
-                                console.log("range and it normal " + result.resultValueNumber)
+                               
                                 const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
                                 saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' }).unwrap()
                                 setTest({ ...newApDiagnosticOrderTests });
@@ -1336,7 +1336,7 @@ const Lab = () => {
 
                                 if (normalRange.criticalValue) {
                                   if (result.resultValueNumber < normalRange.criticalValueLessThan) {
-                                    console.log("Less than and critical  " + result.resultValueNumber + "<" + normalRange.criticalValueLessThan)
+                                   
                                     const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
                                     saveResult({ ...result, marker: "6730652890616978", statusLkey: '265123250697000' }).unwrap();
                                     setTest({ ...newApDiagnosticOrderTests });
@@ -1347,7 +1347,7 @@ const Lab = () => {
                                   }
                                 }
                                 else {
-                                  console.log("Less than not critical " + result.resultValueNumber)
+                                 
                                   const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
                                   saveResult({ ...result, marker: "6730094497387122", statusLkey: '265123250697000' }).unwrap();
                                   setTest({ ...newApDiagnosticOrderTests });
@@ -1358,10 +1358,10 @@ const Lab = () => {
                                 }
                               }
                               else if (result.resultValueNumber > normalRange.rangeTo) {
-                                console.log("More than" + normalRange.rangeTo);
+                           
                                 if (normalRange.criticalValue) {
                                   if (result.resultValueNumber > normalRange.criticalValueMoreThan) {
-                                    console.log("more than and critical" + ">" + normalRange.criticalValueMoreThan)
+                                   
                                     const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
                                     saveResult({ ...result, marker: "6730104027458969", statusLkey: '265123250697000' }).unwrap();
                                     setTest({ ...newApDiagnosticOrderTests });
@@ -1371,7 +1371,7 @@ const Lab = () => {
                                     await resultFetch();
                                   }
                                   else {
-                                    console.log("More than not critical")
+                                   
                                     const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
                                     saveResult({ ...result, marker: "6730083474405013", statusLkey: '265123250697000' }).unwrap();
                                     setTest({ ...newApDiagnosticOrderTests });
@@ -1469,29 +1469,36 @@ const Lab = () => {
 
                     }
                     else {
-                      return <Input
-                        value={rowData.resultText}
+                      return showResultInput? (<Input
+                        
                          
                         onChange={async (value) => {
 
                           // setResult({ ...result, resultText: value });
-                          saveResult({ ...result, resultText: value, statusLkey: '265123250697000' }).unwrap();
+                          setResult({ ...result, resultText: value, statusLkey: '265123250697000' });
                           resultFetch();
                         }}
                         onPressEnter={async () => {
 
-
+            
                           const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
+                          saveResult({...result}).unwrap();
+
                           setTest({ ...newApDiagnosticOrderTests });
                           dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                           setTest({ ...Response });
 
                           await fetchTest();
                           await resultFetch();
-
+                         setShowResultInput(false);
 
                         }}
-                      ></Input>
+                      ></Input>):(
+                        <span>
+                          {rowData.resultText}
+                          <FontAwesomeIcon onClick={() => setShowResultInput(true)} icon={faPenToSquare} style={{ fontSize: "1em", marginLeft: "5px", cursor: "pointer" }} />
+                        </span>
+                      );
                     }
                   }}
                 </Cell>
