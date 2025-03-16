@@ -772,9 +772,7 @@ const Lab = () => {
     <Row>
       <Col xs={21} >
 
-        <Row>
-          <h5 style={{ marginLeft: '5px' }}> Clinical Laboratory</h5>
-        </Row>
+       
         <Row>
           <Col xs={14}>
             <Panel style={{ border: '1px solid #e5e5ea'}}>
@@ -1242,7 +1240,7 @@ const Lab = () => {
                 //  onChangeLimit={pageSize => {
                 //    setListRequest({ ...listRequest, pageSize });
                 //  }}
-                total={testsList?.object?.length || 0}
+                total={testsList?.extraNumeric || 0}
               />
             </Panel>}
         </Row>
