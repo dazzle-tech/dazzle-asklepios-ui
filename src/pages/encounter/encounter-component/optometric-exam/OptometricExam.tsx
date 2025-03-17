@@ -134,20 +134,27 @@ const OptometricExam = ({ patient, encounter }) => {
             return 'selected-row';
         } else return '';
     };
-    const handleSave = () => {
+
+    const handleSave = async () => {
         //TODO convert key to code
-        if (optometricExam.key === undefined) {
-            saveOptometricExam({ ...optometricExam, patientKey: patient.key, encounterKey: encounter.key, followUpDate: optometricExam?.followUpDate ? new Date(optometricExam.followUpDate).getTime() : 0, statusLkey: "9766169155908512", createdBy: authSlice.user.key, timeOfMeasurement: time.time.split(':').reduce((acc, time) => acc * 60 + Number(time), 0) * 60 }).unwrap().then(() => {
+        try {
+            if (optometricExam.key === undefined) {
+                await saveOptometricExam({ ...optometricExam, patientKey: patient.key, encounterKey: encounter.key, followUpDate: optometricExam?.followUpDate ? new Date(optometricExam.followUpDate).getTime() : 0, statusLkey: "9766169155908512", createdBy: authSlice.user.key, timeOfMeasurement: time.time.split(':').reduce((acc, time) => acc * 60 + Number(time), 0) * 60 }).unwrap();
                 dispatch(notify('Patient Optometric Exam Added Successfully'));
-            });
-            setOptometricExam({ ...optometricExam, statusLkey: "9766169155908512" })
-            refetchOptometricExam();
-        }
-        else if (optometricExam.key) {
-            saveOptometricExam({ ...optometricExam, patientKey: patient.key, encounterKey: encounter.key, followUpDate: optometricExam?.followUpDate ? new Date(optometricExam.followUpDate).getTime() : 0, updatedBy: authSlice.user.key, timeOfMeasurement: time.time.split(':').reduce((acc, time) => acc * 60 + Number(time), 0) * 60 }).unwrap().then(() => {
+                setOptometricExam({ ...optometricExam, statusLkey: "9766169155908512" })
+
+            } else {
+                await saveOptometricExam({ ...optometricExam, patientKey: patient.key, encounterKey: encounter.key, followUpDate: optometricExam?.followUpDate ? new Date(optometricExam.followUpDate).getTime() : 0, updatedBy: authSlice.user.key, timeOfMeasurement: time.time.split(':').reduce((acc, time) => acc * 60 + Number(time), 0) * 60 }).unwrap();
+
                 dispatch(notify('Patient Optometric Exam Updated Successfully'));
-                refetchOptometricExam();
-            });
+            }
+
+            await refetchOptometricExam();
+            handleClearField();
+
+        } catch (error) {
+            console.error("Error saving Patient ECG:", error);
+            dispatch(notify('Failed to save Patient ECG'));
         }
     };
     const handleCancle = () => {
@@ -1157,7 +1164,7 @@ const OptometricExam = ({ patient, encounter }) => {
                 </Modal.Body>
                 <Modal.Footer>
                     <Button appearance="primary" onClick={handleCancle}
-                    //TODO convert key to code
+                        //TODO convert key to code
                         disabled={optometricExam?.statusLkey === "3196709905099521"}
                         style={{ backgroundColor: 'var(--primary-blue)', color: 'white', zoom: .8 }}
                     >

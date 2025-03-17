@@ -99,25 +99,29 @@ const TreadmillStress = ({ patient, encounter }) => {
             return 'selected-row';
         } else return '';
     };
-    const handleSave = () => {
+    const handleSave = async () => {
         //TODO convert key to code
-        if (treadmillStress.key === undefined) {
-            saveTreadmillStress({ ...treadmillStress, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
+        try {
+            if (treadmillStress.key === undefined) {
+                await saveTreadmillStress({ ...treadmillStress, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap();
                 dispatch(notify('Patient Treadmill Stress Added Successfully'));
-            });
-            setTreadmillStress({ ...newApTreadmillStress, statusLkey: "9766169155908512" })
-            refetchTreadmillStress();
-            handleClearField();
-        }
-        else if (treadmillStress.key) {
-            saveTreadmillStress({ ...treadmillStress, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap().then(() => {
+                setTreadmillStress({ ...newApTreadmillStress, statusLkey: "9766169155908512" })
+            } else {
+                await saveTreadmillStress({ ...treadmillStress, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap();
+    
                 dispatch(notify('Patient Treadmill Stress Updated Successfully'));
-                setTreadmillStress({ ...newApTreadmillStress })
-                refetchTreadmillStress();
-                handleClearField();
-            });
+            }
+    
+            await refetchTreadmillStress();
+            handleClearField();
+            
+        } catch (error) {
+            console.error("Error saving Treadmill Stress:", error);
+            dispatch(notify('Failed to save Treadmill Stress'));
         }
     };
+
+
     const handleExpanded = (rowData) => {
         let open = false;
         const nextExpandedRowKeys = [];

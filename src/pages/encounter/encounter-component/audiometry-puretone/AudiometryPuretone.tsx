@@ -101,22 +101,24 @@ const AudiometryPuretone = ({ patient, encounter }) => {
             return 'selected-row';
         } else return '';
     };
-    const handleSave = () => {
+    const handleSave = async () => {
         //TODO convert key to code
-        if (audiometryPuretone.key === undefined) {
-            saveAudiometryPureton({ ...audiometryPuretone, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
+        try {
+            if (audiometryPuretone.key === undefined) {
+                await  saveAudiometryPureton({ ...audiometryPuretone, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap();
                 dispatch(notify('Patient Audiometry Pureton Added Successfully'));
-            });
-            setAudiometryPuretone({ ...newApAudiometryPuretone, statusLkey: "9766169155908512" })
-            refetchAudiometryPureton();
-            handleClearField();
-        }
-        else if (audiometryPuretone.key) {
-            saveAudiometryPureton({ ...audiometryPuretone, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap().then(() => {
+                setAudiometryPuretone({ ...newApAudiometryPuretone, statusLkey: "9766169155908512" })
+            } else {
+                await saveAudiometryPureton({ ...audiometryPuretone, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap();
+    
                 dispatch(notify('Patient Audiometry Pureton Updated Successfully'));
-                refetchAudiometryPureton();
-                handleClearField();
-            });
+            }
+            await refetchAudiometryPureton();
+            handleClearField();
+            
+        } catch (error) {
+            console.error("Error saving Patient Audiometry:", error);
+            dispatch(notify('Failed to save Patient Audiometry'));
         }
     };
     const handleExpanded = (rowData) => {
