@@ -128,6 +128,7 @@ const Lab = () => {
   const [sample, setSample] = useState({ ...newApDiagnosticOrderTestsSamples });
   const [result, setResult] = useState({ ...newApDiagnosticOrderTestsResult })
   const [selectedSampleDate, setSelectedSampleDate] = useState(null);
+  const [activeRowKey, setActiveRowKey] = useState(null);
   const [listOrdersResponse, setListOrdersResponse] = useState<ListRequest>({
     ...initialListRequest
 
@@ -719,8 +720,9 @@ const Lab = () => {
       await resultFetch();
     }
     await resultFetch().then(() => {
-      console.log("in fetch")
+      
     });
+    setActiveRowKey(null)
   };
 
   const stepsData = [
@@ -1289,7 +1291,7 @@ const Lab = () => {
                       if (normalRange?.resultTypeLkey === "6209578532136054") {
                         const list = lovValues?.object.filter((item) => item.lovKey === normalRange.resultLovKey);
 
-                        return showResultInput ? (
+                        return activeRowKey === rowData.key? (
                           <SelectPicker
                             data={list ?? []}
                             value={rowData.orderTypeLkey}
@@ -1301,12 +1303,12 @@ const Lab = () => {
                         ) : (
                           <span>
                             {rowData.orderTypeLvalue ? rowData.orderTypeLvalue.lovDisplayVale : rowData.orderTypeLkey}
-                            <FontAwesomeIcon onClick={() => setShowResultInput(true)} icon={faPenToSquare} style={{ fontSize: "1em", marginLeft: "5px", cursor: "pointer" }} />
+                            <FontAwesomeIcon onClick={() => setActiveRowKey(rowData.key)} icon={faPenToSquare} style={{ fontSize: "1em", marginLeft: "5px", cursor: "pointer" }} />
                           </span>
                         );
                       }
                       else if (normalRange?.resultTypeLkey == "6209569237704618") {
-                        return showResultInput ? (<Input
+                        return activeRowKey === rowData.key? (<Input
                           style={{ zoom: 0.8 }}
                           type='number'
 
@@ -1315,9 +1317,9 @@ const Lab = () => {
                             setResult({ ...result, resultValueNumber: Number(value) });
 
                           }}
-                          onBlur={async (event) => {
+                          onPressEnter={async (event) => {
                             saveResult({ ...result }).unwrap();
-                            setShowResultInput(false);
+                            setActiveRowKey(null)
                             if (normalRange.normalRangeTypeLkey == "6221150241292558") {
                               
                               if (result.resultValueNumber > normalRange.rangeFrom && result.resultValueNumber < normalRange.rangeTo) {
@@ -1418,7 +1420,7 @@ const Lab = () => {
 
                                 await resultFetch();
                               }
-                              console.log("Less than")
+                            
                             }
                             else if (normalRange.normalRangeTypeLkey == "6221175556193180") {
                               if (result.resultValueNumber > normalRange.rangeTo) {
@@ -1460,14 +1462,14 @@ const Lab = () => {
                         ></Input>) : (
                           <span>
                             {rowData.resultValueNumber}
-                            <FontAwesomeIcon onClick={() => setShowResultInput(true)} icon={faPenToSquare} style={{ fontSize: "1em", marginLeft: "5px", cursor: "pointer" }} />
+                            <FontAwesomeIcon onClick={() => setActiveRowKey(rowData.key)} icon={faPenToSquare} style={{ fontSize: "1em", marginLeft: "5px", cursor: "pointer" }} />
                           </span>)
 
                       }
 
                     }
                     else {
-                      return showResultInput? (<Input
+                      return activeRowKey === rowData.key? (<Input
                         
                          
                         onChange={async (value) => {
@@ -1488,13 +1490,13 @@ const Lab = () => {
 
                           await fetchTest();
                           await resultFetch();
-                         setShowResultInput(false);
+                          setActiveRowKey(null);
 
                         }}
                       ></Input>):(
                         <span>
                           {rowData.resultText}
-                          <FontAwesomeIcon onClick={() => setShowResultInput(true)} icon={faPenToSquare} style={{ fontSize: "1em", marginLeft: "5px", cursor: "pointer" }} />
+                          <FontAwesomeIcon onClick={() => setActiveRowKey(rowData.key)} icon={faPenToSquare} style={{ fontSize: "1em", marginLeft: "5px", cursor: "pointer" }} />
                         </span>
                       );
                     }
