@@ -157,10 +157,9 @@ const FacilityPatientList = () => {
     }, [dateFilter]);
     return (
      
-            <Panel className='box-style' style={{borderRadius:'8px'}}>
+            <Panel className='box-style'>
                 <div  >
                     <div >
-
                         <Form layout='inline' fluid className='divStyle'>
                             <div className='divContainFiledSearch'>
                                 <Stack spacing={5} direction="column" alignItems="flex-start" style={{ zoom: .8 }}>
@@ -171,14 +170,11 @@ const FacilityPatientList = () => {
                                         onChange={handleDateChange}
                                     />
                                 </Stack>
-
                                 <Stack spacing={5} direction="column" alignItems="flex-start" style={{ zoom: .8 }}>
                                     <MyLabel label="Date of Birth " />
                                     <DatePicker format="MM/dd/yyyy" onChange={handleDOFSearch} />
-
                                 </Stack >
                                 <MyInput
-
                                     width={165}
                                     heigth={27}
                                     column
