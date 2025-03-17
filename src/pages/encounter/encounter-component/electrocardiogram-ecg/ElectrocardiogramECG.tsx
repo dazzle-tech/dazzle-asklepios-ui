@@ -95,25 +95,29 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
             return 'selected-row';
         } else return '';
     };
-    const handleSave = () => {
-        //TODO convert key to code
-        if (electrocardiogramEcg.key === undefined) {
-            saveElectrocardiogramECG({ ...electrocardiogramEcg, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
-                dispatch(notify('Patient ECG Added Successfully'));
-            });
-            setElectrocardiogramEcg({ ...newApElectrocardiogramEcg, statusLkey: "9766169155908512" })
-            refetchelectrocardiogramEcg();
-            handleClearField();
-        }
-        else if (electrocardiogramEcg.key) {
-            saveElectrocardiogramECG({ ...electrocardiogramEcg, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap().then(() => {
-                dispatch(notify('Patient ECG Updated Successfully'));
-                setElectrocardiogramEcg({ ...newApElectrocardiogramEcg })
-                refetchelectrocardiogramEcg();
+        const handleSave = async () => {
+            //TODO convert key to code
+            try {
+                if (electrocardiogramEcg.key === undefined) {
+                    await saveElectrocardiogramECG({ ...electrocardiogramEcg, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap();
+                    dispatch(notify('Patient ECG Added Successfully'));
+                    setElectrocardiogramEcg({ ...newApElectrocardiogramEcg, statusLkey: "9766169155908512" })
+                } else {
+                    await   saveElectrocardiogramECG({ ...electrocardiogramEcg, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap();
+        
+                    dispatch(notify('Patient ECG Updated Successfully'));
+                }
+        
+                await refetchelectrocardiogramEcg();
                 handleClearField();
-            });
-        }
-    };
+                
+            } catch (error) {
+                console.error("Error saving Patient ECG:", error);
+                dispatch(notify('Failed to save Patient ECG'));
+            }
+        };
+    
+    
     const handleExpanded = (rowData) => {
         let open = false;
         const nextExpandedRowKeys = [];

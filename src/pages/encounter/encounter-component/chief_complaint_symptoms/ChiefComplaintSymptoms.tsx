@@ -181,24 +181,43 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
             return 'selected-row';
         } else return '';
     };
-    const handleSave = () => {
-        //TODO convert key to code
-        if (complaintSymptoms.key === undefined) {
-            saveComplaintSymptoms({ ...complaintSymptoms, patientKey: patient.key, encounterKey: encounter.key, onsetDate: complaintSymptoms?.onsetDate ? new Date(complaintSymptoms.onsetDate).getTime() : 0, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
+    const handleSave = async () => {
+       //TODO convert key to code
+        try {
+            if (complaintSymptoms.key === undefined) {
+                await saveComplaintSymptoms({ 
+                    ...complaintSymptoms, 
+                    patientKey: patient.key, 
+                    encounterKey: encounter.key, 
+                    onsetDate: complaintSymptoms?.onsetDate ? new Date(complaintSymptoms.onsetDate).getTime() : 0, 
+                    statusLkey: "9766169155908512", 
+                    createdBy: authSlice.user.key 
+                }).unwrap();
+                
                 dispatch(notify('Patient Complaint Symptoms Added Successfully'));
-            });
-            setComplaintSymptoms({ ...complaintSymptoms, statusLkey: "9766169155908512" })
-            refetchComplaintSymptoms();
-            handleClearField();
-        }
-        else if (complaintSymptoms.key) {
-            saveComplaintSymptoms({ ...complaintSymptoms, patientKey: patient.key, encounterKey: encounter.key, onsetDate: complaintSymptoms?.onsetDate ? new Date(complaintSymptoms.onsetDate).getTime() : 0, updatedBy: authSlice.user.key }).unwrap().then(() => {
+                setComplaintSymptoms({ ...complaintSymptoms, statusLkey: "9766169155908512" });
+    
+            } else {
+                await saveComplaintSymptoms({ 
+                    ...complaintSymptoms, 
+                    patientKey: patient.key, 
+                    encounterKey: encounter.key, 
+                    onsetDate: complaintSymptoms?.onsetDate ? new Date(complaintSymptoms.onsetDate).getTime() : 0, 
+                    updatedBy: authSlice.user.key 
+                }).unwrap();
+    
                 dispatch(notify('Patient Complaint Symptom Updated Successfully'));
-                refetchComplaintSymptoms();
-                handleClearField();
-            });
+            }
+    
+            await refetchComplaintSymptoms();
+            handleClearField();
+            
+        } catch (error) {
+            console.error("Error saving complaint symptoms:", error);
+            dispatch(notify('Failed to save complaint symptoms'));
         }
     };
+    
     const handleCancle = () => {
         //TODO convert key to code
         saveComplaintSymptoms({ ...complaintSymptoms, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
@@ -340,7 +359,6 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
             }));
         }
     }, [associatedSymptoms.associatedSymptomsLkey]);
-
     return (
         <Panel>
             <Panel bordered style={{ padding: '10px' }}>

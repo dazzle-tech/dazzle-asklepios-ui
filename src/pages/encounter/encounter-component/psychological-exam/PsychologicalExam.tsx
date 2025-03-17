@@ -88,22 +88,26 @@ const PsychologicalExam = ({ patient, encounter }) => {
             return 'selected-row';
         } else return '';
     };
-    const handleSave = () => {
-        //TODO convert key to code
-        if (psychologicalExam.key === undefined) {
-            savePsychologicalExam({ ...psychologicalExam, patientKey: patient.key, encounterKey: encounter.key, followUpDate: psychologicalExam?.followUpDate ? new Date(psychologicalExam.followUpDate).getTime() : 0, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
-                dispatch(notify('Patient Psychological Exam Added Successfully'));
-            });
-            setPsychologicalExam({ ...newApPsychologicalExam, statusLkey: "9766169155908512" })
-            refetchPsychologicalExam();
-        }
-        else if (psychologicalExam.key) {
-            savePsychologicalExam({ ...psychologicalExam, patientKey: patient.key, encounterKey: encounter.key, followUpDate: psychologicalExam?.followUpDate ? new Date(psychologicalExam.followUpDate).getTime() : 0, updatedBy: authSlice.user.key }).unwrap().then(() => {
-                dispatch(notify('Patient Psychological Exam Updated Successfully'));
-                refetchPsychologicalExam();
-            });
-        }
-    };
+      const handleSave = async () => {
+           //TODO convert key to code
+           try {
+               if (psychologicalExam.key === undefined) {
+                   await savePsychologicalExam({ ...psychologicalExam, patientKey: patient.key, encounterKey: encounter.key, followUpDate: psychologicalExam?.followUpDate ? new Date(psychologicalExam.followUpDate).getTime() : 0, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap();
+                   dispatch(notify('Patient Psychological Exam Added Successfully'));
+                   setPsychologicalExam({ ...newApPsychologicalExam, statusLkey: "9766169155908512" })
+                } else {
+                   await savePsychologicalExam({ ...psychologicalExam, patientKey: patient.key, encounterKey: encounter.key, followUpDate: psychologicalExam?.followUpDate ? new Date(psychologicalExam.followUpDate).getTime() : 0, updatedBy: authSlice.user.key }).unwrap();
+       
+                   dispatch(notify('Patient Psychological Exam Updated Successfully'));;
+               }
+               await refetchPsychologicalExam();
+               handleClearField();
+               
+           } catch (error) {
+               console.error("Error saving Psychological Exam:", error);
+               dispatch(notify('Failed to save Psychological Exam'));
+           }
+       };
     const handleExpanded = (rowData) => {
         let open = false;
         const nextExpandedRowKeys = [];
