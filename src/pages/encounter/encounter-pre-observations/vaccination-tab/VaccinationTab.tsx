@@ -67,7 +67,7 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
     const [vaccineBrand, setVaccineBrand] = useState<ApVaccineBrands>({ ...newApVaccineBrands, volume: null });
     const [vaccineDose, setVaccineDose] = useState<any>({ ...newApVaccineDose });
     const [encounterVaccination, setEncounterVaccination] = useState<ApEncounterVaccination>({ ...newApEncounterVaccination });
-
+    const [administrationReaction, setAdministrationReactions] = useState({ administrationReactionsLkey: '' });
     const [vaccineDoseInterval, setVaccineDoseInterval] = useState<ApVaccineDosesInterval>({ ...newApVaccineDosesInterval });
     const [vaccineToDose, setVaccineToDose] = useState<ApVaccineDose>({ ...newApVaccineDose });
     const [possibleDescription, setPossibleDescription] = useState('');
@@ -220,11 +220,11 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
         setVaccineDoseInterval({ ...newApVaccineDosesInterval })
         setHasExternalFacility({ isHas: false });
         setPossibleDescription('');
+        setAdministrationReactions({administrationReactionsLkey:null});
     };
     const handleExpanded = (rowData) => {
         let open = false;
         const nextExpandedRowKeys = [];
-
         expandedRowKeys.forEach(key => {
             if (key === rowData.key) {
                 open = true;
@@ -232,14 +232,12 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
                 nextExpandedRowKeys.push(key);
             }
         });
-
         if (!open) {
             nextExpandedRowKeys.push(rowData.key);
         }
         setExpandedRowKeys(nextExpandedRowKeys);
     };
     const renderRowExpanded = rowData => {
-
         return (
 
             <Table
@@ -277,12 +275,7 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
                 <Column flexGrow={2} align="center" fullText>
                     <HeaderCell>Reviewed At</HeaderCell>
                     <Cell dataKey="reviewedAt" >
-
-
-
                         {rowData => rowData.reviewedAt ? new Date(rowData.reviewedAt).toLocaleString("en-GB") : ""}
-
-
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>
@@ -336,14 +329,14 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
     };
     const handleSaveEncounterVaccine = () => {
         if (encounterVaccination.key === undefined) {
-            saveEncounterVaccine({ ...encounterVaccination, vaccineKey: vaccine.key, vaccineBrandKey: vaccineBrand.key, vaccineDoseKey: vaccineDose.key, patientKey: patient.key, encounterKey: encounter.key, administrationReactions: possibleDescription, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
+            saveEncounterVaccine({ ...encounterVaccination, vaccineKey: vaccine.key, vaccineBrandKey: vaccineBrand.key, vaccineDoseKey: vaccineDose.key, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
                 dispatch(notify('Encounter Vaccine Added Successfully'));
                 setEncounterVaccination({ ...newApEncounterVaccination, statusLkey: null })
                 encounterVaccine();
                 handleClearField();
             });
         } else if (encounterVaccination.key) {
-            saveEncounterVaccine({ ...encounterVaccination, vaccineKey: vaccine.key, vaccineBrandKey: vaccineBrand.key, vaccineDoseKey: vaccineDose.key, patientKey: patient.key, encounterKey: encounter.key, administrationReactions: possibleDescription, updatedBy: authSlice.user.key }).unwrap().then(() => {
+            saveEncounterVaccine({ ...encounterVaccination, vaccineKey: vaccine.key, vaccineBrandKey: vaccineBrand.key, vaccineDoseKey: vaccineDose.key, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap().then(() => {
                 dispatch(notify('Encounter Vaccine Updated Successfully'));
                 encounterVaccine();
                 handleClearField();
@@ -491,27 +484,22 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
         }
 
     }, [vaccineDosesIntervalListResponseLoading, vaccineDose?.key]);
-    useEffect(() => {
-        if (encounterVaccination.administrationReactions != null) {
-            const foundItem = medAdversLovQueryResponse?.object?.find(
-                item => item.key === encounterVaccination.administrationReactions
-            );
-    
-            const displayValue = foundItem?.lovDisplayVale || '';
-    
-            if (displayValue) {
-                setPossibleDescription(prevadminInstructions => {
-                    if (!prevadminInstructions) {
-                        return displayValue;
-                    }
-                    if (!prevadminInstructions.includes(displayValue)) {
-                        return `${prevadminInstructions}, ${displayValue}`;
-                    }
-                    return prevadminInstructions;
-                });
+        useEffect(() => {
+            if (administrationReaction.administrationReactionsLkey != null) {
+                const foundItemKey = medAdversLovQueryResponse?.object?.find(
+                    item => item.key === administrationReaction.administrationReactionsLkey
+                );
+                const foundItem = foundItemKey?.lovDisplayVale || '';;
+                setEncounterVaccination(prevEncounterVaccination => ({
+                    ...prevEncounterVaccination,
+                    administrationReactions: prevEncounterVaccination.administrationReactions
+                        ? prevEncounterVaccination.administrationReactions.includes(foundItem)
+                            ? prevEncounterVaccination.administrationReactions
+                            : `${prevEncounterVaccination.administrationReactions}, ${foundItem}`
+                        : foundItem
+                }));
             }
-        }
-    }, [encounterVaccination.administrationReactions]);
+        }, [administrationReaction.administrationReactionsLkey]);
     useEffect(() => {
         setVaccineBrandsListRequest((prev) => ({
             ...prev,
@@ -958,12 +946,12 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
                             column
                             fieldLabel="Administration Reactions"
                             fieldType="select"
-                            fieldName='administrationReactions'
+                            fieldName='administrationReactionsLkey'
                             selectData={medAdversLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
-                            record={encounterVaccination}
-                            setRecord={setEncounterVaccination}
+                            record={administrationReaction}
+                            setRecord={setAdministrationReactions}
                             disabled={isEncounterStatusClosed || disabled}
                         />
                         <MyInput
@@ -1006,15 +994,20 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
                             />
 
                         </Form>
+                        <Input
+                         disabled={isEncounterStatusClosed || disabled}
+                            as="textarea"
+                            value={encounterVaccination.administrationReactions || ""}
+                            onChange={(value) =>
+                                setEncounterVaccination((prev) => ({
+                                    ...prev,
+                                    administrationReactions: value
+                                }))
+                            }
+                            style={{ width: 300, marginTop: '26px' }} 
+                            rows={4}
+                        />
 
-                        <Input 
-    as="textarea"
-    disabled={isEncounterStatusClosed || disabled}
-    onChange={(value) => setPossibleDescription(value)}  
-    value={possibleDescription || encounterVaccination.administrationReactions || ""}
-    style={{ width: 300, marginTop: '26px' }} 
-    rows={4} 
-/>
 
                     </Form>
                     <br />
