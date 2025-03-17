@@ -995,16 +995,16 @@ const Rad = () => {
                 size="xs"
                 layout={['total', '-', 'limit', '|', 'pager', 'skip']}
                 limitOptions={[5, 15, 30]}
-                //  limit={listRequest.pageSize}
-                //  activePage={listRequest.pageNumber}
+                 limit={listOrdersTestResponse.pageSize}
+                 activePage={listOrdersTestResponse.pageNumber}
 
-                //  onChangePage={pageNumber => {
-                //    setListRequest({ ...listRequest, pageNumber });
-                //  }}
-                //  onChangeLimit={pageSize => {
-                //    setListRequest({ ...listRequest, pageSize });
-                //  }}
-                total={testsList?.object?.length || 0}
+                 onChangePage={pageNumber => {
+                   setListOrdersTestResponse({ ...listOrdersTestResponse, pageNumber });
+                 }}
+                 onChangeLimit={pageSize => {
+                  setListOrdersTestResponse({ ...listOrdersTestResponse, pageSize });
+                 }}
+                total={testsList?.extraNumeric|| 0}
               />
             </Panel>}
         </Row>
