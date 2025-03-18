@@ -26,7 +26,7 @@ import EditProfile from './EditProfile';
 import RegistrationWizard from '@/pages/patient/facility-patient-list/RegistrationWizard';
 import authSlice from '@/reducers/authSlice';
 import ArrowDownLineIcon from '@rsuite/icons/ArrowDownLine';
-
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 const Header = ({ expand, setExpand }) => {
   const dispatch = useDispatch();
 
@@ -67,6 +67,8 @@ const Header = ({ expand, setExpand }) => {
 
     const handleLogout = () => {
       logout('').unwrap();
+       dispatch(setPageCode(''));
+       dispatch(setDivContent("  "));
     };
 
     useEffect(() => {

@@ -1,6 +1,6 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
-import React, { useState } from 'react';
+import React, { useState ,useEffect } from 'react';
 import { Input, Pagination, Panel, Table } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import {
@@ -8,9 +8,13 @@ import {
 } from '@/services/setupService';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { BlockUI } from 'primereact/blockui';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const ICD10Setup = () => {
-
+    const dispatch = useAppDispatch();
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -24,7 +28,15 @@ const ICD10Setup = () => {
     });
 
     const { data: icdListResponseLoading } = useGetIcdListQuery(listRequest);
-
+    const divElement = useSelector((state: RootState) => state.div?.divElement);
+    const divContent = (
+      <div style={{ display: 'flex' }}>
+        <h5>ICD-10 Diagnosis List</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+    dispatch(setPageCode('ICD10'));
+    dispatch(setDivContent(divContentHTML));
     const handleFilterChange = (fieldName, value) => {
         if (value) {
             setListRequest(
@@ -39,14 +51,14 @@ const ICD10Setup = () => {
             setListRequest({ ...listRequest, filters: [] });
         }
     };
-
+useEffect(() => {
+        return () => {
+          dispatch(setPageCode(''));
+          dispatch(setDivContent("  "));
+        };
+      }, [location.pathname, dispatch])
     return (
         <Panel
-            header={
-                <h3 className="title">
-                    <Translate>ICD-10 Diagnosis List</Translate>
-                </h3>
-            }
         >
             <BlockUI
                 template={

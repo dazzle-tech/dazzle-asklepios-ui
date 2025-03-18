@@ -23,8 +23,13 @@ import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { BlockUI } from 'primereact/blockui';
 import { Check, Trash } from '@rsuite/icons';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const CDTSetup = () => {
+  const dispatch = useAppDispatch();
   const [cdt, setCdt] = useState<ApCdt>({ ...newApCdt });
   const [selectedServiceKey, setSelectedServiceKey] = useState('');
   const [popupOpen, setPopupOpen] = useState(false);
@@ -50,7 +55,15 @@ const CDTSetup = () => {
 
   const { data: cdtTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CDT_TYPE');
   const { data: cdtClassLovQueryResponse } = useGetLovValuesByCodeQuery('CDT_CLASS');
-
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>CDT Codes</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('CDT_Codes'));
+  dispatch(setDivContent(divContentHTML));
   const handleNew = () => {
     setCdt({ ...newApCdt });
     setPopupOpen(true);
@@ -122,14 +135,14 @@ const CDTSetup = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
   return (
     <Panel
-      header={
-        <h3 className="title">
-          <Translate>CDT Codes</Translate>
-        </h3>
-      }
     >
       <ButtonToolbar>
         <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>

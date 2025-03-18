@@ -66,7 +66,10 @@ import {
   Sidenav, Nav, Toggle, Modal
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
 import { initialListRequest } from '@/types/types';
@@ -113,7 +116,15 @@ const Encounter = () => {
   const propsData = location.state;
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...propsData.patient })
   const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...propsData.encounter })
-
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Clinical Visit</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Clinical_Visit'));
+  dispatch(setDivContent(divContentHTML));
   const [modalOpen, setModalOpen] = useState(false);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -178,7 +189,12 @@ const Encounter = () => {
     console.log(authSlice.user)
 
   }, [authSlice.user]);
-
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
   const handleGoBack = () => {
     dispatch(setEncounter(null));
     dispatch(setPatient(null));

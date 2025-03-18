@@ -111,6 +111,10 @@ import PatientExtraDetails from './PatientExtraDetails';
 import SearchIcon from '@rsuite/icons/Search';
 import PatientFamilyMembers from './PatientFamilyMembers';
 import { useLocation } from 'react-router-dom';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useSelector } from 'react-redux';
 const handleDownload = attachment => {
     const byteCharacters = atob(attachment.fileContent);
     const byteNumbers = new Array(byteCharacters.length);
@@ -223,6 +227,16 @@ const PatientProfileCopy = () => {
         { label: 'Primary Phone Number', value: 'phoneNumber' },
         { label: 'Date of Birth', value: 'dob' }
     ];
+  
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Patient Registration</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Patient_Registration'));
+  dispatch(setDivContent(divContentHTML));
     const {
         data: patientListResponse,
         isLoading: isGettingPatients,
@@ -562,6 +576,7 @@ const PatientProfileCopy = () => {
             });
         }
     }, [patientAgeGroupResponse]);
+
     useEffect(() => {
         if (localPatient?.dob) {
             const calculatedFormat = calculateAgeFormat(localPatient.dob);
@@ -594,6 +609,12 @@ const PatientProfileCopy = () => {
             filters: updatedFilters
         }));
     }, [localPatient.key]);
+    useEffect(() => {
+        return () => {
+          dispatch(setPageCode(''));
+          dispatch(setDivContent("  "));
+        };
+      }, [location.pathname, dispatch]);
     useEffect(() => {
         if (isSuccess && fetchAttachmentByKeyResponce) {
             if (actionType === 'download') {

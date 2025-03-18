@@ -14,8 +14,10 @@ import DetailIcon from '@rsuite/icons/Detail';
 import SendIcon from '@rsuite/icons/Send';
 import CharacterAuthorizeIcon from '@rsuite/icons/CharacterAuthorize';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-
-
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useSelector } from 'react-redux';
 import {
     useGetFacilitiesQuery,
     useGetLovValuesByCodeQuery
@@ -52,7 +54,13 @@ const ScheduleScreen = () => {
     const [showCanceled, setShowCanceled] = useState<boolean>(false)
     const [filteredMonth, setFilteredMonth] = useState<Date>()
     const [showReasonModal, setShowReasonModal] = useState(false);
-
+ 
+    useEffect(() => {
+      return () => {
+        dispatch(setPageCode(''));
+        dispatch(setDivContent("  "));
+      };
+    }, [location.pathname, dispatch]);
     const {
         data: appointments,
         refetch: refitchAppointments,
@@ -103,26 +111,15 @@ const ScheduleScreen = () => {
             setAppointmentsData(formattedAppointments);
         }
     }, [appointments, resourcesListResponse]);
-
-
-
-
-
     const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
-
-
     const { data: resourcesListResponse } = useGetResourcesQuery(listRequest);
-
     useEffect(() => {
         if (selectedResourceType) {
             const filtered = resourcesListResponse.object.filter(resource => resource.resourceTypeLkey === selectedResourceType?.resourcesType);
             setFilteredResourcesList(filtered);
         }
     }, [resourcesListResponse, selectedResourceType?.resourcesType]);
-
-
-
-
+   ;
     useEffect(() => {
         if (selectedSlot) {
             setSelectedStartDate(selectedSlot?.slots[0])
@@ -332,10 +329,24 @@ const ScheduleScreen = () => {
 
     const [value, setValue] = useState(new Date());
     const [currentCalView, setCurrentCalView] = useState("month"); // Force "month" view
-
+    const divElement = useSelector((state: RootState) => state.div?.divElement);
+    const divContent = (
+      <div style={{ display: 'flex' }}>
+        <h5>Scheduling</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+    dispatch(setPageCode('Schedule_Screen'));
+    dispatch(setDivContent(divContentHTML));
     useEffect(() => {
         console.log(selectedEvent?.appointmentData.otherReason)
-    }, [selectedEvent])
+    }, [selectedEvent]);
+    useEffect(() => {
+        return () => {
+          dispatch(setPageCode(''));
+          dispatch(setDivContent("  "));
+        };
+      }, [location.pathname, dispatch])
 
     return (
         <div>

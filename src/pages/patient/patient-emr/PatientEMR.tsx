@@ -52,7 +52,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import Encounter from '@/pages/encounter/encounter-screen';
-
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { ApPatient } from '@/types/model-types';
 const PatientEMR = () => {
 
@@ -77,7 +79,15 @@ const PatientEMR = () => {
     const [searchKeyword, setSearchKeyword] = useState('');
     const [patientSearchTarget, setPatientSearchTarget] = useState('primary');
     const [searchResultVisible, setSearchResultVisible] = useState(false);
-   
+    const divElement = useSelector((state: RootState) => state.div?.divElement);
+    const divContent = (
+      <div style={{ display: 'flex' }}>
+        <h5>Patients EMR</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+    dispatch(setPageCode('Patients_EMR'));
+    dispatch(setDivContent(divContentHTML));
     const {
         data: patientListResponse,
         isLoading: isGettingPatients,
@@ -151,7 +161,13 @@ const PatientEMR = () => {
             dispatch(setPatient({...newApPatient}));
             
         }
-    },[searchKeyword])
+    },[searchKeyword]);
+    useEffect(() => {
+        return () => {
+          dispatch(setPageCode(''));
+          dispatch(setDivContent("  "));
+        };
+      }, [location.pathname, dispatch])
     const handleFilterChange = (fieldName, value) => {
         if (value) {
             setListRequest(

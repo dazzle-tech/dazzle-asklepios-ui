@@ -16,6 +16,10 @@ import {
   useGetDiagnosticsTestLaboratoryListQuery,
 
 } from '@/services/setupService';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
   faHandDots,
   faTriangleExclamation
@@ -144,11 +148,27 @@ const Lab = () => {
   const { data: messagesList, refetch: fecthNotes } = useGetOrderTestNotesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
   const { data: messagesResultList, refetch: fecthResultNotes } = useGetOrderTestResultNotesByResultIdQuery(result?.key || undefined, { skip: result.key == null });
   const { data: samplesList, refetch: fecthSample } = useGetOrderTestSamplesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
+
   const [testProfileKey,setTestProfileKey]=useState('')
   // const { data: normalRange } = useGetResultNormalRangeQuery(
   //   { patientKey: patient?.key, testKey: test?.testKey ,testProfileKey:testProfileKey},
   //   { skip: !test.key || !patient.key || !testProfileKey }
   // );
+
+  const { data: normalRange } = useGetResultNormalRangeQuery(
+    { patientKey: patient?.key, testKey: test?.testKey },
+    { skip: !test.key || !patient.key }
+  );
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Clinical Laboratory</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Lab'));
+  dispatch(setDivContent(divContentHTML));
+
   const [listOrdersTestResponse, setListOrdersTestResponse] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -288,6 +308,12 @@ const Lab = () => {
 
 
   }, [order]);
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch]);
   useEffect(() => {
 
     if (dateFilter.fromDate && dateFilter.toDate) {

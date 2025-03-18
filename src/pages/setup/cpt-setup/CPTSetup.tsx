@@ -1,6 +1,6 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
-import React, { useState } from 'react';
+import React, { useState ,useEffect } from 'react';
 
 import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
@@ -9,7 +9,13 @@ import { BlockUI } from 'primereact/blockui';
 import {
     useGetCptListQuery,
 } from '@/services/setupService';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const CPTSetup = () => {
+    const dispatch = useAppDispatch();
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -23,6 +29,15 @@ const CPTSetup = () => {
     });
     const { data: cptListResponseLoading } = useGetCptListQuery(listRequest);
     console.log(cptListResponseLoading?.object)
+        const divElement = useSelector((state: RootState) => state.div?.divElement);
+        const divContent = (
+          <div style={{ display: 'flex' }}>
+            <h5>CPT Diagnosis List</h5>
+          </div>
+        );
+        const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+        dispatch(setPageCode('CPT'));
+        dispatch(setDivContent(divContentHTML));
     const handleFilterChange = (fieldName, value) => {
         if (value) {
             setListRequest(
@@ -46,14 +61,14 @@ const CPTSetup = () => {
             });
         }
     };
-
+    useEffect(() => {
+        return () => {
+          dispatch(setPageCode(''));
+          dispatch(setDivContent("  "));
+        };
+      }, [location.pathname, dispatch])
     return (<>
         <Panel
-            header={
-                <h3 className="title">
-                    <Translate>CPT Diagnosis List</Translate>
-                </h3>
-            }
         >
             <Table
                 height={400}

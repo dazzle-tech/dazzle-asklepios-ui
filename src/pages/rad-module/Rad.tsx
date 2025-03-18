@@ -12,6 +12,7 @@ import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { Image, List } from '@rsuite/icons';
+import { useSelector } from 'react-redux';
 import {
 
   useGetDiagnosticsTestLaboratoryListQuery,
@@ -111,6 +112,9 @@ import { initialListRequest, ListRequest, ListRequestAllValues, initialListReque
 import { ApDiagnosticTestLaboratory } from '@/types/model-types';
 import PatientSide from '../lab-module/PatienSide';
 import ro from 'date-fns/locale/ro';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 const Rad = () => {
   const dispatch = useAppDispatch();
   const [selectedCriterion, setSelectedCriterion] = useState('');
@@ -229,6 +233,15 @@ const Rad = () => {
   const [saveReportNote] = useSaveDiagnosticOrderTestReportNotesMutation();
 
   const endOfMessagesRef = useRef(null);
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Radiology</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Rad'));
+  dispatch(setDivContent(divContentHTML));
   useEffect(() => {
     if (endOfMessagesRef.current) {
       endOfMessagesRef.current.scrollIntoView({ behavior: "smooth" });
@@ -561,15 +574,16 @@ const Rad = () => {
   const filteredStepsData = stepsData.filter(step =>
     currentStep == "6055192099058457" ? step.value !== "Accepted" : step.value !== "Rejected"
   );
-
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
   return (<div>
 
     <Row>
       <Col xs={21} >
-
-        <Row>
-          <h5 style={{ marginLeft: '5px' }}>Radiology</h5>
-        </Row>
         <Row>
           <Col xs={14}>
             <Panel style={{ border: '1px solid #e5e5ea' }}>

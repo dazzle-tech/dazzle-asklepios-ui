@@ -45,6 +45,11 @@ import {
     useGetPatientsQuery,
 } from '@/services/patientService';
 import { ApAttachment, ApPatient } from '@/types/model-types';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useSelector } from 'react-redux';
+import { useAppDispatch } from '@/hooks';
 const PatientMergeFiles = () => {
     const [firstPatient, setFirstPatient] = useState<ApPatient>({ ...newApPatient });
     const [secondPatient, setSecondPatient] = useState<ApPatient>({ ...newApPatient });
@@ -89,7 +94,17 @@ const PatientMergeFiles = () => {
     const { data: patientClassLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_CLASS');
     const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
     const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
-
+    const dispatch = useAppDispatch();
+    const divElement = useSelector((state: RootState) => state.div?.divElement);
+    const divContent = (
+      <div style={{ display: 'flex' }}>
+        <h5>Files Merge</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+    dispatch(setPageCode('Files_Merge'));
+    dispatch(setDivContent(divContentHTML));
+  
     const fetchEmployeeImageResponse = useFetchAttachmentQuery(
         {
             type: 'PATIENT_PROFILE_PICTURE',
@@ -257,6 +272,12 @@ const PatientMergeFiles = () => {
 
     };
     ////////////////////
+    useEffect(() => {
+        return () => {
+          dispatch(setPageCode(''));
+          dispatch(setDivContent("  "));
+        };
+      }, [location.pathname, dispatch]);
     useEffect(() => {
         if (fetchAttachment)
             if (fetchAttachment && firstPatient.key) {
