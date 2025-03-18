@@ -5,15 +5,31 @@ import { useAppSelector } from '@/hooks';
 import authSlice from '@/reducers/authSlice';
 import React, { useEffect } from 'react';
 import { Panel, FlexboxGrid, Col, List, Stack, Button, Timeline } from 'rsuite';
-
-
-
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const Dashboard = () => {
- 
+  const dispatch = useAppDispatch();
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Dashboard</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Dashboard'));
+  dispatch(setDivContent(divContentHTML));
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch]);
 
   return (
-    <Panel header={<h3 className="title">Dashboard</h3>}>
+    <Panel>
       <FlexboxGrid>
         <FlexboxGrid.Item as={Col} colspan={24} lg={8} md={12} sm={24}>
           <Panel bordered header={<Translate>Number of No-Shows per Day</Translate>}>

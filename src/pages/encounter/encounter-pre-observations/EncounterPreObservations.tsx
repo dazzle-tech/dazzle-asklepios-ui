@@ -58,7 +58,12 @@ import { useNavigate } from 'react-router-dom';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import VaccinationTab from './vaccination-tab';
 import Observations from './observations/Observations';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 const EncounterPreObservations = () => {
+  const dispatch = useAppDispatch();
   const location = useLocation();
   const propsData = location.state;
   const [activeTab, setActiveTab] = useState(0);
@@ -67,6 +72,15 @@ const EncounterPreObservations = () => {
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Nurse Station</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Nurse_Station'));
+  dispatch(setDivContent(divContentHTML));
   // TODO update status to be a LOV value
   useEffect(() => {
     if (localEncounter?.encounterStatusLkey === '91109811181900') {
@@ -80,11 +94,16 @@ const EncounterPreObservations = () => {
       setReadOnly(true);
     }
   };
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
   return (
     <>
       {propsData?.patient && propsData?.encounter && (
         <div >
-          <h4>Nurse Station</h4>
           <Panel header={<EncounterMainInfoSection patient={propsData.patient} encounter={propsData.encounter} />}>
           </Panel>
 
