@@ -154,10 +154,11 @@ const Laboratory = ({diagnosticsTest}) => {
             <Translate>Laboratory</Translate>
           </h3>
         }
+        
       >
         <hr />
-          <Form layout="inline" fluid>
-          <MyInput
+        <Form layout="inline" fluid style={{display:'flex', flexWrap: 'wrap', gap: '4px'  }}>
+        <MyInput
            width={250}
            column
             fieldName="categoryLkey"
@@ -184,7 +185,10 @@ const Laboratory = ({diagnosticsTest}) => {
           <MyInput  width={250} column fieldName="systemLkey" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
           <MyInput  width={250} column fieldName="scaleLkey" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
           <MyInput  width={250} column fieldName="methodLkey" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-          <MyInput
+        </Form>
+        <Form layout="inline" fluid style={{display:'flex', flexWrap: 'wrap', gap: '4px'  }}>
+           
+        <MyInput
             width={250}
             column
             fieldName="reagentsLkey"
@@ -229,6 +233,9 @@ const Laboratory = ({diagnosticsTest}) => {
             setRecord={setDiagnosticTestLaboratory}
           />
            <MyInput  width={250} column fieldType="number" fieldName="sampleVolume" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
+        </Form>
+          <Form layout="inline" fluid style={{display:'flex', flexWrap: 'wrap', gap: '4px'  }}>
+         
           <MyInput
             width={250}
             column
@@ -276,21 +283,17 @@ const Laboratory = ({diagnosticsTest}) => {
             record={diagnosticTestLaboratory} 
             setRecord={setDiagnosticTestLaboratory}
           />
-           <MyInput width={250} column fieldType="checkbox" fieldName="isProfile" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-         
 
-          <br/> <br/> 
+          </Form>
+          <Form layout="inline" fluid style={{display:'flex', flexWrap: 'wrap', gap: '4px'  }}>
+          <MyInput width={250} column fieldType="checkbox" fieldName="isProfile" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
+         
           <MyInput  width={400} column fieldType="textarea" fieldName="preparationRequirements" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
           <MyInput  width={400} column fieldType="textarea" fieldName="medicalIndications" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
           <MyInput  width={400} column fieldType="textarea" fieldName="associatedRisks" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
           <MyInput  width={400} column fieldType="textarea" fieldName="testInstructions" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
          
-        
-
-         
-         
           </Form>
-
           <IconButton
                 onClick={handleSaveLab}
                 appearance="primary"

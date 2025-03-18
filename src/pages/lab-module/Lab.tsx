@@ -150,15 +150,9 @@ const Lab = () => {
   const { data: samplesList, refetch: fecthSample } = useGetOrderTestSamplesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
 
   const [testProfileKey,setTestProfileKey]=useState('')
-  // const { data: normalRange } = useGetResultNormalRangeQuery(
-  //   { patientKey: patient?.key, testKey: test?.testKey ,testProfileKey:testProfileKey},
-  //   { skip: !test.key || !patient.key || !testProfileKey }
-  // );
+ 
 
-  const { data: normalRange } = useGetResultNormalRangeQuery(
-    { patientKey: patient?.key, testKey: test?.testKey },
-    { skip: !test.key || !patient.key }
-  );
+  
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
     <div style={{ display: 'flex' }}>
@@ -1164,7 +1158,7 @@ const Lab = () => {
                 <Column sortable flexGrow={2} fullText>
                   <HeaderCell>
 
-                    <Translate>Technician Notes</Translate>
+                    <Translate>TECHNICIAN NOTES</Translate>
                   </HeaderCell>
                   <Cell >
                     {rowData => (
@@ -1882,7 +1876,7 @@ const Lab = () => {
     </Modal>
     <Modal open={openNoteResultModal} onClose={() => setOpenNoteResultModal(false)} size="xs">
       <Modal.Header>
-        <Modal.Title>💬Technician Notes</Modal.Title>
+        <Modal.Title>💬Comments</Modal.Title>
       </Modal.Header>
       <Modal.Body style={{ maxHeight: "300px", overflowY: "auto", padding: "10px" }}>
         {messagesResultList?.object.length > 0 ? (

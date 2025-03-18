@@ -501,7 +501,7 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
 
       </Panel>
       {diagnosticsTest.key && (
-        <Panel>
+        <Panel >
           {/* {console.log("the value is " + handleShowComponent() + basicDataSaved)} */}
           {handleShowComponent()}
         </Panel>
