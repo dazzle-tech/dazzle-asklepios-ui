@@ -32,7 +32,8 @@ const DiagnosticsTest = () => {
  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
  const { data: diagnosticsListResponse,  refetch: refetchDiagnostics  } = useGetDiagnosticsTestListQuery(listRequest);
  const [saveDiagnosticsTest, saveDiagnosticsTestMutation] = useSaveDiagnosticsTestMutation();
- const [carouselActiveIndex, setCarouselActiveIndex] = useState(0); 
+ const [carouselActiveIndex, 
+  setCarouselActiveIndex] = useState(0); 
 
  const [normalRangePopupOpen, setNormalRangePopupOpen] = useState(false);
  const [profilePopupOpen, setProfilePopupOpen] = useState(false);
