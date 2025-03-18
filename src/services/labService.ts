@@ -95,9 +95,20 @@ export const labService = createApi({
                 return response.object;
             }
         }),
+        saveDiagnosticTestResult: builder.mutation({
+            query: (order: ApDiagnosticOrderTestsResult) => ({
+                url: `/lab/save-diagnostic-tests-result`,
+                method: 'POST',
+                body: order
+            }),
+            onQueryStarted: onQueryStarted,
+            transformResponse: (response: any) => {
+                return response.object;
+            }
+        }),
         getResultNormalRange: builder.query({
-            query: ({ patientKey, testKey }) => ({
-                url: `/lab/get-result-normal-range?patientKey=${encodeURIComponent(patientKey)}&testKey=${encodeURIComponent(testKey)}`
+            query: ({ patientKey, testKey ,testProfileKey }) => ({
+                url: `/lab/get-result-normal-range?patientKey=${encodeURIComponent(patientKey)}&testKey=${encodeURIComponent(testKey)}testProfileKey=${encodeURIComponent(testProfileKey)}`
             }),
             onQueryStarted: onQueryStarted,
             transformResponse: (response: any) => response.object,
@@ -114,5 +125,6 @@ export const {
     useSaveDiagnosticOrderTestResultsNotesMutation,
     useGetDiagnosticOrderTestResultQuery,
     useSaveDiagnosticOrderTestResultMutation,
-    useGetResultNormalRangeQuery
+    useGetResultNormalRangeQuery,
+    useSaveDiagnosticTestResultMutation
 } = labService;
