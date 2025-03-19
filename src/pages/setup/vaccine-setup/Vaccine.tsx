@@ -59,6 +59,10 @@ import {
 
 } from '@/services/setupService';
 import ReloadIcon from '@rsuite/icons/Reload';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 const Vaccine = () => {
 
     const [vaccine, setVaccine] = useState<ApVaccine>({ ...newApVaccine });
@@ -106,14 +110,19 @@ const Vaccine = () => {
         { key: numDisplayValue },
         { skip: !numDisplayValue }
     );
+    const divElement = useSelector((state: RootState) => state.div?.divElement);
+    const divContent = (
+        <div style={{ display: 'flex' }}>
+            <h5>Vaccine</h5>
+        </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+    dispatch(setPageCode('Vaccine'));
+    dispatch(setDivContent(divContentHTML));
     const selectedValue = numofDossLovQueryResponse?.object?.find(
         (item) => item.key === vaccine.numberOfDosesLkey
 
     );
-    useEffect(() => {
-        setNumDisplayValue(selectedValue?.lovDisplayVale || numDisplayValue);
-    }, [selectedValue, vaccine]);
-
 
     const dosesNameList = (fetchDoseNumbersListQueryResponce?.apLovValues ?? []).map(item => ({
         value: item.key,
@@ -335,6 +344,10 @@ const Vaccine = () => {
             },
         ],
     });
+    ///useEffect
+    useEffect(() => {
+        setNumDisplayValue(selectedValue?.lovDisplayVale || numDisplayValue);
+    }, [selectedValue, vaccine]);
     useEffect(() => {
         if (saveVaccineMutation && saveVaccineMutation.status === 'fulfilled') {
             setVaccine(saveVaccineMutation.data);
@@ -481,16 +494,14 @@ const Vaccine = () => {
     }, [vaccine.possibleReactions]);
 
 
-
+    useEffect(() => {
+        return () => {
+            dispatch(setPageCode(''));
+            dispatch(setDivContent("  "));
+        };
+    }, [location.pathname, dispatch])
     return (
-
-        <Panel
-            header={
-                <h3 className="title">
-                    <Translate>Vaccine</Translate>
-                </h3>
-            }
-        >
+        <Panel>
             <ButtonToolbar>
                 <IconButton appearance="primary" color="violet" icon={<AddOutlineIcon />} onClick={() => { setPopupOpen(true), setVaccine({ ...newApVaccine }), setEdit_new(true) }}>
                     Add New
@@ -504,9 +515,9 @@ const Vaccine = () => {
                 >
                     Edit Selected
                 </IconButton>
-                
+
                 <IconButton
-                    disabled={ vaccine.key === undefined}
+                    disabled={vaccine.key === undefined}
                     appearance="ghost"
                     color="violet"
                     icon={<ReloadIcon />}
@@ -514,10 +525,10 @@ const Vaccine = () => {
                         handleDeactive()
                     }}
                 >
-                    Activate / Deactivate 
+                    Activate / Deactivate
                 </IconButton>
 
-                
+
                 <IconButton
                     disabled={!vaccine.key}
                     appearance="ghost"
@@ -1425,7 +1436,6 @@ const Vaccine = () => {
                         </Panel>
                     </Form>
                     <br />
-
                 </Modal.Body>
                 <Modal.Footer>
                     <Button onClick={handleClear} appearance="ghost" color='blue'>
@@ -1433,10 +1443,7 @@ const Vaccine = () => {
                     </Button>
                 </Modal.Footer>
             </Modal>
-        </Panel>
-
-
-
+        </Panel>         
     );
 };
 

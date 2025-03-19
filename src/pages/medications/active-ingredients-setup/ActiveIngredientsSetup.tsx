@@ -30,38 +30,40 @@ import PregnancyLactation from './PregnancyLactation';
 import SpecialPopulation from './SpecialPopulation';
 import DoseAdjustment from './DoseAdjustment';
 import Pharmacokinetics from './Pharmacokinetics';
-
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const ActiveIngredientsSetup = () => {
+  const dispatch = useAppDispatch();
   const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({ ...newApActiveIngredient });
   const [popupOpen, setPopupOpen] = useState(false);
-
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  
-
-
   const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientMutation();
   const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
-
   const { data: activeIngredientListResponse, refetch: activeIngredientRefetch } = useGetActiveIngredientQuery(listRequest);
   const { data: MedicationCategorLovQueryResponse } = useGetLovValuesByCodeQuery('MED_CATEGORY');
   const { data: MedicationClassLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ClASS');
   const { data: MedicationTypesLovQueryResponse } = useGetLovValuesByCodeQuery('MED_TYPES');
   const { data: indicationListResponseData } = useGetActiveIngredientIndicationQuery(listRequest);
-
-
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Active Ingredients</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Active_Ingredients'));
+  dispatch(setDivContent(divContentHTML));
   const handleNew = () => {
     setActiveIngredient({...newApActiveIngredient});
     setCarouselActiveIndex(1);
   };
-
-
   const handleSave = () => {
     setPopupOpen(false);
     saveActiveIngredient(activeIngredient).unwrap();
   };
-
-
  const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -84,6 +86,12 @@ const ActiveIngredientsSetup = () => {
   };
 
   useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
+  useEffect(() => {
     if (saveActiveIngredientMutation.data) {
       setListRequest({ ...listRequest, timestamp: new Date().getTime() });
     }
@@ -101,13 +109,7 @@ const ActiveIngredientsSetup = () => {
     autoplay={false}
     activeIndex={carouselActiveIndex}
   >
-    <Panel
-      header={
-        <h3 className="title">
-          <Translate>Active Ingredients</Translate>
-        </h3>
-      }
-    >
+    <Panel>
       <ButtonToolbar>
         <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
           Add New

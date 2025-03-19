@@ -18,23 +18,34 @@ import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList, fromCamelCaseToDBName } from '@/utils';
 import { useGetResourcesQuery, useGetResourceTypeQuery, useSaveResourcesMutation } from '@/services/appointmentService';
 import AvailabilityTime from './AvailabilityTime';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const Resources = () => {
+  const dispatch = useAppDispatch();
   const [resources, setResources] = useState<ApResources>({ ...newApResources });
   const [popupOpen, setPopupOpen] = useState(false);
-
   const [isPractitioner, setISPractitioner] = useState(false);
   const [isDepartment, setISDepartment] = useState(false);
   const [isMedicalTest, setIsMedicalTest] = useState(false);
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-
   const [saveResources, saveResourcesMutation] = useSaveResourcesMutation();
-
   const { data: resourcesListResponse } = useGetResourcesQuery(listRequest);
   const {data: facilityListResponse } = useGetFacilitiesQuery(listRequest) ;
   const { data: resourceTypeLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
   const resourceTypeListResponse = useGetResourceTypeQuery(resources.resourceTypeLkey || "");
   console.log(resourceTypeListResponse + "this is the list")
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Resources</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Resources'));
+  dispatch(setDivContent(divContentHTML));
   const handleNew = () => {
     setResources({...newApResources})
     setPopupOpen(true);
@@ -99,15 +110,14 @@ const Resources = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-
-
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
   return (
     <Panel
-      header={
-        <h3 className="title">
-          <Translate>Resources</Translate>
-        </h3>
-      }
     >
       <ButtonToolbar>
         <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>

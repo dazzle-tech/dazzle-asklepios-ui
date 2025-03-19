@@ -47,7 +47,11 @@ import { first } from 'lodash';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import MyToast from '@/components/MyToast/MyToast';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const Users = () => {
   // const [facilities, setFacilities] = useState([])
 
@@ -94,6 +98,7 @@ const Users = () => {
 
   const [selectedDepartmentFromTable, setSelectedDepartmentFromTable] = useState()
 
+  const dispatch = useAppDispatch();
 
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const [licenseListRequest, setLicenseListRequest] = useState<ListRequest>({ ...initialListRequest });
@@ -131,7 +136,15 @@ const Users = () => {
   const [filteredFacilities, setFilteredFacilities] = useState([]);
   const [filteredDepartments, setFilteredDepartments] = useState([]);
   const [filteredlicense, setFilteredlicense] = useState([]);
-
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Users</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Users'));
+  dispatch(setDivContent(divContentHTML));
   useEffect(() => {
     if (user?.key && licenseListResponse?.object) {
       const filteredLicenses = licenseListResponse.object.filter(license => license.userKey === user.key);
@@ -141,9 +154,12 @@ const Users = () => {
       console.log("No user or license list to filter.");
     }
   }, [user, licenseListResponse]);
-
-
-
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
   useEffect(() => {
     const filterKeys = user._facilitiesInput || [];
     const filtered = facilityListResponse?.object?.filter(facility =>
@@ -695,11 +711,6 @@ const Users = () => {
           :
           <div>
             <Panel style={{ background: 'white' }}
-              header={
-                <h3 className="title">
-                  <Translate>Users</Translate>
-                </h3>
-              }
             >
               <ButtonToolbar>
                 <IconButton

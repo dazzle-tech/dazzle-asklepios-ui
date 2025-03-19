@@ -21,15 +21,18 @@ import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { Check, Trash } from '@rsuite/icons';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const ServiceSetup = () => {
+  const dispatch = useAppDispatch();
   const [service, setService] = useState<ApService>({ ...newApService });
   const [popupOpen, setPopupOpen] = useState(false);
   const [proceduresOpen, setProceduresOpen] = useState(false);
   const [cdtMap, setCdtMap] = useState({});
-
   const [selectedCdtKey, setSelectedCdtKey] = useState('');
-
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     pageSize: 15
@@ -49,7 +52,15 @@ const ServiceSetup = () => {
   const { data: serviceTypeLovQueryResponse } = useGetLovValuesByCodeQuery('SERVICE_TYPE');
   const { data: serviceCategoryLovQueryResponse } = useGetLovValuesByCodeQuery('SERVICE_CATEGORY');
   const { data: currencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
-
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Services</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Services'));
+  dispatch(setDivContent(divContentHTML));
   useEffect(() => {
     if (cdtListResponse && cdtListResponse.object) {
       let map = {};
@@ -121,15 +132,14 @@ const ServiceSetup = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch]);
   return (
-    <Panel
-      header={
-        <h3 className="title">
-          <Translate>Services</Translate>
-        </h3>
-      }
-    >
+    <Panel>
       <ButtonToolbar>
         <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
           Add New

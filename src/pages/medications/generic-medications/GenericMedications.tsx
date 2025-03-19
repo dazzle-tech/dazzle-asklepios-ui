@@ -19,18 +19,27 @@ import NewEditGenericMedication from './NewEditGenericMedication';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 const GenericMedications = () => {
-
+    const dispatch = useAppDispatch();
     const [genericMedication, setGenericMedication] = useState<ApGenericMedication>({ ...newApGenericMedication});
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-    const dispatch = useAppDispatch();
     const { data: genericMedicationListResponse, refetch: genericMedicationRefetch } = useGetGenericMedicationQuery(listRequest);
     const [removeGenericMedication, removeGenericMedicationMutation] = useRemoveGenericMedicationMutation();
     const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
     const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
-
+    const divElement = useSelector((state: RootState) => state.div?.divElement);
+    const divContent = (
+      <div style={{ display: 'flex' }}>
+        <h5>Brand Medications List</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+    dispatch(setPageCode('Brand_Medications'));
+    dispatch(setDivContent(divContentHTML));
     const handleNew = () => {
       setGenericMedication({...newApGenericMedication});
       setCarouselActiveIndex(1);
@@ -87,20 +96,19 @@ const GenericMedications = () => {
     useEffect(() => {
       genericMedicationRefetch();
     }, [carouselActiveIndex]);
-  
+    useEffect(() => {
+      return () => {
+        dispatch(setPageCode(''));
+        dispatch(setDivContent("  "));
+      };
+    }, [location.pathname, dispatch]);
     return (
       <Carousel
       style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
       autoplay={false}
       activeIndex={carouselActiveIndex}
     >
-      <Panel
-        header={
-          <h3 className="title">
-            <Translate> Brand Medications List </Translate>
-          </h3>
-        }
-      >
+      <Panel>
         <ButtonToolbar>
           <IconButton appearance="primary" icon={<AddOutlineIcon />}  onClick={handleNew}>
             Add New

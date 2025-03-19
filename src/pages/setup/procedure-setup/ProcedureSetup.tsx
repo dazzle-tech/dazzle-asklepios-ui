@@ -39,6 +39,10 @@ import {
 } from '@/services/setupService';
 import { ApProcedureCoding, ApProcedurePriceList, ApProcedureSetup } from '@/types/model-types';
 import { newApProcedureCoding, newApProcedurePriceList, newApProcedureSetup } from '@/types/model-types-constructor';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 const ProcedureSetup = () => {
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [popupOpen, setPopupOpen] = useState(false);
@@ -58,7 +62,6 @@ const ProcedureSetup = () => {
     const [removeProcedureCoding, removeProcedureCodingMutation] = useRemoveProcedureCodingMutation();
     const [procedure, setProcedure] = useState<ApProcedureSetup>({ ...newApProcedureSetup });
     const [procedureCode, setProcedureCode] = useState<ApProcedureCoding>({ ...newApProcedureCoding, procedureKey: procedure.key })
-   
     const [procedureprice, setProcedurePrice] = useState<ApProcedurePriceList>({ ...newApProcedurePriceList });
     const { data: procedurecodingQueryResponse, refetch: procfetch } = useGetProcedureCodingListQuery({ ...initialListRequest
         ,
@@ -86,7 +89,15 @@ const ProcedureSetup = () => {
         ignore: procedure.key==undefined
      });
     const [saveProcedurePrice, saveProcedurePriceMutation] = useSaveProcedurePriceListMutation();
- 
+    const divElement = useSelector((state: RootState) => state.div?.divElement);
+    const divContent = (
+      <div style={{ display: 'flex' }}>
+        <h5>Procedure Setup</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+    dispatch(setPageCode('Procedure_Setup'));
+    dispatch(setDivContent(divContentHTML));
     const isSelected = rowData => {
         if (rowData && procedure && rowData.key === procedure.key) {
             return 'selected-row';
@@ -286,13 +297,13 @@ const ProcedureSetup = () => {
      const joinValuesFromArray = (values) => {
             return values.filter(Boolean).join(', ');
         };
-    return (<><Panel
-        header={
-            <h3 className="title">
-                <Translate>Procedure Setup</Translate>
-            </h3>
-        }
-    >
+        useEffect(() => {
+            return () => {
+              dispatch(setPageCode(''));
+              dispatch(setDivContent("  "));
+            };
+          }, [location.pathname, dispatch])
+    return (<><Panel>
         <ButtonToolbar>
             <IconButton appearance="primary"
                 icon={<AddOutlineIcon />}

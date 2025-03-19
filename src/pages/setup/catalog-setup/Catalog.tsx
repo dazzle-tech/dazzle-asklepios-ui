@@ -30,8 +30,13 @@ import {
 } from '@/utils';
 import { Console } from 'console';
 import NewDiagnosticsTest from '../diagnostics-tests-definition/NewDiagnosticsTest';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const Catalog = () => {
+  const dispatch = useAppDispatch();
   const [diagnosticsTestCatalogHeader, setDiagnosticsTestCatalogHeader] = useState<ApDiagnosticTestCatalogHeader>({ ...newApDiagnosticTestCatalogHeader });
   const [catalogDiagnosticsTest, setCatalogDiagnosticsTest] = useState<ApCatalogDiagnosticTest>({
     ...newApCatalogDiagnosticTest
@@ -39,12 +44,19 @@ const Catalog = () => {
   const [diagnosticsTestSelected, setDiagnosticsTestSelected] = useState<ApDiagnosticTest>({
     ...newApDiagnosticTest
   })
-
   const  [popupOpen, setPopupOpen] = useState(false);
   const [popupOpentest, setPopupOpentest] = useState(false);
   
   const { data: testTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_TEST-TYPES');
-  
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Catalog</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Catalog'));
+  dispatch(setDivContent(divContentHTML));
   useEffect(() => {
     const updatedFilters = [
       {
@@ -201,15 +213,14 @@ const Catalog = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
   return (
-    <Panel
-      header={
-        <h3 className="title">
-          <Translate>Catalog</Translate>
-        </h3>
-      }
-    >
+    <Panel>
       <ButtonToolbar>
         <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
           Add New

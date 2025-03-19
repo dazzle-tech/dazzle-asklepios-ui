@@ -20,22 +20,32 @@ import { newApPrescriptionInstruction } from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const PrescriptionInstructions = () => {
+  const dispatch = useAppDispatch();
   const [prescriptionInstructions, setPrescriptionInstructions] = useState<ApPrescriptionInstruction>({ ...newApPrescriptionInstruction });
   const [popupOpen, setPopupOpen] = useState(false);
-
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-
   const [savePrescriptionInstruction, savePrescriptionInstructionMutation] = useSavePrescriptionInstructionMutation();
   const [removePrescriptionInstruction, removePrescriptionInstructionMutation] = useRemovePrescriptionInstructionMutation();
-
   const { data: prescriptionInstructionListResponse } = useGetPrescriptionInstructionQuery(listRequest);
   const { data: ageGroupLovQueryResponse} = useGetLovValuesByCodeQuery('AGE_GROUPS'); 
   const { data: uomLovQueryResponse} = useGetLovValuesByCodeQuery('UOM');  
   const { data: medRoutLovQueryResponse} = useGetLovValuesByCodeQuery('MED_ROA');  
   const { data: medFreqLovQueryResponse} = useGetLovValuesByCodeQuery('MED_FREQUENCY');  
-  
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Prescription Instructions</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Prescription_Instructions'));
+  dispatch(setDivContent(divContentHTML));
   const handleNew = () => {
     setPrescriptionInstructions({...newApPrescriptionInstruction})
     setPopupOpen(true);
@@ -81,15 +91,14 @@ const PrescriptionInstructions = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
   return (
-    <Panel
-      header={
-        <h3 className="title">
-          <Translate>Prescription Instructions</Translate>
-        </h3>
-      }
-    >
+    <Panel>
       <ButtonToolbar>
         <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
           Add New

@@ -24,8 +24,14 @@ import {
   useSaveDvmRuleMutation
 } from '@/services/dvmService';
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const DVM = () => {
+  const dispatch = useAppDispatch();
+
   const [ruleTypes, setRuleTypes] = useState([]);
   const [screenKey, setScreenKey] = useState('');
   const [screenMetadataKey, setScreenMetadataKey] = useState('');
@@ -60,7 +66,15 @@ const DVM = () => {
   const [dvmRule, setDvmRule] = useState({ ...newApDvmRule });
   const [saveDvm, saveDvmMutation] = useSaveDvmRuleMutation();
   const [popupOpen, setPopupOpen] = useState(false);
-
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Data Validation Manager</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Data_Validation'));
+  dispatch(setDivContent(divContentHTML));
   const handleNew = () => {
     setPopupOpen(true);
     setDvmRule({ ...newApDvmRule });
@@ -168,13 +182,14 @@ const DVM = () => {
     }
   };
 
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
   return (
     <Panel style={{background: 'white'}}
-      header={
-        <h3 className="title">
-          <Translate>Data Validation Manager</Translate>
-        </h3>
-      }
     >
       <small style={{ display: 'block', marginBottom: '10px' }}>
         <Translate>Specify screen metadata to configure validation rules</Translate>

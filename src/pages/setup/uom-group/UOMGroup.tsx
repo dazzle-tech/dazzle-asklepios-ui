@@ -17,21 +17,32 @@ import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import * as icons from 'react-icons/fa6';
 import MyIconInput from '@/components/MyInput/MyIconInput';
 import { Icon } from '@rsuite/icons';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 
 const UOMGroup = () => {
+  const dispatch = useAppDispatch();
   const [uomGroup, setUomGroup] = useState<ApUomGroups>({ ...newApUomGroups });
   const [uomGrpupOpen, setUomGroupOpen] = useState(false);
   const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
   const [subView, setSubView] = useState('');
-
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-
   const [saveUomGroup, saveUomGroupMutation] = useSaveUomGroupMutation();
   const [removeUomGroup, { isLoading, isSuccess, isError }] = useRemoveUomGroupMutation();
-
   const { data: uomGroupsListResponse,refetch:refetchUomGroups } = useGetUomGroupsQuery(listRequest);
 
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+    const divContent = (
+      <div style={{ display: 'flex' }}>
+        <h5>UOM Groups</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+    dispatch(setPageCode('UOM_Groups'));
+    dispatch(setDivContent(divContentHTML));
   useEffect(() => { }, []);
 
   const handleUomGroupNew = () => {
@@ -96,20 +107,19 @@ const UOMGroup = () => {
     setCarouselActiveIndex(1);
     setSubView(subview);
   };
-
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch]);
   return (
     <Carousel
       style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
       autoplay={false}
       activeIndex={carouselActiveIndex}
     >
-      <Panel
-        header={
-          <h3 className="title">
-            <Translate>UOM Groups</Translate>
-          </h3>
-        }
-      >
+      <Panel>
         <ButtonToolbar>
           <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleUomGroupNew}>
             Add New

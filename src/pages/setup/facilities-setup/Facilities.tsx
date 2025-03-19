@@ -24,8 +24,14 @@ import {
 } from '@/services/setupService';
 import { Address } from 'cluster';
 import { useNavigate } from 'react-router-dom';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const Facilities = () => {
+  const dispatch = useAppDispatch();
+
   const [facility, setFacility] = useState<ApFacility>({ ...newApFacility });
   const [address, setAddress] = useState<Address>({ ...newApAddresses });
   const [departments, setDepartments] = useState<Address>({ ...newApDepartment });
@@ -52,7 +58,15 @@ const Facilities = () => {
   const [removeFacility, removeFacilityMutation] = useRemoveFacilityMutation()
 
   const [detailsPanle, setDetailsPanle] = useState(false);
-
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Facilities</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Facilities'));
+  dispatch(setDivContent(divContentHTML));
   const handleNew = () => {
     setAddress(newApAddresses)
     setFacility(newApFacility)
@@ -209,6 +223,12 @@ const Facilities = () => {
     }
   };
 
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
   return (
     <div>
 
@@ -341,11 +361,6 @@ const Facilities = () => {
 
           <div>
             <Panel style={{ background: 'white' }}
-              header={
-                <h3 className="title">
-                  <Translate>Facilities</Translate>
-                </h3>
-              }
             >
 
               <ButtonToolbar>

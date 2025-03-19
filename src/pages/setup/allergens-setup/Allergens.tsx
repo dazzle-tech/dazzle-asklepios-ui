@@ -17,18 +17,28 @@ import { newApAllergens } from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const Allergens = () => {
+  const dispatch = useAppDispatch();
   const [allergens, setAllergens] = useState<ApAllergens>({ ...newApAllergens });
   const [popupOpen, setPopupOpen] = useState(false);
-
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-
   const [saveAllergens, saveAllergensMutation] = useSaveAllergensMutation();
-
   const { data: allergensListResponse } = useGetAllergensQuery(listRequest);
   const { data: allergensTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGEN_TYPES');
-
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Allergens</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Allergens'));
+  dispatch(setDivContent(divContentHTML));
 
   const handleNew = () => {
     setAllergens({...newApAllergens})
@@ -66,15 +76,14 @@ const Allergens = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch]);
   return (
-    <Panel
-      header={
-        <h3 className="title">
-          <Translate>Allergens</Translate>
-        </h3>
-      }
-    >
+    <Panel>
       <ButtonToolbar>
         <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
           Add New
