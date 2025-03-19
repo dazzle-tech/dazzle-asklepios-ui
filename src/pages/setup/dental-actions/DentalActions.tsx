@@ -20,15 +20,18 @@ import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { Check, Trash } from '@rsuite/icons';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const DentalActions = () => {
+  const dispatch = useAppDispatch();
   const [dentalAction, setDentalAction] = useState<ApDentalAction>({ ...newApDentalAction });
   const [popupOpen, setPopupOpen] = useState(false);
   const [proceduresOpen, setProceduresOpen] = useState(false);
   const [cdtMap, setCdtMap] = useState({});
-
   const [selectedCdtKey, setSelectedCdtKey] = useState('');
-
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     pageSize: 15
@@ -37,14 +40,21 @@ const DentalActions = () => {
   const [saveDentalAction, saveDentalActionMutation] = useSaveDentalActionMutation();
   const [linkCdtAction, linkCdtActionMutation] = useLinkCdtActionMutation();
   const [unlinkCdtAction, unlinkCdtActionMutation] = useUnlinkCdtActionMutation();
-
   const { data: dentalActionListResponse } = useGetDentalActionsQuery(listRequest);
   const { data: cdtListResponse } = useGetCdtsQuery({
     ...initialListRequest,
     pageSize: 1000,
     skipDetails: true
   });
-
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Dental Actions</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Dental_Actions'));
+  dispatch(setDivContent(divContentHTML));
   useEffect(() => {
     // fill cdt procedure objects in a map with key as item key
     let map = {};
@@ -115,15 +125,14 @@ const DentalActions = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch]);
   return (
-    <Panel
-      header={
-        <h3 className="title">
-          <Translate>DentalActions</Translate>
-        </h3>
-      }
-    >
+    <Panel>
       <ButtonToolbar>
         <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
           Add New

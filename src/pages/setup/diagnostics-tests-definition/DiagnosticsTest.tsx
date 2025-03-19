@@ -26,18 +26,29 @@ import Radiology from './Radiology';
 import Laboratory from './Laboratory';
 import NormalRangeSetup from './NormalRangeSetup';
 import ProfileSetup from './ProfileSetup';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const DiagnosticsTest = () => {
+  const dispatch = useAppDispatch();
  const [diagnosticsTest, setDiagnosticsTest] = useState<ApDiagnosticTest>({...newApDiagnosticTest});
  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
  const { data: diagnosticsListResponse,  refetch: refetchDiagnostics  } = useGetDiagnosticsTestListQuery(listRequest);
  const [saveDiagnosticsTest, saveDiagnosticsTestMutation] = useSaveDiagnosticsTestMutation();
- const [carouselActiveIndex, 
-  setCarouselActiveIndex] = useState(0); 
-
+ const [carouselActiveIndex, setCarouselActiveIndex] = useState(0); 
  const [normalRangePopupOpen, setNormalRangePopupOpen] = useState(false);
  const [profilePopupOpen, setProfilePopupOpen] = useState(false);
-
+ const divElement = useSelector((state: RootState) => state.div?.divElement);
+ const divContent = (
+   <div style={{ display: 'flex' }}>
+     <h5>Diagnostics Tests Definition</h5>
+   </div>
+ );
+ const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+ dispatch(setPageCode('Diagnostics_Tests'));
+ dispatch(setDivContent(divContentHTML));
   const handleNew = () => {
     setDiagnosticsTest({ ...newApDiagnosticTest});
   };
@@ -68,20 +79,19 @@ const DiagnosticsTest = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch]);
   return (
     <Carousel
     style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
     autoplay={false}
     activeIndex={carouselActiveIndex}
   >
-    <Panel
-      header={
-        <h3 className="title">
-          <Translate>Diagnostics Tests Definition</Translate>
-        </h3>
-      }
-    >
+    <Panel>
       <ButtonToolbar>
         <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={() => {setCarouselActiveIndex(1); setDiagnosticsTest({...newApDiagnosticTest})}}>
           Add New

@@ -1,6 +1,6 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
-import React, { useState } from 'react';
+import React, { useState ,useEffect} from 'react';
 import { Input, Pagination, Panel, Table } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetMetadataQuery } from '@/services/setupService';
@@ -13,14 +13,26 @@ import {
   fromCamelCaseToDBName
 } from '@/utils';
 import MetadataFields from './MetadataFields';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const Metadata = () => {
+  const dispatch = useAppDispatch();
   const [metadata, setMetadata] = useState<ApMetadata>({ ...newApMetadata });
   const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
-
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const { data: metadataListResponse } = useGetMetadataQuery(listRequest);
-
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Metadata</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Metadata'));
+  dispatch(setDivContent(divContentHTML));
   const isSelected = rowData => {
     if (rowData && metadata && rowData.key === metadata.key) {
       return 'selected-row';
@@ -42,6 +54,12 @@ const Metadata = () => {
     }
   };
 
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
   return (
     <Carousel
       style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
@@ -49,11 +67,6 @@ const Metadata = () => {
       activeIndex={carouselActiveIndex}
     >
       <Panel
-        header={
-          <h3 className="title">
-            <Translate>Metadata</Translate>
-          </h3>
-        }
       >
         <ButtonToolbar>
           <IconButton

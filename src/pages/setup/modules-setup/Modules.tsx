@@ -18,8 +18,13 @@ import Screens from './Screens';
 import * as icons from 'react-icons/fa6';
 import MyIconInput from '@/components/MyInput/MyIconInput';
 import { Icon } from '@rsuite/icons';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const Modules = () => {
+  const dispatch = useAppDispatch();
   const [module, setModule] = useState<ApModule>({ ...newApModule });
   const [modulePopupOpen, setModulePopupOpen] = useState(false);
   const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
@@ -30,7 +35,15 @@ const Modules = () => {
   const [saveModule, saveModuleMutation] = useSaveModuleMutation();
 
   const { data: moduleListResponse } = useGetModulesQuery(listRequest);
-
+ const divElement = useSelector((state: RootState) => state.div?.divElement);
+        const divContent = (
+          <div style={{ display: 'flex' }}>
+            <h5>Modules</h5>
+          </div>
+        );
+        const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+        dispatch(setPageCode('Modules'));
+        dispatch(setDivContent(divContentHTML));
   useEffect(() => {}, []);
 
   const handleModuleNew = () => {
@@ -87,24 +100,23 @@ const Modules = () => {
         );
     }
   };
-
   const toSubView = (subview: string) => {
     setCarouselActiveIndex(1);
     setSubView(subview);
   };
-
+  useEffect(() => {
+        return () => {
+          dispatch(setPageCode(''));
+          dispatch(setDivContent("  "));
+        };
+      }, [location.pathname, dispatch])
   return (
     <Carousel
       style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
       autoplay={false}
       activeIndex={carouselActiveIndex}
     >
-      <Panel 
-        header={
-          <h3 className="title">
-            <Translate>Modules</Translate>
-          </h3>
-        }
+      <Panel
       >
         <ButtonToolbar>
           <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleModuleNew}>

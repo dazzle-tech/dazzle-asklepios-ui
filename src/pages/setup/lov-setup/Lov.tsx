@@ -19,8 +19,14 @@ import {
   conjureValueBasedOnKeyFromList,
   fromCamelCaseToDBName
 } from '@/utils';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const Lov = () => {
+  const dispatch = useAppDispatch();
+
   const [lov, setLov] = useState<ApLov>({ ...newApLov });
   const [lovPopupOpen, setLovPopupOpen] = useState(false);
   const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
@@ -40,7 +46,15 @@ const Lov = () => {
     setLovPopupOpen(false);
     saveLov(lov).unwrap();
   };
-
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Lovs</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Lovs'));
+  dispatch(setDivContent(divContentHTML));
   useEffect(() => {
     if (saveLovMutation.data) {
       setListRequest({ ...listRequest, timestamp: new Date().getTime() });
@@ -67,7 +81,12 @@ const Lov = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
   return (
     <Carousel
       style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
@@ -75,11 +94,6 @@ const Lov = () => {
       activeIndex={carouselActiveIndex}
     >
       <Panel
-        header={
-          <h3 className="title">
-            <Translate>Lovs</Translate>
-          </h3>
-        }
       >
         <ButtonToolbar>
           <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleLovNew}>

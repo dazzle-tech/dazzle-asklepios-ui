@@ -28,6 +28,11 @@ import { notify } from '@/utils/uiReducerActions';
 import { useDispatch } from 'react-redux';
 import CombinationIcon from '@rsuite/icons/Combination';
 import { useSaveMedicalSheetMutation, useGetMedicalSheetsByDepartmentIdQuery } from '@/services/setupService';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const Departments = () => {
 
   const [department, setDepartment] = useState<ApDepartment>({ ...newApDepartment });
@@ -72,8 +77,15 @@ const Departments = () => {
   );
   const { data: facilityListResponse } = useGetFacilitiesQuery(facilityListRequest);
   const { data: departmentListResponse } = useGetDepartmentsQuery(listRequest);
-
-
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Departments</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Departments'));
+  dispatch(setDivContent(divContentHTML));
 
   const handleNew = () => {
     generateFiveDigitCode()
@@ -136,6 +148,12 @@ const Departments = () => {
     console.log("sh", showScreen)
   }, [showScreen]);
 
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -175,11 +193,6 @@ const Departments = () => {
 
   return (
     <Panel
-      header={
-        <h3 className="title">
-          <Translate>Departments</Translate>
-        </h3>
-      }
     >
       <ButtonToolbar>
         <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>

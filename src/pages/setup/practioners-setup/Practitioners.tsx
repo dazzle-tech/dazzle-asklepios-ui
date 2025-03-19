@@ -26,15 +26,18 @@ import { addFilterToListRequest, conjureValueBasedOnKeyFromList, fromCamelCaseTo
 import AdminIcon from '@rsuite/icons/Admin';
 import { notify } from '@/utils/uiReducerActions';
 import ReloadIcon from '@rsuite/icons/Reload';
-
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const Practitioners = () => {
+  const dispatch = useAppDispatch();
   const [practitioner, setPractitioner] = useState<ApPractitioner>({ ...newApPractitioner });
   const [popupOpen, setPopupOpen] = useState(false);
   const [newPrac, setnewPrac] = useState(false);
-
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const { data: userListResponse, refetch: refetchUsers } = useGetUsersQuery(listRequest);
-
   const [facilityListRequest, setFacilityListRequest] = useState<ListRequest>({
     ...initialListRequest
   });
@@ -43,7 +46,15 @@ const Practitioners = () => {
     ignore: true
   });
   const [edit_new, setEdit_new] = useState(false);
-
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Practitioners</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Practitioners'));
+  dispatch(setDivContent(divContentHTML));
   const handleBack = () => {
     setEdit_new(false)
     setPractitioner(newApPractitioner)
@@ -89,9 +100,6 @@ const Practitioners = () => {
     setnewPrac(false)
 
   };
-
-
-
   useEffect(() => {
     if (practitioner.primaryFacilityKey) {
       setDepartmentListRequest(
@@ -102,8 +110,12 @@ const Practitioners = () => {
       );
     }
   }, [practitioner.primaryFacilityKey]);
-
-
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
 
   const isSelected = rowData => {
     if (rowData && practitioner && rowData.key === practitioner.key) {
@@ -140,11 +152,6 @@ const Practitioners = () => {
       setPractitioner(newApPractitioner)
     })
   };
-
-
-
-
-
   return (
     <div>
 
@@ -152,11 +159,6 @@ const Practitioners = () => {
       {
         !edit_new ?
           <Panel
-            header={
-              <h3 className="title">
-                <Translate>Practitioners</Translate>
-              </h3>
-            }
           >
             <ButtonToolbar>
               <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>

@@ -17,18 +17,32 @@ import Authorizations from './Authorizations';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import AccessRoleScreenMatrix from './AccessRoleScreenMatrix';
 import ViewsAuthorizeIcon from '@rsuite/icons/ViewsAuthorize';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useAppDispatch } from '@/hooks';
 const AccessRoles = () => {
   const [accessRole, setAccessRole] = useState<ApAccessRole>({ ...newApAccessRole });
   const [popupOpen, setPopupOpen] = useState(false);
   const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
   const [subView, setSubView] = useState('');
+  const dispatch = useAppDispatch();
 
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const { data: accessRoleListResponse } = useGetAccessRolesQuery(listRequest);
 
   const [saveAccessRole, saveAccessRoleMutation] = useSaveAccessRoleMutation();
 
-
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Access Roles</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Access_Roles'));
+  dispatch(setDivContent(divContentHTML));
   const handleNew = () => {
     setPopupOpen(true);
   };
@@ -97,6 +111,12 @@ const AccessRoles = () => {
     }
   };
 
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
   return (
     <Carousel
       style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
@@ -104,11 +124,6 @@ const AccessRoles = () => {
       activeIndex={carouselActiveIndex}
     >
       <Panel
-        header={
-          <h3 className="title">
-            <Translate>AccessRoles</Translate>
-          </h3>
-        }
       >
         <ButtonToolbar>
           <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>

@@ -19,6 +19,10 @@ import {
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { ApAgeGroup } from '@/types/model-types';
 import { newApAgeGroup } from '@/types/model-types-constructor';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 const AgeGroup = () => {
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const [popupOpen, setPopupOpen] = useState(false);
@@ -28,7 +32,15 @@ const AgeGroup = () => {
   const { data: ageunitsLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_UNITS');
   const [saveAgeGroups, saveAgeGroupsMutation] = useSaveAgeGroupMutation();
   const { data: ageGroupsListResponse } = useGetAgeGroupQuery(listRequest);
-
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Age Group</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Age_Group'));
+  dispatch(setDivContent(divContentHTML));
   const isSelected = rowData => {
     if (rowData && agegroups && rowData.key === agegroups.key) {
       return 'selected-row';
@@ -79,15 +91,14 @@ const AgeGroup = () => {
       setListRequest({ ...listRequest, timestamp: new Date().getTime() });
     }
   }, [saveAgeGroupsMutation.data]);
-
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent("  "));
+    };
+  }, [location.pathname, dispatch])
   return (<>
-    <Panel
-      header={
-        <h3 className="title">
-          <Translate>Age Group</Translate>
-        </h3>
-      }
-    >
+    <Panel>
       <ButtonToolbar>
         <IconButton appearance="primary"
           icon={<AddOutlineIcon />}

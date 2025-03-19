@@ -24,6 +24,10 @@ import {
 } from '@/services/setupService';
 import { ApDuplicationCandidateSetup } from '@/types/model-types';
 import { newApDuplicationCandidateSetup } from '@/types/model-types-constructor';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 const PotintialDuplicate = () => {
     const [isactive, setIsactive] = useState(false);
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
@@ -38,7 +42,15 @@ const PotintialDuplicate = () => {
             return 'selected-row';
         } else return '';
     };
-
+    const divElement = useSelector((state: RootState) => state.div?.divElement);
+    const divContent = (
+      <div style={{ display: 'flex' }}>
+        <h5>Potintial Duplicate</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+    dispatch(setPageCode('Potintial_Duplicate'));
+    dispatch(setDivContent(divContentHTML));
     const handleFilterChange = (fieldName, value) => {
         if (value) {
             setListRequest(
@@ -79,14 +91,14 @@ const PotintialDuplicate = () => {
             }
         }
     };
+    useEffect(() => {
+        return () => {
+          dispatch(setPageCode(''));
+          dispatch(setDivContent("  "));
+        };
+      }, [location.pathname, dispatch]);
     return (<>
-        <Panel
-            header={
-                <h3 className="title">
-                    <Translate>Potintial Duplicate</Translate>
-                </h3>
-            }
-        >
+        <Panel>
             <ButtonToolbar>
                 <IconButton appearance="primary"
                     icon={<AddOutlineIcon />}
