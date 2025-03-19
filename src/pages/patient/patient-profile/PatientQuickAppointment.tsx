@@ -48,7 +48,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
     const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
     const dispatch = useAppDispatch();
     const [openModelPayment, setOpenModelPayment] = React.useState(false);
-    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter, patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob) });
+    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter,visitTypeLkey:'2041082245699228', patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob) });
     const [validationResult, setValidationResult] = useState({});
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
@@ -88,7 +88,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
     const handleClosePaymentModel = () => setOpenModelPayment(false);
     const handleSavePayment = () => {
         setOpenModelPayment(false);
-    };
+     };
 
     useEffect(() => {
         if (localEncounter?.resourceTypeLkey) {
@@ -110,7 +110,9 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                 visitTypeLkey: ['2039534205961578', '2039516279378421'].includes(localEncounter.resourceTypeLkey) ? '2041082245699228' : null
 
 
-            }).unwrap().catch((e) => {
+            }).unwrap().then(()=>{
+                setQuickAppointmentModel(false)
+            }).catch((e) => {
 
                 if (e.status === 422) {
                     console.log("Validation error: Unprocessable Entity", e);
@@ -549,23 +551,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                 selectDataLabel="lovDisplayVale"
                                                 selectDataValue="key"
                                                 record={localEncounter}
-                                                setRecord={setLocalEncounter}
-                                                disabled={isReadOnly}
-                                            />
-
-
-                                            <MyInput
-                                                vr={validationResult}
-                                                column
-                                                width={165}
-                                                fieldType="select"
-                                                fieldLabel="Physician"
-                                                fieldName="physicianKey"
-                                                selectData={practitionerListResponse?.object ?? []}
-                                                selectDataLabel="practitionerFullName"
-                                                selectDataValue="key"
-                                                record={localEncounter}
-                                                setRecord={setLocalEncounter}
+                                                setRecord={() => {}} // No updates allowed
                                                 disabled={isReadOnly}
                                             />
 
