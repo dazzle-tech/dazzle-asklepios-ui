@@ -1355,6 +1355,7 @@ export interface ApFacility {
 	facilityType:string;
 	facilityAddress:string;
 	roolKey:string;
+	defaultCurrencyLkey:string;
 } 
 
 export interface ApGenericMedication { 

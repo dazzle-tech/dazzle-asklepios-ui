@@ -47,6 +47,7 @@ const Facilities = () => {
     parentValueKey: address?.countryLkey
   });
   const { data: stateLovQueryResponse } = useGetLovValuesByCodeQuery('STATE');
+  const { data: currencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
 
   const { data: fsltyTypeLovQueryResponse } = useGetLovValuesByCodeQuery('FSLTY_TYP');
 
@@ -194,6 +195,20 @@ const Facilities = () => {
           <MyInput disabled={!editing && !newEntry} column fieldName="facilityPhone2" required record={facility} setRecord={setFacility} />
           <MyInput disabled={!editing && !newEntry} column fieldName="facilityEmailAddress" record={facility} setRecord={setFacility} />
           <MyInput disabled={!editing && !newEntry} column fieldName="facilityFax" required record={facility} setRecord={setFacility} />
+          <MyInput
+            disabled={!editing && !newEntry}
+            required
+            width={165}
+            vr={validationResult}
+            column
+            fieldLabel="Default Currency"
+            fieldType="select"
+            fieldName="defaultCurrencyLkey"
+            selectData={currencyLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={facility} setRecord={setFacility}
+          />
 
           <MyInput
             disabled={!editing && !newEntry}
@@ -479,7 +494,7 @@ const Facilities = () => {
 
               <Modal size={'lg'} open={popupOpen} overflow>
                 <Modal.Title>
-                  <Translate>New/Edit Facility</Translate>
+                  <Translate>New Facility</Translate>
                 </Modal.Title>
                 <Modal.Body>
                   {inputForms(true)}

@@ -1356,6 +1356,7 @@ export const newApFacility:modelTypes.ApFacility = {
 	facilityType:'',
 	facilityAddress:'',
 	roolKey:undefined,
+	defaultCurrencyLkey:undefined,
 } 
 
 export const newApGenericMedication:modelTypes.ApGenericMedication = { 
