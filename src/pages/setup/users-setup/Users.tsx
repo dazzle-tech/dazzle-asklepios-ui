@@ -453,7 +453,7 @@ const Users = () => {
 
   useEffect(() => {
     console.log(user)
-    if (user.firstName)
+    if (user.firstName && user.username)
       setReadyUser({
         ...user,
         fullName: user.firstName + ' ' + user.lastName,
