@@ -46,8 +46,6 @@ const Modules = () => {
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
 
   const [saveModule, saveModuleMutation] = useSaveModuleMutation();
-
-  const { data: moduleListResponse } = useGetModulesQuery(listRequest);
  const divElement = useSelector((state: RootState) => state.div?.divElement);
         const divContent = (
           <div style={{ display: 'flex' }}>
