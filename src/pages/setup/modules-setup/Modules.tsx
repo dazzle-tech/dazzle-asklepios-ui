@@ -1,9 +1,12 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
+import { Input, Modal, Pagination, Panel, Table, InputGroup, SelectPicker } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetModulesQuery, useSaveModuleMutation } from '@/services/setupService';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faLaptop } from '@fortawesome/free-solid-svg-icons';
+import SearchIcon from '@rsuite/icons/Search';
 import { Button, ButtonToolbar, Carousel, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import EditIcon from '@rsuite/icons/Edit';
@@ -16,13 +19,23 @@ import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import Screens from './Screens';
 import * as icons from 'react-icons/fa6';
+import { MdDelete } from 'react-icons/md';
+import { IoSettingsSharp } from 'react-icons/io5';
+import { MdModeEdit } from 'react-icons/md';
 import MyIconInput from '@/components/MyInput/MyIconInput';
 import { Icon } from '@rsuite/icons';
+
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
+import FormControl from 'rsuite/esm/FormControl';
+
+
+
 const Modules = () => {
   const dispatch = useAppDispatch();
   const [module, setModule] = useState<ApModule>({ ...newApModule });
@@ -46,7 +59,15 @@ const Modules = () => {
         dispatch(setDivContent(divContentHTML));
   useEffect(() => {}, []);
 
+  const { data: moduleListResponse, refetch, isLoading } = useGetModulesQuery(listRequest);
+
+  const [operationState, setOperationState] = useState<string>('New');
+
+  // useEffect(() => {}, []);
+
+
   const handleModuleNew = () => {
+    setOperationState('New');
     setModulePopupOpen(true);
     setModule({ ...newApModule });
   };
@@ -100,6 +121,7 @@ const Modules = () => {
         );
     }
   };
+
   const toSubView = (subview: string) => {
     setCarouselActiveIndex(1);
     setSubView(subview);
@@ -110,6 +132,38 @@ const Modules = () => {
           dispatch(setDivContent("  "));
         };
       }, [location.pathname, dispatch])
+
+
+  const toSubView = (subview: string, rowData) => {
+    setModule(rowData);
+    setCarouselActiveIndex(1);
+    setSubView(subview);
+  };
+
+  const iconsForActions = (rowData: ApModule) => (
+    <div style={{ display: 'flex', gap: '20px' }}>
+      <IoSettingsSharp
+        title="Setup Module Screens"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          toSubView('screens', rowData);
+        }}
+      />
+      <MdModeEdit
+        title="Edit"
+        size={24}
+         fill="var(--primary-gray)"
+        onClick={() => {
+          setModule(rowData);
+          setOperationState('Edit');
+          setModulePopupOpen(true);
+        }}
+      />  
+      <MdDelete title="Deactivate" size={24} fill="var(--primary-pink)" />
+    </div>
+  );
+
   return (
     <Carousel
       style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
@@ -117,40 +171,32 @@ const Modules = () => {
       activeIndex={carouselActiveIndex}
     >
       <Panel
+
+      // style={{backgroundColor: "#b3c2d3"}}
+      // header={
+      //   <h3 className="title">
+      //     <Translate>Modules</Translate>
+      //   </h3>
+      // }
+
       >
-        <ButtonToolbar>
-          <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleModuleNew}>
-            Add New
-          </IconButton>
-          <IconButton
-            disabled={!module.key}
-            appearance="primary"
-            onClick={() => setModulePopupOpen(true)}
-            color="green"
-            icon={<EditIcon />}
-          >
-            Edit Selected
-          </IconButton>
-          <IconButton
-            disabled={true || !module.key}
-            appearance="primary"
-            color="red"
-            icon={<TrashIcon />}
-          >
-            Delete Selected
-          </IconButton>
-          <IconButton
-            disabled={!module.key}
-            appearance="primary"
-            color="orange"
-            onClick={() => toSubView('screens')}
-            icon={<ChangeListIcon />}
-          >
-            Setup Module Screens
-          </IconButton>
-        </ButtonToolbar>
-        <hr />
+        
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <InputGroup inside style={{ width: 200, marginBottom: 10 }}>
+            <InputGroup.Button>
+              <SearchIcon />
+            </InputGroup.Button>
+            <Input placeholder="Search by name" onChange={e => handleFilterChange('name', e)} />
+          </InputGroup>
+          <div>
+           
+
+            <Button startIcon={<AddOutlineIcon />} style={{ marginRight: '40px', backgroundColor: "var(--deep-blue)"}} appearance="primary" onClick={handleModuleNew}> Add New </Button>
+
+          </div>
+        </div>
         <Table
+          loading={isLoading}
           height={400}
           sortColumn={listRequest.sortBy}
           sortType={listRequest.sortType}
@@ -162,9 +208,7 @@ const Modules = () => {
                 sortType
               });
           }}
-          headerHeight={80}
-          rowHeight={60}
-          bordered
+          headerHeight={42}
           cellBordered
           data={moduleListResponse?.object ?? []}
           onRowClick={rowData => {
@@ -174,34 +218,37 @@ const Modules = () => {
         >
           <Column sortable align="center" flexGrow={1}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('iconImagePath', e)} />
               <Translate>Icon</Translate>
             </HeaderCell>
-            <Cell>{rowData => <Icon size="2em" as={icons[rowData.iconImagePath]} />}</Cell>
+            <Cell>
+              {rowData => <Icon fill="#969FB0" size="1.5em" as={icons[rowData.iconImagePath]} />}
+            </Cell>
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('name', e)} />
               <Translate>Name</Translate>
             </HeaderCell>
-            <Cell dataKey="name" />
+            <Cell style={{fontWeight: "bold"}} dataKey="name" />
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('description', e)} />
               <Translate>Description</Translate>
             </HeaderCell>
             <Cell dataKey="description" />
           </Column>
           <Column sortable flexGrow={2}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('viewOrder', e)} />
               <Translate>View Order</Translate>
             </HeaderCell>
             <Cell dataKey="viewOrder" />
           </Column>
+
+          <Column flexGrow={2}>
+            <HeaderCell></HeaderCell>
+            <Cell>{rowData => iconsForActions(rowData)}</Cell>
+          </Column>
         </Table>
-        <div style={{ padding: 20 }}>
+        <div style={{ padding: 20, backgroundColor: '#F4F7FC' }}>
           <Pagination
             prev
             next
@@ -225,36 +272,73 @@ const Modules = () => {
           />
         </div>
 
-        <Modal open={modulePopupOpen} overflow>
+        <Modal open={modulePopupOpen} className="left-modal" size="xsm">
           <Modal.Title>
-            <Translate>New/Edit Module</Translate>
+            <Translate>{operationState} Module</Translate>
           </Modal.Title>
-          <Modal.Body>
+          <hr />
+          <Modal.Body style={{ marginBottom: '120px' }}>
             <Form fluid>
-              <MyInput fieldName="name" record={module} setRecord={setModule} />
-              <MyInput fieldName="description" record={module} setRecord={setModule} />
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignContent: 'center',
+                  alignItems: 'center',
+                  marginBottom: '40px'
+                }}
+              >
+                <FontAwesomeIcon
+                  icon={faLaptop}
+                  color="#415BE7"
+                  style={{ marginBottom: '10px' }}
+                  size="2x"
+                />
+                <label style={{fontWeight: "bold", fontSize: "14px"}}>Module info</label>
+              </div>
+              <MyInput fieldName="name" record={module} setRecord={setModule} width={520} height={45} />
               <MyInput
-                fieldName="viewOrder"
-                fieldType="number"
+                fieldType="textarea"
+                fieldName="description"
                 record={module}
                 setRecord={setModule}
+                width={520}
+                height={150}
               />
-              <MyIconInput
-                fieldName="iconImagePath"
-                fieldLabel="Icon"
-                record={module}
-                setRecord={setModule}
-              />
+              <div style={{ display: 'flex', gap: '20px' }}>
+                <MyInput
+                  fieldName="viewOrder"
+                  fieldType="number"
+                  record={module}
+                  setRecord={setModule}
+                  width={250}
+                  height={45}
+                />
+                <MyIconInput
+                  fieldName="iconImagePath"
+                  fieldLabel="Icon"
+                  record={module}
+                  setRecord={setModule}
+                  width={250}
+                  height={"45px"}
+                />
+                
+              </div>
             </Form>
           </Modal.Body>
+          <hr/>
           <Modal.Footer>
-            <Stack spacing={2} divider={<Divider vertical />}>
-              <Button appearance="primary" onClick={handleModuleSave}>
-                Save
-              </Button>
-              <Button appearance="primary" color="red" onClick={() => setModulePopupOpen(false)}>
+          
+            <Stack style={{display: "flex", justifyContent: "flex-end"}} spacing={2} divider={<Divider vertical />}>
+              <Button
+                appearance="subtle"
+                style={{ color: "var(--deep-blue)" }}
+                onClick={() => setModulePopupOpen(false)}
+              >
                 Cancel
               </Button>
+              <Button startIcon={<FontAwesomeIcon icon={faCheckDouble} />} style={{backgroundColor: "var(--deep-blue)"}} appearance="primary" onClick={handleModuleSave}> {operationState === "New" ? "Create" : "Save"} </Button>
             </Stack>
           </Modal.Footer>
         </Modal>

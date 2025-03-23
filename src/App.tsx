@@ -110,7 +110,7 @@ const App = () => {
     const navs = [];
     navs.push({
       eventKey: 'dashboard',
-      icon: <Icon as={MdDashboard} />,
+      icon: <Icon fill="var(--primary-gray)" as={MdDashboard} />,
       title: 'Dashboard',
       to: '/'
     });
@@ -119,7 +119,7 @@ const App = () => {
     navigationMapRawData.screens.map(screenWithoutModule => {
       navs.push({
         eventKey: screenWithoutModule.key,
-        icon: <Icon as={icons[screenWithoutModule?.iconImagePath ?? 'FaCircle']} />,
+        icon: <Icon fill="var(--primary-gray)" as={icons[screenWithoutModule?.iconImagePath ?? 'FaCircle']} />,
         title: screenWithoutModule.name,
         to: '/'.concat(screenWithoutModule.navPath)
       });
@@ -135,7 +135,7 @@ const App = () => {
       childrenScreens.map(screen => {
         chidlrenNavs.push({
           eventKey: screen.key,
-          icon: <Icon as={icons[screen?.iconImagePath ?? 'FaCircle']} />,
+          icon: <Icon fill="var(--primary-gray)" as={icons[screen?.iconImagePath ?? 'FaCircle']} />,
           title: screen.name,
           to: '/'.concat(screen.navPath)
         });
@@ -145,7 +145,7 @@ const App = () => {
 
       navs.push({
         eventKey: module.key,
-        icon: <Icon as={icons[module?.iconImagePath ?? 'FaBox']} />,
+        icon: <Icon fill="var(--primary-gray)" as={icons[module?.iconImagePath ?? 'FaBox']} />,
         title: module.name,
         children: chidlrenNavs
       });

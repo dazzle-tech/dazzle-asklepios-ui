@@ -1,11 +1,12 @@
 import { camelCaseToLabel } from '@/utils';
 import React from 'react';
-import { Form, Input, DatePicker, Checkbox, Toggle, SelectPicker, InputNumber } from 'rsuite';
+import { Form, SelectPicker} from 'rsuite';
 import MyLabel from '../MyLabel';
 import Translate from '../Translate';
 import * as icons from 'react-icons/fa6';
 import {iconsAsText} from '../../styles/icons-as-text';
 import { Icon } from '@rsuite/icons';
+import './styles.less';
 
 const MyIconInput = ({ fieldName, fieldType = 'text', record, setRecord, ...props }) => {
   const fieldLabel = props?.fieldLabel ?? camelCaseToLabel(fieldName);
@@ -13,16 +14,18 @@ const MyIconInput = ({ fieldName, fieldType = 'text', record, setRecord, ...prop
   const handleValueChange = value => {
     setRecord({ ...record, [fieldName]: value });
   };
-
+  
   return (
     <>
-      <Form.Group>
+      <Form.Group style={{ zoom: 0.8}}>
         <Form.ControlLabel>
           <MyLabel label={fieldLabel} />
         </Form.ControlLabel>
         <Form.Control
+        className="icons-list" 
           block
           virtualized
+          style={{ width: props?.width ?? {}, '--component-height': props.height} as React.CSSProperties} //baaaaack
           accepter={SelectPicker}
           name={fieldName}
           data={iconsAsText}
