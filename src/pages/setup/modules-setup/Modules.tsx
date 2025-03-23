@@ -119,11 +119,6 @@ const Modules = () => {
         );
     }
   };
-
-  const toSubView = (subview: string) => {
-    setCarouselActiveIndex(1);
-    setSubView(subview);
-  };
   useEffect(() => {
         return () => {
           dispatch(setPageCode(''));
