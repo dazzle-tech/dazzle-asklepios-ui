@@ -1,7 +1,8 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Drawer, Input, List, Modal, Pagination, Panel, Table } from 'rsuite';
+import { Drawer, Input, List, Modal, Pagination, Panel, Table,InputGroup } from 'rsuite';
+import SearchIcon from '@rsuite/icons/Search';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetScreensQuery, useSaveScreenMutation } from '@/services/setupService';
 import { useGetScreenMetadataQuery, useSaveScreenMetadataMutation } from '@/services/dvmService';
@@ -11,9 +12,14 @@ import EditIcon from '@rsuite/icons/Edit';
 import ListIcon from '@rsuite/icons/List';
 import TrashIcon from '@rsuite/icons/Trash';
 import { ApScreen } from '@/types/model-types';
+import { MdDelete } from 'react-icons/md';
+import { MdModeEdit } from 'react-icons/md';
 import { newApScreen } from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
 import ArowBackIcon from '@rsuite/icons/ArowBack';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faLaptop } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import {
   addFilterToListRequest,
   conjureValueBasedOnKeyFromList,
@@ -44,6 +50,8 @@ const Screens = ({ module, goBack, ...props }) => {
   const { data: screenListResponse } = useGetScreensQuery(listRequest);
   const { data: screenMetadataListResponse } = useGetScreenMetadataQuery(listRequestForMetadata);
 
+  const [operationState, setOperationState] = useState<string>("New");
+
   useEffect(() => {
     if (module && module.key) {
       setListRequest(addFilterToListRequest('module_key', 'match', module.key, listRequest));
@@ -67,6 +75,7 @@ const Screens = ({ module, goBack, ...props }) => {
   }, [screenMetadataListResponse]);
 
   const handleScreenNew = () => {
+    setOperationState('New');
     setScreenPopupOpen(true);
     setScreen({ ...newApScreen, moduleKey: module.key });
   };
@@ -103,55 +112,56 @@ const Screens = ({ module, goBack, ...props }) => {
     }
   };
 
+  const iconsForActions = (rowData: ApScreen) => (
+    <div style={{ display: 'flex', gap: '20px' }}>
+      <MdModeEdit
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setScreen(rowData);
+          setOperationState('Edit');
+          setScreenPopupOpen(true);
+        }}
+      />
+      <MdDelete title="Deactivate" fill="var(--primary-pink)" size={24} />
+    </div>
+  );
+
   return (
     <>
       {module && module.key && (
         <Panel
-          header={
-            <h3 className="title">
-              <Translate> Screens for </Translate> <i>{module?.moduleName ?? ''}</i>{' '}
-              <Translate>Module</Translate>
-            </h3>
-          }
+        // header={
+        //   <h3 className="title">
+        //     <Translate> Screens for </Translate> <i>{module?.moduleName ?? ''}</i>{' '}
+        //     <Translate>Module</Translate>
+        //   </h3>
+        // }
         >
-          <ButtonToolbar>
-            <IconButton appearance="ghost" color="cyan" icon={<ArowBackIcon />} onClick={goBack}>
-              Go Back
-            </IconButton>
-            <Divider vertical />
-            <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleScreenNew}>
-              Add New
-            </IconButton>
-            <IconButton
-              disabled={!screen.key}
-              appearance="primary"
-              onClick={() => setScreenPopupOpen(true)}
-              color="green"
-              icon={<EditIcon />}
-            >
-              Edit Selected
-            </IconButton>
-            <IconButton
-              disabled={true || !screen.key}
-              appearance="primary"
-              color="red"
-              icon={<TrashIcon />}
-            >
-              Delete Selected
-            </IconButton>
-            <IconButton
-              disabled={!screen.key}
-              appearance="primary"
-              color="orange"
-              onClick={() => {
-                setScreenMetadataPopupOpen(true);
-              }}
-              icon={<ListIcon />}
-            >
-              Screen Metadata
-            </IconButton>
-          </ButtonToolbar>
-          <hr />
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{display: "flex", gap: "20px"}}>
+         
+
+            <Button startIcon={<ArowBackIcon />} style={{ marginBottom: 10}} color="var(--deep-blue)" appearance="ghost" onClick={goBack}> Back </Button>
+
+
+          
+            <InputGroup inside style={{ width: 200, marginBottom: 10 }}>
+                        <InputGroup.Button>
+                          <SearchIcon />
+                        </InputGroup.Button>
+                        <Input placeholder="Search by name" onChange={e => handleFilterChange('name', e)} />
+                      </InputGroup>
+                     
+
+             </div>
+            <div>
+              
+                <Button startIcon={<AddOutlineIcon />} style={{ marginRight: '40px', backgroundColor: "var(--deep-blue)"}} appearance="primary" onClick={handleScreenNew}> Add New </Button>
+              
+            </div>
+          </div>
           <Table
             height={400}
             sortColumn={listRequest.sortBy}
@@ -164,9 +174,6 @@ const Screens = ({ module, goBack, ...props }) => {
                   sortType
                 });
             }}
-            headerHeight={80}
-            rowHeight={60}
-            bordered
             cellBordered
             data={screenListResponse?.object ?? []}
             onRowClick={rowData => {
@@ -176,41 +183,41 @@ const Screens = ({ module, goBack, ...props }) => {
           >
             <Column sortable align="center" flexGrow={1}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('iconImagePath', e)} />
                 <Translate>Icon</Translate>
               </HeaderCell>
-              <Cell>{rowData => <Icon size="2em" as={icons[rowData.iconImagePath]} />}</Cell>
+              <Cell>{rowData => <Icon fill="var(--primary-gray)" size="1.5em" as={icons[rowData.iconImagePath]} />}</Cell>
             </Column>
             <Column sortable flexGrow={4}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('name', e)} />
                 <Translate>Name</Translate>
               </HeaderCell>
               <Cell dataKey="name" />
             </Column>
             <Column sortable flexGrow={4}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('description', e)} />
                 <Translate>Description</Translate>
               </HeaderCell>
               <Cell dataKey="description" />
             </Column>
             <Column sortable flexGrow={2}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('viewOrder', e)} />
                 <Translate>View Order</Translate>
               </HeaderCell>
               <Cell dataKey="viewOrder" />
             </Column>
             <Column sortable flexGrow={4}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('navPath', e)} />
                 <Translate>Navigation Path</Translate>
               </HeaderCell>
               <Cell dataKey="navPath" />
             </Column>
+
+            <Column flexGrow={2}>
+              <HeaderCell></HeaderCell>
+              <Cell>{rowData => iconsForActions(rowData)}</Cell>
+            </Column>
           </Table>
-          <div style={{ padding: 20 }}>
+          <div style={{ padding: 20, backgroundColor: '#F4F7FC'}}>
             <Pagination
               prev
               next
@@ -234,37 +241,66 @@ const Screens = ({ module, goBack, ...props }) => {
             />
           </div>
 
-          <Modal open={screenPopupOpen} overflow>
+          <Modal open={screenPopupOpen} className="left-modal" size="xsm">
             <Modal.Title>
-              <Translate>New/Edit Screen</Translate>
+              <Translate>{operationState} Screen</Translate>
             </Modal.Title>
-            <Modal.Body>
+            <hr />
+            <Modal.Body style={{ marginBottom: '50px' }}>
               <Form fluid>
-                <MyInput fieldName="name" record={screen} setRecord={setScreen} />
-                <MyInput fieldName="description" record={screen} setRecord={setScreen} />
+                <div
+                                style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  justifyContent: 'center',
+                                  alignContent: 'center',
+                                  alignItems: 'center',
+                                  marginBottom: '40px'
+                                }}
+                              >
+                                <FontAwesomeIcon
+                                  icon={faLaptop}
+                                  color="#415BE7"
+                                  style={{ marginBottom: '10px' }}
+                                  size="2x"
+                                />
+                                <label style={{fontWeight: "bold", fontSize: "14px"}}>Screen info</label>
+                              </div>
+
+                <MyInput fieldName="name" record={screen} setRecord={setScreen} width={520} height={45}/>
+                <MyInput fieldName="description" record={screen} setRecord={setScreen} width={520} height={150} />
                 <MyInput
                   fieldName="viewOrder"
                   fieldType="number"
                   record={screen}
                   setRecord={setScreen}
+                  height={45}
+                  width={520}
                 />
+                <div style={{ display: 'flex', gap: '20px' }}>
                 <MyIconInput
                   fieldName="iconImagePath"
                   fieldLabel="Icon"
                   record={screen}
                   setRecord={setScreen}
+                  height={"45px"}
+                  width={250}
                 />
-                <MyInput fieldName="navPath" record={screen} setRecord={setScreen} />
+                <MyInput fieldName="navPath" record={screen} setRecord={setScreen} height={45} width={250} />
+                </div>
               </Form>
             </Modal.Body>
+            <hr/>
             <Modal.Footer>
-              <Stack spacing={2} divider={<Divider vertical />}>
-                <Button appearance="primary" onClick={handleScreenSave}>
-                  Save
-                </Button>
-                <Button appearance="primary" color="red" onClick={() => setScreenPopupOpen(false)}>
-                  Cancel
-                </Button>
+              <Stack style={{display: "flex", justifyContent: "flex-end"}} spacing={2} divider={<Divider vertical />}>
+               <Button
+                              appearance="subtle"
+                              style={{ color: "var(--deep-blue)" }}
+                              onClick={() => setScreenPopupOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button startIcon={<FontAwesomeIcon icon={faCheckDouble} />} style={{backgroundColor: "var(--deep-blue)"}} appearance="primary" onClick={handleScreenSave}> {operationState === "New" ? "Create" : "Save"} </Button>
               </Stack>
             </Modal.Footer>
           </Modal>
@@ -273,12 +309,12 @@ const Screens = ({ module, goBack, ...props }) => {
 
       <Drawer open={screenMetadataPopupOpen} onClose={() => setScreenMetadataPopupOpen(false)}>
         <Drawer.Header>
-          <Drawer.Title>List of Metadata In Screen</Drawer.Title> 
+          <Drawer.Title>List of Metadata In Screen</Drawer.Title>
         </Drawer.Header>
         <Drawer.Body>
           <List bordered>
             {(screenMetadataListResponse?.object ?? []).map(smd => {
-              return <List.Item>{smd.metadataObject.objectName}</List.Item>
+              return <List.Item>{smd.metadataObject.objectName}</List.Item>;
             })}
           </List>
         </Drawer.Body>

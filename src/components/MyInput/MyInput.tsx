@@ -47,7 +47,7 @@ const MyInput = ({
       case 'textarea':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260 ,height:props?.height??50}}
+            style={{ width: props?.width ?? 260 ,height:props?.height ?? 50}}
             disabled={props.disabled}
             name={fieldName}
             placeholder={props.placeholder}
@@ -70,7 +70,7 @@ const MyInput = ({
       case 'select':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260 }}
+            style={{ width: props?.width ?? 260,height:props?.height ?? 50}}
             block
             disabled={props.disabled}
             accepter={SelectPicker}
@@ -89,7 +89,7 @@ const MyInput = ({
       case 'multyPicker':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260 }}
+            style={{ width: props?.width ?? 260,height:props?.height ?? 50 }}
             block
             disabled={props.disabled}
             accepter={TagPicker}
@@ -97,18 +97,18 @@ const MyInput = ({
             data={props?.selectData ?? []}
             labelKey={props?.selectDataLabel ?? ''}
             valueKey={props?.selectDataValue ?? ''}
-            value={record ? record[fieldName] : []}  // Multiple values as array
-            onChange={handleValueChange}  // Pass handler for multiple value selection
+            value={record ? record[fieldName] : []} // Multiple values as array
+            onChange={handleValueChange} // Pass handler for multiple value selection
             placeholder={props.placeholder ?? 'Select...'}
             creatable={props.creatable ?? false} // Optional: Allow users to create new tags
             groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
-            searchBy={props.searchBy}  // Optional: Search function for TagPicker
+            searchBy={props.searchBy} // Optional: Search function for TagPicker
           />
         );
       case 'date':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260 }}
+            style={{ width: props?.width ?? 260,height:props?.height ?? 50 }}
             disabled={props.disabled}
             name={fieldName}
             value={record[fieldName] ? new Date(record[fieldName]) : null}
@@ -120,7 +120,7 @@ const MyInput = ({
       case 'number':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260 }}
+            style={{ width: props?.width ?? 260,height:props?.height ?? 50}} 
             disabled={props.disabled}
             name={fieldName}
             max={props.max ? props.max : 1000000}
@@ -146,14 +146,13 @@ const MyInput = ({
         return (
           <Form.Control
             labelKey={props?.selectDataLabel ?? ''}
-
-            style={{ width: props?.width ?? 260 }}
+            style={{ width: props?.width ?? 260,height:props?.height ?? 50 }}
             disabled={props.disabled}
             name={fieldName}
             type={fieldType}
             value={record ? record[fieldName] : ''}
             onChange={handleValueChange}
-
+            
           />
         );
     }
@@ -186,12 +185,12 @@ const MyInput = ({
 
   return (
     <>
-      <Form.Group style={{ zoom: 0.8 }}>
+      <Form.Group style={{ zoom: 0.8}}>
         <Form.ControlLabel>
           {props.required && (
-            <span style={{ color: 'red', fontSize: '110%', margin: '2px'  }}>*</span>
+            <span style={{ color: 'red', fontSize: '110%', margin: '2px' }}>*</span>
           )}
-     {showLabel&&<MyLabel label={fieldLabel} error={validationResult} />}
+     {showLabel && <MyLabel label={fieldLabel} error={validationResult} />}
         </Form.ControlLabel>
         {props.column && <br />}
         {conjureFormControl()}
