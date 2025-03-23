@@ -62,9 +62,8 @@ const Users = () => {
   const [userLicense, setUserLicense] = useState<ApUserMedicalLicense>({
     ...newApUserMedicalLicense
   });
-  const [readyUser, setReadyUser] = useState({
-    user
-  });
+  const [readyUser, setReadyUser] = useState(user);
+
 
   const [selectedLicense, setSelectedLicense] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState(newApFacility);
@@ -201,23 +200,30 @@ const Users = () => {
 
   const [newDepartmentPopupOpen, setNewDepartmentPopupOpen] = useState(false)
 
-  const handleSave = () => {
-    saveUser({ ...user, selectedDepartmentsFacilityKey: selectedFacility?.key, username: readyUser?.username }).unwrap().then(() => {
-      setEditing(false)
-      refetchUsers()
-      refetchFacility()
-      setUser({ ...user, _depratmentsInput: [] })
-      setNewDepartmentPopupOpen(false)
-      refetchDepartments()
-      setPopupOpen(false)
-    }).then(() => (setUser({ ...user, username: readyUser?.username }))).then(() => {
-      console.log(user)
-    })
-    if (!detailsPanle) {
-      setUser(newApUser)
+  const handleSave = async () => {
+    try {
+      const updatedUser = {
+        ...user,
+        selectedDepartmentsFacilityKey: selectedFacility?.key,
+        username: readyUser.username
+      };
 
+      await saveUser(updatedUser).unwrap();
+
+      setUser(updatedUser);
+      setReadyUser(updatedUser);
+
+      setEditing(false);
+      refetchUsers();
+      refetchFacility();
+      refetchDepartments();
+      setNewDepartmentPopupOpen(false);
+      setPopupOpen(false);
+
+      console.log("User updated:", updatedUser);
+    } catch (error) {
+      console.error("Error saving user:", error);
     }
-
   };
 
   const handleFacilityDepartmentSave = () => {
@@ -450,19 +456,19 @@ const Users = () => {
 
 
 
-
   useEffect(() => {
-    console.log(user)
-    if (user.firstName && user.username)
-      setReadyUser({
-        ...user,
-        fullName: user.firstName + ' ' + user.lastName,
-        username: user.username ? user?.username : (user.firstName.slice(0, 1) + user.lastName).toLowerCase()
-      })
+    console.log(user);
 
-
-  }, [user])
-
+    if (user.username.trim() !== "" && user.username != null) {
+         setReadyUser({ ...user,username:readyUser.username?readyUser.username:user.username });
+    } else if (user.firstName) {
+         setReadyUser({
+            ...user,
+            fullName: `${user.firstName} ${user.lastName || ''}`.trim(),
+            username: (user.firstName.slice(0, 1) + (user.lastName || '')).toLowerCase()
+        });
+    }
+}, [user]);
 
   useEffect(() => {
     console.log(resetPasswordPopupOpen)
@@ -478,6 +484,10 @@ const Users = () => {
     setUserLicense(selectedLicense)
   }, [selectedLicense])
 
+  const handleBack =()=>{
+    setDetailsPanle(false)
+    setReadyUser(newApUser)
+  }
 
 
   return (
@@ -496,7 +506,7 @@ const Users = () => {
             >
               <ButtonToolbar>
                 <IconButton appearance="primary" icon={<ArowBackIcon />}
-                  onClick={() => setDetailsPanle(false)}>
+                  onClick={ handleBack}>
                   Back
                 </IconButton>
                 <IconButton
