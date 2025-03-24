@@ -122,6 +122,7 @@ const Lab = () => {
   const [openRejectedModal, setOpenRejectedModal] = useState(false);
   const [openRejectedResultModal, setOpenRejectedResultModal] = useState(false);
   const [currentStep, setCurrentStep] = useState("6055029972709625");
+  
   const [encounter, setEncounter] = useState({ ...newApEncounter });
   const [showFilterInput, setShowFilterInput] = useState(false);
   const [showResultInput, setShowResultInput] = useState(false);
@@ -1208,7 +1209,7 @@ const Lab = () => {
                         <Whisper
                           placement="top"
                           trigger="hover"
-                          speaker={<Tooltip>Accepted</Tooltip>}
+                          speaker={<Tooltip>Accept</Tooltip>}
                         >
                           <CheckRoundIcon
                             onClick={() => (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") && handleAcceptTest(rowData)}
@@ -1223,7 +1224,7 @@ const Lab = () => {
                         <Whisper
                           placement="top"
                           trigger="hover"
-                          speaker={<Tooltip>Rejected</Tooltip>}
+                          speaker={<Tooltip>Reject</Tooltip>}
                         >
                           <WarningRoundIcon
                             onClick={() => (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") && setOpenRejectedModal(true)}
@@ -1570,10 +1571,10 @@ const Lab = () => {
 
                         }
                         else if (rowData.normalRange?.normalRangeTypeLkey == "6221162489019880") {
-                          return rowData.normalRange?.rangeFrom;
+                          return ("Less Than "+rowData.normalRange?.rangeFrom +" "+labDetails?.resultUnitLvalue.lovDisplayVale);
                         }
                         else if (rowData.normalRange?.normalRangeTypeLkey == "6221175556193180") {
-                          return rowData.normalRange?.rangeTo;
+                          return ("More Than " +rowData.normalRange?.rangeTo+" "+labDetails?.resultUnitLvalue.lovDisplayVale);
 
                         }
 
@@ -1749,35 +1750,116 @@ const Lab = () => {
                 <Cell >
                   {rowData => (
                     <HStack spacing={10}>
-                      <WarningRoundIcon style={{ fontSize: '1em', marginRight: '5px' }} onClick={() => setOpenRejectedResultModal(true)} />
-                      <CheckRoundIcon style={{ fontSize: '1em', marginRight: '5px' }}
-                        onClick={async () => {
+                       <Whisper
+                          placement="top"
+                          trigger="hover"
+                          speaker={<Tooltip>Approve</Tooltip>}
+                        >
+                          <CheckRoundIcon   style={{
+                            fontSize: '1em',
+                            marginRight: 5,
+                            color: (rowData.statusLkey == "265089168359400") ? 'gray' : 'inherit',
+                            cursor: (rowData.statusLkey == "265089168359400") ? 'not-allowed' : 'pointer',
+                          }}
+                       onClick={async () => {
+                        if (rowData.statusLkey !== "265089168359400") {
                           try {
-                            await saveResult({ ...result, statusLkey: '265089168359400', approvedAt: Date.now() }).unwrap();
-                            const Response = await saveTest({ ...test, processingStatusLkey: '265089168359400', approvedAt: Date.now() }).unwrap();
-
-                            dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                            function value(rowData) {
+                              if (rowData.normalRange?.resultTypeLkey === "6209578532136054") {
+                                return joinValuesFromArray(rowData.normalRange?.lovList);
+                              } else if (rowData.normalRange?.resultTypeLkey === "6209569237704618") {
+                                if (rowData.normalRange?.normalRangeTypeLkey === "6221150241292558") {
+                                  return rowData.normalRange?.rangeFrom + "_" + rowData.normalRange?.rangeTo;
+                                } else if (rowData.normalRange?.normalRangeTypeLkey === "6221162489019880") {
+                                  return "Less Than " + rowData.normalRange?.rangeFrom + " " + labDetails?.resultUnitLvalue?.lovDisplayVale;
+                                } else if (rowData.normalRange?.normalRangeTypeLkey === "6221175556193180") {
+                                  return "More Than " + rowData.normalRange?.rangeTo + " " + labDetails?.resultUnitLvalue?.lovDisplayVale;
+                                }
+                              }
+                              return "Not Defined"; 
+                            }
+                      
+                            const resultValue = value(rowData);
+                            console.log(resultValue);
+                      
+                            const response = await saveTest({
+                              ...test,
+                              processingStatusLkey: "265089168359400",
+                              approvedAt: Date.now()
+                            }).unwrap();
+                      
+                            await saveResult({
+                              ...result,
+                              statusLkey: "265089168359400",
+                              approvedAt: Date.now(),
+                              normalRangeValue: String(resultValue),
+                            }).unwrap();
+                      
                             setTest({ ...newApDiagnosticOrderTests });
+                            dispatch(notify({ msg: "Saved successfully", sev: "success" }));
+                            setTest({ ...response });
+                      
                             await fetchTest();
-                            orderFetch();
-                            setTest({ ...Response });
                             await resultFetch();
+                          } catch (error) {
+                            dispatch(notify({ msg: "Save Failed", sev: "error" }));
                           }
-                          catch (error) {
-                            dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-                          }
-                        }} />
-                      <ConversionIcon style={{ fontSize: '1em', marginRight: '5px' }} onClick={async () => {
-                        await setOpenSampleModal(true);
-                        saveResult({
-                          ...rowData,
-                          statusLkey: '6055029972709625'
-                        }).unwrap();
-                        await resultFetch();
+                        }
                       }} />
-
-                      <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: '5px' }} />
-                      <FontAwesomeIcon icon={faStar} style={{ fontSize: '1em', marginRight: '5px', color: rowData.reviewAt ? '#e0a500' : "#343434" }} onClick={async () => {
+                        </Whisper>
+                        <Whisper
+                        placement="top"
+                        trigger="hover"
+                        speaker={<Tooltip>Reject</Tooltip>}
+                      >
+                        <WarningRoundIcon
+                          style={{
+                            fontSize: '1em',
+                            marginRight: 5,
+                            color: (rowData.statusLkey == "265089168359400") ? 'gray' : 'inherit',
+                            cursor: (rowData.statusLkey == "265089168359400") ? 'not-allowed' : 'pointer',
+                          }}
+                          onClick={() => rowData.statusLkey !== "265089168359400" && setOpenRejectedResultModal(true)} />
+                      </Whisper>
+                        <Whisper
+                          placement="top"
+                          trigger="hover"
+                          speaker={<Tooltip>Repeat Test</Tooltip>}
+                        >
+                            <ConversionIcon 
+                             style={{
+                              fontSize: '1em',
+                              marginRight: 5,
+                              color: (rowData.statusLkey == "265089168359400") ? 'gray' : 'inherit',
+                              cursor: (rowData.statusLkey == "265089168359400") ? 'not-allowed' : 'pointer',
+                            }}
+                            onClick={async() => {
+                              if(rowData.statusLkey !== "265089168359400")
+                                {
+                              await setOpenSampleModal(true);
+                              saveResult({
+                                ...rowData,
+                                statusLkey: '6055029972709625'
+                              }).unwrap();
+                              await resultFetch()}
+                            } }/>
+                      
+                        </Whisper>
+                   
+                        <Whisper
+                          placement="top"
+                          trigger="hover"
+                          speaker={<Tooltip>Print</Tooltip>}
+                        >
+                           <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: '5px' }} />
+                        </Whisper>
+                        <Whisper
+                          placement="top"
+                          trigger="hover"
+                          speaker={<Tooltip>Review</Tooltip>}
+                        >
+                          <FontAwesomeIcon icon={faStar} style={{ fontSize: '1em', marginRight: '5px', color: rowData.reviewAt ? '#e0a500' : "#343434" }} 
+                      onClick={async () => {
                         try {
                           await saveResult({ ...result, reviewAt: Date.now() }).unwrap();
                           dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
@@ -1787,6 +1869,8 @@ const Lab = () => {
                           dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
                         }
                       }} />
+                        </Whisper>
+                     
                     </HStack>
 
                   )}
@@ -1927,7 +2011,7 @@ const Lab = () => {
       <Modal.Body>
         <Row>
           <Col xs={8}>
-            <Form style={{ zoom: 0.85 }}>
+            <Form >
               <MyInput
                 disabled={true}
                 fieldName={"systemLkey"}
@@ -1937,7 +2021,7 @@ const Lab = () => {
               /></Form>
           </Col>
           <Col xs={8}>
-            <Form style={{ zoom: 0.85 }}>
+            <Form >
               <MyInput
                 disabled={true}
                 fieldName={"tubeColorLkey"}
@@ -1951,7 +2035,7 @@ const Lab = () => {
               /></Form>
           </Col>
           <Col xs={8}>
-            <Form style={{ zoom: 0.85 }}>
+            <Form >
               <MyInput
                 disabled={true}
                 fieldName={"tubeTypeLkey"}
@@ -1967,7 +2051,7 @@ const Lab = () => {
         </Row>
         <Row>
           <Col xs={8}>
-            <Form style={{ zoom: 0.85 }}>
+            <Form >
               <MyInput
                 fieldName={"sampleContainerLkey"}
                 fieldType='select'
@@ -1980,7 +2064,7 @@ const Lab = () => {
               /></Form>
           </Col>
           <Col xs={8}>
-            <Form style={{ zoom: 0.85 }}>
+            <Form >
               <MyInput
                 fieldName={"sampleVolume"}
                 fieldType='number'
@@ -1992,7 +2076,7 @@ const Lab = () => {
 
           </Col>
           <Col xs={8}>
-            <Form style={{ zoom: 0.85 }}>
+            <Form >
               <MyInput
                 fieldName={"sampleVolumeUnitLkey"}
                 fieldType='select'
@@ -2141,7 +2225,7 @@ const Lab = () => {
         <Modal.Title>Why do you want to reject the Test? </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Form style={{ zoom: 0.85 }}>
+        <Form >
           <MyInput
             disabled={false}
             fieldType={"textarea"}
@@ -2173,7 +2257,7 @@ const Lab = () => {
         <Modal.Title>Why do you want to reject the Test? </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Form style={{ zoom: 0.85 }}>
+        <Form >
           <MyInput
             disabled={false}
             fieldType={"textarea"}
