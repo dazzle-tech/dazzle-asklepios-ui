@@ -1406,7 +1406,7 @@ const Lab = () => {
                                 }
                               }
                               else if (result.resultValueNumber > rowData.normalRange?.rangeTo) {
-
+                                 
                                 if (rowData.normalRange?.criticalValue) {
                                   if (result.resultValueNumber > rowData.normalRange?.criticalValueMoreThan) {
 
@@ -1429,7 +1429,16 @@ const Lab = () => {
                                     await resultFetch();
                                   }
                                 }
+                                else {
 
+                                  const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
+                                  saveResult({ ...result, marker: "6730083474405013", statusLkey: '265123250697000' }).unwrap();
+                                  setTest({ ...newApDiagnosticOrderTests });
+                                  dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                                  setTest({ ...Response });
+                                  await fetchTest();
+                                  await resultFetch();
+                                }
                               }
 
                             }
