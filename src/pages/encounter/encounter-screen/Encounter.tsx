@@ -143,7 +143,7 @@ const Encounter = () => {
 
   });
 
-  const [startEncounter, startEncounterMutation] = useStartEncounterMutation();
+
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const { data: allergensListToGetName } = useGetAllergensQuery({
     ...initialListRequest
@@ -212,17 +212,7 @@ const Encounter = () => {
   const OpenWarningModal = () => {
     setOpenWarningModal(true);
   }
-  const handleStartEncounter = () => {
-    if (propsData.encounter && propsData.encounter.editable) {
-      startEncounter(propsData.encounter).unwrap();
-    }
-  };
 
-  useEffect(() => {
-    if (startEncounterMutation.status === 'fulfilled') {
-      dispatch(setEncounter(startEncounterMutation.data));
-    }
-  }, [startEncounterMutation]);
 
   const handleCompleteEncounter = () => {
     if (propsData.encounter) {
@@ -340,20 +330,7 @@ const Encounter = () => {
   return (
     <>
        
-        <BlockUI
-          blocked={propsData.encounter.encounterStatusLkey === encounterStatusNew}
-          template={
-            <IconButton
-              onClick={handleStartEncounter}
-              size="lg"
-              appearance="primary"
-              color="cyan"
-              icon={<icons.ArrowRight />}
-            >
-              <Translate>Start Encounter</Translate>
-            </IconButton>
-          }
-        >
+      
           <Panel header={<EncounterMainInfoSection patient={propsData.patient} encounter={propsData.encounter} />}>
             <Panel>
               <ButtonToolbar>
@@ -829,7 +806,7 @@ const Encounter = () => {
               showOnly={showAppointmentOnly}
             />
           </Panel>
-        </BlockUI>
+      
       
     </>
   );
