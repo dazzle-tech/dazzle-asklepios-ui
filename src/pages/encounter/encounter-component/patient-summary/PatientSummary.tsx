@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import './styles.less';
-import { BodyComponent } from "reactjs-human-body";
+
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { ApEncounter } from '@/types/model-types';
@@ -95,7 +95,7 @@ const PatientSummary = ({ patient, encounter }) => {
             },
             { skip: !patient?.dob }
         );
-   
+
     const { data: predefinedInstructionsListResponse } = useGetPrescriptionInstructionQuery({ ...initialListRequest });
     const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({ ...initialListRequest, filters });
     const { data: warningsListResponse, refetch: fetchwarnings } = useGetWarningsQuery({ ...initialListRequest, filters });
@@ -520,30 +520,30 @@ const PatientSummary = ({ patient, encounter }) => {
 
                 <div className='patient-summary-panel' >
                     {
-                        (patientAgeGroupResponse?.object?.key === '5945922992301153'||
-                         patientAgeGroupResponse?.object?.key === '1790407842882435'||
-                         patientAgeGroupResponse?.object?.key === '5946401407873394'||
-                         patientAgeGroupResponse?.object?.key === '1375554380483561'||
-                         patientAgeGroupResponse?.object?.key === '5945877765605378')
-                          && (
+                        (patientAgeGroupResponse?.object?.key === '5945922992301153' ||
+                            patientAgeGroupResponse?.object?.key === '1790407842882435' ||
+                            patientAgeGroupResponse?.object?.key === '5946401407873394' ||
+                            patientAgeGroupResponse?.object?.key === '1375554380483561' ||
+                            patientAgeGroupResponse?.object?.key === '5945877765605378')
+                        && (
                             patient?.genderLkey === '1' ? (
                                 <img className='image-style' src={ChildBoy} onClick={handleopenchartModel} />
                             ) : (
                                 <img className='image-style' src={ChildGirl} onClick={handleopenchartModel} />
                             )
-                        ) 
+                        )
                     }
-                     {
-                        (patientAgeGroupResponse?.object?.key === '1790428129203615'||
-                      
-                         patientAgeGroupResponse?.object?.key === '1790525617633551')
-                          && (
+                    {
+                        (patientAgeGroupResponse?.object?.key === '1790428129203615' ||
+
+                            patientAgeGroupResponse?.object?.key === '1790525617633551')
+                        && (
                             patient?.genderLkey === '1' ? (
                                 <img className='image-style' src={Male} onClick={handleopenchartModel} />
                             ) : (
                                 <img className='image-style' src={Female} onClick={handleopenchartModel} />
                             )
-                        ) 
+                        )
                     }
 
 
@@ -666,24 +666,34 @@ const PatientSummary = ({ patient, encounter }) => {
                     <Modal.Title>Body Diagram</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <BodyComponent
-                        partsInput={{
-                            head: { show: true },
-                            leftShoulder: { show: true },
-                            rightShoulder: { show: true },
-                            leftArm: { show: true },
-                            rightArm: { show: true },
-                            chest: { show: true },
-                            stomach: { show: true },
-                            leftLeg: { show: true },
-                            rightLeg: { show: true },
-                            leftHand: { show: true },
-                            rightHand: { show: true },
-                            leftFoot: { show: true },
-                            rightFoot: { show: true }
-                        }}
-                    />
+                <div style={{height:'400px'}}>
+                {
+                        (patientAgeGroupResponse?.object?.key === '5945922992301153' ||
+                            patientAgeGroupResponse?.object?.key === '1790407842882435' ||
+                            patientAgeGroupResponse?.object?.key === '5946401407873394' ||
+                            patientAgeGroupResponse?.object?.key === '1375554380483561' ||
+                            patientAgeGroupResponse?.object?.key === '5945877765605378')
+                        && (
+                            patient?.genderLkey === '1' ? (
+                                <img className='image-style' src={ChildBoy} onClick={handleopenchartModel} />
+                            ) : (
+                                <img className='image-style' src={ChildGirl} onClick={handleopenchartModel}/>
+                            )
+                        )
+                    }
+                    {
+                        (patientAgeGroupResponse?.object?.key === '1790428129203615' ||
 
+                            patientAgeGroupResponse?.object?.key === '1790525617633551')
+                        && (
+                            patient?.genderLkey === '1' ? (
+                                <img className='image-style' src={Male} onClick={handleopenchartModel} />
+                            ) : (
+                                <img className='image-style' src={Female} onClick={handleopenchartModel} />
+                            )
+                        )
+                    }
+                    </div>
                 </Modal.Body>
                 <Modal.Footer style={{ display: "flex", justifyContent: "flex-start" }}>
                     <Button onClick={handleclosechartModel} appearance="primary">
