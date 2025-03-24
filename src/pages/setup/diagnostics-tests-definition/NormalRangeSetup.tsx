@@ -40,7 +40,8 @@ import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import {
-    useGetLovValuesByCodeQuery
+    useGetLovValuesByCodeQuery,
+    useGetDiagnosticsTestLaboratoryListQuery
 } from '@/services/setupService';
 import { ApDiagnosticTestNormalRange } from '@/types/model-types';
 import { newApDiagnosticTestNormalRange } from '@/types/model-types-constructor';
@@ -56,6 +57,7 @@ const NormalRangeSetup = ({ popUpOpen, setPopUpOpen, diagnosticsTest }) => {
     const { data: conditionLovQueryResponse } = useGetLovValuesByCodeQuery('NORANGE_CONDITIONS');
     const { data: testResultTypeLovQueryResponse } = useGetLovValuesByCodeQuery('TEST_RESULT_TYPE');
     const { data: normalRangeLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_NORMRANGE_VALUE_TYPE');
+    const { data: ValueUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
     const { data: lovQueryResponse } = useGetLovValuesByCodeQuery(lovCode);
     const [normalRangeListRequest, setNormalRangeListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [isActive, setIsActive] = useState(false);
@@ -73,13 +75,14 @@ const NormalRangeSetup = ({ popUpOpen, setPopUpOpen, diagnosticsTest }) => {
                 value: diagnosticsTest.key || undefined
             },
             {
-              fieldName: 'deleted_at',
-              operator: 'isNull',
-              value: undefined
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
             }
         ]
     }
     );
+    const { data: labrotoryDetailsQueryResponse } = useGetDiagnosticsTestLaboratoryListQuery(listRequest);
     const { data: normalRangeListResponse, refetch: refetchNormalRange } = useGetDiagnosticsTestNormalRangeListQuery(listRequest);
     const [saveDiagnosticsTestNormalRange, saveDiagnosticsTestNormalRangeMutation] = useSaveDiagnosticsTestNormalRangeMutation();
     const [removeDiagnosticsTestNormalRange, removeDiagnosticsTestNormalRangeMutation] = useRemoveDiagnosticsTestNormalRangeMutation();
@@ -109,7 +112,7 @@ const NormalRangeSetup = ({ popUpOpen, setPopUpOpen, diagnosticsTest }) => {
         });
     };
 
-  const handleSearch = value => {
+    const handleSearch = value => {
         setSearchKeyword(value);
         console.log('serch' + searchKeyword);
 
@@ -117,23 +120,23 @@ const NormalRangeSetup = ({ popUpOpen, setPopUpOpen, diagnosticsTest }) => {
 
     const handleSave = async () => {
         try {
-            await saveDiagnosticsTestNormalRange({diagnosticTestNormalRange : {...diagnosticTestNormalRange,testKey: diagnosticsTest.key }, lov: selectedLOVs  }).unwrap();
+            await saveDiagnosticsTestNormalRange({ diagnosticTestNormalRange: { ...diagnosticTestNormalRange, testKey: diagnosticsTest.key }, lov: selectedLOVs }).unwrap();
             refetchNormalRange();
             dispatch(notify('Normal Range Saved Successfully'));
-           
+
         } catch (error) {
             console.error("Error saving Normal Range:", error);
         }
     };
 
     const handleRemove = () => {
-            removeDiagnosticsTestNormalRange({
-                ...diagnosticTestNormalRange,
-                deletedBy: 'Administrator'
-            }).unwrap().then(() => refetchNormalRange());
-            dispatch(notify('Deleted Successfully '));
-    
-        };
+        removeDiagnosticsTestNormalRange({
+            ...diagnosticTestNormalRange,
+            deletedBy: 'Administrator'
+        }).unwrap().then(() => refetchNormalRange());
+        dispatch(notify('Deleted Successfully '));
+
+    };
 
     useEffect(() => {
         if (diagnosticTestNormalRange) {
@@ -158,35 +161,35 @@ const NormalRangeSetup = ({ popUpOpen, setPopUpOpen, diagnosticsTest }) => {
         }
     }, [saveDiagnosticsTestNormalRangeMutation.data]);
 
-  
-     useEffect(() => {
 
-          const updatedFilters =[
+    useEffect(() => {
+
+        const updatedFilters = [
             {
                 fieldName: 'test_key',
                 operator: 'match',
                 value: diagnosticsTest.key || undefined
             },
             {
-              fieldName: 'deleted_at',
-              operator: 'isNull',
-              value: undefined
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
             }
-          ];
+        ];
 
-          setListRequest((prevRequest) => ({
+        setListRequest((prevRequest) => ({
             ...prevRequest,
             filters: updatedFilters,
-          }));
+        }));
 
-            setDiagnosticTestNormalRange(prevState => ({
-              ...prevState,
-              testKey: diagnosticsTest.key
-      
-            }));
-          
-          setLovCode(null);
-        }, [diagnosticsTest.key]);
+        setDiagnosticTestNormalRange(prevState => ({
+            ...prevState,
+            testKey: diagnosticsTest.key
+
+        }));
+
+        setLovCode(null);
+    }, [diagnosticsTest.key]);
 
     return (
 
@@ -241,6 +244,18 @@ const NormalRangeSetup = ({ popUpOpen, setPopUpOpen, diagnosticsTest }) => {
                     />
                 </Form>
                 <Form layout="inline" fluid style={{ display: 'flex' }}>
+
+                    <MyInput
+                        disabled={true}
+                        fieldName="resultUnitLkey"
+                        fieldType="select"
+                        selectData={ValueUnitLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={labrotoryDetailsQueryResponse?.object[0]}
+                        setRecord={""}
+                    />
+
                     <MyInput
                         disabled={!isActive}
                         fieldName="resultTypeLkey"
@@ -262,7 +277,7 @@ const NormalRangeSetup = ({ popUpOpen, setPopUpOpen, diagnosticsTest }) => {
                             record={diagnosticTestNormalRange}
                             setRecord={setDiagnosticTestNormalRange}
                         />
-                        )}
+                    )}
 
                     {(diagnosticTestNormalRange.normalRangeTypeLkey === '6221150241292558') && (<>
                         <MyInput width={100} fieldLabel="" fieldName="rangeFrom" record={diagnosticTestNormalRange} setRecord={setDiagnosticTestNormalRange} />
