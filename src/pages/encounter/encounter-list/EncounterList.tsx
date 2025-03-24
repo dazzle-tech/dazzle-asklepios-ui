@@ -64,10 +64,7 @@ const EncounterList = () => {
   dispatch(setDivContent(divContentHTML));
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient })
   const [encounter, setLocalEncounter] = useState({ ...newApEncounter });
-  const { data: icdListResponseData } = useGetIcdListQuery({
-    ...initialListRequest,
-    pageSize: 100
-  });
+ const [startEncounter]=useStartEncounterMutation()
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     ignore: true
@@ -86,18 +83,11 @@ const EncounterList = () => {
       return 'selected-row';
     } else return '';
   };
-  const handleFilterChange = (fieldName, value) => {
-    if (value) {
-      setListRequest(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'startsWithIgnoreCase',
-          value,
-          listRequest
-        )
-      );
-    } else {
-      setListRequest({ ...listRequest, filters: [] });
+  const handleStartEncounter =async () => {
+    console.log("start")
+    if (encounter ) {
+      console.log("start enc")
+     await startEncounter(encounter).unwrap();
     }
   };
 
@@ -133,7 +123,8 @@ const EncounterList = () => {
     handleManualSearch();
   }, []);
 
-  const goToVisit = () => {
+  const goToVisit = async() => {
+    await startEncounter(encounter).unwrap();
     if (encounter && encounter.key) {
       dispatch(setEncounter(encounter));
       dispatch(setPatient(encounter['patientObject']));
@@ -153,8 +144,8 @@ const EncounterList = () => {
     setDateClickToVisit(currentDateTime);
   };
 
-  const goToPreVisitObservations = () => {
-
+  const goToPreVisitObservations = async() => {
+    
     const privatePatientPath = '/user-access-patient-private';
     const preObservationsPath = '/encounter-pre-observations';
     const targetPath = localPatient.privatePatient ? privatePatientPath : preObservationsPath;
