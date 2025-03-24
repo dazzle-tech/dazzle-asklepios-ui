@@ -768,6 +768,7 @@ export const newApDiagnosticOrderTestsResult:modelTypes.ApDiagnosticOrderTestsRe
 	resultText:'',
 	testProfileKey:undefined,
 	isProfile:undefined,
+	normalRangeValue:'',
 } 
 
 export const newApDiagnosticOrderTestsResultNotes:modelTypes.ApDiagnosticOrderTestsResultNotes = { 

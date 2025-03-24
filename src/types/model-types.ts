@@ -767,6 +767,7 @@ export interface ApDiagnosticOrderTestsResult {
 	resultText:string;
 	testProfileKey:string;
 	isProfile:boolean;
+	normalRangeValue:string;
 } 
 
 export interface ApDiagnosticOrderTestsResultNotes { 
