@@ -63,8 +63,8 @@ import {
 } from '@/services/encounterService';
 import { ApPatientDiagnose } from '@/types/model-types';
 import { newApConsultationOrder, newApPatientDiagnose } from '@/types/model-types-constructor';
-const Consultation = ({edit}) => {
-    const patientSlice = useAppSelector(state => state.patient);
+const Consultation = ({edit,patient,encounter}) => {
+    
     const dispatch = useAppDispatch();
     const [selectedRows, setSelectedRows] = useState([]);
     const [showCanceled, setShowCanceled] = useState(true);
@@ -78,7 +78,7 @@ const Consultation = ({edit}) => {
     const { data: consultationMethodLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_METHOD');
     const { data: consultationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_TYPE');
     const { data: practitionerListResponse } = useGetPractitionersQuery({ ...initialListRequest });
-    const { data: encounterReviewOfSystemsSummaryResponse, refetch } = useGetEncounterReviewOfSystemsQuery(patientSlice.encounter.key);
+    const { data: encounterReviewOfSystemsSummaryResponse, refetch } = useGetEncounterReviewOfSystemsQuery(encounter.key);
     console.log(encounterReviewOfSystemsSummaryResponse?.object)
     const summaryText = encounterReviewOfSystemsSummaryResponse?.object
         ?.map((item, index) => {
@@ -87,7 +87,7 @@ const Consultation = ({edit}) => {
                 : item.systemDetailLkey;
             return `* ${systemDetail}\n${item.notes}`;
         })
-        .join("\n") +"\n____________________\n"+(patientSlice.encounter?.physicalExamNote??"");
+        .join("\n") +"\n____________________\n"+(encounter?.physicalExamNote??"");
 
 
     console.log(summaryText);
@@ -96,7 +96,7 @@ const Consultation = ({edit}) => {
         {
             fieldName: 'patient_key',
             operator: 'match',
-            value: patientSlice.patient.key
+            value:patient.key
         },
         {
             fieldName: "status_lkey",
@@ -109,7 +109,7 @@ const Consultation = ({edit}) => {
         filters.push({
             fieldName: 'visit_key',
             operator: 'match',
-            value: patientSlice.encounter.key
+            value:encounter.key
         });
     }
 
@@ -133,12 +133,12 @@ const Consultation = ({edit}) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patientSlice.patient.key
+                value:patient.key
             },
             {
                 fieldName: 'visit_key',
                 operator: 'match',
-                value: patientSlice.encounter.key
+                value:encounter.key
             }
 
         ]
@@ -152,8 +152,8 @@ const Consultation = ({edit}) => {
 
     const [selectedDiagnose, setSelectedDiagnose] = useState<ApPatientDiagnose>({
         ...newApPatientDiagnose,
-        visitKey: patientSlice.encounter.key,
-        patientKey: patientSlice.patient.key,
+        visitKey:encounter.key,
+        patientKey:patient.key,
         createdBy: 'Administrator'
 
 
@@ -240,8 +240,6 @@ const Consultation = ({edit}) => {
 
         setRequestedPatientAttacment(attachmentKey);
         setActionType('download');
-        console.log("iam in download atach atKey= " + attachmentKey)
-
         handleDownload(fetchAttachmentByKeyResponce);
 
 
@@ -257,7 +255,19 @@ const Consultation = ({edit}) => {
                 )
             );
         } else {
-            setListRequest({ ...listRequest, filters: [] });
+            setListRequest({ ...listRequest, filters:[
+                {
+                    fieldName: 'patient_key',
+                    operator: 'match',
+                    value:patient.key
+                },
+                {
+                    fieldName: 'visit_key',
+                    operator: 'match',
+                    value:encounter.key
+                }
+    
+            ] });
         }
     };
     const handleCheckboxChange = (key) => {
@@ -279,8 +289,8 @@ const Consultation = ({edit}) => {
         try {
             await saveconsultationOrders({
                 ...consultationOrders,
-                patientKey: patientSlice.patient.key,
-                visitKey: patientSlice.encounter.key,
+                patientKey: patient.key,
+                visitKey:encounter.key,
                 statusLkey: '164797574082125',
                 createdBy: "Admin"
             }).unwrap();
@@ -308,8 +318,6 @@ const Consultation = ({edit}) => {
         });
     }
     const handleCancle = async () => {
-        console.log(selectedRows);
-
         try {
             await Promise.all(
                 selectedRows.map(item => saveconsultationOrders({ ...item, statusLkey: '1804447528780744', isValid: false, deletedAt: Date.now() }).unwrap())

@@ -23,6 +23,7 @@ import {
     Grid,
     Row,
     Col,
+    Loader,
 } from 'rsuite';
 import {
     useGetLovValuesByCodeQuery,
@@ -33,8 +34,8 @@ import Translate from '@/components/Translate';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
 import MyLabel from '@/components/MyLabel';
 const { Column, HeaderCell, Cell } = Table
-const VaccineReccord = () => {
-    const patientSlice = useAppSelector(state => state.patient);
+const VaccineReccord = ({patient,encounter}) => {
+    
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
     const [isCanelledValue, setIsCanelledValue] = useState("NULL")
     //LOV
@@ -43,15 +44,15 @@ const VaccineReccord = () => {
     const { data: numofDossLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
 
 
-    const { data: vaccineListResponseLoading, refetch } = useGetPatientVaccinationRecordQuery({
-        key: patientSlice?.patient?.key,
+    const { data: vaccineListResponseLoading, refetch,isFetching } = useGetPatientVaccinationRecordQuery({
+        key: patient?.key,
         isCanelled: isCanelledValue
     });
+
 
     useEffect(() => {
         refetch();
     }, [isCanelledValue]);
-    console.log("vaccineListResponseLoading0-->", vaccineListResponseLoading?.object);
 
 
     const handleExpanded = (rowData) => {
@@ -168,7 +169,7 @@ const VaccineReccord = () => {
 
 
     return (
-        <>
+        <Panel >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '15px' }}><Checkbox
 
                 onChange={(value, checked) => {
@@ -182,7 +183,9 @@ const VaccineReccord = () => {
 
             /> <MyLabel label="Show Cancelled Vaccine Doses" />
             </div>
-            {vaccineListResponseLoading?.object?.map((vaccine, index) => (
+            {isFetching&&<Loader center />}
+            {!isFetching&&
+            vaccineListResponseLoading?.object?.map((vaccine, index) => (
 
                 <Panel header={`${vaccine.vaccineName}`} collapsible bordered >
                     <Form style={{ zoom: 0.85 }} layout="inline" fluid>
@@ -357,7 +360,7 @@ const VaccineReccord = () => {
 
                 </Panel>
             ))}
-        </>
+        </Panel>
     );
 
 };

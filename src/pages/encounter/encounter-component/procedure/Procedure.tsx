@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-
+import { useLocation } from 'react-router-dom';
 import Translate from '@/components/Translate';
 import './styles.less';
 import * as icons from '@rsuite/icons';
@@ -80,8 +80,8 @@ import {
     useGetProcedureCodingListQuery
 } from '@/services/setupService';
 import Indications from '@/pages/medications/active-ingredients-setup/Indications';
-const Referrals = ({edit}) => {
-    const patientSlice = useAppSelector(state => state.patient);
+const Referrals = ({edit,patient,encounter}) => {
+  
     const dispatch = useAppDispatch();
     const [selectedRows, setSelectedRows] = useState([]);
     const [showCanceled, setShowCanceled] = useState(true);
@@ -104,19 +104,19 @@ const Referrals = ({edit}) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patientSlice.patient.key
+                value:patient.key
             },
             {
                 fieldName: 'visit_key',
                 operator: 'match',
-                value: patientSlice.encounter.key
+                value:encounter.key
             }
 
         ]
     });
     const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
     const [openOrderModel, setOpenOrderModel] = useState(false);
-    const [procedure, setProcedure] = useState<ApProcedure>({ ...newApProcedure, encounterKey: patientSlice.encounter.key, currentDepartment: true });
+    const [procedure, setProcedure] = useState<ApProcedure>({ ...newApProcedure, encounterKey:encounter.key, currentDepartment: true });
     const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
     const { data: ProcedureLevelLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
     const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
@@ -155,7 +155,7 @@ const Referrals = ({edit}) => {
 
     const department = departmentListResponse?.object.filter(item => item.departmentTypeLkey === "5673990729647006");
     const [saveProcedures, saveProcedureMutation] = useSaveProceduresMutation();
-    const { data: encounterReviewOfSystemsSummaryResponse, refetch } = useGetEncounterReviewOfSystemsQuery(patientSlice.encounter.key);
+    const { data: encounterReviewOfSystemsSummaryResponse, refetch } = useGetEncounterReviewOfSystemsQuery(encounter.key);
     const summaryText = encounterReviewOfSystemsSummaryResponse?.object
         ?.map((item, index) => {
             const systemDetail = item.systemDetailLvalue
@@ -163,7 +163,7 @@ const Referrals = ({edit}) => {
                 : item.systemDetailLkey;
             return `* ${systemDetail}\n${item.notes}`;
         })
-        .join("\n") + "\n____________________\n" + (patientSlice?.encounter?.physicalExamNote || "");
+        .join("\n") + "\n____________________\n" + (encounter?.physicalExamNote || "");
     const isSelected = rowData => {
         if (rowData && procedure && rowData.key === procedure.key) {
             return 'selected-row';
@@ -171,8 +171,8 @@ const Referrals = ({edit}) => {
     };
     const [selectedDiagnose, setSelectedDiagnose] = useState<ApPatientDiagnose>({
         ...newApPatientDiagnose,
-        visitKey: patientSlice.encounter.key,
-        patientKey: patientSlice.patient.key,
+        visitKey:encounter.key,
+        patientKey:patient.key,
         createdBy: 'Administrator'
 
 
@@ -184,7 +184,7 @@ const Referrals = ({edit}) => {
             {
                 fieldName: "encounter_key",
                 operator: "match",
-                value: patientSlice.encounter.key,
+                value:encounter.key,
             },
             {
                 fieldName: "status_lkey",
@@ -390,7 +390,7 @@ const Referrals = ({edit}) => {
                 ...procedure,
                 statusLkey: '3621653475992516',
                 indications: indicationsDescription,
-                encounterKey: patientSlice.encounter.key
+                encounterKey:encounter.key
             }).unwrap().then(() => {
 
                 proRefetch();
@@ -958,7 +958,7 @@ const Referrals = ({edit}) => {
                 <Modal.Body>
 
 
-                    < PatientOrder />
+                    < PatientOrder edit={edit} patient={patient} encounter={encounter} />
                 </Modal.Body>
                 <Modal.Footer>
                     <Stack spacing={2} divider={<Divider vertical />}>
@@ -1141,9 +1141,9 @@ const Referrals = ({edit}) => {
                 <Modal.Title>Modal Title</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <EncounterMainInfoSection patient={patientSlice.patient} encounter={patientSlice.encounter} />
+                <EncounterMainInfoSection patient={patient} encounter={encounter} />
                 <Divider style={{ margin: '4px 4px' }} />
-                <Form style={{ zoom: 0.85 }} layout="inline" fluid disabled={true}>
+                <Form  layout="inline" fluid disabled={true}>
                     
                 <MyInput
                         column
