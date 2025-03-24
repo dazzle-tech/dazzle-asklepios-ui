@@ -1575,19 +1575,19 @@ const Lab = () => {
                     if (rowData.normalRangeKey) {
                       if (rowData.normalRange?.resultTypeLkey == "6209578532136054") {
 
-                        return (joinValuesFromArray(rowData.normalRange?.lovList) + " " + labDetails.resultUnitLvalue.lovDisplayVale);
+                        return (joinValuesFromArray(rowData.normalRange?.lovList) + " " + labDetails.resultUnitLvalue?.lovDisplayVale);
 
                       }
                       else if (rowData.normalRange?.resultTypeLkey == "6209569237704618") {
                         if (rowData.normalRange?.normalRangeTypeLkey == "6221150241292558") {
-                          return rowData.normalRange?.rangeFrom + "_" + rowData.normalRange?.rangeTo;
+                          return (rowData.normalRange?.rangeFrom + "_" + rowData.normalRange?.rangeTo + " " + labDetails?.resultUnitLvalue?.lovDisplayVale);
 
                         }
                         else if (rowData.normalRange?.normalRangeTypeLkey == "6221162489019880") {
-                          return ("Less Than " + rowData.normalRange?.rangeFrom + " " + labDetails?.resultUnitLvalue.lovDisplayVale);
+                          return ("Less Than " + rowData.normalRange?.rangeFrom + " " + labDetails?.resultUnitLvalue?.lovDisplayVale);
                         }
                         else if (rowData.normalRange?.normalRangeTypeLkey == "6221175556193180") {
-                          return ("More Than " + rowData.normalRange?.rangeTo + " " + labDetails?.resultUnitLvalue.lovDisplayVale);
+                          return ("More Than " + rowData.normalRange?.rangeTo + " " + labDetails?.resultUnitLvalue?.lovDisplayVale);
 
                         }
 
