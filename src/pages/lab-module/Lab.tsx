@@ -122,7 +122,7 @@ const Lab = () => {
   const [openRejectedModal, setOpenRejectedModal] = useState(false);
   const [openRejectedResultModal, setOpenRejectedResultModal] = useState(false);
   const [currentStep, setCurrentStep] = useState("6055029972709625");
-  
+
   const [encounter, setEncounter] = useState({ ...newApEncounter });
   const [showFilterInput, setShowFilterInput] = useState(false);
   const [showResultInput, setShowResultInput] = useState(false);
@@ -132,7 +132,7 @@ const Lab = () => {
   const [test, setTest] = useState({ ...newApDiagnosticOrderTests });
   const [note, setNote] = useState({ ...newApDiagnosticOrderTestsNotes });
   const [sample, setSample] = useState({ ...newApDiagnosticOrderTestsSamples });
-  const [result, setResult] = useState({ ...newApDiagnosticOrderTestsResult,resultLkey:'' })
+  const [result, setResult] = useState({ ...newApDiagnosticOrderTestsResult, resultLkey: '' })
   const [selectedSampleDate, setSelectedSampleDate] = useState(null);
   const [activeRowKey, setActiveRowKey] = useState(null);
   const [listOrdersResponse, setListOrdersResponse] = useState<ListRequest>({
@@ -150,10 +150,10 @@ const Lab = () => {
   const { data: messagesResultList, refetch: fecthResultNotes } = useGetOrderTestResultNotesByResultIdQuery(result?.key || undefined, { skip: result.key == null });
   const { data: samplesList, refetch: fecthSample } = useGetOrderTestSamplesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
 
-  const [testProfileKey,setTestProfileKey]=useState('')
- 
+  const [testProfileKey, setTestProfileKey] = useState('')
 
-  
+
+
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
     <div style={{ display: 'flex' }}>
@@ -268,7 +268,7 @@ const Lab = () => {
   const [saveSample] = useSaveDiagnosticOrderTestSamplesMutation();
   const [saveTest] = useSaveDiagnosticOrderTestMutation();
   const [saveNewResult] = useSaveDiagnosticTestResultMutation();
-  const [saveResult]=useSaveDiagnosticOrderTestResultMutation();
+  const [saveResult] = useSaveDiagnosticOrderTestResultMutation();
   const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
 
   const endOfMessagesRef = useRef(null);
@@ -339,7 +339,7 @@ const Lab = () => {
     }
   }, [dateFilter]);
   useEffect(() => {
-   
+
     const cat = laboratoryList?.object?.find((item) => item.testKey === test.testKey);
     setLabDetails(cat);
     setCurrentStep(test.processingStatusLkey);
@@ -435,7 +435,7 @@ const Lab = () => {
   }, [selectedCatValue, laboratoryListToFilter]);
 
   useEffect(() => {
-   
+
   }, [listOrdersTestResponse])
 
   const handleSendMessage = async (value) => {
@@ -511,13 +511,13 @@ const Lab = () => {
   const handleAcceptTest = async (rowData) => {
     if (samplesList?.object?.length > 0) {
       try {
-        const Response = await saveTest({ 
-          ...test, 
-          processingStatusLkey: "6055074111734636", 
-          acceptedAt: Date.now() 
+        const Response = await saveTest({
+          ...test,
+          processingStatusLkey: "6055074111734636",
+          acceptedAt: Date.now()
         }).unwrap();
-    
-       const rResponse= await saveNewResult({
+
+        const rResponse = await saveNewResult({
           ...result,
           orderKey: order.key,
           orderTestKey: test.key,
@@ -526,23 +526,23 @@ const Lab = () => {
           visitKey: encounter.key,
           statusLkey: '6055029972709625'
         }).unwrap();
-       
-         setTest({...newApDiagnosticOrderTests})
+
+        setTest({ ...newApDiagnosticOrderTests })
         dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-       
+
         setTest({ ...Response });
         await fetchTest();
         await resultFetch();
-      } 
+      }
       catch (error) {
         console.error("Error saving test:", error);
         dispatch(notify({ msg: error, sev: 'error' }));
       }
-    } 
+    }
     else {
       dispatch(notify({ msg: 'Collect a sample first.', sev: 'warning' }));
     }
-    
+
 
   }
   const handleFilterChange = (fieldName, value) => {
@@ -715,30 +715,30 @@ const Lab = () => {
       .map(obj => obj.lovDisplayVale)
       .join(', ');
   };
-  const handleValueChange = async (value ,rowData) => {
-     
-  const Response = await saveResult({ ...rowData,resultLkey:value }).unwrap();
+  const handleValueChange = async (value, rowData) => {
 
-   
+    const Response = await saveResult({ ...rowData, resultLkey: value }).unwrap();
+
+
     const v = rowData.normalRange?.lovList.find((item) => item == value);
     if (v) {
       const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
       saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' }).unwrap();
-     
 
-      
+
+
       setTest({ ...newApDiagnosticOrderTests });
-      
+
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
       setTest({ ...Response });
-      await fetchTest(); 
+      await fetchTest();
       await resultFetch();
 
     }
     else {
       const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
       saveResult({ ...result, marker: "6730122218786367", statusLkey: '265123250697000' }).unwrap();
-     
+
 
       setTest({ ...newApDiagnosticOrderTests });
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
@@ -1304,14 +1304,15 @@ const Lab = () => {
                   <Translate>TEST NAME</Translate>
                 </HeaderCell>
                 <Cell>
-                  {rowData=>{
-                    if(rowData.isProfile){
-                      return test.profileList.find((item)=>item.key==rowData.testProfileKey)?.testName
+                  {rowData => {
+                    if (rowData.isProfile) {
+                      return test.profileList.find((item) => item.key == rowData.testProfileKey)?.testName
                     }
-                    else{
+                    else {
                       console.log(test)
-                     return test.test.testName}
-                  } }
+                      return test.test.testName
+                    }
+                  }}
                 </Cell>
               </Column>
               <Column sortable flexGrow={2} fullText>
@@ -1330,9 +1331,10 @@ const Lab = () => {
                             value={rowData.orderTypeLkey}
                             valueKey="key"
                             labelKey="lovDisplayVale"
-                            onChange={(value) =>{
-                             
-                              handleValueChange(value, rowData)}}
+                            onChange={(value) => {
+
+                              handleValueChange(value, rowData)
+                            }}
                             style={{ width: 100, zoom: 0.8 }}
                           />
                         ) : (
@@ -1353,7 +1355,7 @@ const Lab = () => {
 
                           }}
                           onPressEnter={async (event) => {
-                         await   saveResult({ ...result }).unwrap();
+                            await saveResult({ ...result }).unwrap();
                             setActiveRowKey(null)
                             if (rowData.normalRange?.normalRangeTypeLkey == "6221150241292558") {
 
@@ -1370,7 +1372,7 @@ const Lab = () => {
                               else if (result.resultValueNumber < rowData.normalRange?.rangeFrom) {
 
                                 if (rowData.normalRange?.criticalValue) {
-                                  if (result.resultValueNumber <rowData.normalRange?.criticalValueLessThan) {
+                                  if (result.resultValueNumber < rowData.normalRange?.criticalValueLessThan) {
 
                                     const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
                                     saveResult({ ...result, marker: "6730652890616978", statusLkey: '265123250697000' }).unwrap();
@@ -1380,6 +1382,17 @@ const Lab = () => {
                                     await fetchTest();
                                     await resultFetch();
                                   }
+                                  else {
+
+                                    const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
+                                    saveResult({ ...result, marker: "6730094497387122", statusLkey: '265123250697000' }).unwrap();
+                                    setTest({ ...newApDiagnosticOrderTests });
+                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                                    setTest({ ...Response });
+                                    await fetchTest();
+                                    await resultFetch();
+                                  }
+
                                 }
                                 else {
 
@@ -1421,13 +1434,13 @@ const Lab = () => {
 
                             }
                             else if (rowData.normalRange?.normalRangeTypeLkey == "6221162489019880") {
-                             
+
                               if (result.resultValueNumber > rowData.normalRange?.rangeFrom) {
-                                
+
                                 if (rowData.normalRange?.criticalValue) {
-                                 
+
                                   if (result.resultValueNumber >= rowData.normalRange?.criticalValueMoreThan) {
-                                  
+
                                     const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
                                     saveResult({ ...result, marker: "6730104027458969", statusLkey: '265123250697000' }).unwrap();
                                     setTest({ ...newApDiagnosticOrderTests });
@@ -1437,8 +1450,8 @@ const Lab = () => {
                                     await resultFetch();
 
                                   }
-                                  else { 
-                                  
+                                  else {
+
                                     const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
                                     saveResult({ ...result, marker: "6730083474405013", statusLkey: '265123250697000' }).unwrap();
                                     setTest({ ...newApDiagnosticOrderTests });
@@ -1448,8 +1461,8 @@ const Lab = () => {
                                     await resultFetch();
                                   }
                                 }
-                                else { 
-                                  
+                                else {
+
                                   const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
                                   saveResult({ ...result, marker: "6730083474405013", statusLkey: '265123250697000' }).unwrap();
                                   setTest({ ...newApDiagnosticOrderTests });
@@ -1460,7 +1473,7 @@ const Lab = () => {
                                 }
                               }
                               else {
-                                
+
                                 const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
                                 saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' }).unwrap();
                                 setTest({ ...newApDiagnosticOrderTests });
@@ -1562,7 +1575,7 @@ const Lab = () => {
                     if (rowData.normalRangeKey) {
                       if (rowData.normalRange?.resultTypeLkey == "6209578532136054") {
 
-                        return joinValuesFromArray(rowData.normalRange?.lovList);
+                        return (joinValuesFromArray(rowData.normalRange?.lovList) + " " + labDetails.resultUnitLvalue.lovDisplayVale);
 
                       }
                       else if (rowData.normalRange?.resultTypeLkey == "6209569237704618") {
@@ -1571,10 +1584,10 @@ const Lab = () => {
 
                         }
                         else if (rowData.normalRange?.normalRangeTypeLkey == "6221162489019880") {
-                          return ("Less Than "+rowData.normalRange?.rangeFrom +" "+labDetails?.resultUnitLvalue.lovDisplayVale);
+                          return ("Less Than " + rowData.normalRange?.rangeFrom + " " + labDetails?.resultUnitLvalue.lovDisplayVale);
                         }
                         else if (rowData.normalRange?.normalRangeTypeLkey == "6221175556193180") {
-                          return ("More Than " +rowData.normalRange?.rangeTo+" "+labDetails?.resultUnitLvalue.lovDisplayVale);
+                          return ("More Than " + rowData.normalRange?.rangeTo + " " + labDetails?.resultUnitLvalue.lovDisplayVale);
 
                         }
 
@@ -1750,64 +1763,64 @@ const Lab = () => {
                 <Cell >
                   {rowData => (
                     <HStack spacing={10}>
-                       <Whisper
-                          placement="top"
-                          trigger="hover"
-                          speaker={<Tooltip>Approve</Tooltip>}
-                        >
-                          <CheckRoundIcon   style={{
-                            fontSize: '1em',
-                            marginRight: 5,
-                            color: (rowData.statusLkey == "265089168359400") ? 'gray' : 'inherit',
-                            cursor: (rowData.statusLkey == "265089168359400") ? 'not-allowed' : 'pointer',
-                          }}
-                       onClick={async () => {
-                        if (rowData.statusLkey !== "265089168359400") {
-                          try {
-                            function value(rowData) {
-                              if (rowData.normalRange?.resultTypeLkey === "6209578532136054") {
-                                return joinValuesFromArray(rowData.normalRange?.lovList);
-                              } else if (rowData.normalRange?.resultTypeLkey === "6209569237704618") {
-                                if (rowData.normalRange?.normalRangeTypeLkey === "6221150241292558") {
-                                  return rowData.normalRange?.rangeFrom + "_" + rowData.normalRange?.rangeTo;
-                                } else if (rowData.normalRange?.normalRangeTypeLkey === "6221162489019880") {
-                                  return "Less Than " + rowData.normalRange?.rangeFrom + " " + labDetails?.resultUnitLvalue?.lovDisplayVale;
-                                } else if (rowData.normalRange?.normalRangeTypeLkey === "6221175556193180") {
-                                  return "More Than " + rowData.normalRange?.rangeTo + " " + labDetails?.resultUnitLvalue?.lovDisplayVale;
+                      <Whisper
+                        placement="top"
+                        trigger="hover"
+                        speaker={<Tooltip>Approve</Tooltip>}
+                      >
+                        <CheckRoundIcon style={{
+                          fontSize: '1em',
+                          marginRight: 5,
+                          color: (rowData.statusLkey == "265089168359400") ? 'gray' : 'inherit',
+                          cursor: (rowData.statusLkey == "265089168359400") ? 'not-allowed' : 'pointer',
+                        }}
+                          onClick={async () => {
+                            if (rowData.statusLkey !== "265089168359400") {
+                              try {
+                                function value(rowData) {
+                                  if (rowData.normalRange?.resultTypeLkey === "6209578532136054") {
+                                    return joinValuesFromArray(rowData.normalRange?.lovList);
+                                  } else if (rowData.normalRange?.resultTypeLkey === "6209569237704618") {
+                                    if (rowData.normalRange?.normalRangeTypeLkey === "6221150241292558") {
+                                      return rowData.normalRange?.rangeFrom + "_" + rowData.normalRange?.rangeTo;
+                                    } else if (rowData.normalRange?.normalRangeTypeLkey === "6221162489019880") {
+                                      return "Less Than " + rowData.normalRange?.rangeFrom + " " + labDetails?.resultUnitLvalue?.lovDisplayVale;
+                                    } else if (rowData.normalRange?.normalRangeTypeLkey === "6221175556193180") {
+                                      return "More Than " + rowData.normalRange?.rangeTo + " " + labDetails?.resultUnitLvalue?.lovDisplayVale;
+                                    }
+                                  }
+                                  return "Not Defined";
                                 }
+
+                                const resultValue = value(rowData);
+                                console.log(resultValue);
+
+                                const response = await saveTest({
+                                  ...test,
+                                  processingStatusLkey: "265089168359400",
+                                  approvedAt: Date.now()
+                                }).unwrap();
+
+                                await saveResult({
+                                  ...result,
+                                  statusLkey: "265089168359400",
+                                  approvedAt: Date.now(),
+                                  normalRangeValue: String(resultValue),
+                                }).unwrap();
+
+                                setTest({ ...newApDiagnosticOrderTests });
+                                dispatch(notify({ msg: "Saved successfully", sev: "success" }));
+                                setTest({ ...response });
+
+                                await fetchTest();
+                                await resultFetch();
+                              } catch (error) {
+                                dispatch(notify({ msg: "Save Failed", sev: "error" }));
                               }
-                              return "Not Defined"; 
                             }
-                      
-                            const resultValue = value(rowData);
-                            console.log(resultValue);
-                      
-                            const response = await saveTest({
-                              ...test,
-                              processingStatusLkey: "265089168359400",
-                              approvedAt: Date.now()
-                            }).unwrap();
-                      
-                            await saveResult({
-                              ...result,
-                              statusLkey: "265089168359400",
-                              approvedAt: Date.now(),
-                              normalRangeValue: String(resultValue),
-                            }).unwrap();
-                      
-                            setTest({ ...newApDiagnosticOrderTests });
-                            dispatch(notify({ msg: "Saved successfully", sev: "success" }));
-                            setTest({ ...response });
-                      
-                            await fetchTest();
-                            await resultFetch();
-                          } catch (error) {
-                            dispatch(notify({ msg: "Save Failed", sev: "error" }));
-                          }
-                        }
-                      }} />
-                        </Whisper>
-                        <Whisper
+                          }} />
+                      </Whisper>
+                      <Whisper
                         placement="top"
                         trigger="hover"
                         speaker={<Tooltip>Reject</Tooltip>}
@@ -1821,56 +1834,56 @@ const Lab = () => {
                           }}
                           onClick={() => rowData.statusLkey !== "265089168359400" && setOpenRejectedResultModal(true)} />
                       </Whisper>
-                        <Whisper
-                          placement="top"
-                          trigger="hover"
-                          speaker={<Tooltip>Repeat Test</Tooltip>}
-                        >
-                            <ConversionIcon 
-                             style={{
-                              fontSize: '1em',
-                              marginRight: 5,
-                              color: (rowData.statusLkey == "265089168359400") ? 'gray' : 'inherit',
-                              cursor: (rowData.statusLkey == "265089168359400") ? 'not-allowed' : 'pointer',
-                            }}
-                            onClick={async() => {
-                              if(rowData.statusLkey !== "265089168359400")
-                                {
+                      <Whisper
+                        placement="top"
+                        trigger="hover"
+                        speaker={<Tooltip>Repeat Test</Tooltip>}
+                      >
+                        <ConversionIcon
+                          style={{
+                            fontSize: '1em',
+                            marginRight: 5,
+                            color: (rowData.statusLkey == "265089168359400") ? 'gray' : 'inherit',
+                            cursor: (rowData.statusLkey == "265089168359400") ? 'not-allowed' : 'pointer',
+                          }}
+                          onClick={async () => {
+                            if (rowData.statusLkey !== "265089168359400") {
                               await setOpenSampleModal(true);
                               saveResult({
                                 ...rowData,
                                 statusLkey: '6055029972709625'
                               }).unwrap();
-                              await resultFetch()}
-                            } }/>
-                      
-                        </Whisper>
-                   
-                        <Whisper
-                          placement="top"
-                          trigger="hover"
-                          speaker={<Tooltip>Print</Tooltip>}
-                        >
-                           <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: '5px' }} />
-                        </Whisper>
-                        <Whisper
-                          placement="top"
-                          trigger="hover"
-                          speaker={<Tooltip>Review</Tooltip>}
-                        >
-                          <FontAwesomeIcon icon={faStar} style={{ fontSize: '1em', marginRight: '5px', color: rowData.reviewAt ? '#e0a500' : "#343434" }} 
-                      onClick={async () => {
-                        try {
-                          await saveResult({ ...result, reviewAt: Date.now() }).unwrap();
-                          dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                          resultFetch();
-                        }
-                        catch (error) {
-                          dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-                        }
-                      }} />
-                        </Whisper>
-                     
+                              await resultFetch()
+                            }
+                          }} />
+
+                      </Whisper>
+
+                      <Whisper
+                        placement="top"
+                        trigger="hover"
+                        speaker={<Tooltip>Print</Tooltip>}
+                      >
+                        <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: '5px' }} />
+                      </Whisper>
+                      <Whisper
+                        placement="top"
+                        trigger="hover"
+                        speaker={<Tooltip>Review</Tooltip>}
+                      >
+                        <FontAwesomeIcon icon={faStar} style={{ fontSize: '1em', marginRight: '5px', color: rowData.reviewAt ? '#e0a500' : "#343434" }}
+                          onClick={async () => {
+                            try {
+                              await saveResult({ ...result, reviewAt: Date.now() }).unwrap();
+                              dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                              resultFetch();
+                            }
+                            catch (error) {
+                              dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+                            }
+                          }} />
+                      </Whisper>
+
                     </HStack>
 
                   )}
