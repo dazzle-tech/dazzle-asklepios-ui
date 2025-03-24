@@ -56,7 +56,7 @@ import {
 import { useGetGenericMedicationActiveIngredientQuery, useGetActiveIngredientQuery } from '@/services/medicationsSetupService';
 
 const PatientSummary = ({ patient, encounter }) => {
-    const patientSlice = useAppSelector(state => state.patient);
+  
     const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
     const { data: encounterReasonLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_REASON');
     const[prevencounter,setPrevencounter]=useState<ApEncounter>({...newApEncounter});
@@ -67,7 +67,7 @@ const PatientSummary = ({ patient, encounter }) => {
         {
             fieldName: 'patient_key',
             operator: 'match',
-            value: patientSlice.patient.key
+            value: patient?.key
         },
 
         {

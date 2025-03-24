@@ -19,7 +19,7 @@ import {
 
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
-const PatientHistory =()=>{
+const PatientHistory =({patient,encounter})=>{
     return(<>
     <Panel header="Medical History" collapsible bordered >1</Panel>
     <Panel header="Surgical History" collapsible bordered >2</Panel>

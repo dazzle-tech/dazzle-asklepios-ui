@@ -72,9 +72,9 @@ import {
 import {
     useGetIcdListQuery,
 } from '@/services/setupService';
-const Prescription = ({edit}) => {
+const Prescription = ({edit,patient,encounter}) => {
 
-    const patientSlice = useAppSelector(state => state.patient);
+    
     const dispatch = useAppDispatch();
     const [searchKeyword, setSearchKeyword] = useState('');
     const [selectedOption, setSelectedOption] = useState(null);
@@ -98,7 +98,7 @@ const Prescription = ({edit}) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patientSlice.patient.key
+                value:patient.key
             },
             ,
             {
@@ -669,13 +669,13 @@ const Prescription = ({edit}) => {
         setPreKey(null);
         setPrescription(null);
 
-        if (patientSlice.patient && patientSlice.encounter) {
+        if (patient && encounter) {
             try {
 
                 const response = await savePrescription({
                     ...newApPrescription,
-                    patientKey: patientSlice.patient.key,
-                    visitKey: patientSlice.encounter.key,
+                    patientKey: patient.key,
+                    visitKey: encounter.key,
                     statusLkey: "164797574082125",
                 });
 

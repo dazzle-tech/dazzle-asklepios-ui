@@ -78,15 +78,12 @@ import {
     useGetIcdListQuery,
 } from '@/services/setupService';
 import './styles.less';
-const DrugOrder = ({edit}) => {
-    const patientSlice = useAppSelector(state => state.patient);
+const DrugOrder = ({edit,patient,encounter}) => {
+   
     const dispatch = useAppDispatch();
     const [drugKey, setDrugKey] = useState(null);
     const [searchKeyword, setSearchKeyword] = useState('');
     const [searchKeywordicd, setSearchKeywordicd] = useState('');
-    const [searchKeywordSnomed, setSearchKeywordSnomed] = useState('');
-    const [searchActive, setSearchActive] = useState(true);
-    const [selectedOption, setSelectedOption] = useState(null);
     const [tags, setTags] = React.useState([]);
     const [showCanceled, setShowCanceled] = useState(true);
     const [editing, setEditing] = useState(false);
@@ -122,7 +119,7 @@ const DrugOrder = ({edit}) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patientSlice.patient.key
+                value:patient.key
             },
             ,
             {
@@ -143,12 +140,12 @@ const DrugOrder = ({edit}) => {
             {
                 fieldName: "patient_key",
                 operator: "match",
-                value: patientSlice.patient.key,
+                value:patient.key,
             },
             {
                 fieldName: "visit_key",
                 operator: "match",
-                value: patientSlice.encounter.key,
+                value:encounter.key,
             }
 
         ],
@@ -503,13 +500,13 @@ const DrugOrder = ({edit}) => {
     const handleSaveOrder = async () => {
       handleCleare();
 
-        if (patientSlice.patient && patientSlice.encounter) {
+        if (patient && encounter) {
             try {
 
                 const response = await saveDrugorder({
                     ...newApDrugOrder,
-                    patientKey: patientSlice.patient.key,
-                    visitKey: patientSlice.encounter.key,
+                    patientKey:patient.key,
+                    visitKey: encounter.key,
                     statusLkey: "164797574082125",
                 });
 
@@ -603,8 +600,8 @@ const DrugOrder = ({edit}) => {
             const tagcompine = joinValuesFromArray(tags);
             saveDrugorderMedication({
                 ...orderMedication,
-                patientKey: patientSlice.patient.key,
-                visitKey: patientSlice.encounter.key,
+                patientKey:patient.key,
+                visitKey:encounter.key,
                 drugOrderKey: drugKey,
                 genericMedicationsKey: selectedGeneric.key,
                 parametersToMonitor: tagcompine,

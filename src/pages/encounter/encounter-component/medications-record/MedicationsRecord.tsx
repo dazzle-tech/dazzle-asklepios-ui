@@ -43,8 +43,8 @@ import {
 import { initialListRequest } from '@/types/types';
 import { ApDrugOrder, ApDrugOrderMedications, ApPrescription } from '@/types/model-types';
 import { newApDrugOrder, newApDrugOrderMedications, newApPrescription } from '@/types/model-types-constructor';
-const MedicationsRecord = () => {
-    const patientSlice = useAppSelector(state => state.patient);
+const MedicationsRecord = ({patient ,encounter}) => {
+    
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
     const [prescription, setPrescription] = useState<ApPrescription>({ ...newApPrescription });
     const { data: prescriptions, isLoading: isLoadingPrescriptions, refetch: preRefetch } = useGetPrescriptionsQuery({
@@ -53,7 +53,7 @@ const MedicationsRecord = () => {
             {
                 fieldName: "patient_key",
                 operator: "match",
-                value: patientSlice.patient.key,
+                value: patient.key,
             },
             {
                 fieldName: "status_lkey",
@@ -88,7 +88,7 @@ const MedicationsRecord = () => {
             {
                 fieldName: "patient_key",
                 operator: "match",
-                value: patientSlice.patient.key,
+                value: patient.key,
             }
             ,
             {
@@ -111,7 +111,7 @@ const MedicationsRecord = () => {
             {
                 fieldName: "patient_key",
                 operator: "match",
-                value: patientSlice.patient.key,
+                value: patient.key,
             },
 
             {
@@ -149,7 +149,7 @@ const MedicationsRecord = () => {
             {
                 fieldName: "patient_key",
                 operator: "match",
-                value: patientSlice.patient.key,
+                value:patient.key,
             },
             {
                 fieldName: "status_lkey",
@@ -550,7 +550,7 @@ const MedicationsRecord = () => {
                 <Column flexGrow={1} align="center" fullText>
                     <HeaderCell>Visit Date</HeaderCell>
                     <Cell  >
-                        {rowData => rowData.encounter.createdAt ? new Date(rowData.encounter.createdAt).toLocaleString() : " "}
+                        {rowData => rowData.encounter?.createdAt ? new Date(rowData.encounter?.createdAt).toLocaleString() : " "}
                     </Cell>
                 </Column>
                 <Column flexGrow={1} align="center" fullText>

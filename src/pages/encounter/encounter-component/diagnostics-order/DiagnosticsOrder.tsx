@@ -62,8 +62,8 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { newApDiagnosticOrders, newApDiagnosticOrderTests, newApDiagnosticTest, newApPatientEncounterOrder } from '@/types/model-types-constructor';
 import { isValid } from 'date-fns';
 import { OrderList } from 'primereact/orderlist';
-const DiagnosticsOrder = ({ edit }) => {
-    const patientSlice = useAppSelector(state => state.patient);
+const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
+    
     const dispatch = useAppDispatch();
     const [showCanceled, setShowCanceled] = useState(true);
     const [order, setOrder] = useState<ApPatientEncounterOrder>({ ...newApPatientEncounterOrder });
@@ -77,12 +77,12 @@ const DiagnosticsOrder = ({ edit }) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patientSlice.patient.key
+                value:patient.key
             },
             {
                 fieldName: 'visit_key',
                 operator: 'match',
-                value: patientSlice.encounter.key
+                value:encounter.key
             }
         ]
     });
@@ -92,12 +92,12 @@ const DiagnosticsOrder = ({ edit }) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patientSlice.patient.key
+                value:patient.key
             },
             {
                 fieldName: 'visit_key',
                 operator: 'match',
-                value: patientSlice.encounter.key
+                value:encounter.key
             },
             {
                 fieldName: 'is_valid',
@@ -114,7 +114,7 @@ const DiagnosticsOrder = ({ edit }) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patientSlice.patient.key
+                value:patient.key
             },
             {
                 fieldName: 'order_key',
@@ -134,11 +134,8 @@ const DiagnosticsOrder = ({ edit }) => {
     const { data: ordersList, refetch: ordersRefetch } = useGetDiagnosticOrderQuery(listOrdersRequest);
     const { data: orderTestList, refetch: orderTestRefetch } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
     const {data:receivedLabList}=useGetDepartmentListByTypeQuery(receivedType)
-    console.log(receivedLabList?.object);
-    const [savePatientOrder, savePatientOrderMutation] = useSavePatientEncounterOrderMutation();
     const [saveOrders, saveOrdersMutation] = useSaveDiagnosticOrderMutation();
     const [saveOrderTests, saveOrderTestsMutation] = useSaveDiagnosticOrderTestMutation();
-    const [deleteOrder, deleteOrderMutation] = useRemovePatientEncounterOrderMutation();
     const [openDetailsModel, setOpenDetailsModel] = useState(false);
     const [openConfirmDeleteModel, setConfirmDeleteModel] = useState(false);
     const [actionType, setActionType] = useState(null);
@@ -186,8 +183,7 @@ const DiagnosticsOrder = ({ edit }) => {
         }
     }, [ordersList]);
     useEffect(() => {
-        console.log("test", test)
-        console.log(test?.testTypeLkey)
+
         if(test?.testTypeLkey=='862810597620632'){
             setReceivedType('5673990729647007');
 
@@ -232,12 +228,12 @@ const DiagnosticsOrder = ({ edit }) => {
                 {
                     fieldName: 'patient_key',
                     operator: 'match',
-                    value: patientSlice.patient.key
+                    value:patient.key
                 },
                 {
                     fieldName: 'visit_key',
                     operator: 'match',
-                    value: patientSlice.encounter.key
+                    value:encounter.key
                 },
                 {
                     fieldName: 'is_valid',
@@ -253,7 +249,7 @@ const DiagnosticsOrder = ({ edit }) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patientSlice.patient.key
+                value:patient.key
             },
             {
                 fieldName: 'order_key',
@@ -340,11 +336,11 @@ const DiagnosticsOrder = ({ edit }) => {
                     fromCamelCaseToDBName(fieldName),
                     'containsIgnoreCase',
                     value,
-                    listRequest
+                    listTestRequest
                 )
             );
         } else {
-            setListRequest({ ...listRequest, filters: [] });
+            setListRequest({ ...listTestRequest, filters: [] });
         }
     };
     const OpenDetailsModel = () => {
@@ -419,8 +415,8 @@ const DiagnosticsOrder = ({ edit }) => {
             
             await saveOrderTests({
                 ...ordersList,
-                patientKey: patientSlice.patient.key,
-                visitKey: patientSlice.encounter.key,
+                patientKey:patient.key,
+                visitKey:encounter.key,
                 orderKey: orders.key,
                 testKey: test.key,
                 statusLkey: "164797574082125",
@@ -449,13 +445,13 @@ const DiagnosticsOrder = ({ edit }) => {
         // setPreKey(null);
         // setPrescription(null);
 
-        if (patientSlice.patient && patientSlice.encounter) {
+        if (patient && encounter) {
             try {
 
                 const response = await saveOrders({
                     ...newApDiagnosticOrders,
-                    patientKey: patientSlice.patient.key,
-                    visitKey: patientSlice.encounter.key,
+                    patientKey: patient.key,
+                    visitKey:encounter.key,
                     statusLkey: "164797574082125",
                     labStatusLkey:"6055029972709625",
                     radStatusLkey:"6055029972709625",
