@@ -436,7 +436,7 @@ const Encounter = () => {
                     {medicalSheet?.object?.dentalCare && <List.Item
                       style={{ display: 'flex', alignItems: 'center' }}
                       //!patientSlice.encounter.editable
-                      onClick={() => handleMenuItemClick(<Dental disabled={true} patient={propsData.patient} encounter={propsData.encounter}/>)}>
+                      onClick={() => handleMenuItemClick(<Dental  patient={propsData.patient} encounter={propsData.encounter}/>)}>
                       <FontAwesomeIcon icon={faTooth} style={{ margin: '3px' }} />
                       <Translate>Dental Care</Translate>
                     </List.Item>}
