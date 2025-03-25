@@ -54,8 +54,8 @@ import {
 import MyInput from '@/components/MyInput';
 import { ItemDataType } from 'rsuite/esm/@types/common';
 
-const Dental = ({ disabled, ...props }) => {
-  const patientSlice = useAppSelector(state => state.patient);
+const Dental = ({ encounter ,patient }) => {
+  
   const dispatch = useAppDispatch();
 
   const [originalChart, setOriginalChart] = useState({ ...newApDentalChart });
@@ -102,7 +102,7 @@ const Dental = ({ disabled, ...props }) => {
   const [cdtMap, setCdtMap] = useState({}); // to cache dental services list as a map
 
   const dentalChartsResponse = useGetDentalChartsByEncounterQuery(
-    patientSlice.encounter?.key ?? ''
+   encounter?.key ?? ''
   );
 
   const [saveProgressNotes, saveProgressNotesMutation] = useSaveProgressNotesMutation();
@@ -436,7 +436,7 @@ const Dental = ({ disabled, ...props }) => {
 
                         <StackItem>
                           <ButtonToolbar>
-                            {!disabled && (
+                           
                               <SelectPicker
                                 onClean={cancelPreviousChartView}
                                 placeholder="Previous Charts"
@@ -450,14 +450,14 @@ const Dental = ({ disabled, ...props }) => {
                                   else cancelPreviousChartView();
                                 }}
                               />
-                            )}
+                           
                           </ButtonToolbar>
                         </StackItem>
                       </Stack>
                     }
                   >
                     <DentalChart
-                      disabled={disabled || currentChart.key !== originalChart.key}
+                      disabled={ currentChart.key !== originalChart.key}
                       chartObject={currentChart}
                       setChartObject={setCurrentChart}
                       selectedTooth={selectedTooth}
@@ -480,10 +480,10 @@ const Dental = ({ disabled, ...props }) => {
             </TabPanel>
 
             <TabPanel>
-              {!disabled && (
+              
                 <ButtonToolbar>
                   <IconButton
-                    disabled={disabled}
+                   
                     appearance="primary"
                     icon={<icons.Plus />}
                     onClick={() => {
@@ -508,7 +508,7 @@ const Dental = ({ disabled, ...props }) => {
                     <Translate>Save Notes</Translate>
                   </IconButton>
                 </ButtonToolbar>
-              )}
+             
               <Table height={400} rowHeight={100} bordered data={progressNotes}>
                 <Column flexGrow={6} align="center" fixed>
                   <HeaderCell>
@@ -518,7 +518,7 @@ const Dental = ({ disabled, ...props }) => {
                     {(rowData, rowIndex) => (
                       <Input
                         style={{ padding: '10px' }}
-                        disabled={disabled}
+                       
                         as="textarea"
                         rows={3}
                         placeholder="Insert new note... "
@@ -618,14 +618,14 @@ const Dental = ({ disabled, ...props }) => {
                         console.log({
                           ...draftPlannedTreatment,
                           type: 'DRAFT',
-                          encounterKey: patientSlice.encounter.key
+                          encounterKey:encounter.key
                         });
 
                         savePlannedTreatment({
                           ...draftPlannedTreatment,
                           type: 'DRAFT',
-                          encounterKey: patientSlice.encounter.key,
-                          patientKey: patientSlice.patient.key
+                          encounterKey:encounter.key,
+                          patientKey:patient.key
                         }).unwrap();
                       }}
                     >
@@ -816,8 +816,8 @@ const Dental = ({ disabled, ...props }) => {
                         savePlannedTreatment({
                           ...activePlannedTreatment,
                           type: 'CURRENT',
-                          encounterKey: patientSlice.encounter.key,
-                          patientKey: patientSlice.patient.key
+                          encounterKey:encounter.key,
+                          patientKey:patient.key
                         }).unwrap();
                       }}
                     >
