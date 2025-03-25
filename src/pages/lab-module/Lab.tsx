@@ -946,14 +946,14 @@ const Lab = () => {
                 placeholder="From Date"
                 value={dateFilter.fromDate}
                 onChange={e => setDateFilter({ ...dateFilter, fromDate: e })}
-                style={{ width: '230px', marginRight: '5px' }}
+                style={{ width: '230px', marginRight: '5px',fontFamily:'Inter' ,fontSize:'14px' }}
               />
               <DatePicker
                 oneTap
                 placeholder="To Date"
                 value={dateFilter.toDate}
                 onChange={e => setDateFilter({ ...dateFilter, toDate: e })}
-                style={{ width: '230px', marginRight: '5px' }}
+                style={{ width: '230px', marginRight: '5px',fontFamily:'Inter' ,fontSize:'14px' }}
               />
 
             </Row>
