@@ -40,8 +40,6 @@ const MyInput = ({
   const handleValueChange = value => {
     setRecord({ ...record, [fieldName]: value });
   };
-
-
   const conjureFormControl = () => {
     switch (fieldType) {
       case 'textarea':
@@ -70,7 +68,7 @@ const MyInput = ({
       case 'select':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260,height:props?.height ?? 50}}
+            style={{ width: props?.width ?? 260,height:props?.height ?? 34}}
             block
             disabled={props.disabled}
             accepter={SelectPicker}
@@ -89,7 +87,7 @@ const MyInput = ({
       case 'multyPicker':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260,height:props?.height ?? 50 }}
+            style={{ width: props?.width ?? 260,height:props?.height ?? 40 }}
             block
             disabled={props.disabled}
             accepter={TagPicker}
@@ -108,19 +106,18 @@ const MyInput = ({
       case 'date':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260,height:props?.height ?? 50 }}
+            style={{ width: props?.width ?? 260,height:props?.height ?? 25 }}
             disabled={props.disabled}
             name={fieldName}
             value={record[fieldName] ? new Date(record[fieldName]) : null}
             accepter={CustomDatePicker}
-            
             onChange={handleValueChange}
           />
         );
       case 'number':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260,height:props?.height ?? 50}} 
+            style={{ width: props?.width ?? 260,height:props?.height ??33}} 
             disabled={props.disabled}
             name={fieldName}
             max={props.max ? props.max : 1000000}
@@ -146,7 +143,7 @@ const MyInput = ({
         return (
           <Form.Control
             labelKey={props?.selectDataLabel ?? ''}
-            style={{ width: props?.width ?? 260,height:props?.height ?? 50 }}
+            style={{ width: props?.width ?? 260,height:props?.height ?? 33 }}
             disabled={props.disabled}
             name={fieldName}
             type={fieldType}
