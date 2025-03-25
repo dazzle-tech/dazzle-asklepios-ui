@@ -1279,12 +1279,13 @@ export interface ApEncounter {
 	encounterNotes:string;
 	sourceName:string;
 	physicalExamNote:string;
-	planInstructions:string;
+	planInstructionsLkey:string;
 	visitTypeLkey:string;
 	physicianKey:string;
 	insuranceKey:string;
 	resourceTypeLkey:string;
 	resourceKey:string;
+	planInstructionsNote:string;
 } 
 
 export interface ApEncounterAppliedService { 

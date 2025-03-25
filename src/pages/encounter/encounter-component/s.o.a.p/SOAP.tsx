@@ -1,4 +1,4 @@
-import React, { useEffect, useState,useContext } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { TagInput, Panel } from 'rsuite';
 import './styles.less';
 import MyInput from '@/components/MyInput';
@@ -6,7 +6,8 @@ import EncounterPreObservations from '../../encounter-pre-observations/Encounter
 import { faBolt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import VoiceCitation from '@/components/VoiceCitation';
-
+import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import {
   FlexboxGrid,
   IconButton,
@@ -26,8 +27,7 @@ import {
 } from 'rsuite';
 
 const { Column, HeaderCell, Cell } = Table;
-import ChiefComplaint from '../../medical-notes-and-assessments/chief-complaint';
-import Plan from '../../medical-notes-and-assessments/plan';
+
 import PatientDiagnosis from '../../medical-notes-and-assessments/patient-diagnosis';
 import ReviewOfSystems from '../../medical-notes-and-assessments/review-of-systems';
 import Consultation from '../consultation';
@@ -55,37 +55,22 @@ import { values } from 'lodash';
 import { notify } from '@/utils/uiReducerActions';
 
 
-const SOAP = ({edit}) => {
-  const patientSlice = useAppSelector(state => state.patient);
-
+const SOAP = ({ edit,patient,encounter ,setEncounter}) => {
   const dispatch = useAppDispatch();
-  const [localEncounter, setLocalEncounter] = useState({ ...patientSlice.encounter });
-  console.log(patientSlice.encounter)
-   const [planInstructions, setPlanInstructions] = useState();
-    const [instructionKey, setInstructionsKey] = useState()
-      const [instructionValue, setInstructionsValue] = useState()
-       const [instructions, setInstructions] = useState()
+  const [localEncounter, setLocalEncounter] = useState({ ...encounter });
+  const [planInstructions, setPlanInstructions] = useState();
+  const [instructionKey, setInstructionsKey] = useState()
+  const [instructionValue, setInstructionsValue] = useState()
+  const [instructions, setInstructions] = useState()
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
   const { data: planLovQueryResponse } = useGetLovValuesByCodeQuery('VISIT_CAREPLAN_OPT');
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     ignore: true
   });
-  
+
   const [saveEncounterChanges, saveEncounterChangesMutation] = useSaveEncounterChangesMutation();
-  const [patientLastVisitObservationsListRequest, setPatientLastVisitObservationsListRequest] =
-    useState<ListRequest>({
-      ...initialListRequest,
-      sortBy: 'createdAt',
-      sortType: 'desc',
-      filters: [
-        {
-          fieldName: 'patient_key',
-          operator: 'match',
-          value: patientSlice.patient.key
-        }
-      ]
-    });
+
   const [patientObservationsListRequest, setPatientObservationsListRequest] =
     useState<ListRequest>({
       ...initialListRequest,
@@ -94,13 +79,13 @@ const SOAP = ({edit}) => {
         {
           fieldName: 'patient_key',
           operator: 'match',
-          value: patientSlice.patient.key
+          value: patient.key
         }
         ,
         {
           fieldName: 'visit_key',
           operator: 'match',
-          value: patientSlice.encounter.key
+          value:encounter.key
         }
       ]
     });
@@ -123,32 +108,15 @@ const SOAP = ({edit}) => {
     latestpainlevelLkey: null
   });
 
-  useEffect(() => {
-    
-    if (patientSlice.encounter && patientSlice.encounter.key) {
-     
-      setLocalEncounter(patientSlice.encounter);
  
-    } else {
-    }
-  }, []);
 
-        useEffect(() => {
-          console.log('case patient')
-            if (localEncounter.planInstructions!= null){
-              
-            console.log(localEncounter.planInstructions)
-             setPlanInstructions(prevplanInstructions =>
-                    prevplanInstructions ? `${prevplanInstructions}, ${planLovQueryResponse?.object?.find(
-                        item => item.key === localEncounter.planInstructions
-                    )?.lovDisplayVale}` : 
-                    planLovQueryResponse?.object?.find(
-                        item => item.key === localEncounter.planInstructions
-                    )?.lovDisplayVale
-                );}
-    
-            setLocalEncounter({ ...localEncounter, planInstructions: null })
-        }, [localEncounter.planInstructions])
+ useEffect(() => {
+    if (saveEncounterChangesMutation.status === 'fulfilled') {
+     setEncounter(saveEncounterChangesMutation.data);
+      setLocalEncounter(saveEncounterChangesMutation.data);
+    }
+  }, [saveEncounterChangesMutation]);
+
   useEffect(() => {
 
     setPatientObservationSummary((prevSummary) => ({
@@ -183,33 +151,53 @@ const SOAP = ({edit}) => {
   };
   const savePlan = async () => {
 
-    console.log(localEncounter)
-    console.log("ppp"+planInstructions)
     try {
-      await saveEncounterChanges({...localEncounter,planInstructions:planInstructions}).unwrap();
-      dispatch(notify('Assessment  Saved Successfully'));
+      await saveEncounterChanges({ ...localEncounter}).unwrap();
+      dispatch(notify('Saved Successfully'));
     } catch (error) {
 
 
-      dispatch(notify('Assessment Save Failed'));
+      dispatch(notify('Save Failed'));
     }
   };
   const assessmentSummeryChanged = () => {
-    return patientSlice.encounter.assessmentSummery !== localEncounter.assessmentSummery;
+    return encounter.assessmentSummery !== localEncounter.assessmentSummery;
   };
   return (<>
     <h5>Clinical Visit</h5>
-    <div  className={`soap-container ${edit ? "disabled-panel" : ""}`}>
+    <div className={`soap-container ${edit ? "disabled-panel" : ""}`}>
       <div className="column-container">
 
         <fieldset style={{ flex: "2" }} className="box-container">
           <legend>Chief Complain</legend>
 
-          <ChiefComplaint />
+          <InputGroup>
+            <InputGroup.Addon>
+              <IconButton
+                circle
+
+                icon={<CheckOutlineIcon />}
+                size="xs"
+                appearance="primary"
+                color="green"
+                onClick={saveChanges}
+              />
+            </InputGroup.Addon>
+            <Input
+              as={'textarea'}
+              rows={8}
+              style={{ overflowY: 'auto', resize: 'vertical' }}
+              value={localEncounter.chiefComplaint}
+              onChange={e => setLocalEncounter({ ...localEncounter, chiefComplaint: e })}
+
+            />
+
+
+          </InputGroup>
         </fieldset>
         <fieldset style={{ flex: "4" }} className="box-container">
           <legend> Physical Examination & Findings</legend>
-          <ReviewOfSystems />
+          <ReviewOfSystems patient={patient} encounter={encounter}/>
         </fieldset>
 
         <fieldset className="box-container">
@@ -220,7 +208,7 @@ const SOAP = ({edit}) => {
             <Button
               appearance="ghost"
               style={{ border: '1px solid rgb(130, 95, 196)', color: 'rgb(130, 95, 196)' }}
-              
+
             >
               <FontAwesomeIcon icon={faBolt} style={{ marginRight: '5px' }} />
               <span>Prescription</span>
@@ -237,7 +225,7 @@ const SOAP = ({edit}) => {
             <Button
               appearance="ghost"
               style={{ border: '1px solid rgb(130, 95, 196)', color: 'rgb(130, 95, 196)', marginLeft: "3px" }}
-            
+
             >
               <FontAwesomeIcon icon={faBolt} style={{ marginRight: '5px' }} />
               <span>Consultation</span>
@@ -379,13 +367,13 @@ const SOAP = ({edit}) => {
         </fieldset>
         <fieldset style={{ flex: "1" }} className="box-container">
           <legend>Patient Diagnosis </legend>
-          <PatientDiagnosis />
+          <PatientDiagnosis  patient={patient} encounter={encounter} setEncounter={setEncounter}/>
         </fieldset>
         <fieldset style={{ flex: "1" }} className="box-container">
           <legend>Plan</legend>
-          
-          <div style={{display:'flex',gap:'6px'}}>
-          <Form style={{ zoom: 0.85 }} fluid>
+
+
+          <Form fluid>
 
             <MyInput
 
@@ -395,24 +383,34 @@ const SOAP = ({edit}) => {
               selectData={planLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
               selectDataValue="key"
-              fieldName={'planInstructions'}
+              fieldName={'planInstructionsLkey'}
               record={localEncounter}
               setRecord={setLocalEncounter}
             />
+            <MyInput
+              width={350}
+              fieldType='textarea'
+              fieldName={'planNstructionsNote'}
+              record={localEncounter}
+              setRecord={setLocalEncounter}
+              row={4}
+            />
 
-            <Input as="textarea" onChange={(e) => setPlanInstructions(e)} value={planInstructions} style={{ width: 350 }} rows={3} />
           </Form>
-          <div style={{display:'flex',justifyContent: 'center', alignItems: 'flex-end'}}>
-          <Button
-          appearance="primary"
-          color='green'
-          onClick={savePlan}
-          >
-            Save
+          <div style={{ display: 'flex', justifyContent: 'start', alignItems: 'flex-end', marginTop: '10px' }}>
+
+            <Button
+              appearance="primary"
+              onClick={() => savePlan()}
+              style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: '5px' }}
+            >
+              <FontAwesomeIcon icon={faCheckDouble} style={{ marginRight: '5px' }} />
+
+              Save
             </Button>
           </div>
-          </div>
-          
+
+
         </fieldset>
       </div>
       <div className="column-container">

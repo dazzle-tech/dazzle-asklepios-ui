@@ -21,14 +21,14 @@ import {
   useSaveReviewOfSystemMutation,
   useSaveEncounterChangesMutation
 } from '@/services/encounterService';
-const ReviewOfSystems = () => {
-  const patientSlice = useAppSelector(state => state.patient);
+const ReviewOfSystems = ({patient,encounter}) => {
+
  const [openModel,setOpenModel]=useState(false);
   const dispatch = useAppDispatch();
   const [selectedSystem, setSelectedSystem] = useState({ ...newApLovValues });
 
   const [saveEncounterChanges, saveEncounterChangesMutation] = useSaveEncounterChangesMutation();
-  const [localEncounter, setLocalEncounter] = useState({ ...patientSlice.encounter });
+  const [localEncounter, setLocalEncounter] = useState({ ...encounter });
   const { data: bodySystemsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_SYS');
   const { data: bodySystemsDetailLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
     code: 'BODY_SYS_DETAIL',
@@ -36,20 +36,19 @@ const ReviewOfSystems = () => {
   });
 
   const encounterReviewOfSystemsResponse = useGetEncounterReviewOfSystemsQuery(
-    patientSlice.encounter.key
+    encounter.key
   );
   
-   const{data:encounterReviewOfSystemsSummaryResponse ,refetch} = useGetEncounterReviewOfSystemsQuery(  patientSlice.encounter.key );
+   const{data:encounterReviewOfSystemsSummaryResponse ,refetch} = useGetEncounterReviewOfSystemsQuery(  encounter.key );
 
   const [saveReviewOfSystem, saveReviewOfSystemMutation] = useSaveReviewOfSystemMutation();
   const [removeReviewOfSystem, removeReviewOfSystemMutation] = useRemoveReviewOfSystemMutation();
   const [mainData, setMainData] = useState({});
-  console.log(patientSlice.encounter.key);
-  
+
 
   useEffect(()=>{
-    console.log("saved")
-  },[encounterReviewOfSystemsSummaryResponse,patientSlice.encounter.key])
+
+  },[encounterReviewOfSystemsSummaryResponse,encounter.key])
   const closeModel=()=>{
     setOpenModel(false);
   }
@@ -182,7 +181,7 @@ const ReviewOfSystems = () => {
                           if (checked) {
                             saveReviewOfSystem({
                               key: mainData[rowData.key] ? mainData[rowData.key].key : undefined,
-                              encounterKey: patientSlice.encounter.key,
+                              encounterKey:encounter.key,
                               bodySystemDetailKey: rowData.key,
                               systemLkey:selectedSystem.key,
                               notes: mainData[rowData.key] ? mainData[rowData.key].notes : ''
@@ -193,7 +192,7 @@ const ReviewOfSystems = () => {
                           } else {
                             removeReviewOfSystem({
                               key: mainData[rowData.key] ? mainData[rowData.key].key : undefined,
-                              encounterKey: patientSlice.encounter.key,
+                              encounterKey: encounter.key,
                               bodySystemDetailKey: rowData.key,
                               notes: mainData[rowData.key] ? mainData[rowData.key].notes : ''
                             }).unwrap();
@@ -230,7 +229,7 @@ const ReviewOfSystems = () => {
                         onBlur={() => {
                           saveReviewOfSystem({
                             key: mainData[rowData.key].key,
-                            encounterKey: patientSlice.encounter.key,
+                            encounterKey: encounter.key,
                             bodySystemDetailKey: rowData.key,
                             notes: mainData[rowData.key].notes
                           }).unwrap();
