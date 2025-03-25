@@ -4,13 +4,45 @@
 @import '../components/Header/styles.less';
 @import '../components/MyLabel/styles.less';
 
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;700&display=swap');
+@font-face {
+  font-family: 'Manrope';
+  src: url('C:\AskLepois\dazzle-asklepios-ui\public\fonts\Manrope\static\Manrope-Regular.ttf')
+  
+   format('truetype');
 
+}
+@font-face {
+  font-family: 'Manrope Bold';
+  src: url('C:\AskLepois\dazzle-asklepios-ui\public\fonts\Manrope\static\Manrope-bold.ttf')
+  
+   format('truetype');
 
+}
+@font-face {
+  font-family: 'Inter Bold';
+  src: url('C:\AskLepois\dazzle-asklepios-ui\public\fonts\Inter\static\Inter_24pt-Bold.ttf')
+  
+   format('truetype');
+
+}
+@font-face {
+  font-family: 'Inter';
+  src: url('C:\AskLepois\dazzle-asklepios-ui\public\fonts\Inter\static\Inter_24pt-Regular.ttf')
+  
+   format('truetype');
+
+}
+@font-face {
+  font-family: 'Inter Semi Bold';
+  src: url('C:\AskLepois\dazzle-asklepios-ui\public\fonts\Inter\static\Inter_24pt-SemiBold.ttf')
+  
+   format('truetype');
+ 
+}
 body {
   background: #ffffff;
   zoom: 0.98;
-  font-family:'Manrope', sans-serif;
+  font-family:'Manrope';
 }
  
 .text-muted {
@@ -104,9 +136,9 @@ body {
 .rs-table-row-header .rs-table-cell {
   color: #575757;
   background-color: #f4f7fe !important;
-  font-weight: bold;
+  font-family: 'Inter Semi Bold';
   height: 35px ;
-  font-size: 10px;
+  font-size: 11px;
 }
 .rs-table-row:nth-of-type(odd) .rs-table-cell {
   background-color: #f2f2f5;
