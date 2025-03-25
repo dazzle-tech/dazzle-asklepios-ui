@@ -226,8 +226,7 @@ const Encounter = () => {
     }
   }, [completeEncounterMutation]);
   const renderRowExpanded = rowData => {
-    console.log("Iam in the expanded Row ")
-    console.log("Children Data:", rowData);  // Add this line to check children data
+
 
     return (
 
@@ -403,7 +402,7 @@ const Encounter = () => {
                     {medicalSheet?.object?.clinicalVisit &&
                       <List.Item
                         style={{ display: 'flex', alignItems: 'center' }}
-                        onClick={() => handleMenuItemClick(<SOAP edit={propsData.fromPage == "PatientEMR"} />)}>
+                        onClick={() => handleMenuItemClick(<SOAP edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={localEncounter} setEncounter={setLocalEncounter}/>)}>
                         <FontAwesomeIcon icon={faUserDoctor} style={{ margin: '3px' }} />
                         <Translate>Clinical Visit</Translate>
                       </List.Item>

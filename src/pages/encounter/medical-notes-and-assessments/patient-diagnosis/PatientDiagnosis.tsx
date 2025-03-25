@@ -40,11 +40,10 @@ import {
 } from '@/services/encounterService';
 import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { ApPatientDiagnose } from '@/types/model-types';
-const PatientDiagnosis = () => {
-  const patientSlice = useAppSelector(state => state.patient);
+const PatientDiagnosis = ({patient,encounter ,setEncounter}) => {
+  
   const dispatch = useAppDispatch();
   const [searchKeyword, setSearchKeyword] = useState('');
-
   const [listRequest, setListRequest] = useState({
     ...initialListRequest,
 
@@ -55,12 +54,12 @@ const PatientDiagnosis = () => {
       {
         fieldName: 'patient_key',
         operator: 'match',
-        value: patientSlice.patient.key
+        value:patient.key
       },
       {
         fieldName: 'visit_key',
         operator: 'match',
-        value: patientSlice.encounter.key
+        value:encounter.key
       }
 
     ]
@@ -102,12 +101,11 @@ const PatientDiagnosis = () => {
     useGetLovValuesByCodeQuery('ALLERGY_RES_STATUS');
 
   const [savePatientDiagnose, savePatientDiagnoseMutation] = useSavePatientDiagnoseMutation();
-  const [removePatientDiagnose, removePatientDiagnoseMutation] = useRemovePatientDiagnoseMutation();
   const [diagnosisIcd, setDiagnosisIcd] = useState(null);
   const [selectedDiagnose, setSelectedDiagnose] = useState<ApPatientDiagnose>({
     ...newApPatientDiagnose,
-    visitKey: patientSlice.encounter.key,
-    patientKey: patientSlice.patient.key,
+    visitKey:encounter.key,
+    patientKey:patient.key,
     createdBy: 'Administrator'
 
 
@@ -120,11 +118,7 @@ const PatientDiagnosis = () => {
       setSelectedDiagnose(patientDiagnoseListResponse.data.object[0]);
     }
   }, [patientDiagnoseListResponse.data]);
-
-  console.log(selectedDiagnose);
-  console.log( selectedDiagnose?.diagnoseCode );
-
-  // console.log(icdListResponseData.object.find(item => item.key === selectedDiagnose?.diagnoseCode)?.icdCode)
+ 
   const save = () => {
 
     try {
@@ -146,73 +140,13 @@ const PatientDiagnosis = () => {
 
 
   };
-  // const remove = () => {
-  //   if (selectedDiagnose.key) {
-  //     removePatientDiagnose({
-  //       ...selectedDiagnose,
-  //       deletedBy: 'Administrator'
-  //     }).unwrap();
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   if (savePatientDiagnoseMutation.isSuccess) {
-  //     setListRequest({
-  //       ...listRequest,
-  //       timestamp: new Date().getMilliseconds()
-  //     });
-  //     setSelectedDiagnose({ ...newApPatientDiagnose });
-  //   }
-  // }, [savePatientDiagnoseMutation]);
-
-  // useEffect(() => {
-  //   if (removePatientDiagnoseMutation.isSuccess) {
-  //     setListRequest({
-  //       ...listRequest,
-  //       timestamp: new Date().getMilliseconds()
-  //     });
-  //     setSelectedDiagnose({ ...newApPatientDiagnose });
-  //   }
-  // }, [removePatientDiagnoseMutation]);
-
-  // function formatDate(_date) {
-  //   if (!_date) return '';
-
-  //   const date = new Date(_date);
-
-  //   const year = date.getFullYear();
-  //   const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-  //   const day = String(date.getDate()).padStart(2, '0');
-
-  //   return `${year}/${month}/${day}`;
-  // }
-
-  // const isSelected = rowData => {
-  //   if (rowData && rowData.key === selectedDiagnose.key) {
-  //     return 'selected-row';
-  //   } else return '';
-  // };
+ 
   return (
     <>
       <Panel style={{ display: 'flex', flexDirection: 'column', padding: '3px' }} >
         <div style={{ display: 'flex' }}>
           <div >
-            {/* <Text style={{ zoom: 0.88 }}>Diagnose</Text>
-            <SelectPicker
-              disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900'}
-              style={{ width: '300px', zoom: 0.80 }}
-              data={modifiedData}
-              labelKey="combinedLabel"
-              valueKey="key"
-              placeholder="ICD"
-              value={selectedDiagnose.diagnoseCode}
-              onChange={e =>
-                setSelectedDiagnose({
-                  ...selectedDiagnose,
-                  diagnoseCode: e
-                })
-              }
-            /> */}
+           
           
             <InputGroup inside style={{ width: '300px', zoom: 0.80 ,marginTop:'20px'}}>
               <Input
@@ -250,7 +184,7 @@ const PatientDiagnosis = () => {
           <Form style={{ zoom: 0.87, marginLeft: "10px",display: 'flex' }} layout="inline" fluid>
             <MyInput
 
-              disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
+              disabled={encounter.encounterStatusLkey == '91109811181900' ? true : false}
               column
               fieldLabel="Suspected"
               fieldType="checkbox"
@@ -261,7 +195,7 @@ const PatientDiagnosis = () => {
             />
             <MyInput
               style={{ marginLeft: "10px" }}
-              disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
+              disabled={encounter.encounterStatusLkey == '91109811181900' ? true : false}
               column
               fieldLabel="Major"
               fieldType="checkbox"
@@ -304,12 +238,12 @@ const PatientDiagnosis = () => {
 
               />
             </InputGroup>
-            {/* <p>hanan{ selectedDiagnose?.diagnosisObject.icdCode}, {selectedDiagnose?.diagnosisObject.description}</p> */}
+            
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '3px' }}>
             <Text style={{ zoom: 0.88, width: '200px' }}>Type </Text>
             <SelectPicker
-              disabled={patientSlice.encounter.encounterStatusLkey == '91109811181900' ? true : false}
+              disabled={encounter.encounterStatusLkey == '91109811181900' ? true : false}
               style={{ width: '100%', zoom: 0.96 }}
               data={sourceOfInfoLovResponseData?.object ?? []}
               labelKey="lovDisplayVale"
