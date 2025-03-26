@@ -1,13 +1,15 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState ,useEffect} from 'react';
+import { IoSettingsSharp } from 'react-icons/io5';
 import { Input, Pagination, Panel, Table } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetMetadataQuery } from '@/services/setupService';
-import { ButtonToolbar, Carousel, IconButton } from 'rsuite';
+import { ButtonToolbar, Carousel, IconButton,InputGroup } from 'rsuite';
 import ListIcon from '@rsuite/icons/List';
 import { ApMetadata } from '@/types/model-types';
 import { newApMetadata } from '@/types/model-types-constructor';
+import SearchIcon from '@rsuite/icons/Search';
 import {
   addFilterToListRequest, 
   fromCamelCaseToDBName
@@ -59,7 +61,7 @@ const Metadata = () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent("  "));
     };
-  }, [location.pathname, dispatch])
+  }, [location.pathname, dispatch]);
   return (
     <Carousel
       style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
@@ -68,18 +70,14 @@ const Metadata = () => {
     >
       <Panel
       >
-        <ButtonToolbar>
-          <IconButton
-            disabled={!metadata.key}
-            appearance="primary"
-            color="orange"
-            onClick={() => setCarouselActiveIndex(1)}
-            icon={<ListIcon />}
-          >
-            View Metadata Values
-          </IconButton>
-        </ButtonToolbar>
-        <hr />
+        
+         <InputGroup inside style={{ width: 170, marginBottom: 10 }}>
+                                <InputGroup.Button>
+                                  <SearchIcon />
+                                </InputGroup.Button>
+                                <Input style={{fontSize: "12px"}} placeholder="Search by Object Name" onChange={e => handleFilterChange('objectName', e)} />
+                              </InputGroup>
+        
         <Table
           height={400}
           sortColumn={listRequest.sortBy}
@@ -92,9 +90,7 @@ const Metadata = () => {
                 sortType
               });
           }}
-          headerHeight={80}
-          rowHeight={60}
-          bordered
+          // bordered
           cellBordered
           data={metadataListResponse?.object ?? []}
           onRowClick={rowData => {
@@ -104,27 +100,40 @@ const Metadata = () => {
         >
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('objectName', e)} />
+              {/* <Input onChange={e => handleFilterChange('objectName', e)} /> */}
               <Translate>Object Name</Translate>
             </HeaderCell>
             <Cell dataKey="objectName" />
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('dbObjectName', e)} />
+              {/* <Input onChange={e => handleFilterChange('dbObjectName', e)} /> */}
               <Translate>DB Object Name</Translate>
             </HeaderCell>
             <Cell dataKey="dbObjectName" />
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('description', e)} />
+              {/* <Input onChange={e => handleFilterChange('description', e)} /> */}
               <Translate>Description</Translate>
             </HeaderCell>
             <Cell dataKey="description" />
           </Column>
+
+          <Column flexGrow={2}>
+            <HeaderCell>View Metadata Values</HeaderCell>
+            <Cell>
+              <IoSettingsSharp
+                      title="View Metadata Values"
+                      size={24}
+                      fill="var(--primary-gray)"
+                      onClick={() => setCarouselActiveIndex(1)}
+                    />
+            </Cell>
+          </Column>
+
         </Table>
-        <div style={{ padding: 20 }}>
+        <div style={{ padding: 20, backgroundColor: '#F4F7FC' }}>
           <Pagination
             prev
             next

@@ -147,11 +147,11 @@ const Screens = ({ module, goBack, ...props }) => {
 
 
           
-            <InputGroup inside style={{ width: 200, marginBottom: 10 }}>
+            <InputGroup inside style={{ width: 170, marginBottom: 10 }}>
                         <InputGroup.Button>
                           <SearchIcon />
                         </InputGroup.Button>
-                        <Input placeholder="Search by name" onChange={e => handleFilterChange('name', e)} />
+                        <Input style={{fontSize: "12px"}} placeholder="Search by Name" onChange={e => handleFilterChange('name', e)} />
                       </InputGroup>
                      
 

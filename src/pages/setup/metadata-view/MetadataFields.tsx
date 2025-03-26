@@ -1,12 +1,14 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { ButtonToolbar, Input, Pagination, Panel, Table } from 'rsuite';
+import { ButtonToolbar, Input, Pagination, Panel, Table,Button,InputGroup } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetMetadataFieldsQuery } from '@/services/setupService';
 import { IconButton } from 'rsuite';
+import SearchIcon from '@rsuite/icons/Search';
 import ArowBackIcon from '@rsuite/icons/ArowBack';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
+import MyInput from '@/components/MyInput';
 
 const MetadataFields = ({ metadata, goBack, ...props }) => {
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
@@ -38,18 +40,23 @@ const MetadataFields = ({ metadata, goBack, ...props }) => {
     <>
       {metadata && metadata.key && (
         <Panel
-          header={
-            <h3 className="title">
-              <Translate> Metadata Fields for </Translate> <i>{metadata?.metadataName ?? ''}</i>
-            </h3>
-          }
+          // header={
+          //   <h3 className="title">
+          //     <Translate> Metadata Fields for </Translate> <i>{metadata?.metadataName ?? ''}</i>
+          //   </h3>
+          // }
         >
-          <ButtonToolbar>
-            <IconButton appearance="ghost" color="cyan" icon={<ArowBackIcon />} onClick={goBack}>
-              Go Back
-            </IconButton>
-          </ButtonToolbar>
-          <hr />
+          <div style={{display:"flex", gap:"20px"}}>
+          <Button startIcon={<ArowBackIcon />} style={{ marginBottom: 10}} color="var(--deep-blue)" appearance="ghost" onClick={goBack}> Back </Button>
+          <InputGroup inside style={{ width: 170, marginBottom: 10 }}>
+                                <InputGroup.Button>
+                                  <SearchIcon />
+                                </InputGroup.Button>
+                                <Input style={{fontSize: "12px"}} placeholder="Search by Field Name" onChange={e => handleFilterChange('fieldName', e)} />
+                                
+                               </InputGroup>
+          </div>
+
           <Table
             height={400}
             sortColumn={listRequest.sortBy}
@@ -62,35 +69,32 @@ const MetadataFields = ({ metadata, goBack, ...props }) => {
                   sortType
                 });
             }}
-            headerHeight={80}
-            rowHeight={60}
-            bordered
             cellBordered
             data={metadataFieldListResponse?.object ?? []}
           >
             <Column sortable flexGrow={4}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('fieldName', e)} />
+                {/* <Input onChange={e => handleFilterChange('fieldName', e)} /> */}
                 <Translate>Field Name</Translate>
               </HeaderCell>
               <Cell dataKey="fieldName" />
             </Column>
             <Column sortable flexGrow={4}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('dbFieldName', e)} />
+                {/* <Input onChange={e => handleFilterChange('dbFieldName', e)} /> */}
                 <Translate>DB Field Name</Translate>
               </HeaderCell>
               <Cell dataKey="dbFieldName" />
             </Column>
             <Column sortable flexGrow={4}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('dataType', e)} />
+                {/* <Input onChange={e => handleFilterChange('dataType', e)} /> */}
                 <Translate>Data Type</Translate>
               </HeaderCell>
               <Cell dataKey="dataType" />
             </Column>
           </Table>
-          <div style={{ padding: 20 }}>
+          <div style={{ padding: 20, backgroundColor: '#F4F7FC' }}>
             <Pagination
               prev
               next
