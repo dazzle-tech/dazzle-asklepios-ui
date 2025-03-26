@@ -247,7 +247,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
                         onClick={() =>
                             handleSave()
                         }
-                        color='violet'
+                        color='blue'
                         appearance="primary"
                     >
                         Save
@@ -256,7 +256,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
             </Modal>
 
             <ButtonToolbar style={{ padding: 1 , zoom:.8}}>
-                <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
+                <Button style={{ backgroundColor:'var(--primary-blue)', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
                     onClick={() => {
                         setPatientHP({ ...newApPatientPreferredHealthProfessional });
                         setPractitioner({ ...newApPractitioner });
@@ -277,11 +277,11 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
                         setPreferredHealthModalOpen(true);
                     }}
                     appearance="ghost"
-                    style={{ border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: "3px" }}
+                    style={{ border: '1px solid var(--primary-blue)', backgroundColor: 'white', color: 'var(--primary-blue)', marginLeft: "3px" }}
 
                 >
 
-                    <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: '#007e91' }} />
+                    <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: 'var(--primary-blue)' }} />
 
                     <span>Edit</span>
                 </Button>
@@ -289,7 +289,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
                 <Button
                     disabled={isClick || !editable}
 
-                    style={{ border: '1px solid  #007e91', backgroundColor: 'white', color: '#007e91', display: 'flex', alignItems: 'center', gap: '5px' }}
+                    style={{ border: '1px solid var(--primary-blue)', backgroundColor: 'white', color: 'var(--primary-blue)', display: 'flex', alignItems: 'center', gap: '5px' }}
 
                     onClick={() => { setDeletePreferredHealthModalOpen(true) }}
                 >
@@ -312,7 +312,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
                     </p>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button onClick={handleClearDeletePH} appearance="ghost" color='cyan'
+                    <Button onClick={handleClearDeletePH} appearance="ghost" color='blue'
                     >
                         Cancel
                     </Button>

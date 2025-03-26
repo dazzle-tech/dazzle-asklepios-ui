@@ -788,7 +788,7 @@ const PatientProfileCopy = () => {
                                                     <Avatar
                                                         size="xl"
                                                         circle
-                                                        color="cyan" bordered
+                                                        bordered
                                                         onClick={() => handleImageClick('PATIENT_PROFILE_PICTURE')}
                                                         src={
                                                             patientImage && patientImage.fileContent
@@ -810,13 +810,13 @@ const PatientProfileCopy = () => {
 
                                                 onClick={handleSave}
                                                 appearance="primary"
-                                                style={{ border: '1px solid #00b1cc', backgroundColor: '#00b1cc', color: 'white', marginLeft: "3px" }}
+                                                style={{ border: 'var(--primary-blue)', backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: "3px" }}
 
                                             >
                                                 <FontAwesomeIcon icon={faCheckDouble} style={{ marginRight: '5px', color: 'white' }} />
                                                 <span>Save</span>
                                             </Button>
-                                            <Button appearance="primary" style={{ border: '1px solid #007e91', backgroundColor: '#007e91', color: 'white', marginLeft: "3px" }} onClick={handleClear}>
+                                            <Button appearance="primary" style={{ border:'var(--primary-blue)', backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: "3px" }} onClick={handleClear}>
                                                 <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px', color: 'white' }} />
                                                 <Translate>Clear</Translate>
                                             </Button>
@@ -826,9 +826,9 @@ const PatientProfileCopy = () => {
                                                     {
                                                         label: (
                                                             <Button
-                                                                color='cyan'
+                                                                color='blue'
                                                                 appearance="ghost"
-                                                                style={{ color: '#00b1cc', zoom: 0.8, textAlign: 'left', width: 170 }}
+                                                                style={{ color: 'var(--primary-blue)', zoom: 0.8, textAlign: 'left', width: 170 }}
                                                                 disabled={localPatient.key === undefined}
                                                                 onClick={() => setVisitHistoryModel(true)}
                                                                 block
@@ -842,9 +842,9 @@ const PatientProfileCopy = () => {
                                                     {
                                                         label: (
                                                             <Button
-                                                                color='cyan'
+                                                                color='blue'
                                                                 appearance="ghost"
-                                                                style={{ color: '#00b1cc', zoom: 0.8, textAlign: 'left', width: 170 }}
+                                                                style={{ color: 'var(--primary-blue)', zoom: 0.8, textAlign: 'left', width: 170 }}
                                                                 disabled={!localPatient.key}
                                                                 onClick={handleNewVisit}
                                                                 block
@@ -857,11 +857,11 @@ const PatientProfileCopy = () => {
                                                     {
                                                         label: (
                                                             <Button
-                                                                color='cyan'
+                                                                color='blue'
                                                                 onClick={() => setAdministrativeWarningsModalOpen(true)}
                                                                 disabled={!localPatient.key}
                                                                 appearance="ghost"
-                                                                style={{ color: '#00b1cc', zoom: 0.8, textAlign: 'left', width: 170 }}
+                                                                style={{ color: 'var(--primary-blue)', zoom: 0.8, textAlign: 'left', width: 170 }}
                                                                 block
                                                             >
                                                                 <span>Administrative Warnings</span>
@@ -871,7 +871,7 @@ const PatientProfileCopy = () => {
                                                     },
                                                 ]}
                                                 placeholder={
-                                                    <span style={{ color: '#00b1cc' }}>
+                                                    <span style={{ color: 'var(--primary-blue)'}}>
                                                         <ListIcon style={{ marginRight: 8 }} />
                                                         {"  "} More
                                                     </span>
@@ -1576,7 +1576,7 @@ const PatientProfileCopy = () => {
                                 <Tabs.Tab eventKey="3" title="Address">
                                     <Form layout="inline" fluid>
                                         <ButtonToolbar style={{ zoom: .8 }}>
-                                            <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={!localPatient.key}>
+                                            <Button style={{ backgroundColor:'var(--primary-blue)', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={!localPatient.key}>
                                                 <Icon as={FaClock} />  Address Change Log
                                             </Button>
                                         </ButtonToolbar>
@@ -1677,7 +1677,7 @@ const PatientProfileCopy = () => {
 
                                 <Tabs.Tab eventKey="4" title="Insurance">
                                     <ButtonToolbar style={{ zoom: .8 }}>
-                                        <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={!localPatient.key}
+                                        <Button style={{ backgroundColor: 'var(--primary-blue)', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} disabled={!localPatient.key}
                                             onClick={() => {
                                                 setInsuranceModalOpen(true);
                                                 setSelectedInsurance(newApPatientInsurance);
@@ -1688,15 +1688,15 @@ const PatientProfileCopy = () => {
                                             disabled={!selectedInsurance?.key}
                                             onClick={handleEditModal}
                                             appearance="ghost"
-                                            style={{ border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: "3px" }}
+                                            style={{ border: '1px solid var(--primary-blue)', backgroundColor: 'white', color:'var(--primary-blue)', marginLeft: "3px" }}
                                         >
-                                            <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: '#007e91' }} />
+                                            <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: 'var(--primary-blue)' }} />
                                             <span>Edit</span>
                                         </Button>
                                         <Button
                                             disabled={!selectedInsurance?.key}
                                             appearance="primary"
-                                            style={{ backgroundColor: '#007e91' }}
+                                            style={{ backgroundColor: 'var(--primary-blue)'}}
                                             onClick={() => setSpecificCoverageModalOpen(true)}
                                         >
                                             <FontAwesomeIcon icon={faLock} style={{ marginRight: '8px' }} />
@@ -1704,7 +1704,7 @@ const PatientProfileCopy = () => {
                                         </Button>
                                         <Button
                                             disabled={!selectedInsurance?.key}
-                                            style={{ border: '1px solid  #007e91', backgroundColor: 'white', color: '#007e91', display: 'flex', alignItems: 'center', gap: '5px' }}
+                                            style={{ border: '1px solid var(--primary-blue)', backgroundColor: 'white', color: 'var(--primary-blue)', display: 'flex', alignItems: 'center', gap: '5px' }}
                                             onClick={handleDeleteInsurance}
                                         >
                                             <TrashIcon /> <Translate>Delete</Translate>
@@ -1835,12 +1835,12 @@ const PatientProfileCopy = () => {
                                     </Modal>
                                     <Form layout="inline" fluid>
                                         <ButtonToolbar style={{ zoom: .8 }}>
-                                            <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
+                                            <Button style={{ backgroundColor: 'var(--primary-blue)', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
                                                 onClick={() => setVerificationModalOpen(true)}
                                                 disabled={!localPatient.key}>
                                                 <PlusRound />   Patient Verification
                                             </Button>
-                                            <Button style={{ backgroundColor: ' #007e91', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} >
+                                            <Button style={{ backgroundColor: 'var(--primary-blue)', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }} >
                                                 <Icon as={VscGitPullRequestGoToChanges} />   Amendment Requests
                                             </Button>
                                         </ButtonToolbar>

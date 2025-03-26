@@ -290,7 +290,7 @@ const PatientFamilyMembers = ({ localPatient }) => {
                     </Modal.Footer>
                 </Modal>
                 <ButtonToolbar style={{ padding: 1 ,zoom:.8}}>
-                    <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
+                    <Button style={{ backgroundColor: 'var(--primary-blue)', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
                         disabled={!localPatient.key}
                         onClick={() => {
                             setSelectedPatientRelation({ ...newApPatientRelation });
@@ -305,15 +305,15 @@ const PatientFamilyMembers = ({ localPatient }) => {
                             setRelationModalOpen(true);
                         }}
                         appearance="ghost"
-                        style={{ border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: "3px" }}
+                        style={{ border: '1px solid var(--primary-blue)', backgroundColor: 'white', color: 'var(--primary-blue)', marginLeft: "3px" }}
                     >
-                        <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: '#007e91' }} />
+                        <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: 'var(--primary-blue)' }} />
                         <span>Edit</span>
                     </Button>
                     <Button
                         disabled={!selectedPatientRelation?.key}
 
-                        style={{ border: '1px solid  #007e91', backgroundColor: 'white', color: '#007e91', display: 'flex', alignItems: 'center', gap: '5px' }}
+                        style={{ border: '1px solid var(--primary-blue)', backgroundColor: 'white', color: 'var(--primary-blue)', display: 'flex', alignItems: 'center', gap: '5px' }}
 
                         onClick={() => { setDeleteRelativeModalOpen(true) }}
                     >
@@ -336,7 +336,7 @@ const PatientFamilyMembers = ({ localPatient }) => {
                         </p>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button onClick={handleClearRelative} appearance="ghost" color='cyan'>
+                        <Button onClick={handleClearRelative} appearance="ghost" color='blue'>
                             Cancel
                         </Button>
                         <Divider vertical />

@@ -497,7 +497,7 @@ const PatientAttachment = ({ localPatient }) => {
 
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button onClick={handleClearAttachmentDelete} appearance="ghost" color="cyan" >
+                        <Button onClick={handleClearAttachmentDelete} appearance="ghost" color="blue" >
                             Cancel
                         </Button>
 
@@ -521,7 +521,7 @@ const PatientAttachment = ({ localPatient }) => {
                 <ButtonToolbar style={{ padding: 1 ,zoom:.8 }}>
 
 
-                    <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
+                    <Button style={{ backgroundColor: 'var(--primary-blue)', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
                         onClick={() => {
                             handleCleareAttachment();
                             setAttachmentsModalOpen(true);
