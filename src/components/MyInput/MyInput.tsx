@@ -149,7 +149,7 @@ const MyInput = ({
             type={fieldType}
             value={record ? record[fieldName] : ''}
             onChange={handleValueChange}
-            
+            placeholder={props.placeholder}
           />
         );
     }

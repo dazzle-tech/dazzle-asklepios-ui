@@ -292,7 +292,7 @@ const DVM = () => {
                                   </InputGroup.Button>
                                   {/* <Input style={{fontSize: "12px"}} placeholder="Search" onChange={e => handleFilterChange(record["filter"], e)} /> */}
                                  
-                                  <MyInput fieldName='search' fieldType='text' record={undefined} setRecord={undefined} height={'45px'} showLabel={false}/>
+                                  <MyInput fieldName='search' fieldType='text' record={undefined} setRecord={undefined} height={33} showLabel={false} placeholder="Search"/>
                                  
                                 </InputGroup>
                                 </Form>

@@ -271,7 +271,13 @@ const Modules = () => {
           </Modal.Title>
           <hr />
           <Modal.Body style={{ marginBottom: '120px' }}>
-            <Form fluid>
+            <Form fluid  style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignContent: 'center',
+                  alignItems: 'center',
+                }}>
               <div
                 style={{
                   display: 'flex',
@@ -316,7 +322,7 @@ const Modules = () => {
                   width={250}
                   height={"45px"}
                 />
-                
+
               </div>
             </Form>
           </Modal.Body>
