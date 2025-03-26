@@ -171,7 +171,7 @@ const PatientExtraDetails = ({ localPatient }) => {
 
                 <ButtonToolbar style={{zoom:.8}}>
 
-                    <Button style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
+                    <Button style={{ backgroundColor: 'var(--primary-blue)', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
                         onClick={() => {
                             setSecondaryDocumentModalOpen(true);
                             setSelectedSecondaryDocument(newApPatientSecondaryDocuments);
@@ -183,15 +183,15 @@ const PatientExtraDetails = ({ localPatient }) => {
                         disabled={!selectedSecondaryDocument?.key}
                         onClick={handleEditSecondaryDocument}
                         appearance="ghost"
-                        style={{ border: '1px solid #00b1cc', backgroundColor: 'white', color: '#00b1cc', marginLeft: "3px" }}
+                        style={{ border: '1px solid  var(--primary-blue)', backgroundColor: 'white', color: 'var(--primary-blue)', marginLeft: "3px" }}
                     >
-                        <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: '#007e91' }} />
+                        <FontAwesomeIcon icon={faUserPen} style={{ marginRight: '5px', color: 'var(--primary-blue)' }} />
 
                         <span>Edit</span>
                     </Button>
                     <Button
                         disabled={!selectedSecondaryDocument?.key}
-                        style={{ border: '1px solid  #007e91', backgroundColor: 'white', color: '#007e91', display: 'flex', alignItems: 'center', gap: '5px' }}
+                        style={{ border: '1px solid var(--primary-blue)', backgroundColor: 'white', color:'var(--primary-blue)', display: 'flex', alignItems: 'center', gap: '5px' }}
                         onClick={() => { setDeleteDocModalOpen(true) }}
                     >
                         <TrashIcon /> <Translate>Delete</Translate>
@@ -354,14 +354,14 @@ const PatientExtraDetails = ({ localPatient }) => {
                 </Modal.Body>
                 <Modal.Footer style={{display:'flex' ,alignItems:'center'}}>
                      <ButtonToolbar style={{display:'flex' ,alignItems:'center',zoom:.8,marginLeft:'auto'}}>
-                     <Button onClick={() => handleCleareSecondaryDocument()} appearance="ghost" style={{ color: ' #00b1cc', border: '1px solid  #00b1cc' }}>
+                     <Button onClick={() => handleCleareSecondaryDocument()} appearance="ghost" style={{ color:'var(--primary-blue)', border: '1px solid  var(--primary-blue)' }}>
                         Cancel
                     </Button>
                     <Button
                         onClick={() => {
                             handleSaveSecondaryDocument();
                         }}
-                        style={{ backgroundColor: ' #00b1cc', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
+                        style={{ backgroundColor:'var(--primary-blue)', color: 'white', display: 'flex', alignItems: 'center', gap: '10px' }}
                         
                     >
                         <FontAwesomeIcon icon={faCheckDouble} style={{ marginRight: '5px', color: 'white' }} />
@@ -384,7 +384,7 @@ const PatientExtraDetails = ({ localPatient }) => {
                     </p>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button onClick={handleClearDocument} appearance="ghost" color='cyan'>
+                    <Button onClick={handleClearDocument} appearance="ghost" color='blue'>
                         Cancel
                     </Button>
                     <Button
