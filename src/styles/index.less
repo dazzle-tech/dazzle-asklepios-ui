@@ -4,53 +4,13 @@
 @import '../components/Header/styles.less';
 @import '../components/MyLabel/styles.less';
 
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;700&display=swap');
 
-@font-face {
-  font-family: 'Manrope';
-  src: url('C:\AskLepois\dazzle-asklepios-ui\public\fonts\Manrope\static\Manrope-Regular.ttf')
-  
-   format('truetype');
 
-}
-@font-face {
-  font-family: 'Manrope Bold';
-  src: url('C:\AskLepois\dazzle-asklepios-ui\public\fonts\Manrope\static\Manrope-bold.ttf')
-  
-   format('truetype');
-
-}
-@font-face {
-  font-family: 'Manrope Medium';
-  src: url('C:\AskLepois\dazzle-asklepios-ui\public\fonts\Manrope\static\Manrope-Medium.ttf')
-  
-   format('truetype');
-
-}
-@font-face {
-  font-family: 'Inter Bold';
-  src: url('C:\AskLepois\dazzle-asklepios-ui\public\fonts\Inter\static\Inter_24pt-Bold.ttf')
-  
-   format('truetype');
-
-}
-@font-face {
-  font-family: 'Inter';
-  src: url('C:\AskLepois\dazzle-asklepios-ui\public\fonts\Inter\static\Inter_24pt-Regular.ttf')
-  
-   format('truetype');
-
-}
-@font-face {
-  font-family: 'Inter Semi Bold';
-  src: url('C:\AskLepois\dazzle-asklepios-ui\public\fonts\Inter\static\Inter_24pt-SemiBold.ttf')
-  
-   format('truetype');
- 
-}
 body {
   background: #ffffff;
   zoom: 0.98;
-  font-family:'Manrope';
+  font-family:'Manrope', sans-serif;
 }
  
 .text-muted {
@@ -144,9 +104,9 @@ body {
 .rs-table-row-header .rs-table-cell {
   color: #575757;
   background-color: #f4f7fe !important;
-  font-family: 'Inter Semi Bold';
+  font-weight: bold;
   height: 35px ;
-  font-size: 11px;
+  font-size: 10px;
 }
 .rs-table-row:nth-of-type(odd) .rs-table-cell {
   background-color: #f2f2f5;
@@ -192,7 +152,7 @@ aside{
   --primary-blue: #415BE7;
   --light-blue: #60AFFF;
   --deep-blue: #2264E5;
-  --black:#ffffff
+
 
   --primary-pink: #E23670;
   --light-pink: #FCEBF1;
@@ -201,7 +161,7 @@ aside{
   --background-light: #F9FAFB;
   --background-gray: #F2F3F4;
   --primary-gray: #969FB0;
-  --icon-gray :#8F98AB;
+  
 
   --primary-green: #45B887;
   --light-green: #DAF1E7;
@@ -239,4 +199,4 @@ background: #FFFFFF !important;
  
   box-shadow: none !important;
   border:none;
-}
+  }
