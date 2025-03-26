@@ -5,7 +5,8 @@ import {
     faTriangleExclamation
     ,
     faIdCard,
-    faUser
+    faUser,
+    faFileWaveform
 
 
 } from '@fortawesome/free-solid-svg-icons';
@@ -252,8 +253,62 @@ const PatientSide = ({ patient, encounter }) => {
             <Divider style={{ margin: '4px 4px' }} />
             
             <Text >
-            <FontAwesomeIcon icon={faUser} style={{ color: 'var(--icon-gray)' }} /> <span style={{ fontWeight: 'bold' }}>Patient  Information</span>
+            <FontAwesomeIcon icon={faFileWaveform}  style={{ color: 'var(--icon-gray)' }} /> <span style={{ fontWeight: 'bold' }}>Visit Details</span>
             </Text>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <br />
+                <div style={{ display: 'flex', gap: '10px', width: '230px' }}>
+                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
+                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Visit Date</Text>
+                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}>
+                            {encounter.plannedStartDate}
+                        </Text>
+
+                    </div>
+
+                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}
+                    >
+                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Visit ID</Text>
+                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}
+                        > {encounter.visitId}</Text>
+
+                    </div>
+                </div>
+                <div style={{ display: 'flex', gap: '10px', width: '230px' }}>
+                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
+                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Visit Type</Text>
+                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}>
+                            {encounter?.visitTypeLvalue?.lovDisplayVale}
+                        </Text>
+
+                    </div>
+
+                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}
+                    >
+                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Priority</Text>
+                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}
+                        > {encounter?.encounterPriorityLvalue?.lovDisplayVale}</Text>
+
+                    </div>
+                </div>
+                <div style={{ display: 'flex', gap: '10px', width: '230px' }}>
+                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
+                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Reason</Text>
+                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}>
+                            {encounter?.reasonLvalue?.lovDisplayVale}
+                        </Text>
+
+                    </div>
+
+                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}
+                    >
+                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Origin</Text>
+                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}
+                        > {encounter.admissionOrigin}</Text>
+
+                    </div>
+                </div>
+            </div>
             {/* <Row >
                 <span style={{ fontWeight: 'bold' }}> Diagnosis:</span> {encounter?.diagnosis}
 
