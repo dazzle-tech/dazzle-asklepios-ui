@@ -2114,7 +2114,7 @@ const Lab = () => {
         </Row>
         <Row>
           <Col xs={8}>
-            <Form style={{ zoom: 0.85 }}>
+            <Form >
               <MyInput
                 fieldLabel={"Actual Sample Quantity"}
                 fieldName={"quantity"}
@@ -2126,7 +2126,7 @@ const Lab = () => {
             </Form>
           </Col>
           <Col xs={8}>
-            <Form style={{ zoom: 0.85 }}>
+            <Form >
               <MyInput
                 fieldName={"unitLkey"}
                 fieldType='select'
@@ -2140,7 +2140,7 @@ const Lab = () => {
           <Col xs={8}>
             <Text style={{ fontWeight: 'bold' }}>Sample Collected </Text>
             <DatePicker
-              style={{ zoom: 0.85, width: '270' }}
+              style={{ width: '270' }}
               format="dd MMM yyyy hh:mm:ss aa"
               showMeridiem
               caretAs={FaCalendar}

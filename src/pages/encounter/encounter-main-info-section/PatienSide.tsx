@@ -136,7 +136,7 @@ const PatientSide = ({ patient, encounter }) => {
 
 
                     </div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>
+                    <div style={{ fontSize: '12px', color:'var(--icon-gray)' }}>
                         #  {patient?.patientMrn ?? "MRN"}
 
                     </div>
