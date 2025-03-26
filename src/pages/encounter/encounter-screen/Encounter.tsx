@@ -24,7 +24,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import TableIcon from '@rsuite/icons/Table';
 import { useGetAppointmentsQuery } from '@/services/appointmentService';
-import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentModal'
+import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentModal';
+import PatientSide from '../encounter-main-info-section/PatienSide';
 import {
   faBolt,
   faVials
@@ -328,9 +329,9 @@ const Encounter = () => {
 
   return (
     <>
-       
-      
-          <Panel header={<EncounterMainInfoSection patient={propsData.patient} encounter={propsData.encounter} />}>
+       <div style={{display:'flex' ,gap:'10px'}}>
+       <div  style={{flexGrow:'4',borderRadius:'5px' ,border:'1px solid var(--background-gray)'}}>
+       <Panel >
             <Panel>
               <ButtonToolbar>
                 <IconButton
@@ -804,7 +805,14 @@ const Encounter = () => {
               onSave={refitchAppointments}
               showOnly={showAppointmentOnly}
             />
-          </Panel>
+          </Panel></div>
+        
+       <div  style={{flexGrow:'1',borderRadius:'5px',border:'1px solid var(--background-gray)'}}>
+       <PatientSide patient={propsData.patient} encounter={propsData.encounter}/>
+       </div>
+       </div>
+      
+        
       
       
     </>

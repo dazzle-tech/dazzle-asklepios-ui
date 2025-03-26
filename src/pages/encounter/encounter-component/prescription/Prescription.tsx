@@ -170,12 +170,12 @@ const Prescription = ({edit,patient,encounter}) => {
             {
                 fieldName: "patient_key",
                 operator: "match",
-                value: patientSlice.patient.key,
+                value:patient.key,
             },
             {
                 fieldName: "visit_key",
                 operator: "match",
-                value: patientSlice.encounter.key,
+                value:encounter.key,
             }
 
         ],
@@ -185,7 +185,7 @@ const Prescription = ({edit,patient,encounter}) => {
     ) ?? [];
 
     const [preKey, setPreKey] = useState(null);
-    console.log("pre Key:", preKey)
+
 
     const [prescription, setPrescription] = useState<ApPrescription>({
         ...prescriptions?.object?.find(prescription =>
@@ -411,8 +411,8 @@ const Prescription = ({edit,patient,encounter}) => {
                 try {
                     await savePrescriptionMedication({
                         ...prescriptionMedication,
-                        patientKey: patientSlice.patient.key,
-                        visitKey: patientSlice.encounter.key,
+                        patientKey:patient.key,
+                        visitKey:encounter.key,
                         prescriptionKey: preKey,
                         genericMedicationsKey: selectedGeneric.key,
                         parametersToMonitor: tagcompine,
@@ -1001,7 +1001,7 @@ const Prescription = ({edit,patient,encounter}) => {
                     <div style={{ marginLeft: "10px" }}>
                         {selectedOption === "3010606785535008" &&
                             <div className='form-search-container-p ' style={{ width: "600px" }}>
-                                <Form style={{ zoom: 0.85 }} layout="inline" fluid disabled={preKey != null ? editing : true}>
+                                <Form  layout="inline" fluid disabled={preKey != null ? editing : true}>
                                     <MyInput
                                         column
 
@@ -1081,7 +1081,7 @@ const Prescription = ({edit,patient,encounter}) => {
                             </Form>
                         }
                         {selectedOption === "3010573499898196" &&
-                            <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+                            <Form  layout="inline" fluid>
                                 <textarea
                                     rows={4}
                                     style={{ width: '350px' }}
@@ -1102,7 +1102,7 @@ const Prescription = ({edit,patient,encounter}) => {
 
 
 
-                    <div style={{ marginBottom: '3px', zoom: 0.85 }}>
+                    <div style={{ marginBottom: '3px'}}>
                         <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
                             <Input
                                 disabled={preKey != null ? editing : true}
@@ -1141,7 +1141,7 @@ const Prescription = ({edit,patient,encounter}) => {
                             }
                             style={{ width: 300 }} rows={4} />
                     </div>
-                    <div style={{ marginBottom: '3px', zoom: 0.85 }}>
+                    <div style={{ marginBottom: '3px'}}>
                         <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
                             <Input
                                 disabled={preKey != null ? editing : true}
@@ -1159,7 +1159,7 @@ const Prescription = ({edit,patient,encounter}) => {
 
                             style={{ width: 300 }} rows={4} />
                     </div>
-                    <div style={{ marginBottom: '3px', zoom: 0.85 }}>
+                    <div style={{ marginBottom: '3px' }}>
                         <Form layout="inline" fluid>
                             <MyInput
                                 column
@@ -1268,7 +1268,7 @@ const Prescription = ({edit,patient,encounter}) => {
         <div className={edit ? "disabled-panel" : ""} style={{ display: 'flex', flexDirection: 'column', border: '1px solid #b6b7b8' }}>
 
             <div style={{ display: 'flex', gap: '10px', padding: '4px' }}>
-                <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+                <Form  layout="inline" fluid>
 
 
                     <MyInput
@@ -1308,7 +1308,7 @@ const Prescription = ({edit,patient,encounter}) => {
                     />
 
                 </Form>
-                <Form style={{ zoom: 0.85 }} fluid>
+                <Form  fluid>
 
                     <MyInput
 
@@ -1365,7 +1365,7 @@ const Prescription = ({edit,patient,encounter}) => {
 
             </div>
             <div style={{ display: 'flex', gap: '10px', padding: '4px' }}>
-                <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+                <Form  layout="inline" fluid>
 
 
                     <MyInput
@@ -1404,9 +1404,9 @@ const Prescription = ({edit,patient,encounter}) => {
                 </Form>
                 <Input as="textarea" onChange={(e) => setAdminInstructions(e)}
                     value={adminInstructions}
-                    style={{ width: 250, zoom: 0.85 }}
+                    style={{ width: 250 }}
                     rows={3} />
-                <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+                <Form  layout="inline" fluid>
                     <MyInput
                         column
                         disabled={preKey != null ? editing : true}
@@ -1419,7 +1419,7 @@ const Prescription = ({edit,patient,encounter}) => {
 
                     />
                 </Form>
-                <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+                <Form  layout="inline" fluid>
                     <MyInput
                         column
                         disabled={preKey != null ? editing : true}
