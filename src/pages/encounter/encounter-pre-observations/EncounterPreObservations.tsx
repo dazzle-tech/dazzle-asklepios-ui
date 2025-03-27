@@ -55,7 +55,8 @@ import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import { useLocation } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useNavigate } from 'react-router-dom';
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import { Tab, TabList, TabPanel } from 'react-tabs';
+import { Tabs, Placeholder } from 'rsuite'
 import VaccinationTab from './vaccination-tab';
 import Observations from './observations/Observations';
 import { useSelector } from 'react-redux';
@@ -108,60 +109,43 @@ const EncounterPreObservations = () => {
           </Panel>
 
           <Panel>
-            <Tabs
-              selectedIndex={activeTab}
-              onSelect={(index) => setActiveTab(index)}
-            >
-              <TabList style={{ display: 'flex' }}>
-                <Tab>
-                  <Translate>Observations</Translate>
-                </Tab>
-                <Tab>
-                  <Translate>Allergies</Translate>
-                </Tab>
-                <Tab>
-                  <Translate>Medical Warnings</Translate>
-                </Tab>
-                <Tab>
-                  <Translate>Vaccination</Translate>
-                </Tab>
+            <Form fluid layout='inline' style={{display:'flex',zoom:.8}}>
+            <ButtonToolbar style={{ marginLeft: 'auto' }}>
+              <IconButton
+                appearance="primary"
+                disabled={isEncounterStatusClosed || readOnly}
+                color="cyan"
+                icon={<CloseOutlineIcon />}
+                onClick={() => { handleCompleteEncounter() }}
+              >
+                <Translate>Complete Visit</Translate>
+              </IconButton>
+              <IconButton
+                appearance="primary"
+                color="blue"
+                icon={<CloseOutlineIcon />}
+                onClick={() => { navigate('/encounter-list') }}
+              >
+                <Translate>Close</Translate>
+              </IconButton>
+            </ButtonToolbar>
+            </Form>
+        
+            <Tabs defaultActiveKey="1" appearance="subtle">
 
-                <Tab>
-                  <Translate>Patient History </Translate>
-                </Tab>
 
-                <ButtonToolbar style={{ marginLeft: 'auto' }}>
-                  <IconButton
-                    appearance="primary"
-                    disabled={isEncounterStatusClosed || readOnly}
-                    color="cyan"
-                    icon={<CloseOutlineIcon />}
-                    onClick={() => { handleCompleteEncounter() }}
-                  >
-                    <Translate>Complete Visit</Translate>
-                  </IconButton>
-                  <IconButton
-                    appearance="primary"
-                    color="blue"
-                    icon={<CloseOutlineIcon />}
-                    onClick={() => { navigate('/encounter-list') }}
-                  >
-                    <Translate>Close</Translate>
-                  </IconButton>
-                </ButtonToolbar>
-              </TabList>
-              <TabPanel>
-              {activeTab === 0 && <Observations  patient={propsData.patient} encounter={propsData.encounter} />}  
-              </TabPanel>
-              <TabPanel>
-                {activeTab === 1 && <Allergies edit={false} patient={propsData.patient} encounter={propsData.encounter} />}
-              </TabPanel>
-              <TabPanel>
-          {activeTab === 2&& <Warning edit={false} patient={propsData.patient} encounter={propsData.encounter} />}
-        </TabPanel>
-        <TabPanel>
-          {activeTab === 3&& <VaccinationTab   disabled={isEncounterStatusClosed || readOnly} patient={propsData.patient} encounter={propsData.encounter} />}
-        </TabPanel>
+              <Tabs.Tab eventKey="1" title="Observations">
+                <Observations patient={propsData.patient} encounter={propsData.encounter} />
+              </Tabs.Tab>
+              <Tabs.Tab eventKey="2" title="Allergies">
+                <Allergies edit={false} patient={propsData.patient} encounter={propsData.encounter} />
+              </Tabs.Tab>
+              <Tabs.Tab eventKey="3" title="Medical Warnings">
+                <Warning edit={false} patient={propsData.patient} encounter={propsData.encounter} />
+              </Tabs.Tab>
+              <Tabs.Tab eventKey="4" title="Vaccination">
+                <VaccinationTab disabled={isEncounterStatusClosed || readOnly} patient={propsData.patient} encounter={propsData.encounter} />
+              </Tabs.Tab>
             </Tabs>
           </Panel>
         </div>
