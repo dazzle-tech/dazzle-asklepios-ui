@@ -717,13 +717,13 @@ const Lab = () => {
   };
   const handleValueChange = async (value, rowData) => {
 
-    const Response = await saveResult({ ...rowData, resultLkey: value }).unwrap();
+    const Response = await saveResult({ ...rowData, resultLkey: String(value) }).unwrap();
 
 
     const v = rowData.normalRange?.lovList.find((item) => item == value);
     if (v) {
       const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-      saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' }).unwrap();
+      saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' , resultLkey: String(value)}).unwrap();
 
 
 
@@ -737,7 +737,7 @@ const Lab = () => {
     }
     else {
       const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-      saveResult({ ...result, marker: "6730122218786367", statusLkey: '265123250697000' }).unwrap();
+      saveResult({ ...result, marker: "6730122218786367", statusLkey: '265123250697000', resultLkey: String(value) }).unwrap();
 
 
       setTest({ ...newApDiagnosticOrderTests });
