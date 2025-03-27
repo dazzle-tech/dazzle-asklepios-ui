@@ -714,11 +714,7 @@ const PatientProfileCopy = () => {
                                 <Stack.Item grow={1}>
                                     <Form layout="inline" fluid style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                         <div
-                                            style={{
-                                                borderRadius: '5px',
-                                                border: '1px solid #e1e1e1',
-                                                padding: '5px'
-                                            }}
+                                    
                                         >
                                             <Form style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>
                                                 <AvatarGroup spacing={6}>
@@ -736,7 +732,7 @@ const PatientProfileCopy = () => {
                                                             >
                                                                 <div
                                                                     style={{
-                                                                        fontSize: 30,
+                                                                        fontSize: 18,
                                                                         position: 'relative',
                                                                         marginRight: '10px'
                                                                     }}
@@ -763,7 +759,7 @@ const PatientProfileCopy = () => {
                                                             >
                                                                 <div
                                                                     style={{
-                                                                        fontSize: 30,
+                                                                        fontSize: 18,
                                                                         position: 'relative',
                                                                         marginRight: '10px'
                                                                     }}
@@ -786,7 +782,7 @@ const PatientProfileCopy = () => {
                                                         accept="image/*"
                                                     />
                                                     <Avatar
-                                                        size="xl"
+                                                        size="lg"
                                                         circle
                                                         bordered
                                                         onClick={() => handleImageClick('PATIENT_PROFILE_PICTURE')}
@@ -797,8 +793,8 @@ const PatientProfileCopy = () => {
                                                         }
                                                         alt={localPatient?.fullName}
                                                     />
-                                                    <Form style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: '8px' }}>
-                                                        <h6>{localPatient?.fullName}</h6>
+                                                    <Form style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: '8px' , fontSize:11}}>
+                                                        <span style={{fontWeight:'bold'}}>{localPatient?.fullName}</span>
                                                         <span>{localPatient?.createdAt ? new Date(localPatient?.createdAt).toLocaleString("en-GB") : ""}</span>
                                                         <span>{localPatient?.patientMrn}</span>
                                                     </Form>
