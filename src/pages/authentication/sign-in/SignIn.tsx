@@ -3,7 +3,7 @@ import { Form, Button, Panel, SelectPicker, Stack, Divider, Message, Modal, Butt
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import Logo from '../../../images/Logo_BLUE_New.svg';
 import Background from '../../../images/medical-equipment-desk-with-copy-space.svg';
-import UserLogo from '../../../images/Login_ICon.svg';
+import UserLogo from '../../../images/PP-Person-Blue copy.svg';
 import './styles.less';
 import Translate from '@/components/Translate';
 import { useLoginMutation } from "@/services/authService";
@@ -210,7 +210,7 @@ const SignIn = () => {
             </Form.Group>
  
             <Form.Group>
-              <Button style={{backgroundColor:'#599ab8'}} appearance="primary" onClick={handleLogin} disabled={!authSlice.tenant}
+              <Button style={{backgroundColor:'var(--primary-blue)'}} appearance="primary" onClick={handleLogin} disabled={!authSlice.tenant}
                 className='submit-button' >
                 Sign in
               </Button>
