@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Panel } from 'rsuite';
 import EncounterMainInfoSection from '../encounter-main-info-section';
+import PatientSide from '../encounter-main-info-section/PatienSide';
 import { useAppSelector, useAppDispatch } from '@/hooks';
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
@@ -104,50 +105,56 @@ const EncounterPreObservations = () => {
   return (
     <>
       {propsData?.patient && propsData?.encounter && (
-        <div >
-          <Panel header={<EncounterMainInfoSection patient={propsData.patient} encounter={propsData.encounter} />}>
-          </Panel>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ flexGrow: '4', borderRadius: '5px', border: '1px solid var(--background-gray)',minWidth:'1170px' }}>
+            <div >
+              <Panel >
+              </Panel>
 
-          <Panel>
-            <Form fluid layout='inline' style={{display:'flex',zoom:.8}}>
-            <ButtonToolbar style={{ marginLeft: 'auto' }}>
-              <IconButton
-                appearance="primary"
-                disabled={isEncounterStatusClosed || readOnly}
-                color="cyan"
-                icon={<CloseOutlineIcon />}
-                onClick={() => { handleCompleteEncounter() }}
-              >
-                <Translate>Complete Visit</Translate>
-              </IconButton>
-              <IconButton
-                appearance="primary"
-                color="blue"
-                icon={<CloseOutlineIcon />}
-                onClick={() => { navigate('/encounter-list') }}
-              >
-                <Translate>Close</Translate>
-              </IconButton>
-            </ButtonToolbar>
-            </Form>
-        
-            <Tabs defaultActiveKey="1" appearance="subtle">
+              <Panel>
+                <Form fluid layout='inline' style={{ display: 'flex', zoom: .8 }}>
+                  <ButtonToolbar style={{ marginLeft: 'auto' }}>
+                    <IconButton
+                      appearance="primary"
+                      disabled={isEncounterStatusClosed || readOnly}
+                      color="cyan"
+                      icon={<CloseOutlineIcon />}
+                      onClick={() => { handleCompleteEncounter() }}
+                    >
+                      <Translate>Complete Visit</Translate>
+                    </IconButton>
+                    <IconButton
+                      appearance="primary"
+                      color="blue"
+                      icon={<CloseOutlineIcon />}
+                      onClick={() => { navigate('/encounter-list') }}
+                    >
+                      <Translate>Close</Translate>
+                    </IconButton>
+                  </ButtonToolbar>
+                </Form>
+
+                <Tabs defaultActiveKey="1" appearance="subtle">
 
 
-              <Tabs.Tab eventKey="1" title="Observations">
-                <Observations patient={propsData.patient} encounter={propsData.encounter} />
-              </Tabs.Tab>
-              <Tabs.Tab eventKey="2" title="Allergies">
-                <Allergies edit={false} patient={propsData.patient} encounter={propsData.encounter} />
-              </Tabs.Tab>
-              <Tabs.Tab eventKey="3" title="Medical Warnings">
-                <Warning edit={false} patient={propsData.patient} encounter={propsData.encounter} />
-              </Tabs.Tab>
-              <Tabs.Tab eventKey="4" title="Vaccination">
-                <VaccinationTab disabled={isEncounterStatusClosed || readOnly} patient={propsData.patient} encounter={propsData.encounter} />
-              </Tabs.Tab>
-            </Tabs>
-          </Panel>
+                  <Tabs.Tab eventKey="1" title="Observations">
+                    <Observations patient={propsData.patient} encounter={propsData.encounter} />
+                  </Tabs.Tab>
+                  <Tabs.Tab eventKey="2" title="Allergies">
+                    <Allergies edit={false} patient={propsData.patient} encounter={propsData.encounter} />
+                  </Tabs.Tab>
+                  <Tabs.Tab eventKey="3" title="Medical Warnings">
+                    <Warning edit={false} patient={propsData.patient} encounter={propsData.encounter} />
+                  </Tabs.Tab>
+                  <Tabs.Tab eventKey="4" title="Vaccination">
+                    <VaccinationTab disabled={isEncounterStatusClosed || readOnly} patient={propsData.patient} encounter={propsData.encounter} />
+                  </Tabs.Tab>
+                </Tabs>
+              </Panel>
+            </div></div>
+          <div style={{ flexGrow: '1', borderRadius: '5px', border: '1px solid var(--background-gray)' }}>
+            <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
+          </div>
         </div>
       )}
     </>
