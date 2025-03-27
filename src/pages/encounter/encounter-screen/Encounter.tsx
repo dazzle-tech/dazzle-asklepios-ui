@@ -328,7 +328,7 @@ const Encounter = () => {
   return (
     <>
       <div style={{ display: 'flex', gap: '10px' }}>
-        <div style={{ flexGrow: '4', borderRadius: '5px', border: '1px solid var(--background-gray)' }}>
+        <div style={{ flexGrow: '4', borderRadius: '5px', border: '1px solid var(--background-gray)',width:'1170px' }}>
           <Panel >
             <Panel>
          
