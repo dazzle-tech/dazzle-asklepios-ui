@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Button, Panel, SelectPicker, Stack, Divider, Message, Modal, ButtonToolbar } from 'rsuite';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import Logo from '../../../images/suggested logo_2025 copy.svg';
+import Logo from '../../../images/Logo_BLUE_New.svg';
 import Background from '../../../images/medical-equipment-desk-with-copy-space.svg';
 import UserLogo from '../../../images/Login_ICon.svg';
 import './styles.less';

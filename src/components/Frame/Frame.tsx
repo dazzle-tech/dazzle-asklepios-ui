@@ -20,7 +20,7 @@ import NavToggle from './NavToggle';
 import Header from '../Header';
 import NavLink from '../NavLink';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import Logo from '../../images/suggested logo_2025 copy.svg';
+import Logo from '../../images/Logo_BLUE_New.svg';
 import { Breadcrumb } from 'rsuite';
 import Translate from '../Translate';
 import StackItem from 'rsuite/esm/Stack/StackItem';
