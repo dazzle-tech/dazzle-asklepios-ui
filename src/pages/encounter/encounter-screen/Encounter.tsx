@@ -81,13 +81,9 @@ import { useNavigate } from 'react-router-dom';
 import Dental from '../dental-screen';
 import {
   useCompleteEncounterMutation,
-  useStartEncounterMutation,
-  useSavePrescriptionMutation,
-  useGetPrescriptionsQuery
 } from '@/services/encounterService';
 import {
   useGetAllergiesQuery,
-  useSaveAllergiesMutation,
   useGetWarningsQuery
 } from '@/services/observationService';
 import { faHeartPulse } from '@fortawesome/free-solid-svg-icons';
