@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Form, Button, Panel, SelectPicker, Stack, Divider, Message, Modal, ButtonToolbar } from 'rsuite';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import Logo from '../../../images/Logo_BLUE_New.svg';
-import Background from '../../../images/medical-equipment-desk-with-copy-space.svg';
+import Background from '../../../images/BLUE2_WALLPAPER.svg';
 import UserLogo from '../../../images/PP-Person-Blue copy.svg';
 import './styles.less';
 import Translate from '@/components/Translate';
