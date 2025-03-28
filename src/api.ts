@@ -52,11 +52,23 @@ export const onQueryStarted = async (body, { dispatch, queryFulfilled }) => {
   try {
     const { data } = await queryFulfilled;
     console.log(data);
-    
-    if(data._responseMsg){
+
+    if (data._responseMsg) {
       dispatch(notify(data._responseMsg));
     }
   } catch (err) {
-    dispatch(notify({ msg: err.error?.data?.msg || 'Internal Server Error', sev: 'error' }));
+    console.log(err?.error?.status)
+    console.log(err)
+
+   
+
+    if (err?.error?.status == 422) {
+      dispatch(notify({ msg: err.error?.data?.message || 'Unprocessable Entity', sev: 'error' }));
+
+    }else {
+      dispatch(notify({ msg: err.error?.data?.msg || 'Internal Server Error', sev: 'error' }));
+
+    }
+
   }
 };
