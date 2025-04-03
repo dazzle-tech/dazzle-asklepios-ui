@@ -360,16 +360,55 @@ const PatientSummary = ({ patient, encounter }) => {
     };
 
     return (<>
-        <h5>Patient Dashboard</h5>
+
 
         <div className='patient-summary-container'>
 
 
+
+
+
+
             <div className='patient-summary-Column'>
+
+                <div className='patient-summary-panel' style={{ height: '520px' }} >
+                    {
+                        (patientAgeGroupResponse?.object?.key === '5945922992301153' ||
+                            patientAgeGroupResponse?.object?.key === '1790407842882435' ||
+                            patientAgeGroupResponse?.object?.key === '5946401407873394' ||
+                            patientAgeGroupResponse?.object?.key === '1375554380483561' ||
+                            patientAgeGroupResponse?.object?.key === '5945877765605378')
+                        && (
+                            patient?.genderLkey === '1' ? (
+                                <img className='image-style' src={ChildBoy} onClick={handleopenchartModel} />
+                            ) : (
+                                <img className='image-style' src={ChildGirl} onClick={handleopenchartModel} />
+                            )
+                        )
+                    }
+                    {
+                        (patientAgeGroupResponse?.object?.key === '1790428129203615' ||
+
+                            patientAgeGroupResponse?.object?.key === '1790525617633551')
+                        && (
+                            patient?.genderLkey === '1' ? (
+                                <img className='image-style' src={Male} onClick={handleopenchartModel} />
+                            ) : (
+                                <img className='image-style' src={Female} onClick={handleopenchartModel} />
+                            )
+                        )
+                    }
+
+
+
+                </div>
                 <div className='patient-summary-panel'>
 
-
-                    Previuos Visit
+                <div className='panel-header'>
+                        <Text className='title'>Previuos Visit</Text>
+                        
+                    </div>
+                    
                     <Form disabled layout="inline" fluid >
                         <MyInput
                             column
@@ -412,12 +451,20 @@ const PatientSummary = ({ patient, encounter }) => {
 
                 </div>
 
-                <div style={{ flex: 2 }} className='patient-summary-panel' onClick={handleopenMajoModel}>
-                    Patient Major Problem
-                    <Row gutter={15}>
+            </div>
+            <div className='patient-summary-Column'>
+
+
+                <div className='patient-summary-panel' >
+                    <div className='panel-header'>
+                        <Text className='title'>Patient Major Problem</Text>
+                        <Text className='full-view' onClick={handleopenMajoModel}>Full view</Text>
+                    </div>
+
+                    <Row >
                         <Col xs={24}>
                             <Table
-                                bordered
+
                                 data={majorDiagnosesCodes ?? []}
                                 onRowClick={rowData => {
 
@@ -441,12 +488,15 @@ const PatientSummary = ({ patient, encounter }) => {
 
                 </div>
 
-                <div style={{ flex: 2 }} className='patient-summary-panel' onClick={handleopenChronicModel}>
-                    Patient Chronic Medications
-                    <Row gutter={15}>
-                        <Col xs={24}>
+                <div className='patient-summary-panel' style={{ height: '523px' }} >
+                    
+                    <div className='panel-header'>
+                        <Text className='title'>Patient Chronic Medications</Text>
+                        <Text className='full-view' onClick={handleopenChronicModel}>Full view</Text>
+                    </div>  
+                     
                             <Table
-                                bordered
+                                height={500}
                                 data={combinedArray ?? []}
                                 onRowClick={rowData => {
 
@@ -508,57 +558,22 @@ const PatientSummary = ({ patient, encounter }) => {
                                 </Table.Column>
 
                             </Table>
-                        </Col>
-                    </Row>
+                        
+                    
                 </div>
-            </div>
-
-
-
-
-            <div className='patient-summary-Column'>
-
-                <div className='patient-summary-panel' >
-                    {
-                        (patientAgeGroupResponse?.object?.key === '5945922992301153' ||
-                            patientAgeGroupResponse?.object?.key === '1790407842882435' ||
-                            patientAgeGroupResponse?.object?.key === '5946401407873394' ||
-                            patientAgeGroupResponse?.object?.key === '1375554380483561' ||
-                            patientAgeGroupResponse?.object?.key === '5945877765605378')
-                        && (
-                            patient?.genderLkey === '1' ? (
-                                <img className='image-style' src={ChildBoy} onClick={handleopenchartModel} />
-                            ) : (
-                                <img className='image-style' src={ChildGirl} onClick={handleopenchartModel} />
-                            )
-                        )
-                    }
-                    {
-                        (patientAgeGroupResponse?.object?.key === '1790428129203615' ||
-
-                            patientAgeGroupResponse?.object?.key === '1790525617633551')
-                        && (
-                            patient?.genderLkey === '1' ? (
-                                <img className='image-style' src={Male} onClick={handleopenchartModel} />
-                            ) : (
-                                <img className='image-style' src={Female} onClick={handleopenchartModel} />
-                            )
-                        )
-                    }
-
-
-
-                </div>
-
             </div>
 
             <div className='patient-summary-Column'>
                 <div className='patient-summary-panel'>
-                    Active Allergies
+                <div className='panel-header'>
+                        <Text className='title'>Active Allergies</Text>
+                        
+                    </div>
+                
                     <Row gutter={10}>
                         <Col xs={24}>
                             <Table
-                                bordered
+
                                 data={allergiesListResponse?.object || []}
                                 onRowClick={rowData => {
 
@@ -568,12 +583,12 @@ const PatientSummary = ({ patient, encounter }) => {
                             >
 
                                 <Table.Column flexGrow={1} fullText>
-                                    <Table.HeaderCell style={{ fontSize: '10px' }} >Allergy Type</Table.HeaderCell>
+                                    <Table.HeaderCell  >Allergy Type</Table.HeaderCell>
                                     <Table.Cell>{rowData => rowData.allergyTypeLvalue?.lovDisplayVale}</Table.Cell>
 
                                 </Table.Column>
                                 <Table.Column flexGrow={1} fullText>
-                                    <Table.HeaderCell style={{ fontSize: '10px' }}>Allergene</Table.HeaderCell>
+                                    <Table.HeaderCell >Allergene</Table.HeaderCell>
                                     <Table.Cell>
 
                                         {rowData => {
@@ -587,7 +602,7 @@ const PatientSummary = ({ patient, encounter }) => {
                                         }}</Table.Cell>
                                 </Table.Column>
                                 <Table.Column flexGrow={1} fullText>
-                                    <Table.HeaderCell style={{ fontSize: '10px' }} >Onset Date</Table.HeaderCell>
+                                    <Table.HeaderCell  >Onset Date</Table.HeaderCell>
                                     <Table.Cell>
 
                                         {rowData => rowData.onsetDate ? new Date(rowData.onsetDate).toLocaleString() : "Undefind"}</Table.Cell>
@@ -598,11 +613,15 @@ const PatientSummary = ({ patient, encounter }) => {
                     </Row>
                 </div>
                 <div className='patient-summary-panel'>
-                    Medical Warnings
+                <div className='panel-header'>
+                        <Text className='title'>Medical Warnings</Text>
+                        
+                    </div>
+                    
                     <Row gutter={10}>
                         <Col xs={24}>
                             <Table
-                                bordered
+
                                 data={warningsListResponse?.object || []}
                                 onRowClick={rowData => {
 
@@ -612,15 +631,15 @@ const PatientSummary = ({ patient, encounter }) => {
                             >
 
                                 <Table.Column flexGrow={1} fullText>
-                                    <Table.HeaderCell style={{ fontSize: '10px' }}>Warning Type</Table.HeaderCell>
+                                    <Table.HeaderCell >Warning Type</Table.HeaderCell>
                                     <Table.Cell>{rowData => rowData.warningTypeLvalue?.lovDisplayVale}</Table.Cell>
                                 </Table.Column>
                                 <Table.Column flexGrow={1} fullText>
-                                    <Table.HeaderCell style={{ fontSize: '10px' }}>Warning</Table.HeaderCell>
+                                    <Table.HeaderCell >Warning</Table.HeaderCell>
                                     <Table.Cell>{rowData => rowData.warning}</Table.Cell>
                                 </Table.Column>
                                 <Table.Column flexGrow={1} fullText>
-                                    <Table.HeaderCell style={{ fontSize: '10px' }}>First Time Recorded</Table.HeaderCell>
+                                    <Table.HeaderCell >First Time Recorded</Table.HeaderCell>
                                     <Table.Cell>{rowData => rowData.firstTimeRecorded ? new Date(rowData.firstTimeRecorded).toLocaleString() : "Undefind"}</Table.Cell>
                                 </Table.Column>
 
@@ -629,11 +648,15 @@ const PatientSummary = ({ patient, encounter }) => {
                     </Row>
                 </div>
                 <div className='patient-summary-panel'>
-                    Recent Test Results
+                  <div className='panel-header'>
+                        <Text className='title'>Recent Test Results</Text>
+                        
+                    </div>
+                    
                     <Row gutter={10}>
                         <Col xs={24}>
                             <Table
-                                bordered
+
                                 onRowClick={rowData => {
 
                                 }}
@@ -642,19 +665,19 @@ const PatientSummary = ({ patient, encounter }) => {
                             >
 
                                 <Table.Column flexGrow={1}>
-                                    <Table.HeaderCell style={{ fontSize: '9px' }}> Type</Table.HeaderCell>
+                                    <Table.HeaderCell > Type</Table.HeaderCell>
                                     <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
                                 </Table.Column>
                                 <Table.Column flexGrow={1}>
-                                    <Table.HeaderCell style={{ fontSize: '9px' }}>Name</Table.HeaderCell>
+                                    <Table.HeaderCell >Name</Table.HeaderCell>
                                     <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
                                 </Table.Column>
                                 <Table.Column flexGrow={1}>
-                                    <Table.HeaderCell style={{ fontSize: '9px' }} >Order Time</Table.HeaderCell>
+                                    <Table.HeaderCell >Order Time</Table.HeaderCell>
                                     <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
                                 </Table.Column>
                                 <Table.Column flexGrow={1}>
-                                    <Table.HeaderCell style={{ fontSize: '9px' }}>Result Time</Table.HeaderCell>
+                                    <Table.HeaderCell >Result Time</Table.HeaderCell>
                                     <Table.Cell>{rowData => <Text>h</Text>}</Table.Cell>
                                 </Table.Column>
                             </Table>
@@ -666,33 +689,33 @@ const PatientSummary = ({ patient, encounter }) => {
                     <Modal.Title>Body Diagram</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                <div style={{height:'400px'}}>
-                {
-                        (patientAgeGroupResponse?.object?.key === '5945922992301153' ||
-                            patientAgeGroupResponse?.object?.key === '1790407842882435' ||
-                            patientAgeGroupResponse?.object?.key === '5946401407873394' ||
-                            patientAgeGroupResponse?.object?.key === '1375554380483561' ||
-                            patientAgeGroupResponse?.object?.key === '5945877765605378')
-                        && (
-                            patient?.genderLkey === '1' ? (
-                                <img className='image-style' src={ChildBoy} onClick={handleopenchartModel} />
-                            ) : (
-                                <img className='image-style' src={ChildGirl} onClick={handleopenchartModel}/>
+                    <div >
+                        {
+                            (patientAgeGroupResponse?.object?.key === '5945922992301153' ||
+                                patientAgeGroupResponse?.object?.key === '1790407842882435' ||
+                                patientAgeGroupResponse?.object?.key === '5946401407873394' ||
+                                patientAgeGroupResponse?.object?.key === '1375554380483561' ||
+                                patientAgeGroupResponse?.object?.key === '5945877765605378')
+                            && (
+                                patient?.genderLkey === '1' ? (
+                                    <img className='image-style' src={ChildBoy} onClick={handleopenchartModel} />
+                                ) : (
+                                    <img className='image-style' src={ChildGirl} onClick={handleopenchartModel} />
+                                )
                             )
-                        )
-                    }
-                    {
-                        (patientAgeGroupResponse?.object?.key === '1790428129203615' ||
+                        }
+                        {
+                            (patientAgeGroupResponse?.object?.key === '1790428129203615' ||
 
-                            patientAgeGroupResponse?.object?.key === '1790525617633551')
-                        && (
-                            patient?.genderLkey === '1' ? (
-                                <img className='image-style' src={Male} onClick={handleopenchartModel} />
-                            ) : (
-                                <img className='image-style' src={Female} onClick={handleopenchartModel} />
+                                patientAgeGroupResponse?.object?.key === '1790525617633551')
+                            && (
+                                patient?.genderLkey === '1' ? (
+                                    <img className='image-style' src={Male} onClick={handleopenchartModel} />
+                                ) : (
+                                    <img className='image-style' src={Female} onClick={handleopenchartModel} />
+                                )
                             )
-                        )
-                    }
+                        }
                     </div>
                 </Modal.Body>
                 <Modal.Footer style={{ display: "flex", justifyContent: "flex-start" }}>
@@ -714,7 +737,7 @@ const PatientSummary = ({ patient, encounter }) => {
                     <Row gutter={15}>
                         <Col xs={24}>
                             <Table
-                                bordered
+
                                 data={majorDiagnosesCodes ?? []}
                                 onRowClick={rowData => {
 
@@ -766,7 +789,7 @@ const PatientSummary = ({ patient, encounter }) => {
                 <Modal.Body>
 
                     <Table
-                        bordered
+
                         data={combinedArray ?? []}
                         onRowClick={rowData => {
 
