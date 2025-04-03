@@ -13,7 +13,6 @@
   flex: 1;
   display: flex;
   flex-direction: column;
- 
   gap: 13px;
 }
 
@@ -72,17 +71,21 @@
 
 }
 @media (max-width: 1200px) {
-  .image-style ,.title,.panel-header,.patient-summary-panel,.patient-summary-Column{
-zoom:0.90
+  .image-style{
+    height: 500px;
   }
+   .title{
+    line-height: 18;
+   }
+   .panel-header{
+    width: 348px;
+  height: 18px;
+   }
+   .patient-summary-panel{
+    height: 250px;
+    width: 350px;
+   }
+   
 }
-@media (max-width: 1000px) {
-  .image-style ,.title,.panel-header,.patient-summary-panel,.patient-summary-Column{
-zoom:0.85
-  }
-}
-@media (max-width: 400px) {
-  .image-style ,.title,.panel-header,.patient-summary-panel,.patient-summary-Column{
-zoom:0.80
-  }
-}
+
+
