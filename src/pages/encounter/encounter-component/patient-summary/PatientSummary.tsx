@@ -359,15 +359,10 @@ const PatientSummary = ({ patient, encounter }) => {
         return values.filter(Boolean).join(', ');
     };
 
-    return (<>
+    return (
 
 
         <div className='patient-summary-container'>
-
-
-
-
-
 
             <div className='patient-summary-Column'>
 
@@ -881,7 +876,7 @@ const PatientSummary = ({ patient, encounter }) => {
                 </Modal.Footer>
             </Modal>
         </div >
-    </>);
+    );
 };
 export default PatientSummary;
 
