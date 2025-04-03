@@ -1,0 +1,29 @@
+.container {
+    display: flex;
+   
+  }
+
+  .left-box {
+    flex: 4;
+    min-width: 300px;
+    flex-basis: 80% ;
+  
+  }
+  
+  .right-box {
+    flex: 1;
+    min-width: 200px;
+    flex-basis: 20%;
+   
+  }
+
+
+  @media (max-width: 768px) {
+    .container {
+      flex-direction: column;
+    }
+    .left-box, .right-box {
+      flex-basis: 100%;
+      width: 100%;
+    }
+  }
