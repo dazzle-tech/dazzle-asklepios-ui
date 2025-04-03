@@ -113,6 +113,7 @@ import {
 import { initialListRequest, ListRequest, ListRequestAllValues, initialListRequestAllValues } from '@/types/types';
 import { ApDiagnosticTestLaboratory } from '@/types/model-types';
 import PatientSide from './PatienSide';
+import './styles.less';
 const Lab = () => {
   const dispatch = useAppDispatch();
   const [selectedCriterion, setSelectedCriterion] = useState('');
@@ -796,10 +797,10 @@ const Lab = () => {
   };
 
 
-  return (<div>
+  return (<>
 
-    <Row>
-      <Col xs={21} >
+<div className='container'>
+      <div className='left-box' >
 
 
         <Row>
@@ -946,14 +947,14 @@ const Lab = () => {
                 placeholder="From Date"
                 value={dateFilter.fromDate}
                 onChange={e => setDateFilter({ ...dateFilter, fromDate: e })}
-                style={{ width: '230px', marginRight: '5px',fontFamily:'Inter' ,fontSize:'14px' }}
+                style={{ width: '230px', marginRight: '5px',fontFamily:'Inter' ,fontSize:'14px',height:'30px' }}
               />
               <DatePicker
                 oneTap
                 placeholder="To Date"
                 value={dateFilter.toDate}
                 onChange={e => setDateFilter({ ...dateFilter, toDate: e })}
-                style={{ width: '230px', marginRight: '5px',fontFamily:'Inter' ,fontSize:'14px' }}
+                style={{ width: '230px', marginRight: '5px',fontFamily:'Inter' ,fontSize:'14px',height:'30px' }}
               />
 
             </Row>
@@ -1067,7 +1068,7 @@ const Lab = () => {
                     {rowData => {
                       const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)
                       if (cat) {
-                        return cat.categoryLvalue.lovDisplayVale
+                        return cat?.categoryLvalue?.lovDisplayVale
                       }
                       return "";
                     }}
@@ -1927,12 +1928,12 @@ const Lab = () => {
           }
         </Row>
 
-      </Col>
+      </div>
 
-      <Col style={{ border: '1px solid #e5e5ea', height: '87vh' }} xs={3}>
+      <div className='right-box' >
         <PatientSide patient={patient} encounter={encounter} />
-      </Col>
-    </Row>
+      </div>
+    </div>
 
     <Modal open={openNoteModal} onClose={() => setOpenNoteModal(false)} size="xs">
       <Modal.Header>
@@ -2319,6 +2320,6 @@ const Lab = () => {
         </Button>
       </Modal.Footer>
     </Modal>
-  </div>)
+  </>)
 }
 export default Lab;
