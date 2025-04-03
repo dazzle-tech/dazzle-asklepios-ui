@@ -149,7 +149,7 @@ const PatientSide = ({ patient, encounter }) => {
             </Text>
             <br />
 
-            <div style={{ display: 'flex', gap: '10px', width: '230px' }}>
+            <div style={{ display: 'flex', gap: '10px', width: '230px' ,height:'35px' }}>
                 <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
                     <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Document No</Text>
                     <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}>
@@ -173,7 +173,7 @@ const PatientSide = ({ patient, encounter }) => {
             </Text>
             <br />
 
-            <div style={{ display: 'flex', gap: '10px', width: '230px' }}>
+            <div style={{ display: 'flex', gap: '10px', width: '230px',height:'35px' }}>
                 <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
                     <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Age</Text>
                     <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}>
@@ -257,7 +257,7 @@ const PatientSide = ({ patient, encounter }) => {
             </Text>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <br />
-                <div style={{ display: 'flex', gap: '10px', width: '230px' }}>
+                <div style={{ display: 'flex', gap: '10px', width: '230px',height:'35px' }}>
                     <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
                         <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Visit Date</Text>
                         <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}>
@@ -274,7 +274,7 @@ const PatientSide = ({ patient, encounter }) => {
 
                     </div>
                 </div>
-                <div style={{ display: 'flex', gap: '10px', width: '230px' }}>
+                <div style={{ display: 'flex', gap: '10px', width: '230px',height:'35px' }}>
                     <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
                         <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Visit Type</Text>
                         <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}>
@@ -291,7 +291,7 @@ const PatientSide = ({ patient, encounter }) => {
 
                     </div>
                 </div>
-                <div style={{ display: 'flex', gap: '10px', width: '230px' }}>
+                <div style={{ display: 'flex', gap: '10px', width: '230px',height:'35px' }}>
                     <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
                         <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Reason</Text>
                         <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}>
