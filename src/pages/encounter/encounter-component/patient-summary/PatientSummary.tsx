@@ -359,7 +359,9 @@ const PatientSummary = ({ patient, encounter }) => {
         return values.filter(Boolean).join(', ');
     };
 
+
     return (
+
 
 
         <div className='patient-summary-container'>
