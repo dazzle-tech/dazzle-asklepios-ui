@@ -1961,13 +1961,14 @@ const PatientProfileCopy = () => {
                                                 border: '1px solid #f0f0f0',
                                                 borderRadius: '8px',
                                                 padding: '15px',
-                                                boxShadow: '3px 10px 3px rgba(0, 177, 204, 0.1)',
+                                               backgroundColor:'white',
+                                               
 
 
                                             }}>
                                                 <Row gutter={15}>
                                                     <Col xs={19}>
-                                                        <Row><Avatar circle color="cyan" src={
+                                                        <Row><Avatar circle  src={
                                                             patient?.attachmentProfilePicture?.fileContent
                                                                 ? `data:${patient?.attachmentProfilePicture?.contentType};base64,${patient?.attachmentProfilePicture?.fileContent}`
                                                                 : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
@@ -1988,7 +1989,7 @@ const PatientProfileCopy = () => {
 
                                                         <br />
                                                         <br />
-                                                        <Row><Button appearance="ghost" style={{ color: ' #00b1cc', border: '1px solid  #00b1cc' }} onClick={() => setLocalPatient(patient)} >
+                                                        <Row><Button appearance="ghost" style={{ color: 'var(--primary-blue)', border: '1px solid  var(--primary-blue)' }} onClick={() => setLocalPatient(patient)} >
                                                             <ArrowLeftLineIcon style={{ width: '10px', height: '10px' }} />
                                                         </Button>
                                                         </Row>
