@@ -27,13 +27,13 @@ const DynamicLineChart = props => {
         {
           data: values,
           label: props.title ? props.title : 'Untitled',
-          borderColor: 'rgba(75,192,192,1)',
-          backgroundColor: 'rgba(75,192,192,0.2)',
+          borderColor:"#2264E5",
+          backgroundColor:"#93c6fa72",
           fill: true,
           pointStyle: 'circle',
           pointRadius: 4,
           pointBorderWidth: 2,
-          pointBorderColor: 'rgba(75,192,192,1)'
+          pointBorderColor: "#2264E5"
         }
       ];
 

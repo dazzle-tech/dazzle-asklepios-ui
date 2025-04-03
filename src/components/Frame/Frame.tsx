@@ -91,8 +91,8 @@ const Frame = (props: FrameProps) => {
         <Sidenav.Header>
 
         </Sidenav.Header>
-        <Sidenav expanded={expand} appearance="subtle" defaultOpenKeys={['2', '3']}>
-          <Sidenav.Body style={navBodyStyle}>
+        <Sidenav expanded={expand} appearance="subtle" defaultOpenKeys={['2', '3']} style={{zoom: expand ? 0.85 : 1}}>
+          <Sidenav.Body style={navBodyStyle}> 
             <Nav>
               {expand&&<img
                 onClick={() => {
@@ -118,7 +118,8 @@ const Frame = (props: FrameProps) => {
                style={{
                  display: 'flex',
                  alignItems: 'center',
-                 marginLeft: '15px',
+                 marginLeft: '35px',
+                 justifyContent:'center',
                  padding: '12px 15px',
                  borderRadius: '15px',
                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)', 
@@ -146,8 +147,7 @@ const Frame = (props: FrameProps) => {
                 const { children, ...rest } = item;
                 if (children) {
                   return (
-                    <Nav.Menu key={item.eventKey} placement="rightStart" trigger="hover" {...rest} style={{ zoom: expand ? 0.8 : 1 }}
->
+                    <Nav.Menu key={item.eventKey} placement="rightStart" trigger="hover" {...rest} >
                       {children.map(child => {
                         return (
                           <NavItem
@@ -166,7 +166,7 @@ const Frame = (props: FrameProps) => {
 
                 if (rest.target === '_blank') {
                   return (
-                    <Nav.Item key={item.eventKey} {...rest}>
+                    <Nav.Item key={item.eventKey} {...rest} style={{ zoom: expand ? 0.8 : 1 }}>
                       {item.title}
                     </Nav.Item>
                   );
@@ -181,7 +181,7 @@ const Frame = (props: FrameProps) => {
       </Sidebar>
 
       <Container className={containerClasses}  >
-        <Header expand={expand} setExpand={setExpand} />
+        <Header expand={expand} setExpand={setExpand}  />
         <Content style={{ marginTop: '15px' }}>
           {/* <Breadcrumb>
             <Breadcrumb.Item onClick={() => navigate('/')}>
