@@ -181,7 +181,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
          const filteredList = resourceAvailabilityTimeListResponse.object.filter(item => 
             item.resourceKey === localEncounter.resourceKey && 
             item.departmentKey 
-            && item.dayLvalue.lovDisplayVale === today //Day match
+            && item.dayLvalue?.lovDisplayVale === today //Day match
         );
     
         console.log("Filtered List (By Resource and Day):", filteredList);
