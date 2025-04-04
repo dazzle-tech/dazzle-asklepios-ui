@@ -43,12 +43,12 @@ import {
 import { initialListRequest, ListRequest } from '@/types/types';
 import MyLabel from '@/components/MyLabel';
 import { calculateAgeFormat, fromCamelCaseToDBName } from '@/utils';
-import { useGetResourcesQuery } from '@/services/appointmentService';
+import { useGetResourcesAvailabilityTimeQuery, useGetResourcesQuery } from '@/services/appointmentService';
 const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuickAppointmentModel, localVisit }) => {
     const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
     const dispatch = useAppDispatch();
     const [openModelPayment, setOpenModelPayment] = React.useState(false);
-    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter,visitTypeLkey:'2041082245699228', patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob) });
+    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter, visitTypeLkey: '2041082245699228', patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob) });
     const [validationResult, setValidationResult] = useState({});
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
@@ -88,7 +88,11 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
     const handleClosePaymentModel = () => setOpenModelPayment(false);
     const handleSavePayment = () => {
         setOpenModelPayment(false);
-     };
+    };
+    const [resourcesAvailabilityTimeListRequest, setResourcesAvailabilityTimeListRequest] = useState<ListRequest>({ ...initialListRequest });
+
+    const { data: resourceAvailabilityTimeListResponse, refetch: availabilityRefetch } = useGetResourcesAvailabilityTimeQuery({...resourcesAvailabilityTimeListRequest,pageSize:10000});
+    const [uniqueDepartmentKeys, setUniqueDepartmentKeys] = useState([]);
 
     useEffect(() => {
         if (localEncounter?.resourceTypeLkey) {
@@ -110,13 +114,13 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                 visitTypeLkey: ['2039534205961578', '2039516279378421'].includes(localEncounter.resourceTypeLkey) ? '2041082245699228' : null
 
 
-            }).unwrap().then(()=>{
+            }).unwrap().then(() => {
                 setQuickAppointmentModel(false)
             }).catch((e) => {
 
                 if (e.status === 422) {
                     console.log("Validation error: Unprocessable Entity", e);
-                    //dispatch(notify({ msg: 'Patient Already Registered on this Resource.', sev: 'error' }));
+                    dispatch(notify({ msg: 'Patient Already Registered on this Resource.', sev: 'error' }));
 
                 } else {
                     console.log("An unexpected error occurred", e);
@@ -166,6 +170,35 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
             setIsReadOnly(true);
         }
     }, [localVisit]);
+
+    useEffect(() => {
+        if (!localEncounter?.resourceKey || !resourceAvailabilityTimeListResponse) return;
+    
+        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }); 
+        
+        console.log("Today is:", today);
+        
+         const filteredList = resourceAvailabilityTimeListResponse.object.filter(item => 
+            item.resourceKey === localEncounter.resourceKey && 
+            item.departmentKey 
+            && item.dayLvalue.lovDisplayVale === today //Day match
+        );
+    
+        console.log("Filtered List (By Resource and Day):", filteredList);
+    
+        const departmentKeys = filteredList.map(item => item.departmentKey?.toString().trim());
+    
+        console.log("Before Set:", departmentKeys);
+    
+        const uniqueDepartmentKeys = Array.from(new Set(departmentKeys));
+        
+        console.log("Unique Department Keys:", uniqueDepartmentKeys);
+    
+        setUniqueDepartmentKeys(uniqueDepartmentKeys);
+    
+    }, [localEncounter, resourceAvailabilityTimeListResponse]);
+    
+
     return (
         <>
             <Panel>
@@ -531,7 +564,9 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                     width={165}
                                                     fieldType="select"
                                                     fieldName="departmentKey"
-                                                    selectData={departmentListResponse?.object ?? []}
+                                                    selectData={departmentListResponse?.object?.filter(dept => 
+                                                        uniqueDepartmentKeys.includes(dept.key)
+                                                    ) ?? []}                                              
                                                     selectDataLabel="name"
                                                     selectDataValue="key"
                                                     record={localEncounter}
@@ -551,7 +586,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                 selectDataLabel="lovDisplayVale"
                                                 selectDataValue="key"
                                                 record={localEncounter}
-                                                setRecord={() => {}} // No updates allowed
+                                                setRecord={() => { }} // No updates allowed
                                                 disabled={isReadOnly}
                                             />
 

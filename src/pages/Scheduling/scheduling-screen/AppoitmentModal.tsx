@@ -477,7 +477,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
         periodsData?.forEach((item) => {
             const resourceKey = item.resourceKey;
-            const day = item.dayLvalue.lovDisplayVale;
+            const day = item.dayLvalue?.lovDisplayVale;
             const period = {
                 startTime: item.startTime,
                 endTime: item.endTime,
@@ -495,9 +495,9 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                 periods: periods,
             }))
         );
-        console.log(availabilityPickerData)
+        console.log(availabilityPickerData??[])
 
-        setAvailabilDays(availabilityPickerData);
+        setAvailabilDays(availabilityPickerData??[]);
     };
 
 
