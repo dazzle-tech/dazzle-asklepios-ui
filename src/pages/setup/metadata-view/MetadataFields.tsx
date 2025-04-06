@@ -46,11 +46,11 @@ const MetadataFields = ({ metadata, goBack, ...props }) => {
     <>
       {metadata && metadata.key && (
         <Panel
-        // header={
-        //   <h3 className="title">
-        //     <Translate> Metadata Fields for </Translate> <i>{metadata?.metadataName ?? ''}</i>
-        //   </h3>
-        // }
+        header={
+          <p >
+            <Translate> Metadata Fields for </Translate> <i>{metadata?.objectName ?? ''}</i>
+          </p>
+        }
         >
           <div style={{ display: 'flex', gap: '20px', marginBottom: '10px' }}>
             <MyButton
@@ -58,6 +58,9 @@ const MetadataFields = ({ metadata, goBack, ...props }) => {
               color="var(--deep-blue)"
               ghost
               onClick={goBack}
+              width='82px'
+              height='40px'
+              
             >
               Back
             </MyButton>

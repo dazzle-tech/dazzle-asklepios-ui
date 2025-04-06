@@ -323,10 +323,12 @@ const DVM = () => {
               </div>
               <div style={{ marginRight: '30px' }}>
                 <MyButton
-                  //  disabled={!recordOfScreenMetaData["screenMetadataKey"]}
+                   disabled={!recordOfScreenMetaData["screenMetadataKey"]}
                   prefixIcon={() => <AddOutlineIcon />}
                   color="var(--deep-blue)"
                   onClick={handleNew}
+                  width='109px'
+                  height='32px'
                 >
                   Add New
                 </MyButton>
@@ -346,7 +348,6 @@ const DVM = () => {
                   sortType
                 });
             }}
-            cellBordered
             data={dvmRulesListResponse?.object ?? []}
             onRowClick={rowData => {
               setDvmRule(rowData);

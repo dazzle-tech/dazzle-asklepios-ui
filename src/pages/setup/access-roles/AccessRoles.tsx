@@ -182,6 +182,8 @@ const AccessRoles = () => {
               prefixIcon={() => <AddOutlineIcon />}
               color="var(--deep-blue)"
               onClick={handleNew}
+              width ="109px"
+              height ="32px"
             >
               Add New
             </MyButton>
@@ -339,26 +341,23 @@ const AccessRoles = () => {
             </Form>
           </Modal.Body>
           <Modal.Footer>
-            {/* <Stack spacing={2} divider={<Divider vertical />}>
-              <Button appearance="primary" onClick={handleSave}>
-                Save
-              </Button>
-              <Button appearance="primary" color="red" onClick={() => setPopupOpen(false)}>
-                Cancel
-              </Button>
-            </Stack> */}
              <Stack
                             style={{ display: 'flex', justifyContent: 'flex-end' }}
                             spacing={2}
                             divider={<Divider vertical />}
                           >
-                            <MyButton ghost color="var(--deep-blue)" onClick={() => setPopupOpen(false)}>
+                            <MyButton ghost color="var(--deep-blue)" onClick={() => setPopupOpen(false)}
+                            width='78px'
+                            height='40px'
+                              >
                               Cancel
                             </MyButton>
                             <MyButton
                               prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                               color="var(--deep-blue)"
                               onClick={handleSave}
+                              width="93px"
+                              height="40px"
                             >
                               {operationState === 'New' ? 'Create' : 'Save'}
                             </MyButton>

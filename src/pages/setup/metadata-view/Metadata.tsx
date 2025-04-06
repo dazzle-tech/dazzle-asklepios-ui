@@ -99,8 +99,6 @@ const Metadata = () => {
                 sortType
               });
           }}
-          // bordered
-          cellBordered
           data={metadataListResponse?.object ?? []}
           onRowClick={rowData => {
             setMetadata(rowData);
