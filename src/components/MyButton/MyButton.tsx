@@ -9,9 +9,12 @@ const MyButton = ({ prefixIcon: Prefix=null, postfixIcon: Postfix = null, childr
         <Button
         className="bt"
             appearance={props.ghost ? "ghost" : "primary"}
+            disabled={props.disabled}
             style={{
                 color: props.ghost ? props.color ?? "var(--primary-blue)" : 'white',
                 width: props.width,
+                height:props.height,
+                borderRadius:props.radius,
                 backgroundColor: props.ghost ? 'white' : props.color ?? "var(--primary-blue)",
                 border: props.ghost ? `2px solid ${props.color ?? "var(--primary-blue)"}` : 'none', 
                 transition: "all 0.3s ease",
