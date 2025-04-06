@@ -6,6 +6,7 @@ import {
     ApDiagnosticOrderTestsNotes,
     ApDiagnosticOrderTestsResult,
     ApDiagnosticOrderTestsSamples,
+    ApLabResultLog
 } from '@/types/model-types';
 export const labService = createApi({
     reducerPath: 'labApi',
@@ -114,6 +115,24 @@ export const labService = createApi({
             transformResponse: (response: any) => response.object,
             keepUnusedDataFor: 5
         }),
+        getLabResultLogList: builder.query({
+            query: (listRequest: ListRequest) => ({
+                url: `/lab/lab-order-test-list?${fromListRequestToQueryParams(listRequest)}`
+            }),
+            onQueryStarted: onQueryStarted,
+            keepUnusedDataFor: 5
+        }),
+        saveLabResultLog: builder.mutation({
+            query: (log: ApLabResultLog) => ({
+                url: `/lab/save-lab-result-log`,
+                method: 'POST',
+                body: log
+            }),
+            onQueryStarted: onQueryStarted,
+            transformResponse: (response: any) => {
+                return response.object;
+            }
+        }),
     })
 });
 export const {
@@ -126,5 +145,7 @@ export const {
     useGetDiagnosticOrderTestResultQuery,
     useSaveDiagnosticOrderTestResultMutation,
     useGetResultNormalRangeQuery,
-    useSaveDiagnosticTestResultMutation
+    useSaveDiagnosticTestResultMutation,
+    useGetLabResultLogListQuery,
+    useSaveLabResultLogMutation
 } = labService;

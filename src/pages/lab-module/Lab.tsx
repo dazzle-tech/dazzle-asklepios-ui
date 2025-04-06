@@ -28,7 +28,7 @@ import {
   ,
   faPrint
   ,
-  faComments,
+  faFileLines,
   faVialCircleCheck,
   faDiagramPredecessor,
   faFilter,
@@ -82,7 +82,9 @@ import {
   useGetDiagnosticOrderTestResultQuery,
   useSaveDiagnosticOrderTestResultMutation,
   useGetResultNormalRangeQuery,
-  useSaveDiagnosticTestResultMutation
+  useSaveDiagnosticTestResultMutation,
+  useGetLabResultLogListQuery,
+  useSaveLabResultLogMutation
 } from '@/services/labService';
 import { addFilterToListRequest, formatDate, fromCamelCaseToDBName, getNumericTimestamp } from '@/utils';
 
@@ -101,6 +103,7 @@ import {
   newApDiagnosticOrderTestsSamples,
   newApDiagnosticTestLaboratory,
   newApEncounter,
+  newApLabResultLog,
   newApPatient
 } from '@/types/model-types-constructor';
 const { Column, HeaderCell, Cell } = Table;
@@ -116,6 +119,8 @@ import PatientSide from './PatienSide';
 import './styles.less';
 const Lab = () => {
   const dispatch = useAppDispatch();
+  const uiSlice = useAppSelector(state => state.auth);
+  const [localUser, setLocalUser] = useState(uiSlice?.user);
   const [selectedCriterion, setSelectedCriterion] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [openorders, setOpenOrders] = useState(false);
@@ -123,7 +128,7 @@ const Lab = () => {
   const [openRejectedModal, setOpenRejectedModal] = useState(false);
   const [openRejectedResultModal, setOpenRejectedResultModal] = useState(false);
   const [currentStep, setCurrentStep] = useState("6055029972709625");
-
+  const [openLogModal, setOpenLogModal] = useState(false)
   const [encounter, setEncounter] = useState({ ...newApEncounter });
   const [showFilterInput, setShowFilterInput] = useState(false);
   const [showResultInput, setShowResultInput] = useState(false);
@@ -140,7 +145,19 @@ const Lab = () => {
     ...initialListRequest
 
   });
+  const [listLogRequest, setListLogRequest] = useState({
+    ...initialListRequest,
+    filters: [
+      {
 
+        fieldName: "result_key",
+        operator: "match",
+        value: result?.key ?? undefined,
+
+      }
+    ]
+
+  })
   const { data: ValueUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
   const { data: SampleContainerLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_SAMPLE_CONTAINER');
   const { data: LabTubeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_TYPES');
@@ -150,7 +167,7 @@ const Lab = () => {
   const { data: messagesList, refetch: fecthNotes } = useGetOrderTestNotesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
   const { data: messagesResultList, refetch: fecthResultNotes } = useGetOrderTestResultNotesByResultIdQuery(result?.key || undefined, { skip: result.key == null });
   const { data: samplesList, refetch: fecthSample } = useGetOrderTestSamplesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
-
+  const { data: resultLogList, refetch: fetchLogs, isFetching: fetchLog } = useGetLabResultLogListQuery({ ...listLogRequest })
   const [testProfileKey, setTestProfileKey] = useState('')
 
 
@@ -244,7 +261,7 @@ const Lab = () => {
 
     ],
   });
-  const { data: resultsList, refetch: resultFetch, isResultsFetcing } = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
+  const { data: resultsList, refetch: resultFetch } = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
   const { data: prevResultsList, refetch: prevResultFetch } = useGetDiagnosticOrderTestResultQuery({ ...listPrevResultResponse });
   const [labDetails, setLabDetails] = useState<ApDiagnosticTestLaboratory>({ ...newApDiagnosticTestLaboratory })
   const isSelected = rowData => {
@@ -271,7 +288,7 @@ const Lab = () => {
   const [saveNewResult] = useSaveDiagnosticTestResultMutation();
   const [saveResult] = useSaveDiagnosticOrderTestResultMutation();
   const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
-
+  const [saveResultLog, saveResultLogMutation] = useSaveLabResultLogMutation();
   const endOfMessagesRef = useRef(null);
   useEffect(() => {
     if (endOfMessagesRef.current) {
@@ -379,10 +396,25 @@ const Lab = () => {
   }, [test]);
 
   useEffect(() => {
-
     resultFetch();
-  }, [result]);
+    const updatedFilter = [
+      {
 
+        fieldName: "result_key",
+        operator: "match",
+        value: result?.key ?? undefined,
+
+      }
+    ];
+    setListLogRequest((prevRequest) => ({
+      ...prevRequest,
+      filters: updatedFilter,
+    }));
+    fetchLogs();
+  }, [result]);
+  useEffect(() => {
+    fetchLogs();
+  }, [saveResultLogMutation])
   useEffect(() => {
     handleManualSearch();
   }, []);
@@ -725,9 +757,7 @@ const Lab = () => {
     if (v) {
       const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
       saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' , resultLkey: String(value)}).unwrap();
-
-
-
+      saveResultLog({ ...newApLabResultLog, resultKey: result?.key, createdBy: localUser.fullName, resultValue:v.lovDisplayVale  }).unwrap();
       setTest({ ...newApDiagnosticOrderTests });
 
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
@@ -737,10 +767,10 @@ const Lab = () => {
 
     }
     else {
+    
       const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
       saveResult({ ...result, marker: "6730122218786367", statusLkey: '265123250697000', resultLkey: String(value) }).unwrap();
-
-
+      saveResultLog({ ...newApLabResultLog, resultKey: result?.key, createdBy: localUser.fullName, resultValue:lovValues?.object?.find(lov => lov.key === value)?.lovDisplayVale }).unwrap();
       setTest({ ...newApDiagnosticOrderTests });
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
       setTest({ ...Response });
@@ -1340,8 +1370,9 @@ const Lab = () => {
                           />
                         ) : (
                           <span>
-                            {rowData.resultLvalue ? rowData.resultLvalue.lovDisplayVale : rowData?.resultLkey}
+                            
                             <FontAwesomeIcon onClick={() => setActiveRowKey(rowData.key)} icon={faPenToSquare} style={{ fontSize: "1em", marginLeft: "5px", cursor: "pointer" }} />
+                            {rowData.resultLvalue ? rowData.resultLvalue.lovDisplayVale : rowData?.resultLkey}
                           </span>
                         );
                       }
@@ -1356,7 +1387,9 @@ const Lab = () => {
 
                           }}
                           onPressEnter={async (event) => {
-                            await saveResult({ ...result }).unwrap();
+                            const Respons = await saveResult({ ...result }).unwrap();
+                            setResult({ ...Respons });
+                            saveResultLog({ ...newApLabResultLog, resultKey: result?.key, createdBy: localUser.fullName, resultValue: result.resultValueNumber })
                             setActiveRowKey(null)
                             if (rowData.normalRange?.normalRangeTypeLkey == "6221150241292558") {
 
@@ -1556,7 +1589,7 @@ const Lab = () => {
 
                           const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
                           saveResult({ ...result }).unwrap();
-
+                          saveResultLog({ ...newApLabResultLog, resultKey: result?.key, createdBy: localUser.fullName, resultValue: result.resultText });
                           setTest({ ...newApDiagnosticOrderTests });
                           dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                           setTest({ ...Response });
@@ -1772,7 +1805,7 @@ const Lab = () => {
                 </HeaderCell>
                 <Cell >
                   {rowData => (
-                    <HStack spacing={10}>
+                    <HStack spacing={5}>
                       <Whisper
                         placement="top"
                         trigger="hover"
@@ -1892,6 +1925,14 @@ const Lab = () => {
                               dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
                             }
                           }} />
+                      </Whisper>
+                      <Whisper
+                        placement="top"
+                        trigger="hover"
+                        speaker={<Tooltip>Log</Tooltip>}
+                      >
+                        <FontAwesomeIcon icon={faFileLines} style={{ fontSize: '1em', marginRight: '5px', color: rowData.reviewAt ? '#e0a500' : "#343434" }}
+                          onClick={() => setOpenLogModal(true)} />
                       </Whisper>
 
                     </HStack>
@@ -2315,6 +2356,55 @@ const Lab = () => {
           appearance="ghost"
           color="cyan"
           onClick={() => setOpenRejectedResultModal(false)}
+        >
+          Cancel
+        </Button>
+      </Modal.Footer>
+    </Modal>
+    <Modal open={openLogModal} onClose={() => setOpenLogModal(false)} size="md">
+      <Modal.Header>
+        <Modal.Title>  </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Table
+          data={resultLogList?.object ?? []}
+          loading={fetchLog}
+        >
+          <Column flexGrow={1} fullText>
+            <HeaderCell>
+              <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
+              <Translate>RESULT </Translate>
+            </HeaderCell>
+            <Cell  >
+              {rowData => rowData.resultValue}
+            </Cell>
+          </Column>
+          <Column flexGrow={1} fullText>
+            <HeaderCell>
+              <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
+              <Translate>Time </Translate>
+            </HeaderCell>
+            <Cell  >
+              {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}
+            </Cell>
+          </Column>
+          <Column flexGrow={1} fullText>
+            <HeaderCell>
+              <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
+              <Translate>log </Translate>
+            </HeaderCell>
+            <Cell  >
+              {rowData => rowData.createdBy}
+            </Cell>
+          </Column>
+        </Table>
+      </Modal.Body>
+      <Modal.Footer style={{ display: "flex", justifyContent: 'flex-end' }}>
+        
+        <Button
+          appearance="ghost"
+          color="cyan"
+          onClick={() => setOpenLogModal(false)}
         >
           Cancel
         </Button>

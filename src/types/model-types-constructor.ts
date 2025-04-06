@@ -1471,6 +1471,19 @@ export const newApIcdCode:modelTypes.ApIcdCode = {
 	isValid:undefined,
 } 
 
+export const newApLabResultLog:modelTypes.ApLabResultLog = { 
+	key:undefined,
+	resultKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+	resultValue:'',
+} 
+
 export const newApLanguages:modelTypes.ApLanguages = { 
 	key:undefined,
 	languageCode:'',

@@ -1470,6 +1470,19 @@ export interface ApIcdCode {
 	isValid:boolean;
 } 
 
+export interface ApLabResultLog { 
+	key:string;
+	resultKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	resultValue:string;
+} 
+
 export interface ApLanguages { 
 	key:string;
 	languageCode:string;
