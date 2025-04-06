@@ -326,10 +326,10 @@ const Encounter = () => {
 
 
   return (
-    <>
+    
       <div className='container'>
         <div className='left-box'>
-          <Panel >
+         
             <Panel>
               <div className='container-bt'>
                 <div className='left'>
@@ -802,7 +802,7 @@ const Encounter = () => {
               onSave={refitchAppointments}
               showOnly={showAppointmentOnly}
             />
-          </Panel></div>
+          </div>
 
         <div className='right-box'>
           <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
@@ -812,7 +812,7 @@ const Encounter = () => {
 
 
 
-    </>
+    
   );
 };
 
