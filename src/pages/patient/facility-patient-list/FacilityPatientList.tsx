@@ -291,7 +291,7 @@ const FacilityPatientList = () => {
                                 </HeaderCell>
                                 <Cell>
                                     {rowData =>
-                                        rowData.encounterStatusLvalue
+                                        rowData.genderLvalue
                                             ? rowData.genderLvalue.lovDisplayVale
                                             : rowData.genderLkey
                                     }

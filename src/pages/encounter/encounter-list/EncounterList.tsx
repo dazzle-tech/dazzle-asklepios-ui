@@ -1,55 +1,37 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
-import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import { ApPatient } from '@/types/model-types';
 import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
-import { Block, Check, DocPass, Edit, Icon, PlusRound } from '@rsuite/icons';
 import React, { useEffect, useState } from 'react';
+import MyButton from '@/components/MyButton/MyButton';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUserDoctor } from "@fortawesome/free-solid-svg-icons";
+import { faUserNurse } from "@fortawesome/free-solid-svg-icons";
 import { Badge } from 'rsuite';
 import './styles.less'
 import {
-  InputGroup,
-  ButtonToolbar,
-  FlexboxGrid,
   Form,
-  IconButton,
-  Input,
   Panel,
-  Stack,
-  Divider,
-  Drawer,
   Table,
   Pagination,
-  Button,
-  DatePicker,
-  SelectPicker
+  Tooltip,
+  Whisper
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
-import PageIcon from '@rsuite/icons/Page';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
-import CharacterAuthorizeIcon from '@rsuite/icons/CharacterAuthorize';
 // import PeoplesTimeIcon from '@rsuite/icons/PeoplesTime';
-import { addFilterToListRequest, calculateAge, formatDate, fromCamelCaseToDBName } from '@/utils';
-import CheckRoundIcon from '@rsuite/icons/CheckRound';
-import ListIcon from '@rsuite/icons/List';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import SendIcon from '@rsuite/icons/Send';
-import { useGetIcdListQuery } from '@/services/setupService';
+import { addFilterToListRequest, formatDate } from '@/utils';
 import { useNavigate } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
-import { notify } from '@/utils/uiReducerActions';
-import CharacterLockIcon from '@rsuite/icons/CharacterLock';
 import { useLocation } from "react-router-dom";
-import PageEndIcon from '@rsuite/icons/PageEnd';
-import { timeStamp } from 'console';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
+import './styles.less'
 const EncounterList = () => {
-  const patientSlice = useAppSelector(state => state.patient);
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -58,40 +40,31 @@ const EncounterList = () => {
       <h5>Patients Visit List</h5>
     </div>
   );
-
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('P_Encounters'));
   dispatch(setDivContent(divContentHTML));
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient })
-  const [encounter, setLocalEncounter] = useState({ ...newApEncounter });
- const [startEncounter]=useStartEncounterMutation()
+  const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
+  const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+  const [startEncounter] = useStartEncounterMutation()
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     ignore: true
   });
-
-
-  const { data: encounterListResponse,isFetching ,isLoading} = useGetEncountersQuery(listRequest);
-
+  const { data: encounterListResponse, isFetching, isLoading } = useGetEncountersQuery(listRequest);
   const [dateFilter, setDateFilter] = useState({
-    fromDate: new Date(),//new Date(),
+    fromDate: new Date(),
     toDate: new Date()
   });
 
+  //Functions
   const isSelected = rowData => {
     if (rowData && encounter && rowData.key === encounter.key) {
       return 'selected-row';
     } else return '';
   };
-  const handleStartEncounter =async () => {
-    console.log("start")
-    if (encounter ) {
-      console.log("start enc")
-     await startEncounter(encounter).unwrap();
-    }
-  };
-
   const handleManualSearch = () => {
+    setManualSearchTriggered(true);
     if (dateFilter.fromDate && dateFilter.toDate) {
       const formattedFromDate = formatDate(dateFilter.fromDate);
       const formattedToDate = formatDate(dateFilter.toDate);
@@ -117,124 +90,84 @@ const EncounterList = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
+  const handleGoToVisit = async (encounterData, patientData) => {
+    await startEncounter(encounterData).unwrap();
+    if (encounterData && encounterData.key) {
+      dispatch(setEncounter(encounterData));
+      dispatch(setPatient(encounterData['patientObject']));
+    }
+    const privatePatientPath = '/user-access-patient-private';
+    const encounterPath = '/encounter';
+    const targetPath = patientData.privatePatient ? privatePatientPath : encounterPath;
+    if (patientData.privatePatient) {
+      navigate(targetPath, { state: { info: "toEncounter", fromPage: "EncounterList", patient: patientData, encounter: encounterData } });
+    } else {
+      navigate(targetPath, { state: { info: "toEncounter", fromPage: "EncounterList", patient: patientData, encounter: encounterData } });
+    }
+    const currentDateTime = new Date().toLocaleString();
+    setDateClickToVisit(currentDateTime);
+  };
+  const handleGoToPreVisitObservations = async (encounterData, patientData) => {
+    const privatePatientPath = '/user-access-patient-private';
+    const preObservationsPath = '/encounter-pre-observations';
+    const targetPath = localPatient.privatePatient ? privatePatientPath : preObservationsPath;
+    if (localPatient.privatePatient) {
+      navigate(targetPath, { state: { info: "toNurse", patient: patientData, encounter: encounterData } });
+    } else {
+      navigate(targetPath, { state: { patient: patientData, encounter: encounterData } });
 
+    }
+  };
+
+  //useEffect
+  useEffect(() => {
+    dispatch(setPageCode(''));
+    dispatch(setDivContent(" "));
+  }, [location.pathname, dispatch, isLoading]);
+  useEffect(() => {
+    if (!isFetching && manualSearchTriggered) {
+      setManualSearchTriggered(false);
+    }
+  }, [isFetching, manualSearchTriggered]);
   useEffect(() => {
     // init list
     handleManualSearch();
   }, []);
 
-  const goToVisit = async() => {
-    await startEncounter(encounter).unwrap();
-    if (encounter && encounter.key) {
-      dispatch(setEncounter(encounter));
-      dispatch(setPatient(encounter['patientObject']));
-    }
-
-    const privatePatientPath = '/user-access-patient-private';
-    const encounterPath = '/encounter';
-    const targetPath = localPatient.privatePatient ? privatePatientPath : encounterPath;
-
-    if (localPatient.privatePatient) {
-      navigate(targetPath, { state: { info: "toEncounter", fromPage: "EncounterList", patient: localPatient, encounter: encounter } });
-    } else {
-      navigate(targetPath, { state: { info: "toEncounter", fromPage: "EncounterList", patient: localPatient, encounter: encounter } });
-    }
-
-    const currentDateTime = new Date().toLocaleString();
-    setDateClickToVisit(currentDateTime);
-  };
-
-  const goToPreVisitObservations = async() => {
-    
-    const privatePatientPath = '/user-access-patient-private';
-    const preObservationsPath = '/encounter-pre-observations';
-    const targetPath = localPatient.privatePatient ? privatePatientPath : preObservationsPath;
-    if (localPatient.privatePatient) {
-      navigate(targetPath, { state: { info: "toNurse", patient: localPatient, encounter: encounter } });
-    } else {
-      navigate(targetPath, { state: { patient: localPatient, encounter: encounter } });
-
-    }
-  };
-  useEffect(() => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(" "));
-   
-  }, [location.pathname, dispatch ,isLoading]);
   return (
     <>
-      <Panel
-
-      >
-        <Panel style={{ zoom: .85 }}>
-          <ButtonToolbar>
-
-            <Button appearance="primary" onClick={goToVisit} style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: "3px" }} >
-
-              <icons.ArrowRight style={{ marginRight: '5px', color: 'white' }} />
-              <Translate>Go to Visit</Translate>
-            </Button>
-            <Divider vertical />
-            <DatePicker
-              oneTap
-              placeholder="From Date"
-              value={dateFilter.fromDate}
-              onChange={e => setDateFilter({ ...dateFilter, fromDate: e })}
-
-              style={{ width: '234px' }}
-            />
-            <DatePicker
-              oneTap
-              placeholder="To Date"
-              value={dateFilter.toDate}
-              onChange={e => setDateFilter({ ...dateFilter, toDate: e })}
-              style={{ width: '234px' }}
-            />
-
-            <Button appearance="primary" onClick={handleManualSearch} style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: "3px" }} >
-
-              <icons.Search style={{ marginRight: '5px', color: 'white' }} />
-              <Translate>Search</Translate>
-            </Button>
-
-            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Button onClick={goToPreVisitObservations} appearance="ghost" style={{ borderColor: 'var(--primary-blue)', color: 'var(--primary-blue)', display: 'flex', marginLeft: "3px" }}>
-
-                <PageEndIcon style={{ marginRight: '5px', color: 'var(--primary-blue)' }} />
-                <Translate>Nurse Station</Translate>
-              </Button>
-              <SelectPicker
-                style={{ width: 185 }}
-                data={[
-                  {
-                    label: (
-                      <Button
-                        color='cyan'
-                        appearance="ghost"
-                        style={{ color: 'var(--primary-blue', zoom: 0.8, textAlign: 'left', width: 170 }}
-                        disabled={localPatient.key === undefined}
-                        block
-                      >
-                        <span>Visit History</span>
-                      </Button>
-                    ),
-                    value: 'visitHistory',
-                  },
-                ]}
-                placeholder={
-                  <span style={{ color: 'var(--primary-blue' }}>
-                    <ListIcon style={{ marginRight: 8 }} />
-                    {"  "} More
-                  </span>
-                }
-                menuStyle={{ marginTop: 0, width: 180, padding: 5 }}
-              />
-
-            </div>
-          </ButtonToolbar>
-        </Panel>
+      <Panel>
+        <Form layout='inline' fluid className='date-filter-form'>
+          <MyInput
+            width={291}
+            height={40}
+            column
+            fieldType="date"
+            fieldLabel="From Date"
+            fieldName="fromDate"
+            record={dateFilter}
+            setRecord={setDateFilter}
+          />
+          <MyInput
+            height={40}
+            width={291}
+            column
+            fieldType="date"
+            fieldLabel="To Date"
+            fieldName="toDate"
+            record={dateFilter}
+            setRecord={setDateFilter}
+          />
+          <MyButton
+            className='search-btn'
+            prefixIcon={() => <icons.Search />}
+            onClick={handleManualSearch}
+          >
+            Search
+          </MyButton>
+        </Form>
         <Table
-          height={600}
+          height={450}
           sortColumn={listRequest.sortBy}
           sortType={listRequest.sortType}
           onSortColumn={(sortBy, sortType) => {
@@ -245,75 +178,67 @@ const EncounterList = () => {
                 sortType
               });
           }}
-          rowHeight={40}
           data={encounterListResponse?.object ?? []}
           onRowClick={rowData => {
             setLocalEncounter(rowData);
             setLocalPatient(rowData.patientObject)
           }}
-          rowClassName={(rowData, rowIndex) => {
-            if (rowIndex === -1) return "first-row";
-            return isSelected(rowData);
-          }}
-          loading={isLoading}
+          rowClassName={isSelected}
+          loading={isLoading || (manualSearchTriggered && isFetching)}
         >
-          <Column sortable flexGrow={2} fullText>
-            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
+          <Column flexGrow={1} fullText>
+            <HeaderCell  >
               <Translate>#</Translate>
             </HeaderCell>
             <Cell dataKey="queueNumber" />
           </Column>
-          <Column sortable flexGrow={3}>
-            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
+          <Column flexGrow={3}>
+            <HeaderCell  >
               <Translate>VISIT ID</Translate>
             </HeaderCell>
             <Cell dataKey="visitId" />
           </Column>
-          <Column sortable flexGrow={6} fullText>
-            <HeaderCell fullText style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
+          <Column flexGrow={6} fullText>
+            <HeaderCell fullText  >
               <Translate>PATIENT NAME</Translate>
             </HeaderCell>
             <Cell dataKey="patientFullName" fullText>
-              {rowData => rowData?.patientObject?.privatePatient ? (
-                <div>
-                  <Badge color="cyan" content={'Private'}>
-                    <p style={{ marginTop: '5px' }}>{rowData?.patientObject?.fullName}</p>
-                  </Badge>
-                </div>
-              ) : (
-                <p>{rowData?.patientObject?.fullName}</p>
-              )
-              }
-            </Cell>
-          </Column>
-          <Column sortable flexGrow={3}>
-            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-              <Translate>MRN</Translate>
-            </HeaderCell>
-            <Cell>
-              {(rowData) => {
-                return rowData?.patientObject?.patientMrn;
+              {rowData => {
+                const tooltipSpeaker = (
+                  <Tooltip>
+                    <div>MRN : {rowData?.patientObject?.patientMrn}</div>
+                    <div>Age : {rowData?.patientAge}</div>
+                    <div>Gender : {rowData?.patientObject?.genderLvalue
+                      ? rowData?.patientObject?.genderLvalue?.lovDisplayVale
+                      : rowData?.patientObject?.genderLkey}</div>
+                  </Tooltip>
+                );
+                return (
+                  <Whisper trigger="hover" placement="top" speaker={tooltipSpeaker}>
+                    <div style={{ display: 'inline-block' }}>
+                      {rowData?.patientObject?.privatePatient ? (
+                        <Badge color="cyan" content="Private">
+                          <p style={{ marginTop: '5px', cursor: 'pointer' }}>{rowData?.patientObject?.fullName}</p>
+                        </Badge>
+                      ) : (
+                        <p style={{ cursor: 'pointer' }}>{rowData?.patientObject?.fullName}</p>
+                      )}
+                    </div>
+                  </Whisper>
+                );
               }}
             </Cell>
           </Column>
-          <Column sortable flexGrow={3}>
-            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-              <Translate>AGE</Translate>
-            </HeaderCell>
-            <Cell dataKey="patientAge" />
-          </Column>
-
-          <Column sortable flexGrow={3} fullText fixed>
-            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
+          <Column flexGrow={3} fullText >
+            <HeaderCell  >
               <Translate>VISIT TYPE</Translate>
             </HeaderCell>
             <Cell >
-              {rowData=>rowData.visitTypeLvalue?rowData.visitTypeLvalue.lovDisplayVale:rowData.visitTypeLkey}
+              {rowData => rowData.visitTypeLvalue ? rowData.visitTypeLvalue.lovDisplayVale : rowData.visitTypeLkey}
             </Cell>
           </Column>
-          <Column sortable flexGrow={4} fullText>
-            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-
+          <Column flexGrow={4} fullText>
+            <HeaderCell  >
               <Translate> CHIEF COMPLAIN </Translate>
             </HeaderCell>
             <Cell>
@@ -321,74 +246,43 @@ const EncounterList = () => {
                 rowData.chiefComplaint
               }</Cell>
           </Column>
-          <Column sortable flexGrow={5} fullText>
-            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-
+          <Column flexGrow={5} fullText>
+            <HeaderCell>
               <Translate>DIAGNOSIS</Translate>
             </HeaderCell>
             <Cell>
               {rowData =>
                 rowData.diagnosis}
-
             </Cell>
-
           </Column>
-          <Column sortable flexGrow={3} fullText>
-            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-
+          <Column flexGrow={3} fullText>
+            <HeaderCell>
               <Translate>PRESCRIPTION</Translate>
             </HeaderCell>
-            <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
-              rowData.hasPrescription ? <Badge content="YES" style={{
-                backgroundColor: '#bcf4f7',
-                color: '#008aa6',
-                padding: '5px 19px',
-                borderRadius: '12px',
-                fontSize: '12px',
-                fontWeight: "bold"
-              }} /> : <Badge
-                style={{
-                  backgroundColor: 'rgba(238, 130, 238, 0.2)',
-                  color: '#4B0082',
-                  padding: '5px 19px',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  fontWeight: "bold"
-                }}
+            <Cell>{rowData =>
+              rowData.hasPrescription ? <Badge content="YES"
+                className='status-yes'
+              /> : <Badge
+                className='status-no'
                 content="NO"
               />
             }</Cell>
           </Column>
-          <Column sortable flexGrow={3}>
-            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-
+          <Column flexGrow={3}>
+            <HeaderCell  >
               <Translate>HAS ORDER</Translate>
             </HeaderCell>
-            <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} >{rowData =>
-              rowData.hasOrder ? <Badge content="YES" style={{
-                backgroundColor: '#bcf4f7',
-                color: '#008aa6',
-                padding: '5px 19px',
-                borderRadius: '12px',
-                fontSize: '12px',
-                fontWeight: "bold"
-              }} /> : <Badge
-                style={{
-                  backgroundColor: 'rgba(238, 130, 238, 0.2)',
-                  color: '#4B0082',
-                  padding: '5px 19px',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  fontWeight: "bold"
-                }}
+            <Cell>{rowData =>
+              rowData.hasOrder ? <Badge content="YES"
+                className=' status-yes'
+              /> : <Badge
+                className='status-no'
                 content="NO"
               />
             }</Cell>
           </Column>
-
-          <Column sortable flexGrow={3}>
-            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-
+          <Column flexGrow={3}>
+            <HeaderCell  >
               <Translate>PRIORITY</Translate>
             </HeaderCell>
             <Cell>
@@ -399,15 +293,14 @@ const EncounterList = () => {
               }
             </Cell>
           </Column>
-          <Column sortable flexGrow={3}>
-            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
+          <Column flexGrow={3}>
+            <HeaderCell  >
               <Translate>DATE</Translate>
             </HeaderCell>
             <Cell dataKey="plannedStartDate" />
           </Column>
-          <Column sortable flexGrow={3}>
-            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-
+          <Column flexGrow={3}>
+            <HeaderCell  >
               <Translate>STATUS</Translate>
             </HeaderCell>
             <Cell>
@@ -418,30 +311,54 @@ const EncounterList = () => {
               }
             </Cell>
           </Column>
-
           <Column >
-            <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
+            <HeaderCell  >
               <Translate>IS OBSERVED</Translate>
             </HeaderCell>
-            <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {rowData => (rowData.hasObservation ? <Badge content="YES" style={{
-                backgroundColor: '#bcf4f7',
-                color: '#008aa6',
-                padding: '5px 19px',
-                borderRadius: '12px',
-                fontSize: '12px',
-                fontWeight: "bold"
-              }} /> : <Badge
-                style={{
-                  backgroundColor: 'rgba(238, 130, 238, 0.2)',
-                  color: '#4B0082',
-                  padding: '5px 19px',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  fontWeight: "bold"
-                }}
+            <Cell>
+              {rowData => (rowData.hasObservation ? <Badge
+                content="YES"
+                className='status-yes'
+              /> : <Badge
+                className='status-no'
                 content="NO"
               />)}
+            </Cell>
+          </Column>
+          <Column >
+            <HeaderCell  >
+              <Translate> </Translate>
+            </HeaderCell>
+            <Cell style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              {rowData =>
+                <Form layout='inline' fluid>
+                  <MyButton
+                    className='nurse-doctor-btn'
+                    prefixIcon={() => <FontAwesomeIcon icon={faUserDoctor} />}
+                    onClick={() => {
+                      const encounterData = rowData;
+                      const patientData = rowData.patientObject;
+                      setLocalEncounter(encounterData);
+                      setLocalPatient(patientData);
+                      handleGoToVisit(encounterData, patientData);
+                    }}
+                  >
+                  </MyButton>
+                  <MyButton
+                    className='nurse-doctor-btn'
+                    prefixIcon={() => <FontAwesomeIcon icon={faUserNurse} />}
+                    color='black'
+                    onClick={() => {
+                      const encounterData = rowData;
+                      const patientData = rowData.patientObject;
+                      setLocalEncounter(encounterData);
+                      setLocalPatient(patientData);
+                      handleGoToPreVisitObservations(encounterData, patientData);
+                    }}
+                  >
+                  </MyButton>
+                </Form>
+              }
             </Cell>
           </Column>
         </Table>
@@ -459,7 +376,6 @@ const EncounterList = () => {
             limitOptions={[5, 15, 30]}
             limit={listRequest.pageSize}
             activePage={listRequest.pageNumber}
-
             onChangePage={pageNumber => {
               setListRequest({ ...listRequest, pageNumber });
             }}

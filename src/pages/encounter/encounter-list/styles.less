@@ -1,13 +1,53 @@
-
-.iconStyle{
-    background-color: rgba(238, 130, 238, 0.2); // Light purple with transparency
-    color: #4B0082; // Dark purple
-    padding: 8px 16px; // Increased padding
-    border-radius: 12px; // Rounded corners
-    font-size: 14px;
+.status-no{
+    background-color: rgba(150, 159, 176, 0.19) !important;
+    color: #969FB0!important;
+    padding: 5px 19px !important;
+    border-radius: 12px !important;
+    font-size: 12px !important;
+    font-weight: bold !important;
 }
-.iconNoStyle{
-    color: rgb(224, 76, 35);
-    width: 19px;
-    height: 19px;
+.status-yes{
+    background-color: #DAF1E7 !important;
+    color: #45B887 !important;
+    padding: 5px 19px !important;
+    border-radius: 12px !important;
+    font-size: 12px !important;
+    font-weight: bold !important;
+}
+
+.search-btn{
+    margin-right: 20px;
+    margin-top: 24px !important;
+    vertical-align: middle !important;
+    height: 30px !important;
+    gap: 10px;
+    padding: 10px;
+}
+.nurse-doctor-btn{
+    padding:0 !important; ;
+    margin-top: 10px !important;
+    height: 32px !important;
+    width: 32px !important;
+}
+.date-filter-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap; /* important for smaller screens */
+  }
+  .centered-container {
+    display: flex !important;
+    align-items: center !important;
+  }
+  
+  @media (max-width: 680px) {
+    .date-filter-form {
+      flex-direction: column;
+      align-items: stretch;
     }
+  
+    .date-filter-form .search-btn {
+      width: 100%;
+    }
+  }
+  
