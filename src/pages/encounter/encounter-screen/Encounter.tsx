@@ -27,7 +27,8 @@ import { useGetAppointmentsQuery } from '@/services/appointmentService';
 import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentModal';
 import PatientSide from '../encounter-main-info-section/PatienSide';
 import MyButton from '@/components/MyButton/MyButton';
-import { ArrowRight } from "@rsuite/icons";
+import ArowBackIcon from '@rsuite/icons/ArowBack';
+import BarChartHorizontalIcon from '@rsuite/icons/BarChartHorizontal';
 import {
   faBolt,
   faVials
@@ -46,11 +47,10 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { faBars, faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useState } from 'react';
+import './styles.less';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import {
-  InputGroup,
-  ButtonToolbar,
-  FlexboxGrid,
-  Form,
+
   IconButton,
   Input,
   Panel,
@@ -98,7 +98,7 @@ import PsychologicalExam from '../encounter-component/psychological-exam';
 import AudiometryPuretone from '../encounter-component/audiometry-puretone';
 import { faEarListen } from "@fortawesome/free-solid-svg-icons";
 import { faBrain } from "@fortawesome/free-solid-svg-icons";
-import { faEye } from "@fortawesome/free-solid-svg-icons";
+import { faEye, faUserPlus } from "@fortawesome/free-solid-svg-icons";
 import OptometricExam from '../encounter-component/optometric-exam/OptometricExam';
 import TreadmillStress from '../encounter-component/treadm-stress/TreadmillStress';
 import Cardiology from '../encounter-component/cardiology/Cardiology';
@@ -327,60 +327,57 @@ const Encounter = () => {
 
   return (
     <>
-      <div style={{ display: 'flex', gap: '10px' }}>
-        <div style={{ flexGrow: '4', borderRadius: '5px', border: '1px solid var(--background-gray)',width:'1170px' }}>
+      <div className='container'>
+        <div className='left-box'>
           <Panel >
             <Panel>
-         
-              <ButtonToolbar>
-              
-                <IconButton
-                  appearance="primary"
-                  color="violet"
-                  icon={<icons.ArrowLeft />}
-                  onClick={handleGoBack}
-                >
-                  <Translate>Go Back</Translate>
-                </IconButton>
+              <div className='container-bt'>
+                <div className='left'>
+                  <MyButton
+                    prefixIcon={() => <ArowBackIcon />}
 
-                <IconButton
-                  appearance="primary"
-                  color="blue"
-                  icon={<icons.Menu />}
-                  onClick={() => setIsDrawerOpen(true)}
-                >
-                  <Translate>Medical Sheets</Translate>
-                </IconButton>
-                <Button appearance="primary"
-                  onClick={OpenAllargyModal}
-                  color={propsData.patient.hasAllergy ? "red" : "cyan"} >
-                  <FontAwesomeIcon icon={faHandDots} style={{ marginRight: '5px' }} />
-                  <Translate>Allergy</Translate>
-                </Button>
-                <Button appearance="primary"
-                  onClick={OpenWarningModal}
-                  color={propsData.patient.hasWarning ? "red" : "cyan"} >
-                  <FontAwesomeIcon icon={faTriangleExclamation} style={{ marginRight: '5px' }} />
-                  <Translate>Warning</Translate>
-                </Button>
-                <IconButton
-                  appearance="primary"
-                  color="violet"
-                  icon={<TableIcon />}
-                  onClick={() => { setModalOpen(true) }}
-                >
-                  <Translate>Create Follow-up</Translate>
-                </IconButton>
-                {propsData.encounter.editable && (
-                  <IconButton
-                    appearance="primary"
-                    icon={<icons.CloseOutline />}
-                    onClick={handleCompleteEncounter}
-                  >
-                    <Translate>Complete Visit</Translate>
-                  </IconButton>
-                )}
-              </ButtonToolbar>
+                    color={'var(--primary-gray)'}
+                    onClick={handleGoBack}
+
+                  >Go Back</MyButton>
+                </div>
+                <div className='right'>
+                  <MyButton
+                    prefixIcon={() => <BarChartHorizontalIcon />}
+                    color={"var(--deep-blue)"}
+                    width={"155px"}
+                    onClick={() => setIsDrawerOpen(true)}
+                  >Medical Sheets</MyButton>
+                  <MyButton
+                    width={"172px"}
+                    prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
+                    onClick={() => { setModalOpen(true) }}
+                  >Create Follow-up</MyButton>
+                  <MyButton
+                    width={"97px"}
+                    color={propsData.patient.hasAllergy ? "var(--primary-orange)" : "var(--deep-blue)"}
+                    onClick={OpenAllargyModal}
+                    prefixIcon={() => <FontAwesomeIcon icon={faHandDots} />}
+                  >Allergy</MyButton>
+                  <MyButton
+                    width={"97px"}
+                    color={propsData.patient.hasWarning ? "var(--primary-orange)" : "var(--deep-blue)"}
+                    onClick={OpenWarningModal}
+                    prefixIcon={() => <FontAwesomeIcon icon={faTriangleExclamation} />}
+                  >Warning</MyButton>
+                  {propsData.encounter.editable && (
+                    <MyButton
+                      width={"150px"}
+                      prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                      onClick={handleCompleteEncounter}
+                      ghost={true}
+                    >
+                      <Translate>Complete Visit</Translate>
+                    </MyButton>
+                  )}
+                </div>
+              </div>
+
               <Divider />
               <Drawer
                 open={isDrawerOpen}
@@ -807,7 +804,7 @@ const Encounter = () => {
             />
           </Panel></div>
 
-        <div style={{ flexGrow: '1', borderRadius: '5px', border: '1px solid var(--background-gray)' }}>
+        <div className='right-box'>
           <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
         </div>
       </div>

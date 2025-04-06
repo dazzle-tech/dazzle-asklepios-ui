@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { Icon } from '@rsuite/icons';
 import './styles.less';
-const MyButton = ({ prefixIcon: Prefix, postfixIcon: Postfix, children,onClick, ...props }) => {
+const MyButton = ({ prefixIcon: Prefix=null, postfixIcon: Postfix = null, children,onClick=()=>{}, width = "auto",...props }) => {
     return (
         <Button
         className="bt"
@@ -13,7 +13,8 @@ const MyButton = ({ prefixIcon: Prefix, postfixIcon: Postfix, children,onClick, 
                 color: props.ghost ? props.color ?? "var(--primary-blue)" : 'white',
                 width: props.width,
                 backgroundColor: props.ghost ? 'white' : props.color ?? "var(--primary-blue)",
-                border: props.ghost ? `2px solid ${props.color ?? "var(--primary-blue)"}` : 'none', // إضافة border عند الـ ghost
+                border: props.ghost ? `2px solid ${props.color ?? "var(--primary-blue)"}` : 'none', 
+                transition: "all 0.3s ease",
             }}
             {...props}
             onClick={onClick}
