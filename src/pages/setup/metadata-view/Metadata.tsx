@@ -1,17 +1,17 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
-import React, { useState ,useEffect} from 'react';
-import { Input, Pagination, Panel, Table } from 'rsuite';
+import React, { useState, useEffect } from 'react';
+import { IoSettingsSharp } from 'react-icons/io5';
+import { Input, Pagination, Panel, Table, Form } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetMetadataQuery } from '@/services/setupService';
-import { ButtonToolbar, Carousel, IconButton } from 'rsuite';
+import { ButtonToolbar, Carousel, IconButton, InputGroup } from 'rsuite';
 import ListIcon from '@rsuite/icons/List';
 import { ApMetadata } from '@/types/model-types';
 import { newApMetadata } from '@/types/model-types-constructor';
-import {
-  addFilterToListRequest, 
-  fromCamelCaseToDBName
-} from '@/utils';
+import MyInput from '@/components/MyInput';
+import SearchIcon from '@rsuite/icons/Search';
+import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import MetadataFields from './MetadataFields';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
@@ -39,6 +39,19 @@ const Metadata = () => {
     } else return '';
   };
 
+  const [recordOFSearch, setRecordOFSearch] = useState({ name: '' });
+
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent('  '));
+    };
+  }, [location.pathname, dispatch]);
+
+  useEffect(() => {
+    handleFilterChange('objectName', recordOFSearch['objectName']);
+  }, [recordOFSearch]);
+
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -54,32 +67,26 @@ const Metadata = () => {
     }
   };
 
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent("  "));
-    };
-  }, [location.pathname, dispatch])
+  
   return (
     <Carousel
       style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
       autoplay={false}
       activeIndex={carouselActiveIndex}
     >
-      <Panel
-      >
-        <ButtonToolbar>
-          <IconButton
-            disabled={!metadata.key}
-            appearance="primary"
-            color="orange"
-            onClick={() => setCarouselActiveIndex(1)}
-            icon={<ListIcon />}
-          >
-            View Metadata Values
-          </IconButton>
-        </ButtonToolbar>
-        <hr />
+      <Panel>
+        <Form style={{marginBottom: "10px"}}>
+          <MyInput
+            fieldName="objectName"
+            fieldType="text"
+            record={recordOFSearch}
+            setRecord={setRecordOFSearch}
+            showLabel={false}
+            placeholder="Search by Object Name"
+            width={'220px'}
+          />
+        </Form>
+
         <Table
           height={400}
           sortColumn={listRequest.sortBy}
@@ -92,9 +99,7 @@ const Metadata = () => {
                 sortType
               });
           }}
-          headerHeight={80}
-          rowHeight={60}
-          bordered
+          // bordered
           cellBordered
           data={metadataListResponse?.object ?? []}
           onRowClick={rowData => {
@@ -104,27 +109,36 @@ const Metadata = () => {
         >
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('objectName', e)} />
               <Translate>Object Name</Translate>
             </HeaderCell>
             <Cell dataKey="objectName" />
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('dbObjectName', e)} />
               <Translate>DB Object Name</Translate>
             </HeaderCell>
             <Cell dataKey="dbObjectName" />
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('description', e)} />
               <Translate>Description</Translate>
             </HeaderCell>
             <Cell dataKey="description" />
           </Column>
+
+          <Column flexGrow={2}>
+            <HeaderCell>View Metadata Values</HeaderCell>
+            <Cell>
+              <IoSettingsSharp
+                title="View Metadata Values"
+                size={24}
+                fill="var(--primary-gray)"
+                onClick={() => setCarouselActiveIndex(1)}
+              />
+            </Cell>
+          </Column>
         </Table>
-        <div style={{ padding: 20 }}>
+        <div style={{ padding: 20, backgroundColor: '#F4F7FC' }}>
           <Pagination
             prev
             next

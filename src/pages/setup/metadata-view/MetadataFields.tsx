@@ -1,23 +1,31 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { ButtonToolbar, Input, Pagination, Panel, Table } from 'rsuite';
+import { ButtonToolbar, Input, Pagination, Panel, Table, Button, InputGroup, Form } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetMetadataFieldsQuery } from '@/services/setupService';
 import { IconButton } from 'rsuite';
+import SearchIcon from '@rsuite/icons/Search';
 import ArowBackIcon from '@rsuite/icons/ArowBack';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-
+import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
 const MetadataFields = ({ metadata, goBack, ...props }) => {
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
 
   const { data: metadataFieldListResponse } = useGetMetadataFieldsQuery(listRequest);
+
+  const [recordOFSearch, setRecordOFSearch] = useState({ fieldName: '' });
 
   useEffect(() => {
     if (metadata && metadata.key) {
       setListRequest(addFilterToListRequest('metadata_key', 'match', metadata.key, listRequest));
     }
   }, [metadata]);
+
+  useEffect(() => {
+    handleFilterChange('fieldName', recordOFSearch['fieldName']);
+  }, [recordOFSearch]);
 
   const handleFilterChange = (fieldName, value) => {
     if (value) {
@@ -38,18 +46,34 @@ const MetadataFields = ({ metadata, goBack, ...props }) => {
     <>
       {metadata && metadata.key && (
         <Panel
-          header={
-            <h3 className="title">
-              <Translate> Metadata Fields for </Translate> <i>{metadata?.metadataName ?? ''}</i>
-            </h3>
-          }
+        // header={
+        //   <h3 className="title">
+        //     <Translate> Metadata Fields for </Translate> <i>{metadata?.metadataName ?? ''}</i>
+        //   </h3>
+        // }
         >
-          <ButtonToolbar>
-            <IconButton appearance="ghost" color="cyan" icon={<ArowBackIcon />} onClick={goBack}>
-              Go Back
-            </IconButton>
-          </ButtonToolbar>
-          <hr />
+          <div style={{ display: 'flex', gap: '20px', marginBottom: '10px' }}>
+            <MyButton
+              prefixIcon={() => <ArowBackIcon />}
+              color="var(--deep-blue)"
+              ghost
+              onClick={goBack}
+            >
+              Back
+            </MyButton>
+            <Form>
+              <MyInput
+                fieldName="fieldName"
+                fieldType="text"
+                record={recordOFSearch}
+                setRecord={setRecordOFSearch}
+                showLabel={false}
+                placeholder="Search by Field Name"
+                width={'220px'}
+              />
+            </Form>
+          </div>
+
           <Table
             height={400}
             sortColumn={listRequest.sortBy}
@@ -62,35 +86,29 @@ const MetadataFields = ({ metadata, goBack, ...props }) => {
                   sortType
                 });
             }}
-            headerHeight={80}
-            rowHeight={60}
-            bordered
             cellBordered
             data={metadataFieldListResponse?.object ?? []}
           >
             <Column sortable flexGrow={4}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('fieldName', e)} />
                 <Translate>Field Name</Translate>
               </HeaderCell>
               <Cell dataKey="fieldName" />
             </Column>
             <Column sortable flexGrow={4}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('dbFieldName', e)} />
                 <Translate>DB Field Name</Translate>
               </HeaderCell>
               <Cell dataKey="dbFieldName" />
             </Column>
             <Column sortable flexGrow={4}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('dataType', e)} />
                 <Translate>Data Type</Translate>
               </HeaderCell>
               <Cell dataKey="dataType" />
             </Column>
           </Table>
-          <div style={{ padding: 20 }}>
+          <div style={{ padding: 20, backgroundColor: '#F4F7FC' }}>
             <Pagination
               prev
               next

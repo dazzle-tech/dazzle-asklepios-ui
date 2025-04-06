@@ -1,14 +1,22 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Input, InputPicker, Modal, Pagination, Panel, Table } from 'rsuite';
+import { Input, InputPicker, Modal, Pagination, Panel, Table, InputGroup } from 'rsuite';
+import SearchIcon from '@rsuite/icons/Search';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetMetadataFieldsQuery, useGetScreensQuery } from '@/services/setupService';
 import { Button, ButtonToolbar, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import EditIcon from '@rsuite/icons/Edit';
 import TrashIcon from '@rsuite/icons/Trash';
+import { MdDelete } from 'react-icons/md';
+import { IoSettingsSharp } from 'react-icons/io5';
+import { MdModeEdit } from 'react-icons/md';
 import { ApFacility } from '@/types/model-types';
+import { FaClipboardCheck } from 'react-icons/fa6';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
+import MyButton from '@/components/MyButton/MyButton';
 import {
   newApDvmRule,
   newApFacility,
@@ -23,7 +31,10 @@ import {
   useGetScreenMetadataQuery,
   useSaveDvmRuleMutation
 } from '@/services/dvmService';
-import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
+// import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
+import { Nav, VStack } from 'rsuite';
+import { Tabs } from 'rsuite';
+import { Tab } from 'rsuite';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
@@ -33,8 +44,10 @@ const DVM = () => {
   const dispatch = useAppDispatch();
 
   const [ruleTypes, setRuleTypes] = useState([]);
-  const [screenKey, setScreenKey] = useState('');
-  const [screenMetadataKey, setScreenMetadataKey] = useState('');
+  // const [screenKey, setScreenKey] = useState('');
+  const [recordOfScreen, setRecordOfScreen] = useState({ screenKey: '' });
+  // const [screenMetadataKey, setScreenMetadataKey] = useState('');
+  const [recordOfScreenMetaData, setRecordOfScreenMetaData] = useState({ screenMetadataKey: '' });
 
   const [screensListRequest, setScreensListRequest] = useState<ListRequest>({
     ...initialListRequest
@@ -73,25 +86,50 @@ const DVM = () => {
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+
+  const [operationState, setOperationState] = useState('New');
+
+  const filterFields = [
+    { label: 'Type', value: 'validationType' },
+    { label: 'Description', value: 'ruleDescription' },
+    { label: 'Field Name', value: 'fieldName' },
+    { label: 'Data Type', value: 'fieldDataType' },
+    { label: 'Rule Type', value: 'ruleType' },
+    { label: 'Rule Value', value: 'ruleValue' },
+    { label: 'Secondary Rule Value', value: 'ruleValueTwo' },
+    { label: 'Is Dependant', value: 'isDependant' }
+  ];
+
+  const [record, setRecord] = useState({ filter: '', value: '' });
+
   dispatch(setPageCode('Data_Validation'));
   dispatch(setDivContent(divContentHTML));
   const handleNew = () => {
+    setOperationState('New');
     setPopupOpen(true);
     setDvmRule({ ...newApDvmRule });
   };
 
   const handleSave = () => {
     setPopupOpen(false);
-    saveDvm({ ...dvmRule, screenMetadataKey: screenMetadataKey }).unwrap();
+    saveDvm({
+      ...dvmRule,
+      screenMetadataKey: recordOfScreenMetaData['screenMetadataKey']
+    }).unwrap();
   };
 
   useEffect(() => {
-    if (screenKey) {
+    if (recordOfScreen['screenKey']) {
       setScreensMetadataListRequest(
-        addFilterToListRequest('screen_key', 'match', screenKey, screensMetadataListRequest)
+        addFilterToListRequest(
+          'screen_key',
+          'match',
+          recordOfScreen['screenKey'],
+          screensMetadataListRequest
+        )
       );
     }
-  }, [screenKey]);
+  }, [recordOfScreen]);
 
   useEffect(() => {
     if (dvmRule.fieldKey) {
@@ -117,9 +155,9 @@ const DVM = () => {
   }, [dvmRule.fieldKey]);
 
   useEffect(() => {
-    if (screenMetadataKey) {
+    if (recordOfScreenMetaData['screenMetadataKey']) {
       (screenMetadataListResponse?.object ?? []).map(smd => {
-        if (smd.key === screenMetadataKey) {
+        if (smd.key === recordOfScreenMetaData['screenMetadataKey']) {
           setMetaDataFieldsListRequest(
             addFilterToListRequest(
               'metadata_key',
@@ -135,7 +173,7 @@ const DVM = () => {
         }
       });
     }
-  }, [screenMetadataKey]);
+  }, [recordOfScreenMetaData['screenMetadataKey']]);
   useEffect(() => {
     let map = {};
     (metaDataFieldsListResponse?.object ?? []).map(mdf => {
@@ -157,15 +195,19 @@ const DVM = () => {
   };
 
   const handleFilterChange = (fieldName, value) => {
-    if (value) {
-      setListRequest(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'startsWithIgnoreCase',
-          value,
-          listRequest
-        )
-      );
+    if (fieldName) {
+      if (value) {
+        setListRequest(
+          addFilterToListRequest(
+            fromCamelCaseToDBName(fieldName),
+            'startsWithIgnoreCase',
+            value,
+            listRequest
+          )
+        );
+      } else {
+        setListRequest({ ...listRequest, filters: [] });
+      }
     } else {
       setListRequest({ ...listRequest, filters: [] });
     }
@@ -185,71 +227,113 @@ const DVM = () => {
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent("  "));
+      dispatch(setDivContent('  '));
     };
-  }, [location.pathname, dispatch])
+  }, [location.pathname, dispatch]);
+
+  useEffect(() => {
+    handleFilterChange(record['filter'], record['value']);
+  }, [record]);
+
+  const iconsForActions = rowData => (
+    <div style={{ display: 'flex', gap: '20px' }}>
+      <MdModeEdit
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setPopupOpen(true);
+          setOperationState('Edit');
+        }}
+      />
+      <MdDelete title="Deactivate" size={24} fill="var(--primary-pink)" />
+    </div>
+  );
+
   return (
-    <Panel style={{background: 'white'}}
-    >
+    <Panel style={{ background: 'white' }}>
       <small style={{ display: 'block', marginBottom: '10px' }}>
         <Translate>Specify screen metadata to configure validation rules</Translate>
       </small>
-      <InputPicker
-        placeholder="Select Screen"
-        value={screenKey}
-        data={screenListResponse?.object ?? []}
-        labelKey="name"
-        valueKey="key"
-        onChange={v => setScreenKey(v)}
-      />
+      <Form>
+        <div style={{ display: 'flex'}}>
+          <MyInput
+            fieldName="screenKey"
+            fieldType="select"
+            placeholder="Select Screen"
+            selectData={screenListResponse?.object ?? []}
+            selectDataLabel="name"
+            selectDataValue="key"
+            record={recordOfScreen}
+            setRecord={setRecordOfScreen}
+            showLabel={false}
+          />
 
-      <Divider vertical />
+          <Divider vertical />
+          <MyInput
+            fieldName="screenMetadataKey"
+            fieldType="select"
+            placeholder="Select Metadata"
+            selectData={screenMetadataListResponse?.object ?? []}
+            selectDataLabel="metadataObjectName"
+            selectDataValue="key"
+            record={recordOfScreenMetaData}
+            setRecord={setRecordOfScreenMetaData}
+            showLabel={false}
+          />
+        </div>
+      </Form>
 
-      <InputPicker
-        placeholder="Select Metadata"
-        value={screenMetadataKey}
-        data={screenMetadataListResponse?.object ?? []}
-        labelKey="metadataObjectName"
-        valueKey="key"
-        onChange={v => setScreenMetadataKey(v)}
-      />
       <hr />
 
-      <Tabs>
-        <TabList>
-          <Tab>Validation Rules</Tab>
-          <Tab>Rule Combinations</Tab>
-        </TabList>
+      <Tabs defaultActiveKey="1" appearance="subtle">
+        <Tab active eventKey="1" title="Validation Rules">
+          <Form
+            style={{
+              padding: '10px'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <div>
+                  <MyInput
+                    selectDataValue="value"
+                    selectDataLabel="label"
+                    selectData={filterFields}
+                    fieldName={'filter'}
+                    fieldType="select"
+                    record={record}
+                    setRecord={setRecord}
+                    showLabel={false}
+                    placeholder="select filter"
+                    width="150px"
+                  />
+                </div>
+                <div>
+                  <MyInput
+                    fieldName="value"
+                    fieldType="text"
+                    record={record}
+                    setRecord={setRecord}
+                    showLabel={false}
+                    placeholder="Search"
+                    width={'220px'}
+                  />
+                </div>
+              </div>
+              <div style={{ marginRight: '30px' }}>
+                <MyButton
+                  //  disabled={!recordOfScreenMetaData["screenMetadataKey"]}
+                  prefixIcon={() => <AddOutlineIcon />}
+                  color="var(--deep-blue)"
+                  onClick={handleNew}
+                >
+                  Add New
+                </MyButton>
+              </div>
+            </div>
+          </Form>
 
-        <TabPanel>
-          <ButtonToolbar>
-            <IconButton
-              disabled={!screenMetadataKey}
-              appearance="primary"
-              icon={<AddOutlineIcon />}
-              onClick={handleNew}
-            >
-              Add New
-            </IconButton>
-            <IconButton
-              disabled={!dvmRule.key}
-              appearance="primary"
-              onClick={() => setPopupOpen(true)}
-              color="green"
-              icon={<EditIcon />}
-            >
-              Edit Selected
-            </IconButton>
-            <IconButton
-              disabled={true || !dvmRule.key}
-              appearance="primary"
-              color="red"
-              icon={<TrashIcon />}
-            >
-              Delete Selected
-            </IconButton>
-          </ButtonToolbar>
-          <hr />
           <Table
             height={400}
             sortColumn={listRequest.sortBy}
@@ -262,9 +346,6 @@ const DVM = () => {
                   sortType
                 });
             }}
-            headerHeight={80}
-            rowHeight={60}
-            bordered
             cellBordered
             data={dvmRulesListResponse?.object ?? []}
             onRowClick={rowData => {
@@ -274,69 +355,91 @@ const DVM = () => {
           >
             <Column sortable flexGrow={2}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('validationType', e)} />
                 <Translate>Type</Translate>
               </HeaderCell>
               <Cell dataKey="validationType" />
             </Column>
             <Column sortable flexGrow={4}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('ruleDescription', e)} />
                 <Translate>Description</Translate>
               </HeaderCell>
               <Cell dataKey="ruleDescription" />
             </Column>
             <Column sortable flexGrow={3}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('fieldName', e)} />
                 <Translate>Field Name</Translate>
               </HeaderCell>
               <Cell dataKey="fieldName" />
             </Column>
             <Column sortable flexGrow={3}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('fieldDataType', e)} />
                 <Translate>Data Type</Translate>
               </HeaderCell>
               <Cell dataKey="fieldDataType" />
             </Column>
             <Column sortable flexGrow={3}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('ruleType', e)} />
                 <Translate>Rule Type</Translate>
               </HeaderCell>
               <Cell dataKey="ruleType" />
             </Column>
             <Column sortable flexGrow={4}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('ruleValue', e)} />
                 <Translate>Rule Value</Translate>
               </HeaderCell>
               <Cell dataKey="ruleValue" />
             </Column>
             <Column sortable flexGrow={4}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('ruleValueTwo', e)} />
                 <Translate>Secondary Rule Value</Translate>
               </HeaderCell>
               <Cell dataKey="ruleValueTwo" />
             </Column>
             <Column sortable flexGrow={2}>
               <HeaderCell>
-                <Input onChange={e => handleFilterChange('isDependant', e)} />
                 <Translate>Is Dependant</Translate>
               </HeaderCell>
               <Cell dataKey="isDependant" />
             </Column>
+
+            <Column flexGrow={2}>
+              <HeaderCell></HeaderCell>
+              <Cell>{rowData => iconsForActions(rowData)}</Cell>
+            </Column>
           </Table>
 
-          <Modal open={popupOpen} overflow>
+          <Modal open={popupOpen} className="left-modal" size="xsm">
             <Modal.Title>
-              <Translate>New/Edit DVM Rule</Translate>
+              <Translate>{operationState} DVM Rule</Translate>
             </Modal.Title>
-            <Modal.Body>
-              <Form fluid>
-                <MyInput fieldName="ruleDescription" record={dvmRule} setRecord={setDvmRule} />
+            <Modal.Body style={{ marginBottom: '50px' }}>
+              <Form
+                fluid
+                style={{
+                  padding: '1px'
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignContent: 'center',
+                    alignItems: 'center',
+                    marginBottom: '40px'
+                  }}
+                >
+                  <FaClipboardCheck color="#415BE7" style={{ marginBottom: '10px' }} size={30} />
+                  <label style={{ fontWeight: 'bold', fontSize: '14px' }}>DVM Rule info</label>
+                </div>
+
+                <MyInput
+                  fieldName="ruleDescription"
+                  record={dvmRule}
+                  setRecord={setDvmRule}
+                  width={520}
+                />
+
                 <MyInput
                   fieldLabel="Validation Type"
                   fieldType="select"
@@ -350,45 +453,84 @@ const DVM = () => {
                   selectDataValue="v"
                   record={dvmRule}
                   setRecord={setDvmRule}
+                  width={520}
                 />
-                <MyInput
-                  fieldLabel="Field"
-                  fieldType="select"
-                  fieldName="fieldKey"
-                  selectData={metaDataFieldsListResponse?.object ?? []}
-                  selectDataLabel="fieldName"
-                  selectDataValue="key"
-                  record={dvmRule}
-                  setRecord={setDvmRule}
-                />
-                <MyInput
-                  fieldLabel="Rule Type"
-                  fieldType="select"
-                  fieldName="ruleType"
-                  selectData={ruleTypes}
-                  selectDataLabel="label"
-                  selectDataValue="value"
-                  record={dvmRule}
-                  setRecord={setDvmRule}
-                />
-                {dvmRule.ruleType && dvmRule.ruleType !== 'REQUIRED' && (
-                  <MyInput fieldName="ruleValue" record={dvmRule} setRecord={setDvmRule} />
-                )}
-                {hasSecondRuleValue() && (
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '20px'
+                  }}
+                >
                   <MyInput
-                    fieldType="Secondary Rule Value"
-                    fieldName="ruleValueTwo"
+                    fieldLabel="Field"
+                    fieldType="select"
+                    fieldName="fieldKey"
+                    selectData={metaDataFieldsListResponse?.object ?? []}
+                    selectDataLabel="fieldName"
+                    selectDataValue="key"
                     record={dvmRule}
                     setRecord={setDvmRule}
+                    width={250}
                   />
-                )}
+                  <MyInput
+                    fieldLabel="Rule Type"
+                    fieldType="select"
+                    fieldName="ruleType"
+                    selectData={ruleTypes}
+                    selectDataLabel="label"
+                    selectDataValue="value"
+                    record={dvmRule}
+                    setRecord={setDvmRule}
+                    width={250}
+                  />
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '20px',
+                    marginBottom: '20px'
+                  }}
+                >
+                  <div
+                    style={{
+                      visibility:
+                        dvmRule.ruleType && dvmRule.ruleType !== 'REQUIRED' ? 'visible' : 'hidden'
+                    }}
+                  >
+                    <MyInput
+                      fieldName="ruleValue"
+                      record={dvmRule}
+                      setRecord={setDvmRule}
+                      width={250}
+                    />
+                  </div>
+                  <div
+                    style={{
+                      visibility: hasSecondRuleValue() ? 'visible' : 'hidden'
+                    }}
+                  >
+                    <MyInput
+                      fieldType="Secondary Rule Value"
+                      fieldName="ruleValueTwo"
+                      record={dvmRule}
+                      setRecord={setDvmRule}
+                      width={250}
+                    />
+                  </div>
+                </div>
                 <MyInput
                   fieldType="checkbox"
                   fieldName="isDependant"
                   record={dvmRule}
                   setRecord={setDvmRule}
                 />
-                {dvmRule.isDependant && (
+                <div
+                  style={{
+                    visibility: dvmRule.isDependant ? 'visible' : 'hidden',
+                    display: 'flex',
+                    gap: '20px'
+                  }}
+                >
                   <MyInput
                     fieldLabel="Dependant Rule"
                     fieldType="select"
@@ -398,9 +540,9 @@ const DVM = () => {
                     selectDataValue="key"
                     record={dvmRule}
                     setRecord={setDvmRule}
+                    width={250}
                   />
-                )}
-                {dvmRule.isDependant && (
+
                   <MyInput
                     fieldLabel="Dependant Rule Check"
                     fieldType="select"
@@ -413,22 +555,32 @@ const DVM = () => {
                     selectDataValue="v"
                     record={dvmRule}
                     setRecord={setDvmRule}
+                    width={250}
                   />
-                )}
+                </div>
               </Form>
             </Modal.Body>
             <Modal.Footer>
-              <Stack spacing={2} divider={<Divider vertical />}>
-                <Button appearance="primary" onClick={handleSave}>
-                  Save
-                </Button>
-                <Button appearance="primary" color="red" onClick={() => setPopupOpen(false)}>
+              <Stack
+                style={{ display: 'flex', justifyContent: 'flex-end' }}
+                spacing={2}
+                divider={<Divider vertical />}
+              >
+                <MyButton ghost color="var(--deep-blue)" onClick={() => setPopupOpen(false)}>
                   Cancel
-                </Button>
+                </MyButton>
+                <MyButton
+                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                  color="var(--deep-blue)"
+                  onClick={handleSave}
+                >
+                  {operationState === 'New' ? 'Create' : 'Save'}
+                </MyButton>
               </Stack>
             </Modal.Footer>
           </Modal>
-        </TabPanel>
+        </Tab>
+        <Tab eventKey="2" title="Rule Combinations"></Tab>
       </Tabs>
     </Panel>
   );

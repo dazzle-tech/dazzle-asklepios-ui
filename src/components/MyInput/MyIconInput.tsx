@@ -25,7 +25,7 @@ const MyIconInput = ({ fieldName, fieldType = 'text', record, setRecord, ...prop
         className="icons-list" 
           block
           virtualized
-          style={{ width: props?.width ?? {}, '--component-height': props.height} as React.CSSProperties} //baaaaack
+          style={{ width: props?.width}} //baaaaack
           accepter={SelectPicker}
           name={fieldName}
           data={iconsAsText}

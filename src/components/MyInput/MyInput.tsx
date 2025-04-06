@@ -1,3 +1,4 @@
+
 import { camelCaseToLabel, fromCamelCaseToDBName } from '@/utils';
 import React, { useEffect, useState } from 'react';
 import { Form, Input, DatePicker, Checkbox, Toggle, SelectPicker, InputNumber, TagPicker } from 'rsuite';
@@ -52,6 +53,7 @@ const MyInput = ({
             value={record[fieldName] ? record[fieldName] : ''}
             accepter={Textarea}
             onChange={handleValueChange}
+            
           />
         );
       case 'checkbox':
@@ -81,6 +83,7 @@ const MyInput = ({
             value={record ? record[fieldName] : ''}
             onChange={handleValueChange}
             defaultValue={props.defaultSelectValue}
+            placeholder={props.placeholder}
           />
         );
       //<TagPicker data={data} style={{ width: 300 }} />
@@ -112,6 +115,7 @@ const MyInput = ({
             value={record[fieldName] ? new Date(record[fieldName]) : null}
             accepter={CustomDatePicker}
             onChange={handleValueChange}
+            placeholder={props.placeholder}
           />
         );
       case 'number':
@@ -149,7 +153,7 @@ const MyInput = ({
             type={fieldType}
             value={record ? record[fieldName] : ''}
             onChange={handleValueChange}
-            
+            placeholder={props.placeholder}
           />
         );
     }
@@ -197,4 +201,4 @@ const MyInput = ({
   );
 };
 
-export default MyInput;
+export default MyInput;

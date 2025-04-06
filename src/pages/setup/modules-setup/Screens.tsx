@@ -1,7 +1,7 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Drawer, Input, List, Modal, Pagination, Panel, Table,InputGroup } from 'rsuite';
+import { Drawer, Input, List, Modal, Pagination, Panel, Table, InputGroup } from 'rsuite';
 import SearchIcon from '@rsuite/icons/Search';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetScreensQuery, useSaveScreenMutation } from '@/services/setupService';
@@ -20,6 +20,7 @@ import ArowBackIcon from '@rsuite/icons/ArowBack';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLaptop } from '@fortawesome/free-solid-svg-icons';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
+import MyButton from '@/components/MyButton/MyButton';
 import {
   addFilterToListRequest,
   conjureValueBasedOnKeyFromList,
@@ -50,7 +51,8 @@ const Screens = ({ module, goBack, ...props }) => {
   const { data: screenListResponse } = useGetScreensQuery(listRequest);
   const { data: screenMetadataListResponse } = useGetScreenMetadataQuery(listRequestForMetadata);
 
-  const [operationState, setOperationState] = useState<string>("New");
+  const [operationState, setOperationState] = useState<string>('New');
+  const [record, setRecord] = useState({ value: '' });
 
   useEffect(() => {
     if (module && module.key) {
@@ -74,6 +76,16 @@ const Screens = ({ module, goBack, ...props }) => {
     }
   }, [screenMetadataListResponse]);
 
+  useEffect(() => {
+    handleFilterChange('name', record['value']);
+  }, [record]);
+
+  useEffect(() => {
+    if (saveScreenMutation.data) {
+      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+    }
+  }, [saveScreenMutation.data]);
+
   const handleScreenNew = () => {
     setOperationState('New');
     setScreenPopupOpen(true);
@@ -84,12 +96,6 @@ const Screens = ({ module, goBack, ...props }) => {
     setScreenPopupOpen(false);
     saveScreen(screen).unwrap();
   };
-
-  useEffect(() => {
-    if (saveScreenMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveScreenMutation.data]);
 
   const isSelected = rowData => {
     if (rowData && screen && rowData.key === screen.key) {
@@ -140,26 +146,35 @@ const Screens = ({ module, goBack, ...props }) => {
         // }
         >
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <div style={{display: "flex", gap: "20px"}}>
-         
-
-            <Button startIcon={<ArowBackIcon />} style={{ marginBottom: 10}} color="var(--deep-blue)" appearance="ghost" onClick={goBack}> Back </Button>
-
-
-          
-            <InputGroup inside style={{ width: 200, marginBottom: 10 }}>
-                        <InputGroup.Button>
-                          <SearchIcon />
-                        </InputGroup.Button>
-                        <Input placeholder="Search by name" onChange={e => handleFilterChange('name', e)} />
-                      </InputGroup>
-                     
-
-             </div>
-            <div>
-              
-                <Button startIcon={<AddOutlineIcon />} style={{ marginRight: '40px', backgroundColor: "var(--deep-blue)"}} appearance="primary" onClick={handleScreenNew}> Add New </Button>
-              
+            <div style={{ display: 'flex', gap: '20px' }}>
+              <MyButton
+                prefixIcon={() => <ArowBackIcon />}
+                color="var(--deep-blue)"
+                ghost
+                onClick={goBack}
+              >
+                Back
+              </MyButton>
+              <Form>
+                <MyInput
+                  fieldName="value"
+                  fieldType="text"
+                  record={record}
+                  setRecord={setRecord}
+                  showLabel={false}
+                  placeholder="Search by Name"
+                  width={'220px'}
+                />
+              </Form>
+            </div>
+            <div style={{ marginRight: '40px', marginBottom: '10px' }}>
+              <MyButton
+                prefixIcon={() => <AddOutlineIcon />}
+                color="var(--deep-blue)"
+                onClick={handleScreenNew}
+              >
+                Add New
+              </MyButton>
             </div>
           </div>
           <Table
@@ -185,7 +200,11 @@ const Screens = ({ module, goBack, ...props }) => {
               <HeaderCell>
                 <Translate>Icon</Translate>
               </HeaderCell>
-              <Cell>{rowData => <Icon fill="var(--primary-gray)" size="1.5em" as={icons[rowData.iconImagePath]} />}</Cell>
+              <Cell>
+                {rowData => (
+                  <Icon fill="var(--primary-gray)" size="1.5em" as={icons[rowData.iconImagePath]} />
+                )}
+              </Cell>
             </Column>
             <Column sortable flexGrow={4}>
               <HeaderCell>
@@ -217,7 +236,7 @@ const Screens = ({ module, goBack, ...props }) => {
               <Cell>{rowData => iconsForActions(rowData)}</Cell>
             </Column>
           </Table>
-          <div style={{ padding: 20, backgroundColor: '#F4F7FC'}}>
+          <div style={{ padding: 20, backgroundColor: '#F4F7FC' }}>
             <Pagination
               prev
               next
@@ -246,61 +265,80 @@ const Screens = ({ module, goBack, ...props }) => {
               <Translate>{operationState} Screen</Translate>
             </Modal.Title>
             <hr />
-            <Modal.Body style={{ marginBottom: '50px' }}>
-              <Form fluid>
+            <Modal.Body style={{ marginBottom: '140px' }}>
+              <Form
+                fluid
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignContent: 'center',
+                  alignItems: 'center'
+                }}
+              >
                 <div
-                                style={{
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  justifyContent: 'center',
-                                  alignContent: 'center',
-                                  alignItems: 'center',
-                                  marginBottom: '40px'
-                                }}
-                              >
-                                <FontAwesomeIcon
-                                  icon={faLaptop}
-                                  color="#415BE7"
-                                  style={{ marginBottom: '10px' }}
-                                  size="2x"
-                                />
-                                <label style={{fontWeight: "bold", fontSize: "14px"}}>Screen info</label>
-                              </div>
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignContent: 'center',
+                    alignItems: 'center',
+                    marginBottom: '40px'
+                  }}
+                >
+                  <FontAwesomeIcon
+                    icon={faLaptop}
+                    color="#415BE7"
+                    style={{ marginBottom: '10px' }}
+                    size="2x"
+                  />
+                  <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Screen info</label>
+                </div>
 
-                <MyInput fieldName="name" record={screen} setRecord={setScreen} width={520} height={45}/>
-                <MyInput fieldName="description" record={screen} setRecord={setScreen} width={520} height={150} />
+                <MyInput fieldName="name" record={screen} setRecord={setScreen} width={520} />
+                <MyInput
+                  fieldName="description"
+                  fieldType="textarea"
+                  record={screen}
+                  setRecord={setScreen}
+                  width={520}
+                />
                 <MyInput
                   fieldName="viewOrder"
                   fieldType="number"
                   record={screen}
                   setRecord={setScreen}
-                  height={45}
                   width={520}
                 />
                 <div style={{ display: 'flex', gap: '20px' }}>
-                <MyIconInput
-                  fieldName="iconImagePath"
-                  fieldLabel="Icon"
-                  record={screen}
-                  setRecord={setScreen}
-                  height={"45px"}
-                  width={250}
-                />
-                <MyInput fieldName="navPath" record={screen} setRecord={setScreen} height={45} width={250} />
+                  <MyIconInput
+                    fieldName="iconImagePath"
+                    fieldLabel="Icon"
+                    record={screen}
+                    setRecord={setScreen}
+                    width={250}
+                  />
+                  <MyInput fieldName="navPath" record={screen} setRecord={setScreen} width={250} />
                 </div>
               </Form>
             </Modal.Body>
-            <hr/>
+            <hr />
             <Modal.Footer>
-              <Stack style={{display: "flex", justifyContent: "flex-end"}} spacing={2} divider={<Divider vertical />}>
-               <Button
-                              appearance="subtle"
-                              style={{ color: "var(--deep-blue)" }}
-                              onClick={() => setScreenPopupOpen(false)}
-                            >
-                              Cancel
-                            </Button>
-                            <Button startIcon={<FontAwesomeIcon icon={faCheckDouble} />} style={{backgroundColor: "var(--deep-blue)"}} appearance="primary" onClick={handleScreenSave}> {operationState === "New" ? "Create" : "Save"} </Button>
+              <Stack
+                style={{ display: 'flex', justifyContent: 'flex-end' }}
+                spacing={2}
+                divider={<Divider vertical />}
+              >
+                <MyButton ghost color="var(--deep-blue)" onClick={() => setScreenPopupOpen(false)}>
+                  Cancel
+                </MyButton>
+                <MyButton
+                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                  color="var(--deep-blue)"
+                  onClick={handleScreenSave}
+                >
+                  {operationState === 'New' ? 'Create' : 'Save'}
+                </MyButton>
               </Stack>
             </Modal.Footer>
           </Modal>
