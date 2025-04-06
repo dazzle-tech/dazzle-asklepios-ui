@@ -86,8 +86,9 @@ const NormalRangeSetup = ({ popUpOpen, setPopUpOpen, diagnosticsTest }) => {
     const { data: normalRangeListResponse, refetch: refetchNormalRange } = useGetDiagnosticsTestNormalRangeListQuery(listRequest);
     const [saveDiagnosticsTestNormalRange, saveDiagnosticsTestNormalRangeMutation] = useSaveDiagnosticsTestNormalRangeMutation();
     const [removeDiagnosticsTestNormalRange, removeDiagnosticsTestNormalRangeMutation] = useRemoveDiagnosticsTestNormalRangeMutation();
-    const { data: lovListResponseData } = useGetLovsQuery(listLovRequest);
     const [searchKeyword, setSearchKeyword] = useState('');
+    const { data: lovListResponseData } = useGetLovsQuery(listLovRequest, { skip: !searchKeyword || searchKeyword == '' });
+    
     const modifiedData = (lovListResponseData?.object ?? []).map(item => ({
         ...item,
         combinedLabel: `${item.lovCode} - ${item.lovName}`
@@ -112,11 +113,7 @@ const NormalRangeSetup = ({ popUpOpen, setPopUpOpen, diagnosticsTest }) => {
         });
     };
 
-    const handleSearch = value => {
-        setSearchKeyword(value);
-        console.log('serch' + searchKeyword);
-
-    };
+   
 
     const handleSave = async () => {
         try {
@@ -146,7 +143,34 @@ const NormalRangeSetup = ({ popUpOpen, setPopUpOpen, diagnosticsTest }) => {
             setDiagnosticTestNormalRange(newApDiagnosticTestNormalRange);
         }
     }, [diagnosticTestNormalRange]);
+    const handleSearch = value => {
+        setSearchKeyword(value);
 
+
+    };
+         useEffect(() => {
+             if (searchKeyword?.trim() !== "") {
+                 setListLovRequest(
+                     {
+                         ...listLovRequest,
+                         filterLogic: 'or',
+                         filters: [
+                             {
+                                 fieldName: 'lov_code',
+                                 operator: 'containsIgnoreCase',
+                                 value: searchKeyword
+                             },
+                             {
+                                 fieldName: 'lov_name',
+                                 operator: 'containsIgnoreCase',
+                                 value: searchKeyword
+                             }
+     
+                         ]
+                     }
+                 );
+             }
+         }, [searchKeyword]);
     useEffect(() => {
         setDiagnosticTestNormalRange({
             ...newApDiagnosticTestNormalRange,
@@ -297,37 +321,50 @@ const NormalRangeSetup = ({ popUpOpen, setPopUpOpen, diagnosticsTest }) => {
 
                     {(diagnosticTestNormalRange.resultTypeLkey === '6209578532136054') && (
                         <>
-                            <MyInput
-                                disabled={!isActive}
-                                fieldLabel={'Search LOV'}
-                                fieldName=""
-                                record={searchKeyword}
-                                setRecord={setSearchKeyword}
-
-                            />
-
-                            {searchKeyword && (
-                                <Dropdown.Menu className="dropdown-menuresult">
-                                    {modifiedData && modifiedData?.map(mod => (
-                                        <Dropdown.Item
-                                            key={mod.key}
-                                            eventKey={mod.key}
-                                            onClick={() => {
-                                                setDiagnosticTestNormalRange({
-                                                    ...diagnosticTestNormalRange,
-                                                    resultLovKey: mod.key
-                                                })
-                                                setLovCode(mod.lovCode);
-                                                setSearchKeyword("");
-                                            }
-                                            }
-                                        >
-                                            <span style={{ marginRight: "19px" }}>{mod.lovCode}</span>
-                                            <span>{mod.lovName}</span>
-                                        </Dropdown.Item>
-                                    ))}
-                                </Dropdown.Menu>
-                            )}
+                                        <InputGroup
+                                    disabled={!isActive}
+                                    inside style={{ width: '300px', zoom: 0.80, marginTop: '20px' }}>
+                                    <Input
+                                        placeholder={'Search LOV'}
+                                        value={searchKeyword}
+                                        onChange={handleSearch}
+                                    />
+                                    <InputGroup.Button>
+                                        <SearchIcon />
+                                    </InputGroup.Button>
+                                </InputGroup>
+                                {searchKeyword && (
+                                    <Dropdown.Menu className="dropdown-menuresult"
+                                        style={{
+                                            position: "absolute",
+                                            zIndex: 9999,
+                                            maxHeight: "200px",
+                                            overflowY: "auto",
+                                            backgroundColor: "white",
+                                            border: "1px solid #ccc",
+                                            boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)"
+                                        }}
+                                    >
+                                        {modifiedData && modifiedData?.map(mod => (
+                                            <Dropdown.Item
+                                                key={mod.key}
+                                                eventKey={mod.key}
+                                                onClick={() => {
+                                                    setDiagnosticTestNormalRange({
+                                                        ...diagnosticTestNormalRange,
+                                                        resultLovKey: mod.key
+                                                    })
+                                                    setLovCode(mod.lovCode);
+                                                    setSearchKeyword("");
+                                                }
+                                                }
+                                            >
+                                                <span style={{ marginRight: "19px" }}>{mod.lovCode}</span>
+                                                <span>{mod.lovName}</span>
+                                            </Dropdown.Item>
+                                        ))}
+                                    </Dropdown.Menu>
+                                )}
                             <Input
                                 disabled={true}
                                 style={{ zoom: 0.80, width: '300px' }}
