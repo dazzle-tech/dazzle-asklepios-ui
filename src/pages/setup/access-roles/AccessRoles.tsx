@@ -3,6 +3,9 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
+import { MdDelete } from 'react-icons/md';
+import { IoSettingsSharp } from 'react-icons/io5';
+import { MdModeEdit } from 'react-icons/md';
 import { useGetAccessRolesQuery, useSaveAccessRoleMutation } from '@/services/setupService';
 import { Button, ButtonToolbar, Carousel, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -33,6 +36,8 @@ const AccessRoles = () => {
   const { data: accessRoleListResponse } = useGetAccessRolesQuery(listRequest);
 
   const [saveAccessRole, saveAccessRoleMutation] = useSaveAccessRoleMutation();
+
+  const [operationState, setOperationState] = useState<string>('New');
 
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
@@ -116,7 +121,30 @@ const AccessRoles = () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent("  "));
     };
-  }, [location.pathname, dispatch])
+  }, [location.pathname, dispatch]);
+
+  const iconsForActions = (rowData: ApAccessRole) => (
+      <div style={{ display: 'flex', gap: '20px' }}>
+        <IoSettingsSharp
+          title="Setup Module Screens"
+          size={24}
+          fill="var(--primary-gray)"
+          onClick={() => toSubView('screen-matrix')}
+        />
+        <MdModeEdit
+          title="Edit"
+          size={24}
+           fill="var(--primary-gray)"
+           onClick={() => {
+            setAccessRole(rowData);
+            setOperationState('Edit');
+            setPopupOpen(true);
+          }}
+        />  
+        <MdDelete title="Deactivate" size={24} fill="var(--primary-pink)" />
+      </div>
+    );
+
   return (
     <Carousel
       style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
@@ -129,7 +157,7 @@ const AccessRoles = () => {
           <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
             Add New
           </IconButton>
-          <IconButton
+          {/* <IconButton
             disabled={!accessRole.key}
             appearance="primary"
             onClick={() => setPopupOpen(true)}
@@ -163,7 +191,7 @@ const AccessRoles = () => {
             icon={<ViewsAuthorizeIcon />}
           >
             Screen Access Matrix
-          </IconButton>
+          </IconButton> */}
         </ButtonToolbar>
         <hr />
         <Table
@@ -178,10 +206,6 @@ const AccessRoles = () => {
                 sortType
               });
           }}
-          headerHeight={80}
-          rowHeight={60}
-          bordered
-          cellBordered
           data={accessRoleListResponse?.object ?? []}
           onRowClick={rowData => {
             setAccessRole(rowData);
@@ -191,21 +215,21 @@ const AccessRoles = () => {
         >
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('name', e)} />
+              {/* <Input onChange={e => handleFilterChange('name', e)} /> */}
               <Translate>Name</Translate>
             </HeaderCell>
             <Cell dataKey="name" />
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('accessLevel', e)} />
+              {/* <Input onChange={e => handleFilterChange('accessLevel', e)} /> */}
               <Translate>Access Level</Translate>
             </HeaderCell>
             <Cell dataKey="accessLevel" />
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('passwordErrorRetires', e)} />
+              {/* <Input onChange={e => handleFilterChange('passwordErrorRetires', e)} /> */}
               <Translate>Password Error Retries</Translate>
             </HeaderCell>
             <Cell dataKey="passwordErrorRetires" />
@@ -218,10 +242,14 @@ const AccessRoles = () => {
           </Column>
           <Column sortable flexGrow={3}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('passwordExpiresAfterDays', e)} />
+              {/* <Input onChange={e => handleFilterChange('passwordExpiresAfterDays', e)} /> */}
               <Translate>Password Expires after</Translate>
             </HeaderCell>
             <Cell dataKey="passwordExpiresAfterDays" />
+          </Column>
+          <Column flexGrow={2}>
+            <HeaderCell></HeaderCell>
+            <Cell>{rowData => iconsForActions(rowData)}</Cell>
           </Column>
         </Table>
         <div style={{ padding: 20 }}>
