@@ -1,7 +1,7 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { ButtonToolbar, Input, Pagination, Panel, Table,Button,InputGroup } from 'rsuite';
+import { ButtonToolbar, Input, Pagination, Panel, Table, Button, InputGroup, Form } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetMetadataFieldsQuery } from '@/services/setupService';
 import { IconButton } from 'rsuite';
@@ -15,11 +15,18 @@ const MetadataFields = ({ metadata, goBack, ...props }) => {
 
   const { data: metadataFieldListResponse } = useGetMetadataFieldsQuery(listRequest);
 
+    const [recordOFSearch, setRecordOFSearch] = useState({ fieldName: '' });
+  
+
   useEffect(() => {
     if (metadata && metadata.key) {
       setListRequest(addFilterToListRequest('metadata_key', 'match', metadata.key, listRequest));
     }
   }, [metadata]);
+
+   useEffect(() => {
+      handleFilterChange('fieldName', recordOFSearch['fieldName']);
+    }, [recordOFSearch]);
 
   const handleFilterChange = (fieldName, value) => {
     if (value) {
@@ -40,21 +47,34 @@ const MetadataFields = ({ metadata, goBack, ...props }) => {
     <>
       {metadata && metadata.key && (
         <Panel
-          // header={
-          //   <h3 className="title">
-          //     <Translate> Metadata Fields for </Translate> <i>{metadata?.metadataName ?? ''}</i>
-          //   </h3>
-          // }
+        // header={
+        //   <h3 className="title">
+        //     <Translate> Metadata Fields for </Translate> <i>{metadata?.metadataName ?? ''}</i>
+        //   </h3>
+        // }
         >
-          <div style={{display:"flex", gap:"20px"}}>
-          <Button startIcon={<ArowBackIcon />} style={{ marginBottom: 10}} color="var(--deep-blue)" appearance="ghost" onClick={goBack}> Back </Button>
-          <InputGroup inside style={{ width: 170, marginBottom: 10 }}>
-                                <InputGroup.Button>
-                                  <SearchIcon />
-                                </InputGroup.Button>
-                                <Input style={{fontSize: "12px"}} placeholder="Search by Field Name" onChange={e => handleFilterChange('fieldName', e)} />
-                                
-                               </InputGroup>
+          <div style={{ display: 'flex', gap: '20px' }}>
+            <Button
+              startIcon={<ArowBackIcon />}
+              style={{ marginBottom: 10 }}
+              color="var(--deep-blue)"
+              appearance="ghost"
+              onClick={goBack}
+            >
+              {' '}
+              Back{' '}
+            </Button>
+             <Form style={{marginBottom: "10px"}}>
+                      <MyInput
+                        fieldName="fieldName"
+                        fieldType="text"
+                        record={recordOFSearch}
+                        setRecord={setRecordOFSearch}
+                        showLabel={false}
+                        placeholder="Search by Field Name"
+                        width={'220px'}
+                      />
+                    </Form>
           </div>
 
           <Table
@@ -74,21 +94,18 @@ const MetadataFields = ({ metadata, goBack, ...props }) => {
           >
             <Column sortable flexGrow={4}>
               <HeaderCell>
-                {/* <Input onChange={e => handleFilterChange('fieldName', e)} /> */}
                 <Translate>Field Name</Translate>
               </HeaderCell>
               <Cell dataKey="fieldName" />
             </Column>
             <Column sortable flexGrow={4}>
               <HeaderCell>
-                {/* <Input onChange={e => handleFilterChange('dbFieldName', e)} /> */}
                 <Translate>DB Field Name</Translate>
               </HeaderCell>
               <Cell dataKey="dbFieldName" />
             </Column>
             <Column sortable flexGrow={4}>
               <HeaderCell>
-                {/* <Input onChange={e => handleFilterChange('dataType', e)} /> */}
                 <Translate>Data Type</Translate>
               </HeaderCell>
               <Cell dataKey="dataType" />

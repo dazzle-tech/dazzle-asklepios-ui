@@ -34,8 +34,6 @@ import { useAppDispatch } from '@/hooks';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import FormControl from 'rsuite/esm/FormControl';
 
-
-
 const Modules = () => {
   const dispatch = useAppDispatch();
   const [module, setModule] = useState<ApModule>({ ...newApModule });
@@ -46,23 +44,39 @@ const Modules = () => {
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
 
   const [saveModule, saveModuleMutation] = useSaveModuleMutation();
- const divElement = useSelector((state: RootState) => state.div?.divElement);
-        const divContent = (
-          <div style={{ display: 'flex' }}>
-            <h5>Modules</h5>
-          </div>
-        );
-        const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-        dispatch(setPageCode('Modules'));
-        dispatch(setDivContent(divContentHTML));
+  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Modules</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Modules'));
+  dispatch(setDivContent(divContentHTML));
   useEffect(() => {}, []);
 
   const { data: moduleListResponse, refetch, isLoading } = useGetModulesQuery(listRequest);
 
   const [operationState, setOperationState] = useState<string>('New');
+  const [record, setRecord] = useState({ value: '' });
 
   // useEffect(() => {}, []);
+  useEffect(() => {
+    handleFilterChange('name', record['value']);
+  }, [record]);
 
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent('  '));
+    };
+  }, [location.pathname, dispatch]);
+
+  useEffect(() => {
+    if (saveModuleMutation.data) {
+      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+    }
+  }, [saveModuleMutation.data]);
 
   const handleModuleNew = () => {
     setOperationState('New');
@@ -75,11 +89,7 @@ const Modules = () => {
     saveModule(module).unwrap();
   };
 
-  useEffect(() => {
-    if (saveModuleMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveModuleMutation.data]);
+  
 
   const isSelected = rowData => {
     if (rowData && module && rowData.key === module.key) {
@@ -119,13 +129,7 @@ const Modules = () => {
         );
     }
   };
-  useEffect(() => {
-        return () => {
-          dispatch(setPageCode(''));
-          dispatch(setDivContent("  "));
-        };
-      }, [location.pathname, dispatch])
-
+  
 
   const toSubView = (subview: string, rowData) => {
     setModule(rowData);
@@ -146,13 +150,13 @@ const Modules = () => {
       <MdModeEdit
         title="Edit"
         size={24}
-         fill="var(--primary-gray)"
+        fill="var(--primary-gray)"
         onClick={() => {
           setModule(rowData);
           setOperationState('Edit');
           setModulePopupOpen(true);
         }}
-      />  
+      />
       <MdDelete title="Deactivate" size={24} fill="var(--primary-pink)" />
     </div>
   );
@@ -171,23 +175,33 @@ const Modules = () => {
       //     <Translate>Modules</Translate>
       //   </h3>
       // }
-
       >
-        
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <InputGroup inside style={{ width: 170, marginBottom: 10 }}>
-            <InputGroup.Button>
-              <SearchIcon />
-            </InputGroup.Button>
-            <Input style={{fontSize: "12px"}} placeholder="Search by Name" onChange={e => handleFilterChange('name', e)} />
-          </InputGroup>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+          <Form>
+            <MyInput
+              fieldName="value"
+              fieldType="text"
+              record={record}
+              setRecord={setRecord}
+              showLabel={false}
+              placeholder="Search by Name"
+              width={'220px'}
+            />
+            
+          </Form>
           <div>
-           
-
-            <Button startIcon={<AddOutlineIcon />} style={{ marginRight: '40px', backgroundColor: "var(--deep-blue)"}} appearance="primary" onClick={handleModuleNew}> Add New </Button>
-
+            <Button
+              startIcon={<AddOutlineIcon />}
+              style={{ marginRight: '40px', backgroundColor: 'var(--deep-blue)' }}
+              appearance="primary"
+              onClick={handleModuleNew}
+            >
+              {' '}
+              Add New{' '}
+            </Button>
           </div>
         </div>
+        
         <Table
           loading={isLoading}
           height={400}
@@ -221,7 +235,7 @@ const Modules = () => {
             <HeaderCell>
               <Translate>Name</Translate>
             </HeaderCell>
-            <Cell style={{fontWeight: "bold"}} dataKey="name" />
+            <Cell style={{ fontWeight: 'bold' }} dataKey="name" />
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
@@ -270,14 +284,17 @@ const Modules = () => {
             <Translate>{operationState} Module</Translate>
           </Modal.Title>
           <hr />
-          <Modal.Body style={{ marginBottom: '120px' }}>
-            <Form fluid  style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignContent: 'center',
-                  alignItems: 'center',
-                }}>
+          <Modal.Body style={{ marginBottom: '200px' }}>
+            <Form
+              fluid
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignContent: 'center',
+                alignItems: 'center'
+              }}
+            >
               <div
                 style={{
                   display: 'flex',
@@ -294,16 +311,15 @@ const Modules = () => {
                   style={{ marginBottom: '10px' }}
                   size="2x"
                 />
-                <label style={{fontWeight: "bold", fontSize: "14px"}}>Module info</label>
+                <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Module info</label>
               </div>
-              <MyInput fieldName="name" record={module} setRecord={setModule} width={520} height={45} />
+              <MyInput fieldName="name" record={module} setRecord={setModule} width={520} />
               <MyInput
                 fieldType="textarea"
                 fieldName="description"
                 record={module}
                 setRecord={setModule}
                 width={520}
-                height={150}
               />
               <div style={{ display: 'flex', gap: '20px' }}>
                 <MyInput
@@ -312,7 +328,6 @@ const Modules = () => {
                   record={module}
                   setRecord={setModule}
                   width={250}
-                  height={45}
                 />
                 <MyIconInput
                   fieldName="iconImagePath"
@@ -320,24 +335,33 @@ const Modules = () => {
                   record={module}
                   setRecord={setModule}
                   width={250}
-                  height={"45px"}
                 />
-
               </div>
             </Form>
           </Modal.Body>
-          <hr/>
+          <hr />
           <Modal.Footer>
-          
-            <Stack style={{display: "flex", justifyContent: "flex-end"}} spacing={2} divider={<Divider vertical />}>
+            <Stack
+              style={{ display: 'flex', justifyContent: 'flex-end' }}
+              spacing={2}
+              divider={<Divider vertical />}
+            >
               <Button
                 appearance="subtle"
-                style={{ color: "var(--deep-blue)" }}
+                style={{ color: 'var(--deep-blue)' }}
                 onClick={() => setModulePopupOpen(false)}
               >
                 Cancel
               </Button>
-              <Button startIcon={<FontAwesomeIcon icon={faCheckDouble} />} style={{backgroundColor: "var(--deep-blue)"}} appearance="primary" onClick={handleModuleSave}> {operationState === "New" ? "Create" : "Save"} </Button>
+              <Button
+                startIcon={<FontAwesomeIcon icon={faCheckDouble} />}
+                style={{ backgroundColor: 'var(--deep-blue)' }}
+                appearance="primary"
+                onClick={handleModuleSave}
+              >
+                {' '}
+                {operationState === 'New' ? 'Create' : 'Save'}{' '}
+              </Button>
             </Stack>
           </Modal.Footer>
         </Modal>
