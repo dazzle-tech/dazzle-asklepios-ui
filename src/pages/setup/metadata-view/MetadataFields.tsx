@@ -9,14 +9,13 @@ import SearchIcon from '@rsuite/icons/Search';
 import ArowBackIcon from '@rsuite/icons/ArowBack';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import MyInput from '@/components/MyInput';
-
+import MyButton from '@/components/MyButton/MyButton';
 const MetadataFields = ({ metadata, goBack, ...props }) => {
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
 
   const { data: metadataFieldListResponse } = useGetMetadataFieldsQuery(listRequest);
 
-    const [recordOFSearch, setRecordOFSearch] = useState({ fieldName: '' });
-  
+  const [recordOFSearch, setRecordOFSearch] = useState({ fieldName: '' });
 
   useEffect(() => {
     if (metadata && metadata.key) {
@@ -24,9 +23,9 @@ const MetadataFields = ({ metadata, goBack, ...props }) => {
     }
   }, [metadata]);
 
-   useEffect(() => {
-      handleFilterChange('fieldName', recordOFSearch['fieldName']);
-    }, [recordOFSearch]);
+  useEffect(() => {
+    handleFilterChange('fieldName', recordOFSearch['fieldName']);
+  }, [recordOFSearch]);
 
   const handleFilterChange = (fieldName, value) => {
     if (value) {
@@ -53,28 +52,26 @@ const MetadataFields = ({ metadata, goBack, ...props }) => {
         //   </h3>
         // }
         >
-          <div style={{ display: 'flex', gap: '20px' }}>
-            <Button
-              startIcon={<ArowBackIcon />}
-              style={{ marginBottom: 10 }}
+          <div style={{ display: 'flex', gap: '20px', marginBottom: '10px' }}>
+            <MyButton
+              prefixIcon={() => <ArowBackIcon />}
               color="var(--deep-blue)"
-              appearance="ghost"
+              ghost
               onClick={goBack}
             >
-              {' '}
-              Back{' '}
-            </Button>
-             <Form style={{marginBottom: "10px"}}>
-                      <MyInput
-                        fieldName="fieldName"
-                        fieldType="text"
-                        record={recordOFSearch}
-                        setRecord={setRecordOFSearch}
-                        showLabel={false}
-                        placeholder="Search by Field Name"
-                        width={'220px'}
-                      />
-                    </Form>
+              Back
+            </MyButton>
+            <Form>
+              <MyInput
+                fieldName="fieldName"
+                fieldType="text"
+                record={recordOFSearch}
+                setRecord={setRecordOFSearch}
+                showLabel={false}
+                placeholder="Search by Field Name"
+                width={'220px'}
+              />
+            </Form>
           </div>
 
           <Table

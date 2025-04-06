@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLaptop } from '@fortawesome/free-solid-svg-icons';
 import SearchIcon from '@rsuite/icons/Search';
 import { Button, ButtonToolbar, Carousel, IconButton } from 'rsuite';
+import MyButton from '@/components/MyButton/MyButton';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import EditIcon from '@rsuite/icons/Edit';
 import TrashIcon from '@rsuite/icons/Trash';
@@ -189,16 +190,13 @@ const Modules = () => {
             />
             
           </Form>
-          <div>
-            <Button
-              startIcon={<AddOutlineIcon />}
-              style={{ marginRight: '40px', backgroundColor: 'var(--deep-blue)' }}
-              appearance="primary"
-              onClick={handleModuleNew}
-            >
-              {' '}
-              Add New{' '}
-            </Button>
+          <div style={{marginRight: '40px'}}>
+            <MyButton 
+             prefixIcon={() => <AddOutlineIcon />}
+             color="var(--deep-blue)"
+             onClick={handleModuleNew}
+             >
+              Add New</MyButton>
           </div>
         </div>
         
@@ -346,22 +344,20 @@ const Modules = () => {
               spacing={2}
               divider={<Divider vertical />}
             >
-              <Button
-                appearance="subtle"
-                style={{ color: 'var(--deep-blue)' }}
-                onClick={() => setModulePopupOpen(false)}
+              <MyButton
+               ghost
+               color="var(--deep-blue)"
+               onClick={() => setModulePopupOpen(false)}
               >
                 Cancel
-              </Button>
-              <Button
-                startIcon={<FontAwesomeIcon icon={faCheckDouble} />}
-                style={{ backgroundColor: 'var(--deep-blue)' }}
-                appearance="primary"
-                onClick={handleModuleSave}
-              >
-                {' '}
-                {operationState === 'New' ? 'Create' : 'Save'}{' '}
-              </Button>
+              </MyButton>
+              <MyButton 
+             prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+             color="var(--deep-blue)"
+             onClick={handleModuleSave}
+             >
+             {operationState === 'New' ? 'Create' : 'Save'}
+              </MyButton>
             </Stack>
           </Modal.Footer>
         </Modal>

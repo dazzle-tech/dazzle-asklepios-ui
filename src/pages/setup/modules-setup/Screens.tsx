@@ -20,6 +20,7 @@ import ArowBackIcon from '@rsuite/icons/ArowBack';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLaptop } from '@fortawesome/free-solid-svg-icons';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
+import MyButton from '@/components/MyButton/MyButton';
 import {
   addFilterToListRequest,
   conjureValueBasedOnKeyFromList,
@@ -96,8 +97,6 @@ const Screens = ({ module, goBack, ...props }) => {
     saveScreen(screen).unwrap();
   };
 
-  
-
   const isSelected = rowData => {
     if (rowData && screen && rowData.key === screen.key) {
       return 'selected-row';
@@ -148,16 +147,14 @@ const Screens = ({ module, goBack, ...props }) => {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', gap: '20px' }}>
-              <Button
-                startIcon={<ArowBackIcon />}
-                style={{ marginBottom: 10 }}
+              <MyButton
+                prefixIcon={() => <ArowBackIcon />}
                 color="var(--deep-blue)"
-                appearance="ghost"
+                ghost
                 onClick={goBack}
               >
-                {' '}
-                Back{' '}
-              </Button>
+                Back
+              </MyButton>
               <Form>
                 <MyInput
                   fieldName="value"
@@ -170,16 +167,14 @@ const Screens = ({ module, goBack, ...props }) => {
                 />
               </Form>
             </div>
-            <div>
-              <Button
-                startIcon={<AddOutlineIcon />}
-                style={{ marginRight: '40px', backgroundColor: 'var(--deep-blue)' }}
-                appearance="primary"
+            <div style={{ marginRight: '40px', marginBottom: '10px' }}>
+              <MyButton
+                prefixIcon={() => <AddOutlineIcon />}
+                color="var(--deep-blue)"
                 onClick={handleScreenNew}
               >
-                {' '}
-                Add New{' '}
-              </Button>
+                Add New
+              </MyButton>
             </div>
           </div>
           <Table
@@ -270,16 +265,17 @@ const Screens = ({ module, goBack, ...props }) => {
               <Translate>{operationState} Screen</Translate>
             </Modal.Title>
             <hr />
-            <Modal.Body style={{ marginBottom: '150px' }}>
-              <Form 
-               fluid
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignContent: 'center',
-                alignItems: 'center'
-              }}>
+            <Modal.Body style={{ marginBottom: '140px' }}>
+              <Form
+                fluid
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignContent: 'center',
+                  alignItems: 'center'
+                }}
+              >
                 <div
                   style={{
                     display: 'flex',
@@ -302,7 +298,7 @@ const Screens = ({ module, goBack, ...props }) => {
                 <MyInput fieldName="name" record={screen} setRecord={setScreen} width={520} />
                 <MyInput
                   fieldName="description"
-                  fieldType='textarea'
+                  fieldType="textarea"
                   record={screen}
                   setRecord={setScreen}
                   width={520}
@@ -333,22 +329,16 @@ const Screens = ({ module, goBack, ...props }) => {
                 spacing={2}
                 divider={<Divider vertical />}
               >
-                <Button
-                  appearance="subtle"
-                  style={{ color: 'var(--deep-blue)' }}
-                  onClick={() => setScreenPopupOpen(false)}
-                >
+                <MyButton ghost color="var(--deep-blue)" onClick={() => setScreenPopupOpen(false)}>
                   Cancel
-                </Button>
-                <Button
-                  startIcon={<FontAwesomeIcon icon={faCheckDouble} />}
-                  style={{ backgroundColor: 'var(--deep-blue)' }}
-                  appearance="primary"
+                </MyButton>
+                <MyButton
+                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                  color="var(--deep-blue)"
                   onClick={handleScreenSave}
                 >
-                  {' '}
-                  {operationState === 'New' ? 'Create' : 'Save'}{' '}
-                </Button>
+                  {operationState === 'New' ? 'Create' : 'Save'}
+                </MyButton>
               </Stack>
             </Modal.Footer>
           </Modal>
