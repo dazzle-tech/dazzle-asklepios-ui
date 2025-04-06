@@ -185,7 +185,7 @@ const Encounter = () => {
   }, []);
   useEffect(() => {
     setLocalUser(authSlice.user)
-    console.log(authSlice.user)
+  
 
   }, [authSlice.user]);
   useEffect(() => {
@@ -335,7 +335,7 @@ const Encounter = () => {
                 <div className='left'>
                   <MyButton
                     prefixIcon={() => <ArowBackIcon />}
-
+                    
                     color={'var(--primary-gray)'}
                     onClick={handleGoBack}
 
