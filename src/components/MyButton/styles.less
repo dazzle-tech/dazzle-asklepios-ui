@@ -1,41 +1,77 @@
-.bt{
-display: flex;
-flex-direction: row;
-align-items: center;
-padding: 6px 12px;
-gap: 8px;
-height: 40px;
-border-radius: 6px;
-font-family: 'Inter Medium';
-font-size: 14px;}
+.bt {
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   gap: 8px;
+   font-family: 'Inter Medium';
+   border-radius: 6px;
+   transition: all 0.3s ease;
+ }
+ 
+ .bt.small {
+   height: 30px;
+   font-size: 12px;
 
-@media (max-width: 1150px) {
-    .bt{
- zoom:0.92
-    }
-  }
-  @media (max-width: 1020px) {
-    .bt{
- zoom:0.88
-    }
-  }
-  @media (max-width: 950px) {
-    .bt{
- zoom:0.83
-    }
-  }
-  @media (max-width: 900px) {
-    .bt{
- zoom:0.80
-    }
-  }
-  @media (max-width:800px) {
-    .bt{
- zoom:0.70
-    }
-  }
-  @media (max-width:400px) {
-    .bt{
- zoom:0.60
-    }
-  }
+ }
+ 
+ .bt.medum {
+   height: 40px;
+   font-size: 14px;
+  
+ }
+ 
+ .bt.large {
+   height: 50px;
+   font-size: 16px;
+ 
+ }
+ @media (max-width: 1100px) {
+   .bt.small {
+     height: 29px;
+     font-size: 11px;
+   }
+ 
+   .bt.medum {
+     height: 38px;
+     font-size: 13px;
+   }
+ 
+   .bt.large {
+     height: 47x;
+     font-size: 15px;
+   }
+ }
+@media (max-width: 950px) {
+   .bt.small {
+     height: 28px;
+     font-size: 11px;
+   }
+ 
+   .bt.medum {
+     height: 36px;
+     font-size: 13px;
+   }
+ 
+   .bt.large {
+     height: 45px;
+     font-size: 15px;
+   }
+ }
+ 
+ @media (max-width: 600px) {
+   .bt.small {
+     height: 26px;
+     font-size: 10px;
+   }
+ 
+   .bt.medum {
+     height: 32px;
+     font-size: 12px;
+   }
+ 
+   .bt.large {
+     height: 40px;
+     font-size: 14px;
+   }
+ }
+ 
