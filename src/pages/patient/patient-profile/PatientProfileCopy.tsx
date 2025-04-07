@@ -824,7 +824,7 @@ const PatientProfileCopy = () => {
                                                             <Button
                                                                 color='blue'
                                                                 appearance="ghost"
-                                                                style={{ color: 'var(--primary-blue)', zoom: 0.8, textAlign: 'left', width: 170 }}
+                                                                style={{ color: 'var(--primary-blue)', textAlign: 'left', width: 170 }}
                                                                 disabled={localPatient.key === undefined}
                                                                 onClick={() => setVisitHistoryModel(true)}
                                                                 block
@@ -840,7 +840,7 @@ const PatientProfileCopy = () => {
                                                             <Button
                                                                 color='blue'
                                                                 appearance="ghost"
-                                                                style={{ color: 'var(--primary-blue)', zoom: 0.8, textAlign: 'left', width: 170 }}
+                                                                style={{ color: 'var(--primary-blue)', textAlign: 'left', width: 170 }}
                                                                 disabled={!localPatient.key}
                                                                 onClick={handleNewVisit}
                                                                 block
@@ -857,7 +857,7 @@ const PatientProfileCopy = () => {
                                                                 onClick={() => setAdministrativeWarningsModalOpen(true)}
                                                                 disabled={!localPatient.key}
                                                                 appearance="ghost"
-                                                                style={{ color: 'var(--primary-blue)', zoom: 0.8, textAlign: 'left', width: 170 }}
+                                                                style={{ color: 'var(--primary-blue)', textAlign: 'left', width: 170 }}
                                                                 block
                                                             >
                                                                 <span>Administrative Warnings</span>
@@ -1941,7 +1941,7 @@ const PatientProfileCopy = () => {
                 </div>
                 <div style={{ flex: expand ? "240px" : "56px", height: '90vh', display: 'flex', flexDirection: 'row-reverse' }}>
                     <Sidebar
-                        style={{ display: 'flex', flexDirection: 'column', height: '90vh', zoom: 0.8 }}
+                        style={{ display: 'flex', flexDirection: 'column', height: '90vh' }}
                         width={expand ? 300 : 56}
                         collapsible
 

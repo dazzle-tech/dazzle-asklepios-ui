@@ -183,12 +183,12 @@ const VaccineReccord = ({patient,encounter}) => {
 
             /> <MyLabel label="Show Cancelled Vaccine Doses" />
             </div>
-            {isFetching&&<Loader center />}
-            {!isFetching&&
+            {isFetching && <Loader center />}
+            {!isFetching &&
             vaccineListResponseLoading?.object?.map((vaccine, index) => (
 
-                <Panel header={`${vaccine.vaccineName}`} collapsible bordered >
-                    <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+                <Panel header={`${vaccine.vaccineName}`} collapsible bordered key={vaccine.vaccineName}>
+                    <Form layout="inline" fluid>
                         <MyInput
                             column
                             disabled

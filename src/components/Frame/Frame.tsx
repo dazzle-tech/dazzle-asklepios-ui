@@ -14,7 +14,7 @@ import {
   Panel
 } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHospital} from '@fortawesome/free-solid-svg-icons';
+import { faHospital } from '@fortawesome/free-solid-svg-icons';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import NavToggle from './NavToggle';
 import Header from '../Header';
@@ -58,7 +58,6 @@ const Frame = (props: FrameProps) => {
   const authSlice = useAppSelector(state => state.auth);
   const patientSlice = useAppSelector(state => state.patient);
   const navigate = useNavigate();
-  const location = useLocation();
   const dispatch = useAppDispatch();
 
   useEffect(() => {
@@ -79,79 +78,73 @@ const Frame = (props: FrameProps) => {
     : {};
 
   return (
-    <Container className="frame" >
-
-  
+    <Container className="frame">
       <Sidebar
-        style={{ display: 'flex', flexDirection: 'column', height: '102vh'}}
-
+        style={{ display: 'flex', flexDirection: 'column', height: '102vh' }}
         width={expand ? 260 : 56}
         collapsible
       >
-        <Sidenav.Header>
-
-        </Sidenav.Header>
-        <Sidenav expanded={expand} appearance="subtle" defaultOpenKeys={['2', '3']} style={{zoom: expand ? 0.85 : 1}}>
-          <Sidenav.Body style={navBodyStyle}> 
+        <Sidenav.Header></Sidenav.Header>
+        <Sidenav expanded={expand} appearance="subtle" defaultOpenKeys={['2', '3']}>
+          <Sidenav.Body style={navBodyStyle}>
             <Nav>
-              {expand&&<img
-                onClick={() => {
-                  navigate('/');
-                }}
-                style={{
-                  display: 'block',
-                  margin: 'auto',
-                  padding: '0px 0px',
-                  cursor: 'pointer'
-                }}
-                src={
-                  authSlice.tenant && authSlice.tenant.tenantLogoPath
-                    ? authSlice.tenant.tenantLogoPath
-                    : Logo
-                }
-                height={50}
-                width={ 100 }
-              />}
-            {expand&&
-               <div
-               
-               style={{
-                 display: 'flex',
-                 alignItems: 'center',
-                 marginLeft: '35px',
-                 justifyContent:'center',
-                 padding: '12px 15px',
-                 borderRadius: '15px',
-                 boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)', 
-                 backgroundColor: '#f9f9f9',
-                 width: '220px',
-                 border: '1px solid #ddd'
-               }}
-             >
-               <FontAwesomeIcon 
-                 icon={faHospital} 
-                 size="lg" 
-                 style={{ color: '#666', marginRight: '12px' }} 
-               />
-             
-               <div>
-                 <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#333' }}>
-                   Health Organization1
-                 </div>
-                 <div style={{ fontSize: '10px', color: '#777' }}>
-                   845 Euclid Avenue, CA
-                 </div>
-               </div>
-             </div>}
+              {expand && (
+                <img
+                  onClick={() => {
+                    navigate('/');
+                  }}
+                  style={{
+                    display: 'block',
+                    margin: 'auto',
+                    padding: '0px 0px',
+                    cursor: 'pointer'
+                  }}
+                  src={
+                    authSlice.tenant && authSlice.tenant.tenantLogoPath
+                      ? authSlice.tenant.tenantLogoPath
+                      : Logo
+                  }
+                  height={50}
+                  width={100}
+                />
+              )}
+              {expand && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginLeft: '35px',
+                    justifyContent: 'center',
+                    padding: '12px 15px',
+                    borderRadius: '15px',
+                    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
+                    backgroundColor: '#f9f9f9',
+                    width: '220px',
+                    border: '1px solid #ddd'
+                  }}
+                >
+                  <FontAwesomeIcon
+                    icon={faHospital}
+                    size="lg"
+                    style={{ color: '#666', marginRight: '12px' }}
+                  />
+
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#333' }}>
+                      Health Organization1
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#777' }}>845 Euclid Avenue, CA</div>
+                  </div>
+                </div>
+              )}
               {navs.map(item => {
                 const { children, ...rest } = item;
                 if (children) {
                   return (
-                    <Nav.Menu key={item.eventKey} placement="rightStart" trigger="hover" {...rest} >
+                    <Nav.Menu key={item.eventKey} placement="rightStart" trigger="hover" {...rest}>
                       {children.map(child => {
                         return (
                           <NavItem
-                  
                             onClick={() => {
                               dispatch(setScreenKey(child.eventKey));
                             }}
@@ -166,7 +159,7 @@ const Frame = (props: FrameProps) => {
 
                 if (rest.target === '_blank') {
                   return (
-                    <Nav.Item key={item.eventKey} {...rest} style={{ zoom: expand ? 0.8 : 1 }}>
+                    <Nav.Item key={item.eventKey} {...rest}>
                       {item.title}
                     </Nav.Item>
                   );
@@ -180,8 +173,8 @@ const Frame = (props: FrameProps) => {
         <NavToggle expand={expand} onChange={() => setExpand(!expand)} />
       </Sidebar>
 
-      <Container className={containerClasses}  >
-        <Header expand={expand} setExpand={setExpand}  />
+      <Container className={containerClasses}>
+        <Header expand={expand} setExpand={setExpand} />
         <Content style={{ marginTop: '15px' }}>
           {/* <Breadcrumb>
             <Breadcrumb.Item onClick={() => navigate('/')}>

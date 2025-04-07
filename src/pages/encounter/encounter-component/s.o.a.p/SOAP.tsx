@@ -246,7 +246,7 @@ const SOAP = ({ edit,patient,encounter ,setEncounter}) => {
       <div className="column-container">
         <fieldset style={{ flex: "2" }} className="box-container">
           <legend> Vital signs</legend>
-          <Panel style={{ zoom: 0.88 }}>
+          <Panel>
             <Grid fluid>
               <Row gutter={15}>
                 <Col xs={2}><h6 style={{ textAlign: 'left', fontSize: "13px" }}>BP</h6></Col>
@@ -416,7 +416,7 @@ const SOAP = ({ edit,patient,encounter ,setEncounter}) => {
       <div className="column-container">
         <fieldset style={{ flex: "2" }} className="box-container">
           <legend> Body Measurements</legend>
-          <Panel style={{ padding: '5px', zoom: 0.88 }} >
+          <Panel style={{ padding: '5px'}} >
             <Grid fluid>
               <Row gutter={15}>
                 <Col xs={6}><h6 style={{ textAlign: 'left', fontSize: "13px" }}>Weight</h6></Col>
@@ -478,7 +478,7 @@ const SOAP = ({ edit,patient,encounter ,setEncounter}) => {
         </fieldset>
         <fieldset className="box-container">
           <legend> Pain Level</legend>
-          <Panel style={{ padding: '5px', zoom: 0.88 }} >
+          <Panel style={{ padding: '5px'}} >
             <Grid fluid>
               <Row gutter={15}>
                 <Col xs={6}>
@@ -514,7 +514,7 @@ const SOAP = ({ edit,patient,encounter ,setEncounter}) => {
         </fieldset>
         <fieldset className="box-container">
           <legend> Assessment</legend>
-          <Panel style={{ padding: '2px', zoom: 0.88 }} >
+          <Panel style={{ padding: '2px' }} >
             <Form>
               {/* <MyInput
             fieldType='textarea'

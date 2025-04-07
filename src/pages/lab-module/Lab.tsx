@@ -874,7 +874,7 @@ const Lab = () => {
                     ) : (
 
                       <div onClick={() => setShowFilterInput(true)} style={{ cursor: 'pointer' }}>
-                        <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px', zoom: 0.8 }} />
+                        <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
                         <Translate> ORDER ID</Translate>
                       </div>
                     )}
@@ -885,7 +885,7 @@ const Lab = () => {
                 </Column>
                 <Column sortable flexGrow={3} fullText>
                   <HeaderCell>
-                    <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px', zoom: 0.8 }} />
+                    <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
                     <Translate>  DATE,TIME</Translate>
                   </HeaderCell>
                   <Cell >
@@ -895,7 +895,7 @@ const Lab = () => {
 
                 <Column sortable flexGrow={2} fullText>
                   <HeaderCell>
-                    <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px', zoom: 0.8 }} />
+                    <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px'}} />
                     <Translate>MRN</Translate>
                   </HeaderCell>
                   <Cell>
@@ -904,7 +904,7 @@ const Lab = () => {
                 </Column>
                 <Column sortable flexGrow={2} fullText>
                   <HeaderCell>
-                    <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px', zoom: 0.8 }} />
+                    <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
                     <Translate>PATIENT NAME</Translate>
                   </HeaderCell>
                   <Cell  >
@@ -916,7 +916,7 @@ const Lab = () => {
 
                 <Column sortable flexGrow={2} fullText >
                   <HeaderCell>
-                    <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px', zoom: 0.8 }} />
+                    <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
                     <Translate>SATUTS</Translate>
                   </HeaderCell>
                   <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1087,7 +1087,7 @@ const Lab = () => {
                       />
                     ) : (
                       <div onClick={() => setShowListFilter(true)} style={{ cursor: 'pointer' }}>
-                        <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px', zoom: 0.8 }} />
+                        <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
                         <Translate> TEST CATEGORY</Translate>
                       </div>
                     )}
@@ -1366,7 +1366,7 @@ const Lab = () => {
 
                               handleValueChange(value, rowData)
                             }}
-                            style={{ width: 100, zoom: 0.8 }}
+                            style={{ width: 100 }}
                           />
                         ) : (
                           <span>
@@ -1378,7 +1378,6 @@ const Lab = () => {
                       }
                       else if (rowData.normalRange?.resultTypeLkey == "6209569237704618") {
                         return activeRowKey === rowData.key ? (<Input
-                          style={{ zoom: 0.8 }}
                           type='number'
 
                           onChange={(value) => {
@@ -2156,7 +2155,7 @@ const Lab = () => {
         </Row>
         <Row>
           <Col xs={8}>
-            <Form style={{ zoom: 0.85 }}>
+            <Form>
               <MyInput
                 fieldLabel={"Actual Sample Quantity"}
                 fieldName={"quantity"}
@@ -2168,7 +2167,7 @@ const Lab = () => {
             </Form>
           </Col>
           <Col xs={8}>
-            <Form style={{ zoom: 0.85 }}>
+            <Form>
               <MyInput
                 fieldName={"unitLkey"}
                 fieldType='select'
@@ -2182,7 +2181,7 @@ const Lab = () => {
           <Col xs={8}>
             <Text style={{ fontWeight: 'bold' }}>Sample Collected </Text>
             <DatePicker
-              style={{ zoom: 0.85, width: '270' }}
+              style={{width: '270' }}
               format="dd MMM yyyy hh:mm:ss aa"
               showMeridiem
               caretAs={FaCalendar}
@@ -2196,7 +2195,7 @@ const Lab = () => {
             <Panel
               header="Collected Samples"
               collapsible
-              style={{ border: '1px solid #e5e5ea', zoom: 0.85 }}
+              style={{ border: '1px solid #e5e5ea' }}
             >
               <Panel style={{ border: '1px solid #e5e5ea', borderRadius: '25px', zoom: 0.93 }}>
                 <Table

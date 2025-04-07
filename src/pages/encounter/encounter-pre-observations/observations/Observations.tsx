@@ -205,7 +205,7 @@ const Observations = ({patient,encounter}) => {
 
   return (
     <>
-       <Grid fluid style={{ zoom: 0.85}} >
+       <Grid fluid >
                   <Row gutter={15} >
                     <div className="responseveDiv">
                       <div className='resDivPart'>  <Col xs={12}>

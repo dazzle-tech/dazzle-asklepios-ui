@@ -639,624 +639,66 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
         });
     }, [allData, encounterStatus]);
 
-    return (<>
-        <div>
-            <Panel header="Add Vaccine " collapsible bordered defaultExpanded>
-                <div style={{ border: '1px solid #b6b7b8', padding: "5px" }}>
-                    <Form style={{ zoom: 0.85 }} layout="inline" fluid>
-                        <div style={{ zoom: 0.9, display: 'flex', gap: '10px', flexWrap: "wrap" }}>
+    return (<div>
+        <Panel header="Add Vaccine " collapsible bordered defaultExpanded>
+            <div style={{ border: '1px solid #b6b7b8', padding: "5px" }}>
+                <Form layout="inline" fluid>
+                    <div style={{ zoom: 0.9, display: 'flex', gap: '10px', flexWrap: "wrap" }}>
 
-                            <div style={{ position: "relative" }}>
-                                <Text style={{ fontWeight: '800', fontSize: '16px' }}>Vaccine Name</Text>
-                                <InputGroup inside style={{ width: '230px' }}>
-                                    <Input
-                                        disabled={isEncounterStatusClosed || disabled}
-                                        placeholder="Search"
-                                        value={searchKeyword}
-                                        onChange={handleSearch}
-                                    />
-                                    <InputGroup.Button>
-                                        <SearchIcon />
-                                    </InputGroup.Button>
-                                </InputGroup>
-                                {searchKeyword && (
-                                    <Dropdown.Menu className="dropdown-menuresult" >
-                                        {modifiedData?.map(mod => (
-                                            <Dropdown.Item
-                                                key={mod.key}
-                                                eventKey={mod.key}
-                                                onClick={() => {
-                                                    setVaccine(mod);
-                                                    setSearchKeyword("");
-                                                }}
-                                            >
-                                                <span style={{ marginRight: "19px" }}>{mod.vaccineName}</span>
-                                            </Dropdown.Item>
-                                        ))}
-                                    </Dropdown.Menu>
-                                )}
-                            </div>
-
-                            <MyInput
-                                column
-                                disabled
-                                width={200}
-                                fieldType="text"
-                                fieldLabel="Vaccin Name"
-                                fieldName='vaccineName'
-                                record={vaccine}
-                                setRecord={setVaccine}
-                            />
-                            <MyInput
-                                column
-                                disabled
-                                width={200}
-                                fieldType="text"
-                                fieldLabel="ATC Code"
-                                fieldName='atcCode'
-                                record={vaccine}
-                                setRecord={setVaccine}
-                            />
-
-                            <MyInput
-                                width={230}
-                                column
-                                fieldLabel="Type"
-                                fieldType="select"
-                                fieldName="typeLkey"
-                                selectData={typeLovQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                record={vaccine}
-                                setRecord={setVaccine}
-                                disabled
-                            />
-                            <MyInput
-                                width={230}
-                                column
-                                fieldLabel="Number of Doses"
-                                fieldType="select"
-                                fieldName="numberOfDosesLkey"
-                                selectData={numofDossLovQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                record={vaccine}
-                                setRecord={setVaccine}
-                                disabled
-                            />
-
-                            <MyInput
-                                width={230}
-                                column
-                                fieldLabel="ROA"
-                                fieldType="select"
-                                fieldName="roaLkey"
-                                selectData={rOALovQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                record={vaccine}
-                                setRecord={setVaccine}
-                                disabled
-                            />
-                            <MyInput
-                                width={230}
-                                column
-                                fieldLabel="Site of Administration"
-                                fieldName="siteOfAdministration"
-                                record={vaccine}
-                                setRecord={setVaccine}
-                                disabled
-                            />
-
-                            <ButtonToolbar>
-                                <IconButton width={180} style={{ marginTop: '25px' }} appearance="primary" color="cyan" icon={<PlusIcon />} onClick={() => { setPopupOpen(true) }}
-                                    disabled={!vaccine.key} >
-                                    View Vaccine
-                                </IconButton> </ButtonToolbar></div>
-                    </Form>
-                    <Form style={{ zoom: 0.85, display: 'flex' }} layout="inline" fluid>
-                        <div style={{ display: 'flex', zoom: 0.90, alignItems: 'center', gap: '10px' }}>
-
-                            <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px' }}>
-                                <div>  <MyLabel label="Used Brand" /></div>
-                                <SelectPicker
-
-                                    data={brandsNameList}
-
-                                    value={
-                                        vaccineBrand?.brandName === null
-                                            ? null
-                                            : brandsNameList.key
-                                    }
-                                    onChange={(value) => {
-                                        const selectedItem = brandsNameList.find((item) => item.value === value);
-                                        setVaccineBrand({ ...selectedItem.vaccineBrand });
-                                    }}
-                                    style={{ width: 230 }}
-                                    placeholder={vaccineBrand?.key ? vaccineBrand?.brandName : 'Select'}
-                                    labelKey="label"
-                                    valueKey="value"
-                                    disabled={!vaccine.key || isEncounterStatusClosed || disabled}
-
+                        <div style={{ position: "relative" }}>
+                            <Text style={{ fontWeight: '800', fontSize: '16px' }}>Vaccine Name</Text>
+                            <InputGroup inside style={{ width: '230px' }}>
+                                <Input
+                                    disabled={isEncounterStatusClosed || disabled}
+                                    placeholder="Search"
+                                    value={searchKeyword}
+                                    onChange={handleSearch}
                                 />
-                            </div>
-                            <MyInput
-                                column
-                                disabled
-                                width={90}
-                                fieldType="text"
-                                fieldLabel="Volume"
-                                fieldName='volume'
-                                record={vaccineBrand}
-                                setRecord={setVaccineBrand}
-                            />
-                            <MyInput
-                                disabled
-                                width={100}
-                                column
-                                fieldLabel="Unit"
-                                fieldType="select"
-                                fieldName="unitLkey"
-                                selectData={volumUnitLovQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                record={vaccineBrand}
-                                setRecord={setVaccineBrand}
-
-                            />
-                            <MyInput
-
-                                width={200}
-                                column
-                                fieldLabel="Vaccine Manufacturer"
-                                fieldType="select"
-                                fieldName="manufacturerLkey"
-                                selectData={manufacturerLovQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                record={vaccineBrand}
-                                setRecord={setVaccineBrand}
-                                disabled
-                            />
-                            <MyInput
-                                column
-                                disabled={isEncounterStatusClosed || disabled}
-                                width={230}
-                                fieldType="text"
-                                fieldLabel="Vaccine Lot Number"
-                                fieldName='vaccineLotNumber'
-                                record={encounterVaccination}
-                                setRecord={setEncounterVaccination}
-                            />
-                            <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px' }}>
-                                <div>  <MyLabel label="Date Administered" /></div>
-                                <Stack spacing={10} direction="column" alignItems="flex-start">
-                                    <DatePicker
-                                        format="MM/dd/yyyy hh:mm"
-                                        showMeridian
-                                        disabled={isEncounterStatusClosed || disabled}
-                                        style={{ width: '230px' }}
-                                        value={encounterVaccination.dateAdministered ? new Date(encounterVaccination.dateAdministered) : null}
-                                        placeholder={encounterVaccination.dateAdministered ? new Date(encounterVaccination.dateAdministered).toLocaleString("en-GB") : "MM/dd/yyyy hh:mm"}
-                                        onChange={newValue => {
-                                            if (newValue) {
-                                                setEncounterVaccination(prev => ({
-                                                    ...prev,
-                                                    dateAdministered: newValue.getTime()
-                                                }));
-                                            } else {
-
-                                                setEncounterVaccination(prev => ({
-                                                    ...prev,
-                                                    dateAdministered: null
-                                                }));
-                                            }
-                                        }}
-                                    />
-                                </Stack>
-
-
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px' }}>
-                                <div>
-                                    <MyLabel label="Dose Name" />
-                                </div>
-                                <SelectPicker
-                                    data={dosesList}
-                                    value={
-                                        vaccineDose?.doseNameLkey === null
-                                            ? null
-                                            : dosesList.key
-                                    }
-                                    onChange={(value) => {
-                                        const selectedItem = dosesList.find((item) => item.value === value);
-                                        setVaccineDose({ ...selectedItem.vaccineDoses });
-                                    }}
-                                    style={{ width: 230 }}
-                                    labelKey="label"
-                                    valueKey="value"
-                                    placeholder={
-                                        vaccineDose?.key
-                                            ? vaccineDose?.doseNameLvalue.lovDisplayVale
-                                            : 'Select'
-                                    }
-                                    disabled={!vaccine.key || isEncounterStatusClosed || disabled}
-                                />
-
-
-                            </div>
-                            <MyInput
-
-                                width={230}
-                                column
-                                fieldLabel="Next Dose"
-                                fieldType="select"
-                                fieldName="doseNameLkey"
-                                selectData={numSerialLovQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                record={vaccineToDose}
-
-                                disabled
-                            />
-                            <div style={{ display: 'flex' }}>
-
-                                <MyInput
-
-                                    width={40}
-                                    column
-                                    fieldLabel="Next"
-                                    fieldName="intervalBetweenDoses"
-                                    record={vaccineDoseInterval}
-                                    disabled
-                                />
-                                <MyInput
-
-                                    width={150}
-                                    column
-                                    fieldLabel="Dose Due Date"
-                                    fieldType="select"
-                                    fieldName="unitLkey"
-                                    selectData={unitLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    record={vaccineDoseInterval}
-                                    disabled
-                                />
-
-                            </div>
-
+                                <InputGroup.Button>
+                                    <SearchIcon />
+                                </InputGroup.Button>
+                            </InputGroup>
+                            {searchKeyword && (
+                                <Dropdown.Menu className="dropdown-menuresult" >
+                                    {modifiedData?.map(mod => (
+                                        <Dropdown.Item
+                                            key={mod.key}
+                                            eventKey={mod.key}
+                                            onClick={() => {
+                                                setVaccine(mod);
+                                                setSearchKeyword("");
+                                            }}
+                                        >
+                                            <span style={{ marginRight: "19px" }}>{mod.vaccineName}</span>
+                                        </Dropdown.Item>
+                                    ))}
+                                </Dropdown.Menu>
+                            )}
                         </div>
 
-                    </Form>
-                    <Form style={{ zoom: 0.85, display: 'flex' }} layout="inline" fluid>
                         <MyInput
                             column
-                            disabled={isEncounterStatusClosed || disabled}
-                            width={300}
-                            fieldType="text"
-                            fieldLabel="Actual Side and Site of Administration"
-                            fieldName='actualSide'
-                            record={encounterVaccination}
-                            setRecord={setEncounterVaccination}
-                        />
-                        <MyInput
-                            width={353}
-                            column
-                            fieldLabel="Administration Reactions"
-                            fieldType="select"
-                            fieldName='administrationReactionsLkey'
-                            selectData={medAdversLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            record={administrationReaction}
-                            setRecord={setAdministrationReactions}
-                            disabled={isEncounterStatusClosed || disabled}
-                        />
-                        <MyInput
-                            width={230}
-                            column
-                            fieldLabel="External Facility"
-                            fieldType="checkbox"
-                            fieldName="isHas"
-                            record={hasExternalFacility}
-                            setRecord={setHasExternalFacility}
-                            disabled={isEncounterStatusClosed || disabled}
-                        />
-                        <MyInput
-                            column
-
-                            width={230}
-                            fieldType="text"
-                            fieldLabel="External Facility Name"
-                            fieldName='externalFacilityName'
-                            record={encounterVaccination}
-                            setRecord={setEncounterVaccination}
-                            disabled={!hasExternalFacility.isHas}
-                        />
-
-
-                    </Form>
-                    <Form style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <Form style={{ display: 'flex', flexDirection: 'column' }}>
-                            <MyLabel label="Notes" />
-                            <Input
-                                disabled={isEncounterStatusClosed || disabled}
-                                as="textarea"
-                                value={encounterVaccination.notes}
-                                onChange={(e) => setEncounterVaccination({
-                                    ...encounterVaccination,
-                                    notes: e
-                                })}
-                                style={{ width: 255 }}
-                                rows={4}
-                            />
-
-                        </Form>
-                        <Input
-                         disabled={isEncounterStatusClosed || disabled}
-                            as="textarea"
-                            value={encounterVaccination.administrationReactions || ""}
-                            onChange={(value) =>
-                                setEncounterVaccination((prev) => ({
-                                    ...prev,
-                                    administrationReactions: value
-                                }))
-                            }
-                            style={{ width: 300, marginTop: '26px' }} 
-                            rows={4}
-                        />
-
-
-                    </Form>
-                    <br />
-                    <IconButton
-                        color="violet"
-                        appearance="primary"
-                        onClick={() => handleSaveEncounterVaccine()}
-
-                        disabled={encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey: false}
-                        icon={<CheckIcon />}
-                    >
-                        <Translate>Save</Translate>
-                    </IconButton>
-                    <Button
-                        color="cyan"
-                        appearance="primary"
-                        style={{ marginLeft: "5px" }}
-                        onClick={handleClearField}
-                    >
-
-                        <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px' }} />
-                        <span>Clear</span>
-                    </Button>
-
-                </div>
-            </Panel>
-
-            <Panel header="Patient’s Vaccines " collapsible bordered>
-                <div>
-                    <IconButton
-                        color="cyan"
-                        appearance="primary"
-                        onClick={() => { setPopupCancelOpen(true) }}
-                        icon={<CloseOutlineIcon />}
-                        disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey: false}
-
-                    >
-                        <Translate>Cancel</Translate>
-                    </IconButton>
-                    <IconButton
-                        color="cyan"
-                        appearance="primary"
-                        onClick={handleReviewe}
-                        style={{ marginLeft: '4px' }}
-                        icon={<CheckOutlineIcon />}
-                        disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3721622082897301' || encounterVaccination.statusLkey === '3196709905099521' || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey: false || isEncounterStatusClosed || disabled }
-                    >
-                        <Translate>Review</Translate>
-                    </IconButton>
-
-                    <Checkbox
-                        onChange={(value, checked) => {
-                            if (checked) {
-                                setEncounterStatus('3196709905099521');
-                            }
-                            else {
-                                setEncounterStatus('');
-
-                            }
-                        }}
-                    >
-                        Show Cancelled
-                    </Checkbox>
-                    <Checkbox
-                        onChange={(value, checked) => {
-                            if (checked) {
-                                setAllDate(true);
-                            }
-                            else {
-                                setAllDate(false);
-
-                            }
-                        }}
-                    >
-                        Show All Vaccines
-                    </Checkbox>
-                </div>
-                <Table
-                    height={600}
-                    data={encounterVaccineListResponseLoading?.object ?? []}
-                    rowKey="key"
-                    expandedRowKeys={expandedRowKeys}
-                    renderRowExpanded={renderRowExpanded}
-                    shouldUpdateScroll={false}
-                    bordered
-                    cellBordered
-                    onRowClick={rowData => {
-                        setEncounterVaccination({
-                            ...rowData
-                        });
-                        setVaccineBrand({ ...rowData.vaccineBrands });
-                        setVaccineDose({ ...rowData.vaccineDose })
-                        setVaccine({ ...rowData.vaccine })
-
-                    }}
-                    rowClassName={isSelected}
-                >
-                    <Column width={70} align="center">
-                        <HeaderCell>#</HeaderCell>
-                        <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-                    </Column>
-
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Vaccine Name</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                rowData.vaccine?.vaccineName
-                            }
-                        </Cell>
-                    </Column >
-
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Brand Name</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                rowData.vaccineBrands?.brandName
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Dose Number</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                rowData.vaccineDose?.doseNameLvalue
-                                    ? rowData.vaccineDose?.doseNameLvalue.lovDisplayVale
-                                    : rowData.vaccineDose?.doseNameLkey
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Date of Administration</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => {
-                                if (!rowData.dateAdministered) return "  ";
-                                const date = new Date(rowData.dateAdministered);
-                                return date.toLocaleString("en-GB");
-                            }}
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={3} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Actual Side and Site of Administration</Translate>
-                        </HeaderCell>
-                        <Cell dataKey="actualSide" />
-                    </Column>
-                    <Column flexGrow={1} fullText>
-                        <HeaderCell align="center">
-                            <Translate>ROA</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                rowData?.vaccine?.roaLvalue
-                                    ? rowData?.vaccine?.roaLvalue?.lovDisplayVale
-                                    : rowData?.vaccine?.roaLkey
-                            }
-
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Vaccination Location</Translate>
-                        </HeaderCell>
-                        <Cell dataKey="externalFacilityName" />
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Is Reviewed</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                rowData.reviewedAt === 0 ? "No" : "Yes"
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Total Vaccine Doses</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                rowData?.vaccine?.numberOfDosesLvalue
-                                    ? rowData?.vaccine?.numberOfDosesLvalue?.lovDisplayVale
-                                    : rowData?.vaccine?.numberOfDosesLkey
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={1} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Status</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                rowData?.statusLvalue
-                                    ? rowData?.statusLvalue?.lovDisplayVale
-                                    : rowData?.statusLkey
-                            }
-                        </Cell>
-                    </Column>
-                </Table>
-
-            </Panel>
-            <Modal
-                open={popupOpen}
-                onClose={() => handleClear()}
-                size="lg"
-            >
-                <Modal.Header>
-                    <Modal.Title>View Vaccine</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form layout="inline" fluid>
-                        <MyInput
+                            disabled
                             width={200}
-                            column
-                            fieldLabel="Vaccine Code"
-                            fieldName="vaccineCode"
+                            fieldType="text"
+                            fieldLabel="Vaccin Name"
+                            fieldName='vaccineName'
                             record={vaccine}
                             setRecord={setVaccine}
-                            disabled
                         />
                         <MyInput
-                            width={200}
                             column
-                            fieldLabel="Vaccine Name"
-                            fieldName="vaccineName"
-                            record={vaccine}
-                            setRecord={setVaccine}
-                            plachplder={"Medical Component"}
                             disabled
-                        />
-                        <MyInput
                             width={200}
-                            column
+                            fieldType="text"
                             fieldLabel="ATC Code"
-                            fieldName="atcCode"
+                            fieldName='atcCode'
                             record={vaccine}
                             setRecord={setVaccine}
-                            disabled
                         />
+
                         <MyInput
-                            width={200}
+                            width={230}
                             column
                             fieldLabel="Type"
                             fieldType="select"
@@ -1268,9 +710,22 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
                             setRecord={setVaccine}
                             disabled
                         />
-                        <br />
                         <MyInput
-                            width={200}
+                            width={230}
+                            column
+                            fieldLabel="Number of Doses"
+                            fieldType="select"
+                            fieldName="numberOfDosesLkey"
+                            selectData={numofDossLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            record={vaccine}
+                            setRecord={setVaccine}
+                            disabled
+                        />
+
+                        <MyInput
+                            width={230}
                             column
                             fieldLabel="ROA"
                             fieldType="select"
@@ -1283,7 +738,7 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
                             disabled
                         />
                         <MyInput
-                            width={200}
+                            width={230}
                             column
                             fieldLabel="Site of Administration"
                             fieldName="siteOfAdministration"
@@ -1291,197 +746,740 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
                             setRecord={setVaccine}
                             disabled
                         />
+
+                        <ButtonToolbar>
+                            <IconButton width={180} style={{ marginTop: '25px' }} appearance="primary" color="cyan" icon={<PlusIcon />} onClick={() => { setPopupOpen(true) }}
+                                disabled={!vaccine.key} >
+                                View Vaccine
+                            </IconButton> </ButtonToolbar></div>
+                </Form>
+                <Form style={{ display: 'flex' }} layout="inline" fluid>
+                    <div style={{ display: 'flex', zoom: 0.90, alignItems: 'center', gap: '10px' }}>
+
+                        <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px' }}>
+                            <div>  <MyLabel label="Used Brand" /></div>
+                            <SelectPicker
+
+                                data={brandsNameList}
+
+                                value={
+                                    vaccineBrand?.brandName === null
+                                        ? null
+                                        : brandsNameList.key
+                                }
+                                onChange={(value) => {
+                                    const selectedItem = brandsNameList.find((item) => item.value === value);
+                                    setVaccineBrand({ ...selectedItem.vaccineBrand });
+                                }}
+                                style={{ width: 230 }}
+                                placeholder={vaccineBrand?.key ? vaccineBrand?.brandName : 'Select'}
+                                labelKey="label"
+                                valueKey="value"
+                                disabled={!vaccine.key || isEncounterStatusClosed || disabled}
+
+                            />
+                        </div>
                         <MyInput
-                            width={200}
                             column
-                            fieldLabel="Post Opening Duration"
-                            fieldName="postOpeningDuration"
-                            record={vaccine}
-                            setRecord={setVaccine}
                             disabled
+                            width={90}
+                            fieldType="text"
+                            fieldLabel="Volume"
+                            fieldName='volume'
+                            record={vaccineBrand}
+                            setRecord={setVaccineBrand}
                         />
                         <MyInput
-                            width={200}
+                            disabled
+                            width={100}
                             column
-                            fieldLabel="Duration Unit"
+                            fieldLabel="Unit"
                             fieldType="select"
-                            fieldName="durationUnitLkey"
-                            selectData={unitLovQueryResponse?.object ?? []}
+                            fieldName="unitLkey"
+                            selectData={volumUnitLovQueryResponse?.object ?? []}
                             selectDataLabel="lovDisplayVale"
                             selectDataValue="key"
-                            record={vaccine}
-                            setRecord={setVaccine}
+                            record={vaccineBrand}
+                            setRecord={setVaccineBrand}
+
+                        />
+                        <MyInput
+
+                            width={200}
+                            column
+                            fieldLabel="Vaccine Manufacturer"
+                            fieldType="select"
+                            fieldName="manufacturerLkey"
+                            selectData={manufacturerLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            record={vaccineBrand}
+                            setRecord={setVaccineBrand}
                             disabled
                         />
-                        <br />
-                        <div style={{ display: "flex", alignItems: 'center', gap: '10px' }}>
-                            <div>
-                                <Text style={{ fontWeight: '800', fontSize: '16px' }}>Indications</Text>
-                                <InputGroup inside style={{ width: '415px' }}>
-                                    <Input
-                                        disabled
-                                        placeholder="Search ICD"
-                                        value={searchKeyword}
-                                        onChange={handleSearch}
-                                    />
-                                    <InputGroup.Button>
-                                        <SearchIcon />
-                                    </InputGroup.Button>
-                                </InputGroup>
-
-                            </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <Input as="textarea"
-                                disabled={true}
-                                value={vaccine?.indications}
-                                style={{ width: 415 }} rows={4} />
-
-                            <Input as="textarea"
-                                disabled={true}
-                                value={vaccine?.possibleReactions}
-                                style={{ width: 415 }} rows={4} /></div>
-
-
-                        <MyInput width={415} column fieldType="textarea" disabled fieldName="contraindicationsAndPrecautions" record={vaccine}
-                            setRecord={setVaccine} />
-
-                        <MyInput width={415} column fieldType="textarea" disabled fieldName="storageAndHandling" record={vaccine}
-                            setRecord={setVaccine} />
-                    </Form>
-                    <div style={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        alignItems: 'center',
-
-                        width: 840
-                    }}>
-
-                    </div>
-                    <br />
-                    <Panel header="View Brand Products of Vaccine " collapsible bordered>
-
-
-                        <Panel bordered>
-
-                            <Grid fluid>
-                                <Row gutter={15}>
-
-
-                                    <Col xs={23}>
-
-                                        <Grid fluid>
-
-                                            <Row gutter={15} style={{ border: '1px solid #e1e1e1' }}>
-
-                                                <Col xs={20}></Col>
-
-                                            </Row>
-                                            <Row gutter={18}>
-                                                <Col xs={24}>
-                                                    <Table
-                                                        bordered
-
-                                                        data={vaccine?.key ? vaccineBrandsListResponseLoading?.object ?? [] : []}
-                                                    >
-                                                        <Table.Column flexGrow={2}>
-                                                            <Table.HeaderCell>Brand Name</Table.HeaderCell>
-                                                            <Table.Cell dataKey="brandName" />
-                                                        </Table.Column>
-                                                        <Table.Column flexGrow={2}>
-
-                                                            <Table.HeaderCell>Manufacturer</Table.HeaderCell>
-                                                            <Table.Cell>
-
-                                                                {rowData =>
-                                                                    rowData?.manufacturerLvalue
-                                                                        ? rowData?.manufacturerLvalue?.lovDisplayVale
-                                                                        : rowData?.manufacturerLkey
-                                                                }
-                                                            </Table.Cell>
-                                                        </Table.Column>
-                                                        <Table.Column flexGrow={2}>
-                                                            <Table.HeaderCell>Volume</Table.HeaderCell>
-                                                            <Table.Cell>
-
-                                                                {rowData => (
-                                                                    <>
-                                                                        {rowData?.volume}{" "}
-                                                                        {rowData?.unitLvalue
-                                                                            ? rowData?.unitLvalue?.lovDisplayVale
-                                                                            : rowData?.unitLkey}
-                                                                    </>
-                                                                )}
-                                                            </Table.Cell>
-                                                        </Table.Column>
-                                                        <Table.Column flexGrow={4}>
-                                                            <Table.HeaderCell>Marketing Authorization Holder</Table.HeaderCell>
-                                                            <Table.Cell dataKey="marketingAuthorizationHolder" >
-
-                                                            </Table.Cell>
-                                                        </Table.Column>
-                                                        <Table.Column flexGrow={2}>
-                                                            <Table.HeaderCell>Status</Table.HeaderCell>
-                                                            <Cell dataKey="isValid">
-                                                                {rowData => (rowData?.isValid ? 'Valid' : 'InValid')}
-                                                            </Cell>
-                                                        </Table.Column>
-
-                                                    </Table>
-                                                </Col>
-                                            </Row>
-                                        </Grid>
-                                    </Col>
-                                </Row>
-                            </Grid>
-                        </Panel>
-                    </Panel>
-
-                </Modal.Body>
-
-                <Modal.Footer>
-                    <Button onClick={handleClear} appearance="ghost" color='blue'>
-                        Close
-                    </Button>
-                </Modal.Footer>
-            </Modal>
-            <Modal
-                open={popupCancelOpen}
-                onClose={() => handleClear()}
-                size="sm"
-            >
-                <Modal.Header>
-                    <Translate><h6>Confirm Cancel</h6></Translate>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form style={{ zoom: 0.85 }} layout="inline" fluid>
                         <MyInput
-                            width={600}
-
                             column
-                            fieldLabel="Cancellation Reason"
-                            fieldType="textarea"
-                            fieldName="cancellationReason"
-                            height={120}
+                            disabled={isEncounterStatusClosed || disabled}
+                            width={230}
+                            fieldType="text"
+                            fieldLabel="Vaccine Lot Number"
+                            fieldName='vaccineLotNumber'
                             record={encounterVaccination}
                             setRecord={setEncounterVaccination}
-                            disabled={encounterVaccination?.deletedAt === 0}
                         />
-                    </Form>
-                </Modal.Body>
+                        <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px' }}>
+                            <div>  <MyLabel label="Date Administered" /></div>
+                            <Stack spacing={10} direction="column" alignItems="flex-start">
+                                <DatePicker
+                                    format="MM/dd/yyyy hh:mm"
+                                    showMeridian
+                                    disabled={isEncounterStatusClosed || disabled}
+                                    style={{ width: '230px' }}
+                                    value={encounterVaccination.dateAdministered ? new Date(encounterVaccination.dateAdministered) : null}
+                                    placeholder={encounterVaccination.dateAdministered ? new Date(encounterVaccination.dateAdministered).toLocaleString("en-GB") : "MM/dd/yyyy hh:mm"}
+                                    onChange={newValue => {
+                                        if (newValue) {
+                                            setEncounterVaccination(prev => ({
+                                                ...prev,
+                                                dateAdministered: newValue.getTime()
+                                            }));
+                                        } else {
 
-                <Modal.Footer>
-                    <Button appearance="primary" onClick={handleCancle} disabled={encounterVaccination?.deletedAt === 0} >
-                        Cancel
-                    </Button>
-                    <Divider vertical />
-                    <Button onClick={handleClear} appearance="ghost" color='blue'>
-                        Close
-                    </Button>
-                </Modal.Footer>
-            </Modal>
-        </div>
-    </>);
+                                            setEncounterVaccination(prev => ({
+                                                ...prev,
+                                                dateAdministered: null
+                                            }));
+                                        }
+                                    }}
+                                />
+                            </Stack>
+
+
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px' }}>
+                            <div>
+                                <MyLabel label="Dose Name" />
+                            </div>
+                            <SelectPicker
+                                data={dosesList}
+                                value={
+                                    vaccineDose?.doseNameLkey === null
+                                        ? null
+                                        : dosesList.key
+                                }
+                                onChange={(value) => {
+                                    const selectedItem = dosesList.find((item) => item.value === value);
+                                    setVaccineDose({ ...selectedItem.vaccineDoses });
+                                }}
+                                style={{ width: 230 }}
+                                labelKey="label"
+                                valueKey="value"
+                                placeholder={
+                                    vaccineDose?.key
+                                        ? vaccineDose?.doseNameLvalue.lovDisplayVale
+                                        : 'Select'
+                                }
+                                disabled={!vaccine.key || isEncounterStatusClosed || disabled}
+                            />
+
+
+                        </div>
+                        <MyInput
+
+                            width={230}
+                            column
+                            fieldLabel="Next Dose"
+                            fieldType="select"
+                            fieldName="doseNameLkey"
+                            selectData={numSerialLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            record={vaccineToDose}
+
+                            disabled
+                        />
+                        <div style={{ display: 'flex' }}>
+
+                            <MyInput
+
+                                width={40}
+                                column
+                                fieldLabel="Next"
+                                fieldName="intervalBetweenDoses"
+                                record={vaccineDoseInterval}
+                                disabled
+                            />
+                            <MyInput
+
+                                width={150}
+                                column
+                                fieldLabel="Dose Due Date"
+                                fieldType="select"
+                                fieldName="unitLkey"
+                                selectData={unitLovQueryResponse?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                record={vaccineDoseInterval}
+                                disabled
+                            />
+
+                        </div>
+
+                    </div>
+
+                </Form>
+                <Form style={{ display: 'flex' }} layout="inline" fluid>
+                    <MyInput
+                        column
+                        disabled={isEncounterStatusClosed || disabled}
+                        width={300}
+                        fieldType="text"
+                        fieldLabel="Actual Side and Site of Administration"
+                        fieldName='actualSide'
+                        record={encounterVaccination}
+                        setRecord={setEncounterVaccination}
+                    />
+                    <MyInput
+                        width={353}
+                        column
+                        fieldLabel="Administration Reactions"
+                        fieldType="select"
+                        fieldName='administrationReactionsLkey'
+                        selectData={medAdversLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={administrationReaction}
+                        setRecord={setAdministrationReactions}
+                        disabled={isEncounterStatusClosed || disabled}
+                    />
+                    <MyInput
+                        width={230}
+                        column
+                        fieldLabel="External Facility"
+                        fieldType="checkbox"
+                        fieldName="isHas"
+                        record={hasExternalFacility}
+                        setRecord={setHasExternalFacility}
+                        disabled={isEncounterStatusClosed || disabled}
+                    />
+                    <MyInput
+                        column
+
+                        width={230}
+                        fieldType="text"
+                        fieldLabel="External Facility Name"
+                        fieldName='externalFacilityName'
+                        record={encounterVaccination}
+                        setRecord={setEncounterVaccination}
+                        disabled={!hasExternalFacility.isHas}
+                    />
+
+
+                </Form>
+                <Form style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Form style={{ display: 'flex', flexDirection: 'column' }}>
+                        <MyLabel label="Notes" />
+                        <Input
+                            disabled={isEncounterStatusClosed || disabled}
+                            as="textarea"
+                            value={encounterVaccination.notes}
+                            onChange={(e) => setEncounterVaccination({
+                                ...encounterVaccination,
+                                notes: e
+                            })}
+                            style={{ width: 255 }}
+                            rows={4}
+                        />
+
+                    </Form>
+                    <Input
+                     disabled={isEncounterStatusClosed || disabled}
+                        as="textarea"
+                        value={encounterVaccination.administrationReactions || ""}
+                        onChange={(value) =>
+                            setEncounterVaccination((prev) => ({
+                                ...prev,
+                                administrationReactions: value
+                            }))
+                        }
+                        style={{ width: 300, marginTop: '26px' }} 
+                        rows={4}
+                    />
+
+
+                </Form>
+                <br />
+                <IconButton
+                    color="violet"
+                    appearance="primary"
+                    onClick={() => handleSaveEncounterVaccine()}
+
+                    disabled={encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey: false}
+                    icon={<CheckIcon />}
+                >
+                    <Translate>Save</Translate>
+                </IconButton>
+                <Button
+                    color="cyan"
+                    appearance="primary"
+                    style={{ marginLeft: "5px" }}
+                    onClick={handleClearField}
+                >
+
+                    <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px' }} />
+                    <span>Clear</span>
+                </Button>
+
+            </div>
+        </Panel>
+
+        <Panel header="Patient’s Vaccines " collapsible bordered>
+            <div>
+                <IconButton
+                    color="cyan"
+                    appearance="primary"
+                    onClick={() => { setPopupCancelOpen(true) }}
+                    icon={<CloseOutlineIcon />}
+                    disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey: false}
+
+                >
+                    <Translate>Cancel</Translate>
+                </IconButton>
+                <IconButton
+                    color="cyan"
+                    appearance="primary"
+                    onClick={handleReviewe}
+                    style={{ marginLeft: '4px' }}
+                    icon={<CheckOutlineIcon />}
+                    disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3721622082897301' || encounterVaccination.statusLkey === '3196709905099521' || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey: false || isEncounterStatusClosed || disabled }
+                >
+                    <Translate>Review</Translate>
+                </IconButton>
+
+                <Checkbox
+                    onChange={(value, checked) => {
+                        if (checked) {
+                            setEncounterStatus('3196709905099521');
+                        }
+                        else {
+                            setEncounterStatus('');
+
+                        }
+                    }}
+                >
+                    Show Cancelled
+                </Checkbox>
+                <Checkbox
+                    onChange={(value, checked) => {
+                        if (checked) {
+                            setAllDate(true);
+                        }
+                        else {
+                            setAllDate(false);
+
+                        }
+                    }}
+                >
+                    Show All Vaccines
+                </Checkbox>
+            </div>
+            <Table
+                height={600}
+                data={encounterVaccineListResponseLoading?.object ?? []}
+                rowKey="key"
+                expandedRowKeys={expandedRowKeys}
+                renderRowExpanded={renderRowExpanded}
+                shouldUpdateScroll={false}
+                bordered
+                cellBordered
+                onRowClick={rowData => {
+                    setEncounterVaccination({
+                        ...rowData
+                    });
+                    setVaccineBrand({ ...rowData.vaccineBrands });
+                    setVaccineDose({ ...rowData.vaccineDose })
+                    setVaccine({ ...rowData.vaccine })
+
+                }}
+                rowClassName={isSelected}
+            >
+                <Column width={70} align="center">
+                    <HeaderCell>#</HeaderCell>
+                    <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
+                </Column>
+
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Vaccine Name</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            rowData.vaccine?.vaccineName
+                        }
+                    </Cell>
+                </Column >
+
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Brand Name</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            rowData.vaccineBrands?.brandName
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Dose Number</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            rowData.vaccineDose?.doseNameLvalue
+                                ? rowData.vaccineDose?.doseNameLvalue.lovDisplayVale
+                                : rowData.vaccineDose?.doseNameLkey
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Date of Administration</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => {
+                            if (!rowData.dateAdministered) return "  ";
+                            const date = new Date(rowData.dateAdministered);
+                            return date.toLocaleString("en-GB");
+                        }}
+                    </Cell>
+                </Column>
+                <Column flexGrow={3} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Actual Side and Site of Administration</Translate>
+                    </HeaderCell>
+                    <Cell dataKey="actualSide" />
+                </Column>
+                <Column flexGrow={1} fullText>
+                    <HeaderCell align="center">
+                        <Translate>ROA</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            rowData?.vaccine?.roaLvalue
+                                ? rowData?.vaccine?.roaLvalue?.lovDisplayVale
+                                : rowData?.vaccine?.roaLkey
+                        }
+
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Vaccination Location</Translate>
+                    </HeaderCell>
+                    <Cell dataKey="externalFacilityName" />
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Is Reviewed</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            rowData.reviewedAt === 0 ? "No" : "Yes"
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Total Vaccine Doses</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            rowData?.vaccine?.numberOfDosesLvalue
+                                ? rowData?.vaccine?.numberOfDosesLvalue?.lovDisplayVale
+                                : rowData?.vaccine?.numberOfDosesLkey
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={1} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Status</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            rowData?.statusLvalue
+                                ? rowData?.statusLvalue?.lovDisplayVale
+                                : rowData?.statusLkey
+                        }
+                    </Cell>
+                </Column>
+            </Table>
+
+        </Panel>
+        <Modal
+            open={popupOpen}
+            onClose={() => handleClear()}
+            size="lg"
+        >
+            <Modal.Header>
+                <Modal.Title>View Vaccine</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form layout="inline" fluid>
+                    <MyInput
+                        width={200}
+                        column
+                        fieldLabel="Vaccine Code"
+                        fieldName="vaccineCode"
+                        record={vaccine}
+                        setRecord={setVaccine}
+                        disabled
+                    />
+                    <MyInput
+                        width={200}
+                        column
+                        fieldLabel="Vaccine Name"
+                        fieldName="vaccineName"
+                        record={vaccine}
+                        setRecord={setVaccine}
+                        plachplder={"Medical Component"}
+                        disabled
+                    />
+                    <MyInput
+                        width={200}
+                        column
+                        fieldLabel="ATC Code"
+                        fieldName="atcCode"
+                        record={vaccine}
+                        setRecord={setVaccine}
+                        disabled
+                    />
+                    <MyInput
+                        width={200}
+                        column
+                        fieldLabel="Type"
+                        fieldType="select"
+                        fieldName="typeLkey"
+                        selectData={typeLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={vaccine}
+                        setRecord={setVaccine}
+                        disabled
+                    />
+                    <br />
+                    <MyInput
+                        width={200}
+                        column
+                        fieldLabel="ROA"
+                        fieldType="select"
+                        fieldName="roaLkey"
+                        selectData={rOALovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={vaccine}
+                        setRecord={setVaccine}
+                        disabled
+                    />
+                    <MyInput
+                        width={200}
+                        column
+                        fieldLabel="Site of Administration"
+                        fieldName="siteOfAdministration"
+                        record={vaccine}
+                        setRecord={setVaccine}
+                        disabled
+                    />
+                    <MyInput
+                        width={200}
+                        column
+                        fieldLabel="Post Opening Duration"
+                        fieldName="postOpeningDuration"
+                        record={vaccine}
+                        setRecord={setVaccine}
+                        disabled
+                    />
+                    <MyInput
+                        width={200}
+                        column
+                        fieldLabel="Duration Unit"
+                        fieldType="select"
+                        fieldName="durationUnitLkey"
+                        selectData={unitLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={vaccine}
+                        setRecord={setVaccine}
+                        disabled
+                    />
+                    <br />
+                    <div style={{ display: "flex", alignItems: 'center', gap: '10px' }}>
+                        <div>
+                            <Text style={{ fontWeight: '800', fontSize: '16px' }}>Indications</Text>
+                            <InputGroup inside style={{ width: '415px' }}>
+                                <Input
+                                    disabled
+                                    placeholder="Search ICD"
+                                    value={searchKeyword}
+                                    onChange={handleSearch}
+                                />
+                                <InputGroup.Button>
+                                    <SearchIcon />
+                                </InputGroup.Button>
+                            </InputGroup>
+
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <Input as="textarea"
+                            disabled={true}
+                            value={vaccine?.indications}
+                            style={{ width: 415 }} rows={4} />
+
+                        <Input as="textarea"
+                            disabled={true}
+                            value={vaccine?.possibleReactions}
+                            style={{ width: 415 }} rows={4} /></div>
+
+
+                    <MyInput width={415} column fieldType="textarea" disabled fieldName="contraindicationsAndPrecautions" record={vaccine}
+                        setRecord={setVaccine} />
+
+                    <MyInput width={415} column fieldType="textarea" disabled fieldName="storageAndHandling" record={vaccine}
+                        setRecord={setVaccine} />
+                </Form>
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    alignItems: 'center',
+
+                    width: 840
+                }}>
+
+                </div>
+                <br />
+                <Panel header="View Brand Products of Vaccine " collapsible bordered>
+
+
+                    <Panel bordered>
+
+                        <Grid fluid>
+                            <Row gutter={15}>
+
+
+                                <Col xs={23}>
+
+                                    <Grid fluid>
+
+                                        <Row gutter={15} style={{ border: '1px solid #e1e1e1' }}>
+
+                                            <Col xs={20}></Col>
+
+                                        </Row>
+                                        <Row gutter={18}>
+                                            <Col xs={24}>
+                                                <Table
+                                                    bordered
+
+                                                    data={vaccine?.key ? vaccineBrandsListResponseLoading?.object ?? [] : []}
+                                                >
+                                                    <Table.Column flexGrow={2}>
+                                                        <Table.HeaderCell>Brand Name</Table.HeaderCell>
+                                                        <Table.Cell dataKey="brandName" />
+                                                    </Table.Column>
+                                                    <Table.Column flexGrow={2}>
+
+                                                        <Table.HeaderCell>Manufacturer</Table.HeaderCell>
+                                                        <Table.Cell>
+
+                                                            {rowData =>
+                                                                rowData?.manufacturerLvalue
+                                                                    ? rowData?.manufacturerLvalue?.lovDisplayVale
+                                                                    : rowData?.manufacturerLkey
+                                                            }
+                                                        </Table.Cell>
+                                                    </Table.Column>
+                                                    <Table.Column flexGrow={2}>
+                                                        <Table.HeaderCell>Volume</Table.HeaderCell>
+                                                        <Table.Cell>
+
+                                                            {rowData => (
+                                                                <>
+                                                                    {rowData?.volume}{" "}
+                                                                    {rowData?.unitLvalue
+                                                                        ? rowData?.unitLvalue?.lovDisplayVale
+                                                                        : rowData?.unitLkey}
+                                                                </>
+                                                            )}
+                                                        </Table.Cell>
+                                                    </Table.Column>
+                                                    <Table.Column flexGrow={4}>
+                                                        <Table.HeaderCell>Marketing Authorization Holder</Table.HeaderCell>
+                                                        <Table.Cell dataKey="marketingAuthorizationHolder" >
+
+                                                        </Table.Cell>
+                                                    </Table.Column>
+                                                    <Table.Column flexGrow={2}>
+                                                        <Table.HeaderCell>Status</Table.HeaderCell>
+                                                        <Cell dataKey="isValid">
+                                                            {rowData => (rowData?.isValid ? 'Valid' : 'InValid')}
+                                                        </Cell>
+                                                    </Table.Column>
+
+                                                </Table>
+                                            </Col>
+                                        </Row>
+                                    </Grid>
+                                </Col>
+                            </Row>
+                        </Grid>
+                    </Panel>
+                </Panel>
+
+            </Modal.Body>
+
+            <Modal.Footer>
+                <Button onClick={handleClear} appearance="ghost" color='blue'>
+                    Close
+                </Button>
+            </Modal.Footer>
+        </Modal>
+        <Modal
+            open={popupCancelOpen}
+            onClose={() => handleClear()}
+            size="sm"
+        >
+            <Modal.Header>
+                <Translate><h6>Confirm Cancel</h6></Translate>
+            </Modal.Header>
+            <Modal.Body>
+                <Form layout="inline" fluid>
+                    <MyInput
+                        width={600}
+
+                        column
+                        fieldLabel="Cancellation Reason"
+                        fieldType="textarea"
+                        fieldName="cancellationReason"
+                        height={120}
+                        record={encounterVaccination}
+                        setRecord={setEncounterVaccination}
+                        disabled={encounterVaccination?.deletedAt === 0}
+                    />
+                </Form>
+            </Modal.Body>
+
+            <Modal.Footer>
+                <Button appearance="primary" onClick={handleCancle} disabled={encounterVaccination?.deletedAt === 0} >
+                    Cancel
+                </Button>
+                <Divider vertical />
+                <Button onClick={handleClear} appearance="ghost" color='blue'>
+                    Close
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    </div>);
 };
 export default VaccinationTab;
 

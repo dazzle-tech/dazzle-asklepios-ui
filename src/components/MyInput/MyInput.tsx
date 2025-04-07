@@ -186,7 +186,7 @@ const MyInput = ({
 
   return (
     <>
-      <Form.Group style={{ zoom: 0.8}}>
+      <Form.Group>
         <Form.ControlLabel>
           {props.required && (
             <span style={{ color: 'red', fontSize: '110%', margin: '2px' }}>*</span>

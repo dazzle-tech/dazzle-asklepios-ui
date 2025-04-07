@@ -140,7 +140,7 @@ const SignIn = () => {
  
  
           {/* Logo Panel */}
-      <Panel style={{ zoom: 0.86 }} className="logo-panel">
+      <Panel className="logo-panel">
         <img
           src={authSlice.tenant && authSlice.tenant.tenantLogoPath ? authSlice.tenant.tenantLogoPath : Logo}
           alt="Tenant Logo"
@@ -149,18 +149,17 @@ const SignIn = () => {
  
       {/* Sign In Panel */}
       {!resetPasswordView && (
-        <Panel  bordered className='sign-in-panel '>
+        <Panel bordered className='sign-in-panel '>
  
           <div className='image-header-div'>
             <img
-            style={{ zoom: 0.86 }}
               src={UserLogo}
               alt="Header Background"
               className='header-image'
  
             /></div>
  
-          <h3 style={{ zoom: 0.82 }}  className='title'>
+          <h3 className='title'>
             Sign In
           </h3>
           {!authSlice.tenant && (
@@ -169,7 +168,7 @@ const SignIn = () => {
             </Message>
           )}
  
-          <Form fluid style={{ zoom: 0.85 }} onKeyPress={handleKeyPress}>
+          <Form fluid onKeyPress={handleKeyPress}>
             <Form.Group>
               <Form.ControlLabel>Organization</Form.ControlLabel>
               <Form.Control
