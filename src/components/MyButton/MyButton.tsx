@@ -4,20 +4,42 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { Icon } from '@rsuite/icons';
 import './styles.less';
-const MyButton = ({ prefixIcon: Prefix=null, postfixIcon: Postfix = null, children,onClick=()=>{}, width = "auto",...props }) => {
+type Appearance = "primary" | "default" | "link" | "subtle" | "ghost";
+const MyButton = ({ 
+    prefixIcon: Prefix=null,
+     postfixIcon: Postfix = null
+    , children
+    ,onClick=()=>{}, 
+    width = "auto",
+    appearance = "primary"  as Appearance,
+    size='medium',
+    disabled=false,
+
+    ...props 
+}) => {
+
+
     return (
         <Button
-        className="bt"
-            appearance={props.ghost ? "ghost" : "primary"}
-            disabled={props.disabled}
+        className={`bt ${size}`} 
+        appearance={appearance} 
+         disabled={props.disabled}
+
+
             style={{
-                color: props.ghost ? props.color ?? "var(--primary-blue)" : 'white',
+                color: appearance === "ghost" ||appearance === "link" ||appearance === "subtle"
+                ? props.color ?? "var(--primary-blue)"
+                : 'white',
                 width: props.width,
-                height:props.height,
+              
                 borderRadius:props.radius,
-                backgroundColor: props.ghost ? 'white' : props.color ?? "var(--primary-blue)",
-                border: props.ghost ? `2px solid ${props.color ?? "var(--primary-blue)"}` : 'none', 
-                transition: "all 0.3s ease",
+                backgroundColor: appearance === "ghost"||appearance === "link" ||appearance === "subtle"
+                ? 'white'
+                : props.backgroundColor ?? "var(--primary-blue)",
+                border: appearance === "ghost"
+                ? `2px solid ${props.color ??  "var(--primary-blue)"}`
+                : 'none',
+              transition: "all 0.3s ease",
             }}
             {...props}
             onClick={onClick}
