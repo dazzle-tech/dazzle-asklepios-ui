@@ -335,8 +335,8 @@ const Encounter = () => {
                 <div className='left'>
                   <MyButton
                     prefixIcon={() => <ArowBackIcon />}
-                    
-                    color={'var(--primary-gray)'}
+                   
+                    backgroundColor={'var(--primary-gray)'}
                     onClick={handleGoBack}
 
                   >Go Back</MyButton>
@@ -344,33 +344,33 @@ const Encounter = () => {
                 <div className='right'>
                   <MyButton
                     prefixIcon={() => <BarChartHorizontalIcon />}
-                    color={"var(--deep-blue)"}
-                    width={"155px"}
+                    backgroundColor={"var(--deep-blue)"}
+                    
                     onClick={() => setIsDrawerOpen(true)}
                   >Medical Sheets</MyButton>
                   <MyButton
-                    width={"172px"}
+                   
                     prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
                     onClick={() => { setModalOpen(true) }}
                   >Create Follow-up</MyButton>
                   <MyButton
-                    width={"97px"}
-                    color={propsData.patient.hasAllergy ? "var(--primary-orange)" : "var(--deep-blue)"}
+                  
+                  backgroundColor={propsData.patient.hasAllergy ? "var(--primary-orange)" : "var(--deep-blue)"}
                     onClick={OpenAllargyModal}
                     prefixIcon={() => <FontAwesomeIcon icon={faHandDots} />}
                   >Allergy</MyButton>
                   <MyButton
-                    width={"97px"}
-                    color={propsData.patient.hasWarning ? "var(--primary-orange)" : "var(--deep-blue)"}
+                  
+                    backgroundColor={propsData.patient.hasWarning ? "var(--primary-orange)" : "var(--deep-blue)"}
                     onClick={OpenWarningModal}
                     prefixIcon={() => <FontAwesomeIcon icon={faTriangleExclamation} />}
                   >Warning</MyButton>
                   {propsData.encounter.editable && (
                     <MyButton
-                      width={"150px"}
+                     
                       prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                       onClick={handleCompleteEncounter}
-                      ghost={true}
+                     appearance='ghost'
                     >
                       <Translate>Complete Visit</Translate>
                     </MyButton>
