@@ -1,7 +1,8 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useEffect, useState } from 'react';
-import { Input, Pagination, Panel, Table, Toggle } from 'rsuite';
+import { Input, Pagination, Panel, Table, Toggle, Form } from 'rsuite';
+import MyInput from '@/components/MyInput';
 const { Column, HeaderCell, Cell } = Table;
 import {
   useGetScreenAccessMatrixQuery,
@@ -12,26 +13,32 @@ import ArowBackIcon from '@rsuite/icons/ArowBack';
 import CheckIcon from '@rsuite/icons/Check';
 import { ApAccessRoleScreen } from '@/types/model-types';
 import { FaLockOpen } from 'react-icons/fa6';
+import MyButton from '@/components/MyButton/MyButton';
 const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
   const { data: screenAccessMatrixResponse } = useGetScreenAccessMatrixQuery(accessRole);
   const [saveMatrix, saveMatrixMutationResponse] = useSaveScreenAccessMatrixMutation();
-  const [searchTerm, setSearchTerm] = useState<string>()
+  const [searchTerm, setSearchTerm] = useState<string>();
   const [matrixData, setMatrixData] = useState([]);
+  const [recordOfSearch, setRecordOfSearch] = useState({screenName: ""});
+  
 
   useEffect(() => {
     if (screenAccessMatrixResponse) {
-      const filteredData = searchTerm && searchTerm.trim() !== "" 
-        ? screenAccessMatrixResponse.object.filter(
-            (item) =>
-              item.screenName &&
-              item.screenName.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-        : screenAccessMatrixResponse.object; 
+      const filteredData =
+        searchTerm && searchTerm.trim() !== ''
+          ? screenAccessMatrixResponse.object.filter(
+              item =>
+                item.screenName && item.screenName.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+          : screenAccessMatrixResponse.object;
 
       setMatrixData(filteredData);
     }
   }, [screenAccessMatrixResponse, searchTerm]);
 
+  useEffect(() => {
+      handleFilterChange('objectName', recordOfSearch['screenName']);
+    }, [recordOfSearch]);
 
 
   const handleReadChange = (checked, index) => {
@@ -68,13 +75,6 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
     matrixClone[index] = { ...matrixClone[index], canDelete: checked };
     setMatrixData(matrixClone);
   };
-
-  const handleSave = () => {
-    if (matrixData) {
-      saveMatrix(matrixData).unwrap();
-    }
-  };
-
   const grantAll = index => {
     let matrixClone = [...matrixData];
     matrixClone[index] = {
@@ -85,33 +85,77 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
     };
     setMatrixData(matrixClone);
   };
+
+  const handleSave = () => {
+    if (matrixData) {
+      saveMatrix(matrixData).unwrap();
+    }
+  };
+
+  
   const handleFilterChange = (fieldName, e) => {
-    setSearchTerm(e); 
+    setSearchTerm(e);
   };
 
   return (
     <Panel
       header={
-        <h3 className="title">
+        <p>
           <Translate> Screen Access Matrix for </Translate> <i>{accessRole?.name ?? ''}</i>
-        </h3>
+        </p>
       }
     >
-      <ButtonToolbar>
+      {/* <ButtonToolbar>
         <IconButton appearance="ghost" color="cyan" icon={<ArowBackIcon />} onClick={goBack}>
           Go Back
         </IconButton>
         <IconButton appearance="primary" color="green" icon={<CheckIcon />} onClick={handleSave}>
           Save Changes
         </IconButton>
-      </ButtonToolbar>
-      <hr />
-      <Table height={600} headerHeight={80} rowHeight={60} bordered cellBordered data={matrixData}>
+      </ButtonToolbar> */}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', gap: '20px' }}>
+          <MyButton
+            prefixIcon={() => <ArowBackIcon />}
+            color="var(--deep-blue)"
+            ghost
+            onClick={goBack}
+            width="82px"
+            height="40px"
+          >
+            Back
+          </MyButton>
+          <Form>
+            <MyInput
+              fieldName="screenName"
+              fieldType="text"
+              record={recordOfSearch}
+              setRecord={setRecordOfSearch}
+              showLabel={false}
+              placeholder="Search by Screen Name"
+              width={'220px'}
+            />
+          </Form>
+        </div>
+        <div style={{ marginRight: '40px', marginBottom: '10px' }}>
+          <MyButton
+            prefixIcon={() => <CheckIcon />}
+            color="var(--deep-blue)"
+            onClick={handleSave}
+            width='111px'
+            height='40px'
+          >
+            Save Changes
+          </MyButton>
+        </div>
+      </div>
+      <Table height={600} data={matrixData}>
         <Column sortable flexGrow={5}>
           <HeaderCell>
-            <Input
+            {/* <Input
               onChange={e => handleFilterChange('description', e)}
-            />
+            /> */}
             <Translate>Screen</Translate>
           </HeaderCell>
           <Cell dataKey="screenName" />
@@ -159,7 +203,16 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
           <HeaderCell>
             <Translate>Grant All</Translate>
           </HeaderCell>
-          <Cell>{(rowData, i) => <IconButton onClick={() => { grantAll(i) }} icon={<FaLockOpen />} />}</Cell>
+          <Cell>
+            {(rowData, i) => (
+              <IconButton
+                onClick={() => {
+                  grantAll(i);
+                }}
+                icon={<FaLockOpen size="0.8em" />}
+              />
+            )}
+          </Cell>
         </Column>
       </Table>
     </Panel>

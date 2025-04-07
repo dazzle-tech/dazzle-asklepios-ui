@@ -138,12 +138,12 @@ const Screens = ({ module, goBack, ...props }) => {
     <>
       {module && module.key && (
         <Panel
-        // header={
-        //   <h3 className="title">
-        //     <Translate> Screens for </Translate> <i>{module?.moduleName ?? ''}</i>{' '}
-        //     <Translate>Module</Translate>
-        //   </h3>
-        // }
+        header={
+          <p >
+            <Translate> Screens for </Translate> <i>{module?.name ?? ''}</i>{' '}
+            <Translate>Module</Translate>
+          </p>
+        }
         >
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', gap: '20px' }}>
@@ -152,6 +152,8 @@ const Screens = ({ module, goBack, ...props }) => {
                 color="var(--deep-blue)"
                 ghost
                 onClick={goBack}
+                width="82px"
+                height="40px"
               >
                 Back
               </MyButton>
@@ -172,6 +174,8 @@ const Screens = ({ module, goBack, ...props }) => {
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
                 onClick={handleScreenNew}
+                width="111px"
+                height="40px"
               >
                 Add New
               </MyButton>
@@ -265,7 +269,7 @@ const Screens = ({ module, goBack, ...props }) => {
               <Translate>{operationState} Screen</Translate>
             </Modal.Title>
             <hr />
-            <Modal.Body style={{ marginBottom: '140px' }}>
+            <Modal.Body style={{ marginBottom: '130px' }}>
               <Form
                 fluid
                 style={{
@@ -329,13 +333,15 @@ const Screens = ({ module, goBack, ...props }) => {
                 spacing={2}
                 divider={<Divider vertical />}
               >
-                <MyButton ghost color="var(--deep-blue)" onClick={() => setScreenPopupOpen(false)}>
+                <MyButton ghost color="var(--deep-blue)" onClick={() => setScreenPopupOpen(false)} width='78px' height='40px'>
                   Cancel
                 </MyButton>
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                   color="var(--deep-blue)"
                   onClick={handleScreenSave}
+                   width='93px'
+                  height='40px'
                 >
                   {operationState === 'New' ? 'Create' : 'Save'}
                 </MyButton>

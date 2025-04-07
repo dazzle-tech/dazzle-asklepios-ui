@@ -3,6 +3,9 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
+import { MdDelete } from 'react-icons/md';
+import { IoSettingsSharp } from 'react-icons/io5';
+import { MdModeEdit } from 'react-icons/md';
 import { useGetAccessRolesQuery, useSaveAccessRoleMutation } from '@/services/setupService';
 import { Button, ButtonToolbar, Carousel, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -22,6 +25,12 @@ import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+import MyButton from '@/components/MyButton/MyButton';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faKey } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
+
+
 const AccessRoles = () => {
   const [accessRole, setAccessRole] = useState<ApAccessRole>({ ...newApAccessRole });
   const [popupOpen, setPopupOpen] = useState(false);
@@ -34,6 +43,9 @@ const AccessRoles = () => {
 
   const [saveAccessRole, saveAccessRoleMutation] = useSaveAccessRoleMutation();
 
+  const [operationState, setOperationState] = useState<string>('New');
+  const [recordOfSearch, setRecordOfSearch] = useState({ screen: '' });
+
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
     <div style={{ display: 'flex' }}>
@@ -44,7 +56,9 @@ const AccessRoles = () => {
   dispatch(setPageCode('Access_Roles'));
   dispatch(setDivContent(divContentHTML));
   const handleNew = () => {
+    setOperationState('New');
     setPopupOpen(true);
+    setAccessRole({ ...newApAccessRole });
   };
 
   const handleSave = () => {
@@ -57,6 +71,10 @@ const AccessRoles = () => {
       setListRequest({ ...listRequest, timestamp: new Date().getTime() });
     }
   }, [saveAccessRoleMutation.data]);
+
+  useEffect(() => {
+    handleFilterChange('name', recordOfSearch['screen']);
+  }, [recordOfSearch]);
 
   const isSelected = rowData => {
     if (rowData && accessRole && rowData.key === accessRole.key) {
@@ -114,58 +132,64 @@ const AccessRoles = () => {
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent("  "));
+      dispatch(setDivContent('  '));
     };
-  }, [location.pathname, dispatch])
+  }, [location.pathname, dispatch]);
+
+  const iconsForActions = (rowData: ApAccessRole) => (
+    <div style={{ display: 'flex', gap: '20px' }}>
+      <IoSettingsSharp
+        title="Setup Module Screens"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => toSubView('screen-matrix')}
+      />
+      <MdModeEdit
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setAccessRole(rowData);
+          setOperationState('Edit');
+          setPopupOpen(true);
+        }}
+      />
+      <MdDelete title="Deactivate" size={24} fill="var(--primary-pink)" />
+    </div>
+  );
+
   return (
     <Carousel
       style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
       autoplay={false}
       activeIndex={carouselActiveIndex}
     >
-      <Panel
-      >
-        <ButtonToolbar>
-          <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
-            Add New
-          </IconButton>
-          <IconButton
-            disabled={!accessRole.key}
-            appearance="primary"
-            onClick={() => setPopupOpen(true)}
-            color="green"
-            icon={<EditIcon />}
-          >
-            Edit Selected
-          </IconButton>
-          <IconButton
-            disabled={true || !accessRole.key}
-            appearance="primary"
-            color="red"
-            icon={<TrashIcon />}
-          >
-            Delete Selected
-          </IconButton>
-          <IconButton
-            disabled={!accessRole.key}
-            appearance="primary"
-            color="orange"
-            onClick={() => toSubView('authorizations')}
-            icon={<DataAuthorizeIcon />}
-          >
-            Authorizations
-          </IconButton>
-          <IconButton
-            disabled={!accessRole.key}
-            appearance="primary"
-            color="yellow"
-            onClick={() => toSubView('screen-matrix')}
-            icon={<ViewsAuthorizeIcon />}
-          >
-            Screen Access Matrix
-          </IconButton>
-        </ButtonToolbar>
-        <hr />
+      <Panel>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+          <Form>
+            <MyInput
+              fieldName="screen"
+              fieldType="text"
+              record={recordOfSearch}
+              setRecord={setRecordOfSearch}
+              showLabel={false}
+              placeholder="Search by Screen Name"
+              width={'220px'}
+            />
+          </Form>
+          <div style={{ marginRight: '40px' }}>
+            <MyButton
+              prefixIcon={() => <AddOutlineIcon />}
+              color="var(--deep-blue)"
+              onClick={handleNew}
+              width ="109px"
+              height ="32px"
+            >
+              Add New
+            </MyButton>
+          </div>
+        </div>
+
         <Table
           height={400}
           sortColumn={listRequest.sortBy}
@@ -178,10 +202,6 @@ const AccessRoles = () => {
                 sortType
               });
           }}
-          headerHeight={80}
-          rowHeight={60}
-          bordered
-          cellBordered
           data={accessRoleListResponse?.object ?? []}
           onRowClick={rowData => {
             setAccessRole(rowData);
@@ -191,21 +211,21 @@ const AccessRoles = () => {
         >
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('name', e)} />
+              {/* <Input onChange={e => handleFilterChange('name', e)} /> */}
               <Translate>Name</Translate>
             </HeaderCell>
             <Cell dataKey="name" />
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('accessLevel', e)} />
+              {/* <Input onChange={e => handleFilterChange('accessLevel', e)} /> */}
               <Translate>Access Level</Translate>
             </HeaderCell>
             <Cell dataKey="accessLevel" />
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('passwordErrorRetires', e)} />
+              {/* <Input onChange={e => handleFilterChange('passwordErrorRetires', e)} /> */}
               <Translate>Password Error Retries</Translate>
             </HeaderCell>
             <Cell dataKey="passwordErrorRetires" />
@@ -218,13 +238,17 @@ const AccessRoles = () => {
           </Column>
           <Column sortable flexGrow={3}>
             <HeaderCell>
-              <Input onChange={e => handleFilterChange('passwordExpiresAfterDays', e)} />
+              {/* <Input onChange={e => handleFilterChange('passwordExpiresAfterDays', e)} /> */}
               <Translate>Password Expires after</Translate>
             </HeaderCell>
             <Cell dataKey="passwordExpiresAfterDays" />
           </Column>
+          <Column flexGrow={2}>
+            <HeaderCell></HeaderCell>
+            <Cell>{rowData => iconsForActions(rowData)}</Cell>
+          </Column>
         </Table>
-        <div style={{ padding: 20 }}>
+        <div style={{ padding: 20, backgroundColor: '#F4F7FC' }}>
           <Pagination
             prev
             next
@@ -248,43 +272,96 @@ const AccessRoles = () => {
           />
         </div>
 
-        <Modal open={popupOpen} overflow>
+        <Modal open={popupOpen} className="left-modal" size="xsm">
           <Modal.Title>
-            <Translate>New/Edit AccessRole</Translate>
+            <Translate>{operationState} AccessRole</Translate>
           </Modal.Title>
-          <Modal.Body>
-            <Form fluid>
-              <MyInput fieldName="name" record={accessRole} setRecord={setAccessRole} />
-              <MyInput fieldName="description" record={accessRole} setRecord={setAccessRole} />
-              <MyInput fieldName="accessLevel" record={accessRole} setRecord={setAccessRole} />
+          <hr />
+          <Modal.Body style={{ marginBottom: '170px' }}>
+            <Form
+              fluid
+              style={{
+                padding: '1px'
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignContent: 'center',
+                  alignItems: 'center',
+                  marginBottom: '40px'
+                }}
+              >
+                <FontAwesomeIcon
+                  icon={faKey}
+                  color="#415BE7"
+                  style={{ marginBottom: '10px' }}
+                  size={'2x'}
+                />
+                <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Access Rule Rule info</label>
+              </div>
+              <MyInput fieldName="name" record={accessRole} setRecord={setAccessRole} width={520} />
+              <MyInput fieldName="description" record={accessRole} setRecord={setAccessRole} width={520} />
+              <div
+               style={{
+                    display: 'flex',
+                    gap: '20px'
+                  }}>
+              <MyInput fieldName="accessLevel" record={accessRole} setRecord={setAccessRole} width={250} />
               <MyInput
                 fieldName="passwordErrorRetries"
                 record={accessRole}
                 setRecord={setAccessRole}
+                width={250}
               />
+              </div>
+              <div
+              style={{
+                display: 'flex',
+                gap: '120px'
+              }}
+              >
               <MyInput
                 fieldName="passwordExpires"
                 fieldType="checkbox"
                 record={accessRole}
                 setRecord={setAccessRole}
+                
               />
               <MyInput
                 fieldName="passwordExpiresAfterDays"
                 record={accessRole}
                 disabled={!accessRole.passwordExpires}
                 setRecord={setAccessRole}
+                width={245}
               />
+              </div>
             </Form>
           </Modal.Body>
           <Modal.Footer>
-            <Stack spacing={2} divider={<Divider vertical />}>
-              <Button appearance="primary" onClick={handleSave}>
-                Save
-              </Button>
-              <Button appearance="primary" color="red" onClick={() => setPopupOpen(false)}>
-                Cancel
-              </Button>
-            </Stack>
+             <Stack
+                            style={{ display: 'flex', justifyContent: 'flex-end' }}
+                            spacing={2}
+                            divider={<Divider vertical />}
+                          >
+                            <MyButton ghost color="var(--deep-blue)" onClick={() => setPopupOpen(false)}
+                            width='78px'
+                            height='40px'
+                              >
+                              Cancel
+                            </MyButton>
+                            <MyButton
+                              prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                              color="var(--deep-blue)"
+                              onClick={handleSave}
+                              width="93px"
+                              height="40px"
+                            >
+                              {operationState === 'New' ? 'Create' : 'Save'}
+                            </MyButton>
+                          </Stack>
           </Modal.Footer>
         </Modal>
       </Panel>
