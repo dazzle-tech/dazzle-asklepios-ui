@@ -3,6 +3,14 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faUser,
+  faIdCard,
+  faPhone,
+  faAddressBook,
+  faShieldHalved,
+  faCheck
+} from '@fortawesome/free-solid-svg-icons';
 const { Column, HeaderCell, Cell } = Table;
 import {
   useGetFacilitiesQuery,
@@ -73,6 +81,13 @@ const Facilities = () => {
 
   const [recordOfSearchForFacility, setRecordOfSearchForFacility] = useState({ facilityName: '' });
 
+  //==========back==============
+  const steps = [
+    { title: 'Basic Info', icon: faUser },
+    { title: 'Address', icon: faAddressBook },
+    { title: 'Contact', icon: faPhone }
+  ];
+
   const divContent = (
     <div style={{ display: 'flex' }}>
       <h5>Facilities</h5>
@@ -90,14 +105,6 @@ const Facilities = () => {
 
   const iconsForActions = (rowData: ApFacility) => (
     <div style={{ display: 'flex', gap: '20px' }}>
-      {/* <IoSettingsSharp
-        title="Setup Module Screens"
-        size={24}
-        fill="var(--primary-gray)"
-        onClick={() => {
-          toSubView('screens', rowData);
-        }}
-      /> */}
       <FcDepartment
         title="View Departments"
         size={24}
@@ -127,6 +134,7 @@ const Facilities = () => {
     </div>
   );
 
+ 
   const handleSave = () => {
     console.log({ ...facility, address });
     setPopupOpen(false);
@@ -163,7 +171,7 @@ const Facilities = () => {
   const inputForms = newEntry => {
     return (
       <div>
-        <Form layout="inline" fluid>
+        <Form>
           <MyInput
             disabled={!editing && !newEntry}
             fieldLabel="Facility ID"
