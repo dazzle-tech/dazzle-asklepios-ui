@@ -191,7 +191,7 @@ const Header = ({ expand, setExpand }) => {
   const pageCode = useSelector((state: RootState) => state.div?.pageCode);
   return (
     <div>
-      <Stack className="header" spacing={8} style={{ width: expand ? "calc(93% - 200px)" : "93%" }}>
+      <Stack  className={`header ${expand ? "expand" : ""}`} spacing={8}>
         <div dangerouslySetInnerHTML={{ __html: divElement }} />
         <div className="headerItem" >
           {pageCode === 'P_Facility' ? <RegistrationWizard /> : <></>}
