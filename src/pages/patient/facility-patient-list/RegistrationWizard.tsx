@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Panel } from 'rsuite';
-import {
-  ButtonToolbar,
-  Form,
-  Input
-} from 'rsuite';
+import { ButtonToolbar, Form, Input } from 'rsuite';
 import { Modal, Steps, SelectPicker, DatePicker, Toggle } from 'rsuite';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { faUser, faIdCard, faPhone, faShieldHalved, faCheck } from '@fortawesome/free-solid-svg-icons';
+import {
+  faUser,
+  faIdCard,
+  faPhone,
+  faShieldHalved,
+  faCheck
+} from '@fortawesome/free-solid-svg-icons';
 const steps = [
   { title: 'Basic Info', icon: faUser },
   { title: 'Document', icon: faIdCard },
@@ -22,25 +24,19 @@ import { ApPatientInsurance } from '@/types/model-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { faBolt } from '@fortawesome/free-solid-svg-icons';
-import {
-  newApPatient,
-} from '@/types/model-types-constructor';
-import {
-  ApPatient,
-} from '@/types/model-types';
+import { newApPatient } from '@/types/model-types-constructor';
+import { ApPatient } from '@/types/model-types';
 import {
   useGetLovValuesByCodeAndParentQuery,
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
-import {
-  useSavePatientMutation
-} from '@/services/patientService';
+import { useSavePatientMutation } from '@/services/patientService';
 import { useNavigate } from 'react-router-dom';
 import { useSavePatientInsuranceMutation } from '@/services/patientService';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import QuickPatient from '../patient-profile/quickPatient';
-import { setDivContent ,setPageCode } from '@/reducers/divSlice';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 const RegistrationWizard = () => {
   const [open, setOpen] = useState(false);
   const dispatch = useAppDispatch();
@@ -48,16 +44,24 @@ const RegistrationWizard = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
   const [savePatientInsurance, savePatientInsuranceMutation] = useSavePatientInsuranceMutation();
-  const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
+  const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({
+    ...newApPatientInsurance
+  });
   const [savePatient, savePatientMutation] = useSavePatientMutation();
   const navigate = useNavigate();
-  const handleClose = () => {setOpen(false)
-    ;setCurrentStep(0)};
+  const handleClose = () => {
+    setOpen(false);
+    setCurrentStep(0);
+  };
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
-  const { data: preferredWayOfContactLovQueryResponse } = useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
-  const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({ code: 'CITY', parentValueKey: localPatient.countryLkey });
+  const { data: preferredWayOfContactLovQueryResponse } =
+    useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
+  const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
+    code: 'CITY',
+    parentValueKey: localPatient.countryLkey
+  });
   const { data: isnuranceProviderTypeResponse } = useGetLovValuesByCodeQuery('INS_PROVIDER');
   const { data: isnurancePlanTypeResponse } = useGetLovValuesByCodeQuery('INS_PLAN_TYPS');
   const handleNext = () => {
@@ -71,9 +75,11 @@ const RegistrationWizard = () => {
     }
   };
   const handleSave = () => {
-    savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false }).unwrap().then(() => {
-      dispatch(notify('Patient Added Successfully'));
-    });
+    savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false })
+      .unwrap()
+      .then(() => {
+        dispatch(notify('Patient Added Successfully'));
+      });
   };
   const goToPatientProfile = () => {
     handleSave();
@@ -84,18 +90,19 @@ const RegistrationWizard = () => {
     setPatientInsurance({ ...newApPatientInsurance });
   };
   const handleSaveInsurance = async () => {
-    savePatientInsurance({ ...patientInsurance, patientKey: localPatient.key }).unwrap().then(() => {
-      dispatch(notify('Patient Insurance Added Successfully'));
-      const privatePatientPath = '/patient-profile';
-      navigate(privatePatientPath, { state: { patient: localPatient } });
-      setOpen(false);
-      setLocalPatient({ ...newApPatient });
-      setPatientInsurance({ ...newApPatientInsurance });
-    }).catch((error) => {
-      setPatientInsurance({ ...patientInsurance, primaryInsurance: false })
-    });
-
-
+    savePatientInsurance({ ...patientInsurance, patientKey: localPatient.key })
+      .unwrap()
+      .then(() => {
+        dispatch(notify('Patient Insurance Added Successfully'));
+        const privatePatientPath = '/patient-profile';
+        navigate(privatePatientPath, { state: { patient: localPatient } });
+        setOpen(false);
+        setLocalPatient({ ...newApPatient });
+        setPatientInsurance({ ...newApPatientInsurance });
+      })
+      .catch(error => {
+        setPatientInsurance({ ...patientInsurance, primaryInsurance: false });
+      });
   };
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -113,17 +120,19 @@ const RegistrationWizard = () => {
   }, []);
   useEffect(() => {
     return () => {
-      dispatch (setPageCode(''));
-          dispatch(setDivContent(null));
+      dispatch(setPageCode(''));
+      dispatch(setDivContent(null));
     };
   }, [location.pathname, dispatch]);
-  const conjureFormContent = (stepNumber) => {
+  const conjureFormContent = stepNumber => {
     switch (stepNumber) {
       case 0:
         return (
-          <Form fluid layout='inline' style={{ height: '350px' }}>
+          <Form fluid layout="inline" style={{ height: '350px' }}>
             <br />
-            <span style={{ color: "#a4a6b3", fontSize: "12px", fontWeight: '600' }}>Basic Information</span>
+            <span style={{ color: '#a4a6b3', fontSize: '12px', fontWeight: '600' }}>
+              Basic Information
+            </span>
             <br />
             <br />
             <MyInput
@@ -204,9 +213,11 @@ const RegistrationWizard = () => {
         );
       case 1:
         return (
-          <Form fluid layout='inline' style={{ height: '350px' }}>
+          <Form fluid layout="inline" style={{ height: '350px' }}>
             <br />
-            <span style={{ color: "#a4a6b3", fontSize: "12px", fontWeight: '600' }}>Document Information</span>
+            <span style={{ color: '#a4a6b3', fontSize: '12px', fontWeight: '600' }}>
+              Document Information
+            </span>
             <br />
             <br />
             <MyInput
@@ -250,11 +261,12 @@ const RegistrationWizard = () => {
         );
       case 2:
         return (
-          <Form fluid layout='inline' style={{ height: '350px' }}>
+          <Form fluid layout="inline" style={{ height: '350px' }}>
             <br />
-            <span style={{ color: "#a4a6b3", fontSize: "12px", fontWeight: '600' }}>Contact Information</span>
+            <span style={{ color: '#a4a6b3', fontSize: '12px', fontWeight: '600' }}>
+              Contact Information
+            </span>
             <br />
-
 
             <MyInput
               column
@@ -306,7 +318,9 @@ const RegistrationWizard = () => {
               setRecord={setLocalPatient}
             />
             <br />
-            <span style={{ color: "#a4a6b3", fontSize: "12px", fontWeight: '600' }}>Address Information</span>
+            <span style={{ color: '#a4a6b3', fontSize: '12px', fontWeight: '600' }}>
+              Address Information
+            </span>
             <br />
             <MyInput
               column
@@ -352,12 +366,15 @@ const RegistrationWizard = () => {
               record={localPatient}
               setRecord={setLocalPatient}
             />
-          </Form>);
+          </Form>
+        );
       case 3:
         return (
-          <Form fluid layout='inline' style={{ height: '350px' }}>
+          <Form fluid layout="inline" style={{ height: '350px' }}>
             <br />
-            <span style={{ color: "#a4a6b3", fontSize: "12px", fontWeight: '600' }}>Insurance Information</span>
+            <span style={{ color: '#a4a6b3', fontSize: '12px', fontWeight: '600' }}>
+              Insurance Information
+            </span>
             <br />
             <MyInput
               width={235}
@@ -421,19 +438,39 @@ const RegistrationWizard = () => {
     if (savePatientMutation && savePatientMutation.status === 'fulfilled') {
       setLocalPatient(savePatientMutation.data);
     }
-  }, [savePatientMutation])
+  }, [savePatientMutation]);
   return (
-    <Panel  >
-      <ButtonToolbar style={{ display: 'flex', alignItems: 'center' }} zoom={0.8}>
-        <Button appearance="primary" style={{ backgroundColor: 'var(--primary-blue)', color: 'white', display: 'flex', gap: '10px', borderRadius: '15px' }} onClick={() => setOpen(true)}>
+    <Panel>
+      <ButtonToolbar style={{ display: 'flex', alignItems: 'center' }}>
+        <Button
+          appearance="primary"
+          style={{
+            backgroundColor: 'var(--primary-blue)',
+            color: 'white',
+            display: 'flex',
+            gap: '10px',
+            borderRadius: '15px'
+          }}
+          onClick={() => setOpen(true)}
+        >
           <FontAwesomeIcon icon={faUserPlus} />
           Create New Patient
         </Button>
-        <Button appearance="ghost" style={{ borderColor: 'var(--primary-blue)', color: 'var(--primary-blue)', display: 'flex', gap: '10px', borderRadius: '15px' }} onClick={() => setQuickPatientModalOpen(true)}>
+        <Button
+          appearance="ghost"
+          style={{
+            borderColor: 'var(--primary-blue)',
+            color: 'var(--primary-blue)',
+            display: 'flex',
+            gap: '10px',
+            borderRadius: '15px'
+          }}
+          onClick={() => setQuickPatientModalOpen(true)}
+        >
           <FontAwesomeIcon icon={faBolt} /> Quick Patient
         </Button>
       </ButtonToolbar>
-      <Modal open={open} onClose={handleClose} size="450px"  className='left-modal'>
+      <Modal open={open} onClose={handleClose} size="450px" className="left-modal">
         <Modal.Header>
           <Modal.Title>Create New Patient</Modal.Title>
         </Modal.Header>
@@ -445,13 +482,18 @@ const RegistrationWizard = () => {
                 style={{ paddingLeft: 0 }}
                 key={index}
                 icon={<></>}
-                title={<div style={{ textAlign: 'center' }}>
-                  <FontAwesomeIcon
-                    icon={currentStep > index ? faCheck : step.icon}
-                    style={{ color: currentStep > index ? 'green' : currentStep === index ? 'blue' : 'gray' }}
-                  />
-                  <div style={{ fontSize: '10px' }}>{step.title}</div>
-                </div>}
+                title={
+                  <div style={{ textAlign: 'center' }}>
+                    <FontAwesomeIcon
+                      icon={currentStep > index ? faCheck : step.icon}
+                      style={{
+                        color:
+                          currentStep > index ? 'green' : currentStep === index ? 'blue' : 'gray'
+                      }}
+                    />
+                    <div style={{ fontSize: '10px' }}>{step.title}</div>
+                  </div>
+                }
               />
             ))}
           </Steps>
@@ -459,31 +501,70 @@ const RegistrationWizard = () => {
         </Modal.Body>
         <Modal.Footer>
           <Divider />
-          {currentStep > 0 ? <Button onClick={handlePrev} appearance="subtle" disabled={currentStep === 0} style={{ color: 'var(--primary-blue)' }}>
-            Back
-          </Button> : <></>}
-          {currentStep < 2 ? <Button appearance="subtle" style={{ color: 'var(--primary-blue)' }} onClick={handleSave}>
-            Save
-          </Button> : <></>}
-          {currentStep === 2 ? <Button onClick={goToPatientProfile} appearance="subtle" style={{ color: 'var(--primary-blue)' }}>
-
-            Skip & Create
-          </Button> : <></>}
-          {currentStep < 3 ? <Button onClick={handleNext} appearance="primary" style={{ backgroundColor: 'var(--primary-blue)', color: 'white' }}>
-            Next
-          </Button> : <></>}
-          {currentStep === 3 ? <Button onClick={handleSaveInsurance} appearance="primary" style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: "3px" }}>
-            <FontAwesomeIcon icon={faCheckDouble} style={{ marginRight: '5px', color: 'white' }} />
-            Create
-          </Button> : <></>}
+          {currentStep > 0 ? (
+            <Button
+              onClick={handlePrev}
+              appearance="subtle"
+              disabled={currentStep === 0}
+              style={{ color: 'var(--primary-blue)' }}
+            >
+              Back
+            </Button>
+          ) : (
+            <></>
+          )}
+          {currentStep < 2 ? (
+            <Button
+              appearance="subtle"
+              style={{ color: 'var(--primary-blue)' }}
+              onClick={handleSave}
+            >
+              Save
+            </Button>
+          ) : (
+            <></>
+          )}
+          {currentStep === 2 ? (
+            <Button
+              onClick={goToPatientProfile}
+              appearance="subtle"
+              style={{ color: 'var(--primary-blue)' }}
+            >
+              Skip & Create
+            </Button>
+          ) : (
+            <></>
+          )}
+          {currentStep < 3 ? (
+            <Button
+              onClick={handleNext}
+              appearance="primary"
+              style={{ backgroundColor: 'var(--primary-blue)', color: 'white' }}
+            >
+              Next
+            </Button>
+          ) : (
+            <></>
+          )}
+          {currentStep === 3 ? (
+            <Button
+              onClick={handleSaveInsurance}
+              appearance="primary"
+              style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: '3px' }}
+            >
+              <FontAwesomeIcon
+                icon={faCheckDouble}
+                style={{ marginRight: '5px', color: 'white' }}
+              />
+              Create
+            </Button>
+          ) : (
+            <></>
+          )}
         </Modal.Footer>
       </Modal>
-      <QuickPatient
-                open={quickPatientModalOpen}
-                onClose={() => setQuickPatientModalOpen(false)}
-              />
+      <QuickPatient open={quickPatientModalOpen} onClose={() => setQuickPatientModalOpen(false)} />
     </Panel>
-
   );
 };
 

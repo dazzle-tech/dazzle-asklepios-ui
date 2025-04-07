@@ -550,7 +550,7 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                     </Col>
                     <Col xs={8}>   <Text>Current Orders ID : {orders.orderId}</Text></Col>
                     <Col xs={2}>
-                    <Form fluid layout='inline' style={{zoom:0.80}} >
+                    <Form fluid layout='inline' >
                         <MyInput
                         disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
                         column

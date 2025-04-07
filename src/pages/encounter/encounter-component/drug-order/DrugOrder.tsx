@@ -997,7 +997,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
         </div>
         <br />
         <div className={`top-container-p ${edit ? "disabled-panel" : ""}`}>
-            <Form style={{ zoom: 0.85, display: 'flex' }} layout="inline" fluid
+            <Form style={{ display: 'flex' }} layout="inline" fluid
                 disabled={drugKey != null ? editing : true}
 
             >
@@ -1059,7 +1059,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
             <div className='instructions-container-p ' style={{ minWidth: "800px", border: " 1px solid #b6b7b8" }}>
                 <div style={{ marginLeft: "10px", display: 'flex', flexDirection: 'column' }}>
                     <div className='form-search-container-p ' style={{ width: "710px" }}>
-                        <Form style={{ zoom: 0.85, display: 'flex' }} layout="inline" fluid disabled={drugKey != null ? editing : true}>
+                        <Form style={{ display: 'flex' }} layout="inline" fluid disabled={drugKey != null ? editing : true}>
                             <MyInput
                                 column
                                 width={150}
@@ -1084,7 +1084,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
 
                             <div>
                                 <Text style={{ fontWeight: 'bold', marginTop: '7px' }}>Frequency</Text>
-                                <InputGroup style={{ width: '160px', zoom: 0.85, height: '40px' }}>
+                                <InputGroup style={{ width: '160px', height: '40px' }}>
                                     <Input
                                         disabled={orderMedication.drugOrderTypeLkey == '2937757567806213' ? true : false}
 
@@ -1131,7 +1131,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
 
 
 
-                        <div style={{ marginBottom: '3px', zoom: 0.85 }}>
+                        <div style={{ marginBottom: '3px' }}>
                             <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
                                 <Input
                                     disabled={drugKey != null ? editing : true}
@@ -1170,7 +1170,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
                                 }
                                 style={{ width: 300 }} rows={4} />
                         </div>
-                        <div style={{ marginBottom: '3px', zoom: 0.85 }}>
+                        <div style={{ marginBottom: '3px'}}>
                             <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
                                 <Input
                                     disabled={drugKey != null ? editing : true}
@@ -1188,7 +1188,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
 
                                 style={{ width: 300 }} rows={4} />
                         </div>
-                        <div style={{ marginBottom: '3px', zoom: 0.85 }}>
+                        <div style={{ marginBottom: '3px' }}>
                             <Form layout="inline" fluid>
                                 <MyInput
                                     column
@@ -1299,7 +1299,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
         <div className={edit ? "disabled-panel" : ""} style={{ display: 'flex', flexDirection: 'column', border: '1px solid #b6b7b8' }}>
 
             <div style={{ display: 'flex', gap: '10px', padding: '4px' }}>
-                <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+                <Form layout="inline" fluid>
 
 
                     <MyInput
@@ -1343,7 +1343,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
 
 
                 </Form>
-                <Form style={{ zoom: 0.85 }} fluid>
+                <Form fluid>
 
                     <MyInput
 
@@ -1372,7 +1372,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
 
 
 
-                <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+                <Form layout="inline" fluid>
                     <MyInput
 
                         disabled={drugKey != null ? editing : true}
@@ -1387,7 +1387,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
                     />
                 </Form>
                 <div style={{ width: "147px" }}></div>
-                <Form style={{ zoom: 0.85 }} fluid>
+                <Form fluid>
                     <MyInput
                         column
                         disabled={true}
@@ -1400,7 +1400,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
 
             </div>
             <div style={{ display: 'flex', gap: '10px', padding: '4px' }}>
-                <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+                <Form layout="inline" fluid>
 
                     <MyInput
                         column
@@ -1440,9 +1440,9 @@ const DrugOrder = ({edit,patient,encounter}) => {
                 </Form>
                 <Input as="textarea" onChange={(e) => setAdminInstructions(e)}
                     value={adminInstructions}
-                    style={{ width: 250, height: '100px', zoom: 0.85 }}
+                    style={{ width: 250, height: '100px'}}
                 />
-                <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+                <Form layout="inline" fluid>
                     <MyInput
                         column
                         disabled={drugKey != null ? editing : true}
@@ -1467,7 +1467,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
                 </Form>
                 <div style={{ width: "150px" }}></div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <Form style={{ zoom: 0.85 }} fluid>
+                    <Form fluid>
 
                         <MyInput
                             column
@@ -1640,7 +1640,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
                 <Modal.Body>
 
 
-                    <Form style={{ zoom: 0.85 }} layout="inline" fluid>
+                    <Form layout="inline" fluid>
                         <MyInput
                             width={250}
 

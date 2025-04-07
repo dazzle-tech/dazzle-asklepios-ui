@@ -17,7 +17,7 @@ const MyIconInput = ({ fieldName, fieldType = 'text', record, setRecord, ...prop
   
   return (
     <>
-      <Form.Group style={{ zoom: 0.8}}>
+      <Form.Group>
         <Form.ControlLabel>
           <MyLabel label={fieldLabel} />
         </Form.ControlLabel>

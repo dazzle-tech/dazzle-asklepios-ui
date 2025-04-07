@@ -554,7 +554,7 @@ const handleSearch = value => {
                                 <>
                                                <InputGroup
                                     disabled={!isActive}
-                                    inside style={{ width: '300px', zoom: 0.80, marginTop: '20px' }}>
+                                    inside style={{ width: '300px', marginTop: '20px' }}>
                                     <Input
                                         placeholder={'Search LOV'}
                                         value={searchKeyword}
@@ -598,7 +598,7 @@ const handleSearch = value => {
                                 )}
                                     <Input
                                         disabled={true}
-                                        style={{ zoom: 0.80, width: '300px' }}
+                                        style={{ width: '300px' }}
                                         value={
                                             lovListResponseData?.object.find(item => item.key === diagnosticTestNormalRange?.resultLovKey)
                                                 ? `${lovListResponseData.object.find(item => item.key === diagnosticTestNormalRange?.resultLovKey)?.lovCode}, ${lovListResponseData.object.find(item => item.key === diagnosticTestNormalRange?.resultLovKey)?.lovName}`

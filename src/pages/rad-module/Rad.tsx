@@ -1371,7 +1371,7 @@ const Rad = () => {
           <Row>
             <Text style={{ fontWeight: 'bold' }}>Patient Arrived </Text>
             <DatePicker
-              style={{ zoom: 0.85, width: '270' }}
+              style={{ width: '270' }}
               format="dd MMM yyyy hh:mm:ss aa"
               showMeridiem
               caretAs={FaCalendar}
@@ -1414,7 +1414,7 @@ const Rad = () => {
         <Modal.Title>Why do you want to reject the Test? </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Form style={{ zoom: 0.85 }}>
+        <Form>
           <MyInput
             disabled={false}
             fieldType={"textarea"}
@@ -1447,7 +1447,7 @@ const Rad = () => {
         <Modal.Title>Why do you want to reject the Test? </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Form style={{ zoom: 0.85 }}>
+        <Form>
           <MyInput
             disabled={false}
             fieldType={"textarea"}
@@ -1502,7 +1502,7 @@ const Rad = () => {
             <IconButton icon={<List />} />
             <IconButton icon={<FaLink />} />
             <IconButton icon={<Image />} />
-            <Form style={{ zoom: 0.85 }}>
+            <Form>
               <MyInput
 
                 fieldName={"severityLkey"}
