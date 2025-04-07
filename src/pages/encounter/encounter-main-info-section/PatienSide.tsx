@@ -149,10 +149,12 @@ const PatientSide = ({ patient, encounter }) => {
             </Text>
             <br />
 
+
             <div className='info-section'>
                 <div className='info-column'>
                     <Text className='info-label'>Document No</Text>
                     <Text className='info-value'>
+
                         {patient?.documentTypeLvalue?.lovDisplayVale}
                     </Text>
 
@@ -177,6 +179,7 @@ const PatientSide = ({ patient, encounter }) => {
                 <div className='info-column'>
                     <Text className='info-label'>Age</Text>
                     <Text className='info-value'>
+
                         {patient?.dob ? calculateAgeFormat(patient?.dob) : ""}
                     </Text>
 
@@ -257,10 +260,12 @@ const PatientSide = ({ patient, encounter }) => {
             </Text>
             <div className='details-section'>
                 <br />
+
                 <div className='info-section'>
                     <div className='info-column'>
                         <Text className='info-label'>Visit Date</Text>
                         <Text className='info-value'>
+
                             {encounter.plannedStartDate}
                         </Text>
 
@@ -274,10 +279,12 @@ const PatientSide = ({ patient, encounter }) => {
 
                     </div>
                 </div>
+
                 <div className='info-section'>
                     <div className='info-column'>
                         <Text className='info-label'>Visit Type</Text>
                         <Text className='info-value'>
+
                             {encounter?.visitTypeLvalue?.lovDisplayVale}
                         </Text>
 
@@ -291,10 +298,12 @@ const PatientSide = ({ patient, encounter }) => {
 
                     </div>
                 </div>
+
                 <div className='info-section'>
                     <div className='info-column'>
                         <Text className='info-label'>Reason</Text>
                         <Text className='info-value'>
+
                             {encounter?.reasonLvalue?.lovDisplayVale}
                         </Text>
 
