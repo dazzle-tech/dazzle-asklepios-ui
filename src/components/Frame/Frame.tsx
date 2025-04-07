@@ -84,7 +84,6 @@ const Frame = (props: FrameProps) => {
   
       <Sidebar
         style={{ display: 'flex', flexDirection: 'column', height: '102vh'}}
-
         width={expand ? 260 : 56}
         collapsible
       >
@@ -182,7 +181,7 @@ const Frame = (props: FrameProps) => {
 
       <Container className={containerClasses}  >
         <Header expand={expand} setExpand={setExpand}  />
-        <Content style={{ marginTop: '15px' }}>
+        <Content>
           {/* <Breadcrumb>
             <Breadcrumb.Item onClick={() => navigate('/')}>
               <a>
