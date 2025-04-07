@@ -1184,39 +1184,75 @@ const Rad = () => {
                 <Cell >
                   {rowData => (
                     <HStack spacing={10}>
-                      <CheckRoundIcon style={{ fontSize: '1em', marginRight: 10 }}
-                        onClick={async () => {
-                          try {
-                            saveReport({ ...rowData, statusLkey: '265089168359400', approvedAt: Date.now() }).unwrap();
-                            const Response = await saveTest({ ...test, processingStatusLkey: '265089168359400', approvedAt: Date.now() }).unwrap();
+                        <Whisper
+                          placement="top"
+                          trigger="hover"
+                          speaker={<Tooltip>Approve</Tooltip>}
+                        >
+                          <CheckRoundIcon 
+                          style={{
+                          fontSize: '1em',
+                          marginRight: 10,
+                          color: (rowData.statusLkey == "265089168359400") ? 'gray' : 'inherit',
+                          cursor: (rowData.statusLkey == "265089168359400") ? 'not-allowed' : 'pointer',
+                        }}
+                            onClick={async () => {
+                              if (rowData.statusLkey !== "265089168359400") {
+                              try {
+                                saveReport({ ...rowData, statusLkey: '265089168359400', approvedAt: Date.now() }).unwrap();
+                                const Response = await saveTest({ ...test, processingStatusLkey: '265089168359400', approvedAt: Date.now() }).unwrap();
 
-                            setTest({ ...newApDiagnosticOrderTests })
-                            dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                            setTest({ ...Response })
-                            await fetchTest();
+                                setTest({ ...newApDiagnosticOrderTests })
+                                dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                                setTest({ ...Response })
+                                await fetchTest();
 
 
-                            await resultFetch();
-                          }
-                          catch (error) {
-                            dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-                          }
-                        }} />
-                      <WarningRoundIcon style={{ fontSize: '1em', marginRight: 10 }} onClick={() => setOpenRejectedResultModal(true)} />
+                                await resultFetch();
+                              }
+                              catch (error) {
+                                dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+                              }
+                            }} }/>
+                        </Whisper>
+                      <Whisper
+                          placement="top"
+                          trigger="hover"
+                          speaker={<Tooltip>Reject</Tooltip>}
+                        >
+                          <WarningRoundIcon 
+                          style={{ fontSize: '1em', marginRight: 10,
+                             color: (rowData.statusLkey == "265089168359400") ? 'gray' : 'inherit',
+                             cursor: (rowData.statusLkey == "265089168359400") ? 'not-allowed' : 'pointer',
+                           }} onClick={() =>rowData.statusLkey !== "265089168359400"&& setOpenRejectedResultModal(true)} />
+                        </Whisper>
 
 
 
-                      <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: 10 }} />
-                      <FontAwesomeIcon icon={faStar} style={{ fontSize: '1em', marginRight: 10, color: rowData.reviewAt ? '#e0a500' : "#343434" }} onClick={async () => {
-                        try {
-                          await saveReport({ ...report, reviewAt: Date.now() }).unwrap();
-                          dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                          resultFetch();
-                        }
-                        catch (error) {
-                          dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-                        }
-                      }} />
+
+                        <Whisper
+                          placement="top"
+                          trigger="hover"
+                          speaker={<Tooltip>Print</Tooltip>}
+                        >
+                          <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: 10 }} />
+                        </Whisper>
+                        <Whisper
+                          placement="top"
+                          trigger="hover"
+                          speaker={<Tooltip>Review</Tooltip>}
+                        >
+                          <FontAwesomeIcon icon={faStar} style={{ fontSize: '1em', marginRight: 10, color: rowData.reviewAt ? '#e0a500' : "#343434" }} onClick={async () => {
+                            try {
+                              await saveReport({ ...report, reviewAt: Date.now() }).unwrap();
+                              dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                              resultFetch();
+                            }
+                            catch (error) {
+                              dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+                            }
+                          }} />
+                        </Whisper>
                     </HStack>
 
                   )}
@@ -1414,7 +1450,7 @@ const Rad = () => {
         <Modal.Title>Why do you want to reject the Test? </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Form style={{ zoom: 0.85 }}>
+        <Form >
           <MyInput
             disabled={false}
             fieldType={"textarea"}
@@ -1447,7 +1483,7 @@ const Rad = () => {
         <Modal.Title>Why do you want to reject the Test? </Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <Form style={{ zoom: 0.85 }}>
+        <Form >
           <MyInput
             disabled={false}
             fieldType={"textarea"}
@@ -1502,9 +1538,9 @@ const Rad = () => {
             <IconButton icon={<List />} />
             <IconButton icon={<FaLink />} />
             <IconButton icon={<Image />} />
-            <Form style={{ zoom: 0.85 }}>
+            <Form >
               <MyInput
-
+               disabled={report.statusLkey == "265089168359400"?true:false}
                 fieldName={"severityLkey"}
                 fieldType='select'
                 selectData={severityLovQueryResponse?.object ?? []}
@@ -1517,7 +1553,7 @@ const Rad = () => {
           </ButtonGroup>
           <Form>
             <MyInput
-
+              disabled={report.statusLkey == "265089168359400"?true:false}
               width={450}
               hight={200}
               fieldLabel={""}
@@ -1533,6 +1569,7 @@ const Rad = () => {
       </Modal.Body>
       <Modal.Footer style={{ display: "flex", justifyContent: 'flex-end' }}>
         <Button
+        disabled={report.statusLkey == "265089168359400"?true:false}
           appearance="primary"
           color="cyan"
           onClick={async () => {
