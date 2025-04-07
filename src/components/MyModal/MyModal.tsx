@@ -3,7 +3,7 @@ import { Modal, Steps, Divider } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import './styles.less';
 import MyButton from '../MyButton/MyButton';
-
+import {faCheck} from '@fortawesome/free-solid-svg-icons';
 const MyModal = ({
   open,
   setOpen,
@@ -15,9 +15,10 @@ const MyModal = ({
   content,
   size = "sm",
   steps = [],
-  footer,
+  footerButtons,
   position = "center",
   hideCanel = false,
+  hideBack = false,
   triggerSource = ""
 }) => {
   const isSinglePage = pagesCount === 1;
@@ -41,7 +42,8 @@ const MyModal = ({
       setCurrentStep(prev => prev - 1);
     }
   };
-
+console.log("currentStep-->",currentStep);
+console.log(" --pagesCount-->", pagesCount);
   return (
     <Modal
       open={open}
@@ -64,7 +66,7 @@ const MyModal = ({
               title={step.title}
               icon={
                 <FontAwesomeIcon
-                  icon={currentStep > index ? 'check' : step.icon}
+                  icon={currentStep > index ? faCheck : step.icon}
                   style={{
                     color: currentStep > index ? 'green' : currentStep === index ? 'blue' : 'gray'
                   }}
@@ -80,8 +82,9 @@ const MyModal = ({
       <Modal.Footer>
         <Divider />
         {!hideCanel && <MyButton onClick={() => setOpen(false)}>Cancel</MyButton>}
-        <MyButton onClick={handleNext}>Next</MyButton>
-        {footer}
+        {!hideBack && currentStep > 0 && <MyButton onClick={handlePrev}>Back</MyButton>}
+        {!(currentStep === pagesCount-1) && <MyButton onClick={handleNext}>Next</MyButton>}
+        {footerButtons}
       </Modal.Footer>
     </Modal>
   );
