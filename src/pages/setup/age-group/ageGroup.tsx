@@ -70,9 +70,8 @@ const AgeGroup = () => {
     //if you want to use response object write response.object 
     try {
       const response = await saveAgeGroups(agegroups).unwrap();
-      console.log(response.msg)
 
-      dispatch(notify(response.msg));
+      dispatch(notify({ msg: response.msg, sev: "success" }));
 
     } catch (error) {
       if (error.data && error.data.message) {
@@ -138,10 +137,7 @@ const AgeGroup = () => {
               sortType
             });
         }}
-        headerHeight={80}
-        rowHeight={60}
-        bordered
-        cellBordered
+
         data={ageGroupsListResponse?.object ?? []}
         onRowClick={rowData => {
           setAgeGroups(rowData);
@@ -149,8 +145,8 @@ const AgeGroup = () => {
         rowClassName={isSelected}
       >
         <Column sortable flexGrow={2}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('ageGroupLkey', e)} />
+          <HeaderCell >
+            {/* <Input onChange={e => handleFilterChange('ageGroupLkey', e)} /> */}
             <Translate>Age Group</Translate>
           </HeaderCell>
           <Cell>
@@ -159,8 +155,8 @@ const AgeGroup = () => {
           </Cell  >
         </Column>
         <Column sortable flexGrow={2}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('fromAge', e)} />
+          <HeaderCell >
+            {/* <Input onChange={e => handleFilterChange('fromAge', e)} /> */}
 
             <Translate>Age From Unit</Translate>
           </HeaderCell>
@@ -171,8 +167,8 @@ const AgeGroup = () => {
           </Cell>
         </Column>
         <Column sortable flexGrow={2} >
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('toAge', e)} />
+          <HeaderCell >
+            {/* <Input onChange={e => handleFilterChange('toAge', e)} /> */}
             <Translate>Age To Unit</Translate>
           </HeaderCell>
           <Cell dataKey="toAge" >
@@ -180,9 +176,9 @@ const AgeGroup = () => {
               : rowData.toAgeUnitLkey}`}
           </Cell>
         </Column>
-        <Column flexGrow={3}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('isValid', e)} />
+        <Column flexGrow={3} >
+          <HeaderCell >
+            {/* <Input onChange={e => handleFilterChange('isValid', e)} /> */}
             <Translate>status</Translate>
           </HeaderCell>
           <Cell >
@@ -191,14 +187,39 @@ const AgeGroup = () => {
         </Column>
 
       </Table>
+      <div style={{ padding: 20 }}>
+        <Pagination
+          prev
+          next
+          first
+          last
+          ellipsis
+          boundaryLinks
+          maxButtons={5}
+          size="xs"
+          layout={['total', '-', 'limit', '|', 'pager', 'skip']}
+          limitOptions={[4, 15, 30]}
+          limit={listRequest.pageSize}
+          activePage={listRequest.pageNumber}
+          onChangePage={pageNumber => {
+            setListRequest({ ...listRequest, pageNumber });
+          }}
+          onChangeLimit={pageSize => {
+            setListRequest({ ...listRequest, pageSize });
+          }}
+          total={ageGroupsListResponse?.extraNumeric ?? 0}
+        />
+      </div>
+
       <Modal open={popupOpen} overflow>
         <Modal.Title>
-          <Translate>New Age Group</Translate>
+          <Translate>New/Edit Age Group</Translate>
         </Modal.Title>
         <Modal.Body>
           <Form fluid>
 
             <MyInput
+              disabled={agegroups.key ? true : false}
               fieldName="ageGroupLkey"
               fieldType="select"
               selectData={agegroupsLovQueryResponse?.object ?? []}
