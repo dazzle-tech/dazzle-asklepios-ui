@@ -40,6 +40,7 @@ import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+import './styles.less';
 const DVM = () => {
   const dispatch = useAppDispatch();
 
@@ -81,7 +82,7 @@ const DVM = () => {
   const [popupOpen, setPopupOpen] = useState(false);
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className='title'>
       <h5>Data Validation Manager</h5>
     </div>
   );
@@ -235,8 +236,8 @@ const DVM = () => {
     handleFilterChange(record['filter'], record['value']);
   }, [record]);
 
-  const iconsForActions = rowData => (
-    <div style={{ display: 'flex', gap: '20px' }}>
+  const iconsForActions = () => (
+    <div className='container-of-icons'>
       <MdModeEdit
         title="Edit"
         size={24}
@@ -251,12 +252,12 @@ const DVM = () => {
   );
 
   return (
-    <Panel style={{ background: 'white' }}>
-      <small style={{ display: 'block', marginBottom: '10px' }}>
+    <Panel>
+      <small className='metadata-selection-title'>
         <Translate>Specify screen metadata to configure validation rules</Translate>
       </small>
       <Form>
-        <div style={{ display: 'flex'}}>
+        <div className='container-of-selects'>
           <MyInput
             fieldName="screenKey"
             fieldType="select"
@@ -289,12 +290,10 @@ const DVM = () => {
       <Tabs defaultActiveKey="1" appearance="subtle">
         <Tab active eventKey="1" title="Validation Rules">
           <Form
-            style={{
-              padding: '10px'
-            }}
+          className='form-of-header-actions'
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', gap: '10px' }}>
+            <div className='container-of-header-actions'>
+              <div className='container-of-search'>
                 <div>
                   <MyInput
                     selectDataValue="value"
@@ -321,7 +320,6 @@ const DVM = () => {
                   />
                 </div>
               </div>
-              <div style={{ marginRight: '30px' }}>
                 <MyButton
                    disabled={!recordOfScreenMetaData["screenMetadataKey"]}
                   prefixIcon={() => <AddOutlineIcon />}
@@ -332,7 +330,6 @@ const DVM = () => {
                 >
                   Add New
                 </MyButton>
-              </div>
             </div>
           </Form>
 

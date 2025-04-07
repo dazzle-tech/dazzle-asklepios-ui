@@ -24,15 +24,17 @@ import { IoSettingsSharp } from 'react-icons/io5';
 import { MdModeEdit } from 'react-icons/md';
 import MyIconInput from '@/components/MyInput/MyIconInput';
 import { Icon } from '@rsuite/icons';
+
 import MyButton from '@/components/MyButton/MyButton';
+
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
-
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import FormControl from 'rsuite/esm/FormControl';
+import './styles.less';
 
 const Modules = () => {
   const dispatch = useAppDispatch();
@@ -42,12 +44,12 @@ const Modules = () => {
   const [subView, setSubView] = useState('');
 
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const [recordOfSearch, setRecordOfSearch] = useState({name: ""});
+  const [recordOfSearch, setRecordOfSearch] = useState({ name: '' });
 
   const [saveModule, saveModuleMutation] = useSaveModuleMutation();
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className="title">
       <h5>Modules</h5>
     </div>
   );
@@ -80,8 +82,8 @@ const Modules = () => {
   }, [saveModuleMutation.data]);
 
   useEffect(() => {
-      handleFilterChange('name', recordOfSearch['name']);
-    }, [recordOfSearch]);
+    handleFilterChange('name', recordOfSearch['name']);
+  }, [recordOfSearch]);
 
   const isSelected = rowData => {
     if (rowData && module && rowData.key === module.key) {
@@ -135,7 +137,7 @@ const Modules = () => {
   };
 
   const iconsForActions = (rowData: ApModule) => (
-    <div style={{ display: 'flex', gap: '20px' }}>
+    <div className="containerOfIcons">
       <IoSettingsSharp
         title="Setup Module Screens"
         size={24}
@@ -159,11 +161,7 @@ const Modules = () => {
   );
 
   return (
-    <Carousel
-      style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
-      autoplay={false}
-      activeIndex={carouselActiveIndex}
-    >
+    <Carousel className="carousel" autoplay={false} activeIndex={carouselActiveIndex}>
       <Panel
 
       // style={{backgroundColor: "#b3c2d3"}}
@@ -173,30 +171,26 @@ const Modules = () => {
       //   </h3>
       // }
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div className="containerOfHeaderActions">
           <Form>
             <MyInput
-             placeholder="Search by Name"
+              placeholder="Search by Name"
               fieldName="name"
               fieldType="text"
               record={recordOfSearch}
               setRecord={setRecordOfSearch}
               showLabel={false}
               width={'220px'}
-              />
-              </Form>
-        
-          <div style={{ marginRight: '40px' }}>
-            <MyButton
-              prefixIcon={() => <AddOutlineIcon />}
-              color="var(--deep-blue)"
-              onClick={handleModuleNew}
-              width="109px"
-              height="32px"
-            >
-              Add New
-            </MyButton>
-          </div>
+            />
+          </Form>
+
+          <MyButton
+            prefixIcon={() => <AddOutlineIcon />}
+            color="var(--deep-blue)"
+            onClick={handleModuleNew}
+          >
+            Add New
+          </MyButton>
         </div>
         <Table
           loading={isLoading}
@@ -231,7 +225,7 @@ const Modules = () => {
             <HeaderCell>
               <Translate>Name</Translate>
             </HeaderCell>
-            <Cell style={{ fontWeight: 'bold' }} dataKey="name" />
+            <Cell className="columnName" dataKey="name" />
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
@@ -251,7 +245,7 @@ const Modules = () => {
             <Cell>{rowData => iconsForActions(rowData)}</Cell>
           </Column>
         </Table>
-        <div style={{ padding: 20, backgroundColor: '#F4F7FC' }}>
+        <div className="containerOfPagination">
           <Pagination
             prev
             next
@@ -280,14 +274,11 @@ const Modules = () => {
             <Translate>{operationState} Module</Translate>
           </Modal.Title>
           <hr />
-          <Modal.Body style={{ marginBottom: '120px' }}>
-            <Form 
-            fluid
-            style={{
-              padding: '1px'
-            }}
-            >
+
+          <Modal.Body className="modalBody">
+            <Form fluid>
               <div
+                className="headerOfModal"
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -305,12 +296,7 @@ const Modules = () => {
                 />
                 <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Module info</label>
               </div>
-              <MyInput
-                fieldName="name"
-                record={module}
-                setRecord={setModule}
-                width={520}
-              />
+              <MyInput fieldName="name" record={module} setRecord={setModule} width={520} />
               <MyInput
                 fieldType="textarea"
                 fieldName="description"
