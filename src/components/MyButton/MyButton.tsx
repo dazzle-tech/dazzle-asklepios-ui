@@ -13,6 +13,7 @@ const MyButton = ({
     width = "auto",
     appearance = "primary"  as Appearance,
     size='medium',
+    disabled=false,
     ...props 
 }) => {
 
@@ -21,8 +22,7 @@ const MyButton = ({
         <Button
         className={`bt ${size}`} 
         appearance={appearance} 
-         
-            disabled={props.disabled}
+ disabled={props.disabled}
             style={{
                 color: appearance === "ghost" ||appearance === "link" ||appearance === "subtle"
                 ? props.color ?? "var(--primary-blue)"

@@ -116,8 +116,8 @@ const PatientSide = ({ patient, encounter }) => {
         if (patient.key) profileImageFileInputRef.current.click();
     };
     return (
-        <Panel style={{ width: '272px', padding: '7px', display: 'flex', flexDirection: 'column' }}>
-            <div className='div-avatar' style={{ display: 'flex', flexDirection: 'row', gap: '15px', marginBottom: '10px' }}>
+        <Panel className='patient-panel'>
+            <div className='div-avatar' >
                 <Avatar
 
                     circle
@@ -131,12 +131,12 @@ const PatientSide = ({ patient, encounter }) => {
                     alt={patient?.fullName}
                 />
                 <div>
-                    <div style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
-                        <Text style={{ fontSize: '12px', fontFamily: 'Manrope Medium' }}>{patient?.fullName ?? "Patient Name"}</Text>
+                    <div className='patient-info'>
+                        <Text className='patient-name'>{patient?.fullName ?? "Patient Name"}</Text>
 
 
                     </div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>
+                    <div className='info-label'>
                         #  {patient?.patientMrn ?? "MRN"}
 
                     </div>
@@ -144,175 +144,172 @@ const PatientSide = ({ patient, encounter }) => {
 
             </div>
 
-            <Text style={{ marginTop: '5px' }}>
-                <FontAwesomeIcon icon={faIdCard} style={{ color: 'var(--icon-gray)' }} /> <span style={{ fontWeight: 'bold' }}>Document  Information</span>
+            <Text className="patient-info">
+                <FontAwesomeIcon icon={faIdCard} className='icon-color' /> <span className='section-title'>Document  Information</span>
             </Text>
             <br />
 
-            <div style={{ display: 'flex', gap: '10px', width: '230px' ,height:'35px' }}>
-                <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
-                    <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Document No</Text>
-                    <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}>
+            <div className='info-section'>
+                <div className='info-column'>
+                    <Text className='info-label'>Document No</Text>
+                    <Text className='info-value'>
                         {patient?.documentTypeLvalue?.lovDisplayVale}
                     </Text>
 
                 </div>
 
-                <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}
+                <div className='info-column'
                 >
-                    <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Document Type</Text>
-                    <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}
+                    <Text className='info-label'>Document Type</Text>
+                    <Text className='info-value'
                     > {patient?.documentNo}</Text>
 
                 </div>
             </div>
-            <Divider style={{ margin: '4px 4px' }} />
+            <Divider className='divider-style' />
 
             <Text >
-                <FontAwesomeIcon icon={faUser} style={{ color: 'var(--icon-gray)' }} /> <span style={{ fontWeight: 'bold' }}>Patient  Information</span>
+                <FontAwesomeIcon icon={faUser} className='icon-color' /> <span className='section-title'>Patient  Information</span>
             </Text>
             <br />
 
-            <div style={{ display: 'flex', gap: '10px', width: '230px',height:'35px' }}>
-                <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
-                    <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Age</Text>
-                    <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}>
+            <div className='info-section'>
+                <div className='info-column'>
+                    <Text className='info-label'>Age</Text>
+                    <Text className='info-value'>
                         {patient?.dob ? calculateAgeFormat(patient?.dob) : ""}
                     </Text>
 
                 </div>
 
-                <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}
+                <div className='info-column'
                 >
-                    <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Sex at Birth</Text>
-                    <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}
+                    <Text className='info-label'>Sex at Birth</Text>
+                    <Text className='info-value'
                     > {patient?.genderLvalue?.lovDisplayVale}</Text>
 
                 </div>
 
 
             </div>
-            <Divider style={{ margin: '4px 4px' }} />
+            <Divider className='divider-style' />
             <Text >
-                <FaWeight style={{ color: 'var(--icon-gray)' }} /> <span style={{ fontWeight: 'bold' }}>Physical Measurements</span>
+                <FaWeight className='icon-color' /> <span className='section-title'>Physical Measurements</span>
             </Text>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className='details-section'>
                 <br />
-                <div style={{ display: 'flex', gap: '10px', width: '230px' }}>
-                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Weight</Text>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}>
+                <div className='info-section'>
+                    <div className='info-column'>
+                        <Text className='info-label'>Weight</Text>
+                        <Text className='info-value'>
                             {bodyMeasurements?.weight}
                         </Text>
 
                     </div>
 
-                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}
+                    <div className='info-column'
                     >
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Height</Text>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}
+                        <Text className='info-label'>Height</Text>
+                        <Text className='info-value'
                         > {bodyMeasurements?.height}</Text>
 
                     </div>
                 </div>
-                <div style={{ display: 'flex', gap: '10px', width: '230px' }}>
-                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>H.C</Text>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}>
+                <div className='info-section'>
+                    <div className='info-column'>
+                        <Text className='info-label'>H.C</Text>
+                        <Text className='info-value'>
                             {bodyMeasurements?.headcircumference}
                         </Text>
 
                     </div>
 
-                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}
+                    <div className='info-column'
                     >
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>BMI</Text>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}
+                        <Text className='info-label'>BMI</Text>
+                        <Text className='info-value'
                         > {Math.sqrt((bodyMeasurements?.weight * bodyMeasurements?.height) / 3600).toFixed(2)}</Text>
 
                     </div>
                 </div>
-                <div style={{ display: 'flex', gap: '10px', width: '230px' }}>
-                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>BSA</Text>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}>
+                <div className='info-section'>
+                    <div className='info-column'>
+                        <Text className='info-label'>BSA</Text>
+                        <Text className='info-value'>
                             {Math.sqrt((bodyMeasurements?.weight * bodyMeasurements?.height) / 3600).toFixed(2)}
                         </Text>
 
                     </div>
 
-                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}
+                    <div className='info-column'
                     >
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Blood Group</Text>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}
+                        <Text className='info-label'>Blood Group</Text>
+                        <Text className='info-value'
                         > B+</Text>
 
                     </div>
                 </div>
             </div>
-            <Divider style={{ margin: '4px 4px' }} />
+            <Divider className='divider-style' />
             
             <Text >
-            <FontAwesomeIcon icon={faFileWaveform}  style={{ color: 'var(--icon-gray)' }} /> <span style={{ fontWeight: 'bold' }}>Visit Details</span>
+            <FontAwesomeIcon icon={faFileWaveform}  className='icon-color' /> <span className='section-title'>Visit Details</span>
             </Text>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className='details-section'>
                 <br />
-                <div style={{ display: 'flex', gap: '10px', width: '230px',height:'35px' }}>
-                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Visit Date</Text>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}>
+                <div className='info-section'>
+                    <div className='info-column'>
+                        <Text className='info-label'>Visit Date</Text>
+                        <Text className='info-value'>
                             {encounter.plannedStartDate}
                         </Text>
 
                     </div>
 
-                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}
+                    <div className='info-column'
                     >
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Visit ID</Text>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}
+                        <Text className='info-label'>Visit ID</Text>
+                        <Text className='info-value'
                         > {encounter.visitId}</Text>
 
                     </div>
                 </div>
-                <div style={{ display: 'flex', gap: '10px', width: '230px',height:'35px' }}>
-                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Visit Type</Text>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}>
+                <div className='info-section'>
+                    <div className='info-column'>
+                        <Text className='info-label'>Visit Type</Text>
+                        <Text className='info-value'>
                             {encounter?.visitTypeLvalue?.lovDisplayVale}
                         </Text>
 
                     </div>
 
-                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}
+                    <div className='info-column'
                     >
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Priority</Text>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}
+                        <Text className='info-label'>Priority</Text>
+                        <Text className='info-value'
                         > {encounter?.encounterPriorityLvalue?.lovDisplayVale}</Text>
 
                     </div>
                 </div>
-                <div style={{ display: 'flex', gap: '10px', width: '230px',height:'35px' }}>
-                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Reason</Text>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}>
+                <div className='info-section'>
+                    <div className='info-column'>
+                        <Text className='info-label'>Reason</Text>
+                        <Text className='info-value'>
                             {encounter?.reasonLvalue?.lovDisplayVale}
                         </Text>
 
                     </div>
 
-                    <div style={{ flex: '1', display: 'flex', flexDirection: 'column' }}
+                    <div className='info-column'
                     >
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '12px', color: 'var(--icon-gray)' }}>Origin</Text>
-                        <Text style={{ fontFamily: 'Manrope Medium', fontSize: '14px', color: 'var(--black)' }}
+                        <Text className='info-label'>Origin</Text>
+                        <Text className='info-value'
                         > {encounter.admissionOrigin}</Text>
 
                     </div>
                 </div>
             </div>
-            {/* <Row >
-                <span style={{ fontWeight: 'bold' }}> Diagnosis:</span> {encounter?.diagnosis}
-
-            </Row> */}
+      
 
         </Panel>
     )

@@ -236,7 +236,7 @@ const Encounter = () => {
         cellBordered
         headerHeight={30}
         rowHeight={40}
-        style={{ width: '100%', marginTop: '5px', marginBottom: '5px' }}
+        className='table-style'
         height={100} // Adjust height as needed
       >
         <Column flexGrow={2} align="center" fullText>
@@ -389,141 +389,141 @@ const Encounter = () => {
                 <Drawer.Header>
                   <Drawer.Title>Medical Sheets</Drawer.Title>
                 </Drawer.Header>
-                <Drawer.Body style={{ padding: '10px' }}>
-                  <List hover style={{ width: '100%', margin: 0 }}>
+                <Drawer.Body className='drawer-body'>
+                  <List hover className='drawer-list-style'>
                     {medicalSheet?.object?.patientDashboard && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       onClick={() => handleMenuItemClick(<PatientSummary patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faBars} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faBars} className='icon' />
                       <Translate>Patient Dashboard</Translate>
                     </List.Item>}
                     {medicalSheet?.object?.clinicalVisit &&
                       <List.Item
-                        style={{ display: 'flex', alignItems: 'center' }}
+                        className='drawer-item'
                         onClick={() => handleMenuItemClick(<SOAP edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={localEncounter} setEncounter={setLocalEncounter} />)}>
-                        <FontAwesomeIcon icon={faUserDoctor} style={{ margin: '3px' }} />
+                        <FontAwesomeIcon icon={faUserDoctor} className='icon' />
                         <Translate>Clinical Visit</Translate>
                       </List.Item>
                     }
                     {medicalSheet?.object?.observation && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       //!patientSlice.encounter.editable
                       onClick={() => handleMenuItemClick(<Observations patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faBedPulse} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faBedPulse} className='icon' />
                       <Translate>Observations</Translate>
                     </List.Item>}
                     {medicalSheet?.object?.allergies && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       onClick={() => handleMenuItemClick(<Allergies edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faPersonDotsFromLine} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faPersonDotsFromLine} className='icon' />
                       <Translate>Allergies</Translate>
                     </List.Item>}
                     {medicalSheet?.object?.medicalWarnings && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       onClick={() => handleMenuItemClick(<Warning edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faTriangleExclamation} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faTriangleExclamation} className='icon' />
                       <Translate>Medical Warnings</Translate>
                     </List.Item>}
                     {medicalSheet?.object?.cardiology && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       onClick={() => handleMenuItemClick(<Cardiology patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faHeartPulse} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faHeartPulse} className='icon' />
                       <Translate>Cardiology</Translate>
                     </List.Item>}
 
                     {medicalSheet?.object?.dentalCare && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       //!patientSlice.encounter.editable
                       onClick={() => handleMenuItemClick(<Dental patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faTooth} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faTooth} className='icon' />
                       <Translate>Dental Care</Translate>
                     </List.Item>}
                     {medicalSheet?.object?.optometricExam && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       onClick={() => handleMenuItemClick(<OptometricExam patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faEye} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faEye} className='icon' />
                       <Translate>Optometric Exam</Translate>
                     </List.Item>}
                     {medicalSheet?.object?.audiometryPuretone && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       onClick={() => handleMenuItemClick(<AudiometryPuretone patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faEarListen} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faEarListen} className='icon' />
                       <Translate>Audiometry Puretone</Translate>
                     </List.Item>}
                     {medicalSheet?.object?.psychologicalExam && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       onClick={() => handleMenuItemClick(<PsychologicalExam patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faBrain} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faBrain} className='icon' />
                       <Translate>Psychological Exam</Translate>
                     </List.Item>}
                     {medicalSheet?.object?.vaccination && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       //!patientSlice.encounter.editable
                       onClick={() => handleMenuItemClick(<VaccinationTab disabled={false} patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faSyringe} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faSyringe} className='icon' />
                       <Translate>VaccinationTab </Translate>
                     </List.Item>}
                     {medicalSheet?.object?.prescription && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       onClick={() => handleMenuItemClick(<Prescription edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
 
-                      <FontAwesomeIcon icon={faFilePrescription} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faFilePrescription} className='icon' />
                       <Translate>Prescription</Translate>
                     </List.Item>}
                     {medicalSheet?.object?.diagnosticsOrder && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       onClick={() =>
                         handleMenuItemClick(<DiagnosticsOrder edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)
                       }>
-                      <FontAwesomeIcon icon={faVials} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faVials} className='icon' />
                       <Translate>Diagnostics Order</Translate>
                     </List.Item>}
                     {medicalSheet?.object?.consultation && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       onClick={() => handleMenuItemClick(<Consultation edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faStethoscope} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faStethoscope} className='icon' />
                       <Translate>Consultation</Translate>
                     </List.Item>}
                     {medicalSheet?.object?.drugOrder && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       onClick={() => handleMenuItemClick(<DrugOrder edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
 
-                      <FontAwesomeIcon icon={faPills} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faPills} className='icon' />
                       <Translate>Drug Order</Translate>
                     </List.Item>}
 
 
                     {medicalSheet?.object?.procedures && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       onClick={() => handleMenuItemClick(<Referrals edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faNotesMedical} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faNotesMedical} className='icon' />
                       <Translate>Procedures</Translate>
                     </List.Item>}
                     {medicalSheet?.object?.patientHistory && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       onClick={() => handleMenuItemClick(<PatientHistory patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faClockRotateLeft} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faClockRotateLeft} className='icon' />
                       <Translate>Patient History</Translate>
                     </List.Item>}
 
 
                     {medicalSheet?.object?.medicationsRecord && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       onClick={() => handleMenuItemClick(<MedicationsRecord patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faPills} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faPills} className='icon' />
                       <Translate>Medications Record</Translate>
                     </List.Item>}
                     {medicalSheet?.object?.vaccineReccord && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       onClick={() => handleMenuItemClick(<VaccineReccord patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faSyringe} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faSyringe} className='icon' />
                       <Translate>Vaccine Reccord</Translate>
                     </List.Item>}
 
                     {medicalSheet?.object?.diagnosticsResult && <List.Item
-                      style={{ display: 'flex', alignItems: 'center' }}
+                      className='drawer-item'
                       onClick={() => handleMenuItemClick(<DiagnosticsResult edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faFileWaveform} style={{ margin: '3px' }} />
+                      <FontAwesomeIcon icon={faFileWaveform} className='icon' />
                       <Translate>Diagnostics Test Result</Translate>
                     </List.Item>}
 
