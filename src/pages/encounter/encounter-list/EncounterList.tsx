@@ -158,7 +158,10 @@ const EncounterList = () => {
             record={dateFilter}
             setRecord={setDateFilter}
           />
-          <div style={{height:'100%' ,paddingTop:'30px' ,marginLeft:'auto'}}>
+          <div 
+          className='search-btn'
+          
+           >
           <MyButton
           
             onClick={handleManualSearch}
