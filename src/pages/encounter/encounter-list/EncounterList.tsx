@@ -137,7 +137,7 @@ const EncounterList = () => {
   return (
     <>
       <Panel>
-        <Form layout='inline' fluid className='date-filter-form'>
+        <Form layout='inline' fluid className='date-filter-form' >
           <MyInput
             width={291}
             height={40}
@@ -158,13 +158,14 @@ const EncounterList = () => {
             record={dateFilter}
             setRecord={setDateFilter}
           />
+          <div style={{height:'100%' ,paddingTop:'30px' ,marginLeft:'auto'}}>
           <MyButton
-            className='search-btn'
-            prefixIcon={() => <icons.Search />}
+          
             onClick={handleManualSearch}
           >
-            Search
+           <icons.Search />
           </MyButton>
+          </div>
         </Form>
         <Table
           height={450}
@@ -333,8 +334,8 @@ const EncounterList = () => {
               {rowData =>
                 <Form layout='inline' fluid>
                   <MyButton
-                    className='nurse-doctor-btn'
-                    prefixIcon={() => <FontAwesomeIcon icon={faUserDoctor} />}
+                   size='small'
+                    
                     onClick={() => {
                       const encounterData = rowData;
                       const patientData = rowData.patientObject;
@@ -343,11 +344,12 @@ const EncounterList = () => {
                       handleGoToVisit(encounterData, patientData);
                     }}
                   >
+                    <FontAwesomeIcon icon={faUserDoctor}/>
                   </MyButton>
                   <MyButton
-                    className='nurse-doctor-btn'
-                    prefixIcon={() => <FontAwesomeIcon icon={faUserNurse} />}
-                    color='black'
+                   
+                    size='small'
+                    backgroundColor='black'
                     onClick={() => {
                       const encounterData = rowData;
                       const patientData = rowData.patientObject;
@@ -356,6 +358,7 @@ const EncounterList = () => {
                       handleGoToPreVisitObservations(encounterData, patientData);
                     }}
                   >
+                    <FontAwesomeIcon icon={faUserNurse} />
                   </MyButton>
                 </Form>
               }
