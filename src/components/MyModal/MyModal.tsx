@@ -4,28 +4,28 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import './styles.less';
 import MyButton from '../MyButton/MyButton';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
-
 const MyModal = ({
     open,
     setOpen,
     title,
     icon = null,
     pagesCount = 1,
-    currentStep = 0,
-    setCurrentStep = null,
+    bodyhieght = 400,
     content,
     size = "sm",
     steps = [],
-    footerButtons,
+    footerButtons = null,
     position = "center",
     hideCanel = false,
     hideBack = false,
     actionButtonLabel = "Save",
-    actionButtonFunction,
+    actionButtonFunction = null,
 }) => {
-    const [internalStep, setInternalStep] = useState(currentStep);
-    const activeStep = typeof setCurrentStep === 'function' ? currentStep : internalStep;
-    const updateStep = typeof setCurrentStep === 'function' ? setCurrentStep : setInternalStep;
+
+    const [internalStep, setInternalStep] = useState(0);
+    const activeStep = internalStep;
+    const updateStep = setInternalStep;
+
     const computedPagesCount = steps.length > pagesCount ? steps.length : pagesCount;
     const modalClass =
         position === "left"
@@ -57,18 +57,21 @@ const MyModal = ({
                 </Modal.Title>
             </Modal.Header>
             <Divider className='divider-line' />
-            <Modal.Body>
-                <Steps current={activeStep} className='steps-modal'>
+            <Modal.Body style={{ height: bodyhieght }}>
+                <Steps current={activeStep} className={`steps-modal ${steps.length === 1 ? 'centered-step' : ''}`}>
                     {steps.map((step, index) => (
                         <Steps.Item
                             key={index}
                             title={<div style={{ textAlign: 'center' }}>
                                 <FontAwesomeIcon
-                                    icon={currentStep > index ? faCheck : step.icon}
-                                    style={{
-                                        color:
-                                            currentStep > index ? 'green' : currentStep === index ? 'blue' : 'gray'
-                                    }}
+                                    icon={activeStep > index ? faCheck : step.icon}
+                                    className={
+                                        activeStep > index
+                                            ? 'step-past'
+                                            : activeStep === index
+                                                ? 'step-active'
+                                                : 'step-future'
+                                    }
                                 />
                                 <div>{step.title}</div>
                             </div>}
@@ -79,12 +82,12 @@ const MyModal = ({
                 {typeof content === 'function' ? content(activeStep) : (activeStep === 0 && content)}
             </Modal.Body>
             <Divider className='divider-line' />
-            <Modal.Footer style={{ display: 'flex', alignItems: 'center' }}>
-                <Form style={{ display: 'flex', alignItems: 'center', marginLeft: 'auto' }}>
-                    {!hideCanel && <MyButton appearance={'subtle'}  width='93px' onClick={() => setOpen(false)}>Cancel</MyButton>}
-                    {!hideBack && activeStep > 0 && <MyButton ghost width='93px' onClick={handlePrev}>Back</MyButton>}
-                    {!(activeStep === computedPagesCount - 1) && <MyButton  width='93px'onClick={handleNext}>Next</MyButton>}
-                    {(activeStep === computedPagesCount - 1) && <MyButton width='93px' onClick={actionButtonFunction}>{actionButtonLabel}</MyButton>}
+            <Modal.Footer className='footer-modal'>
+                <Form className='footer-modal-content'>
+                    {!hideCanel && <MyButton appearance={'subtle'} onClick={() => setOpen(false)}>Cancel</MyButton>}
+                    {!hideBack && activeStep > 0 && <MyButton appearance={'subtle'} onClick={handlePrev}>Back</MyButton>}
+                    {!(activeStep === computedPagesCount - 1) && <MyButton onClick={handleNext}>Next</MyButton>}
+                    {(activeStep === computedPagesCount - 1) && <MyButton onClick={actionButtonFunction}>{actionButtonLabel}</MyButton>}
                     {footerButtons}
                     {steps[activeStep]?.footer}
                 </Form>
@@ -92,7 +95,4 @@ const MyModal = ({
         </Modal>
     );
 };
-
-
-
 export default MyModal;
