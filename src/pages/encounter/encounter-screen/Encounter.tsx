@@ -148,8 +148,8 @@ const Encounter = () => {
     ...initialListRequest
   });
   const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
-    localUser?.departmentKey,
-    { skip: !localUser?.departmentKey }
+    propsData?.encounter?.departmentKey,
+    { skip: !propsData?.encounter?.departmentKey }
   );
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
@@ -185,7 +185,7 @@ const Encounter = () => {
   }, []);
   useEffect(() => {
     setLocalUser(authSlice.user)
-  
+
 
   }, [authSlice.user]);
   useEffect(() => {
@@ -326,493 +326,493 @@ const Encounter = () => {
 
 
   return (
-    
-      <div className='container'>
-        <div className='left-box'>
-         
-            <Panel>
-              <div className='container-bt'>
-                <div className='left'>
-                  <MyButton
-                    prefixIcon={() => <ArowBackIcon />}
-                   
-                    backgroundColor={'var(--primary-gray)'}
-                    onClick={handleGoBack}
 
-                  >Go Back</MyButton>
-                </div>
-                <div className='right'>
-                  <MyButton
-                    prefixIcon={() => <BarChartHorizontalIcon />}
-                    backgroundColor={"var(--deep-blue)"}
-                    
-                    onClick={() => setIsDrawerOpen(true)}
-                  >Medical Sheets</MyButton>
-                  <MyButton
-                   
-                    prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
-                    onClick={() => { setModalOpen(true) }}
-                  >Create Follow-up</MyButton>
-                  <MyButton
-                  
-                  backgroundColor={propsData.patient.hasAllergy ? "var(--primary-orange)" : "var(--deep-blue)"}
-                    onClick={OpenAllargyModal}
-                    prefixIcon={() => <FontAwesomeIcon icon={faHandDots} />}
-                  >Allergy</MyButton>
-                  <MyButton
-                  
-                    backgroundColor={propsData.patient.hasWarning ? "var(--primary-orange)" : "var(--deep-blue)"}
-                    onClick={OpenWarningModal}
-                    prefixIcon={() => <FontAwesomeIcon icon={faTriangleExclamation} />}
-                  >Warning</MyButton>
-                  {propsData.encounter.editable && (
-                    <MyButton
-                     
-                      prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                      onClick={handleCompleteEncounter}
-                     appearance='ghost'
-                    >
-                      <Translate>Complete Visit</Translate>
-                    </MyButton>
-                  )}
-                </div>
-              </div>
+    <div className='container'>
+      <div className='left-box'>
 
-              <Divider />
-              <Drawer
-                open={isDrawerOpen}
-                onClose={() => setIsDrawerOpen(false)}
-                placement='left'
+        <Panel>
+          <div className='container-bt'>
+            <div className='left'>
+              <MyButton
+                prefixIcon={() => <ArowBackIcon />}
 
-                style={{ width: '240px' }}
-              >
-                <Drawer.Header>
-                  <Drawer.Title>Medical Sheets</Drawer.Title>
-                </Drawer.Header>
-                <Drawer.Body className='drawer-body'>
-                  <List hover className='drawer-list-style'>
-                    {medicalSheet?.object?.patientDashboard && <List.Item
-                      className='drawer-item'
-                      onClick={() => handleMenuItemClick(<PatientSummary patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faBars} className='icon' />
-                      <Translate>Patient Dashboard</Translate>
-                    </List.Item>}
-                    {medicalSheet?.object?.clinicalVisit &&
-                      <List.Item
-                        className='drawer-item'
-                        onClick={() => handleMenuItemClick(<SOAP edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={localEncounter} setEncounter={setLocalEncounter} />)}>
-                        <FontAwesomeIcon icon={faUserDoctor} className='icon' />
-                        <Translate>Clinical Visit</Translate>
-                      </List.Item>
-                    }
-                    {medicalSheet?.object?.observation && <List.Item
-                      className='drawer-item'
-                      //!patientSlice.encounter.editable
-                      onClick={() => handleMenuItemClick(<Observations patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faBedPulse} className='icon' />
-                      <Translate>Observations</Translate>
-                    </List.Item>}
-                    {medicalSheet?.object?.allergies && <List.Item
-                      className='drawer-item'
-                      onClick={() => handleMenuItemClick(<Allergies edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faPersonDotsFromLine} className='icon' />
-                      <Translate>Allergies</Translate>
-                    </List.Item>}
-                    {medicalSheet?.object?.medicalWarnings && <List.Item
-                      className='drawer-item'
-                      onClick={() => handleMenuItemClick(<Warning edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faTriangleExclamation} className='icon' />
-                      <Translate>Medical Warnings</Translate>
-                    </List.Item>}
-                    {medicalSheet?.object?.cardiology && <List.Item
-                      className='drawer-item'
-                      onClick={() => handleMenuItemClick(<Cardiology patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faHeartPulse} className='icon' />
-                      <Translate>Cardiology</Translate>
-                    </List.Item>}
+                backgroundColor={'var(--primary-gray)'}
+                onClick={handleGoBack}
 
-                    {medicalSheet?.object?.dentalCare && <List.Item
-                      className='drawer-item'
-                      //!patientSlice.encounter.editable
-                      onClick={() => handleMenuItemClick(<Dental patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faTooth} className='icon' />
-                      <Translate>Dental Care</Translate>
-                    </List.Item>}
-                    {medicalSheet?.object?.optometricExam && <List.Item
-                      className='drawer-item'
-                      onClick={() => handleMenuItemClick(<OptometricExam patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faEye} className='icon' />
-                      <Translate>Optometric Exam</Translate>
-                    </List.Item>}
-                    {medicalSheet?.object?.audiometryPuretone && <List.Item
-                      className='drawer-item'
-                      onClick={() => handleMenuItemClick(<AudiometryPuretone patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faEarListen} className='icon' />
-                      <Translate>Audiometry Puretone</Translate>
-                    </List.Item>}
-                    {medicalSheet?.object?.psychologicalExam && <List.Item
-                      className='drawer-item'
-                      onClick={() => handleMenuItemClick(<PsychologicalExam patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faBrain} className='icon' />
-                      <Translate>Psychological Exam</Translate>
-                    </List.Item>}
-                    {medicalSheet?.object?.vaccination && <List.Item
-                      className='drawer-item'
-                      //!patientSlice.encounter.editable
-                      onClick={() => handleMenuItemClick(<VaccinationTab disabled={false} patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faSyringe} className='icon' />
-                      <Translate>VaccinationTab </Translate>
-                    </List.Item>}
-                    {medicalSheet?.object?.prescription && <List.Item
-                      className='drawer-item'
-                      onClick={() => handleMenuItemClick(<Prescription edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
+              >Go Back</MyButton>
+            </div>
+            <div className='right'>
+              <MyButton
+                prefixIcon={() => <BarChartHorizontalIcon />}
+                backgroundColor={"var(--deep-blue)"}
 
-                      <FontAwesomeIcon icon={faFilePrescription} className='icon' />
-                      <Translate>Prescription</Translate>
-                    </List.Item>}
-                    {medicalSheet?.object?.diagnosticsOrder && <List.Item
-                      className='drawer-item'
-                      onClick={() =>
-                        handleMenuItemClick(<DiagnosticsOrder edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)
-                      }>
-                      <FontAwesomeIcon icon={faVials} className='icon' />
-                      <Translate>Diagnostics Order</Translate>
-                    </List.Item>}
-                    {medicalSheet?.object?.consultation && <List.Item
-                      className='drawer-item'
-                      onClick={() => handleMenuItemClick(<Consultation edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faStethoscope} className='icon' />
-                      <Translate>Consultation</Translate>
-                    </List.Item>}
-                    {medicalSheet?.object?.drugOrder && <List.Item
-                      className='drawer-item'
-                      onClick={() => handleMenuItemClick(<DrugOrder edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
+                onClick={() => setIsDrawerOpen(true)}
+              >Medical Sheets</MyButton>
+              <MyButton
 
-                      <FontAwesomeIcon icon={faPills} className='icon' />
-                      <Translate>Drug Order</Translate>
-                    </List.Item>}
+                prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
+                onClick={() => { setModalOpen(true) }}
+              >Create Follow-up</MyButton>
+              <MyButton
 
+                backgroundColor={propsData.patient.hasAllergy ? "var(--primary-orange)" : "var(--deep-blue)"}
+                onClick={OpenAllargyModal}
+                prefixIcon={() => <FontAwesomeIcon icon={faHandDots} />}
+              >Allergy</MyButton>
+              <MyButton
 
-                    {medicalSheet?.object?.procedures && <List.Item
-                      className='drawer-item'
-                      onClick={() => handleMenuItemClick(<Referrals edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faNotesMedical} className='icon' />
-                      <Translate>Procedures</Translate>
-                    </List.Item>}
-                    {medicalSheet?.object?.patientHistory && <List.Item
-                      className='drawer-item'
-                      onClick={() => handleMenuItemClick(<PatientHistory patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faClockRotateLeft} className='icon' />
-                      <Translate>Patient History</Translate>
-                    </List.Item>}
+                backgroundColor={propsData.patient.hasWarning ? "var(--primary-orange)" : "var(--deep-blue)"}
+                onClick={OpenWarningModal}
+                prefixIcon={() => <FontAwesomeIcon icon={faTriangleExclamation} />}
+              >Warning</MyButton>
+              {propsData.encounter.editable && (
+                <MyButton
 
-
-                    {medicalSheet?.object?.medicationsRecord && <List.Item
-                      className='drawer-item'
-                      onClick={() => handleMenuItemClick(<MedicationsRecord patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faPills} className='icon' />
-                      <Translate>Medications Record</Translate>
-                    </List.Item>}
-                    {medicalSheet?.object?.vaccineReccord && <List.Item
-                      className='drawer-item'
-                      onClick={() => handleMenuItemClick(<VaccineReccord patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faSyringe} className='icon' />
-                      <Translate>Vaccine Reccord</Translate>
-                    </List.Item>}
-
-                    {medicalSheet?.object?.diagnosticsResult && <List.Item
-                      className='drawer-item'
-                      onClick={() => handleMenuItemClick(<DiagnosticsResult edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
-                      <FontAwesomeIcon icon={faFileWaveform} className='icon' />
-                      <Translate>Diagnostics Test Result</Translate>
-                    </List.Item>}
-
-
-
-                  </List>
-                </Drawer.Body>
-              </Drawer>
-              {activeContent} {/* Render the selected content */}
-            </Panel>
-            <Modal size="lg" open={openAllargyModal} onClose={CloseAllargyModal} overflow  >
-              <Modal.Title>
-                <Translate><h6>Patient Allergy</h6></Translate>
-              </Modal.Title>
-              <Modal.Body>
-                <div>
-                  <Checkbox
-                    checked={!showCanceled}
-                    onChange={() => {
-                      setShowCanceled(!showCanceled);
-                    }}
-                  >
-                    Show Cancelled
-                  </Checkbox>
-                </div>
-                <Table
-
-                  data={allergiesListResponse?.object || []}
-                  rowKey="key"
-                  expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
-                  renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
-                  shouldUpdateScroll={false}
-                  bordered
-                  cellBordered
-
+                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+                  onClick={handleCompleteEncounter}
+                  appearance='ghost'
                 >
-                  <Column width={70} align="center">
-                    <HeaderCell>#</HeaderCell>
-                    <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-                  </Column>
-
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Allergy Type</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.allergyTypeLvalue?.lovDisplayVale
-                      }
-                    </Cell>
-                  </Column >
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Allergen</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData => {
-
-                        if (!allergensListToGetName?.object) {
-                          return "Loading...";
-                        }
-                        const getname = allergensListToGetName.object.find(item => item.key === rowData.allergenKey);
-                        console.log(getname);
-                        return getname?.allergenName || "No Name";
-                      }}
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Severity</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.severityLvalue?.lovDisplayVale
-                      }
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Onset</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.onsetLvalue?.lovDisplayVale
-                      }
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Onset Date Time</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData => rowData.onsetDate ? new Date(rowData.onsetDate).toLocaleString() : "Undefind"}
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Treatment Strategy</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.treatmentStrategyLvalue?.lovDisplayVale
-                      }
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Source of information</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.sourceOfInformationLvalue?.lovDisplayVale || "BY Patient"
-                      }
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Reaction Description</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.reactionDescription
-                      }
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Notes</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.notes
-                      }
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={1} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Status</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.statusLvalue?.lovDisplayVale
-                      }
-                    </Cell>
-                  </Column>
-                </Table>
-
-
-
-              </Modal.Body>
-              <Modal.Footer>
-                <Stack spacing={2} divider={<Divider vertical />}>
-
-                  <Button appearance="ghost" color="cyan" onClick={CloseAllargyModal}>
-                    Close
-                  </Button>
-                </Stack>
-              </Modal.Footer>
-            </Modal>
-            <Modal size="lg" open={openWarningModal} onClose={CloseWarningModal} overflow  >
-              <Modal.Title>
-                <Translate><h6>Patient Warning</h6></Translate>
-              </Modal.Title>
-              <Modal.Body>
-                <div>
-                  <Checkbox
-                    checked={!showCanceled}
-                    onChange={() => {
-
-
-                      setShowCanceled(!showCanceled);
-                    }}
-                  >
-                    Show Cancelled
-                  </Checkbox>
-
-
-                </div>
-                <Table
-                  height={600}
-                  data={warningsListResponse?.object || []}
-                  rowKey="key"
-                  expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
-                  renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
-                  shouldUpdateScroll={false}
-                  bordered
-                  cellBordered
-
-                >
-                  <Column width={70} align="center">
-                    <HeaderCell>#</HeaderCell>
-                    <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-                  </Column>
-
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Warning Type</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.warningTypeLvalue?.lovDisplayVale
-                      }
-                    </Cell>
-                  </Column >
-
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Severity</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.severityLvalue?.lovDisplayVale
-                      }
-                    </Cell>
-                  </Column>
-
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>First Time Recorded</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData => rowData.firstTimeRecorded ? new Date(rowData.firstTimeRecorded).toLocaleString() : "Undefind"}
-                    </Cell>
-                  </Column>
-
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Source of information</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.sourceOfInformationLvalue?.lovDisplayVale || "BY Patient"
-                      }
-                    </Cell>
-                  </Column>
-
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Notes</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.notes
-                      }
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={1} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Status</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.statusLvalue?.lovDisplayVale
-                      }
-                    </Cell>
-                  </Column>
-                </Table>
-
-              </Modal.Body>
-              <Modal.Footer>
-                <Stack spacing={2} divider={<Divider vertical />}>
-
-                  <Button appearance="ghost" color="cyan" onClick={CloseWarningModal}>
-                    Close
-                  </Button>
-                </Stack>
-              </Modal.Footer>
-            </Modal>
-            <AppointmentModal
-              from={'Encounter'}
-              isOpen={modalOpen}
-              onClose={() => { setModalOpen(false), setShowAppointmentOnly(false) }}
-              appointmentData={selectedEvent?.appointmentData}
-              resourceType={selectedResourceType}
-              facility={selectedFacility}
-              onSave={refitchAppointments}
-              showOnly={showAppointmentOnly}
-            />
+                  <Translate>Complete Visit</Translate>
+                </MyButton>
+              )}
+            </div>
           </div>
 
-        <div className='right-box'>
-          <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
-        </div>
+          <Divider />
+          <Drawer
+            open={isDrawerOpen}
+            onClose={() => setIsDrawerOpen(false)}
+            placement='left'
+
+            style={{ width: '240px' }}
+          >
+            <Drawer.Header>
+              <Drawer.Title>Medical Sheets</Drawer.Title>
+            </Drawer.Header>
+            <Drawer.Body className='drawer-body'>
+              <List hover className='drawer-list-style'>
+                {medicalSheet?.object?.patientDashboard && <List.Item
+                  className='drawer-item'
+                  onClick={() => handleMenuItemClick(<PatientSummary patient={propsData.patient} encounter={propsData.encounter} />)}>
+                  <FontAwesomeIcon icon={faBars} className='icon' />
+                  <Translate>Patient Dashboard</Translate>
+                </List.Item>}
+                {medicalSheet?.object?.clinicalVisit &&
+                  <List.Item
+                    className='drawer-item'
+                    onClick={() => handleMenuItemClick(<SOAP edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={localEncounter} setEncounter={setLocalEncounter} />)}>
+                    <FontAwesomeIcon icon={faUserDoctor} className='icon' />
+                    <Translate>Clinical Visit</Translate>
+                  </List.Item>
+                }
+                {medicalSheet?.object?.observation && <List.Item
+                  className='drawer-item'
+                  //!patientSlice.encounter.editable
+                  onClick={() => handleMenuItemClick(<Observations patient={propsData.patient} encounter={propsData.encounter} />)}>
+                  <FontAwesomeIcon icon={faBedPulse} className='icon' />
+                  <Translate>Observations</Translate>
+                </List.Item>}
+                {medicalSheet?.object?.allergies && <List.Item
+                  className='drawer-item'
+                  onClick={() => handleMenuItemClick(<Allergies edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
+                  <FontAwesomeIcon icon={faPersonDotsFromLine} className='icon' />
+                  <Translate>Allergies</Translate>
+                </List.Item>}
+                {medicalSheet?.object?.medicalWarnings && <List.Item
+                  className='drawer-item'
+                  onClick={() => handleMenuItemClick(<Warning edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
+                  <FontAwesomeIcon icon={faTriangleExclamation} className='icon' />
+                  <Translate>Medical Warnings</Translate>
+                </List.Item>}
+                {medicalSheet?.object?.cardiology && <List.Item
+                  className='drawer-item'
+                  onClick={() => handleMenuItemClick(<Cardiology patient={propsData.patient} encounter={propsData.encounter} />)}>
+                  <FontAwesomeIcon icon={faHeartPulse} className='icon' />
+                  <Translate>Cardiology</Translate>
+                </List.Item>}
+
+                {medicalSheet?.object?.dentalCare && <List.Item
+                  className='drawer-item'
+                  //!patientSlice.encounter.editable
+                  onClick={() => handleMenuItemClick(<Dental patient={propsData.patient} encounter={propsData.encounter} />)}>
+                  <FontAwesomeIcon icon={faTooth} className='icon' />
+                  <Translate>Dental Care</Translate>
+                </List.Item>}
+                {medicalSheet?.object?.optometricExam && <List.Item
+                  className='drawer-item'
+                  onClick={() => handleMenuItemClick(<OptometricExam patient={propsData.patient} encounter={propsData.encounter} />)}>
+                  <FontAwesomeIcon icon={faEye} className='icon' />
+                  <Translate>Optometric Exam</Translate>
+                </List.Item>}
+                {medicalSheet?.object?.audiometryPuretone && <List.Item
+                  className='drawer-item'
+                  onClick={() => handleMenuItemClick(<AudiometryPuretone patient={propsData.patient} encounter={propsData.encounter} />)}>
+                  <FontAwesomeIcon icon={faEarListen} className='icon' />
+                  <Translate>Audiometry Puretone</Translate>
+                </List.Item>}
+                {medicalSheet?.object?.psychologicalExam && <List.Item
+                  className='drawer-item'
+                  onClick={() => handleMenuItemClick(<PsychologicalExam patient={propsData.patient} encounter={propsData.encounter} />)}>
+                  <FontAwesomeIcon icon={faBrain} className='icon' />
+                  <Translate>Psychological Exam</Translate>
+                </List.Item>}
+                {medicalSheet?.object?.vaccination && <List.Item
+                  className='drawer-item'
+                  //!patientSlice.encounter.editable
+                  onClick={() => handleMenuItemClick(<VaccinationTab disabled={false} patient={propsData.patient} encounter={propsData.encounter} />)}>
+                  <FontAwesomeIcon icon={faSyringe} className='icon' />
+                  <Translate>VaccinationTab </Translate>
+                </List.Item>}
+                {medicalSheet?.object?.prescription && <List.Item
+                  className='drawer-item'
+                  onClick={() => handleMenuItemClick(<Prescription edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
+
+                  <FontAwesomeIcon icon={faFilePrescription} className='icon' />
+                  <Translate>Prescription</Translate>
+                </List.Item>}
+                {medicalSheet?.object?.diagnosticsOrder && <List.Item
+                  className='drawer-item'
+                  onClick={() =>
+                    handleMenuItemClick(<DiagnosticsOrder edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)
+                  }>
+                  <FontAwesomeIcon icon={faVials} className='icon' />
+                  <Translate>Diagnostics Order</Translate>
+                </List.Item>}
+                {medicalSheet?.object?.consultation && <List.Item
+                  className='drawer-item'
+                  onClick={() => handleMenuItemClick(<Consultation edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
+                  <FontAwesomeIcon icon={faStethoscope} className='icon' />
+                  <Translate>Consultation</Translate>
+                </List.Item>}
+                {medicalSheet?.object?.drugOrder && <List.Item
+                  className='drawer-item'
+                  onClick={() => handleMenuItemClick(<DrugOrder edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
+
+                  <FontAwesomeIcon icon={faPills} className='icon' />
+                  <Translate>Drug Order</Translate>
+                </List.Item>}
+
+
+                {medicalSheet?.object?.procedures && <List.Item
+                  className='drawer-item'
+                  onClick={() => handleMenuItemClick(<Referrals edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
+                  <FontAwesomeIcon icon={faNotesMedical} className='icon' />
+                  <Translate>Procedures</Translate>
+                </List.Item>}
+                {medicalSheet?.object?.patientHistory && <List.Item
+                  className='drawer-item'
+                  onClick={() => handleMenuItemClick(<PatientHistory patient={propsData.patient} encounter={propsData.encounter} />)}>
+                  <FontAwesomeIcon icon={faClockRotateLeft} className='icon' />
+                  <Translate>Patient History</Translate>
+                </List.Item>}
+
+
+                {medicalSheet?.object?.medicationsRecord && <List.Item
+                  className='drawer-item'
+                  onClick={() => handleMenuItemClick(<MedicationsRecord patient={propsData.patient} encounter={propsData.encounter} />)}>
+                  <FontAwesomeIcon icon={faPills} className='icon' />
+                  <Translate>Medications Record</Translate>
+                </List.Item>}
+                {medicalSheet?.object?.vaccineReccord && <List.Item
+                  className='drawer-item'
+                  onClick={() => handleMenuItemClick(<VaccineReccord patient={propsData.patient} encounter={propsData.encounter} />)}>
+                  <FontAwesomeIcon icon={faSyringe} className='icon' />
+                  <Translate>Vaccine Reccord</Translate>
+                </List.Item>}
+
+                {medicalSheet?.object?.diagnosticsResult && <List.Item
+                  className='drawer-item'
+                  onClick={() => handleMenuItemClick(<DiagnosticsResult edit={propsData.fromPage == "PatientEMR"} patient={propsData.patient} encounter={propsData.encounter} />)}>
+                  <FontAwesomeIcon icon={faFileWaveform} className='icon' />
+                  <Translate>Diagnostics Test Result</Translate>
+                </List.Item>}
+
+
+
+              </List>
+            </Drawer.Body>
+          </Drawer>
+          {activeContent} {/* Render the selected content */}
+        </Panel>
+        <Modal size="lg" open={openAllargyModal} onClose={CloseAllargyModal} overflow  >
+          <Modal.Title>
+            <Translate><h6>Patient Allergy</h6></Translate>
+          </Modal.Title>
+          <Modal.Body>
+            <div>
+              <Checkbox
+                checked={!showCanceled}
+                onChange={() => {
+                  setShowCanceled(!showCanceled);
+                }}
+              >
+                Show Cancelled
+              </Checkbox>
+            </div>
+            <Table
+
+              data={allergiesListResponse?.object || []}
+              rowKey="key"
+              expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
+              renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
+              shouldUpdateScroll={false}
+              bordered
+              cellBordered
+
+            >
+              <Column width={70} align="center">
+                <HeaderCell>#</HeaderCell>
+                <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
+              </Column>
+
+              <Column flexGrow={2} fullText>
+                <HeaderCell align="center">
+                  <Translate>Allergy Type</Translate>
+                </HeaderCell>
+                <Cell>
+                  {rowData =>
+                    rowData.allergyTypeLvalue?.lovDisplayVale
+                  }
+                </Cell>
+              </Column >
+              <Column flexGrow={2} fullText>
+                <HeaderCell align="center">
+                  <Translate>Allergen</Translate>
+                </HeaderCell>
+                <Cell>
+                  {rowData => {
+
+                    if (!allergensListToGetName?.object) {
+                      return "Loading...";
+                    }
+                    const getname = allergensListToGetName.object.find(item => item.key === rowData.allergenKey);
+                    console.log(getname);
+                    return getname?.allergenName || "No Name";
+                  }}
+                </Cell>
+              </Column>
+              <Column flexGrow={2} fullText>
+                <HeaderCell align="center">
+                  <Translate>Severity</Translate>
+                </HeaderCell>
+                <Cell>
+                  {rowData =>
+                    rowData.severityLvalue?.lovDisplayVale
+                  }
+                </Cell>
+              </Column>
+              <Column flexGrow={2} fullText>
+                <HeaderCell align="center">
+                  <Translate>Onset</Translate>
+                </HeaderCell>
+                <Cell>
+                  {rowData =>
+                    rowData.onsetLvalue?.lovDisplayVale
+                  }
+                </Cell>
+              </Column>
+              <Column flexGrow={2} fullText>
+                <HeaderCell align="center">
+                  <Translate>Onset Date Time</Translate>
+                </HeaderCell>
+                <Cell>
+                  {rowData => rowData.onsetDate ? new Date(rowData.onsetDate).toLocaleString() : "Undefind"}
+                </Cell>
+              </Column>
+              <Column flexGrow={2} fullText>
+                <HeaderCell align="center">
+                  <Translate>Treatment Strategy</Translate>
+                </HeaderCell>
+                <Cell>
+                  {rowData =>
+                    rowData.treatmentStrategyLvalue?.lovDisplayVale
+                  }
+                </Cell>
+              </Column>
+              <Column flexGrow={2} fullText>
+                <HeaderCell align="center">
+                  <Translate>Source of information</Translate>
+                </HeaderCell>
+                <Cell>
+                  {rowData =>
+                    rowData.sourceOfInformationLvalue?.lovDisplayVale || "BY Patient"
+                  }
+                </Cell>
+              </Column>
+              <Column flexGrow={2} fullText>
+                <HeaderCell align="center">
+                  <Translate>Reaction Description</Translate>
+                </HeaderCell>
+                <Cell>
+                  {rowData =>
+                    rowData.reactionDescription
+                  }
+                </Cell>
+              </Column>
+              <Column flexGrow={2} fullText>
+                <HeaderCell align="center">
+                  <Translate>Notes</Translate>
+                </HeaderCell>
+                <Cell>
+                  {rowData =>
+                    rowData.notes
+                  }
+                </Cell>
+              </Column>
+              <Column flexGrow={1} fullText>
+                <HeaderCell align="center">
+                  <Translate>Status</Translate>
+                </HeaderCell>
+                <Cell>
+                  {rowData =>
+                    rowData.statusLvalue?.lovDisplayVale
+                  }
+                </Cell>
+              </Column>
+            </Table>
+
+
+
+          </Modal.Body>
+          <Modal.Footer>
+            <Stack spacing={2} divider={<Divider vertical />}>
+
+              <Button appearance="ghost" color="cyan" onClick={CloseAllargyModal}>
+                Close
+              </Button>
+            </Stack>
+          </Modal.Footer>
+        </Modal>
+        <Modal size="lg" open={openWarningModal} onClose={CloseWarningModal} overflow  >
+          <Modal.Title>
+            <Translate><h6>Patient Warning</h6></Translate>
+          </Modal.Title>
+          <Modal.Body>
+            <div>
+              <Checkbox
+                checked={!showCanceled}
+                onChange={() => {
+
+
+                  setShowCanceled(!showCanceled);
+                }}
+              >
+                Show Cancelled
+              </Checkbox>
+
+
+            </div>
+            <Table
+              height={600}
+              data={warningsListResponse?.object || []}
+              rowKey="key"
+              expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
+              renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
+              shouldUpdateScroll={false}
+              bordered
+              cellBordered
+
+            >
+              <Column width={70} align="center">
+                <HeaderCell>#</HeaderCell>
+                <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
+              </Column>
+
+              <Column flexGrow={2} fullText>
+                <HeaderCell align="center">
+                  <Translate>Warning Type</Translate>
+                </HeaderCell>
+                <Cell>
+                  {rowData =>
+                    rowData.warningTypeLvalue?.lovDisplayVale
+                  }
+                </Cell>
+              </Column >
+
+              <Column flexGrow={2} fullText>
+                <HeaderCell align="center">
+                  <Translate>Severity</Translate>
+                </HeaderCell>
+                <Cell>
+                  {rowData =>
+                    rowData.severityLvalue?.lovDisplayVale
+                  }
+                </Cell>
+              </Column>
+
+              <Column flexGrow={2} fullText>
+                <HeaderCell align="center">
+                  <Translate>First Time Recorded</Translate>
+                </HeaderCell>
+                <Cell>
+                  {rowData => rowData.firstTimeRecorded ? new Date(rowData.firstTimeRecorded).toLocaleString() : "Undefind"}
+                </Cell>
+              </Column>
+
+              <Column flexGrow={2} fullText>
+                <HeaderCell align="center">
+                  <Translate>Source of information</Translate>
+                </HeaderCell>
+                <Cell>
+                  {rowData =>
+                    rowData.sourceOfInformationLvalue?.lovDisplayVale || "BY Patient"
+                  }
+                </Cell>
+              </Column>
+
+              <Column flexGrow={2} fullText>
+                <HeaderCell align="center">
+                  <Translate>Notes</Translate>
+                </HeaderCell>
+                <Cell>
+                  {rowData =>
+                    rowData.notes
+                  }
+                </Cell>
+              </Column>
+              <Column flexGrow={1} fullText>
+                <HeaderCell align="center">
+                  <Translate>Status</Translate>
+                </HeaderCell>
+                <Cell>
+                  {rowData =>
+                    rowData.statusLvalue?.lovDisplayVale
+                  }
+                </Cell>
+              </Column>
+            </Table>
+
+          </Modal.Body>
+          <Modal.Footer>
+            <Stack spacing={2} divider={<Divider vertical />}>
+
+              <Button appearance="ghost" color="cyan" onClick={CloseWarningModal}>
+                Close
+              </Button>
+            </Stack>
+          </Modal.Footer>
+        </Modal>
+        <AppointmentModal
+          from={'Encounter'}
+          isOpen={modalOpen}
+          onClose={() => { setModalOpen(false), setShowAppointmentOnly(false) }}
+          appointmentData={selectedEvent?.appointmentData}
+          resourceType={selectedResourceType}
+          facility={selectedFacility}
+          onSave={refitchAppointments}
+          showOnly={showAppointmentOnly}
+        />
       </div>
 
+      <div className='right-box'>
+        <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
+      </div>
+    </div>
 
 
 
-    
+
+
   );
 };
 

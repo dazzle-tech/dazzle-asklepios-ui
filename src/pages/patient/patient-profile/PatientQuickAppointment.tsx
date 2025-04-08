@@ -96,7 +96,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
 
     useEffect(() => {
         if (localEncounter?.resourceTypeLkey) {
-            const filtered = resourcesListResponse.object.filter(resource => resource.resourceTypeLkey === localEncounter?.resourceTypeLkey);
+            const filtered = resourcesListResponse?.object?.filter(resource => resource?.resourceTypeLkey === localEncounter?.resourceTypeLkey);
             setFilteredResourcesList(filtered);
         }
     }, [resourcesListResponse, localEncounter?.resourceTypeLkey]);
@@ -564,9 +564,11 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                     width={165}
                                                     fieldType="select"
                                                     fieldName="departmentKey"
-                                                    selectData={departmentListResponse?.object?.filter(dept => 
+                                                    selectData={
+                                                        departmentListResponse?.object?.filter(dept => 
                                                         uniqueDepartmentKeys.includes(dept.key)
-                                                    ) ?? []}                                              
+                                                   ) ?? []
+                                                }                                              
                                                     selectDataLabel="name"
                                                     selectDataValue="key"
                                                     record={localEncounter}
