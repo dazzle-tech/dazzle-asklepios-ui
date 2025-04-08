@@ -49,6 +49,7 @@ import { faBars, faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useState } from 'react';
 import './styles.less';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
+import MyCard from '@/components/MyCard/';
 import {
 
   IconButton,
@@ -326,6 +327,8 @@ const Encounter = () => {
 
 
   return (
+
+
 
     <div className='container'>
       <div className='left-box'>
