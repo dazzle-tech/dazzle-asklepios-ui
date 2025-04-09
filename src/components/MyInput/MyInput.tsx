@@ -14,7 +14,7 @@ const CustomDatePicker = React.forwardRef((props, ref: any) => (
 ));
 
 const MyInput = ({
-   fieldName,
+  fieldName,
   fieldType = 'text',
   record,
   setRecord = undefined,
@@ -46,14 +46,14 @@ const MyInput = ({
       case 'textarea':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260 ,height:props?.height ?? 50}}
+            style={{ width: props?.width ?? 260, height: props?.height ?? 50 }}
             disabled={props.disabled}
             name={fieldName}
             placeholder={props.placeholder}
             value={record[fieldName] ? record[fieldName] : ''}
             accepter={Textarea}
             onChange={handleValueChange}
-            
+
           />
         );
       case 'checkbox':
@@ -70,7 +70,7 @@ const MyInput = ({
       case 'select':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260,height:props?.height ?? 34}}
+            style={{ width: props?.width ?? 260, height: props?.height ?? 40 }}
             block
             disabled={props.disabled}
             accepter={SelectPicker}
@@ -90,7 +90,7 @@ const MyInput = ({
       case 'multyPicker':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260,height:props?.height ?? 40 }}
+            style={{ width: props?.width ?? 260, height: props?.height ?? 40 }}
             block
             disabled={props.disabled}
             accepter={TagPicker}
@@ -109,7 +109,11 @@ const MyInput = ({
       case 'date':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260,height:props?.height ?? 25 }}
+            className="custom-date-input"
+            style={{
+              width: props?.width ?? 260,
+              '--input-height': `${props?.height ?? 40}px`
+            } as React.CSSProperties}
             disabled={props.disabled}
             name={fieldName}
             value={record[fieldName] ? new Date(record[fieldName]) : null}
@@ -117,11 +121,12 @@ const MyInput = ({
             onChange={handleValueChange}
             placeholder={props.placeholder}
           />
+
         );
       case 'number':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260,height:props?.height ??33}} 
+            style={{ width: props?.width ?? 260, height: props?.height ?? 40 }}
             disabled={props.disabled}
             name={fieldName}
             max={props.max ? props.max : 1000000}
@@ -131,23 +136,23 @@ const MyInput = ({
             placeholder={props.placeholder}
           />
         );
-        case 'check':
-          return (
-            <Checkbox
-              checked={record[fieldName] ?? false}
-              onChange={(_, checked) => handleValueChange(checked)}
-              disabled={props.disabled}
-              color="cyan"
-              style={{ fontSize:'13px' ,transform: 'scale(1.3)' ,width:'150px'}} 
-            >
-              {props.label ?? fieldLabel}
-            </Checkbox>
-          );
+      case 'check':
+        return (
+          <Checkbox
+            checked={record[fieldName] ?? false}
+            onChange={(_, checked) => handleValueChange(checked)}
+            disabled={props.disabled}
+            color="cyan"
+            style={{ fontSize: '13px', transform: 'scale(1.3)', width: '150px' }}
+          >
+            {props.label ?? fieldLabel}
+          </Checkbox>
+        );
       default:
         return (
           <Form.Control
             labelKey={props?.selectDataLabel ?? ''}
-            style={{ width: props?.width ?? 260,height:props?.height ?? 33 }}
+            style={{ width: props?.width ?? 260, height: props?.height ?? 40 }}
             disabled={props.disabled}
             name={fieldName}
             type={fieldType}
@@ -191,7 +196,7 @@ const MyInput = ({
           {props.required && (
             <span style={{ color: 'red', fontSize: '110%', margin: '2px' }}>*</span>
           )}
-     {showLabel && <MyLabel label={fieldLabel} error={validationResult} />}
+          {showLabel && <MyLabel label={fieldLabel} error={validationResult} />}
         </Form.ControlLabel>
         {props.column && <br />}
         {conjureFormControl()}
@@ -201,4 +206,4 @@ const MyInput = ({
   );
 };
 
-export default MyInput;
+export default MyInput;
