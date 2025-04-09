@@ -1,11 +1,11 @@
 import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
 import * as icons from '@rsuite/icons';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import React, { useEffect, useState } from 'react';
 import SearchIcon from '@rsuite/icons/Search';
-
+import { forwardRef, useImperativeHandle } from 'react';
 import { Toggle } from 'rsuite';
 import {
   FlexboxGrid,
@@ -40,6 +40,7 @@ import {
 } from '@/services/encounterService';
 import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { ApPatientDiagnose } from '@/types/model-types';
+import './styles.less';
 const PatientDiagnosis = ({ patient, encounter, setEncounter }) => {
   const dispatch = useAppDispatch();
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -116,31 +117,33 @@ const PatientDiagnosis = ({ patient, encounter, setEncounter }) => {
         ...selectedDiagnose,
         diagnoseCode: diagnosisIcd.key
       }).unwrap();
-      dispatch(notify('saved  Successfully'));
+      dispatch(notify({msg:'saved  Successfully',sev:'success'}));
     } catch (error) {
       console.error('Encounter save failed:', error);
       dispatch(notify('Save Failed'));
     }
+
   };
   const handleSearch = value => {
     setSearchKeyword(value);
   };
 
   return (
-    <Panel style={{ display: 'flex', flexDirection: 'column', padding: '3px' }}>
-      <div style={{ display: 'flex' }}>
-        <div>
-          <InputGroup inside style={{ width: '300px', marginTop: '20px' }}>
+    <div style={{ padding: '3px' }} className='flex-column gap10'>
+      <Text>Search</Text>
+         <InputGroup inside >
             <Input placeholder={'Search ICD-10'} value={searchKeyword} onChange={handleSearch} />
             <InputGroup.Button>
               <SearchIcon />
             </InputGroup.Button>
           </InputGroup>
+          
           {searchKeyword && (
-            <Dropdown.Menu className="dropdown-menuresult">
+            <Dropdown.Menu>
               {modifiedData &&
                 modifiedData?.map(mod => (
                   <Dropdown.Item
+               
                     key={mod.key}
                     eventKey={mod.key}
                     onClick={() => {
@@ -152,49 +155,21 @@ const PatientDiagnosis = ({ patient, encounter, setEncounter }) => {
                       setSearchKeyword('');
                     }}
                   >
-                    <span style={{ marginRight: '19px' }}>{mod.icdCode}</span>
+                    <span style={{marginRight:'19px'}}>{mod.icdCode}</span>
+                 
                     <span>{mod.description}</span>
                   </Dropdown.Item>
                 ))}
             </Dropdown.Menu>
           )}
-        </div>
-        <Form style={{ marginLeft: '10px', display: 'flex' }} layout="inline" fluid>
-          <MyInput
-            disabled={encounter.encounterStatusLkey == '91109811181900' ? true : false}
-            column
-            fieldLabel="Suspected"
-            fieldType="checkbox"
-            fieldName="isSuspected"
-            record={selectedDiagnose}
-            setRecord={setSelectedDiagnose}
-            //   disabled={!editing}
-          />
-          <MyInput
-            style={{ marginLeft: '10px' }}
-            disabled={encounter.encounterStatusLkey == '91109811181900' ? true : false}
-            column
-            fieldLabel="Major"
-            fieldType="checkbox"
-            fieldName="isMajor"
-            record={selectedDiagnose}
-            setRecord={setSelectedDiagnose}
-            //   disabled={!editing}
-          />
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
-            <Button color="green" appearance="primary" onClick={save}>
-              <Translate>Save</Translate>
-            </Button>
-          </div>
-        </Form>
-      </div>
-      <div style={{ display: 'flex', gap: '4px', width: '100%' }}>
-        <div>
+          
+          <div  className='mid-div'>
+          <div style={{flex:1}} >
           <Text>Diagnosis</Text>
           <InputGroup>
             <Input
               disabled={true}
-              style={{ width: '300px' }}
+             
               value={
                 icdListResponseData?.object.find(
                   item => item.key === selectedDiagnose?.diagnoseCode
@@ -213,11 +188,11 @@ const PatientDiagnosis = ({ patient, encounter, setEncounter }) => {
             />
           </InputGroup>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', marginLeft: '3px' }}>
-          <Text style={{ width: '200px' }}>Type </Text>
+        <div  className='type-div' >
+          <Text >Type </Text>
           <SelectPicker
             disabled={encounter.encounterStatusLkey == '91109811181900' ? true : false}
-            style={{ width: '100%', zoom: 0.96 }}
+           
             data={sourceOfInfoLovResponseData?.object ?? []}
             labelKey="lovDisplayVale"
             valueKey="key"
@@ -230,8 +205,44 @@ const PatientDiagnosis = ({ patient, encounter, setEncounter }) => {
             }
           />
         </div>
+            </div>
+      <div className='buttom-dev'>
+       
+        <Form  className='flex-row gap10' layout="inline" fluid>
+          <MyInput
+            disabled={encounter.encounterStatusLkey == '91109811181900' ? true : false}
+            column
+            fieldLabel="Suspected"
+            fieldType="checkbox"
+            fieldName="isSuspected"
+            record={selectedDiagnose}
+            setRecord={setSelectedDiagnose}
+            //   disabled={!editing}
+          />
+          <MyInput
+             style={{ marginLeft: '10px' }}
+            disabled={encounter.encounterStatusLkey == '91109811181900' ? true : false}
+            column
+            fieldLabel="Major"
+            fieldType="checkbox"
+            fieldName="isMajor"
+            record={selectedDiagnose}
+            setRecord={setSelectedDiagnose}
+            //   disabled={!editing}
+          />
+         
+        </Form>
+        <div  className='bt-save-div'>
+        <MyButton
+                    size='small'
+                   
+                    onClick={save}
+
+                  >Save</MyButton>
+                  </div>
       </div>
-    </Panel>
+      
+    </div>
   );
 };
 
