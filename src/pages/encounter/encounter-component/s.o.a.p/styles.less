@@ -1,16 +1,29 @@
-
-.soap-container {
-    height: 100%;
-    height: 110%;
+.patient-summary-container {
+    background-color: #F8FAFE;
+    padding: 10px;
+    height: auto;
+    width: 100%;
+    flex-wrap: wrap;
     display: flex;
-    
-    gap: 18px;
+    margin: 5px;
+    gap: 10px;
+    border-radius: 8px;
+  }
   
-}
+.patient-summary-panel {
+ 
+    height: 255px;
+    width: 358px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
 
 
 .column-container {
-    flex: 2;
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -22,19 +35,11 @@
 }
 
 
-.box-container {
-    flex: 1;
-    border: 1px solid #8c8c8c;
-    border-radius: 8px;
-    padding: 5px;
 
-    overflow-y: auto;
-}
 legend {
     font-size: 16px;
     color: #333;
-    padding: 0 5px; // لإضافة مسافة داخلية بسيطة
-
+    padding: 0 5px; 
 }
 .custom-header-cell {
     font-size: 9px;
@@ -42,5 +47,53 @@ legend {
     padding: 5px;
   }
 
-  
-  
+  .rs-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+
+}
+
+.rs-nav-horizontal {
+    background-color: #ffffff;
+}
+.flex1{
+    flex:1;
+    background-color: #ffffff;
+    border-radius: 8px;
+    overflow-y: auto;
+    height:173px ;
+    padding: 0px 5px 0px 5px;
+
+}
+.top-section{
+    flex:1;
+    display:flex;
+    gap:10px;
+    height:173px ;
+}
+.title-div {
+    display: flex;
+    justify-content: space-between;
+    height: 27px;
+    margin: 10px 5px 0px 5px;
+    position: sticky;
+    top: 0;
+    background-color: white; 
+    z-index: 10; 
+  }
+
+.rs-divider.rs-divider-horizontal{
+    margin: 10px 0px 10px 0px;
+
+}
+
+.rs-picker.rs-picker-select.rs-picker-default.rs-picker-toggle-wrapper.rs-picker-cleanable{
+    height: 35px !important;
+}
+.flex-end{
+    display:flex ;               
+    padding:10px;
+    justify-content:flex-end !important;
+}
