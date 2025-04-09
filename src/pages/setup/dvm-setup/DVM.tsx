@@ -1,27 +1,18 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Input, InputPicker, Modal, Pagination, Panel, Table, InputGroup } from 'rsuite';
-import SearchIcon from '@rsuite/icons/Search';
+import { Modal, Panel, Table } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetMetadataFieldsQuery, useGetScreensQuery } from '@/services/setupService';
-import { Button, ButtonToolbar, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
 import { MdDelete } from 'react-icons/md';
-import { IoSettingsSharp } from 'react-icons/io5';
 import { MdModeEdit } from 'react-icons/md';
-import { ApFacility } from '@/types/model-types';
 import { FaClipboardCheck } from 'react-icons/fa6';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '@/components/MyButton/MyButton';
 import {
-  newApDvmRule,
-  newApFacility,
-  newApScreen,
-  newApScreenMetadata
+  newApDvmRule
 } from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
@@ -31,8 +22,6 @@ import {
   useGetScreenMetadataQuery,
   useSaveDvmRuleMutation
 } from '@/services/dvmService';
-// import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
-import { Nav, VStack } from 'rsuite';
 import { Tabs } from 'rsuite';
 import { Tab } from 'rsuite';
 import { useSelector } from 'react-redux';
@@ -40,13 +29,12 @@ import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+import './styles.less';
 const DVM = () => {
   const dispatch = useAppDispatch();
 
   const [ruleTypes, setRuleTypes] = useState([]);
-  // const [screenKey, setScreenKey] = useState('');
   const [recordOfScreen, setRecordOfScreen] = useState({ screenKey: '' });
-  // const [screenMetadataKey, setScreenMetadataKey] = useState('');
   const [recordOfScreenMetaData, setRecordOfScreenMetaData] = useState({ screenMetadataKey: '' });
 
   const [screensListRequest, setScreensListRequest] = useState<ListRequest>({
@@ -81,7 +69,7 @@ const DVM = () => {
   const [popupOpen, setPopupOpen] = useState(false);
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className='title'>
       <h5>Data Validation Manager</h5>
     </div>
   );
@@ -235,8 +223,8 @@ const DVM = () => {
     handleFilterChange(record['filter'], record['value']);
   }, [record]);
 
-  const iconsForActions = rowData => (
-    <div style={{ display: 'flex', gap: '20px' }}>
+  const iconsForActions = () => (
+    <div className='container-of-icons'>
       <MdModeEdit
         title="Edit"
         size={24}
@@ -251,12 +239,12 @@ const DVM = () => {
   );
 
   return (
-    <Panel style={{ background: 'white' }}>
-      <small style={{ display: 'block', marginBottom: '10px' }}>
+    <Panel>
+      <small className='metadata-selection-title'>
         <Translate>Specify screen metadata to configure validation rules</Translate>
       </small>
       <Form>
-        <div style={{ display: 'flex'}}>
+        <div className='container-of-selects'>
           <MyInput
             fieldName="screenKey"
             fieldType="select"
@@ -289,12 +277,10 @@ const DVM = () => {
       <Tabs defaultActiveKey="1" appearance="subtle">
         <Tab active eventKey="1" title="Validation Rules">
           <Form
-            style={{
-              padding: '10px'
-            }}
+          className='form-of-header-actions'
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', gap: '10px' }}>
+            <div className='container-of-header-actions'>
+              <div className='container-of-search'>
                 <div>
                   <MyInput
                     selectDataValue="value"
@@ -321,7 +307,6 @@ const DVM = () => {
                   />
                 </div>
               </div>
-              <div style={{ marginRight: '30px' }}>
                 <MyButton
                    disabled={!recordOfScreenMetaData["screenMetadataKey"]}
                   prefixIcon={() => <AddOutlineIcon />}
@@ -332,7 +317,6 @@ const DVM = () => {
                 >
                   Add New
                 </MyButton>
-              </div>
             </div>
           </Form>
 
@@ -413,25 +397,17 @@ const DVM = () => {
             <Modal.Title>
               <Translate>{operationState} DVM Rule</Translate>
             </Modal.Title>
-            <Modal.Body style={{ marginBottom: '50px' }}>
+            <Modal.Body className='modal-body'>
               <Form
                 fluid
-                style={{
-                  padding: '1px'
-                }}
               >
                 <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignContent: 'center',
-                    alignItems: 'center',
-                    marginBottom: '40px'
-                  }}
+                className='header-of-modal'
                 >
-                  <FaClipboardCheck color="#415BE7" style={{ marginBottom: '10px' }} size={30} />
-                  <label style={{ fontWeight: 'bold', fontSize: '14px' }}>DVM Rule info</label>
+                  <FaClipboardCheck color="#415BE7"
+                  //  style={{ marginBottom: '10px' }} 
+                   size={30} />
+                  <label>DVM Rule info</label>
                 </div>
 
                 <MyInput
@@ -457,10 +433,7 @@ const DVM = () => {
                   width={520}
                 />
                 <div
-                  style={{
-                    display: 'flex',
-                    gap: '20px'
-                  }}
+                 className='container-of-two-fields'
                 >
                   <MyInput
                     fieldLabel="Field"
@@ -486,14 +459,11 @@ const DVM = () => {
                   />
                 </div>
                 <div
-                  style={{
-                    display: 'flex',
-                    gap: '20px',
-                    marginBottom: '20px'
-                  }}
+                className='container-of-rule-values'
                 >
                   <div
-                    style={{
+                  //This inline style cannot be removed because it uses dynamic variables
+                    style={{  
                       visibility:
                         dvmRule.ruleType && dvmRule.ruleType !== 'REQUIRED' ? 'visible' : 'hidden'
                     }}
@@ -506,6 +476,7 @@ const DVM = () => {
                     />
                   </div>
                   <div
+                   //This inline style cannot be removed because it uses dynamic variables
                     style={{
                       visibility: hasSecondRuleValue() ? 'visible' : 'hidden'
                     }}
@@ -526,6 +497,7 @@ const DVM = () => {
                   setRecord={setDvmRule}
                 />
                 <div
+                 //This inline style cannot be removed because it uses dynamic variables
                   style={{
                     visibility: dvmRule.isDependant ? 'visible' : 'hidden',
                     display: 'flex',
@@ -561,9 +533,9 @@ const DVM = () => {
                 </div>
               </Form>
             </Modal.Body>
-            <Modal.Footer>
+            <Modal.Footer className='modal-footer'>
               <Stack
-                style={{ display: 'flex', justifyContent: 'flex-end' }}
+               className='stack'
                 spacing={2}
                 divider={<Divider vertical />}
               >

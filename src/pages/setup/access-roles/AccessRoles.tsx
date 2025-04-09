@@ -29,7 +29,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faKey } from '@fortawesome/free-solid-svg-icons';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
-
+import './styles.less';
 
 const AccessRoles = () => {
   const [accessRole, setAccessRole] = useState<ApAccessRole>({ ...newApAccessRole });
@@ -48,7 +48,7 @@ const AccessRoles = () => {
 
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div title='title'>
       <h5>Access Roles</h5>
     </div>
   );
@@ -137,7 +137,7 @@ const AccessRoles = () => {
   }, [location.pathname, dispatch]);
 
   const iconsForActions = (rowData: ApAccessRole) => (
-    <div style={{ display: 'flex', gap: '20px' }}>
+    <div className='container-of-icons'>
       <IoSettingsSharp
         title="Setup Module Screens"
         size={24}
@@ -160,12 +160,12 @@ const AccessRoles = () => {
 
   return (
     <Carousel
-      style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
+    className='carousel'
       autoplay={false}
       activeIndex={carouselActiveIndex}
     >
       <Panel>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div className='container-of-header-actions' >
           <Form>
             <MyInput
               fieldName="screen"
@@ -177,17 +177,13 @@ const AccessRoles = () => {
               width={'220px'}
             />
           </Form>
-          <div style={{ marginRight: '40px' }}>
             <MyButton
               prefixIcon={() => <AddOutlineIcon />}
               color="var(--deep-blue)"
               onClick={handleNew}
-              width ="109px"
-              height ="32px"
             >
               Add New
             </MyButton>
-          </div>
         </div>
 
         <Table
@@ -238,7 +234,6 @@ const AccessRoles = () => {
           </Column>
           <Column sortable flexGrow={3}>
             <HeaderCell>
-              {/* <Input onChange={e => handleFilterChange('passwordExpiresAfterDays', e)} /> */}
               <Translate>Password Expires after</Translate>
             </HeaderCell>
             <Cell dataKey="passwordExpiresAfterDays" />
@@ -248,7 +243,7 @@ const AccessRoles = () => {
             <Cell>{rowData => iconsForActions(rowData)}</Cell>
           </Column>
         </Table>
-        <div style={{ padding: 20, backgroundColor: '#F4F7FC' }}>
+        <div className='container-of-pagination'>
           <Pagination
             prev
             next
@@ -277,38 +272,26 @@ const AccessRoles = () => {
             <Translate>{operationState} AccessRole</Translate>
           </Modal.Title>
           <hr />
-          <Modal.Body style={{ marginBottom: '170px' }}>
+          <Modal.Body className='modal-body'>
             <Form
               fluid
-              style={{
-                padding: '1px'
-              }}
             >
               <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignContent: 'center',
-                  alignItems: 'center',
-                  marginBottom: '40px'
-                }}
+                className='header-of-modal'
               >
                 <FontAwesomeIcon
                   icon={faKey}
                   color="#415BE7"
-                  style={{ marginBottom: '10px' }}
+                  // style={{ marginBottom: '10px' }}
                   size={'2x'}
                 />
-                <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Access Rule Rule info</label>
+                <label>Access Rule Rule info</label>
               </div>
               <MyInput fieldName="name" record={accessRole} setRecord={setAccessRole} width={520} />
               <MyInput fieldName="description" record={accessRole} setRecord={setAccessRole} width={520} />
               <div
-               style={{
-                    display: 'flex',
-                    gap: '20px'
-                  }}>
+               className='container-of-two-fields'
+               >
               <MyInput fieldName="accessLevel" record={accessRole} setRecord={setAccessRole} width={250} />
               <MyInput
                 fieldName="passwordErrorRetries"
@@ -318,10 +301,8 @@ const AccessRoles = () => {
               />
               </div>
               <div
-              style={{
-                display: 'flex',
-                gap: '120px'
-              }}
+              className='container-of-passwordExpires'
+             
               >
               <MyInput
                 fieldName="passwordExpires"
@@ -342,7 +323,7 @@ const AccessRoles = () => {
           </Modal.Body>
           <Modal.Footer>
              <Stack
-                            style={{ display: 'flex', justifyContent: 'flex-end' }}
+             className='stack'
                             spacing={2}
                             divider={<Divider vertical />}
                           >

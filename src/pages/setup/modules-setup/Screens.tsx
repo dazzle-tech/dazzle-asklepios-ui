@@ -1,16 +1,12 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Drawer, Input, List, Modal, Pagination, Panel, Table, InputGroup } from 'rsuite';
-import SearchIcon from '@rsuite/icons/Search';
+import { Drawer, List, Modal, Pagination, Panel, Table } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetScreensQuery, useSaveScreenMutation } from '@/services/setupService';
 import { useGetScreenMetadataQuery, useSaveScreenMetadataMutation } from '@/services/dvmService';
-import { Button, ButtonToolbar, Carousel, IconButton } from 'rsuite';
+import {IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import ListIcon from '@rsuite/icons/List';
-import TrashIcon from '@rsuite/icons/Trash';
 import { ApScreen } from '@/types/model-types';
 import { MdDelete } from 'react-icons/md';
 import { MdModeEdit } from 'react-icons/md';
@@ -23,14 +19,13 @@ import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '@/components/MyButton/MyButton';
 import {
   addFilterToListRequest,
-  conjureValueBasedOnKeyFromList,
   fromCamelCaseToDBName
 } from '@/utils';
 import MyInput from '@/components/MyInput';
 import MyIconInput from '@/components/MyInput/MyIconInput';
 import { Icon } from '@rsuite/icons';
 import * as icons from 'react-icons/fa6';
-
+import './styles.less';
 const Screens = ({ module, goBack, ...props }) => {
   const [screen, setScreen] = useState<ApScreen>({ ...newApScreen });
   const [screenPopupOpen, setScreenPopupOpen] = useState(false);
@@ -119,7 +114,7 @@ const Screens = ({ module, goBack, ...props }) => {
   };
 
   const iconsForActions = (rowData: ApScreen) => (
-    <div style={{ display: 'flex', gap: '20px' }}>
+    <div className='container-of-icons'>
       <MdModeEdit
         title="Edit"
         size={24}
@@ -145,8 +140,8 @@ const Screens = ({ module, goBack, ...props }) => {
           </p>
         }
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', gap: '20px' }}>
+          <div className='container-of-header-actions'>
+            <div className='container-of-back-and-search'>
               <MyButton
                 prefixIcon={() => <ArowBackIcon />}
                 color="var(--deep-blue)"
@@ -169,7 +164,6 @@ const Screens = ({ module, goBack, ...props }) => {
                 />
               </Form>
             </div>
-            <div style={{ marginRight: '40px', marginBottom: '10px' }}>
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
@@ -179,7 +173,6 @@ const Screens = ({ module, goBack, ...props }) => {
               >
                 Add New
               </MyButton>
-            </div>
           </div>
           <Table
             height={400}
@@ -240,7 +233,7 @@ const Screens = ({ module, goBack, ...props }) => {
               <Cell>{rowData => iconsForActions(rowData)}</Cell>
             </Column>
           </Table>
-          <div style={{ padding: 20, backgroundColor: '#F4F7FC' }}>
+          <div className='container-of-pagination'>
             <Pagination
               prev
               next
@@ -269,34 +262,21 @@ const Screens = ({ module, goBack, ...props }) => {
               <Translate>{operationState} Screen</Translate>
             </Modal.Title>
             <hr />
-            <Modal.Body style={{ marginBottom: '130px' }}>
+            <Modal.Body className='modal-body'>
               <Form
                 fluid
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignContent: 'center',
-                  alignItems: 'center'
-                }}
+                
               >
                 <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignContent: 'center',
-                    alignItems: 'center',
-                    marginBottom: '40px'
-                  }}
+                 className='header-of-modal'
                 >
                   <FontAwesomeIcon
                     icon={faLaptop}
                     color="#415BE7"
-                    style={{ marginBottom: '10px' }}
+                    // style={{ marginBottom: '10px' }}
                     size="2x"
                   />
-                  <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Screen info</label>
+                  <label >Screen info</label>
                 </div>
 
                 <MyInput fieldName="name" record={screen} setRecord={setScreen} width={520} />
@@ -314,7 +294,7 @@ const Screens = ({ module, goBack, ...props }) => {
                   setRecord={setScreen}
                   width={520}
                 />
-                <div style={{ display: 'flex', gap: '20px' }}>
+                <div className='container-of-two-fields'>
                   <MyIconInput
                     fieldName="iconImagePath"
                     fieldLabel="Icon"
@@ -327,9 +307,9 @@ const Screens = ({ module, goBack, ...props }) => {
               </Form>
             </Modal.Body>
             <hr />
-            <Modal.Footer>
+            <Modal.Footer className='modal-footer'>
               <Stack
-                style={{ display: 'flex', justifyContent: 'flex-end' }}
+                className='stack'
                 spacing={2}
                 divider={<Divider vertical />}
               >

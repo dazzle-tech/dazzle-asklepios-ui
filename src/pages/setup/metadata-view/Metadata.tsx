@@ -18,6 +18,7 @@ import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+import './styles.less';
 const Metadata = () => {
   const dispatch = useAppDispatch();
   const [metadata, setMetadata] = useState<ApMetadata>({ ...newApMetadata });
@@ -26,7 +27,7 @@ const Metadata = () => {
   const { data: metadataListResponse } = useGetMetadataQuery(listRequest);
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className='title'>
       <h5>Metadata</h5>
     </div>
   );
@@ -70,12 +71,12 @@ const Metadata = () => {
   
   return (
     <Carousel
-      style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
+    className='carousel'
       autoplay={false}
       activeIndex={carouselActiveIndex}
     >
       <Panel>
-        <Form style={{marginBottom: "10px"}}>
+        <Form className='containerOfSearch'>
           <MyInput
             fieldName="objectName"
             fieldType="text"
@@ -136,7 +137,7 @@ const Metadata = () => {
             </Cell>
           </Column>
         </Table>
-        <div style={{ padding: 20, backgroundColor: '#F4F7FC' }}>
+        <div className='containerOfPagination'>
           <Pagination
             prev
             next

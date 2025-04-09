@@ -10,6 +10,7 @@ import ArowBackIcon from '@rsuite/icons/ArowBack';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
+import './styles.less';
 const MetadataFields = ({ metadata, goBack, ...props }) => {
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
 
@@ -52,7 +53,7 @@ const MetadataFields = ({ metadata, goBack, ...props }) => {
           </p>
         }
         >
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '10px' }}>
+          <div className='containerOfHeaderActions'>
             <MyButton
               prefixIcon={() => <ArowBackIcon />}
               color="var(--deep-blue)"
@@ -111,7 +112,7 @@ const MetadataFields = ({ metadata, goBack, ...props }) => {
               <Cell dataKey="dataType" />
             </Column>
           </Table>
-          <div style={{ padding: 20, backgroundColor: '#F4F7FC' }}>
+          <div className='containerOfPagination'>
             <Pagination
               prev
               next
