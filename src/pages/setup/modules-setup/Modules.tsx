@@ -1,17 +1,13 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Input, Modal, Pagination, Panel, Table, InputGroup, SelectPicker } from 'rsuite';
+import { Modal, Pagination, Panel, Table } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetModulesQuery, useSaveModuleMutation } from '@/services/setupService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLaptop } from '@fortawesome/free-solid-svg-icons';
-import SearchIcon from '@rsuite/icons/Search';
-import { Button, ButtonToolbar, Carousel, IconButton } from 'rsuite';
+import {Carousel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
-import ChangeListIcon from '@rsuite/icons/ChangeList';
 import { ApModule } from '@/types/model-types';
 import { newApModule } from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
@@ -33,7 +29,6 @@ import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
-import FormControl from 'rsuite/esm/FormControl';
 import './styles.less';
 
 const Modules = () => {
@@ -137,7 +132,7 @@ const Modules = () => {
   };
 
   const iconsForActions = (rowData: ApModule) => (
-    <div className="containerOfIcons">
+    <div className="container-of-icons">
       <IoSettingsSharp
         title="Setup Module Screens"
         size={24}
@@ -171,7 +166,7 @@ const Modules = () => {
       //   </h3>
       // }
       >
-        <div className="containerOfHeaderActions">
+        <div className="container-of-header-actions">
           <Form>
             <MyInput
               placeholder="Search by Name"
@@ -225,7 +220,7 @@ const Modules = () => {
             <HeaderCell>
               <Translate>Name</Translate>
             </HeaderCell>
-            <Cell className="columnName" dataKey="name" />
+            <Cell className="column-name" dataKey="name" />
           </Column>
           <Column sortable flexGrow={4}>
             <HeaderCell>
@@ -245,7 +240,7 @@ const Modules = () => {
             <Cell>{rowData => iconsForActions(rowData)}</Cell>
           </Column>
         </Table>
-        <div className="containerOfPagination">
+        <div className="container-of-pagination">
           <Pagination
             prev
             next
@@ -275,26 +270,18 @@ const Modules = () => {
           </Modal.Title>
           <hr />
 
-          <Modal.Body className="modalBody">
+          <Modal.Body className="modal-body">
             <Form fluid>
               <div
-                className="headerOfModal"
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignContent: 'center',
-                  alignItems: 'center',
-                  marginBottom: '40px'
-                }}
+                className="header-of-modal"
               >
                 <FontAwesomeIcon
                   icon={faLaptop}
                   color="#415BE7"
-                  style={{ marginBottom: '10px' }}
+                  // style={{ marginBottom: '10px' }}
                   size="2x"
                 />
-                <label style={{ fontWeight: 'bold', fontSize: '14px' }}>Module info</label>
+                <label>Module info</label>
               </div>
               <MyInput fieldName="name" record={module} setRecord={setModule} width={520} />
               <MyInput
@@ -305,7 +292,7 @@ const Modules = () => {
                 width={520}
                 height={150}
               />
-              <div style={{ display: 'flex', gap: '20px' }}>
+              <div className='container-of-two-fields'>
                 <MyInput
                   fieldName="viewOrder"
                   fieldType="number"
@@ -324,9 +311,9 @@ const Modules = () => {
             </Form>
           </Modal.Body>
           <hr />
-          <Modal.Footer>
+          <Modal.Footer className='modal-footer'>
             <Stack
-              style={{ display: 'flex', justifyContent: 'flex-end' }}
+             className='stack'
               spacing={2}
               divider={<Divider vertical />}
             >

@@ -1,19 +1,18 @@
 import Translate from '@/components/Translate';
-import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useEffect, useState } from 'react';
-import { Input, Pagination, Panel, Table, Toggle, Form } from 'rsuite';
+import {Panel, Table, Toggle, Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 const { Column, HeaderCell, Cell } = Table;
 import {
   useGetScreenAccessMatrixQuery,
   useSaveScreenAccessMatrixMutation
 } from '@/services/setupService';
-import { ButtonToolbar, IconButton } from 'rsuite';
+import {IconButton } from 'rsuite';
 import ArowBackIcon from '@rsuite/icons/ArowBack';
 import CheckIcon from '@rsuite/icons/Check';
-import { ApAccessRoleScreen } from '@/types/model-types';
 import { FaLockOpen } from 'react-icons/fa6';
 import MyButton from '@/components/MyButton/MyButton';
+import './styles.less';
 const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
   const { data: screenAccessMatrixResponse } = useGetScreenAccessMatrixQuery(accessRole);
   const [saveMatrix, saveMatrixMutationResponse] = useSaveScreenAccessMatrixMutation();
@@ -105,17 +104,9 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
         </p>
       }
     >
-      {/* <ButtonToolbar>
-        <IconButton appearance="ghost" color="cyan" icon={<ArowBackIcon />} onClick={goBack}>
-          Go Back
-        </IconButton>
-        <IconButton appearance="primary" color="green" icon={<CheckIcon />} onClick={handleSave}>
-          Save Changes
-        </IconButton>
-      </ButtonToolbar> */}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', gap: '20px' }}>
+      <div className='container-of-header-actions'>
+        <div className='container-of-back-and-search'>
           <MyButton
             prefixIcon={() => <ArowBackIcon />}
             color="var(--deep-blue)"
@@ -138,7 +129,6 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
             />
           </Form>
         </div>
-        <div style={{ marginRight: '40px', marginBottom: '10px' }}>
           <MyButton
             prefixIcon={() => <CheckIcon />}
             color="var(--deep-blue)"
@@ -148,7 +138,6 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
           >
             Save Changes
           </MyButton>
-        </div>
       </div>
       <Table height={600} data={matrixData}>
         <Column sortable flexGrow={5}>

@@ -1,27 +1,18 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Input, InputPicker, Modal, Pagination, Panel, Table, InputGroup } from 'rsuite';
-import SearchIcon from '@rsuite/icons/Search';
+import { Modal, Panel, Table } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetMetadataFieldsQuery, useGetScreensQuery } from '@/services/setupService';
-import { Button, ButtonToolbar, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
 import { MdDelete } from 'react-icons/md';
-import { IoSettingsSharp } from 'react-icons/io5';
 import { MdModeEdit } from 'react-icons/md';
-import { ApFacility } from '@/types/model-types';
 import { FaClipboardCheck } from 'react-icons/fa6';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '@/components/MyButton/MyButton';
 import {
-  newApDvmRule,
-  newApFacility,
-  newApScreen,
-  newApScreenMetadata
+  newApDvmRule
 } from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
@@ -31,8 +22,6 @@ import {
   useGetScreenMetadataQuery,
   useSaveDvmRuleMutation
 } from '@/services/dvmService';
-// import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
-import { Nav, VStack } from 'rsuite';
 import { Tabs } from 'rsuite';
 import { Tab } from 'rsuite';
 import { useSelector } from 'react-redux';
@@ -45,9 +34,7 @@ const DVM = () => {
   const dispatch = useAppDispatch();
 
   const [ruleTypes, setRuleTypes] = useState([]);
-  // const [screenKey, setScreenKey] = useState('');
   const [recordOfScreen, setRecordOfScreen] = useState({ screenKey: '' });
-  // const [screenMetadataKey, setScreenMetadataKey] = useState('');
   const [recordOfScreenMetaData, setRecordOfScreenMetaData] = useState({ screenMetadataKey: '' });
 
   const [screensListRequest, setScreensListRequest] = useState<ListRequest>({
@@ -410,25 +397,17 @@ const DVM = () => {
             <Modal.Title>
               <Translate>{operationState} DVM Rule</Translate>
             </Modal.Title>
-            <Modal.Body style={{ marginBottom: '50px' }}>
+            <Modal.Body className='modal-body'>
               <Form
                 fluid
-                style={{
-                  padding: '1px'
-                }}
               >
                 <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignContent: 'center',
-                    alignItems: 'center',
-                    marginBottom: '40px'
-                  }}
+                className='header-of-modal'
                 >
-                  <FaClipboardCheck color="#415BE7" style={{ marginBottom: '10px' }} size={30} />
-                  <label style={{ fontWeight: 'bold', fontSize: '14px' }}>DVM Rule info</label>
+                  <FaClipboardCheck color="#415BE7"
+                  //  style={{ marginBottom: '10px' }} 
+                   size={30} />
+                  <label>DVM Rule info</label>
                 </div>
 
                 <MyInput
@@ -454,10 +433,7 @@ const DVM = () => {
                   width={520}
                 />
                 <div
-                  style={{
-                    display: 'flex',
-                    gap: '20px'
-                  }}
+                 className='container-of-two-fields'
                 >
                   <MyInput
                     fieldLabel="Field"
@@ -483,14 +459,11 @@ const DVM = () => {
                   />
                 </div>
                 <div
-                  style={{
-                    display: 'flex',
-                    gap: '20px',
-                    marginBottom: '20px'
-                  }}
+                className='container-of-rule-values'
                 >
                   <div
-                    style={{
+                  //This inline style cannot be removed because it uses dynamic variables
+                    style={{  
                       visibility:
                         dvmRule.ruleType && dvmRule.ruleType !== 'REQUIRED' ? 'visible' : 'hidden'
                     }}
@@ -503,6 +476,7 @@ const DVM = () => {
                     />
                   </div>
                   <div
+                   //This inline style cannot be removed because it uses dynamic variables
                     style={{
                       visibility: hasSecondRuleValue() ? 'visible' : 'hidden'
                     }}
@@ -523,6 +497,7 @@ const DVM = () => {
                   setRecord={setDvmRule}
                 />
                 <div
+                 //This inline style cannot be removed because it uses dynamic variables
                   style={{
                     visibility: dvmRule.isDependant ? 'visible' : 'hidden',
                     display: 'flex',
@@ -558,9 +533,9 @@ const DVM = () => {
                 </div>
               </Form>
             </Modal.Body>
-            <Modal.Footer>
+            <Modal.Footer className='modal-footer'>
               <Stack
-                style={{ display: 'flex', justifyContent: 'flex-end' }}
+               className='stack'
                 spacing={2}
                 divider={<Divider vertical />}
               >

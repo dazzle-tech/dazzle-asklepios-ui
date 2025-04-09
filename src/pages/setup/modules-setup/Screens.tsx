@@ -1,16 +1,12 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Drawer, Input, List, Modal, Pagination, Panel, Table, InputGroup } from 'rsuite';
-import SearchIcon from '@rsuite/icons/Search';
+import { Drawer, List, Modal, Pagination, Panel, Table } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetScreensQuery, useSaveScreenMutation } from '@/services/setupService';
 import { useGetScreenMetadataQuery, useSaveScreenMetadataMutation } from '@/services/dvmService';
-import { Button, ButtonToolbar, Carousel, IconButton } from 'rsuite';
+import {IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import ListIcon from '@rsuite/icons/List';
-import TrashIcon from '@rsuite/icons/Trash';
 import { ApScreen } from '@/types/model-types';
 import { MdDelete } from 'react-icons/md';
 import { MdModeEdit } from 'react-icons/md';
@@ -23,7 +19,6 @@ import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '@/components/MyButton/MyButton';
 import {
   addFilterToListRequest,
-  conjureValueBasedOnKeyFromList,
   fromCamelCaseToDBName
 } from '@/utils';
 import MyInput from '@/components/MyInput';
@@ -119,7 +114,7 @@ const Screens = ({ module, goBack, ...props }) => {
   };
 
   const iconsForActions = (rowData: ApScreen) => (
-    <div className='containerOfIcons'>
+    <div className='container-of-icons'>
       <MdModeEdit
         title="Edit"
         size={24}
@@ -145,8 +140,8 @@ const Screens = ({ module, goBack, ...props }) => {
           </p>
         }
         >
-          <div className='containerOfHeaderActions'>
-            <div className='containerOfBackAndSearch'>
+          <div className='container-of-header-actions'>
+            <div className='container-of-back-and-search'>
               <MyButton
                 prefixIcon={() => <ArowBackIcon />}
                 color="var(--deep-blue)"
@@ -238,7 +233,7 @@ const Screens = ({ module, goBack, ...props }) => {
               <Cell>{rowData => iconsForActions(rowData)}</Cell>
             </Column>
           </Table>
-          <div className='containerOfPagination'>
+          <div className='container-of-pagination'>
             <Pagination
               prev
               next
@@ -267,13 +262,13 @@ const Screens = ({ module, goBack, ...props }) => {
               <Translate>{operationState} Screen</Translate>
             </Modal.Title>
             <hr />
-            <Modal.Body className='modalBody' style={{marginBottom: "130px"}}>
+            <Modal.Body className='modal-body'>
               <Form
                 fluid
                 
               >
                 <div
-                 className='headerOfModal'
+                 className='header-of-modal'
                 >
                   <FontAwesomeIcon
                     icon={faLaptop}
@@ -299,7 +294,7 @@ const Screens = ({ module, goBack, ...props }) => {
                   setRecord={setScreen}
                   width={520}
                 />
-                <div className='containerOfTwoFields'>
+                <div className='container-of-two-fields'>
                   <MyIconInput
                     fieldName="iconImagePath"
                     fieldLabel="Icon"
@@ -312,7 +307,7 @@ const Screens = ({ module, goBack, ...props }) => {
               </Form>
             </Modal.Body>
             <hr />
-            <Modal.Footer className='modalFooter'>
+            <Modal.Footer className='modal-footer'>
               <Stack
                 className='stack'
                 spacing={2}
