@@ -91,7 +91,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
     };
     const [resourcesAvailabilityTimeListRequest, setResourcesAvailabilityTimeListRequest] = useState<ListRequest>({ ...initialListRequest });
 
-    const { data: resourceAvailabilityTimeListResponse, refetch: availabilityRefetch } = useGetResourcesAvailabilityTimeQuery({...resourcesAvailabilityTimeListRequest,pageSize:10000});
+    const { data: resourceAvailabilityTimeListResponse, refetch: availabilityRefetch } = useGetResourcesAvailabilityTimeQuery({ ...resourcesAvailabilityTimeListRequest, pageSize: 10000 });
     const [uniqueDepartmentKeys, setUniqueDepartmentKeys] = useState([]);
 
     useEffect(() => {
@@ -173,31 +173,31 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
 
     useEffect(() => {
         if (!localEncounter?.resourceKey || !resourceAvailabilityTimeListResponse) return;
-    
-        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }); 
-        
+
+        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+
         console.log("Today is:", today);
-        
-         const filteredList = resourceAvailabilityTimeListResponse.object.filter(item => 
-            item.resourceKey === localEncounter.resourceKey && 
-            item.departmentKey 
+
+        const filteredList = resourceAvailabilityTimeListResponse.object.filter(item =>
+            item.resourceKey === localEncounter.resourceKey &&
+            item.departmentKey
             && item.dayLvalue?.lovDisplayVale === today //Day match
         );
-    
+
         console.log("Filtered List (By Resource and Day):", filteredList);
-    
+
         const departmentKeys = filteredList.map(item => item.departmentKey?.toString().trim());
-    
+
         console.log("Before Set:", departmentKeys);
-    
+
         const uniqueDepartmentKeys = Array.from(new Set(departmentKeys));
-        
+
         console.log("Unique Department Keys:", uniqueDepartmentKeys);
-    
+
         setUniqueDepartmentKeys(uniqueDepartmentKeys);
-    
+
     }, [localEncounter, resourceAvailabilityTimeListResponse]);
-    
+
 
     return (
         <>
@@ -543,18 +543,22 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                 setRecord={setLocalEncounter}
                                             />
 
-
                                             <MyInput
                                                 width={300}
                                                 column
                                                 fieldLabel="Resources"
-                                                selectData={filteredResourcesList.length > 0 ? filteredResourcesList : !localEncounter?.resourceTypeLkey ? resourcesListResponse?.object : []}
+                                                selectData={
+                                                    localEncounter?.resourceTypeLkey
+                                                        ? (filteredResourcesList?.length > 0 ? filteredResourcesList : resourcesListResponse?.object ?? [])
+                                                        : []
+                                                }
                                                 fieldType="select"
                                                 selectDataLabel="resourceName"
                                                 selectDataValue="key"
                                                 fieldName="resourceKey"
                                                 record={localEncounter}
                                                 setRecord={setLocalEncounter}
+                                                disabled={!localEncounter?.resourceTypeLkey}
                                             />
                                             {/* 2039534205961578 */}
                                             {localEncounter?.resourceTypeLkey == '2039534205961578' ?
@@ -565,10 +569,10 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                                                     fieldType="select"
                                                     fieldName="departmentKey"
                                                     selectData={
-                                                        departmentListResponse?.object?.filter(dept => 
-                                                        uniqueDepartmentKeys.includes(dept.key)
-                                                   ) ?? []
-                                                }                                              
+                                                        departmentListResponse?.object?.filter(dept =>
+                                                            uniqueDepartmentKeys.includes(dept.key)
+                                                        ) ?? []
+                                                    }
                                                     selectDataLabel="name"
                                                     selectDataValue="key"
                                                     record={localEncounter}
