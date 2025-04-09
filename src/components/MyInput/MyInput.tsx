@@ -193,10 +193,11 @@ const MyInput = ({
     <>
       <Form.Group>
         <Form.ControlLabel>
-          {props.required && (
-            <span style={{ color: 'red', fontSize: '110%', margin: '2px' }}>*</span>
-          )}
+
           {showLabel && <MyLabel label={fieldLabel} error={validationResult} />}
+          {props.required && (
+            <span className='required-field '>*</span>
+          )}
         </Form.ControlLabel>
         {props.column && <br />}
         {conjureFormControl()}
