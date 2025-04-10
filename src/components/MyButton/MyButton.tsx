@@ -8,7 +8,7 @@ type Appearance = "primary" | "default" | "link" | "subtle" | "ghost";
 const MyButton = ({ 
     prefixIcon: Prefix=null,
      postfixIcon: Postfix = null
-    , children
+    , children:children=null
     ,onClick=()=>{}, 
     width = "auto",
     appearance = "primary"  as Appearance,

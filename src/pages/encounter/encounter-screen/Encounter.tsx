@@ -338,8 +338,7 @@ const Encounter = () => {
 
                 backgroundColor={'var(--primary-gray)'}
                 onClick={handleGoBack}
-
-              >Go Back</MyButton>
+                >Go Back</MyButton>           
             </div>
             <div className='right'>
               <MyButton
