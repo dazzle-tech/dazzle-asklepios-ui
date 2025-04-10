@@ -341,40 +341,35 @@ const Warning = ({ edit, patient, encounter }) => {
     }
   };
   const renderRowExpanded = rowData => {
-    console.log('Iam in the expanded Row ');
-    console.log('Children Data:', rowData); // Add this line to check children data
+  
 
     return (
       <Table
         data={[rowData]} // Pass the data as an array to populate the table
-        bordered
-        cellBordered
-        headerHeight={30}
-        rowHeight={40}
-        style={{ width: '100%', marginTop: '5px', marginBottom: '5px' }}
+    
         height={100} // Adjust height as needed
       >
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1}    fullText>
           <HeaderCell>Created At</HeaderCell>
           <Cell dataKey="createdAt">
             {rowData => (rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : '')}
           </Cell>
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1}    fullText>
           <HeaderCell>Created By</HeaderCell>
           <Cell dataKey="createdBy" />
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1}    fullText>
           <HeaderCell>Updated At</HeaderCell>
           <Cell dataKey="updatedAt">
             {rowData => (rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString() : '')}
           </Cell>
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1}    fullText>
           <HeaderCell>Updated By</HeaderCell>
           <Cell dataKey="updatedBy" />
         </Column>
-        <Column flexGrow={2} align="center" fullText>
+        <Column flexGrow={2}    fullText>
           <HeaderCell>Resolved At</HeaderCell>
           <Cell dataKey="resolvedAt">
             {rowData => {
@@ -384,21 +379,21 @@ const Warning = ({ edit, patient, encounter }) => {
             }}
           </Cell>
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1}    fullText>
           <HeaderCell>Resolved By</HeaderCell>
           <Cell dataKey="resolvedBy" />
         </Column>
-        <Column flexGrow={2} align="center" fullText>
+        <Column flexGrow={2}    fullText>
           <HeaderCell>Cancelled At</HeaderCell>
           <Cell dataKey="deletedAt">
             {rowData => (rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : '')}
           </Cell>
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1}    fullText>
           <HeaderCell>Cancelled By</HeaderCell>
           <Cell dataKey="deletedBy" />
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1}    fullText>
           <HeaderCell>Cancelliton Reason</HeaderCell>
           <Cell dataKey="cancellationReason" />
         </Column>
@@ -444,8 +439,8 @@ const Warning = ({ edit, patient, encounter }) => {
     </Cell>
   );
   return (
-    <>
-      <Panel
+    <div>
+      {/* <Panel
         header="Add Warning "
         collapsible
         bordered
@@ -590,8 +585,8 @@ const Warning = ({ edit, patient, encounter }) => {
             </Button>
           </div>
         </div>
-      </Panel>
-      <Panel header="Patient’s Warnings " collapsible bordered>
+      </Panel> */}
+     
         <div>
           <IconButton
             color="cyan"
@@ -641,21 +636,20 @@ const Warning = ({ edit, patient, encounter }) => {
           </Checkbox>
         </div>
         <Table
-          height={600}
+          autoHeight
           data={warningsListResponse?.object || []}
           rowKey="key"
           expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
           renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
           shouldUpdateScroll={false}
-          bordered
-          cellBordered
+          
           onRowClick={rowData => {
             setWarning(rowData);
             setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
           }}
           rowClassName={isSelected}
         >
-          <Column width={70} align="center">
+          <Column width={70} >
             <HeaderCell>#</HeaderCell>
             <ExpandCell
               rowData={rowData => rowData}
@@ -666,21 +660,21 @@ const Warning = ({ edit, patient, encounter }) => {
           </Column>
 
           <Column flexGrow={2} fullText>
-            <HeaderCell align="center">
+            <HeaderCell   >
               <Translate>Warning Type</Translate>
             </HeaderCell>
             <Cell>{rowData => rowData.warningTypeLvalue?.lovDisplayVale}</Cell>
           </Column>
 
           <Column flexGrow={2} fullText>
-            <HeaderCell align="center">
+            <HeaderCell   >
               <Translate>Severity</Translate>
             </HeaderCell>
             <Cell>{rowData => rowData.severityLvalue?.lovDisplayVale}</Cell>
           </Column>
 
           <Column flexGrow={2} fullText>
-            <HeaderCell align="center">
+            <HeaderCell   >
               <Translate>First Time Recorded</Translate>
             </HeaderCell>
             <Cell>
@@ -693,7 +687,7 @@ const Warning = ({ edit, patient, encounter }) => {
           </Column>
 
           <Column flexGrow={2} fullText>
-            <HeaderCell align="center">
+            <HeaderCell   >
               <Translate>Source of information</Translate>
             </HeaderCell>
             <Cell>
@@ -701,31 +695,31 @@ const Warning = ({ edit, patient, encounter }) => {
             </Cell>
           </Column>
           <Column flexGrow={1} fullText>
-            <HeaderCell align="center">
+            <HeaderCell   >
               <Translate>Warning</Translate>
             </HeaderCell>
             <Cell>{rowData => rowData.warning}</Cell>
           </Column>
           <Column flexGrow={1} fullText>
-            <HeaderCell align="center">
+            <HeaderCell   >
               <Translate>Action Taken</Translate>
             </HeaderCell>
             <Cell>{rowData => rowData.actionTake}</Cell>
           </Column>
           <Column flexGrow={2} fullText>
-            <HeaderCell align="center">
+            <HeaderCell   >
               <Translate>Notes</Translate>
             </HeaderCell>
             <Cell>{rowData => rowData.notes}</Cell>
           </Column>
           <Column flexGrow={1} fullText>
-            <HeaderCell align="center">
+            <HeaderCell   >
               <Translate>Status</Translate>
             </HeaderCell>
             <Cell>{rowData => rowData.statusLvalue?.lovDisplayVale}</Cell>
           </Column>
         </Table>
-      </Panel>
+   
       <Modal open={openCancellationReasonModel} onClose={CloseCancellationReasonModel} overflow>
         <Modal.Title>
           <Translate>
@@ -800,7 +794,7 @@ const Warning = ({ edit, patient, encounter }) => {
           </Stack>
         </Modal.Footer>
       </Modal>
-    </>
+    </div>
   );
 };
 export default Warning;
