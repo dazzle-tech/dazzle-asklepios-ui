@@ -2,22 +2,10 @@ import React, { useEffect, useState } from 'react';
 import Translate from '@/components/Translate';
 import MoreIcon from '@rsuite/icons/More';
 import {
-    InputGroup,
-    Form,
-    Input,
     Panel,
-    DatePicker,
-    Text,
-    Checkbox,
-    Dropdown,
-    Button,
     IconButton,
-    SelectPicker,
     Table,
-    Modal,
-    Stack,
-    Divider,
-    Toggle,
+    Tabs
 
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
@@ -43,6 +31,7 @@ import {
 import { initialListRequest } from '@/types/types';
 import { ApDrugOrder, ApDrugOrderMedications, ApPrescription } from '@/types/model-types';
 import { newApDrugOrder, newApDrugOrderMedications, newApPrescription } from '@/types/model-types-constructor';
+import './styles.less';
 const MedicationsRecord = ({patient ,encounter}) => {
     
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
@@ -331,17 +320,12 @@ const MedicationsRecord = ({patient ,encounter}) => {
     );
 
     return (<>
-        <Panel header="Prescriptions" collapsible bordered >
-
-            <Table
-                shouldUpdateScroll={true}
-                bordered
-
-                headerHeight={30}
-                rowHeight={40}
+     <Tabs defaultActiveKey="1" appearance="subtle">
+     <Tabs.Tab eventKey="1" title="Prescriptions" >
+     <Table
+   
                 data={prescriptions?.object ?? []}
-                autoHeight
-                //  maxHeight={300}
+               
                 onRowClick={rowData => {
                     setPrescription(rowData);
                 }}
@@ -394,11 +378,6 @@ const MedicationsRecord = ({patient ,encounter}) => {
             {prescription.key &&
                 <Table
                     autoHeight
-                    // maxHeight={300}
-                    headerHeight={30}
-                    rowHeight={40}
-                    bordered
-                    cellBordered
                     data={prescriptionMedications?.object ?? []}
                     style={{ marginTop: '10px' }}
                 >
@@ -521,12 +500,10 @@ const MedicationsRecord = ({patient ,encounter}) => {
                 </Table>
 
             }
-        </Panel>
-        <Panel header="Drug Orders" collapsible bordered >
-            <Table
-                bordered
-                headerHeight={30}
-                rowHeight={40}
+     </Tabs.Tab>
+     <Tabs.Tab eventKey="2" title="Drug Orders" >
+     <Table
+           
                 data={orders?.object ?? []}
                 autoHeight
                 // maxHeight={300}
@@ -699,8 +676,9 @@ const MedicationsRecord = ({patient ,encounter}) => {
                 </Table>
 
             }
-        </Panel>
-        <Panel header="Patient’s Chronic Medications" collapsible bordered >
+     </Tabs.Tab>
+     <Tabs.Tab eventKey="3" title="Patient’s Chronic Medications" >
+     <Panel header="Patient’s Chronic Medications" collapsible bordered >
             <Table
                 autoHeight
                 // maxHeight={300}
@@ -852,6 +830,10 @@ const MedicationsRecord = ({patient ,encounter}) => {
                     <Cell dataKey="notes" />
                 </Column>
             </Table>
-        </Panel></>);
+        </Panel>
+     </Tabs.Tab>
+     </Tabs>
+
+        </>);
 };
 export default MedicationsRecord;

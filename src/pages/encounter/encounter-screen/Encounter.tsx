@@ -152,6 +152,8 @@ const Encounter = () => {
     propsData?.encounter?.departmentKey,
     { skip: !propsData?.encounter?.departmentKey }
   );
+  console.log("medical sheet",medicalSheet?.object);
+  console.log(propsData?.encounter?.departmentKey )
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
   const [openWarningModal, setOpenWarningModal] = useState(false);
