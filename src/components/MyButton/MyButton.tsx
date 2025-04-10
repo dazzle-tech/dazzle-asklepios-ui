@@ -47,7 +47,7 @@ const MyButton = ({
 
             {Prefix && <Prefix style={{ marginRight: "8px" }} />}
 
-            {children}
+            {children&&children}
 
 
             {Postfix && <Postfix style={{ marginLeft: "8px" }} />}
