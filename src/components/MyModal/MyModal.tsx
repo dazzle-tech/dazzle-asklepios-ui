@@ -62,7 +62,7 @@ const MyModal = ({
                     {steps.map((step, index) => (
                         <Steps.Item
                             key={index}
-                            title={<div style={{ textAlign: 'center' }}>
+                            title={<div className='title-modal'>
                                 <FontAwesomeIcon
                                     icon={activeStep > index ? faCheck : step.icon}
                                     className={
