@@ -129,10 +129,12 @@ const PatientDiagnosis = ({ patient, encounter, setEncounter }) => {
   };
 
   return (
+
     <div  className='flex-column gap10'>
       <Text>Search</Text>
          <InputGroup inside >
-            <Input placeholder='Search ICD-10' value={searchKeyword} onChange={handleSearch} />
+            <Input placeholder={'Search ICD-10'} value={searchKeyword} onChange={handleSearch} />
+
             <InputGroup.Button>
               <SearchIcon />
             </InputGroup.Button>
@@ -155,8 +157,10 @@ const PatientDiagnosis = ({ patient, encounter, setEncounter }) => {
                       setSearchKeyword('');
                     }}
                   >
+
                     <span >{mod.icdCode}</span>
                     <span>&nbsp; &nbsp;</span>
+
                     <span>{mod.description}</span>
                   </Dropdown.Item>
                 ))}
@@ -220,7 +224,7 @@ const PatientDiagnosis = ({ patient, encounter, setEncounter }) => {
             //   disabled={!editing}
           />
           <MyInput
-             
+
             disabled={encounter.encounterStatusLkey == '91109811181900' ? true : false}
             column
             fieldLabel="Major"
