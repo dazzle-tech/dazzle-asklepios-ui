@@ -142,8 +142,7 @@ const MyInput = ({
             checked={record[fieldName] ?? false}
             onChange={(_, checked) => handleValueChange(checked)}
             disabled={props.disabled}
-            color="cyan"
-            style={{ fontSize: '13px', transform: 'scale(1.3)', width: '150px' }}
+            className='check-box-style'
           >
             {props.label ?? fieldLabel}
           </Checkbox>
