@@ -166,8 +166,8 @@ const SOAP = ({ edit, patient, encounter, setEncounter }) => {
                 <Divider />
                 <Form fluid>  
                 <MyInput 
-                width={'100%'}
-                height={"95px"}
+                width='100%'
+                height="95px"
                 showLabel={false}
                 fieldType='textarea'
                 fieldName="chiefComplaint"
@@ -190,8 +190,8 @@ const SOAP = ({ edit, patient, encounter, setEncounter }) => {
                 <Divider />
                 <Form fluid>
                 <MyInput 
-                width={'100%'}
-                height={"95px"}
+                width='100%'
+                height="95px"
                 showLabel={false}
                 placeholder={'Only you can see this Assessment'}
                 fieldType='textarea'
@@ -226,19 +226,19 @@ const SOAP = ({ edit, patient, encounter, setEncounter }) => {
 
                 <MyInput
 
-                  width={'100%'}
+                  width='100%'
                   fieldType="select"
                   selectData={planLovQueryResponse?.object ?? []}
                   selectDataLabel="lovDisplayVale"
                   selectDataValue="key"
-                  fieldName={'planInstructionsLkey'}
+                  fieldName='planInstructionsLkey'
                   record={localEncounter}
                   setRecord={setLocalEncounter}
                 />
                 <MyInput
-                  width={'100%'}
+                  width='100%'
                   fieldType='textarea'
-                  fieldName={'planInstructionsNote'}
+                  fieldName='planInstructionsNote'
                   record={localEncounter}
                   setRecord={setLocalEncounter}
                   row={4}
@@ -266,7 +266,7 @@ const SOAP = ({ edit, patient, encounter, setEncounter }) => {
         </Tabs.Tab>
         <Tabs.Tab eventKey="2" title="Physical Examination & Findings">
 
-          <fieldset style={{ flex: "4" }} className="box-container">
+          <fieldset>
             <legend> Physical Examination & Findings</legend>
             <ReviewOfSystems patient={patient} encounter={encounter} />
           </fieldset>
