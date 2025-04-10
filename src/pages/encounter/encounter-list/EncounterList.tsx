@@ -158,16 +158,16 @@ const EncounterList = () => {
             record={dateFilter}
             setRecord={setDateFilter}
           />
-          <div 
-          className='search-btn'
-          
-           >
-          <MyButton
-          
-            onClick={handleManualSearch}
+          <div
+            className='search-btn'
+
           >
-           <icons.Search />
-          </MyButton>
+            <MyButton
+
+              onClick={handleManualSearch}
+            >
+              <icons.Search />
+            </MyButton>
           </div>
         </Form>
         <Table
@@ -196,12 +196,6 @@ const EncounterList = () => {
             </HeaderCell>
             <Cell dataKey="queueNumber" />
           </Column>
-          <Column flexGrow={3}>
-            <HeaderCell  >
-              <Translate>VISIT ID</Translate>
-            </HeaderCell>
-            <Cell dataKey="visitId" />
-          </Column>
           <Column flexGrow={6} fullText>
             <HeaderCell fullText  >
               <Translate>PATIENT NAME</Translate>
@@ -215,6 +209,7 @@ const EncounterList = () => {
                     <div>Gender : {rowData?.patientObject?.genderLvalue
                       ? rowData?.patientObject?.genderLvalue?.lovDisplayVale
                       : rowData?.patientObject?.genderLkey}</div>
+                    <div>Visit ID : {rowData?.visitId}</div>
                   </Tooltip>
                 );
                 return (
@@ -233,7 +228,7 @@ const EncounterList = () => {
               }}
             </Cell>
           </Column>
-          <Column flexGrow={3} fullText >
+          <Column flexGrow={4} fullText >
             <HeaderCell  >
               <Translate>VISIT TYPE</Translate>
             </HeaderCell>
@@ -250,7 +245,7 @@ const EncounterList = () => {
                 rowData.chiefComplaint
               }</Cell>
           </Column>
-          <Column flexGrow={5} fullText>
+          <Column flexGrow={4} fullText>
             <HeaderCell>
               <Translate>DIAGNOSIS</Translate>
             </HeaderCell>
@@ -334,38 +329,58 @@ const EncounterList = () => {
               <Translate> </Translate>
             </HeaderCell>
             <Cell style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              {rowData =>
-                <Form layout='inline' fluid>
-                  <MyButton
-                   size='small'
-                    
-                    onClick={() => {
-                      const encounterData = rowData;
-                      const patientData = rowData.patientObject;
-                      setLocalEncounter(encounterData);
-                      setLocalPatient(patientData);
-                      handleGoToVisit(encounterData, patientData);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faUserDoctor}/>
-                  </MyButton>
-                  <MyButton
-                   
-                    size='small'
-                    backgroundColor='black'
-                    onClick={() => {
-                      const encounterData = rowData;
-                      const patientData = rowData.patientObject;
-                      setLocalEncounter(encounterData);
-                      setLocalPatient(patientData);
-                      handleGoToPreVisitObservations(encounterData, patientData);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faUserNurse} />
-                  </MyButton>
-                </Form>
-              }
-            </Cell>
+  {rowData => {
+    const tooltipNurse = (
+      <Tooltip>
+        <div>Nurse Station</div>
+      </Tooltip>
+    );
+    const tooltipDoctor = (
+      <Tooltip>
+        <div>Go to Visit</div>
+      </Tooltip>
+    );
+    return ( 
+      <Form layout='inline' fluid className='nurse-doctor-form'>
+        <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}> 
+          <div>
+          <MyButton
+            size='small'
+            onClick={() => {
+              const encounterData = rowData;
+              const patientData = rowData.patientObject;
+              setLocalEncounter(encounterData);
+              setLocalPatient(patientData);
+              handleGoToVisit(encounterData, patientData);
+            }}
+          >
+            <FontAwesomeIcon icon={faUserDoctor} />
+          </MyButton>
+        
+          </div>
+          </Whisper>
+        <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
+        <div>
+          <MyButton
+            size='small'
+            backgroundColor='black'
+            onClick={() => {
+              const encounterData = rowData;
+              const patientData = rowData.patientObject;
+              setLocalEncounter(encounterData);
+              setLocalPatient(patientData);
+              handleGoToPreVisitObservations(encounterData, patientData);
+            }}
+          >
+            <FontAwesomeIcon icon={faUserNurse} />
+          </MyButton>
+          </div>
+        </Whisper>
+      </Form>
+    );
+  }}
+</Cell>
+
           </Column>
         </Table>
         <div style={{ padding: 20 }}>
