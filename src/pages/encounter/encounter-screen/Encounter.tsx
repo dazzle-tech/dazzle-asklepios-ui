@@ -23,7 +23,7 @@ import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import TableIcon from '@rsuite/icons/Table';
-import { useGetAppointmentsQuery } from '@/services/appointmentService';
+import { useGetAppointmentsQuery, useGetResourcesByResourceIdQuery, useGetResourcesQuery } from '@/services/appointmentService';
 import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentModal';
 import PatientSide from '../encounter-main-info-section/PatienSide';
 import MyButton from '@/components/MyButton/MyButton';
@@ -144,14 +144,57 @@ const Encounter = () => {
   });
 
 
+
+
+ 
+
+
+
+const [medicalSheetSourceKey, setMedicalSheetSourceKey] = useState<string | undefined>();
+const [medicalSheetRowSourceKey, setMedicalSheetRowSourceKey] = useState<string | undefined>();
+
+// get Midical Sheets Data Steps
+useEffect(() => {
+  if (propsData?.encounter?.resourceTypeLkey === '2039516279378421') {
+    // Clinic, then we need to get its resource details
+    setMedicalSheetRowSourceKey(propsData?.encounter?.resourceKey);
+    setMedicalSheetSourceKey(undefined);
+  } else {
+    // Not Clinic, use department directly
+    setMedicalSheetSourceKey(propsData?.encounter?.departmentKey);
+    setMedicalSheetRowSourceKey(undefined); 
+  }
+}, [propsData?.encounter]);
+
+// Step 2: Fetch the resource if needed "IF Clinic"
+const { data: resourcesResponse } = useGetResourcesByResourceIdQuery(
+  medicalSheetRowSourceKey!,
+  { skip: !medicalSheetRowSourceKey }
+);
+
+// Step 3: Set departmentKey from resource "IF Clinic"
+useEffect(() => {
+  if (resourcesResponse?.object?.resourceKey) {
+    setMedicalSheetSourceKey(resourcesResponse.object.resourceKey);
+  }
+}, [resourcesResponse]);
+
+// Step 4:get medical sheet with final departmentKey.
+const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
+  medicalSheetSourceKey!,
+  { skip: !medicalSheetSourceKey }
+);
+
+
+
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const { data: allergensListToGetName } = useGetAllergensQuery({
     ...initialListRequest
   });
-  const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
-    propsData?.encounter?.departmentKey,
-    { skip: !propsData?.encounter?.departmentKey }
-  );
+
+
+
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
   const [openWarningModal, setOpenWarningModal] = useState(false);
@@ -348,7 +391,7 @@ const Encounter = () => {
                 prefixIcon={() => <BarChartHorizontalIcon />}
                 backgroundColor={"var(--deep-blue)"}
 
-                onClick={() => setIsDrawerOpen(true)}
+                onClick={() => {setIsDrawerOpen(true),console.log(medicalSheetSourceKey)}}
               >Medical Sheets</MyButton>
               <MyButton
 
