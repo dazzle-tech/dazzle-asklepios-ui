@@ -453,9 +453,9 @@ const Warning = ({ edit, patient, encounter }) => {
     </Cell>
   );
   return (
-    <div>
+    <div >
       
-      <div className=''>
+      <div className='bt-div'>
         <MyButton
           prefixIcon={() => <CloseOutlineIcon />}
           onClick={OpenCancellationReasonModel}
