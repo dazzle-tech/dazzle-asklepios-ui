@@ -71,6 +71,7 @@ import PatientEMR from './pages/patient/patient-emr';
 import PatientProfileCopy from './pages/patient/patient-profile/PatientProfileCopy';
 import Lab from './pages/lab-module';
 import Rad from './pages/rad-module';
+import SystemLoader from './components/Loaders/SystemLoader';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -184,6 +185,7 @@ const App = () => {
       </div>
 
       <MyToast />
+      <SystemLoader />
       <SessionExpiredBackdrop />
       <CustomProvider locale={enGB}>
         <Routes>
