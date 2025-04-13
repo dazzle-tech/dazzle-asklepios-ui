@@ -25,6 +25,7 @@ import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 const DentalActions = () => {
   const dispatch = useAppDispatch();
   const [dentalAction, setDentalAction] = useState<ApDentalAction>({ ...newApDentalAction });
@@ -40,8 +41,8 @@ const DentalActions = () => {
   const [saveDentalAction, saveDentalActionMutation] = useSaveDentalActionMutation();
   const [linkCdtAction, linkCdtActionMutation] = useLinkCdtActionMutation();
   const [unlinkCdtAction, unlinkCdtActionMutation] = useUnlinkCdtActionMutation();
-  const { data: dentalActionListResponse } = useGetDentalActionsQuery(listRequest);
-  const { data: cdtListResponse } = useGetCdtsQuery({
+  const { data: dentalActionListResponse, isLoading:isDentalActionLoading } = useGetDentalActionsQuery(listRequest);
+    const { data: cdtListResponse } = useGetCdtsQuery({
     ...initialListRequest,
     pageSize: 1000,
     skipDetails: true
@@ -131,6 +132,22 @@ const DentalActions = () => {
       dispatch(setDivContent("  "));
     };
   }, [location.pathname, dispatch]);
+
+
+
+  
+ 
+   
+   useEffect(() => {
+     console.log(isDentalActionLoading)
+     if (isDentalActionLoading) {
+       dispatch(showSystemLoader());
+     } else {
+       dispatch(hideSystemLoader());
+     }
+ 
+   }, [isDentalActionLoading])
+
   return (
     <Panel>
       <ButtonToolbar>

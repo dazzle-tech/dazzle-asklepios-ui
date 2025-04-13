@@ -31,6 +31,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
 import './styles.less'
+import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 const EncounterList = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -51,7 +52,7 @@ const EncounterList = () => {
     ...initialListRequest,
     ignore: true
   });
-  const { data: encounterListResponse, isFetching, isLoading } = useGetEncountersQuery(listRequest);
+  const { data: encounterListResponse, isFetching, refetch: refetchEncounter,isLoading } = useGetEncountersQuery(listRequest);
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(),
     toDate: new Date()
@@ -133,6 +134,19 @@ const EncounterList = () => {
     // init list
     handleManualSearch();
   }, []);
+
+
+
+  useEffect(() => {
+    console.log(isLoading)
+    if (isLoading) {
+      dispatch(showSystemLoader());
+    } else {
+      dispatch(hideSystemLoader());
+    }
+
+  }, [isLoading])
+
 
   return (
     <>
