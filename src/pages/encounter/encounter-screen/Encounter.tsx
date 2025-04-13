@@ -191,10 +191,6 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
   const { data: allergensListToGetName } = useGetAllergensQuery({
     ...initialListRequest
   });
-  const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
-    propsData?.encounter?.departmentKey,
-    { skip: !propsData?.encounter?.departmentKey }
-  );
   console.log("medical sheet",medicalSheet?.object);
   console.log(propsData?.encounter?.departmentKey )
 
