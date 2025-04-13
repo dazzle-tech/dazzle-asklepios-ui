@@ -3,8 +3,10 @@ import Translate from '@/components/Translate';
 import './styles.less';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { useAppDispatch, useAppSelector } from '@/hooks';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import FileDownloadIcon from '@rsuite/icons/FileDownload';
 import DocPassIcon from '@rsuite/icons/DocPass';
+import { Tooltip, Whisper } from 'rsuite';
 import {
     InputGroup,
     Form,
@@ -30,6 +32,10 @@ import {
     useGetLovValuesByCodeQuery,
 } from '@/services/setupService';
 import {
+    faLandMineOn,
+
+  } from '@fortawesome/free-solid-svg-icons';
+import {
     useFetchAttachmentQuery,
     useFetchAttachmentLightQuery,
     useFetchAttachmentByKeyQuery,
@@ -48,9 +54,6 @@ import {
     useGetDepartmentListByTypeQuery
 } from '@/services/setupService';
 import {
-    useSavePatientEncounterOrderMutation,
-    useGetPatientEncounterOrdersQuery,
-    useRemovePatientEncounterOrderMutation,
     useGetDiagnosticOrderQuery,
     useGetDiagnosticOrderTestQuery,
     useSaveDiagnosticOrderMutation,
@@ -529,8 +532,20 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
     }
     return (
         <>
-            <div style={{ marginLeft: '10px', padding: '5px', border: '1px solid #b6b7b8' }}>
+            <div style={{ marginLeft: '10px', padding: '5px' }}>
+            <Whisper
+                                            placement="top"
+                                            trigger="hover"
+                                            speaker={<Tooltip>Urgent</Tooltip>}
+                                          >
+                                            <FontAwesomeIcon
+                                              icon={faLandMineOn}
+                                              onClick={()=>setOrders({...orders,isUrgent:true})}
+                                              style={{  marginRight: 10, color:orders.isUrgent? 'red':"grey"}}
+                                            />
+                                          </Whisper>
                 <Row style={{ paddingTop: '10px' }}>
+                      
                     <Col xs={6}>
                         <SelectPicker
 
@@ -689,7 +704,7 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                 </Row>
             </div>
             <Row >   </Row>
-            <Row style={{ marginLeft: '10px' }}>
+            <Row style={{ margin: '5px' }}>
                 <Table
                     height={400}
                     sortColumn={listOrderRequest.sortBy}
@@ -702,10 +717,7 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                                 sortType
                             });
                     }}
-                    headerHeight={80}
-                    rowHeight={60}
-                    bordered
-                    cellBordered
+                   
 
                     data={orderTestList?.object ?? []}
                     onRowClick={rowData => {
@@ -715,8 +727,8 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                     }}
                     rowClassName={isSelected}
                 >
-                    <Column flexGrow={1}>
-                        <HeaderCell align="center">
+                    <Column flexGrow={2}>
+                        <HeaderCell  >
 
                             <Translate>#</Translate>
                         </HeaderCell>
@@ -734,8 +746,8 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
 
                     </Column>
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('orderType', e)} />
+                        <HeaderCell  >
+                            {/* <Input onChange={e => handleFilterChange('orderType', e)} /> */}
                             <Translate>Order Type</Translate>
                         </HeaderCell>
                         <Cell dataKey="orderTypeLkey">
@@ -751,8 +763,8 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
 
                     </Column>
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('TestName', e)} />
+                        <HeaderCell  >
+                            {/* <Input onChange={e => handleFilterChange('TestName', e)} /> */}
                             <Translate>Test Name</Translate>
                         </HeaderCell>
                         <Cell>
@@ -761,8 +773,8 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                         </Cell>
                     </Column>
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('InternalCode', e)} />
+                        <HeaderCell  >
+                            {/* <Input onChange={e => handleFilterChange('InternalCode', e)} /> */}
                             <Translate>Internal Code</Translate>
                         </HeaderCell>
                         <Cell dataKey="internalCode" >
@@ -771,8 +783,8 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
 
                     </Column>
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('statusLkey', e)} />
+                        <HeaderCell  >
+                            {/* <Input onChange={e => handleFilterChange('statusLkey', e)} /> */}
                             <Translate>Status</Translate>
                         </HeaderCell>
                         <Cell  >
@@ -780,8 +792,8 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                         </Cell>
                     </Column>
                     <Column flexGrow={3} fullText>
-                        <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('InternationalCoding', e)} />
+                        <HeaderCell  >
+                            {/* <Input onChange={e => handleFilterChange('InternationalCoding', e)} /> */}
                             <Translate>International Coding</Translate>
                         </HeaderCell>
                         <Cell >
@@ -798,8 +810,8 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                         </Cell>
                     </Column>
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('receivedLabkey', e)} />
+                        <HeaderCell  >
+                            {/* <Input onChange={e => handleFilterChange('receivedLabkey', e)} /> */}
                             <Translate>Received Lab</Translate>
                         </HeaderCell>
                         <Cell  >
@@ -807,8 +819,8 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                         </Cell>
                     </Column>
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('receivedLabLkey', e)} />
+                        <HeaderCell  >
+                            {/* <Input onChange={e => handleFilterChange('receivedLabLkey', e)} /> */}
                             <Translate> Processing Status</Translate>
                         </HeaderCell>
                         <Cell  >
@@ -816,31 +828,31 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                         </Cell>
                     </Column>
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('reasonLkey', e)} />
+                        <HeaderCell  >
+                            {/* <Input onChange={e => handleFilterChange('reasonLkey', e)} /> */}
                             <Translate>Reason </Translate>
                         </HeaderCell>
                         <Cell >{rowData => rowData.reasonLvalue?.lovDisplayVale || ""}</Cell>
                     </Column>
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('priorityLkey', e)} />
+                        <HeaderCell  >
+                            {/* <Input onChange={e => handleFilterChange('priorityLkey', e)} /> */}
                             <Translate>Priority</Translate>
                         </HeaderCell>
                         <Cell >{rowData => rowData.priorityLvalue?.lovDisplayVale || ''}
                         </Cell>
                     </Column>
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('notes', e)} />
+                        <HeaderCell  >
+                            {/* <Input onChange={e => handleFilterChange('notes', e)} /> */}
                             <Translate>Notes</Translate>
                         </HeaderCell>
                         <Cell dataKey="notes" />
                     </Column>
 
                     <Column flexGrow={3} fullText>
-                        <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('createdAt', e)} />
+                        <HeaderCell  >
+                            {/* <Input onChange={e => handleFilterChange('createdAt', e)} /> */}
                             <Translate>Submit Date</Translate>
                         </HeaderCell>
                         <Cell >
@@ -849,7 +861,7 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                         </Cell>
                     </Column>
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
 
                             <Translate>Add details</Translate>
                         </HeaderCell>

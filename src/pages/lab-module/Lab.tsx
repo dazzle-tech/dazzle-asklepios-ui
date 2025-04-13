@@ -657,10 +657,7 @@ const Lab = () => {
 
       <Table
         data={[rowData]}
-        bordered
-        cellBordered
-        headerHeight={30}
-        rowHeight={40}
+
         style={{ width: '100%', marginTop: '5px', marginBottom: '5px' }}
         height={100}
       >
