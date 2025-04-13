@@ -237,27 +237,29 @@ aside {
 
 .rs-form-inline .rs-form-control-label {
   margin-bottom: 5px !important;
-  font-style: normal !important;
-  font-weight: 600 !important;
+  margin-right: 0 !important;
   font-size: 14px !important;
   line-height: 20px !important;
   color: #1C2836 !important;
   order: 0 !important;
   align-self: stretch !important;
   flex-grow: 0 !important;
-  font-family: 'Inter' !important;
+  font-family: 'Inter Medium' !important;
 }
 
 .rs-input {
   background: #FFFFFF !important;
   box-shadow: 0px 1px 2px rgba(105, 104, 104, 0.06), 0px 0px 0px 1px rgba(110, 109, 109, 0.16) !important;
   border: 0px solid var(--rs-border-primary);
-  color: #A1A9B8;
+
 }
 
 .rs-picker-toggle-wrapper {
   border-radius: 6px !important;
   background: #FFFFFF !important;
+  box-shadow: 0px 1px 2px rgba(105, 104, 104, 0.06), 0px 0px 0px 1px rgba(110, 109, 109, 0.16) !important;
+  border: 0px solid var(--rs-border-primary);
+
 }
 
 .rs-picker-toggle-wrapper .rs-picker-toggle.rs-btn {
@@ -267,6 +269,7 @@ aside {
 
 .rs-input-group .rs-input {
   box-shadow: none !important;
+  border: none;
 
 }
 
@@ -280,4 +283,29 @@ aside {
 .rs-content {
   margin-top: 0 !important;
   padding-top: 0 !important;
+
+}
+
+.custom-date-input .rs-input-group-inside {
+  height: var(--input-height) !important;
+  background: #FFFFFF !important;
+  box-shadow: 0px 1px 2px rgba(105, 104, 104, 0.06), 0px 0px 0px 1px rgba(110, 109, 109, 0.16) !important;
+  border: 0px solid var(--rs-border-primary);
+}
+
+.rs-picker-default .rs-picker-toggle {
+  position: relative;
+  z-index: 5;
+  padding-right: 32px;
+  display: inline-block;
+  color: var(--rs-text-primary);
+  border: none !important;
+}
+
+.custom-date-input .rs-input-group-inside {
+  height: var(--input-height) !important;
+  background: #FFFFFF !important;
+  box-shadow: none !important;
+  border: 0px solid var(--rs-border-primary);
+
 }

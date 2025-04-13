@@ -19,6 +19,16 @@ export const appointmentService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    getResourcesByResourceId: builder.query({
+      query: (resourceKey: string) => ({
+        url: `/appointment/resource-by-key`,
+        params: {
+          resourceKey
+        }
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
     getResourcesAvailability: builder.query({
       query: ({ resource_key, facility_id }) => ({
         url: `/appointment/resources-availability-list?resource_key=${resource_key}&facility_id=${facility_id}`,
@@ -107,6 +117,7 @@ export const appointmentService = createApi({
 export const {
   
   useGetResourcesQuery,
+  useGetResourcesByResourceIdQuery,
   useGetResourceTypeQuery,
   useSaveResourcesMutation,
   useGetResourcesAvailabilityTimeQuery,
