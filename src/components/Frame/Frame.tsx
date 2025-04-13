@@ -201,9 +201,18 @@ const Frame = (props: FrameProps) => {
           >
             
           </Stack>
+{/* <<<<<<< HEAD */}
           <div
           className='content'
             
+// =======
+//           <Panel
+
+//           className='content'
+//             style={{ maxHeight: '90vh', overflowY: 'auto', marginTop: '5px'}}
+//             bordered
+//             color="green"
+// >>>>>>> 2991b31 (904)
           >
             <Outlet />
           </div>

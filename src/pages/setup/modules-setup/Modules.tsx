@@ -20,16 +20,15 @@ import { IoSettingsSharp } from 'react-icons/io5';
 import { MdModeEdit } from 'react-icons/md';
 import MyIconInput from '@/components/MyInput/MyIconInput';
 import { Icon } from '@rsuite/icons';
-
 import MyButton from '@/components/MyButton/MyButton';
-
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
-import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
+import MyModal from '@/components/MyModal/MyModal';
 import './styles.less';
+import { title } from 'process';
 
 const Modules = () => {
   const dispatch = useAppDispatch();
@@ -155,6 +154,41 @@ const Modules = () => {
     </div>
   );
 
+  const conjureFormContent = (stepNumber = 0) =>{
+    switch(stepNumber){
+      case 0:
+    return(
+      <Form fluid>
+      <MyInput fieldName="name" record={module} setRecord={setModule} width={520} />
+      <MyInput
+        fieldType="textarea"
+        fieldName="description"
+        record={module}
+        setRecord={setModule}
+        width={520}
+        height={150}
+      />
+      <div className='container-of-two-fields'>
+        <MyInput
+          fieldName="viewOrder"
+          fieldType="number"
+          record={module}
+          setRecord={setModule}
+          width={250}
+        />
+        <MyIconInput
+          fieldName="iconImagePath"
+          fieldLabel="Icon"
+          record={module}
+          setRecord={setModule}
+          width={250}
+        />
+      </div>
+    </Form>
+    )
+  }
+  }
+
   return (
     <Carousel className="carousel" autoplay={false} activeIndex={carouselActiveIndex}>
       <Panel
@@ -263,8 +297,8 @@ const Modules = () => {
             total={moduleListResponse?.extraNumeric ?? 0}
           />
         </div>
-
-        <Modal open={modulePopupOpen} className="left-modal" size="xsm">
+   
+        {/* <Modal open={modulePopupOpen} className="left-modal" size="xsm">
           <Modal.Title>
             <Translate>{operationState} Module</Translate>
           </Modal.Title>
@@ -337,7 +371,19 @@ const Modules = () => {
               </MyButton>
             </Stack>
           </Modal.Footer>
-        </Modal>
+        </Modal> */}
+        <MyModal
+         open={modulePopupOpen}
+         setOpen={setModulePopupOpen}
+         title={operationState + " Module"}
+         position="right"
+         content={conjureFormContent} 
+         actionButtonLabel={operationState === 'New' ? 'Create' : 'Save'}
+         steps={[
+          {title:"Module Info", icon: faLaptop }
+         ]}
+         size={'570px'}
+         />
       </Panel>
       {conjureSubViews()}
     </Carousel>

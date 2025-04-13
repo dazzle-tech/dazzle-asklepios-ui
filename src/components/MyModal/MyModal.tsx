@@ -94,6 +94,8 @@ const MyModal = ({
                 </Form>
             </Modal.Footer>
         </Modal>
+
+        
     );
 };
 export default MyModal;
