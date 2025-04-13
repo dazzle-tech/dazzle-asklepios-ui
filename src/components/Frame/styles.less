@@ -58,6 +58,89 @@
 }
 
 
-.rs-dropdown-toggle.rs-sidenav-item{
+.rs-sidenav-nav > .rs-sidenav-item,
+.rs-sidenav-nav > .rs-dropdown .rs-dropdown-toggle {
+  
+    font-family: 'Manrope';
+font-style: normal;
+font-weight: 600;
+font-size: 13px;
+line-height: 16px;
+display: flex;
+align-items: center;
+letter-spacing: 0.02em;
 
+color: var(--dark-blue-gray);
+
+}
+
+.rs-dropdown-item.rs-dropdown-item-with-icon{
+  font-family: 'Manrope';
+  font-style: normal;
+  font-size: 13px;
+  line-height: 16px;
+  display: flex;
+  align-items: center;
+  letter-spacing: 0.02em;
+  
+  color: var(--dark-blue-gray);
+}
+
+.logo{
+  display: block;
+  margin-left: 70px;
+  margin-bottom: 10px;
+  margin-top: 10px;
+  padding: 0px 0px;
+  cursor: pointer
+}
+
+.container-of-organization-info{
+  display: flex;
+  align-items: center;
+  margin-left: 20px;
+  justify-content: center;
+  padding: 12px 15px;
+  border-radius: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  background-color: #f9f9f9;
+  width: 220px;
+  border: 1px solid #ddd;
+
+  .organization-img{
+    color: var(--gray-dark);
+     margin-right: 12px;
+  }
+  .name{
+    font-size: 13px;
+    font-weight: bold;
+    color: '#333'
+  }
+  .location{
+    font-size: 10px;
+    color: #777
+  }
+}
+.search-field{
+  margin-left: 20px;
+   margin-top: 20px;
+}
+#fixedInfoBar{
+ 
+  padding: 11px;
+  position: relative;
+  display: inline-flex;
+  color: black;
+  z-index: 101;
+
+  height: 50px;
+  border-radius: 0px 15px 15px 0px;
+}
+.content{
+  max-height: 90vh;
+  overflow-y: auto;
+  margin-top: 5px;
+}
+.nav-item{
+  text-align: center;
 }
