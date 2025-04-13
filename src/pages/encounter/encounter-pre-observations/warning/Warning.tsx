@@ -436,7 +436,7 @@ const Warning = ({ edit, patient, encounter }) => {
   };
 
   const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
-    <Cell {...props} style={{ padding: 5 }}>
+    <Cell {...props} className='padding-expand-table'>
       <IconButton
         appearance="subtle"
         onClick={() => {
@@ -455,7 +455,7 @@ const Warning = ({ edit, patient, encounter }) => {
   return (
     <div>
       
-      <div style={{ display: 'flex', gap: '5px' }}>
+      <div className=''>
         <MyButton
           prefixIcon={() => <CloseOutlineIcon />}
           onClick={OpenCancellationReasonModel}
@@ -489,7 +489,7 @@ const Warning = ({ edit, patient, encounter }) => {
         >
           Show Previous Warnings
         </Checkbox>
-        <div style={{marginLeft:'auto'}}>
+        <div className='bt-right'>
         <MyButton
           prefixIcon={() => <ReloadIcon />}
           disabled={warning?.statusLkey != '9766179572884232' ? true : false}
@@ -758,7 +758,7 @@ const Warning = ({ edit, patient, encounter }) => {
               <div>
                 <Text className='font-style'>First Time Recorded</Text>
                 <DatePicker
-                  style={{width:'200px'}}
+                 className='date-width'
                   format="MM/dd/yyyy hh:mm aa"
                   showMeridian
                   value={selectedFirstDate}
