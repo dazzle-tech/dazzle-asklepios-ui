@@ -4,7 +4,8 @@ import Translate from '@/components/Translate';
 import './styles.less';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import { Tag } from 'rsuite';
+import MyButton from '@/components/MyButton/MyButton';
+import MyModal from '@/components/MyModal/MyModal';
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
 import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
@@ -38,7 +39,7 @@ import { notify } from '@/utils/uiReducerActions';
 import CheckIcon from '@rsuite/icons/Check';
 import PlusIcon from '@rsuite/icons/Plus';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBroom } from '@fortawesome/free-solid-svg-icons';
+import { faBroom, faPersonDotsFromLine } from '@fortawesome/free-solid-svg-icons';
 import {
   useGetLovValuesByCodeQuery,
   useGetLovValuesQuery,
@@ -47,6 +48,7 @@ import {
 import { useGetAllergiesQuery, useSaveAllergiesMutation } from '@/services/observationService';
 import { ApVisitAllergies } from '@/types/model-types';
 import { newApVisitAllergies } from '@/types/model-types-constructor';
+import MyLabel from '@/components/MyLabel/index';
 const Allergies = ({ edit, patient, encounter }) => {
   const { data: allergyTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGEN_TYPES');
   const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
@@ -61,6 +63,8 @@ const Allergies = ({ edit, patient, encounter }) => {
   const [showCanceled, setShowCanceled] = useState(true);
   const [editing, setEditing] = useState(false);
   const [showPrev, setShowPrev] = useState(true);
+  
+  const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [listRequestallerg, setListRequestallerg] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -101,8 +105,8 @@ const Allergies = ({ edit, patient, encounter }) => {
   const [selectedOnsetDate, setSelectedOnsetDate] = useState(null);
   const [saveAllergies, saveAllergiesMutation] = useSaveAllergiesMutation();
   const [reactionDescription, setReactionDescription] = useState();
-  const [editOnset, setEditOnset] = useState(true);
-  const [editSourceof, seteditSourceof] = useState(true);
+  const [editOnset, setEditOnset] = useState({editdate:true});
+  const [editSourceof, seteditSourceof] = useState({editSource:true});
   const [listRequest, setListRequest] = useState({
     ...initialListRequest
   });
@@ -113,30 +117,29 @@ const Allergies = ({ edit, patient, encounter }) => {
       return 'selected-row';
     } else return '';
   };
-  useEffect(() => {}, [selectedOnsetDate]);
+  useEffect(() => { }, [selectedOnsetDate]);
   useEffect(() => {
     if (allerges.reactionDescription != null) {
       console.log(allerges.reactionDescription);
       setReactionDescription(prevadminInstructions =>
         prevadminInstructions
-          ? `${prevadminInstructions}, ${
-              reactionLovQueryResponse?.object?.find(
-                item => item.key === allerges.reactionDescription
-              )?.lovDisplayVale
-            }`
+          ? `${prevadminInstructions}, ${reactionLovQueryResponse?.object?.find(
+            item => item.key === allerges.reactionDescription
+          )?.lovDisplayVale
+          }`
           : reactionLovQueryResponse?.object?.find(
-              item => item.key === allerges.reactionDescription
-            )?.lovDisplayVale
+            item => item.key === allerges.reactionDescription
+          )?.lovDisplayVale
       );
     }
   }, [allerges.reactionDescription]);
   useEffect(() => {
     if (allerges.onsetDate != 0) {
-      setEditOnset(false);
+      setEditOnset({editdate:false});
       setSelectedOnsetDate(new Date(allerges.onsetDate));
     }
     if (allerges.sourceOfInformationLkey != null) {
-      seteditSourceof(false);
+      seteditSourceof({editSource:false});
     }
   }, [allerges]);
   useEffect(() => {
@@ -233,38 +236,40 @@ const Allergies = ({ edit, patient, encounter }) => {
       }));
     }
   }, [showCanceled]);
+  useEffect(()=>{
+    if(editOnset.editdate){
+      setSelectedOnsetDate(null);
+    }
+  },[editOnset.editdate])
   const renderRowExpanded = rowData => {
     return (
       <Table
         data={[rowData]} // Pass the data as an array to populate the table
-        bordered
-        headerHeight={30}
-        rowHeight={40}
-        style={{ width: '100%', marginTop: '5px', marginBottom: '5px' }}
-        cellBordered
+
+
         height={100} // Adjust height as needed
       >
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1} fullText>
           <HeaderCell>Created At</HeaderCell>
           <Cell dataKey="onsetDate">
             {rowData => (rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : '')}
           </Cell>
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1} fullText>
           <HeaderCell>Created By</HeaderCell>
           <Cell dataKey="createdBy" />
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1} fullText>
           <HeaderCell>Updated At</HeaderCell>
           <Cell dataKey="updatedAt">
             {rowData => (rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString() : '')}
           </Cell>
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1} fullText>
           <HeaderCell>Updated By</HeaderCell>
           <Cell dataKey="updatedBy" />
         </Column>
-        <Column flexGrow={2} align="center" fullText>
+        <Column flexGrow={2} fullText>
           <HeaderCell>Resolved At</HeaderCell>
           <Cell dataKey="resolvedAt">
             {rowData => {
@@ -274,33 +279,33 @@ const Allergies = ({ edit, patient, encounter }) => {
             }}
           </Cell>
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1} fullText>
           <HeaderCell>Resolved By</HeaderCell>
           <Cell dataKey="resolvedBy" />
         </Column>
-        <Column flexGrow={2} align="center" fullText>
+        <Column flexGrow={2} fullText>
           <HeaderCell>Cancelled At</HeaderCell>
           <Cell dataKey="deletedAt">
             {rowData => (rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : '')}
           </Cell>
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1} fullText>
           <HeaderCell>Cancelled By</HeaderCell>
           <Cell dataKey="deletedBy" />
         </Column>
         <Column flexGrow={1} fullText>
-          <HeaderCell align="center">
+          <HeaderCell  >
             <Translate>Notes</Translate>
           </HeaderCell>
           <Cell>{rowData => rowData.notes}</Cell>
         </Column>
         <Column flexGrow={2} fullText>
-          <HeaderCell align="center">
+          <HeaderCell  >
             <Translate>Certainty</Translate>
           </HeaderCell>
           <Cell>{rowData => rowData.certainty}</Cell>
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1} fullText>
           <HeaderCell>Cancelliton Reason</HeaderCell>
           <Cell dataKey="cancellationReason" />
         </Column>
@@ -367,8 +372,8 @@ const Allergies = ({ edit, patient, encounter }) => {
       typeOfPropensityLkey: null
     });
     setSelectedOnsetDate(null);
-    setEditOnset(true);
-    seteditSourceof(true);
+    setEditOnset({editdate:true});
+    seteditSourceof({editSource:true});
     setReactionDescription(null);
   };
   const handleSave = async () => {
@@ -430,7 +435,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         });
 
       CloseCancellationReasonModel();
-    } catch {}
+    } catch { }
   };
 
   const handleResolved = async () => {
@@ -484,399 +489,170 @@ const Allergies = ({ edit, patient, encounter }) => {
   };
   return (
     <div>
-      <Panel
-        className={edit ? 'disabled-panel' : ''}
-        header="Add Allergy "
-        collapsible
-        bordered
-        defaultExpanded
-      >
-        <div style={{ border: '1px solid #b6b7b8', padding: '5px' }}>
-          <Form style={{ display: 'flex' }} layout="inline" fluid>
-            <MyInput
-              column
-              disabled={editing}
-              width={150}
-              fieldType="select"
-              fieldLabel="Allergy Type"
-              selectData={allergyTypeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'allergyTypeLkey'}
-              record={allerges}
-              setRecord={setAllerges}
-            />
-            <MyInput
-              column
-              disabled={editing}
-              width={150}
-              fieldType="select"
-              fieldLabel="Allergen"
-              selectData={allergensListResponse?.object ?? []}
-              selectDataLabel="allergenName"
-              selectDataValue="key"
-              fieldName={'allergenKey'}
-              record={allerges}
-              setRecord={setAllerges}
-            />
-            <MyInput
-              column
-              disabled={editing}
-              width={150}
-              fieldType="select"
-              fieldLabel="Severity"
-              selectData={severityLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'severityLkey'}
-              record={allerges}
-              setRecord={setAllerges}
-            />
-            <MyInput
-              column
-              disabled={editing}
-              width={150}
-              fieldType="select"
-              fieldLabel="Criticality"
-              selectData={criticalityLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'criticalityLkey'}
-              record={allerges}
-              setRecord={setAllerges}
-            />
-            <MyInput
-              column
-              disabled={editing}
-              width={150}
-              fieldName={'certainty'}
-              record={allerges}
-              setRecord={setAllerges}
-            />
-            <MyInput
-              column
-              disabled={editing}
-              width={150}
-              fieldType="select"
-              fieldLabel="Onset"
-              selectData={onsetLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'onsetLkey'}
-              record={allerges}
-              setRecord={setAllerges}
-            />
-            <div>
-              <Text style={{ marginTop: '3px', fontWeight: 'bold' }}>Onset Date</Text>
-              <DatePicker
-                format="MM/dd/yyyy hh:mm aa"
-                showMeridian
-                value={selectedOnsetDate}
-                onChange={handleDateChange}
-                disabled={editOnset}
-              />
-            </div>
-            <div>
-              <Text style={{ marginTop: '3px', fontWeight: 'bold' }}>Onset Undefined</Text>
-              <Toggle
-                checked={editOnset}
-                onChange={checked => {
-                  setEditOnset(checked);
-                  if (checked) {
-                    setSelectedOnsetDate(null);
-                  }
-                }}
-                checkedChildren="Yes"
-                unCheckedChildren="No"
-                style={{ width: 130 }}
-              />
-            </div>
 
-            <MyInput
-              column
-              disabled={editSourceof}
-              width={150}
-              fieldType="select"
-              fieldLabel="Source of Information"
-              selectData={sourceofinformationLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'sourceOfInformationLkey'}
-              record={allerges}
-              setRecord={setAllerges}
-            />
 
-            <div>
-              <Text style={{ marginTop: '3px', fontWeight: 'bold' }}>By Patient</Text>
-              <Toggle
-                checked={editSourceof}
-                onChange={checked => {
-                  seteditSourceof(checked);
-                  setAllerges({ ...allerges, sourceOfInformationLkey: null });
-                }}
-                checkedChildren="Yes"
-                unCheckedChildren="No"
-                style={{ width: 100 }}
-              />
-            </div>
-          </Form>
-          <Form style={{ display: 'flex' }} layout="inline" fluid>
-            <MyInput
-              column
-              disabled={editing}
-              width={150}
-              fieldType="select"
-              fieldLabel="Treatment Strategy"
-              selectData={treatmentstrategyLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'treatmentStrategyLkey'}
-              record={allerges}
-              setRecord={setAllerges}
-            />
-            <MyInput
-              column
-              disabled={editing}
-              width={150}
-              fieldType="select"
-              fieldLabel="Type of Propensity"
-              selectData={allgPropnLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'typeOfPropensityLkey'}
-              record={allerges}
-              setRecord={setAllerges}
-            />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-              <MyInput
-                column
-                disabled={editing}
-                width={250}
-                fieldType="select"
-                fieldLabel="Allergic Reactions"
-                selectData={reactionLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                fieldName={'reactionDescription'}
-                record={allerges}
-                setRecord={setAllerges}
-              />
-              <Input
-                as="textarea"
-                disabled={editing}
-                onChange={e => setReactionDescription(e)}
-                value={reactionDescription}
-                style={{ width: 250 }}
-                rows={3}
-              />
-            </div>
-            <MyInput
-              width={250}
-              column
-              fieldLabel="Note"
-              fieldType="textarea"
-              fieldName="notes"
-              height={120}
-              record={allerges}
-              setRecord={setAllerges}
-              disabled={editing}
-            />
-          </Form>
-          <div>
-            <IconButton
-              color="violet"
-              appearance="primary"
-              onClick={handleSave}
-              disabled={
-                showPrev ? (allerges?.statusLkey == '3196709905099521' ? true : false) : true
-              }
-              icon={<CheckIcon />}
-            >
-              <Translate>Save</Translate>
-            </IconButton>
-            <Button
-              color="cyan"
-              appearance="primary"
-              style={{ marginLeft: '5px' }}
-              onClick={handleClear}
-            >
-              <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px' }} />
-              <span>Clear</span>
-            </Button>
-          </div>
-        </div>
-      </Panel>
-      <Panel header="Patient’s Allergies " collapsible bordered>
-        <div>
-          <IconButton
-            color="cyan"
-            appearance="primary"
-            onClick={OpenCancellationReasonModel}
-            // disabled={prescriptions?.object[0]?.statusLkey == '1804482322306061' ? true : false}
+      <div className='bt-div'>
+        <MyButton
+          prefixIcon={() => <CloseOutlineIcon />}
+          onClick={OpenCancellationReasonModel}
+        >Cancel</MyButton>
 
-            icon={<CloseOutlineIcon />}
-          >
-            <Translate>Cancel</Translate>
-          </IconButton>
-          <IconButton
-            color="cyan"
-            appearance="primary"
-            onClick={OpenConfirmResolvedModel}
-            disabled={allerges?.statusLkey != '9766169155908512' ? true : false}
-            style={{ marginLeft: '4px' }}
-            icon={<CheckOutlineIcon />}
-          >
-            <Translate>Resolved</Translate>
-          </IconButton>
-          <IconButton
-            color="cyan"
-            appearance="primary"
-            onClick={OpenConfirmUndoResolvedModel}
-            disabled={allerges?.statusLkey != '9766179572884232' ? true : false}
-            style={{ marginLeft: '4px' }}
-            icon={<ReloadIcon />}
-          >
-            <Translate>Undo Resolved</Translate>
-          </IconButton>
-          <Checkbox
-            checked={!showCanceled}
-            onChange={() => {
-              setShowCanceled(!showCanceled);
-            }}
-          >
-            Show Cancelled
-          </Checkbox>
-          <Checkbox
-            checked={!showPrev}
-            onChange={() => {
-              setShowPrev(!showPrev);
-            }}
-          >
-            Show Previous Allergies
-          </Checkbox>
-        </div>
-        <Table
-          height={600}
-          data={allergiesListResponse?.object || []}
-          rowKey="key"
-          expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
-          renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
-          shouldUpdateScroll={false}
-          bordered
-          cellBordered
-          onRowClick={rowData => {
-            setAllerges(rowData);
-            setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
-          }}
-          rowClassName={isSelected}
+        <MyButton
+          disabled={allerges?.statusLkey != '9766169155908512' ? true : false}
+          prefixIcon={() => <FontAwesomeIcon icon={faPersonDotsFromLine} />}
+          onClick={OpenConfirmResolvedModel}
         >
-          <Column width={70} align="center">
-            <HeaderCell>#</HeaderCell>
-            <ExpandCell
-              rowData={rowData => rowData}
-              dataKey="key"
-              expandedRowKeys={expandedRowKeys}
-              onChange={handleExpanded}
-            />
-          </Column>
+          Resolved</MyButton>
+        <MyButton
+          prefixIcon={() => <ReloadIcon />}
+          disabled={allerges?.statusLkey != '9766179572884232' ? true : false}
+          onClick={OpenConfirmUndoResolvedModel}
+        >Undo Resolved</MyButton>
 
-          <Column flexGrow={2} fullText>
-            <HeaderCell align="center">
-              <Translate>Allergy Type</Translate>
-            </HeaderCell>
-            <Cell>{rowData => rowData.allergyTypeLvalue?.lovDisplayVale}</Cell>
-          </Column>
-          <Column flexGrow={2} fullText>
-            <HeaderCell align="center">
-              <Translate>Allergen</Translate>
-            </HeaderCell>
-            <Cell>
-              {rowData => {
-                if (!allergensListToGetName?.object) {
-                  return 'Loading...';
-                }
-                const getname = allergensListToGetName.object.find(
-                  item => item.key === rowData.allergenKey
-                );
+        <Checkbox
+          checked={!showCanceled}
+          onChange={() => {
+            setShowCanceled(!showCanceled);
+          }}
+        >
+          Show Cancelled
+        </Checkbox>
+        <Checkbox
+          checked={!showPrev}
+          onChange={() => {
+            setShowPrev(!showPrev);
+          }}
+        >
+          Show Previous Allergies
+        </Checkbox>
+        <div className='bt-right'>
+          <MyButton
+            prefixIcon={() => <ReloadIcon />}
+            
+            onClick={() => setOpenDetailsModal(true)}
+          >Add Allergy</MyButton>
+        </div>
+      </div>
+      <Table
+        autoHeight
+        data={allergiesListResponse?.object || []}
+        rowKey="key"
+        expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
+        renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
+        shouldUpdateScroll={false}
+        onRowClick={rowData => {
+          setAllerges(rowData);
+          setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
+        }}
+        rowClassName={isSelected}
+      >
+        <Column width={70}  >
+          <HeaderCell>#</HeaderCell>
+          <ExpandCell
+            rowData={rowData => rowData}
+            dataKey="key"
+            expandedRowKeys={expandedRowKeys}
+            onChange={handleExpanded}
+          />
+        </Column>
 
-                return getname?.allergenName || 'No Name';
-              }}
-            </Cell>
-          </Column>
-          <Column flexGrow={1} fullText>
-            <HeaderCell align="center">
-              <Translate>Severity</Translate>
-            </HeaderCell>
-            <Cell>{rowData => rowData.severityLvalue?.lovDisplayVale}</Cell>
-          </Column>
-          <Column flexGrow={2} fullText>
-            <HeaderCell align="center">
-              <Translate>Certainty type</Translate>
-            </HeaderCell>
-            <Cell>
-              {rowData =>
-                rowData.criticalityLkey
-                  ? rowData.criticalityLvalue.lovDisplayVale
-                  : rowData.criticalityLkey
+        <Column flexGrow={2} fullText>
+          <HeaderCell >
+            <Translate>Allergy Type</Translate>
+          </HeaderCell>
+          <Cell>{rowData => rowData.allergyTypeLvalue?.lovDisplayVale}</Cell>
+        </Column>
+        <Column flexGrow={2} fullText>
+          <HeaderCell >
+            <Translate>Allergen</Translate>
+          </HeaderCell>
+          <Cell>
+            {rowData => {
+              if (!allergensListToGetName?.object) {
+                return 'Loading...';
               }
-            </Cell>
-          </Column>
-          <Column flexGrow={2} fullText>
-            <HeaderCell align="center">
-              <Translate>Onset</Translate>
-            </HeaderCell>
-            <Cell>{rowData => rowData.onsetLvalue?.lovDisplayVale}</Cell>
-          </Column>
-          <Column flexGrow={2} fullText>
-            <HeaderCell align="center">
-              <Translate>Onset Date Time</Translate>
-            </HeaderCell>
-            <Cell>
-              {rowData =>
-                rowData.onsetDate ? new Date(rowData.onsetDate).toLocaleString() : 'Undefind'
-              }
-            </Cell>
-          </Column>
-          <Column flexGrow={2} fullText>
-            <HeaderCell align="center">
-              <Translate>Treatment Strategy</Translate>
-            </HeaderCell>
-            <Cell>{rowData => rowData.treatmentStrategyLvalue?.lovDisplayVale}</Cell>
-          </Column>
-          <Column flexGrow={2} fullText>
-            <HeaderCell align="center">
-              <Translate>Source of information</Translate>
-            </HeaderCell>
-            <Cell>
-              {rowData => rowData.sourceOfInformationLvalue?.lovDisplayVale || 'BY Patient'}
-            </Cell>
-          </Column>
-          <Column flexGrow={2} fullText>
-            <HeaderCell align="center">
-              <Translate>Reaction Description</Translate>
-            </HeaderCell>
-            <Cell>{rowData => rowData.reactionDescription}</Cell>
-          </Column>
-          <Column flexGrow={2} fullText>
-            <HeaderCell align="center">
-              <Translate>Type Of Propensity</Translate>
-            </HeaderCell>
-            <Cell>
-              {rowData =>
-                rowData.typeOfPropensityLkey
-                  ? rowData.typeOfPropensityLvalue.lovDisplayVale
-                  : rowData.typeOfPropensityLkey
-              }
-            </Cell>
-          </Column>
-          <Column flexGrow={1} fullText>
-            <HeaderCell align="center">
-              <Translate>Status</Translate>
-            </HeaderCell>
-            <Cell>{rowData => rowData.statusLvalue?.lovDisplayVale}</Cell>
-          </Column>
-        </Table>
-      </Panel>
+              const getname = allergensListToGetName.object.find(
+                item => item.key === rowData.allergenKey
+              );
+
+              return getname?.allergenName || 'No Name';
+            }}
+          </Cell>
+        </Column>
+        <Column flexGrow={1} fullText>
+          <HeaderCell >
+            <Translate>Severity</Translate>
+          </HeaderCell>
+          <Cell>{rowData => rowData.severityLvalue?.lovDisplayVale}</Cell>
+        </Column>
+        <Column flexGrow={2} fullText>
+          <HeaderCell  >
+            <Translate>Certainty type</Translate>
+          </HeaderCell>
+          <Cell>
+            {rowData =>
+              rowData.criticalityLkey
+                ? rowData.criticalityLvalue.lovDisplayVale
+                : rowData.criticalityLkey
+            }
+          </Cell>
+        </Column>
+        <Column flexGrow={2} fullText>
+          <HeaderCell  >
+            <Translate>Onset</Translate>
+          </HeaderCell>
+          <Cell>{rowData => rowData.onsetLvalue?.lovDisplayVale}</Cell>
+        </Column>
+        <Column flexGrow={2} fullText>
+          <HeaderCell  >
+            <Translate>Onset Date Time</Translate>
+          </HeaderCell>
+          <Cell>
+            {rowData =>
+              rowData.onsetDate ? new Date(rowData.onsetDate).toLocaleString() : 'Undefind'
+            }
+          </Cell>
+        </Column>
+        <Column flexGrow={2} fullText>
+          <HeaderCell  >
+            <Translate>Treatment Strategy</Translate>
+          </HeaderCell>
+          <Cell>{rowData => rowData.treatmentStrategyLvalue?.lovDisplayVale}</Cell>
+        </Column>
+        <Column flexGrow={2} fullText>
+          <HeaderCell  >
+            <Translate>Source of information</Translate>
+          </HeaderCell>
+          <Cell>
+            {rowData => rowData.sourceOfInformationLvalue?.lovDisplayVale || 'BY Patient'}
+          </Cell>
+        </Column>
+        <Column flexGrow={2} fullText>
+          <HeaderCell  >
+            <Translate>Reaction Description</Translate>
+          </HeaderCell>
+          <Cell>{rowData => rowData.reactionDescription}</Cell>
+        </Column>
+        <Column flexGrow={2} fullText>
+          <HeaderCell  >
+            <Translate>Type Of Propensity</Translate>
+          </HeaderCell>
+          <Cell>
+            {rowData =>
+              rowData.typeOfPropensityLkey
+                ? rowData.typeOfPropensityLvalue.lovDisplayVale
+                : rowData.typeOfPropensityLkey
+            }
+          </Cell>
+        </Column>
+        <Column flexGrow={1} fullText>
+          <HeaderCell  >
+            <Translate>Status</Translate>
+          </HeaderCell>
+          <Cell>{rowData => rowData.statusLvalue?.lovDisplayVale}</Cell>
+        </Column>
+      </Table>
+
       <Modal open={openCancellationReasonModel} onClose={CloseCancellationReasonModel} overflow>
         <Modal.Title>
           <Translate>
@@ -886,7 +662,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         <Modal.Body>
           <Form layout="inline" fluid>
             <MyInput
-              width={250}
+              width={200}
               column
               fieldLabel="Cancellation Reason"
               fieldType="textarea"
@@ -894,7 +670,7 @@ const Allergies = ({ edit, patient, encounter }) => {
               height={120}
               record={allerges}
               setRecord={setAllerges}
-              //   disabled={!editing}
+            //   disabled={!editing}
             />
           </Form>
         </Modal.Body>
@@ -949,6 +725,279 @@ const Allergies = ({ edit, patient, encounter }) => {
           </Stack>
         </Modal.Footer>
       </Modal>
+      <MyModal
+        open={openDetailsModal}
+        setOpen={setOpenDetailsModal}
+        title="Add Warning"
+        actionButtonFunction={handleSave}
+        bodyhieght={800}
+        size='700px'
+        position='right'
+        steps={[
+
+          {
+            title: 'Allergy', icon: faPersonDotsFromLine, footer: <MyButton
+
+              onClick={handleClear}
+            >Clear</MyButton>
+          },
+        ]}
+        content={
+
+          <div className={edit?'disabled-panel':""} >
+            <div className="div-parent">
+              <div style={{ flex: 1 }}>
+                <Form layout="inline" fluid>
+                  <MyInput
+                    column
+                    disabled={editing}
+                    width={200}
+                    fieldType="select"
+                    fieldLabel="Allergy Type"
+                    selectData={allergyTypeLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    fieldName={'allergyTypeLkey'}
+                    record={allerges}
+                    setRecord={setAllerges}
+                  />
+                </Form>
+              </div>
+              <div style={{ flex: 1 }}>
+                <Form layout="inline" fluid>
+                <MyInput
+                column
+                disabled={editing}
+                width={200}
+                fieldType="select"
+                fieldLabel="Allergen"
+                selectData={allergensListResponse?.object ?? []}
+                selectDataLabel="allergenName"
+                selectDataValue="key"
+                fieldName={'allergenKey'}
+                record={allerges}
+                setRecord={setAllerges}
+              />
+                </Form>
+              </div>
+              <div style={{ flex: 1 }}>
+                <Form layout="inline" fluid>
+                <MyInput
+                column
+                disabled={editing}
+                width={200}
+                fieldType="select"
+                fieldLabel="Severity"
+                selectData={severityLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                fieldName={'severityLkey'}
+                record={allerges}
+                setRecord={setAllerges}
+              />
+                </Form>
+              </div>
+            
+            </div>
+            <div className="div-parent">
+              <div style={{ flex: 1 }}>
+                <Form layout="inline" fluid>
+                <MyInput
+                column
+                disabled={editing}
+                width={200}
+                fieldType="select"
+                fieldLabel="Criticality"
+                selectData={criticalityLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                fieldName={'criticalityLkey'}
+                record={allerges}
+                setRecord={setAllerges}
+              />
+                </Form>
+              </div>
+              <div style={{ flex: 1 }}>
+                <Form layout="inline" fluid>
+                <MyInput
+                column
+                disabled={editing}
+                width={200}
+                fieldName={'certainty'}
+                record={allerges}
+                setRecord={setAllerges}
+              />
+                </Form>
+              </div>
+              <div style={{ flex: 1 }}>
+                <Form layout="inline" fluid>
+                <MyInput
+                column
+                disabled={editing}
+                width={200}
+                fieldType="select"
+                fieldLabel="Treatment Strategy"
+                selectData={treatmentstrategyLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                fieldName={'treatmentStrategyLkey'}
+                record={allerges}
+                setRecord={setAllerges}
+              />
+                </Form>
+              </div>
+            
+            </div>
+            <div className="div-parent">
+              <div style={{ flex: 1 }}>
+                <Form layout="inline" fluid>
+                <MyInput
+                column
+                disabled={editing}
+                width={200}
+                fieldType="select"
+                fieldLabel="Onset"
+                selectData={onsetLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                fieldName={'onsetLkey'}
+                record={allerges}
+                setRecord={setAllerges}
+              />
+                </Form>
+              </div>
+              <div style={{ flex: 1 }}>
+              <div>
+                <Form className='margin-label'>
+                  <MyLabel  label='Onset Date'/>
+                </Form>
+                
+                <DatePicker
+                className='date-width'
+                  format="MM/dd/yyyy hh:mm aa"
+                  showMeridian
+                  value={selectedOnsetDate}
+                  onChange={handleDateChange}
+                  disabled={editOnset.editdate}
+                />
+              </div>
+              </div>
+              <div style={{ flex: 1 }}>
+                <Form layout="inline" fluid>
+                <MyInput 
+                fieldLabel="Undefined"
+                fieldName="editdate"
+                column
+                width={67}
+                fieldType='checkbox'
+                record={editOnset}
+                setRecord={setEditOnset}
+                />
+                </Form>
+              </div>
+            
+            </div>
+            <div className="div-parent">
+              <div style={{ flex: 1 }}>
+                <Form layout="inline" fluid>
+                <MyInput
+                column
+                disabled={editSourceof.editSource}
+                width={200}
+                fieldType="select"
+                fieldLabel="Source of Information"
+                selectData={sourceofinformationLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                fieldName={'sourceOfInformationLkey'}
+                record={allerges}
+                setRecord={setAllerges}
+              />
+                </Form>
+              </div>
+              <div style={{ flex: 1 }}>
+              <Form layout="inline" fluid>
+                <MyInput 
+                fieldLabel="BY Patient"
+                fieldName="editSource"
+                column
+                width={67}
+                fieldType='checkbox'
+                record={editSourceof}
+                setRecord={seteditSourceof}
+                />
+                </Form>
+              </div>
+              <div style={{ flex: 1 }}>
+                <Form layout="inline" fluid>
+                <MyInput
+                column
+                disabled={editing}
+                width={200}
+                fieldType="select"
+                fieldLabel="Type of Propensity"
+                selectData={allgPropnLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                fieldName={'typeOfPropensityLkey'}
+                record={allerges}
+                setRecord={setAllerges}
+              />
+                </Form>
+              </div>
+            
+            </div>
+            <div className="div-parent">
+            <div style={{ flex: 1 }}>
+            <Form  fluid>
+            <div className='column-div'>
+                <MyInput
+                  column
+                  disabled={editing}
+                  width= '100%'
+                  fieldType="select"
+                  fieldLabel="Allergic Reactions"
+                  selectData={reactionLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  fieldName={'reactionDescription'}
+                  record={allerges}
+                  setRecord={setAllerges}
+                />
+                <Input
+                  as="textarea"
+                  disabled={editing}
+                  onChange={e => setReactionDescription(e)}
+                  value={reactionDescription}
+                  className='fill-width'
+                  rows={3}
+                />
+              </div>
+            </Form>
+            </div>
+            <div style={{ flex: 1 }}>
+            <Form  fluid>
+            <MyInput
+              width= '100%'
+                column
+                fieldLabel="Note"
+                fieldType="textarea"
+                fieldName="notes"
+                height={148}
+                record={allerges}
+                setRecord={setAllerges}
+                disabled={editing}
+              />
+            </Form>
+            </div>
+            </div>
+           
+        
+          </div>
+        }
+
+
+      />
     </div>
   );
 };
