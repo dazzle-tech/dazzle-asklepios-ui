@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Text, VStack, TagGroup, Tag } from 'rsuite';
 import classNames from 'classnames';
 import {
   Container,
@@ -9,22 +8,21 @@ import {
   Nav,
   DOMHelper,
   Stack,
-  Button,
   Divider,
-  Panel
+  Panel,
+  Form
 } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHospital } from '@fortawesome/free-solid-svg-icons';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import NavToggle from './NavToggle';
 import Header from '../Header';
 import NavLink from '../NavLink';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import Logo from '../../images/Logo_BLUE_New.svg';
-import { Breadcrumb } from 'rsuite';
-import Translate from '../Translate';
-import StackItem from 'rsuite/esm/Stack/StackItem';
 import { setScreenKey } from '@/utils/uiReducerActions';
+import MyInput from '../MyInput';
+import './styles.less';
 
 const { getHeight, on } = DOMHelper;
 
@@ -60,6 +58,10 @@ const Frame = (props: FrameProps) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
+  const[recordOfSearchedScreenName, setRecordOfSearchedScreenName] = useState({screen: ""});
+
+ 
+
   useEffect(() => {
     setWindowHeight(getHeight(window));
     const resizeListenner = on(window, 'resize', () => setWindowHeight(getHeight(window)));
@@ -72,6 +74,17 @@ const Frame = (props: FrameProps) => {
   const containerClasses = classNames('page-container', {
     'container-full': !expand
   });
+
+
+   const screenExist: (module: NavItemData) => boolean = (module: NavItemData) => {
+      for(const screen of module?.children ){
+          if(screen.title.includes(recordOfSearchedScreenName['screen'])){
+            return true;
+          }
+      }
+      return false;
+     
+   }
 
   const navBodyStyle: React.CSSProperties = expand
     ? { height: windowHeight - 112, overflow: 'auto' }
@@ -95,7 +108,11 @@ const Frame = (props: FrameProps) => {
                   }}
                   style={{
                     display: 'block',
-                    margin: 'auto',
+                    // margin: 'auto',
+                    //===============back============//
+                    marginLeft: '70px',
+                    marginBottom: "10px",
+                    marginTop: "10px",
                     padding: '0px 0px',
                     cursor: 'pointer'
                   }}
@@ -113,7 +130,7 @@ const Frame = (props: FrameProps) => {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    marginLeft: '35px',
+                    marginLeft: '20px',
                     justifyContent: 'center',
                     padding: '12px 15px',
                     borderRadius: '15px',
@@ -135,14 +152,26 @@ const Frame = (props: FrameProps) => {
                     </div>
                     <div style={{ fontSize: '10px', color: '#777' }}>845 Euclid Avenue, CA</div>
                   </div>
+                  
                 </div>
               )}
+               {expand && (
+              
+                    <Form style={{marginLeft: '20px', marginTop: "10px"}}>
+                      <MyInput fieldName='screen' width= '220px' record={recordOfSearchedScreenName} setRecord={setRecordOfSearchedScreenName} placeholder="Search by Sreen Name" showLabel={false}/>
+                    </Form>
+                 
+               )}
               {navs.map(item => {
                 const { children, ...rest } = item;
-                if (children) {
+                // console.log("mod: " + item.title + " " + screenExist(item));
+                if (children && screenExist(item)) {
+                  console.log("in if " + item.title);
                   return (
-                    <Nav.Menu key={item.eventKey} placement="rightStart" trigger="hover" {...rest}>
+                    <Nav.Menu expanded={false} key={item.eventKey} placement="rightStart" trigger="hover" {...rest}>
+                       <div style={{ maxHeight: !expand ? '600px' : undefined, overflowY: !expand ? 'auto' : undefined }}>
                       {children.map(child => {
+                        if(child.title.includes(recordOfSearchedScreenName['screen'])){
                         return (
                           <NavItem
                             onClick={() => {
@@ -152,7 +181,9 @@ const Frame = (props: FrameProps) => {
                             {...child}
                           />
                         );
+                      }
                       })}
+                      </div>
                     </Nav.Menu>
                   );
                 }
@@ -165,7 +196,7 @@ const Frame = (props: FrameProps) => {
                   );
                 }
 
-                return <NavItem key={rest.eventKey} {...rest} />;
+                // return <NavItem key={rest.eventKey} {...rest} />;
               })}
             </Nav>
           </Sidenav.Body>
@@ -174,8 +205,8 @@ const Frame = (props: FrameProps) => {
       </Sidebar>
 
 
-      <Container className={containerClasses}  >
-        <Header expand={expand} setExpand={setExpand}  />
+      <Container className={containerClasses} >
+        <Header expand={expand} setExpand={setExpand} />
         <Content>
           {/* <Breadcrumb>
             <Breadcrumb.Item onClick={() => navigate('/')}>
@@ -187,6 +218,7 @@ const Frame = (props: FrameProps) => {
               location ? location.pathname.replace('/','') : ''
             }
           </Breadcrumb> */}
+          
           <Stack
             id="fixedInfoBar"
             style={{
