@@ -39,7 +39,7 @@ import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import CheckIcon from '@rsuite/icons/Check';
 import PlusIcon from '@rsuite/icons/Plus';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBroom } from '@fortawesome/free-solid-svg-icons';
+import { faBroom, faFile, faStethoscope, faPen } from '@fortawesome/free-solid-svg-icons';
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import OthersIcon from '@rsuite/icons/Others';
 import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
@@ -57,6 +57,8 @@ import {
 import { useGetPatientDiagnosisQuery } from '@/services/encounterService';
 import { ApPatientDiagnose } from '@/types/model-types';
 import { newApConsultationOrder, newApPatientDiagnose } from '@/types/model-types-constructor';
+import MyButton from '@/components/MyButton/MyButton';
+import MyModal from '@/components/MyModal/MyModal';
 const Consultation = ({ edit, patient, encounter }) => {
   const dispatch = useAppDispatch();
   const [selectedRows, setSelectedRows] = useState([]);
@@ -64,6 +66,7 @@ const Consultation = ({ edit, patient, encounter }) => {
   const [showPrev, setShowPrev] = useState(true);
   const [actionType, setActionType] = useState(null);
   const [editing, setEditing] = useState(false);
+  const [openDetailsMdal, setOpenDetailsModal] = useState(false);
   const [openConfirmDeleteModel, setConfirmDeleteModel] = useState(false);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const { data: consultantSpecialtyLovQueryResponse } =
@@ -81,13 +84,13 @@ const Consultation = ({ edit, patient, encounter }) => {
         const systemDetail = item.systemDetailLvalue
           ? item.systemDetailLvalue.lovDisplayVale
           : item.systemDetailLkey;
-        return `* ${systemDetail}\n${item.notes}`;
+        return `${index + 1} : ${systemDetail}\n note: ${item.notes}`;
       })
       .join('\n') +
-    '\n____________________\n' +
+
     (encounter?.physicalExamNote ?? '');
 
-  console.log(summaryText);
+
 
   const filters = [
     {
@@ -174,7 +177,9 @@ const Consultation = ({ edit, patient, encounter }) => {
     { key: requestedPatientAttacment },
     { skip: !requestedPatientAttacment || !consultationOrders.key }
   );
+  useEffect(() => {
 
+  }, [selectedDiagnose])
   useEffect(() => {
     if (patientDiagnoseListResponse.data?.object?.length > 0) {
       setSelectedDiagnose(patientDiagnoseListResponse?.data?.object[0]?.diagnosisObject);
@@ -287,12 +292,13 @@ const Consultation = ({ edit, patient, encounter }) => {
       dispatch(notify('saved  Successfully'));
       refetchCon()
         .then(() => {
-          console.log('Refetch complete');
+          setOpenDetailsModal(false);
+          handleClear();
         })
         .catch(error => {
           console.error('Refetch failed:', error);
         });
-      handleClear();
+
     } catch (error) {
       dispatch(notify('Save Failed'));
     }
@@ -366,129 +372,18 @@ const Consultation = ({ edit, patient, encounter }) => {
       dispatch(notify('One or more saves failed'));
     }
   };
+  const handelAddNew = () => {
+    handleClear();
+    setOpenDetailsModal(true)
+  }
   return (
     <div>
       <h5>Consultation Order</h5>
       <br />
       <div className={`top-div ${edit ? 'disabled-panel' : ''}`}>
-        <div>
-          <Form layout="inline" fluid>
-            <MyInput
-              column
-              disabled={editing}
-              width={200}
-              fieldType="select"
-              fieldLabel="Consultant Specialty"
-              selectData={consultantSpecialtyLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'consultantSpecialtyLkey'}
-              record={consultationOrders}
-              setRecord={setConsultationOrder}
-            />
-            <MyInput
-              column
-              disabled={editing}
-              width={200}
-              fieldType="select"
-              fieldLabel="City"
-              selectData={cityLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'cityLkey'}
-              record={consultationOrders}
-              setRecord={setConsultationOrder}
-            />
 
-            <MyInput
-              column
-              disabled={editing}
-              width={200}
-              fieldType="select"
-              fieldLabel="Preferred Consultant"
-              fieldName={'preferredConsultantKey'}
-              selectData={practitionerListResponse?.object ?? []}
-              selectDataLabel="practitionerFullName"
-              selectDataValue="key"
-              record={consultationOrders}
-              setRecord={setConsultationOrder}
-            />
-
-            <MyInput
-              column
-              disabled={editing}
-              width={200}
-              fieldType="select"
-              fieldLabel="Consultation Method"
-              selectData={consultationMethodLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'consultationMethodLkey'}
-              record={consultationOrders}
-              setRecord={setConsultationOrder}
-            />
-            <MyInput
-              column
-              disabled={editing}
-              width={200}
-              fieldType="select"
-              fieldLabel="Consultation Type"
-              selectData={consultationTypeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'consultationTypeLkey'}
-              record={consultationOrders}
-              setRecord={setConsultationOrder}
-            />
-          </Form>
-          <br />
-          <Form layout="inline" fluid>
-            <MyInput
-              column
-              width={300}
-              disabled={editing}
-              fieldName="consultationContent"
-              rows={6}
-              fieldType="textarea"
-              record={consultationOrders}
-              setRecord={setConsultationOrder}
-            />
-
-            <MyInput
-              column
-              width={300}
-              disabled={editing}
-              fieldName="notes"
-              rows={6}
-              fieldType="textarea"
-              record={consultationOrders}
-              setRecord={setConsultationOrder}
-            />
-          </Form>
-          <br />
-          <div className="buttons-sect-one">
-            <IconButton
-              color="violet"
-              appearance="primary"
-              onClick={handleSave}
-              // disabled={selectedRows.length === 0}
-              icon={<CheckIcon />}
-            >
-              <Translate>Save</Translate>
-            </IconButton>
-            <Button
-              color="cyan"
-              appearance="primary"
-              style={{ marginLeft: '5px' }}
-              onClick={handleClear}
-            >
-              <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px' }} />
-              <span>Clear</span>
-            </Button>
-          </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', width: '250px' }}>
-          <Form layout="inline" fluid>
+       
+          <div style={{ flex: 1 }}>
             <Text>Diagnose</Text>
             <textarea
               value={
@@ -497,222 +392,374 @@ const Consultation = ({ edit, patient, encounter }) => {
                   : ''
               }
               readOnly
-              rows={3}
-              cols={50}
-              style={{ width: '100%' }}
+              rows={5}
+
+             className='fil-width'
             />
+          </div>
+          <div style={{ flex: 1 }}>
             <Text>Finding Summery</Text>
-            <textarea value={summaryText} readOnly rows={5} cols={50} style={{ width: '100%' }} />
-          </Form>
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
-            {fetchOrderAttachResponse.status != 'uninitialized' && (
-              <Button
-                style={{ marginTop: '20px' }}
-                appearance="link"
-                onClick={() =>
-                  handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)
-                }
-              >
-                Download <FileDownloadIcon style={{ marginLeft: '10px', scale: '1.4' }} />
-              </Button>
-            )}
-            <AttachmentModal
+            <textarea value={summaryText} readOnly rows={5} className='fil-width' />
+          </div>
+
+      
+        
+      </div>
+
+      <div className='bt-div'>
+        <MyButton
+          onClick={handleSubmit}
+          disabled={selectedRows.length === 0}
+          prefixIcon={() => <CheckIcon />}
+        >Submit</MyButton>
+        <MyButton
+          prefixIcon={() => <BlockIcon />}
+          onClick={OpenConfirmDeleteModel}
+          disabled={selectedRows.length === 0}
+        >Cancle</MyButton>
+        <MyButton
+          appearance='ghost'
+          disabled={selectedRows.length === 0}
+          prefixIcon={() => <FontAwesomeIcon icon={faPrint} />}
+        >Print</MyButton>
+
+
+        <Checkbox
+          checked={!showCanceled}
+          onChange={() => {
+            setShowCanceled(!showCanceled);
+          }}
+        >
+          Show Cancelled
+        </Checkbox>
+        <Checkbox
+          checked={!showPrev}
+          onChange={() => {
+            setShowPrev(!showPrev);
+          }}
+        >
+          Show Previous Consultations
+        </Checkbox>
+        <div className='bt-right'>
+          <MyButton
+            onClick={handelAddNew}
+          >Add Consultation</MyButton>
+        </div>
+      </div>
+
+      <div>
+        <Table
+          autoHeight
+          sortColumn={listRequest.sortBy}
+          onSortColumn={(sortBy, sortType) => {
+            if (sortBy)
+              setListRequest({
+                ...listRequest,
+                sortBy,
+                sortType
+              });
+          }}
+
+          data={consultationOrderListResponse?.object ?? []}
+          onRowClick={rowData => {
+            setConsultationOrder(rowData);
+            setEditing(rowData.statusLkey == '164797574082125' ? false : true);
+
+          }}
+          rowClassName={isSelected}
+        >
+          <Column flexGrow={1} fullText>
+            <HeaderCell >
+              <Translate>#</Translate>
+            </HeaderCell>
+            <Cell>
+              {rowData => (
+                <Checkbox
+                  key={rowData.id}
+                  checked={selectedRows.includes(rowData)}
+                  onChange={() => handleCheckboxChange(rowData)}
+                  disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
+                />
+              )}
+            </Cell>
+          </Column>
+          <Column sortable flexGrow={2} fullText>
+            <HeaderCell >
+              <Translate>Consultation Date</Translate>
+            </HeaderCell>
+
+            <Cell>
+              {rowData => (rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : '')}
+            </Cell>
+          </Column>
+
+          <Column flexGrow={2} fullText>
+            <HeaderCell >
+              {/* <Input onChange={e => handleFilterChange('consultantSpecialtyLvalue', e)} /> */}
+              <Translate>Consultant Specialty</Translate>
+            </HeaderCell>
+            <Cell>{rowData => rowData.consultantSpecialtyLvalue?.lovDisplayVale}</Cell>
+          </Column>
+
+          <Column flexGrow={2} fullText>
+            <HeaderCell>
+              {/* <Input onChange={e => handleFilterChange('statusLvalue', e)} /> */}
+              <Translate>Status</Translate>
+            </HeaderCell>
+            <Cell>{rowData => rowData.statusLvalue.lovDisplayVale}</Cell>
+          </Column>
+          <Column flexGrow={2} fullText>
+            <HeaderCell  >
+              {/* <Input onChange={e => handleFilterChange('createdBy', e)} /> */}
+              <Translate>Submitted By</Translate>
+            </HeaderCell>
+            <Cell>{rowData => rowData.createdBy}</Cell>
+          </Column>
+          <Column flexGrow={2} fullText>
+            <HeaderCell  >
+              {/* <Input onChange={e => handleFilterChange('ststusLvalue', e)} /> */}
+              <Translate>Submission Date & Time</Translate>
+            </HeaderCell>
+            <Cell>
+              {rowData =>
+                rowData.submissionDate ? new Date(rowData.submissionDate).toLocaleString() : ''
+              }
+            </Cell>
+          </Column>
+          <Column flexGrow={2} fullText>
+            <HeaderCell  >
+              {/* <Input onChange={e => handleFilterChange('resposeStatusLvalue', e)} /> */}
+              <Translate>Respose Status</Translate>
+            </HeaderCell>
+            <Cell>{rowData => rowData.resposeStatusLvalue?.lovDisplayVale}</Cell>
+          </Column>
+          <Column flexGrow={1}>
+            <HeaderCell  >
+              <Translate>View Response</Translate>
+            </HeaderCell>
+            <Cell align='center'>
+              <MyButton
+                size='xsmall'
+                appearance='subtle'
+                color="var(--primary-gray)"
+              ><OthersIcon /></MyButton>
+
+            </Cell>
+          </Column>
+          <Column flexGrow={1}>
+            <HeaderCell  >
+              <Translate>Attached File</Translate>
+            </HeaderCell>
+            <Cell align='center'>
+              <MyButton
+                size='xsmall'
+                appearance='subtle'
+                color="var(--primary-gray)"
+                onClick={() =>  handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)}><FileDownloadIcon /></MyButton>
+
+            </Cell>
+          </Column>
+          <Column flexGrow={1}>
+            <HeaderCell  >
+              <Translate>Attached File</Translate>
+            </HeaderCell>
+            <Cell align='center'>
+              <MyButton
+                size='xsmall'
+                appearance='subtle'
+                color="var(--primary-gray)"
+                onClick={() => setOpenDetailsModal(true)}><FontAwesomeIcon icon={faPen} /></MyButton>
+            </Cell>
+          </Column>
+        </Table>
+      </div>
+      <Modal open={openConfirmDeleteModel} onClose={CloseConfirmDeleteModel} overflow>
+        <Modal.Title>
+          <Translate>
+            <h6>Confirm Delete</h6>
+          </Translate>
+        </Modal.Title>
+        <Modal.Body>
+          <p>
+            <RemindOutlineIcon
+              
+            />
+            <Translate >
+              Are you sure you want to delete this Consultations?
+            </Translate>
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Stack spacing={2} divider={<Divider vertical />}>
+            <Button appearance="primary" onClick={handleCancle}>
+              Delete
+            </Button>
+            <Button appearance="ghost" color="cyan" onClick={CloseConfirmDeleteModel}>
+              Cancel
+            </Button>
+          </Stack>
+        </Modal.Footer>
+      </Modal>
+      <MyModal
+        open={openDetailsMdal}
+        setOpen={setOpenDetailsModal}
+        title="Consultation Details"
+        actionButtonFunction={handleSave}
+        position='right'
+        size='700px'
+        steps={[
+
+          {
+            title: "Details", icon: faStethoscope,
+            footer:
+              [<MyButton
+                onClick={() => setAttachmentsModalOpen(true)}
+                prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
+              >Attachment File</MyButton>
+                ,
+
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+                onClick={handleClear}
+              >Clear</MyButton>
+              ]
+          },
+        ]}
+
+        content={<div className='basuc-div'>
+          <div className='div-parent' >
+            <div style={{ flex: 1 }} >
+              <Form layout="inline" fluid >
+                <MyInput
+                  column
+                  disabled={editing}
+                  width={200}
+                  fieldType="select"
+                  fieldLabel="Consultant Specialty"
+                  selectData={consultantSpecialtyLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  fieldName={'consultantSpecialtyLkey'}
+                  record={consultationOrders}
+                  setRecord={setConsultationOrder}
+                />
+              </Form>
+            </div>
+            <div style={{ flex: 1 }} >
+              <Form layout="inline" fluid >
+                <MyInput
+                  column
+                  disabled={editing}
+                  width={200}
+                  fieldType="select"
+                  fieldLabel="City"
+                  selectData={cityLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  fieldName={'cityLkey'}
+                  record={consultationOrders}
+                  setRecord={setConsultationOrder}
+                />
+              </Form>
+            </div>
+            <div style={{ flex: 1 }} >
+              <Form layout="inline" >
+
+                <MyInput
+                  column
+                  disabled={editing}
+                  width={200}
+                  fieldType="select"
+                  fieldLabel="Preferred Consultant"
+                  fieldName={'preferredConsultantKey'}
+                  selectData={practitionerListResponse?.object ?? []}
+                  selectDataLabel="practitionerFullName"
+                  selectDataValue="key"
+                  record={consultationOrders}
+                  setRecord={setConsultationOrder}
+                />
+              </Form>
+            </div>
+          </div>
+          <div className='div-parent' >
+            <div style={{ flex: 1 }} >
+              <Form layout="inline" fluid >
+                <MyInput
+                  column
+                  disabled={editing}
+                  width={200}
+                  fieldType="select"
+                  fieldLabel="Consultation Method"
+                  selectData={consultationMethodLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  fieldName={'consultationMethodLkey'}
+                  record={consultationOrders}
+                  setRecord={setConsultationOrder}
+                />
+              </Form>
+            </div>
+            <div style={{ flex: 1 }} >
+              <Form layout="inline" fluid >
+                <MyInput
+                  column
+                  disabled={editing}
+                  width={200}
+                  fieldType="select"
+                  fieldLabel="Consultation Type"
+                  selectData={consultationTypeLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  fieldName={'consultationTypeLkey'}
+                  record={consultationOrders}
+                  setRecord={setConsultationOrder}
+                />
+              </Form>
+            </div>
+            <div style={{ flex: 1 }} ></div>
+          </div>
+          <div className="div-parent">
+            <div style={{ flex: 1 }}>
+              <Form fluid>
+                <MyInput
+                  column
+                  width={'100%'}
+                  disabled={editing}
+                  fieldName="consultationContent"
+                  rows={6}
+                  fieldType="textarea"
+                  record={consultationOrders}
+                  setRecord={setConsultationOrder}
+                />
+
+              </Form>
+            </div>
+            <div style={{ flex: 1 }}>
+              <Form fluid>
+                <MyInput
+                  column
+                  width={'100%'}
+                  disabled={editing}
+                  fieldName="notes"
+                  rows={6}
+                  fieldType="textarea"
+                  record={consultationOrders}
+                  setRecord={setConsultationOrder}
+                />
+              </Form>
+            </div>
+          </div>
+
+        </div>}
+      ></MyModal>
+        <AttachmentModal
               isOpen={attachmentsModalOpen}
               onClose={() => setAttachmentsModalOpen(false)}
               localPatient={consultationOrders}
               attatchmentType={'CONSULTATION_ORDER'}
             />
-          </div>
-        </div>
-      </div>
-      <div className="mid-container-p ">
-        <div>
-          <IconButton
-            color="cyan"
-            appearance="primary"
-            onClick={handleSubmit}
-            icon={<CheckIcon />}
-            disabled={selectedRows.length === 0}
-          >
-            <Translate>Submit</Translate>
-          </IconButton>
-          <IconButton
-            color="cyan"
-            appearance="primary"
-            style={{ marginLeft: '5px' }}
-            icon={<BlockIcon />}
-            onClick={OpenConfirmDeleteModel}
-            disabled={selectedRows.length === 0}
-          >
-            <Translate> Cancle</Translate>
-          </IconButton>
-          <Button
-            color="cyan"
-            appearance="primary"
-            style={{ marginLeft: '5px' }}
-            disabled={selectedRows.length === 0}
-          >
-            <FontAwesomeIcon icon={faPrint} style={{ marginRight: '5px' }} />
-            <span>Print</span>
-          </Button>
-
-          <Checkbox
-            checked={!showCanceled}
-            onChange={() => {
-              setShowCanceled(!showCanceled);
-            }}
-          >
-            Show Cancelled
-          </Checkbox>
-          <Checkbox
-            checked={!showPrev}
-            onChange={() => {
-              setShowPrev(!showPrev);
-            }}
-          >
-            Show Previous Consultations
-          </Checkbox>
-        </div>
-
-        <div>
-          <Table
-            height={400}
-            sortColumn={listRequest.sortBy}
-            onSortColumn={(sortBy, sortType) => {
-              if (sortBy)
-                setListRequest({
-                  ...listRequest,
-                  sortBy,
-                  sortType
-                });
-            }}
-            headerHeight={80}
-            rowHeight={60}
-            bordered
-            cellBordered
-            data={consultationOrderListResponse?.object ?? []}
-            onRowClick={rowData => {
-              setConsultationOrder(rowData);
-              setEditing(rowData.statusLkey == '164797574082125' ? false : true);
-              console.log(requestedPatientAttacment);
-            }}
-            rowClassName={isSelected}
-          >
-            <Column flexGrow={1} fullText>
-              <HeaderCell align="center">
-                <Translate>#</Translate>
-              </HeaderCell>
-              <Cell>
-                {rowData => (
-                  <Checkbox
-                    key={rowData.id}
-                    checked={selectedRows.includes(rowData)}
-                    onChange={() => handleCheckboxChange(rowData)}
-                    disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
-                  />
-                )}
-              </Cell>
-            </Column>
-            <Column sortable flexGrow={2} fullText>
-              <HeaderCell align="center">
-                <Translate>Consultation Date</Translate>
-              </HeaderCell>
-
-              <Cell>
-                {rowData => (rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : '')}
-              </Cell>
-            </Column>
-
-            <Column flexGrow={2} fullText>
-              <HeaderCell align="center">
-                <Input onChange={e => handleFilterChange('consultantSpecialtyLvalue', e)} />
-                <Translate>Consultant Specialty</Translate>
-              </HeaderCell>
-              <Cell>{rowData => rowData.consultantSpecialtyLvalue?.lovDisplayVale}</Cell>
-            </Column>
-
-            <Column flexGrow={2} fullText>
-              <HeaderCell align="center">
-                <Input onChange={e => handleFilterChange('statusLvalue', e)} />
-                <Translate>Status</Translate>
-              </HeaderCell>
-              <Cell>{rowData => rowData.statusLvalue.lovDisplayVale}</Cell>
-            </Column>
-            <Column flexGrow={2} fullText>
-              <HeaderCell align="center">
-                <Input onChange={e => handleFilterChange('createdBy', e)} />
-                <Translate>Submitted By</Translate>
-              </HeaderCell>
-              <Cell>{rowData => rowData.createdBy}</Cell>
-            </Column>
-            <Column flexGrow={2} fullText>
-              <HeaderCell align="center">
-                <Input onChange={e => handleFilterChange('ststusLvalue', e)} />
-                <Translate>Submission Date & Time</Translate>
-              </HeaderCell>
-              <Cell>
-                {rowData =>
-                  rowData.submissionDate ? new Date(rowData.submissionDate).toLocaleString() : ''
-                }
-              </Cell>
-            </Column>
-            <Column flexGrow={2} fullText>
-              <HeaderCell align="center">
-                <Input onChange={e => handleFilterChange('resposeStatusLvalue', e)} />
-                <Translate>Respose Status</Translate>
-              </HeaderCell>
-              <Cell>{rowData => rowData.resposeStatusLvalue?.lovDisplayVale}</Cell>
-            </Column>
-            <Column flexGrow={2}>
-              <HeaderCell align="center">
-                <Translate>View Response</Translate>
-              </HeaderCell>
-              <Cell>
-                <IconButton icon={<OthersIcon />} />
-              </Cell>
-            </Column>
-            <Column flexGrow={2}>
-              <HeaderCell align="center">
-                <Translate>Attached File</Translate>
-              </HeaderCell>
-              <Cell>
-                <IconButton
-                  onClick={() => setAttachmentsModalOpen(true)}
-                  icon={<FileUploadIcon />}
-                />
-              </Cell>
-            </Column>
-          </Table>
-        </div>
-        <Modal open={openConfirmDeleteModel} onClose={CloseConfirmDeleteModel} overflow>
-          <Modal.Title>
-            <Translate>
-              <h6>Confirm Delete</h6>
-            </Translate>
-          </Modal.Title>
-          <Modal.Body>
-            <p>
-              <RemindOutlineIcon
-                style={{ color: '#ffca61', marginRight: '8px', fontSize: '24px' }}
-              />
-              <Translate style={{ fontSize: '24px' }}>
-                Are you sure you want to delete this Consultations?
-              </Translate>
-            </p>
-          </Modal.Body>
-          <Modal.Footer>
-            <Stack spacing={2} divider={<Divider vertical />}>
-              <Button appearance="primary" onClick={handleCancle}>
-                Delete
-              </Button>
-              <Button appearance="ghost" color="cyan" onClick={CloseConfirmDeleteModel}>
-                Cancel
-              </Button>
-            </Stack>
-          </Modal.Footer>
-        </Modal>
-      </div>
     </div>
+
   );
 };
 export default Consultation;
