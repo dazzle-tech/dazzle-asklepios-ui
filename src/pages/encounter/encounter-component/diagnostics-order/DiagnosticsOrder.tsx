@@ -34,7 +34,7 @@ import {
 import {
     faLandMineOn,
 
-  } from '@fortawesome/free-solid-svg-icons';
+} from '@fortawesome/free-solid-svg-icons';
 import {
     useFetchAttachmentQuery,
     useFetchAttachmentLightQuery,
@@ -65,8 +65,10 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { newApDiagnosticOrders, newApDiagnosticOrderTests, newApDiagnosticTest, newApPatientEncounterOrder } from '@/types/model-types-constructor';
 import { isValid } from 'date-fns';
 import { OrderList } from 'primereact/orderlist';
-const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
-    
+import MyButton from '@/components/MyButton/MyButton';
+import MyModal from '@/components/MyModal/MyModal';
+const DiagnosticsOrder = ({ edit, patient, encounter }) => {
+
     const dispatch = useAppDispatch();
     const [showCanceled, setShowCanceled] = useState(true);
     const [order, setOrder] = useState<ApPatientEncounterOrder>({ ...newApPatientEncounterOrder });
@@ -80,12 +82,12 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value:patient.key
+                value: patient.key
             },
             {
                 fieldName: 'visit_key',
                 operator: 'match',
-                value:encounter.key
+                value: encounter.key
             }
         ]
     });
@@ -95,12 +97,12 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value:patient.key
+                value: patient.key
             },
             {
                 fieldName: 'visit_key',
                 operator: 'match',
-                value:encounter.key
+                value: encounter.key
             },
             {
                 fieldName: 'is_valid',
@@ -110,14 +112,14 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
         ]
     });
     const [orders, setOrders] = useState<ApDiagnosticOrders>({ ...newApDiagnosticOrders });
-    const [orderTest, setOrderTest] = useState<ApDiagnosticOrderTests>({ ...newApDiagnosticOrderTests,processingStatusLkey:'6055029972709625' });
+    const [orderTest, setOrderTest] = useState<ApDiagnosticOrderTests>({ ...newApDiagnosticOrderTests, processingStatusLkey: '6055029972709625' });
     const [listOrdersTestRequest, setListOrdersTestRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value:patient.key
+                value: patient.key
             },
             {
                 fieldName: 'order_key',
@@ -131,12 +133,12 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
             }
         ]
     });
-    const [receivedType,setReceivedType]=useState("");
+    const [receivedType, setReceivedType] = useState("");
     const [selectedRows, setSelectedRows] = useState([]);
     const { data: testsList } = useGetDiagnosticsTestListQuery(listTestRequest);
     const { data: ordersList, refetch: ordersRefetch } = useGetDiagnosticOrderQuery(listOrdersRequest);
     const { data: orderTestList, refetch: orderTestRefetch } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
-    const {data:receivedLabList}=useGetDepartmentListByTypeQuery(receivedType)
+    const { data: receivedLabList } = useGetDepartmentListByTypeQuery(receivedType)
     const [saveOrders, saveOrdersMutation] = useSaveDiagnosticOrderMutation();
     const [saveOrderTests, saveOrderTestsMutation] = useSaveDiagnosticOrderTestMutation();
     const [openDetailsModel, setOpenDetailsModel] = useState(false);
@@ -187,23 +189,23 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
     }, [ordersList]);
     useEffect(() => {
 
-        if(test?.testTypeLkey=='862810597620632'){
+        if (test?.testTypeLkey == '862810597620632') {
             setReceivedType('5673990729647007');
 
         }
-        else if(test?.testTypeLkey=='862828331135792'){
+        else if (test?.testTypeLkey == '862828331135792') {
             setReceivedType('5673990729647008');
         }
-        else if(test?.testTypeLkey=='862842242812880'){
+        else if (test?.testTypeLkey == '862842242812880') {
             setReceivedType('5673990729647009');
         }
         else {
             setReceivedType('');
         }
     }, [test]);
-    useEffect(()=>{
+    useEffect(() => {
         console.log(receivedType)
-    },[receivedType])
+    }, [receivedType])
     useEffect(() => {
         if (searchKeyword.trim() !== "") {
             setListRequest(
@@ -231,12 +233,12 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                 {
                     fieldName: 'patient_key',
                     operator: 'match',
-                    value:patient.key
+                    value: patient.key
                 },
                 {
                     fieldName: 'visit_key',
                     operator: 'match',
-                    value:encounter.key
+                    value: encounter.key
                 },
                 {
                     fieldName: 'is_valid',
@@ -252,7 +254,7 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value:patient.key
+                value: patient.key
             },
             {
                 fieldName: 'order_key',
@@ -415,16 +417,16 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
     const handleItemClick = async (test) => {
 
         try {
-            
+
             await saveOrderTests({
                 ...ordersList,
-                patientKey:patient.key,
-                visitKey:encounter.key,
+                patientKey: patient.key,
+                visitKey: encounter.key,
                 orderKey: orders.key,
                 testKey: test.key,
                 statusLkey: "164797574082125",
-                processingStatusLkey:'6055029972709625',
-                orderTypeLkey:test.testTypeLkey
+                processingStatusLkey: '6055029972709625',
+                orderTypeLkey: test.testTypeLkey
 
 
             }).unwrap();
@@ -454,10 +456,10 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                 const response = await saveOrders({
                     ...newApDiagnosticOrders,
                     patientKey: patient.key,
-                    visitKey:encounter.key,
+                    visitKey: encounter.key,
                     statusLkey: "164797574082125",
-                    labStatusLkey:"6055029972709625",
-                    radStatusLkey:"6055029972709625",
+                    labStatusLkey: "6055029972709625",
+                    radStatusLkey: "6055029972709625",
                 });
 
 
@@ -486,7 +488,7 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
             dispatch(notify('submetid  Successfully'));
             ordersRefetch();
             orderTestRefetch();
-           
+
 
         }
         catch (error) {
@@ -497,12 +499,12 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
             saveOrderTests({ ...item, statusLkey: "1804482322306061", submitDate: Date.now() })
         })
         setIsDraft(false);
-      
+
         await ordersRefetch();
-        
-       orderTestRefetch().then(() => "");
-       setOrders({...newApDiagnosticOrders});
-          
+
+        orderTestRefetch().then(() => "");
+        setOrders({ ...newApDiagnosticOrders });
+
 
 
     }
@@ -533,19 +535,9 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
     return (
         <>
             <div style={{ marginLeft: '10px', padding: '5px' }}>
-            <Whisper
-                                            placement="top"
-                                            trigger="hover"
-                                            speaker={<Tooltip>Urgent</Tooltip>}
-                                          >
-                                            <FontAwesomeIcon
-                                              icon={faLandMineOn}
-                                              onClick={()=>setOrders({...orders,isUrgent:true})}
-                                              style={{  marginRight: 10, color:orders.isUrgent? 'red':"grey"}}
-                                            />
-                                          </Whisper>
+            
                 <Row style={{ paddingTop: '10px' }}>
-                      
+
                     <Col xs={6}>
                         <SelectPicker
 
@@ -563,20 +555,47 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
 
                         />
                     </Col>
-                    <Col xs={8}>   <Text>Current Orders ID : {orders.orderId}</Text></Col>
+                    <Col xs={8}><Text> Order # {orders.orderId}</Text>
+                    </Col>
                     <Col xs={2}>
-                    <Form fluid layout='inline' >
-                        <MyInput
-                        disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
-                        column
-                        fieldType='checkbox'
-                        fieldName={'isUrgent'}
-                        record={orders}
-                        setRecord={setOrders}
+                    <Row> {orders.key && orders.statusLkey !== '1804482322306061' ? (
+                    <Whisper
+                        placement="top"
+                        trigger="hover"
+                        speaker={<Tooltip>Urgent</Tooltip>}
+                    >
+                        <FontAwesomeIcon
+                            icon={faLandMineOn}
+                            onClick={() =>
+                                setOrders({ ...orders, isUrgent: !orders.isUrgent })
+                            }
+                            style={{
+                                
+                                color: orders.isUrgent ? 'red' : 'grey',
+                                cursor: 'pointer',
+                            }}
                         />
-
-                        
-                        </Form></Col>
+                    </Whisper>
+                ) : (
+                    <FontAwesomeIcon
+                        icon={faLandMineOn}
+                        style={{
+                           
+                            color: 'grey',
+                            opacity: 0.5,
+                            cursor: 'not-allowed',
+                        }}
+                    />
+                )}</Row>
+                   <Row>
+                   <MyButton
+                          appearance="subtle"
+                          size='small'
+                          onClick={handleSaveOrders}
+                          disabled={isdraft}
+                          ><PlusIcon /></MyButton>
+                   </Row>
+                </Col>
                     <Col xs={3} >
                         {
                             !isdraft &&
@@ -616,20 +635,7 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                             <Translate>Submit</Translate>
                         </IconButton>
                     </Col>
-                    <Col xs={3}>
-
-                        <IconButton
-                            color="cyan"
-                            appearance="ghost"
-                            onClick={handleSaveOrders}
-                            disabled={isdraft}
-                            style={{ marginLeft: 'auto' }}
-                            // className={edit ? "disabled-panel" : ""}
-                            icon={<PlusIcon />}
-                        >
-                            <Translate>New Order</Translate>
-                        </IconButton>
-                    </Col>
+               
                 </Row>
                 <Row>
                     <Divider />
@@ -638,7 +644,7 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                     <Col xs={24}>
                         <div className='top-container'>
 
-                            <div className='form-search-container '>
+                          
                                 <Form>
                                     <Text>Add test</Text>
                                     <InputGroup inside className='input-search'>
@@ -667,7 +673,16 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                                             ))}
                                         </Dropdown.Menu>
                                     )}
-                                    <Checkbox
+                                 
+
+                                </Form>
+
+                         
+
+                            <div className='space-container'></div>
+
+                            <div className="buttons-sect">
+                            <Checkbox
                                         checked={!showCanceled}
                                         disabled={orders.key == null}
                                         onChange={() => {
@@ -678,24 +693,12 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                                     >
                                         Show canceled test
                                     </Checkbox>
-
-                                </Form>
-
-                            </div>
-
-                            <div className='space-container'></div>
-
-                            <div className="buttons-sect">
-
-                                <IconButton
-                                    color="cyan"
-                                    appearance="primary"
-                                    onClick={OpenConfirmDeleteModel}
-                                    icon={<CloseOutlineIcon />}
+                                    <MyButton
                                     disabled={orders.key !== null ? selectedRows.length === 0 : true}
-                                >
-                                    <Translate>Cancel</Translate>
-                                </IconButton>
+                                    prefixIcon={()=><CloseOutlineIcon />}
+                                    onClick={OpenConfirmDeleteModel}
+                                    >Cancel</MyButton>
+                              
 
 
                             </div>
@@ -717,13 +720,13 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                                 sortType
                             });
                     }}
-                   
+
 
                     data={orderTestList?.object ?? []}
                     onRowClick={rowData => {
                         setOrderTest(rowData);
                         setTest(rowData.test);
-                      
+
                     }}
                     rowClassName={isSelected}
                 >
@@ -824,7 +827,7 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                             <Translate> Processing Status</Translate>
                         </HeaderCell>
                         <Cell  >
-                            {rowData => rowData. processingStatusLvalue? rowData.processingStatusLvalue?.lovDisplayVale:rowData.processingStatusLkey}
+                            {rowData => rowData.processingStatusLvalue ? rowData.processingStatusLvalue?.lovDisplayVale : rowData.processingStatusLkey}
                         </Cell>
                     </Column>
                     <Column flexGrow={2} fullText>
@@ -871,6 +874,12 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                     </Column>
                 </Table>
             </Row>
+            <MyModal
+            open={openDetailsModel}
+            setOpen={setOpenDetailsModel}
+            title={"Test Details"}
+            
+            />
             <Modal open={openDetailsModel} onClose={CloseDetailsModel} overflow>
                 <Modal.Title>
                     <Translate>Add Test Details</Translate>
@@ -880,16 +889,16 @@ const DiagnosticsOrder = ({ edit ,patient,encounter}) => {
                         <div>
                             <Form layout="inline" fluid>
                                 <Input
-                                  style={{width:150}}
+                                    style={{ width: 150 }}
                                     disabled={true}
-                                  
+
                                     value={test?.testTypeLvalue?.lovDisplayVale}
                                 />
 
                                 <Input
 
                                     disabled={true}
-                                    style={{width:150}}
+                                    style={{ width: 150 }}
                                     value={test?.testName}
                                 />
 
