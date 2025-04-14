@@ -12,7 +12,7 @@ const MyButton = ({
     ,onClick=()=>{}, 
    
     appearance = "primary"  as Appearance,
-    size='medium',
+    size='small',
    
 
     ...props 
