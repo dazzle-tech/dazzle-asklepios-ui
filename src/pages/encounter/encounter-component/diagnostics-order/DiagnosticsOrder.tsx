@@ -887,7 +887,6 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                 title="Add Test Details"
                 actionButtonFunction={handleSaveTest}
                 position='right'
-                size='700px'
                 steps={[
 
                     {
@@ -901,8 +900,8 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                 ]}
                 content={<>
                     <div className='div-parent'>
-                        <div style={{ display: 'flex1' }} disabled={orderTest.statusLkey !== '164797574082125'}>
-                            <Form layout="inline" fluid>
+                        <div style={{flex:1 }} >
+                            <Form layout="inline" fluid disabled={orderTest.statusLkey !== '164797574082125'}>
                                 <MyInput
                                     column
 
@@ -918,8 +917,8 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                                 />
                             </Form>
                         </div>
-                        <div style={{ display: 'flex1' }} disabled={orderTest.statusLkey !== '164797574082125'}>
-                            <Form layout="inline" fluid>
+                        <div style={{flex:1 }} >
+                            <Form layout="inline" fluid disabled={orderTest.statusLkey !== '164797574082125'}>
                                 <MyInput
                                     column
 
@@ -935,8 +934,8 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                                 />
                             </Form>
                         </div>
-                        <div style={{ display: 'flex1' }} disabled={orderTest.statusLkey !== '164797574082125'}>
-                            <Form layout="inline" fluid>
+                        <div style={{flex:1 }} >
+                            <Form layout="inline" fluid disabled={orderTest.statusLkey !== '164797574082125'}>
                                 <MyInput
                                     column
 

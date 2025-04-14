@@ -457,6 +457,7 @@ const Warning = ({ edit, patient, encounter }) => {
       
       <div className='bt-div'>
         <MyButton
+         disabled={warning.key?warning?.statusLkey == '3196709905099521' ? true : false:true}
           prefixIcon={() => <CloseOutlineIcon />}
           onClick={OpenCancellationReasonModel}
         >Cancel</MyButton>
@@ -492,7 +493,7 @@ const Warning = ({ edit, patient, encounter }) => {
         <div className='bt-right'>
         <MyButton
           prefixIcon={() => <ReloadIcon />}
-          disabled={warning?.statusLkey != '9766179572884232' ? true : false}
+          
           onClick={() => setOpenDetailsModal(true)}
         >Add Warning</MyButton>
         </div>
