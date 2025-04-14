@@ -753,9 +753,6 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
               expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
               renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
               shouldUpdateScroll={false}
-              bordered
-              cellBordered
-
             >
               <Column width={70} align="center">
                 <HeaderCell>#</HeaderCell>

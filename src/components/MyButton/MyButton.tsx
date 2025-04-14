@@ -12,8 +12,8 @@ const MyButton = ({
     ,onClick=()=>{}, 
    
     appearance = "primary"  as Appearance,
-    size='medium',
-    disabled=false,
+    size='small',
+   
 
     ...props 
 }) => {
