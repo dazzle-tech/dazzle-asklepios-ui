@@ -33,7 +33,9 @@ import {
 } from '@/services/setupService';
 import {
     faLandMineOn,
-
+    faVials,
+    faFile,
+    faPen
 } from '@fortawesome/free-solid-svg-icons';
 import {
     useFetchAttachmentQuery,
@@ -446,9 +448,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         }
     };
     const handleSaveOrders = async () => {
-        // handleCleare();
-        // setPreKey(null);
-        // setPrescription(null);
+
 
         if (patient && encounter) {
             try {
@@ -535,175 +535,177 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
     return (
         <>
             <div style={{ marginLeft: '10px', padding: '5px' }}>
-            
-                <Row style={{ paddingTop: '10px' }}>
+                <div className='top-container'>
 
-                    <Col xs={6}>
-                        <SelectPicker
+                    <SelectPicker
 
-                            style={{ width: '100%' }}
-                            data={filteredOrders ?? []}
-                            labelKey="orderId"
-                            valueKey="key"
-                            placeholder="orders"
+                        style={{ width:250 }}
+                        data={filteredOrders ?? []}
+                        labelKey="orderId"
+                        valueKey="key"
+                        placeholder="orders"
 
-                            value={orders.key ?? null}
-                            onChange={(value) => {
-                                const selectedItem = filteredOrders.find(item => item.key === value) || newApDiagnosticOrders;
-                                setOrders(selectedItem);
-                            }}
-
-                        />
-                    </Col>
-                    <Col xs={8}><Text> Order # {orders.orderId}</Text>
-                    </Col>
-                    <Col xs={2}>
-                    <Row> {orders.key && orders.statusLkey !== '1804482322306061' ? (
-                    <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>Urgent</Tooltip>}
-                    >
-                        <FontAwesomeIcon
-                            icon={faLandMineOn}
-                            onClick={() =>
-                                setOrders({ ...orders, isUrgent: !orders.isUrgent })
-                            }
-                            style={{
-                                
-                                color: orders.isUrgent ? 'red' : 'grey',
-                                cursor: 'pointer',
-                            }}
-                        />
-                    </Whisper>
-                ) : (
-                    <FontAwesomeIcon
-                        icon={faLandMineOn}
-                        style={{
-                           
-                            color: 'grey',
-                            opacity: 0.5,
-                            cursor: 'not-allowed',
+                        value={orders.key ?? null}
+                        onChange={(value) => {
+                            const selectedItem = filteredOrders.find(item => item.key === value) || newApDiagnosticOrders;
+                            setOrders(selectedItem);
                         }}
+
                     />
-                )}</Row>
-                   <Row>
-                   <MyButton
-                          appearance="subtle"
-                          size='small'
-                          onClick={handleSaveOrders}
-                          disabled={isdraft}
-                          ><PlusIcon /></MyButton>
-                   </Row>
-                </Col>
-                    <Col xs={3} >
+                    <div className='form-search-container'>
+                    <Text> Order # {orders.orderId}</Text>
+                    <div>
+                    {orders.key && orders.statusLkey !== '1804482322306061' ? (
+                            <Whisper
+                                placement="top"
+                                trigger="hover"
+                                speaker={<Tooltip>Urgent</Tooltip>}
+                            >
+                                <FontAwesomeIcon
+                                    icon={faLandMineOn}
+                                    onClick={() =>
+                                        setOrders({ ...orders, isUrgent: !orders.isUrgent })
+                                    }
+                                    style={{
+
+                                        color: orders.isUrgent ? 'red' : 'grey',
+                                        cursor: 'pointer',
+                                    }}
+                                />
+                            </Whisper>
+                        ) : (
+                            <Whisper
+                            placement="top"
+                            trigger="hover"
+                            speaker={<Tooltip>Urgent</Tooltip>}
+                        >
+                            <FontAwesomeIcon
+                                icon={faLandMineOn}
+                                style={{
+
+                                    color: 'grey',
+                                    opacity: 0.5,
+                                    cursor: 'not-allowed',
+                                }}
+                            />
+                             </Whisper>
+                        )}
+                 
+                        <MyButton
+                            appearance="subtle"
+                            size='small'
+                            onClick={handleSaveOrders}
+                            disabled={isdraft}
+                        ><PlusIcon /></MyButton>
+                  
+                    </div>
+                    </div>
+                    
+                    <div className='buttons-sect'>
+             
+                        
+                            <MyButton
+                            onClick={handleSubmitPres}
+                            disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
+                            prefixIcon={()=><CheckIcon />}
+                        >
+                            <Translate>Submit</Translate>
+                        </MyButton>
+                    
+
                         {
                             !isdraft &&
-                            <IconButton
-                                color="cyan"
-                                appearance="primary"
+                            <MyButton
                                 onClick={saveDraft}
-                                icon={<DocPassIcon />}
+                                postfixIcon={()=><DocPassIcon />}
                                 disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
                             >
                                 <Translate> Save draft</Translate>
-                            </IconButton>
+                            </MyButton>
 
                         }
                         {
                             isdraft &&
-                            <IconButton
-                                color="red"
-                                appearance="primary"
+                            <MyButton
+                                appearance="ghost"
                                 onClick={cancleDraft}
-                                icon={<DocPassIcon />}
+                                postfixIcon={()=><DocPassIcon />}
                                 disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
                             >
                                 <Translate> Cancle draft </Translate>
-                            </IconButton>
+                            </MyButton>
 
-                        }</Col>
-
-                    <Col xs={2}>
-                        <IconButton
-                            color="cyan"
-                            appearance="primary"
-                            onClick={handleSubmitPres}
-                            disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
-                            icon={<CheckIcon />}
-                        >
-                            <Translate>Submit</Translate>
-                        </IconButton>
-                    </Col>
+                        }
+                    </div>
+                </div>
                
-                </Row>
                 <Row>
                     <Divider />
                 </Row>
                 <Row>
-                    <Col xs={24}>
-                        <div className='top-container'>
 
-                          
-                                <Form>
-                                    <Text>Add test</Text>
-                                    <InputGroup inside className='input-search'>
-                                        <Input
-                                            disabled={orders.key == null}
-                                            placeholder={'Search Test '}
-                                            value={searchKeyword}
-                                            onChange={handleSearch}
-                                        />
-                                        <InputGroup.Button>
-                                            <SearchIcon />
-                                        </InputGroup.Button>
-                                    </InputGroup>
-                                    {searchKeyword && (
-                                        <Dropdown.Menu className="dropdown-menuresult">
-                                            {testsList && testsList?.object?.map(test => (
-                                                <Dropdown.Item
-                                                    key={test.key}
-                                                    eventKey={test.key}
-                                                    onClick={() => handleItemClick(test)}
+                    <div className='top-container'>
 
-                                                >
-                                                    <span style={{ marginRight: "19px" }}>{test.testName}</span>
-                                                    <span>{test?.testTypeLvalue?.lovDisplayVale}</span>
-                                                </Dropdown.Item>
-                                            ))}
-                                        </Dropdown.Menu>
-                                    )}
-                                 
 
-                                </Form>
+                        <Form>
+                            <Text>Add test</Text>
+                            <InputGroup inside className='input-search'>
+                                <Input
+                                    disabled={orders.key == null}
+                                    placeholder={'Search Test '}
+                                    value={searchKeyword}
+                                    onChange={handleSearch}
+                                />
+                                <InputGroup.Button>
+                                    <SearchIcon />
+                                </InputGroup.Button>
+                            </InputGroup>
+                            {searchKeyword && (
+                                <Dropdown.Menu className="dropdown-menuresult">
+                                    {testsList && testsList?.object?.map(test => (
+                                        <Dropdown.Item
+                                            key={test.key}
+                                            eventKey={test.key}
+                                            onClick={() => handleItemClick(test)}
 
-                         
+                                        >
+                                            <span style={{ marginRight: "19px" }}>{test.testName}</span>
+                                            <span>{test?.testTypeLvalue?.lovDisplayVale}</span>
+                                        </Dropdown.Item>
+                                    ))}
+                                </Dropdown.Menu>
+                            )}
 
-                            <div className='space-container'></div>
 
-                            <div className="buttons-sect">
+                        </Form>
+
+
+
+
+
+                        <div className="buttons-sect">
                             <Checkbox
-                                        checked={!showCanceled}
-                                        disabled={orders.key == null}
-                                        onChange={() => {
+                                checked={!showCanceled}
+                                disabled={orders.key == null}
+                                onChange={() => {
 
 
-                                            setShowCanceled(!showCanceled);
-                                        }}
-                                    >
-                                        Show canceled test
-                                    </Checkbox>
-                                    <MyButton
-                                    disabled={orders.key !== null ? selectedRows.length === 0 : true}
-                                    prefixIcon={()=><CloseOutlineIcon />}
-                                    onClick={OpenConfirmDeleteModel}
-                                    >Cancel</MyButton>
-                              
+                                    setShowCanceled(!showCanceled);
+                                }}
+                            >
+                                Show canceled test
+                            </Checkbox>
+                            <MyButton
+                                disabled={orders.key !== null ? selectedRows.length === 0 : true}
+                                prefixIcon={() => <CloseOutlineIcon />}
+                                onClick={OpenConfirmDeleteModel}
+                            >Cancel</MyButton>
 
 
-                            </div>
-                        </div >
-                    </Col>
+
+                        </div>
+                    </div >
+
                 </Row>
             </div>
             <Row >   </Row>
@@ -869,18 +871,105 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                             <Translate>Add details</Translate>
                         </HeaderCell>
                         <Cell  >
-                            <IconButton onClick={OpenDetailsModel} icon={<OthersIcon />} />
+                            <MyButton
+                            size='xsmall'
+                            appearance='subtle'
+                            color="var(--primary-gray)"
+                            onClick={OpenDetailsModel}><FontAwesomeIcon icon={faPen} /></MyButton>
+                          
                         </Cell>
                     </Column>
                 </Table>
             </Row>
             <MyModal
-            open={openDetailsModel}
-            setOpen={setOpenDetailsModel}
-            title={"Test Details"}
-            
+                open={openDetailsModel}
+                setOpen={setOpenDetailsModel}
+                title="Add Test Details"
+                actionButtonFunction={handleSaveTest}
+                position='right'
+                size='700px'
+                steps={[
+
+                    {
+                        title: (test?.testTypeLvalue?.lovDisplayVale || '') + ' - ' + (test?.testName || ''), icon: faVials,
+                        footer:
+                            <MyButton
+                                onClick={() => setAttachmentsModalOpen(true)}
+                                prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
+                            >Attachment File</MyButton>
+                    },
+                ]}
+                content={<>
+                    <div className='div-parent'>
+                        <div style={{ display: 'flex1' }} disabled={orderTest.statusLkey !== '164797574082125'}>
+                            <Form layout="inline" fluid>
+                                <MyInput
+                                    column
+
+                                    width={200}
+                                    fieldType="select"
+                                    fieldLabel="Order Priority"
+                                    selectData={orderPriorityLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName={'priorityLkey'}
+                                    record={orderTest}
+                                    setRecord={setOrderTest}
+                                />
+                            </Form>
+                        </div>
+                        <div style={{ display: 'flex1' }} disabled={orderTest.statusLkey !== '164797574082125'}>
+                            <Form layout="inline" fluid>
+                                <MyInput
+                                    column
+
+                                    width={200}
+                                    fieldType="select"
+                                    fieldLabel="Reason"
+                                    selectData={ReasonLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName={'reasonLkey'}
+                                    record={orderTest}
+                                    setRecord={setOrderTest}
+                                />
+                            </Form>
+                        </div>
+                        <div style={{ display: 'flex1' }} disabled={orderTest.statusLkey !== '164797574082125'}>
+                            <Form layout="inline" fluid>
+                                <MyInput
+                                    column
+
+                                    width={200}
+                                    fieldType="select"
+                                    fieldLabel="Received Lab"
+                                    selectData={receivedLabList?.object ?? []}
+                                    selectDataLabel="name"
+                                    selectDataValue="key"
+                                    fieldName={'receivedLabKey'}
+                                    record={orderTest}
+                                    setRecord={setOrderTest}
+                                />
+                            </Form>
+                        </div>
+
+                    </div>
+                    <div>
+                        <Form fluid disabled={orderTest.statusLkey !== '164797574082125'}>
+                            <MyInput
+                                column
+                                rows={5}
+                                width={'100%'}
+
+                                fieldName={'notes'}
+                                record={orderTest}
+                                setRecord={setOrderTest}
+                            />
+                        </Form>
+                    </div>
+                </>}
             />
-            <Modal open={openDetailsModel} onClose={CloseDetailsModel} overflow>
+            {/* <Modal open={openDetailsModel} onClose={CloseDetailsModel} overflow>
                 <Modal.Title>
                     <Translate>Add Test Details</Translate>
                 </Modal.Title>
@@ -996,9 +1085,9 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                         </Button>
                     </Stack>
                 </Modal.Footer>
-            </Modal>
+            </Modal> */}
 
-
+            <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={order} attatchmentType={'ORDER_ATTACHMENT'} />
             <Modal open={openConfirmDeleteModel} onClose={CloseConfirmDeleteModel} overflow  >
                 <Modal.Title>
                     <Translate><h6>Confirm Delete</h6></Translate>

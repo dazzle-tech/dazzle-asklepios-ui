@@ -13,7 +13,7 @@ const MyButton = ({
    
     appearance = "primary"  as Appearance,
     size='medium',
-    disabled=false,
+   
 
     ...props 
 }) => {
