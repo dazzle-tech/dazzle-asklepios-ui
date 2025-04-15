@@ -20,8 +20,6 @@ const DeletionConfirmationModal = ({
         onClose={() => setOpen(false)}
         size="450px"
         className='delete-modal'
-        
-
       >
         <Modal.Header>
           <div className="delete-circle-wrapper">
@@ -37,7 +35,7 @@ const DeletionConfirmationModal = ({
         </Modal.Body>
         <Modal.Footer className='footer-delete-modal'>
           <MyButton appearance={'subtle'} color="var(--dark-blue-gray)" onClick={() => setOpen(false)}>Cancel</MyButton>
-          <MyButton backgroundColor="var(--primary-pink)" onClick={() => setOpen(false)}>Delete</MyButton>
+          <MyButton backgroundColor="var(--primary-pink)" onClick={actionButtonFunction}>Delete</MyButton>
         </Modal.Footer>
       </Modal>
     </>
