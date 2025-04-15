@@ -88,8 +88,6 @@ const SignIn = () => {
   }
  
   useEffect(() => {
-    console.log(newPassword)
-    console.log(newPasswordConfirm)
     setErrText(" ")
  
   }, [newPassword, newPasswordConfirm])

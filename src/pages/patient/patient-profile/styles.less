@@ -1,51 +1,166 @@
 .input-container {
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-    transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
-    opacity: 0;
-  }
-  
-  .input-container.show {
-    opacity: 1;
-  }
-  
-  .input-container.hide {
-    opacity: 0;
-  }
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  opacity: 0;
+}
 
-  .clickedInputs{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
+.input-container.show {
+  opacity: 1;
+}
+
+.input-container.hide {
+  opacity: 0;
+}
+
+.clickedInputs {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 .my-table-row:hover {
-    background-color: #f0f0f0; 
+  background-color: #f0f0f0;
 }
 
 .my-table-row-primary {
-    background-color: #e6f0ff; 
+  background-color: #e6f0ff;
 }
 .react-tabs__tab--selected {
-  border-bottom:2px solid #a8cce5 !important;
- }
- .react-tabs__tab {
-   background-color: white;
-   border-radius: 0px !important;
- }
- .react-tabs__tab--selected {
-   background: #fff;
-   border-color: #aaa;
-   color: black;
-   border-radius: 5px 5px 0 0;
- }
- .react-tabs__tab {
-   display: inline-block;
-   border: 1px solid transparent;
-   border-bottom: none;
-   bottom: -1px;
-   position: relative;
-   list-style: none;
-   padding: 6px 12px;
-   cursor: pointer;
- }
+  border-bottom: 2px solid #a8cce5 !important;
+}
+.react-tabs__tab {
+  background-color: white;
+  border-radius: 0px !important;
+}
+.react-tabs__tab--selected {
+  background: #fff;
+  border-color: #aaa;
+  color: black;
+  border-radius: 5px 5px 0 0;
+}
+.react-tabs__tab {
+  display: inline-block;
+  border: 1px solid transparent;
+  border-bottom: none;
+  bottom: -1px;
+  position: relative;
+  list-style: none;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.patient-profile-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  height: 93vh;
+  max-height: 100%;
+}
+
+.profile-sidebar-container {
+  width: 56px;
+  height: 93vh;
+
+  &.expanded {
+    width: 300px;
+  }
+  .sidebar-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 15px 10px;
+    width: 100%;
+
+    .rs-panel-header {
+      text-align: left;
+      width: 100%;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    .rs-panel-body {
+      width: 100%;
+    }
+
+    .expand-sidebar {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+    }
+  }
+
+  .patient-list {
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+    gap: 15px;
+
+    .actions-button {
+      background: none;
+      svg {
+        color: var(--icon-gray);
+      }
+    }
+  }
+}
+.profile-sidebar {
+  background: #fff !important;
+  border: 1px solid #e8e9eb;
+  border-radius: 8px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 93vh !important;
+
+  .rs-sidenav.profile-sidenav {
+    border-top: none;
+  }
+
+  .patient-search-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+}
+
+.patient-profile-info {
+  width: 100%;
+  height: 100%;
+
+  &.expanded {
+    width: calc(100% - 300px);
+  }
+}
+
+.rs-btn.user-search-btn {
+  background: none;
+  padding: 10px;
+
+  &:hover,
+  &:focus {
+    background: none;
+    svg {
+      g {
+        fill: var(--primary-blue);
+      }
+    }
+  }
+
+  svg {
+    width: 35px;
+    height: 35px;
+  }
+}
+
+.patient-info-tabs {
+  .rs-nav {
+    overflow: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}

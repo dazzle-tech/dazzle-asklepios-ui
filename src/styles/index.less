@@ -95,7 +95,7 @@ body {
 }
 
 .selected-row .rs-table-cell {
-  background-color: #34d6ff7a !important;
+  background-color: rgba(#2264E5, 0.10) !important;
 }
 
 .form-div {
@@ -141,15 +141,18 @@ body {
 
 .rs-table-cell {
   border-color: #ffffff !important;
-  height: 40px;
-  font-size: 12px;
-  // background-color: #f6fdff;
+  font-size: 14px;
+}
+
+.rs-table-cell-content {
+  display: flex;
+  align-items: center;
 }
 
 .rs-table-hover .rs-table-row:not(.rs-table-row-header):hover,
 .rs-table-hover .rs-table-row:hover .rs-table-cell-group,
 .rs-table-hover .rs-table-row:hover .rs-table-cell {
-  background-color: #5bc1d3;
+  background-color: rgba(#969FB0,0.05);
 
   cursor: pointer;
 }
@@ -157,7 +160,7 @@ body {
 .rs-table-row-header .rs-table-cell {
   color: #575757;
 
-  background-color: #F9FAFC !important;
+  background-color: rgba(#2264E5, 0.05) !important;
 
   height: 35px;
   font-size: 11px;

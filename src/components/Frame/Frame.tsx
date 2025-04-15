@@ -275,13 +275,14 @@ const Frame = (props: FrameProps) => {
               </StackItem>
             )} */}
           </Stack>
-          <Panel
+          <Outlet />
+          {/* <Panel
             style={{ maxHeight: '90vh', overflowY: 'auto', marginTop: '5px' }}
             bordered
             color="green"
           >
             <Outlet />
-          </Panel>
+          </Panel> */}
         </Content>
       </Container>
     </Container>

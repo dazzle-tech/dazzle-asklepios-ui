@@ -1,22 +1,38 @@
-.label-placement .rs-badge-content {
-  top: -5px;
-}
+.my-input-container {
+  .label-placement .rs-badge-content {
+    top: -5px;
+  }
 
-.badge-hidden .rs-badge-content {
-  display: none;
-}
+  .badge-hidden .rs-badge-content {
+    display: none;
+  }
 
-.icons-list .rs-picker-toggle {
-  height: var(--component-height, 50px) !important;
-}
+  .icons-list .rs-picker-toggle {
+    height: var(--component-height, 50px) !important;
+  }
 
-.required-field {
-  color: #E23670;
-  font-size: 110%;
-  margin: 3px;
+  .required-field {
+    color: #e23670;
+    font-size: 110%;
+    margin: 3px;
+  }
+  .check-box-style {
+    font-size: 13px;
+    transform: scale(1.3);
+    width: 150px;
+  }
+
+  .my-input.rs-picker-block {
+    .rs-stack {
+      height: 100%;
+    }
+  }
+
+  .rs-picker-has-value .rs-btn .rs-picker-toggle-value,
+  .rs-picker-has-value .rs-picker-toggle .rs-picker-toggle-value {
+    color: black;
+  }
 }
-.check-box-style {
-  font-size: 13px;
-  transform: scale(1.3);
-  width: 150px;
+.rs-picker-popup {
+  z-index: 999 !important;
 }

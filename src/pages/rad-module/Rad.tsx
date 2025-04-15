@@ -1,116 +1,83 @@
-import { useState, useEffect, useRef } from 'react';
-import React from 'react';
 import Translate from '@/components/Translate';
-import CheckRoundIcon from '@rsuite/icons/CheckRound';
-import ConversionIcon from '@rsuite/icons/Conversion';
-import { HStack } from 'rsuite';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import { Tooltip, Whisper } from 'rsuite';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import { notify } from '@/utils/uiReducerActions';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { Image, List } from '@rsuite/icons';
-import { useSelector } from 'react-redux';
-import { useGetDiagnosticsTestLaboratoryListQuery } from '@/services/setupService';
+import { useAppDispatch } from '@/hooks';
 import {
-  useSaveDiagnosticOrderTestRadReportMutation,
+  useGetOrderTestNotesByTestIdQuery,
+  useSaveDiagnosticOrderTestNotesMutation
+} from '@/services/labService';
+import {
   useGetDiagnosticOrderTestRadReportListQuery,
   useGetDiagnosticOrderTestReportNotesByReportIdQuery,
+  useSaveDiagnosticOrderTestRadReportMutation,
   useSaveDiagnosticOrderTestReportNotesMutation
 } from '@/services/radService';
 import {
-  faHandDots,
-  faTriangleExclamation,
-  faClipboardList,
-  faComment,
-  faPrint,
-  faFileLines,
-  faVialCircleCheck,
-  faDiagramPredecessor,
-  faFilter,
-  faStar,
-  faLandMineOn,
-  faArrowUp,
-  faArrowDown,
-  faPaperPlane,
-  faCircleExclamation,
-  faRightFromBracket,
-  faHospitalUser
-} from '@fortawesome/free-solid-svg-icons';
-import './styles.less';
-import { Badge, SelectPicker, ButtonGroup } from 'rsuite';
-import { FaCalendar, FaBold, FaItalic, FaLink } from 'react-icons/fa';
+  useGetDiagnosticsTestLaboratoryListQuery,
+  useGetLovValuesByCodeQuery
+} from '@/services/setupService';
+import { addFilterToListRequest, fromCamelCaseToDBName, getNumericTimestamp } from '@/utils';
+import { notify } from '@/utils/uiReducerActions';
 import {
-  InputGroup,
-  ButtonToolbar,
+  faComment,
+  faFileLines,
+  faFilter,
+  faHospitalUser,
+  faLandMineOn,
+  faPaperPlane,
+  faPrint,
+  faRightFromBracket,
+  faStar
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Image, List } from '@rsuite/icons';
+import CheckRoundIcon from '@rsuite/icons/CheckRound';
+import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
+import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
+import WarningRoundIcon from '@rsuite/icons/WarningRound';
+import React, { useEffect, useRef, useState } from 'react';
+import { FaBold, FaCalendar, FaItalic, FaLink } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
+import {
+  ButtonGroup,
+  DatePicker,
+  Divider,
   Form,
+  HStack,
   IconButton,
   Input,
-  Divider,
-  Drawer,
-  Table,
+  Modal,
   Pagination,
   Row,
-  Progress,
-  DatePicker,
-  Dropdown,
+  Table,
   Text,
-  Modal
+  Tooltip,
+  Whisper
 } from 'rsuite';
-import { useGetLovValuesByCodeQuery, useGetLovAllValuesQuery } from '@/services/setupService';
-import { faFaceSmile } from '@fortawesome/free-solid-svg-icons';
-import {
-  useGetOrderTestNotesByTestIdQuery,
-  useSaveDiagnosticOrderTestNotesMutation,
-  useGetResultNormalRangeQuery
-} from '@/services/labService';
-import {
-  addFilterToListRequest,
-  formatDate,
-  fromCamelCaseToDBName,
-  getNumericTimestamp
-} from '@/utils';
+import './styles.less';
 
 import MyInput from '@/components/MyInput';
 
-import SearchIcon from '@rsuite/icons/Search';
-import { Panel, FlexboxGrid, Col, Stack, Button, Timeline, Steps } from 'rsuite';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import {
+  useGetDiagnosticOrderQuery,
+  useGetDiagnosticOrderTestQuery,
+  useSaveDiagnosticOrderTestMutation
+} from '@/services/encounterService';
+import { RootState } from '@/store';
 import {
   newApDiagnosticOrders,
   newApDiagnosticOrderTests,
   newApDiagnosticOrderTestsNotes,
   newApDiagnosticOrderTestsRadReport,
-  newApDiagnosticOrderTestsResult,
-  newApDiagnosticOrderTestsSamples,
-  newApDiagnosticTestLaboratory,
   newApEncounter,
   newApPatient
 } from '@/types/model-types-constructor';
-const { Column, HeaderCell, Cell } = Table;
-import {
-  useGetDiagnosticOrderQuery,
-  useGetDiagnosticOrderTestQuery,
-  useSaveDiagnosticOrderMutation,
-  useSaveDiagnosticOrderTestMutation
-} from '@/services/encounterService';
-import {
-  initialListRequest,
-  ListRequest,
-  ListRequestAllValues,
-  initialListRequestAllValues
-} from '@/types/types';
-import { ApDiagnosticTestLaboratory } from '@/types/model-types';
-import PatientSide from '../lab-module/PatienSide';
-import ro from 'date-fns/locale/ro';
-import { RootState } from '@/store';
+import { initialListRequest, ListRequest } from '@/types/types';
 import ReactDOMServer from 'react-dom/server';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { Button, Col, Panel, Steps } from 'rsuite';
+import PatientSide from '../lab-module/PatienSide';
+const { Column, HeaderCell, Cell } = Table;
 const Rad = () => {
   const dispatch = useAppDispatch();
-  const [selectedCriterion, setSelectedCriterion] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
   const [openorders, setOpenOrders] = useState(false);
   const [openresults, setOpenResults] = useState(false);
   const [openRejectedModal, setOpenRejectedModal] = useState(false);

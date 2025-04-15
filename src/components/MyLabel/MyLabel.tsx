@@ -1,6 +1,5 @@
-import { useAppSelector } from '@/hooks';
 import React, { useEffect, useState } from 'react';
-import { Badge, Message, Tooltip, Whisper } from 'rsuite';
+import { Tooltip, Whisper } from 'rsuite';
 import Translate from '../Translate';
 
 const MyLabel = props => {
@@ -25,16 +24,16 @@ const MyLabel = props => {
         setErrorType(undefined);
       }
     }
-  }, [props.error]); 
+  }, [props.error]);
 
   const labelStyle = () => {
-    let fontSize = '15px';
+    let fontSize = '14px';
     if (props.size) {
       switch (props.size) {
         case 'small':
           fontSize = '12px';
         case 'medium':
-          fontSize = '15px';
+          fontSize = '14px';
         case 'large':
           fontSize = '18px';
         case 'larger':
@@ -44,43 +43,40 @@ const MyLabel = props => {
 
     return {
       fontSize,
-      color: props.color,
-    
+      color: props.color
     };
   };
 
   return (
-    <>
-      <Whisper
-        open={props.tooltip ? undefined : false}
-        placement="top"
-        trigger="hover"
-        speaker={
-          <Tooltip arrow={false}>
-            <Translate>{props.tooltip}</Translate>
-          </Tooltip>
-        }
+    <Whisper
+      open={props.tooltip ? undefined : false}
+      placement="top"
+      trigger="hover"
+      speaker={
+        <Tooltip arrow={false}>
+          <Translate>{props.tooltip}</Translate>
+        </Tooltip>
+      }
+    >
+      <span>
+        {/* <Badge
+        className={'label-placement'.concat(
+          (props.error && errorType)
+            ? ''
+            : ' badge-hidden'
+        )}
+        color={errorType === 'ERROR' ? 'red' : errorType === 'WARN' ? 'orange' : 'blue'}
+        content={errorType === 'ERROR' ? 'Error' : errorType === 'WARN' ? 'Warning' : undefined}
       >
-        <span style={{ margin: '1px' }}>
-          {/* <Badge
-            className={'label-placement'.concat(
-              (props.error && errorType)
-                ? ''
-                : ' badge-hidden'
-            )}
-            color={errorType === 'ERROR' ? 'red' : errorType === 'WARN' ? 'orange' : 'blue'}
-            content={errorType === 'ERROR' ? 'Error' : errorType === 'WARN' ? 'Warning' : undefined}
-          >
-            <span style={labelStyle()}>
-              <Translate>{props.label}</Translate>
-            </span>
-          </Badge> */}
-          <span style={labelStyle()}>
-              <Translate>{props.label}</Translate>
-            </span>
+        <span style={labelStyle()}>
+          <Translate>{props.label}</Translate>
         </span>
-      </Whisper>
-    </>
+      </Badge> */}
+        <span style={labelStyle()}>
+          <Translate>{props.label}</Translate>
+        </span>
+      </span>
+    </Whisper>
   );
 };
 

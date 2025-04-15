@@ -1,0 +1,48 @@
+.patient-card-container.rs-panel {
+  box-shadow: 0px 0px 0px 1px rgba(152, 161, 178, 0.1), 0px 1px 4px rgba(69, 75, 87, 0.12),
+    0px 0px 2px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  padding: 10px;
+
+  .rs-panel-body {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .patient-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    text-align: left;
+
+    .patient-name,
+    .patient-mrn {
+      font-weight: 600;
+    }
+    .patient-mrn,
+    .created-at {
+      color: var(--icon-gray);
+    }
+    .created-at {
+      font-weight: 500;
+    }
+  }
+
+  .actions {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    .arrow-button {
+      background: #ffffff;
+      box-shadow: 0px 0px 0px 1px rgba(152, 161, 178, 0.1), 0px 1px 4px rgba(69, 75, 87, 0.12),
+        0px 0px 2px rgba(0, 0, 0, 0.08);
+      border-radius: 8px;
+
+      svg {
+        color: var(--icon-gray);
+      }
+    }
+  }
+}

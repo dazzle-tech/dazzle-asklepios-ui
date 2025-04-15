@@ -1,7 +1,15 @@
-
 import { camelCaseToLabel, fromCamelCaseToDBName } from '@/utils';
 import React, { useEffect, useState } from 'react';
-import { Form, Input, DatePicker, Checkbox, Toggle, SelectPicker, InputNumber, TagPicker } from 'rsuite';
+import {
+  Checkbox,
+  DatePicker,
+  Form,
+  Input,
+  InputNumber,
+  SelectPicker,
+  TagPicker,
+  Toggle
+} from 'rsuite';
 import MyLabel from '../MyLabel';
 import Translate from '../Translate';
 
@@ -25,7 +33,7 @@ const MyInput = ({
   const [validationResult, setValidationResult] = useState(undefined);
 
   useEffect(() => {
-    let fieldDbName = fromCamelCaseToDBName(fieldName);
+    const fieldDbName = fromCamelCaseToDBName(fieldName);
     if (vr && vr.details && vr.details[fieldDbName]) {
       // keep local state updated when props changes
       setValidationResult(preValue => {
@@ -53,14 +61,13 @@ const MyInput = ({
             value={record[fieldName] ? record[fieldName] : ''}
             accepter={Textarea}
             onChange={handleValueChange}
-
           />
         );
       case 'checkbox':
         return (
           <Toggle
-            checkedChildren={props.checkedLabel || "Yes"}
-            unCheckedChildren={props.unCheckedLabel || "No"}
+            checkedChildren={props.checkedLabel || 'Yes'}
+            unCheckedChildren={props.unCheckedLabel || 'No'}
             disabled={props.disabled}
             checked={record[fieldName]}
             onChange={handleValueChange}
@@ -70,7 +77,7 @@ const MyInput = ({
       case 'select':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260, height: props?.height ?? 40 }}
+            style={{ width: props?.width ?? 260, height: props?.height ?? 32 }}
             block
             disabled={props.disabled}
             accepter={SelectPicker}
@@ -84,13 +91,15 @@ const MyInput = ({
             onChange={handleValueChange}
             defaultValue={props.defaultSelectValue}
             placeholder={props.placeholder}
+            className="my-input"
+            searchable={props.searchable}
           />
         );
       //<TagPicker data={data} style={{ width: 300 }} />
       case 'multyPicker':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260, height: props?.height ?? 40 }}
+            style={{ width: props?.width ?? 260, height: props?.height ?? 32 }}
             block
             disabled={props.disabled}
             accepter={TagPicker}
@@ -110,10 +119,12 @@ const MyInput = ({
         return (
           <Form.Control
             className="custom-date-input"
-            style={{
-              width: props?.width ?? 260,
-              '--input-height': `${props?.height ?? 40}px`
-            } as React.CSSProperties}
+            style={
+              {
+                width: props?.width ?? 260,
+                '--input-height': `${props?.height ?? 32}px`
+              } as React.CSSProperties
+            }
             disabled={props.disabled}
             name={fieldName}
             value={record[fieldName] ? new Date(record[fieldName]) : null}
@@ -121,16 +132,15 @@ const MyInput = ({
             onChange={handleValueChange}
             placeholder={props.placeholder}
           />
-
         );
       case 'number':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260, height: props?.height ?? 40 }}
+            style={{ width: props?.width ?? 260, height: props?.height ?? 32 }}
             disabled={props.disabled}
             name={fieldName}
             max={props.max ? props.max : 1000000}
-            value={record[fieldName] ? record[fieldName] : ""}
+            value={record[fieldName] ? record[fieldName] : ''}
             accepter={InputNumber}
             onChange={handleValueChange}
             placeholder={props.placeholder}
@@ -142,7 +152,7 @@ const MyInput = ({
             checked={record[fieldName] ?? false}
             onChange={(_, checked) => handleValueChange(checked)}
             disabled={props.disabled}
-            className='check-box-style'
+            className="check-box-style"
           >
             {props.label ?? fieldLabel}
           </Checkbox>
@@ -151,7 +161,7 @@ const MyInput = ({
         return (
           <Form.Control
             labelKey={props?.selectDataLabel ?? ''}
-            style={{ width: props?.width ?? 260, height: props?.height ?? 40 }}
+            style={{ width: props?.width ?? 260, height: props?.height ?? 32 }}
             disabled={props.disabled}
             name={fieldName}
             type={fieldType}
@@ -164,10 +174,10 @@ const MyInput = ({
   };
 
   const conjureValidationMessages = () => {
-    let msgs = [];
+    const msgs = [];
 
     let i = 0;
-    for (let vrs of validationResult) {
+    for (const vrs of validationResult) {
       msgs.push(
         <Form.HelpText
           key={i++}
@@ -176,8 +186,8 @@ const MyInput = ({
               vrs.validationType === 'REJECT'
                 ? 'red'
                 : vrs.validationType === 'WARN'
-                  ? 'orange'
-                  : 'grey'
+                ? 'orange'
+                : 'grey'
           }}
         >
           <Translate>{fieldLabel}</Translate> - <Translate>{vrs.message}</Translate>
@@ -189,20 +199,15 @@ const MyInput = ({
   };
 
   return (
-    <>
-      <Form.Group>
-        <Form.ControlLabel>
-
-          {showLabel && <MyLabel label={fieldLabel} error={validationResult} />}
-          {props.required && (
-            <span className='required-field '>*</span>
-          )}
-        </Form.ControlLabel>
-        {props.column && <br />}
-        {conjureFormControl()}
-        {validationResult && conjureValidationMessages()}
-      </Form.Group>
-    </>
+    <Form.Group className="my-input-container">
+      <Form.ControlLabel>
+        {showLabel && <MyLabel label={fieldLabel} error={validationResult} />}
+        {props.required && <span className="required-field ">*</span>}
+      </Form.ControlLabel>
+      {props.column && <br />}
+      {conjureFormControl()}
+      {validationResult && conjureValidationMessages()}
+    </Form.Group>
   );
 };
 
