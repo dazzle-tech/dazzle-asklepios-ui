@@ -9,6 +9,7 @@ const initialState = {
   translations: {},
   screenKey: '',
   loading: false,
+  systemLoader: false,
   showChangePassword: false,
   showEditProfile:false
 };
@@ -35,6 +36,12 @@ export const uiSlice = createSlice({
     },
     hideLoading: state => {
       state.loading = false
+    },
+    showSystemLoader: state => {
+      state.systemLoader = true
+    },
+    hideSystemLoader: state => {
+      state.systemLoader = false
     },
     openChangePassword: state => {
       state.showChangePassword = true;

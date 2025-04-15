@@ -18,6 +18,8 @@ export const closeEditProfile = createAction('ui/closeEditProfile');
 export const clearNotification = createAction('ui/clearNotification');
 export const showLoading = createAction('ui/showLoading');
 export const hideLoading = createAction('ui/hideLoading');
+export const showSystemLoader = createAction('ui/showSystemLoader');
+export const hideSystemLoader = createAction('ui/hideSystemLoader');
 export const setScreenKey = createAction('ui/setScreenKey', payload => ({
   payload
 }));

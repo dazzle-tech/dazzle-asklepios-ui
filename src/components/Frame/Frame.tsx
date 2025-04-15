@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Text, VStack, TagGroup, Tag } from 'rsuite';
 import classNames from 'classnames';
 import {
   Container,
@@ -9,22 +8,21 @@ import {
   Nav,
   DOMHelper,
   Stack,
-  Button,
   Divider,
-  Panel
+  Panel,
+  Form
 } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHospital } from '@fortawesome/free-solid-svg-icons';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import NavToggle from './NavToggle';
 import Header from '../Header';
 import NavLink from '../NavLink';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import Logo from '../../images/Logo_BLUE_New.svg';
-import { Breadcrumb } from 'rsuite';
-import Translate from '../Translate';
-import StackItem from 'rsuite/esm/Stack/StackItem';
 import { setScreenKey } from '@/utils/uiReducerActions';
+import MyInput from '../MyInput';
+import './styles.less';
 
 const { getHeight, on } = DOMHelper;
 
@@ -52,6 +50,8 @@ export interface FrameProps {
 }
 
 const Frame = (props: FrameProps) => {
+
+  
   const { navs } = props;
   const [expand, setExpand] = useState(false);
   const [windowHeight, setWindowHeight] = useState(getHeight(window));
@@ -59,6 +59,10 @@ const Frame = (props: FrameProps) => {
   const patientSlice = useAppSelector(state => state.patient);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+
+  const[recordOfSearchedScreenName, setRecordOfSearchedScreenName] = useState({screen: ""});
+
+ 
 
   useEffect(() => {
     setWindowHeight(getHeight(window));
@@ -72,6 +76,17 @@ const Frame = (props: FrameProps) => {
   const containerClasses = classNames('page-container', {
     'container-full': !expand
   });
+
+
+   const screenExist: (module: NavItemData) => boolean = (module: NavItemData) => {
+      for(const screen of module?.children ){
+          if((screen.title.toLocaleLowerCase()).includes(recordOfSearchedScreenName['screen'].toLocaleLowerCase())){
+            return true;
+          }
+      }
+      return false;
+     
+   };
 
   const navBodyStyle: React.CSSProperties = expand
     ? { height: windowHeight - 112, overflow: 'auto' }
@@ -93,12 +108,7 @@ const Frame = (props: FrameProps) => {
                   onClick={() => {
                     navigate('/');
                   }}
-                  style={{
-                    display: 'block',
-                    margin: 'auto',
-                    padding: '0px 0px',
-                    cursor: 'pointer'
-                  }}
+                  className='logo'
                   src={
                     authSlice.tenant && authSlice.tenant.tenantLogoPath
                       ? authSlice.tenant.tenantLogoPath
@@ -110,39 +120,40 @@ const Frame = (props: FrameProps) => {
               )}
               {expand && (
                 <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    marginLeft: '35px',
-                    justifyContent: 'center',
-                    padding: '12px 15px',
-                    borderRadius: '15px',
-                    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
-                    backgroundColor: '#f9f9f9',
-                    width: '220px',
-                    border: '1px solid #ddd'
-                  }}
+                className='container-of-organization-info'
                 >
                   <FontAwesomeIcon
+                  className='organization-img'
                     icon={faHospital}
                     size="lg"
-                    style={{ color: '#666', marginRight: '12px' }}
                   />
 
                   <div>
-                    <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#333' }}>
+                    <div className='name'>
                       Health Organization1
                     </div>
-                    <div style={{ fontSize: '10px', color: '#777' }}>845 Euclid Avenue, CA</div>
+                    <div className='location'>845 Euclid Avenue, CA</div>
                   </div>
+                  
                 </div>
               )}
+               {expand && (
+              
+                    <Form className='search-field'>
+                      <MyInput fieldName='screen' width= '220px' record={recordOfSearchedScreenName} setRecord={setRecordOfSearchedScreenName} placeholder="Search by Sreen Name" showLabel={false}/>
+                    </Form>
+                 
+               )}
               {navs.map(item => {
                 const { children, ...rest } = item;
-                if (children) {
+                if (children && screenExist(item)) {
                   return (
-                    <Nav.Menu key={item.eventKey} placement="rightStart" trigger="hover" {...rest}>
+                    <Nav.Menu expanded key={item.eventKey} placement="rightStart" trigger="hover" {...rest}>
+                      {/* This inline style cannot be removed because it uses dynamic variables */}
+                      
+                       <div style={{ maxHeight: !expand ? '600px' : undefined, overflowY: !expand ? 'auto' : undefined }}>
                       {children.map(child => {
+                        if(child.title.toLocaleLowerCase().includes(recordOfSearchedScreenName['screen'].toLocaleLowerCase())){
                         return (
                           <NavItem
                             onClick={() => {
@@ -152,7 +163,9 @@ const Frame = (props: FrameProps) => {
                             {...child}
                           />
                         );
+                      }
                       })}
+                      </div>
                     </Nav.Menu>
                   );
                 }
@@ -165,7 +178,6 @@ const Frame = (props: FrameProps) => {
                   );
                 }
 
-                return <NavItem key={rest.eventKey} {...rest} />;
               })}
             </Nav>
           </Sidenav.Body>
@@ -174,115 +186,28 @@ const Frame = (props: FrameProps) => {
       </Sidebar>
 
 
-      <Container className={containerClasses}  >
-        <Header expand={expand} setExpand={setExpand}  />
+      <Container className={containerClasses} >
+        <Header expand={expand} setExpand={setExpand} />
         <Content>
-          {/* <Breadcrumb>
-            <Breadcrumb.Item onClick={() => navigate('/')}>
-              <a>
-                <Translate>Home</Translate>
-              </a>
-            </Breadcrumb.Item>
-            {
-              location ? location.pathname.replace('/','') : ''
-            }
-          </Breadcrumb> */}
+         
+          
           <Stack
             id="fixedInfoBar"
+            //This inline style cannot be removed because it uses dynamic variables
             style={{
               opacity: patientSlice.patient ? '1' : '0.85',
-              padding: '11px',
-              position: 'relative',
-              display: 'inline-flex',
-              color: 'black',
-              zIndex: '101',
-
-              height: '50px',
-              borderRadius: '0px 15px 15px 0px'
             }}
             divider={<Divider vertical />}
           >
-            {/* <StackItem>
-              <img
-                onClick={() => {
-                  navigate('/');
-                }}
-                style={{
-                  display: 'block',
-                  margin: 'auto',
-                  padding: '0px 0px',
-                  cursor: 'pointer'
-                }}
-                src={
-                  authSlice.tenant && authSlice.tenant.tenantLogoPath
-                    ? authSlice.tenant.tenantLogoPath
-                    : Logo
-                }
-                height={50}
-                width={100}
-              />
-            </StackItem>
-            <StackItem>
-              <small>
-                <b>Facility</b>
-              </small>
-              <div>HQ</div>
-            </StackItem>
-            <StackItem>
-              <small>
-                <b>Department</b>
-              </small>
-              <div>Dental</div>
-            </StackItem>
-            <StackItem>
-              <small>
-                <b>Date</b>
-              </small>
-              <div>{new Date().toDateString()}</div>
-            </StackItem>
-            {patientSlice.patient && (
-              <StackItem>
-                <small>
-                  <b>Patient</b>
-                </small>
-                <div>
-                  <a
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => {
-                      navigate('/patient-profile');
-                    }}
-                  >
-                    {patientSlice.patient.fullName}
-                  </a>
-                </div>
-              </StackItem>
-            )}
-            {patientSlice.encounter && (
-              <StackItem>
-                <small>
-                  <b>Visit ID</b>
-                </small>
-                <div>
-                  <a
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => {
-                      navigate('/encounter');
-                    }}
-                  >
-                    {patientSlice.encounter.key}
-                  </a>
-                </div>
-              </StackItem>
-            )} */}
+            
           </Stack>
-          <Outlet />
-          {/* <Panel
-            style={{ maxHeight: '90vh', overflowY: 'auto', marginTop: '5px' }}
+          <Panel
+          className='content'
             bordered
             color="green"
           >
             <Outlet />
-          </Panel> */}
+          </Panel>
         </Content>
       </Container>
     </Container>

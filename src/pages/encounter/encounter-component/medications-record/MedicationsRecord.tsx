@@ -2,22 +2,10 @@ import React, { useEffect, useState } from 'react';
 import Translate from '@/components/Translate';
 import MoreIcon from '@rsuite/icons/More';
 import {
-    InputGroup,
-    Form,
-    Input,
     Panel,
-    DatePicker,
-    Text,
-    Checkbox,
-    Dropdown,
-    Button,
     IconButton,
-    SelectPicker,
     Table,
-    Modal,
-    Stack,
-    Divider,
-    Toggle,
+    Tabs
 
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
@@ -43,6 +31,7 @@ import {
 import { initialListRequest } from '@/types/types';
 import { ApDrugOrder, ApDrugOrderMedications, ApPrescription } from '@/types/model-types';
 import { newApDrugOrder, newApDrugOrderMedications, newApPrescription } from '@/types/model-types-constructor';
+import './styles.less';
 const MedicationsRecord = ({patient ,encounter}) => {
     
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
@@ -98,6 +87,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
             }
         ],
     });
+    console.log("Pres",prescriptionMedicationsPatient?.object)
     const { data: predefinedInstructionsListResponse } = useGetPrescriptionInstructionQuery({ ...initialListRequest });
     const isSelected = rowData => {
         if (rowData && prescription && rowData.key === prescription.key) {
@@ -254,33 +244,31 @@ const MedicationsRecord = ({patient ,encounter}) => {
 
             <Table
                 data={[rowData]} // Pass the data as an array to populate the table
-                bordered
-                cellBordered
-                style={{ width: '100%', marginTop: '10px' }}
+            
                 height={100} // Adjust height as needed
             >
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}   fullText>
                     <HeaderCell>Created At</HeaderCell>
                     <Cell dataKey="createdAt" >
                         {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}   fullText>
                     <HeaderCell>Created By</HeaderCell>
                     <Cell dataKey="createdBy" />
                 </Column>
 
-                <Column flexGrow={2} align="center" fullText>
+                <Column flexGrow={2}   fullText>
                     <HeaderCell>Cancelled At</HeaderCell>
                     <Cell dataKey="deletedAt" >
                         {rowData => rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ""}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}   fullText>
                     <HeaderCell>Cancelled By</HeaderCell>
                     <Cell dataKey="deletedBy" />
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}   fullText>
                     <HeaderCell>Cancelliton Reason</HeaderCell>
                     <Cell dataKey="cancellationReason" />
                 </Column>
@@ -331,59 +319,54 @@ const MedicationsRecord = ({patient ,encounter}) => {
     );
 
     return (<>
-        <Panel header="Prescriptions" collapsible bordered >
-
-            <Table
-                shouldUpdateScroll={true}
-                bordered
-
-                headerHeight={30}
-                rowHeight={40}
+     <Tabs defaultActiveKey="1" appearance="subtle">
+     <Tabs.Tab eventKey="1" title="Prescriptions" >
+     <Table
+   
                 data={prescriptions?.object ?? []}
                 autoHeight
-                //  maxHeight={300}
                 onRowClick={rowData => {
                     setPrescription(rowData);
                 }}
                 rowClassName={isSelected}
             >
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}  fullText>
                     <HeaderCell>Prescription ID</HeaderCell>
                     <Cell  >
                         {rowData => rowData?.prescriptionId??""}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}  fullText>
                     <HeaderCell>Visit ID</HeaderCell>
                     <Cell  >
                         {rowData => rowData?.encounter?.visitId ??""}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}  fullText>
                     <HeaderCell>Visit Date</HeaderCell>
                     <Cell  >
                         {rowData => rowData?.encounter.createdAt ? new Date(rowData.encounter.createdAt).toLocaleString() : " "}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}  fullText>
                     <HeaderCell>Created At</HeaderCell>
                     <Cell  >
                         {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : " "}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}  fullText>
                     <HeaderCell>Created By</HeaderCell>
                     <Cell  >
                         {rowData => rowData?.createdBy??""}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}  fullText>
                     <HeaderCell>Submitted By </HeaderCell>
                     <Cell  >
                         {rowData => rowData?.submittedBy||""}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}  fullText>
                     <HeaderCell>Submitted at</HeaderCell>
                     <Cell  >
                         {rowData => rowData.submittedAt ? new Date(rowData.submittedAt).toLocaleString() : " "}
@@ -394,17 +377,13 @@ const MedicationsRecord = ({patient ,encounter}) => {
             {prescription.key &&
                 <Table
                     autoHeight
-                    // maxHeight={300}
-                    headerHeight={30}
-                    rowHeight={40}
-                    bordered
-                    cellBordered
                     data={prescriptionMedications?.object ?? []}
-                    style={{ marginTop: '10px' }}
+                  
+                    className='margin-top'
                 >
 
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell >
 
                             <Translate>Medication Name</Translate>
                         </HeaderCell>
@@ -416,7 +395,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
                         </Cell>
                     </Column>
                     <Column flexGrow={3} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell >
 
                             <Translate>Instructions</Translate>
                         </HeaderCell>
@@ -459,7 +438,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
                         </Cell>
                     </Column>
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
 
                             <Translate>Instructions Type</Translate>
                         </HeaderCell>
@@ -468,26 +447,26 @@ const MedicationsRecord = ({patient ,encounter}) => {
                         </Cell>
                     </Column>
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
 
                             <Translate>Valid until</Translate>
                         </HeaderCell>
                         <Cell dataKey="validUtil" />
                     </Column>
                     <Column flexGrow={1} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
                             <Translate>Note</Translate>
                         </HeaderCell>
                         <Cell dataKey="notes" />
                     </Column>
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
                             <Translate>Lab Monitoring Parameters</Translate>
                         </HeaderCell>
                         <Cell dataKey="parametersToMonitor" />
                     </Column>
                     <Column flexGrow={1} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
                             <Translate>Indicated Use</Translate>
                         </HeaderCell>
                         <Cell  >
@@ -496,7 +475,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
                         </Cell>
                     </Column>
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
                             <Translate>Indication</Translate>
                         </HeaderCell>
                         <Cell  >
@@ -508,7 +487,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
 
 
                     <Column flexGrow={1} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
 
                             <Translate>Is Chronic</Translate>
                         </HeaderCell>
@@ -521,12 +500,10 @@ const MedicationsRecord = ({patient ,encounter}) => {
                 </Table>
 
             }
-        </Panel>
-        <Panel header="Drug Orders" collapsible bordered >
-            <Table
-                bordered
-                headerHeight={30}
-                rowHeight={40}
+     </Tabs.Tab>
+     <Tabs.Tab eventKey="2" title="Drug Orders" >
+     <Table
+           
                 data={orders?.object ?? []}
                 autoHeight
                 // maxHeight={300}
@@ -535,43 +512,43 @@ const MedicationsRecord = ({patient ,encounter}) => {
                 }}
                 rowClassName={isSelectedO}
             >
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}   fullText>
                     <HeaderCell>Order ID</HeaderCell>
                     <Cell  >
                         {rowData => rowData?.drugorderId??""}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}   fullText>
                     <HeaderCell>Visit ID</HeaderCell>
                     <Cell  >
                         {rowData => rowData?.encounter?.visitId??""}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}   fullText>
                     <HeaderCell>Visit Date</HeaderCell>
                     <Cell  >
                         {rowData => rowData.encounter?.createdAt ? new Date(rowData.encounter?.createdAt).toLocaleString() : " "}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}   fullText>
                     <HeaderCell>Created At</HeaderCell>
                     <Cell  >
                         {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : " "}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}   fullText>
                     <HeaderCell>Created By</HeaderCell>
                     <Cell  >
                         {rowData => rowData.createdBy}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}   fullText>
                     <HeaderCell>Submitted By </HeaderCell>
                     <Cell  >
                         {rowData => rowData.submittedBy}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1}   fullText>
                     <HeaderCell>Submitted at</HeaderCell>
                     <Cell  >
                         {rowData => rowData.submittedAt ? new Date(rowData.submittedAt).toLocaleString() : " "}
@@ -582,7 +559,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
             </Table>
             {order.key &&
                 <Table
-                    style={{ marginTop: '10px' }}
+                    className='margin-top'
                     autoHeight
                     // maxHeight={300}
                     data={orderMedications?.object || []}
@@ -590,19 +567,18 @@ const MedicationsRecord = ({patient ,encounter}) => {
                     expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
                     renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
                     shouldUpdateScroll={false}
-                    bordered
-                    cellBordered
+                  
                     onRowClick={rowData => {
                         setOrderMedication(rowData);
                     }}
                     rowClassName={isSelected}
                 >
-                    <Column width={70} align="center">
+                    <Column width={70}  >
                         <HeaderCell>#</HeaderCell>
                         <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
                     </Column>
                     <Column flexGrow={2}>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
 
                             <Translate>Medication Name</Translate>
                         </HeaderCell>
@@ -614,7 +590,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
                         </Cell>
                     </Column>
                     <Column flexGrow={1} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
                             <Translate>Drug Order Type</Translate>
                         </HeaderCell>
                         <Cell>
@@ -625,7 +601,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
                     </Column >
 
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
                             <Translate>Instruction</Translate>
                         </HeaderCell>
                         <Cell>
@@ -637,7 +613,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
                     </Column>
 
                     <Column flexGrow={1} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
                             <Translate>Start Date Time</Translate>
                         </HeaderCell>
                         <Cell>
@@ -645,19 +621,19 @@ const MedicationsRecord = ({patient ,encounter}) => {
                         </Cell>
                     </Column>
                     <Column flexGrow={1} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
                             <Translate>Note</Translate>
                         </HeaderCell>
                         <Cell dataKey="notes" />
                     </Column>
                     <Column flexGrow={1} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
                             <Translate>Lab Monitoring Parameters</Translate>
                         </HeaderCell>
                         <Cell dataKey="parametersToMonitor" />
                     </Column>
                     <Column flexGrow={1} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
                             <Translate>Indicated Use</Translate>
                         </HeaderCell>
                         <Cell  >
@@ -666,7 +642,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
                         </Cell>
                     </Column>
                     <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
                             <Translate>Indication</Translate>
                         </HeaderCell>
                         <Cell  >
@@ -676,7 +652,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
                     </Column>
 
                     <Column flexGrow={1} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
                             <Translate>Is Chronic</Translate>
                         </HeaderCell>
                         <Cell>
@@ -686,7 +662,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
                     </Column>
 
                     <Column flexGrow={1} fullText>
-                        <HeaderCell align="center">
+                        <HeaderCell  >
                             <Translate>priority Level</Translate>
                         </HeaderCell>
                         <Cell>
@@ -699,14 +675,13 @@ const MedicationsRecord = ({patient ,encounter}) => {
                 </Table>
 
             }
-        </Panel>
-        <Panel header="Patient’s Chronic Medications" collapsible bordered >
+     </Tabs.Tab>
+     <Tabs.Tab eventKey="3" title="Patient’s Chronic Medications" >
+    
             <Table
                 autoHeight
                 // maxHeight={300}
-                headerHeight={30}
-                rowHeight={40}
-                bordered
+             
 
                 data={combinedArray ?? []}
                 onRowClick={rowData => ""}
@@ -716,7 +691,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
 
 
                 <Column flexGrow={1} width={150} fullText>
-                    <HeaderCell align="center">
+                    <HeaderCell >
 
                         <Translate>Source </Translate>
                     </HeaderCell>
@@ -725,7 +700,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
                     </Cell>
                 </Column>
                 <Column flexGrow={1} width={150} fullText>
-                    <HeaderCell align="center">
+                    <HeaderCell >
 
                         <Translate>Medication Name</Translate>
                     </HeaderCell>
@@ -737,7 +712,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
                     </Cell>
                 </Column>
                 <Column flexGrow={1} width={150} fullText>
-                    <HeaderCell align="center">
+                    <HeaderCell >
 
                         <Translate>Dosage Form</Translate>
                     </HeaderCell>
@@ -749,7 +724,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
                     </Cell>
                 </Column>
                 <Column flexGrow={2} width={200} fullText>
-                    <HeaderCell align="center">
+                    <HeaderCell >
 
                         <Translate>Active Ingredients</Translate>
                     </HeaderCell>
@@ -761,7 +736,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
                     </Cell>
                 </Column>
                 <Column flexGrow={1} width={150} fullText>
-                    <HeaderCell align="center">
+                    <HeaderCell >
 
                         <Translate>Instruction Type</Translate>
                     </HeaderCell>
@@ -775,7 +750,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
                 </Column>
 
                 <Column flexGrow={2.5} fullText>
-                    <HeaderCell align="center">
+                    <HeaderCell >
                         <Translate>Instruction</Translate>
                     </HeaderCell>
                     <Cell  >
@@ -822,7 +797,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
                     </Cell>
                 </Column>
                 <Column flexGrow={2} width={200} fullText>
-                    <HeaderCell align="center">
+                    <HeaderCell >
 
                         <Translate>Date of Prescribing</Translate>
                     </HeaderCell>
@@ -831,7 +806,7 @@ const MedicationsRecord = ({patient ,encounter}) => {
                     </Cell>
                 </Column>
                 <Column flexGrow={1.5} width={180} fullText>
-                    <HeaderCell align="center">
+                    <HeaderCell >
 
                         <Translate>Prescribing Physician </Translate>
                     </HeaderCell>
@@ -840,18 +815,22 @@ const MedicationsRecord = ({patient ,encounter}) => {
                     </Cell>
                 </Column>
                 <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
+                    <HeaderCell >
                         <Translate>Lab Monitoring Parameters</Translate>
                     </HeaderCell>
                     <Cell dataKey="parametersToMonitor" />
                 </Column>
                 <Column flexGrow={1} fullText>
-                    <HeaderCell align="center">
+                    <HeaderCell >
                         <Translate>Note</Translate>
                     </HeaderCell>
                     <Cell dataKey="notes" />
                 </Column>
             </Table>
-        </Panel></>);
+      
+     </Tabs.Tab>
+     </Tabs>
+
+        </>);
 };
 export default MedicationsRecord;

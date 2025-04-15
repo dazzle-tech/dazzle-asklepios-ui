@@ -10,10 +10,10 @@ const MyButton = ({
      postfixIcon: Postfix = null
     , children:children=null
     ,onClick=()=>{}, 
-    width = "auto",
+   
     appearance = "primary"  as Appearance,
-    size='medium',
-    disabled=false,
+    size='small',
+   
 
     ...props 
 }) => {
@@ -30,6 +30,7 @@ const MyButton = ({
                 color: appearance === "ghost" ||appearance === "link" ||appearance === "subtle"
                 ? props.color ?? "var(--primary-blue)"
                 : 'white',
+                
                 width: props.width,
               
                 borderRadius:props.radius,

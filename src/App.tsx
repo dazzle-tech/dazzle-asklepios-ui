@@ -71,6 +71,7 @@ import PatientEMR from './pages/patient/patient-emr';
 import PatientProfileCopy from './pages/patient/patient-profile/PatientProfileCopy';
 import Lab from './pages/lab-module';
 import Rad from './pages/rad-module';
+import SystemLoader from './components/Loaders/SystemLoader';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -89,7 +90,7 @@ const App = () => {
 
     console.log(config.backendBaseURL);
     console.log(config.tenantId);
-  }, [])
+  }, []);
 
   useEffect(() => {
     if (navigationMapRawData && !isLoadingNavigationMap && !isFetchingNavigationMap) {
@@ -110,7 +111,7 @@ const App = () => {
     const navs = [];
     navs.push({
       eventKey: 'dashboard',
-      icon: <Icon fill="var(--primary-gray)" as={MdDashboard} />,
+      icon: <Icon fill="var(--gray-dark)" as={MdDashboard} />,
       title: 'Dashboard',
       to: '/'
     });
@@ -119,7 +120,7 @@ const App = () => {
     navigationMapRawData.screens.map(screenWithoutModule => {
       navs.push({
         eventKey: screenWithoutModule.key,
-        icon: <Icon fill="var(--primary-gray)" as={icons[screenWithoutModule?.iconImagePath ?? 'FaCircle']} />,
+        icon: <Icon fill="var(--gray-dark)" as={icons[screenWithoutModule?.iconImagePath ?? 'FaCircle']} />,
         title: screenWithoutModule.name,
         to: '/'.concat(screenWithoutModule.navPath)
       });
@@ -135,7 +136,7 @@ const App = () => {
       childrenScreens.map(screen => {
         chidlrenNavs.push({
           eventKey: screen.key,
-          icon: <Icon fill="var(--primary-gray)" as={icons[screen?.iconImagePath ?? 'FaCircle']} />,
+          icon: <Icon fill="var(--gray-dark)" as={icons[screen?.iconImagePath ?? 'FaCircle']} />,
           title: screen.name,
           to: '/'.concat(screen.navPath)
         });
@@ -145,7 +146,7 @@ const App = () => {
 
       navs.push({
         eventKey: module.key,
-        icon: <Icon fill="var(--primary-gray)" as={icons[module?.iconImagePath ?? 'FaBox']} />,
+        icon: <Icon fill="var(--gray-dark)" as={icons[module?.iconImagePath ?? 'FaBox']} />,
         title: module.name,
         children: chidlrenNavs
       });
@@ -184,6 +185,7 @@ const App = () => {
       </div>
 
       <MyToast />
+      <SystemLoader />
       <SessionExpiredBackdrop />
       <CustomProvider locale={enGB}>
         <Routes>
