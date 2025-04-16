@@ -29,7 +29,7 @@ const AddressTab: React.FC<AddressTabProps> = ({
 
   return (
     <Form layout="inline" fluid>
-      <ButtonToolbar style={{ zoom: 0.8 }}>
+      <ButtonToolbar>
         <Button
           style={{
             backgroundColor: 'var(--primary-blue)',
@@ -46,7 +46,6 @@ const AddressTab: React.FC<AddressTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Country"
         fieldType="select"
         fieldName="countryLkey"
@@ -59,7 +58,6 @@ const AddressTab: React.FC<AddressTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="State/Province"
         fieldType="select"
         fieldName="stateProvinceRegionLkey"
@@ -72,7 +70,6 @@ const AddressTab: React.FC<AddressTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="City"
         fieldType="select"
         fieldName="cityLkey"
@@ -85,7 +82,6 @@ const AddressTab: React.FC<AddressTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Street Name"
         fieldName="streetAddressLine1"
         record={localPatient}
@@ -94,7 +90,6 @@ const AddressTab: React.FC<AddressTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="House/Apartment Number"
         fieldName="apartmentNumber"
         record={localPatient}
@@ -103,7 +98,6 @@ const AddressTab: React.FC<AddressTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Postal/ZIP code"
         fieldName="postalCode"
         record={localPatient}
@@ -112,7 +106,6 @@ const AddressTab: React.FC<AddressTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Additional Address Line"
         fieldName="streetAddressLine2"
         record={localPatient}
@@ -121,7 +114,6 @@ const AddressTab: React.FC<AddressTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Country ID"
         fieldType="text"
         fieldName="countryId"

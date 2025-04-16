@@ -98,7 +98,7 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
       </Modal>
 
       <Form layout="inline" fluid>
-        <ButtonToolbar style={{ zoom: 0.8 }}>
+        <ButtonToolbar >
           <Button
             style={{
               backgroundColor: 'var(--primary-blue)',
@@ -127,7 +127,6 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
         <MyInput
           vr={validationResult}
           column
-          width={165}
           fieldLabel="Security Access Level"
           fieldType="select"
           fieldName="securityAccessLevelLkey"
@@ -140,7 +139,6 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
         <MyInput
           vr={validationResult}
           column
-          width={165}
           fieldLabel="Social Security Number"
           fieldName="socialSecurityNumber"
           record={localPatient}
@@ -149,7 +147,6 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
         <h5 style={{ borderTop: '1px solid #e1e1e1' }}>HIPAA</h5>
         <MyInput
           vr={validationResult}
-          width={165}
           fieldType="checkbox"
           fieldLabel="Notice of Privacy Practices"
           fieldName="noticeOfPrivacyPractice"
@@ -158,7 +155,6 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
         />
         <MyInput
           vr={validationResult}
-          width={165}
           fieldType="date"
           fieldLabel=" "
           fieldName="noticeOfPrivacyPracticeDate"
@@ -167,7 +163,6 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
         />
         <br />
         <MyInput
-          width={165}
           vr={validationResult}
           fieldType="checkbox"
           fieldLabel="Privacy Authorization"
@@ -178,7 +173,6 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
         <MyInput
           vr={validationResult}
           fieldType="date"
-          width={165}
           fieldLabel=" "
           fieldName="privacyAuthorizationDate"
           record={localPatient}

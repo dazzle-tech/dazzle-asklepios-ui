@@ -65,7 +65,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
 
   return (
     <>
-      <ButtonToolbar style={{ zoom: 0.8 }}>
+      <ButtonToolbar>
         <Button
           style={{
             backgroundColor: 'var(--primary-blue)',
