@@ -415,5 +415,3 @@ const VaccinationTab = ({ disabled, patient, encounter }) => {
     </div>);
 };
 export default VaccinationTab;
-
-
