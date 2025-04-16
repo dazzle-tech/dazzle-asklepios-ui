@@ -1,29 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import {
-    InputGroup,
-    Form,
-    Input,
     Panel,
-    DatePicker,
-    Text,
-    Checkbox,
-    Dropdown,
-    Button,
-    IconButton,
-    SelectPicker,
     Table,
-    Modal,
-    Stack,
-    Divider,
-    Toggle,
+    Tabs
+   ,
 
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 const PatientHistory =({patient,encounter})=>{
     return(<>
-    <Panel header="Medical History" collapsible bordered >1</Panel>
-    <Panel header="Surgical History" collapsible bordered >2</Panel>
-    <Panel header="Family History" collapsible bordered >3</Panel>
+    <Tabs defaultActiveKey="1" appearance="subtle">
+     <Tabs.Tab eventKey="1" title="Medical History" >1</Tabs.Tab>
+     <Tabs.Tab eventKey="2" title="Surgical History" >2</Tabs.Tab>
+     <Tabs.Tab eventKey="3" title="Family History" >3</Tabs.Tab>
+    </Tabs>
+   
     </>);
 };
 export default PatientHistory;
