@@ -28,7 +28,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
     <Form layout="inline" fluid>
       <MyInput
         vr={validationResult}
-        width={165}
         column
         fieldLabel="First Name (Sec. Lang)"
         fieldName="firstNameOtherLang"
@@ -37,7 +36,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       />
       <MyInput
         vr={validationResult}
-        width={165}
         column
         fieldLabel="Second Name (Sec. Lang)"
         fieldName="secondNameOtherLang"
@@ -47,7 +45,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Third Name (Sec. Lang)"
         fieldName="thirdNameOtherLang"
         record={localPatient}
@@ -56,7 +53,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Last Name (Sec. Lang)"
         fieldName="lastNameOtherLang"
         record={localPatient}
@@ -65,7 +61,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Marital Status"
         fieldType="select"
         fieldName="maritalStatusLkey"
@@ -78,7 +73,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Nationality"
         fieldType="select"
         fieldName="nationalityLkey"
@@ -91,7 +85,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Religion"
         fieldType="select"
         fieldName="religionLkey"
@@ -104,7 +97,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Ethnicity"
         fieldType="select"
         fieldName="ethnicityLkey"
@@ -117,7 +109,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Occupation"
         fieldType="select"
         fieldName="occupationLkey"
@@ -130,7 +121,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Responsible Party"
         fieldType="select"
         fieldName="responsiblePartyLkey"
@@ -143,7 +133,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Educational Level"
         fieldType="select"
         fieldName="educationalLevelLkey"
@@ -156,7 +145,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Previous ID"
         fieldName="previousId"
         record={localPatient}
@@ -165,7 +153,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Archiving Number"
         fieldName="archivingNumber"
         record={localPatient}

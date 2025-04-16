@@ -82,6 +82,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   // Handle quick appointment
   const handleNewVisit = () => {
     // This will be handled in the parent component
+   
   };
 
   // Effects for patient image
@@ -223,7 +224,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 </AvatarGroup>
               </Form>
             </div>
-            <ButtonToolbar style={{ zoom: 0.8 }}>
+            <ButtonToolbar>
               <Button
                 onClick={handleSave}
                 appearance="primary"
