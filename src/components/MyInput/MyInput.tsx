@@ -54,7 +54,7 @@ const MyInput = ({
       case 'textarea':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260, height: props?.height ?? 50 }}
+            style={{ width: props?.width ?? 145, height: props?.height ?? 50 }}
             disabled={props.disabled}
             name={fieldName}
             placeholder={props.placeholder}
