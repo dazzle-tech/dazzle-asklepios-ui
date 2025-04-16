@@ -1,65 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import './styles.less';
-import {
-    InputGroup,
-    Form,
-    Input,
-    Panel,
-    DatePicker,
-    Text,
-    Checkbox,
-    Dropdown,
-    Button,
-    IconButton,
-    SelectPicker,
-    Table,
-    Modal,
-    Stack,
-    Divider,
-    Toggle,
-    ButtonToolbar,
-    Grid,
-    Row,
-    Col,
-} from 'rsuite';
+import {InputGroup,Form, Input,Panel,Text,Checkbox,Button,IconButton,Table, Modal, Row, Col,Grid} from 'rsuite';
 import Translate from '@/components/Translate';
 import SearchIcon from '@rsuite/icons/Search';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
-import { faBroom } from '@fortawesome/free-solid-svg-icons';
-import {
-    useSaveVaccineMutation,
-    useGetLovValuesByCodeQuery,
-    useGetVaccineListQuery,
-    useRemoveVaccineMutation,
-    useDeactiveActivVaccineMutation,
-    useSaveVaccineBrandMutation,
-    useGetVaccineBrandsListQuery,
-    useDeactiveActivVaccineBrandsMutation,
-    useGetDoseNumbersListQuery,
-    useSaveVaccineDoseMutation,
-    useGetVaccineDosesListQuery,
-    useRemoveVaccineDoseMutation,
-    useSaveVaccineDosesIntervalMutation,
-    useGetVaccineDosesIntervalListQuery,
-    useRemoveVaccineDoseIntervalMutation,
-} from '@/services/setupService';
+import CancellationVaccine from './CancellationVaccine';
+import {useGetLovValuesByCodeQuery,useGetVaccineListQuery,useGetVaccineBrandsListQuery, useGetVaccineDosesListQuery,useGetVaccineDosesIntervalListQuery} from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppSelector, useAppDispatch } from '@/hooks';
+import MyButton from '@/components/MyButton/MyButton';
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import CheckIcon from '@rsuite/icons/Check';
 import PlusIcon from '@rsuite/icons/Plus';
-import MyLabel from '@/components/MyLabel';
 import { initialListRequest, ListRequest } from '@/types/types';
 import MyInput from '@/components/MyInput';
 import { useSaveEncounterVaccineMutation, useGetEncounterVaccineQuery } from '@/services/observationService'
 import { ApVaccine, ApVaccineBrands, ApVaccineDose, ApVaccineDosesInterval, ApEncounterVaccination } from '@/types/model-types';
 import { newApVaccine, newApVaccineBrands, newApVaccineDose, newApVaccineDosesInterval, newApEncounterVaccination } from '@/types/model-types-constructor';
+import AddEncounterVaccine from './AddEncounterVaccine';
 const { Column, HeaderCell, Cell } = Table;
-const VaccinationTab = ({ disabled ,patient,encounter }) => {
-    const patientSlice = useAppSelector(state => state.patient);
+const VaccinationTab = ({ disabled, patient, encounter }) => {
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
     const [vaccine, setVaccine] = useState<ApVaccine>({ ...newApVaccine });
@@ -220,7 +181,7 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
         setVaccineDoseInterval({ ...newApVaccineDosesInterval })
         setHasExternalFacility({ isHas: false });
         setPossibleDescription('');
-        setAdministrationReactions({administrationReactionsLkey:null});
+        setAdministrationReactions({ administrationReactionsLkey: null });
     };
     const handleExpanded = (rowData) => {
         let open = false;
@@ -247,56 +208,56 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
                 style={{ width: '100%', marginTop: '10px' }}
                 height={100}
             >
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1} fullText>
                     <HeaderCell>Created At</HeaderCell>
                     <Cell >
                         {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString("en-GB") : ""}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1} fullText>
                     <HeaderCell>Created By</HeaderCell>
                     <Cell >
                         {rowData => rowData?.createByUser?.fullName}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1} fullText>
                     <HeaderCell>Updated At</HeaderCell>
                     <Cell >
 
                         {rowData => rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1} fullText>
                     <HeaderCell>Updated By</HeaderCell>
                     <Cell >
                         {rowData => rowData?.updateByUser?.fullName}
                     </Cell>
                 </Column>
-                <Column flexGrow={2} align="center" fullText>
+                <Column flexGrow={2} fullText>
                     <HeaderCell>Reviewed At</HeaderCell>
                     <Cell dataKey="reviewedAt" >
                         {rowData => rowData.reviewedAt ? new Date(rowData.reviewedAt).toLocaleString("en-GB") : ""}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1} fullText>
                     <HeaderCell>Reviewed By</HeaderCell>
                     <Cell >
                         {rowData => rowData?.reviewedByUser?.fullName}
                     </Cell>
                 </Column>
-                <Column flexGrow={2} align="center" fullText>
+                <Column flexGrow={2} fullText>
                     <HeaderCell>Cancelled At</HeaderCell>
                     <Cell dataKey="deletedAt" >
                         {rowData => rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString("en-GB") : ""}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1} fullText>
                     <HeaderCell>Cancelled By</HeaderCell>
                     <Cell >
                         {rowData => rowData?.deleteByUser?.fullName}
                     </Cell>
                 </Column>
-                <Column flexGrow={1} align="center" fullText>
+                <Column flexGrow={1} fullText>
                     <HeaderCell>Cancelliton Reason</HeaderCell>
                     <Cell dataKey="cancellationReason" />
                 </Column>
@@ -349,6 +310,7 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
             dispatch(notify('Encounter Vaccine Canceled Successfully'));
             encounterVaccine();
         });
+        setPopupOpen(false);
     };
     const handleReviewe = () => {
         saveEncounterVaccine({ ...encounterVaccination, statusLkey: "3721622082897301", reviewedAt: reviewedAt, reviewedBy: authSlice.user.key, updatedBy: authSlice.user.key }).unwrap().then(() => {
@@ -366,7 +328,7 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
     }, [encounter?.encounterStatusLkey]);
     useEffect(() => {
         console.log(isEncounterStatusClosed)
-    }, [isEncounterStatusClosed,encounter?.encounterStatusLkey, disabled]);
+    }, [isEncounterStatusClosed, encounter?.encounterStatusLkey, disabled]);
 
     useEffect(() => {
         if (searchKeyword.trim() !== "") {
@@ -484,22 +446,22 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
         }
 
     }, [vaccineDosesIntervalListResponseLoading, vaccineDose?.key]);
-        useEffect(() => {
-            if (administrationReaction.administrationReactionsLkey != null) {
-                const foundItemKey = medAdversLovQueryResponse?.object?.find(
-                    item => item.key === administrationReaction.administrationReactionsLkey
-                );
-                const foundItem = foundItemKey?.lovDisplayVale || '';;
-                setEncounterVaccination(prevEncounterVaccination => ({
-                    ...prevEncounterVaccination,
-                    administrationReactions: prevEncounterVaccination.administrationReactions
-                        ? prevEncounterVaccination.administrationReactions.includes(foundItem)
-                            ? prevEncounterVaccination.administrationReactions
-                            : `${prevEncounterVaccination.administrationReactions}, ${foundItem}`
-                        : foundItem
-                }));
-            }
-        }, [administrationReaction.administrationReactionsLkey]);
+    useEffect(() => {
+        if (administrationReaction.administrationReactionsLkey != null) {
+            const foundItemKey = medAdversLovQueryResponse?.object?.find(
+                item => item.key === administrationReaction.administrationReactionsLkey
+            );
+            const foundItem = foundItemKey?.lovDisplayVale || '';;
+            setEncounterVaccination(prevEncounterVaccination => ({
+                ...prevEncounterVaccination,
+                administrationReactions: prevEncounterVaccination.administrationReactions
+                    ? prevEncounterVaccination.administrationReactions.includes(foundItem)
+                        ? prevEncounterVaccination.administrationReactions
+                        : `${prevEncounterVaccination.administrationReactions}, ${foundItem}`
+                    : foundItem
+            }));
+        }
+    }, [administrationReaction.administrationReactionsLkey]);
     useEffect(() => {
         setVaccineBrandsListRequest((prev) => ({
             ...prev,
@@ -640,7 +602,8 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
     }, [allData, encounterStatus]);
 
     return (<div>
-        <Panel header="Add Vaccine " collapsible bordered defaultExpanded>
+        <AddEncounterVaccine open={popupOpen} setOpen={setPopupOpen} patient={patient} encounter={encounter} encounterVaccination={encounterVaccination} setEncounterVaccination={setEncounterVaccination}/>
+        {/* <Panel header="Add Vaccine " collapsible bordered defaultExpanded>
             <div style={{ border: '1px solid #b6b7b8', padding: "5px" }}>
                 <Form layout="inline" fluid>
                     <div style={{ zoom: 0.9, display: 'flex', gap: '10px', flexWrap: "wrap" }}>
@@ -994,7 +957,7 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
 
                     </Form>
                     <Input
-                     disabled={isEncounterStatusClosed || disabled}
+                        disabled={isEncounterStatusClosed || disabled}
                         as="textarea"
                         value={encounterVaccination.administrationReactions || ""}
                         onChange={(value) =>
@@ -1003,7 +966,7 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
                                 administrationReactions: value
                             }))
                         }
-                        style={{ width: 300, marginTop: '26px' }} 
+                        style={{ width: 300, marginTop: '26px' }}
                         rows={4}
                     />
 
@@ -1015,7 +978,7 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
                     appearance="primary"
                     onClick={() => handleSaveEncounterVaccine()}
 
-                    disabled={encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey: false}
+                    disabled={encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey : false}
                     icon={<CheckIcon />}
                 >
                     <Translate>Save</Translate>
@@ -1032,191 +995,188 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
                 </Button>
 
             </div>
-        </Panel>
+        </Panel> */}
 
-        <Panel header="Patient’s Vaccines " collapsible bordered>
-            <div>
-                <IconButton
-                    color="cyan"
-                    appearance="primary"
-                    onClick={() => { setPopupCancelOpen(true) }}
-                    icon={<CloseOutlineIcon />}
-                    disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey: false}
 
-                >
-                    <Translate>Cancel</Translate>
-                </IconButton>
-                <IconButton
-                    color="cyan"
-                    appearance="primary"
-                    onClick={handleReviewe}
-                    style={{ marginLeft: '4px' }}
-                    icon={<CheckOutlineIcon />}
-                    disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3721622082897301' || encounterVaccination.statusLkey === '3196709905099521' || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey: false || isEncounterStatusClosed || disabled }
-                >
-                    <Translate>Review</Translate>
-                </IconButton>
+        <div className='bt-div'>
+            <MyButton
+                prefixIcon={() => <CloseOutlineIcon />}
+                onClick={() => { setPopupCancelOpen(true) }}
+                disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey : false}
 
-                <Checkbox
-                    onChange={(value, checked) => {
-                        if (checked) {
-                            setEncounterStatus('3196709905099521');
-                        }
-                        else {
-                            setEncounterStatus('');
+            >Cancel</MyButton>
 
-                        }
-                    }}
-                >
-                    Show Cancelled
-                </Checkbox>
-                <Checkbox
-                    onChange={(value, checked) => {
-                        if (checked) {
-                            setAllDate(true);
-                        }
-                        else {
-                            setAllDate(false);
-
-                        }
-                    }}
-                >
-                    Show All Vaccines
-                </Checkbox>
-            </div>
-            <Table
-                height={600}
-                data={encounterVaccineListResponseLoading?.object ?? []}
-                rowKey="key"
-                expandedRowKeys={expandedRowKeys}
-                renderRowExpanded={renderRowExpanded}
-                shouldUpdateScroll={false}
-                bordered
-                cellBordered
-                onRowClick={rowData => {
-                    setEncounterVaccination({
-                        ...rowData
-                    });
-                    setVaccineBrand({ ...rowData.vaccineBrands });
-                    setVaccineDose({ ...rowData.vaccineDose })
-                    setVaccine({ ...rowData.vaccine })
-
-                }}
-                rowClassName={isSelected}
+            <MyButton
+                disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3721622082897301' || encounterVaccination.statusLkey === '3196709905099521' || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey : false || isEncounterStatusClosed || disabled}
+                prefixIcon={() => <CheckOutlineIcon />}
+                onClick={handleReviewe}
             >
-                <Column width={70} align="center">
-                    <HeaderCell>#</HeaderCell>
-                    <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-                </Column>
+                Review</MyButton>
 
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Vaccine Name</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            rowData.vaccine?.vaccineName
-                        }
-                    </Cell>
-                </Column >
 
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Brand Name</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            rowData.vaccineBrands?.brandName
-                        }
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Dose Number</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            rowData.vaccineDose?.doseNameLvalue
-                                ? rowData.vaccineDose?.doseNameLvalue.lovDisplayVale
-                                : rowData.vaccineDose?.doseNameLkey
-                        }
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Date of Administration</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => {
-                            if (!rowData.dateAdministered) return "  ";
-                            const date = new Date(rowData.dateAdministered);
-                            return date.toLocaleString("en-GB");
-                        }}
-                    </Cell>
-                </Column>
-                <Column flexGrow={3} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Actual Side and Site of Administration</Translate>
-                    </HeaderCell>
-                    <Cell dataKey="actualSide" />
-                </Column>
-                <Column flexGrow={1} fullText>
-                    <HeaderCell align="center">
-                        <Translate>ROA</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            rowData?.vaccine?.roaLvalue
-                                ? rowData?.vaccine?.roaLvalue?.lovDisplayVale
-                                : rowData?.vaccine?.roaLkey
-                        }
+            <Checkbox
+                onChange={(value, checked) => {
+                    if (checked) {
+                        setEncounterStatus('3196709905099521');
+                    }
+                    else {
+                        setEncounterStatus('');
 
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Vaccination Location</Translate>
-                    </HeaderCell>
-                    <Cell dataKey="externalFacilityName" />
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Is Reviewed</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            rowData.reviewedAt === 0 ? "No" : "Yes"
-                        }
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Total Vaccine Doses</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            rowData?.vaccine?.numberOfDosesLvalue
-                                ? rowData?.vaccine?.numberOfDosesLvalue?.lovDisplayVale
-                                : rowData?.vaccine?.numberOfDosesLkey
-                        }
-                    </Cell>
-                </Column>
-                <Column flexGrow={1} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Status</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            rowData?.statusLvalue
-                                ? rowData?.statusLvalue?.lovDisplayVale
-                                : rowData?.statusLkey
-                        }
-                    </Cell>
-                </Column>
-            </Table>
+                    }
+                }}
+            >
+                Show Cancelled
+            </Checkbox>
+            <Checkbox
+                onChange={(value, checked) => {
+                    if (checked) {
+                        setAllDate(true);
+                    }
+                    else {
+                        setAllDate(false);
 
-        </Panel>
-        <Modal
+                    }
+                }}
+            >
+                Show All Vaccines
+            </Checkbox>
+            <div className='bt-right'>
+                <MyButton
+                    prefixIcon={() => <PlusIcon />}
+
+               onClick={() => setPopupOpen(true)}
+                >Add Vaccine</MyButton>
+            </div>
+        </div>
+        <Table
+            autoHeight
+            data={encounterVaccineListResponseLoading?.object ?? []}
+            rowKey="key"
+            expandedRowKeys={expandedRowKeys}
+            renderRowExpanded={renderRowExpanded}
+            shouldUpdateScroll={false}
+            onRowClick={rowData => {
+                setEncounterVaccination({
+                    ...rowData
+                });
+                setVaccineBrand({ ...rowData.vaccineBrands });
+                setVaccineDose({ ...rowData.vaccineDose })
+                setVaccine({ ...rowData.vaccine })
+
+            }}
+            rowClassName={isSelected}
+        >
+            <Column width={70}  >
+                <HeaderCell>#</HeaderCell>
+                <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
+            </Column>
+
+            <Column flexGrow={2} fullText>
+                <HeaderCell  >
+                    <Translate>Vaccine Name</Translate>
+                </HeaderCell>
+                <Cell>
+                    {rowData =>
+                        rowData.vaccine?.vaccineName
+                    }
+                </Cell>
+            </Column >
+
+            <Column flexGrow={2} fullText>
+                <HeaderCell  >
+                    <Translate>Brand Name</Translate>
+                </HeaderCell>
+                <Cell>
+                    {rowData =>
+                        rowData.vaccineBrands?.brandName
+                    }
+                </Cell>
+            </Column>
+            <Column flexGrow={2} fullText>
+                <HeaderCell  >
+                    <Translate>Dose Number</Translate>
+                </HeaderCell>
+                <Cell>
+                    {rowData =>
+                        rowData.vaccineDose?.doseNameLvalue
+                            ? rowData.vaccineDose?.doseNameLvalue.lovDisplayVale
+                            : rowData.vaccineDose?.doseNameLkey
+                    }
+                </Cell>
+            </Column>
+            <Column flexGrow={2} fullText>
+                <HeaderCell  >
+                    <Translate>Date of Administration</Translate>
+                </HeaderCell>
+                <Cell>
+                    {rowData => {
+                        if (!rowData.dateAdministered) return "  ";
+                        const date = new Date(rowData.dateAdministered);
+                        return date.toLocaleString("en-GB");
+                    }}
+                </Cell>
+            </Column>
+            <Column flexGrow={3} fullText>
+                <HeaderCell  >
+                    <Translate>Actual Side and Site of Administration</Translate>
+                </HeaderCell>
+                <Cell dataKey="actualSide" />
+            </Column>
+            <Column flexGrow={1} fullText>
+                <HeaderCell  >
+                    <Translate>ROA</Translate>
+                </HeaderCell>
+                <Cell>
+                    {rowData =>
+                        rowData?.vaccine?.roaLvalue
+                            ? rowData?.vaccine?.roaLvalue?.lovDisplayVale
+                            : rowData?.vaccine?.roaLkey
+                    }
+
+                </Cell>
+            </Column>
+            <Column flexGrow={2} fullText>
+                <HeaderCell  >
+                    <Translate>Vaccination Location</Translate>
+                </HeaderCell>
+                <Cell dataKey="externalFacilityName" />
+            </Column>
+            <Column flexGrow={2} fullText>
+                <HeaderCell  >
+                    <Translate>Is Reviewed</Translate>
+                </HeaderCell>
+                <Cell>
+                    {rowData =>
+                        rowData.reviewedAt === 0 ? "No" : "Yes"
+                    }
+                </Cell>
+            </Column>
+            <Column flexGrow={2} fullText>
+                <HeaderCell  >
+                    <Translate>Total Vaccine Doses</Translate>
+                </HeaderCell>
+                <Cell>
+                    {rowData =>
+                        rowData?.vaccine?.numberOfDosesLvalue
+                            ? rowData?.vaccine?.numberOfDosesLvalue?.lovDisplayVale
+                            : rowData?.vaccine?.numberOfDosesLkey
+                    }
+                </Cell>
+            </Column>
+            <Column flexGrow={1} fullText>
+                <HeaderCell  >
+                    <Translate>Status</Translate>
+                </HeaderCell>
+                <Cell>
+                    {rowData =>
+                        rowData?.statusLvalue
+                            ? rowData?.statusLvalue?.lovDisplayVale
+                            : rowData?.statusLkey
+                    }
+                </Cell>
+            </Column>
+        </Table>
+        {/* <Modal
             open={popupOpen}
             onClose={() => handleClear()}
             size="lg"
@@ -1443,42 +1403,8 @@ const VaccinationTab = ({ disabled ,patient,encounter }) => {
                     Close
                 </Button>
             </Modal.Footer>
-        </Modal>
-        <Modal
-            open={popupCancelOpen}
-            onClose={() => handleClear()}
-            size="sm"
-        >
-            <Modal.Header>
-                <Translate><h6>Confirm Cancel</h6></Translate>
-            </Modal.Header>
-            <Modal.Body>
-                <Form layout="inline" fluid>
-                    <MyInput
-                        width={600}
-
-                        column
-                        fieldLabel="Cancellation Reason"
-                        fieldType="textarea"
-                        fieldName="cancellationReason"
-                        height={120}
-                        record={encounterVaccination}
-                        setRecord={setEncounterVaccination}
-                        disabled={encounterVaccination?.deletedAt === 0}
-                    />
-                </Form>
-            </Modal.Body>
-
-            <Modal.Footer>
-                <Button appearance="primary" onClick={handleCancle} disabled={encounterVaccination?.deletedAt === 0} >
-                    Cancel
-                </Button>
-                <Divider vertical />
-                <Button onClick={handleClear} appearance="ghost" color='blue'>
-                    Close
-                </Button>
-            </Modal.Footer>
-        </Modal>
+        </Modal> */}
+        <CancellationVaccine open={popupCancelOpen} setOpen={setPopupCancelOpen} object={encounterVaccination} setObject={setEncounterVaccination} handleCancle={handleCancle} />
     </div>);
 };
 export default VaccinationTab;
