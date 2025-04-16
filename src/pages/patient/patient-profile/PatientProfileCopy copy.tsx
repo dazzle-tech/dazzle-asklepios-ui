@@ -1177,7 +1177,7 @@ const PatientProfileCopy = () => {
                   <Form layout="inline" fluid>
                     <MyInput
                       required
-                      width={165}
+                      width={150}
                       vr={validationResult}
                       column
                       fieldName="firstName"
@@ -1346,7 +1346,7 @@ const PatientProfileCopy = () => {
                   <Form layout="inline" fluid>
                     <MyInput
                       vr={validationResult}
-                      width={165}
+                      width={150}
                       column
                       fieldLabel="First Name (Sec. Lang)"
                       fieldName="firstNameOtherLang"
@@ -1947,7 +1947,6 @@ const PatientProfileCopy = () => {
                     <MyInput
                       vr={validationResult}
                       column
-                      width={165}
                       fieldLabel="Security Access Level"
                       fieldType="select"
                       fieldName="securityAccessLevelLkey"
@@ -1960,7 +1959,6 @@ const PatientProfileCopy = () => {
                     <MyInput
                       vr={validationResult}
                       column
-                      width={165}
                       fieldLabel="Social Security Number"
                       fieldName="socialSecurityNumber"
                       record={localPatient}
@@ -1969,7 +1967,6 @@ const PatientProfileCopy = () => {
                     <h5 style={{ borderTop: '1px solid #e1e1e1' }}>HIPAA</h5>
                     <MyInput
                       vr={validationResult}
-                      width={165}
                       fieldType="checkbox"
                       fieldLabel="Notice of Privacy Practices"
                       fieldName="noticeOfPrivacyPractice"
@@ -1978,7 +1975,6 @@ const PatientProfileCopy = () => {
                     />
                     <MyInput
                       vr={validationResult}
-                      width={165}
                       fieldType="date"
                       fieldLabel=" "
                       fieldName="noticeOfPrivacyPracticeDate"
@@ -1987,7 +1983,6 @@ const PatientProfileCopy = () => {
                     />
                     <br />
                     <MyInput
-                      width={165}
                       vr={validationResult}
                       fieldType="checkbox"
                       fieldLabel="Privacy Authorization"
@@ -1998,7 +1993,6 @@ const PatientProfileCopy = () => {
                     <MyInput
                       vr={validationResult}
                       fieldType="date"
-                      width={165}
                       fieldLabel=" "
                       fieldName="privacyAuthorizationDate"
                       record={localPatient}
@@ -2018,7 +2012,6 @@ const PatientProfileCopy = () => {
                 <Tabs.Tab eventKey="9" title="Extra Details">
                   <Form layout="inline" fluid>
                     <MyInput
-                      width={165}
                       vr={validationResult}
                       column
                       fieldLabel=" Details"
