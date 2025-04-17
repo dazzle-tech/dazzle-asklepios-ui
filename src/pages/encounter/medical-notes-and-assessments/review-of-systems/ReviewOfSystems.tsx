@@ -9,6 +9,9 @@ import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
 import { useNavigate } from 'react-router-dom';
 import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faListCheck } from '@fortawesome/free-solid-svg-icons';
+
 import {
   useGetLovValuesByCodeAndParentQuery,
   useGetLovValuesByCodeQuery
@@ -24,6 +27,8 @@ import {
 import MyCard from '@/components/MyCard';
 import MyButton from '@/components/MyButton/MyButton';
 import './styles.less';
+import MyModal from '@/components/MyModal/MyModal';
+import { time } from 'console';
 const ReviewOfSystems = ({ patient, encounter }) => {
 
   const [openModel, setOpenModel] = useState(false);
@@ -113,8 +118,29 @@ const ReviewOfSystems = ({ patient, encounter }) => {
 
   return (
     <>
-      <Panel style={{ padding: '5px', margin: '5px' }} >
+      <Panel  >
         <Grid fluid>
+        {/* <InputGroup>
+              <InputGroup.Addon>
+                <IconButton
+                  circle
+
+                  icon={<CheckOutlineIcon />}
+                  size="xs"
+                  appearance="primary"
+                  color="green"
+                  onClick={saveChanges}
+                />
+              </InputGroup.Addon>
+              <Input
+                as={'textarea'}
+                rows={1}
+                style={{ fontSize: '12px', maxHeight: '50px', overflowY: 'auto', resize: 'vertical' }}
+                value={localEncounter.physicalExamSummery}
+                onChange={e => setLocalEncounter({ ...localEncounter, physicalExamSummery: e })}
+
+              />          
+            </InputGroup> */}
           <div className='top-div'>
 
            <Translate>Physical Examination & Findings</Translate>
@@ -127,12 +153,12 @@ const ReviewOfSystems = ({ patient, encounter }) => {
             </div>
 
           </div>
-          <Row gutter={15} style={{ backgroundColor: 'white', padding: '10px 0px 10px 0px'  ,borderRadius:'8px'}}>
+         
 
 
 
-            <div style={{ display: "flex", gap: "10px" }}>
-              <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '300px', overflowY: 'auto', gap: '5px' ,flex:1 }}>
+            <div className='details-style'>
+              <div className='system-style'>
                 {bodySystemsLovQueryResponse?.object.map((item, index) => (
 
                   <MyCard
@@ -141,14 +167,14 @@ const ReviewOfSystems = ({ patient, encounter }) => {
                   ></MyCard>
 
                 ))}</div>
-           <div style={{ display: 'flex', flexDirection: 'column' ,width:'100%' ,flex:4}}>
+           <div className='system-details'>
               <Table
 
                 data={bodySystemsDetailLovQueryResponse?.object ?? []}
 
                 maxHeight={300}
                 autoHeight
-                style={{ flex: "3" }}
+                
               >
                 <Table.Column flexGrow={1} fullText>
                   <Table.HeaderCell> </Table.HeaderCell>
@@ -156,7 +182,7 @@ const ReviewOfSystems = ({ patient, encounter }) => {
                     {rowData => (
                       <Checkbox
                         onChange={(value, checked) => {
-                          console.log("systemLkey: ",selectedSystem.key)
+                          
                           if (checked) {
                             saveReviewOfSystem({
                               key: mainData[rowData.key] ? mainData[rowData.key].key : undefined,
@@ -218,9 +244,10 @@ const ReviewOfSystems = ({ patient, encounter }) => {
                   </Table.Cell>
                 </Table.Column>
               </Table>
-              <div>
-              <Divider style={{ margin: '4px 4px' }} />
+              <div className='pagination' >
+              <Divider  />
               <Pagination
+              
                 prev
                 next
                 first
@@ -246,43 +273,38 @@ const ReviewOfSystems = ({ patient, encounter }) => {
               </div>
             </div>
 
-          </Row>
+         
 
         </Grid>
-        <Modal open={openModel} onClose={closeModel}>
-          <Modal.Header>
-            <Modal.Title>Physical Examination & Findings Summary</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
+        <MyModal 
+        open={openModel} 
+        setOpen={setOpenModel}
+        title="Summery"
+        actionButtonFunction={closeModel}
+        actionButtonLabel='Close'
+        hideCanel
+        steps={[
 
-            <div style={{
-              display: "flex",
-              flexDirection: "column",
+          {
+            title: "Summery", icon:faListCheck ,
+           
+          },
+        ]}
+        content={
+           <div className='summery-div'>
+          
+            {encounterReviewOfSystemsSummaryResponse?.object?.map((item, index) => (
+              <div key={index} className='summery-div-child'>
+                <p>{item.systemLkey}</p>
+                <p>{item.systemDetailLvalue ? item.systemDetailLvalue.lovDisplayVale
+                  : item.systemDetailLkey}</p>
+                <p> {item.notes}</p>
+              </div>
+            ))}
 
-              height: "250px",
-              backgroundColor: "#f7f7fa"
-            }}>
-              <pre style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                {encounterReviewOfSystemsSummaryResponse?.object?.map((item, index) => (
-                  <div key={index} style={{ marginBottom: "10px", padding: "5px", borderBottom: "1px solid #ccc" }}>
-                    <p>{item.systemLkey}</p>
-                    <p>{item.systemDetailLvalue ? item.systemDetailLvalue.lovDisplayVale
-                      : item.systemDetailLkey}</p>
-                    <p> {item.notes}</p>
-                  </div>
-                ))}
-
-              </pre>
-            </div>
-          </Modal.Body>
-          <Modal.Footer>
-
-
-            <Button appearance="default" onClick={closeModel}>
-              Cancel
-            </Button>
-          </Modal.Footer>
-        </Modal>
+         
+        </div>}>
+        </MyModal>
       </Panel>
     </>
   );
