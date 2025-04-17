@@ -191,8 +191,6 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
   const { data: allergensListToGetName } = useGetAllergensQuery({
     ...initialListRequest
   });
-  console.log("medical sheet",medicalSheet?.object);
-  console.log(propsData?.encounter?.departmentKey )
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openAllargyModal, setOpenAllargyModal] = useState(false);

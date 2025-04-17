@@ -3,8 +3,8 @@ import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import React, { useEffect, useState } from 'react';
-import { FlexboxGrid, IconButton, Input, Panel, Table, Grid, Row, Col, Checkbox, InputGroup } from 'rsuite';
-import {  Modal, Button, Toggle, Form } from 'rsuite';
+import { Pagination, IconButton, Input, Panel, Table, Grid, Row, Divider , Checkbox, InputGroup } from 'rsuite';
+import { Modal, Button, Toggle, Form } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
 import { useNavigate } from 'react-router-dom';
@@ -21,9 +21,12 @@ import {
   useSaveReviewOfSystemMutation,
   useSaveEncounterChangesMutation
 } from '@/services/encounterService';
-const ReviewOfSystems = ({patient,encounter}) => {
+import MyCard from '@/components/MyCard';
+import MyButton from '@/components/MyButton/MyButton';
+import './styles.less';
+const ReviewOfSystems = ({ patient, encounter }) => {
 
- const [openModel,setOpenModel]=useState(false);
+  const [openModel, setOpenModel] = useState(false);
   const dispatch = useAppDispatch();
   const [selectedSystem, setSelectedSystem] = useState({ ...newApLovValues });
 
@@ -38,24 +41,26 @@ const ReviewOfSystems = ({patient,encounter}) => {
   const encounterReviewOfSystemsResponse = useGetEncounterReviewOfSystemsQuery(
     encounter.key
   );
-  
-   const{data:encounterReviewOfSystemsSummaryResponse ,refetch} = useGetEncounterReviewOfSystemsQuery(  encounter.key );
+
+  const { data: encounterReviewOfSystemsSummaryResponse, refetch } = useGetEncounterReviewOfSystemsQuery(encounter.key);
 
   const [saveReviewOfSystem, saveReviewOfSystemMutation] = useSaveReviewOfSystemMutation();
   const [removeReviewOfSystem, removeReviewOfSystemMutation] = useRemoveReviewOfSystemMutation();
   const [mainData, setMainData] = useState({});
 
+  useEffect(() => {
+    refetch();
+  }, [saveReviewOfSystemMutation])
+  useEffect(() => {
 
-  useEffect(()=>{
-
-  },[encounterReviewOfSystemsSummaryResponse,encounter.key])
-  const closeModel=()=>{
+  }, [encounterReviewOfSystemsSummaryResponse, encounter.key])
+  const closeModel = () => {
     setOpenModel(false);
   }
   const saveChanges = async () => {
     try {
       await saveEncounterChanges(localEncounter).unwrap();
-     
+
       dispatch(notify('Findings Saved Successfully'));
     } catch (error) {
       console.error("Encounter save failed:", error);
@@ -91,7 +96,7 @@ const ReviewOfSystems = ({patient,encounter}) => {
 
   const buildMainData = data => {
     const _map = {};
-    console.log(data);
+ 
     if (data) {
       data.map(record => {
         _map[record.systemDetailLkey] = record;
@@ -108,82 +113,56 @@ const ReviewOfSystems = ({patient,encounter}) => {
 
   return (
     <>
-      <Panel bordered style={{ padding: '5px', margin: '5px' }} >
+      <Panel style={{ padding: '5px', margin: '5px' }} >
         <Grid fluid>
-          <Row gutter={15}>
+          <div className='top-div'>
 
-            <InputGroup>
-            <InputGroup.Addon>
-            <IconButton
-            circle
-            
-            icon={<CheckOutlineIcon />}
-            size="xs"
-            appearance="primary"
-            color="green"
-            onClick={saveChanges}
-          />
-              </InputGroup.Addon>
-              <Input
-               as={'textarea'}
-               rows={1}
-               style={{ fontSize: '12px', maxHeight: '150px', overflowY: 'auto', resize: 'vertical' }}
-               value={localEncounter.physicalExamSummery}
-                onChange={e => setLocalEncounter({ ...localEncounter, physicalExamSummery: e })}
-               
-              />
-             
-              <InputGroup.Addon>
-                <IconButton 
-                onClick={() => setOpenModel(true)}
-                    style={{fontSize:"12px"}}
-                icon={<icons.List style={{ fontSize: "10px" }} />}>Summary</IconButton> 
+           <Translate>Physical Examination & Findings</Translate>
+            <div className='bt-right'
+            >
+               <MyButton
+                  onClick={() => setOpenModel(true)}
+                 
+                 prefixIcon={()=><icons.List  />}>Summary</MyButton>
+            </div>
 
-              </InputGroup.Addon>
-            </InputGroup>
-          
-          </Row>
-          <Row gutter={15}>
-          <Panel header="Full Body Examination" collapsible bordered>
-   
-  
-            <div style={{ display: "flex", gap: "3px" }}>
+          </div>
+          <Row gutter={15} style={{ backgroundColor: 'white', padding: '10px 0px 10px 0px'  ,borderRadius:'8px'}}>
+
+
+
+            <div style={{ display: "flex", gap: "10px" }}>
+              <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '300px', overflowY: 'auto', gap: '5px' ,flex:1 }}>
+                {bodySystemsLovQueryResponse?.object.map((item, index) => (
+
+                  <MyCard
+                    arrowClick={() => setSelectedSystem(item)}
+                    footerContant={item.lovDisplayVale}
+                  ></MyCard>
+
+                ))}</div>
+           <div style={{ display: 'flex', flexDirection: 'column' ,width:'100%' ,flex:4}}>
               <Table
-                style={{ flex: "1" }}
-                bordered
-                data={bodySystemsLovQueryResponse?.object ?? []}
-                height={298}
-                onRowClick={rowData => {
-                  setSelectedSystem(rowData);
-                }}
-                rowClassName={isSelected}
-              >
-                <Table.Column flexGrow={1}>
-                  <Table.HeaderCell>System</Table.HeaderCell>
-                  <Table.Cell style={{ fontSize:"12px"}} dataKey="lovDisplayVale" />
-                </Table.Column>
-              </Table>
 
-
-              <Table
-                bordered
                 data={bodySystemsDetailLovQueryResponse?.object ?? []}
-                height={298}
-                rowHeight={50}
+
+                maxHeight={300}
+                autoHeight
                 style={{ flex: "3" }}
               >
                 <Table.Column flexGrow={1} fullText>
-                  <Table.HeaderCell>Checked</Table.HeaderCell>
+                  <Table.HeaderCell> </Table.HeaderCell>
                   <Table.Cell>
                     {rowData => (
                       <Checkbox
                         onChange={(value, checked) => {
+                          console.log("systemLkey: ",selectedSystem.key)
                           if (checked) {
                             saveReviewOfSystem({
                               key: mainData[rowData.key] ? mainData[rowData.key].key : undefined,
-                              encounterKey:encounter.key,
+                              encounterKey: encounter.key,
                               bodySystemDetailKey: rowData.key,
-                              systemLkey:selectedSystem.key,
+                              systemLkey: String(selectedSystem.key),
                               notes: mainData[rowData.key] ? mainData[rowData.key].notes : ''
                             }).unwrap();
                             dispatch(notify('Findings Saved Successfully'));
@@ -239,8 +218,34 @@ const ReviewOfSystems = ({patient,encounter}) => {
                   </Table.Cell>
                 </Table.Column>
               </Table>
+              <div>
+              <Divider style={{ margin: '4px 4px' }} />
+              <Pagination
+                prev
+                next
+                first
+                last
+                ellipsis
+                boundaryLinks
+                maxButtons={5}
+                size="xs"
+                layout={['total', '-', 'limit', '|', 'pager', 'skip']}
+                limitOptions={[4, 15, 30]}
+                // limit={listOrdersResponse.pageSize}
+                // activePage={listOrdersResponse.pageNumber}
+
+                // onChangePage={pageNumber => {
+                //   setListOrdersResponse({ ...listOrdersResponse, pageNumber });
+                // }}
+                // onChangeLimit={pageSize => {
+                //   setListOrdersResponse({ ...listOrdersResponse, pageSize });
+                // }}
+                total={bodySystemsDetailLovQueryResponse?.extraNumeric || 0}
+              />
+              </div>
+              </div>
             </div>
-            </Panel>
+
           </Row>
 
         </Grid>
@@ -249,30 +254,30 @@ const ReviewOfSystems = ({patient,encounter}) => {
             <Modal.Title>Physical Examination & Findings Summary</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            
+
             <div style={{
               display: "flex",
               flexDirection: "column",
-              
+
               height: "250px",
               backgroundColor: "#f7f7fa"
             }}>
-             <pre style={{ maxHeight: '200px', overflowY: 'auto' }}>
-       {encounterReviewOfSystemsSummaryResponse?.object?.map((item, index) => (
-          <div key={index} style={{ marginBottom: "10px", padding: "5px", borderBottom: "1px solid #ccc" }}>
-            <p>{item.systemLkey}</p>
-            <p>{item.systemDetailLvalue? item.systemDetailLvalue.lovDisplayVale
-                  : item.systemDetailLkey}</p>
-            <p> {item.notes}</p>
-          </div>
-        ))}
-    
-  </pre>
+              <pre style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                {encounterReviewOfSystemsSummaryResponse?.object?.map((item, index) => (
+                  <div key={index} style={{ marginBottom: "10px", padding: "5px", borderBottom: "1px solid #ccc" }}>
+                    <p>{item.systemLkey}</p>
+                    <p>{item.systemDetailLvalue ? item.systemDetailLvalue.lovDisplayVale
+                      : item.systemDetailLkey}</p>
+                    <p> {item.notes}</p>
+                  </div>
+                ))}
+
+              </pre>
             </div>
           </Modal.Body>
           <Modal.Footer>
-           
-            
+
+
             <Button appearance="default" onClick={closeModel}>
               Cancel
             </Button>
