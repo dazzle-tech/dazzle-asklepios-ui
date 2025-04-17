@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
 import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { faBan } from '@fortawesome/free-solid-svg-icons';
 import {Form} from 'rsuite';
-const CancellationVaccine = ({
+const CancellationModal = ({
     open,
     setOpen,
     handleCancle,
     object,
-    setObject
+    setObject,
+    fieldName="",
+    statusField="statusLkey",
+    statusKey="3196709905099521"  // TODO update status to be a LOV value
 }) => {
-
-
     return (
         <MyModal
             open={open}
@@ -19,7 +20,7 @@ const CancellationVaccine = ({
             title="Confirm Cancel"
             actionButtonLabel="Submit"
             actionButtonFunction={handleCancle}
-            isDisabledActionBtn={object?.statusLkey === '3196709905099521'}
+            isDisabledActionBtn={object?.[statusField] === statusKey}
             steps={[
                 { title: 'Cancel', icon: faBan },
             ]}
@@ -29,11 +30,11 @@ const CancellationVaccine = ({
                     column
                     fieldLabel="Cancellation Reason"
                     fieldType="textarea"
-                    fieldName="cancellationReason"
+                    fieldName={fieldName}
                     height={120}
                     record={object}
-                    setRecord={object}
-                    disabled={setObject?.statusLkey === '3196709905099521'}
+                    setRecord={setObject}
+                    disabled={object?.statusLkey === statusKey}
                 />
             </Form>}
             size="450px"
@@ -41,4 +42,4 @@ const CancellationVaccine = ({
         />
     );
 };
-export default CancellationVaccine;
+export default CancellationModal;
