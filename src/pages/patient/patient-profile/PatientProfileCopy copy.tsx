@@ -1177,7 +1177,6 @@ const PatientProfileCopy = () => {
                   <Form layout="inline" fluid>
                     <MyInput
                       required
-                      width={150}
                       vr={validationResult}
                       column
                       fieldName="firstName"
@@ -1346,7 +1345,6 @@ const PatientProfileCopy = () => {
                   <Form layout="inline" fluid>
                     <MyInput
                       vr={validationResult}
-                      width={150}
                       column
                       fieldLabel="First Name (Sec. Lang)"
                       fieldName="firstNameOtherLang"

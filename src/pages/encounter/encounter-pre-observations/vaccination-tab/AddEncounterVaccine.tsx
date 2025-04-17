@@ -720,10 +720,10 @@ const AddEncounterVaccine = ({
                                 selectDataValue="key"
                                 record={administrationReaction}
                                 setRecord={setAdministrationReactions}
-                             disabled={isDisabledField}
+                                disabled={isDisabledField}
                             />
                             <MyInput
-                             disabled={isDisabledField}
+                                disabled={isDisabledField}
                                 showLabel={false}
                                 fieldType="textarea"
                                 fieldLabel="Administration Reactions"
@@ -734,6 +734,7 @@ const AddEncounterVaccine = ({
                             />
                         </div>
                         <MyInput
+                           disabled={isDisabledField}
                             column
                             fieldType="textarea"
                             fieldLabel="Notes"
