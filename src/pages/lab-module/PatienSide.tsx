@@ -46,8 +46,9 @@ import { newApEncounter } from '@/types/model-types-constructor';
 import { ApAttachment } from '@/types/model-types';
 import './styles.less'
 import MyButton from '@/components/MyButton/MyButton';
+import MyModal from '@/components/MyModal/MyModal';
 const PatientSide = ({ patient, encounter }) => {
-    console.log(patient?.hasAllergy)
+   
     const [openAllargyModal, setOpenAllargyModal] = useState(false);
     const [openWarningModal, setOpenWarningModal] = useState(false);
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
@@ -152,10 +153,6 @@ const PatientSide = ({ patient, encounter }) => {
         if (!open) {
           nextExpandedRowKeys.push(rowData.key);
         }
-    
-    
-    
-        console.log(nextExpandedRowKeys)
         setExpandedRowKeys(nextExpandedRowKeys);
       };
     const renderRowExpanded = rowData => {
@@ -166,24 +163,20 @@ const PatientSide = ({ patient, encounter }) => {
     
           <Table
             data={[rowData]} // Pass the data as an array to populate the table
-            bordered
-            cellBordered
-            headerHeight={30}
-            rowHeight={40}
             style={{ width: '100%', marginTop: '5px', marginBottom: '5px' }}
             height={100} // Adjust height as needed
           >
-            <Column flexGrow={2} align="center" fullText>
+            <Column flexGrow={2}   fullText>
               <HeaderCell>Created At</HeaderCell>
               <Cell dataKey="onsetDate" >
                 {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}
               </Cell>
             </Column>
-            <Column flexGrow={1} align="center" fullText>
+            <Column flexGrow={1}   fullText>
               <HeaderCell>Created By</HeaderCell>
               <Cell dataKey="createdBy" />
             </Column>
-            <Column flexGrow={2} align="center" fullText>
+            <Column flexGrow={2}   fullText>
               <HeaderCell>Resolved At</HeaderCell>
               <Cell dataKey="resolvedAt" >
                 {rowData => {
@@ -194,21 +187,21 @@ const PatientSide = ({ patient, encounter }) => {
                 }}
               </Cell>
             </Column>
-            <Column flexGrow={1} align="center" fullText>
+            <Column flexGrow={1}   fullText>
               <HeaderCell>Resolved By</HeaderCell>
               <Cell dataKey="resolvedBy" />
             </Column>
-            <Column flexGrow={2} align="center" fullText>
+            <Column flexGrow={2}   fullText>
               <HeaderCell>Cancelled At</HeaderCell>
               <Cell dataKey="deletedAt" >
                 {rowData => rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ""}
               </Cell>
             </Column>
-            <Column flexGrow={1} align="center" fullText>
+            <Column flexGrow={1}   fullText>
               <HeaderCell>Cancelled By</HeaderCell>
               <Cell dataKey="deletedBy" />
             </Column>
-            <Column flexGrow={1} align="center" fullText>
+            <Column flexGrow={1}   fullText>
               <HeaderCell>Cancelliton Reason</HeaderCell>
               <Cell dataKey="cancellationReason" />
             </Column>
@@ -390,155 +383,108 @@ const PatientSide = ({ patient, encounter }) => {
                 <span style={{ fontWeight: 'bold' }}> Diagnosis:</span> {encounter?.diagnosis}
 
             </Row> */}
-                    <Modal size="lg" open={openAllargyModal} onClose={CloseAllargyModal} overflow  >
-              <Modal.Title>
-                <Translate><h6>Patient Allergy</h6></Translate>
-              </Modal.Title>
-              <Modal.Body>
-                <div>
-                  <Checkbox
-                    checked={!showCanceled}
-                    onChange={() => {
-                      setShowCanceled(!showCanceled);
-                    }}
-                  >
-                    Show Cancelled
-                  </Checkbox>
-                </div>
-                <Table
-
-                  data={allergiesListResponse?.object || []}
-                  rowKey="key"
-                  expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
-                  renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
-                  shouldUpdateScroll={false}
-                  bordered
-                  cellBordered
-
-                >
-                  <Column width={70} align="center">
-                    <HeaderCell>#</HeaderCell>
-                    <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-                  </Column>
-
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Allergy Type</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.allergyTypeLvalue?.lovDisplayVale
-                      }
-                    </Cell>
-                  </Column >
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Allergen</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData => {
-
-                        if (!allergensListToGetName?.object) {
-                          return "Loading...";
-                        }
-                        const getname = allergensListToGetName.object.find(item => item.key === rowData.allergenKey);
-                        console.log(getname);
-                        return getname?.allergenName || "No Name";
-                      }}
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Severity</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.severityLvalue?.lovDisplayVale
-                      }
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Onset</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.onsetLvalue?.lovDisplayVale
-                      }
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Onset Date Time</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData => rowData.onsetDate ? new Date(rowData.onsetDate).toLocaleString() : "Undefind"}
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Treatment Strategy</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.treatmentStrategyLvalue?.lovDisplayVale
-                      }
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Source of information</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.sourceOfInformationLvalue?.lovDisplayVale || "BY Patient"
-                      }
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Reaction Description</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.reactionDescription
-                      }
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Notes</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.notes
-                      }
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={1} fullText>
-                    <HeaderCell align="center">
-                      <Translate>Status</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.statusLvalue?.lovDisplayVale
-                      }
-                    </Cell>
-                  </Column>
-                </Table>
-
-
-
-              </Modal.Body>
-              <Modal.Footer>
-                <Stack spacing={2} divider={<Divider vertical />}>
-
-                  <Button appearance="ghost" color="cyan" onClick={CloseAllargyModal}>
-                    Close
-                  </Button>
-                </Stack>
-              </Modal.Footer>
-            </Modal>
+                    <MyModal 
+                    position='right'
+                     open={openAllargyModal}
+                     setOpen={setOpenAllargyModal} 
+                     title='Patient Allergy'
+                     content={<>  <div>
+                      <Checkbox
+                        checked={!showCanceled}
+                        onChange={() => {
+    
+    
+                          setShowCanceled(!showCanceled);
+                        }}
+                      >
+                        Show Cancelled
+                      </Checkbox>
+    
+    
+                    </div>
+                    <Table
+                      height={600}
+                      data={warningsListResponse?.object || []}
+                      rowKey="key"
+                      expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
+                      renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
+                      shouldUpdateScroll={false}
+                    
+    
+                    >
+                      <Column width={70}  >
+                        <HeaderCell>#</HeaderCell>
+                        <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
+                      </Column>
+    
+                      <Column flexGrow={2} fullText>
+                        <HeaderCell  >
+                          <Translate>Warning Type</Translate>
+                        </HeaderCell>
+                        <Cell>
+                          {rowData =>
+                            rowData.warningTypeLvalue?.lovDisplayVale
+                          }
+                        </Cell>
+                      </Column >
+    
+                      <Column flexGrow={2} fullText>
+                        <HeaderCell  >
+                          <Translate>Severity</Translate>
+                        </HeaderCell>
+                        <Cell>
+                          {rowData =>
+                            rowData.severityLvalue?.lovDisplayVale
+                          }
+                        </Cell>
+                      </Column>
+    
+                      <Column flexGrow={2} fullText>
+                        <HeaderCell  >
+                          <Translate>First Time Recorded</Translate>
+                        </HeaderCell>
+                        <Cell>
+                          {rowData => rowData.firstTimeRecorded ? new Date(rowData.firstTimeRecorded).toLocaleString() : "Undefind"}
+                        </Cell>
+                      </Column>
+    
+                      <Column flexGrow={2} fullText>
+                        <HeaderCell  >
+                          <Translate>Source of information</Translate>
+                        </HeaderCell>
+                        <Cell>
+                          {rowData =>
+                            rowData.sourceOfInformationLvalue?.lovDisplayVale || "BY Patient"
+                          }
+                        </Cell>
+                      </Column>
+    
+                      <Column flexGrow={2} fullText>
+                        <HeaderCell  >
+                          <Translate>Notes</Translate>
+                        </HeaderCell>
+                        <Cell>
+                          {rowData =>
+                            rowData.notes
+                          }
+                        </Cell>
+                      </Column>
+                      <Column flexGrow={1} fullText>
+                        <HeaderCell  >
+                          <Translate>Status</Translate>
+                        </HeaderCell>
+                        <Cell>
+                          {rowData =>
+                            rowData.statusLvalue?.lovDisplayVale
+                          }
+                        </Cell>
+                      </Column>
+                    </Table>
+    </>}
+                     >
+       
+           
+            </MyModal>
             <Modal size="lg" open={openWarningModal} onClose={CloseWarningModal} overflow  >
               <Modal.Title>
                 <Translate><h6>Patient Warning</h6></Translate>
@@ -569,13 +515,13 @@ const PatientSide = ({ patient, encounter }) => {
                   cellBordered
 
                 >
-                  <Column width={70} align="center">
+                  <Column width={70}>
                     <HeaderCell>#</HeaderCell>
                     <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
                   </Column>
 
                   <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
+                    <HeaderCell>
                       <Translate>Warning Type</Translate>
                     </HeaderCell>
                     <Cell>
@@ -586,7 +532,7 @@ const PatientSide = ({ patient, encounter }) => {
                   </Column >
 
                   <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
+                    <HeaderCell >
                       <Translate>Severity</Translate>
                     </HeaderCell>
                     <Cell>
@@ -597,7 +543,7 @@ const PatientSide = ({ patient, encounter }) => {
                   </Column>
 
                   <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
+                    <HeaderCell  >
                       <Translate>First Time Recorded</Translate>
                     </HeaderCell>
                     <Cell>
@@ -606,7 +552,7 @@ const PatientSide = ({ patient, encounter }) => {
                   </Column>
 
                   <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
+                    <HeaderCell  >
                       <Translate>Source of information</Translate>
                     </HeaderCell>
                     <Cell>
@@ -617,7 +563,7 @@ const PatientSide = ({ patient, encounter }) => {
                   </Column>
 
                   <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
+                    <HeaderCell  >
                       <Translate>Notes</Translate>
                     </HeaderCell>
                     <Cell>
@@ -627,7 +573,7 @@ const PatientSide = ({ patient, encounter }) => {
                     </Cell>
                   </Column>
                   <Column flexGrow={1} fullText>
-                    <HeaderCell align="center">
+                    <HeaderCell  >
                       <Translate>Status</Translate>
                     </HeaderCell>
                     <Cell>
