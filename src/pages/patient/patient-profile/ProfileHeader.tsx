@@ -83,7 +83,9 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   // Handle quick appointment
   const handleNewVisit = () => {
+
     setQuickAppointmentModel(true);
+
   };
 
   // Effects for patient image
