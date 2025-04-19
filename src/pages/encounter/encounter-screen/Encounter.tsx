@@ -427,15 +427,15 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
             open={isDrawerOpen}
             onClose={() => setIsDrawerOpen(false)}
             placement='left'
-
-            style={{ width: '240px' }}
+           className='drawer-style'
           >
             <Drawer.Header>
-              <Drawer.Title>Medical Sheets</Drawer.Title>
+              <Drawer.Title className='title-drawer'>Medical Sheets</Drawer.Title>
             </Drawer.Header>
             <Drawer.Body className='drawer-body'>
               <List hover className='drawer-list-style'>
-                {medicalSheet?.object?.patientDashboard && <List.Item
+                {medicalSheet?.object?.patientDashboard &&
+                 <List.Item
                   className='drawer-item'
                   onClick={() => handleMenuItemClick(<PatientSummary patient={propsData.patient} encounter={propsData.encounter} />)}>
                   <FontAwesomeIcon icon={faBars} className='icon' />
