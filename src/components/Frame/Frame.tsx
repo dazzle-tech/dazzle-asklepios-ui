@@ -201,13 +201,12 @@ const Frame = (props: FrameProps) => {
           >
             
           </Stack>
-          <Panel
+          <div
           className='content'
-            bordered
-            color="green"
+            
           >
             <Outlet />
-          </Panel>
+          </div>
         </Content>
       </Container>
     </Container>

@@ -1,13 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { Form, Button, Panel, SelectPicker, Stack, Divider, Message, Modal, ButtonToolbar } from 'rsuite';
+import {
+  Form,
+  Button,
+  Panel,
+  SelectPicker,
+  Stack,
+  Divider,
+  Message,
+  Modal,
+  ButtonToolbar,
+  Text
+} from 'rsuite';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import Logo from '../../../images/Logo_BLUE_New.svg';
-import Background from '../../../images/BLUE2_WALLPAPER.svg';
+import Background from '../../../images/auth-bg.png';
 import UserLogo from '../../../images/PP-Person-Blue copy.svg';
 import './styles.less';
 import Translate from '@/components/Translate';
-import { useLoginMutation } from "@/services/authService";
-import { useNavigate } from "react-router-dom";
+import { useLoginMutation } from '@/services/authService';
+import { useNavigate } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetFacilitiesQuery } from '@/services/setupService';
 import PasswordChangeModal from './PasswordChangeModal';
@@ -15,24 +26,22 @@ import RemindIcon from '@rsuite/icons/legacy/Remind';
 import MyInput from '@/components/MyInput';
 import { ApUser } from '@/types/model-types';
 import { newApUser } from '@/types/model-types-constructor';
-import {
-  useGetUsersQuery,
-  useSaveUserMutation,
-} from '@/services/setupService';
+import { useGetUsersQuery, useSaveUserMutation } from '@/services/setupService';
 import { Input, InputGroup } from 'rsuite';
 import EyeCloseIcon from '@rsuite/icons/EyeClose';
 import VisibleIcon from '@rsuite/icons/Visible';
- 
+
 const SignIn = () => {
-  const [login, { isLoading: isLoggingIn, data: loginResult, error: loginError }] = useLoginMutation()
+  const [login, { isLoading: isLoggingIn, data: loginResult, error: loginError }] =
+    useLoginMutation();
   const authSlice = useAppSelector(state => state.auth);
   const [otpView, setOtpView] = useState(false);
   const [changePasswordView, setChangePasswordView] = useState(false);
   const [newPassword, setNewPassword] = useState();
   const [newPasswordConfirm, setNewPasswordConfirm] = useState();
-  const [errText, setErrText] = useState(" ")
+  const [errText, setErrText] = useState(' ');
   const [resetPasswordView, setResetPasswordView] = useState(false);
- 
+
   const [credentials, setCredentials] = useState({
     username: '',
     password: '',
@@ -40,187 +49,171 @@ const SignIn = () => {
   });
   const navigate = useNavigate();
   const [saveUser, saveUserMutation] = useSaveUserMutation();
- 
+
   const {
     data: facilityListResponse,
     isLoading: isGettingFacilities,
     isFetching: isFetchingFacilities
   } = useGetFacilitiesQuery({ ...initialListRequest });
- 
+
   const handleLogin = () => {
     login(credentials).unwrap();
   };
- 
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter') {
-      e.preventDefault();  // Prevent default form submission behavior
+      e.preventDefault(); // Prevent default form submission behavior
       handleLogin();
     }
   };
- 
- 
+
   useEffect(() => {
     // if there is a user, navigate to dashboard
-    if (authSlice.user && localStorage.getItem('access_token') && !authSlice.user?.mustChangePassword) {
-      navigate('/')
-    } else if (authSlice.user && localStorage.getItem('access_token') && authSlice.user?.mustChangePassword) {
-      console.log(authSlice.user?.mustChangePassword)
-      setChangePasswordView(true)
- 
+    if (
+      authSlice.user &&
+      localStorage.getItem('access_token') &&
+      !authSlice.user?.mustChangePassword
+    ) {
+      navigate('/');
+    } else if (
+      authSlice.user &&
+      localStorage.getItem('access_token') &&
+      authSlice.user?.mustChangePassword
+    ) {
+      console.log(authSlice.user?.mustChangePassword);
+      setChangePasswordView(true);
     }
- 
   }, [authSlice.user]);
- 
+
   useEffect(() => {
-    console.log(changePasswordView)
-  }, [changePasswordView])
- 
- 
+    console.log(changePasswordView);
+  }, [changePasswordView]);
+
   const [user, setUser] = useState<ApUser>({
     ...newApUser
   });
- 
- 
+
   const resetUserPasswordModal = () => {
-    return (
-      <h3>test</h3>
-    )
-  }
- 
+    return <h3>test</h3>;
+  };
+
   useEffect(() => {
-    setErrText(" ")
- 
-  }, [newPassword, newPasswordConfirm])
- 
+    setErrText(' ');
+  }, [newPassword, newPasswordConfirm]);
+
   const handleSaveNewPassword = () => {
     if (changePasswordView) {
- 
       if (!newPassword || newPassword === '') {
-        setErrText('Please ensure both fields are filled.')
+        setErrText('Please ensure both fields are filled.');
       } else {
- 
         if (newPassword === newPasswordConfirm) {
-          console.log('Passwords  Matched')
-          saveUser({ ...authSlice?.user, password: newPassword, mustChangePassword: false }).unwrap().then(() => {
-            navigate('/')
-          })
- 
- 
-        } else (
-          setErrText('Please ensure both fields have the same password.')
-        )
+          console.log('Passwords  Matched');
+          saveUser({ ...authSlice?.user, password: newPassword, mustChangePassword: false })
+            .unwrap()
+            .then(() => {
+              navigate('/');
+            });
+        } else setErrText('Please ensure both fields have the same password.');
       }
- 
     }
-  }
- 
-  useEffect(() => {
+  };
 
+  useEffect(() => {
     document.body.style.backgroundImage = `url(${Background})`;
     document.body.style.backgroundSize = 'cover';
     document.body.style.backgroundPosition = 'center';
     document.body.style.backgroundRepeat = 'no-repeat';
 
     return () => {
-      document.body.style.backgroundImage = ''; 
-
-
+      document.body.style.backgroundImage = '';
     };
-  }, [Background]); 
+  }, [Background]);
   return (
- 
-    <Panel
-      bordered
-      className="panel"
-    >
-    
-      <div className='bodySignInDiv'>
- 
- 
-          {/* Logo Panel */}
-      <Panel className="logo-panel">
-        <img
-          src={authSlice.tenant && authSlice.tenant.tenantLogoPath ? authSlice.tenant.tenantLogoPath : Logo}
-          alt="Tenant Logo"
-        />
-      </Panel>
- 
-      {/* Sign In Panel */}
-      {!resetPasswordView && (
-        <Panel bordered className='sign-in-panel '>
- 
-          <div className='image-header-div'>
-            <img
-              src={UserLogo}
-              alt="Header Background"
-              className='header-image'
- 
-            /></div>
- 
-          <h3 className='title'>
-            Sign In
-          </h3>
-          {!authSlice.tenant && (
-            <Message type="warning" showIcon>
-              <Translate>No Tenant Configured</Translate>
-            </Message>
-          )}
- 
-          <Form fluid onKeyPress={handleKeyPress}>
-            <Form.Group>
-              <Form.ControlLabel>Organization</Form.ControlLabel>
-              <Form.Control
-                block
-                disabled={!authSlice.tenant}
-                accepter={SelectPicker}
-                name="organization"
-                data={facilityListResponse?.object ?? []}
-                labelKey='facilityName'
-                valueKey='key'
-                value={credentials.orgKey}
-                onChange={e => setCredentials({ ...credentials, orgKey: e })}
-              />
-            </Form.Group>
- 
-            <Form.Group>
-              <Form.ControlLabel>Username</Form.ControlLabel>
-              <Form.Control
-                disabled={!authSlice.tenant}
-                name="username"
-                value={credentials.username}
-                onChange={e => setCredentials({ ...credentials, username: e })}
-              />
-            </Form.Group>
- 
-            <Form.Group>
-              <Form.ControlLabel>
-                <span>Password</span>
-                <a className="forgot-password" >Forgot password?</a>
-              </Form.ControlLabel>
-              <Form.Control
-                disabled={!authSlice.tenant}
-                name="password"
-                type="password"
-                value={credentials.password}
-                onChange={e => setCredentials({ ...credentials, password: e })}
-              />
-            </Form.Group>
- 
-            <Form.Group>
-              <Button style={{backgroundColor:'var(--primary-blue)'}} appearance="primary" onClick={handleLogin} disabled={!authSlice.tenant}
-                className='submit-button' >
-                Sign in
-              </Button>
-            </Form.Group>
-          </Form>
+    <Panel bordered className="panel">
+      <div className="bodySignInDiv">
+        {/* Logo Panel */}
+        <Text className="welcome-title">Welcome to</Text>
+        <Panel className="logo-panel">
+          <img
+            src={
+              authSlice.tenant && authSlice.tenant.tenantLogoPath
+                ? authSlice.tenant.tenantLogoPath
+                : Logo
+            }
+            alt="Tenant Logo"
+          />
         </Panel>
-      )}
- 
+
+        {/* Sign In Panel */}
+        {!resetPasswordView && (
+          <Panel className="sign-in-panel ">
+            <h3 className="title">Sign In</h3>
+            {!authSlice.tenant && (
+              <Message type="warning" showIcon>
+                <Translate>No Tenant Configured</Translate>
+              </Message>
+            )}
+
+            <Form fluid onKeyPress={handleKeyPress}>
+              <Form.Group>
+                <Form.ControlLabel>Organization</Form.ControlLabel>
+                <Form.Control
+                  block
+                  disabled={!authSlice.tenant}
+                  accepter={SelectPicker}
+                  name="organization"
+                  data={facilityListResponse?.object ?? []}
+                  labelKey="facilityName"
+                  valueKey="key"
+                  value={credentials.orgKey}
+                  onChange={e => setCredentials({ ...credentials, orgKey: e })}
+                  className="org-list"
+                />
+              </Form.Group>
+
+              <Form.Group>
+                <Form.ControlLabel>Username</Form.ControlLabel>
+                <Form.Control
+                  disabled={!authSlice.tenant}
+                  name="username"
+                  value={credentials.username}
+                  onChange={e => setCredentials({ ...credentials, username: e })}
+                />
+              </Form.Group>
+
+              <Form.Group>
+                <Form.ControlLabel>
+                  <span>Password</span>
+                </Form.ControlLabel>
+                <Form.Control
+                  disabled={!authSlice.tenant}
+                  name="password"
+                  type="password"
+                  value={credentials.password}
+                  onChange={e => setCredentials({ ...credentials, password: e })}
+                />
+              </Form.Group>
+              <a className="forgot-password">Forgot password?</a>
+
+              <Form.Group>
+                <Button
+                  style={{ backgroundColor: 'var(--primary-blue)' }}
+                  appearance="primary"
+                  onClick={handleLogin}
+                  disabled={!authSlice.tenant}
+                  className="submit-button"
+                >
+                  Sign in
+                </Button>
+              </Form.Group>
+            </Form>
+          </Panel>
+        )}
       </div>
-   
+
       {/* Reset Password Panel */}
       {resetPasswordView && (
-        <Panel bordered className='reset-password-panel' header={<h3>Sign In</h3>}>
+        <Panel bordered className="reset-password-panel" header={<h3>Sign In</h3>}>
           <Form fluid>
             <Form.Group>
               <Form.ControlLabel>Organization</Form.ControlLabel>
@@ -233,7 +226,7 @@ const SignIn = () => {
                 onChange={e => setCredentials({ ...credentials, orgKey: e })}
               />
             </Form.Group>
- 
+
             <Form.Group>
               <Form.ControlLabel>Username</Form.ControlLabel>
               <Form.Control
@@ -242,7 +235,7 @@ const SignIn = () => {
                 onChange={e => setCredentials({ ...credentials, username: e })}
               />
             </Form.Group>
- 
+
             <Form.Group>
               <Button appearance="primary" onClick={handleLogin}>
                 Send OTP
@@ -251,16 +244,13 @@ const SignIn = () => {
           </Form>
         </Panel>
       )}
- 
- 
- 
- 
+
       {/* Modal for Password Change */}
       <Modal backdrop="static" role="alertdialog" open={changePasswordView} size="xs">
         <Modal.Body>
-          <RemindIcon className='remind-icon' />
+          <RemindIcon className="remind-icon" />
           {'New password required!'}
- 
+
           <Form fluid>
             <Form.Group>
               <Form.ControlLabel>New Password</Form.ControlLabel>
@@ -279,17 +269,17 @@ const SignIn = () => {
               />
             </Form.Group>
           </Form>
-          <p className='error-text'> {errText}</p>
+          <p className="error-text"> {errText}</p>
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={handleSaveNewPassword} appearance="primary">Ok</Button>
+          <Button onClick={handleSaveNewPassword} appearance="primary">
+            Ok
+          </Button>
           <Button appearance="subtle">Cancel</Button>
         </Modal.Footer>
       </Modal>
     </Panel>
- 
- 
   );
 };
- 
+
 export default SignIn;

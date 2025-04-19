@@ -27,6 +27,7 @@ interface ProfileHeaderProps {
   handleClear: () => void;
   setVisitHistoryModel: (value: boolean) => void;
   setAdministrativeWarningsModalOpen: (value: boolean) => void;
+  setQuickAppointmentModel: (value: boolean) => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -34,7 +35,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   handleSave,
   handleClear,
   setVisitHistoryModel,
-  setAdministrativeWarningsModalOpen
+  setAdministrativeWarningsModalOpen,
+  setQuickAppointmentModel
 }) => {
   const authSlice = useAppSelector(state => state.auth);
   const profileImageFileInputRef = useRef(null);
@@ -81,7 +83,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   // Handle quick appointment
   const handleNewVisit = () => {
-    // This will be handled in the parent component
+    setQuickAppointmentModel(true);
   };
 
   // Effects for patient image
@@ -223,7 +225,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 </AvatarGroup>
               </Form>
             </div>
-            <ButtonToolbar style={{ zoom: 0.8 }}>
+            <ButtonToolbar>
               <Button
                 onClick={handleSave}
                 appearance="primary"
@@ -253,75 +255,40 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px', color: 'white' }} />
                 <Translate>Clear</Translate>
               </Button>
-              <SelectPicker
-                style={{ width: 185 }}
-                data={[
-                  {
-                    label: (
-                      <Button
-                        color="blue"
-                        appearance="ghost"
-                        style={{
-                          color: 'var(--primary-blue)',
-                          textAlign: 'left',
-                          width: 170
-                        }}
-                        disabled={localPatient.key === undefined}
-                        onClick={() => setVisitHistoryModel(true)}
-                        block
-                      >
-                        <span>Visit History</span>
-                      </Button>
-                    ),
-                    value: 'visitHistory'
-                  },
-                  {
-                    label: (
-                      <Button
-                        color="blue"
-                        appearance="ghost"
-                        style={{
-                          color: 'var(--primary-blue)',
-                          textAlign: 'left',
-                          width: 170
-                        }}
-                        disabled={!localPatient.key}
-                        onClick={handleNewVisit}
-                        block
-                      >
-                        <span>Quick Appointment</span>
-                      </Button>
-                    ),
-                    value: 'quickAppointment'
-                  },
-                  {
-                    label: (
-                      <Button
-                        color="blue"
-                        onClick={() => setAdministrativeWarningsModalOpen(true)}
-                        disabled={!localPatient.key}
-                        appearance="ghost"
-                        style={{
-                          color: 'var(--primary-blue)',
-                          textAlign: 'left',
-                          width: 170
-                        }}
-                        block
-                      >
-                        <span>Administrative Warnings</span>
-                      </Button>
-                    ),
-                    value: 'administrativeWarnings'
-                  }
-                ]}
-                placeholder={
-                  <span style={{ color: 'var(--primary-blue)' }}>
-                    <ListIcon style={{ marginRight: 8 }} />
-                    {'  '} More
-                  </span>
-                }
-                menuStyle={{ marginTop: 0, width: 180, padding: 5 }}
-              />
+              <Button
+                color="blue"
+                appearance="ghost"
+                style={{
+                  color: 'var(--primary-blue)'
+                }}
+                disabled={localPatient.key === undefined}
+                onClick={() => setVisitHistoryModel(true)}
+              >
+                <span>Visit History</span>
+              </Button>
+              <Button
+                color="blue"
+                appearance="ghost"
+                style={{
+                  color: 'var(--primary-blue)'
+                }}
+                disabled={!localPatient.key}
+                onClick={handleNewVisit}
+              >
+                <span>Quick Appointment</span>
+              </Button>
+
+              <Button
+                color="blue"
+                onClick={() => setAdministrativeWarningsModalOpen(true)}
+                disabled={!localPatient.key}
+                appearance="ghost"
+                style={{
+                  color: 'var(--primary-blue)',
+                }}
+              >
+                <span>Administrative Warnings</span>
+              </Button>
             </ButtonToolbar>
           </Form>
         </Stack.Item>
