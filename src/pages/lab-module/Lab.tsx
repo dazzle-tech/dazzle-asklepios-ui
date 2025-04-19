@@ -167,11 +167,7 @@ const Lab = () => {
   const { data: messagesList, refetch: fecthNotes } = useGetOrderTestNotesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
   const { data: messagesResultList, refetch: fecthResultNotes } = useGetOrderTestResultNotesByResultIdQuery(result?.key || undefined, { skip: result.key == null });
   const { data: samplesList, refetch: fecthSample } = useGetOrderTestSamplesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
-  const { data: resultLogList, refetch: fetchLogs, isFetching: fetchLog } = useGetLabResultLogListQuery({ ...listLogRequest })
-  const [testProfileKey, setTestProfileKey] = useState('')
-
-
-
+  const { data: resultLogList, refetch: fetchLogs, isFetching: fetchLog } = useGetLabResultLogListQuery({ ...listLogRequest });
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
     <div style={{ display: 'flex' }}>
@@ -396,6 +392,7 @@ const Lab = () => {
   }, [test]);
 
   useEffect(() => {
+    
     resultFetch();
     const updatedFilter = [
       {
@@ -413,6 +410,7 @@ const Lab = () => {
     fetchLogs();
   }, [result]);
   useEffect(() => {
+ 
     fetchLogs();
   }, [saveResultLogMutation])
   useEffect(() => {
@@ -714,9 +712,6 @@ const Lab = () => {
       nextExpandedRowKeys.push(rowData.key);
     }
 
-
-
-    console.log(nextExpandedRowKeys)
     setExpandedRowKeys(nextExpandedRowKeys);
   };
 
@@ -751,10 +746,12 @@ const Lab = () => {
 
 
     const v = rowData.normalRange?.lovList.find((item) => item == value);
+    const valueText=lovValues?.object?.find(lov => lov.key === value)?.lovDisplayVale
     if (v) {
+      
       const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
       saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' , resultLkey: String(value)}).unwrap();
-      saveResultLog({ ...newApLabResultLog, resultKey: result?.key, createdBy: localUser.fullName, resultValue:v.lovDisplayVale  }).unwrap();
+      saveResultLog({ ...newApLabResultLog, resultKey: result?.key, createdBy: localUser.fullName, resultValue:valueText }).unwrap();
       setTest({ ...newApDiagnosticOrderTests });
 
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
@@ -767,7 +764,7 @@ const Lab = () => {
     
       const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
       saveResult({ ...result, marker: "6730122218786367", statusLkey: '265123250697000', resultLkey: String(value) }).unwrap();
-      saveResultLog({ ...newApLabResultLog, resultKey: result?.key, createdBy: localUser.fullName, resultValue:lovValues?.object?.find(lov => lov.key === value)?.lovDisplayVale }).unwrap();
+      saveResultLog({ ...newApLabResultLog, resultKey: result?.key, createdBy: localUser.fullName, resultValue:valueText }).unwrap();
       setTest({ ...newApDiagnosticOrderTests });
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
       setTest({ ...Response });
@@ -791,37 +788,6 @@ const Lab = () => {
   const filteredStepsData = stepsData.filter(step =>
     currentStep == "6055192099058457" ? step.value !== "Accepted" : step.value !== "Rejected"
   );
-
-  const FilterableHeader = ({ columnKey, title, onFilterChange }) => {
-    const [showFilter, setShowFilter] = React.useState(false);
-    const [filterValue, setFilterValue] = React.useState("");
-
-    return (
-      <div style={{ display: "flex", alignItems: "center", width: "100%" }}>
-        {showFilter ? (
-          <Input
-            placeholder={`Search ${title}`}
-            value={filterValue}
-            onChange={(value) => {
-              setFilterValue(value);
-              onFilterChange(columnKey, value);
-            }}
-            onBlur={() => setShowFilter(false)}
-            autoFocus
-            style={{ width: '80%', height: '23px', marginBottom: '3px' }}
-          />
-        ) : (
-          <div
-            onClick={() => setShowFilter(true)}
-            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', width: '100%' }}
-          >
-            <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-            <Translate>{title}</Translate>
-          </div>
-        )}
-      </div>
-    );
-  };
 
 
   return (<>
@@ -852,6 +818,8 @@ const Lab = () => {
                 onRowClick={rowData => {
                   setOrder(rowData);
                   setOpenOrders(true);
+              
+                
                 }}
                 rowClassName={isSelected}
                 loading={isOrderFetcheng}
@@ -989,7 +957,7 @@ const Lab = () => {
 
             {test.key &&
               <Row>
-                <Steps current={filteredStepsData.findIndex(step => step.key === currentStep)} style={{ zoom: 0.7 }}>
+                <Steps current={filteredStepsData.findIndex(step => step.key === currentStep)} small={true} >
                   {filteredStepsData.map((step, index) => {
                     let stepStatus = "process";
                     let stepColor = "inherit";
@@ -1050,6 +1018,7 @@ const Lab = () => {
                 onRowClick={rowData => {
                   setOpenResults(true);
                   setTest(rowData);
+                  setResult({...newApDiagnosticOrderTestsResult})
                 }}
                 rowClassName={isTestSelected}
                 loading={isTestsFetching}
@@ -1063,7 +1032,7 @@ const Lab = () => {
                   <HeaderCell>
                     {showListFilter ? (
                       <SelectPicker
-                        style={{ width: '80%', zoom: 0.7 }}
+                        style={{ width: '80%'}}
                         placeholder={<Translate>Select Action From List</Translate>}
                         data={labCatLovQueryResponse?.object}
                         labelKey="lovDisplayVale"
@@ -1138,6 +1107,17 @@ const Lab = () => {
                   <Cell >
                     {rowData => rowData.priorityLvalue ? rowData.priorityLvalue.lovDisplayVale : rowData.priorityLkey}
                   </Cell>
+                </Column>
+                <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
+
+                    <Translate>PHYSICIAN</Translate>
+                  </HeaderCell>
+                  <Cell>
+                    {rowData => { return rowData.createdBy, " At", rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "" }}
+
+                  </Cell>
+
                 </Column>
 
                 <Column sortable flexGrow={2} fullText>
@@ -1224,12 +1204,14 @@ const Lab = () => {
                           speaker={<Tooltip>Accept</Tooltip>}
                         >
                           <CheckRoundIcon
-                            onClick={() => (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") && handleAcceptTest(rowData)}
+                            onClick={() =>
+                               (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") &&
+                                handleAcceptTest(rowData)}
                             style={{
                               fontSize: '1em',
                               marginRight: 10,
-                              color: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'gray' : 'inherit',
-                              cursor: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'not-allowed' : 'pointer',
+                               color: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'gray' : 'inherit',
+                               cursor: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'not-allowed' : 'pointer',
                             }}
                           />
                         </Whisper>
@@ -1321,7 +1303,7 @@ const Lab = () => {
                       return test.profileList.find((item) => item.key == rowData.testProfileKey)?.testName
                     }
                     else {
-                      console.log(test)
+                
                       return test.test.testName
                     }
                   }}
@@ -1598,7 +1580,7 @@ const Lab = () => {
                     if (rowData.normalRangeKey) {
                       if (rowData.normalRange?.resultTypeLkey == "6209578532136054") {
 
-                        return (joinValuesFromArray(rowData.normalRange?.lovList) + " " + labDetails.resultUnitLvalue?.lovDisplayVale);
+                        return (joinValuesFromArray(rowData.normalRange?.lovList) + " " + labDetails?.resultUnitLvalue?.lovDisplayVale||"");
 
                       }
                       else if (rowData.normalRange?.resultTypeLkey == "6209569237704618") {
@@ -1686,7 +1668,7 @@ const Lab = () => {
                 </HeaderCell>
                 <Cell>
                   {prevResultsList?.object[1]?.normalRangeKey === "6209578532136054" && (
-                    prevResultsList?.object[1]?.reasonLvalue ? prevResultsList?.object[1]?.reasonLvalue.lovDisplayVale : prevResultsList?.object[0].reasonLkey
+                    prevResultsList?.object[1]?.reasonLvalue ? prevResultsList?.object[1]?.reasonLvalue?.lovDisplayVale : prevResultsList?.object[0].reasonLkey
                   )}
 
                   {prevResultsList?.object[1]?.normalRangeKey === "6209569237704618" && (
@@ -1816,7 +1798,7 @@ const Lab = () => {
                                 }
 
                                 const resultValue = value(rowData);
-                                console.log(resultValue);
+                                
 
                                 const response = await saveTest({
                                   ...test,
@@ -2178,7 +2160,7 @@ const Lab = () => {
               collapsible
               style={{ border: '1px solid #e5e5ea' }}
             >
-              <Panel style={{ border: '1px solid #e5e5ea', borderRadius: '25px', zoom: 0.93 }}>
+              <Panel style={{ border: '1px solid #e5e5ea' }}>
                 <Table
                   height={200}
 

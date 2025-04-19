@@ -875,7 +875,17 @@ const Rad = () => {
                       }}
                     </Cell>
                   </Column>
+                  <Column sortable flexGrow={2} fullText>
+                  <HeaderCell>
 
+                    <Translate>PHYSICIAN</Translate>
+                  </HeaderCell>
+                  <Cell>
+                    {rowData => { return rowData.createdBy, " At", rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "" }}
+
+                  </Cell>
+
+                </Column>
                   <Column sortable flexGrow={2} fullText>
                     <HeaderCell>
                       <Translate>ORDERS NOTES</Translate>
