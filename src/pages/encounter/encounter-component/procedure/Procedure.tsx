@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import Translate from '@/components/Translate';
 import './styles.less';
 import * as icons from '@rsuite/icons';
+
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { faList, faPlay, faCheck, faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
@@ -49,7 +50,7 @@ import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import CheckIcon from '@rsuite/icons/Check';
 import PlusIcon from '@rsuite/icons/Plus';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBroom } from '@fortawesome/free-solid-svg-icons';
+import { faBroom ,faPen} from '@fortawesome/free-solid-svg-icons';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import OthersIcon from '@rsuite/icons/Others';
 import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
@@ -73,6 +74,14 @@ import {
   useGetProcedureCodingListQuery
 } from '@/services/setupService';
 import Indications from '@/pages/medications/active-ingredients-setup/Indications';
+import MyButton from '@/components/MyButton/MyButton';
+import AdvancedModal from '@/components/AdvancedModal';
+import InfoCardList from '@/components/InfoCardList';
+import MyModal from '@/components/MyModal/MyModal';
+import Perform from './Perform';
+import { title } from 'process';
+import Details from './Details';
+
 const Referrals = ({ edit, patient, encounter }) => {
   const dispatch = useAppDispatch();
   const [selectedRows, setSelectedRows] = useState([]);
@@ -107,6 +116,8 @@ const Referrals = ({ edit, patient, encounter }) => {
   });
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
   const [openOrderModel, setOpenOrderModel] = useState(false);
+  const [openDetailsModal, setOpenDetailsModal] = useState(false);
+  console.log("open", openDetailsModal);
   const [procedure, setProcedure] = useState<ApProcedure>({
     ...newApProcedure,
     encounterKey: encounter.key,
@@ -160,10 +171,10 @@ const Referrals = ({ edit, patient, encounter }) => {
         const systemDetail = item.systemDetailLvalue
           ? item.systemDetailLvalue.lovDisplayVale
           : item.systemDetailLkey;
-        return `* ${systemDetail}\n${item.notes}`;
+        return `${index + 1} :${systemDetail}\n note : ${item.notes}`;
       })
       .join('\n') +
-    '\n____________________\n' +
+
     (encounter?.physicalExamNote || '');
   const isSelected = rowData => {
     if (rowData && procedure && rowData.key === procedure.key) {
@@ -211,7 +222,7 @@ const Referrals = ({ edit, patient, encounter }) => {
     { key: requestedPatientAttacment },
     {
       skip: !requestedPatientAttacment
-      // || !consultationOrders.key
+       || !procedure.key
     }
   );
   const [icdListRequest, setIcdListRequest] = useState<ListRequest>({
@@ -225,10 +236,7 @@ const Referrals = ({ edit, patient, encounter }) => {
     ]
   });
   const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
-  const modifiedData = (icdListResponseLoading?.object ?? []).map(item => ({
-    ...item,
-    combinedLabel: `${item.icdCode} - ${item.description}`
-  }));
+
   useEffect(() => {
     if (procedure.indications != null || procedure.indications != '') {
       setindicationsDescription(prevadminInstructions => {
@@ -271,12 +279,12 @@ const Referrals = ({ edit, patient, encounter }) => {
       filters: [
         ...(procedure?.categoryKey
           ? [
-              {
-                fieldName: 'category_lkey',
-                operator: 'match',
-                value: procedure?.categoryKey
-              }
-            ]
+            {
+              fieldName: 'category_lkey',
+              operator: 'match',
+              value: procedure?.categoryKey
+            }
+          ]
           : [])
       ]
     }));
@@ -329,34 +337,9 @@ const Referrals = ({ edit, patient, encounter }) => {
     }
   };
   const handleDownloadSelectedPatientAttachment = attachmentKey => {
-    console.log('iam in downlod file fun');
     setRequestedPatientAttacment(attachmentKey);
     setActionType('download');
-
     handleDownload(fetchAttachmentByKeyResponce);
-  };
-  const handleFilterChange = (fieldName, value) => {
-    // if (value) {
-    //     setListRequest(
-    //         addFilterToListRequest(
-    //             fromCamelCaseToDBName(fieldName),
-    //             'containsIgnoreCase',
-    //             value,
-    //             listRequest
-    //         )
-    //     );
-    // } else {
-    //     setListRequest({ ...listRequest, filters: [] });
-    // }
-  };
-  const handleCheckboxChange = key => {
-    setSelectedRows(prev => {
-      if (prev.includes(key)) {
-        return prev.filter(item => item !== key);
-      } else {
-        return [...prev, key];
-      }
-    });
   };
   const OpenPerformModel = () => {
     setOpenPerformModal(true);
@@ -385,30 +368,8 @@ const Referrals = ({ edit, patient, encounter }) => {
       dispatch(notify('Save Failed'));
     }
   };
-  const handleChangeStatus = async status => {
-    try {
-      await saveProcedures({
-        ...procedure,
-        statusLkey: status
-      })
-        .unwrap()
-        .then(() => {
-          proRefetch();
-        });
-
-      dispatch(notify('Changed Status Successfully'));
-    } catch (error) {
-      dispatch(notify('Changed Status Failed'));
-    }
-  };
   const CloseCancellationReasonModel = () => {
     setOpenCancellationReasonModel(false);
-  };
-  const CloseOrderModel = () => {
-    setOpenOrderModel(false);
-  };
-  const joinValuesFromArray = values => {
-    return values.filter(Boolean).join(', ');
   };
   const handleClear = () => {
     setProcedure({
@@ -433,14 +394,9 @@ const Referrals = ({ edit, patient, encounter }) => {
     return (
       <Table
         data={[rowData]} // Pass the data as an array to populate the table
-        bordered
-        cellBordered
-        style={{ width: '100%', marginTop: '10px', marginBottom: '5px' }}
-        height={105}
-        headerHeight={30}
-        rowHeight={40} // Adjust height as needed
+        autoHeight
       >
-        <Column flexGrow={2} align="center" fullText>
+        <Column flexGrow={2} fullText>
           <HeaderCell>Facelity</HeaderCell>
           <Cell dataKey="faciltyLvalue.lovDisplayVale">
             {rowData =>
@@ -448,7 +404,7 @@ const Referrals = ({ edit, patient, encounter }) => {
             }
           </Cell>
         </Column>
-        <Column flexGrow={2} align="center" fullText>
+        <Column flexGrow={2} fullText>
           <HeaderCell>Department</HeaderCell>
           <Cell dataKey="departmentKey">
             {rowData => {
@@ -458,11 +414,11 @@ const Referrals = ({ edit, patient, encounter }) => {
             }}
           </Cell>
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1} fullText>
           <HeaderCell>Current Department</HeaderCell>
           <Cell>{rowData => (rowData.currentDepartment ? 'Yes' : '')}</Cell>
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1} fullText>
           <HeaderCell>Body Part</HeaderCell>
           <Cell dataKey="bodyPartLvalue.lovDisplayVale">
             {rowData =>
@@ -470,38 +426,38 @@ const Referrals = ({ edit, patient, encounter }) => {
             }
           </Cell>
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1} fullText>
           <HeaderCell>Side</HeaderCell>
           <Cell dataKey="sideLvalue.lovDisplayVale">
             {rowData => (rowData.sideLkey ? rowData.sideLvalue.lovDisplayVale : rowData.sideLkey)}
           </Cell>
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1} fullText>
           <HeaderCell>Note</HeaderCell>
           <Cell dataKey="notes">{rowData => rowData.notes}</Cell>
         </Column>
-        <Column flexGrow={2} align="center" fullText>
+        <Column flexGrow={2} fullText>
           <HeaderCell>Created At</HeaderCell>
           <Cell dataKey="createdAt">
             {rowData => (rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : '')}
           </Cell>
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1} fullText>
           <HeaderCell>Created By</HeaderCell>
           <Cell dataKey="createdBy" />
         </Column>
 
-        <Column flexGrow={2} align="center" fullText>
+        <Column flexGrow={2} fullText>
           <HeaderCell>Cancelled At</HeaderCell>
           <Cell dataKey="deletedAt">
             {rowData => (rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : '')}
           </Cell>
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1} fullText>
           <HeaderCell>Cancelled By</HeaderCell>
           <Cell dataKey="deletedBy" />
         </Column>
-        <Column flexGrow={1} align="center" fullText>
+        <Column flexGrow={1} fullText>
           <HeaderCell>Cancelliton Reason</HeaderCell>
           <Cell dataKey="cancellationReason" />
         </Column>
@@ -559,393 +515,69 @@ const Referrals = ({ edit, patient, encounter }) => {
       />
     </Cell>
   );
+  const handelAddNew = () => {
+    handleClear();
+    setOpenDetailsModal(true)
+  }
   return (
     <>
       <h5>Procedure Order</h5>
       <br />
       <div className={`top-div ${edit ? 'disabled-panel' : ''}`}>
-        <div>
-          <Form layout="inline" fluid>
-            <MyInput
-              column
-              disabled={editing}
-              width={170}
-              fieldType="select"
-              fieldLabel="Category Type"
-              selectData={CategoryLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'categoryKey'}
-              record={procedure}
-              setRecord={setProcedure}
-            />
-            <MyInput
-              column
-              disabled={editing}
-              width={170}
-              fieldType="select"
-              fieldLabel="Procedure Name"
-              selectData={procedureQueryResponse?.object ?? []}
-              selectDataLabel="name"
-              selectDataValue="key"
-              fieldName={'procedureNameKey'}
-              record={procedure}
-              setRecord={setProcedure}
-            />
-            <MyInput
-              column
-              disabled={editing}
-              width={170}
-              fieldType="select"
-              fieldLabel="Procedure Level"
-              selectData={ProcedureLevelLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'procedureLevelLkey'}
-              record={procedure}
-              setRecord={setProcedure}
-            />
-            <MyInput
-              column
-              disabled={editing}
-              width={170}
-              fieldType="select"
-              fieldLabel="Priority"
-              selectData={priorityLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'priorityLkey'}
-              record={procedure}
-              setRecord={setProcedure}
-            />
+        <div style={{ flex: 1 }}>
+          <Text>Diagnose</Text>
+          <textarea
+            value={
+              selectedDiagnose && selectedDiagnose.icdCode && selectedDiagnose.description
+                ? `${selectedDiagnose.icdCode}, ${selectedDiagnose.description}`
+                : ''
+            }
+            readOnly
+            rows={5}
 
-            <MyInput
-              column
-              disabled={editing ? editing : procedure.currentDepartment}
-              width={170}
-              fieldType="select"
-              fieldLabel="Facilty "
-              selectData={faciltyypesLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'faciltyLkey'}
-              record={procedure}
-              setRecord={setProcedure}
-            />
-            <MyInput
-              column
-              disabled={editing ? editing : procedure.currentDepartment}
-              width={170}
-              fieldType="select"
-              fieldLabel="Department"
-              selectData={department ?? []}
-              selectDataLabel="name"
-              selectDataValue="key"
-              fieldName={'departmentKey'}
-              record={procedure}
-              setRecord={setProcedure}
-            />
-            <MyInput
-              disabled={editing}
-              column
-              fieldType="checkbox"
-              fieldName="currentDepartment"
-              record={procedure}
-              setRecord={setProcedure}
-            />
-          </Form>
-          <br />
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <div style={{ marginTop: '5px' }}>
-              <Table
-                height={150}
-                width={330}
-                bordered
-                headerHeight={33}
-                rowHeight={40}
-                data={procedurecodingQueryResponse?.object ?? []}
-              >
-                <Column sortable flexGrow={1.5}>
-                  <HeaderCell align="center">
-                    <Translate>Code Type</Translate>
-                  </HeaderCell>
-                  <Cell align="center">
-                    {rowData =>
-                      rowData.codeTypeLkey
-                        ? rowData.codeTypeLvalue.lovDisplayVale
-                        : rowData.codeTypeLkey
-                    }
-                  </Cell>
-                </Column>
-                <Column sortable flexGrow={2}>
-                  <HeaderCell align="center">
-                    <Translate>international Code</Translate>
-                  </HeaderCell>
-                  <Cell align="center">{rowData => rowData.internationalCodeKey}</Cell>
-                </Column>
-              </Table>
-            </div>
-            <div style={{ margin: '5px' }}>
-              <Text style={{ fontWeight: 'bold' }}>Indications</Text>
-              <InputGroup inside style={{ width: '300px', margin: '3px' }}>
-                <Input
-                  placeholder="Search ICD-10"
-                  value={searchKeywordicd}
-                  onChange={handleSearchIcd}
-                />
-                <InputGroup.Button>
-                  <SearchIcon />
-                </InputGroup.Button>
-              </InputGroup>
-              {searchKeywordicd && (
-                <Dropdown.Menu className="dropdown-menuresult">
-                  {modifiedData?.map(mod => (
-                    <Dropdown.Item
-                      key={mod.key}
-                      eventKey={mod.key}
-                      onClick={() => {
-                        setProcedure({
-                          ...procedure,
-                          indications: mod.key
-                        });
-                        setSearchKeywordicd('');
-                      }}
-                    >
-                      <span style={{ marginRight: '19px' }}>{mod.icdCode}</span>
-                      <span>{mod.description}</span>
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown.Menu>
-              )}
-              <Input
-                as="textarea"
-                disabled={true}
-                onChange={e => setindicationsDescription}
-                value={indicationsDescription || procedure.indications}
-                style={{ width: 300 }}
-                rows={4}
-              />
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <div>
-                <Text style={{ marginTop: '6px', fontWeight: 'bold' }}>Scheduled Date</Text>
-                <DatePicker
-                  disabled={editing}
-                  format="MM/dd/yyyy hh:mm aa"
-                  showMeridian
-                  value={
-                    procedure.scheduledDateTime != 0
-                      ? new Date(procedure.scheduledDateTime)
-                      : new Date()
-                  }
-                  onChange={value => {
-                    setProcedure({
-                      ...procedure,
-                      scheduledDateTime: value.getTime()
-                    });
-                  }}
-                />
-              </div>
-              <Form layout="inline" fluid disabled={editing}>
-                <MyInput
-                  column
-                  width={220}
-                  height={72}
-                  disabled={editing}
-                  fieldName="notes"
-                  fieldType="textarea"
-                  record={procedure}
-                  setRecord={setProcedure}
-                />
-              </Form>
-            </div>
-
-            <div>
-              <Form layout="inline" fluid disabled={editing}>
-                <MyInput
-                  column
-                  width={170}
-                  fieldType="select"
-                  fieldLabel="Body Part "
-                  selectData={bodypartLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName={'bodyPartLkey'}
-                  record={procedure}
-                  setRecord={setProcedure}
-                />
-                <MyInput
-                  column
-                  width={170}
-                  fieldType="select"
-                  fieldLabel="Side"
-                  selectData={sideLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName={'sideLkey'}
-                  record={procedure}
-                  setRecord={setProcedure}
-                />
-              </Form>
-            </div>
-          </div>
-
-          <br />
-          <div className="buttons-sect-one">
-            <IconButton
-              color="violet"
-              appearance="ghost"
-              onClick={() => {
-                setOpenOrderModel(true);
-              }}
-              disabled={editing}
-              icon={<CheckIcon />}
-            >
-              <Translate>Order Related Tests</Translate>
-            </IconButton>
-            <IconButton
-              color="violet"
-              appearance="primary"
-              onClick={handleSave}
-              // disabled={selectedRows.length === 0}
-              icon={<CheckIcon />}
-            >
-              <Translate>Save</Translate>
-            </IconButton>
-            <Button
-              color="cyan"
-              appearance="primary"
-              style={{ marginLeft: '5px' }}
-              onClick={handleClear}
-            >
-              <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px' }} />
-              <span>Clear</span>
-            </Button>
-          </div>
+            className='fil-width'
+          />
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', width: '300px' }}>
-          <Form layout="inline" fluid>
-            <Text>Diagnose</Text>
-            <textarea
-              value={
-                selectedDiagnose && selectedDiagnose.icdCode && selectedDiagnose.description
-                  ? `${selectedDiagnose.icdCode}, ${selectedDiagnose.description}`
-                  : ''
-              }
-              readOnly
-              rows={3}
-              cols={50}
-              style={{ width: '100%' }}
-            />
-            <Text>Finding Summery</Text>
-            <textarea value={summaryText} readOnly rows={5} cols={50} style={{ width: '100%' }} />
-          </Form>
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
-            {fetchOrderAttachResponse.status != 'uninitialized' && (
-              <Button
-                style={{ marginTop: '20px' }}
-                appearance="link"
-                onClick={() =>
-                  handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)
-                }
-              >
-                Download <FileDownloadIcon style={{ scale: '1.4' }} />
-              </Button>
-            )}
-            <AttachmentModal
-              isOpen={attachmentsModalOpen}
-              onClose={() => setAttachmentsModalOpen(false)}
-              localPatient={procedure}
-              attatchmentType={'PROCEDURE_ORDER'}
-            />
-          </div>
+        <div style={{ flex: 1 }}>
+          <Text>Finding Summery</Text>
+          <textarea value={summaryText} readOnly rows={5} className='fil-width' />
         </div>
-
-        <Modal open={openCancellationReasonModel} onClose={CloseCancellationReasonModel} overflow>
-          <Modal.Title>
-            <Translate>
-              <h6>Confirm Cancel</h6>
-            </Translate>
-          </Modal.Title>
-          <Modal.Body>
-            <Form layout="inline" fluid>
-              <MyInput
-                width={250}
-                column
-                fieldLabel="Cancellation Reason"
-                fieldType="textarea"
-                fieldName="cancellationReason"
-                height={120}
-                record={procedure}
-                setRecord={setProcedure}
-                //   disabled={!editing}
-              />
-            </Form>
-          </Modal.Body>
-          <Modal.Footer>
-            <Stack spacing={2} divider={<Divider vertical />}>
-              <Button appearance="primary" onClick={handleCancle}>
-                Cancel
-              </Button>
-              <Button appearance="ghost" color="cyan" onClick={CloseCancellationReasonModel}>
-                Close
-              </Button>
-            </Stack>
-          </Modal.Footer>
-        </Modal>
-        <Modal size="lg" open={openOrderModel} onClose={CloseOrderModel} overflow>
-          <Modal.Title>
-            <Translate>
-              <h6>Add Order</h6>
-            </Translate>
-          </Modal.Title>
-          <Modal.Body>
-            <PatientOrder edit={edit} patient={patient} encounter={encounter} />
-          </Modal.Body>
-          <Modal.Footer>
-            <Stack spacing={2} divider={<Divider vertical />}>
-              <Button appearance="ghost" color="cyan" onClick={CloseOrderModel}>
-                Close
-              </Button>
-            </Stack>
-          </Modal.Footer>
-        </Modal>
       </div>
-      <IconButton
-        color="cyan"
-        appearance="primary"
-        style={{ marginLeft: '5px' }}
-        icon={<BlockIcon />}
-        onClick={() => setOpenCancellationReasonModel(true)}
-      >
-        <Translate> Cancle</Translate>
-      </IconButton>
-      <Checkbox
-        checked={!showCanceled}
-        onChange={() => {
-          setShowCanceled(!showCanceled);
-          if (showCanceled == false) setEditing(true);
-        }}
-      >
-        Show Cancelled
-      </Checkbox>
+      <div className='bt-div'>
+        <MyButton
+          onClick={() => setOpenCancellationReasonModel(true)}
+          disabled={procedure.key ? false : true}
+          prefixIcon={() => <BlockIcon />}
+        >Cancle</MyButton>
+        <Checkbox
+          checked={!showCanceled}
+          onChange={() => {
+            setShowCanceled(!showCanceled);
+            if (showCanceled == false) setEditing(true);
+          }}
+        >
+          Show Cancelled
+        </Checkbox>
+        <div className='bt-right'>
+          <MyButton
+            onClick={handelAddNew}
+          >Add Procedure</MyButton>
+        </div>
+      </div>
       <Table
-        height={600}
+        autoHeight
         data={procedures?.object ?? []}
         rowKey="key"
         expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
         renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
         shouldUpdateScroll={false}
-        bordered
-        cellBordered
         onRowClick={rowData => {
           setProcedure(rowData);
           setEditing(rowData.statusLkey == '3621690096636149' ? true : false);
         }}
         rowClassName={isSelected}
       >
-        <Column width={70} align="center">
+        <Column width={70}  >
           <HeaderCell>#</HeaderCell>
           <ExpandCell
             rowData={rowData => rowData}
@@ -956,21 +588,21 @@ const Referrals = ({ edit, patient, encounter }) => {
         </Column>
 
         <Column flexGrow={1} fullText>
-          <HeaderCell align="center">
+          <HeaderCell  >
             <Translate>Procedure ID</Translate>
           </HeaderCell>
           <Cell>{rowData => rowData.procedureId}</Cell>
         </Column>
 
         <Column flexGrow={2} fullText>
-          <HeaderCell align="center">
+          <HeaderCell  >
             <Translate>Procedure Name</Translate>
           </HeaderCell>
           <Cell>{rowData => rowData.procedureName}</Cell>
         </Column>
 
         <Column flexGrow={2} fullText>
-          <HeaderCell align="center">
+          <HeaderCell  >
             <Translate>Scheduled Date Time</Translate>
           </HeaderCell>
           <Cell>
@@ -981,7 +613,7 @@ const Referrals = ({ edit, patient, encounter }) => {
         </Column>
 
         <Column flexGrow={2} fullText>
-          <HeaderCell align="center">
+          <HeaderCell  >
             <Translate>Category</Translate>
           </HeaderCell>
           <Cell>
@@ -996,7 +628,7 @@ const Referrals = ({ edit, patient, encounter }) => {
         </Column>
 
         <Column flexGrow={1} fullText>
-          <HeaderCell align="center">
+          <HeaderCell  >
             <Translate>Priority</Translate>
           </HeaderCell>
           <Cell>
@@ -1006,7 +638,7 @@ const Referrals = ({ edit, patient, encounter }) => {
           </Cell>
         </Column>
         <Column flexGrow={1} fullText>
-          <HeaderCell align="center">
+          <HeaderCell  >
             <Translate>Level</Translate>
           </HeaderCell>
           <Cell>
@@ -1018,176 +650,104 @@ const Referrals = ({ edit, patient, encounter }) => {
           </Cell>
         </Column>
         <Column flexGrow={1} fullText>
-          <HeaderCell align="center">
+          <HeaderCell  >
             <Translate>Indications</Translate>
           </HeaderCell>
           <Cell>{rowData => rowData.indications}</Cell>
         </Column>
         <Column flexGrow={1} fullText>
-          <HeaderCell align="center">
+          <HeaderCell  >
             <Translate>Status</Translate>
           </HeaderCell>
           <Cell>{rowData => rowData.statusLvalue?.lovDisplayVale}</Cell>
         </Column>
         <Column flexGrow={1}>
-          <HeaderCell align="center">
+          <HeaderCell  >
             <Translate>Perform</Translate>
           </HeaderCell>
-          <Cell align="center">
-            <IconButton onClick={OpenPerformModel} icon={<FontAwesomeIcon icon={faBedPulse} />} />
+          <Cell  >
+            <MyButton
+            size='xsmall'
+              appearance='subtle'
+              color="var(--primary-gray)"
+              onClick={OpenPerformModel}><FontAwesomeIcon icon={faBedPulse} /></MyButton>
+
           </Cell>
         </Column>
         <Column flexGrow={1}>
-          <HeaderCell align="center">
+          <HeaderCell  >
             <Translate>Attached File</Translate>
           </HeaderCell>
-          <Cell align="center">
-            <IconButton onClick={() => setAttachmentsModalOpen(true)} icon={<FileUploadIcon />} />
+          <Cell  >
+          <MyButton
+                size='xsmall'
+                appearance='subtle'
+                color="var(--primary-gray)"
+                onClick={() =>  handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)}><FileDownloadIcon /></MyButton>
           </Cell>
         </Column>
+        <Column>
+        <HeaderCell  >
+            <Translate>Edit</Translate>
+          </HeaderCell>
+          <Cell >
+            <MyButton
+              size='xsmall'
+              appearance='subtle'
+              color="var(--primary-gray)"
+              onClick={()=>setOpenDetailsModal(true)}><FontAwesomeIcon icon={faPen} /></MyButton></Cell></Column>
       </Table>
+      <MyModal
+        open={openPerformModal}
+        setOpen={setOpenPerformModal}
+        title='Perform Details'
+        actionButtonFunction={handleSave}
+        size='full'
 
-      <Modal size={'full'} open={openPerformModal} onClose={ClosePerformModel}>
-        <Modal.Header>
-          <Modal.Title>Modal Title</Modal.Title>
-        </Modal.Header>
+        steps={[
+
+          {
+            title: "Perform", icon: faBedPulse,
+
+          },
+        ]}
+
+        content={<Perform encounter={encounter} patient={patient} procedure={procedure} setProcedure={setProcedure} edit={edit} />}
+      ></MyModal>
+      <Details patient={patient} encounter={encounter} edit={edit}
+        procedure={procedure} setProcedure={setProcedure}
+        openDetailsModal={openDetailsModal} setOpenDetailsModal={setOpenDetailsModal} />
+     
+      <Modal open={openCancellationReasonModel} onClose={CloseCancellationReasonModel} overflow>
+        <Modal.Title>
+          <Translate>
+            <h6>Confirm Cancel</h6>
+          </Translate>
+        </Modal.Title>
         <Modal.Body>
-          <EncounterMainInfoSection patient={patient} encounter={encounter} />
-          <Divider style={{ margin: '4px 4px' }} />
-          <Form layout="inline" fluid disabled={true}>
+          <Form layout="inline" fluid>
             <MyInput
+              width={200}
               column
-              width={170}
-              fieldType="select"
-              fieldLabel="Category Type"
-              selectData={CategoryLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'categoryKey'}
+              fieldLabel="Cancellation Reason"
+              fieldType="textarea"
+              fieldName="cancellationReason"
+              height={120}
               record={procedure}
               setRecord={setProcedure}
-            />
-            <MyInput
-              column
-              width={170}
-              fieldType="select"
-              fieldLabel="Procedure Name"
-              selectData={procedureQueryResponse?.object ?? []}
-              selectDataLabel="name"
-              selectDataValue="key"
-              fieldName={'procedureNameKey'}
-              record={procedure}
-              setRecord={setProcedure}
-            />
-
-            <MyInput
-              column
-              width={170}
-              fieldType="select"
-              fieldLabel="Priority"
-              selectData={priorityLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'priorityLkey'}
-              record={procedure}
-              setRecord={setProcedure}
-            />
-
-            <MyInput
-              column
-              width={170}
-              fieldType="select"
-              fieldLabel="Body Part "
-              selectData={bodypartLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'bodyPartLkey'}
-              record={procedure}
-              setRecord={setProcedure}
-            />
-            <MyInput
-              column
-              width={170}
-              fieldType="select"
-              fieldLabel="Side"
-              selectData={sideLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName={'sideLkey'}
-              record={procedure}
-              setRecord={setProcedure}
+            //   disabled={!editing}
             />
           </Form>
-          <Divider style={{ margin: '4px 4px' }} />
-          <ButtonToolbar>
-            <Button
-              appearance="ghost"
-              style={{ border: '1px solid rgb(106, 195, 200)', color: 'rgb(38, 119, 154)' }}
-              onClick={() => handleChangeStatus('3621794252137516')}
-            >
-              <FontAwesomeIcon icon={faList} style={{ marginRight: '5px' }} />
-              <span>Awaiting Consent</span>
-            </Button>
-
-            <Button
-              appearance="ghost"
-              style={{ border: '1px solid rgb(106, 195, 200)', color: 'rgb(38, 119, 154)' }}
-              onClick={() => handleChangeStatus('3621681578985655')}
-            >
-              <FontAwesomeIcon icon={faPlay} style={{ marginRight: '5px' }} />
-              <Translate>Start Procedure</Translate>
-            </Button>
-            <Button
-              appearance="ghost"
-              style={{ border: '1px solid rgb(106, 195, 200)', color: 'rgb(38, 119, 154)' }}
-              onClick={() => handleChangeStatus('3621707345048408')}
-            >
-              <FontAwesomeIcon icon={faCheck} style={{ marginRight: '5px' }} />
-              <Translate>Complete Procedure</Translate>
-            </Button>
-            <Button
-              appearance="ghost"
-              style={{ border: '1px solid rgb(106, 195, 200)', color: 'rgb(38, 119, 154)' }}
-            >
-              <FontAwesomeIcon
-                icon={faRectangleXmark}
-                style={{ marginRight: '5px' }}
-                onClick={() => handleChangeStatus('3621690096636149')}
-              />
-              <Translate>Cancel Procedure</Translate>
-            </Button>
-          </ButtonToolbar>
-
-          <Divider />
-          <Steps current={1}>
-            <Steps.Item title="Procedure Registration" />
-            <Steps.Item title="Pre-Procedure Assessment" />
-            <Steps.Item title="Procedure Performing" />
-            <Steps.Item title="Post-Procedure Care and Follow-up" />
-            <Steps.Item title="Equipment and Logistics" />
-            <Steps.Item title="Completed" />
-          </Steps>
-          <Divider />
-          <Panel header="Procedure Registration" collapsible bordered>
-            1
-          </Panel>
-          <Panel header="Pre-Procedure Assessment" collapsible bordered>
-            2
-          </Panel>
-          <Panel header="Procedure Performing" collapsible bordered>
-            3
-          </Panel>
-          <Panel header="Post-Procedure Care and Follow-up" collapsible bordered>
-            4
-          </Panel>
-          <Panel header=" Equipment and Logistics" collapsible bordered>
-            5
-          </Panel>
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={ClosePerformModel} appearance="primary">
-            Close
-          </Button>
+          <Stack spacing={2} divider={<Divider vertical />}>
+            <Button appearance="primary" onClick={handleCancle}>
+              Cancel
+            </Button>
+            <Button appearance="ghost" color="cyan" onClick={CloseCancellationReasonModel}>
+              Close
+            </Button>
+          </Stack>
         </Modal.Footer>
       </Modal>
     </>
