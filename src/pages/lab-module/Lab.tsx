@@ -392,7 +392,7 @@ const Lab = () => {
   }, [test]);
 
   useEffect(() => {
-    console.log("result key" ,result.key);
+    
     resultFetch();
     const updatedFilter = [
       {
@@ -410,7 +410,7 @@ const Lab = () => {
     fetchLogs();
   }, [result]);
   useEffect(() => {
-    console.log("save log")
+ 
     fetchLogs();
   }, [saveResultLogMutation])
   useEffect(() => {
@@ -712,9 +712,6 @@ const Lab = () => {
       nextExpandedRowKeys.push(rowData.key);
     }
 
-
-
-    console.log(nextExpandedRowKeys)
     setExpandedRowKeys(nextExpandedRowKeys);
   };
 
@@ -960,7 +957,7 @@ const Lab = () => {
 
             {test.key &&
               <Row>
-                <Steps current={filteredStepsData.findIndex(step => step.key === currentStep)} style={{ zoom: 0.7 }}>
+                <Steps current={filteredStepsData.findIndex(step => step.key === currentStep)} small={true} >
                   {filteredStepsData.map((step, index) => {
                     let stepStatus = "process";
                     let stepColor = "inherit";
@@ -1035,7 +1032,7 @@ const Lab = () => {
                   <HeaderCell>
                     {showListFilter ? (
                       <SelectPicker
-                        style={{ width: '80%', zoom: 0.7 }}
+                        style={{ width: '80%'}}
                         placeholder={<Translate>Select Action From List</Translate>}
                         data={labCatLovQueryResponse?.object}
                         labelKey="lovDisplayVale"
@@ -1801,7 +1798,7 @@ const Lab = () => {
                                 }
 
                                 const resultValue = value(rowData);
-                                console.log(resultValue);
+                                
 
                                 const response = await saveTest({
                                   ...test,
@@ -2163,7 +2160,7 @@ const Lab = () => {
               collapsible
               style={{ border: '1px solid #e5e5ea' }}
             >
-              <Panel style={{ border: '1px solid #e5e5ea', borderRadius: '25px', zoom: 0.93 }}>
+              <Panel style={{ border: '1px solid #e5e5ea' }}>
                 <Table
                   height={200}
 
