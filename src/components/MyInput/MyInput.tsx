@@ -54,7 +54,7 @@ const MyInput = ({
       case 'textarea':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260, height: props?.height ?? 50 }}
+            style={{ width: props?.width ?? 200, height: props?.height ?? 70 }}
             disabled={props.disabled}
             name={fieldName}
             placeholder={props.placeholder}
@@ -77,7 +77,7 @@ const MyInput = ({
       case 'select':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260, height: props?.height ?? 32 }}
+            style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
             block
             disabled={props.disabled}
             accepter={SelectPicker}
@@ -99,7 +99,7 @@ const MyInput = ({
       case 'multyPicker':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260, height: props?.height ?? 32 }}
+            style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
             block
             disabled={props.disabled}
             accepter={TagPicker}
@@ -121,8 +121,8 @@ const MyInput = ({
             className="custom-date-input"
             style={
               {
-                width: props?.width ?? 260,
-                '--input-height': `${props?.height ?? 32}px`
+                width: props?.width ?? 145,
+                '--input-height': `${props?.height ?? 30}px`
               } as React.CSSProperties
             }
             disabled={props.disabled}
@@ -136,7 +136,7 @@ const MyInput = ({
       case 'number':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 260, height: props?.height ?? 32 }}
+            style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
             disabled={props.disabled}
             name={fieldName}
             max={props.max ? props.max : 1000000}
@@ -161,7 +161,7 @@ const MyInput = ({
         return (
           <Form.Control
             labelKey={props?.selectDataLabel ?? ''}
-            style={{ width: props?.width ?? 260, height: props?.height ?? 32 }}
+            style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
             disabled={props.disabled}
             name={fieldName}
             type={fieldType}

@@ -163,7 +163,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           <Tabs.Tab eventKey="9" title="Extra Details">
             <Form layout="inline" fluid>
               <MyInput
-                width={165}
                 vr={validationResult}
                 column
                 fieldLabel=" Details"

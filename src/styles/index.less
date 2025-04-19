@@ -311,7 +311,7 @@ aside {
 
 .rs-picker-default .rs-picker-toggle {
   position: relative;
-  z-index: 5;
+  z-index: 6000 !important;
   padding-right: 32px;
   display: inline-block;
   color: var(--rs-text-primary);
@@ -324,4 +324,13 @@ aside {
   box-shadow: none !important;
   border: 0px solid var(--rs-border-primary);
 
+}
+.rs-modal {
+  display: none;
+  overflow: visible;
+  outline: 0;
+  margin: 30px auto 0 auto;
+  position: relative;
+  width: auto;
+   z-index: 20; 
 }
