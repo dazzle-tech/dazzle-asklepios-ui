@@ -1,58 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { useGetPatientVaccinationRecordQuery } from '@/services/observationService'
 import { initialListRequest, ListRequest } from '@/types/types';
+import PlusIcon from '@rsuite/icons/Plus';
 import { useAppSelector, useAppDispatch } from '@/hooks';
-import {
-    InputGroup,
-    Form,
-    Input,
-    Panel,
-    DatePicker,
-    Text,
-    Checkbox,
-    Dropdown,
-    Button,
-    IconButton,
-    SelectPicker,
-    Table,
-    Modal,
-    Stack,
-    Divider,
-    Toggle,
-    ButtonToolbar,
-    Grid,
-    Row,
-    Col,
-} from 'rsuite';
-import {
-    useGetLovValuesByCodeQuery,
-} from '@/services/setupService';
-import {
-    useSavePsychologicalExamsMutation,
-    useGetPsychologicalExamsQuery
-} from '@/services/encounterService';
-import MyInput from '@/components/MyInput';
+import { Checkbox, IconButton, Table, } from 'rsuite';
+import { useSavePsychologicalExamsMutation, useGetPsychologicalExamsQuery } from '@/services/encounterService';
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import Translate from '@/components/Translate';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import MyLabel from '@/components/MyLabel';
-import {
-    newApPsychologicalExam
-} from '@/types/model-types-constructor';
-import {
-    ApPsychologicalExam
-} from '@/types/model-types';
+import { newApPsychologicalExam } from '@/types/model-types-constructor';
+import { ApPsychologicalExam } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
-import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBroom } from '@fortawesome/free-solid-svg-icons';
+import MyButton from '@/components/MyButton/MyButton';
+import AddPsychologicalExam from './AddPsychologicalExam';
+import CancellationModal from '@/components/CancellationModal';
 const { Column, HeaderCell, Cell } = Table
 const PsychologicalExam = ({ patient, encounter }) => {
     const authSlice = useAppSelector(state => state.auth);
+    const [openAddModal, setOpenAddModal] = useState(false);
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
     const [psychologicalExam, setPsychologicalExam] = useState<ApPsychologicalExam>({ ...newApPsychologicalExam });
-    const [savePsychologicalExam, savePsychologicalExamMutation] = useSavePsychologicalExamsMutation();
+    const [savePsychologicalExam] = useSavePsychologicalExamsMutation();
     const [popupCancelOpen, setPopupCancelOpen] = useState(false);
     const [psychologicalExamStatus, setPsychologicalExamStatus] = useState('');
     const [allData, setAllData] = useState(false);
@@ -77,41 +45,18 @@ const PsychologicalExam = ({ patient, encounter }) => {
             }
         ],
     });
-        //LOV
-        const { data: testTypeLovQueryResponse } = useGetLovValuesByCodeQuery('PSYCH_TEST_TYPES');
-        const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
-        const { data: scoreLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
-        const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
+    // Fetch the list of psychological exams based on the provided request, and provide a refetch function
     const { data: psychologicalExamResponse, refetch: refetchPsychologicalExam } = useGetPsychologicalExamsQuery(psychologicalExamListRequest);
+    // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
     const isSelected = rowData => {
         if (rowData && psychologicalExam && psychologicalExam.key === rowData.key) {
             return 'selected-row';
         } else return '';
     };
-      const handleSave = async () => {
-           //TODO convert key to code
-           try {
-               if (psychologicalExam.key === undefined) {
-                   await savePsychologicalExam({ ...psychologicalExam, patientKey: patient.key, encounterKey: encounter.key, followUpDate: psychologicalExam?.followUpDate ? new Date(psychologicalExam.followUpDate).getTime() : 0, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap();
-                   dispatch(notify('Patient Psychological Exam Added Successfully'));
-                   setPsychologicalExam({ ...newApPsychologicalExam, statusLkey: "9766169155908512" })
-                } else {
-                   await savePsychologicalExam({ ...psychologicalExam, patientKey: patient.key, encounterKey: encounter.key, followUpDate: psychologicalExam?.followUpDate ? new Date(psychologicalExam.followUpDate).getTime() : 0, updatedBy: authSlice.user.key }).unwrap();
-       
-                   dispatch(notify('Patient Psychological Exam Updated Successfully'));;
-               }
-               await refetchPsychologicalExam();
-               handleClearField();
-               
-           } catch (error) {
-               console.error("Error saving Psychological Exam:", error);
-               dispatch(notify('Failed to save Psychological Exam'));
-           }
-       };
+    // handle Expanded Table Functions
     const handleExpanded = (rowData) => {
         let open = false;
         const nextExpandedRowKeys = [];
-
         expandedRowKeys.forEach(key => {
             if (key === rowData.key) {
                 open = true;
@@ -126,9 +71,7 @@ const PsychologicalExam = ({ patient, encounter }) => {
         setExpandedRowKeys(nextExpandedRowKeys);
     };
     const renderRowExpanded = rowData => {
-
         return (
-
             <Table
                 data={[rowData]}
                 bordered
@@ -153,24 +96,23 @@ const PsychologicalExam = ({ patient, encounter }) => {
                     <Cell>
                         {rowData => (
                             <>
-                               {rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
+                                {rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
                                 {" / "}
                                 {rowData?.updateByUser?.fullName}
                             </>
                         )}
                     </Cell>
                 </Column>
-
                 <Column flexGrow={2} align="center" fullText>
                     <HeaderCell>Cancelled At / Cancelled By</HeaderCell>
                     <Cell dataKey="deletedAt" >
-                       {rowData=>(
-                        <>
-                          {rowData.deletedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
+                        {rowData => (
+                            <>
+                                {rowData.deletedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
                                 {" / "}
-                           {rowData?.deleteByUser?.fullName}
-                        </>
-                       )}
+                                {rowData?.deleteByUser?.fullName}
+                            </>
+                        )}
                     </Cell>
                 </Column>
                 <Column flexGrow={2} align="center" fullText>
@@ -178,8 +120,6 @@ const PsychologicalExam = ({ patient, encounter }) => {
                     <Cell dataKey="cancellationReason" />
                 </Column>
             </Table>
-
-
         );
     };
     const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
@@ -204,23 +144,11 @@ const PsychologicalExam = ({ patient, encounter }) => {
         savePsychologicalExam({ ...psychologicalExam, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
             dispatch(notify('Psychological Exam Canceled Successfully'));
             refetchPsychologicalExam();
+            setPopupCancelOpen(false);
         });
     };
-        const handleClearField = () => {
-            setPopupCancelOpen(false);
-            setPsychologicalExam({
-                ...newApPsychologicalExam,
-                testTypeLkey: null,
-                unitLkey: null,
-                scoreLkey: null,
-                resultInterpretationLkey: null,
-                statusLkey:null,
-                requireFollowUp:null
-            });
-            
-            
-        };
-    ///useEffect
+
+    // Effects
     useEffect(() => {
         setPsychologicalExamListRequest((prev) => ({
             ...prev,
@@ -296,392 +224,179 @@ const PsychologicalExam = ({ patient, encounter }) => {
                     ]),
             ],
         }));
-    }, [psychologicalExamStatus ,allData]);
-     useEffect(() => {
-            setPsychologicalExamListRequest((prev) => {
-                const filters =
+    }, [psychologicalExamStatus, allData]);
+    useEffect(() => {
+        setPsychologicalExamListRequest((prev) => {
+            const filters =
                 psychologicalExamStatus != '' && allData
+                    ? [
+
+                        {
+                            fieldName: 'patient_key',
+                            operator: 'match',
+                            value: patient?.key
+                        },
+                    ]
+                    : psychologicalExamStatus === '' && allData
                         ? [
-    
+                            {
+                                fieldName: 'deleted_at',
+                                operator: 'isNull',
+                                value: undefined,
+                            },
                             {
                                 fieldName: 'patient_key',
                                 operator: 'match',
                                 value: patient?.key
                             },
                         ]
-                        : psychologicalExamStatus === '' && allData
-                            ? [
-                                {
-                                    fieldName: 'deleted_at',
-                                    operator: 'isNull',
-                                    value: undefined,
-                                },
-                                {
-                                    fieldName: 'patient_key',
-                                    operator: 'match',
-                                    value: patient?.key
-                                },
-                            ]
-                            : prev.filters;
-    
-                return {
-                    ...initialListRequest,
-                    filters,
-                };
-            });
-        }, [allData, psychologicalExamStatus]);
+                        : prev.filters;
+
+            return {
+                ...initialListRequest,
+                filters,
+            };
+        });
+    }, [allData, psychologicalExamStatus]);
     return (
-        <Panel header={"Psychological Exam"}>
-            <Panel bordered style={{ padding: '10px' }}>
-                <Form fluid layout='inline'>
-                    <MyInput
-                        width={165}
-                        column
-                        fieldLabel="Test Type"
-                        fieldType="select"
-                        fieldName="testTypeLkey"
-                        selectData={testTypeLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={psychologicalExam}
-                        setRecord={setPsychologicalExam}
-                    />
-                    <MyInput
-                        width={165}
-                        column
-                        fieldLabel="Reason"
-                        fieldName="reason"
-                        record={psychologicalExam}
-                        setRecord={setPsychologicalExam}
-                    />
-                    <MyInput
-                        fieldType="number"
-                        fieldLabel="Test Duration"
-                        width={165}
-                        column
-                        fieldName="testDuration"
-                        record={psychologicalExam}
-                        setRecord={setPsychologicalExam}
-                    />
-                    <MyInput
-                        column
-                        width={165}
-                        fieldLabel="Unit"
-                        fieldType="select"
-                        fieldName="unitLkey"
-                        selectData={unitLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={psychologicalExam}
-                        setRecord={setPsychologicalExam}
-                    />
-                    <MyInput
-                        column
-                        width={165}
-                        fieldLabel="Score"
-                        fieldType="select"
-                        fieldName="scoreLkey"
-                        selectData={scoreLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={psychologicalExam}
-                        setRecord={setPsychologicalExam}
-                    />
-                    <MyInput
-                        column
-                        width={165}
-                        fieldLabel="Result Interpretation"
-                        fieldType="select"
-                        fieldName="resultInterpretationLkey"
-                        selectData={severityLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={psychologicalExam}
-                        setRecord={setPsychologicalExam}
-                    />
-                    <MyInput
-                        width={165}
-                        column
-                        fieldLabel="Require Follow-up"
-                        fieldType="checkbox"
-                        fieldName="requireFollowUp"
-                        record={psychologicalExam}
-                        setRecord={setPsychologicalExam}
-                    />
-                    <MyInput
-                        width={165}
-                        column
-                        fieldType="date"
-                        fieldLabel="Require Follow-up"
-                        fieldName="followUpDate"
-                        record={psychologicalExam}
-                        setRecord={setPsychologicalExam}
-                        disabled={!psychologicalExam?.requireFollowUp}
-                    />
-                    <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px', zoom: .8 }}>
-                        <Form style={{ display: 'flex', flexDirection: 'column' }}>
-                            <MyLabel label="Clinical Observations" />
-                            <Input
-                                as="textarea"
-                                value={psychologicalExam.clinicalObservations}
-                                onChange={(e) => setPsychologicalExam({
-                                    ...psychologicalExam,
-                                    clinicalObservations: e
-                                })}
-                                style={{ width: 330 }}
-                                rows={3}
-                            />
-                        </Form>
-                        <Form style={{ display: 'flex', flexDirection: 'column' }}>
-                            <MyLabel label="Treatment Plan" />
-                            <Input
-                                as="textarea"
-                                value={psychologicalExam.treatmentPlan}
-                                onChange={(e) => setPsychologicalExam({
-                                    ...psychologicalExam,
-                                    treatmentPlan: e
-                                })}
-                                style={{ width: 330 }}
-                                rows={3}
-                            />
-                        </Form>
-                        <Form style={{ display: 'flex', flexDirection: 'column' }}>
-                            <MyLabel label="Additional Notes" />
-                            <Input
-                                as="textarea"
-                                value={psychologicalExam.additionalNotes}
-                                onChange={(e) => setPsychologicalExam({
-                                    ...psychologicalExam,
-                                    additionalNotes: e
-                                })}
-                                style={{ width: 330 }}
-                                rows={3}
-                            />
-                        </Form>
-                    </Form>
-                    <ButtonToolbar style={{ zoom: .8 }}>
-                        <Button
-                            appearance="primary"
-                            onClick={() => handleSave()}
-                            style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: '5px' }}
-                        >
-                            <FontAwesomeIcon icon={faCheckDouble} style={{ marginRight: '5px' }} />
-
-                            <Translate>Save</Translate>
-                        </Button>
-                        <Button
-                            appearance="ghost"
-                            style={{ backgroundColor: 'white', color: 'var(--primary-blue)', marginLeft: "5px" }}
-                            onClick={handleClearField}
-                        >
-                            <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px' }} />
-                            <span>Clear</span>
-                        </Button>
-                    </ButtonToolbar>
-                </Form>
-            </Panel>
-            <Panel header={"Patient's Psychological Exam"} collapsible bordered>
-                <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <ButtonToolbar>
-                        <Button
-                            appearance="primary"
-                            style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: "5px", zoom: .8 }}
-                            onClick={() => { setPopupCancelOpen(true) }}
-                            disabled={!psychologicalExam?.key}
-                        >
-                            <CloseOutlineIcon style={{ marginRight: '7px' }} />
-                            <Translate>Cancel</Translate>
-                        </Button>
-
-                    </ButtonToolbar>
-                    <Checkbox
-                        onChange={(value, checked) => {
-                            if (checked) {
-                                //TODO convert key to code
-                                setPsychologicalExamStatus('3196709905099521');
-                            }
-                            else {
-                                setPsychologicalExamStatus('');
-                            }
-                        }}
-                    >
-                        Show Cancelled
-                    </Checkbox>
-                    <Checkbox
-                        onChange={(value, checked) => {
-                            if (checked) {
-                                setAllData(true);
-                            }
-                            else {
-                                setAllData(false);
-                            }
-                        }}
-                    >
-                        Show All
-                    </Checkbox>
-                </Form>
-                <Table
-                    height={600}
-                    data={psychologicalExamResponse?.object ?? []}
-                    rowKey="key"
-                    expandedRowKeys={expandedRowKeys}
-                    renderRowExpanded={renderRowExpanded}
-                    shouldUpdateScroll={false}
-                    bordered
-                    cellBordered
+        <div>
+            <AddPsychologicalExam open={openAddModal} setOpen={setOpenAddModal} patient={patient} encounter={encounter} encounterPsychologicalExam={psychologicalExam} />
+            <div className='bt-div'>
+                <MyButton prefixIcon={() => <CloseOutlineIcon />} onClick={() => { setPopupCancelOpen(true) }} >
+                    Cancel
+                </MyButton>
+                <Checkbox onChange={(value, checked) => { if (checked) { setPsychologicalExamStatus('3196709905099521'); } else { setPsychologicalExamStatus(''); } }}>
+                    Show Cancelled
+                </Checkbox>
+                <Checkbox onChange={(value, checked) => { if (checked) { setAllData(true); } else { setAllData(false); } }}>
+                    Show All Vaccines
+                </Checkbox>
+                <div className='bt-right'>
+                    <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setOpenAddModal(true)}>Add Psychological Exam</MyButton>
+                </div>
+            </div>
+            <Table
+                height={600}
+                data={psychologicalExamResponse?.object ?? []}
+                rowKey="key"
+                expandedRowKeys={expandedRowKeys}
+                renderRowExpanded={renderRowExpanded}
+                shouldUpdateScroll={false}
+                bordered
+                cellBordered
                 onRowClick={rowData => {
                     setPsychologicalExam({
                         ...rowData
                     });
                 }}
                 rowClassName={isSelected}
-                >
-                    <Column width={70} align="center">
-                        <HeaderCell>#</HeaderCell>
-                        <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-                    </Column>
-
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Test Type</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.testTypeLvalue
-                                ? rowData?.testTypeLvalue.lovDisplayVale
-                                : rowData?.testTypeLkey
-                            }
-                        </Cell>
-                    </Column >
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Reason</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                rowData?.reason
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Test Duration</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                <> {rowData?.testDuration} {" "}
-                                    {
-                                        rowData?.unitLvalue
-                                            ? rowData?.unitLvalue.lovDisplayVale
-                                            : rowData?.unitLkey
-                                    }
-                                </>
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Score</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.scoreLvalue
-                                ? rowData?.scoreLvalue.lovDisplayVale
-                                : rowData?.scoreLkey
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={3} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Result Interpretation</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.resultInterpretationLvalue
-                                ? rowData?.resultInterpretationLvalue.lovDisplayVale
-                                : rowData?.resultInterpretationLkey
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Clinical Observations</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.clinicalObservations}
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Treatment Plan</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.treatmentPlan}
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Treatment Plan</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.treatmentPlan}
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Additional Notes</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.additionalNotes}
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Follow-up Date</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.followUpDate ? new Date(rowData.followUpDate).toLocaleString("en-GB") : ""}
-                        </Cell>
-                    </Column>
-                </Table>
-            </Panel>
-            <Modal
-                open={popupCancelOpen}
-                onClose={() => setPopupCancelOpen(false)}
-                size="sm"
             >
-                <Modal.Header>
-                    <Translate><h6>Confirm Cancel</h6></Translate>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form  layout="inline" fluid>
-                        <MyInput
-                            width={600}
-                            column
-                            fieldLabel="Cancellation Reason"
-                            fieldType="textarea"
-                            fieldName="cancellationReason"
-                            height={120}
-                            record={psychologicalExam}
-                            setRecord={setPsychologicalExam}
-                            //TODO convert key to code
-                            disabled={psychologicalExam?.statusLkey === "3196709905099521"}
-                        />
-                    </Form>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button appearance="primary" onClick={handleCancle}
-                    //TODO convert key to code
-                     disabled={psychologicalExam?.statusLkey === "3196709905099521"} 
-                     style={{ backgroundColor: 'var(--primary-blue)', color: 'white', zoom: .8 }}
-                    >
-                        Cancel
-                    </Button>
-                    <Divider vertical />
-                    <Button appearance="ghost" color='blue' onClick={()=>{setPopupCancelOpen(false)}}
-                         style={{ color: 'var(--primary-blue)', backgroundColor: 'white', zoom: .8 }}>
-                        Close
-                    </Button>
-                </Modal.Footer>
-            </Modal>
-        </Panel>
+                <Column width={70} align="center">
+                    <HeaderCell>#</HeaderCell>
+                    <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Test Type</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => rowData?.testTypeLvalue
+                            ? rowData?.testTypeLvalue.lovDisplayVale
+                            : rowData?.testTypeLkey
+                        }
+                    </Cell>
+                </Column >
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Reason</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            rowData?.reason
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Test Duration</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            <> {rowData?.testDuration} {" "}
+                                {
+                                    rowData?.unitLvalue
+                                        ? rowData?.unitLvalue.lovDisplayVale
+                                        : rowData?.unitLkey
+                                }
+                            </>
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Score</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => rowData?.scoreLvalue
+                            ? rowData?.scoreLvalue.lovDisplayVale
+                            : rowData?.scoreLkey
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={3} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Result Interpretation</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => rowData?.resultInterpretationLvalue
+                            ? rowData?.resultInterpretationLvalue.lovDisplayVale
+                            : rowData?.resultInterpretationLkey
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Clinical Observations</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => rowData?.clinicalObservations}
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Treatment Plan</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => rowData?.treatmentPlan}
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Treatment Plan</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => rowData?.treatmentPlan}
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Additional Notes</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => rowData?.additionalNotes}
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Follow-up Date</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => rowData?.followUpDate ? new Date(rowData.followUpDate).toLocaleString("en-GB") : ""}
+                    </Cell>
+                </Column>
+            </Table>
+            <CancellationModal open={popupCancelOpen} setOpen={setPopupCancelOpen} object={psychologicalExam} setObject={setPsychologicalExam} handleCancle={handleCancle} fieldName="cancellationReason" />
+        </div>
     );
 };
 export default PsychologicalExam;
