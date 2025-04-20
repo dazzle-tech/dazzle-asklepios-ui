@@ -24,7 +24,7 @@ const MyCard = ({
     ...props 
 }) => {
   return (
-    <Card width={width}  shaded>
+    <Card width={width} style={{minHeight:'45px'}} shaded>
     {(avatar || more) && (  <Card.Header >
         <HStack  >
      
@@ -32,7 +32,7 @@ const MyCard = ({
        {more&& <MyButton 
         style={{
             marginLeft:'auto'}}
-        appearance="subtle" size='small' color='var(--primary-gray)' radius='8px'><FontAwesomeIcon icon={faEllipsis}  onClick={moreClick} /></MyButton>} 
+        appearance="subtle" size='xsmall' color='var(--primary-gray)' onClick={moreClick} radius='8px'><FontAwesomeIcon icon={faEllipsis}   /></MyButton>} 
         </HStack>
       </Card.Header>)}
       {title &&   <Card.Body >
@@ -42,12 +42,16 @@ const MyCard = ({
       </Card.Body>}
       <Card.Footer style={{ display:'flex' ,justifyContent:'space-between' ,alignItems:'center'}}>
       <div className='footer-contant-text'>{ footerContant}</div>
-       {!leftArrow&& <MyButton 
+       {!leftArrow&& 
+       <MyButton 
+       onClick={arrowClick} 
        className='arrow-style'
-        appearance="subtle" size='small' color='var(--primary-gray)' radius='8px' ><FontAwesomeIcon icon={faArrowLeft} onClick={arrowClick} /></MyButton>}
-       {leftArrow&& <MyButton 
-      className='arrow-style'
-        appearance="subtle" size='small' color='var(--primary-gray)' radius='8px'><FontAwesomeIcon icon={faArrowRight} onClick={arrowClick} /></MyButton>}
+        appearance="subtle" size='xsmall' color='var(--primary-gray)' radius='8px' ><FontAwesomeIcon icon={faArrowLeft} /></MyButton>}
+       {leftArrow&&
+        <MyButton 
+        onClick={arrowClick}
+        className='arrow-style'
+        appearance="subtle" size='xsmall' color='var(--primary-gray)' radius='8px'><FontAwesomeIcon icon={faArrowRight} /></MyButton>}
       </Card.Footer>
     </Card>
   );
