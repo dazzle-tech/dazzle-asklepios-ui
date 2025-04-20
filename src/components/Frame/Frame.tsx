@@ -66,10 +66,9 @@ const Frame = (props: FrameProps) => {
 
   useEffect(() => {
     setWindowHeight(getHeight(window));
-   if(window.innerWidth <= 950) 
-     setExpand(false);
     const resizeListenner = on(window, 'resize', () => setWindowHeight(getHeight(window)));
-
+    if(window.innerWidth <= 950) 
+      setExpand(false);
     return () => {
       resizeListenner.off();
     };
@@ -97,9 +96,8 @@ const Frame = (props: FrameProps) => {
   return (
     <Container className="frame">
       <Sidebar
-      className={`sidebar ${expand === true ? "sidebar-expanded" : "sidebar-unexpanded"}`}
-        // className='sidebar'
-        // width={expand ? 260 : 56}
+        className='sidebar'
+        width={expand ? 260 : 56}
         collapsible
       >
         <Sidenav.Header></Sidenav.Header>
@@ -117,8 +115,8 @@ const Frame = (props: FrameProps) => {
                       ? authSlice.tenant.tenantLogoPath
                       : Logo
                   }
-                  // height={50}
-                  // width={100}
+                  height={50}
+                  width={100}
                 />
               )}
               {expand && (
@@ -143,7 +141,7 @@ const Frame = (props: FrameProps) => {
                {expand && (
               
                     <Form className='search-field'>
-                      <MyInput fieldName='screen' width= '85%' record={recordOfSearchedScreenName} setRecord={setRecordOfSearchedScreenName} placeholder="Search by Screen Name" showLabel={false}/>
+                      <MyInput fieldName='screen' width= '220px' record={recordOfSearchedScreenName} setRecord={setRecordOfSearchedScreenName} placeholder="Search by Sreen Name" showLabel={false}/>
                     </Form>
                  
                )}
@@ -180,12 +178,11 @@ const Frame = (props: FrameProps) => {
                     </Nav.Item>
                   );
                 }
-                
-                if(recordOfSearchedScreenName['screen'].length === 0)
-                return <NavItem key={rest.eventKey} {...rest} />;
-              })}
 
-              
+                if(recordOfSearchedScreenName['screen'].length === 0)
+                  return <NavItem key={rest.eventKey} {...rest} />;
+
+              })}
             </Nav>
           </Sidenav.Body>
         </Sidenav>
@@ -193,9 +190,7 @@ const Frame = (props: FrameProps) => {
       </Sidebar>
 
 
-      <Container 
-      className={containerClasses}
-       >
+      <Container className={containerClasses} >
         <Header expand={expand} setExpand={setExpand} />
         <Content>
          

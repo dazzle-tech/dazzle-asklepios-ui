@@ -25,6 +25,7 @@ import MyInput from '@/components/MyInput';
 import MyIconInput from '@/components/MyInput/MyIconInput';
 import { Icon } from '@rsuite/icons';
 import * as icons from 'react-icons/fa6';
+import MyModal from '@/components/MyModal/MyModal';
 import './styles.less';
 const Screens = ({ module, goBack, ...props }) => {
   const [screen, setScreen] = useState<ApScreen>({ ...newApScreen });
@@ -48,6 +49,18 @@ const Screens = ({ module, goBack, ...props }) => {
 
   const [operationState, setOperationState] = useState<string>('New');
   const [record, setRecord] = useState({ value: '' });
+
+    const [isSmallWindow, setIsSmallWindow] = useState<boolean>(window.innerWidth < 500);
+
+    useEffect(() => {
+        const handleResize = () => {
+          setIsSmallWindow(window.innerWidth < 500);
+        };
+    
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+      }, []);
+  
 
   useEffect(() => {
     if (module && module.key) {
@@ -129,6 +142,46 @@ const Screens = ({ module, goBack, ...props }) => {
     </div>
   );
 
+  const conjureFormContent = (stepNumber = 0) => {
+      switch (stepNumber) {
+        case 0:
+          return (
+            <Form
+                fluid
+              >
+               
+
+                <MyInput fieldName="name" record={screen} setRecord={setScreen} width={520} />
+                <MyInput
+                  fieldName="description"
+                  fieldType="textarea"
+                  record={screen}
+                  setRecord={setScreen}
+                  width={520}
+                />
+                <MyInput
+                  fieldName="viewOrder"
+                  fieldType="number"
+                  record={screen}
+                  setRecord={setScreen}
+                  width={520}
+                />
+                <div className='container-of-two-fields-module'>
+                  <MyIconInput
+                    fieldName="iconImagePath"
+                    fieldLabel="Icon"
+                    record={screen}
+                    setRecord={setScreen}
+                    width={250}
+                  />
+                  <MyInput fieldName="navPath" record={screen} setRecord={setScreen} width={250} />
+                </div>
+              </Form>
+          );
+      }
+    };
+  
+
   return (
     <>
       {module && module.key && (
@@ -140,18 +193,19 @@ const Screens = ({ module, goBack, ...props }) => {
           </p>
         }
         >
-          <div className='container-of-header-actions'>
-            <div className='container-of-back-and-search'>
+          <div className='container-of-header-actions-screen'>
+            <div className= {window.innerWidth > 700 ? 'container-of-back-and-search-screen' : ""}>
+              <div>
               <MyButton
                 prefixIcon={() => <ArowBackIcon />}
                 color="var(--deep-blue)"
-                ghost
+                appearance={'ghost'}
                 onClick={goBack}
                 width="82px"
-                height="40px"
               >
                 Back
               </MyButton>
+              </div>
               <Form>
                 <MyInput
                   fieldName="value"
@@ -161,18 +215,20 @@ const Screens = ({ module, goBack, ...props }) => {
                   showLabel={false}
                   placeholder="Search by Name"
                   width={'220px'}
+                  // width={isSmallWindow ? '109px' : '220px'}
                 />
               </Form>
             </div>
+            <div>
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
                 onClick={handleScreenNew}
                 width="111px"
-                height="40px"
               >
                 Add New
               </MyButton>
+              </div>
           </div>
           <Table
             height={400}
@@ -233,15 +289,15 @@ const Screens = ({ module, goBack, ...props }) => {
               <Cell>{rowData => iconsForActions(rowData)}</Cell>
             </Column>
           </Table>
-          <div className='container-of-pagination'>
+          <div className='container-of-pagination-module'>
             <Pagination
               prev
               next
-              first
-              last
-              ellipsis
-              boundaryLinks
-              maxButtons={5}
+              first={!isSmallWindow}
+            last={!isSmallWindow}
+            ellipsis={!isSmallWindow}
+            boundaryLinks={!isSmallWindow}
+            maxButtons={isSmallWindow ? 1 : 2}
               size="xs"
               layout={['limit', '|', 'pager']}
               limitOptions={[5, 15, 30]}
@@ -257,7 +313,7 @@ const Screens = ({ module, goBack, ...props }) => {
             />
           </div>
 
-          <Modal open={screenPopupOpen} className="left-modal" size="xsm">
+          {/* <Modal open={screenPopupOpen} className="left-modal" size="xsm">
             <Modal.Title>
               <Translate>{operationState} Screen</Translate>
             </Modal.Title>
@@ -327,7 +383,19 @@ const Screens = ({ module, goBack, ...props }) => {
                 </MyButton>
               </Stack>
             </Modal.Footer>
-          </Modal>
+          </Modal> */}
+
+
+          <MyModal
+                    open={screenPopupOpen}
+                    setOpen={setScreenPopupOpen}
+                    title={operationState + ' Screen'}
+                    position="right"
+                    content={conjureFormContent}
+                    actionButtonLabel={operationState === 'New' ? 'Create' : 'Save'}
+                    steps={[{ title: 'Screen Info', icon: faLaptop }]}
+                    size={'570px'}
+                  />
         </Panel>
       )}
 

@@ -6,7 +6,7 @@ const { Column, HeaderCell, Cell } = Table;
 import { useGetModulesQuery, useSaveModuleMutation } from '@/services/setupService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLaptop } from '@fortawesome/free-solid-svg-icons';
-import {Carousel } from 'rsuite';
+import { Carousel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { ApModule } from '@/types/model-types';
 import { newApModule } from '@/types/model-types-constructor';
@@ -27,6 +27,7 @@ import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
 import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
 import './styles.less';
 import { title } from 'process';
 
@@ -56,6 +57,8 @@ const Modules = () => {
 
   const [operationState, setOperationState] = useState<string>('New');
 
+  const [isSmallWindow, setIsSmallWindow] = useState<boolean>(window.innerWidth < 500);
+
   // useEffect(() => {}, []);
 
   const handleModuleNew = () => {
@@ -68,6 +71,15 @@ const Modules = () => {
     setModulePopupOpen(false);
     saveModule(module).unwrap();
   };
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmallWindow(window.innerWidth < 500);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (saveModuleMutation.data) {
@@ -154,40 +166,112 @@ const Modules = () => {
     </div>
   );
 
-  const conjureFormContent = (stepNumber = 0) =>{
-    switch(stepNumber){
+  const conjureFormContent = (stepNumber = 0) => {
+    switch (stepNumber) {
       case 0:
-    return(
-      <Form fluid>
-      <MyInput fieldName="name" record={module} setRecord={setModule} width={520} />
-      <MyInput
-        fieldType="textarea"
-        fieldName="description"
-        record={module}
-        setRecord={setModule}
-        width={520}
-        height={150}
-      />
-      <div className='container-of-two-fields'>
-        <MyInput
-          fieldName="viewOrder"
-          fieldType="number"
-          record={module}
-          setRecord={setModule}
-          width={250}
-        />
-        <MyIconInput
-          fieldName="iconImagePath"
-          fieldLabel="Icon"
-          record={module}
-          setRecord={setModule}
-          width={250}
-        />
-      </div>
-    </Form>
-    )
-  }
-  }
+        return (
+          <Form fluid>
+            <MyInput fieldName="name" record={module} setRecord={setModule} width={520} />
+            <MyInput
+              fieldType="textarea"
+              fieldName="description"
+              record={module}
+              setRecord={setModule}
+              width={520}
+              height={150}
+            />
+            <div className="container-of-two-fields-module">
+              <MyInput
+                fieldName="viewOrder"
+                fieldType="number"
+                record={module}
+                setRecord={setModule}
+                width={250}
+              />
+              <MyIconInput
+                fieldName="iconImagePath"
+                fieldLabel="Icon"
+                record={module}
+                setRecord={setModule}
+                width={250}
+              />
+            </div>
+          </Form>
+        );
+    }
+  };
+
+   const tableColumns = [
+      {
+        key: 'queueNumber',
+        title: <Translate>#</Translate>,
+        flexGrow: 1,
+        dataKey: 'queueNumber'
+      },
+      {
+        key: 'patientFullName',
+        title: <Translate>PATIENT NAME</Translate>,
+        flexGrow: 6,
+        fullText: true,
+      },
+      {
+        key: 'visitType',
+        title: <Translate>VISIT TYPE</Translate>,
+        flexGrow: 4,
+
+      },
+      {
+        key: 'chiefComplaint',
+        title: <Translate>CHIEF COMPLAIN</Translate>,
+        flexGrow: 4,
+      },
+      {
+        key: 'diagnosis',
+        title: <Translate>DIAGNOSIS</Translate>,
+        flexGrow: 4,
+      },
+      {
+        key: 'hasPrescription',
+        title: <Translate>PRESCRIPTION</Translate>,
+        flexGrow: 3,
+     
+      },
+      {
+        key: 'hasOrder',
+        title: <Translate>HAS ORDER</Translate>,
+        flexGrow: 3,
+       
+      },
+      {
+        key: 'encounterPriority',
+        title: <Translate>PRIORITY</Translate>,
+        flexGrow: 3,
+       
+      },
+      {
+        key: 'plannedStartDate',
+        title: <Translate>DATE</Translate>,
+        flexGrow: 3,
+        dataKey: 'plannedStartDate'
+      },
+      {
+        key: 'status',
+        title: <Translate>STATUS</Translate>,
+        flexGrow: 3,
+        render: rowData =>
+          rowData.encounterStatusLvalue
+            ? rowData.encounterStatusLvalue.lovDisplayVale
+            : rowData.encounterStatusLkey
+      },
+      {
+        key: 'hasObservation',
+        title: <Translate>IS OBSERVED</Translate>,
+      },
+      {
+        key: 'actions',
+        title: <Translate> </Translate>,
+      }
+    ];
 
   return (
     <Carousel className="carousel" autoplay={false} activeIndex={carouselActiveIndex}>
@@ -200,10 +284,8 @@ const Modules = () => {
       //   </h3>
       // }
       >
-        <div 
-        className="container-of-header-actions2"
-        >
-          <Form >
+        <div className="container-of-header-actions-module">
+          <Form>
             <MyInput
               placeholder="Search by Name"
               fieldName="name"
@@ -220,10 +302,30 @@ const Modules = () => {
             prefixIcon={() => <AddOutlineIcon />}
             color="var(--deep-blue)"
             onClick={handleModuleNew}
+            width="109px"
           >
             Add New
           </MyButton>
         </div>
+
+<MyTable
+        height={450}
+        data={moduleListResponse?.object ?? []}
+        columns={tableColumns}
+        rowClassName={isSelected}
+        // loading={isLoading || (manualSearchTriggered && isFetching)}
+        onRowClick={rowData => {
+          setModule(rowData);
+          
+        }}
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortChange={(sortBy, sortType) => {
+          if (sortBy)
+          setListRequest({ ...listRequest, sortBy, sortType });
+        }}
+      />
+
         <Table
           loading={isLoading}
           height={400}
@@ -277,17 +379,18 @@ const Modules = () => {
             <Cell>{rowData => iconsForActions(rowData)}</Cell>
           </Column>
         </Table>
-        <div className="container-of-pagination">
+        <div className="container-of-pagination-module">
           <Pagination
             prev
             next
-            first
-            last
-            ellipsis
-            boundaryLinks
-            maxButtons={2}
+            first={!isSmallWindow}
+            last={!isSmallWindow}
+            ellipsis={!isSmallWindow}
+            boundaryLinks={!isSmallWindow}
+            maxButtons={isSmallWindow ? 1 : 2}
             size="xs"
-            layout={['limit', '|', 'pager']}
+            // layout={isSmallWindow ? ['pager'] : ['limit', '|', 'pager']}
+            layout={ ['limit', '|', 'pager']}
             limitOptions={[5, 15, 30]}
             limit={listRequest.pageSize}
             activePage={listRequest.pageNumber}
@@ -300,7 +403,7 @@ const Modules = () => {
             total={moduleListResponse?.extraNumeric ?? 0}
           />
         </div>
-   
+
         {/* <Modal open={modulePopupOpen} className="left-modal" size="xsm">
           <Modal.Title>
             <Translate>{operationState} Module</Translate>
@@ -376,17 +479,15 @@ const Modules = () => {
           </Modal.Footer>
         </Modal> */}
         <MyModal
-         open={modulePopupOpen}
-         setOpen={setModulePopupOpen}
-         title={operationState + " Module"}
-         position="right"
-         content={conjureFormContent} 
-         actionButtonLabel={operationState === 'New' ? 'Create' : 'Save'}
-         steps={[
-          {title:"Module Info", icon: faLaptop }
-         ]}
-         size={'570px'}
-         />
+          open={modulePopupOpen}
+          setOpen={setModulePopupOpen}
+          title={operationState + ' Module'}
+          position="right"
+          content={conjureFormContent}
+          actionButtonLabel={operationState === 'New' ? 'Create' : 'Save'}
+          steps={[{ title: 'Module Info', icon: faLaptop }]}
+          size={'570px'}
+        />
       </Panel>
       {conjureSubViews()}
     </Carousel>

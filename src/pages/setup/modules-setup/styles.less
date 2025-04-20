@@ -10,38 +10,64 @@
      background-color: var(--rs-body) !important;
 }
 
-.container-of-header-actions2{
+.container-of-header-actions-module{
     display: flex;
      justify-content: space-between;
       margin-bottom: 10px;
       margin-right: 5px;
 }
+.container-of-header-actions-screen{
+    display: flex;
+    justify-content: space-between;
+     margin-bottom: 10px;
+     margin-right: 5px;
+}
 .column-name{
     font-weight: bold;
 }
-.container-of-pagination{
-    // padding: 20px;
+.container-of-pagination-module{
+    padding: 20px;
      background-color: var(--extra-light-blue);
 }
 
-.container-of-two-fields{
+.container-of-two-fields-module{
     display: flex;
      gap: 20px;
 }
-.container-of-back-and-search{
+.container-of-back-and-search-screen{
     display: flex;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
     gap: 20px;
 }
 
 @media(max-width: 500px){
 
-    .container-of-header-actions2{
-        // display: flex;
+    .container-of-header-actions-module{
         flex-direction: column;
         gap: 10px;
-         justify-content: none;
+         justify-content: center;
           margin-bottom: 10px;
-        //   margin-right: 5px;
+
+    }
+    .container-of-pagination-module{
+        padding: 5px;
     }
 
+   
+    
+   
+}
+
+@media(max-width: 700px){
+
+    .container-of-header-actions-screen{
+        flex-direction: column;
+        gap: 10px;
+         justify-content: center;
+          margin-bottom: 10px;
+
+    }
+  
 }
