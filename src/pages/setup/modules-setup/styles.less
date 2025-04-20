@@ -10,17 +10,17 @@
      background-color: var(--rs-body) !important;
 }
 
-.container-of-header-actions{
+.container-of-header-actions2{
     display: flex;
      justify-content: space-between;
       margin-bottom: 10px;
-      margin-right: 40px;
+      margin-right: 5px;
 }
 .column-name{
     font-weight: bold;
 }
 .container-of-pagination{
-    padding: 20px;
+    // padding: 20px;
      background-color: var(--extra-light-blue);
 }
 
@@ -31,4 +31,17 @@
 .container-of-back-and-search{
     display: flex;
     gap: 20px;
+}
+
+@media(max-width: 500px){
+
+    .container-of-header-actions2{
+        // display: flex;
+        flex-direction: column;
+        gap: 10px;
+         justify-content: none;
+          margin-bottom: 10px;
+        //   margin-right: 5px;
+    }
+
 }

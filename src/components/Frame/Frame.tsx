@@ -193,7 +193,9 @@ const Frame = (props: FrameProps) => {
       </Sidebar>
 
 
-      <Container className={containerClasses} >
+      <Container 
+      className={containerClasses}
+       >
         <Header expand={expand} setExpand={setExpand} />
         <Content>
          

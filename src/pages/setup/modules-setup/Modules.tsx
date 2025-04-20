@@ -200,8 +200,10 @@ const Modules = () => {
       //   </h3>
       // }
       >
-        <div className="container-of-header-actions">
-          <Form>
+        <div 
+        className="container-of-header-actions2"
+        >
+          <Form >
             <MyInput
               placeholder="Search by Name"
               fieldName="name"
@@ -210,6 +212,7 @@ const Modules = () => {
               setRecord={setRecordOfSearch}
               showLabel={false}
               width={'220px'}
+              // width={'100%'}
             />
           </Form>
 
@@ -282,7 +285,7 @@ const Modules = () => {
             last
             ellipsis
             boundaryLinks
-            maxButtons={5}
+            maxButtons={2}
             size="xs"
             layout={['limit', '|', 'pager']}
             limitOptions={[5, 15, 30]}
