@@ -11,16 +11,16 @@ import MyButton from '../MyButton/MyButton';
 import './styles.less';
 const MyCard = ({ 
     leftArrow=true,
+    arrow=false,
     more=false,
     arrowClick=()=>{}, 
     moreClick=()=>{}, 
     width = null,
     avatar=null,
-    size='medium',
-    disabled=false,
     contant:contant=null,
     footerContant:footerContant=null,
     title:title=null,
+    variant= 'basic',
     ...props 
 }) => {
   return (
@@ -35,23 +35,41 @@ const MyCard = ({
         appearance="subtle" size='xsmall' color='var(--primary-gray)' onClick={moreClick} radius='8px'><FontAwesomeIcon icon={faEllipsis}   /></MyButton>} 
         </HStack>
       </Card.Header>)}
-      {title &&   <Card.Body >
-        <div className='title-style'>{title}</div>
+   {(title||contant) &&<Card.Body  >
+        {title &&  <div  className='title-style'>{title}</div>}
         
-        <div className='contant-text'>{ contant}</div>
+        <div className={`contant-text-${variant}`}>{ contant}</div>
       </Card.Body>}
       <Card.Footer style={{ display:'flex' ,justifyContent:'space-between' ,alignItems:'center'}}>
-      <div className='footer-contant-text'>{ footerContant}</div>
-       {!leftArrow&& 
-       <MyButton 
-       onClick={arrowClick} 
-       className='arrow-style'
-        appearance="subtle" size='xsmall' color='var(--primary-gray)' radius='8px' ><FontAwesomeIcon icon={faArrowLeft} /></MyButton>}
-       {leftArrow&&
-        <MyButton 
+      <div className={`footer-contant-text-${variant}`}>{ footerContant}</div>
+      {arrow && (
+  <>
+    {leftArrow?  (
+      <MyButton
         onClick={arrowClick}
         className='arrow-style'
-        appearance="subtle" size='xsmall' color='var(--primary-gray)' radius='8px'><FontAwesomeIcon icon={faArrowRight} /></MyButton>}
+        appearance='subtle'
+        size='xsmall'
+        color='var(--primary-gray)'
+        radius='8px'
+      >
+        <FontAwesomeIcon icon={faArrowLeft} />
+      </MyButton>
+    )
+  : (
+      <MyButton
+        onClick={arrowClick}
+        className='arrow-style'
+        appearance='subtle'
+        size='xsmall'
+        color='var(--primary-gray)'
+        radius='8px'
+      >
+        <FontAwesomeIcon icon={faArrowRight} />
+      </MyButton>
+    )}
+  </>
+)}
       </Card.Footer>
     </Card>
   );
