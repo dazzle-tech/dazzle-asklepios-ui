@@ -85,7 +85,6 @@
     "@babel/preset-env": "^7.7.7",
     "@babel/preset-react": "^7.7.4",
     "@babel/preset-typescript": "^7.12.7",
-    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.16",
     "@svgr/webpack": "^6.3.1",
     "@types/jest": "^28.1.4",
     "@types/node": "^18.0.3",

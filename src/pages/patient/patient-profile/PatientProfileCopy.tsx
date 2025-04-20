@@ -17,6 +17,7 @@ import PatientVisitHistory from './PatientVisitHistory';
 import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import { useSavePatientMutation } from '@/services/patientService';
 import clsx from 'clsx';
+import AdministrativeWarningsModal from './AdministrativeWarningsModal';
 
 const { getHeight } = DOMHelper;
 
@@ -29,6 +30,7 @@ const PatientProfile = () => {
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [validationResult, setValidationResult] = useState({});
   const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
+  const [administrativeWarningsModalOpen, setAdministrativeWarningsModalOpen] = useState(false);
   const [visitHistoryModel, setVisitHistoryModel] = useState(false);
   const location = useLocation();
   const propsData = location.state;
@@ -124,7 +126,8 @@ const PatientProfile = () => {
             handleSave={handleSave}
             handleClear={handleClear}
             setVisitHistoryModel={setVisitHistoryModel}
-            setAdministrativeWarningsModalOpen={value => {}} // Will be implemented in child component
+            setQuickAppointmentModel={setQuickAppointmentModel}
+            setAdministrativeWarningsModalOpen={setAdministrativeWarningsModalOpen} // Will be implemented in child component
           />
 
           <ProfileTabs
@@ -158,6 +161,15 @@ const PatientProfile = () => {
           localPatient={localPatient}
           setVisitHistoryModel={setVisitHistoryModel}
           setQuickAppointmentModel={setQuickAppointmentModel}
+        />
+      )}
+
+      {administrativeWarningsModalOpen && (
+        <AdministrativeWarningsModal
+          open={administrativeWarningsModalOpen}
+          onClose={() => setAdministrativeWarningsModalOpen(false)}
+          localPatient={localPatient}
+          validationResult={validationResult}
         />
       )}
     </>

@@ -15,7 +15,11 @@
   src: url('/src/fonts/Manrope/static/Manrope-Bold.ttf') format('truetype');
 
 }
+@font-face {
+  font-family: 'Manrope SemiBold';
+  src: url('/src/fonts/Manrope/static/Manrope-SemiBold.ttf') format('truetype');
 
+}
 @font-face {
   font-family: 'Manrope Medium';
   src: url('/src/fonts/Manrope/static/Manrope-Medium.ttf') format('truetype');
@@ -202,7 +206,11 @@ body {
 .rs-dropdown-item>.rs-icon {
   margin-right: 5px;
 }
-
+textarea {
+  border-color: rgb(240, 237, 237);
+  border-radius: 6px;
+  overflow: auto;
+}
 aside {
   z-index: 102 !important;
 }
@@ -271,6 +279,7 @@ aside {
 .rs-picker-toggle-wrapper .rs-picker-toggle.rs-btn {
   padding-right: 32px;
   height: 100% !important;
+  border-radius: 10px;
 }
 
 .rs-input-group .rs-input {
@@ -284,6 +293,7 @@ aside {
   margin-top: 0 !important;
   padding-top: 0 !important;
   border-top: none !important;
+  position: relative;
 }
 
 .rs-content {
@@ -301,7 +311,6 @@ aside {
 
 .rs-picker-default .rs-picker-toggle {
   position: relative;
-  z-index: 5;
   padding-right: 32px;
   display: inline-block;
   color: var(--rs-text-primary);
@@ -315,3 +324,13 @@ aside {
   border: 0px solid var(--rs-border-primary);
 
 }
+.rs-modal {
+  display: none;
+  overflow: visible;
+  outline: 0;
+  margin: 30px auto 0 auto;
+  position: relative;
+  width: auto;
+   z-index: 20; 
+}
+

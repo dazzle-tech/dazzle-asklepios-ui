@@ -18,6 +18,7 @@ const MyModal = ({
     position = "center",
     hideCanel = false,
     hideBack = false,
+    isDisabledActionBtn=false,
     actionButtonLabel = "Save",
     actionButtonFunction = null,
 }) => {
@@ -87,7 +88,7 @@ const MyModal = ({
                     {!hideCanel && <MyButton appearance={'subtle'} onClick={() => setOpen(false)}>Cancel</MyButton>}
                     {!hideBack && activeStep > 0 && <MyButton appearance={'subtle'} onClick={handlePrev}>Back</MyButton>}
                     {!(activeStep === computedPagesCount - 1) && <MyButton onClick={handleNext}>Next</MyButton>} {steps[activeStep]?.footer}
-                    {(activeStep === computedPagesCount - 1) && <MyButton onClick={actionButtonFunction}>{actionButtonLabel}</MyButton>}
+                    {(activeStep === computedPagesCount - 1) && <MyButton onClick={actionButtonFunction} disabled={isDisabledActionBtn}>{actionButtonLabel}</MyButton>}
                     {footerButtons}
                    
                 </Form>

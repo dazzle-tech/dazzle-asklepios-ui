@@ -1,0 +1,502 @@
+import React, { useEffect, useState } from 'react';
+import { useAppDispatch } from '@/hooks';
+import {
+    InputGroup,
+    Form,
+    Input,
+    Panel,
+    Text,
+    Dropdown,
+    DatePicker,
+} from 'rsuite';
+import PatientOrder from '../diagnostics-order';
+import AttachmentModal from '@/pages/patient/patient-profile/AttachmentUploadModal';
+import CheckIcon from '@rsuite/icons/Check';
+import { faBroom ,faFile} from '@fortawesome/free-solid-svg-icons';
+
+import MyModal from '@/components/MyModal/MyModal';
+import MyButton from '@/components/MyButton/MyButton';
+
+import { newApPatientDiagnose, newApProcedure } from '@/types/model-types-constructor';
+import { useGetIcdListQuery } from '@/services/setupService';
+import SearchIcon from '@rsuite/icons/Search';
+import { initialListRequest, ListRequest } from '@/types/types';
+import {
+    useGetDepartmentsQuery,
+    useGetProcedureListQuery,
+} from '@/services/setupService';
+import {
+    useSaveProceduresMutation
+} from '@/services/encounterService';
+import { notify } from '@/utils/uiReducerActions';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import MyInput from '@/components/MyInput';
+const Details = ({ patient, encounter, edit, procedure, setProcedure ,openDetailsModal,setOpenDetailsModal}) => {
+    const [openOrderModel, setOpenOrderModel] = useState(false);
+    const [editing, setEditing] = useState(false);
+    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+    const [saveProcedures, saveProcedureMutation] = useSaveProceduresMutation();
+    const { data: faciltyypesLovQueryResponse } = useGetLovValuesByCodeQuery('FSLTY_TYP');
+    const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
+    const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
+    const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
+    const { data: ProcedureLevelLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
+    const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
+    const [listRequestPro, setListRequestPro] = useState<ListRequest>({
+        ...initialListRequest,
+        filters: [
+            {
+                fieldName: 'category_lkey',
+                operator: 'match',
+                value: procedure.categoryKey
+            }
+        ]
+    });
+    const { data: procedureQueryResponse, refetch: profetch } = useGetProcedureListQuery(
+        listRequestPro,
+        { skip: procedure.categoryKey == undefined }
+    );
+    const [indicationsDescription, setindicationsDescription] = useState<string>('');
+    const [searchKeywordicd, setSearchKeywordicd] = useState('');
+
+    const [icdListRequest, setIcdListRequest] = useState<ListRequest>({
+        ...initialListRequest,
+        filters: [
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
+            }
+        ]
+    });
+    const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
+    const modifiedData = (icdListResponseLoading?.object ?? []).map(item => ({
+        ...item,
+        combinedLabel: `${item.icdCode} - ${item.description}`
+    }));
+    const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
+    const department = departmentListResponse?.object.filter(
+        item => item.departmentTypeLkey === '5673990729647006'
+    );
+     useEffect(() => {
+        if (procedure.indications != null || procedure.indications != '') {
+          setindicationsDescription(prevadminInstructions => {
+            const currentIcd = icdListResponseLoading?.object?.find(
+              item => item.key === procedure.indications
+            );
+    
+            if (!currentIcd) return prevadminInstructions;
+    
+            const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
+    
+            return prevadminInstructions ? `${prevadminInstructions}\n${newEntry}` : newEntry;
+          });
+        }
+      }, [procedure.indications]);
+      useEffect(() => {
+        if (searchKeywordicd.trim() !== '') {
+          setIcdListRequest({
+            ...initialListRequest,
+            filterLogic: 'or',
+            filters: [
+              {
+                fieldName: 'icd_code',
+                operator: 'containsIgnoreCase',
+                value: searchKeywordicd
+              },
+              {
+                fieldName: 'description',
+                operator: 'containsIgnoreCase',
+                value: searchKeywordicd
+              }
+            ]
+          });
+        }
+      }, [searchKeywordicd]);
+    
+      useEffect(() => {
+        setListRequestPro(prev => ({
+          ...prev,
+          filters: [
+            ...(procedure?.categoryKey
+              ? [
+                {
+                  fieldName: 'category_lkey',
+                  operator: 'match',
+                  value: procedure?.categoryKey
+                }
+              ]
+              : [])
+          ]
+        }));
+      }, [procedure?.categoryKey]);
+      useEffect(() => {
+        if (procedure.currentDepartment) {
+          setProcedure({ ...procedure, departmentKey: null, faciltyLkey: null });
+        }
+      }, [procedure.currentDepartment]);
+ 
+    const dispatch = useAppDispatch();
+    const handleClear = () => {
+        setProcedure({
+            ...newApProcedure,
+
+            statusLkey: '3621653475992516',
+            indications: indicationsDescription,
+            bodyPartLkey: null,
+            sideLkey: null,
+            faciltyLkey: null,
+            priorityLkey: null,
+            procedureLevelLkey: null,
+            departmentKey: null,
+            categoryKey: null,
+            procedureNameKey: null
+        });
+    };
+    const handleSave = async () => {      
+        try {
+            await saveProcedures({
+                ...procedure,
+                statusLkey: '3621653475992516',
+                indications: indicationsDescription,
+                encounterKey: encounter.key
+            })
+                .unwrap()
+                .then(() => {
+                   
+                });
+            handleClear();
+            setOpenDetailsModal(false);
+            dispatch(notify('saved  Successfully'));
+        } catch (error) {
+            dispatch(notify('Save Failed'));
+        }
+    };
+    const handleSearchIcd = value => {
+        setSearchKeywordicd(value);
+    };
+    return (<>
+        <MyModal
+            open={openDetailsModal}
+            setOpen={setOpenDetailsModal}
+            title='Procedure Details'
+            actionButtonFunction={handleSave}
+            position='right'
+            size='800'
+
+            footerButtons={<div className='footer-buttons'>
+                <MyButton
+                    onClick={handleClear}
+                    prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+                >
+                    Clear
+                </MyButton>
+                <MyButton
+                    appearance='ghost'
+
+                    onClick={() => {
+                        setOpenOrderModel(true);
+                    }}
+                    disabled={editing}
+                    prefixIcon={() => <CheckIcon />}>
+                    Order Related Tests
+                </MyButton>
+                <MyButton
+                onClick={() => setAttachmentsModalOpen(true)}
+                prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
+              >Attachment File</MyButton></div>}
+            content={
+                <div className='basuc-div'>
+                    <div className='div-parent' >
+                        <div style={{ flex: 1 }} >
+                            <Form layout="inline" fluid >
+                                <MyInput
+                                    column
+                                    disabled={editing}
+                                    width={200}
+                                    fieldType="select"
+                                    fieldLabel="Category Type"
+                                    selectData={CategoryLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName={'categoryKey'}
+                                    record={procedure}
+                                    setRecord={setProcedure}
+                                />
+                            </Form>
+                        </div>
+                        <div style={{ flex: 1 }} >
+                            <Form layout="inline" fluid >
+                                <MyInput
+                                    column
+                                    disabled={editing}
+                                    width={200}
+                                    fieldType="select"
+                                    fieldLabel="Procedure Name"
+                                    selectData={procedureQueryResponse?.object ?? []}
+                                    selectDataLabel="name"
+                                    selectDataValue="key"
+                                    fieldName={'procedureNameKey'}
+                                    record={procedure}
+                                    setRecord={setProcedure}
+                                />
+                            </Form>
+                        </div>
+                        <div style={{ flex: 1 }} >
+                            <Form layout="inline" fluid >
+                                <MyInput
+                                    column
+                                    disabled={editing}
+                                    width={200}
+                                    fieldType="select"
+                                    fieldLabel="Procedure Level"
+                                    selectData={ProcedureLevelLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName={'procedureLevelLkey'}
+                                    record={procedure}
+                                    setRecord={setProcedure}
+                                />
+                            </Form>
+                        </div>
+
+                    </div>
+                    <div className='div-parent' >
+                        <div style={{ flex: 1 }} >
+                            <Form layout="inline" fluid >
+                                <MyInput
+                                    column
+                                    disabled={editing}
+                                    width={200}
+                                    fieldType="select"
+                                    fieldLabel="Priority"
+                                    selectData={priorityLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName={'priorityLkey'}
+                                    record={procedure}
+                                    setRecord={setProcedure}
+                                />
+
+                            </Form>
+                        </div>
+                        <div style={{ flex: 1 }} >
+                            <Form layout="inline" fluid >
+
+                                <MyInput
+                                    column
+                                    disabled={editing ? editing : procedure.currentDepartment}
+                                    width={200}
+                                    fieldType="select"
+                                    fieldLabel="Facilty "
+                                    selectData={faciltyypesLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName={'faciltyLkey'}
+                                    record={procedure}
+                                    setRecord={setProcedure}
+                                />
+                            </Form>
+                        </div>
+                        <div style={{ flex: 1 }} >
+                            <Form layout="inline" fluid >
+                                <MyInput
+                                    column
+                                    disabled={editing ? editing : procedure.currentDepartment}
+                                    width={200}
+                                    fieldType="select"
+                                    fieldLabel="Department"
+                                    selectData={department ?? []}
+                                    selectDataLabel="name"
+                                    selectDataValue="key"
+                                    fieldName={'departmentKey'}
+                                    record={procedure}
+                                    setRecord={setProcedure}
+                                />
+                            </Form>
+                        </div>
+
+                    </div>
+                    <div className='div-parent' >
+                        <div style={{ flex: 1 }} >
+                            <Form layout="inline" fluid >
+                                <MyInput
+                                    column
+                                    width={200}
+                                    fieldType="select"
+                                    fieldLabel="Body Part "
+                                    selectData={bodypartLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName={'bodyPartLkey'}
+                                    record={procedure}
+                                    setRecord={setProcedure}
+                                />
+                            </Form>
+                        </div>
+                        <div style={{ flex: 1 }} >
+                            <Form layout="inline" fluid >
+                                <MyInput
+                                    column
+                                    width={200}
+                                    fieldType="select"
+                                    fieldLabel="Side"
+                                    selectData={sideLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName={'sideLkey'}
+                                    record={procedure}
+                                    setRecord={setProcedure}
+                                />
+                            </Form>
+                        </div>
+                        <div style={{ flex: 1 }} >
+                            <Form layout="inline" fluid >
+
+                                <MyInput
+                                    disabled={editing}
+                                    column
+                                    fieldType="checkbox"
+                                    fieldName="currentDepartment"
+                                    record={procedure}
+                                    setRecord={setProcedure}
+                                />
+                            </Form>
+                        </div>
+
+                    </div>
+                    <div className='div-parent' >
+                        <div style={{ flex: 1 }} >
+
+                            <Text style={{ marginTop: '6px', fontWeight: 'bold' }}>Scheduled Date</Text>
+                            <DatePicker
+                                disabled={editing}
+                                format="MM/dd/yyyy hh:mm aa"
+                                showMeridian
+                                value={
+                                    procedure.scheduledDateTime != 0
+                                        ? new Date(procedure.scheduledDateTime)
+                                        : new Date()
+                                }
+                                onChange={value => {
+                                    setProcedure({
+                                        ...procedure,
+                                        scheduledDateTime: value.getTime()
+                                    });
+                                }}
+                            />
+
+                        </div>
+                        <div style={{ flex: 1 }} >
+                            <Form layout="inline" fluid >
+                                <MyInput
+                                    column
+                                    width={200}
+
+                                    disabled={editing}
+                                    fieldName="notes"
+                                    fieldType="textarea"
+                                    record={procedure}
+                                    setRecord={setProcedure}
+                                />
+                            </Form>
+                        </div>
+                        <div style={{ flex: 1 }} >
+
+                            <Text style={{ fontWeight: 'bold' }}>Indications</Text>
+                            <InputGroup inside style={{ width: ' 200px', margin: '3px' }}>
+                                <Input
+                                    placeholder="Search ICD-10"
+                                    value={searchKeywordicd}
+                                    onChange={handleSearchIcd}
+                                />
+                                <InputGroup.Button>
+                                    <SearchIcon />
+                                </InputGroup.Button>
+                            </InputGroup>
+                            {searchKeywordicd && (
+                                <Dropdown.Menu className="dropdown-menuresult">
+                                    {modifiedData?.map(mod => (
+                                        <Dropdown.Item
+                                            key={mod.key}
+                                            eventKey={mod.key}
+                                            onClick={() => {
+                                                setProcedure({
+                                                    ...procedure,
+                                                    indications: mod.key
+                                                });
+                                                setSearchKeywordicd('');
+                                            }}
+                                        >
+                                            <span style={{ marginRight: '19px' }}>{mod.icdCode}</span>
+                                            <span>{mod.description}</span>
+                                        </Dropdown.Item>
+                                    ))}
+                                </Dropdown.Menu>
+                            )}
+                            <Input
+                                as="textarea"
+                                disabled={true}
+                                onChange={e => setindicationsDescription}
+                                value={indicationsDescription || procedure.indications}
+                                style={{ width: 200 }}
+                                rows={4}
+                            />
+
+                        </div>
+
+                    </div>
+                </div>
+            }
+
+
+        ></MyModal>
+        {/* <div style={{ display: 'flex', flexDirection: 'column', width: '300px' }}>
+          <Form layout="inline" fluid>
+            <Text>Diagnose</Text>
+            <textarea
+              value={
+                selectedDiagnose && selectedDiagnose.icdCode && selectedDiagnose.description
+                  ? `${selectedDiagnose.icdCode}, ${selectedDiagnose.description}`
+                  : ''
+              }
+              readOnly
+              rows={3}
+              cols={50}
+              style={{ width: '100%' }}
+            />
+            <Text>Finding Summery</Text>
+            <textarea value={summaryText} readOnly rows={5} cols={50} style={{ width: '100%' }} />
+          </Form>
+          <div style={{ display: 'flex', flexDirection: 'row' }}>
+            {fetchOrderAttachResponse.status != 'uninitialized' && (
+              <Button
+                style={{ marginTop: '20px' }}
+                appearance="link"
+                onClick={() =>
+                  handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)
+                }
+              >
+                Download <FileDownloadIcon style={{ scale: '1.4' }} />
+              </Button>
+            )}
+          
+          </div>
+        </div> */}
+        <AttachmentModal
+            isOpen={attachmentsModalOpen}
+            onClose={() => setAttachmentsModalOpen(false)}
+            localPatient={procedure}
+            attatchmentType={'PROCEDURE_ORDER'}
+        />
+        <MyModal
+            open={openOrderModel}
+            setOpen={setOpenOrderModel}
+            size={'full'}
+            title="Add Order"
+            content={<PatientOrder edit={edit} patient={patient} encounter={encounter} />}
+        ></MyModal>
+    </>);
+}
+export default Details;

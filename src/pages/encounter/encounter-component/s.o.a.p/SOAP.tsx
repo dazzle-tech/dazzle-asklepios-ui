@@ -3,12 +3,10 @@ import { TagInput, Panel, Divider } from 'rsuite';
 
 import './styles.less';
 import MyInput from '@/components/MyInput';
-import EncounterPreObservations from '../../encounter-pre-observations/EncounterPreObservations';
-import { faBolt } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import VoiceCitation from '@/components/VoiceCitation';
-import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
-import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
+import ChildBoy from '../../../../images/Chart_Child_Boy.svg';
+import ChildGirl from '../../../../images/Chart_Child_Girl.svg';
+import Female from '../../../../images/Chart_Female.svg';
+import Male from '../../../../images/Chart_Male.svg';
 import {
   Input,
   Table,
@@ -19,7 +17,9 @@ import {
 } from 'rsuite';
 
 const { Column, HeaderCell, Cell } = Table;
-
+import {
+  useGetAgeGroupValueQuery
+} from '@/services/patientService';
 import PatientDiagnosis from '../../medical-notes-and-assessments/patient-diagnosis';
 import ReviewOfSystems from '../../medical-notes-and-assessments/review-of-systems';
 
@@ -77,6 +77,13 @@ const SOAP = ({ edit, patient, encounter, setEncounter }) => {
   const { data: getCurrenttObservationSummaries } = useGetObservationSummariesQuery({
     ...patientObservationsListRequest,
   });
+  const { data: patientAgeGroupResponse, refetch: patientAgeGroupRefetch } =
+  useGetAgeGroupValueQuery(
+      {
+          dob: patient?.dob ? new Date(patient.dob).toISOString() : null
+      },
+      { skip: !patient?.dob }
+  );
   const currentObservationSummary = getCurrenttObservationSummaries?.object?.length > 0 ? getCurrenttObservationSummaries.object[0] : null;
   const [patientObservationSummary, setPatientObservationSummary] = useState<ApPatientObservationSummary>({
     ...newApPatientObservationSummary,
@@ -260,27 +267,41 @@ const SOAP = ({ edit, patient, encounter, setEncounter }) => {
                 >Save</MyButton>
               </div>
             </div>
-
-
-
-
           </div>
-
-
 
         </Tabs.Tab>
         <Tabs.Tab eventKey="2" title="Physical Examination & Findings">
 
-
-        
-
-        
             <ReviewOfSystems patient={patient} encounter={encounter} />
          
         </Tabs.Tab>
         <Tabs.Tab eventKey="3" title="Physical Examination & Findings BY Image">
-
-          hhn
+          {
+                                  (patientAgeGroupResponse?.object?.key === '5945922992301153' ||
+                                      patientAgeGroupResponse?.object?.key === '1790407842882435' ||
+                                      patientAgeGroupResponse?.object?.key === '5946401407873394' ||
+                                      patientAgeGroupResponse?.object?.key === '1375554380483561' ||
+                                      patientAgeGroupResponse?.object?.key === '5945877765605378')
+                                  && (
+                                      patient?.genderLkey === '1' ? (
+                                          <img className='image-style' src={ChildBoy} />
+                                      ) : (
+                                          <img className='image-style' src={ChildGirl}/>
+                                      )
+                                  )
+                              }
+                              {
+                                  (patientAgeGroupResponse?.object?.key === '1790428129203615' ||
+          
+                                      patientAgeGroupResponse?.object?.key === '1790525617633551')
+                                  && (
+                                      patient?.genderLkey === '1' ? (
+                                          <img className='image-style' src={Male}  />
+                                      ) : (
+                                          <img className='image-style' src={Female}  />
+                                      )
+                                  )
+                              }
         </Tabs.Tab>
       </Tabs>
 

@@ -1,63 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { Panel } from 'rsuite';
-import EncounterMainInfoSection from '../encounter-main-info-section';
+import { Panel } from 'rsuite';;
 import PatientSide from '../encounter-main-info-section/PatienSide';
-import { useAppSelector, useAppDispatch } from '@/hooks';
-import MyInput from '@/components/MyInput';
+import { useAppDispatch } from '@/hooks';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import Translate from '@/components/Translate';
 import Allergies from './AllergiesNurse';
 import Warning from './warning';
+import ArowBackIcon from '@rsuite/icons/ArowBack';
 import './styles.less';
-import { Block, Check, DocPass, Edit, History, Icon, PlusRound, Detail } from '@rsuite/icons';
-import {
-  FlexboxGrid,
-  IconButton,
-  Input,
-  Table,
-  Grid,
-  Row,
-  Col,
-  ButtonToolbar,
-  Text,
-  InputGroup,
-  SelectPicker,
-  Form
-} from 'rsuite';
-
-import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
-import BlockIcon from '@rsuite/icons/Block';
-import { notify } from '@/utils/uiReducerActions';
-import {
-  useGetObservationSummariesQuery,
-  useRemoveObservationSummaryMutation,
-  useSaveObservationSummaryMutation
-} from '@/services/observationService';
-import {
-  useGetEncountersQuery,
-  useCompleteEncounterRegistrationMutation
-} from '@/services/encounterService';
-import {
-  useGetLovValuesByCodeAndParentQuery,
-  useGetLovValuesByCodeQuery
-} from '@/services/setupService';
-import {
-  ApEncounter,
-  ApPatientObservationSummary
-} from '@/types/model-types';
-import {
-  newApPatientObservationSummary
-} from '@/types/model-types-constructor';
-import {
-  useCompleteEncounterMutation,
-
-} from '@/services/encounterService';
-import { ApPatient } from '@/types/model-types';
-import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
+import { Form } from 'rsuite';
+import MyButton from '@/components/MyButton/MyButton';
+import { ApEncounter } from '@/types/model-types';
+import { useCompleteEncounterMutation } from '@/services/encounterService';
 import { useLocation } from 'react-router-dom';
-import { initialListRequest, ListRequest } from '@/types/types';
 import { useNavigate } from 'react-router-dom';
-import { Tab, TabList, TabPanel } from 'react-tabs';
-import { Tabs, Placeholder } from 'rsuite'
+import { Tabs } from 'rsuite'
 import VaccinationTab from './vaccination-tab';
 import Observations from './observations/Observations';
 import { useSelector } from 'react-redux';
@@ -68,13 +26,13 @@ const EncounterPreObservations = () => {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const propsData = location.state;
-  const [activeTab, setActiveTab] = useState(0);
   const navigate = useNavigate();
-  const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...propsData.encounter })
+  const [localEncounter] = useState<ApEncounter>({ ...propsData.encounter })
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
-  const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const [completeEncounter] = useCompleteEncounterMutation();
+
+ // Page header setup
   const divContent = (
     <div style={{ display: 'flex' }}>
       <h5>Nurse Station</h5>
@@ -83,60 +41,45 @@ const EncounterPreObservations = () => {
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Nurse_Station'));
   dispatch(setDivContent(divContentHTML));
-  // TODO update status to be a LOV value
-  useEffect(() => {
-    if (localEncounter?.encounterStatusLkey === '91109811181900') {
-      setIsEncounterStatusClosed(true);
-    }
-  }, [localEncounter?.encounterStatusLkey]);
 
+ // handle Complete Encounter Function
   const handleCompleteEncounter = () => {
     if (localEncounter) {
       completeEncounter(localEncounter).unwrap();
       setReadOnly(true);
     }
   };
+
+  // Effects
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent("  "));
     };
   }, [location.pathname, dispatch])
+  useEffect(() => {
+    // TODO update status to be a LOV value
+    if (localEncounter?.encounterStatusLkey === '91109811181900') {
+      setIsEncounterStatusClosed(true);
+    }
+  }, [localEncounter?.encounterStatusLkey]);
   return (
     <>
       {propsData?.patient && propsData?.encounter && (
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <div style={{ flexGrow: '4', borderRadius: '5px', border: '1px solid var(--background-gray)',minWidth:'1170px' }}>
-            <div >
-              <Panel >
-              </Panel>
-
+        <div className='main-box '>
+          <div className='left-box'>
               <Panel>
-                <Form fluid layout='inline' style={{ display: 'flex', zoom: .8 }}>
-                  <ButtonToolbar style={{ marginLeft: 'auto' }}>
-                    <IconButton
-                      appearance="primary"
-                      disabled={isEncounterStatusClosed || readOnly}
-                      color="cyan"
-                      icon={<CloseOutlineIcon />}
-                      onClick={() => { handleCompleteEncounter() }}
-                    >
+                <div className='left-buttons-container'>
+                <Form fluid layout='inline' className='left-buttons-contant'>
+                    <MyButton prefixIcon={() => <ArowBackIcon />} backgroundColor={'var(--primary-gray)'} onClick={() => { navigate('/encounter-list') }}>
+                      Go Back
+                    </MyButton>
+                    <MyButton prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />} onClick={handleCompleteEncounter} appearance='ghost'>
                       <Translate>Complete Visit</Translate>
-                    </IconButton>
-                    <IconButton
-                      appearance="primary"
-                      color="blue"
-                      icon={<CloseOutlineIcon />}
-                      onClick={() => { navigate('/encounter-list') }}
-                    >
-                      <Translate>Close</Translate>
-                    </IconButton>
-                  </ButtonToolbar>
-                </Form>
-
+                    </MyButton>
+                  </Form>
+                </div>  
                 <Tabs defaultActiveKey="1" appearance="subtle">
-
-
                   <Tabs.Tab eventKey="1" title="Observations">
                     <Observations patient={propsData.patient} encounter={propsData.encounter} />
                   </Tabs.Tab>
@@ -151,8 +94,8 @@ const EncounterPreObservations = () => {
                   </Tabs.Tab>
                 </Tabs>
               </Panel>
-            </div></div>
-          <div style={{ flexGrow: '1', borderRadius: '5px', border: '1px solid var(--background-gray)' }}>
+            </div>
+          <div className='right-box'>
             <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
           </div>
         </div>

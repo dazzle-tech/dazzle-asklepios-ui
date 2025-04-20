@@ -137,9 +137,13 @@ color: var(--dark-blue-gray);
   border-radius: 0px 15px 15px 0px;
 }
 .content{
-  max-height: 90vh;
+  // max-height: 90vh;
   overflow-y: auto;
-  margin-top: 5px;
+  margin-top: 16px;
+  @media (max-width: 685px) {
+    margin-top: 40px;
+  }
+
 }
 .nav-item{
   text-align: center;

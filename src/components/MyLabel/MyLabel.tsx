@@ -27,7 +27,7 @@ const MyLabel = props => {
   }, [props.error]);
 
   const labelStyle = () => {
-    let fontSize = '14px';
+    let fontSize = '13px';
     if (props.size) {
       switch (props.size) {
         case 'small':

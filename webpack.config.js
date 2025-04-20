@@ -3,9 +3,6 @@ const path = require('path');
 
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlwebpackPlugin = require('html-webpack-plugin');
-const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
-const isDevelopment = process.env.NODE_ENV !== 'production';
-
 
 module.exports = {
   entry: './src/index.tsx',
@@ -34,14 +31,7 @@ module.exports = {
     rules: [
       {
         test: /\.tsx?$/,
-        use: [
-          {
-            loader: 'babel-loader',
-            options: {
-              plugins: [isDevelopment && require.resolve('react-refresh/babel')].filter(Boolean)
-            }
-          }
-        ],
+        use: ['babel-loader'],
         exclude: /node_modules/
       },
       {
@@ -77,7 +67,6 @@ module.exports = {
     ]
   },
   plugins: [
-    isDevelopment && new ReactRefreshWebpackPlugin(),
     new HtmlwebpackPlugin({
       title: 'Asklepios',
       filename: 'index.html',
