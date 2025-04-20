@@ -12,7 +12,7 @@ const MyModal = ({
     pagesCount = 1,
     bodyhieght = 400,
     content,
-    size = "sm",
+    size="sm",
     steps = [],
     footerButtons = null,
     position = "center",
