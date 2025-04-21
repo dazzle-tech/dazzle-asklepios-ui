@@ -10,12 +10,13 @@ import ContactTab from './tabs/ContactTab';
 import AddressTab from './tabs/AddressTab';
 import InsuranceTab from './tabs/InsuranceTab';
 import ConsentFormTab from './ConsentFormTab';
-import PreferredHealthProfessional from './PreferredHealthProfessional';
+import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
 import PatientFamilyMembers from './PatientFamilyMembers';
 import PatientExtraDetails from './PatientExtraDetails';
 import PatientAttachment from './PatientAttachment';
 import Translate from '@/components/Translate';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import PrivacySecurityTab from './tabs/PrivacySecurityTab';
 
 interface ProfileTabsProps {
   localPatient: ApPatient;
@@ -116,16 +117,23 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           <Tabs.Tab eventKey="4" title="Insurance">
             <InsuranceTab localPatient={localPatient} />
           </Tabs.Tab>
-          <Tabs.Tab eventKey="5" title="Consent Forms">
+          <Tabs.Tab eventKey="5" title="Privacy & Security">
+            <PrivacySecurityTab
+              localPatient={localPatient}
+              setLocalPatient={setLocalPatient}
+              validationResult={validationResult}
+            />
+          </Tabs.Tab>
+          <Tabs.Tab eventKey="6" title="Consent Forms">
             <ConsentFormTab patient={localPatient} isClick={!localPatient.key} />
           </Tabs.Tab>
-          <Tabs.Tab eventKey="6" title="Preferred Health Professional">
+          <Tabs.Tab eventKey="7" title="Preferred Health Professional">
             <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.key} />
           </Tabs.Tab>
-          <Tabs.Tab eventKey="7" title="Family Members">
+          <Tabs.Tab eventKey="8" title="Family Members">
             <PatientFamilyMembers localPatient={localPatient} />
           </Tabs.Tab>
-          <Tabs.Tab eventKey="8" title="Extra Details">
+          <Tabs.Tab eventKey="9" title="Extra Details">
             <Form layout="inline" fluid>
               <MyInput
                 vr={validationResult}
@@ -139,7 +147,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
             </Form>
             <PatientExtraDetails localPatient={localPatient} />
           </Tabs.Tab>
-          <Tabs.Tab eventKey="9" title="Attachments">
+          <Tabs.Tab eventKey="10" title="Attachments">
             <PatientAttachment localPatient={localPatient} />
           </Tabs.Tab>
         </Tabs>

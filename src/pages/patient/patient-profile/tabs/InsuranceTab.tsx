@@ -132,8 +132,8 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
   };
 
   return (
-    <div className="insurance-main-container">
-      <div className="insurance-content-btns">
+    <div className="tab-main-container">
+      <div className="tab-content-btns">
         <MyButton
           onClick={() => {
             setInsuranceModalOpen(true);

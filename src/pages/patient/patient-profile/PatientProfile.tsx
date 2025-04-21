@@ -109,7 +109,7 @@ import {
   useUpdateAttachmentDetailsMutation
 } from '@/services/attachmentService';
 import { notify } from '@/utils/uiReducerActions';
-import PreferredHealthProfessional from './PreferredHealthProfessional';
+import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
 import ConsentFormTab from './ConsentFormTab';
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
