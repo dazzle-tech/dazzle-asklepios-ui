@@ -556,7 +556,7 @@ const Consultation = ({ edit, patient, encounter }) => {
           >Clear</MyButton>
         </div>}
         rightTitle='Add Consultation'
-        rightContent={<div className='basuc-div'>
+        rightContent={<div >
           <div className='div-parent' >
             <div style={{ flex: 1 }} >
               <Form layout="inline" fluid >

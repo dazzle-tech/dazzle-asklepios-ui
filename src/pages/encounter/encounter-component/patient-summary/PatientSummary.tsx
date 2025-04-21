@@ -361,9 +361,6 @@ const PatientSummary = ({ patient, encounter }) => {
 
 
     return (
-
-
-
         <div className='patient-summary-container'>
 
             <div className='patient-summary-Column'>
