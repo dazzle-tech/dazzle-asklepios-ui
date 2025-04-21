@@ -16,7 +16,7 @@ import PatientExtraDetails from './PatientExtraDetails';
 import PatientAttachment from './PatientAttachment';
 import Translate from '@/components/Translate';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import PrivacySecurityTab from './tabs/PrivacySecurityTab';
+import PrivacySecurityTab from './tabs/PrivacySecurity/PrivacySecurityTab';
 
 interface ProfileTabsProps {
   localPatient: ApPatient;

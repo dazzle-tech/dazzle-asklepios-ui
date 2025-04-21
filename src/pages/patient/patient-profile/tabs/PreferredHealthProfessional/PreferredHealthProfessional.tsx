@@ -20,7 +20,6 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
     const [open, setOpen] = useState(false);
     const [patientHP, setPatientHP] = useState<ApPatientPreferredHealthProfessional>({ ...newApPatientPreferredHealthProfessional })
     const [practitioner, setPractitioner] = useState<ApPractitioner>({ ...newApPractitioner });
-    const [preferredHealthModalOpen, setPreferredHealthModalOpen] = useState(false);
     const [deletePreferredHealthModalOpen, setDeletePreferredHealthModalOpen] = useState(false);
     const [deletePatientPH] = useDeletePatientPreferredHealthProfessionalMutation();
     const [editable, setEditable] = useState(false);
@@ -107,7 +106,6 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
         setPatientHP({ ...newApPatientPreferredHealthProfessional });
         setPractitioner({ ...newApPractitioner });
         setDeletePreferredHealthModalOpen(false);
-        setPreferredHealthModalOpen(false);
     };
     // Handle deleting a preferred health professional
     const handleDeletePH = () => {
