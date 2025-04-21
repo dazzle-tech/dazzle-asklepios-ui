@@ -3,24 +3,13 @@ import { useAppSelector } from '@/hooks';
 import type { ApAttachment, ApPatient } from '@/types/model-types';
 import { faBroom, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import ListIcon from '@rsuite/icons/List';
+import { calculateAgeFormat } from '@/utils';
 import { useFetchAttachmentQuery, useUploadMutation } from '@/services/attachmentService';
-import {
-  AvatarGroup,
-  Avatar,
-  Whisper,
-  Tooltip,
-  Form,
-  Stack,
-  ButtonToolbar,
-  Button,
-  SelectPicker,
-  Panel
-} from 'rsuite';
+import { AvatarGroup, Avatar, Whisper, Tooltip, Form, Stack,} from 'rsuite';
 import { Icon } from '@rsuite/icons';
+import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
-import Translate from '@/components/Translate';
-
+import MyButton from '@/components/MyButton/MyButton';
 interface ProfileHeaderProps {
   localPatient: ApPatient;
   handleSave: () => void;
@@ -29,7 +18,6 @@ interface ProfileHeaderProps {
   setAdministrativeWarningsModalOpen: (value: boolean) => void;
   setQuickAppointmentModel: (value: boolean) => void;
 }
-
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   localPatient,
   handleSave,
@@ -42,7 +30,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [upload, uploadMutation] = useUploadMutation();
-
   // Fetch patient profile image
   const fetchPatientImageResponse = useFetchAttachmentQuery(
     {
@@ -80,14 +67,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         });
     }
   };
-
   // Handle quick appointment
   const handleNewVisit = () => {
 
     setQuickAppointmentModel(true);
 
   };
-
   // Effects for patient image
   React.useEffect(() => {
     if (
@@ -106,197 +91,129 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       setPatientImage(uploadMutation.data);
     }
   }, [uploadMutation]);
-
   return (
-    <Panel>
-      <Stack>
-        <Stack.Item grow={1}>
-          <Form
-            layout="inline"
-            fluid
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div>
-              <Form style={{ display: 'flex', alignItems: 'center', padding: '5px' }}>
-                <AvatarGroup spacing={6}>
+    <Stack>
+      <Stack.Item grow={1}>
+        <Form
+          layout="inline"
+          fluid
+          className='profile-header'
+        >
+          <AvatarGroup spacing={6} className="avatar-card-parent">
+            <input
+              type="file"
+              ref={profileImageFileInputRef}
+              style={{ display: 'none' }}
+              onChange={handleFileChange}
+              accept="image/*"
+            />
+            <Avatar
+              size="lg"
+              circle
+              bordered
+              onClick={handleImageClick}
+              src={
+                patientImage && patientImage.fileContent
+                  ? `data:${patientImage.contentType};base64,${patientImage.fileContent}`
+                  : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
+              }
+              alt={localPatient?.fullName}
+              className='avatar-image'
+            />
+            <div className='avatar-container'>
+              <span className='patient-name'>
+                {localPatient?.firstName} {localPatient?.lastName}
+              </span>
+              <div className='patient-info'>
+                {localPatient.key != undefined && <FaUser />}
+                {localPatient?.genderLvalue?.lovDisplayVale}{localPatient.key != undefined && ","}{localPatient.dob ? calculateAgeFormat(localPatient.dob) + '' : ''}{localPatient.key != undefined && " old"}
+              </div>
+              <span className='patient-mrn'>
+                {localPatient.key != undefined && `# `}
+                {localPatient?.patientMrn}
+              </span>
+            </div>
+            <div
+              className='status-icons-container'
+            >
+              {localPatient.key && (
+                <Whisper
+                  placement="top"
+                  controlId="control-id-click"
+                  trigger="hover"
+                  speaker={
+                    <Tooltip>
+                      {localPatient.verified ? 'Verified Patient' : 'Unverified Patient'}
+                    </Tooltip>
+                  }
+                >
                   <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center'
-                    }}
+                    className='status-icon'
                   >
-                    {localPatient.key && (
-                      <Whisper
-                        placement="top"
-                        controlId="control-id-click"
-                        trigger="hover"
-                        speaker={
-                          <Tooltip>
-                            {localPatient.verified ? 'Verified Patient' : 'Unverified Patient'}
-                          </Tooltip>
-                        }
-                      >
-                        <div
-                          style={{
-                            fontSize: 18,
-                            position: 'relative',
-                            marginRight: '10px'
-                          }}
-                        >
-                          {!localPatient.verified && (
-                            <Icon style={{ color: 'red' }} as={VscUnverified} />
-                          )}
-                          {localPatient.verified && (
-                            <Icon style={{ color: 'green' }} as={VscVerified} />
-                          )}
-                        </div>
-                      </Whisper>
+                    {!localPatient.verified && (
+                      <Icon color="red" as={VscUnverified} />
                     )}
-                    {localPatient.key && (
-                      <Whisper
-                        placement="bottom"
-                        controlId="control-id-click"
-                        trigger="hover"
-                        speaker={
-                          <Tooltip>
-                            {localPatient.incompletePatient
-                              ? 'Incomplete Patient'
-                              : 'Complete Patient'}
-                          </Tooltip>
-                        }
-                      >
-                        <div
-                          style={{
-                            fontSize: 18,
-                            position: 'relative',
-                            marginRight: '10px'
-                          }}
-                        >
-                          {localPatient.incompletePatient && (
-                            <Icon style={{ color: 'red' }} as={VscUnverified} />
-                          )}
-                          {!localPatient.incompletePatient && (
-                            <Icon style={{ color: 'green' }} as={VscVerified} />
-                          )}
-                        </div>
-                      </Whisper>
+                    {localPatient.verified && (
+                      <Icon color="green" as={VscVerified} />
                     )}
                   </div>
-                  <input
-                    type="file"
-                    ref={profileImageFileInputRef}
-                    style={{ display: 'none' }}
-                    onChange={handleFileChange}
-                    accept="image/*"
-                  />
-                  <Avatar
-                    size="lg"
-                    circle
-                    bordered
-                    onClick={handleImageClick}
-                    src={
-                      patientImage && patientImage.fileContent
-                        ? `data:${patientImage.contentType};base64,${patientImage.fileContent}`
-                        : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
-                    }
-                    alt={localPatient?.fullName}
-                  />
-                  <Form
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'flex-start',
-                      gap: '8px',
-                      fontSize: 11
-                    }}
+                </Whisper>
+              )}
+              {localPatient.key && (
+                <Whisper
+                  placement="bottom"
+                  controlId="control-id-click"
+                  trigger="hover"
+                  speaker={
+                    <Tooltip>
+                      {localPatient.incompletePatient
+                        ? 'Incomplete Patient'
+                        : 'Complete Patient'}
+                    </Tooltip>
+                  }
+                >
+                  <div
+                    className='status-icon'
                   >
-                    <span style={{ fontWeight: 'bold' }}>{localPatient?.fullName}</span>
-                    <span>
-                      {localPatient?.createdAt
-                        ? new Date(localPatient?.createdAt).toLocaleString('en-GB')
-                        : ''}
-                    </span>
-                    <span>{localPatient?.patientMrn}</span>
-                  </Form>
-                </AvatarGroup>
-              </Form>
+                    {localPatient.incompletePatient && (
+                      <Icon color="red" as={VscUnverified} />
+                    )}
+                    {!localPatient.incompletePatient && (
+                      <Icon color="green" as={VscVerified} />
+                    )}
+                  </div>
+                </Whisper>
+              )}
             </div>
-            <ButtonToolbar>
-              <Button
-                onClick={handleSave}
-                appearance="primary"
-                style={{
-                  border: 'var(--primary-blue)',
-                  backgroundColor: 'var(--primary-blue)',
-                  color: 'white',
-                  marginLeft: '3px'
-                }}
-              >
-                <FontAwesomeIcon
-                  icon={faCheckDouble}
-                  style={{ marginRight: '5px', color: 'white' }}
-                />
-                <span>Save</span>
-              </Button>
-              <Button
-                appearance="primary"
-                style={{
-                  border: 'var(--primary-blue)',
-                  backgroundColor: 'var(--primary-blue)',
-                  color: 'white',
-                  marginLeft: '3px'
-                }}
-                onClick={handleClear}
-              >
-                <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px', color: 'white' }} />
-                <Translate>Clear</Translate>
-              </Button>
-              <Button
-                color="blue"
-                appearance="ghost"
-                style={{
-                  color: 'var(--primary-blue)'
-                }}
-                disabled={localPatient.key === undefined}
-                onClick={() => setVisitHistoryModel(true)}
-              >
-                <span>Visit History</span>
-              </Button>
-              <Button
-                color="blue"
-                appearance="ghost"
-                style={{
-                  color: 'var(--primary-blue)'
-                }}
-                disabled={!localPatient.key}
-                onClick={handleNewVisit}
-              >
-                <span>Quick Appointment</span>
-              </Button>
-
-              <Button
-                color="blue"
-                onClick={() => setAdministrativeWarningsModalOpen(true)}
-                disabled={!localPatient.key}
-                appearance="ghost"
-                style={{
-                  color: 'var(--primary-blue)',
-                }}
-              >
-                <span>Administrative Warnings</span>
-              </Button>
-            </ButtonToolbar>
+          </AvatarGroup>
+          <Form fluid layout='inline'>
+            <MyButton
+              prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
+              onClick={handleSave}
+            >Save</MyButton>
+            <MyButton
+              prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+              onClick={handleClear}
+            >Clear</MyButton>
+            <MyButton
+              appearance="ghost"
+              disabled={localPatient.key === undefined}
+              onClick={() => setVisitHistoryModel(true)}
+            >Visit History</MyButton>
+            <MyButton
+              appearance="ghost"
+              disabled={!localPatient.key}
+              onClick={handleNewVisit}
+            >Quick Appointment</MyButton>
+            <MyButton
+              appearance="ghost"
+              disabled={!localPatient.key}
+              onClick={() => setAdministrativeWarningsModalOpen(true)}
+            >Administrative Warnings</MyButton>
           </Form>
-        </Stack.Item>
-      </Stack>
-    </Panel>
+        </Form>
+      </Stack.Item>
+    </Stack>
   );
 };
-
 export default ProfileHeader;
