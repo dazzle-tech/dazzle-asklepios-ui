@@ -46,14 +46,6 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
           record={localPatient}
           setRecord={setLocalPatient}
         />
-        <MyInput
-          vr={validationResult}
-          column
-          fieldLabel="Social Security Number"
-          fieldName="socialSecurityNumber"
-          record={localPatient}
-          setRecord={setLocalPatient}
-        />
         <h5 className='border-top'>HIPAA</h5>
         <div className='covg-content'>
           <MyInput
