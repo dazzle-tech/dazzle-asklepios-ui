@@ -249,8 +249,7 @@ const FacilityPatientList = () => {
                                         sortType
                                     });
                             }}
-                            headerHeight={40}
-                            rowHeight={30}
+                          
                             data={patientListResponse?.object ?? []}
                             // onRowClick={rowData => {
                             //     setLocalPatient(rowData);

@@ -39,7 +39,7 @@ import { notify } from '@/utils/uiReducerActions';
 import CheckIcon from '@rsuite/icons/Check';
 import PlusIcon from '@rsuite/icons/Plus';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBroom, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faBroom, faCheck, faWarning } from '@fortawesome/free-solid-svg-icons';
 import {
   useGetLovValuesByCodeQuery,
   useGetLovValuesQuery,
@@ -492,8 +492,8 @@ const Warning = ({ edit, patient, encounter }) => {
         </Checkbox>
         <div className='bt-right'>
         <MyButton
-          prefixIcon={() => <ReloadIcon />}
-          
+          prefixIcon={() => <PlusIcon />}
+       
           onClick={() => setOpenDetailsModal(true)}
         >Add Warning</MyButton>
         </div>
@@ -667,7 +667,7 @@ const Warning = ({ edit, patient, encounter }) => {
         position='right'
         steps={[
 
-          { title: 'Warning', icon:faCheck,footer:<MyButton
+          { title: 'Warning', icon:faWarning,footer:<MyButton
            
             onClick={handleClear}
           >Clear</MyButton>},
