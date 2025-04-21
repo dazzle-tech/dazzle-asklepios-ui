@@ -12,7 +12,6 @@ import Warning from './warning';
 import ArowBackIcon from '@rsuite/icons/ArowBack';
 import {  } from '@rsuite/icons';
 import './styles.less';
-import { Form } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
 import { ApEncounter } from '@/types/model-types';
 import { useCompleteEncounterMutation } from '@/services/encounterService';
