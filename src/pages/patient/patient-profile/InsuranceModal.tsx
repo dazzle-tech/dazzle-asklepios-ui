@@ -36,6 +36,7 @@ const InsuranceModal = ({ open, setOpen, onClose, patientKey, refetchInsurance, 
           record={patientInsurance}
           setRecord={setPatientInsurance}
           disabled={insuranceBrowsing}
+          searchable={false}
         />
         <MyInput
           column
@@ -64,6 +65,7 @@ const InsuranceModal = ({ open, setOpen, onClose, patientKey, refetchInsurance, 
           record={patientInsurance}
           setRecord={setPatientInsurance}
           disabled={insuranceBrowsing}
+          searchable={false}
         />
         <MyInput
           column
@@ -110,7 +112,7 @@ const InsuranceModal = ({ open, setOpen, onClose, patientKey, refetchInsurance, 
           record={patientInsurance}
           setRecord={setPatientInsurance}
           disabled={insuranceBrowsing}
-        />
+          searchable={false}        />
         <MyInput
           column
           fieldLabel="Primary Insurance"
