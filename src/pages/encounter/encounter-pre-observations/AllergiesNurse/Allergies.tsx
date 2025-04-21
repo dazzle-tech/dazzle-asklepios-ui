@@ -730,7 +730,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         setOpen={setOpenDetailsModal}
         title="Add Warning"
         actionButtonFunction={handleSave}
-        bodyhieght={800}
+        bodyheight={800}
         size='700px'
         position='right'
         steps={[

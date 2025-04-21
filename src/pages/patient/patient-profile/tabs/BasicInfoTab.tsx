@@ -74,6 +74,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
             selectDataValue="key"
             record={localPatient}
             setRecord={setLocalPatient}
+            searchable={false}
           />
           <MyInput
             vr={validationResult}
@@ -113,6 +114,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
             selectDataValue="key"
             record={localPatient}
             setRecord={setLocalPatient}
+            searchable={false}
           />
           {localPatient?.incompletePatient ? (
             <MyInput
@@ -147,6 +149,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
             selectDataValue="key"
             record={localPatient}
             setRecord={setLocalPatient}
+            searchable={false}
           />
           <MyInput
             required

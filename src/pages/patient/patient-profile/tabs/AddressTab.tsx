@@ -3,24 +3,20 @@ import type { ApPatient } from '@/types/model-types';
 import { Form, ButtonToolbar, Button } from 'rsuite';
 import { Icon } from '@rsuite/icons';
 import MyInput from '@/components/MyInput';
-import {
-  useGetLovValuesByCodeQuery,
-  useGetLovValuesByCodeAndParentQuery
-} from '@/services/setupService';
+import { useGetLovValuesByCodeQuery, useGetLovValuesByCodeAndParentQuery } from '@/services/setupService';
 import { FaClock } from 'react-icons/fa6';
-
+import MyButton from '@/components/MyButton/MyButton';
 interface AddressTabProps {
   localPatient: ApPatient;
   setLocalPatient: (patient: ApPatient) => void;
   validationResult: any;
 }
-
 const AddressTab: React.FC<AddressTabProps> = ({
   localPatient,
   setLocalPatient,
   validationResult
 }) => {
-  // Fetch LOV data
+  // Fetch LOV data for various fields
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
   const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
     code: 'CITY',
@@ -29,20 +25,13 @@ const AddressTab: React.FC<AddressTabProps> = ({
 
   return (
     <Form layout="inline" fluid>
-      <ButtonToolbar>
-        <Button
-          style={{
-            backgroundColor: 'var(--primary-blue)',
-            color: 'white',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px'
-          }}
-          disabled={!localPatient.key}
-        >
-          <Icon as={FaClock} /> Address Change Log
-        </Button>
-      </ButtonToolbar>
+      <div>
+        <MyButton
+        prefixIcon={() => <FaClock />}
+        disabled={!localPatient.key}
+      >
+        Address Change Log
+      </MyButton></div>
       <MyInput
         vr={validationResult}
         column

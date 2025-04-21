@@ -10,7 +10,7 @@ const MyModal = ({
     title,
     icon = null,
     pagesCount = 1,
-    bodyhieght = 400,
+    bodyheight = 400,
     content,
     size="sm",
     steps = [],
@@ -58,7 +58,7 @@ const MyModal = ({
                 </Modal.Title>
             </Modal.Header>
             <Divider className='divider-line' />
-            <Modal.Body style={{ height: bodyhieght }}>
+            <Modal.Body style={{ height: bodyheight }}>
                 <Steps current={activeStep} className={`steps-modal ${steps.length === 1 ? 'centered-step' : ''}`}>
                     {steps.map((step, index) => (
                         <Steps.Item

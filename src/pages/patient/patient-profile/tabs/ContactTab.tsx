@@ -9,15 +9,13 @@ interface ContactTabProps {
   setLocalPatient: (patient: ApPatient) => void;
   validationResult: any;
 }
-
 const ContactTab: React.FC<ContactTabProps> = ({
   localPatient,
   setLocalPatient,
   validationResult
 }) => {
-  // Fetch LOV data
-  const { data: preferredWayOfContactLovQueryResponse } =
-    useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
+  // Fetch LOV data for various fields
+  const { data: preferredWayOfContactLovQueryResponse } = useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
   const { data: primaryLangLovQueryResponse } = useGetLovValuesByCodeQuery('LANG');
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: roleLovQueryResponse } = useGetLovValuesByCodeQuery('ER_CONTACTP_ROLE');
@@ -91,6 +89,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
@@ -103,6 +102,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
@@ -122,6 +122,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
@@ -141,6 +142,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
     </Form>
   );
