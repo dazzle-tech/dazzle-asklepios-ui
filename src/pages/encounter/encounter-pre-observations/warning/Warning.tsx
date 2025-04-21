@@ -662,7 +662,7 @@ const Warning = ({ edit, patient, encounter }) => {
         setOpen={setOpenDetailsModal}
         title="Add Warning"
         actionButtonFunction={handleSave}
-        bodyhieght={800}
+        bodyheight={800}
         size='680px'
         position='right'
         steps={[

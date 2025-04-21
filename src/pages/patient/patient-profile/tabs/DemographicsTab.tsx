@@ -3,19 +3,17 @@ import type { ApPatient } from '@/types/model-types';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-
 interface DemographicsTabProps {
   localPatient: ApPatient;
   setLocalPatient: (patient: ApPatient) => void;
   validationResult: any;
 }
-
 const DemographicsTab: React.FC<DemographicsTabProps> = ({
   localPatient,
   setLocalPatient,
   validationResult
 }) => {
-  // Fetch LOV data
+  // Fetch LOV data for various fields
   const { data: maritalStatusLovQueryResponse } = useGetLovValuesByCodeQuery('MARI_STATUS');
   const { data: nationalityLovQueryResponse } = useGetLovValuesByCodeQuery('NAT');
   const { data: religeonLovQueryResponse } = useGetLovValuesByCodeQuery('REL');
@@ -69,6 +67,7 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
@@ -93,6 +92,7 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
@@ -105,6 +105,7 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
@@ -129,6 +130,7 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
@@ -141,6 +143,7 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
