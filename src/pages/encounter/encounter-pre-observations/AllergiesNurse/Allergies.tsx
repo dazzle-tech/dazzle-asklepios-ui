@@ -527,8 +527,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         </Checkbox>
         <div className='bt-right'>
           <MyButton
-            prefixIcon={() => <ReloadIcon />}
-            
+            prefixIcon={() => <PlusIcon />}
             onClick={() => setOpenDetailsModal(true)}
           >Add Allergy</MyButton>
         </div>

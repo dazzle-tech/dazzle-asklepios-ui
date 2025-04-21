@@ -1,22 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Divider, Panel } from 'rsuite';
-import { useAppSelector, useAppDispatch } from '@/hooks';
+import { Divider} from 'rsuite';
+import { useAppDispatch } from '@/hooks';
 import MyInput from '@/components/MyInput';
-import Translate from '@/components/Translate';
+import { forwardRef, useImperativeHandle } from 'react';
 import './styles.less';
-import { Check } from '@rsuite/icons';
 import {
-  FlexboxGrid,
-  IconButton,
-  Input,
-  Table,
-  Grid,
-  Row,
-  Col,
-  ButtonToolbar,
   Text,
-  InputGroup,
-  SelectPicker,
   Form
 } from 'rsuite';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -25,20 +14,12 @@ import {
   faHeartPulse,
   faPerson
 } from '@fortawesome/free-solid-svg-icons';
-import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
-import BlockIcon from '@rsuite/icons/Block';
 import { notify } from '@/utils/uiReducerActions';
 import {
   useGetObservationSummariesQuery,
-  useRemoveObservationSummaryMutation,
   useSaveObservationSummaryMutation
 } from '@/services/observationService';
 import {
-  useGetEncountersQuery,
-  useCompleteEncounterRegistrationMutation
-} from '@/services/encounterService';
-import {
-  useGetLovValuesByCodeAndParentQuery,
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
 import {
@@ -48,23 +29,21 @@ import {
 import {
   newApPatientObservationSummary
 } from '@/types/model-types-constructor';
-import {
-  useCompleteEncounterMutation,
-
-} from '@/services/encounterService';
 import { ApPatient } from '@/types/model-types';
-import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
-import { useLocation } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useNavigate } from 'react-router-dom';
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import MyButton from '@/components/MyButton/MyButton';
 import MyLabel from '@/components/MyLabel';
-const Observations = ({ patient, encounter }) => {
+type ObservationsProps = {
+  patient: any;         
+  encounter: any;     
+};
+export type ObservationsRef = {
+  handleSave: () => void;
+};
+const Observations = forwardRef<ObservationsRef, ObservationsProps>(
+  ({ patient, encounter }, ref) => {
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...patient })
   const dispatch = useAppDispatch();
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
-  const navigate = useNavigate();
   const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...encounter })
   const [bmi, setBmi] = useState('');
   const [bsa, setBsa] = useState('');
@@ -188,12 +167,9 @@ const Observations = ({ patient, encounter }) => {
       dispatch(notify('Added Successfully'));
     });;
   };
-  const handleClear = () => {
-    setPatientObservationSummary({
-      ...newApPatientObservationSummary,
-      latestpainlevelLkey: null
-    });
-  }
+  useImperativeHandle(ref, () => ({
+    handleSave,handleClear
+  }));
 
   useEffect(() => {
     const { latestweight, latestheight } = patientObservationSummary;
@@ -209,12 +185,19 @@ const Observations = ({ patient, encounter }) => {
   }, [patientObservationSummary]);
 
   useEffect(() => {
-    console.log("ls", patientObservationSummary.latestbpSystolic)
   }, [patientObservationSummary.latestbpSystolic])
+ 
+  const handleClear = () => {
+    setPatientObservationSummary({
+      ...newApPatientObservationSummary,
+      latestpainlevelLkey: null
+    });
+  }
+ 
 
   return (
-    <div>
-      <div className='basuc-div'>
+   
+      <div ref={ref} className='basuc-div'>
 
         < div className='container-Column'>
           <div className='container-form'>
@@ -474,19 +457,9 @@ const Observations = ({ patient, encounter }) => {
         </div>
        
       </div>
-      <div className='bt-row'>
-        <MyButton
-          onClick={handleSave}
-          prefixIcon={() => <Check />}
-        >Save</MyButton>
-        <MyButton
-          appearance='ghost'
-         prefixIcon={()=><BlockIcon />}
-          onClick={handleClear}
-               >Clear</MyButton>
-      </div>
-    </div>
+   
+
   );
-};
+});
 
 export default Observations;
