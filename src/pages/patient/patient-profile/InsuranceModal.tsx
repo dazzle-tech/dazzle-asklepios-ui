@@ -1,47 +1,200 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Button, Placeholder, Form, InputGroup, Input, Toggle } from 'rsuite';
+import { Form } from 'rsuite';
 import './styles.less';
-
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import {
-  useGetLovValuesByCodeAndParentQuery,
-  useGetLovValuesByCodeQuery
-} from '@/services/setupService';
+import { useAppDispatch} from '@/hooks';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
-// import { ApPatient } from '@/types/model-types';
 import { ApPatientInsurance } from '@/types/model-types';
-
+import { faShieldHeart } from '@fortawesome/free-solid-svg-icons';
 import { useSavePatientInsuranceMutation } from '@/services/patientService';
 import { notify } from '@/utils/uiReducerActions';
 import { newApPatientInsurance } from '@/types/model-types-constructor';
+import MyModal from '@/components/MyModal/MyModal';
 
-const InsuranceModal = ({ open, onClose, patientKey, refetchInsurance, editing, insuranceBrowsing, relations }) => {
-  const [isUnknown, setIsUnknown] = useState(false);
-  const [validationResult, setValidationResult] = useState({});
-  const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
-  const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
+const InsuranceModal = ({ open, setOpen, onClose, patientKey, refetchInsurance, editing, insuranceBrowsing, relations }) => {
+  const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
+  const [savePatientInsurance] = useSavePatientInsuranceMutation();
+  const [relationsList, setRelationsList] = useState()
+  const dispatch = useAppDispatch();
+
+  // Fetch LOV data for various fields
   const { data: isnurancePlanTypeResponse } = useGetLovValuesByCodeQuery('INS_PLAN_TYPS');
   const { data: isnuranceProviderTypeResponse } = useGetLovValuesByCodeQuery('INS_PROVIDER');
 
-  const dispatch = useAppDispatch();
-  const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
-  const [savePatientInsurance, savePatientInsuranceMutation] = useSavePatientInsuranceMutation();
-  const [relationsList, setRelationsList] = useState()
+  // MyModal content
+  const renderContent = () => (
+    <div>
+      <Form layout="inline" fluid>
+        <MyInput
+          column
+          fieldLabel="Insurance Provider"
+          fieldType="select"
+          fieldName="insuranceProviderLkey"
+          selectData={isnuranceProviderTypeResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={patientInsurance}
+          setRecord={setPatientInsurance}
+          disabled={insuranceBrowsing}
+        />
+        <MyInput
+          column
+          fieldLabel="Insurance Policy Number"
+          fieldName="insurancePolicyNumber"
+          record={patientInsurance}
+          setRecord={setPatientInsurance}
+          disabled={insuranceBrowsing}
+        />
+        <MyInput
+          column
+          fieldLabel="Group Number"
+          fieldName="groupNumber"
+          record={patientInsurance}
+          setRecord={setPatientInsurance}
+          disabled={insuranceBrowsing}
+        />
+        <MyInput
+          column
+          fieldLabel="Insurance Plan Type"
+          fieldType="select"
+          fieldName="insurancePlanTypeLkey"
+          selectData={isnurancePlanTypeResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={patientInsurance}
+          setRecord={setPatientInsurance}
+          disabled={insuranceBrowsing}
+        />
+        <MyInput
+          column
+          fieldLabel="Authorization Numbers"
+          fieldName="authorizationNumbers"
+          record={patientInsurance}
+          setRecord={setPatientInsurance}
+          disabled={insuranceBrowsing}
+        />
+        <MyInput
+          column
+          fieldType="date"
+          fieldLabel="Expiration Date"
+          fieldName="expirationDate"
+          record={patientInsurance}
+          setRecord={setPatientInsurance}
+          disabled={insuranceBrowsing}
+        />
+        <MyInput
+          column
+          fieldLabel="Remaining Benefits"
+          fieldName="remainingBenefits"
+          record={patientInsurance}
+          setRecord={setPatientInsurance}
+          disabled={insuranceBrowsing}
+        />
 
-  useEffect(() => {
-    if (editing) {
-      setPatientInsurance(editing);
-    }
-  }, [editing]);
+        <MyInput
+          column
+          fieldLabel="Remailing Deductibles"
+          fieldName="remailingDeductibles"
+          record={patientInsurance}
+          setRecord={setPatientInsurance}
+          disabled={insuranceBrowsing}
+        />
+        <MyInput
+          column
+          fieldLabel="Policy Holder"
+          fieldType="select"
+          fieldName="policyHolder"
+          selectData={relationsList}
+          selectDataLabel="name"
+          selectDataValue="id"
+          record={patientInsurance}
+          setRecord={setPatientInsurance}
+          disabled={insuranceBrowsing}
+        />
+        <MyInput
+          column
+          fieldLabel="Primary Insurance"
+          fieldName="primaryInsurance"
+          record={patientInsurance}
+          setRecord={setPatientInsurance}
+          fieldType="checkbox"
+          disabled={insuranceBrowsing}
+        />
+      </Form>
+      <div className='clickedInputs'>
+        <Form layout="inline" fluid >
+          <MyInput
+            column
+            fieldLabel="Co Payment"
+            fieldName="coPayment"
+            record={patientInsurance}
+            setRecord={setPatientInsurance}
+            fieldType="checkbox"
+            disabled={insuranceBrowsing}
+          />
+          <div className={`input-container ${patientInsurance?.coPayment ? 'show' : 'hide'}`}>
+            <MyInput
+              column
+              fieldLabel="Co Payment Value"
+              fieldName="coPaymentValue"
+              record={patientInsurance}
+              setRecord={setPatientInsurance}
+              disabled={insuranceBrowsing}
+            />
+          </div>
+        </Form>
+        <Form layout="inline" fluid >
+          <MyInput
+            column
+            fieldLabel="Co Insurance"
+            fieldName="coInsurance"
+            record={patientInsurance}
+            setRecord={setPatientInsurance}
+            fieldType="checkbox"
+            disabled={insuranceBrowsing}
+          />
+          <div className={`input-container ${patientInsurance?.coInsurance ? 'show' : 'hide'}`}>
+            <MyInput
+              column
+              fieldLabel="Co Insurance Value"
+              fieldName="coInsuranceValue"
+              record={patientInsurance}
+              setRecord={setPatientInsurance}
+              disabled={insuranceBrowsing}
+            />
+          </div>
+        </Form>
+        <Form layout="inline" fluid>
+          <MyInput
+            column
+            fieldLabel="Deductibles"
+            fieldName="deductibles"
+            record={patientInsurance}
+            setRecord={setPatientInsurance}
+            fieldType="checkbox"
+            disabled={insuranceBrowsing}
+          />
+          <div className={`input-container ${patientInsurance?.deductibles ? 'show' : 'hide'}`}>
+            <MyInput
+              column
+              fieldLabel="Deductibles Value"
+              fieldName="deductiblesValue"
+              record={patientInsurance}
+              setRecord={setPatientInsurance}
+              disabled={insuranceBrowsing}
+            />
+          </div>
+        </Form>
+      </div>
+    </div>
+  );
 
-  console.log(patientKey.key)
-
+  //handle save insurance
   const handleSave = async () => {
-    console.log({ ...patientInsurance, patientKey: patientKey.key })
     savePatientInsurance({ ...patientInsurance, patientKey: patientKey.key }).unwrap().then(() => {
       refetchInsurance()
       handleClearModal()
+      dispatch(notify('Insurance Saved Successfully'))
     }).catch((error) => {
       console.log(error)
       setPatientInsurance({ ...patientInsurance, primaryInsurance: false })
@@ -49,16 +202,13 @@ const InsuranceModal = ({ open, onClose, patientKey, refetchInsurance, editing, 
 
   };
 
-  useEffect(() => {
-    console.log(patientInsurance)
-    console.log(relations)
-  }, [patientInsurance])
-
+  //handle Clear Modal
   const handleClearModal = () => {
+    setPatientInsurance(newApPatientInsurance);
     onClose();
-    setPatientInsurance(newApPatientInsurance)
   };
 
+  //Effects
   useEffect(() => {
     const namesAndIds = relations.map(relation => {
       const relativePatient = relation.relativePatientObject;
@@ -67,276 +217,42 @@ const InsuranceModal = ({ open, onClose, patientKey, refetchInsurance, editing, 
         id: relation.key
       };
     });
-
-
     setRelationsList(namesAndIds);
     console.log(namesAndIds)
   }, [relations]);
+ 
+  useEffect(() => {
+    console.log(patientInsurance)
+    console.log(relations)
+  }, [patientInsurance])
 
-
-
+  useEffect(() => {
+    if (open === false) {
+      handleClearModal();
+    }
+  }, [open])
+ 
+  useEffect(() => {
+    if (editing) {
+      setPatientInsurance(editing);
+    }
+  }, [editing]);
   return (
-    <div>
-      <Modal size={'lg'} open={open} onClose={handleClearModal} >
-        <Modal.Header>
-          <Modal.Title>Patient Insurance</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div style={{ padding: 15 }}>
-            <Form layout="inline" fluid>
-
-
-              <MyInput
-                width={165}
-                vr={validationResult}
-                column
-                fieldLabel="Insurance Provider"
-                fieldType="select"
-                fieldName="insuranceProviderLkey"
-                selectData={isnuranceProviderTypeResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={patientInsurance}
-                setRecord={setPatientInsurance}
-                disabled={insuranceBrowsing}
-              />
-
-
-
-
-              <MyInput
-                vr={validationResult}
-                column
-                fieldLabel="Insurance Policy Number"
-                fieldName="insurancePolicyNumber"
-                record={patientInsurance}
-                setRecord={setPatientInsurance}
-                disabled={insuranceBrowsing}
-
-              />
-
-              <MyInput
-                vr={validationResult}
-                column
-                fieldLabel="Group Number"
-                fieldName="groupNumber"
-                record={patientInsurance}
-                setRecord={setPatientInsurance}
-                disabled={insuranceBrowsing}
-
-              />
-
-
-
-
-              <MyInput
-                width={165}
-                vr={validationResult}
-                column
-                fieldLabel="Insurance Plan Type"
-                fieldType="select"
-                fieldName="insurancePlanTypeLkey"
-                selectData={isnurancePlanTypeResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={patientInsurance}
-                setRecord={setPatientInsurance}
-                disabled={insuranceBrowsing}
-
-              />
-
-              <MyInput
-                vr={validationResult}
-                column
-                fieldLabel="Authorization Numbers"
-                fieldName="authorizationNumbers"
-                record={patientInsurance}
-                setRecord={setPatientInsurance}
-                disabled={insuranceBrowsing}
-
-              />
-
-
-              <MyInput
-                vr={validationResult}
-                column
-                fieldType="date"
-                fieldLabel="Expiration Date"
-                fieldName="expirationDate"
-                record={patientInsurance}
-                setRecord={setPatientInsurance}
-                disabled={insuranceBrowsing}
-
-              />
-
-
-              <MyInput
-                vr={validationResult}
-                column
-                fieldLabel="Remaining Benefits"
-                fieldName="remainingBenefits"
-                record={patientInsurance}
-                setRecord={setPatientInsurance}
-                disabled={insuranceBrowsing}
-
-              />
-
-              <MyInput
-                vr={validationResult}
-                column
-                fieldLabel="Remailing Deductibles"
-                fieldName="remailingDeductibles"
-                record={patientInsurance}
-                setRecord={setPatientInsurance}
-                disabled={insuranceBrowsing}
-
-              />
-
-              <MyInput
-                width={165}
-                vr={validationResult}
-                column
-                fieldLabel="Policy Holder"
-                fieldType="select"
-                fieldName="policyHolder"
-                selectData={relationsList}
-                selectDataLabel="name"
-                selectDataValue="id"
-                record={patientInsurance}
-                setRecord={setPatientInsurance}
-                disabled={insuranceBrowsing}
-              />
-
-              <MyInput
-
-                vr={validationResult}
-                column
-                fieldLabel="Primary Insurance"
-                fieldName="primaryInsurance"
-                record={patientInsurance}
-                setRecord={setPatientInsurance}
-                fieldType="checkbox"
-                disabled={insuranceBrowsing}
-
-              />
-            </Form>
-
-            <br />
-            <div className='clickedInputs'>
-              <Form
-                layout="inline"
-                fluid
-              >
-                <MyInput
-                  vr={validationResult}
-                  column
-                  fieldLabel="Co Payment"
-                  fieldName="coPayment"
-                  record={patientInsurance}
-                  setRecord={setPatientInsurance}
-                  fieldType="checkbox"
-                  disabled={insuranceBrowsing}
-
-                />
-
-                <div className={`input-container ${patientInsurance?.coPayment ? 'show' : 'hide'}`}>
-
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    fieldLabel="Co Payment Value"
-                    fieldName="coPaymentValue"
-                    record={patientInsurance}
-                    setRecord={setPatientInsurance}
-                    disabled={insuranceBrowsing}
-
-                  />
-
-
-                </div>
-
-              </Form>
-
-              <Form
-                layout="inline"
-                fluid
-              >
-                <MyInput
-                  vr={validationResult}
-                  column
-                  fieldLabel="Co Insurance"
-                  fieldName="coInsurance"
-                  record={patientInsurance}
-                  setRecord={setPatientInsurance}
-                  fieldType="checkbox"
-                  disabled={insuranceBrowsing}
-
-                />
-                <div className={`input-container ${patientInsurance?.coInsurance ? 'show' : 'hide'}`}>
-
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    fieldLabel="Co Insurance Value"
-                    fieldName="coInsuranceValue"
-                    record={patientInsurance}
-                    setRecord={setPatientInsurance}
-                    disabled={insuranceBrowsing}
-
-                  />
-                </div>
-              </Form>
-
-
-              <Form
-                layout="inline"
-                fluid
-              >
-                <MyInput
-                  vr={validationResult}
-                  column
-                  fieldLabel="Deductibles"
-                  fieldName="deductibles"
-                  record={patientInsurance}
-                  setRecord={setPatientInsurance}
-                  fieldType="checkbox"
-                  disabled={insuranceBrowsing}
-
-                />
-
-                <div className={`input-container ${patientInsurance?.deductibles ? 'show' : 'hide'}`}>
-                  <MyInput
-                    vr={validationResult}
-                    column
-                    fieldLabel="Deductibles Value"
-                    fieldName="deductiblesValue"
-                    record={patientInsurance}
-                    setRecord={setPatientInsurance}
-                    disabled={insuranceBrowsing}
-
-                  />
-                </div>
-
-
-
-
-              </Form>
-            </div>
-
-
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button onClick={handleClearModal} appearance="subtle">
-            Cancel
-          </Button>
-          <Button onClick={handleSave} appearance="primary">
-            Save
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </div>
+    <MyModal
+      open={open}
+      setOpen={setOpen}
+      title="Patient Insurance"
+      bodyheight={410}
+      content={renderContent}
+      size="lg"
+      steps={[
+        {
+          title: "Insurance", icon: faShieldHeart,
+        },
+      ]}
+      actionButtonLabel="Save"
+      actionButtonFunction={handleSave}
+    />
   );
 };
-
 export default InsuranceModal;
