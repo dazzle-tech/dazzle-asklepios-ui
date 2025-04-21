@@ -45,6 +45,103 @@ const PsychologicalExam = ({ patient, encounter }) => {
             }
         ],
     });
+    const columns = [
+        {
+          key: 'expand',
+          title: '#',
+          width: 70,
+          align: 'center',
+          render: (rowData: any) => (
+            <ExpandCell
+              rowData={rowData}
+              dataKey="key"
+              expandedRowKeys={expandedRowKeys}
+              onChange={handleExpanded}
+            />
+          )
+        },
+        {
+          key: 'testType',
+          title: <Translate>Test Type</Translate>,
+          flexGrow: 2,
+          fullText: true,
+          align: 'center',
+          render: (rowData: any) =>
+            rowData?.testTypeLvalue ? rowData?.testTypeLvalue.lovDisplayVale : rowData?.testTypeLkey
+        },
+        {
+          key: 'reason',
+          title: <Translate>Reason</Translate>,
+          flexGrow: 2,
+          fullText: true,
+          align: 'center',
+          dataKey: 'reason'
+        },
+        {
+          key: 'testDuration',
+          title: <Translate>Test Duration</Translate>,
+          flexGrow: 2,
+          fullText: true,
+          align: 'center',
+          render: (rowData: any) => (
+            <>
+              {rowData?.testDuration}{" "}
+              {rowData?.unitLvalue ? rowData?.unitLvalue.lovDisplayVale : rowData?.unitLkey}
+            </>
+          )
+        },
+        {
+          key: 'score',
+          title: <Translate>Score</Translate>,
+          flexGrow: 2,
+          fullText: true,
+          align: 'center',
+          render: (rowData: any) =>
+            rowData?.scoreLvalue ? rowData?.scoreLvalue.lovDisplayVale : rowData?.scoreLkey
+        },
+        {
+          key: 'resultInterpretation',
+          title: <Translate>Result Interpretation</Translate>,
+          flexGrow: 3,
+          fullText: true,
+          align: 'center',
+          render: (rowData: any) =>
+            rowData?.resultInterpretationLvalue ? rowData?.resultInterpretationLvalue.lovDisplayVale : rowData?.resultInterpretationLkey
+        },
+        {
+          key: 'clinicalObservations',
+          title: <Translate>Clinical Observations</Translate>,
+          flexGrow: 2,
+          fullText: true,
+          align: 'center',
+          dataKey: 'clinicalObservations'
+        },
+        {
+          key: 'treatmentPlan',
+          title: <Translate>Treatment Plan</Translate>,
+          flexGrow: 2,
+          fullText: true,
+          align: 'center',
+          dataKey: 'treatmentPlan'
+        },
+        {
+          key: 'additionalNotes',
+          title: <Translate>Additional Notes</Translate>,
+          flexGrow: 2,
+          fullText: true,
+          align: 'center',
+          dataKey: 'additionalNotes'
+        },
+        {
+          key: 'followUpDate',
+          title: <Translate>Follow-up Date</Translate>,
+          flexGrow: 2,
+          fullText: true,
+          align: 'center',
+          render: (rowData: any) =>
+            rowData?.followUpDate ? new Date(rowData.followUpDate).toLocaleString('en-GB') : ''
+        }
+      ];
     // Fetch the list of psychological exams based on the provided request, and provide a refetch function
     const { data: psychologicalExamResponse, refetch: refetchPsychologicalExam } = useGetPsychologicalExamsQuery(psychologicalExamListRequest);
     // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
@@ -269,10 +366,10 @@ const PsychologicalExam = ({ patient, encounter }) => {
                     Show Cancelled
                 </Checkbox>
                 <Checkbox onChange={(value, checked) => { if (checked) { setAllData(true); } else { setAllData(false); } }}>
-                    Show All Vaccines
+                    Show All 
                 </Checkbox>
                 <div className='bt-right'>
-                    <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setOpenAddModal(true)}>Add Psychological Exam</MyButton>
+                    <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setOpenAddModal(true)}>Add </MyButton>
                 </div>
             </div>
             <Table
@@ -282,8 +379,6 @@ const PsychologicalExam = ({ patient, encounter }) => {
                 expandedRowKeys={expandedRowKeys}
                 renderRowExpanded={renderRowExpanded}
                 shouldUpdateScroll={false}
-                bordered
-                cellBordered
                 onRowClick={rowData => {
                     setPsychologicalExam({
                         ...rowData
