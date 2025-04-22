@@ -1,23 +1,31 @@
-.title{
+.title-metadata{
     display: flex;
 }
-.carousel{
+.title-metadata-fields {
+    font-size: 16px;
+    @media (max-width: 450px) {
+      font-size: 12px;
+    }
+  }
+.carousel-metadata{
     height: auto !important;
      background-color: var(--rs-body) !important;
 }
-.containerOfPagination{
+.container-of-pagination-metadata{
     padding: 20px;
      background-color: var(--extra-light-blue);
+     @media (max-width: 500px) {
+        padding: 5px;
+      }
 }
-.containerOfSearch{
+.container-of-search-metadata{
     margin-bottom: 10px;
 }
-.containerOfHeaderActions{
+.container-of-header-actions-metadata{
     display: flex;
      gap: 20px;
-     margin-bottom: 10px;
-}
-.containerOfPagination{
-    padding: 20px;
-     background-color: var(--extra-light-blue);
+    @media (max-width: 500px) {
+        flex-direction: column;
+        gap: 5px;
+    }
 }
