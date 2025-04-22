@@ -75,7 +75,7 @@ import Cardiology from '../encounter-component/cardiology/Cardiology';
 import { useGetMedicalSheetsByDepartmentIdQuery } from '@/services/setupService';
 import AllergiesModal from './AllergiesModal';
 import WarningiesModal from './WarningiesModal';
-
+import { useGetAppointmentsQuery} from '@/services/appointmentService';
 const Encounter = () => {
 
   const authSlice = useAppSelector(state => state.auth);
@@ -99,7 +99,18 @@ const Encounter = () => {
   const [selectedResourceType, setSelectedResourceType] = useState(null);
 const [medicalSheetSourceKey, setMedicalSheetSourceKey] = useState<string | undefined>();
 const [medicalSheetRowSourceKey, setMedicalSheetRowSourceKey] = useState<string | undefined>();
+const [selectedResources, setSelectedResources] = useState([])
+const {
+  data: appointments,
+  refetch: refitchAppointments,
+  error,
+  isLoading
+} = useGetAppointmentsQuery({
+  resource_type: selectedResourceType?.resourcesType || null,
+  facility_id: selectedFacility?.facilityKey || null,
+  resources: selectedResources ? selectedResources.resourceKey : [],
 
+});
 // get Midical Sheets Data Steps
 useEffect(() => {
   if (propsData?.encounter?.resourceTypeLkey === '2039516279378421') {
