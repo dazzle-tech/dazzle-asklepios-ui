@@ -24,16 +24,9 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
 
   return (
     <div className="tab-main-container">
-      <div className="tab-content-btns">
+    
         <AddVerification open={verificationModalOpen} setOpen={setVerificationModalOpen} localPatient={localPatient} setLocalPatient={setLocalPatient} validationResult={validationResult} />
-        <MyButton
-          onClick={() => setVerificationModalOpen(true)}
-          disabled={!localPatient.key}
-          prefixIcon={() => <PlusRound />}>
-          Patient Verification
-        </MyButton>
-      </div>
-      <Form layout="inline" fluid>
+        <Form layout="inline" className='btn-fileds-style'>
         <MyInput
           vr={validationResult}
           column
@@ -46,6 +39,15 @@ const PrivacySecurityTab: React.FC<PrivacySecurityTabProps> = ({
           record={localPatient}
           setRecord={setLocalPatient}
         />
+          <MyButton
+          onClick={() => setVerificationModalOpen(true)}
+          disabled={!localPatient.key}
+          prefixIcon={() => <PlusRound />}>
+          Patient Verification
+        </MyButton>
+      </Form>
+      
+      <Form layout="inline" fluid>
         <h5 className='border-top'>HIPAA</h5>
         <div className='covg-content'>
           <MyInput
