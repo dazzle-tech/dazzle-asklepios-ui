@@ -12,7 +12,7 @@ import InsuranceTab from './tabs/InsuranceTab';
 import ConsentFormTab from './ConsentFormTab';
 import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
 import PatientFamilyMembers from './tabs/FamilyMember/PatientFamilyMembers';
-import PatientExtraDetails from './PatientExtraDetails';
+import PatientExtraDetails from './tabs/ExtraDetails/PatientExtraDetails';
 import PatientAttachment from './PatientAttachment';
 import Translate from '@/components/Translate';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
