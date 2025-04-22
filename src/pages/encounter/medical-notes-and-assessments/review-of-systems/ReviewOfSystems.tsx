@@ -162,7 +162,7 @@ const ReviewOfSystems = ({ patient, encounter }) => {
                 {bodySystemsLovQueryResponse?.object.map((item, index) => (
 
                   <MyCard
-                    arrow={true}
+                    showArrow={true}
                     leftArrow={false}
                     arrowClick={() => setSelectedSystem(item)}
                     footerContant={item.lovDisplayVale}
