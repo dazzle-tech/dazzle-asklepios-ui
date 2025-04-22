@@ -7,10 +7,8 @@
   .rs-sidenav {
     flex: 1 1 auto;
     transition: none !important;
-    // border-top: 1px solid @B100;
     width: 100%;
   }
-
   .rs-content {
     padding: 0 10px;
     
@@ -23,22 +21,14 @@
       }
     }
   }
-  .nav-toggle {
-    // border-top: 1px solid @B100;
-  }
-
   .rs-sidenav-item,
   .rs-dropdown-item {
-    &.active {
-      // color: @H500 !important;
-    }
     &-icon {
       height: 1.3em !important;
       width: 1.3em !important;
     }
   }
 }
-
 .brand {
   padding: 10px 18px;
   font-size: 16px;
@@ -46,7 +36,6 @@
   overflow: hidden;
   font-weight: bold;
   text-transform: uppercase;
-
   a {
     text-decoration: none;
   }
@@ -56,51 +45,80 @@
   flex-direction: column;
   height: 102vh;
 }
-
-
-
-
-.rs-sidenav-nav > .rs-sidenav-item,
-.rs-sidenav-nav > .rs-dropdown .rs-dropdown-toggle {
-  
-    font-family: 'Manrope';
-font-style: normal;
-font-weight: 600;
-font-size: 13px;
-line-height: 16px;
-display: flex;
-align-items: center;
-letter-spacing: 0.02em;
-
-color: var(--dark-blue-gray);
-
-}
-
-.rs-dropdown-item.rs-dropdown-item-with-icon{
-  font-family: 'Manrope';
-  font-style: normal;
-  font-size: 13px;
-  line-height: 16px;
-  display: flex;
-  align-items: center;
-  letter-spacing: 0.02em;
-  
-  color: var(--dark-blue-gray);
-}
-
+.nav-menu{
+  font-family: 'Manrope' !important;
+  font-style: normal !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  line-height: 16px !important;
+  align-items: center !important;
+  letter-spacing: 0.02em !important;
+  color: var(--dark-blue-gray) !important;
+  @media (min-width: 1046px) and (max-width: 1297px) {
+    font-size: 12px !important;
+  }
+  @media (min-width: 1020px) and (max-width: 1046px) {
+    font-size: 11px !important;
+  }
+  @media (max-width: 1020px) {
+    font-size: 10px !important;
+  }
+   .rs-sidenav-item, .rs-dropdown-toggle {   
+    font-family: 'Manrope' !important;
+    font-style: normal !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    line-height: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    letter-spacing: 0.02em !important;   
+    color: var(--dark-blue-gray) !important;
+    @media (min-width: 1046px) and (max-width: 1297px) {
+      font-size: 12px !important;
+    } 
+    @media (min-width: 1020px) and  (max-width: 1046px) {
+      font-size: 11px !important;
+    }
+    @media (max-width: 1020px) {
+      font-size: 10px !important;
+    }
+   }
+   ul{
+    div{
+      li{
+        .rs-dropdown-item.rs-dropdown-item-with-icon{
+          font-family: 'Manrope' !important;
+          font-style: normal !important;
+          font-size: 13px !important;
+          line-height: 16px !important;
+          display: flex !important;
+          align-items: center !important;
+          letter-spacing: 0.02em !important;      
+          color: var(--dark-blue-gray) !important;
+          @media (min-width: 1046px) and (max-width: 1297px) {
+            font-size: 12px !important;
+          }       
+          @media (min-width: 1020px) and  (max-width: 1046px) {
+            font-size: 11px !important;
+          }
+          @media (max-width: 1020px) {
+            font-size: 10px !important;
+          }
+        }
+      }
+    }
+   }
+    }
 .logo{
   display: block;
-  // margin-left: 70px;
   margin-left: 28%;
   margin-bottom: 10px;
   margin-top: 10px;
   padding: 0px 0px;
   cursor: pointer;
   height: 50px;
-  // width: 100px;
   width: 40%;
 }
-
 .container-of-organization-info{
   display: flex;
   align-items: center;
@@ -112,10 +130,8 @@ color: var(--dark-blue-gray);
   background-color: #f9f9f9;
   width: 85%;
   border: 1px solid #ddd;
-
   .organization-img{
     color: var(--gray-dark);
-    //  margin-right: 12px;
     margin-right: 5.45%;
   }
   .name{
@@ -129,193 +145,150 @@ color: var(--dark-blue-gray);
   }
 }
 .search-field{
-  margin-left: 20px;
+  width: 85% !important;
+  margin-left: 8%;
    margin-top: 20px;
 }
 #fixedInfoBar{
- 
   padding: 11px;
   position: relative;
   display: inline-flex;
   color: black;
   z-index: 101;
-
   height: 50px;
   border-radius: 0px 15px 15px 0px;
 }
 .content{
-  // max-height: 90vh;
   overflow-y: auto;
   margin-top: 16px;
   @media (max-width: 685px) {
     margin-top: 40px;
   }
-
 }
-.nav-item{
-  text-align: center;
-}
-
 .sidebar-expanded{
-  // width: 260px !important;
   width: 17% !important;
 }
  .sidebar-unexpanded{
     width: 56px !important;
  }
-
  @media (min-width: 1310px) and (max-width: 1350px){
   .container-of-organization-info{
+    padding: 11.5px 14.5px;
     .name{
       font-size: 12.5px;
-
     }
     .location{
       font-size: 9.5px;
     }
   }
-
  }
-
  @media (min-width: 1275px) and (max-width: 1310px){
-
-  
   .container-of-organization-info{
+    padding: 11px 14px;
     .name{
       font-size: 12px;
-
     }
     .location{
       font-size: 9px;
     }
   }
-
  }
-
  @media (min-width: 1236px) and (max-width: 1275px) {
-
   .container-of-organization-info{
+    padding: 10.5px 13.5px;
     .name{
       font-size: 11.5px;
-
     }
     .location{
       font-size: 8.5px;
     }
   }
-
  }
-
  @media (min-width: 1200px) and  (max-width: 1236px) {
-
   .container-of-organization-info{
+    padding: 10px 13px;
     .name{
       font-size: 11px;
-
     }
     .location{
       font-size: 8px;
     }
   }
-
  }
-
  @media (min-width: 1160px) and (max-width: 1200px)  {
-
   .container-of-organization-info{
+    padding: 9.5px 12.5px;
     .name{
       font-size: 10.5px;
-
     }
     .location{
       font-size: 7.5px;
     }
   }
-
  }
-
  @media (min-width: 1125px) and (max-width: 1160px)  {
-
   .container-of-organization-info{
+    padding: 9px 12px;
     .name{
       font-size: 10px;
-
     }
     .location{
       font-size: 7px;
     }
   }
-
  }
-
  @media (min-width: 1088px) and (max-width: 1125px)   {
-
   .container-of-organization-info{
+    padding: 8.5px 11.5px;
     .name{
       font-size: 9.5px;
-
     }
     .location{
       font-size: 6.5px;
     }
   }
-
  }
-
  @media (min-width: 1050px) and (max-width: 1088px) {
-
   .container-of-organization-info{
+    padding: 8px 11px;
     .name{
       font-size: 9px;
-
     }
     .location{
       font-size: 6px;
     }
   }
-
  }
-
  @media (min-width: 1013px) and (max-width: 1050px){
-
   .container-of-organization-info{
+    padding: 7.5px 10.5px;
     .name{
       font-size: 8.5px;
-
     }
     .location{
       font-size: 5.5px;
     }
   }
-
  }
-
  @media (min-width: 977px) and (max-width: 1013px) {
-
   .container-of-organization-info{
+    padding: 7px 10px;
     .name{
       font-size: 8px;
-
     }
     .location{
       font-size: 5px;
     }
   }
-
  }
-
  @media (max-width: 977px)  {
-
   .container-of-organization-info{
+    padding: 6.5px 9.5px;
     .name{
       font-size: 7.5px;
-
     }
     .location{
       font-size: 4.5px;
     }
   }
-
  }
-
-
