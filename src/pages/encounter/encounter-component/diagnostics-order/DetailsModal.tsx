@@ -1,0 +1,203 @@
+import React, { useEffect, useState } from 'react';
+import Translate from '@/components/Translate';
+import './styles.less';
+import MyModal from '@/components/MyModal/MyModal';
+import MyButton from '@/components/MyButton/MyButton';
+import { Form } from 'rsuite';
+import MyInput from '@/components/MyInput';
+import AttachmentModal from '@/pages/patient/patient-profile/AttachmentUploadModal';
+import { faFile, faVials } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+    useGetLovValuesByCodeQuery,
+} from '@/services/setupService';
+import {
+    useGetDiagnosticsTestListQuery,
+    useGetDepartmentListByTypeQuery
+} from '@/services/setupService';
+import {
+    useFetchAttachmentByKeyQuery,
+} from '@/services/attachmentService';
+const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveTest, orderTest, setOrderTest, order }) => {
+    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+    const [actionType, setActionType] = useState(null);
+    const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
+    const [receivedType, setReceivedType] = useState("");
+    const { data: orderPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
+    const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
+    const { data: departmentTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
+
+    const { data: receivedLabList } = useGetDepartmentListByTypeQuery(receivedType);
+
+    const {
+        data: fetchAttachmentByKeyResponce,
+        error,
+        isLoading,
+        isFetching,
+        isSuccess,
+        refetch
+    } = useFetchAttachmentByKeyQuery(
+        { key: requestedPatientAttacment },
+        { skip: !requestedPatientAttacment || !order.key }
+    );
+    useEffect(() => {
+
+        if (test?.testTypeLkey == '862810597620632') {
+            setReceivedType('5673990729647007');
+
+        }
+        else if (test?.testTypeLkey == '862828331135792') {
+            setReceivedType('5673990729647008');
+        }
+        else if (test?.testTypeLkey == '862842242812880') {
+            setReceivedType('5673990729647009');
+        }
+        else {
+            setReceivedType('');
+        }
+    }, [test]);
+    useEffect(() => {
+        console.log(receivedType)
+    }, [receivedType]);
+    useEffect(() => {
+
+        if (isSuccess && fetchAttachmentByKeyResponce) {
+            if (actionType === 'download') {
+                handleDownload(fetchAttachmentByKeyResponce);
+            }
+        }
+    }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
+    const handleDownload = async (attachment) => {
+        try {
+            if (!attachment?.fileContent || !attachment?.contentType || !attachment?.fileName) {
+                console.error("Invalid attachment data.");
+                return;
+            }
+
+            const byteCharacters = atob(attachment.fileContent);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: attachment.contentType });
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.style.display = "none";
+            a.href = url;
+            a.download = attachment.fileName;
+
+            document.body.appendChild(a);
+            a.click();
+
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            console.log("File downloaded successfully:", attachment.fileName);
+
+        } catch (error) {
+            console.error("Error during file download:", error);
+        }
+    };
+    const handleDownloadSelectedPatientAttachment = attachmentKey => {
+
+        setRequestedPatientAttacment(attachmentKey);
+        setActionType('download');
+
+    };
+    return (<>
+        <MyModal
+            open={openDetailsModel}
+            setOpen={setOpenDetailsModel}
+            title="Add Test Details"
+            actionButtonFunction={handleSaveTest}
+            position='right'
+            size='700px'
+            steps={[
+
+                {
+                    title: (test?.testTypeLvalue?.lovDisplayVale || '') + ' - ' + (test?.testName || ''), icon: faVials,
+                    footer:
+                        <MyButton
+                            onClick={() => setAttachmentsModalOpen(true)}
+                            prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
+                        >Attachment File</MyButton>
+                },
+            ]}
+            content={<>
+                <div className='div-parent'>
+                    <div style={{ flex: 1 }} >
+                        <Form layout="inline" fluid disabled={orderTest.statusLkey !== '164797574082125'}>
+                            <MyInput
+                                column
+
+                                width={200}
+                                fieldType="select"
+                                fieldLabel="Order Priority"
+                                selectData={orderPriorityLovQueryResponse?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                fieldName={'priorityLkey'}
+                                record={orderTest}
+                                setRecord={setOrderTest}
+                            />
+                        </Form>
+                    </div>
+                    <div style={{ flex: 1 }} >
+                        <Form layout="inline" fluid disabled={orderTest.statusLkey !== '164797574082125'}>
+                            <MyInput
+                                column
+
+                                width={200}
+                                fieldType="select"
+                                fieldLabel="Reason"
+                                selectData={ReasonLovQueryResponse?.object ?? []}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                fieldName={'reasonLkey'}
+                                record={orderTest}
+                                setRecord={setOrderTest}
+                            />
+                        </Form>
+                    </div>
+                    <div style={{ flex: 1 }} >
+                        <Form layout="inline" fluid disabled={orderTest.statusLkey !== '164797574082125'}>
+                            <MyInput
+                                column
+
+                                width={200}
+                                fieldType="select"
+                                fieldLabel="Received Lab"
+                                selectData={receivedLabList?.object ?? []}
+                                selectDataLabel="name"
+                                selectDataValue="key"
+                                fieldName={'receivedLabKey'}
+                                record={orderTest}
+                                setRecord={setOrderTest}
+                            />
+                        </Form>
+                    </div>
+
+                </div>
+                <div>
+                    <Form fluid disabled={orderTest.statusLkey !== '164797574082125'}>
+                        <MyInput
+                            column
+                            rows={5}
+                            width={'100%'}
+
+                            fieldName={'notes'}
+                            record={orderTest}
+                            setRecord={setOrderTest}
+                        />
+                    </Form>
+                </div>
+            </>}
+        />
+
+
+        <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={order} attatchmentType={'ORDER_ATTACHMENT'} />
+    </>)
+}
+export default DetailsModal
