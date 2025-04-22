@@ -125,7 +125,7 @@ const PatientSearch = ({ selectedPatientRelation, setSelectedPatientRelation, se
                     {patientListResponse?.object?.map(patient => (
                         <MyCard
                             width={250}
-                            arrow={true}
+                            showArrow={true}
                             key={patient.key}
                             variant='profile'
                             leftArrow={false}
@@ -138,7 +138,7 @@ const PatientSearch = ({ selectedPatientRelation, setSelectedPatientRelation, se
                                     {patient.createdAt ? new Date(patient?.createdAt).toLocaleString('en-GB') : ''}{' '}
                                 </>
                             }
-                            more={true}
+                            showMore={true}
                             arrowClick={() => {
                                 console.log("Selected patient:", patient);
                                 handleSelectPatient(patient);
