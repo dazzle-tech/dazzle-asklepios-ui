@@ -11,7 +11,7 @@ import AddressTab from './tabs/AddressTab';
 import InsuranceTab from './tabs/InsuranceTab';
 import ConsentFormTab from './ConsentFormTab';
 import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
-import PatientFamilyMembers from './PatientFamilyMembers';
+import PatientFamilyMembers from './tabs/FamilyMember/PatientFamilyMembers';
 import PatientExtraDetails from './PatientExtraDetails';
 import PatientAttachment from './PatientAttachment';
 import Translate from '@/components/Translate';
