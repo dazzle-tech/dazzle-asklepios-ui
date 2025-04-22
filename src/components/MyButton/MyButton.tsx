@@ -30,7 +30,7 @@ const MyButton = ({
             : props.backgroundColor ?? 'var(--primary-blue)',
         border:
           appearance === 'ghost' ? `2px solid ${props.color ?? 'var(--primary-blue)'}` : 'none',
-        transition: 'all 0.3s ease'
+      
       }}
       {...props}
       onClick={onClick}
