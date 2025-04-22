@@ -1,36 +1,29 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Drawer, List, Modal, Pagination, Panel, Table } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
-import { useGetScreensQuery, useSaveScreenMutation } from '@/services/setupService';
-import { useGetScreenMetadataQuery, useSaveScreenMetadataMutation } from '@/services/dvmService';
-import {IconButton } from 'rsuite';
+import { Drawer, List, Pagination, Panel } from 'rsuite';
+import { useGetScreensQuery } from '@/services/setupService';
+import { useGetScreenMetadataQuery } from '@/services/dvmService';
+import { IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { ApScreen } from '@/types/model-types';
 import { MdDelete } from 'react-icons/md';
 import { MdModeEdit } from 'react-icons/md';
 import { newApScreen } from '@/types/model-types-constructor';
-import { Form, Stack, Divider } from 'rsuite';
+import { Form } from 'rsuite';
 import ArowBackIcon from '@rsuite/icons/ArowBack';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLaptop } from '@fortawesome/free-solid-svg-icons';
-import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '@/components/MyButton/MyButton';
-import {
-  addFilterToListRequest,
-  fromCamelCaseToDBName
-} from '@/utils';
+import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import MyInput from '@/components/MyInput';
-import MyIconInput from '@/components/MyInput/MyIconInput';
 import { Icon } from '@rsuite/icons';
 import * as icons from 'react-icons/fa6';
 import './styles.less';
-const Screens = ({ module, goBack, ...props }) => {
+import MyTable from '@/components/MyTable';
+import AddEditScreen from './AddEditScreen';
+const Screens = ({ module, goBack }) => {
   const [screen, setScreen] = useState<ApScreen>({ ...newApScreen });
   const [screenPopupOpen, setScreenPopupOpen] = useState(false);
   const [screenMetadataPopupOpen, setScreenMetadataPopupOpen] = useState(false);
-
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     sortBy: 'viewOrder'
@@ -39,16 +32,18 @@ const Screens = ({ module, goBack, ...props }) => {
     ...initialListRequest,
     ignore: true
   });
-
-  const [saveScreen, saveScreenMutation] = useSaveScreenMutation();
-  const [saveScreenMetadata, saveScreenMetadataMutation] = useSaveScreenMutation();
-
-  const { data: screenListResponse } = useGetScreensQuery(listRequest);
-  const { data: screenMetadataListResponse } = useGetScreenMetadataQuery(listRequestForMetadata);
-
   const [operationState, setOperationState] = useState<string>('New');
   const [record, setRecord] = useState({ value: '' });
-
+  const [width, setWidth] = useState<number>(window.innerWidth);
+  //fetch data
+  const { data: screenListResponse, refetch } = useGetScreensQuery(listRequest);
+  const { data: screenMetadataListResponse } = useGetScreenMetadataQuery(listRequestForMetadata);
+  //useEffects
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   useEffect(() => {
     if (module && module.key) {
       setListRequest(addFilterToListRequest('module_key', 'match', module.key, listRequest));
@@ -56,7 +51,6 @@ const Screens = ({ module, goBack, ...props }) => {
     setScreenPopupOpen(false);
     setScreen({ ...newApScreen });
   }, [module]);
-
   useEffect(() => {
     if (screen && screen.key) {
       setListRequestForMetadata(
@@ -64,40 +58,27 @@ const Screens = ({ module, goBack, ...props }) => {
       );
     }
   }, [screen]);
-
   useEffect(() => {
     if (screenMetadataListResponse) {
       console.log(screenMetadataListResponse);
     }
   }, [screenMetadataListResponse]);
-
   useEffect(() => {
     handleFilterChange('name', record['value']);
   }, [record]);
-
-  useEffect(() => {
-    if (saveScreenMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveScreenMutation.data]);
-
+  //handle click on Add New Button
   const handleScreenNew = () => {
     setOperationState('New');
     setScreenPopupOpen(true);
     setScreen({ ...newApScreen, moduleKey: module.key });
   };
-
-  const handleScreenSave = () => {
-    setScreenPopupOpen(false);
-    saveScreen(screen).unwrap();
-  };
-
+  //className for selected row
   const isSelected = rowData => {
     if (rowData && screen && rowData.key === screen.key) {
       return 'selected-row';
     } else return '';
   };
-
+  //filter table
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -112,9 +93,9 @@ const Screens = ({ module, goBack, ...props }) => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-
+  //icons column (edit, deactivate)
   const iconsForActions = (rowData: ApScreen) => (
-    <div className='container-of-icons'>
+    <div className="container-of-icons">
       <MdModeEdit
         title="Edit"
         size={24}
@@ -128,31 +109,73 @@ const Screens = ({ module, goBack, ...props }) => {
       <MdDelete title="Deactivate" fill="var(--primary-pink)" size={24} />
     </div>
   );
+  //table columns
+  const tableColumns = [
+    {
+      key: 'icon',
+      title: <Translate>Icon</Translate>,
+      flexGrow: 3,
+      render: rowData => (
+        <Icon fill="var(--primary-gray)" size="1.5em" as={icons[rowData.iconImagePath]} />
+      )
+    },
+    {
+      key: 'name',
+      title: <Translate>Name</Translate>,
+      flexGrow: 4,
+      dataKey: 'name'
+    },
+    {
+      key: 'description',
+      title: <Translate>Description</Translate>,
+      flexGrow: 5,
+      dataKey: 'description'
+    },
+    {
+      key: 'viewOrder',
+      title: <Translate>View Order</Translate>,
+      flexGrow: 4,
+      dataKey: 'viewOrder'
+    },
+    {
+      key: 'navPath',
+      title: <Translate>Navigation Path</Translate>,
+      flexGrow: 4,
+      dataKey: 'viewOrder'
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      flexGrow: 3,
+      render: rowData => iconsForActions(rowData)
+    }
+  ];
 
   return (
     <>
       {module && module.key && (
         <Panel
-        header={
-          <p >
-            <Translate> Screens for </Translate> <i>{module?.name ?? ''}</i>{' '}
-            <Translate>Module</Translate>
-          </p>
-        }
+          header={
+            <p className="title-screen">
+              <Translate> Screens for </Translate> <i>{module?.name ?? ''}</i>{' '}
+              <Translate>Module</Translate>
+            </p>
+          }
         >
-          <div className='container-of-header-actions'>
-            <div className='container-of-back-and-search'>
-              <MyButton
-                prefixIcon={() => <ArowBackIcon />}
-                color="var(--deep-blue)"
-                ghost
-                onClick={goBack}
-                width="82px"
-                height="40px"
-              >
-                Back
-              </MyButton>
-              <Form>
+          <div className="container-of-header-actions-screen">
+            <div className={'container-of-back-and-search-screen'}>
+              <div>
+                <MyButton
+                  prefixIcon={() => <ArowBackIcon />}
+                  color="var(--deep-blue)"
+                  appearance={'ghost'}
+                  onClick={goBack}
+                  width="82px"
+                >
+                  Back
+                </MyButton>
+              </div>
+              <Form layout="inline">
                 <MyInput
                   fieldName="value"
                   fieldType="text"
@@ -161,87 +184,45 @@ const Screens = ({ module, goBack, ...props }) => {
                   showLabel={false}
                   placeholder="Search by Name"
                   width={'220px'}
+                  height={32}
                 />
               </Form>
             </div>
+            <div>
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
                 onClick={handleScreenNew}
                 width="111px"
-                height="40px"
               >
                 Add New
               </MyButton>
+            </div>
           </div>
-          <Table
-            height={400}
-            sortColumn={listRequest.sortBy}
-            sortType={listRequest.sortType}
-            onSortColumn={(sortBy, sortType) => {
-              if (sortBy)
-                setListRequest({
-                  ...listRequest,
-                  sortBy,
-                  sortType
-                });
-            }}
-            cellBordered
+
+          <MyTable
+            height={450}
             data={screenListResponse?.object ?? []}
+            columns={tableColumns}
+            rowClassName={isSelected}
             onRowClick={rowData => {
               setScreen({ ...rowData, moduleKey: module.key });
             }}
-            rowClassName={isSelected}
-          >
-            <Column sortable align="center" flexGrow={1}>
-              <HeaderCell>
-                <Translate>Icon</Translate>
-              </HeaderCell>
-              <Cell>
-                {rowData => (
-                  <Icon fill="var(--primary-gray)" size="1.5em" as={icons[rowData.iconImagePath]} />
-                )}
-              </Cell>
-            </Column>
-            <Column sortable flexGrow={4}>
-              <HeaderCell>
-                <Translate>Name</Translate>
-              </HeaderCell>
-              <Cell dataKey="name" />
-            </Column>
-            <Column sortable flexGrow={4}>
-              <HeaderCell>
-                <Translate>Description</Translate>
-              </HeaderCell>
-              <Cell dataKey="description" />
-            </Column>
-            <Column sortable flexGrow={2}>
-              <HeaderCell>
-                <Translate>View Order</Translate>
-              </HeaderCell>
-              <Cell dataKey="viewOrder" />
-            </Column>
-            <Column sortable flexGrow={4}>
-              <HeaderCell>
-                <Translate>Navigation Path</Translate>
-              </HeaderCell>
-              <Cell dataKey="navPath" />
-            </Column>
-
-            <Column flexGrow={2}>
-              <HeaderCell></HeaderCell>
-              <Cell>{rowData => iconsForActions(rowData)}</Cell>
-            </Column>
-          </Table>
-          <div className='container-of-pagination'>
+            sortColumn={listRequest.sortBy}
+            sortType={listRequest.sortType}
+            onSortChange={(sortBy, sortType) => {
+              if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+            }}
+          />
+          <div className="container-of-pagination-module">
             <Pagination
               prev
               next
-              first
-              last
-              ellipsis
-              boundaryLinks
-              maxButtons={5}
+              first={width > 500}
+              last={width > 500}
+              ellipsis={width > 500}
+              boundaryLinks={width > 500}
+              maxButtons={width < 500 ? 1 : 2}
               size="xs"
               layout={['limit', '|', 'pager']}
               limitOptions={[5, 15, 30]}
@@ -256,81 +237,17 @@ const Screens = ({ module, goBack, ...props }) => {
               total={screenListResponse?.extraNumeric ?? 0}
             />
           </div>
-
-          <Modal open={screenPopupOpen} className="left-modal" size="xsm">
-            <Modal.Title>
-              <Translate>{operationState} Screen</Translate>
-            </Modal.Title>
-            <hr />
-            <Modal.Body className='modal-body'>
-              <Form
-                fluid
-                
-              >
-                <div
-                 className='header-of-modal'
-                >
-                  <FontAwesomeIcon
-                    icon={faLaptop}
-                    color="#415BE7"
-                    // style={{ marginBottom: '10px' }}
-                    size="2x"
-                  />
-                  <label >Screen info</label>
-                </div>
-
-                <MyInput fieldName="name" record={screen} setRecord={setScreen} width={520} />
-                <MyInput
-                  fieldName="description"
-                  fieldType="textarea"
-                  record={screen}
-                  setRecord={setScreen}
-                  width={520}
-                />
-                <MyInput
-                  fieldName="viewOrder"
-                  fieldType="number"
-                  record={screen}
-                  setRecord={setScreen}
-                  width={520}
-                />
-                <div className='container-of-two-fields'>
-                  <MyIconInput
-                    fieldName="iconImagePath"
-                    fieldLabel="Icon"
-                    record={screen}
-                    setRecord={setScreen}
-                    width={250}
-                  />
-                  <MyInput fieldName="navPath" record={screen} setRecord={setScreen} width={250} />
-                </div>
-              </Form>
-            </Modal.Body>
-            <hr />
-            <Modal.Footer className='modal-footer'>
-              <Stack
-                className='stack'
-                spacing={2}
-                divider={<Divider vertical />}
-              >
-                <MyButton ghost color="var(--deep-blue)" onClick={() => setScreenPopupOpen(false)} width='78px' height='40px'>
-                  Cancel
-                </MyButton>
-                <MyButton
-                  prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                  color="var(--deep-blue)"
-                  onClick={handleScreenSave}
-                   width='93px'
-                  height='40px'
-                >
-                  {operationState === 'New' ? 'Create' : 'Save'}
-                </MyButton>
-              </Stack>
-            </Modal.Footer>
-          </Modal>
+          <AddEditScreen
+            open={screenPopupOpen}
+            setOpen={setScreenPopupOpen}
+            operationState={operationState}
+            width={width}
+            screen={screen}
+            setScreen={setScreen}
+            refetch={refetch}
+          />
         </Panel>
       )}
-
       <Drawer open={screenMetadataPopupOpen} onClose={() => setScreenMetadataPopupOpen(false)}>
         <Drawer.Header>
           <Drawer.Title>List of Metadata In Screen</Drawer.Title>
@@ -338,12 +255,15 @@ const Screens = ({ module, goBack, ...props }) => {
         <Drawer.Body>
           <List bordered>
             {(screenMetadataListResponse?.object ?? []).map(smd => {
-              return <List.Item>{smd.metadataObject.objectName}</List.Item>;
+              return (
+                <List.Item key={smd.metadataObject.objectId}>
+                  {smd.metadataObject.objectName}
+                </List.Item>
+              );
             })}
           </List>
         </Drawer.Body>
       </Drawer>
-
       {(!module || !module.key) && (
         <IconButton appearance="ghost" color="cyan" icon={<ArowBackIcon />} onClick={goBack}>
           No Valid Module Selected, Go Back
@@ -352,5 +272,4 @@ const Screens = ({ module, goBack, ...props }) => {
     </>
   );
 };
-
 export default Screens;
