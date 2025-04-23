@@ -43,7 +43,7 @@ import { faBroom, faFile, faStethoscope, faPen } from '@fortawesome/free-solid-s
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import OthersIcon from '@rsuite/icons/Others';
 import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
-import AttachmentModal from '@/pages/patient/patient-profile/AttachmentUploadModal';
+import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
 import SearchIcon from '@rsuite/icons/Search';
 import BlockIcon from '@rsuite/icons/Block';
 import MyInput from '@/components/MyInput';
@@ -535,8 +535,8 @@ const Consultation = ({ edit, patient, encounter }) => {
 
       <AttachmentModal
         isOpen={attachmentsModalOpen}
-        onClose={() => setAttachmentsModalOpen(false)}
-        localPatient={consultationOrders}
+        setIsOpen={setAttachmentsModalOpen}
+        attachmentSource={consultationOrders}
         attatchmentType={'CONSULTATION_ORDER'}
       />
       <AdvancedModal

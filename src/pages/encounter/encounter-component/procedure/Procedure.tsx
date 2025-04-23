@@ -54,7 +54,7 @@ import { faBroom ,faPen} from '@fortawesome/free-solid-svg-icons';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import OthersIcon from '@rsuite/icons/Others';
 import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
-import AttachmentModal from '@/pages/patient/patient-profile/AttachmentUploadModal';
+import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
 import SearchIcon from '@rsuite/icons/Search';
 import BlockIcon from '@rsuite/icons/Block';
 import MyInput from '@/components/MyInput';

@@ -5,7 +5,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import AttachmentModal from '@/pages/patient/patient-profile/AttachmentUploadModal';
+import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
 import { faFile, faVials } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -197,7 +197,7 @@ const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveT
         />
 
 
-        <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={order} attatchmentType={'ORDER_ATTACHMENT'} />
+        <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} attachmentSource={order} attatchmentType={'ORDER_ATTACHMENT'} />
     </>)
 }
 export default DetailsModal

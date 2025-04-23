@@ -20,7 +20,7 @@ import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from "@/services/se
 import TrashIcon from '@rsuite/icons/Trash';
 import { useAppDispatch, useAppSelector } from "@/hooks";
 import { useChangeAppointmentStatusMutation, useGetResourcesAvailabilityQuery, useGetResourcesQuery, useSaveAppointmentMutation } from "@/services/appointmentService";
-import AttachmentModal from "@/pages/patient/patient-profile/AttachmentUploadModal";
+import AttachmentModal from "@/components/AttachmentUploadModal/AttachmentUploadModal";
 import { object } from "prop-types";
 import { setPatient } from "@/reducers/patientSlice";
 import { notify } from "@/utils/uiReducerActions";
@@ -1147,7 +1147,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                 </IconButton>
 
                                 {/* ===================AttachmentModal=================== */}
-                                <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={localPatient} attatchmentType={'APPOINTMENT_ATTACHMENT'} />
+                                <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} attachmentSource={localPatient} attatchmentType={'APPOINTMENT_ATTACHMENT'} />
 
                             </div>
                         </div>
