@@ -13,6 +13,8 @@ import MyModal from '@/components/MyModal/MyModal';
 const AddExtraDetails = ({ localPatient, open, setOpen, secondaryDocument, setSecondaryDocument, refetch }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [saveSecondaryDocument] = useSaveNewSecondaryDocumentMutation();
+    // Fetch LOV data for various fields
+    const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
     const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
     const dispatch = useAppDispatch();
     // MyModal Content
@@ -35,6 +37,25 @@ const AddExtraDetails = ({ localPatient, open, setOpen, secondaryDocument, setSe
                         ...newRecord
                     })
                 }
+            />
+            <MyInput
+                required
+                column
+                width={300}
+                fieldLabel="Document Type"
+                fieldType="select"
+                fieldName="documentTypeLkey"
+                selectData={docTypeLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={secondaryDocument}
+                setRecord={newRecord =>
+                    setSecondaryDocument({
+                        ...secondaryDocument,
+                        ...newRecord
+                    })
+                }
+                searchable={false}
             />
             <MyInput
                 required

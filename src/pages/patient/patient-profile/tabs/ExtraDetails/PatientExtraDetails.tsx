@@ -78,6 +78,15 @@ const PatientExtraDetails = ({ localPatient }) => {
                     : rowData.documentCountryLkey,
         },
         {
+            key: 'documentType',
+            title: <Translate>Document Type</Translate>,
+            flexGrow: 4,
+            render: (rowData: any) =>
+                rowData.documentTypeLvalue
+                    ? rowData.documentTypeLvalue.lovDisplayVale
+                    : rowData.documentTypeLkey,
+        },
+        {
             key: 'documentNo',
             title: <Translate>Document Number</Translate>,
             flexGrow: 4,

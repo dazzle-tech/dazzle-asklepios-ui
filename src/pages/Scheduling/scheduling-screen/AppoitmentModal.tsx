@@ -20,7 +20,7 @@ import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from "@/services/se
 import TrashIcon from '@rsuite/icons/Trash';
 import { useAppDispatch, useAppSelector } from "@/hooks";
 import { useChangeAppointmentStatusMutation, useGetResourcesAvailabilityQuery, useGetResourcesQuery, useSaveAppointmentMutation } from "@/services/appointmentService";
-import AttachmentModal from "@/pages/patient/patient-profile/AttachmentUploadModal";
+import AttachmentModal from "@/components/AttachmentUploadModal/AttachmentUploadModal";
 import { object } from "prop-types";
 import { setPatient } from "@/reducers/patientSlice";
 import { notify } from "@/utils/uiReducerActions";

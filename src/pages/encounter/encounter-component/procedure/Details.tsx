@@ -10,7 +10,7 @@ import {
     DatePicker,
 } from 'rsuite';
 import PatientOrder from '../diagnostics-order';
-import AttachmentModal from '@/pages/patient/patient-profile/AttachmentUploadModal';
+import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
 import CheckIcon from '@rsuite/icons/Check';
 import { faBroom ,faFile} from '@fortawesome/free-solid-svg-icons';
 
