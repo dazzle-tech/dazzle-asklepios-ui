@@ -13,6 +13,7 @@ import {
     Table,
     Checkbox,
 } from 'rsuite';
+import { faWarning } from '@fortawesome/free-solid-svg-icons';
 const { Column, HeaderCell, Cell } = Table;
 
 const WarningiesModal = ({ open, setOpen, patient }) => {
@@ -131,11 +132,12 @@ const WarningiesModal = ({ open, setOpen, patient }) => {
     return (<>
         <MyModal
             position='right'
-            bodyheight={400}
+            bodyheight={450}
             size='900px'
             title="Warning"
             open={open}
             setOpen={setOpen}
+            steps={[{ title: "Warning", icon:faWarning}]}
             content={<>
                 <div>
                     <Checkbox
@@ -152,7 +154,7 @@ const WarningiesModal = ({ open, setOpen, patient }) => {
 
                 </div>
                 <Table
-
+                     autoHeight
                     data={warningsListResponse?.object || []}
                     rowKey="key"
                     expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
