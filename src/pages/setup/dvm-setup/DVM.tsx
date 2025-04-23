@@ -1,20 +1,17 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Modal, Panel, Table } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
+import { Panel} from 'rsuite';
 import { useGetMetadataFieldsQuery, useGetScreensQuery } from '@/services/setupService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdDelete } from 'react-icons/md';
 import { MdModeEdit } from 'react-icons/md';
-import { FaClipboardCheck } from 'react-icons/fa6';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '@/components/MyButton/MyButton';
+import { faClipboardCheck } from '@fortawesome/free-solid-svg-icons';
 import {
   newApDvmRule
 } from '@/types/model-types-constructor';
-import { Form, Stack, Divider } from 'rsuite';
+import { Form} from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import {
@@ -22,14 +19,15 @@ import {
   useGetScreenMetadataQuery,
   useSaveDvmRuleMutation
 } from '@/services/dvmService';
-import { Tabs } from 'rsuite';
-import { Tab } from 'rsuite';
+import { Tabs, Tab } from 'rsuite';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
 import './styles.less';
+import MyTable from '@/components/MyTable';
+import MyModal from '@/components/MyModal/MyModal';
 const DVM = () => {
   const dispatch = useAppDispatch();
 
@@ -42,6 +40,7 @@ const DVM = () => {
   });
   const { data: screenListResponse } = useGetScreensQuery(screensListRequest);
 
+  const [width, setWidth] = useState<number>(window.innerWidth);
   const [screensMetadataListRequest, setScreensMetadataListRequest] = useState<ListRequest>({
     ...initialListRequest,
     ignore: true
@@ -62,7 +61,7 @@ const DVM = () => {
     ...initialListRequest,
     ignore: true
   });
-  const { data: dvmRulesListResponse } = useGetDvmRulesQuery(listRequest);
+  const { data: dvmRulesListResponse, refetch ,isLoading } = useGetDvmRulesQuery(listRequest);
 
   const [dvmRule, setDvmRule] = useState({ ...newApDvmRule });
   const [saveDvm, saveDvmMutation] = useSaveDvmRuleMutation();
@@ -118,6 +117,13 @@ const DVM = () => {
       );
     }
   }, [recordOfScreen]);
+
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
 
   useEffect(() => {
     if (dvmRule.fieldKey) {
@@ -238,13 +244,209 @@ const DVM = () => {
     </div>
   );
 
+   const conjureFormContent = (stepNumber = 0) => {
+      switch (stepNumber) {
+        case 0:
+          return (
+              <Form fluid>
+              {/* <div
+              className='header-of-modal'
+              >
+                <FaClipboardCheck color="#415BE7"
+                 size={30} />
+                <label>DVM Rule info</label>
+              </div> */}
+              <MyInput
+                fieldName="ruleDescription"
+                record={dvmRule}
+                setRecord={setDvmRule}
+                width={520}
+              />
+              <MyInput
+                fieldLabel="Validation Type"
+                fieldType="select"
+                fieldName="validationType"
+                selectData={[
+                  { l: 'Reject', v: 'REJECT' },
+                  { l: 'Warning', v: 'WARN' },
+                  { l: 'Check', v: 'CHECK' }
+                ]}
+                selectDataLabel="l"
+                selectDataValue="v"
+                record={dvmRule}
+                setRecord={setDvmRule}
+                width={520}
+              />
+              <div
+               className='container-of-two-fields'
+              >
+                <MyInput
+                  fieldLabel="Field"
+                  fieldType="select"
+                  fieldName="fieldKey"
+                  selectData={metaDataFieldsListResponse?.object ?? []}
+                  selectDataLabel="fieldName"
+                  selectDataValue="key"
+                  record={dvmRule}
+                  setRecord={setDvmRule}
+                  width={250}
+                />
+                <MyInput
+                  fieldLabel="Rule Type"
+                  fieldType="select"
+                  fieldName="ruleType"
+                  selectData={ruleTypes}
+                  selectDataLabel="label"
+                  selectDataValue="value"
+                  record={dvmRule}
+                  setRecord={setDvmRule}
+                  width={250}
+                />
+              </div>
+              <div
+              className='container-of-rule-values'
+              >
+                <div
+                //This inline style cannot be removed because it uses dynamic variables
+                  style={{  
+                    visibility:
+                      dvmRule.ruleType && dvmRule.ruleType !== 'REQUIRED' ? 'visible' : 'hidden'
+                  }}
+                >
+                  <MyInput
+                    fieldName="ruleValue"
+                    record={dvmRule}
+                    setRecord={setDvmRule}
+                    width={250}
+                  />
+                </div>
+                <div
+                 //This inline style cannot be removed because it uses dynamic variables
+                  style={{
+                    visibility: hasSecondRuleValue() ? 'visible' : 'hidden'
+                  }}
+                >
+                  <MyInput
+                    fieldType="Secondary Rule Value"
+                    fieldName="ruleValueTwo"
+                    record={dvmRule}
+                    setRecord={setDvmRule}
+                    width={250}
+                  />
+                </div>
+              </div>
+              <MyInput
+                fieldType="checkbox"
+                fieldName="isDependant"
+                record={dvmRule}
+                setRecord={setDvmRule}
+              />
+              <div
+               //This inline style cannot be removed because it uses dynamic variables
+                style={{
+                  visibility: dvmRule.isDependant ? 'visible' : 'hidden',
+                  display: 'flex',
+                  gap: '20px'
+                }}
+              >
+                <MyInput
+                  fieldLabel="Dependant Rule"
+                  fieldType="select"
+                  fieldName="dependantRuleKey"
+                  selectData={dvmRulesListResponse?.object ?? []}
+                  selectDataLabel="ruleDescription"
+                  selectDataValue="key"
+                  record={dvmRule}
+                  setRecord={setDvmRule}
+                  width={250}
+                />
+  
+                <MyInput
+                  fieldLabel="Dependant Rule Check"
+                  fieldType="select"
+                  fieldName="dependantRuleCheck"
+                  selectData={[
+                    { l: 'Pass', v: 'PASS' },
+                    { l: 'Fail', v: 'FAIL' }
+                  ]}
+                  selectDataLabel="l"
+                  selectDataValue="v"
+                  record={dvmRule}
+                  setRecord={setDvmRule}
+                  width={250}
+                />
+              </div>
+            </Form>
+          );
+      }
+    };
+
+  //table columns
+  const tableColumns = [
+    {
+      key: 'validationType',
+      title: <Translate>Type</Translate>,
+      flexGrow: 2,
+      dataKey: 'validationType'
+    },
+    {
+      key: 'ruleDescription',
+      title: <Translate>Description</Translate>,
+      flexGrow: 4,
+      dataKey: 'ruleDescription'
+    },
+    {
+      key: 'fieldName',
+      title: <Translate>Field Name</Translate>,
+      flexGrow: 3,
+      dataKey: 'fieldName'
+    },
+    {
+      key: 'fieldDataType',
+      title: <Translate>Data Type</Translate>,
+      flexGrow: 3,
+      dataKey: 'fieldDataType'
+    },
+    {
+      key: 'ruleType',
+      title: <Translate>Rule Type</Translate>,
+      flexGrow: 3,
+      dataKey: 'ruleType'
+    },
+    {
+      key: 'ruleValue',
+      title: <Translate>Rule Value</Translate>,
+      flexGrow: 3,
+      dataKey: 'ruleValue'
+    },
+    {
+      key: 'ruleValueTwo',
+      title: <Translate>Secondary Rule Value</Translate>,
+      flexGrow: 3,
+      dataKey: 'ruleValueTwo'
+    },
+    {
+      key: 'isDependant',
+      title: <Translate>Is Dependant</Translate>,
+      flexGrow: 3,
+      dataKey: 'isDependant'
+    },
+    {
+      key: 'icons',
+      title: <Translate>Rule Value</Translate>,
+      flexGrow: 3,
+      render: () => iconsForActions()
+    }
+  ];
+
   return (
     <Panel>
       <small className='metadata-selection-title'>
         <Translate>Specify screen metadata to configure validation rules</Translate>
       </small>
-      <Form>
+      {/* <Form> */}
         <div className='container-of-selects'>
+          <Form>
           <MyInput
             fieldName="screenKey"
             fieldType="select"
@@ -256,8 +458,8 @@ const DVM = () => {
             setRecord={setRecordOfScreen}
             showLabel={false}
           />
-
-          <Divider vertical />
+          </Form>
+          <Form>
           <MyInput
             fieldName="screenMetadataKey"
             fieldType="select"
@@ -269,19 +471,22 @@ const DVM = () => {
             setRecord={setRecordOfScreenMetaData}
             showLabel={false}
           />
+          </Form>
         </div>
-      </Form>
+      {/* </Form> */}
 
       <hr />
 
-      <Tabs defaultActiveKey="1" appearance="subtle">
+      <Tabs defaultActiveKey="1" appearance="subtle" className="my-tabs">
         <Tab active eventKey="1" title="Validation Rules">
-          <Form
+          {/* <Form
+          layout='inline'
           className='form-of-header-actions'
-          >
+          > */}
             <div className='container-of-header-actions'>
               <div className='container-of-search'>
-                <div>
+                {/* <div> */}
+                <Form>
                   <MyInput
                     selectDataValue="value"
                     selectDataLabel="label"
@@ -291,11 +496,13 @@ const DVM = () => {
                     record={record}
                     setRecord={setRecord}
                     showLabel={false}
-                    placeholder="select filter"
+                    placeholder="Select Filter"
                     width="150px"
                   />
-                </div>
-                <div>
+                  </Form>
+                {/* </div> */}
+                {/* <div> */}
+                <Form>
                   <MyInput
                     fieldName="value"
                     fieldType="text"
@@ -305,7 +512,8 @@ const DVM = () => {
                     placeholder="Search"
                     width={'220px'}
                   />
-                </div>
+                  </Form>
+                {/* </div> */}
               </div>
                 <MyButton
                    disabled={!recordOfScreenMetaData["screenMetadataKey"]}
@@ -313,87 +521,28 @@ const DVM = () => {
                   color="var(--deep-blue)"
                   onClick={handleNew}
                   width='109px'
-                  height='32px'
                 >
                   Add New
                 </MyButton>
             </div>
-          </Form>
+          {/* </Form> */}
 
-          <Table
-            height={400}
-            sortColumn={listRequest.sortBy}
-            sortType={listRequest.sortType}
-            onSortColumn={(sortBy, sortType) => {
-              if (sortBy)
-                setListRequest({
-                  ...listRequest,
-                  sortBy,
-                  sortType
-                });
-            }}
-            data={dvmRulesListResponse?.object ?? []}
-            onRowClick={rowData => {
-              setDvmRule(rowData);
-            }}
-            rowClassName={isSelected}
-          >
-            <Column sortable flexGrow={2}>
-              <HeaderCell>
-                <Translate>Type</Translate>
-              </HeaderCell>
-              <Cell dataKey="validationType" />
-            </Column>
-            <Column sortable flexGrow={4}>
-              <HeaderCell>
-                <Translate>Description</Translate>
-              </HeaderCell>
-              <Cell dataKey="ruleDescription" />
-            </Column>
-            <Column sortable flexGrow={3}>
-              <HeaderCell>
-                <Translate>Field Name</Translate>
-              </HeaderCell>
-              <Cell dataKey="fieldName" />
-            </Column>
-            <Column sortable flexGrow={3}>
-              <HeaderCell>
-                <Translate>Data Type</Translate>
-              </HeaderCell>
-              <Cell dataKey="fieldDataType" />
-            </Column>
-            <Column sortable flexGrow={3}>
-              <HeaderCell>
-                <Translate>Rule Type</Translate>
-              </HeaderCell>
-              <Cell dataKey="ruleType" />
-            </Column>
-            <Column sortable flexGrow={4}>
-              <HeaderCell>
-                <Translate>Rule Value</Translate>
-              </HeaderCell>
-              <Cell dataKey="ruleValue" />
-            </Column>
-            <Column sortable flexGrow={4}>
-              <HeaderCell>
-                <Translate>Secondary Rule Value</Translate>
-              </HeaderCell>
-              <Cell dataKey="ruleValueTwo" />
-            </Column>
-            <Column sortable flexGrow={2}>
-              <HeaderCell>
-                <Translate>Is Dependant</Translate>
-              </HeaderCell>
-              <Cell dataKey="isDependant" />
-            </Column>
-
-            <Column flexGrow={2}>
-              <HeaderCell></HeaderCell>
-              <Cell>{rowData => iconsForActions(rowData)}</Cell>
-            </Column>
-          </Table>
-
-          <Modal open={popupOpen} className="left-modal" size="xsm">
+          <MyTable 
+              height={450}
+              data={dvmRulesListResponse?.object ?? []}
+              columns={tableColumns}
+              rowClassName={isSelected}
+              loading={isLoading}
+              onRowClick={rowData => {
+                setDvmRule(rowData);
+              }}
+              sortColumn={listRequest.sortBy}
+              sortType={listRequest.sortType}
+              onSortChange={(sortBy, sortType) => {
+                if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+              }}
+          />
+          {/* <Modal open={popupOpen} className="left-modal" size="xsm">
             <Modal.Title>
               <Translate>{operationState} DVM Rule</Translate>
             </Modal.Title>
@@ -405,18 +554,15 @@ const DVM = () => {
                 className='header-of-modal'
                 >
                   <FaClipboardCheck color="#415BE7"
-                  //  style={{ marginBottom: '10px' }} 
                    size={30} />
                   <label>DVM Rule info</label>
                 </div>
-
                 <MyInput
                   fieldName="ruleDescription"
                   record={dvmRule}
                   setRecord={setDvmRule}
                   width={520}
                 />
-
                 <MyInput
                   fieldLabel="Validation Type"
                   fieldType="select"
@@ -551,7 +697,29 @@ const DVM = () => {
                 </MyButton>
               </Stack>
             </Modal.Footer>
-          </Modal>
+          </Modal> */}
+
+
+    <MyModal
+      open={popupOpen}
+      setOpen={setPopupOpen}
+      title={operationState + ' DVM Rule'}
+      position="right"
+      content={conjureFormContent}
+      actionButtonLabel={operationState === 'New' ? 'Create' : 'Save'}
+      actionButtonFunction={handleSave}
+      steps={[{ title: 'DVM Rule info', icon: faClipboardCheck }]}
+      size={width > 600 ? '570px' : '300px'}
+    />
+          {/* <AddEditDVMRule
+          open={popupOpen}
+          setOpen={setPopupOpen}
+          operationState={operationState}
+          width={width}
+          dvmRule={dvmRule}
+          setDvmRule={setDvmRule}
+          refetch={refetch} 
+          /> */}
         </Tab>
         <Tab eventKey="2" title="Rule Combinations"></Tab>
       </Tabs>
