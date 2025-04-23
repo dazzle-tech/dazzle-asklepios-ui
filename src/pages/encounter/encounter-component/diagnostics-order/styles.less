@@ -14,17 +14,24 @@
   }
   
   .input-search{
-    width: 500px;
+    width: 250px !important;
+    height: 35px !important;
     direction: ltr;
   }
   
   .dropdown-menuresult {
-    width: 350px;
-    position: absolute;
-    z-index: 1000;
-    background: white;
-    border: 1px solid #ccc;
-    margin-top: 5px;
+   
+      position: absolute;
+      z-index: 1000;
+      max-height: 200px;
+      overflow-y: auto;
+      width: 100%;
+      top: 100%;// Ensure it appears directly below the input
+      left: 0;
+      background: white; 
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
   
   .checkbox-container {
