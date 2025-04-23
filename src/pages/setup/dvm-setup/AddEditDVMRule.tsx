@@ -1,24 +1,68 @@
 import MyModal from '@/components/MyModal/MyModal';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSaveDvmRuleMutation } from '@/services/dvmService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import { faClipboardCheck } from '@fortawesome/free-solid-svg-icons';
-
+import { useGetMetadataFieldsQuery } from '@/services/setupService';
 const AddEditDVMRule = ({
   open,
   setOpen,
-  operationState,
   width,
   dvmRule,
   setDvmRule,
-  refetch, 
- 
+  refetch,
+  recordOfScreenMetaData,
+  dvmRulesListResponse,
+  metaDataFieldsListRequest,
+  listRequest,
+  setListRequest
 }) => {
-  
-  //save module
-  const [saveDvm] = useSaveDvmRuleMutation();
+  const [ruleTypes, setRuleTypes] = useState([]);
+  const [metadataFieldMap, setMetadataFieldMap] = useState({});
+  //save dvm
+  const [saveDvm, saveDvmMutation] = useSaveDvmRuleMutation();
+  // Fetch metaDataFields list response
+  const { data: metaDataFieldsListResponse } = useGetMetadataFieldsQuery(metaDataFieldsListRequest);
 
+  // Effects
+  useEffect(() => {
+    if (saveDvmMutation.data) {
+      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+    }
+  }, [saveDvmMutation.data]);
+
+  useEffect(() => {
+    let map = {};
+    (metaDataFieldsListResponse?.object ?? []).map(mdf => {
+      map[mdf.key] = mdf;
+    });
+    setMetadataFieldMap(map);
+  }, [metaDataFieldsListResponse]);
+
+  useEffect(() => {
+    if (dvmRule.fieldKey) {
+      const mdf = metadataFieldMap[dvmRule.fieldKey];
+      if (mdf) {
+        const _ruleTypes = [{ label: 'Required', value: 'REQUIRED' }];
+        switch (mdf.dataType) {
+          case 'numeric':
+            _ruleTypes.push({ label: 'Min Value', value: 'MIN_VALUE' });
+            _ruleTypes.push({ label: 'Max Value', value: 'MAX_VALUE' });
+            _ruleTypes.push({ label: 'Range', value: 'RANGE' });
+            break;
+          case 'text':
+            _ruleTypes.push({ label: 'Min Length', value: 'MIN_LENGTH' });
+            _ruleTypes.push({ label: 'Max Length', value: 'MAX_LENGTH' });
+            _ruleTypes.push({ label: 'Regular Expression', value: 'REGEX' });
+            break;
+        }
+        setRuleTypes(_ruleTypes);
+      }
+    }
+  }, [dvmRule.fieldKey]);
+
+  // Does the dvmRule have a second rule
   const hasSecondRuleValue = () => {
     if (dvmRule.ruleType) {
       switch (dvmRule.ruleType) {
@@ -29,8 +73,7 @@ const AddEditDVMRule = ({
       }
     }
   };
-
-  //handle save module
+  // Handle save dvmRule
   const handleSave = async () => {
     setOpen(false);
     await saveDvm({
@@ -38,22 +81,15 @@ const AddEditDVMRule = ({
       screenMetadataKey: recordOfScreenMetaData['screenMetadataKey']
     }).unwrap();
     if (refetch != null) {
-        refetch();
-      }
+      refetch();
+    }
   };
-  
+  // modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
         return (
-            <Form fluid>
-            {/* <div
-            className='header-of-modal'
-            >
-              <FaClipboardCheck color="#415BE7"
-               size={30} />
-              <label>DVM Rule info</label>
-            </div> */}
+          <Form fluid>
             <MyInput
               fieldName="ruleDescription"
               record={dvmRule}
@@ -75,9 +111,7 @@ const AddEditDVMRule = ({
               setRecord={setDvmRule}
               width={520}
             />
-            <div
-             className='container-of-two-fields'
-            >
+            <div className="container-of-two-fields-dvm">
               <MyInput
                 fieldLabel="Field"
                 fieldType="select"
@@ -101,12 +135,10 @@ const AddEditDVMRule = ({
                 width={250}
               />
             </div>
-            <div
-            className='container-of-rule-values'
-            >
+            <div className="container-of-rule-values">
               <div
-              //This inline style cannot be removed because it uses dynamic variables
-                style={{  
+                //This inline style cannot be removed because it uses dynamic variables
+                style={{
                   visibility:
                     dvmRule.ruleType && dvmRule.ruleType !== 'REQUIRED' ? 'visible' : 'hidden'
                 }}
@@ -119,7 +151,7 @@ const AddEditDVMRule = ({
                 />
               </div>
               <div
-               //This inline style cannot be removed because it uses dynamic variables
+                //This inline style cannot be removed because it uses dynamic variables
                 style={{
                   visibility: hasSecondRuleValue() ? 'visible' : 'hidden'
                 }}
@@ -140,7 +172,7 @@ const AddEditDVMRule = ({
               setRecord={setDvmRule}
             />
             <div
-             //This inline style cannot be removed because it uses dynamic variables
+              //This inline style cannot be removed because it uses dynamic variables
               style={{
                 visibility: dvmRule.isDependant ? 'visible' : 'hidden',
                 display: 'flex',
@@ -158,7 +190,6 @@ const AddEditDVMRule = ({
                 setRecord={setDvmRule}
                 width={250}
               />
-
               <MyInput
                 fieldLabel="Dependant Rule Check"
                 fieldType="select"
@@ -182,10 +213,10 @@ const AddEditDVMRule = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={operationState + ' DVM Rule'}
+      title={dvmRule?.key ? 'Edit DVM Rule' : 'New DVM Rule'}
       position="right"
       content={conjureFormContent}
-      actionButtonLabel={operationState === 'New' ? 'Create' : 'Save'}
+      actionButtonLabel={dvmRule?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'DVM Rule info', icon: faClipboardCheck }]}
       size={width > 600 ? '570px' : '300px'}
