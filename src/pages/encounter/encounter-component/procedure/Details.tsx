@@ -486,8 +486,8 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure ,openDetail
         </div> */}
         <AttachmentModal
             isOpen={attachmentsModalOpen}
-            onClose={() => setAttachmentsModalOpen(false)}
-            localPatient={procedure}
+            setIsOpen={setAttachmentsModalOpen}
+            attachmentSource={procedure}
             attatchmentType={'PROCEDURE_ORDER'}
         />
         <MyModal

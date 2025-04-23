@@ -197,7 +197,7 @@ const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveT
         />
 
 
-        <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={order} attatchmentType={'ORDER_ATTACHMENT'} />
+        <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} attachmentSource={order} attatchmentType={'ORDER_ATTACHMENT'} />
     </>)
 }
 export default DetailsModal

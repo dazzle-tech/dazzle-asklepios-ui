@@ -535,8 +535,8 @@ const Consultation = ({ edit, patient, encounter }) => {
 
       <AttachmentModal
         isOpen={attachmentsModalOpen}
-        onClose={() => setAttachmentsModalOpen(false)}
-        localPatient={consultationOrders}
+        setIsOpen={setAttachmentsModalOpen}
+        attachmentSource={consultationOrders}
         attatchmentType={'CONSULTATION_ORDER'}
       />
       <AdvancedModal

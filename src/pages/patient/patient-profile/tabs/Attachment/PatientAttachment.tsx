@@ -101,6 +101,7 @@ const PatientAttachment = ({ localPatient }) => {
     // Handle Add New Attachment Open Modal
     const handleAddNewAttachment = () => {
         handleClearAttachment();
+        setSelectedAttachment(null);
         setAttachmentsModalOpen(true);
     }
     // Handle Download Selected Patient Attachment
@@ -250,7 +251,7 @@ const PatientAttachment = ({ localPatient }) => {
                     Delete
                 </MyButton>
             </div>
-            <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} actionType={actionType} setActionType={setActionType} refecthData={attachmentRefetch} localPatient={localPatient} selectedPatientAttacment={selectedAttachment} setSelectedPatientAttacment={setSelectedAttachment} requestedPatientAttacment={requestedPatientAttacment} setRequestedPatientAttacment={setRequestedPatientAttacment} />
+            <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} actionType={actionType} setActionType={setActionType} refecthData={attachmentRefetch} attachmentSource={localPatient} selectedPatientAttacment={selectedAttachment} setSelectedPatientAttacment={setSelectedAttachment} requestedPatientAttacment={requestedPatientAttacment} setRequestedPatientAttacment={setRequestedPatientAttacment} attatchmentType="PATIENT_PROFILE_ATTACHMENT"/>
             <MyTable
                 height={200}
                 loading={loadAttachment}

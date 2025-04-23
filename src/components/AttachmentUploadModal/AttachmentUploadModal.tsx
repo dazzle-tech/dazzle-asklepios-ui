@@ -10,20 +10,22 @@ import React, { useEffect, useRef, useState } from 'react';
 import MyInput from "@/components/MyInput";
 import './styles.less'
 interface AttachmentModalProps {
-    localPatient: { key: string };
+    attachmentSource: { key: string };
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
-    actionType: 'view' | 'download' | 'add' | null;
-    setActionType: (actionType: 'view' | 'download' | 'add' | null) => void;
-    selectedPatientAttacment: any; // if selected attachment from table or,..
-    setSelectedPatientAttacment: (attachment: any) => void;
-    setRequestedPatientAttacment: React.Dispatch<React.SetStateAction<string | undefined>> // if selected send key from selected attachment
-    requestedPatientAttacment: string | null;
-    refecthData: () => void;
+    attatchmentType: string;
+    actionType?: 'view' | 'download' | 'add' | null;
+    setActionType?: (actionType: 'view' | 'download' | 'add' | null) => void | null;
+    selectedPatientAttacment?: any | null;
+    setSelectedPatientAttacment?: (attachment: any) => void | null;
+    setRequestedPatientAttacment?: React.Dispatch<React.SetStateAction<string | undefined>> | null;
+    requestedPatientAttacment?: string | null;
+    refecthData?: () => void | null;
 }
 
+
 const AttachmentModal = ({
-    localPatient,
+    attachmentSource,
     isOpen,
     setIsOpen,
     actionType,
@@ -32,7 +34,8 @@ const AttachmentModal = ({
     setSelectedPatientAttacment,
     setRequestedPatientAttacment,
     requestedPatientAttacment,
-    refecthData
+    refecthData,
+    attatchmentType,
 }: AttachmentModalProps) => {
 
     const authSlice = useAppSelector(state => state.auth);
@@ -52,17 +55,17 @@ const AttachmentModal = ({
     // Handle Fetch Attachment By Key Responce
     const { data: fetchAttachmentByKeyResponce, isSuccess } = useFetchAttachmentByKeyQuery(
         { key: requestedPatientAttacment },
-        { skip: !requestedPatientAttacment || !localPatient.key }
+        { skip: !requestedPatientAttacment || !attachmentSource.key }
     );
 
     // Handle Attachment File Upload Click
     const handleAttachmentFileUploadClick = (type: string) => {
         setNewAttachmentType(type);
-        if (localPatient && isOpen) attachmentFileInputRef.current?.click();
+        if (attachmentSource && isOpen) attachmentFileInputRef.current?.click();
     };
     // Handle File Upload
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (!localPatient) return;
+        if (!attachmentSource) return;
         const selectedFile = event.target.files?.[0];
         if (selectedFile) {
             const formData = new FormData();
@@ -78,7 +81,7 @@ const AttachmentModal = ({
                 setUploadedAttachmentOpject({
                     formData,
                     type: newAttachmentType,
-                    refKey: localPatient.key
+                    refKey: attachmentSource?.key
                 });
             }
         }
@@ -147,20 +150,20 @@ const AttachmentModal = ({
                         alt={'Attachment Preview'}
                         width={150}
                         height={150}
-                        onClick={() => handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')}
+                        onClick={() => handleAttachmentFileUploadClick(attatchmentType)}
                         src={newAttachmentSrc}
                     />
                 ) : selectedPatientAttacment && selectedPatientAttacment.fileContent ? (
                     selectedPatientAttacment.contentType === 'application/pdf' ? (
                         <DetailIcon
-                            onClick={() => handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')}
+                            onClick={() => handleAttachmentFileUploadClick(attatchmentType)}
                         />
                     ) : (
                         <img
                             alt={'Attachment Preview'}
                             width={150}
                             height={150}
-                            onClick={() => handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')}
+                            onClick={() => handleAttachmentFileUploadClick(attatchmentType)}
                             src={`data:${selectedPatientAttacment.contentType};base64,${selectedPatientAttacment.fileContent}`}
                         />
                     )
@@ -169,7 +172,7 @@ const AttachmentModal = ({
                         alt={'Attachment Preview'}
                         width={150}
                         height={150}
-                        onClick={() => handleAttachmentFileUploadClick('PATIENT_PROFILE_ATTACHMENT')}
+                        onClick={() => handleAttachmentFileUploadClick(attatchmentType)}
                         src={Attachment}
                     />
                 )}

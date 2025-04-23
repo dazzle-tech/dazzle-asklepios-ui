@@ -1147,7 +1147,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                 </IconButton>
 
                                 {/* ===================AttachmentModal=================== */}
-                                <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={localPatient} attatchmentType={'APPOINTMENT_ATTACHMENT'} />
+                                <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} attachmentSource={localPatient} attatchmentType={'APPOINTMENT_ATTACHMENT'} />
 
                             </div>
                         </div>
