@@ -1,50 +1,24 @@
-import Translate from '@/components/Translate';
-import { initialListRequest, ListRequest } from '@/types/types';
-import React, { useState, useEffect } from 'react';
-import { Input, Modal, Pagination, Panel, Table, Checkbox, TagPicker, List } from 'rsuite';
-import CheckIcon from '@rsuite/icons/Check';
-import CloseIcon from '@rsuite/icons/Close';
-import PageIcon from '@rsuite/icons/Page';
-import EventDetailIcon from '@rsuite/icons/EventDetail';
-import {
-  FlexboxGrid,
-  Grid,
-  Row,
-  Col,
-  Text,
-  InputGroup,
-  SelectPicker,
-  DatePicker,
-  Dropdown
-} from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
-import {
-  useGetFacilitiesQuery,
-  useGetDepartmentsQuery,
-  useSaveDepartmentMutation,
-  useGetDiagnosticsTestNormalRangeListQuery,
-  useSaveDiagnosticsTestNormalRangeMutation,
-  useGetLovsQuery,
-  useRemoveDiagnosticsTestNormalRangeMutation
-} from '@/services/setupService';
-import { Button, ButtonToolbar, IconButton } from 'rsuite';
-import SearchIcon from '@rsuite/icons/Search';
-import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
-import { Form, Stack, Divider, PanelGroup } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { MdSave } from 'react-icons/md';
-import { Plus, Trash } from '@rsuite/icons';
-import { notify } from '@/utils/uiReducerActions';
+import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import {
+  useGetDiagnosticsTestLaboratoryListQuery,
+  useGetDiagnosticsTestNormalRangeListQuery,
+  useGetLovsQuery,
   useGetLovValuesByCodeQuery,
-  useGetDiagnosticsTestLaboratoryListQuery
+  useRemoveDiagnosticsTestNormalRangeMutation,
+  useSaveDiagnosticsTestNormalRangeMutation
 } from '@/services/setupService';
 import { ApDiagnosticTestNormalRange } from '@/types/model-types';
 import { newApDiagnosticTestNormalRange } from '@/types/model-types-constructor';
+import { initialListRequest, ListRequest } from '@/types/types';
+import { notify } from '@/utils/uiReducerActions';
+import { Plus, Trash } from '@rsuite/icons';
+import SearchIcon from '@rsuite/icons/Search';
+import React, { useEffect, useState } from 'react';
+import { MdSave } from 'react-icons/md';
+import { Button, ButtonToolbar, Divider, Dropdown, Form, IconButton, Input, InputGroup, Modal, Stack, Table, Text } from 'rsuite';
+const { Column, HeaderCell, Cell } = Table;
 const NormalRangeSetup = ({ popUpOpen, setPopUpOpen, diagnosticsTest }) => {
   const [diagnosticTestNormalRange, setDiagnosticTestNormalRange] =
     useState<ApDiagnosticTestNormalRange>({

@@ -1,49 +1,41 @@
-import React, { useEffect, useState } from 'react';
 import Translate from '@/components/Translate';
-import './styles.less';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { MdModeEdit } from 'react-icons/md';
-import DocPassIcon from '@rsuite/icons/DocPass';
-import { Tooltip, Whisper } from 'rsuite';
-import {
-    InputGroup,
-    Form,
-    Input,
-    Text,
-    Checkbox,
-    Dropdown,
-    Table,
-    Divider,
-    Row,
-    SelectPicker
-} from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
+import { useAppDispatch } from '@/hooks';
 import { ApDiagnosticOrders, ApDiagnosticOrderTests, ApDiagnosticTest, ApPatientEncounterOrder } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import {
     faLandMineOn,
 } from '@fortawesome/free-solid-svg-icons';
-
-import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
-import CheckIcon from '@rsuite/icons/Check';
-import PlusIcon from '@rsuite/icons/Plus';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import DocPassIcon from '@rsuite/icons/DocPass';
+import React, { useEffect, useState } from 'react';
+import { MdModeEdit } from 'react-icons/md';
 import {
-    useGetDiagnosticsTestListQuery,
-} from '@/services/setupService';
+    Checkbox, Divider,
+    Row,
+    SelectPicker, Table, Text, Tooltip, Whisper
+} from 'rsuite';
+import './styles.less';
+const { Column, HeaderCell, Cell } = Table;
+
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyButton from '@/components/MyButton/MyButton';
+import MyTable from '@/components/MyTable';
 import {
     useGetDiagnosticOrderQuery,
     useGetDiagnosticOrderTestQuery,
     useSaveDiagnosticOrderMutation,
     useSaveDiagnosticOrderTestMutation
 } from '@/services/encounterService';
-import SearchIcon from '@rsuite/icons/Search';
-import { initialListRequest, ListRequest } from '@/types/types';
+import {
+    useGetDiagnosticsTestListQuery,
+} from '@/services/setupService';
 import { newApDiagnosticOrders, newApDiagnosticOrderTests, newApDiagnosticTest, newApPatientEncounterOrder } from '@/types/model-types-constructor';
-import MyButton from '@/components/MyButton/MyButton';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { initialListRequest, initialListRequestAllValues, ListRequest, ListRequestAllValues } from '@/types/types';
+import CheckIcon from '@rsuite/icons/Check';
+import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
+import PlusIcon from '@rsuite/icons/Plus';
 import DetailsModal from './DetailsModal';
-import MyTable from '@/components/MyTable';
+import TestDropdown from './TestDropdown';
 
 const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
@@ -51,8 +43,8 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
     const [showCanceled, setShowCanceled] = useState(true);
     const [order, setOrder] = useState<ApPatientEncounterOrder>({ ...newApPatientEncounterOrder });
     const [test, setTest] = useState<ApDiagnosticTest>({ ...newApDiagnosticTest });
-    const [searchKeyword, setSearchKeyword] = useState('');
-    const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+    const [flag, setFlag] = useState('');
+    const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest});
     const [listOrderRequest, setListOrderRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -140,25 +132,6 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
     }, [ordersList]);
 
     useEffect(() => {
-        if (searchKeyword.trim() !== "") {
-            setListRequest(
-                {
-                    ...initialListRequest,
-
-                    filters: [
-                        {
-                            fieldName: 'test_name',
-                            operator: 'containsIgnoreCase',
-                            value: searchKeyword
-                        }
-
-                    ]
-                }
-            );
-        }
-    }, [searchKeyword]);
-
-    useEffect(() => {
 
         setListOrdersTestRequest({
             ...initialListRequest,
@@ -211,9 +184,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
     }, [orders])
     //
 
-    const handleSearch = value => {
-        setSearchKeyword(value);
-    };
+   
 
     const OpenDetailsModel = () => {
         setOpenDetailsModel(true);
@@ -300,7 +271,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             }).catch((error) => {
                 console.error("Refetch failed:", error);
             });
-            setSearchKeyword("");
+            setFlag(true);
         }
         catch (error) {
 
@@ -325,10 +296,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
 
                 dispatch(notify('Start New Order whith ID:' + response?.data?.orderId));
-
-                // setPreKey(response?.data?.key);
                 setOrders(response?.data);
-                // preRefetch().then(() => "");
 
             } catch (error) {
                 console.error("Error saving prescription:", error);
@@ -350,7 +318,6 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             ordersRefetch();
             orderTestRefetch();
 
-
         }
         catch (error) {
             console.error("Error saving :", error);
@@ -365,9 +332,6 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
         orderTestRefetch().then(() => "");
         setOrders({ ...newApDiagnosticOrders });
-
-
-
     }
     const saveDraft = async () => {
         try {
@@ -664,42 +628,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
                     <div className='top-container'>
 
-
-                        <Form>
-                            <Text>Add test</Text>
-                            <InputGroup inside className='input-search'>
-                                <Input
-                                    disabled={orders.key == null}
-                                    placeholder={'Search Test '}
-                                    value={searchKeyword}
-                                    onChange={handleSearch}
-                                />
-                                <InputGroup.Button>
-                                    <SearchIcon />
-                                </InputGroup.Button>
-                            </InputGroup>
-                            {searchKeyword && (
-                                <Dropdown.Menu className="dropdown-menuresult">
-                                    {testsList && testsList?.object?.map(test => (
-                                        <Dropdown.Item
-                                            key={test.key}
-                                            eventKey={test.key}
-                                            onClick={() => handleItemClick(test)}
-
-                                        >
-                                            <span style={{ marginRight: "19px" }}>{test.testName}</span>
-                                            <span>{test?.testTypeLvalue?.lovDisplayVale}</span>
-                                        </Dropdown.Item>
-                                    ))}
-                                </Dropdown.Menu>
-                            )}
-
-
-                        </Form>
-
-
-
-
+                      <TestDropdown handleItemClick={handleItemClick} disabled={orders.key == null} flag={flag}/>
 
                         <div className="buttons-sect">
                             <Checkbox

@@ -1,34 +1,30 @@
-import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import React, { useEffect, useState } from 'react';
-import { Pagination, IconButton, Input, Panel, Table, Grid, Row, Divider , Checkbox, InputGroup } from 'rsuite';
-import { Modal, Button, Toggle, Form } from 'rsuite';
-import 'react-tabs/style/react-tabs.css';
-import * as icons from '@rsuite/icons';
-import { useNavigate } from 'react-router-dom';
-import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useAppDispatch } from '@/hooks';
+import { setEncounter } from '@/reducers/patientSlice';
 import { faListCheck } from '@fortawesome/free-solid-svg-icons';
+import * as icons from '@rsuite/icons';
+import React, { useEffect, useState } from 'react';
+import 'react-tabs/style/react-tabs.css';
+import { Checkbox, Divider, Grid, Input, Pagination, Panel } from 'rsuite';
 
+import MyButton from '@/components/MyButton/MyButton';
+import MyCard from '@/components/MyCard';
+import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
+import {
+  useGetEncounterReviewOfSystemsQuery,
+  useRemoveReviewOfSystemMutation,
+  useSaveEncounterChangesMutation,
+  useSaveReviewOfSystemMutation
+} from '@/services/encounterService';
 import {
   useGetLovValuesByCodeAndParentQuery,
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
+import { newApLovValues } from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
-import { newApLovValues, newApEncounter } from '@/types/model-types-constructor';
-import {
-  useGetEncounterReviewOfSystemsQuery,
-  useRemoveReviewOfSystemMutation,
-  useSaveReviewOfSystemMutation,
-  useSaveEncounterChangesMutation
-} from '@/services/encounterService';
-import MyCard from '@/components/MyCard';
-import MyButton from '@/components/MyButton/MyButton';
 import './styles.less';
-import MyModal from '@/components/MyModal/MyModal';
-import { time } from 'console';
+import Summary from './Summery';
 const ReviewOfSystems = ({ patient, encounter }) => {
 
   const [openModel, setOpenModel] = useState(false);
@@ -115,7 +111,77 @@ const ReviewOfSystems = ({ patient, encounter }) => {
       return 'selected-row';
     } else return '';
   };
+    const tableColumns = [
+      {
+        key: ' ',
+        title: <Translate>#</Translate>,
+        flexGrow: 1,
+        render: rowData => (
+          <Checkbox
+            onChange={(value, checked) => {
+              
+              if (checked) {
+                saveReviewOfSystem({
+                  key: mainData[rowData.key] ? mainData[rowData.key].key : undefined,
+                  encounterKey: encounter.key,
+                  bodySystemDetailKey: rowData.key,
+                  systemLkey: String(selectedSystem.key),
+                  notes: mainData[rowData.key] ? mainData[rowData.key].notes : ''
+                }).unwrap();
+                dispatch(notify('Findings Saved Successfully'));
+                refetch();
 
+              } else {
+                removeReviewOfSystem({
+                  key: mainData[rowData.key] ? mainData[rowData.key].key : undefined,
+                  encounterKey: encounter.key,
+                  bodySystemDetailKey: rowData.key,
+                  notes: mainData[rowData.key] ? mainData[rowData.key].notes : ''
+                }).unwrap();
+                dispatch(notify('Findings Deleted Successfully'));
+                refetch();
+              }
+            }}
+            checked={mainData[rowData.key] ? true : false}
+          />
+        )
+      },
+      {
+        key: 'detail',
+        title: <Translate>Detail</Translate>,
+        flexGrow: 2,
+       dataKey:"lovDisplayVale"
+      },
+      {
+        key: 'note',
+        title: <Translate>Notes</Translate>,
+        flexGrow: 4,
+        render:rowData => (
+          <Input
+            disabled={!mainData[rowData.key]}
+            value={mainData[rowData.key] ? mainData[rowData.key].notes : ''}
+            onChange={e => {
+              setMainData({
+                ...mainData,
+                [rowData.key]: {
+                  ...mainData[rowData.key],
+                  notes: e
+                }
+              });
+            }}
+            placeholder="Insert Notes"
+            onBlur={() => {
+              saveReviewOfSystem({
+                key: mainData[rowData.key].key,
+                encounterKey: encounter.key,
+                bodySystemDetailKey: rowData.key,
+                notes: mainData[rowData.key].notes
+              }).unwrap();
+            }}
+          />
+        )
+      }
+    ];
   return (
     <>
       <Panel  >
@@ -153,10 +219,6 @@ const ReviewOfSystems = ({ patient, encounter }) => {
             </div>
 
           </div>
-         
-
-
-
             <div className='details-style'>
               <div className='system-style'>
                 {bodySystemsLovQueryResponse?.object.map((item, index) => (
@@ -170,82 +232,11 @@ const ReviewOfSystems = ({ patient, encounter }) => {
 
                 ))}</div>
            <div className='system-details'>
-              <Table
-
-                data={bodySystemsDetailLovQueryResponse?.object ?? []}
-
-                maxHeight={300}
-                autoHeight
-                
-              >
-                <Table.Column flexGrow={1} fullText>
-                  <Table.HeaderCell> </Table.HeaderCell>
-                  <Table.Cell>
-                    {rowData => (
-                      <Checkbox
-                        onChange={(value, checked) => {
-                          
-                          if (checked) {
-                            saveReviewOfSystem({
-                              key: mainData[rowData.key] ? mainData[rowData.key].key : undefined,
-                              encounterKey: encounter.key,
-                              bodySystemDetailKey: rowData.key,
-                              systemLkey: String(selectedSystem.key),
-                              notes: mainData[rowData.key] ? mainData[rowData.key].notes : ''
-                            }).unwrap();
-                            dispatch(notify('Findings Saved Successfully'));
-                            refetch();
-
-                          } else {
-                            removeReviewOfSystem({
-                              key: mainData[rowData.key] ? mainData[rowData.key].key : undefined,
-                              encounterKey: encounter.key,
-                              bodySystemDetailKey: rowData.key,
-                              notes: mainData[rowData.key] ? mainData[rowData.key].notes : ''
-                            }).unwrap();
-                            dispatch(notify('Findings Deleted Successfully'));
-                            refetch();
-                          }
-                        }}
-                        checked={mainData[rowData.key] ? true : false}
-                      />
-                    )}
-                  </Table.Cell>
-                </Table.Column>
-                <Table.Column flexGrow={2}>
-                  <Table.HeaderCell>Detail</Table.HeaderCell>
-                  <Table.Cell dataKey="lovDisplayVale" />
-                </Table.Column>
-                <Table.Column flexGrow={4}>
-                  <Table.HeaderCell>Notes</Table.HeaderCell>
-                  <Table.Cell>
-                    {rowData => (
-                      <Input
-                        disabled={!mainData[rowData.key]}
-                        value={mainData[rowData.key] ? mainData[rowData.key].notes : ''}
-                        onChange={e => {
-                          setMainData({
-                            ...mainData,
-                            [rowData.key]: {
-                              ...mainData[rowData.key],
-                              notes: e
-                            }
-                          });
-                        }}
-                        placeholder="Insert Notes"
-                        onBlur={() => {
-                          saveReviewOfSystem({
-                            key: mainData[rowData.key].key,
-                            encounterKey: encounter.key,
-                            bodySystemDetailKey: rowData.key,
-                            notes: mainData[rowData.key].notes
-                          }).unwrap();
-                        }}
-                      />
-                    )}
-                  </Table.Cell>
-                </Table.Column>
-              </Table>
+            <MyTable
+            data={bodySystemsDetailLovQueryResponse?.object ?? []}
+            columns={tableColumns}
+            ></MyTable>
+             
               <div className='pagination' >
               <Divider  />
               <Pagination
@@ -274,39 +265,8 @@ const ReviewOfSystems = ({ patient, encounter }) => {
               </div>
               </div>
             </div>
-
-         
-
         </Grid>
-        <MyModal 
-        open={openModel} 
-        setOpen={setOpenModel}
-        title="Summery"
-        actionButtonFunction={closeModel}
-        actionButtonLabel='Close'
-        hideCanel
-        steps={[
-
-          {
-            title: "Summery", icon:faListCheck ,
-           
-          },
-        ]}
-        content={
-           <div className='summery-div'>
-          
-            {encounterReviewOfSystemsSummaryResponse?.object?.map((item, index) => (
-              <div key={index} className='summery-div-child'>
-                <p>{item.systemLkey}</p>
-                <p>{item.systemDetailLvalue ? item.systemDetailLvalue.lovDisplayVale
-                  : item.systemDetailLkey}</p>
-                <p> {item.notes}</p>
-              </div>
-            ))}
-
-         
-        </div>}>
-        </MyModal>
+  <Summary  open={openModel} setOpen={setOpenModel} list={encounterReviewOfSystemsSummaryResponse?.object}/>
       </Panel>
     </>
   );
