@@ -5,7 +5,7 @@ import { faComments, faPaperPlane } from "@fortawesome/free-solid-svg-icons";
 import MyInput from "../MyInput";
 import { Form } from "rsuite";
 import MyModal from "../MyModal/MyModal";
-
+import "./styles.less";
 const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowName }) => {
     const [newMessage, setNewMessage] = useState({ message: "" });
     const endOfMessagesRef = useRef(null);
@@ -31,38 +31,29 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
                 bodyheight={410}
                 steps={[{ title: title, icon: faComments }]}
                 content={
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                        <div style={{ maxHeight: "250px", minHeight: '250px', overflowY: "auto", padding: "10px" }}>
+                    <div className="basic-div">
+                        <div className="chat-box">
                             {list?.length > 0 ? (
                                 list?.map((msg, index) => (
-                                    <div key={index} style={{ textAlign: "left", maxWidth: "100%" }}>
+                                    <div key={index} className="message-box">
                                         <span
-                                            style={{
-                                                display: "inline-block",
-                                                padding: "8px 12px",
-                                                borderRadius: "10px",
-                                                backgroundColor: 'var(--primary-blue)',
-                                                color: "white",
-                                                maxWidth: "100%",
-                                                wordWrap: "break-word",    
-                                                whiteSpace: "normal",    
-                                            }}
+                                           className="message-text"
                                         >
                                             {msg[fieldShowName]}
                                         </span>
-                                        <div style={{ fontSize: "10px", color: "gray", marginTop: "4px" }}>
+                                        <div className="message-date">
                                             {new Date(msg.createdAt).toLocaleString()}
                                         </div>
                                     </div>
                                 ))
                             ) : (
-                                <p style={{ textAlign: "center", color: "gray" }}>No data found</p>
+                                <p className="no-data">No data found</p>
                             )}
 
                             <div ref={endOfMessagesRef}></div>
                         </div>
-                        <div style={{ display: 'flex', marginBottom: '0px' }}>
-                            <Form fluid style={{ width: "100%" }}>
+                        <div className="send-message-box">
+                            <Form fluid className="fill-width">
                                 <MyInput
                                     placeholder="write note.."
                                     showLabel={false}
