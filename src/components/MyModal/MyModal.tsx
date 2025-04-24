@@ -12,14 +12,14 @@ const MyModal = ({
     pagesCount = 1,
     bodyheight = 400,
     content,
-    size="sm",
+    size = "sm",
     steps = [],
     footerButtons = null,
     position = "center",
     hideCanel = false,
     hideBack = false,
     hideActionBtn = false,
-    isDisabledActionBtn=false,
+    isDisabledActionBtn = false,
     actionButtonLabel = "Save",
     actionButtonFunction = null,
 }) => {
@@ -83,7 +83,14 @@ const MyModal = ({
                 </Steps>
                 {typeof content === 'function' ? content(activeStep) : (activeStep === 0 && content)}
             </Modal.Body>
-            <Divider className='divider-line' />
+            {(
+                footerButtons ||
+                !hideCanel ||
+                (!hideBack && activeStep > 0) ||
+                activeStep !== computedPagesCount - 1 ||
+                steps[activeStep]?.footer ||
+                (activeStep === computedPagesCount - 1 && !hideActionBtn && actionButtonFunction)
+            ) && <Divider className='divider-line' />}
             <Modal.Footer className='footer-modal'>
                 <Form className='footer-modal-content'>
                     {!hideCanel && <MyButton appearance={'subtle'} onClick={() => setOpen(false)}>Cancel</MyButton>}
@@ -91,12 +98,12 @@ const MyModal = ({
                     {!(activeStep === computedPagesCount - 1) && <MyButton onClick={handleNext}>Next</MyButton>} {steps[activeStep]?.footer}
                     {(activeStep === computedPagesCount - 1) && !hideActionBtn && <MyButton onClick={actionButtonFunction} disabled={isDisabledActionBtn}>{actionButtonLabel}</MyButton>}
                     {footerButtons}
-                   
+
                 </Form>
             </Modal.Footer>
         </Modal>
 
-        
+
     );
 };
 export default MyModal;

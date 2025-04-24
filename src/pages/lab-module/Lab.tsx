@@ -1,100 +1,84 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Translate from '@/components/Translate';
-import CheckRoundIcon from '@rsuite/icons/CheckRound';
-import ConversionIcon from '@rsuite/icons/Conversion';
-import { HStack } from 'rsuite';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import { Tooltip, Whisper } from 'rsuite';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-import {
-
-  useGetDiagnosticsTestLaboratoryListQuery,
-
-} from '@/services/setupService';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
-import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
-  faHandDots,
-  faTriangleExclamation
-  , faClipboardList,
-  faComment
-  ,
-  faPrint
-  ,
-  faFileLines,
-  faVialCircleCheck,
-  faDiagramPredecessor,
-  faFilter,
-  faStar,
-  faLandMineOn,
-  faArrowUp,
+  useGetDiagnosticsTestLaboratoryListQuery,
+} from '@/services/setupService';
+import { RootState } from '@/store';
+import { notify } from '@/utils/uiReducerActions';
+import {
   faArrowDown,
-  faPaperPlane,
+  faArrowUp,
   faCircleExclamation,
+  faComment,
+  faDiagramPredecessor,
+  faFileLines,
+  faFilter,
+  faLandMineOn,
+  faPaperPlane,
+  faPenToSquare,
+  faPrint,
   faRightFromBracket,
-  faPenToSquare
-
-
+  faStar,
+  faTriangleExclamation,
+  faVialCircleCheck
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import CheckRoundIcon from '@rsuite/icons/CheckRound';
+import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
+import ConversionIcon from '@rsuite/icons/Conversion';
+import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
+import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import React from 'react';
+import ReactDOMServer from 'react-dom/server';
+import { useSelector } from 'react-redux';
+import { HStack, SelectPicker, Tooltip, Whisper } from 'rsuite';
 import './styles.less';
-import { Badge, SelectPicker } from 'rsuite';
 
+import {
+  useGetLovAllValuesQuery,
+  useGetLovValuesByCodeQuery
+} from '@/services/setupService';
 import { FaCalendar } from 'react-icons/fa';
 import {
-  InputGroup,
-  ButtonToolbar,
+  DatePicker,
+  Divider,
   Form,
   IconButton,
   Input,
-  Divider,
-  Drawer,
-  Table,
+  Modal,
   Pagination,
   Row,
-  Progress,
-  DatePicker,
-  Dropdown,
-  Text,
-  Modal
-
+  Table,
+  Text
 } from 'rsuite';
-import {
-
-  useGetLovValuesByCodeQuery,
-  useGetLovAllValuesQuery
-} from '@/services/setupService';
 
 import {
-  useGetOrderTestNotesByTestIdQuery,
-  useSaveDiagnosticOrderTestNotesMutation,
-  useGetOrderTestSamplesByTestIdQuery,
-  useSaveDiagnosticOrderTestSamplesMutation,
-  useGetOrderTestResultNotesByResultIdQuery,
-  useSaveDiagnosticOrderTestResultsNotesMutation,
   useGetDiagnosticOrderTestResultQuery,
-  useSaveDiagnosticOrderTestResultMutation,
-  useGetResultNormalRangeQuery,
-  useSaveDiagnosticTestResultMutation,
   useGetLabResultLogListQuery,
+  useGetOrderTestNotesByTestIdQuery,
+  useGetOrderTestResultNotesByResultIdQuery,
+  useGetOrderTestSamplesByTestIdQuery,
+  useSaveDiagnosticOrderTestNotesMutation,
+  useSaveDiagnosticOrderTestResultMutation,
+  useSaveDiagnosticOrderTestResultsNotesMutation,
+  useSaveDiagnosticOrderTestSamplesMutation,
+  useSaveDiagnosticTestResultMutation,
   useSaveLabResultLogMutation
 } from '@/services/labService';
-import { addFilterToListRequest, formatDate, fromCamelCaseToDBName, getNumericTimestamp } from '@/utils';
+import { addFilterToListRequest, fromCamelCaseToDBName, getNumericTimestamp } from '@/utils';
 
 
+import ChatModal from '@/components/ChatModal';
 import MyInput from '@/components/MyInput';
-import SearchIcon from '@rsuite/icons/Search';
 import {
-  Panel, FlexboxGrid, Col, List, Stack, Button, Timeline
-  , Steps
-} from 'rsuite';
+  useGetDiagnosticOrderQuery,
+  useGetDiagnosticOrderTestQuery,
+  useSaveDiagnosticOrderTestMutation
+} from '@/services/encounterService';
+import { ApDiagnosticTestLaboratory } from '@/types/model-types';
 import {
   newApDiagnosticOrders,
   newApDiagnosticOrderTests,
@@ -106,17 +90,16 @@ import {
   newApLabResultLog,
   newApPatient
 } from '@/types/model-types-constructor';
-const { Column, HeaderCell, Cell } = Table;
+import { initialListRequest, initialListRequestAllValues, ListRequest } from '@/types/types';
 import {
-  useGetDiagnosticOrderQuery,
-  useGetDiagnosticOrderTestQuery,
-  useSaveDiagnosticOrderMutation,
-  useSaveDiagnosticOrderTestMutation
-} from '@/services/encounterService';
-import { initialListRequest, ListRequest, ListRequestAllValues, initialListRequestAllValues } from '@/types/types';
-import { ApDiagnosticTestLaboratory } from '@/types/model-types';
+  Button,
+  Col,
+  Panel,
+  Steps
+} from 'rsuite';
 import PatientSide from './PatienSide';
 import './styles.less';
+const { Column, HeaderCell, Cell } = Table;
 const Lab = () => {
   const dispatch = useAppDispatch();
   const uiSlice = useAppSelector(state => state.auth);
@@ -470,10 +453,11 @@ const Lab = () => {
   }, [listOrdersTestResponse])
 
   const handleSendMessage = async (value) => {
+   
     try {
-      await savenotes({ ...note, notes: newMessage, testKey: test.key, orderKey: order.key }).unwrap();
-      dispatch(notify({ msg: 'Send successfully', sev: 'success' }));
-      await setNewMessage("");
+      await savenotes({ ...note, notes: value, testKey: test.key, orderKey: order.key }).unwrap();
+      dispatch(notify({ msg: 'Send Successfully', sev: 'success' }));
+    
     }
     catch (error) {
       dispatch(notify({ msg: 'Send Faild', sev: 'error' }));
@@ -483,15 +467,17 @@ const Lab = () => {
   };
 
   const handleSendResultMessage = async (value) => {
+    console.log("value", value)
+  
     try {
-      await saveResultNote({ ...note, notes: newMessage, testKey: test.key, orderKey: order.key, resultKey: result.key }).unwrap();
-      dispatch(notify({ msg: 'Send successfully', sev: 'success' }));
-      await setNewMessage("");
+      await saveResultNote({ ...note, notes: value, testKey: test.key, orderKey: order.key, resultKey: result.key }).unwrap();
+      dispatch(notify({ msg: 'Send Successfully', sev: 'success' }));
+  
     }
     catch (error) {
       dispatch(notify({ msg: 'Send Faild', sev: 'error' }));
     }
-    fecthResultNotes();
+   await fecthResultNotes();
 
   };
   const handleDateChange = (date) => {
@@ -1938,98 +1924,8 @@ const Lab = () => {
       </div>
     </div>
 
-    <Modal open={openNoteModal} onClose={() => setOpenNoteModal(false)} size="xs">
-      <Modal.Header>
-        <Modal.Title>💬Technician Notes</Modal.Title>
-      </Modal.Header>
-      <Modal.Body style={{ maxHeight: "300px", overflowY: "auto", padding: "10px" }}>
-        {messagesList?.object.length > 0 ? (
-          messagesList?.object.map((msg, index) => (
-            <div key={index} style={{ textAlign: "right", marginBottom: "8px" }}>
-              <span
-                style={{
-                  display: "inline-block",
-                  padding: "8px 12px",
-                  borderRadius: "10px",
-                  backgroundColor: "#007bff",
-                  color: "white",
-                  maxWidth: "70%",
-                }}
-              >
-                {msg.notes}
-              </span>
-              <div style={{ fontSize: "10px", color: "gray", marginTop: "4px" }}>
-                {new Date(msg.createdAt).toLocaleString()}
-              </div>
-            </div>
-          ))
-        ) : (
-          <p style={{ textAlign: "center", color: "gray" }}>Not found Notes Yet</p>
-        )}
-
-        <div ref={endOfMessagesRef}></div>
-      </Modal.Body>
-      <Modal.Footer>
-        <div style={{ display: 'flex' }}>
-          <Input
-            value={newMessage}
-            onChange={setNewMessage}
-            placeholder="write note.."
-            style={{ width: "80%", marginRight: "10px" }}
-            onPressEnter={(value) => handleSendMessage(value)}
-          />
-          <Button appearance="primary" onClick={(value) => handleSendMessage(value)}>
-            <FontAwesomeIcon icon={faPaperPlane} />
-          </Button>
-        </div>
-      </Modal.Footer>
-    </Modal>
-    <Modal open={openNoteResultModal} onClose={() => setOpenNoteResultModal(false)} size="xs">
-      <Modal.Header>
-        <Modal.Title>💬Comments</Modal.Title>
-      </Modal.Header>
-      <Modal.Body style={{ maxHeight: "300px", overflowY: "auto", padding: "10px" }}>
-        {messagesResultList?.object.length > 0 ? (
-          messagesResultList?.object.map((msg, index) => (
-            <div key={index} style={{ textAlign: "right", marginBottom: "8px" }}>
-              <span
-                style={{
-                  display: "inline-block",
-                  padding: "8px 12px",
-                  borderRadius: "10px",
-                  backgroundColor: "#007bff",
-                  color: "white",
-                  maxWidth: "70%",
-                }}
-              >
-                {msg.notes}
-              </span>
-              <div style={{ fontSize: "10px", color: "gray", marginTop: "4px" }}>
-                {new Date(msg.createdAt).toLocaleString()}
-              </div>
-            </div>
-          ))
-        ) : (
-          <p style={{ textAlign: "center", color: "gray" }}>Not found Notes Yet</p>
-        )}
-
-        <div ref={endOfMessagesRef}></div>
-      </Modal.Body>
-      <Modal.Footer>
-        <div style={{ display: 'flex' }}>
-          <Input
-            value={newMessage}
-            onChange={setNewMessage}
-            placeholder="write note.."
-            style={{ width: "80%", marginRight: "10px" }}
-            onPressEnter={(value) => handleSendResultMessage(value)}
-          />
-          <Button appearance="primary" onClick={(value) => handleSendResultMessage(value)}>
-            <FontAwesomeIcon icon={faPaperPlane} />
-          </Button>
-        </div>
-      </Modal.Footer>
-    </Modal>
+    <ChatModal open={openNoteResultModal} setOpen={setOpenNoteResultModal} handleSendMessage={handleSendResultMessage} title={"Comments"} list={messagesResultList?.object} fieldShowName={'notes'}/>
+    <ChatModal open={openNoteModal} setOpen={setOpenNoteModal} handleSendMessage={handleSendMessage} title={"Comments"} list={messagesList?.object} fieldShowName={'notes'}/>
     <Modal open={openSampleModal} onClose={() => setOpenSampleModal(false)} size="md">
       <Modal.Header>
         <Modal.Title>Collect Sample</Modal.Title>

@@ -16,6 +16,7 @@ import {
     useGetAllergiesQuery,
    
   } from '@/services/observationService';
+import { faHandDots } from '@fortawesome/free-solid-svg-icons';
 const AllergiesModal =({open,setOpen ,patient})=>{
       const [showCanceled, setShowCanceled] = useState(true);
     
@@ -135,10 +136,11 @@ const AllergiesModal =({open,setOpen ,patient})=>{
     return(<>
     <MyModal
     position='right'
-    bodyheight={400}
+    bodyheight={450}
     size='900px'
     open={open}
     setOpen={setOpen}
+    steps={[{ title: "Allergy", icon:faHandDots}]}
     title="Allergy"
     content={<><div>
         <Checkbox
@@ -151,7 +153,7 @@ const AllergiesModal =({open,setOpen ,patient})=>{
         </Checkbox>
       </div>
       <Table
-        
+        autoHeight
         data={allergiesListResponse?.object || []}
         rowKey="key"
         expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
