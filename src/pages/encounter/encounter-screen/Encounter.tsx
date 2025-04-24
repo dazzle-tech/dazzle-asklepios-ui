@@ -2,7 +2,7 @@
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import { ApEncounter} from '@/types/model-types';
+import { ApEncounter } from '@/types/model-types';
 import Consultation from '../encounter-component/consultation';
 import DiagnosticsOrder from '../encounter-component/diagnostics-order';
 import DiagnosticsResult from '../encounter-component/diagnostics-result/DiagnosticsResult';
@@ -75,7 +75,7 @@ import Cardiology from '../encounter-component/cardiology/Cardiology';
 import { useGetMedicalSheetsByDepartmentIdQuery } from '@/services/setupService';
 import AllergiesModal from './AllergiesModal';
 import WarningiesModal from './WarningiesModal';
-import { useGetAppointmentsQuery} from '@/services/appointmentService';
+import { useGetAppointmentsQuery } from '@/services/appointmentService';
 const Encounter = () => {
 
   const authSlice = useAppSelector(state => state.auth);
@@ -97,51 +97,51 @@ const Encounter = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedFacility, setSelectedFacility] = useState(null);
   const [selectedResourceType, setSelectedResourceType] = useState(null);
-const [medicalSheetSourceKey, setMedicalSheetSourceKey] = useState<string | undefined>();
-const [medicalSheetRowSourceKey, setMedicalSheetRowSourceKey] = useState<string | undefined>();
-const [selectedResources, setSelectedResources] = useState([])
-const {
-  data: appointments,
-  refetch: refitchAppointments,
-  error,
-  isLoading
-} = useGetAppointmentsQuery({
-  resource_type: selectedResourceType?.resourcesType || null,
-  facility_id: selectedFacility?.facilityKey || null,
-  resources: selectedResources ? selectedResources.resourceKey : [],
+  const [medicalSheetSourceKey, setMedicalSheetSourceKey] = useState<string | undefined>();
+  const [medicalSheetRowSourceKey, setMedicalSheetRowSourceKey] = useState<string | undefined>();
+  const [selectedResources, setSelectedResources] = useState([])
+  const {
+    data: appointments,
+    refetch: refitchAppointments,
+    error,
+    isLoading
+  } = useGetAppointmentsQuery({
+    resource_type: selectedResourceType?.resourcesType || null,
+    facility_id: selectedFacility?.facilityKey || null,
+    resources: selectedResources ? selectedResources.resourceKey : [],
 
-});
-// get Midical Sheets Data Steps
-useEffect(() => {
-  if (propsData?.encounter?.resourceTypeLkey === '2039516279378421') {
-    // Clinic, then we need to get its resource details
-    setMedicalSheetRowSourceKey(propsData?.encounter?.resourceKey);
-    setMedicalSheetSourceKey(undefined);
-  } else {
-    // Not Clinic, use department directly
-    setMedicalSheetSourceKey(propsData?.encounter?.departmentKey);
-    setMedicalSheetRowSourceKey(undefined); 
-  }
-}, [propsData?.encounter]);
+  });
+  // get Midical Sheets Data Steps
+  useEffect(() => {
+    if (propsData?.encounter?.resourceTypeLkey === '2039516279378421') {
+      // Clinic, then we need to get its resource details
+      setMedicalSheetRowSourceKey(propsData?.encounter?.resourceKey);
+      setMedicalSheetSourceKey(undefined);
+    } else {
+      // Not Clinic, use department directly
+      setMedicalSheetSourceKey(propsData?.encounter?.departmentKey);
+      setMedicalSheetRowSourceKey(undefined);
+    }
+  }, [propsData?.encounter]);
 
-// Step 2: Fetch the resource if needed "IF Clinic"
-const { data: resourcesResponse } = useGetResourcesByResourceIdQuery(
-  medicalSheetRowSourceKey!,
-  { skip: !medicalSheetRowSourceKey }
-);
+  // Step 2: Fetch the resource if needed "IF Clinic"
+  const { data: resourcesResponse } = useGetResourcesByResourceIdQuery(
+    medicalSheetRowSourceKey!,
+    { skip: !medicalSheetRowSourceKey }
+  );
 
-// Step 3: Set departmentKey from resource "IF Clinic"
-useEffect(() => {
-  if (resourcesResponse?.object?.resourceKey) {
-    setMedicalSheetSourceKey(resourcesResponse.object.resourceKey);
-  }
-}, [resourcesResponse]);
+  // Step 3: Set departmentKey from resource "IF Clinic"
+  useEffect(() => {
+    if (resourcesResponse?.object?.resourceKey) {
+      setMedicalSheetSourceKey(resourcesResponse.object.resourceKey);
+    }
+  }, [resourcesResponse]);
 
-// Step 4:get medical sheet with final departmentKey.
-const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
-  medicalSheetSourceKey!,
-  { skip: !medicalSheetSourceKey }
-);
+  // Step 4:get medical sheet with final departmentKey.
+  const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
+    medicalSheetSourceKey!,
+    { skip: !medicalSheetSourceKey }
+  );
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
@@ -206,14 +206,14 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
 
                 backgroundColor={'var(--primary-gray)'}
                 onClick={handleGoBack}
-                >Go Back</MyButton>           
+              >Go Back</MyButton>
             </div>
             <div className='right'>
               <MyButton
                 prefixIcon={() => <BarChartHorizontalIcon />}
                 backgroundColor={"var(--deep-blue)"}
 
-                onClick={() => {setIsDrawerOpen(true),console.log(medicalSheetSourceKey)}}
+                onClick={() => { setIsDrawerOpen(true), console.log(medicalSheetSourceKey) }}
               >Medical Sheets</MyButton>
               <MyButton
 
@@ -221,18 +221,18 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
                 onClick={() => { setModalOpen(true) }}
               >Create Follow-up</MyButton>
               <MyButton
-                
-                backgroundColor={propsData.patient.hasAllergy ? "var(--primary-orange)" : "var(--deep-blue)"}
+
+                backgroundColor={propsData?.patient?.hasAllergy ? "var(--primary-orange)" : "var(--deep-blue)"}
                 onClick={OpenAllargyModal}
                 prefixIcon={() => <FontAwesomeIcon icon={faHandDots} />}
               >Allergy</MyButton>
               <MyButton
 
-                backgroundColor={propsData.patient.hasWarning ? "var(--primary-orange)" : "var(--deep-blue)"}
+                backgroundColor={propsData?.patient?.hasWarning ? "var(--primary-orange)" : "var(--deep-blue)"}
                 onClick={OpenWarningModal}
                 prefixIcon={() => <FontAwesomeIcon icon={faTriangleExclamation} />}
               >Warning</MyButton>
-              {propsData.encounter.editable && (
+              {propsData?.encounter?.editable && (
                 <MyButton
 
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
@@ -250,7 +250,7 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
             open={isDrawerOpen}
             onClose={() => setIsDrawerOpen(false)}
             placement='left'
-           className='drawer-style'
+            className='drawer-style'
           >
             <Drawer.Header>
               <Drawer.Title className='title-drawer'>Medical Sheets</Drawer.Title>
@@ -258,12 +258,12 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
             <Drawer.Body className='drawer-body'>
               <List hover className='drawer-list-style'>
                 {medicalSheet?.object?.patientDashboard &&
-                 <List.Item
-                  className='drawer-item'
-                  onClick={() => handleMenuItemClick(<PatientSummary patient={propsData.patient} encounter={propsData.encounter} />)}>
-                  <FontAwesomeIcon icon={faBars} className='icon' />
-                  <Translate>Patient Dashboard</Translate>
-                </List.Item>}
+                  <List.Item
+                    className='drawer-item'
+                    onClick={() => handleMenuItemClick(<PatientSummary patient={propsData.patient} encounter={propsData.encounter} />)}>
+                    <FontAwesomeIcon icon={faBars} className='icon' />
+                    <Translate>Patient Dashboard</Translate>
+                  </List.Item>}
                 {medicalSheet?.object?.clinicalVisit &&
                   <List.Item
                     className='drawer-item'
@@ -401,7 +401,7 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
           </Drawer>
           {activeContent} {/* Render the selected content */}
         </Panel>
-    
+
 
         <AppointmentModal
           from={'Encounter'}
@@ -418,8 +418,8 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
       <div className='right-box'>
         <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
       </div>
-      <WarningiesModal open={openWarningModal} setOpen={setOpenWarningModal} patient={propsData.patient}/>
-      <AllergiesModal open={openAllargyModal}  setOpen={setOpenAllargyModal} patient={propsData.patient} />
+      <WarningiesModal open={openWarningModal} setOpen={setOpenWarningModal} patient={propsData.patient} />
+      <AllergiesModal open={openAllargyModal} setOpen={setOpenAllargyModal} patient={propsData.patient} />
     </div>
 
 
