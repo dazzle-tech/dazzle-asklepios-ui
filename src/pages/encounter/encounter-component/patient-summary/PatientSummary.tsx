@@ -95,7 +95,7 @@ const PatientSummary = ({ patient, encounter }) => {
             },
             { skip: !patient?.dob }
         );
-
+console.log("encounter?.plannedStartDate-->",encounter?.plannedStartDate);
     const { data: predefinedInstructionsListResponse } = useGetPrescriptionInstructionQuery({ ...initialListRequest });
     const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({ ...initialListRequest, filters });
     const { data: warningsListResponse, refetch: fetchwarnings } = useGetWarningsQuery({ ...initialListRequest, filters });
@@ -108,12 +108,12 @@ const PatientSummary = ({ patient, encounter }) => {
 
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patient.key
+                value: patient?.key
             },
             {
                 fieldName: 'planned_start_date',
                 operator: 'lt',
-                value: encounter.plannedStartDate
+                value: encounter?.plannedStartDate
             }
 
         ],
@@ -138,7 +138,7 @@ const PatientSummary = ({ patient, encounter }) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patient.key
+                value: patient?.key
             },
             {
                 fieldName: 'is_major',
@@ -160,7 +160,7 @@ const PatientSummary = ({ patient, encounter }) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patient.key
+                value: patient?.key
             },
             {
                 fieldName: 'visit_key',
@@ -191,7 +191,7 @@ const PatientSummary = ({ patient, encounter }) => {
             {
                 fieldName: "patient_key",
                 operator: "match",
-                value: patient.key
+                value: patient?.key
             },
             {
                 fieldName: "chronic_medication",
@@ -213,7 +213,7 @@ const PatientSummary = ({ patient, encounter }) => {
             {
                 fieldName: "patient_key",
                 operator: "match",
-                value: patient.key
+                value: patient?.key
             },
             {
                 fieldName: "chronic_medication",
@@ -298,7 +298,7 @@ const PatientSummary = ({ patient, encounter }) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value: patient.key
+                value: patient?.key
             },
             {
                 fieldName: 'visit_key',

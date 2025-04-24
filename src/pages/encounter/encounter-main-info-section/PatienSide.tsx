@@ -266,7 +266,7 @@ const PatientSide = ({ patient, encounter }) => {
                         <Text className='info-label'>Visit Date</Text>
                         <Text className='info-value'>
 
-                            {encounter.plannedStartDate}
+                            {encounter?.plannedStartDate}
                         </Text>
 
                     </div>
@@ -275,7 +275,7 @@ const PatientSide = ({ patient, encounter }) => {
                     >
                         <Text className='info-label'>Visit ID</Text>
                         <Text className='info-value'
-                        > {encounter.visitId}</Text>
+                        > {encounter?.visitId}</Text>
 
                     </div>
                 </div>
@@ -313,7 +313,7 @@ const PatientSide = ({ patient, encounter }) => {
                     >
                         <Text className='info-label'>Origin</Text>
                         <Text className='info-value'
-                        > {encounter.admissionOrigin}</Text>
+                        > {encounter?.admissionOrigin}</Text>
 
                     </div>
                 </div>
