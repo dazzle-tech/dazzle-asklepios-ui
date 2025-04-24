@@ -3,12 +3,16 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { faBan } from '@fortawesome/free-solid-svg-icons';
 import {Form} from 'rsuite';
+import { title } from 'process';
 const CancellationModal = ({
     open,
     setOpen,
     handleCancle,
     object,
     setObject,
+    fieldLabel,
+    title
+    ,
     fieldName="",
     statusField="statusLkey",
     statusKey="3196709905099521"  // TODO update status to be a LOV value
@@ -17,19 +21,19 @@ const CancellationModal = ({
         <MyModal
             open={open}
             setOpen={setOpen}
-            title="Confirm Cancel"
+            title={`Confirm ${title}`}
             actionButtonLabel="Submit"
             actionButtonFunction={handleCancle}
             isDisabledActionBtn={object?.[statusField] === statusKey}
             steps={[
-                { title: 'Cancel', icon: faBan },
+                {icon: faBan },
             ]}
             content={(step) => <Form layout="inline" fluid>
                 <MyInput
                     width={"400px"}
                     column
-                    fieldLabel="Cancellation Reason"
                     fieldType="textarea"
+                   fieldLabel={fieldLabel}
                     fieldName={fieldName}
                     height={120}
                     record={object}
