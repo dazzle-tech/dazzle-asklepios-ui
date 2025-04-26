@@ -41,7 +41,7 @@ const MyInput = ({
     if (vr && vr.details && vr.details[fieldDbName]) {
       // keep local state updated when props changes
       setValidationResult(preValue => {
-        console.log(preValue);
+       
         return [...vr.details[fieldDbName]];
       });
     } else {
@@ -198,8 +198,9 @@ const MyInput = ({
         const inputWidth = props?.width ?? 145;
         const addonWidth = 40;
         const totalWidth =
+
           inputWidth + (leftAddon ? leftAddonwidth ? leftAddonwidth : addonWidth : 0) + (rightAddon ? rightAddonwidth ? rightAddonwidth : addonWidth : 0);
-        console.log(totalWidth)
+
         const inputControl = (
           <Form.Control
             labelKey={props?.selectDataLabel ?? ''}

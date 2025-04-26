@@ -19,6 +19,7 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
     
         return () => clearTimeout(timeout); 
     }, [list]);
+    
     return (
         <div >
             <MyModal

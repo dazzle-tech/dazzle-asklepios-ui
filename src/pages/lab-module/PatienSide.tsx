@@ -1,55 +1,33 @@
-import { useState, useEffect, useRef } from 'react';
-import Translate from '@/components/Translate';
-import {
-    faHandDots,
-    faTriangleExclamation
-    ,
-    faIdCard,
-    faUser,
-    faFileWaveform
-} from '@fortawesome/free-solid-svg-icons';
-import { useGetAllergensQuery } from '@/services/setupService';
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import { useGetEncountersQuery } from '@/services/encounterService';
-import {
-    useGetAllergiesQuery,
-    useSaveAllergiesMutation,
-    useGetWarningsQuery
-} from '@/services/observationService';
-import React from 'react';
-import {
-    Button,
-    Panel,
-    Row,
-    Avatar,
-    Text,
-    Col,
-    Divider,
-    Modal,
-    Stack,
-Table,
-Checkbox,
-IconButton
-} from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
 import {
     useFetchAttachmentQuery,
 } from '@/services/attachmentService';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { FaWeight } from 'react-icons/fa';
-import { calculateAgeFormat } from '@/utils';
 import { useGetObservationSummariesQuery } from '@/services/observationService';
-import { initialListRequest, ListRequest } from '@/types/types';
+import { initialListRequest } from '@/types/types';
+import { calculateAgeFormat } from '@/utils';
+import {
+    faHandDots,
+    faIdCard,
+    faTriangleExclamation,
+    faUser
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useEffect, useRef, useState } from 'react';
+import { FaWeight } from 'react-icons/fa';
+import {
+    Avatar,
+    Divider,
+    Panel,
+    Table,
+    Text
+} from 'rsuite';
+const { Column, HeaderCell, Cell } = Table;
 
-import { ApAttachment } from '@/types/model-types';
-import './styles.less'
 import MyButton from '@/components/MyButton/MyButton';
-import MyModal from '@/components/MyModal/MyModal';
+import { ApAttachment } from '@/types/model-types';
 import AllergiesModal from '../encounter/encounter-screen/AllergiesModal';
 import WarningiesModal from '../encounter/encounter-screen/WarningiesModal';
+import './styles.less';
 const PatientSide = ({ patient, encounter }) => {
- console.log(patient?.hasWarning )
     const [openAllargyModal, setOpenAllargyModal] = useState(false);
     const [openWarningModal, setOpenWarningModal] = useState(false);
     const profileImageFileInputRef = useRef(null);

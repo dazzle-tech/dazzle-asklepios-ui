@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState,useRef } from 'react';
 
-import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
@@ -8,83 +7,40 @@ import {
 } from '@/services/setupService';
 import { RootState } from '@/store';
 import { notify } from '@/utils/uiReducerActions';
-import {
-  faArrowDown,
-  faArrowUp,
-  faCircleExclamation,
-  faComment,
-  faDiagramPredecessor,
-  faFileLines,
-  faFilter,
-  faLandMineOn,
-  faPaperPlane,
-  faPenToSquare,
-  faPrint,
-  faRightFromBracket,
-  faStar,
-  faTriangleExclamation,
-  faVialCircleCheck
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import CheckRoundIcon from '@rsuite/icons/CheckRound';
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-import ConversionIcon from '@rsuite/icons/Conversion';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
+
+
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { useSelector } from 'react-redux';
-import { HStack, SelectPicker, Tooltip, Whisper } from 'rsuite';
+
 import './styles.less';
 
 import {
   useGetLovAllValuesQuery,
-  useGetLovValuesByCodeQuery
 } from '@/services/setupService';
-import { FaCalendar } from 'react-icons/fa';
 import {
   DatePicker,
-  Divider,
-  Form,
-  IconButton,
-  Input,
-  Modal,
-  Pagination,
   Row,
-  Table,
-  Text
+  Table
 } from 'rsuite';
 
 import {
-  useGetDiagnosticOrderTestResultQuery,
   useGetLabResultLogListQuery,
-  useGetOrderTestNotesByTestIdQuery,
-  useGetOrderTestResultNotesByResultIdQuery,
   useGetOrderTestSamplesByTestIdQuery,
-  useSaveDiagnosticOrderTestNotesMutation,
   useSaveDiagnosticOrderTestResultMutation,
-  useSaveDiagnosticOrderTestResultsNotesMutation,
-  useSaveDiagnosticOrderTestSamplesMutation,
-  useSaveDiagnosticTestResultMutation,
   useSaveLabResultLogMutation
 } from '@/services/labService';
 import { addFilterToListRequest, fromCamelCaseToDBName, getNumericTimestamp } from '@/utils';
 
 
-import ChatModal from '@/components/ChatModal';
-import MyInput from '@/components/MyInput';
 import {
-  useGetDiagnosticOrderQuery,
-  useGetDiagnosticOrderTestQuery,
   useSaveDiagnosticOrderTestMutation
 } from '@/services/encounterService';
-import { ApDiagnosticTestLaboratory } from '@/types/model-types';
 import {
   newApDiagnosticOrders,
   newApDiagnosticOrderTests,
   newApDiagnosticOrderTestsNotes,
   newApDiagnosticOrderTestsResult,
-  newApDiagnosticOrderTestsSamples,
   newApDiagnosticTestLaboratory,
   newApEncounter,
   newApLabResultLog,
@@ -92,38 +48,35 @@ import {
 } from '@/types/model-types-constructor';
 import { initialListRequest, initialListRequestAllValues, ListRequest } from '@/types/types';
 import {
-  Button,
   Col,
-  Panel,
   Steps
 } from 'rsuite';
 import PatientSide from './PatienSide';
 import './styles.less';
 const { Column, HeaderCell, Cell } = Table;
+
+
+import Orders from './Orders';
+import Result from './Result';
+import Tests from './Tests';
 const Lab = () => {
   const dispatch = useAppDispatch();
   const uiSlice = useAppSelector(state => state.auth);
+  const ResultRef = useRef(null);
+  const TestRef = useRef(null);
+  const refetchTest = () => {
+    TestRef.current?.refetchTest(); 
+  };
+  const refetchResult = () => {
+    ResultRef.current?.handleClear(); 
+  };
   const [localUser, setLocalUser] = useState(uiSlice?.user);
-  const [selectedCriterion, setSelectedCriterion] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [openorders, setOpenOrders] = useState(false);
-  const [openresults, setOpenResults] = useState(false);
-  const [openRejectedModal, setOpenRejectedModal] = useState(false);
-  const [openRejectedResultModal, setOpenRejectedResultModal] = useState(false);
   const [currentStep, setCurrentStep] = useState("6055029972709625");
-  const [openLogModal, setOpenLogModal] = useState(false)
   const [encounter, setEncounter] = useState({ ...newApEncounter });
-  const [showFilterInput, setShowFilterInput] = useState(false);
-  const [showResultInput, setShowResultInput] = useState(false);
-  const [showListFilter, setShowListFilter] = useState(false);
   const [patient, setPatient] = useState({ ...newApPatient });
-  const [order, setOrder] = useState({ ...newApDiagnosticOrders })
-  const [test, setTest] = useState({ ...newApDiagnosticOrderTests });
-  const [note, setNote] = useState({ ...newApDiagnosticOrderTestsNotes });
-  const [sample, setSample] = useState({ ...newApDiagnosticOrderTestsSamples });
+  const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders })
+  const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
   const [result, setResult] = useState({ ...newApDiagnosticOrderTestsResult, resultLkey: '' })
-  const [selectedSampleDate, setSelectedSampleDate] = useState(null);
-  const [activeRowKey, setActiveRowKey] = useState(null);
   const [listOrdersResponse, setListOrdersResponse] = useState<ListRequest>({
     ...initialListRequest
 
@@ -141,17 +94,9 @@ const Lab = () => {
     ]
 
   })
-  const { data: ValueUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
-  const { data: SampleContainerLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_SAMPLE_CONTAINER');
-  const { data: LabTubeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_TYPES');
-  const { data: TubeColorLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_COLORS');
-  const { data: labCatLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_CATEGORIES');
   const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
-  const { data: messagesList, refetch: fecthNotes } = useGetOrderTestNotesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
-  const { data: messagesResultList, refetch: fecthResultNotes } = useGetOrderTestResultNotesByResultIdQuery(result?.key || undefined, { skip: result.key == null });
+
   const { data: samplesList, refetch: fecthSample } = useGetOrderTestSamplesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
-  const { data: resultLogList, refetch: fetchLogs, isFetching: fetchLog } = useGetLabResultLogListQuery({ ...listLogRequest });
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
     <div style={{ display: 'flex' }}>
       <h5>Clinical Laboratory</h5>
@@ -183,12 +128,7 @@ const Lab = () => {
     fromDate: new Date(),//new Date(),
     toDate: new Date()
   });
-  const [openNoteModal, setOpenNoteModal] = useState(false);
   const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
-  const [openSampleModal, setOpenSampleModal] = useState(false);
-  const { data: ordersList, refetch: orderFetch, isFetching: isOrderFetcheng } = useGetDiagnosticOrderQuery({ ...listOrdersResponse });
-  const filterdOrderList = ordersList?.object.filter((item) => item.hasLaboratory === true);
-  const { data: testsList, refetch: fetchTest, isFetching: isTestsFetching } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestResponse });
   const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
     ...initialListRequest
 
@@ -221,84 +161,19 @@ const Lab = () => {
 
     ],
   });
-  const [listPrevResultResponse, setListPrevResultResponse] = useState<ListRequest>({
-    ...initialListRequest,
-    sortBy: "createdAt",
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: "patient_key",
-        operator: "match",
-        value: patient?.key || undefined,
-      },
-      {
-        fieldName: "medical_test_key",
-        operator: "match",
-        value: test?.testKey || undefined,
-      }
 
 
-    ],
-  });
-  const { data: resultsList, refetch: resultFetch } = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
-  const { data: prevResultsList, refetch: prevResultFetch } = useGetDiagnosticOrderTestResultQuery({ ...listPrevResultResponse });
-  const [labDetails, setLabDetails] = useState<ApDiagnosticTestLaboratory>({ ...newApDiagnosticTestLaboratory })
-  const isSelected = rowData => {
-    if (rowData && order && rowData.key === order.key) {
-      return 'selected-row';
-    } else return '';
-  };
-  const isTestSelected = rowData => {
-    if (rowData && test && rowData.key === test.key) {
-      return 'selected-row';
-    } else return '';
-  };
-  const isResultSelected = rowData => {
-    if (rowData && result && rowData.key === result.key) {
-      return 'selected-row';
-    } else return '';
-  };
-
-  const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [savenotes] = useSaveDiagnosticOrderTestNotesMutation();
-  const [saveSample] = useSaveDiagnosticOrderTestSamplesMutation();
+  const [labDetails, setLabDetails] = useState<any>({ ...newApDiagnosticTestLaboratory });
   const [saveTest] = useSaveDiagnosticOrderTestMutation();
-  const [saveNewResult] = useSaveDiagnosticTestResultMutation();
   const [saveResult] = useSaveDiagnosticOrderTestResultMutation();
-  const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
   const [saveResultLog, saveResultLogMutation] = useSaveLabResultLogMutation();
-  const endOfMessagesRef = useRef(null);
-  useEffect(() => {
-    if (endOfMessagesRef.current) {
-      endOfMessagesRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messagesList]);
+
   useEffect(() => {
     handleManualSearch();
   }, []);
   useEffect(() => {
     setPatient(order.patient);
     setEncounter(order.encounter);
-    const updatedFilters = [
-      {
-        fieldName: "order_key",
-        operator: "match",
-        value: order?.key ?? undefined,
-      },
-      {
-        fieldName: "order_type_lkey",
-        operator: "match",
-        value: "862810597620632",
-      }
-
-    ];
-    setListOrdersTestResponse((prevRequest) => ({
-      ...prevRequest,
-      filters: updatedFilters,
-    }));
-
-
   }, [order]);
   useEffect(() => {
     return () => {
@@ -336,7 +211,7 @@ const Lab = () => {
     }
   }, [dateFilter]);
   useEffect(() => {
-
+    setResult({ ...newApDiagnosticOrderTestsResult })
     const cat = laboratoryList?.object?.find((item) => item.testKey === test.testKey);
     setLabDetails(cat);
     setCurrentStep(test.processingStatusLkey);
@@ -365,37 +240,12 @@ const Lab = () => {
         value: test?.testKey || undefined,
       }
 
-
     ];
-    setListPrevResultResponse((prevRequest) => ({
-      ...prevRequest,
-      filters: updatedPrevFilters,
-    }));
+    
 
   }, [test]);
 
-  useEffect(() => {
-    
-    resultFetch();
-    const updatedFilter = [
-      {
-
-        fieldName: "result_key",
-        operator: "match",
-        value: result?.key ?? undefined,
-
-      }
-    ];
-    setListLogRequest((prevRequest) => ({
-      ...prevRequest,
-      filters: updatedFilter,
-    }));
-    fetchLogs();
-  }, [result]);
-  useEffect(() => {
  
-    fetchLogs();
-  }, [saveResultLogMutation])
   useEffect(() => {
     handleManualSearch();
   }, []);
@@ -448,163 +298,6 @@ const Lab = () => {
     }
   }, [selectedCatValue, laboratoryListToFilter]);
 
-  useEffect(() => {
-
-  }, [listOrdersTestResponse])
-
-  const handleSendMessage = async (value) => {
-   
-    try {
-      await savenotes({ ...note, notes: value, testKey: test.key, orderKey: order.key }).unwrap();
-      dispatch(notify({ msg: 'Send Successfully', sev: 'success' }));
-    
-    }
-    catch (error) {
-      dispatch(notify({ msg: 'Send Faild', sev: 'error' }));
-    }
-    fecthNotes();
-
-  };
-
-  const handleSendResultMessage = async (value) => {
-    console.log("value", value)
-  
-    try {
-      await saveResultNote({ ...note, notes: value, testKey: test.key, orderKey: order.key, resultKey: result.key }).unwrap();
-      dispatch(notify({ msg: 'Send Successfully', sev: 'success' }));
-  
-    }
-    catch (error) {
-      dispatch(notify({ msg: 'Send Faild', sev: 'error' }));
-    }
-   await fecthResultNotes();
-
-  };
-  const handleDateChange = (date) => {
-    if (date) {
-
-      setSelectedSampleDate(date);
-
-
-    }
-  };
-  const handleSaveSample = async () => {
-    try {
-      const Response = await saveTest({ ...test, processingStatusLkey: "6055207372976955" }).unwrap();
-      saveSample({
-        ...sample,
-        orderKey: order.key,
-        testKey: test.key,
-        sampleCollectedAt: selectedSampleDate ? selectedSampleDate.getTime() : null
-      }).unwrap();
-      setTest({ ...newApDiagnosticOrderTests })
-      dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-      setTest({ ...Response });
-      await fetchTest();
-      await fecthSample();
-      setOpenSampleModal(false);
-      setSample({ ...newApDiagnosticOrderTestsSamples });
-      setSelectedSampleDate(null);
-    }
-    catch (error) {
-      dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-    }
-  }
-  const handleRejectedTest = async () => {
-    try {
-      const Response = await saveTest({ ...test, processingStatusLkey: "6055192099058457", rejectedAt: Date.now() }).unwrap();
-
-      setOpenRejectedModal(false);
-      setTest({ ...newApDiagnosticOrderTests });
-      dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-      setTest({ ...Response });
-      await fetchTest();
-    }
-    catch (error) {
-      dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-    }
-  }
-
-  const handleAcceptTest = async (rowData) => {
-    if (samplesList?.object?.length > 0) {
-      try {
-        const Response = await saveTest({
-          ...test,
-          processingStatusLkey: "6055074111734636",
-          acceptedAt: Date.now()
-        }).unwrap();
-
-        const rResponse = await saveNewResult({
-          ...result,
-          orderKey: order.key,
-          orderTestKey: test.key,
-          medicalTestKey: test.testKey,
-          patientKey: patient.key,
-          visitKey: encounter.key,
-          statusLkey: '6055029972709625'
-        }).unwrap();
-
-        setTest({ ...newApDiagnosticOrderTests })
-        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-
-        setTest({ ...Response });
-        await fetchTest();
-        await resultFetch();
-      }
-      catch (error) {
-        console.error("Error saving test:", error);
-        dispatch(notify({ msg: error, sev: 'error' }));
-      }
-    }
-    else {
-      dispatch(notify({ msg: 'Collect a sample first.', sev: 'warning' }));
-    }
-
-
-  }
-  const handleFilterChange = (fieldName, value) => {
-    if (value) {
-      setListOrdersResponse(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'startsWithIgnoreCase',
-          value,
-          listOrdersResponse
-        )
-      );
-    } else {
-      setListOrdersResponse({ ...listOrdersResponse, filters: [] });
-    }
-  };
-  const handleFilterResultChange = (fieldName, value) => {
-    if (value) {
-      setListOrdersTestResponse(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'startsWithIgnoreCase',
-          value,
-          listOrdersTestResponse
-        )
-      );
-    } else {
-      setListOrdersTestResponse({
-        ...listOrdersTestResponse, filters: [
-          {
-            fieldName: "order_key",
-            operator: "match",
-            value: order?.key ?? undefined,
-          },
-          {
-            fieldName: "order_type_lkey",
-            operator: "match",
-            value: "862810597620632",
-          }
-
-
-        ]
-      });
-    }
-  };
   const handleManualSearch = () => {
 
     if (dateFilter.fromDate && dateFilter.toDate) {
@@ -634,134 +327,7 @@ const Lab = () => {
       setListOrdersResponse({ ...listOrdersResponse, filters: [] });
     }
   };
-  const renderRowExpanded = rowData => {
-
-    return (
-
-
-      <Table
-        data={[rowData]}
-
-        style={{ width: '100%', marginTop: '5px', marginBottom: '5px' }}
-        height={100}
-      >
-        <Column flexGrow={1} align="center" fullText>
-          <HeaderCell>ACCEPTED AT</HeaderCell>
-          <Cell dataKey="acceptedAt" >
-            {rowData => rowData.acceptedAt ? new Date(rowData.acceptedAt).toLocaleString() : ""}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} align="center" fullText>
-          <HeaderCell>ACCEPTED BY</HeaderCell>
-          <Cell dataKey="acceptedBy" />
-        </Column>
-        <Column flexGrow={1} align="center" fullText>
-          <HeaderCell>REJECTED AT</HeaderCell>
-          <Cell dataKey="rejectedAt" >
-            {rowData => rowData.rejectedAt ? new Date(rowData.rejectedAt).toLocaleString() : ""}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} align="center" fullText>
-          <HeaderCell>REJECTED BY</HeaderCell>
-          <Cell dataKey="rejectedBy" />
-        </Column>
-        <Column flexGrow={2} align="center" fullText>
-          <HeaderCell>REJECTED REASON</HeaderCell>
-          <Cell dataKey="rejectedReason" >
-            {rowData => rowData.rejectedReason}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} align="center" fullText>
-          <HeaderCell>ATTACHMENT</HeaderCell>
-          <Cell />
-        </Column>
-
-      </Table>
-
-
-    );
-  };
-
-  const handleExpanded = (rowData) => {
-    let open = false;
-    const nextExpandedRowKeys = [];
-
-    expandedRowKeys.forEach(key => {
-      if (key === rowData.key) {
-        open = true;
-      } else {
-        nextExpandedRowKeys.push(key);
-      }
-    });
-
-    if (!open) {
-      nextExpandedRowKeys.push(rowData.key);
-    }
-
-    setExpandedRowKeys(nextExpandedRowKeys);
-  };
-
-  const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
-    <Cell {...props} style={{ padding: 5 }}>
-      <IconButton
-        appearance="subtle"
-        onClick={() => {
-          onChange(rowData);
-        }}
-        icon={
-          expandedRowKeys.some(key => key === rowData["key"]) ? (
-            <CollaspedOutlineIcon />
-          ) : (
-            <ExpandOutlineIcon />
-          )
-        }
-      />
-    </Cell>
-  );
-  const joinValuesFromArray = (keys) => {
-
-    return keys
-      .map(key => lovValues?.object?.find(lov => lov.key === key))
-      .filter(obj => obj !== undefined)
-      .map(obj => obj.lovDisplayVale)
-      .join(', ');
-  };
-  const handleValueChange = async (value, rowData) => {
-
-    const Response = await saveResult({ ...rowData, resultLkey: String(value) }).unwrap();
-
-
-    const v = rowData.normalRange?.lovList.find((item) => item == value);
-    const valueText=lovValues?.object?.find(lov => lov.key === value)?.lovDisplayVale
-    if (v) {
-      
-      const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-      saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' , resultLkey: String(value)}).unwrap();
-      saveResultLog({ ...newApLabResultLog, resultKey: result?.key, createdBy: localUser.fullName, resultValue:valueText }).unwrap();
-      setTest({ ...newApDiagnosticOrderTests });
-
-      dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-      setTest({ ...Response });
-      await fetchTest();
-      await resultFetch();
-
-    }
-    else {
-    
-      const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-      saveResult({ ...result, marker: "6730122218786367", statusLkey: '265123250697000', resultLkey: String(value) }).unwrap();
-      saveResultLog({ ...newApLabResultLog, resultKey: result?.key, createdBy: localUser.fullName, resultValue:valueText }).unwrap();
-      setTest({ ...newApDiagnosticOrderTests });
-      dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-      setTest({ ...Response });
-      await fetchTest();
-      await resultFetch();
-    }
-    await resultFetch().then(() => {
-
-    });
-    setActiveRowKey(null)
-  };
+;
 
   const stepsData = [
     { key: "6055207372976955", value: "Sample Collected", time: " " },
@@ -778,147 +344,13 @@ const Lab = () => {
 
   return (<>
 
-<div className='container'>
+    <div className='container'>
       <div className='left-box' >
 
 
         <Row>
           <Col xs={14}>
-            <Panel style={{ border: '1px solid #e5e5ea' }}>
-              <Table
-                height={200}
-                width={700}
-                sortColumn={listOrdersResponse.sortBy}
-                sortType={listOrdersResponse.sortType}
-                onSortColumn={(sortBy, sortType) => {
-                  if (sortBy)
-                    setListOrdersResponse({
-                      ...listOrdersResponse,
-                      sortBy,
-                      sortType
-                    });
-                }}
-
-
-                data={filterdOrderList ?? []}
-                onRowClick={rowData => {
-                  setOrder(rowData);
-                  setOpenOrders(true);
-              
-                
-                }}
-                rowClassName={isSelected}
-                loading={isOrderFetcheng}
-              >
-                <Column sortable flexGrow={2} fullText>
-                  <HeaderCell>
-                    {showFilterInput ? (
-
-                      <Input
-                        placeholder="Search ORDER ID"
-                        // value={filterValue}
-                        onChange={(value) => handleFilterChange('orderId', value)}
-                        // onKeyPress={handleKeyPress}
-                        onBlur={() => setShowFilterInput(false)}
-                        style={{ width: '80%', height: '23px', marginBottom: '3px' }}
-                      />
-                    ) : (
-
-                      <div onClick={() => setShowFilterInput(true)} style={{ cursor: 'pointer' }}>
-                        <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-                        <Translate> ORDER ID</Translate>
-                      </div>
-                    )}
-                  </HeaderCell>
-                  <Cell  >
-                    {rowData => rowData.orderId}
-                  </Cell>
-                </Column>
-                <Column sortable flexGrow={3} fullText>
-                  <HeaderCell>
-                    <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-                    <Translate>  DATE,TIME</Translate>
-                  </HeaderCell>
-                  <Cell >
-                    {rowData => rowData.submittedAt ? new Date(rowData.submittedAt).toLocaleString() : ""}
-                  </Cell>
-                </Column>
-
-                <Column sortable flexGrow={2} fullText>
-                  <HeaderCell>
-                    <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px'}} />
-                    <Translate>MRN</Translate>
-                  </HeaderCell>
-                  <Cell>
-                    {rowData => rowData.patient?.patientMrn}
-                  </Cell>
-                </Column>
-                <Column sortable flexGrow={2} fullText>
-                  <HeaderCell>
-                    <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-                    <Translate>PATIENT NAME</Translate>
-                  </HeaderCell>
-                  <Cell  >
-                    {rowData => rowData.patient?.fullName}
-                  </Cell>
-                </Column>
-
-
-
-                <Column sortable flexGrow={2} fullText >
-                  <HeaderCell>
-                    <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-                    <Translate>SATUTS</Translate>
-                  </HeaderCell>
-                  <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {rowData => rowData.labStatusLvalue ? rowData.labStatusLvalue.lovDisplayVale : rowData.labStatusLkey}
-                  </Cell>
-                </Column>
-
-                <Column sortable flexGrow={2} fullText>
-                  <HeaderCell>
-
-                    <Translate>MARKER</Translate>
-                  </HeaderCell>
-                  <Cell>
-                    {rowData => rowData.isUrgent ?
-                      <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>Urgent</Tooltip>}
-                      >
-                        <FontAwesomeIcon
-                          icon={faLandMineOn}
-                          style={{ fontSize: '1em', marginRight: 10, color: 'red', cursor: 'pointer' }}
-                        />
-                      </Whisper> : ""}
-                  </Cell>
-                </Column>
-              </Table>
-              <Divider style={{ margin: '4px 4px' }} />
-              <Pagination
-                prev
-                next
-                first
-                last
-                ellipsis
-                boundaryLinks
-                maxButtons={5}
-                size="xs"
-                layout={['total', '-', 'limit', '|', 'pager', 'skip']}
-                limitOptions={[4, 15, 30]}
-                limit={listOrdersResponse.pageSize}
-                activePage={listOrdersResponse.pageNumber}
-
-                onChangePage={pageNumber => {
-                  setListOrdersResponse({ ...listOrdersResponse, pageNumber });
-                }}
-                onChangeLimit={pageSize => {
-                  setListOrdersResponse({ ...listOrdersResponse, pageSize });
-                }}
-                total={filterdOrderList?.length || 0}
-              />
-            </Panel>
+            <Orders order={order} setOrder={setOrder} listOrdersResponse={listOrdersResponse} setListOrdersResponse={setListOrdersResponse} />
           </Col>
           <Col xs={10}>
             <Row>
@@ -928,14 +360,14 @@ const Lab = () => {
                 placeholder="From Date"
                 value={dateFilter.fromDate}
                 onChange={e => setDateFilter({ ...dateFilter, fromDate: e })}
-                style={{ width: '230px', marginRight: '5px',fontFamily:'Inter' ,fontSize:'14px',height:'30px' }}
+                style={{ width: '230px', marginRight: '5px', fontFamily: 'Inter', fontSize: '14px', height: '30px' }}
               />
               <DatePicker
                 oneTap
                 placeholder="To Date"
                 value={dateFilter.toDate}
                 onChange={e => setDateFilter({ ...dateFilter, toDate: e })}
-                style={{ width: '230px', marginRight: '5px',fontFamily:'Inter' ,fontSize:'14px',height:'30px' }}
+                style={{ width: '230px', marginRight: '5px', fontFamily: 'Inter', fontSize: '14px', height: '30px' }}
               />
 
             </Row>
@@ -981,939 +413,21 @@ const Lab = () => {
           </Col>
         </Row>
         <Row>
-          {openorders &&
-            <Panel header="Order's Tests" collapsible defaultExpanded style={{ border: '1px solid #e5e5ea' }}>
-              <Table
-
-                height={200}
-                sortColumn={listOrdersTestResponse.sortBy}
-                sortType={listOrdersTestResponse.sortType}
-                onSortColumn={(sortBy, sortType) => {
-                  if (sortBy)
-                    setListOrdersTestResponse({
-                      ...listOrdersTestResponse,
-                      sortBy,
-                      sortType
-                    });
-                }}
-                rowKey="key"
-                expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
-                renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
-                shouldUpdateScroll={false}
-                data={testsList?.object ?? []}
-                onRowClick={rowData => {
-                  setOpenResults(true);
-                  setTest(rowData);
-                  setResult({...newApDiagnosticOrderTestsResult})
-                }}
-                rowClassName={isTestSelected}
-                loading={isTestsFetching}
-              >
-                <Column width={70} align="center">
-                  <HeaderCell>#</HeaderCell>
-                  <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-                </Column>
-
-                <Column sortable flexGrow={2} fullText>
-                  <HeaderCell>
-                    {showListFilter ? (
-                      <SelectPicker
-                        style={{ width: '80%'}}
-                        placeholder={<Translate>Select Action From List</Translate>}
-                        data={labCatLovQueryResponse?.object}
-                        labelKey="lovDisplayVale"
-                        valueKey="key"
-                        onSelect={(value) => {
-                          setSelectedCatValue(value);
-                          handleFilterResultChange('testKey', value)
-                        }}
-
-                        onClean={() => {
-                          setTimeout(() => setShowListFilter(false), 200)
-                          handleFilterResultChange('testKey', null)
-                        }
-
-
-                        }
-
-                      />
-                    ) : (
-                      <div onClick={() => setShowListFilter(true)} style={{ cursor: 'pointer' }}>
-                        <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-                        <Translate> TEST CATEGORY</Translate>
-                      </div>
-                    )}
-                  </HeaderCell>
-
-
-                  <Cell >
-                    {rowData => {
-                      const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)
-                      if (cat) {
-                        return cat?.categoryLvalue?.lovDisplayVale
-                      }
-                      return "";
-                    }}
-                  </Cell>
-                </Column>
-                <Column sortable flexGrow={2} fullText>
-                  <HeaderCell>
-                    <Translate>TEST NAME</Translate>
-                  </HeaderCell>
-                  <Cell  >
-                    {rowData => rowData.test.testName}
-                  </Cell>
-                </Column>
-
-                <Column sortable flexGrow={2} fullText>
-                  <HeaderCell>
-                    <Translate>IS PROFILE</Translate>
-                  </HeaderCell>
-                  <Cell>
-                    {rowData => {
-                      const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)
-                      return cat?.isProfile ? "Yes" : "NO"
-                    }}
-                  </Cell>
-                </Column>
-                <Column sortable flexGrow={1} fullText>
-                  <HeaderCell>
-
-                    <Translate>REASON</Translate>
-                  </HeaderCell>
-                  <Cell >
-                    {rowData => rowData.reasonLvalue ? rowData.reasonLvalue.lovDisplayVale : rowData.reasonLkey}
-                  </Cell>
-                </Column>
-                <Column sortable flexGrow={2} fullText>
-                  <HeaderCell>
-
-                    <Translate>PROIRITY</Translate>
-                  </HeaderCell>
-                  <Cell >
-                    {rowData => rowData.priorityLvalue ? rowData.priorityLvalue.lovDisplayVale : rowData.priorityLkey}
-                  </Cell>
-                </Column>
-                <Column sortable flexGrow={2} fullText>
-                  <HeaderCell>
-
-                    <Translate>PHYSICIAN</Translate>
-                  </HeaderCell>
-                  <Cell>
-                    {rowData => { return rowData.createdBy, " At", rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "" }}
-
-                  </Cell>
-
-                </Column>
-
-                <Column sortable flexGrow={2} fullText>
-                  <HeaderCell>
-
-                    <Translate>DURATION</Translate>
-                  </HeaderCell>
-                  <Cell >
-                    {rowData => {
-                      const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)
-                      if (cat) {
-                        return cat?.testDurationTime + " " + cat?.timeUnitLvalue?.lovDisplayVale
-                      }
-                      return "";
-
-                    }}
-                  </Cell>
-                </Column>
-                <Column sortable flexGrow={2} fullText>
-                  <HeaderCell>
-
-                    <Translate>ORDERS NOTES</Translate>
-                  </HeaderCell>
-                  <Cell>
-                    {rowData => rowData.notes}
-
-                  </Cell>
-
-                </Column>
-
-                <Column sortable flexGrow={2} fullText>
-                  <HeaderCell>
-
-                    <Translate>TECHNICIAN NOTES</Translate>
-                  </HeaderCell>
-                  <Cell >
-                    {rowData => (
-                      <HStack spacing={10}>
-
-                        <FontAwesomeIcon icon={faComment} style={{ fontSize: '1em' }} onClick={() => setOpenNoteModal(true)} />
-
-                      </HStack>
-
-                    )}
-                  </Cell>
-
-                </Column>
-                <Column sortable flexGrow={2} fullText>
-                  <HeaderCell>
-
-                    <Translate>COLLECT SAMPLE</Translate>
-                  </HeaderCell>
-                  <Cell >
-                    {rowData => (
-                      <HStack spacing={10}>
-
-                        <FontAwesomeIcon icon={faVialCircleCheck} style={{ fontSize: '1em' }} onClick={() => setOpenSampleModal(true)} />
-
-                      </HStack>
-
-                    )}
-                  </Cell>
-
-                </Column>
-                <Column sortable flexGrow={2} fullText >
-                  <HeaderCell>
-                    <Translate>SATUTS</Translate>
-                  </HeaderCell>
-                  <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {rowData => rowData.processingStatusLvalue ? rowData.processingStatusLvalue.lovDisplayVale : rowData.processingStatusLkey}
-                  </Cell>
-                </Column>
-                <Column sortable flexGrow={4} fullText>
-                  <HeaderCell>
-
-                    <Translate>ACTION</Translate>
-                  </HeaderCell>
-                  <Cell >
-                    {rowData => (
-                      <HStack spacing={10}>
-                        <Whisper
-                          placement="top"
-                          trigger="hover"
-                          speaker={<Tooltip>Accept</Tooltip>}
-                        >
-                          <CheckRoundIcon
-                            onClick={() =>
-                               (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") &&
-                                handleAcceptTest(rowData)}
-                            style={{
-                              fontSize: '1em',
-                              marginRight: 10,
-                               color: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'gray' : 'inherit',
-                               cursor: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'not-allowed' : 'pointer',
-                            }}
-                          />
-                        </Whisper>
-                        <Whisper
-                          placement="top"
-                          trigger="hover"
-                          speaker={<Tooltip>Reject</Tooltip>}
-                        >
-                          <WarningRoundIcon
-                            onClick={() => (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") && setOpenRejectedModal(true)}
-                            style={{
-                              fontSize: '1em', marginRight: 10,
-                              color: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'gray' : 'inherit',
-                              cursor: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'not-allowed' : 'pointer',
-                            }} />
-                        </Whisper>
-                        <Whisper
-                          placement="top"
-                          trigger="hover"
-                          speaker={<Tooltip>Send to External Lab</Tooltip>}
-                        >
-                          <FontAwesomeIcon icon={faRightFromBracket} style={{ fontSize: '1em', marginRight: 10 }} />
-                        </Whisper>
-                      </HStack>
-
-                    )}
-                  </Cell>
-
-                </Column>
-              </Table>
-              <Divider style={{ margin: '4px 4px' }} />
-              <Pagination
-                prev
-                next
-                first
-                last
-                ellipsis
-                boundaryLinks
-                maxButtons={5}
-                size="xs"
-                layout={['total', '-', 'limit', '|', 'pager', 'skip']}
-                limitOptions={[5, 15, 30]}
-                //  limit={listRequest.pageSize}
-                //  activePage={listRequest.
-                // pageNumber}
-
-                //  onChangePage={pageNumber => {
-                //    setListRequest({ ...listRequest, pageNumber });
-                //  }}
-                //  onChangeLimit={pageSize => {
-                //    setListRequest({ ...listRequest, pageSize });
-                //  }}
-                total={testsList?.extraNumeric || 0}
-              />
-            </Panel>}
+          {order.key &&
+            <Tests order={order} setTest={setTest} test={test} samplesList={samplesList} />}
         </Row>
         <Row>
-          {openresults && <Panel header="Test's Results Processing" collapsible defaultExpanded style={{ border: '1px solid #e5e5ea' }}>
-            <Table
-
-              height={200}
-
-              //   sortColumn={listRequest.sortBy}
-              //   sortType={listRequest.sortType}
-              //   onSortColumn={(sortBy, sortType) => {
-              //     if (sortBy)
-              //       setListRequest({
-              //         ...listRequest,
-              //         sortBy,
-              //         sortType
-              //       });
-              //   }}
-              headerHeight={35}
-              rowHeight={40}
-
-              data={resultsList?.object ?? []}
-              onRowClick={rowData => {
-                setResult(rowData);
-              }}
-              rowClassName={isResultSelected}
-            >
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
-                  <Translate>TEST NAME</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData => {
-                    if (rowData.isProfile) {
-                      return test.profileList.find((item) => item.key == rowData.testProfileKey)?.testName
-                    }
-                    else {
-                
-                      return test.test.testName
-                    }
-                  }}
-                </Cell>
-              </Column>
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
-                  <Translate>TEST RESULT,UNIT</Translate>
-                </HeaderCell>
-                <Cell style={{ display: 'flex', padding: '7px' }} >
-                  {rowData => {
-                    if (rowData.normalRangeKey) {
-                      if (rowData.normalRange?.resultTypeLkey === "6209578532136054") {
-                        const list = lovValues?.object.filter((item) => item.lovKey === rowData.normalRange?.resultLovKey);
-
-                        return activeRowKey === rowData.key ? (
-                          <SelectPicker
-                            data={list ?? []}
-                            value={rowData.orderTypeLkey}
-                            valueKey="key"
-                            labelKey="lovDisplayVale"
-                            onChange={(value) => {
-
-                              handleValueChange(value, rowData)
-                            }}
-                            style={{ width: 100 }}
-                          />
-                        ) : (
-                          <span>
-                            
-                            <FontAwesomeIcon onClick={() => setActiveRowKey(rowData.key)} icon={faPenToSquare} style={{ fontSize: "1em", marginLeft: "5px", cursor: "pointer" }} />
-                            {rowData.resultLvalue ? rowData.resultLvalue.lovDisplayVale : rowData?.resultLkey}
-                          </span>
-                        );
-                      }
-                      else if (rowData.normalRange?.resultTypeLkey == "6209569237704618") {
-                        return activeRowKey === rowData.key ? (<Input
-                          type='number'
-
-                          onChange={(value) => {
-
-                            setResult({ ...result, resultValueNumber: Number(value) });
-
-                          }}
-                          onPressEnter={async (event) => {
-                            const Respons = await saveResult({ ...result }).unwrap();
-                            setResult({ ...Respons });
-                            saveResultLog({ ...newApLabResultLog, resultKey: result?.key, createdBy: localUser.fullName, resultValue: result.resultValueNumber })
-                            setActiveRowKey(null)
-                            if (rowData.normalRange?.normalRangeTypeLkey == "6221150241292558") {
-
-                              if (result.resultValueNumber > rowData.normalRange?.rangeFrom && result.resultValueNumber < rowData.normalRange?.rangeTo) {
-
-                                const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-                                saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' }).unwrap()
-                                setTest({ ...newApDiagnosticOrderTests });
-                                dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                setTest({ ...Response });
-                                await fetchTest();
-                                await resultFetch();
-                              }
-                              else if (result.resultValueNumber < rowData.normalRange?.rangeFrom) {
-
-                                if (rowData.normalRange?.criticalValue) {
-                                  if (result.resultValueNumber < rowData.normalRange?.criticalValueLessThan) {
-
-                                    const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-                                    saveResult({ ...result, marker: "6730652890616978", statusLkey: '265123250697000' }).unwrap();
-                                    setTest({ ...newApDiagnosticOrderTests });
-                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                    setTest({ ...Response });
-                                    await fetchTest();
-                                    await resultFetch();
-                                  }
-                                  else {
-
-                                    const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-                                    saveResult({ ...result, marker: "6730094497387122", statusLkey: '265123250697000' }).unwrap();
-                                    setTest({ ...newApDiagnosticOrderTests });
-                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                    setTest({ ...Response });
-                                    await fetchTest();
-                                    await resultFetch();
-                                  }
-
-                                }
-                                else {
-
-                                  const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-                                  saveResult({ ...result, marker: "6730094497387122", statusLkey: '265123250697000' }).unwrap();
-                                  setTest({ ...newApDiagnosticOrderTests });
-                                  dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                  setTest({ ...Response });
-                                  await fetchTest();
-                                  await resultFetch();
-                                }
-                              }
-                              else if (result.resultValueNumber > rowData.normalRange?.rangeTo) {
-                                 
-                                if (rowData.normalRange?.criticalValue) {
-                                  if (result.resultValueNumber > rowData.normalRange?.criticalValueMoreThan) {
-
-                                    const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-                                    saveResult({ ...result, marker: "6730104027458969", statusLkey: '265123250697000' }).unwrap();
-                                    setTest({ ...newApDiagnosticOrderTests });
-                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                    setTest({ ...Response });
-                                    await fetchTest();
-                                    await resultFetch();
-                                  }
-                                  else {
-
-                                    const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-                                    saveResult({ ...result, marker: "6730083474405013", statusLkey: '265123250697000' }).unwrap();
-                                    setTest({ ...newApDiagnosticOrderTests });
-                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                    setTest({ ...Response });
-                                    await fetchTest();
-                                    await resultFetch();
-                                  }
-                                }
-                                else {
-
-                                  const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-                                  saveResult({ ...result, marker: "6730083474405013", statusLkey: '265123250697000' }).unwrap();
-                                  setTest({ ...newApDiagnosticOrderTests });
-                                  dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                  setTest({ ...Response });
-                                  await fetchTest();
-                                  await resultFetch();
-                                }
-                              }
-
-                            }
-                            else if (rowData.normalRange?.normalRangeTypeLkey == "6221162489019880") {
-
-                              if (result.resultValueNumber > rowData.normalRange?.rangeFrom) {
-
-                                if (rowData.normalRange?.criticalValue) {
-
-                                  if (result.resultValueNumber >= rowData.normalRange?.criticalValueMoreThan) {
-
-                                    const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-                                    saveResult({ ...result, marker: "6730104027458969", statusLkey: '265123250697000' }).unwrap();
-                                    setTest({ ...newApDiagnosticOrderTests });
-                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                    setTest({ ...Response });
-                                    await fetchTest();
-                                    await resultFetch();
-
-                                  }
-                                  else {
-
-                                    const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-                                    saveResult({ ...result, marker: "6730083474405013", statusLkey: '265123250697000' }).unwrap();
-                                    setTest({ ...newApDiagnosticOrderTests });
-                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                    setTest({ ...Response });
-                                    await fetchTest();
-                                    await resultFetch();
-                                  }
-                                }
-                                else {
-
-                                  const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-                                  saveResult({ ...result, marker: "6730083474405013", statusLkey: '265123250697000' }).unwrap();
-                                  setTest({ ...newApDiagnosticOrderTests });
-                                  dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                  setTest({ ...Response });
-                                  await fetchTest();
-                                  await resultFetch();
-                                }
-                              }
-                              else {
-
-                                const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-                                saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' }).unwrap();
-                                setTest({ ...newApDiagnosticOrderTests });
-                                dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                setTest({ ...Response });
-                                await fetchTest();
-
-                                await resultFetch();
-                              }
-
-                            }
-                            else if (rowData.normalRange?.normalRangeTypeLkey == "6221175556193180") {
-                              if (result.resultValueNumber < rowData.normalRange?.rangeTo) {
-                                if (rowData.normalRange?.criticalValue) {
-                                  if (result.resultValueNumber < rowData.normalRange?.criticalValueLessThan) {
-                                    const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-                                    saveResult({ ...result, marker: "6730652890616978", statusLkey: '265123250697000' }).unwrap();
-                                    setTest({ ...newApDiagnosticOrderTests });
-                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                    setTest({ ...Response });
-                                    await fetchTest();
-                                    await resultFetch();
-                                  }
-                                  else {
-                                    const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-                                    saveResult({ ...result, marker: "6730094497387122", statusLkey: '265123250697000' }).unwrap();
-                                    setTest({ ...newApDiagnosticOrderTests });
-                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                    setTest({ ...Response });
-                                    await fetchTest();
-                                    await resultFetch();
-                                  }
-                                }
-
-                              }
-                              else {
-                                const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-                                saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' }).unwrap();
-                                setTest({ ...newApDiagnosticOrderTests });
-                                dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                setTest({ ...Response });
-                                await fetchTest();
-                                await resultFetch();
-                              }
-
-                            }
-                          }}
-
-                        ></Input>) : (
-                          <span>
-                            {rowData.resultValueNumber}
-                            <FontAwesomeIcon onClick={() => setActiveRowKey(rowData.key)} icon={faPenToSquare} style={{ fontSize: "1em", marginLeft: "5px", cursor: "pointer" }} />
-                          </span>)
-
-                      }
-
-                    }
-                    else {
-                      return activeRowKey === rowData.key ? (<Input
-
-
-                        onChange={async (value) => {
-
-                          // setResult({ ...result, resultText: value });
-                          setResult({ ...result, resultText: value, statusLkey: '265123250697000' });
-                          resultFetch();
-                        }}
-                        onPressEnter={async () => {
-
-
-                          const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-                          saveResult({ ...result }).unwrap();
-                          saveResultLog({ ...newApLabResultLog, resultKey: result?.key, createdBy: localUser.fullName, resultValue: result.resultText });
-                          setTest({ ...newApDiagnosticOrderTests });
-                          dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                          setTest({ ...Response });
-
-                          await fetchTest();
-                          await resultFetch();
-                          setActiveRowKey(null);
-
-                        }}
-                      ></Input>) : (
-                        <span>
-                          {rowData.resultText}
-                          <FontAwesomeIcon onClick={() => setActiveRowKey(rowData.key)} icon={faPenToSquare} style={{ fontSize: "1em", marginLeft: "5px", cursor: "pointer" }} />
-                        </span>
-                      );
-                    }
-                  }}
-                </Cell>
-              </Column>
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
-                  <Translate>NORMAL RANGE</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData => {
-                    if (rowData.normalRangeKey) {
-                      if (rowData.normalRange?.resultTypeLkey == "6209578532136054") {
-
-                        return (joinValuesFromArray(rowData.normalRange?.lovList) + " " + labDetails?.resultUnitLvalue?.lovDisplayVale||"");
-
-                      }
-                      else if (rowData.normalRange?.resultTypeLkey == "6209569237704618") {
-                        if (rowData.normalRange?.normalRangeTypeLkey == "6221150241292558") {
-                          return (rowData.normalRange?.rangeFrom + "_" + rowData.normalRange?.rangeTo + " " + labDetails?.resultUnitLvalue?.lovDisplayVale);
-
-                        }
-                        else if (rowData.normalRange?.normalRangeTypeLkey == "6221162489019880") {
-                          return ("Less Than " + rowData.normalRange?.rangeFrom + " " + labDetails?.resultUnitLvalue?.lovDisplayVale);
-                        }
-                        else if (rowData.normalRange?.normalRangeTypeLkey == "6221175556193180") {
-                          return ("More Than " + rowData.normalRange?.rangeTo + " " + labDetails?.resultUnitLvalue?.lovDisplayVale);
-
-                        }
-
-                      }
-
-                    }
-                    else {
-                      return "Normal Range Not Defined";
-                    }
-                  }}
-                </Cell>
-              </Column>
-
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
-                  <Translate>MARKER</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData => {
-                    if (rowData.marker == "6730122218786367") {
-                      return <FontAwesomeIcon icon={faCircleExclamation} style={{ fontSize: '1em' }} />
-
-                    }
-                    else if (rowData.marker == "6731498382453316") {
-                      return "Normal"
-                    }
-                    else if (rowData.marker == "6730083474405013") {
-                      return <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: '1em' }} />;
-                    }
-                    else if (rowData.marker == "6730094497387122") {
-                      return <FontAwesomeIcon icon={faArrowDown} style={{ fontSize: '1em' }} />;
-                    }
-                    else if (rowData.marker == "6730104027458969") {
-                      return <HStack spacing={10}>
-                        <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} />
-                        <FontAwesomeIcon icon={faArrowUp} style={{ fontSize: '1em' }} />
-
-                      </HStack>;
-                    }
-                    else if (rowData.marker == "6730652890616978") {
-                      return <HStack spacing={10}>
-                        <FontAwesomeIcon icon={faTriangleExclamation} style={{ fontSize: '1em' }} />
-                        <FontAwesomeIcon icon={faArrowDown} style={{ fontSize: '1em' }} />
-
-                      </HStack>;
-                    }
-                  }
-                  }
-                </Cell>
-              </Column>
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
-
-                  <Translate>COMMENTS</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => (
-                    <HStack spacing={10}>
-
-                      <FontAwesomeIcon icon={faComment} style={{ fontSize: '1em' }} onClick={() => setOpenNoteResultModal(true)} />
-
-                    </HStack>
-
-                  )}
-                </Cell>
-              </Column>
-
-
-              <Column sortable flexGrow={3} fullText>
-                <HeaderCell>
-
-                  <Translate>PREVIOUS RESULT</Translate>
-                </HeaderCell>
-                <Cell>
-                  {prevResultsList?.object[1]?.normalRangeKey === "6209578532136054" && (
-                    prevResultsList?.object[1]?.reasonLvalue ? prevResultsList?.object[1]?.reasonLvalue?.lovDisplayVale : prevResultsList?.object[0].reasonLkey
-                  )}
-
-                  {prevResultsList?.object[1]?.normalRangeKey === "6209569237704618" && (
-                    prevResultsList?.object[1]?.resultValueNumber
-                  )}
-
-                  {!["6209578532136054", "6209569237704618"].includes(prevResultsList?.object[1]?.normalRangeKey) &&
-                    (
-                      <></>
-                    )}
-                </Cell>
-              </Column>
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
-
-                  <Translate>PREVIOUS RESULT DATE</Translate>
-                </HeaderCell>
-                <Cell>
-                  {prevResultsList?.object[1] ? new Date(prevResultsList?.object[1]?.createdAt).toLocaleString() : ""}
-                </Cell>
-
-              </Column>
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
-
-                  <Translate>COMPARE WITH ALL PREVIOUS</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => (
-                    <HStack spacing={10}>
-
-                      <FontAwesomeIcon icon={faDiagramPredecessor} style={{ fontSize: '1em' }} />
-
-                    </HStack>
-
-                  )}
-                </Cell>
-              </Column>
-
-
-              <Column sortable flexGrow={1} fullText>
-                <HeaderCell>
-
-                  <Translate>EXTERNEL STATUS</Translate>
-                </HeaderCell>
-                <Cell >
-                  K
-                </Cell>
-
-              </Column>
-              <Column sortable flexGrow={2} fullText >
-                <HeaderCell>
-                  <Translate> RESULT SATUTS</Translate>
-                </HeaderCell>
-                <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {rowData => rowData.statusLvalue ? rowData.statusLvalue.lovDisplayVale : rowData.statusLkey}
-                </Cell>
-              </Column>
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
-
-                  <Translate>EXTERNEL LAB NAME</Translate>
-                </HeaderCell>
-                <Cell>
-                  ll
-
-                </Cell>
-
-              </Column>
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
-
-                  <Translate>ATTACHMENT</Translate>
-                </HeaderCell>
-                <Cell>
-                  ll
-
-                </Cell>
-
-              </Column>
-              <Column sortable flexGrow={2} fullText>
-                <HeaderCell>
-
-                  <Translate>ATTACHED BY/DATE</Translate>
-                </HeaderCell>
-                <Cell>
-                  ll
-
-                </Cell>
-
-              </Column>
-              <Column sortable flexGrow={4} fullText>
-                <HeaderCell>
-
-                  <Translate>ACTION</Translate>
-                </HeaderCell>
-                <Cell >
-                  {rowData => (
-                    <HStack spacing={5}>
-                      <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>Approve</Tooltip>}
-                      >
-                        <CheckRoundIcon style={{
-                          fontSize: '1em',
-                          marginRight: 5,
-                          color: (rowData.statusLkey == "265089168359400") ? 'gray' : 'inherit',
-                          cursor: (rowData.statusLkey == "265089168359400") ? 'not-allowed' : 'pointer',
-                        }}
-                          onClick={async () => {
-                            if (rowData.statusLkey !== "265089168359400") {
-                              try {
-                                function value(rowData) {
-                                  if (rowData.normalRange?.resultTypeLkey === "6209578532136054") {
-                                    return joinValuesFromArray(rowData.normalRange?.lovList);
-                                  } else if (rowData.normalRange?.resultTypeLkey === "6209569237704618") {
-                                    if (rowData.normalRange?.normalRangeTypeLkey === "6221150241292558") {
-                                      return rowData.normalRange?.rangeFrom + "_" + rowData.normalRange?.rangeTo;
-                                    } else if (rowData.normalRange?.normalRangeTypeLkey === "6221162489019880") {
-                                      return "Less Than " + rowData.normalRange?.rangeFrom + " " + labDetails?.resultUnitLvalue?.lovDisplayVale;
-                                    } else if (rowData.normalRange?.normalRangeTypeLkey === "6221175556193180") {
-                                      return "More Than " + rowData.normalRange?.rangeTo + " " + labDetails?.resultUnitLvalue?.lovDisplayVale;
-                                    }
-                                  }
-                                  return "Not Defined";
-                                }
-
-                                const resultValue = value(rowData);
-                                
-
-                                const response = await saveTest({
-                                  ...test,
-                                  processingStatusLkey: "265089168359400",
-                                  approvedAt: Date.now()
-                                }).unwrap();
-
-                                await saveResult({
-                                  ...result,
-                                  statusLkey: "265089168359400",
-                                  approvedAt: Date.now(),
-                                  normalRangeValue: String(resultValue),
-                                }).unwrap();
-
-                                setTest({ ...newApDiagnosticOrderTests });
-                                dispatch(notify({ msg: "Saved successfully", sev: "success" }));
-                                setTest({ ...response });
-
-                                await fetchTest();
-                                await resultFetch();
-                              } catch (error) {
-                                dispatch(notify({ msg: "Save Failed", sev: "error" }));
-                              }
-                            }
-                          }} />
-                      </Whisper>
-                      <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>Reject</Tooltip>}
-                      >
-                        <WarningRoundIcon
-                          style={{
-                            fontSize: '1em',
-                            marginRight: 5,
-                            color: (rowData.statusLkey == "265089168359400") ? 'gray' : 'inherit',
-                            cursor: (rowData.statusLkey == "265089168359400") ? 'not-allowed' : 'pointer',
-                          }}
-                          onClick={() => rowData.statusLkey !== "265089168359400" && setOpenRejectedResultModal(true)} />
-                      </Whisper>
-                      <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>Repeat Test</Tooltip>}
-                      >
-                        <ConversionIcon
-                          style={{
-                            fontSize: '1em',
-                            marginRight: 5,
-                            color: (rowData.statusLkey == "265089168359400") ? 'gray' : 'inherit',
-                            cursor: (rowData.statusLkey == "265089168359400") ? 'not-allowed' : 'pointer',
-                          }}
-                          onClick={async () => {
-                            if (rowData.statusLkey !== "265089168359400") {
-                              await setOpenSampleModal(true);
-                              saveResult({
-                                ...rowData,
-                                statusLkey: '6055029972709625'
-                              }).unwrap();
-                              await resultFetch()
-                            }
-                          }} />
-
-                      </Whisper>
-
-                      <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>Print</Tooltip>}
-                      >
-                        <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: '5px' }} />
-                      </Whisper>
-                      <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>Review</Tooltip>}
-                      >
-                        <FontAwesomeIcon icon={faStar} style={{ fontSize: '1em', marginRight: '5px', color: rowData.reviewAt ? '#e0a500' : "#343434" }}
-                          onClick={async () => {
-                            try {
-                              await saveResult({ ...result, reviewAt: Date.now() }).unwrap();
-                              dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                              resultFetch();
-                            }
-                            catch (error) {
-                              dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-                            }
-                          }} />
-                      </Whisper>
-                      <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>Log</Tooltip>}
-                      >
-                        <FontAwesomeIcon icon={faFileLines} style={{ fontSize: '1em', marginRight: '5px', color: rowData.reviewAt ? '#e0a500' : "#343434" }}
-                          onClick={() => setOpenLogModal(true)} />
-                      </Whisper>
-
-                    </HStack>
-
-                  )}
-                </Cell>
-
-              </Column>
-            </Table>
-            <Divider style={{ margin: '4px 4px' }} />
-            <Pagination
-              prev
-              next
-              first
-              last
-              ellipsis
-              boundaryLinks
-              maxButtons={5}
-              size="xs"
-              layout={['total', '-', 'limit', '|', 'pager', 'skip']}
-              limitOptions={[5, 15, 30]}
-              //  limit={listRequest.pageSize}
-              //  activePage={listRequest.pageNumber}
-
-              //  onChangePage={pageNumber => {
-              //    setListRequest({ ...listRequest, pageNumber });
-              //  }}
-              //  onChangeLimit={pageSize => {
-              //    setListRequest({ ...listRequest, pageSize });
-              //  }}
-              total={40}
-            />
-          </Panel>
+          {test.key &&
+            <Result
+              result={result}
+              setResult={setResult}
+              test={test}
+              setTest={setTest}
+              saveTest={saveTest}
+              labDetails={labDetails}
+              patient={patient}
+              samplesList={samplesList} 
+              fetchTest={refetchTest}/>
           }
         </Row>
 
@@ -1924,350 +438,7 @@ const Lab = () => {
       </div>
     </div>
 
-    <ChatModal open={openNoteResultModal} setOpen={setOpenNoteResultModal} handleSendMessage={handleSendResultMessage} title={"Comments"} list={messagesResultList?.object} fieldShowName={'notes'}/>
-    <ChatModal open={openNoteModal} setOpen={setOpenNoteModal} handleSendMessage={handleSendMessage} title={"Comments"} list={messagesList?.object} fieldShowName={'notes'}/>
-    <Modal open={openSampleModal} onClose={() => setOpenSampleModal(false)} size="md">
-      <Modal.Header>
-        <Modal.Title>Collect Sample</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Row>
-          <Col xs={8}>
-            <Form >
-              <MyInput
-                disabled={true}
-                fieldName={"systemLkey"}
-                record={labDetails}
-                setRecord={setLabDetails}
 
-              /></Form>
-          </Col>
-          <Col xs={8}>
-            <Form >
-              <MyInput
-                disabled={true}
-                fieldName={"tubeColorLkey"}
-                fieldType='select'
-                selectData={TubeColorLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={labDetails}
-                setRecord={setLabDetails}
-
-              /></Form>
-          </Col>
-          <Col xs={8}>
-            <Form >
-              <MyInput
-                disabled={true}
-                fieldName={"tubeTypeLkey"}
-                fieldType='select'
-                selectData={LabTubeTypeLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={labDetails}
-                setRecord={setLabDetails}
-
-              /></Form>
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={8}>
-            <Form >
-              <MyInput
-                fieldName={"sampleContainerLkey"}
-                fieldType='select'
-                selectData={SampleContainerLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                disabled={true}
-                record={labDetails}
-                setRecord={setLabDetails}
-              /></Form>
-          </Col>
-          <Col xs={8}>
-            <Form >
-              <MyInput
-                fieldName={"sampleVolume"}
-                fieldType='number'
-                disabled={true}
-                record={labDetails ?? ""}
-                setRecord={setLabDetails}
-              />
-            </Form>
-
-          </Col>
-          <Col xs={8}>
-            <Form >
-              <MyInput
-                fieldName={"sampleVolumeUnitLkey"}
-                fieldType='select'
-                selectData={ValueUnitLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                disabled={true}
-                record={labDetails}
-                setRecord={setLabDetails}
-              />
-            </Form>
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={8}>
-            <Form>
-              <MyInput
-                fieldLabel={"Actual Sample Quantity"}
-                fieldName={"quantity"}
-                fieldType='number'
-
-                record={sample}
-                setRecord={setSample}
-              />
-            </Form>
-          </Col>
-          <Col xs={8}>
-            <Form>
-              <MyInput
-                fieldName={"unitLkey"}
-                fieldType='select'
-                selectData={ValueUnitLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={sample}
-                setRecord={setSample}
-              />
-            </Form></Col>
-          <Col xs={8}>
-            <Text style={{ fontWeight: 'bold' }}>Sample Collected </Text>
-            <DatePicker
-              style={{width: '270' }}
-              format="dd MMM yyyy hh:mm:ss aa"
-              showMeridiem
-              caretAs={FaCalendar}
-              value={selectedSampleDate}
-              onChange={handleDateChange}
-            /></Col>
-
-        </Row>
-        <Row>
-          <Col xs={24}>
-            <Panel
-              header="Collected Samples"
-              collapsible
-              style={{ border: '1px solid #e5e5ea' }}
-            >
-              <Panel style={{ border: '1px solid #e5e5ea' }}>
-                <Table
-                  height={200}
-
-                  headerHeight={35}
-                  rowHeight={40}
-
-                  data={samplesList?.object ?? []}
-
-                >
-
-                  <Column flexGrow={3} fullText>
-                    <HeaderCell>
-                      <FontAwesomeIcon icon={faFilter} />
-                      <Translate>COLLECTED AT</Translate>
-                    </HeaderCell>
-                    <Cell >
-                      {rowData => rowData.sampleCollectedAt ? new Date(rowData.sampleCollectedAt).toLocaleString() : ""}
-                    </Cell>
-                  </Column>
-
-                  <Column flexGrow={2} fullText>
-                    <HeaderCell>
-                      <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-                      <Translate>ACTUAL SAMPLE QUANTITY</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData => rowData?.quantity ?? ""}
-                    </Cell>
-                  </Column>
-                  <Column flexGrow={1} fullText>
-                    <HeaderCell>
-                      <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-                      <Translate>UNIT </Translate>
-                    </HeaderCell>
-                    <Cell  >
-                      {rowData => rowData.unitLvalue ? rowData.unitLvalue.lovDisplayVale : rowData.unitLkey}
-                    </Cell>
-                  </Column>
-
-                </Table>
-                <Divider style={{ margin: '4px 4px' }} />
-                <Pagination
-                  prev
-                  next
-                  first
-                  last
-                  ellipsis
-                  boundaryLinks
-                  maxButtons={5}
-                  size="xs"
-                  layout={['total', '-', 'limit', '|', 'pager', 'skip']}
-                  limitOptions={[5, 15, 30]}
-                  //  limit={listRequest.pageSize}
-                  //  activePage={listRequest.pageNumber}
-
-                  //  onChangePage={pageNumber => {
-                  //    setListRequest({ ...listRequest, pageNumber });
-                  //  }}
-                  //  onChangeLimit={pageSize => {
-                  //    setListRequest({ ...listRequest, pageSize });
-                  //  }}
-                  total={samplesList?.object?.length || 0}
-                />
-              </Panel>
-            </Panel>
-          </Col>
-        </Row>
-      </Modal.Body>
-      <Modal.Footer style={{ display: "flex", justifyContent: 'flex-end' }}>
-        <Button
-          appearance="primary"
-          color="cyan"
-          onClick={handleSaveSample}
-        >
-          Save
-        </Button>
-        <Button
-          appearance="ghost"
-          color="cyan"
-          onClick={() => setOpenSampleModal(false)}
-        >
-          Cancel
-        </Button>
-      </Modal.Footer>
-    </Modal>
-    <Modal open={openRejectedModal} onClose={() => setOpenRejectedModal(false)} size="xs">
-      <Modal.Header>
-        <Modal.Title>Why do you want to reject the Test? </Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Form >
-          <MyInput
-            disabled={false}
-            fieldType={"textarea"}
-            fieldName={"rejectedReason"}
-            record={test}
-            setRecord={setTest}
-
-          /></Form>
-      </Modal.Body>
-      <Modal.Footer style={{ display: "flex", justifyContent: 'flex-end' }}>
-        <Button
-          appearance="primary"
-          color="cyan"
-          onClick={handleRejectedTest}
-        >
-          Save
-        </Button>
-        <Button
-          appearance="ghost"
-          color="cyan"
-          onClick={() => setOpenRejectedModal(false)}
-        >
-          Cancel
-        </Button>
-      </Modal.Footer>
-    </Modal>
-    <Modal open={openRejectedResultModal} onClose={() => setOpenRejectedResultModal(false)} size="xs">
-      <Modal.Header>
-        <Modal.Title>Why do you want to reject the Test? </Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Form >
-          <MyInput
-            disabled={false}
-            fieldType={"textarea"}
-            fieldName={"rejectedReason"}
-            record={result}
-            setRecord={setResult}
-
-          /></Form>
-      </Modal.Body>
-      <Modal.Footer style={{ display: "flex", justifyContent: 'flex-end' }}>
-        <Button
-          appearance="primary"
-          color="cyan"
-          onClick={async () => {
-            {
-              try {
-                await saveResult({ ...result, statusLkey: '6488555526802885', rejectedAt: Date.now() }).unwrap();
-                dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                resultFetch();
-                setOpenRejectedResultModal(false)
-              }
-              catch (error) {
-                dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-              }
-            }
-          }
-          }
-        >
-          Save
-        </Button>
-        <Button
-          appearance="ghost"
-          color="cyan"
-          onClick={() => setOpenRejectedResultModal(false)}
-        >
-          Cancel
-        </Button>
-      </Modal.Footer>
-    </Modal>
-    <Modal open={openLogModal} onClose={() => setOpenLogModal(false)} size="md">
-      <Modal.Header>
-        <Modal.Title>  </Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Table
-          data={resultLogList?.object ?? []}
-          loading={fetchLog}
-        >
-          <Column flexGrow={1} fullText>
-            <HeaderCell>
-              <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-              <Translate>RESULT </Translate>
-            </HeaderCell>
-            <Cell  >
-              {rowData => rowData.resultValue}
-            </Cell>
-          </Column>
-          <Column flexGrow={1} fullText>
-            <HeaderCell>
-              <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-              <Translate>Time </Translate>
-            </HeaderCell>
-            <Cell  >
-              {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}
-            </Cell>
-          </Column>
-          <Column flexGrow={1} fullText>
-            <HeaderCell>
-              <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-              <Translate>log </Translate>
-            </HeaderCell>
-            <Cell  >
-              {rowData => rowData.createdBy}
-            </Cell>
-          </Column>
-        </Table>
-      </Modal.Body>
-      <Modal.Footer style={{ display: "flex", justifyContent: 'flex-end' }}>
-        
-        <Button
-          appearance="ghost"
-          color="cyan"
-          onClick={() => setOpenLogModal(false)}
-        >
-          Cancel
-        </Button>
-      </Modal.Footer>
-    </Modal>
   </>)
 }
 export default Lab;
