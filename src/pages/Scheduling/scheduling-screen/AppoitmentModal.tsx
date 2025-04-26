@@ -1,6 +1,6 @@
 import MyInput from "@/components/MyInput";
 import Translate from "@/components/Translate";
-import QuickPatient from "@/pages/patient/patient-profile/quickPatient";
+import QuickPatient from "@/pages/patient/facility-patient-list/QuickPatient";
 import { ApAppointment, ApPatient } from "@/types/model-types";
 import { newApAppointment, newApPatient } from "@/types/model-types-constructor";
 import { faBolt } from "@fortawesome/free-solid-svg-icons";
@@ -699,7 +699,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
                                 <QuickPatient
                                     open={quickPatientModalOpen}
-                                    onClose={() => setQuickPatientModalOpen(false)}
+                                    setOpen={() => setQuickPatientModalOpen(false)}
                                 />
                             </div>
 
