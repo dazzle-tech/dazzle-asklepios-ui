@@ -95,7 +95,7 @@ const MyModal = ({
                 <Form className='footer-modal-content'>
                     {!hideCanel && <MyButton appearance={'subtle'} onClick={() => setOpen(false)}>Cancel</MyButton>}
                     {!hideBack && activeStep > 0 && <MyButton appearance={'subtle'} onClick={handlePrev}>Back</MyButton>}
-                    {!(activeStep === computedPagesCount - 1) && <MyButton onClick={handleNext}>Next</MyButton>} {steps[activeStep]?.footer}
+                    {!(activeStep === computedPagesCount - 1) && <MyButton onClick={handleNext} disabled={steps[activeStep]?.disabledNext}>Next</MyButton>} {steps[activeStep]?.footer}
                     {(activeStep === computedPagesCount - 1) && !hideActionBtn && <MyButton onClick={actionButtonFunction} disabled={isDisabledActionBtn}>{actionButtonLabel}</MyButton>}
                     {footerButtons}
 

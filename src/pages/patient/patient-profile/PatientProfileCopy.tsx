@@ -12,7 +12,7 @@ import { useSelector } from 'react-redux';
 import ProfileHeader from './ProfileHeader';
 import ProfileSidebar from './ProfileSidebar';
 import ProfileTabs from './ProfileTabs';
-import PatientQuickAppointment from './PatientQuickAppointment';
+import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
 import PatientVisitHistory from './PatientVisitHistory';
 import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import { useSavePatientMutation } from '@/services/patientService';
