@@ -6,7 +6,7 @@ import { Drawer, Table } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { useGetEncountersQuery } from '@/services/encounterService';
 import { initialListRequest, ListRequest } from '@/types/types';
-import PatientQuickAppointment from './PatientQuickAppointment';
+import PatientQuickAppointment from './PatientQuickAppoinment/PatientQuickAppointment';
 import MyTable from '@/components/MyTable';
 import './styles.less'
 const PatientVisitHistory = ({ visitHistoryModel, localPatient, setVisitHistoryModel, quickAppointmentModel, setQuickAppointmentModel }) => {

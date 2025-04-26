@@ -66,7 +66,7 @@ import EncounterPatientPrivateLogin from './pages/encounter/encounter-patient-pr
 import VaccinationTab from './pages/encounter/encounter-pre-observations/vaccination-tab';
 import CPTSetup from './pages/setup/cpt-setup';
 import LOINCSetup from './pages/setup/lonic-setup';
-import PatientQuickAppointment from './pages/patient/patient-profile/PatientQuickAppointment';
+import PatientQuickAppointment from './pages/patient/patient-profile/PatientQuickAppoinment/PatientQuickAppointment';
 import PatientEMR from './pages/patient/patient-emr';
 import PatientProfileCopy from './pages/patient/patient-profile/PatientProfileCopy';
 import Lab from './pages/lab-module';
