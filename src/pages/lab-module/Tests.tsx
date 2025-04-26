@@ -1,5 +1,6 @@
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
+import { forwardRef, useImperativeHandle } from 'react';
 import { useGetDiagnosticOrderTestQuery, useGetOrderTestNotesByTestIdQuery, useSaveDiagnosticOrderTestMutation } from "@/services/encounterService";
 import { useGetDiagnosticsTestLaboratoryListQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { initialListRequest, ListRequest } from "@/types/types";
@@ -21,7 +22,17 @@ import SampleModal from "./SampleModal";
 import ChatModal from "@/components/ChatModal";
 import CancellationModal from "@/components/CancellationModal";
 const { Column, HeaderCell, Cell } = Table;
-const Tests = ({ order, test, setTest, samplesList }) => {
+type Props = {
+    order: any;         
+    test: any; 
+    setTest: any;
+    samplesList: any;
+    resultFetch: any;    
+  };
+const Tests =forwardRef<unknown,Props>(({ order, test, setTest, samplesList,resultFetch },ref)=>{
+   useImperativeHandle(ref, () => ({
+    fetchTest
+    }));
     const dispatch = useAppDispatch();
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
     const [selectedCatValue, setSelectedCatValue] = useState(null);
@@ -284,7 +295,7 @@ const Tests = ({ order, test, setTest, samplesList }) => {
 
                 setTest({ ...Response });
                 await fetchTest();
-                // await resultFetch();
+                await resultFetch();
             }
             catch (error) {
                 console.error("Error saving test:", error);
@@ -326,7 +337,7 @@ const Tests = ({ order, test, setTest, samplesList }) => {
         }
     }
     return (
-        <Panel header="Order's Tests" collapsible defaultExpanded className="panel-border">
+        <Panel ref={ref} header="Order's Tests" collapsible defaultExpanded className="panel-border">
             <Table
 
                 height={200}
@@ -596,10 +607,10 @@ const Tests = ({ order, test, setTest, samplesList }) => {
                 }}
                 total={testsList?.extraNumeric || 0}
             />
-            <SampleModal open={openSampleModal} setOpen={setOpenSampleModal} samplesList={samplesList} labDetails={laboratoryList?.object?.find((item) => item.testKey === test.testKey)} saveTest={saveTest} order={order} test={test} setTest={setTest} />
+            <SampleModal open={openSampleModal} setOpen={setOpenSampleModal} samplesList={samplesList} labDetails={laboratoryList?.object?.find((item) => item.testKey === test.testKey)} saveTest={saveTest} fetchTest={fetchTest} test={test} setTest={setTest} />
             <ChatModal open={openNoteModal} setOpen={setOpenNoteModal} handleSendMessage={handleSendMessage} title={"Comments"} list={messagesList?.object} fieldShowName={'notes'} />
             <CancellationModal open={openRejectedModal} setOpen={setOpenRejectedModal} fieldName='rejectedReason' handleCancle={handleRejectedTest} object={test} setObject={setTest} fieldLabel={"Reject Reason"} title="Reject" />
         </Panel>
     );
-};
+});
 export default Tests;

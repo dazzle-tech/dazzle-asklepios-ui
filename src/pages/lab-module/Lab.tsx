@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState,useRef } from 'react';
 
-import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
@@ -8,61 +7,32 @@ import {
 } from '@/services/setupService';
 import { RootState } from '@/store';
 import { notify } from '@/utils/uiReducerActions';
-import {
-  faArrowDown,
-  faArrowUp,
-  faCircleExclamation,
-  faComment,
-  faDiagramPredecessor,
-  faFileLines,
-  faFilter,
-  faPenToSquare,
-  faPrint,
-  faStar,
-  faTriangleExclamation
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import CheckRoundIcon from '@rsuite/icons/CheckRound';
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-import ConversionIcon from '@rsuite/icons/Conversion';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import WarningRoundIcon from '@rsuite/icons/WarningRound';
+
+
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { useSelector } from 'react-redux';
-import { HStack, SelectPicker, Tooltip, Whisper } from 'rsuite';
+
 import './styles.less';
 
 import {
   useGetLovAllValuesQuery,
-  useGetLovValuesByCodeQuery
 } from '@/services/setupService';
 import {
   DatePicker,
-  Divider,
-  Form,
-  IconButton,
-  Input,
-  Modal,
-  Pagination,
   Row,
   Table
 } from 'rsuite';
 
 import {
-  useGetDiagnosticOrderTestResultQuery,
   useGetLabResultLogListQuery,
-  useGetOrderTestResultNotesByResultIdQuery,
   useGetOrderTestSamplesByTestIdQuery,
   useSaveDiagnosticOrderTestResultMutation,
-  useSaveDiagnosticOrderTestResultsNotesMutation,
   useSaveLabResultLogMutation
 } from '@/services/labService';
 import { addFilterToListRequest, fromCamelCaseToDBName, getNumericTimestamp } from '@/utils';
 
 
-import ChatModal from '@/components/ChatModal';
-import MyInput from '@/components/MyInput';
 import {
   useSaveDiagnosticOrderTestMutation
 } from '@/services/encounterService';
@@ -78,9 +48,7 @@ import {
 } from '@/types/model-types-constructor';
 import { initialListRequest, initialListRequestAllValues, ListRequest } from '@/types/types';
 import {
-  Button,
   Col,
-  Panel,
   Steps
 } from 'rsuite';
 import PatientSide from './PatienSide';
@@ -89,24 +57,26 @@ const { Column, HeaderCell, Cell } = Table;
 
 
 import Orders from './Orders';
-import Tests from './Tests';
-import CancellationModal from '@/components/CancellationModal';
 import Result from './Result';
+import Tests from './Tests';
 const Lab = () => {
   const dispatch = useAppDispatch();
   const uiSlice = useAppSelector(state => state.auth);
+  const ResultRef = useRef(null);
+  const TestRef = useRef(null);
+  const refetchTest = () => {
+    TestRef.current?.refetchTest(); 
+  };
+  const refetchResult = () => {
+    ResultRef.current?.handleClear(); 
+  };
   const [localUser, setLocalUser] = useState(uiSlice?.user);
-  const [openRejectedModal, setOpenRejectedModal] = useState(false);
-  const [openRejectedResultModal, setOpenRejectedResultModal] = useState(false);
   const [currentStep, setCurrentStep] = useState("6055029972709625");
-  const [openLogModal, setOpenLogModal] = useState(false);
   const [encounter, setEncounter] = useState({ ...newApEncounter });
   const [patient, setPatient] = useState({ ...newApPatient });
   const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders })
   const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
-  const [note, setNote] = useState({ ...newApDiagnosticOrderTestsNotes });
   const [result, setResult] = useState({ ...newApDiagnosticOrderTestsResult, resultLkey: '' })
-  const [activeRowKey, setActiveRowKey] = useState(null);
   const [listOrdersResponse, setListOrdersResponse] = useState<ListRequest>({
     ...initialListRequest
 
@@ -125,10 +95,8 @@ const Lab = () => {
 
   })
   const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
- 
+
   const { data: samplesList, refetch: fecthSample } = useGetOrderTestSamplesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
-  const { data: resultLogList, refetch: fetchLogs, isFetching: fetchLog } = useGetLabResultLogListQuery({ ...listLogRequest });
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
     <div style={{ display: 'flex' }}>
       <h5>Clinical Laboratory</h5>
@@ -193,41 +161,12 @@ const Lab = () => {
 
     ],
   });
-  const [listPrevResultResponse, setListPrevResultResponse] = useState<ListRequest>({
-    ...initialListRequest,
-    sortBy: "createdAt",
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: "patient_key",
-        operator: "match",
-        value: patient?.key || undefined,
-      },
-      {
-        fieldName: "medical_test_key",
-        operator: "match",
-        value: test?.testKey || undefined,
-      }
 
 
-    ],
-  });
-  const { data: resultsList, refetch: resultFetch } = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
-  const { data: prevResultsList, refetch: prevResultFetch } = useGetDiagnosticOrderTestResultQuery({ ...listPrevResultResponse });
   const [labDetails, setLabDetails] = useState<any>({ ...newApDiagnosticTestLaboratory });
-
-  
-
-  const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  
- 
   const [saveTest] = useSaveDiagnosticOrderTestMutation();
- 
   const [saveResult] = useSaveDiagnosticOrderTestResultMutation();
-  const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
   const [saveResultLog, saveResultLogMutation] = useSaveLabResultLogMutation();
-  const endOfMessagesRef = useRef(null);
 
   useEffect(() => {
     handleManualSearch();
@@ -301,37 +240,12 @@ const Lab = () => {
         value: test?.testKey || undefined,
       }
 
-
     ];
-    setListPrevResultResponse((prevRequest) => ({
-      ...prevRequest,
-      filters: updatedPrevFilters,
-    }));
+    
 
   }, [test]);
 
-  useEffect(() => {
-    
-    resultFetch();
-    const updatedFilter = [
-      {
-
-        fieldName: "result_key",
-        operator: "match",
-        value: result?.key ?? undefined,
-
-      }
-    ];
-    setListLogRequest((prevRequest) => ({
-      ...prevRequest,
-      filters: updatedFilter,
-    }));
-    fetchLogs();
-  }, [result]);
-  useEffect(() => {
  
-    fetchLogs();
-  }, [saveResultLogMutation])
   useEffect(() => {
     handleManualSearch();
   }, []);
@@ -384,57 +298,6 @@ const Lab = () => {
     }
   }, [selectedCatValue, laboratoryListToFilter]);
 
-
-
-  
-
-  
-
-
- 
-  const handleFilterChange = (fieldName, value) => {
-    if (value) {
-      setListOrdersResponse(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'startsWithIgnoreCase',
-          value,
-          listOrdersResponse
-        )
-      );
-    } else {
-      setListOrdersResponse({ ...listOrdersResponse, filters: [] });
-    }
-  };
-  const handleFilterResultChange = (fieldName, value) => {
-    if (value) {
-      setListOrdersTestResponse(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'startsWithIgnoreCase',
-          value,
-          listOrdersTestResponse
-        )
-      );
-    } else {
-      setListOrdersTestResponse({
-        ...listOrdersTestResponse, filters: [
-          {
-            fieldName: "order_key",
-            operator: "match",
-            value: order?.key ?? undefined,
-          },
-          {
-            fieldName: "order_type_lkey",
-            operator: "match",
-            value: "862810597620632",
-          }
-
-
-        ]
-      });
-    }
-  };
   const handleManualSearch = () => {
 
     if (dateFilter.fromDate && dateFilter.toDate) {
@@ -464,50 +327,7 @@ const Lab = () => {
       setListOrdersResponse({ ...listOrdersResponse, filters: [] });
     }
   };
-  const joinValuesFromArray = (keys) => {
-
-    return keys
-      .map(key => lovValues?.object?.find(lov => lov.key === key))
-      .filter(obj => obj !== undefined)
-      .map(obj => obj.lovDisplayVale)
-      .join(', ');
-  };
-  const handleValueChange = async (value, rowData) => {
-
-    const Response = await saveResult({ ...rowData, resultLkey: String(value) }).unwrap();
-
-
-    const v = rowData.normalRange?.lovList.find((item) => item == value);
-    const valueText=lovValues?.object?.find(lov => lov.key === value)?.lovDisplayVale
-    if (v) {
-      
-      const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-      saveResult({ ...result, marker: "6731498382453316", statusLkey: '265123250697000' , resultLkey: String(value)}).unwrap();
-      saveResultLog({ ...newApLabResultLog, resultKey: result?.key, createdBy: localUser.fullName, resultValue:valueText }).unwrap();
-      setTest({ ...newApDiagnosticOrderTests });
-
-      dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-      setTest({ ...Response });
-      // await fetchTest();
-      await resultFetch();
-
-    }
-    else {
-    
-      const Response = await saveTest({ ...test, processingStatusLkey: '265123250697000', readyAt: Date.now() }).unwrap();
-      saveResult({ ...result, marker: "6730122218786367", statusLkey: '265123250697000', resultLkey: String(value) }).unwrap();
-      saveResultLog({ ...newApLabResultLog, resultKey: result?.key, createdBy: localUser.fullName, resultValue:valueText }).unwrap();
-      setTest({ ...newApDiagnosticOrderTests });
-      dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-      setTest({ ...Response });
-      // await fetchTest();
-      await resultFetch();
-    }
-    await resultFetch().then(() => {
-
-    });
-    setActiveRowKey(null)
-  };
+;
 
   const stepsData = [
     { key: "6055207372976955", value: "Sample Collected", time: " " },
@@ -524,13 +344,13 @@ const Lab = () => {
 
   return (<>
 
-<div className='container'>
+    <div className='container'>
       <div className='left-box' >
 
 
         <Row>
           <Col xs={14}>
-        <Orders order={order} setOrder={setOrder}  listOrdersResponse={listOrdersResponse} setListOrdersResponse={setListOrdersResponse}/>
+            <Orders order={order} setOrder={setOrder} listOrdersResponse={listOrdersResponse} setListOrdersResponse={setListOrdersResponse} />
           </Col>
           <Col xs={10}>
             <Row>
@@ -540,14 +360,14 @@ const Lab = () => {
                 placeholder="From Date"
                 value={dateFilter.fromDate}
                 onChange={e => setDateFilter({ ...dateFilter, fromDate: e })}
-                style={{ width: '230px', marginRight: '5px',fontFamily:'Inter' ,fontSize:'14px',height:'30px' }}
+                style={{ width: '230px', marginRight: '5px', fontFamily: 'Inter', fontSize: '14px', height: '30px' }}
               />
               <DatePicker
                 oneTap
                 placeholder="To Date"
                 value={dateFilter.toDate}
                 onChange={e => setDateFilter({ ...dateFilter, toDate: e })}
-                style={{ width: '230px', marginRight: '5px',fontFamily:'Inter' ,fontSize:'14px',height:'30px' }}
+                style={{ width: '230px', marginRight: '5px', fontFamily: 'Inter', fontSize: '14px', height: '30px' }}
               />
 
             </Row>
@@ -594,11 +414,20 @@ const Lab = () => {
         </Row>
         <Row>
           {order.key &&
-            <Tests order={order} setTest={setTest} test={test} samplesList={samplesList}/>}
+            <Tests order={order} setTest={setTest} test={test} samplesList={samplesList} />}
         </Row>
         <Row>
-          {test.key && 
-         <Result result={result} setResult={setResult} test={test} setTest={setTest} saveTest={saveTest} labDetails={labDetails} />
+          {test.key &&
+            <Result
+              result={result}
+              setResult={setResult}
+              test={test}
+              setTest={setTest}
+              saveTest={saveTest}
+              labDetails={labDetails}
+              patient={patient}
+              samplesList={samplesList} 
+              fetchTest={refetchTest}/>
           }
         </Row>
 
@@ -609,103 +438,7 @@ const Lab = () => {
       </div>
     </div>
 
- 
-   
-    <Modal open={openRejectedResultModal} onClose={() => setOpenRejectedResultModal(false)} size="xs">
-      <Modal.Header>
-        <Modal.Title>Why do you want to reject the Test? </Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Form >
-          <MyInput
-            disabled={false}
-            fieldType={"textarea"}
-            fieldName={"rejectedReason"}
-            record={result}
-            setRecord={setResult}
 
-          /></Form>
-      </Modal.Body>
-      <Modal.Footer style={{ display: "flex", justifyContent: 'flex-end' }}>
-        <Button
-          appearance="primary"
-          color="cyan"
-          onClick={async () => {
-            {
-              try {
-                await saveResult({ ...result, statusLkey: '6488555526802885', rejectedAt: Date.now() }).unwrap();
-                dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                resultFetch();
-                setOpenRejectedResultModal(false)
-              }
-              catch (error) {
-                dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-              }
-            }
-          }
-          }
-        >
-          Save
-        </Button>
-        <Button
-          appearance="ghost"
-          color="cyan"
-          onClick={() => setOpenRejectedResultModal(false)}
-        >
-          Cancel
-        </Button>
-      </Modal.Footer>
-    </Modal>
-    <Modal open={openLogModal} onClose={() => setOpenLogModal(false)} size="md">
-      <Modal.Header>
-        <Modal.Title>  </Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Table
-          data={resultLogList?.object ?? []}
-          loading={fetchLog}
-        >
-          <Column flexGrow={1} fullText>
-            <HeaderCell>
-              <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-              <Translate>RESULT </Translate>
-            </HeaderCell>
-            <Cell  >
-              {rowData => rowData.resultValue}
-            </Cell>
-          </Column>
-          <Column flexGrow={1} fullText>
-            <HeaderCell>
-              <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-              <Translate>Time </Translate>
-            </HeaderCell>
-            <Cell  >
-              {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}
-            </Cell>
-          </Column>
-          <Column flexGrow={1} fullText>
-            <HeaderCell>
-              <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-              <Translate>log </Translate>
-            </HeaderCell>
-            <Cell  >
-              {rowData => rowData.createdBy}
-            </Cell>
-          </Column>
-        </Table>
-      </Modal.Body>
-      <Modal.Footer style={{ display: "flex", justifyContent: 'flex-end' }}>
-        
-        <Button
-          appearance="ghost"
-          color="cyan"
-          onClick={() => setOpenLogModal(false)}
-        >
-          Cancel
-        </Button>
-      </Modal.Footer>
-    </Modal>
-  
   </>)
 }
 export default Lab;

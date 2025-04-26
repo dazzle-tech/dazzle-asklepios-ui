@@ -8,8 +8,10 @@ import { notify } from '@/utils/uiReducerActions';
 import {
   Form, Modal,
   Row, Col, Button, DatePicker, Table, Divider, Pagination, Panel,
-  Text
+  Text,
+  Stack
 } from "rsuite";
+import './styles.less';
 const { Column, HeaderCell, Cell } = Table;
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
@@ -18,8 +20,14 @@ import { FaCalendar } from "react-icons/fa6";
 import Translate from "@/components/Translate";
 import { useAppDispatch } from "@/hooks";
 import { useSaveDiagnosticOrderTestSamplesMutation } from "@/services/labService";
+import MyModal from "@/components/MyModal/MyModal";
+import { title } from "process";
+import { FaYoutube } from "react-icons/fa";
+import { TableColumn } from "@rsuite/icons";
+import MyTable from "@/components/MyTable";
+import MyLabel from "@/components/MyLabel";
 
-const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, order ,saveTest}) => {
+const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, saveTest ,fetchTest }) => {
   const dispatch = useAppDispatch();
   const [sample, setSample] = useState({ ...newApDiagnosticOrderTestsSamples });
   const [selectedSampleDate, setSelectedSampleDate] = useState(null);
@@ -39,14 +47,14 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, or
       const Response = await saveTest({ ...test, processingStatusLkey: "6055207372976955" }).unwrap();
       saveSample({
         ...sample,
-        orderKey: order.key,
+        orderKey: test.orderKey,
         testKey: test.key,
         sampleCollectedAt: selectedSampleDate ? selectedSampleDate.getTime() : null
       }).unwrap();
       setTest({ ...newApDiagnosticOrderTests })
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
       setTest({ ...Response });
-      // await fetchTest();
+      await fetchTest();
       // await fecthSample();
       setOpen(false);
       setSample({ ...newApDiagnosticOrderTestsSamples });
@@ -55,19 +63,50 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, or
     catch (error) {
       dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
     }
-  }
+  };
 
+  const tableColumns = [
+    {
+      key: "sampleCollectedAt",
+      dataKey: "sampleCollectedAt",
+      title: <Translate>COLLECTED AT</Translate>,
+      fullText: true,
+      flexGrow: 2,
+      render: (rowData) => rowData.sampleCollectedAt ? new Date(rowData.sampleCollectedAt).toLocaleString() : "",
+    },
+    {
+      key: "quantity",
+      dataKey: "quantity",
+      title: <Translate>ACTUAL SAMPLE QUANTITY</Translate>,
+      fullText: true,
+      flexGrow: 2,
+      render: (rowData) => rowData?.quantity ?? "",
+    },
+    {
+      key: "unitLkey",
+      dataKey: "unitLkey",
+      title: <Translate>UNIT </Translate>,
+      fullText: true,
+      flexGrow: 1,
+      render: (rowData) => rowData.unitLvalue ? rowData.unitLvalue.lovDisplayVale : rowData.unitLkey,
+    }]
   return (
     <div className="sample-modal">
-      <Modal open={open} onClose={() => setOpen(false)} size="md">
-        <Modal.Header>
-          <Modal.Title>Collect Sample</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
+      <MyModal
+        open={open}
+        setOpen={setOpen}
+        size="md"
+        bodyheight={1000}
+        actionButtonFunction={handleSaveSample}
+        title="Collect Sample"
+        steps={[{ title: "Sample", icon: FaYoutube }]}
+        position="right"
+        content={<>
           <Row>
             <Col xs={8}>
               <Form >
                 <MyInput
+                  width={200}
                   disabled={true}
                   fieldName={"systemLkey"}
                   record={labDetails}
@@ -78,6 +117,7 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, or
             <Col xs={8}>
               <Form >
                 <MyInput
+                  width={200}
                   disabled={true}
                   fieldName={"tubeColorLkey"}
                   fieldType='select'
@@ -92,6 +132,7 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, or
             <Col xs={8}>
               <Form >
                 <MyInput
+                  width={200}
                   disabled={true}
                   fieldName={"tubeTypeLkey"}
                   fieldType='select'
@@ -108,6 +149,7 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, or
             <Col xs={8}>
               <Form >
                 <MyInput
+                  width={200}
                   fieldName={"sampleContainerLkey"}
                   fieldType='select'
                   selectData={SampleContainerLovQueryResponse?.object ?? []}
@@ -121,6 +163,7 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, or
             <Col xs={8}>
               <Form >
                 <MyInput
+                  width={200}
                   fieldName={"sampleVolume"}
                   fieldType='number'
                   disabled={true}
@@ -133,6 +176,7 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, or
             <Col xs={8}>
               <Form >
                 <MyInput
+                  width={200}
                   fieldName={"sampleVolumeUnitLkey"}
                   fieldType='select'
                   selectData={ValueUnitLovQueryResponse?.object ?? []}
@@ -152,7 +196,7 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, or
                   fieldLabel={"Actual Sample Quantity"}
                   fieldName={"quantity"}
                   fieldType='number'
-
+                  width={200}
                   record={sample}
                   setRecord={setSample}
                 />
@@ -161,6 +205,7 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, or
             <Col xs={8}>
               <Form>
                 <MyInput
+                  width={200}
                   fieldName={"unitLkey"}
                   fieldType='select'
                   selectData={ValueUnitLovQueryResponse?.object ?? []}
@@ -171,107 +216,44 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, or
                 />
               </Form></Col>
             <Col xs={8}>
-              <Text style={{ fontWeight: 'bold' }}>Sample Collected </Text>
-              <DatePicker
-                style={{ width: '270' }}
-                format="dd MMM yyyy hh:mm:ss aa"
-                showMeridiem
-                caretAs={FaCalendar}
-                value={selectedSampleDate}
-                onChange={handleDateChange}
-              /></Col>
+              <div className='vaccine-input-wrapper'>
+                <div>  
+                  <MyLabel label="Sample Collected" /></div>
+                <Stack spacing={10} direction="column" alignItems="flex-start" className='date-time-picker'>
+                  <DatePicker
+                    style={{ width: '200px'}}
+                    format="dd MMM yyyy hh:mm:ss aa"
+                    showMeridiem
+                    caretAs={FaCalendar}
+                    value={selectedSampleDate}
+                    onChange={handleDateChange}
+                  />
+                </Stack>
+              </div>
+           </Col>
 
           </Row>
           <Row>
             <Col xs={24}>
               <Panel
-                header="Collected Samples"
-                collapsible
+
                 style={{ border: '1px solid #e5e5ea' }}
               >
-                <Panel style={{ border: '1px solid #e5e5ea' }}>
-                  <Table
-                    height={200}
+                <MyTable
+                  columns={tableColumns}
+                  data={samplesList?.object ?? []}
+                  height={200}
+                  rowHeight={40}
+                ></MyTable>
 
-                    data={samplesList?.object ?? []}
 
-                  >
-
-                    <Column flexGrow={3} fullText>
-                      <HeaderCell>
-
-                        <Translate>COLLECTED AT</Translate>
-                      </HeaderCell>
-                      <Cell >
-                        {rowData => rowData.sampleCollectedAt ? new Date(rowData.sampleCollectedAt).toLocaleString() : ""}
-                      </Cell>
-                    </Column>
-
-                    <Column flexGrow={2} fullText>
-                      <HeaderCell>
-
-                        <Translate>ACTUAL SAMPLE QUANTITY</Translate>
-                      </HeaderCell>
-                      <Cell>
-                        {rowData => rowData?.quantity ?? ""}
-                      </Cell>
-                    </Column>
-                    <Column flexGrow={1} fullText>
-                      <HeaderCell>
-
-                        <Translate>UNIT </Translate>
-                      </HeaderCell>
-                      <Cell  >
-                        {rowData => rowData.unitLvalue ? rowData.unitLvalue.lovDisplayVale : rowData.unitLkey}
-                      </Cell>
-                    </Column>
-
-                  </Table>
-                  <Divider />
-                  <Pagination
-                    prev
-                    next
-                    first
-                    last
-                    ellipsis
-                    boundaryLinks
-                    maxButtons={5}
-                    size="xs"
-                    layout={['total', '-', 'limit', '|', 'pager', 'skip']}
-                    limitOptions={[5, 15, 30]}
-                    //  limit={listRequest.pageSize}
-                    //  activePage={listRequest.pageNumber}
-
-                    //  onChangePage={pageNumber => {
-                    //    setListRequest({ ...listRequest, pageNumber });
-                    //  }}
-                    //  onChangeLimit={pageSize => {
-                    //    setListRequest({ ...listRequest, pageSize });
-                    //  }}
-                    total={samplesList?.object?.length || 0}
-                  />
-                </Panel>
               </Panel>
             </Col>
-          </Row>
-        </Modal.Body>
-        <Modal.Footer style={{ display: "flex", justifyContent: 'flex-end' }}>
-          <Button
-            appearance="primary"
-            color="cyan"
-            onClick={handleSaveSample}
-          >
-            Save
-          </Button>
-          <Button
-            appearance="ghost"
-            color="cyan"
-            onClick={() => setOpen(false)}
-          >
-            Cancel
-          </Button>
-        </Modal.Footer>
-      </Modal>
+          </Row></>}
+
+
+      ></MyModal>
+
     </div>
   );
 };
