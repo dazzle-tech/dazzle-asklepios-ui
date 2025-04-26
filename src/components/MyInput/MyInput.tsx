@@ -26,10 +26,10 @@ const MyInput = ({
   fieldName,
   fieldType = 'text',
   record,
-  rightAddonwidth=null,
-  rightAddon:rightAddon=null,
-  leftAddon:leftAddon=null,
-  leftAddonwidth=null,
+  rightAddonwidth = null,
+  rightAddon: rightAddon = null,
+  leftAddon: leftAddon = null,
+  leftAddonwidth = null,
   setRecord = undefined,
   vr = undefined,
   showLabel = true, // form validation result
@@ -53,6 +53,9 @@ const MyInput = ({
   const handleValueChange = value => {
     setRecord({ ...record, [fieldName]: value });
   };
+  const inputWidth = props?.width ?? 145;
+  const styleWidth = typeof inputWidth === 'number' ? `${inputWidth}px` : inputWidth;
+
   const conjureFormControl = () => {
     switch (fieldType) {
       case 'textarea':
@@ -61,7 +64,7 @@ const MyInput = ({
             style={{ width: props?.width ?? 200, height: props?.height ?? 70 }}
             disabled={props.disabled}
             name={fieldName}
-            
+
             placeholder={props.placeholder}
             value={record[fieldName] ? record[fieldName] : ''}
             accepter={Textarea}
@@ -82,7 +85,7 @@ const MyInput = ({
       case 'select':
         return (
           <Form.Control
-            style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
+            style={{ width: styleWidth, height: props?.height ?? 30 }}
             block
             disabled={props.disabled}
             accepter={SelectPicker}
@@ -138,48 +141,48 @@ const MyInput = ({
             placeholder={props.placeholder}
           />
         );
-        case 'number': {
-          const inputWidth = props?.width ?? 145;
-          const addonWidth = 40;
-          const totalWidth =
-            inputWidth +
-            (leftAddon ? (leftAddonwidth ?? addonWidth) : 0) +
-            (rightAddon ? (rightAddonwidth ?? addonWidth) : 0);
-        
-          const inputControl = (
-            <Form.Control
-              style={{ width: inputWidth, height: props?.height ?? 30 }}
-              disabled={props.disabled}
-              name={fieldName}
-              max={props.max ? props.max : 1000000}
-              value={record[fieldName] ? record[fieldName] : ''}
-              accepter={InputNumber}
-              onChange={handleValueChange}
-              placeholder={props.placeholder}
-            />
+      case 'number': {
+        const inputWidth = props?.width ?? 145;
+        const addonWidth = 40;
+        const totalWidth =
+          inputWidth +
+          (leftAddon ? (leftAddonwidth ?? addonWidth) : 0) +
+          (rightAddon ? (rightAddonwidth ?? addonWidth) : 0);
+
+        const inputControl = (
+          <Form.Control
+            style={{ width: inputWidth, height: props?.height ?? 30 }}
+            disabled={props.disabled}
+            name={fieldName}
+            max={props.max ? props.max : 1000000}
+            value={record[fieldName] ? record[fieldName] : ''}
+            accepter={InputNumber}
+            onChange={handleValueChange}
+            placeholder={props.placeholder}
+          />
+        );
+
+        if (leftAddon || rightAddon) {
+          return (
+            <InputGroup style={{ width: totalWidth }}>
+              {leftAddon && (
+                <InputGroup.Addon style={{ width: leftAddonwidth ?? addonWidth, textAlign: 'center', color: '#A1A9B8', backgroundColor: '#e0e0e0' }}>
+                  {leftAddon}
+                </InputGroup.Addon>
+              )}
+              {inputControl}
+              {rightAddon && (
+                <InputGroup.Addon style={{ width: rightAddonwidth ?? addonWidth, textAlign: 'center', color: '#A1A9B8', backgroundColor: '#e0e0e0' }}>
+                  {rightAddon}
+                </InputGroup.Addon>
+              )}
+            </InputGroup>
           );
-        
-          if (leftAddon || rightAddon) {
-            return (
-              <InputGroup style={{ width: totalWidth }}>
-                {leftAddon && (
-                  <InputGroup.Addon style={{ width: leftAddonwidth ?? addonWidth, textAlign: 'center' ,color:'#A1A9B8',backgroundColor:'#e0e0e0' }}>
-                    {leftAddon}
-                  </InputGroup.Addon>
-                )}
-                {inputControl}
-                {rightAddon && (
-                  <InputGroup.Addon style={{ width: rightAddonwidth ?? addonWidth, textAlign: 'center',color:'#A1A9B8',backgroundColor:'#e0e0e0' }}>
-                    {rightAddon}
-                  </InputGroup.Addon>
-                )}
-              </InputGroup>
-            );
-          }
-        
-          return inputControl;
         }
-        
+
+        return inputControl;
+      }
+
       case 'check':
         return (
           <Checkbox
@@ -195,8 +198,8 @@ const MyInput = ({
         const inputWidth = props?.width ?? 145;
         const addonWidth = 40;
         const totalWidth =
-          inputWidth + (leftAddon ? leftAddonwidth?leftAddonwidth:addonWidth : 0) + (rightAddon ? rightAddonwidth?rightAddonwidth:addonWidth : 0);
-          console.log(totalWidth)
+          inputWidth + (leftAddon ? leftAddonwidth ? leftAddonwidth : addonWidth : 0) + (rightAddon ? rightAddonwidth ? rightAddonwidth : addonWidth : 0);
+        console.log(totalWidth)
         const inputControl = (
           <Form.Control
             labelKey={props?.selectDataLabel ?? ''}
@@ -213,9 +216,9 @@ const MyInput = ({
         if (leftAddon || rightAddon) {
           return (
             <InputGroup style={{ width: totalWidth }}>
-              {leftAddon && <InputGroup.Addon  style={{ width:addonWidth,textAlign: 'center' }}>{leftAddon}</InputGroup.Addon>}
+              {leftAddon && <InputGroup.Addon style={{ width: addonWidth, textAlign: 'center' }}>{leftAddon}</InputGroup.Addon>}
               {inputControl}
-              {rightAddon && <InputGroup.Addon style={{ width:addonWidth, textAlign: 'center' }}>{rightAddon}</InputGroup.Addon>}
+              {rightAddon && <InputGroup.Addon style={{ width: addonWidth, textAlign: 'center' }}>{rightAddon}</InputGroup.Addon>}
             </InputGroup>
           );
         }
@@ -250,8 +253,8 @@ const MyInput = ({
   };
 
   return (
-    <Form.Group className="my-input-container">
-      <Form.ControlLabel>
+    <Form.Group  className="my-input-container">
+      <Form.ControlLabel >
         {showLabel && <MyLabel label={fieldLabel} error={validationResult} />}
         {props.required && <span className="required-field ">*</span>}
       </Form.ControlLabel>
