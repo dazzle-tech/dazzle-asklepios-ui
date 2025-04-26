@@ -147,7 +147,6 @@ const EncounterList = () => {
   }, []);
 
   useEffect(() => {
-    console.log(isLoading);
     if (isLoading) {
       dispatch(showSystemLoader());
     } else {
@@ -159,13 +158,12 @@ const EncounterList = () => {
     {
       key: 'queueNumber',
       title: <Translate>#</Translate>,
-      flexGrow: 1,
-      dataKey: 'queueNumber'
+      dataKey: 'queueNumber',
+      render: rowData => rowData?.patientObject.patientMrn
     },
     {
       key: 'patientFullName',
       title: <Translate>PATIENT NAME</Translate>,
-      flexGrow: 6,
       fullText: true,
       render: rowData => {
         const tooltipSpeaker = (
@@ -192,7 +190,9 @@ const EncounterList = () => {
                   </p>
                 </Badge>
               ) : (
-                <p style={{ cursor: 'pointer' }}>{rowData?.patientObject?.fullName}</p>
+                <>
+                  <p style={{ cursor: 'pointer' }}>{rowData?.patientObject?.fullName}</p>
+                </>
               )}
             </div>
           </Whisper>
@@ -202,28 +202,22 @@ const EncounterList = () => {
     {
       key: 'visitType',
       title: <Translate>VISIT TYPE</Translate>,
-      flexGrow: 4,
       render: rowData =>
-        rowData.visitTypeLvalue
-          ? rowData.visitTypeLvalue.lovDisplayVale
-          : rowData.visitTypeLkey
+        rowData.visitTypeLvalue ? rowData.visitTypeLvalue.lovDisplayVale : rowData.visitTypeLkey
     },
     {
       key: 'chiefComplaint',
       title: <Translate>CHIEF COMPLAIN</Translate>,
-      flexGrow: 4,
-      render: rowData => rowData.chiefComplaint
+      render: rowData => rowData.chiefComplaint,
     },
     {
       key: 'diagnosis',
       title: <Translate>DIAGNOSIS</Translate>,
-      flexGrow: 4,
       render: rowData => rowData.diagnosis
     },
     {
       key: 'hasPrescription',
       title: <Translate>PRESCRIPTION</Translate>,
-      flexGrow: 3,
       render: rowData =>
         rowData.hasPrescription ? (
           <Badge content="YES" className="status-yes" />
@@ -234,7 +228,6 @@ const EncounterList = () => {
     {
       key: 'hasOrder',
       title: <Translate>HAS ORDER</Translate>,
-      flexGrow: 3,
       render: rowData =>
         rowData.hasOrder ? (
           <Badge content="YES" className="status-yes" />
@@ -245,7 +238,6 @@ const EncounterList = () => {
     {
       key: 'encounterPriority',
       title: <Translate>PRIORITY</Translate>,
-      flexGrow: 3,
       render: rowData =>
         rowData.encounterPriorityLvalue
           ? rowData.encounterPriorityLvalue.lovDisplayVale
@@ -254,13 +246,11 @@ const EncounterList = () => {
     {
       key: 'plannedStartDate',
       title: <Translate>DATE</Translate>,
-      flexGrow: 3,
       dataKey: 'plannedStartDate'
     },
     {
       key: 'status',
       title: <Translate>STATUS</Translate>,
-      flexGrow: 3,
       render: rowData =>
         rowData.encounterStatusLvalue
           ? rowData.encounterStatusLvalue.lovDisplayVale
@@ -317,12 +307,38 @@ const EncounterList = () => {
             </Whisper>
           </Form>
         );
-      }
+      },
+      expandable: false
     }
   ];
 
-  return (
-    <Panel>
+  const pageIndex = listRequest.pageNumber - 1;
+
+  // how many rows per page:
+  const rowsPerPage = listRequest.pageSize;
+
+  // total number of items in the backend:
+  const totalCount = encounterListResponse?.extraNumeric ?? 0;
+
+  // handler when the user clicks a new page number:
+  const handlePageChange = (_: unknown, newPage: number) => {
+    // MUI gives you a zero-based page, so add 1 for your API
+    setManualSearchTriggered(true);
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+
+  // handler when the user chooses a different rows-per-page:
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setManualSearchTriggered(true);
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1 // reset to first page
+    });
+  };
+
+  const filters = () => {
+    return (
       <Form layout="inline" fluid className="date-filter-form">
         <MyInput
           width={291}
@@ -350,9 +366,13 @@ const EncounterList = () => {
           </MyButton>
         </div>
       </Form>
-
+    );
+  };
+  return (
+    <Panel>
       <MyTable
-        height={450}
+        filters={filters()}
+        height={500}
         data={encounterListResponse?.object ?? []}
         columns={tableColumns}
         rowClassName={isSelected}
@@ -366,31 +386,12 @@ const EncounterList = () => {
         onSortChange={(sortBy, sortType) => {
           setListRequest({ ...listRequest, sortBy, sortType });
         }}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
       />
-
-      <div style={{ padding: 20 }}>
-        <Pagination
-          prev
-          next
-          first
-          last
-          ellipsis
-          boundaryLinks
-          maxButtons={5}
-          size="xs"
-          layout={['total', '-', 'limit', '|', 'pager', 'skip']}
-          limitOptions={[5, 15, 30]}
-          limit={listRequest.pageSize}
-          activePage={listRequest.pageNumber}
-          onChangePage={pageNumber => {
-            setListRequest({ ...listRequest, pageNumber });
-          }}
-          onChangeLimit={pageSize => {
-            setListRequest({ ...listRequest, pageSize });
-          }}
-          total={encounterListResponse?.extraNumeric ?? 0}
-        />
-      </div>
     </Panel>
   );
 };

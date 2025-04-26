@@ -1,0 +1,61 @@
+.my-table-wrapper {
+  box-shadow: 0px 0px 0px 1px rgba(152, 161, 178, 0.1), 0px 1px 4px rgba(69, 75, 87, 0.12),
+    0px 0px 2px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+
+  .my-table-filters {
+    padding: 2px 17px 13px;
+  }
+
+  .no-data-label {
+    font-size: var(--medium-font-size);
+    text-transform: capitalize;
+    font-weight: var(--text-weight-extra-bold);
+    opacity: 0.33;
+    padding: 20px;
+  }
+}
+.my-table-container {
+  overflow-y: auto;
+  &.MuiPaper-root {
+    border: none;
+    box-shadow: none;
+    --Paper-shadow: none;
+    .MuiTableHead-root {
+      .MuiTableRow-root {
+        .MuiTableCell-root {
+          background: var(--table-header-bg);
+          font-size: var(--smallest-font-size);
+          font-weight: var(--text-weight-extra-bold);
+          color: #464f60;
+          border: none;
+        }
+      }
+    }
+
+    .MuiTableBody-root {
+      .MuiTableRow-root {
+        border: none;
+        .MuiTableCell-root {
+          border: none;
+          max-width: 274px;
+        }
+        &:nth-child(even) {
+          .MuiTableCell-root {
+            background: var(--light-gray);
+          }
+        }
+        &:hover {
+          .MuiTableCell-root {
+            background-color: rgba(#415be7, 0.05);
+          }
+        }
+      }
+    }
+  }
+}
+
+.MuiTablePagination-root {
+  background: var(--table-header-bg);
+}
