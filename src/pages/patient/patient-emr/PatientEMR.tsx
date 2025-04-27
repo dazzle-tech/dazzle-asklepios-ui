@@ -14,13 +14,17 @@ import { useNavigate } from 'react-router-dom';
 import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import { useLocation } from 'react-router-dom';
 import { ApPatient } from '@/types/model-types';
 const PatientEMR = () => {
     const [expand, setExpand] = useState(false);
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
+    const location = useLocation();
+    const propsData = location.state;
     const [encounter, setLocalEncounter] = useState({ ...newApEncounter });
-    const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
+    const [localPatient, setLocalPatient] = useState<ApPatient>(propsData?.fromPage === "clinicalVisit" ? propsData?.localPatient : { ...newApPatient });
+
 
     // Initialize Patient Encounters list request with default filters
     const [listEncounterRequest, setListEncounterRequest] = useState<ListRequest>({
