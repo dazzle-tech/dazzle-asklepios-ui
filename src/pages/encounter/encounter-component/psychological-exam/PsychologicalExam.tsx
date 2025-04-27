@@ -393,7 +393,7 @@ const PsychologicalExam = ({ patient, encounter }) => {
                     </Cell>
                 </Column>
             </Table>
-            <CancellationModal open={popupCancelOpen} setOpen={setPopupCancelOpen} object={psychologicalExam} setObject={setPsychologicalExam} handleCancle={handleCancle} fieldName="cancellationReason" />
+            <CancellationModal open={popupCancelOpen} setOpen={setPopupCancelOpen} object={psychologicalExam} setObject={setPsychologicalExam} handleCancle={handleCancle} fieldName="cancellationReason"  fieldLabel="Cancellation Reason" title="Cancellation"/>
         </div>
     );
 };

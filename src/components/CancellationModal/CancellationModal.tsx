@@ -26,7 +26,7 @@ const CancellationModal = ({
             actionButtonFunction={handleCancle}
             isDisabledActionBtn={object?.[statusField] === statusKey}
             steps={[
-                {icon: faBan },
+                {title:title,icon: faBan },
             ]}
             content={(step) => <Form layout="inline" fluid>
                 <MyInput
