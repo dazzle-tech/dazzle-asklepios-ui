@@ -91,7 +91,7 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
     useEffect(() => {
         setComplaintSymptoms({ ...complaintSymptom });
     }, [complaintSymptom]);
- useEffect(() => {
+    useEffect(() => {
         // TODO update status to be a LOV value
         if (complaintSymptoms?.statusLkey === '3196709905099521') {
             setIsChiefComplaintSymptomsStatusClose(true);

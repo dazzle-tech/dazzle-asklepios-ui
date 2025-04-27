@@ -1,56 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { useGetPatientVaccinationRecordQuery } from '@/services/observationService'
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppSelector, useAppDispatch } from '@/hooks';
-import {
-    InputGroup,
-    Form,
-    Input,
-    Panel,
-    DatePicker,
-    Text,
-    Checkbox,
-    Dropdown,
-    Button,
-    IconButton,
-    SelectPicker,
-    Table,
-    Modal,
-    Stack,
-    Divider,
-    Toggle,
-    ButtonToolbar,
-    Grid,
-    Row,
-    Col,
-} from 'rsuite';
-import {
-    useGetLovValuesByCodeQuery,
-} from '@/services/setupService';
-import {
-    useSaveAudiometryPuretoneMutation,
-    useGetAudiometryPuretonesQuery
-} from '@/services/encounterService';
-import MyInput from '@/components/MyInput';
+import { Checkbox, IconButton, Table } from 'rsuite';
+import { useSaveAudiometryPuretoneMutation, useGetAudiometryPuretonesQuery } from '@/services/encounterService';
+import PlusIcon from '@rsuite/icons/Plus';
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import Translate from '@/components/Translate';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import MyLabel from '@/components/MyLabel';
-import {
-    newApAudiometryPuretone
-} from '@/types/model-types-constructor';
-import {
-    ApAudiometryPuretone
-} from '@/types/model-types';
+import MyButton from '@/components/MyButton/MyButton';
+import CancellationModal from '@/components/CancellationModal';
+import { newApAudiometryPuretone } from '@/types/model-types-constructor';
+import { ApAudiometryPuretone } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
-import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBroom } from '@fortawesome/free-solid-svg-icons';
+import AddAudiometryPuretone from './AddAudiometryPuretone';
 const { Column, HeaderCell, Cell } = Table
 const AudiometryPuretone = ({ patient, encounter }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
+    const [open, setOpen] = useState(false);
     const [audiometryPuretone, setAudiometryPuretone] = useState<ApAudiometryPuretone>({
         ...newApAudiometryPuretone
         , earExamFindingsLkey: null,
@@ -66,11 +34,13 @@ const AudiometryPuretone = ({ patient, encounter }) => {
         hearingLossTypeLkey: null,
         hearingLossDegreeLkey: null,
     });
-    const [saveAudiometryPureton, saveAudiometryPuretonMutation] = useSaveAudiometryPuretoneMutation();
+    const [ saveAudiometryPureton ] = useSaveAudiometryPuretoneMutation();
     const [popupCancelOpen, setPopupCancelOpen] = useState(false);
     const [audiometryPuretonStatus, setAudiometryPuretonStatus] = useState('');
     const [allData, setAllData] = useState(false);
-    const dispatch = useAppDispatch()
+    const dispatch = useAppDispatch();
+
+    // Initialize list request with default filters
     const [audiometryPuretoneListRequest, setAudiometryPuretoneListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -91,36 +61,17 @@ const AudiometryPuretone = ({ patient, encounter }) => {
             }
         ],
     });
-    //LOV
-    const { data: earExamFindingsLovQueryResponse } = useGetLovValuesByCodeQuery('EAR_EXAM_FINDINGS');
-    const { data: hearingLossTypeLovQueryResponse } = useGetLovValuesByCodeQuery('HEARING_LOSS_TYPES');
-    const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
+
+    // Fetch the list of Audiometry Pureton based on the provided request, and provide a refetch function
     const { data: audiometryPuretonResponse, refetch: refetchAudiometryPureton } = useGetAudiometryPuretonesQuery(audiometryPuretoneListRequest);
+
+    // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
     const isSelected = rowData => {
         if (rowData && audiometryPuretone && audiometryPuretone.key === rowData.key) {
             return 'selected-row';
         } else return '';
     };
-    const handleSave = async () => {
-        //TODO convert key to code
-        try {
-            if (audiometryPuretone.key === undefined) {
-                await  saveAudiometryPureton({ ...audiometryPuretone, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap();
-                dispatch(notify('Patient Audiometry Pureton Added Successfully'));
-                setAudiometryPuretone({ ...newApAudiometryPuretone, statusLkey: "9766169155908512" })
-            } else {
-                await saveAudiometryPureton({ ...audiometryPuretone, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap();
-    
-                dispatch(notify('Patient Audiometry Pureton Updated Successfully'));
-            }
-            await refetchAudiometryPureton();
-            handleClearField();
-            
-        } catch (error) {
-            console.error("Error saving Patient Audiometry:", error);
-            dispatch(notify('Failed to save Patient Audiometry'));
-        }
-    };
+
     const handleExpanded = (rowData) => {
         let open = false;
         const nextExpandedRowKeys = [];
@@ -140,7 +91,6 @@ const AudiometryPuretone = ({ patient, encounter }) => {
     };
     const renderRowExpanded = rowData => {
         return (
-
             <Table
                 data={[rowData]}
                 bordered
@@ -153,9 +103,9 @@ const AudiometryPuretone = ({ patient, encounter }) => {
                     <Cell>
                         {rowData => (
                             <>
-                             {rowData.createdAt ? new Date(rowData.createdAt).toLocaleString("en-GB") : ""}                   
-                                 {" / "}
-                                 {rowData?.createByUser?.fullName}
+                                {rowData.createdAt ? new Date(rowData.createdAt).toLocaleString("en-GB") : ""}
+                                {" / "}
+                                {rowData?.createByUser?.fullName}
                             </>
                         )}
                     </Cell>
@@ -212,24 +162,18 @@ const AudiometryPuretone = ({ patient, encounter }) => {
             />
         </Cell>
     );
+
+    // Handle Audiometry Puretone Record
     const handleCancle = () => {
         //TODO convert key to code
         saveAudiometryPureton({ ...audiometryPuretone, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
             dispatch(notify('Audiometry Pureton Canceled Successfully'));
             refetchAudiometryPureton();
         });
-    };
-    const handleClearField = () => {
         setPopupCancelOpen(false);
-        setAudiometryPuretone({
-            ...newApAudiometryPuretone,
-            earExamFindingsLkey: null,
-            maskedUsed: false,
-            hearingLossTypeLkey: null,
-            hearingLossDegreeLkey: null,
-        });
-    }
-    ///useEffect
+    };
+
+    // Effects
     useEffect(() => {
         setAudiometryPuretoneListRequest((prev) => ({
             ...prev,
@@ -340,458 +284,138 @@ const AudiometryPuretone = ({ patient, encounter }) => {
         });
     }, [allData, audiometryPuretonStatus]);
     return (
-        <Panel header={"Audiometry Puretone"}>
-            <Panel bordered style={{ padding: '10px' }}>
-                <Form fluid layout='inline'>
-                    <MyInput
-                        width={165}
-                        column
-                        fieldLabel="Test Environmen"
-                        fieldName="testEnvironment"
-                        record={audiometryPuretone}
-                        setRecord={setAudiometryPuretone}
-                    />
-                    <MyInput
-                        fieldLabel="Test Reason"
-                        width={165}
-                        column
-                        fieldName="testReason"
-                        record={audiometryPuretone}
-                        setRecord={setAudiometryPuretone}
-                    />
-                    <MyInput
-                        column
-                        width={165}
-                        fieldLabel="Ear Exam Findings"
-                        fieldType="select"
-                        fieldName="earExamFindingsLkey"
-                        selectData={earExamFindingsLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={audiometryPuretone}
-                        setRecord={setAudiometryPuretone}
-                    />
-                    <br />
-                    <Form style={{ display: 'flex', alignItems: 'center' }}>
-                        <Panel header={"Right Ear"} bordered>
-                            <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                                <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px', zoom: .75 }}>
-                                    <MyLabel label="Air Conduction Frequencies " />
-                                    <InputGroup style={{ width: 210 }}>
-
-                                        <Input
-                                            type="number"
-                                            width={165}
-                                            value={audiometryPuretone.airConductionFrequenciesRight}
-                                            onChange={e =>
-                                                setAudiometryPuretone({
-                                                    ...audiometryPuretone,
-                                                    airConductionFrequenciesRight: Number(e),
-                                                })
-                                            }
-                                        />
-                                        <InputGroup.Addon><Text>Hz</Text></InputGroup.Addon>
-                                    </InputGroup>
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px', zoom: .75 }}>
-                                    <MyLabel label="Hearing Thresholds" />
-                                    <InputGroup style={{ width: 210 }}>
-
-                                        <Input
-                                            type="number"
-                                            width={165}
-                                            value={audiometryPuretone.hearingThresholdsRight}
-                                            onChange={e =>
-                                                setAudiometryPuretone({
-                                                    ...audiometryPuretone,
-                                                    hearingThresholdsRight: Number(e),
-                                                })
-                                            }
-                                        />
-                                        <InputGroup.Addon><Text>dB HL</Text></InputGroup.Addon>
-                                    </InputGroup>
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px', zoom: .75 }}>
-                                    <MyLabel label="Bone Conduction Frequencies" />
-                                    <InputGroup style={{ width: 210 }}>
-
-                                        <Input
-                                            type="number"
-                                            width={165}
-                                            value={audiometryPuretone.boneConductionFrequenciesRight}
-                                            onChange={e =>
-                                                setAudiometryPuretone({
-                                                    ...audiometryPuretone,
-                                                    boneConductionFrequenciesRight: Number(e),
-                                                })
-                                            }
-                                        />
-                                        <InputGroup.Addon><Text>Hz</Text></InputGroup.Addon>
-                                    </InputGroup>
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px', zoom: .75 }}>
-                                    <MyLabel label="Bone Conduction Thresholds" />
-                                    <InputGroup style={{ width: 210 }}>
-
-                                        <Input
-                                            type="number"
-                                            width={165}
-                                            value={audiometryPuretone.boneConductionThresholdsRight}
-                                            onChange={e =>
-                                                setAudiometryPuretone({
-                                                    ...audiometryPuretone,
-                                                    boneConductionThresholdsRight: Number(e),
-                                                })
-                                            }
-                                        />
-                                        <InputGroup.Addon><Text>dB HL</Text></InputGroup.Addon>
-                                    </InputGroup>
-                                </div>
-
-                            </Form>
-                        </Panel>
-                        <Panel bordered header={"Left Ear"} >
-                            <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                                <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px', zoom: .75 }}>
-                                    <MyLabel label="Air Conduction Frequencies " />
-                                    <InputGroup style={{ width: 210 }}>
-
-                                        <Input
-                                            type="number"
-                                            width={165}
-                                            value={audiometryPuretone.airConductionFrequenciesLeft}
-                                            onChange={e =>
-                                                setAudiometryPuretone({
-                                                    ...audiometryPuretone,
-                                                    airConductionFrequenciesLeft: Number(e),
-                                                })
-                                            }
-                                        />
-                                        <InputGroup.Addon><Text>Hz</Text></InputGroup.Addon>
-                                    </InputGroup>
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px', zoom: .75 }}>
-                                    <MyLabel label="Hearing Thresholds" />
-                                    <InputGroup style={{ width: 210 }}>
-
-                                        <Input
-                                            type="number"
-                                            width={165}
-                                            value={audiometryPuretone.hearingThresholdsLeft}
-                                            onChange={e =>
-                                                setAudiometryPuretone({
-                                                    ...audiometryPuretone,
-                                                    hearingThresholdsLeft: Number(e),
-                                                })
-                                            }
-                                        />
-                                        <InputGroup.Addon><Text>dB HL</Text></InputGroup.Addon>
-                                    </InputGroup>
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px', zoom: .75 }}>
-                                    <MyLabel label="Bone Conduction Frequencies" />
-                                    <InputGroup style={{ width: 210 }}>
-
-                                        <Input
-                                            type="number"
-                                            width={165}
-                                            value={audiometryPuretone.boneConductionFrequenciesLeft}
-                                            onChange={e =>
-                                                setAudiometryPuretone({
-                                                    ...audiometryPuretone,
-                                                    boneConductionFrequenciesLeft: Number(e),
-                                                })
-                                            }
-                                        />
-                                        <InputGroup.Addon><Text>Hz</Text></InputGroup.Addon>
-                                    </InputGroup>
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: "column", justifyContent: "center", paddingTop: '6px', zoom: .75 }}>
-                                    <MyLabel label="Bone Conduction Thresholds" />
-                                    <InputGroup style={{ width: 210 }}>
-
-                                        <Input
-                                            type="number"
-                                            width={165}
-                                            value={audiometryPuretone.boneConductionThresholdsLeft}
-                                            onChange={e =>
-                                                setAudiometryPuretone({
-                                                    ...audiometryPuretone,
-                                                    boneConductionThresholdsLeft: Number(e),
-                                                })
-                                            }
-                                        />
-                                        <InputGroup.Addon><Text>dB HL</Text></InputGroup.Addon>
-                                    </InputGroup>
-                                </div>
-                            </Form>
-                        </Panel>
-                    </Form>
-                    <MyInput
-                        width={165}
-                        column
-                        fieldLabel="Masked Used"
-                        fieldType="checkbox"
-                        fieldName="maskedUsed"
-                        record={audiometryPuretone}
-                        setRecord={setAudiometryPuretone}
-                    />
-                    <MyInput
-                        column
-                        width={165}
-                        fieldLabel="Hearing Loss Type"
-                        fieldType="select"
-                        fieldName="hearingLossTypeLkey"
-                        selectData={hearingLossTypeLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={audiometryPuretone}
-                        setRecord={setAudiometryPuretone}
-                    />
-                    <MyInput
-                        column
-                        width={165}
-                        fieldLabel="Hearing Loss Degree"
-                        fieldType="select"
-                        fieldName="hearingLossDegreeLkey"
-                        selectData={severityLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={audiometryPuretone}
-                        setRecord={setAudiometryPuretone}
-                    />
-
-                    <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px', zoom: .75 }}>
-                        <Form style={{ display: 'flex', flexDirection: 'column' }}>
-                            <MyLabel label="Recommendations" />
-                            <Input
-                                as="textarea"
-                                value={audiometryPuretone.recommendations}
-                                onChange={(e) => setAudiometryPuretone({
-                                    ...audiometryPuretone,
-                                    recommendations: e
-                                })}
-                                style={{ width: 330 }}
-                                rows={3}
-                            />
-                        </Form>
-                        <Form style={{ display: 'flex', flexDirection: 'column' }}>
-                            <MyLabel label="Additional Notes" />
-                            <Input
-                                as="textarea"
-                                value={audiometryPuretone.additionalNotes}
-                                onChange={(e) => setAudiometryPuretone({
-                                    ...audiometryPuretone,
-                                    additionalNotes: e
-                                })}
-                                style={{ width: 330 }}
-                                rows={3}
-                            />
-                        </Form>
-                    </Form>
-                    <ButtonToolbar style={{ zoom: .8 }}>
-                        <Button
-                            appearance="primary"
-                            onClick={() => handleSave()}
-                            style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: '5px' }}
-                        >
-                            <FontAwesomeIcon icon={faCheckDouble} style={{ marginRight: '5px' }} />
-
-                            <Translate>Save</Translate>
-                        </Button>
-                        <Button
-                            appearance="ghost"
-                            style={{ backgroundColor: 'white', color: 'var(--primary-blue)', marginLeft: "5px" }}
-                            onClick={handleClearField}
-                        >
-                            <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px' }} />
-                            <span>Clear</span>
-                        </Button>
-                    </ButtonToolbar>
-                </Form>
-            </Panel>
-            <Panel header={"Patient's Audiometry Puretone"} collapsible bordered>
-                <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <ButtonToolbar>
-                        <Button
-                            appearance="primary"
-                            style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: "5px", zoom: .8 }}
-                            onClick={() => { setPopupCancelOpen(true) }}
-                            disabled={!audiometryPuretone?.key}
-                        >
-                            <CloseOutlineIcon style={{ marginRight: '7px' }} />
-                            <Translate>Cancel</Translate>
-                        </Button>
-
-                    </ButtonToolbar>
-                    <Checkbox
-                        onChange={(value, checked) => {
-                            if (checked) {
-                                //TODO convert key to code
-                                setAudiometryPuretonStatus('3196709905099521');
-                            }
-                            else {
-                                setAudiometryPuretonStatus('');
-                            }
-                        }}
-                    >
-                        Show Cancelled
-                    </Checkbox>
-                    <Checkbox
-                        onChange={(value, checked) => {
-                            if (checked) {
-                                setAllData(true);
-                            }
-                            else {
-                                setAllData(false);
-                            }
-                        }}
-                    >
-                        Show All
-                    </Checkbox>
-                </Form>
-                <Table
-                    height={600}
-                    data={audiometryPuretonResponse?.object ?? []}
-                    rowKey="key"
-                    expandedRowKeys={expandedRowKeys}
-                    renderRowExpanded={renderRowExpanded}
-                    shouldUpdateScroll={false}
-                    bordered
-                    cellBordered
-                    onRowClick={rowData => {
-                        setAudiometryPuretone({
-                            ...rowData
-                        });
-                    }}
-                    rowClassName={isSelected}
-                >
-                    <Column width={70} align="center">
-                        <HeaderCell>#</HeaderCell>
-                        <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Test Environmen</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                rowData?.testEnvironment
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Test Reason</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                rowData?.testReason
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Ear Exam Findings</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.earExamFindingsLvalue
-                                ? rowData?.earExamFindingsLvalue.lovDisplayVale
-                                : rowData?.earExamFindingsLkey
-                            }
-                        </Cell>
-                    </Column >
-
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Masked used</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                rowData?.maskedUsed
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Hearing Loss Type</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.hearingLossTypeLvalue
-                                ? rowData?.hearingLossTypeLvalue.lovDisplayVale
-                                : rowData?.hearingLossTypeLkey
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={3} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Hearing Loss Degree</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.hearingLossDegreeLvalue
-                                ? rowData?.hearingLossDegreeLvalue.lovDisplayVale
-                                : rowData?.hearingLossDegreeLkey
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Recommendations </Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.recommendations}
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Additional Notes</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.additionalNotes}
-                        </Cell>
-                    </Column>
-                </Table>
-            </Panel>
-            <Modal
-                open={popupCancelOpen}
-                onClose={() => setPopupCancelOpen(false)}
-                size="sm"
+        <div>
+            <div className='bt-div'>
+                <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!audiometryPuretone?.key}>
+                    <Translate>Cancel</Translate>
+                </MyButton>
+                <Checkbox onChange={(value, checked) => {
+                    if (checked) {
+                        //TODO convert key to code
+                        setAudiometryPuretonStatus('3196709905099521');
+                    }
+                    else {
+                        setAudiometryPuretonStatus('');
+                    }
+                }}>
+                    Show Cancelled
+                </Checkbox>
+                <Checkbox onChange={(value, checked) => {
+                    if (checked) {
+                        setAllData(true);
+                    }
+                    else {
+                        setAllData(false);
+                    }
+                }}>
+                    Show All
+                </Checkbox>
+                <div className='bt-right'>
+                    <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>Add </MyButton>
+                </div>
+            </div>
+            <Table
+                height={600}
+                data={audiometryPuretonResponse?.object ?? []}
+                rowKey="key"
+                expandedRowKeys={expandedRowKeys}
+                renderRowExpanded={renderRowExpanded}
+                shouldUpdateScroll={false}
+                onRowClick={rowData => {
+                    setAudiometryPuretone({
+                        ...rowData
+                    });
+                }}
+                rowClassName={isSelected}
             >
-                <Modal.Header>
-                    <Translate><h6>Confirm Cancel</h6></Translate>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form layout="inline" fluid>
-                        <MyInput
-                            width={600}
-                            column
-                            fieldLabel="Cancellation Reason"
-                            fieldType="textarea"
-                            fieldName="cancellationReason"
-                            height={120}
-                            record={audiometryPuretone}
-                            setRecord={setAudiometryPuretone}
-                            //TODO convert key to code
-                            disabled={audiometryPuretone?.statusLkey === "3196709905099521"}
-                        />
-                    </Form>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button appearance="primary" onClick={handleCancle}
-                    //TODO convert key to code
-                        disabled={audiometryPuretone?.statusLkey === "3196709905099521"}
-                        style={{ backgroundColor: 'var(--primary-blue)', color: 'white', zoom: .8 }}
-                    >
-                        Cancel
-                    </Button>
-                    <Divider vertical />
-                    <Button appearance="ghost" color='blue' onClick={() => { setPopupCancelOpen(false) }}
-                        style={{ color: 'var(--primary-blue)', backgroundColor: 'white', zoom: .8 }}>
-                        Close
-                    </Button>
-                </Modal.Footer>
-            </Modal>
-        </Panel>
+                <Column width={70} align="center">
+                    <HeaderCell>#</HeaderCell>
+                    <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Test Environmen</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            rowData?.testEnvironment
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Test Reason</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            rowData?.testReason
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Ear Exam Findings</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => rowData?.earExamFindingsLvalue
+                            ? rowData?.earExamFindingsLvalue.lovDisplayVale
+                            : rowData?.earExamFindingsLkey
+                        }
+                    </Cell>
+                </Column >
+
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Masked used</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            rowData?.maskedUsed
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Hearing Loss Type</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => rowData?.hearingLossTypeLvalue
+                            ? rowData?.hearingLossTypeLvalue.lovDisplayVale
+                            : rowData?.hearingLossTypeLkey
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={3} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Hearing Loss Degree</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => rowData?.hearingLossDegreeLvalue
+                            ? rowData?.hearingLossDegreeLvalue.lovDisplayVale
+                            : rowData?.hearingLossDegreeLkey
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Recommendations </Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => rowData?.recommendations}
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Additional Notes</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => rowData?.additionalNotes}
+                    </Cell>
+                </Column>
+            </Table>
+            <CancellationModal title="Cancel Audiometry Puretone" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={audiometryPuretone} setObject={setAudiometryPuretone} handleCancle={handleCancle} fieldName="cancellationReason" />
+            <AddAudiometryPuretone open={open} setOpen={setOpen} patient={patient} encounter={encounter} audiometryPuretoneObject={audiometryPuretone} refetch={refetchAudiometryPureton} />
+        </div>
     );
 };
 export default AudiometryPuretone;
