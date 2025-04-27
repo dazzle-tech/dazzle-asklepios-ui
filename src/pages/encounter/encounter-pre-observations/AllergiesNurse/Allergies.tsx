@@ -1,70 +1,45 @@
 import React, { useEffect, useState } from 'react';
-import { Placeholder } from 'rsuite';
 import Translate from '@/components/Translate';
 import './styles.less';
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
 import ReloadIcon from '@rsuite/icons/Reload';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import {
-  InputGroup,
   Form,
   Input,
-  Panel,
   DatePicker,
-  Text,
   Checkbox,
-  Dropdown,
-  Button,
   IconButton,
-  SelectPicker,
   Table,
-  Modal,
-  Stack,
-  Divider,
-  Toggle
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
-import './styles.less';
-import { FaCalendar, FaClock } from 'react-icons/fa';
-import { BsCalendar2MonthFill } from 'react-icons/bs';
 import MyInput from '@/components/MyInput';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
-import CheckIcon from '@rsuite/icons/Check';
 import PlusIcon from '@rsuite/icons/Plus';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBroom, faPersonDotsFromLine } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRotateRight, faCheck, faPersonDotsFromLine } from '@fortawesome/free-solid-svg-icons';
 import {
   useGetLovValuesByCodeQuery,
-  useGetLovValuesQuery,
   useGetAllergensQuery
 } from '@/services/setupService';
 import { useGetAllergiesQuery, useSaveAllergiesMutation } from '@/services/observationService';
 import { ApVisitAllergies } from '@/types/model-types';
 import { newApVisitAllergies } from '@/types/model-types-constructor';
 import MyLabel from '@/components/MyLabel/index';
+import CancellationModal from '@/components/CancellationModal';
+import DetailsModal from './DetailsModal';
 const Allergies = ({ edit, patient, encounter }) => {
-  const { data: allergyTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGEN_TYPES');
-  const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
-  const { data: onsetLovQueryResponse } = useGetLovValuesByCodeQuery('ONSET');
-  const { data: reactionLovQueryResponse } = useGetLovValuesByCodeQuery('ALLRGY_REACTION_TYP');
-  const { data: treatmentstrategyLovQueryResponse } = useGetLovValuesByCodeQuery('TREAT_STRATGY');
-  const { data: sourceofinformationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
-  const { data: statusLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGY_RES_STATUS');
-  const { data: allgPropnLovQueryResponse } = useGetLovValuesByCodeQuery('ALLG_PROPN');
-  const { data: criticalityLovQueryResponse } = useGetLovValuesByCodeQuery('CRITICALITY');
   const [allerges, setAllerges] = useState<ApVisitAllergies>({ ...newApVisitAllergies });
   const [showCanceled, setShowCanceled] = useState(true);
   const [editing, setEditing] = useState(false);
   const [showPrev, setShowPrev] = useState(true);
-  
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
+
   const [listRequestallerg, setListRequestallerg] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -85,19 +60,13 @@ const Allergies = ({ edit, patient, encounter }) => {
     ...listRequestallerg
   });
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
+
   const [openConfirmResolvedModel, setOpenConfirmResolvedModel] = useState(false);
+
   const [openConfirmUndoResolvedModel, setOpenConfirmUndoResolvedModel] = useState(false);
+
   const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
-  const { data: allergensListResponse } = useGetAllergensQuery({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'allergen_type_lkey',
-        operator: 'match',
-        value: allerges.allergyTypeLkey
-      }
-    ]
-  });
+
   const { data: allergensListToGetName } = useGetAllergensQuery({
     ...initialListRequest
   });
@@ -105,11 +74,9 @@ const Allergies = ({ edit, patient, encounter }) => {
   const [selectedOnsetDate, setSelectedOnsetDate] = useState(null);
   const [saveAllergies, saveAllergiesMutation] = useSaveAllergiesMutation();
   const [reactionDescription, setReactionDescription] = useState();
-  const [editOnset, setEditOnset] = useState({editdate:true});
-  const [editSourceof, seteditSourceof] = useState({editSource:true});
-  const [listRequest, setListRequest] = useState({
-    ...initialListRequest
-  });
+  const [editOnset, setEditOnset] = useState({ editdate: true });
+ 
+
   const dispatch = useAppDispatch();
 
   const isSelected = rowData => {
@@ -117,31 +84,10 @@ const Allergies = ({ edit, patient, encounter }) => {
       return 'selected-row';
     } else return '';
   };
-  useEffect(() => { }, [selectedOnsetDate]);
-  useEffect(() => {
-    if (allerges.reactionDescription != null) {
-      console.log(allerges.reactionDescription);
-      setReactionDescription(prevadminInstructions =>
-        prevadminInstructions
-          ? `${prevadminInstructions}, ${reactionLovQueryResponse?.object?.find(
-            item => item.key === allerges.reactionDescription
-          )?.lovDisplayVale
-          }`
-          : reactionLovQueryResponse?.object?.find(
-            item => item.key === allerges.reactionDescription
-          )?.lovDisplayVale
-      );
-    }
-  }, [allerges.reactionDescription]);
-  useEffect(() => {
-    if (allerges.onsetDate != 0) {
-      setEditOnset({editdate:false});
-      setSelectedOnsetDate(new Date(allerges.onsetDate));
-    }
-    if (allerges.sourceOfInformationLkey != null) {
-      seteditSourceof({editSource:false});
-    }
-  }, [allerges]);
+ //Effect when reactionDescription get new value and push it to prev 
+
+
+//Effect when check Show Prev Allergy and update filter to get prev allergies
   useEffect(() => {
     if (showPrev) {
       const updatedFilters = [
@@ -184,16 +130,16 @@ const Allergies = ({ edit, patient, encounter }) => {
       }));
     }
   }, [showPrev]);
+//Effect when do save allergy , refetch allergies 
   useEffect(() => {
-    console.log(saveAllergiesMutation);
     setShowPrev(true);
-
     fetchallerges();
   }, [saveAllergiesMutation]);
+
   useEffect(() => {
     fetchallerges();
-    console.log(allergiesListResponse);
   }, [listRequestallerg]);
+
   useEffect(() => {
     if (showPrev) {
       const updatedFilters = [
@@ -236,17 +182,17 @@ const Allergies = ({ edit, patient, encounter }) => {
       }));
     }
   }, [showCanceled]);
-  useEffect(()=>{
-    if(editOnset.editdate){
+
+  useEffect(() => {
+    if (editOnset.editdate) {
       setSelectedOnsetDate(null);
     }
-  },[editOnset.editdate])
+  }, [editOnset.editdate])
+ 
   const renderRowExpanded = rowData => {
     return (
       <Table
         data={[rowData]} // Pass the data as an array to populate the table
-
-
         height={100} // Adjust height as needed
       >
         <Column flexGrow={1} fullText>
@@ -328,8 +274,6 @@ const Allergies = ({ edit, patient, encounter }) => {
     if (!open) {
       nextExpandedRowKeys.push(rowData.key);
     }
-
-    console.log(nextExpandedRowKeys);
     setExpandedRowKeys(nextExpandedRowKeys);
   };
 
@@ -351,13 +295,7 @@ const Allergies = ({ edit, patient, encounter }) => {
     </Cell>
   );
 
-  const handleDateChange = date => {
-    if (date) {
-      if (!editOnset) {
-        setSelectedOnsetDate(date);
-      }
-    }
-  };
+ 
   const handleClear = () => {
     setAllerges({
       ...newApVisitAllergies,
@@ -372,10 +310,10 @@ const Allergies = ({ edit, patient, encounter }) => {
       typeOfPropensityLkey: null
     });
     setSelectedOnsetDate(null);
-    setEditOnset({editdate:true});
-    seteditSourceof({editSource:true});
+    setEditOnset({ editdate: true });
     setReactionDescription(null);
   };
+
   const handleSave = async () => {
     setShowPrev(true);
     try {
@@ -388,6 +326,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         onsetDate: selectedOnsetDate ? selectedOnsetDate.getTime() : null
       }).unwrap();
       dispatch(notify('Saved Successfully'));
+      setOpenDetailsModal(false)
       setShowPrev(false);
       await fetchallerges(); // Ensure refetch is awaited
       await handleClear();
@@ -428,7 +367,7 @@ const Allergies = ({ edit, patient, encounter }) => {
       setShowCanceled(false);
       fetchallerges()
         .then(() => {
-          console.log('Refetch complete');
+         
         })
         .catch(error => {
           console.error('Refetch failed:', error);
@@ -446,7 +385,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         statusLkey: '9766179572884232',
         resolvedAt: Date.now()
       }).unwrap();
-      dispatch(notify('Resolved successfully'));
+      dispatch(notify({msg:'Resolved Successfully',sev:'success'}));
       setShowPrev(false);
       await fetchallerges()
         .then(() => {
@@ -463,6 +402,7 @@ const Allergies = ({ edit, patient, encounter }) => {
       dispatch(notify('Resolved Fill'));
     }
   };
+
   const handleUndoResolved = async () => {
     setShowPrev(true);
     try {
@@ -470,11 +410,11 @@ const Allergies = ({ edit, patient, encounter }) => {
         ...allerges,
         statusLkey: '9766169155908512'
       }).unwrap();
-      dispatch(notify('Undo Resolved successfully'));
+      dispatch(notify({msg:'Undo Resolved Successfully',sev:'success'}));
       setShowPrev(false);
       await fetchallerges()
         .then(() => {
-          console.log('Refetch complete');
+          
         })
         .catch(error => {
           console.error('Refetch failed:', error);
@@ -490,16 +430,17 @@ const Allergies = ({ edit, patient, encounter }) => {
   return (
     <div>
 
-
+      {/* buttons actions section */}
       <div className='bt-div'>
         <MyButton
           prefixIcon={() => <CloseOutlineIcon />}
           onClick={OpenCancellationReasonModel}
+          disabled={allerges?.key == null ? true : false}
         >Cancel</MyButton>
 
         <MyButton
           disabled={allerges?.statusLkey != '9766169155908512' ? true : false}
-          prefixIcon={() => <FontAwesomeIcon icon={faPersonDotsFromLine} />}
+          prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
           onClick={OpenConfirmResolvedModel}
         >
           Resolved</MyButton>
@@ -527,12 +468,12 @@ const Allergies = ({ edit, patient, encounter }) => {
         </Checkbox>
         <div className='bt-right'>
           <MyButton
-            prefixIcon={() => <ReloadIcon />}
-            
+            prefixIcon={() => <PlusIcon />}
             onClick={() => setOpenDetailsModal(true)}
           >Add Allergy</MyButton>
         </div>
       </div>
+
       <Table
         autoHeight
         data={allergiesListResponse?.object || []}
@@ -653,351 +594,43 @@ const Allergies = ({ edit, patient, encounter }) => {
         </Column>
       </Table>
 
-      <Modal open={openCancellationReasonModel} onClose={CloseCancellationReasonModel} overflow>
-        <Modal.Title>
-          <Translate>
-            <h6>Confirm Cancel</h6>
-          </Translate>
-        </Modal.Title>
-        <Modal.Body>
-          <Form layout="inline" fluid>
-            <MyInput
-              width={200}
-              column
-              fieldLabel="Cancellation Reason"
-              fieldType="textarea"
-              fieldName="cancellationReason"
-              height={120}
-              record={allerges}
-              setRecord={setAllerges}
-            //   disabled={!editing}
-            />
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="primary" onClick={handleCancle}>
-              Cancel
-            </Button>
-            <Button appearance="ghost" color="cyan" onClick={CloseCancellationReasonModel}>
-              Close
-            </Button>
-          </Stack>
-        </Modal.Footer>
-      </Modal>
-      <Modal open={openConfirmResolvedModel} onClose={CloseConfirmResolvedModel} overflow>
-        <Modal.Title>
-          <Translate>
-            <h6>Confirm Resolved</h6>
-          </Translate>
-        </Modal.Title>
-        <Modal.Body>
-          <Text>Is this allergy resolved? </Text>
-        </Modal.Body>
-        <Modal.Footer>
-          <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="primary" onClick={handleResolved}>
-              Yes
-            </Button>
-            <Button appearance="ghost" color="cyan" onClick={CloseConfirmResolvedModel}>
-              Cancel
-            </Button>
-          </Stack>
-        </Modal.Footer>
-      </Modal>
-      <Modal open={openConfirmUndoResolvedModel} onClose={CloseConfirmUndoResolvedModel} overflow>
-        <Modal.Title>
-          <Translate>
-            <h6>Confirm Undo Resolve</h6>
-          </Translate>
-        </Modal.Title>
-        <Modal.Body>
-          <Text> Is this allergy active? </Text>
-        </Modal.Body>
-        <Modal.Footer>
-          <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="primary" onClick={handleUndoResolved}>
-              Yes
-            </Button>
-            <Button appearance="ghost" color="cyan" onClick={CloseConfirmUndoResolvedModel}>
-              Cancel
-            </Button>
-          </Stack>
-        </Modal.Footer>
-      </Modal>
+      {/* modal for cancell the allergy and write the reason */}
+      <CancellationModal
+        open={openCancellationReasonModel}
+        setOpen={setOpenCancellationReasonModel}
+        object={allerges}
+        setObject={setAllerges}
+        handleCancle={handleCancle}
+        fieldName="cancellationReason"
+        fieldLabel={'Cancellation Reason'}
+        title={'Cancellation'}
+      ></CancellationModal>
+     {/* open modal to resolve allergy */}
       <MyModal
-        open={openDetailsModal}
-        setOpen={setOpenDetailsModal}
-        title="Add Warning"
-        actionButtonFunction={handleSave}
-        bodyhieght={800}
-        size='700px'
-        position='right'
-        steps={[
+      open={openConfirmResolvedModel}
+      setOpen={setOpenConfirmResolvedModel}
+      actionButtonFunction={handleResolved}
+      actionButtonLabel='Yes'
+      title="Resolve"
+      bodyheight={150}
+      steps={[{title:"Is this allergy resolved?" ,icon:faCheck}]}
+     content={<></>}
+      ></MyModal>
+  
+       <MyModal
+      open={openConfirmUndoResolvedModel}
+      setOpen={setOpenConfirmUndoResolvedModel}
+      actionButtonFunction={handleUndoResolved}
+      actionButtonLabel='Yes'
+      title="Undo Resolve"
+      bodyheight={150}
+      steps={[{title:"Is this allergy active?" ,icon:faArrowRotateRight}]}
+     content={<></>}
+      ></MyModal>
 
-          {
-            title: 'Allergy', icon: faPersonDotsFromLine, footer: <MyButton
-
-              onClick={handleClear}
-            >Clear</MyButton>
-          },
-        ]}
-        content={
-
-          <div className={edit?'disabled-panel':""} >
-            <div className="div-parent">
-              <div style={{ flex: 1 }}>
-                <Form layout="inline" fluid>
-                  <MyInput
-                    column
-                    disabled={editing}
-                    width={200}
-                    fieldType="select"
-                    fieldLabel="Allergy Type"
-                    selectData={allergyTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    fieldName={'allergyTypeLkey'}
-                    record={allerges}
-                    setRecord={setAllerges}
-                  />
-                </Form>
-              </div>
-              <div style={{ flex: 1 }}>
-                <Form layout="inline" fluid>
-                <MyInput
-                column
-                disabled={editing}
-                width={200}
-                fieldType="select"
-                fieldLabel="Allergen"
-                selectData={allergensListResponse?.object ?? []}
-                selectDataLabel="allergenName"
-                selectDataValue="key"
-                fieldName={'allergenKey'}
-                record={allerges}
-                setRecord={setAllerges}
-              />
-                </Form>
-              </div>
-              <div style={{ flex: 1 }}>
-                <Form layout="inline" fluid>
-                <MyInput
-                column
-                disabled={editing}
-                width={200}
-                fieldType="select"
-                fieldLabel="Severity"
-                selectData={severityLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                fieldName={'severityLkey'}
-                record={allerges}
-                setRecord={setAllerges}
-              />
-                </Form>
-              </div>
-            
-            </div>
-            <div className="div-parent">
-              <div style={{ flex: 1 }}>
-                <Form layout="inline" fluid>
-                <MyInput
-                column
-                disabled={editing}
-                width={200}
-                fieldType="select"
-                fieldLabel="Criticality"
-                selectData={criticalityLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                fieldName={'criticalityLkey'}
-                record={allerges}
-                setRecord={setAllerges}
-              />
-                </Form>
-              </div>
-              <div style={{ flex: 1 }}>
-                <Form layout="inline" fluid>
-                <MyInput
-                column
-                disabled={editing}
-                width={200}
-                fieldName={'certainty'}
-                record={allerges}
-                setRecord={setAllerges}
-              />
-                </Form>
-              </div>
-              <div style={{ flex: 1 }}>
-                <Form layout="inline" fluid>
-                <MyInput
-                column
-                disabled={editing}
-                width={200}
-                fieldType="select"
-                fieldLabel="Treatment Strategy"
-                selectData={treatmentstrategyLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                fieldName={'treatmentStrategyLkey'}
-                record={allerges}
-                setRecord={setAllerges}
-              />
-                </Form>
-              </div>
-            
-            </div>
-            <div className="div-parent">
-              <div style={{ flex: 1 }}>
-                <Form layout="inline" fluid>
-                <MyInput
-                column
-                disabled={editing}
-                width={200}
-                fieldType="select"
-                fieldLabel="Onset"
-                selectData={onsetLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                fieldName={'onsetLkey'}
-                record={allerges}
-                setRecord={setAllerges}
-              />
-                </Form>
-              </div>
-              <div style={{ flex: 1 }}>
-              <div>
-                <Form className='margin-label'>
-                  <MyLabel  label='Onset Date'/>
-                </Form>
-                
-                <DatePicker
-                className='date-width'
-                  format="MM/dd/yyyy hh:mm aa"
-                  showMeridian
-                  value={selectedOnsetDate}
-                  onChange={handleDateChange}
-                  disabled={editOnset.editdate}
-                />
-              </div>
-              </div>
-              <div style={{ flex: 1 }}>
-                <Form layout="inline" fluid>
-                <MyInput 
-                fieldLabel="Undefined"
-                fieldName="editdate"
-                column
-                width={67}
-                fieldType='checkbox'
-                record={editOnset}
-                setRecord={setEditOnset}
-                />
-                </Form>
-              </div>
-            
-            </div>
-            <div className="div-parent">
-              <div style={{ flex: 1 }}>
-                <Form layout="inline" fluid>
-                <MyInput
-                column
-                disabled={editSourceof.editSource}
-                width={200}
-                fieldType="select"
-                fieldLabel="Source of Information"
-                selectData={sourceofinformationLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                fieldName={'sourceOfInformationLkey'}
-                record={allerges}
-                setRecord={setAllerges}
-              />
-                </Form>
-              </div>
-              <div style={{ flex: 1 }}>
-              <Form layout="inline" fluid>
-                <MyInput 
-                fieldLabel="BY Patient"
-                fieldName="editSource"
-                column
-                width={67}
-                fieldType='checkbox'
-                record={editSourceof}
-                setRecord={seteditSourceof}
-                />
-                </Form>
-              </div>
-              <div style={{ flex: 1 }}>
-                <Form layout="inline" fluid>
-                <MyInput
-                column
-                disabled={editing}
-                width={200}
-                fieldType="select"
-                fieldLabel="Type of Propensity"
-                selectData={allgPropnLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                fieldName={'typeOfPropensityLkey'}
-                record={allerges}
-                setRecord={setAllerges}
-              />
-                </Form>
-              </div>
-            
-            </div>
-            <div className="div-parent">
-            <div style={{ flex: 1 }}>
-            <Form  fluid>
-            <div className='column-div'>
-                <MyInput
-                  column
-                  disabled={editing}
-                  width= '100%'
-                  fieldType="select"
-                  fieldLabel="Allergic Reactions"
-                  selectData={reactionLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName={'reactionDescription'}
-                  record={allerges}
-                  setRecord={setAllerges}
-                />
-                <Input
-                  as="textarea"
-                  disabled={editing}
-                  onChange={e => setReactionDescription(e)}
-                  value={reactionDescription}
-                  className='fill-width'
-                  rows={3}
-                />
-              </div>
-            </Form>
-            </div>
-            <div style={{ flex: 1 }}>
-            <Form  fluid>
-            <MyInput
-              width= '100%'
-                column
-                fieldLabel="Note"
-                fieldType="textarea"
-                fieldName="notes"
-                height={148}
-                record={allerges}
-                setRecord={setAllerges}
-                disabled={editing}
-              />
-            </Form>
-            </div>
-            </div>
-           
-        
-          </div>
-        }
-
-
-      />
+      {/*modal for add details for allergy and save it */}
+      <DetailsModal open={openDetailsModal} setOpen={setOpenDetailsModal} allerges={allerges} setAllerges={setAllerges} handleClear={handleClear} handleSave={handleSave} edit={edit} editing={editing} />
+    
     </div>
   );
 };

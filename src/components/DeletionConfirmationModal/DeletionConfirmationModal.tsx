@@ -12,7 +12,7 @@ const DeletionConfirmationModal = ({
   itemToDelete = "",
   actionButtonFunction = null,
 }) => {
-
+ 
   return (
     <>
       <Modal

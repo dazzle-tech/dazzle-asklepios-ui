@@ -16,7 +16,7 @@ import TrashIcon from '@rsuite/icons/Trash';
 import DetailIcon from '@rsuite/icons/Detail';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useSelector } from 'react-redux';
-import QuickPatient from './quickPatient';
+import QuickPatient from '../facility-patient-list/QuickPatient';
 import * as icons from '@rsuite/icons';
 import { faBolt } from '@fortawesome/free-solid-svg-icons';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
@@ -109,7 +109,7 @@ import {
   useUpdateAttachmentDetailsMutation
 } from '@/services/attachmentService';
 import { notify } from '@/utils/uiReducerActions';
-import PreferredHealthProfessional from './PreferredHealthProfessional';
+import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
 import ConsentFormTab from './ConsentFormTab';
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
@@ -1174,7 +1174,7 @@ const isSelectedRelation = rowData => {
               <QuickPatient
                 open={quickPatientModalOpen}
                 localPatientData={localPatient}
-                onClose={() => setQuickPatientModalOpen(false)}
+                setOpen={() => setQuickPatientModalOpen(false)}
               />
             </div>
 

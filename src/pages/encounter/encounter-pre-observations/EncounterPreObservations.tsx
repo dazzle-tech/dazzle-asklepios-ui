@@ -1,15 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { Panel } from 'rsuite';;
+import React, { useEffect, useState ,useRef} from 'react';
+import { Panel,Divider } from 'rsuite';;
 import PatientSide from '../encounter-main-info-section/PatienSide';
 import { useAppDispatch } from '@/hooks';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import Translate from '@/components/Translate';
 import Allergies from './AllergiesNurse';
+import { Check } from '@rsuite/icons';
+import BlockIcon from '@rsuite/icons/Block';
 import Warning from './warning';
 import ArowBackIcon from '@rsuite/icons/ArowBack';
+import {  } from '@rsuite/icons';
 import './styles.less';
-import { Form } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
 import { ApEncounter } from '@/types/model-types';
 import { useCompleteEncounterMutation } from '@/services/encounterService';
@@ -18,10 +20,9 @@ import { useNavigate } from 'react-router-dom';
 import { Tabs } from 'rsuite'
 import VaccinationTab from './vaccination-tab';
 import Observations from './observations/Observations';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+
 const EncounterPreObservations = () => {
   const dispatch = useAppDispatch();
   const location = useLocation();
@@ -30,6 +31,7 @@ const EncounterPreObservations = () => {
   const [localEncounter] = useState<ApEncounter>({ ...propsData.encounter })
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
+  const [activeKey, setActiveKey] = useState<string | number>('1');
   const [completeEncounter] = useCompleteEncounterMutation();
 
  // Page header setup
@@ -63,6 +65,14 @@ const EncounterPreObservations = () => {
       setIsEncounterStatusClosed(true);
     }
   }, [localEncounter?.encounterStatusLkey]);
+
+  const obsRef = useRef(null);
+const handleSaveObsarvationClick = () => {
+  obsRef.current?.handleSave(); 
+};
+const handleClearObsarvationClick = () => {
+  obsRef.current?.handleClear(); 
+};
   return (
     <>
       {propsData?.patient && propsData?.encounter && (
@@ -70,18 +80,32 @@ const EncounterPreObservations = () => {
           <div className='left-box'>
               <Panel>
                 <div className='left-buttons-container'>
-                <Form fluid layout='inline' className='left-buttons-contant'>
+               
+               
                     <MyButton prefixIcon={() => <ArowBackIcon />} backgroundColor={'var(--primary-gray)'} onClick={() => { navigate('/encounter-list') }}>
                       Go Back
                     </MyButton>
+                    <div className='left-buttons-contant'>
                     <MyButton prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />} onClick={handleCompleteEncounter} appearance='ghost'>
                       <Translate>Complete Visit</Translate>
                     </MyButton>
-                  </Form>
+                  {activeKey=="1"&& <Divider vertical />}
+                  {activeKey=="1"&&   <MyButton
+                   appearance='ghost'
+                    onClick={handleClearObsarvationClick}
+                   prefixIcon={()=><BlockIcon/>}
+                   >Clear</MyButton>}
+                  {activeKey=="1"&& 
+                    <MyButton
+                    prefixIcon={() => <Check />}
+                    onClick={handleSaveObsarvationClick}
+                    >Save</MyButton>}
+                    </div>
+               
                 </div>  
-                <Tabs defaultActiveKey="1" appearance="subtle">
+                <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
                   <Tabs.Tab eventKey="1" title="Observations">
-                    <Observations patient={propsData.patient} encounter={propsData.encounter} />
+                    <Observations ref={obsRef} patient={propsData.patient} encounter={propsData.encounter} />
                   </Tabs.Tab>
                   <Tabs.Tab eventKey="2" title="Allergies">
                     <Allergies edit={false} patient={propsData.patient} encounter={propsData.encounter} />

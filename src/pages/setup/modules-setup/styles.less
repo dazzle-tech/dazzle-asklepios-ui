@@ -1,60 +1,61 @@
-.title{
-     display: flex;
+.title {
+  display: flex;
 }
-.container-of-icons{
-    display: flex;
-     gap: 20px
+.title-screen {
+  font-size: 16px;
+  @media (max-width: 450px) {
+    font-size: 12px;
+  }
 }
-.carousel{
-    height: auto !important;
-     background-color: var(--rs-body) !important;
+.container-of-icons {
+  display: flex;
+  gap: 20px;
 }
-
-.container-of-header-actions{
-    display: flex;
-     justify-content: space-between;
-      margin-bottom: 10px;
-      margin-right: 40px;
+.carousel {
+  height: auto !important;
+  background-color: var(--rs-body) !important;
 }
-.column-name{
-    font-weight: bold;
+.container-of-header-actions-module {
+  display: flex;
+  justify-content: space-between;
+  margin-right: 5px;
+  @media (max-width: 500px) {
+    flex-direction: column;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
 }
-.container-of-pagination{
-    padding: 20px;
-     background-color: var(--extra-light-blue);
+.container-of-header-actions-screen {
+  display: flex;
+  justify-content: space-between;
+  margin-right: 5px;
+  @media (max-width: 700px) {
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
 }
-.modal-body{
-    margin-bottom: 50px;
-    Form{
-        padding: 1px;
-    }
-    .header-of-modal{
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-content: center;
-        align-items: center;
-        margin-bottom: 40px;
-
-        label{
-            font-weight: bold;
-             font-size: 14px;
-        }
-    }
-    .container-of-two-fields{
-        display: flex;
-         gap: 20px;
-    }
+.column-name {
+  font-weight: bold;
 }
-
-.modal-footer{
-    .stack{
-        display: flex; 
-        justify-content: flex-end;
-    }
+.container-of-pagination-module {
+  padding: 20px;
+  background-color: var(--extra-light-blue);
+  @media (max-width: 500px) {
+    padding: 5px;
+  }
 }
-
-.container-of-back-and-search{
-    display: flex;
-    gap: 20px;
+.container-of-two-fields-module {
+  display: flex;
+  gap: 20px;
+}
+.container-of-back-and-search-screen {
+  display: flex;
+  gap: 20px;
+  @media (max-width: 700px) {
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: -14px;
+  }
 }

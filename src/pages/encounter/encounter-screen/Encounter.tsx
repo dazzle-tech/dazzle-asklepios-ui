@@ -1,9 +1,8 @@
-import MyInput from '@/components/MyInput';
+
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import { ApEncounter, ApPatient, ApUser } from '@/types/model-types';
-import { newApPatient, newApUser } from '@/types/model-types-constructor';
+import { ApEncounter } from '@/types/model-types';
 import Consultation from '../encounter-component/consultation';
 import DiagnosticsOrder from '../encounter-component/diagnostics-order';
 import DiagnosticsResult from '../encounter-component/diagnostics-result/DiagnosticsResult';
@@ -18,12 +17,9 @@ import Allergies from '../encounter-pre-observations/AllergiesNurse';
 import Observations from '../encounter-pre-observations/observations/Observations';
 import VaccinationTab from '../encounter-pre-observations/vaccination-tab/';
 import DrugOrder from '../encounter-component/drug-order';
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserDoctor } from '@fortawesome/free-solid-svg-icons';
-import TableIcon from '@rsuite/icons/Table';
-import { useGetAppointmentsQuery, useGetResourcesByResourceIdQuery, useGetResourcesQuery } from '@/services/appointmentService';
+import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
 import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentModal';
 import PatientSide from '../encounter-main-info-section/PatienSide';
 import MyButton from '@/components/MyButton/MyButton';
@@ -49,51 +45,25 @@ import { faBars, faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useState } from 'react';
 import './styles.less';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
-import MyCard from '@/components/MyCard/';
 import {
-
-  IconButton,
-  Input,
   Panel,
-  Stack,
   List,
   Divider,
   Drawer,
   Table,
-  Pagination,
-  Button,
-  Grid,
-  Row,
-  Col,
-  Checkbox,
-  SelectPicker, Text,
-  Sidenav, Nav, Toggle, Modal
 } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import 'react-tabs/style/react-tabs.css';
-import * as icons from '@rsuite/icons';
-import { initialListRequest } from '@/types/types';
-import { useGetAllergensQuery } from '@/services/setupService';
 import { useNavigate } from 'react-router-dom';
 import Dental from '../dental-screen';
 import {
   useCompleteEncounterMutation,
 } from '@/services/encounterService';
-import {
-  useGetAllergiesQuery,
-  useGetWarningsQuery
-} from '@/services/observationService';
+
 import { faHeartPulse } from '@fortawesome/free-solid-svg-icons';
-import { faRunning, faHeartbeat } from '@fortawesome/free-solid-svg-icons';
-import { ApVisitAllergies } from '@/types/model-types';
-import { newApVisitAllergies } from '@/types/model-types-constructor';
-import { BlockUI } from 'primereact/blockui';
 import { useLocation } from 'react-router-dom';
-import EncounterMainInfoSection from '../encounter-main-info-section';
 import Warning from '../encounter-pre-observations/warning';
 import PsychologicalExam from '../encounter-component/psychological-exam';
 import AudiometryPuretone from '../encounter-component/audiometry-puretone';
@@ -101,22 +71,19 @@ import { faEarListen } from "@fortawesome/free-solid-svg-icons";
 import { faBrain } from "@fortawesome/free-solid-svg-icons";
 import { faEye, faUserPlus } from "@fortawesome/free-solid-svg-icons";
 import OptometricExam from '../encounter-component/optometric-exam/OptometricExam';
-import TreadmillStress from '../encounter-component/treadm-stress/TreadmillStress';
 import Cardiology from '../encounter-component/cardiology/Cardiology';
 import { useGetMedicalSheetsByDepartmentIdQuery } from '@/services/setupService';
-
+import AllergiesModal from './AllergiesModal';
+import WarningiesModal from './WarningiesModal';
+import { useGetAppointmentsQuery } from '@/services/appointmentService';
 const Encounter = () => {
-  const encounterStatusNew = '91063195286200'; // TODO change this to be fetched from redis based on LOV CODE
 
   const authSlice = useAppSelector(state => state.auth);
-  const [localUser, setLocalUser] = useState<ApUser>({ ...newApUser });
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const propsData = location.state;
-  const [localPatient, setLocalPatient] = useState<ApPatient>({ ...propsData.patient })
   const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...propsData.encounter })
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
     <div style={{ display: 'flex' }}>
       <h5>Clinical Visit</h5>
@@ -129,8 +96,10 @@ const Encounter = () => {
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedFacility, setSelectedFacility] = useState(null);
-  const [selectedResources, setSelectedResources] = useState([])
   const [selectedResourceType, setSelectedResourceType] = useState(null);
+  const [medicalSheetSourceKey, setMedicalSheetSourceKey] = useState<string | undefined>();
+  const [medicalSheetRowSourceKey, setMedicalSheetRowSourceKey] = useState<string | undefined>();
+  const [selectedResources, setSelectedResources] = useState([])
   const {
     data: appointments,
     refetch: refitchAppointments,
@@ -142,80 +111,41 @@ const Encounter = () => {
     resources: selectedResources ? selectedResources.resourceKey : [],
 
   });
+  // get Midical Sheets Data Steps
+  useEffect(() => {
+    if (propsData?.encounter?.resourceTypeLkey === '2039516279378421') {
+      // Clinic, then we need to get its resource details
+      setMedicalSheetRowSourceKey(propsData?.encounter?.resourceKey);
+      setMedicalSheetSourceKey(undefined);
+    } else {
+      // Not Clinic, use department directly
+      setMedicalSheetSourceKey(propsData?.encounter?.departmentKey);
+      setMedicalSheetRowSourceKey(undefined);
+    }
+  }, [propsData?.encounter]);
 
+  // Step 2: Fetch the resource if needed "IF Clinic"
+  const { data: resourcesResponse } = useGetResourcesByResourceIdQuery(
+    medicalSheetRowSourceKey!,
+    { skip: !medicalSheetRowSourceKey }
+  );
 
+  // Step 3: Set departmentKey from resource "IF Clinic"
+  useEffect(() => {
+    if (resourcesResponse?.object?.resourceKey) {
+      setMedicalSheetSourceKey(resourcesResponse.object.resourceKey);
+    }
+  }, [resourcesResponse]);
 
-
- 
-
-
-
-const [medicalSheetSourceKey, setMedicalSheetSourceKey] = useState<string | undefined>();
-const [medicalSheetRowSourceKey, setMedicalSheetRowSourceKey] = useState<string | undefined>();
-
-// get Midical Sheets Data Steps
-useEffect(() => {
-  if (propsData?.encounter?.resourceTypeLkey === '2039516279378421') {
-    // Clinic, then we need to get its resource details
-    setMedicalSheetRowSourceKey(propsData?.encounter?.resourceKey);
-    setMedicalSheetSourceKey(undefined);
-  } else {
-    // Not Clinic, use department directly
-    setMedicalSheetSourceKey(propsData?.encounter?.departmentKey);
-    setMedicalSheetRowSourceKey(undefined); 
-  }
-}, [propsData?.encounter]);
-
-// Step 2: Fetch the resource if needed "IF Clinic"
-const { data: resourcesResponse } = useGetResourcesByResourceIdQuery(
-  medicalSheetRowSourceKey!,
-  { skip: !medicalSheetRowSourceKey }
-);
-
-// Step 3: Set departmentKey from resource "IF Clinic"
-useEffect(() => {
-  if (resourcesResponse?.object?.resourceKey) {
-    setMedicalSheetSourceKey(resourcesResponse.object.resourceKey);
-  }
-}, [resourcesResponse]);
-
-// Step 4:get medical sheet with final departmentKey.
-const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
-  medicalSheetSourceKey!,
-  { skip: !medicalSheetSourceKey }
-);
-
-
-
+  // Step 4:get medical sheet with final departmentKey.
+  const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
+    medicalSheetSourceKey!,
+    { skip: !medicalSheetSourceKey }
+  );
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
-  const { data: allergensListToGetName } = useGetAllergensQuery({
-    ...initialListRequest
-  });
-  console.log("medical sheet",medicalSheet?.object);
-  console.log(propsData?.encounter?.departmentKey )
-
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
   const [openWarningModal, setOpenWarningModal] = useState(false);
-  const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
-  const [showCanceled, setShowCanceled] = useState(true);
-
-  const filters = [
-    {
-      fieldName: 'patient_key',
-      operator: 'match',
-      value: propsData.patient?.key
-    },
-    {
-      fieldName: "status_lkey",
-      operator: showCanceled ? "notMatch" : "match",
-      value: "3196709905099521",
-    }
-  ];
-
-
-  const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({ ...initialListRequest, filters });
-  const { data: warningsListResponse, refetch: fetchwarning } = useGetWarningsQuery({ ...initialListRequest, filters });
   const [activeContent, setActiveContent] = useState(<PatientSummary patient={propsData.patient} encounter={propsData.encounter} />);
   const handleMenuItemClick = (content) => {
     setActiveContent(content);
@@ -226,30 +156,32 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
       navigate('/encounter-list');
     }
   }, []);
-  useEffect(() => {
-    setLocalUser(authSlice.user)
 
-
-  }, [authSlice.user]);
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent("  "));
     };
-  }, [location.pathname, dispatch])
+  }, [location.pathname, dispatch]);
+
   const handleGoBack = () => {
     dispatch(setEncounter(null));
     dispatch(setPatient(null));
-    navigate('/encounter-list');
+  
+    if (propsData.fromPage === "PatientEMR") {
+      navigate('/patient-EMR', { 
+        state: { 
+          localPatient: propsData.patient,
+          fromPage: 'clinicalVisit'
+        } 
+      });
+    } else {
+      navigate('/encounter-list');
+    }
   };
-  const CloseAllargyModal = () => {
-    setOpenAllargyModal(false);
-  }
+  
   const OpenAllargyModal = () => {
     setOpenAllargyModal(true);
-  }
-  const CloseWarningModal = () => {
-    setOpenWarningModal(false);
   }
   const OpenWarningModal = () => {
     setOpenWarningModal(true);
@@ -267,105 +199,7 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
       navigate('/encounter-list');
     }
   }, [completeEncounterMutation]);
-  const renderRowExpanded = rowData => {
 
-
-    return (
-
-
-      <Table
-        data={[rowData]} // Pass the data as an array to populate the table
-        bordered
-        cellBordered
-        headerHeight={30}
-        rowHeight={40}
-        className='table-style'
-        height={100} // Adjust height as needed
-      >
-        <Column flexGrow={2} align="center" fullText>
-          <HeaderCell>Created At</HeaderCell>
-          <Cell dataKey="onsetDate" >
-            {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} align="center" fullText>
-          <HeaderCell>Created By</HeaderCell>
-          <Cell dataKey="createdBy" />
-        </Column>
-        <Column flexGrow={2} align="center" fullText>
-          <HeaderCell>Resolved At</HeaderCell>
-          <Cell dataKey="resolvedAt" >
-            {rowData => {
-              if (rowData.statusLkey != '9766169155908512') {
-
-                return rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : "";
-              }
-            }}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} align="center" fullText>
-          <HeaderCell>Resolved By</HeaderCell>
-          <Cell dataKey="resolvedBy" />
-        </Column>
-        <Column flexGrow={2} align="center" fullText>
-          <HeaderCell>Cancelled At</HeaderCell>
-          <Cell dataKey="deletedAt" >
-            {rowData => rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ""}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} align="center" fullText>
-          <HeaderCell>Cancelled By</HeaderCell>
-          <Cell dataKey="deletedBy" />
-        </Column>
-        <Column flexGrow={1} align="center" fullText>
-          <HeaderCell>Cancelliton Reason</HeaderCell>
-          <Cell dataKey="cancellationReason" />
-        </Column>
-      </Table>
-
-
-    );
-  };
-
-  const handleExpanded = (rowData) => {
-    let open = false;
-    const nextExpandedRowKeys = [];
-
-    expandedRowKeys.forEach(key => {
-      if (key === rowData.key) {
-        open = true;
-      } else {
-        nextExpandedRowKeys.push(key);
-      }
-    });
-
-    if (!open) {
-      nextExpandedRowKeys.push(rowData.key);
-    }
-
-
-
-    console.log(nextExpandedRowKeys)
-    setExpandedRowKeys(nextExpandedRowKeys);
-  };
-
-  const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
-    <Cell {...props} style={{ padding: 5 }}>
-      <IconButton
-        appearance="subtle"
-        onClick={() => {
-          onChange(rowData);
-        }}
-        icon={
-          expandedRowKeys.some(key => key === rowData["key"]) ? (
-            <CollaspedOutlineIcon />
-          ) : (
-            <ExpandOutlineIcon />
-          )
-        }
-      />
-    </Cell>
-  );
 
 
   return (
@@ -383,14 +217,14 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
 
                 backgroundColor={'var(--primary-gray)'}
                 onClick={handleGoBack}
-                >Go Back</MyButton>           
+              >Go Back</MyButton>
             </div>
             <div className='right'>
               <MyButton
                 prefixIcon={() => <BarChartHorizontalIcon />}
                 backgroundColor={"var(--deep-blue)"}
 
-                onClick={() => {setIsDrawerOpen(true),console.log(medicalSheetSourceKey)}}
+                onClick={() => { setIsDrawerOpen(true), console.log(medicalSheetSourceKey) }}
               >Medical Sheets</MyButton>
               <MyButton
 
@@ -399,17 +233,17 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
               >Create Follow-up</MyButton>
               <MyButton
 
-                backgroundColor={propsData.patient.hasAllergy ? "var(--primary-orange)" : "var(--deep-blue)"}
+                backgroundColor={propsData?.patient?.hasAllergy ? "var(--primary-orange)" : "var(--deep-blue)"}
                 onClick={OpenAllargyModal}
                 prefixIcon={() => <FontAwesomeIcon icon={faHandDots} />}
               >Allergy</MyButton>
               <MyButton
 
-                backgroundColor={propsData.patient.hasWarning ? "var(--primary-orange)" : "var(--deep-blue)"}
+                backgroundColor={propsData?.patient?.hasWarning ? "var(--primary-orange)" : "var(--deep-blue)"}
                 onClick={OpenWarningModal}
                 prefixIcon={() => <FontAwesomeIcon icon={faTriangleExclamation} />}
               >Warning</MyButton>
-              {propsData.encounter.editable && (
+              {propsData?.encounter?.editable && (
                 <MyButton
 
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
@@ -427,7 +261,7 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
             open={isDrawerOpen}
             onClose={() => setIsDrawerOpen(false)}
             placement='left'
-           className='drawer-style'
+            className='drawer-style'
           >
             <Drawer.Header>
               <Drawer.Title className='title-drawer'>Medical Sheets</Drawer.Title>
@@ -435,12 +269,12 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
             <Drawer.Body className='drawer-body'>
               <List hover className='drawer-list-style'>
                 {medicalSheet?.object?.patientDashboard &&
-                 <List.Item
-                  className='drawer-item'
-                  onClick={() => handleMenuItemClick(<PatientSummary patient={propsData.patient} encounter={propsData.encounter} />)}>
-                  <FontAwesomeIcon icon={faBars} className='icon' />
-                  <Translate>Patient Dashboard</Translate>
-                </List.Item>}
+                  <List.Item
+                    className='drawer-item'
+                    onClick={() => handleMenuItemClick(<PatientSummary patient={propsData.patient} encounter={propsData.encounter} />)}>
+                    <FontAwesomeIcon icon={faBars} className='icon' />
+                    <Translate>Patient Dashboard</Translate>
+                  </List.Item>}
                 {medicalSheet?.object?.clinicalVisit &&
                   <List.Item
                     className='drawer-item'
@@ -578,261 +412,8 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
           </Drawer>
           {activeContent} {/* Render the selected content */}
         </Panel>
-        <Modal size="lg" open={openAllargyModal} onClose={CloseAllargyModal} overflow  >
-          <Modal.Title>
-            <Translate><h6>Patient Allergy</h6></Translate>
-          </Modal.Title>
-          <Modal.Body>
-            <div>
-              <Checkbox
-                checked={!showCanceled}
-                onChange={() => {
-                  setShowCanceled(!showCanceled);
-                }}
-              >
-                Show Cancelled
-              </Checkbox>
-            </div>
-            <Table
-
-              data={allergiesListResponse?.object || []}
-              rowKey="key"
-              expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
-              renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
-              shouldUpdateScroll={false}
-              bordered
-              cellBordered
-
-            >
-              <Column width={70} align="center">
-                <HeaderCell>#</HeaderCell>
-                <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-              </Column>
-
-              <Column flexGrow={2} fullText>
-                <HeaderCell align="center">
-                  <Translate>Allergy Type</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData =>
-                    rowData.allergyTypeLvalue?.lovDisplayVale
-                  }
-                </Cell>
-              </Column >
-              <Column flexGrow={2} fullText>
-                <HeaderCell align="center">
-                  <Translate>Allergen</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData => {
-
-                    if (!allergensListToGetName?.object) {
-                      return "Loading...";
-                    }
-                    const getname = allergensListToGetName.object.find(item => item.key === rowData.allergenKey);
-                    console.log(getname);
-                    return getname?.allergenName || "No Name";
-                  }}
-                </Cell>
-              </Column>
-              <Column flexGrow={2} fullText>
-                <HeaderCell align="center">
-                  <Translate>Severity</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData =>
-                    rowData.severityLvalue?.lovDisplayVale
-                  }
-                </Cell>
-              </Column>
-              <Column flexGrow={2} fullText>
-                <HeaderCell align="center">
-                  <Translate>Onset</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData =>
-                    rowData.onsetLvalue?.lovDisplayVale
-                  }
-                </Cell>
-              </Column>
-              <Column flexGrow={2} fullText>
-                <HeaderCell align="center">
-                  <Translate>Onset Date Time</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData => rowData.onsetDate ? new Date(rowData.onsetDate).toLocaleString() : "Undefind"}
-                </Cell>
-              </Column>
-              <Column flexGrow={2} fullText>
-                <HeaderCell align="center">
-                  <Translate>Treatment Strategy</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData =>
-                    rowData.treatmentStrategyLvalue?.lovDisplayVale
-                  }
-                </Cell>
-              </Column>
-              <Column flexGrow={2} fullText>
-                <HeaderCell align="center">
-                  <Translate>Source of information</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData =>
-                    rowData.sourceOfInformationLvalue?.lovDisplayVale || "BY Patient"
-                  }
-                </Cell>
-              </Column>
-              <Column flexGrow={2} fullText>
-                <HeaderCell align="center">
-                  <Translate>Reaction Description</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData =>
-                    rowData.reactionDescription
-                  }
-                </Cell>
-              </Column>
-              <Column flexGrow={2} fullText>
-                <HeaderCell align="center">
-                  <Translate>Notes</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData =>
-                    rowData.notes
-                  }
-                </Cell>
-              </Column>
-              <Column flexGrow={1} fullText>
-                <HeaderCell align="center">
-                  <Translate>Status</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData =>
-                    rowData.statusLvalue?.lovDisplayVale
-                  }
-                </Cell>
-              </Column>
-            </Table>
 
 
-
-          </Modal.Body>
-          <Modal.Footer>
-            <Stack spacing={2} divider={<Divider vertical />}>
-
-              <Button appearance="ghost" color="cyan" onClick={CloseAllargyModal}>
-                Close
-              </Button>
-            </Stack>
-          </Modal.Footer>
-        </Modal>
-        <Modal size="lg" open={openWarningModal} onClose={CloseWarningModal} overflow  >
-          <Modal.Title>
-            <Translate><h6>Patient Warning</h6></Translate>
-          </Modal.Title>
-          <Modal.Body>
-            <div>
-              <Checkbox
-                checked={!showCanceled}
-                onChange={() => {
-
-
-                  setShowCanceled(!showCanceled);
-                }}
-              >
-                Show Cancelled
-              </Checkbox>
-
-
-            </div>
-            <Table
-              height={600}
-              data={warningsListResponse?.object || []}
-              rowKey="key"
-              expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
-              renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
-              shouldUpdateScroll={false}
-            >
-              <Column width={70} align="center">
-                <HeaderCell>#</HeaderCell>
-                <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-              </Column>
-
-              <Column flexGrow={2} fullText>
-                <HeaderCell align="center">
-                  <Translate>Warning Type</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData =>
-                    rowData.warningTypeLvalue?.lovDisplayVale
-                  }
-                </Cell>
-              </Column >
-
-              <Column flexGrow={2} fullText>
-                <HeaderCell align="center">
-                  <Translate>Severity</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData =>
-                    rowData.severityLvalue?.lovDisplayVale
-                  }
-                </Cell>
-              </Column>
-
-              <Column flexGrow={2} fullText>
-                <HeaderCell align="center">
-                  <Translate>First Time Recorded</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData => rowData.firstTimeRecorded ? new Date(rowData.firstTimeRecorded).toLocaleString() : "Undefind"}
-                </Cell>
-              </Column>
-
-              <Column flexGrow={2} fullText>
-                <HeaderCell align="center">
-                  <Translate>Source of information</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData =>
-                    rowData.sourceOfInformationLvalue?.lovDisplayVale || "BY Patient"
-                  }
-                </Cell>
-              </Column>
-
-              <Column flexGrow={2} fullText>
-                <HeaderCell align="center">
-                  <Translate>Notes</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData =>
-                    rowData.notes
-                  }
-                </Cell>
-              </Column>
-              <Column flexGrow={1} fullText>
-                <HeaderCell align="center">
-                  <Translate>Status</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData =>
-                    rowData.statusLvalue?.lovDisplayVale
-                  }
-                </Cell>
-              </Column>
-            </Table>
-
-          </Modal.Body>
-          <Modal.Footer>
-            <Stack spacing={2} divider={<Divider vertical />}>
-
-              <Button appearance="ghost" color="cyan" onClick={CloseWarningModal}>
-                Close
-              </Button>
-            </Stack>
-          </Modal.Footer>
-        </Modal>
         <AppointmentModal
           from={'Encounter'}
           isOpen={modalOpen}
@@ -848,6 +429,8 @@ const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
       <div className='right-box'>
         <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
       </div>
+      <WarningiesModal open={openWarningModal} setOpen={setOpenWarningModal} patient={propsData.patient} />
+      <AllergiesModal open={openAllargyModal} setOpen={setOpenAllargyModal} patient={propsData.patient} />
     </div>
 
 

@@ -1,17 +1,46 @@
 .inline-two-four-container {
     display: grid;
-    grid-template-columns: 2.5fr 6fr; /* 2 parts for the right, 1 part for the left */
-    gap: 15px; /* Space between the sections, adjust as needed */
-    width: 100%; /* Full width of the container */
-    height: 100vh; /* Full viewport height if needed */
+    grid-template-columns: 2.5fr 6fr; 
+    gap: 15px; 
+    width: 100%; 
+    height: 100vh; 
   }
   
   .right-section {
-    padding: 20px; 
-  }
+    // padding-right: 20px; 
+    height: 86vh;
+    width: 75vw ;
+    background-color: rgb(255, 255, 255);
+
+   }
   
   .left-section {
-    padding: 20px; 
-  }
+    padding:20px; 
+    width: 18vw;
+    background-color: rgb(255, 255, 255);
+
+   }
 
   
+   .rbc-day-slot .rbc-time-slot {
+    height: 80px;
+  }
+  .rbc-row {
+    height: 60px;  
+    // display: flex;
+    // align-items: center;
+}
+
+ 
+.rbc-time-header {
+  height: 62px;   
+}
+
+.rbc-time-content > * > .rbc-timeslot-group {
+  min-height: 81px; 
+
+}
+.rbc-time-gutter {
+  width: 41px;  
+  font-size: 12px;
+}

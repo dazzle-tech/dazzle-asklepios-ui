@@ -22,7 +22,6 @@ import {
   faFilter,
   faHospitalUser,
   faLandMineOn,
-  faPaperPlane,
   faPrint,
   faRightFromBracket,
   faStar
@@ -56,6 +55,7 @@ import './styles.less';
 
 import MyInput from '@/components/MyInput';
 
+import ChatModal from '@/components/ChatModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
   useGetDiagnosticOrderQuery,
@@ -194,7 +194,7 @@ const Rad = () => {
   };
 
   const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
-  const [newMessage, setNewMessage] = useState('');
+
   const [savenotes] = useSaveDiagnosticOrderTestNotesMutation();
 
   const [saveTest] = useSaveDiagnosticOrderTestMutation();
@@ -304,12 +304,12 @@ const Rad = () => {
     try {
       await savenotes({
         ...note,
-        notes: newMessage,
+        notes:value,
         testKey: test.key,
         orderKey: order.key
       }).unwrap();
       dispatch(notify({ msg: 'Send successfully', sev: 'success' }));
-      await setNewMessage('');
+      
     } catch (error) {
       dispatch(notify({ msg: 'Send Faild', sev: 'error' }));
     }
@@ -319,13 +319,13 @@ const Rad = () => {
     try {
       await saveReportNote({
         ...note,
-        notes: newMessage,
+        notes: value,
         testKey: test.key,
         orderKey: order.key,
         reportKey: report.key
       }).unwrap();
       dispatch(notify({ msg: 'Send successfully', sev: 'success' }));
-      await setNewMessage('');
+     
     } catch (error) {
       dispatch(notify({ msg: 'Send Faild', sev: 'error' }));
     }
@@ -786,8 +786,6 @@ const Rad = () => {
                         sortType
                       });
                   }}
-                  headerHeight={35}
-                  rowHeight={40}
                   rowKey="key"
                   expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
                   renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
@@ -1316,99 +1314,8 @@ const Rad = () => {
           <PatientSide patient={patient} encounter={encounter} />
         </div>
       </div>
-
-      <Modal open={openNoteModal} onClose={() => setOpenNoteModal(false)} size="xs">
-        <Modal.Header>
-          <Modal.Title>💬Technician Notes</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ maxHeight: '300px', overflowY: 'auto', padding: '10px' }}>
-          {messagesList?.object.length > 0 ? (
-            messagesList?.object.map((msg, index) => (
-              <div key={index} style={{ textAlign: 'right', marginBottom: '8px' }}>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    padding: '8px 12px',
-                    borderRadius: '10px',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    maxWidth: '70%'
-                  }}
-                >
-                  {msg.notes}
-                </span>
-                <div style={{ fontSize: '10px', color: 'gray', marginTop: '4px' }}>
-                  {new Date(msg.createdAt).toLocaleString()}
-                </div>
-              </div>
-            ))
-          ) : (
-            <p style={{ textAlign: 'center', color: 'gray' }}>Not found Notes Yet</p>
-          )}
-
-          <div ref={endOfMessagesRef}></div>
-        </Modal.Body>
-        <Modal.Footer>
-          <div style={{ display: 'flex' }}>
-            <Input
-              value={newMessage}
-              onChange={setNewMessage}
-              placeholder="write note.."
-              style={{ width: '80%', marginRight: '10px' }}
-              onPressEnter={value => handleSendMessage(value)}
-            />
-            <Button appearance="primary" onClick={value => handleSendMessage(value)}>
-              <FontAwesomeIcon icon={faPaperPlane} />
-            </Button>
-          </div>
-        </Modal.Footer>
-      </Modal>
-      <Modal open={openNoteResultModal} onClose={() => setOpenNoteResultModal(false)} size="xs">
-        <Modal.Header>
-          <Modal.Title>💬Technician Notes</Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ maxHeight: '300px', overflowY: 'auto', padding: '10px' }}>
-          {messagesResultList?.object.length > 0 ? (
-            messagesResultList?.object.map((msg, index) => (
-              <div key={index} style={{ textAlign: 'right', marginBottom: '8px' }}>
-                <span
-                  style={{
-                    display: 'inline-block',
-                    padding: '8px 12px',
-                    borderRadius: '10px',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    maxWidth: '70%'
-                  }}
-                >
-                  {msg.notes}
-                </span>
-                <div style={{ fontSize: '10px', color: 'gray', marginTop: '4px' }}>
-                  {new Date(msg.createdAt).toLocaleString()}
-                </div>
-              </div>
-            ))
-          ) : (
-            <p style={{ textAlign: 'center', color: 'gray' }}>Not found Notes Yet</p>
-          )}
-
-          <div ref={endOfMessagesRef}></div>
-        </Modal.Body>
-        <Modal.Footer>
-          <div style={{ display: 'flex' }}>
-            <Input
-              value={newMessage}
-              onChange={setNewMessage}
-              placeholder="write note.."
-              style={{ width: '80%', marginRight: '10px' }}
-              onPressEnter={value => handleSendResultMessage(value)}
-            />
-            <Button appearance="primary" onClick={value => handleSendResultMessage(value)}>
-              <FontAwesomeIcon icon={faPaperPlane} />
-            </Button>
-          </div>
-        </Modal.Footer>
-      </Modal>
+       <ChatModal open={openNoteResultModal} setOpen={setOpenNoteResultModal} handleSendMessage={handleSendResultMessage} title={"Comments"} list={messagesResultList?.object} fieldShowName={'notes'}/>
+          <ChatModal open={openNoteModal} setOpen={setOpenNoteModal} handleSendMessage={handleSendMessage} title={"Comments"} list={messagesList?.object} fieldShowName={'notes'}/>
       <Modal open={openSampleModal} onClose={() => setOpenSampleModal(false)} size="xs">
         <Modal.Header>
           <Modal.Title>Patient Arrived</Modal.Title>

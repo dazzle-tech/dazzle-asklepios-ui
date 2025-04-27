@@ -2,23 +2,21 @@ import React, { useState, useEffect } from 'react';
 import type { ApPatient } from '@/types/model-types';
 import { Panel, Tabs, Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import {
-  useGetAgeGroupValueQuery,
-} from '@/services/patientService';
+import { useGetAgeGroupValueQuery } from '@/services/patientService';
 import { calculateAgeFormat } from '@/utils';
 import BasicInfoTab from './tabs/BasicInfoTab';
 import DemographicsTab from './tabs/DemographicsTab';
 import ContactTab from './tabs/ContactTab';
 import AddressTab from './tabs/AddressTab';
 import InsuranceTab from './tabs/InsuranceTab';
-import PrivacySecurityTab from './tabs/PrivacySecurityTab';
 import ConsentFormTab from './ConsentFormTab';
-import PreferredHealthProfessional from './PreferredHealthProfessional';
-import PatientFamilyMembers from './PatientFamilyMembers';
-import PatientExtraDetails from './PatientExtraDetails';
-import PatientAttachment from './PatientAttachment';
+import PreferredHealthProfessional from './tabs/PreferredHealthProfessional/PreferredHealthProfessional';
+import PatientFamilyMembers from './tabs/FamilyMember/PatientFamilyMembers';
+import PatientExtraDetails from './tabs/ExtraDetails/PatientExtraDetails';
+import PatientAttachment from './tabs/Attachment/PatientAttachment';
 import Translate from '@/components/Translate';
-import { useGetLovValuesByCodeAndParentQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import PrivacySecurityTab from './tabs/PrivacySecurity/PrivacySecurityTab';
 
 interface ProfileTabsProps {
   localPatient: ApPatient;
@@ -50,10 +48,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   // Fetch LOV data for various fields
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
-  const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
-    code: 'CITY',
-    parentValueKey: localPatient.countryLkey
-  });
   const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
   const { data: patientClassLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_CLASS');
 
@@ -103,7 +97,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           ageGroupValue={ageGroupValue}
         />
       </Panel>
-
       <Panel
         header={
           <h5 className="title">
@@ -113,33 +106,17 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
       >
         <Tabs defaultActiveKey="1" appearance="subtle" className="patient-info-tabs">
           <Tabs.Tab eventKey="1" title="Demographics">
-            <DemographicsTab
-              localPatient={localPatient}
-              setLocalPatient={setLocalPatient}
-              validationResult={validationResult}
-            />
+            <DemographicsTab localPatient={localPatient} setLocalPatient={setLocalPatient} validationResult={validationResult} />
           </Tabs.Tab>
-
           <Tabs.Tab eventKey="2" title="Contact">
-            <ContactTab
-              localPatient={localPatient}
-              setLocalPatient={setLocalPatient}
-              validationResult={validationResult}
-            />
+            <ContactTab localPatient={localPatient} setLocalPatient={setLocalPatient} validationResult={validationResult} />
           </Tabs.Tab>
-
           <Tabs.Tab eventKey="3" title="Address">
-            <AddressTab
-              localPatient={localPatient}
-              setLocalPatient={setLocalPatient}
-              validationResult={validationResult}
-            />
+            <AddressTab localPatient={localPatient} setLocalPatient={setLocalPatient} validationResult={validationResult} />
           </Tabs.Tab>
-
           <Tabs.Tab eventKey="4" title="Insurance">
             <InsuranceTab localPatient={localPatient} />
           </Tabs.Tab>
-
           <Tabs.Tab eventKey="5" title="Privacy & Security">
             <PrivacySecurityTab
               localPatient={localPatient}
@@ -147,23 +124,18 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
               validationResult={validationResult}
             />
           </Tabs.Tab>
-
           <Tabs.Tab eventKey="6" title="Consent Forms">
             <ConsentFormTab patient={localPatient} isClick={!localPatient.key} />
           </Tabs.Tab>
-
           <Tabs.Tab eventKey="7" title="Preferred Health Professional">
             <PreferredHealthProfessional patient={localPatient} isClick={!localPatient.key} />
           </Tabs.Tab>
-
           <Tabs.Tab eventKey="8" title="Family Members">
             <PatientFamilyMembers localPatient={localPatient} />
           </Tabs.Tab>
-
           <Tabs.Tab eventKey="9" title="Extra Details">
             <Form layout="inline" fluid>
               <MyInput
-                width={165}
                 vr={validationResult}
                 column
                 fieldLabel=" Details"
@@ -175,7 +147,6 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
             </Form>
             <PatientExtraDetails localPatient={localPatient} />
           </Tabs.Tab>
-
           <Tabs.Tab eventKey="10" title="Attachments">
             <PatientAttachment localPatient={localPatient} />
           </Tabs.Tab>

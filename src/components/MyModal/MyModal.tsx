@@ -10,7 +10,7 @@ const MyModal = ({
     title,
     icon = null,
     pagesCount = 1,
-    bodyhieght = 400,
+    bodyheight = 400,
     content,
     size = "sm",
     steps = [],
@@ -18,6 +18,8 @@ const MyModal = ({
     position = "center",
     hideCanel = false,
     hideBack = false,
+    hideActionBtn = false,
+    isDisabledActionBtn = false,
     actionButtonLabel = "Save",
     actionButtonFunction = null,
 }) => {
@@ -57,7 +59,7 @@ const MyModal = ({
                 </Modal.Title>
             </Modal.Header>
             <Divider className='divider-line' />
-            <Modal.Body style={{ height: bodyhieght }}>
+            <Modal.Body style={{ height: bodyheight }}>
                 <Steps current={activeStep} className={`steps-modal ${steps.length === 1 ? 'centered-step' : ''}`}>
                     {steps.map((step, index) => (
                         <Steps.Item
@@ -81,18 +83,27 @@ const MyModal = ({
                 </Steps>
                 {typeof content === 'function' ? content(activeStep) : (activeStep === 0 && content)}
             </Modal.Body>
-            <Divider className='divider-line' />
+            {(
+                footerButtons ||
+                !hideCanel ||
+                (!hideBack && activeStep > 0) ||
+                activeStep !== computedPagesCount - 1 ||
+                steps[activeStep]?.footer ||
+                (activeStep === computedPagesCount - 1 && !hideActionBtn && actionButtonFunction)
+            ) && <Divider className='divider-line' />}
             <Modal.Footer className='footer-modal'>
                 <Form className='footer-modal-content'>
                     {!hideCanel && <MyButton appearance={'subtle'} onClick={() => setOpen(false)}>Cancel</MyButton>}
                     {!hideBack && activeStep > 0 && <MyButton appearance={'subtle'} onClick={handlePrev}>Back</MyButton>}
-                    {!(activeStep === computedPagesCount - 1) && <MyButton onClick={handleNext}>Next</MyButton>} {steps[activeStep]?.footer}
-                    {(activeStep === computedPagesCount - 1) && <MyButton onClick={actionButtonFunction}>{actionButtonLabel}</MyButton>}
+                    {!(activeStep === computedPagesCount - 1) && <MyButton onClick={handleNext} disabled={steps[activeStep]?.disabledNext}>Next</MyButton>} {steps[activeStep]?.footer}
+                    {(activeStep === computedPagesCount - 1) && !hideActionBtn && <MyButton onClick={actionButtonFunction} disabled={isDisabledActionBtn}>{actionButtonLabel}</MyButton>}
                     {footerButtons}
-                   
+
                 </Form>
             </Modal.Footer>
         </Modal>
+
+
     );
 };
 export default MyModal;

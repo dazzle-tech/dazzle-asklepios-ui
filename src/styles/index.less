@@ -78,7 +78,14 @@ td {
 }
 
 .page-container {
-  padding-left: 260px;
+  // padding-left: 260px;
+  // transition: padding 0.5s;
+
+  // &.container-full {
+  //   padding-left: 60px;
+  // }
+
+  padding-left: 17%;
   transition: padding 0.5s;
 
   &.container-full {
@@ -331,7 +338,6 @@ aside {
 
 .rs-picker-default .rs-picker-toggle {
   position: relative;
-  z-index: 5;
   padding-right: 32px;
   display: inline-block;
   color: var(--rs-text-primary);
@@ -343,4 +349,8 @@ aside {
   background: #ffffff !important;
   box-shadow: none !important;
   border: 0px solid var(--rs-border-primary);
+
+}
+ .rs-drawer-body{
+  padding: 5px 10px !important;
 }

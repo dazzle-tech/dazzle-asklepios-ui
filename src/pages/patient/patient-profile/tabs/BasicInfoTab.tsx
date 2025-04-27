@@ -33,7 +33,6 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
         <Form layout="inline" fluid>
           <MyInput
             required
-            width={165}
             vr={validationResult}
             column
             fieldName="firstName"
@@ -42,7 +41,6 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
           />
           <MyInput
             required
-            width={165}
             vr={validationResult}
             column
             fieldName="secondName"
@@ -50,7 +48,6 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
             setRecord={setLocalPatient}
           />
           <MyInput
-            width={165}
             vr={validationResult}
             column
             fieldName="thirdName"
@@ -59,7 +56,6 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
           />
           <MyInput
             required
-            width={165}
             vr={validationResult}
             column
             fieldName="lastName"
@@ -68,7 +64,6 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
           />
           <MyInput
             required
-            width={165}
             vr={validationResult}
             column
             fieldLabel="Sex at Birth"
@@ -79,9 +74,9 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
             selectDataValue="key"
             record={localPatient}
             setRecord={setLocalPatient}
+            searchable={false}
           />
           <MyInput
-            width={165}
             vr={validationResult}
             column
             fieldType="date"
@@ -91,7 +86,6 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
             setRecord={setLocalPatient}
           />
           <MyInput
-            width={165}
             vr={validationResult}
             column
             fieldLabel="Age"
@@ -101,7 +95,6 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
             record={localPatient?.dob ? ageFormatType : null}
           />
           <MyInput
-            width={165}
             vr={validationResult}
             column
             fieldLabel="Patient Category"
@@ -111,7 +104,6 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
             record={localPatient?.dob ? ageGroupValue : null}
           />
           <MyInput
-            width={165}
             vr={validationResult}
             column
             fieldLabel="Patient Class"
@@ -122,10 +114,10 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
             selectDataValue="key"
             record={localPatient}
             setRecord={setLocalPatient}
+            searchable={false}
           />
           {localPatient?.incompletePatient ? (
             <MyInput
-              width={165}
               vr={validationResult}
               column
               fieldLabel="Unknown Patient"
@@ -147,8 +139,6 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
             setRecord={setLocalPatient}
           />
           <MyInput
-            required
-            width={165}
             vr={validationResult}
             column
             fieldLabel="Document Type"
@@ -159,10 +149,10 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
             selectDataValue="key"
             record={localPatient}
             setRecord={setLocalPatient}
+            searchable={false}
           />
           <MyInput
             required
-            width={165}
             vr={validationResult}
             column
             fieldLabel="Document Country"
@@ -177,7 +167,6 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
           />
           <MyInput
             required
-            width={165}
             vr={validationResult}
             column
             fieldLabel="Document Number"

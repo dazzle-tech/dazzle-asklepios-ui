@@ -120,7 +120,7 @@ const EncounterList = () => {
   };
   const handleGoToPreVisitObservations = async (encounterData, patientData) => {
     const privatePatientPath = '/user-access-patient-private';
-    const preObservationsPath = '/encounter-pre-observations';
+    const preObservationsPath = '/nurse-station';
     const targetPath = localPatient.privatePatient ? privatePatientPath : preObservationsPath;
     if (localPatient.privatePatient) {
       navigate(targetPath, {

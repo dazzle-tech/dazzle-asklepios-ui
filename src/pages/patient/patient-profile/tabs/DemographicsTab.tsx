@@ -3,19 +3,17 @@ import type { ApPatient } from '@/types/model-types';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-
 interface DemographicsTabProps {
   localPatient: ApPatient;
   setLocalPatient: (patient: ApPatient) => void;
   validationResult: any;
 }
-
 const DemographicsTab: React.FC<DemographicsTabProps> = ({
   localPatient,
   setLocalPatient,
   validationResult
 }) => {
-  // Fetch LOV data
+  // Fetch LOV data for various fields
   const { data: maritalStatusLovQueryResponse } = useGetLovValuesByCodeQuery('MARI_STATUS');
   const { data: nationalityLovQueryResponse } = useGetLovValuesByCodeQuery('NAT');
   const { data: religeonLovQueryResponse } = useGetLovValuesByCodeQuery('REL');
@@ -28,7 +26,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
     <Form layout="inline" fluid>
       <MyInput
         vr={validationResult}
-        width={165}
         column
         fieldLabel="First Name (Sec. Lang)"
         fieldName="firstNameOtherLang"
@@ -37,7 +34,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       />
       <MyInput
         vr={validationResult}
-        width={165}
         column
         fieldLabel="Second Name (Sec. Lang)"
         fieldName="secondNameOtherLang"
@@ -47,7 +43,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Third Name (Sec. Lang)"
         fieldName="thirdNameOtherLang"
         record={localPatient}
@@ -56,7 +51,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Last Name (Sec. Lang)"
         fieldName="lastNameOtherLang"
         record={localPatient}
@@ -65,7 +59,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Marital Status"
         fieldType="select"
         fieldName="maritalStatusLkey"
@@ -74,11 +67,11 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Nationality"
         fieldType="select"
         fieldName="nationalityLkey"
@@ -91,7 +84,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Religion"
         fieldType="select"
         fieldName="religionLkey"
@@ -100,11 +92,11 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Ethnicity"
         fieldType="select"
         fieldName="ethnicityLkey"
@@ -113,11 +105,11 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Occupation"
         fieldType="select"
         fieldName="occupationLkey"
@@ -130,7 +122,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Responsible Party"
         fieldType="select"
         fieldName="responsiblePartyLkey"
@@ -139,11 +130,11 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Educational Level"
         fieldType="select"
         fieldName="educationalLevelLkey"
@@ -152,11 +143,11 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Previous ID"
         fieldName="previousId"
         record={localPatient}
@@ -165,7 +156,6 @@ const DemographicsTab: React.FC<DemographicsTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Archiving Number"
         fieldName="archivingNumber"
         record={localPatient}

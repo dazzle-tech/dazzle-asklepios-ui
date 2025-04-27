@@ -1,238 +1,186 @@
-import React, { useEffect, useState } from 'react';
-import { Modal, Button, Placeholder, Form, InputGroup, Input, Toggle, RadioGroup, Radio, Table, IconButton, ButtonToolbar, Drawer, Pagination } from 'rsuite';
+import React, { useState } from 'react';
+import { Form } from 'rsuite';
 import './styles.less';
 import Translate from '@/components/Translate';
-import { Block, Check, DocPass, Edit, History, Icon, PlusRound, Detail } from '@rsuite/icons';
-import TrashIcon from '@rsuite/icons/Trash';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-
-import { faLock } from '@fortawesome/free-solid-svg-icons';
-
-
-const { Column, HeaderCell, Cell } = Table;
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import {
-    useGetLovValuesByCodeAndParentQuery,
-    useGetLovValuesByCodeQuery
-} from '@/services/setupService';
+import { PlusRound } from '@rsuite/icons';
+import { MdDelete } from 'react-icons/md';
+import MyButton from '@/components/MyButton/MyButton';
+import { faUsersBetweenLines } from '@fortawesome/free-solid-svg-icons';
+import { useAppDispatch } from '@/hooks';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
-// import { ApPatient } from '@/types/model-types';
+import MyModal from '@/components/MyModal/MyModal';
 import { ApPatientInsuranceCoverage } from '@/types/model-types';
-
-import { useSavePatientInsuranceCovgMutation,useDeletePatientInsuranceCovgMutation } from '@/services/patientService';
+import MyTable from '@/components/MyTable';
+import { useSavePatientInsuranceCovgMutation, useDeletePatientInsuranceCovgMutation } from '@/services/patientService';
 import { notify } from '@/utils/uiReducerActions';
-import { newApPatientInsurance, newApPatientInsuranceCoverage } from '@/types/model-types-constructor';
+import { newApPatientInsuranceCoverage } from '@/types/model-types-constructor';
 import { useGetPatientInsuranceCovgQuery } from '@/services/patientService';
 import { initialListRequest, ListRequest } from '@/types/types';
+const SpecificCoverageModa = ({ open, setOpen, insurance }) => {
+    const [patientInsuranceCoverage, setPatientInsuranceCoverage] = useState<ApPatientInsuranceCoverage>({ ...newApPatientInsuranceCoverage });
+    const [saveCoverage] = useSavePatientInsuranceCovgMutation();
+    const [deleteInsuranceCoverage] = useDeletePatientInsuranceCovgMutation()
+    const dispatch = useAppDispatch();
 
-const SpecificCoverageModa = ({ open, onClose, insurance }) => {
-    const [isUnknown, setIsUnknown] = useState(false);
-    const [validationResult, setValidationResult] = useState({});
+    // Fetch LOV data for various fields
     const { data: isnuranceCovgTypResponse } = useGetLovValuesByCodeQuery('COVERAGE_ITEMS');
     const { data: isnuranceCovgItemsResponse } = useGetLovValuesByCodeQuery('INS_COVG_TYP');
 
+    // Initialize List Request Filters
     const [patientInsuranceCovgListRequest, setPatientInsuranceCovgListRequest] = useState<ListRequest>({
         ...initialListRequest,
         pageSize: 1000
     });
-    const dispatch = useAppDispatch();
-    const [patientInsuranceCoverage, setPatientInsuranceCoverage] = useState<ApPatientInsuranceCoverage>({ ...newApPatientInsuranceCoverage });
-    const [saveCoverage, savePatientInsuranceCoverageMutation] = useSavePatientInsuranceCovgMutation();
-    const [deleteInsuranceCoverage, deleteInsuranceCoverageMutation] = useDeletePatientInsuranceCovgMutation()
-    const [covgList,setCovgList] = useState()
 
-    const [selectedCoverage, setSelectedCoverage] = useState()
-
- 
-  
-    const { data:patientInsuranceCovgResponse, error, isLoading,refetch } = useGetPatientInsuranceCovgQuery({
+    //List Responses
+    // Fetch Patient Insurance CovgResponse
+    const { data: patientInsuranceCovgResponse, refetch } = useGetPatientInsuranceCovgQuery({
         listRequest: patientInsuranceCovgListRequest,
-        key:insurance
-      }
-      , { skip: !insurance }
+        key: insurance
+    }
+        , { skip: !insurance }
     );
-
-
-
-
-  
+    // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
+    const isSelected = rowData => {
+        if (rowData && patientInsuranceCoverage && rowData.key === patientInsuranceCoverage.key) {
+            return 'selected-row';
+        } else return '';
+    };
+    // Function handle Save covgInsurance
     const handelSave = () => {
-        saveCoverage({...patientInsuranceCoverage,
-            patientInsuranceKey:insurance
-        }).unwrap().then(()=>{
+        saveCoverage({
+            ...patientInsuranceCoverage,
+            patientInsuranceKey: insurance
+        }).unwrap().then(() => {
             refetch(),
-            handleClearModal()
-                });
+                dispatch(notify('Coverage Saved Successfully')),
+                handleClearModalFields()
+        });
         console.log(patientInsuranceCoverage)
 
     }
-    const handleDeleteInsurance = () => {
-
-  
-
+    // Function handle delete covgInsurance
+    const handleDeleteInsurance = (rowData: any) => {
         deleteInsuranceCoverage({
-          key: selectedCoverage.key
-        }).then(
-          () => (
-            refetch(),
-            setSelectedCoverage(null)
-          )
-        );
-      }
-    const handleClearModal = () => {
-        onClose();
-        setPatientInsuranceCoverage(newApPatientInsuranceCoverage)
+            key: rowData.key
+        }).then(() => {
+            refetch();
+            dispatch(notify('Coverage Deleted Successfully'));
+        }).catch((error) => {
+            dispatch(notify('Failed to delete coverage'));
+        });
     };
+    // Function handle Clear Modal Fields covgInsurance
+    const handleClearModalFields = () => {
+        setPatientInsuranceCoverage({
+            ...newApPatientInsuranceCoverage, typeLkey: null,
+            coverageTypeLkey: null
+        })
+    };
+    // MyModal  Content
+    const CoverageContent = () => (
+        <div className='covg-conrainer'>
+            <Form layout="inline" fluid className="covg-content">
+                <div className="covg-content-fields">
+                    <MyInput
+                        column
+                        fieldLabel="Type"
+                        fieldType="select"
+                        fieldName="typeLkey"
+                        selectData={isnuranceCovgTypResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={patientInsuranceCoverage}
+                        setRecord={setPatientInsuranceCoverage}
+                        searchable={false}
+                    />
+                    <MyInput
+                        column
+                        fieldLabel="Coverage Type"
+                        fieldType="select"
+                        fieldName="coverageTypeLkey"
+                        selectData={isnuranceCovgItemsResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={patientInsuranceCoverage}
+                        setRecord={setPatientInsuranceCoverage}
+                        searchable={false}
 
-    return (
-        <div>
-            <Drawer
-                size="lg"
-                placement={'left'}
-                open={open} onClose={handleClearModal}
-            >
-                <Drawer.Header>
-                    <Drawer.Title>Coverage List</Drawer.Title>
-                    {/* <Drawer.Actions>{conjurePatientSearchBar(patientSearchTarget)}</Drawer.Actions> */}
-
-                </Drawer.Header>
-                <Drawer.Body>
-                    <Form layout="inline" fluid>
-                        <MyInput
-                            vr={validationResult}
-                            column
-                            fieldLabel="Type"
-                            fieldType="select"
-                            fieldName="typeLkey"
-                            selectData={isnuranceCovgTypResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            record={patientInsuranceCoverage}
-                            setRecord={setPatientInsuranceCoverage}
-                        />
-
-                        <MyInput
-                            vr={validationResult}
-                            column
-                            fieldLabel="Coverage Type"
-                            fieldType="select"
-                            fieldName="coverageTypeLkey"
-                            selectData={isnuranceCovgItemsResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            record={patientInsuranceCoverage}
-                            setRecord={setPatientInsuranceCoverage}
-                        />
-
-                        <MyInput
-                            vr={validationResult}
-                            column
-                            fieldLabel="Amount"
-
-                            fieldName="coveredAmount"
-                            record={patientInsuranceCoverage}
-                            setRecord={setPatientInsuranceCoverage}
-                        />
-
-                    </Form>
-
-
-                    <ButtonToolbar>
-                        <IconButton
-                            appearance="primary"
-                            color="cyan"
-                            icon={<PlusRound />}
-                            onClick={() => { handelSave() }}
-                        >
-                            <Translate>New Coverage</Translate>
-                        </IconButton>
-
-                        <IconButton 
-                        onClick={()=>{handleDeleteInsurance()}}
-                        appearance="primary" color="red" icon={<TrashIcon />}  >
-                            <Translate>Delete</Translate>
-                        </IconButton>
-
-
-                    </ButtonToolbar>
-                    <br />
-                    <small>
-                        * <Translate>Click to select Coverage</Translate>
-                    </small>
-
-                    <div>
-                        <Table
-                            sortColumn={patientInsuranceCovgListRequest.sortBy}
-                            sortType={patientInsuranceCovgListRequest.sortType}
-                            onSortColumn={(sortBy, sortType) => {
-                                if (sortBy)
-                                    setPatientInsuranceCovgListRequest({
-                                        ...patientInsuranceCovgListRequest,
-                                        sortBy,
-                                        sortType
-                                    });
-                            }}
-                            height={400}
-                            headerHeight={30}
-                            rowHeight={50}
-                            bordered
-                            cellBordered
-                            onRowClick={setSelectedCoverage}
-                            data={patientInsuranceCovgResponse?.object ?? []}
-                        >
-
-                            <Column sortable flexGrow={5}>
-                                <HeaderCell>Type</HeaderCell>
-                                <Cell dataKey="type" />
-                            </Column>
-
-                            <Column sortable flexGrow={4}>
-                                <HeaderCell>Coverage Type</HeaderCell>
-                                <Cell dataKey="coverageType" />
-                            </Column>
-
-                            <Column sortable flexGrow={4}>
-                                <HeaderCell>Covered Amount</HeaderCell>
-                                <Cell dataKey="coveredAmount" />
-                            </Column>
-
-                        </Table>
-                    </div>
-                    <div style={{ padding: 20 }}>
-                        <Pagination
-                            prev
-                            next
-                            first
-                            last
-                            ellipsis
-                            boundaryLinks
-                            maxButtons={5}
-                            size="xs"
-                            layout={['limit', '|', 'pager']}
-                            limitOptions={[5, 15, 30]}
-                            limit={patientInsuranceCovgListRequest.pageSize}
-                            activePage={patientInsuranceCovgListRequest.pageNumber}
-                            onChangePage={pageNumber => {
-                                setPatientInsuranceCovgListRequest({ ...patientInsuranceCovgListRequest, pageNumber });
-                            }}
-                            onChangeLimit={pageSize => {
-                                setPatientInsuranceCovgListRequest({ ...patientInsuranceCovgListRequest, pageSize });
-                            }}
-                            total={patientInsuranceCovgResponse?.extraNumeric ?? 0}
-                        />
-                    </div>
-                </Drawer.Body>
-            </Drawer>
-
-
-
-
-
-
-
-
+                    />
+                    <MyInput
+                        column
+                        fieldLabel="Amount"
+                        fieldName="coveredAmount"
+                        record={patientInsuranceCoverage}
+                        setRecord={setPatientInsuranceCoverage}
+                    /></div><div className="covg-content-right-btn">
+                    <MyButton
+                        onClick={() => { handelSave() }}
+                        prefixIcon={() => <PlusRound />}
+                    > New
+                    </MyButton>
+                </div>
+            </Form>
+            <small>* <Translate>Click to select Coverage</Translate></small>
+            <MyTable
+                height={200}
+                rowClassName={isSelected}
+                data={patientInsuranceCovgResponse?.object ?? []}
+                onRowClick={setPatientInsuranceCoverage}
+                columns={[
+                    {
+                        key: 'type',
+                        title: 'Type',
+                        flexGrow: 2,
+                        dataKey: 'type'
+                    },
+                    {
+                        key: 'coverageType',
+                        title: 'Coverage Type',
+                        flexGrow: 2,
+                        dataKey: 'coverageType'
+                    },
+                    {
+                        key: 'coveredAmount',
+                        title: 'Covered Amount',
+                        flexGrow: 2,
+                        dataKey: 'coveredAmount'
+                    },
+                    {
+                        key: 'actions',
+                        title: 'Actions',
+                        flexGrow: 1,
+                        render: (rowData: any) => (
+                            <MdDelete
+                                title="Deactivate"
+                                fill="var(--primary-pink)"
+                                size={24}
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => handleDeleteInsurance(rowData)}
+                            />
+                        )
+                    }
+                ]}
+            />
         </div>
+    );
+    return (
+        <MyModal
+            open={open}
+            setOpen={setOpen}
+            title="Coverage List"
+            position="right"
+            size="sm"
+            bodyheight={700}
+            hideActionBtn={true}
+            content={CoverageContent}
+            steps={[
+                {
+                    title: "Coverage", icon: faUsersBetweenLines,
+                },
+            ]}
+        />
     );
 };
 

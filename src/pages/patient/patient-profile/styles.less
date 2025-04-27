@@ -1,7 +1,6 @@
 .input-container {
   display: flex;
   align-items: center;
-  overflow: hidden;
   transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
   opacity: 0;
 }
@@ -162,5 +161,70 @@
     &::-webkit-scrollbar {
       display: none;
     }
+  }
+}
+.profile-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+.avatar-card-parent{
+  align-items: flex-start !important; 
+  padding: 5px ;
+  .avatar-image {
+    cursor: pointer;
+  }
+  .avatar-container {
+    display: flex;
+    flex-direction: column;
+    font-family: 'Manrope Medium'!important; 
+    .patient-name {
+      font-size: 14px; 
+    }
+    
+    .patient-info {
+      display: flex;
+      gap: 4px;
+      color: var(--primary-gray);
+      font-size: 12px;
+      font-family: 'Manrope Medium'!important; 
+      font-weight: 500 !important; 
+    }
+    
+    .patient-mrn {
+      color: var(--icon-gray);
+      font-family: 'Manrope Bold'!important; 
+      font-size: 12px;
+    }
+  
+  }
+  .status-icons-container {
+    display: flex;
+    flex-direction: column;
+    .status-icon {
+      font-size: 18px;
+      position: relative;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+  }
+  
+}
+}
+
+.btn-fileds-above-table{
+  display: flex;
+  align-items: flex-end ;
+  justify-content: space-between;
+}
+.fields-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.payment-method-container{
+  .payment-method-content{
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 }

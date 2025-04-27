@@ -43,7 +43,7 @@ import { faBroom, faFile, faStethoscope, faPen } from '@fortawesome/free-solid-s
 import { faPrint } from '@fortawesome/free-solid-svg-icons';
 import OthersIcon from '@rsuite/icons/Others';
 import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
-import AttachmentModal from '@/pages/patient/patient-profile/AttachmentUploadModal';
+import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
 import SearchIcon from '@rsuite/icons/Search';
 import BlockIcon from '@rsuite/icons/Block';
 import MyInput from '@/components/MyInput';
@@ -59,6 +59,9 @@ import { ApPatientDiagnose } from '@/types/model-types';
 import { newApConsultationOrder, newApPatientDiagnose } from '@/types/model-types-constructor';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import AdvancedModal from '@/components/AdvancedModal';
+import MyCard from '@/components/MyCard';
 const Consultation = ({ edit, patient, encounter }) => {
   const dispatch = useAppDispatch();
   const [selectedRows, setSelectedRows] = useState([]);
@@ -237,34 +240,7 @@ const Consultation = ({ edit, patient, encounter }) => {
     setActionType('download');
     handleDownload(fetchAttachmentByKeyResponce);
   };
-  const handleFilterChange = (fieldName, value) => {
-    if (value) {
-      setListRequest(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'containsIgnoreCase',
-          value,
-          listRequest
-        )
-      );
-    } else {
-      setListRequest({
-        ...listRequest,
-        filters: [
-          {
-            fieldName: 'patient_key',
-            operator: 'match',
-            value: patient.key
-          },
-          {
-            fieldName: 'visit_key',
-            operator: 'match',
-            value: encounter.key
-          }
-        ]
-      });
-    }
-  };
+
   const handleCheckboxChange = key => {
     setSelectedRows(prev => {
       if (prev.includes(key)) {
@@ -344,7 +320,6 @@ const Consultation = ({ edit, patient, encounter }) => {
     }
   };
   const handleSubmit = async () => {
-    console.log(selectedRows);
 
     try {
       await Promise.all(
@@ -380,31 +355,7 @@ const Consultation = ({ edit, patient, encounter }) => {
     <div>
       <h5>Consultation Order</h5>
       <br />
-      <div className={`top-div ${edit ? 'disabled-panel' : ''}`}>
-
-       
-          <div style={{ flex: 1 }}>
-            <Text>Diagnose</Text>
-            <textarea
-              value={
-                selectedDiagnose && selectedDiagnose.icdCode && selectedDiagnose.description
-                  ? `${selectedDiagnose.icdCode}, ${selectedDiagnose.description}`
-                  : ''
-              }
-              readOnly
-              rows={5}
-
-             className='fil-width'
-            />
-          </div>
-          <div style={{ flex: 1 }}>
-            <Text>Finding Summery</Text>
-            <textarea value={summaryText} readOnly rows={5} className='fil-width' />
-          </div>
-
-      
-        
-      </div>
+    
 
       <div className='bt-div'>
         <MyButton
@@ -555,7 +506,7 @@ const Consultation = ({ edit, patient, encounter }) => {
                 size='xsmall'
                 appearance='subtle'
                 color="var(--primary-gray)"
-                onClick={() =>  handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)}><FileDownloadIcon /></MyButton>
+                onClick={() => handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)}><FileDownloadIcon /></MyButton>
 
             </Cell>
           </Column>
@@ -573,67 +524,46 @@ const Consultation = ({ edit, patient, encounter }) => {
           </Column>
         </Table>
       </div>
-      <Modal open={openConfirmDeleteModel} onClose={CloseConfirmDeleteModel} overflow>
-        <Modal.Title>
-          <Translate>
-            <h6>Confirm Delete</h6>
-          </Translate>
-        </Modal.Title>
-        <Modal.Body>
-          <p>
-            <RemindOutlineIcon
-              
-            />
-            <Translate >
-              Are you sure you want to delete this Consultations?
-            </Translate>
-          </p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="primary" onClick={handleCancle}>
-              Delete
-            </Button>
-            <Button appearance="ghost" color="cyan" onClick={CloseConfirmDeleteModel}>
-              Cancel
-            </Button>
-          </Stack>
-        </Modal.Footer>
-      </Modal>
-      <MyModal
+      <DeletionConfirmationModal
+        open={openConfirmDeleteModel}
+        setOpen={setConfirmDeleteModel}
+        itemToDelete='Consultation'
+        actionButtonFunction={handleCancle}>
+
+      </DeletionConfirmationModal>
+
+
+      <AttachmentModal
+        isOpen={attachmentsModalOpen}
+        setIsOpen={setAttachmentsModalOpen}
+        attachmentSource={consultationOrders}
+        attatchmentType={'CONSULTATION_ORDER'}
+      />
+      <AdvancedModal
         open={openDetailsMdal}
         setOpen={setOpenDetailsModal}
-        title="Consultation Details"
         actionButtonFunction={handleSave}
-        position='right'
-        size='700px'
-        steps={[
+        footerButtons={<div style={{ display: 'flex', gap: '5px' }}>
+          <MyButton
+            onClick={() => setAttachmentsModalOpen(true)}
+            prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
+          >Attachment File</MyButton>
 
-          {
-            title: "Details", icon: faStethoscope,
-            footer:
-              [<MyButton
-                onClick={() => setAttachmentsModalOpen(true)}
-                prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
-              >Attachment File</MyButton>
-                ,
 
-              <MyButton
-                prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
-                onClick={handleClear}
-              >Clear</MyButton>
-              ]
-          },
-        ]}
-
-        content={<div className='basuc-div'>
+          <MyButton
+            prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+            onClick={handleClear}
+          >Clear</MyButton>
+        </div>}
+        rightTitle='Add Consultation'
+        rightContent={<div >
           <div className='div-parent' >
             <div style={{ flex: 1 }} >
               <Form layout="inline" fluid >
                 <MyInput
                   column
                   disabled={editing}
-                  width={200}
+                  width={300}
                   fieldType="select"
                   fieldLabel="Consultant Specialty"
                   selectData={consultantSpecialtyLovQueryResponse?.object ?? []}
@@ -650,7 +580,7 @@ const Consultation = ({ edit, patient, encounter }) => {
                 <MyInput
                   column
                   disabled={editing}
-                  width={200}
+                  width={300}
                   fieldType="select"
                   fieldLabel="City"
                   selectData={cityLovQueryResponse?.object ?? []}
@@ -668,7 +598,7 @@ const Consultation = ({ edit, patient, encounter }) => {
                 <MyInput
                   column
                   disabled={editing}
-                  width={200}
+                  width={300}
                   fieldType="select"
                   fieldLabel="Preferred Consultant"
                   fieldName={'preferredConsultantKey'}
@@ -687,7 +617,7 @@ const Consultation = ({ edit, patient, encounter }) => {
                 <MyInput
                   column
                   disabled={editing}
-                  width={200}
+                  width={300}
                   fieldType="select"
                   fieldLabel="Consultation Method"
                   selectData={consultationMethodLovQueryResponse?.object ?? []}
@@ -704,7 +634,7 @@ const Consultation = ({ edit, patient, encounter }) => {
                 <MyInput
                   column
                   disabled={editing}
-                  width={200}
+                  width={300}
                   fieldType="select"
                   fieldLabel="Consultation Type"
                   selectData={consultationTypeLovQueryResponse?.object ?? []}
@@ -751,13 +681,21 @@ const Consultation = ({ edit, patient, encounter }) => {
           </div>
 
         </div>}
-      ></MyModal>
-        <AttachmentModal
-              isOpen={attachmentsModalOpen}
-              onClose={() => setAttachmentsModalOpen(false)}
-              localPatient={consultationOrders}
-              attatchmentType={'CONSULTATION_ORDER'}
-            />
+       
+        leftContent={<div
+          style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          <MyCard
+            title={"Diagnosis"}
+            contant={
+              selectedDiagnose && selectedDiagnose.icdCode && selectedDiagnose.description
+                ? `${selectedDiagnose.icdCode}, ${selectedDiagnose.description}`
+                : ''
+            }></MyCard>
+          <MyCard
+            title={"Physical Examination"}
+            contant={summaryText}></MyCard>
+        </div>}
+      ></AdvancedModal>
     </div>
 
   );

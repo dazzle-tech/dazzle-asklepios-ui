@@ -9,15 +9,13 @@ interface ContactTabProps {
   setLocalPatient: (patient: ApPatient) => void;
   validationResult: any;
 }
-
 const ContactTab: React.FC<ContactTabProps> = ({
   localPatient,
   setLocalPatient,
   validationResult
 }) => {
-  // Fetch LOV data
-  const { data: preferredWayOfContactLovQueryResponse } =
-    useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
+  // Fetch LOV data for various fields
+  const { data: preferredWayOfContactLovQueryResponse } = useGetLovValuesByCodeQuery('PREF_WAY_OF_CONTACT');
   const { data: primaryLangLovQueryResponse } = useGetLovValuesByCodeQuery('LANG');
   const { data: relationsLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: roleLovQueryResponse } = useGetLovValuesByCodeQuery('ER_CONTACTP_ROLE');
@@ -28,7 +26,6 @@ const ContactTab: React.FC<ContactTabProps> = ({
         vr={validationResult}
         column
         required
-        width={165}
         fieldName="phoneNumber"
         fieldLabel="Primary Mobile Number"
         record={localPatient}
@@ -37,7 +34,6 @@ const ContactTab: React.FC<ContactTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldType="checkbox"
         fieldName="receiveSms"
         fieldLabel="Receive SMS"
@@ -47,7 +43,6 @@ const ContactTab: React.FC<ContactTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Secondary Mobile Number"
         fieldName="secondaryMobileNumber"
         record={localPatient}
@@ -56,7 +51,6 @@ const ContactTab: React.FC<ContactTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldName="homePhone"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -64,7 +58,6 @@ const ContactTab: React.FC<ContactTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldName="workPhone"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -72,7 +65,6 @@ const ContactTab: React.FC<ContactTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldName="email"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -80,7 +72,6 @@ const ContactTab: React.FC<ContactTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldType="checkbox"
         fieldName="receiveEmail"
         fieldLabel="Receive Email"
@@ -90,7 +81,6 @@ const ContactTab: React.FC<ContactTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Preferred Way of Contact"
         fieldType="select"
         fieldName="preferredContactLkey"
@@ -99,11 +89,11 @@ const ContactTab: React.FC<ContactTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Native Language"
         fieldType="select"
         fieldName="primaryLanguageLkey"
@@ -112,11 +102,11 @@ const ContactTab: React.FC<ContactTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldName="emergencyContactName"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -124,7 +114,6 @@ const ContactTab: React.FC<ContactTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Emergency Contact Relation"
         fieldType="select"
         fieldName="emergencyContactRelationLkey"
@@ -133,11 +122,11 @@ const ContactTab: React.FC<ContactTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldName="emergencyContactPhone"
         record={localPatient}
         setRecord={setLocalPatient}
@@ -145,7 +134,6 @@ const ContactTab: React.FC<ContactTabProps> = ({
       <MyInput
         vr={validationResult}
         column
-        width={165}
         fieldLabel="Role"
         fieldType="select"
         fieldName="roleLkey"
@@ -154,6 +142,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
         selectDataValue="key"
         record={localPatient}
         setRecord={setLocalPatient}
+        searchable={false}
       />
     </Form>
   );

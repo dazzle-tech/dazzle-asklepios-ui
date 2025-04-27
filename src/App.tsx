@@ -66,7 +66,7 @@ import EncounterPatientPrivateLogin from './pages/encounter/encounter-patient-pr
 import VaccinationTab from './pages/encounter/encounter-pre-observations/vaccination-tab';
 import CPTSetup from './pages/setup/cpt-setup';
 import LOINCSetup from './pages/setup/lonic-setup';
-import PatientQuickAppointment from './pages/patient/patient-profile/PatientQuickAppointment';
+import PatientQuickAppointment from './pages/patient/patient-profile/PatientQuickAppoinment/PatientQuickAppointment';
 import PatientEMR from './pages/patient/patient-emr';
 import PatientProfileCopy from './pages/patient/patient-profile/PatientProfileCopy';
 import Lab from './pages/lab-module';
@@ -227,7 +227,7 @@ const App = () => {
               <Route path="encounter" element={<Encounter />} />
               <Route path="encounter-list" element={<EncounterList />} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
-              <Route path="encounter-pre-observations" element={<EncounterPreObservations />} />
+              <Route path="nurse-station" element={<EncounterPreObservations />} />
               <Route path="facilities" element={<Facilities />} />
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />
@@ -238,7 +238,7 @@ const App = () => {
               <Route path="potintial-duplicate" element={<PotintialDuplicate />} />
               <Route path="users" element={<Users />} />
               <Route path="uom-group" element={<UOMGroup />} />
-              <Route path="encounter-pre-observations" element={<EncounterPreObservations />} />
+              <Route path="nurse-station" element={<EncounterPreObservations />} />
               <Route path="metadata" element={<Metadata />} />
               <Route path="dvm" element={<DVM />} />
               <Route path="practitioners" element={<Practitioners />} />

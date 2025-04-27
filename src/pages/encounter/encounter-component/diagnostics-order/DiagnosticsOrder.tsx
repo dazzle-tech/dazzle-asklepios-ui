@@ -1,83 +1,50 @@
-import React, { useEffect, useState } from 'react';
 import Translate from '@/components/Translate';
-import './styles.less';
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import FileDownloadIcon from '@rsuite/icons/FileDownload';
-import DocPassIcon from '@rsuite/icons/DocPass';
-import { Tooltip, Whisper } from 'rsuite';
-import {
-    InputGroup,
-    Form,
-    Input,
-    Panel,
-    Text,
-    Checkbox,
-    Dropdown,
-    Button,
-    IconButton,
-    Table,
-    Modal,
-    Stack,
-    Divider,
-    Row,
-    Col,
-    SelectPicker
-} from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
+import { useAppDispatch } from '@/hooks';
 import { ApDiagnosticOrders, ApDiagnosticOrderTests, ApDiagnosticTest, ApPatientEncounterOrder } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import {
-    useGetLovValuesByCodeQuery,
-} from '@/services/setupService';
-import {
     faLandMineOn,
-    faVials,
-    faFile,
-    faPen
 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import DocPassIcon from '@rsuite/icons/DocPass';
+import React, { useEffect, useState } from 'react';
+import { MdModeEdit } from 'react-icons/md';
 import {
-    useFetchAttachmentQuery,
-    useFetchAttachmentLightQuery,
-    useFetchAttachmentByKeyQuery,
-    useUploadMutation,
-    useDeleteAttachmentMutation,
-    useUpdateAttachmentDetailsMutation
-} from '@/services/attachmentService';
-import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
-import CheckIcon from '@rsuite/icons/Check';
-import PlusIcon from '@rsuite/icons/Plus';
-import OthersIcon from '@rsuite/icons/Others';
-import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
-import AttachmentModal from "@/pages/patient/patient-profile/AttachmentUploadModal";
-import {
-    useGetDiagnosticsTestListQuery,
-    useGetDepartmentListByTypeQuery
-} from '@/services/setupService';
+    Checkbox, Divider,
+    Row,
+    SelectPicker, Table, Text, Tooltip, Whisper
+} from 'rsuite';
+import './styles.less';
+const { Column, HeaderCell, Cell } = Table;
+
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyButton from '@/components/MyButton/MyButton';
+import MyTable from '@/components/MyTable';
 import {
     useGetDiagnosticOrderQuery,
     useGetDiagnosticOrderTestQuery,
     useSaveDiagnosticOrderMutation,
     useSaveDiagnosticOrderTestMutation
 } from '@/services/encounterService';
-import SearchIcon from '@rsuite/icons/Search';
-import MyInput from '@/components/MyInput';
-import { initialListRequest, ListRequest } from '@/types/types';
+import {
+    useGetDiagnosticsTestListQuery,
+} from '@/services/setupService';
 import { newApDiagnosticOrders, newApDiagnosticOrderTests, newApDiagnosticTest, newApPatientEncounterOrder } from '@/types/model-types-constructor';
-import { isValid } from 'date-fns';
-import { OrderList } from 'primereact/orderlist';
-import MyButton from '@/components/MyButton/MyButton';
-import MyModal from '@/components/MyModal/MyModal';
+import { initialListRequest, initialListRequestAllValues, ListRequest, ListRequestAllValues } from '@/types/types';
+import CheckIcon from '@rsuite/icons/Check';
+import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
+import PlusIcon from '@rsuite/icons/Plus';
+import DetailsModal from './DetailsModal';
+import TestDropdown from './TestDropdown';
+
 const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
     const dispatch = useAppDispatch();
     const [showCanceled, setShowCanceled] = useState(true);
     const [order, setOrder] = useState<ApPatientEncounterOrder>({ ...newApPatientEncounterOrder });
     const [test, setTest] = useState<ApDiagnosticTest>({ ...newApDiagnosticTest });
-    const [searchKeyword, setSearchKeyword] = useState('');
-    const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+    const [flag, setFlag] = useState('');
+    const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest});
     const [listOrderRequest, setListOrderRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -135,42 +102,17 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             }
         ]
     });
-    const [receivedType, setReceivedType] = useState("");
     const [selectedRows, setSelectedRows] = useState([]);
     const { data: testsList } = useGetDiagnosticsTestListQuery(listTestRequest);
     const { data: ordersList, refetch: ordersRefetch } = useGetDiagnosticOrderQuery(listOrdersRequest);
-    const { data: orderTestList, refetch: orderTestRefetch } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
-    const { data: receivedLabList } = useGetDepartmentListByTypeQuery(receivedType)
+    const { data: orderTestList, refetch: orderTestRefetch, isLoading: loadTests } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
     const [saveOrders, saveOrdersMutation] = useSaveDiagnosticOrderMutation();
     const [saveOrderTests, saveOrderTestsMutation] = useSaveDiagnosticOrderTestMutation();
     const [openDetailsModel, setOpenDetailsModel] = useState(false);
     const [openConfirmDeleteModel, setConfirmDeleteModel] = useState(false);
-    const [actionType, setActionType] = useState(null);
-    const { data: orderPriorityLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
-    const { data: ReasonLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_REASON');
-    const { data: departmentTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
-    const [newAttachmentDetails, setNewAttachmentDetails] = useState('');
-    const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch } =
-        useFetchAttachmentLightQuery({ refKey: order?.key }, { skip: !order?.key });
-    const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
-    const fetchOrderAttachResponse = useFetchAttachmentQuery(
-        {
-            type: 'ORDER_ATTACHMENT',
-            refKey: order.key
-        },
-        { skip: !order.key }
-    );
-    const {
-        data: fetchAttachmentByKeyResponce,
-        error,
-        isLoading,
-        isFetching,
-        isSuccess,
-        refetch
-    } = useFetchAttachmentByKeyQuery(
-        { key: requestedPatientAttacment },
-        { skip: !requestedPatientAttacment || !order.key }
-    );
+
+
+
     const [isdraft, setIsDraft] = useState(false);
     const isSelected = rowData => {
         if (rowData && order && rowData.key === order.key) {
@@ -180,52 +122,14 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
     const filteredOrders = ordersList?.object?.filter(
         (item) => item.statusLkey === "1804482322306061"
     ) ?? [];
+    // Effects
     useEffect(() => {
         const draftOrder = ordersList?.object?.find((order) => order.saveDraft === true);
-        console.log(ordersList?.object)
-        console.log(draftOrder);
         if (draftOrder != null) {
             setIsDraft(true);
             setOrders({ ...draftOrder });
         }
     }, [ordersList]);
-    useEffect(() => {
-
-        if (test?.testTypeLkey == '862810597620632') {
-            setReceivedType('5673990729647007');
-
-        }
-        else if (test?.testTypeLkey == '862828331135792') {
-            setReceivedType('5673990729647008');
-        }
-        else if (test?.testTypeLkey == '862842242812880') {
-            setReceivedType('5673990729647009');
-        }
-        else {
-            setReceivedType('');
-        }
-    }, [test]);
-    useEffect(() => {
-        console.log(receivedType)
-    }, [receivedType])
-    useEffect(() => {
-        if (searchKeyword.trim() !== "") {
-            setListRequest(
-                {
-                    ...initialListRequest,
-
-                    filters: [
-                        {
-                            fieldName: 'test_name',
-                            operator: 'containsIgnoreCase',
-                            value: searchKeyword
-                        }
-
-                    ]
-                }
-            );
-        }
-    }, [searchKeyword]);
 
     useEffect(() => {
 
@@ -278,84 +182,14 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         }));
 
     }, [orders])
-    useEffect(() => {
-        console.log("iam in useefect download")
-        if (isSuccess && fetchAttachmentByKeyResponce) {
-            if (actionType === 'download') {
-                handleDownload(fetchAttachmentByKeyResponce);
-            }
-        }
-    }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
-    const handleDownload = async (attachment) => {
-        try {
-            if (!attachment?.fileContent || !attachment?.contentType || !attachment?.fileName) {
-                console.error("Invalid attachment data.");
-                return;
-            }
+    //
 
-            const byteCharacters = atob(attachment.fileContent);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
-            }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: attachment.contentType });
+   
 
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.style.display = "none";
-            a.href = url;
-            a.download = attachment.fileName;
-
-            document.body.appendChild(a);
-            a.click();
-
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-
-            console.log("File downloaded successfully:", attachment.fileName);
-            attachmentRefetch().then(() => {
-                console.log("Refetch complete");
-            }).catch((error) => {
-                console.error("Refetch failed:", error);
-            });
-        } catch (error) {
-            console.error("Error during file download:", error);
-        }
-    };
-    const handleDownloadSelectedPatientAttachment = attachmentKey => {
-
-        setRequestedPatientAttacment(attachmentKey);
-        setActionType('download');
-
-    };
-
-
-    const handleSearch = value => {
-        setSearchKeyword(value);
-
-
-    };
-    const handleFilterChange = (fieldName, value) => {
-        if (value) {
-            setListRequest(
-                addFilterToListRequest(
-                    fromCamelCaseToDBName(fieldName),
-                    'containsIgnoreCase',
-                    value,
-                    listTestRequest
-                )
-            );
-        } else {
-            setListRequest({ ...listTestRequest, filters: [] });
-        }
-    };
     const OpenDetailsModel = () => {
         setOpenDetailsModel(true);
     }
-    const CloseDetailsModel = () => {
-        setOpenDetailsModel(false);
-    }
+
     const OpenConfirmDeleteModel = () => {
         setConfirmDeleteModel(true);
     }
@@ -392,8 +226,6 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         });
     };
 
-
-    // new Date().toISOString()
     const handleCancle = async () => {
 
         try {
@@ -439,7 +271,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             }).catch((error) => {
                 console.error("Refetch failed:", error);
             });
-            setSearchKeyword("");
+            setFlag(true);
         }
         catch (error) {
 
@@ -464,10 +296,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
 
                 dispatch(notify('Start New Order whith ID:' + response?.data?.orderId));
-
-                // setPreKey(response?.data?.key);
                 setOrders(response?.data);
-                // preRefetch().then(() => "");
 
             } catch (error) {
                 console.error("Error saving prescription:", error);
@@ -489,7 +318,6 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             ordersRefetch();
             orderTestRefetch();
 
-
         }
         catch (error) {
             console.error("Error saving :", error);
@@ -504,9 +332,6 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
         orderTestRefetch().then(() => "");
         setOrders({ ...newApDiagnosticOrders });
-
-
-
     }
     const saveDraft = async () => {
         try {
@@ -532,6 +357,163 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
         }
     }
+
+    const tableColumns = [
+        {
+            key: 'check',
+            title: <Translate>#</Translate>,
+            flexGrow:1,
+            fullText: true,
+            render: rowData => (
+                <Checkbox
+                    key={rowData.id}
+                    checked={selectedRows.includes(rowData)}
+                    onChange={() => handleCheckboxChange(rowData)}
+                    disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
+                />
+            )
+        },
+        {
+            key: 'orderTypeLkey',
+            title: <Translate>Order Type</Translate>,
+            flexGrow: 1,
+            fullText: true,
+            render: rowData => {
+
+                const matchedTest = testsList?.object?.find(item => item.testTypeLkey === rowData.test.testTypeLkey);
+
+                return matchedTest ? matchedTest.
+                    testTypeLvalue
+                    .lovDisplayVale : "";
+            }
+        },
+        {
+            key: 'test',
+            title: <Translate>Test Name</Translate>,
+            flexGrow: 2,
+            fullText: true,
+            render: rowData => rowData.test.testName // or wrap in <span> if needed
+        }
+        ,
+        {
+            key: "internalCode",
+            dataKey: "internalCode",
+            title: <Translate>Internal Code</Translate>,
+            flexGrow: 2,
+            fullText: true,
+            render: rowData => rowData.test.internalCode
+
+        }
+        ,
+        {
+            key: "statusLkey",
+            dataKey: "statusLkey",
+            title: <Translate>Status</Translate>,
+            flexGrow: 1,
+            fullText: true,
+            render: rowData => rowData.statusLvalue ? rowData.statusLvalue.lovDisplayVale : rowData.statusLkey
+
+        }
+        ,
+
+        {
+            key: " ",
+
+            title: <Translate>International Coding</Translate>,
+            flexGrow: 2,
+            render: rowData => {
+
+                return (
+                    <>
+                        <span>{rowData.test.internationalCodeOne}</span>
+                        <br />
+
+                        <span>{rowData.test.internationalCodeTwo}</span>
+
+                        <br />
+                        <span>{rowData.test.internationalCodeThree}</span>
+                    </>
+                );
+            }
+
+
+        }
+        ,
+        {
+            key: "receivedLabkey ",
+            dataKey: "receivedLabkey ",
+            title: <Translate>Received Lab</Translate>,
+            fullText: true,
+            flexGrow: 1,
+        }
+        ,
+        {
+            key: "processingStatusLkey",
+            dataKey: "processingStatusLkey",
+            title: <Translate>Processing Status</Translate>,
+            flexGrow: 1,
+            fullText: true,
+            render: rowData => rowData.processingStatusLvalue ? rowData.processingStatusLvalue?.lovDisplayVale : rowData.processingStatusLkey
+
+        }
+        ,
+        {
+            key: "reasonLkey",
+            dataKey: "reasonLkey",
+            title: <Translate>Reason</Translate>,
+            flexGrow: 1,
+            fullText: true,
+            render: rowData => rowData.reasonLkey ? rowData.reasonLvalue?.lovDisplayVale : rowData.reasonLkey
+
+        }
+        ,
+        {
+            key: "priorityLkey",
+            dataKey: "priorityLkey",
+            title: <Translate>Reason</Translate>,
+            flexGrow: 1,
+            fullText: true,
+            render: rowData => rowData.priorityLvalue ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey
+
+        }
+        ,
+        {
+            key: "notes",
+            dataKey: "notes ",
+            title: <Translate>Notes</Translate>,
+            fullText: true,
+            flexGrow: 1,
+        }
+        ,
+        {
+            key: "submitDate",
+            dataKey: "submitDate",
+            title: <Translate>Submit Date</Translate>,
+            flexGrow: 2,
+            fullText: true,
+            render:rowData => rowData.submitDate ? new Date(rowData.submitDate).toLocaleString() : ""
+
+        }
+        ,
+        {
+            key: "details",
+           
+            title: <Translate>Add details</Translate>,
+            flexGrow: 2,
+            fullText: true,
+            render:rowData => {
+                return( <MdModeEdit
+                    title="Edit"
+                    size={24}
+                    fill="var(--primary-gray)"
+                    onClick={OpenDetailsModel}
+                  />)
+            }
+
+        }
+    ];
+
+
     return (
         <>
             <div style={{ marginLeft: '10px', padding: '5px' }}>
@@ -539,7 +521,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
                     <SelectPicker
 
-                        style={{ width:250 }}
+                        style={{ width: 250 }}
                         data={filteredOrders ?? []}
                         labelKey="orderId"
                         valueKey="key"
@@ -553,71 +535,71 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
                     />
                     <div className='form-search-container'>
-                    <Text> Order # {orders.orderId}</Text>
-                    <div>
-                    {orders.key && orders.statusLkey !== '1804482322306061' ? (
-                            <Whisper
-                                placement="top"
-                                trigger="hover"
-                                speaker={<Tooltip>Urgent</Tooltip>}
-                            >
-                                <FontAwesomeIcon
-                                    icon={faLandMineOn}
-                                    onClick={() =>
-                                        setOrders({ ...orders, isUrgent: !orders.isUrgent })
-                                    }
-                                    style={{
+                        <Text> Order # {orders.orderId}</Text>
+                        <div>
+                            {orders.key && orders.statusLkey !== '1804482322306061' ? (
+                                <Whisper
+                                    placement="top"
+                                    trigger="hover"
+                                    speaker={<Tooltip>Urgent</Tooltip>}
+                                >
+                                    <FontAwesomeIcon
+                                        icon={faLandMineOn}
+                                        onClick={() =>
+                                            setOrders({ ...orders, isUrgent: !orders.isUrgent })
+                                        }
+                                        style={{
 
-                                        color: orders.isUrgent ? 'red' : 'grey',
-                                        cursor: 'pointer',
-                                    }}
-                                />
-                            </Whisper>
-                        ) : (
-                            <Whisper
-                            placement="top"
-                            trigger="hover"
-                            speaker={<Tooltip>Urgent</Tooltip>}
-                        >
-                            <FontAwesomeIcon
-                                icon={faLandMineOn}
-                                style={{
+                                            color: orders.isUrgent ? 'red' : 'grey',
+                                            cursor: 'pointer',
+                                        }}
+                                    />
+                                </Whisper>
+                            ) : (
+                                <Whisper
+                                    placement="top"
+                                    trigger="hover"
+                                    speaker={<Tooltip>Urgent</Tooltip>}
+                                >
+                                    <FontAwesomeIcon
+                                        icon={faLandMineOn}
+                                        style={{
 
-                                    color: 'grey',
-                                    opacity: 0.5,
-                                    cursor: 'not-allowed',
-                                }}
-                            />
-                             </Whisper>
-                        )}
-                 
-                        <MyButton
-                            appearance="subtle"
-                            size='small'
-                            onClick={handleSaveOrders}
-                            disabled={isdraft}
-                        ><PlusIcon /></MyButton>
-                  
-                    </div>
-                    </div>
-                    
-                    <div className='buttons-sect'>
-             
-                        
+                                            color: 'grey',
+                                            opacity: 0.5,
+                                            cursor: 'not-allowed',
+                                        }}
+                                    />
+                                </Whisper>
+                            )}
+
                             <MyButton
+                                appearance="subtle"
+                                size='small'
+                                onClick={handleSaveOrders}
+                                disabled={isdraft}
+                            ><PlusIcon /></MyButton>
+
+                        </div>
+                    </div>
+
+                    <div className='buttons-sect'>
+
+
+                        <MyButton
                             onClick={handleSubmitPres}
                             disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
-                            prefixIcon={()=><CheckIcon />}
+                            prefixIcon={() => <CheckIcon />}
                         >
                             <Translate>Submit</Translate>
                         </MyButton>
-                    
+
 
                         {
                             !isdraft &&
                             <MyButton
                                 onClick={saveDraft}
-                                postfixIcon={()=><DocPassIcon />}
+                                postfixIcon={() => <DocPassIcon />}
                                 disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
                             >
                                 <Translate> Save draft</Translate>
@@ -629,7 +611,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                             <MyButton
                                 appearance="ghost"
                                 onClick={cancleDraft}
-                                postfixIcon={()=><DocPassIcon />}
+                                postfixIcon={() => <DocPassIcon />}
                                 disabled={orders.key ? orders.statusLkey === '1804482322306061' : true}
                             >
                                 <Translate> Cancle draft </Translate>
@@ -638,7 +620,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                         }
                     </div>
                 </div>
-               
+
                 <Row>
                     <Divider />
                 </Row>
@@ -646,42 +628,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
                     <div className='top-container'>
 
-
-                        <Form>
-                            <Text>Add test</Text>
-                            <InputGroup inside className='input-search'>
-                                <Input
-                                    disabled={orders.key == null}
-                                    placeholder={'Search Test '}
-                                    value={searchKeyword}
-                                    onChange={handleSearch}
-                                />
-                                <InputGroup.Button>
-                                    <SearchIcon />
-                                </InputGroup.Button>
-                            </InputGroup>
-                            {searchKeyword && (
-                                <Dropdown.Menu className="dropdown-menuresult">
-                                    {testsList && testsList?.object?.map(test => (
-                                        <Dropdown.Item
-                                            key={test.key}
-                                            eventKey={test.key}
-                                            onClick={() => handleItemClick(test)}
-
-                                        >
-                                            <span style={{ marginRight: "19px" }}>{test.testName}</span>
-                                            <span>{test?.testTypeLvalue?.lovDisplayVale}</span>
-                                        </Dropdown.Item>
-                                    ))}
-                                </Dropdown.Menu>
-                            )}
-
-
-                        </Form>
-
-
-
-
+                      <TestDropdown handleItemClick={handleItemClick} disabled={orders.key == null} flag={flag}/>
 
                         <div className="buttons-sect">
                             <Checkbox
@@ -710,18 +657,18 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             </div>
             <Row >   </Row>
             <Row style={{ margin: '5px' }}>
-                <Table
-                    height={400}
+
+             
+
+                <MyTable
+                    columns={tableColumns}
                     sortColumn={listOrderRequest.sortBy}
                     sortType={listOrderRequest.sortType}
-                    onSortColumn={(sortBy, sortType) => {
-                        if (sortBy)
-                            setListRequest({
-                                ...listOrderRequest,
-                                sortBy,
-                                sortType
-                            });
+                    loading={loadTests}
+                    onSortChange={(sortBy, sortType) => {
+                        setListRequest({ ...listOrderRequest, sortBy, sortType });
                     }}
+
 
 
                     data={orderTestList?.object ?? []}
@@ -731,385 +678,25 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
                     }}
                     rowClassName={isSelected}
-                >
-                    <Column flexGrow={2}>
-                        <HeaderCell  >
-
-                            <Translate>#</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => (
-                                <Checkbox
-                                    key={rowData.id}
-                                    checked={selectedRows.includes(rowData)}
-                                    onChange={() => handleCheckboxChange(rowData)}
-                                    disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
-                                />
-                            )}
-                        </Cell>
-
-
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell  >
-                            {/* <Input onChange={e => handleFilterChange('orderType', e)} /> */}
-                            <Translate>Order Type</Translate>
-                        </HeaderCell>
-                        <Cell dataKey="orderTypeLkey">
-                            {rowData => {
-
-                                const matchedTest = testsList?.object?.find(item => item.testTypeLkey === rowData.test.testTypeLkey);
-
-                                return matchedTest ? matchedTest.
-                                    testTypeLvalue
-                                    .lovDisplayVale : "";
-                            }}
-                        </Cell>
-
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell  >
-                            {/* <Input onChange={e => handleFilterChange('TestName', e)} /> */}
-                            <Translate>Test Name</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData.test.testName}
-
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell  >
-                            {/* <Input onChange={e => handleFilterChange('InternalCode', e)} /> */}
-                            <Translate>Internal Code</Translate>
-                        </HeaderCell>
-                        <Cell dataKey="internalCode" >
-                            {rowData => rowData.test.internalCode}
-                        </Cell>
-
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell  >
-                            {/* <Input onChange={e => handleFilterChange('statusLkey', e)} /> */}
-                            <Translate>Status</Translate>
-                        </HeaderCell>
-                        <Cell  >
-                            {rowData => rowData.statusLvalue.lovDisplayVale}
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={3} fullText>
-                        <HeaderCell  >
-                            {/* <Input onChange={e => handleFilterChange('InternationalCoding', e)} /> */}
-                            <Translate>International Coding</Translate>
-                        </HeaderCell>
-                        <Cell >
-                            {rowData =>
-                                rowData.test.internationalCodeOne
-                            } <br />
-                            {rowData =>
-                                rowData.test.internationalCodeTwo
-                            }
-
-                            {rowData =>
-                                rowData.test.internationalCodeThree
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell  >
-                            {/* <Input onChange={e => handleFilterChange('receivedLabkey', e)} /> */}
-                            <Translate>Received Lab</Translate>
-                        </HeaderCell>
-                        <Cell  >
-                            {rowData => rowData.receivedLabkey || ""}
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell  >
-                            {/* <Input onChange={e => handleFilterChange('receivedLabLkey', e)} /> */}
-                            <Translate> Processing Status</Translate>
-                        </HeaderCell>
-                        <Cell  >
-                            {rowData => rowData.processingStatusLvalue ? rowData.processingStatusLvalue?.lovDisplayVale : rowData.processingStatusLkey}
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell  >
-                            {/* <Input onChange={e => handleFilterChange('reasonLkey', e)} /> */}
-                            <Translate>Reason </Translate>
-                        </HeaderCell>
-                        <Cell >{rowData => rowData.reasonLvalue?.lovDisplayVale || ""}</Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell  >
-                            {/* <Input onChange={e => handleFilterChange('priorityLkey', e)} /> */}
-                            <Translate>Priority</Translate>
-                        </HeaderCell>
-                        <Cell >{rowData => rowData.priorityLvalue?.lovDisplayVale || ''}
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell  >
-                            {/* <Input onChange={e => handleFilterChange('notes', e)} /> */}
-                            <Translate>Notes</Translate>
-                        </HeaderCell>
-                        <Cell dataKey="notes" />
-                    </Column>
-
-                    <Column flexGrow={3} fullText>
-                        <HeaderCell  >
-                            {/* <Input onChange={e => handleFilterChange('createdAt', e)} /> */}
-                            <Translate>Submit Date</Translate>
-                        </HeaderCell>
-                        <Cell >
-                            {rowData => rowData.submitDate ? new Date(rowData.submitDate).toLocaleString() : ""}
-
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell  >
-
-                            <Translate>Add details</Translate>
-                        </HeaderCell>
-                        <Cell  >
-                            <MyButton
-                            size='xsmall'
-                            appearance='subtle'
-                            color="var(--primary-gray)"
-                            onClick={OpenDetailsModel}><FontAwesomeIcon icon={faPen} /></MyButton>
-                          
-                        </Cell>
-                    </Column>
-                </Table>
+                />
             </Row>
-            <MyModal
-                open={openDetailsModel}
+
+            <DetailsModal
+                order={order}
+                test={test}
+                openDetailsModel={openDetailsModel}
+                setOpenDetailsModel={setOpenDetailsModel}
+                orderTest={orderTest}
+                setOrderTest={setOrderTest}
+                handleSaveTest={handleSaveTest} />
+
+            <DeletionConfirmationModal
+                open={openConfirmDeleteModel}
                 setOpen={setOpenDetailsModel}
-                title="Add Test Details"
-                actionButtonFunction={handleSaveTest}
-                position='right'
-                steps={[
+                itemToDelete="Test"
+                actionButtonFunction={handleCancle}
 
-                    {
-                        title: (test?.testTypeLvalue?.lovDisplayVale || '') + ' - ' + (test?.testName || ''), icon: faVials,
-                        footer:
-                            <MyButton
-                                onClick={() => setAttachmentsModalOpen(true)}
-                                prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
-                            >Attachment File</MyButton>
-                    },
-                ]}
-                content={<>
-                    <div className='div-parent'>
-                        <div style={{flex:1 }} >
-                            <Form layout="inline" fluid disabled={orderTest.statusLkey !== '164797574082125'}>
-                                <MyInput
-                                    column
-
-                                    width={200}
-                                    fieldType="select"
-                                    fieldLabel="Order Priority"
-                                    selectData={orderPriorityLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    fieldName={'priorityLkey'}
-                                    record={orderTest}
-                                    setRecord={setOrderTest}
-                                />
-                            </Form>
-                        </div>
-                        <div style={{flex:1 }} >
-                            <Form layout="inline" fluid disabled={orderTest.statusLkey !== '164797574082125'}>
-                                <MyInput
-                                    column
-
-                                    width={200}
-                                    fieldType="select"
-                                    fieldLabel="Reason"
-                                    selectData={ReasonLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    fieldName={'reasonLkey'}
-                                    record={orderTest}
-                                    setRecord={setOrderTest}
-                                />
-                            </Form>
-                        </div>
-                        <div style={{flex:1 }} >
-                            <Form layout="inline" fluid disabled={orderTest.statusLkey !== '164797574082125'}>
-                                <MyInput
-                                    column
-
-                                    width={200}
-                                    fieldType="select"
-                                    fieldLabel="Received Lab"
-                                    selectData={receivedLabList?.object ?? []}
-                                    selectDataLabel="name"
-                                    selectDataValue="key"
-                                    fieldName={'receivedLabKey'}
-                                    record={orderTest}
-                                    setRecord={setOrderTest}
-                                />
-                            </Form>
-                        </div>
-
-                    </div>
-                    <div>
-                        <Form fluid disabled={orderTest.statusLkey !== '164797574082125'}>
-                            <MyInput
-                                column
-                                rows={5}
-                                width={'100%'}
-
-                                fieldName={'notes'}
-                                record={orderTest}
-                                setRecord={setOrderTest}
-                            />
-                        </Form>
-                    </div>
-                </>}
             />
-            {/* <Modal open={openDetailsModel} onClose={CloseDetailsModel} overflow>
-                <Modal.Title>
-                    <Translate>Add Test Details</Translate>
-                </Modal.Title>
-                <Modal.Body>
-                    <div className='form-search-container '>
-                        <div>
-                            <Form layout="inline" fluid>
-                                <Input
-                                    style={{ width: 150 }}
-                                    disabled={true}
-
-                                    value={test?.testTypeLvalue?.lovDisplayVale}
-                                />
-
-                                <Input
-
-                                    disabled={true}
-                                    style={{ width: 150 }}
-                                    value={test?.testName}
-                                />
-
-                            </Form>
-                        </div>
-                        <div>
-                            <Form layout="inline" fluid disabled={orderTest.statusLkey !== '164797574082125'}>
-
-                                <MyInput
-                                    column
-
-                                    width={150}
-                                    fieldType="select"
-                                    fieldLabel="Order Priority"
-                                    selectData={orderPriorityLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    fieldName={'priorityLkey'}
-                                    record={orderTest}
-                                    setRecord={setOrderTest}
-                                />
-                                <MyInput
-                                    column
-
-                                    width={150}
-                                    fieldType="select"
-                                    fieldLabel="Reason"
-                                    selectData={ReasonLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    fieldName={'reasonLkey'}
-                                    record={orderTest}
-                                    setRecord={setOrderTest}
-                                />
-                                <MyInput
-                                    column
-
-                                    width={150}
-                                    fieldType="select"
-                                    fieldLabel="Received Lab"
-                                    selectData={receivedLabList?.object ?? []}
-                                    selectDataLabel="name"
-                                    selectDataValue="key"
-                                    fieldName={'receivedLabKey'}
-                                    record={orderTest}
-                                    setRecord={setOrderTest}
-                                />
-                            </Form>
-                        </div>
-                        <div>
-                            <Form layout="inline" fluid disabled={orderTest.statusLkey !== '164797574082125'}>
-                                <MyInput
-                                    column
-                                    rows={3}
-                                    width={150}
-
-                                    fieldName={'notes'}
-                                    record={orderTest}
-                                    setRecord={setOrderTest}
-                                />
-
-
-
-                                <IconButton
-                                    style={{ marginTop: "20px", paddingTop: "10px" }}
-                                    color="cyan"
-                                    appearance="primary"
-                                    icon={<PlusIcon />}
-                                    disabled={orderTest.statusLkey !== '164797574082125'}
-                                    onClick={() => setAttachmentsModalOpen(true)}
-                                >
-                                    <Translate>Attached File</Translate>
-                                </IconButton>
-                                <Button
-                                    style={{ marginTop: "20px" }}
-                                    appearance="link"
-                                    onClick={() => handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)}
-                                >
-                                    Download <FileDownloadIcon style={{ marginLeft: '10px', scale: '1.4' }} />
-                                </Button>
-                                <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={order} attatchmentType={'ORDER_ATTACHMENT'} />
-
-
-                            </Form>
-                        </div>
-                    </div>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Stack spacing={2} divider={<Divider vertical />}>
-                        <Button appearance="primary" disabled={orderTest.statusLkey !== '164797574082125'} onClick={handleSaveTest}>
-                            Save
-                        </Button>
-                        <Button appearance="ghost" color="cyan" onClick={CloseDetailsModel}>
-                            Cancel
-                        </Button>
-                    </Stack>
-                </Modal.Footer>
-            </Modal> */}
-
-            <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={order} attatchmentType={'ORDER_ATTACHMENT'} />
-            <Modal open={openConfirmDeleteModel} onClose={CloseConfirmDeleteModel} overflow  >
-                <Modal.Title>
-                    <Translate><h6>Confirm Delete</h6></Translate>
-                </Modal.Title>
-                <Modal.Body>
-                    <p>
-                        <RemindOutlineIcon style={{ color: '#ffca61', marginRight: '8px', fontSize: '24px' }} />
-                        <Translate style={{ fontSize: '24px' }} >
-                            Are you sure you want to delete this orders?
-                        </Translate>
-                    </p>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Stack spacing={2} divider={<Divider vertical />}>
-                        <Button appearance="primary" onClick={handleCancle}>
-                            Delete
-                        </Button>
-                        <Button appearance="ghost" color="cyan" onClick={CloseConfirmDeleteModel}>
-                            Cancel
-                        </Button>
-                    </Stack>
-                </Modal.Footer>
-            </Modal>
         </>
     );
 };

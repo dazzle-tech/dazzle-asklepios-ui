@@ -271,10 +271,9 @@ const SOAP = ({ edit, patient, encounter, setEncounter }) => {
 
         </Tabs.Tab>
         <Tabs.Tab eventKey="2" title="Physical Examination & Findings">
-          <fieldset>
-            <legend> Physical Examination & Findings</legend>
+
             <ReviewOfSystems patient={patient} encounter={encounter} />
-          </fieldset>
+         
         </Tabs.Tab>
         <Tabs.Tab eventKey="3" title="Physical Examination & Findings BY Image">
           {

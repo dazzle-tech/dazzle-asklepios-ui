@@ -1,39 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { Panel } from 'rsuite';
-import { useAppSelector, useAppDispatch } from '@/hooks';
+import { Divider} from 'rsuite';
+import { useAppDispatch } from '@/hooks';
 import MyInput from '@/components/MyInput';
-import Translate from '@/components/Translate';
+import { forwardRef, useImperativeHandle } from 'react';
 import './styles.less';
-import { Block, Check, DocPass, Edit, History, Icon, PlusRound, Detail } from '@rsuite/icons';
 import {
-  FlexboxGrid,
-  IconButton,
-  Input,
-  Table,
-  Grid,
-  Row,
-  Col,
-  ButtonToolbar,
   Text,
-  InputGroup,
-  SelectPicker,
   Form
 } from 'rsuite';
-
-import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
-import BlockIcon from '@rsuite/icons/Block';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faChildReaching,
+  faHeartPulse,
+  faPerson
+} from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import {
   useGetObservationSummariesQuery,
-  useRemoveObservationSummaryMutation,
   useSaveObservationSummaryMutation
 } from '@/services/observationService';
 import {
-  useGetEncountersQuery,
-  useCompleteEncounterRegistrationMutation
-} from '@/services/encounterService';
-import {
-  useGetLovValuesByCodeAndParentQuery,
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
 import {
@@ -43,21 +29,21 @@ import {
 import {
   newApPatientObservationSummary
 } from '@/types/model-types-constructor';
-import {
-  useCompleteEncounterMutation,
-
-} from '@/services/encounterService';
 import { ApPatient } from '@/types/model-types';
-import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
-import { useLocation } from 'react-router-dom';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useNavigate } from 'react-router-dom';
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-const Observations = ({patient,encounter}) => {
-  const[localPatient,setLocalPatient]=useState<ApPatient>({...patient})
+import MyLabel from '@/components/MyLabel';
+type ObservationsProps = {
+  patient: any;         
+  encounter: any;     
+};
+export type ObservationsRef = {
+  handleSave: () => void;
+};
+const Observations = forwardRef<ObservationsRef, ObservationsProps>(
+  ({ patient, encounter }, ref) => {
+  const [localPatient, setLocalPatient] = useState<ApPatient>({ ...patient })
   const dispatch = useAppDispatch();
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
-  const navigate = useNavigate();
   const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...encounter })
   const [bmi, setBmi] = useState('');
   const [bsa, setBsa] = useState('');
@@ -181,12 +167,9 @@ const Observations = ({patient,encounter}) => {
       dispatch(notify('Added Successfully'));
     });;
   };
-  const handleClear = () => {
-    setPatientObservationSummary({
-      ...newApPatientObservationSummary,
-      latestpainlevelLkey:null
-    });
-  }
+  useImperativeHandle(ref, () => ({
+    handleSave,handleClear
+  }));
 
   useEffect(() => {
     const { latestweight, latestheight } = patientObservationSummary;
@@ -201,356 +184,282 @@ const Observations = ({patient,encounter}) => {
     }
   }, [patientObservationSummary]);
 
-
+  useEffect(() => {
+  }, [patientObservationSummary.latestbpSystolic])
+ 
+  const handleClear = () => {
+    setPatientObservationSummary({
+      ...newApPatientObservationSummary,
+      latestpainlevelLkey: null
+    });
+  }
+ 
 
   return (
-    <>
-       <Grid fluid >
-                  <Row gutter={15} >
-                    <div className="responseveDiv">
-                      <div className='resDivPart'>  <Col xs={12}>
-                        <fieldset
-                          style={{
-                            padding: '5px',
-                            margin: '5px',
-                            border: '1px solid #ccc',
-                            borderRadius: '5px'
-                          }}
-                        >
-                          <legend
-                            style={{
-                              padding: '0 5px',
-                              fontWeight: 'bold',
-                              backgroundColor: '#f9f9f9'
-                            }}
-                          >
-                            Vital Signs
-                          </legend>
-                          <Panel style={{ padding: '5px' }} >
-                            <Grid fluid>
-                              <Row gutter={15}>
-                                <Col xs={2}><h6 style={{ textAlign: 'left' }}>BP</h6></Col>
-                                <Col xs={4}><Input
-                                  disabled={isEncounterStatusClosed || readOnly}
-                                  type="number"
-                                  value={patientObservationSummary.latestbpSystolic}
-                                  onChange={e =>
-                                    setPatientObservationSummary({
-                                      ...patientObservationSummary,
-                                      latestbpSystolic: Number(e)
-                                    })} /></Col>
-                                <Col xs={1}><h6 style={{ textAlign: 'center' }}>/</h6></Col>
-                                <Col xs={4}><Input
-                                  disabled={isEncounterStatusClosed || readOnly}
-                                  type="number"
-                                  value={patientObservationSummary.latestbpDiastolic}
+   
+      <div ref={ref} className='basuc-div'>
 
-                                  onChange={e =>
-                                    setPatientObservationSummary({
-                                      ...patientObservationSummary,
-                                      latestbpDiastolic: Number(e)
-                                    })} /></Col>
-                                <Col xs={1}><h6 style={{ textAlign: 'center' }}>mmHg</h6></Col>
-                                <Col xs={6}></Col>
-                                <Col xs={1}><h6 style={{ textAlign: 'left' }}>MAP</h6></Col>
-                                <Col xs={1}></Col>
-                                <Col xs={4}>
-                                  <Input
-                                    disabled
+        < div className='container-Column'>
+          <div className='container-form'>
+            <div className='title-div'>
+              <Text>Vital Signs</Text>
 
-                                    value={
-                                      patientObservationSummary.latestbpDiastolic != null && patientObservationSummary.latestbpSystolic != null
-                                        ? ((2 * patientObservationSummary.latestbpDiastolic + patientObservationSummary.latestbpSystolic) / 3).toFixed(2)
-                                        : ''
-                                    }
-                                  />
+            </div>
+            <Divider />
+            <div className='container-Column'>
+              <div className='container-row'>
+                <Form layout='inline' fluid>
+                  <MyInput
+                    column
+                    fieldLabel='BP'
+                    fieldName='latestbpSystolic'
+                    disabled={isEncounterStatusClosed || readOnly}
+                    fieldType='number'
+                    record={patientObservationSummary}
+                    setRecord={setPatientObservationSummary}
+                  ></MyInput>
 
-                                </Col>
-                              </Row>
-                              <Row gutter={15}></Row>
-                              <Row gutter={15}></Row>
-                              <Row gutter={15}>
-                                <Col xs={2}><h6 style={{ textAlign: 'left' }}>Pulse</h6></Col>
-                                <Col xs={7}>
-                                  <InputGroup>
-                                    <Input
-                                      disabled={isEncounterStatusClosed || readOnly}
-                                      type="number"
-                                      value={patientObservationSummary.latestheartrate}
-                                      onChange={e =>
-                                        setPatientObservationSummary({
-                                          ...patientObservationSummary,
-                                          latestheartrate: Number(e)
-                                        })} />
-                                    <InputGroup.Addon><Text>bpm</Text></InputGroup.Addon>
-                                  </InputGroup>
-                                </Col>
-                                <Col xs={3}></Col>
-                              </Row>
-                              <Row gutter={15}></Row>
-                              <Row gutter={15}></Row>
-                              <Row>
-                                <Col xs={2}><h6 style={{ textAlign: 'left' }}>R.R</h6></Col>
-                                <Col xs={7}>
-                                  <InputGroup>
-                                    <Input
-                                      type="number"
-                                      disabled={isEncounterStatusClosed || readOnly}
-                                      value={patientObservationSummary.latestrespiratoryrate}
-                                      onChange={e =>
-                                        setPatientObservationSummary({
-                                          ...patientObservationSummary,
-                                          latestrespiratoryrate: Number(e)
-                                        })} />
-                                    <InputGroup.Addon><Text>bpm</Text></InputGroup.Addon>
-                                  </InputGroup>
-                                  <Col xs={3}></Col>
-                                </Col>
-                              </Row>
-                              <Row gutter={15}></Row>
-                              <Row gutter={15}></Row>
-                              <Row>
-                                <Col xs={2}><h6 style={{ textAlign: 'left' }}>SpO2</h6></Col>
-                                <Col xs={7}>
-                                  <InputGroup>
-                                    <Input type="number"
-                                      disabled={isEncounterStatusClosed || readOnly}
-                                      value={patientObservationSummary.latestoxygensaturation}
-                                      onChange={e =>
-                                        setPatientObservationSummary({
-                                          ...patientObservationSummary,
-                                          latestoxygensaturation: Number(e)
-                                        })} />
+                </Form>
+                <span style={{ marginTop: '36px' }}>/</span>
+                <Form layout='inline' fluid>
+                  <MyInput
+                    column
+                    fieldLabel='mmHg'
+                    fieldName='latestbpDiastolic'
+                    disabled={isEncounterStatusClosed || readOnly}
+                    fieldType='number'
+                    record={patientObservationSummary}
+                    setRecord={setPatientObservationSummary}
+                  ></MyInput>
 
-                                    <InputGroup.Addon><Text>%</Text></InputGroup.Addon>
-                                  </InputGroup>
-                                </Col>
-                                <Col xs={3}></Col>
-                              </Row>
-                              <Row gutter={15}></Row>
-                              <Row gutter={15}></Row>
-                              <Row>
-                                <Col xs={2}><h6 style={{ textAlign: 'left' }}>Temp</h6></Col>
-                                <Col xs={7}>
-                                  <InputGroup>
-                                    <Input type="number"
-                                      disabled={isEncounterStatusClosed || readOnly}
-                                      value={patientObservationSummary.latesttemperature}
-                                      onChange={e =>
-                                        setPatientObservationSummary({
-                                          ...patientObservationSummary,
-                                          latesttemperature: Number(e)
-                                        })} />
+                </Form>
+                <div className='container-Column'>
+                  <MyLabel label="MAP" />
+                  <div>
+                    <FontAwesomeIcon icon={faHeartPulse} className='my-icon' />
+                    <text>{
+                      patientObservationSummary.latestbpDiastolic != null && patientObservationSummary.latestbpSystolic != null
+                        ? ((2 * patientObservationSummary.latestbpDiastolic + patientObservationSummary.latestbpSystolic) / 3).toFixed(2)
+                        : ''
+                    }</text></div>
+                </div>
+              </div>
+              <div className='container-row'>
+                <div style={{ flex: 1 }}>
+                  <Form layout='inline' fluid>
 
-                                    <InputGroup.Addon><Text>°C</Text></InputGroup.Addon>
-                                  </InputGroup>
-                                </Col>
-                                <Col xs={3}></Col>
-                              </Row>
-                              <Row gutter={15}></Row>
-                              <Row gutter={15}></Row>
-                              <Row>
-                                <Col xs={2}><h6 style={{ textAlign: 'left' }}>Notes</h6></Col>
-                              </Row>
-                              <Row>
-                                <Col xs={2}><Input
-                                  as="textarea"
-                                  rows={3}
-                                  style={{ width: 357 }}
-                                  value={patientObservationSummary.latestnotes}
-                                  disabled={isEncounterStatusClosed || readOnly}
-                                  onChange={e =>
-                                    setPatientObservationSummary({
-                                      ...patientObservationSummary,
-                                      latestnotes: String(e),
-                                    })
-                                  }
-                                /></Col>
-                              </Row>
+                    <MyInput
+                      column
+                      fieldLabel='Pulse'
+                      rightAddon="bpm"
+                      width={'100%'}
+                      rightAddonwidth={50}
+                      fieldName='latestheartrate'
+                      disabled={isEncounterStatusClosed || readOnly}
+                      fieldType='number'
+                      record={patientObservationSummary}
+                      setRecord={setPatientObservationSummary}
+                    ></MyInput>
 
-                            </Grid>
+                  </Form>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <Form layout='inline' >
+                    <MyInput
+                      column
+                      fieldLabel='R.R'
+                      rightAddon="bpm"
+                      rightAddonwidth={50}
+                      width={'100%'}
+                      fieldName='latestrespiratoryrate'
+                      disabled={isEncounterStatusClosed || readOnly}
+                      fieldType='number'
+                      record={patientObservationSummary}
+                      setRecord={setPatientObservationSummary}
+                    ></MyInput>
+                  </Form>
+                </div>
+              </div>
+              <div className='container-row'>
+                <div style={{ flex: 1 }}>
+                  <Form layout='inline' fluid>
 
-                          </Panel>
-                        </fieldset>
-                      </Col></div>
-                      <div className='resDivPart'> <Col xs={12}>
-                        <fieldset
-                          style={{
-                            padding: '8px',
-                            margin: '5px',
-                            border: '1px solid #ccc',
-                            borderRadius: '5px'
-                          }}
-                        >
-                          <legend
-                            style={{
-                              padding: '0 5px',
-                              fontWeight: 'bold',
-                              backgroundColor: '#f9f9f9'
-                            }}
-                          >
-                            Body Measurements
-                          </legend>
-                          <Panel style={{ padding: '5px' }} >
-                            <Grid fluid>
-                              <Row gutter={15}>
-                                <Col xs={6}><h6 style={{ textAlign: 'left' }}>Weight</h6></Col>
-                                <Col xs={7}>
-                                  <InputGroup>
-                                    <Input
-                                      type="number"
-                                      disabled={isEncounterStatusClosed || readOnly}
-                                      value={patientObservationSummary.latestweight}
-                                      onChange={e =>
-                                        setPatientObservationSummary({
-                                          ...patientObservationSummary,
-                                          latestweight: Number(e),
-                                        })
-                                      }
-                                    />
-                                    <InputGroup.Addon><Text>kg</Text></InputGroup.Addon>
-                                  </InputGroup>
-                                </Col>
-                                <Col xs={3}></Col>
-                                <Col xs={1}><h6 style={{ textAlign: 'left' }}>BMI</h6></Col>
-                                <Col xs={1}></Col>
-                                <Col xs={4}><Input disabled value={bmi} /></Col>
-                              </Row>
-                              <Row gutter={15}>
-                                <Col xs={6}><h6 style={{ textAlign: 'left' }}>Height</h6></Col>
-                                <Col xs={7}>
-                                  <InputGroup>
-                                    <Input
-                                      type="number"
-                                      disabled={isEncounterStatusClosed || readOnly}
-                                      value={patientObservationSummary.latestheight}
-                                      onChange={e =>
-                                        setPatientObservationSummary({
-                                          ...patientObservationSummary,
-                                          latestheight: Number(e),
-                                        })
-                                      }
-                                    />
-                                    <InputGroup.Addon><Text>cm</Text></InputGroup.Addon>
-                                  </InputGroup>
-                                </Col>
-                                <Col xs={3}></Col>
-                                <Col xs={1}><h6 style={{ textAlign: 'left' }}>BSA</h6></Col>
-                                <Col xs={1}></Col>
-                                <Col xs={4}><Input disabled value={bsa} /></Col>
-                              </Row>
-                              <Row gutter={15}></Row>
-                              <Row gutter={15}></Row>
-                              <Row gutter={15}>
-                                <Col xs={6}><h6 style={{ textAlign: 'left' }}>Head circumference</h6></Col>
-                                <Col xs={7}>
-                                  <InputGroup>
-                                    <Input type="number"
-                                      disabled={isEncounterStatusClosed || readOnly}
-                                      value={patientObservationSummary.latestheadcircumference}
-                                      onChange={e =>
-                                        setPatientObservationSummary({
-                                          ...patientObservationSummary,
-                                          latestheadcircumference: Number(e)
-                                        })} />
-                                    <InputGroup.Addon><Text>cm</Text></InputGroup.Addon>
-                                  </InputGroup>
-                                </Col>
-                                <Col xs={3}></Col>
-                              </Row>
-                            </Grid>
-                          </Panel>
-                        </fieldset>
-                        <fieldset
-                          style={{
-                            padding: '5px',
-                            margin: '5px',
-                            border: '1px solid #ccc',
-                            borderRadius: '5px'
-                          }}
-                        >
-                          <legend
-                            style={{
-                              padding: '0 5px',
-                              fontWeight: 'bold',
-                              backgroundColor: '#f9f9f9'
-                            }}
-                          >
-                            Pain Level
-                          </legend>
-                          <Panel style={{ padding: '10px' }} >
-                            <Grid fluid>
-                              <Row gutter={15}>
-                                <Col xs={6}>
-                                  <Form fluid>
-                                    <MyInput
-                                      disabled={isEncounterStatusClosed || readOnly}
-                                      width={165}
-                                      row
-                                      fieldLabel="Pain Degree"
-                                      fieldType="select"
-                                      fieldName="latestpainlevelLkey"
-                                      selectData={painDegreesLovQueryResponse?.object ?? []}
-                                      selectDataLabel="lovDisplayVale"
-                                      selectDataValue="key"
-                                      record={patientObservationSummary}
-                                      setRecord={setPatientObservationSummary}
-                                    />
-                                  </Form>
-                                </Col>
-                              </Row>
-                              <Row gutter={15}></Row>
-                              <Row gutter={15}></Row>
-                              <Row>
-                                <Col xs={9}><h6 style={{ textAlign: 'left' }}>Pain Description</h6></Col>
-                              </Row>
-                              <Row>
-                                <Col xs={2}><Input
-                                  disabled={isEncounterStatusClosed || readOnly}
-                                  as="textarea"
-                                  rows={2}
-                                  value={patientObservationSummary.latestpaindescription}
-                                  style={{ width: 357 }}
-                                  onChange={e =>
-                                    setPatientObservationSummary({
-                                      ...patientObservationSummary,
-                                      latestpaindescription: String(e),
-                                    })
-                                  }
-                                /></Col>
-                              </Row>
-                            </Grid>
-                          </Panel>
-                        </fieldset>
-                      </Col></div>
+                    <MyInput
+                      column
+                      fieldLabel='SpO2'
+                      rightAddon="%"
+                      width={'100%'}
+                      rightAddonwidth={40}
+                      fieldName='latestoxygensaturation'
+                      disabled={isEncounterStatusClosed || readOnly}
+                      fieldType='number'
+                      record={patientObservationSummary}
+                      setRecord={setPatientObservationSummary}
+                    ></MyInput>
 
-                    </div>
-                  </Row>
-                </Grid>
-                <ButtonToolbar>
-                  <IconButton appearance="primary" icon={<Check />} color="violet"
-                    onClick={handleSave}>
-                    <Translate>Save</Translate>
-                  </IconButton>
-                  <IconButton
-                    appearance="primary"
-                    color="cyan"
-                    icon={<BlockIcon />}
-                    onClick={handleClear}
-                  >
-                    <Translate>Clear</Translate>
-                  </IconButton>
-                  <IconButton
-                    appearance="primary"
-                    color="blue"
-                    icon={<CloseOutlineIcon />}
-                    onClick={() => { navigate('/encounter-list') }}
-                  >
-                    <Translate>Close</Translate>
-                  </IconButton>
-                </ButtonToolbar>
-    </>
+                  </Form>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <Form layout='inline' >
+                    <MyInput
+                      column
+                      fieldLabel='Temp'
+                      rightAddon="°C"
+                      rightAddonwidth={40}
+                      width={'100%'}
+                      fieldName='latesttemperature'
+                      disabled={isEncounterStatusClosed || readOnly}
+                      fieldType='number'
+                      record={patientObservationSummary}
+                      setRecord={setPatientObservationSummary}
+                    ></MyInput>
+                  </Form>
+                </div>
+              </div>
+              <div >
+                <Form fluid >
+                  <MyInput
+                    column
+                    fieldLabel='Note'
+                    height={'100px'}
+                    width={'100%'}
+                    fieldName='latestnotes'
+                    disabled={isEncounterStatusClosed || readOnly}
+                    fieldType='textarea'
+                    record={patientObservationSummary}
+                    setRecord={setPatientObservationSummary}
+                  ></MyInput>
+                </Form>
+              </div>
+
+            </div>
+          </div>
+
+
+        </div>
+        < div className='container-Column'>
+          <div className='container-form'>
+            <div className='title-div'>
+              <Text>Body Measurements</Text>
+
+            </div>
+            <Divider />
+            <div className='container-Column'>
+              <div className='container-row'>
+                <Form layout='inline' fluid>
+                  <MyInput
+                    column
+                    fieldLabel='Weight'
+                    fieldName='latestweight'
+                    rightAddon="Kg"
+                    disabled={isEncounterStatusClosed || readOnly}
+                    fieldType='number'
+                    record={patientObservationSummary}
+                    setRecord={setPatientObservationSummary}
+                  ></MyInput>
+
+                </Form>
+
+
+                <div className='container-Column'>
+                  <MyLabel label="BMI" />
+                  <div>
+                    <FontAwesomeIcon icon={faPerson} className='my-icon' />
+                    <text>{bmi}</text>
+                  </div>
+                </div>
+              </div>
+              <div className='container-row'>
+                <Form layout='inline' fluid>
+                  <MyInput
+                    column
+                    fieldLabel='Height'
+                    fieldName='latestheight'
+                    rightAddon="Kg"
+                    disabled={isEncounterStatusClosed || readOnly}
+                    fieldType='number'
+                    record={patientObservationSummary}
+                    setRecord={setPatientObservationSummary}
+                  ></MyInput>
+
+                </Form>
+
+
+                <div className='container-Column'>
+                  <MyLabel label="BSA" />
+                  <div>
+                    <FontAwesomeIcon icon={faChildReaching} className='my-icon' />
+                    <text>{bsa}</text>
+                  </div>
+                </div>
+              </div>
+              <div className='container-row'>
+
+                <Form layout='inline' fluid>
+
+                  <MyInput
+                    column
+                    fieldLabel='Head circumference'
+                    rightAddon="Cm"
+
+                    rightAddonwidth={40}
+                    fieldName='latestheadcircumference'
+                    disabled={isEncounterStatusClosed || readOnly}
+                    fieldType='number'
+                    record={patientObservationSummary}
+                    setRecord={setPatientObservationSummary}
+                  ></MyInput>
+
+                </Form>
+
+
+              </div>
+
+
+            </div>
+          </div>
+          <div className='container-form'>
+            <div className='title-div'>
+              <Text>Pain Level</Text>
+
+            </div>
+            <Divider />
+            <div className='container-Column'>
+
+              <Form fluid>
+                <MyInput
+                  disabled={isEncounterStatusClosed || readOnly}
+                  width={'100%'}
+                  fieldLabel="Pain Degree"
+                  fieldType="select"
+                  fieldName="latestpainlevelLkey"
+                  selectData={painDegreesLovQueryResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  record={patientObservationSummary}
+                  setRecord={setPatientObservationSummary}
+                />
+              </Form>
+              <Form fluid>
+                <MyInput
+                  fieldType='textarea'
+                  width={'100%'}
+
+                  fieldLabel="Pain Description"
+                  fieldName='latestpaindescription'
+                  record={patientObservationSummary}
+                  setRecord={setPatientObservationSummary} />
+              </Form>
+
+            </div>
+          </div>
+
+        </div>
+       
+      </div>
+   
+
   );
-};
+});
 
 export default Observations;

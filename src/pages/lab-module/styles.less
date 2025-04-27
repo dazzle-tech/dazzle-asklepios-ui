@@ -1,106 +1,147 @@
 .container {
   display: flex;
-    gap: 10px;
+  gap: 10px;
 
+}
+
+.left-box {
+  flex: 4;
+  border-radius: 5px;
+  border: 1px solid var(--background-gray);
+
+}
+
+.right-box {
+  flex: 1;
+  border-radius: 5px;
+  border: 1px solid var(--background-gray);
+
+}
+
+.panel-border {
+  border: 1px solid var(--background-gray);
+}
+
+.urgent-icon-style {
+  font-size: 1em;
+  margin-right: 10;
+  color: red;
+  cursor: pointer;
+}
+.vaccine-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 6px;
+}
+.date-time-picker .rs-input-group {
+  border: none !important;
+  height: 30px!important;
+ .rs-input-group-inside {
+     width: 145px!important;
+     padding: 0!important;
+ }
+}
+@media (width: 769px) {
+  .container {
+    flex-direction: column;
   }
 
   .left-box {
-    flex: 4;
-    border-radius: 5px;
-    border: 1px solid var(--background-gray);
-    
+    width: 900px;
   }
 
   .right-box {
-    flex: 1;
-    border-radius: 5px;
-    border: 1px solid var(--background-gray);
-    
+    width: 180px;
   }
-  @media (width: 769px) {
-    .container {
-      flex-direction: column;
-    }
-    .left-box{
-      width: 900px;
-    }
-    .right-box {
-      width: 180px;
-    }
 
-  }
-  @media (width: 901px) {
+}
 
-    .container {
-      flex-direction: column;
-    }
-    .left-box{
-      width: 950px;
-    }
-    .right-box {
-      width: 200px;
-    }
+@media (width: 901px) {
 
-  }
-  @media (width: 950px) {
-
-    .container {
-      flex-direction: column;
-    }
-    .left-box{
-      width: 980px;
-    }
-    .right-box {
-      width: 220px;
-    }
-
-  }
-  @media (width: 1141px) {
-    .container {
-      flex-direction: column;
-    }
-    .left-box, .right-box {
-      flex-basis: 100%;
-      width: 100%;
-    }
-  }
-  .patient-panel {
-    width: 272px;
-    padding: 7px;
-    display: flex;
+  .container {
     flex-direction: column;
+  }
+
+  .left-box {
+    width: 950px;
+  }
+
+  .right-box {
+    width: 200px;
+  }
+
 }
+
+@media (width: 950px) {
+
+  .container {
+    flex-direction: column;
+  }
+
+  .left-box {
+    width: 980px;
+  }
+
+  .right-box {
+    width: 220px;
+  }
+
+}
+
+@media (width: 1141px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .left-box,
+  .right-box {
+    flex-basis: 100%;
+    width: 100%;
+  }
+}
+
+.patient-panel {
+  width: 272px;
+  padding: 7px;
+  display: flex;
+  flex-direction: column;
+}
+
 .div-avatar {
-    display: flex;
-    flex-direction: row;
-    gap: 15px;
-    margin-bottom: 10px;
+  display: flex;
+  flex-direction: row;
+  gap: 15px;
+  margin-bottom: 10px;
 }
+
 .patient-info {
-    font-weight: bold;
-    display: flex;
-    align-items: center;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
 }
 
 .info-section {
-    display: flex;
-    gap: 10px;
-    width: 230px;
+  display: flex;
+  gap: 10px;
+  width: 230px;
 }
 
 .info-column {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 35px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 35px;
 }
+
 .info-label {
-    font-family: 'Manrope Medium' !important;
-    font-size: 12px;
-    color: var(--icon-gray) !important;
+  font-family: 'Manrope Medium' !important;
+  font-size: 12px;
+  color: var(--icon-gray) !important;
 }
+
 .info-value {
-    font-family: 'Manrope Medium';
-    font-size: 14px;
-    color: var(--black);
+  font-family: 'Manrope Medium';
+  font-size: 14px;
+  color: var(--black);
 }

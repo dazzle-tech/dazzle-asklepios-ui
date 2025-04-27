@@ -1,29 +1,24 @@
 import React from 'react';
 import { useState } from 'react';
 import { type ApPatient, type ApPatientInsurance } from '@/types/model-types';
-import {
-  newApPatientInsurance,
-} from '@/types/model-types-constructor';
+import { newApPatientInsurance } from '@/types/model-types-constructor';
 import { PlusRound, Icon } from '@rsuite/icons';
 import { faUserPen, faLock, faEllipsis } from '@fortawesome/free-solid-svg-icons';
-import TrashIcon from '@rsuite/icons/Trash';
-import Translate from '@/components/Translate';
-import {
-  useGetPatientInsuranceQuery,
-  useDeletePatientInsuranceMutation
-} from '@/services/patientService';
+import { useGetPatientInsuranceQuery, useDeletePatientInsuranceMutation } from '@/services/patientService';
 import InsuranceModal from '../InsuranceModal';
 import SpecificCoverageModa from '../SpecificCoverageModa';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Badge, Button, ButtonToolbar, Table } from 'rsuite';
-import { HeaderCell, Column, Cell } from 'rsuite-table';
-
+import { Badge, Button, ButtonToolbar } from 'rsuite';
+import MyTable from '@/components/MyTable';
+import './styles.less'
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyButton from '@/components/MyButton/MyButton';
 interface InsuranceTabProps {
   localPatient: ApPatient;
 }
-
 const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
   const dispatch = useAppDispatch();
   const [selectedInsurance, setSelectedInsurance] = useState<ApPatientInsurance | null>();
@@ -31,17 +26,89 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
   const [specificCoverageModalOpen, setSpecificCoverageModalOpen] = useState(false);
   const [insuranceBrowsing, setInsuranceBrowsing] = useState(false);
   const [deleteInsurance] = useDeletePatientInsuranceMutation();
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  // Define the table columns
+  const columns = [
+    {
+      key: 'insuranceProvider',
+      title: 'Insurance Provider',
+      flexGrow: 4,
+      render: (rowData: any) =>
+        rowData.primaryInsurance ? (
+          <div>
+            <Badge color="blue" content="Primary">
+              <p className="insurance-badge-text">{rowData.insuranceProvider}</p>
+            </Badge>
+          </div>
+        ) : (
+          <p>{rowData.insuranceProvider}</p>
+        ),
+    },
+    {
+      key: 'insurancePolicyNumber',
+      title: 'Insurance Policy Number',
+      flexGrow: 4,
+      dataKey: 'insurancePolicyNumber',
+    },
+    {
+      key: 'groupNumber',
+      title: 'Group Number',
+      flexGrow: 4,
+      dataKey: 'groupNumber',
+    },
+    {
+      key: 'insurancePlanType',
+      title: 'Insurance Plan Type',
+      flexGrow: 4,
+      dataKey: 'insurancePlanType',
+    },
+    {
+      key: 'expirationDate',
+      title: 'Expiration Date',
+      flexGrow: 4,
+      dataKey: 'expirationDate',
+    },
+    {
+      key: 'details',
+      title: 'Details',
+      flexGrow: 2,
+      render: (rowData: any) => (
+        <MyButton
+          onClick={() => {
+            handleShowInsuranceDetails();
+          }}
+          appearance="subtle"
+
+        >
+          <FontAwesomeIcon icon={faEllipsis} />
+        </MyButton>
+      ),
+    },
+  ];
 
   // Fetch patient insurance data
   const patientInsuranceResponse = useGetPatientInsuranceQuery({
     patientKey: localPatient.key
   });
 
+  // Function to check if the current row is the selected one
+  const isSelected = rowData => {
+    if (rowData && selectedInsurance && rowData.key === selectedInsurance.key) {
+      return 'selected-row';
+    } else return '';
+  };
+
   // Handle edit insurance
   const handleEditModal = () => {
     if (selectedInsurance) {
       setInsuranceModalOpen(true);
     }
+  };
+  // Handle close insurance modal
+  const handleCloseInsuranceModal = () => {
+    setInsuranceModalOpen(false);
+    setSelectedInsurance(null);
+    setInsuranceBrowsing(false);
   };
 
   // Handle show insurance details
@@ -57,151 +124,72 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
     }).then(
       () => (
         patientInsuranceResponse.refetch(),
-        dispatch(notify('Insurance Deleted')),
-        setSelectedInsurance(null)
+        dispatch(notify('Insurance Deleted Successfully')),
+        setSelectedInsurance(null),
+        setOpenDeleteModal(false)
       )
     );
   };
 
   return (
-    <>
-      <ButtonToolbar style={{ zoom: 0.8 }}>
-        <Button
-          style={{
-            backgroundColor: 'var(--primary-blue)',
-            color: 'white',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px'
-          }}
-          disabled={!localPatient.key}
+    <div className="tab-main-container">
+      <div className="tab-content-btns">
+        <MyButton
           onClick={() => {
             setInsuranceModalOpen(true);
             setSelectedInsurance(newApPatientInsurance);
           }}
-        >
-          <Icon as={PlusRound} /> New Insurance
-        </Button>
-        <Button
-          disabled={!selectedInsurance?.key}
+          disabled={!localPatient.key}
+          prefixIcon={() => <PlusRound />}
+        > New Insurance
+        </MyButton>
+        <MyButton
           onClick={handleEditModal}
-          appearance="ghost"
-          style={{
-            border: '1px solid var(--primary-blue)',
-            backgroundColor: 'white',
-            color: 'var(--primary-blue)',
-            marginLeft: '3px'
-          }}
-        >
-          <FontAwesomeIcon
-            icon={faUserPen}
-            style={{ marginRight: '5px', color: 'var(--primary-blue)' }}
-          />
-          <span>Edit</span>
-        </Button>
-        <Button
           disabled={!selectedInsurance?.key}
-          appearance="primary"
-          style={{ backgroundColor: 'var(--primary-blue)' }}
+          prefixIcon={() => <FontAwesomeIcon icon={faUserPen} />}
+        > Edit
+        </MyButton>
+        <MyButton
           onClick={() => setSpecificCoverageModalOpen(true)}
-        >
-          <FontAwesomeIcon icon={faLock} style={{ marginRight: '8px' }} />
-          <span>Specific Coverage</span>
-        </Button>
-        <Button
           disabled={!selectedInsurance?.key}
-          style={{
-            border: '1px solid var(--primary-blue)',
-            backgroundColor: 'white',
-            color: 'var(--primary-blue)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px'
-          }}
-          onClick={handleDeleteInsurance}
-        >
-          <TrashIcon /> <Translate>Delete</Translate>
-        </Button>
-      </ButtonToolbar>
-
+          prefixIcon={() => <FontAwesomeIcon icon={faLock} />}
+        > Specific Coverage
+        </MyButton>
+        <MyButton
+          onClick={() => { setOpenDeleteModal(true) }}
+          disabled={!selectedInsurance?.key}
+          prefixIcon={() => <FontAwesomeIcon icon={faTrash} />}
+        >Delete
+        </MyButton>
+      </div>
       <InsuranceModal
         relations={[]}
         editing={selectedInsurance ? selectedInsurance : null}
         refetchInsurance={patientInsuranceResponse.refetch}
         patientKey={localPatient ?? localPatient.key}
         open={InsuranceModalOpen}
+        setOpen={setInsuranceModalOpen}
         insuranceBrowsing={insuranceBrowsing}
-        onClose={() => {
-          setInsuranceModalOpen(false);
-          setInsuranceBrowsing(false);
-          setSelectedInsurance(null);
-        }}
+        onClose={handleCloseInsuranceModal}
       />
-
       <SpecificCoverageModa
         insurance={selectedInsurance?.key}
         open={specificCoverageModalOpen}
-        onClose={() => {
-          setSpecificCoverageModalOpen(false);
-        }}
+        setOpen={setSpecificCoverageModalOpen}
       />
-
-      <Table
-        height={400}
-        headerHeight={40}
-        rowHeight={50}
-        bordered
-        cellBordered
-        onRowClick={setSelectedInsurance}
+      <MyTable
         data={patientInsuranceResponse?.data ?? []}
-      >
-        <Column flexGrow={4}>
-          <HeaderCell>Insurance Provider </HeaderCell>
-          <Cell dataKey="insuranceProvider">
-            {rowData =>
-              rowData.primaryInsurance ? (
-                <div>
-                  <Badge color="blue" content={'Primary'}>
-                    <p>{rowData.insuranceProvider}</p>
-                  </Badge>
-                </div>
-              ) : (
-                <p>{rowData.insuranceProvider}</p>
-              )
-            }
-          </Cell>
-        </Column>
-        <Column flexGrow={4}>
-          <HeaderCell>Insurance Policy Number</HeaderCell>
-          <Cell dataKey="insurancePolicyNumber" />
-        </Column>
-        <Column flexGrow={4}>
-          <HeaderCell>Group Number</HeaderCell>
-          <Cell dataKey="groupNumber" />
-        </Column>
-        <Column flexGrow={4}>
-          <HeaderCell>Insurance Plan Type</HeaderCell>
-          <Cell dataKey="insurancePlanType" />
-        </Column>
-        <Column flexGrow={4}>
-          <HeaderCell>Expiration Date</HeaderCell>
-          <Cell dataKey="expirationDate" />
-        </Column>
-        <Column flexGrow={4}>
-          <HeaderCell>Details</HeaderCell>
-          <Cell>
-            <Button
-              onClick={() => {
-                handleShowInsuranceDetails();
-              }}
-              appearance="subtle"
-            >
-              <FontAwesomeIcon icon={faEllipsis} style={{ marginRight: '8px' }} />
-            </Button>
-          </Cell>
-        </Column>
-      </Table>
-    </>
+        columns={columns}
+        onRowClick={setSelectedInsurance}
+        rowClassName={isSelected}
+      />
+      <DeletionConfirmationModal
+        open={openDeleteModal}
+        setOpen={setOpenDeleteModal}
+        itemToDelete='Insurance'
+        actionButtonFunction={handleDeleteInsurance}>
+      </DeletionConfirmationModal>
+    </div>
   );
 };
 

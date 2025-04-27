@@ -1,6 +1,6 @@
 import MyInput from "@/components/MyInput";
 import Translate from "@/components/Translate";
-import QuickPatient from "@/pages/patient/patient-profile/quickPatient";
+import QuickPatient from "@/pages/patient/facility-patient-list/QuickPatient";
 import { ApAppointment, ApPatient } from "@/types/model-types";
 import { newApAppointment, newApPatient } from "@/types/model-types-constructor";
 import { faBolt } from "@fortawesome/free-solid-svg-icons";
@@ -20,7 +20,7 @@ import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from "@/services/se
 import TrashIcon from '@rsuite/icons/Trash';
 import { useAppDispatch, useAppSelector } from "@/hooks";
 import { useChangeAppointmentStatusMutation, useGetResourcesAvailabilityQuery, useGetResourcesQuery, useSaveAppointmentMutation } from "@/services/appointmentService";
-import AttachmentModal from "@/pages/patient/patient-profile/AttachmentUploadModal";
+import AttachmentModal from "@/components/AttachmentUploadModal/AttachmentUploadModal";
 import { object } from "prop-types";
 import { setPatient } from "@/reducers/patientSlice";
 import { notify } from "@/utils/uiReducerActions";
@@ -699,7 +699,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
                                 <QuickPatient
                                     open={quickPatientModalOpen}
-                                    onClose={() => setQuickPatientModalOpen(false)}
+                                    setOpen={() => setQuickPatientModalOpen(false)}
                                 />
                             </div>
 
@@ -1147,7 +1147,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                 </IconButton>
 
                                 {/* ===================AttachmentModal=================== */}
-                                <AttachmentModal isOpen={attachmentsModalOpen} onClose={() => setAttachmentsModalOpen(false)} localPatient={localPatient} attatchmentType={'APPOINTMENT_ATTACHMENT'} />
+                                <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} attachmentSource={localPatient} attatchmentType={'APPOINTMENT_ATTACHMENT'} />
 
                             </div>
                         </div>
