@@ -40,7 +40,7 @@ const RegistrationWizard = () => {
       <div className='patient-facility-btns'>
         <MyButton
           onClick={() => setOpen(true)}
-          borderRadius="15px"
+          radius="15px"
           prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
         >
           Create New Patient
@@ -48,7 +48,7 @@ const RegistrationWizard = () => {
         <MyButton
           appearance="ghost"
           onClick={() => setQuickPatientModalOpen(true)}
-          borderRadius="15px"
+          radius="15px"
           prefixIcon={() => <FontAwesomeIcon icon={faBolt} />}
         >
           Quick Patient
