@@ -7,49 +7,40 @@
 @font-face {
   font-family: 'Manrope';
   src: url('/src/fonts/Manrope/static/Manrope-Regular.ttf') format('truetype');
-
 }
 
 @font-face {
   font-family: 'Manrope Bold';
   src: url('/src/fonts/Manrope/static/Manrope-Bold.ttf') format('truetype');
-
 }
 @font-face {
   font-family: 'Manrope SemiBold';
   src: url('/src/fonts/Manrope/static/Manrope-SemiBold.ttf') format('truetype');
-
 }
 @font-face {
   font-family: 'Manrope Medium';
   src: url('/src/fonts/Manrope/static/Manrope-Medium.ttf') format('truetype');
-
 }
 
 @font-face {
   font-family: 'Inter Bold';
   src: url('/src/fonts/Inter/static/Inter_18pt-Bold.ttf') format('truetype');
-
 }
 
 @font-face {
   font-family: 'Inter';
   src: url('/src/fonts/Inter/static/Inter_18pt-Regular.ttf') format('truetype');
-
 }
 
 @font-face {
   font-family: 'Inter Semi Bold';
   src: url('/src/fonts/Inter/static/Inter_18pt-SemiBold.ttf') format('truetype');
-
 }
 
 @font-face {
   font-family: 'Inter Medium';
   src: url('/src/fonts/Inter/static/Inter_18pt-Medium.ttf') format('truetype');
-
 }
-
 
 body {
   background: #ffffff;
@@ -61,6 +52,19 @@ body {
 
 * {
   zoom: 1 !important;
+}
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+span,
+div,
+th,
+td {
+  font-family: 'Inter', sans-serif !important;
 }
 
 .text-muted {
@@ -106,7 +110,7 @@ body {
 }
 
 .selected-row .rs-table-cell {
-  background-color: rgba(#2264E5, 0.10) !important;
+  background-color: rgba(#2264e5, 0.1) !important;
 }
 
 .form-div {
@@ -136,14 +140,23 @@ body {
 .rs-btn {
   line-height: 16px !important;
 }
-
+.react-tabs__tab-list {
+  border-bottom-color: #B0B2B3;
+}
 .react-tabs__tab {
-  background-color: #ebf1f5 !important;
+  color: #949494 !important;
   border-radius: 0px;
+  border: none;
 }
 
-.react-tabs__tab--selected {
-  background-color: #a8cce5 !important;
+.react-tabs__tab--selected,
+.react-tabs__tab--selected:active {
+  color: var(--primary-blue) !important;
+  border-bottom: 2px solid var(--primary-blue) !important;
+
+  &:after, &:before {
+    display: none;
+  }
 }
 
 .rs-table-bordered {
@@ -163,7 +176,7 @@ body {
 .rs-table-hover .rs-table-row:not(.rs-table-row-header):hover,
 .rs-table-hover .rs-table-row:hover .rs-table-cell-group,
 .rs-table-hover .rs-table-row:hover .rs-table-cell {
-  background-color: rgba(#969FB0,0.05);
+  background-color: rgba(#969fb0, 0.05);
 
   cursor: pointer;
 }
@@ -171,7 +184,7 @@ body {
 .rs-table-row-header .rs-table-cell {
   color: #575757;
 
-  background-color: rgba(#2264E5, 0.05) !important;
+  background-color: rgba(#2264e5, 0.05) !important;
 
   height: 35px;
   font-size: 11px;
@@ -180,7 +193,7 @@ body {
 }
 
 .rs-table-row:nth-of-type(even) .rs-table-cell {
-  background-color: #F9FAFC;
+  background-color: #f9fafc;
 }
 
 .p-blockui {
@@ -196,8 +209,8 @@ body {
   border-radius: 5px;
 }
 
-.rs-form-inline>*,
-.rs-form-inline>.rs-btn {
+.rs-form-inline > *,
+.rs-form-inline > .rs-btn {
   margin-right: 10px;
   margin-bottom: 10px;
 }
@@ -210,7 +223,7 @@ body {
   overflow: visible;
 }
 
-.rs-dropdown-item>.rs-icon {
+.rs-dropdown-item > .rs-icon {
   margin-right: 5px;
 }
 textarea {
@@ -227,33 +240,44 @@ aside {
 }
 
 :root {
+  --primary-blue: #415be7;
+  --light-blue: #60afff;
+  --deep-blue: #2264e5;
+  --extra-light-blue: #f4f7fc;
 
-  --primary-blue: #415BE7;
-  --light-blue: #60AFFF;
-  --deep-blue: #2264E5;
-  --extra-light-blue: #F4F7FC;
+  --primary-pink: #e23670;
+  --light-pink: #fcebf1;
 
+  --dark-blue-gray: #2d3b4c;
 
-  --primary-pink: #E23670;
-  --light-pink: #FCEBF1;
-
-  --dark-blue-gray: #2D3B4C;
-
-  --background-light: #F9FAFB;
-  --background-gray: #F2F3F4;
-  --primary-gray: #969FB0;
-  --icon-gray:#8F98AB;
+  --background-light: #f9fafb;
+  --background-gray: #f2f3f4;
+  --primary-gray: #969fb0;
+  --icon-gray: #8f98ab;
   --gray-dark: #666;
-  --black:#000000;
+  --black: #000000;
+  --light-gray: #F9FAFC;
 
+  --primary-green: #45b887;
+  --light-green: #daf1e7;
 
-  --primary-green: #45B887;
-  --light-green: #DAF1E7;
+  --primary-orange: #f29a4d;
+  --light-orange: #fbe5bf;
+  --primary-yellow: #f2cb4d;
+  --light-yellow: #fbf5bf;
 
-  --primary-orange: #F29A4D;
-  --light-orange: #FBE5BF;
-  --primary-yellow: #F2CB4D;
-  --light-yellow: #FBF5BF;
+  --table-header-bg: #f4f7fe;
+
+  // Font size
+  --smallest-font-size: 11px;
+  --small-font-size: 12px;
+  --regular-font-size: 14px;
+  --medium-font-size: 16px;
+  --largest-font-size: 24px;
+
+  //Font weight
+  --text-weight-bold: 500;
+  --text-weight-extra-bold: 600;
 }
 
 .rs-form-inline .rs-form-control-label {
@@ -261,7 +285,7 @@ aside {
   margin-right: 0 !important;
   font-size: 14px !important;
   line-height: 20px !important;
-  color: #1C2836 !important;
+  color: #1c2836 !important;
   order: 0 !important;
   align-self: stretch !important;
   flex-grow: 0 !important;
@@ -269,18 +293,16 @@ aside {
 }
 
 .rs-input {
-  background: #FFFFFF !important;
+  background: #ffffff !important;
   box-shadow: 0px 1px 2px rgba(105, 104, 104, 0.06), 0px 0px 0px 1px rgba(110, 109, 109, 0.16) !important;
   border: 0px solid var(--rs-border-primary);
-
 }
 
 .rs-picker-toggle-wrapper {
   border-radius: 6px !important;
-  background: #FFFFFF !important;
+  background: #ffffff !important;
   box-shadow: 0px 1px 2px rgba(105, 104, 104, 0.06), 0px 0px 0px 1px rgba(110, 109, 109, 0.16) !important;
   border: 0px solid var(--rs-border-primary);
-
 }
 
 .rs-picker-toggle-wrapper .rs-picker-toggle.rs-btn {
@@ -292,7 +314,6 @@ aside {
 .rs-input-group .rs-input {
   box-shadow: none !important;
   border: none;
-
 }
 
 .rs-container {
@@ -306,12 +327,11 @@ aside {
 .rs-content {
   margin-top: 0 !important;
   padding-top: 0 !important;
-
 }
 
 .custom-date-input .rs-input-group-inside {
   height: var(--input-height) !important;
-  background: #FFFFFF !important;
+  background: #ffffff !important;
   box-shadow: 0px 1px 2px rgba(105, 104, 104, 0.06), 0px 0px 0px 1px rgba(110, 109, 109, 0.16) !important;
   border: 0px solid var(--rs-border-primary);
 }
@@ -326,7 +346,7 @@ aside {
 
 .custom-date-input .rs-input-group-inside {
   height: var(--input-height) !important;
-  background: #FFFFFF !important;
+  background: #ffffff !important;
   box-shadow: none !important;
   border: 0px solid var(--rs-border-primary);
 

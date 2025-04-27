@@ -3,8 +3,8 @@ import { Popover, Whisper } from 'rsuite';
 import MissingTooth from './images/missing.png';
 
 const Tooth = ({ chartTooth, selected }) => {
-  const width = 100;
-  const height = chartTooth.toothNumberNumeric < 17 ? 500 : 600;
+  const width = 50;
+  const height = chartTooth.toothNumberNumeric < 17 ? 290 : 290;
 
   const upperToothStyle:CSSProperties = {
     position: 'absolute',
@@ -43,7 +43,7 @@ const Tooth = ({ chartTooth, selected }) => {
 
       {!chartTooth.missing && !hasImplant() && (
         // base tooth image
-        <img style={chartTooth.toothNumberNumeric < 17 ? upperToothStyle : lowerToothStyle}
+        <img style={{ maxWidth: "100%"}}
          src={loadImage(true, chartTooth.toothNumber, undefined)} />
       )}
 

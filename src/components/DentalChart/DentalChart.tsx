@@ -203,9 +203,13 @@ const DentalChart = ({
     }
   }, [removeToothActionMutation]);
 
+  const handleRemoveRow = (rowIndex: number) => {
+    console.log(rowIndex);
+  };
+
   return (
     <>
-      <Panel style={{ zoom: props.zoom ? props.zoom : 0.4, width: '2050px' }}>
+      <Panel>
         <Stack id="upper" spacing={1}>
           {upperTeeth &&
             upperTeeth.map((_tooth: ApDentalChartTooth) => {
