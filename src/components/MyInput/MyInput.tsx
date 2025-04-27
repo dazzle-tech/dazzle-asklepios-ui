@@ -74,6 +74,7 @@ const MyInput = ({
       case 'checkbox':
         return (
           <Toggle
+            style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
             checkedChildren={props.checkedLabel || 'Yes'}
             unCheckedChildren={props.unCheckedLabel || 'No'}
             disabled={props.disabled}
