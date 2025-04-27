@@ -1,5 +1,5 @@
 import { camelCaseToLabel, fromCamelCaseToDBName } from '@/utils';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, ForwardedRef } from 'react';
 import {
   Checkbox,
   DatePicker,
@@ -21,6 +21,19 @@ const Textarea = React.forwardRef((props, ref: any) => (
 const CustomDatePicker = React.forwardRef((props, ref: any) => (
   <DatePicker {...props} oneTap cleanable={false} block ref={ref} />
 ));
+const CustomDateTimePicker = React.forwardRef(
+  (props: any, ref: ForwardedRef<HTMLDivElement>) => (
+    <DatePicker
+      {...props}
+      oneTap
+      showMeridian
+      format="MM/dd/yyyy hh:mm aa"
+      cleanable={false}
+      block
+      ref={ref}
+    />
+  )
+);
 
 const MyInput = ({
   fieldName,
@@ -41,7 +54,7 @@ const MyInput = ({
     if (vr && vr.details && vr.details[fieldDbName]) {
       // keep local state updated when props changes
       setValidationResult(preValue => {
-       
+
         return [...vr.details[fieldDbName]];
       });
     } else {
@@ -81,6 +94,19 @@ const MyInput = ({
             checked={record[fieldName]}
             onChange={handleValueChange}
             defaultChecked={props.defaultChecked}
+          />
+        );
+      case 'datetime':
+        return (
+          <Form.Control
+            className="custom-date-input"
+            style={{ width: props?.width ?? 145, '--input-height': `${props?.height ?? 30}px` } as React.CSSProperties}
+            disabled={props.disabled}
+            name={fieldName}
+            value={record[fieldName] ? new Date(record[fieldName]) : null}
+            accepter={CustomDateTimePicker}
+            onChange={handleValueChange}
+            placeholder={props.placeholder}
           />
         );
       case 'select':
@@ -255,7 +281,7 @@ const MyInput = ({
   };
 
   return (
-    <Form.Group  className="my-input-container">
+    <Form.Group className="my-input-container">
       <Form.ControlLabel >
         {showLabel && <MyLabel label={fieldLabel} error={validationResult} />}
         {props.required && <span className="required-field ">*</span>}
