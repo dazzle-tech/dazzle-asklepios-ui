@@ -1,62 +1,71 @@
 .title{
     display: flex;
 }
-.container-of-icons{
+
+.title-matrix {
+    font-size: 16px;
+    @media (max-width: 450px) {
+      font-size: 12px;
+    }
+  }
+.container-of-icons-access-roles{
     display: flex;
      gap: 20px
 }
-.carousel{
+.carousel-access-roles{
     height: auto !important;
      background-color: var(--rs-body) !important;
 }
-.container-of-header-actions{
+.container-of-header-actions-access-roles{
     display: flex;
      justify-content: space-between;
-      margin-bottom: 10px;
-      margin-right: 40px;
+      margin-right: 5px;
 
-      .container-of-back-and-search{
-        display: flex;
-        gap: 20px;
+
+      @media (max-width: 500px) {
+        flex-direction: column;
+        justify-content: center;
+        margin-bottom: 10px;
       }
 }
-.container-of-pagination{
+.container-of-header-actions-matrix{
+    display: flex;
+    justify-content: space-between;
+     margin-right: 5px;
+
+     .container-of-back-and-search-matrix{
+       display: flex;
+       gap: 20px;
+       @media (max-width: 700px) {
+        flex-direction: column;
+        gap: 5px;
+        margin-bottom: -14px;
+      }
+     }
+
+     @media (max-width: 700px) {
+        flex-direction: column;
+        gap: 10px;
+        justify-content: center;
+        margin-bottom: 10px;
+      }
+}
+.container-of-pagination-access-roles{
     padding: 20px;
      background-color: var(--extra-light-blue);
 }
 
-.modal-body{
-    margin-bottom: 30px;
-    Form{
-        padding: 1px;
-    }
-    .header-of-modal{
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-content: center;
-        align-items: center;
-        margin-bottom: 40px;
 
-        label{
-            font-weight: bold;
-             font-size: 14px;
-        }
-    }
-    .container-of-two-fields{
+   
+    .container-of-two-fields-access-roles{
         display: flex;
          gap: 20px;
     }
       
    .container-of-passwordExpires{
      display: flex;
-     gap: 120px
+     gap: 20px
    }
-}
-
-.modal-footer{
-    .stack{
-        display: flex; 
-        justify-content: flex-end;
-    }
-}
+  .form{
+    width: 250px
+  }
