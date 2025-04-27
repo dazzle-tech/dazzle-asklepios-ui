@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Calendar as BigCalendar, Views, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { Calendar as RsuiteCalendar, TagPicker, ButtonToolbar, Panel, InputGroup, SelectPicker, Input, IconButton, Button, Form, Drawer, Calendar, TagGroup, Tag, Divider, DatePicker, Checkbox, Modal, Avatar, Stack, } from "rsuite";
+import { Calendar as RsuiteCalendar, TagPicker, ButtonToolbar, Panel, InputGroup, SelectPicker, Input, IconButton, Button, Form, Drawer, Calendar, TagGroup, Tag, Divider, DatePicker, Checkbox, Modal, Avatar, Stack, ButtonGroup, } from "rsuite";
 import "./styles.less";
 import SearchIcon from '@rsuite/icons/Search';
 import {
@@ -25,7 +25,7 @@ import {
 import { initialListRequest, ListRequest } from "@/types/types";
 import AppointmentModal from "./AppoitmentModal";
 import { ApPatient, ApAppointment } from "@/types/model-types";
-import { faPrint } from "@fortawesome/free-solid-svg-icons";
+import { faCross, faFileCsv, faPaperPlane, faPlus, faPrint, faUserPlus } from "@fortawesome/free-solid-svg-icons";
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
 import AppointmentActionsModal from "./AppointmentActionsModal";
@@ -36,6 +36,8 @@ import CalenderSimpleIcon from '@rsuite/icons/CalenderSimple';
 import PlusIcon from '@rsuite/icons/Plus';
 import ArrowLeftLineIcon from '@rsuite/icons/ArrowLeftLine';
 import ArrowRightLineIcon from '@rsuite/icons/ArrowRightLine';
+import MyButton from "@/components/MyButton/MyButton";
+import Translate from "@/components/Translate";
 
 const ScheduleScreen = () => {
     const localizer = momentLocalizer(moment);
@@ -309,7 +311,7 @@ const ScheduleScreen = () => {
 
     const CustomToolbar = ({ label, onNavigate, onView }) => {
         return (
-            <div style={{marginInline:"15px"}} className="rbc-toolbar">
+            <div style={{ marginInline: "15px" }} className="rbc-toolbar">
                 <span className="rbc-btn-group">
 
                     <div style={{ display: 'flex', alignItems: 'center', fontSize: '16px' }}>
@@ -338,12 +340,20 @@ const ScheduleScreen = () => {
                     <button style={{ margin: "7px", height: "35px" }} onClick={() => onNavigate("NEXT")}><ArrowRightLineIcon /></button>
 
                 </div>
-                <span className="rbc-btn-group">
+
+                 <ButtonGroup style={{borderRadius:"5px",backgroundColor:"#F3F4F6" }} size="md">
+                    <Button style={{border:"none", height:"35px"}} onClick={() => onView(Views.MONTH)}>Month</Button>
+                    <Button style={{border:"none", height:"35px"}}  onClick={() => onView(Views.WEEK)}>Week </Button>
+                    <Button style={{border:"none", height:"35px"}}  onClick={() => onView(Views.DAY)}>Day</Button>
+                    <Button style={{border:"none", height:"35px"}}  onClick={() => onView(Views.AGENDA)}>Agenda</Button>
+                </ButtonGroup> 
+
+                {/* <span className="rbc-btn-group">
                     <button style={{ fontSize: "14px" }} onClick={() => onView(Views.MONTH)}>Month</button>
                     <button style={{ fontSize: "14px" }} onClick={() => onView(Views.WEEK)}>Week</button>
                     <button style={{ fontSize: "14px" }} onClick={() => onView(Views.DAY)}>Day</button>
                     <button style={{ fontSize: "14px" }} onClick={() => onView(Views.AGENDA)}>Agenda</button>
-                </span>
+                </span> */}
             </div>
         );
     };
@@ -624,20 +634,43 @@ const ScheduleScreen = () => {
                         {/* Right  */}
                         <div>
                             <ButtonToolbar>
-                                <IconButton appearance="ghost" style={{ width: "35%" }} icon={<SendIcon />}> View App Requests</IconButton>
-                                <Button style={{
-                                    width: "28%",
+
+                                <Button color="blue" style={{
+                                    width: "35%",
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "flex-start",
-                                    borderRadius: "5px"
+                                    borderRadius: "5px",
+                                    color: "#2264E5"
                                 }}
-                                     appearance="ghost"  >
-                                    <FontAwesomeIcon icon={faPrint} style={{ marginRight: "25px", fontSize: "18px" }} />
+                                    appearance="ghost"  >
+
+                                    <FontAwesomeIcon color="blue" icon={faPaperPlane} style={{ color: "#2264E5", marginRight: "10px", fontSize: "16px" }} />
+                                    View App Requests
+                                </Button>
+
+                                <Button color="blue" style={{
+                                    width: "26%",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "flex-start",
+                                    borderRadius: "5px",
+                                    color: "blue"
+                                }}
+                                    appearance="ghost"  >
+
+                                    <FontAwesomeIcon icon={faPrint} style={{ color: "#2264E5", marginRight: "25px", fontSize: "18px" }} />
                                     Print Report
                                 </Button>
-                                <IconButton onClick={() => { setModalOpen(true) }} appearance="primary" style={{ width: "32%" }} icon={<PlusIcon />}>Add Appointments</IconButton>
+                                <Button onClick={() => { setModalOpen(true) }}
+                                    appearance="primary"
+                                    style={{ width: "34%", backgroundColor: 'var(--primary-blue)', marginLeft: "3px" }}
+                                >
+                                    <FontAwesomeIcon icon={faPlus
 
+                                    } style={{ marginRight: '5px', color: 'white' }} />
+                                    <Translate>Add New Appointments</Translate>
+                                </Button>
                             </ButtonToolbar>
                         </div>
                     </div>
