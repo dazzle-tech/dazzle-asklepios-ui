@@ -203,6 +203,10 @@ const DentalChart = ({
     }
   }, [removeToothActionMutation]);
 
+  const handleRemoveRow = (rowIndex: number) => {
+    console.log(rowIndex);
+  };
+
   return (
     <>
       <Panel>

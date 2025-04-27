@@ -133,14 +133,23 @@ td {
 .rs-btn {
   line-height: 16px !important;
 }
-
+.react-tabs__tab-list {
+  border-bottom-color: #B0B2B3;
+}
 .react-tabs__tab {
-  background-color: #ebf1f5 !important;
+  color: #949494 !important;
   border-radius: 0px;
+  border: none;
 }
 
-.react-tabs__tab--selected {
-  background-color: #a8cce5 !important;
+.react-tabs__tab--selected,
+.react-tabs__tab--selected:active {
+  color: var(--primary-blue) !important;
+  border-bottom: 2px solid var(--primary-blue) !important;
+
+  &:after, &:before {
+    display: none;
+  }
 }
 
 .rs-table-bordered {

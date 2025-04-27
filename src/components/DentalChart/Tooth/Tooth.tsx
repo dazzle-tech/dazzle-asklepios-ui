@@ -4,7 +4,7 @@ import MissingTooth from './images/missing.png';
 
 const Tooth = ({ chartTooth, selected }) => {
   const width = 50;
-  const height = chartTooth.toothNumberNumeric < 17 ? 290 : 600;
+  const height = chartTooth.toothNumberNumeric < 17 ? 290 : 290;
 
   const upperToothStyle:CSSProperties = {
     position: 'absolute',
