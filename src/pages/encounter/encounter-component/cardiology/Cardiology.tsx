@@ -1,37 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import {
-    Panel,
-} from 'rsuite';
+import React from 'react';
 import TreadmillStress from '../treadm-stress/TreadmillStress';
 import ChiefComplaintSymptoms from '../chief_complaint_symptoms/ChiefComplaintSymptoms';
 import ElectrocardiogramECG from '../electrocardiogram-ecg/ElectrocardiogramECG';
-
+import { Tabs } from 'rsuite';
 const Cardiology = ({ patient, encounter }) => {
-    
     return (
-        <Panel header={"Cardiology"}>
-            <Panel header={"Chief Complaint & Symptoms"} collapsible bordered>  
-            <ChiefComplaintSymptoms patient={patient} encounter={encounter}/>  
-            </Panel>
-            <Panel header={"Treadmill Stress Test (TMST)"} collapsible bordered>
-             <TreadmillStress patient={patient} encounter={encounter}/>     
-            </Panel>
-            <Panel header={"Electrocardiography (ECG)"} collapsible bordered>   
-            <ElectrocardiogramECG patient={patient} encounter={encounter}/>        
-            </Panel>
-            <Panel header={"Echocardiography (ECHO)"} collapsible bordered>  
-            </Panel>
-            <Panel header={"Ambulatory Blood Pressure Monitoring (ABPM)"} collapsible bordered>
-            </Panel>
-            <Panel header={"Holter Monitoring"} collapsible bordered>      
-            </Panel>
-            <Panel header={"Cardiovascular Risk Factors"} collapsible bordered>  
-            </Panel>
-            <Panel header={"Cardiac Biomarkers"} collapsible bordered>
-            </Panel>
-            <Panel header={"Diagnosis & Treatment Plan"} collapsible bordered>
-            </Panel>
-        </Panel>
+        <Tabs defaultActiveKey="1" appearance="subtle" >
+            <Tabs.Tab eventKey="1" title="Chief Complaint & Symptoms">
+                <ChiefComplaintSymptoms patient={patient} encounter={encounter} />
+            </Tabs.Tab>
+            <Tabs.Tab eventKey="2" title="Treadmill Stress Test (TMST)">
+                <TreadmillStress patient={patient} encounter={encounter} />
+            </Tabs.Tab>
+            <Tabs.Tab eventKey="3" title="Electrocardiography (ECG)">
+                <ElectrocardiogramECG patient={patient} encounter={encounter} />
+            </Tabs.Tab>
+        </Tabs>
     );
 };
 export default Cardiology;
