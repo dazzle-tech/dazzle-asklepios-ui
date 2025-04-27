@@ -162,13 +162,24 @@ const Encounter = () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent("  "));
     };
-  }, [location.pathname, dispatch])
+  }, [location.pathname, dispatch]);
+
   const handleGoBack = () => {
     dispatch(setEncounter(null));
     dispatch(setPatient(null));
-    navigate('/encounter-list');
+  
+    if (propsData.fromPage === "PatientEMR") {
+      navigate('/patient-EMR', { 
+        state: { 
+          localPatient: propsData.patient,
+          fromPage: 'clinicalVisit'
+        } 
+      });
+    } else {
+      navigate('/encounter-list');
+    }
   };
-
+  
   const OpenAllargyModal = () => {
     setOpenAllargyModal(true);
   }
