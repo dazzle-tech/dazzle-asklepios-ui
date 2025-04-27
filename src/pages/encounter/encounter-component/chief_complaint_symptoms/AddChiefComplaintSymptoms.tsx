@@ -234,7 +234,7 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
         <MyModal
             open={open}
             setOpen={setOpen}
-            title="Add/Edit Psychology Exam"
+            title="Add/Edit Chief Complaint Symptoms"
             actionButtonFunction={handleSave}
             position='right'
             isDisabledActionBtn={isDisabledField}
