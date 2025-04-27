@@ -598,6 +598,8 @@ const Warning = ({ edit, patient, encounter }) => {
         setObject={setWarning}
         handleCancle={handleCancle}
         fieldName="cancellationReason"
+        title={"Cancellation"}
+        fieldLabel={"Cancellation Reason"}
       ></CancellationModal>
 
 
@@ -607,7 +609,7 @@ const Warning = ({ edit, patient, encounter }) => {
         setOpen={setOpenDetailsModal}
         title="Add Warning"
         actionButtonFunction={handleSave}
-        bodyheight={800}
+        bodyheight={550}
         size='680px'
         position='right'
         steps={[

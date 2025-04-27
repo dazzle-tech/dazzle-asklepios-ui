@@ -86,16 +86,7 @@ const Allergies = ({ edit, patient, encounter }) => {
   };
  //Effect when reactionDescription get new value and push it to prev 
 
-//effect when Allergy object change and if have onset date handle formating date
-  useEffect(() => {
-    if (allerges.onsetDate != 0) {
-      setEditOnset({ editdate: false });
-      setSelectedOnsetDate(new Date(allerges.onsetDate));
-    }
-    if (allerges.sourceOfInformationLkey != null) {
-      seteditSourceof({ editSource: false });
-    }
-  }, [allerges]);
+
 //Effect when check Show Prev Allergy and update filter to get prev allergies
   useEffect(() => {
     if (showPrev) {
@@ -320,7 +311,6 @@ const Allergies = ({ edit, patient, encounter }) => {
     });
     setSelectedOnsetDate(null);
     setEditOnset({ editdate: true });
-    seteditSourceof({ editSource: true });
     setReactionDescription(null);
   };
 
@@ -445,6 +435,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         <MyButton
           prefixIcon={() => <CloseOutlineIcon />}
           onClick={OpenCancellationReasonModel}
+          disabled={allerges?.key == null ? true : false}
         >Cancel</MyButton>
 
         <MyButton
@@ -611,6 +602,8 @@ const Allergies = ({ edit, patient, encounter }) => {
         setObject={setAllerges}
         handleCancle={handleCancle}
         fieldName="cancellationReason"
+        fieldLabel={'Cancellation Reason'}
+        title={'Cancellation'}
       ></CancellationModal>
      {/* open modal to resolve allergy */}
       <MyModal

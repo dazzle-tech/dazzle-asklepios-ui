@@ -49,6 +49,15 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, han
            );
          }
        }, [allerges.reactionDescription]);
+        useEffect(() => {
+           if (allerges.onsetDate != 0) {
+             setEditOnset({ editdate: false });
+             setSelectedOnsetDate(new Date(allerges.onsetDate));
+           }
+           if (allerges.sourceOfInformationLkey != null) {
+             seteditSourceof({ editSource: false });
+           }
+         }, [allerges]);
      const handleDateChange = date => {
         if (date) {
           if (!editOnset) {
@@ -62,7 +71,7 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, han
             setOpen={setOpen}
             title="Add Allergy"
             actionButtonFunction={handleSave}
-            bodyheight={800}
+            bodyheight={550}
             size='700px'
             position='right'
             steps={[
