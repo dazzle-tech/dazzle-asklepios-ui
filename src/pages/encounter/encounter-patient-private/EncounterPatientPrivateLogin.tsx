@@ -58,7 +58,7 @@ const EncounterPatientPrivateLogin = () => {
         .unwrap()
         if (response?.msg=== "success") {
           dispatch(notify(`Welcome ${localUser.username}`));
-          if(propsData.info === "toNurse"){navigate('/encounter-pre-observations',{ state: { patient:propsData.patient ,encounter:propsData.encounter } })}
+          if(propsData.info === "toNurse"){navigate('/nurse-station',{ state: { patient:propsData.patient ,encounter:propsData.encounter } })}
           else if(propsData.info === "toEncounter"){navigate('/encounter',{ state: { info: "toEncounter", fromPage: "EncounterList" ,patient:propsData.patient ,encounter:propsData.encounter } } )}
           
         } else {
