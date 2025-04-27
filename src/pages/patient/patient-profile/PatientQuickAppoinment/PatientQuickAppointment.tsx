@@ -134,7 +134,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                 , { title: 'Add Payment', icon: faMoneyBillWave }]}
             content={(step) => conjureFormContent(step)}
             size="750px"
-            bodyheight={600}
+            bodyheight={400}
         />
     );
 };

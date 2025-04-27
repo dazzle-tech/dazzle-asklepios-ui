@@ -11,8 +11,7 @@ const CancellationModal = ({
     object,
     setObject,
     fieldLabel,
-    title
-    ,
+    title,
     fieldName="",
     statusField="statusLkey",
     statusKey="3196709905099521"  // TODO update status to be a LOV value
@@ -33,7 +32,7 @@ const CancellationModal = ({
                     width={"400px"}
                     column
                     fieldType="textarea"
-                   fieldLabel={fieldLabel}
+                    fieldLabel={fieldLabel}
                     fieldName={fieldName}
                     height={120}
                     record={object}

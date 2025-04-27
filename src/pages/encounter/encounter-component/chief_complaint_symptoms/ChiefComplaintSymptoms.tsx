@@ -1,66 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { useGetPatientVaccinationRecordQuery } from '@/services/observationService'
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppSelector, useAppDispatch } from '@/hooks';
-import {
-    InputGroup,
-    Form,
-    Input,
-    Panel,
-    DatePicker,
-    Text,
-    Checkbox,
-    Dropdown,
-    Button,
-    IconButton,
-    SelectPicker,
-    Table,
-    Modal,
-    Stack,
-    Divider,
-    Toggle,
-    ButtonToolbar,
-    Grid,
-    Row,
-    Col,
-} from 'rsuite';
-import {
-    useGetLovValuesByCodeQuery,
-} from '@/services/setupService';
-import {
-    useSaveComplaintSymptomsMutation,
-    useGetComplaintSymptomsQuery
-} from '@/services/encounterService';
-import MyInput from '@/components/MyInput';
+import { Checkbox, IconButton, Table } from 'rsuite';
+import { useSaveComplaintSymptomsMutation, useGetComplaintSymptomsQuery } from '@/services/encounterService';
+import PlusIcon from '@rsuite/icons/Plus';
+import MyButton from '@/components/MyButton/MyButton';
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import Translate from '@/components/Translate';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import MyLabel from '@/components/MyLabel';
-import {
-    newApComplaintSymptoms,
-} from '@/types/model-types-constructor';
-import {
-    ApComplaintSymptoms
-} from '@/types/model-types';
+import { newApComplaintSymptoms } from '@/types/model-types-constructor';
+import { ApComplaintSymptoms } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
-import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBroom } from '@fortawesome/free-solid-svg-icons';
+import CancellationModal from '@/components/CancellationModal';
+import AddChiefComplaintSymptoms from './AddChiefComplaintSymptoms';
 const { Column, HeaderCell, Cell } = Table
 const ChiefComplaintSymptoms = ({ patient, encounter }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
-    const [complaintSymptoms, setComplaintSymptoms] = useState<ApComplaintSymptoms>({
-        ...newApComplaintSymptoms,
-        duration: null,
-    });
-    const [associatedSymptoms, setAssociatedSymptoms] = useState({ associatedSymptomsLkey: '' });
-    const [saveComplaintSymptoms, saveComplaintSymptomsMutation] = useSaveComplaintSymptomsMutation();
+    const [complaintSymptoms, setComplaintSymptoms] = useState<ApComplaintSymptoms>({ ...newApComplaintSymptoms, duration: null });
+    const [open, setOpen] = useState(false);
+    const [saveComplaintSymptoms] = useSaveComplaintSymptomsMutation();
     const [popupCancelOpen, setPopupCancelOpen] = useState(false);
     const [complaintSymptomsStatus, setComplaintSymptomsStatus] = useState('');
     const [allData, setAllData] = useState(false);
-    const dispatch = useAppDispatch()
+    const dispatch = useAppDispatch();
+
+    // Initialize list request with default filters
     const [complaintSymptomsListRequest, setComplaintSymptomsListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -81,10 +47,8 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
             }
         ],
     });
-    //LOV
-    const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
-    const { data: bodyPartsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
-    const { data: adversLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ADVERS_EFFECTS');
+
+    // Fetch the list of Complaint Symptoms based on the provided request, and provide a refetch function
     const { data: complaintSymptomsResponse, refetch: refetchComplaintSymptoms } = useGetComplaintSymptomsQuery(complaintSymptomsListRequest);
     const handleExpanded = (rowData) => {
         let open = false;
@@ -103,9 +67,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
         setExpandedRowKeys(nextExpandedRowKeys);
     };
     const renderRowExpanded = rowData => {
-
         return (
-
             <Table
                 data={[rowData]}
                 bordered
@@ -176,64 +138,24 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
             />
         </Cell>
     );
+    // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
     const isSelected = rowData => {
         if (rowData && complaintSymptoms && complaintSymptoms.key === rowData.key) {
             return 'selected-row';
         } else return '';
     };
-    const handleSave = async () => {
-       //TODO convert key to code
-        try {
-            if (complaintSymptoms.key === undefined) {
-                await saveComplaintSymptoms({ 
-                    ...complaintSymptoms, 
-                    patientKey: patient.key, 
-                    encounterKey: encounter.key, 
-                    onsetDate: complaintSymptoms?.onsetDate ? new Date(complaintSymptoms.onsetDate).getTime() : 0, 
-                    statusLkey: "9766169155908512", 
-                    createdBy: authSlice.user.key 
-                }).unwrap();
-                
-                dispatch(notify('Patient Complaint Symptoms Added Successfully'));
-                setComplaintSymptoms({ ...complaintSymptoms, statusLkey: "9766169155908512" });
-    
-            } else {
-                await saveComplaintSymptoms({ 
-                    ...complaintSymptoms, 
-                    patientKey: patient.key, 
-                    encounterKey: encounter.key, 
-                    onsetDate: complaintSymptoms?.onsetDate ? new Date(complaintSymptoms.onsetDate).getTime() : 0, 
-                    updatedBy: authSlice.user.key 
-                }).unwrap();
-    
-                dispatch(notify('Patient Complaint Symptom Updated Successfully'));
-            }
-    
-            await refetchComplaintSymptoms();
-            handleClearField();
-            
-        } catch (error) {
-            console.error("Error saving complaint symptoms:", error);
-            dispatch(notify('Failed to save complaint symptoms'));
-        }
-    };
-    
+
+    // Handle Cancel Complaint Symptoms Record
     const handleCancle = () => {
         //TODO convert key to code
         saveComplaintSymptoms({ ...complaintSymptoms, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
             dispatch(notify('Treadmill Complaint Symptoms Successfully'));
             refetchComplaintSymptoms();
         });
-    };
-    const handleClearField = () => {
         setPopupCancelOpen(false);
-        setComplaintSymptoms({
-            ...newApComplaintSymptoms,
-            unitLkey: null,
-            painLocationLkey: null
-        });
     };
-    ///useEffect
+
+    // Effects
     useEffect(() => {
         setComplaintSymptomsListRequest((prev) => ({
             ...prev,
@@ -343,207 +265,38 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
             };
         });
     }, [allData, complaintSymptomsStatus]);
-    useEffect(() => {
-        if (associatedSymptoms.associatedSymptomsLkey != null) {
-            const foundItemKey = adversLovQueryResponse?.object?.find(
-                item => item.key === associatedSymptoms.associatedSymptomsLkey
-            );
-            const foundItem = foundItemKey?.lovDisplayVale || '';;
-            setComplaintSymptoms(prevComplaintSymptoms => ({
-                ...prevComplaintSymptoms,
-                associatedSymptoms: prevComplaintSymptoms.associatedSymptoms
-                    ? prevComplaintSymptoms.associatedSymptoms.includes(foundItem)
-                        ? prevComplaintSymptoms.associatedSymptoms
-                        : `${prevComplaintSymptoms.associatedSymptoms}, ${foundItem}`
-                    : foundItem
-            }));
-        }
-    }, [associatedSymptoms.associatedSymptomsLkey]);
     return (
-        <Panel>
-            <Panel bordered style={{ padding: '10px' }}>
-            <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px' ,zoom:.8}}>
-                    <Form style={{ display: 'flex', flexDirection: 'column', gap: '7px', marginTop: '10px' }}>
-                        <MyLabel label="Chief Complaint" />
-                        <Input
-                            as="textarea"
-                            value={complaintSymptoms.chiefComplaint}
-                            onChange={(e) => setComplaintSymptoms({
-                                ...complaintSymptoms,
-                                chiefComplaint: e
-                            })}
-                            style={{ width: 330 }}
-                            rows={3}
-                        />
-                    </Form>
-
-                    <Form fluid layout='inline' style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                        <MyInput
-                            width={360}
-                            column
-                            fieldLabel="Associated Symptoms"
-                            fieldType="select"
-                            fieldName='associatedSymptomsLkey'
-                            selectData={adversLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            record={associatedSymptoms}
-                            setRecord={setAssociatedSymptoms}
-                        />
-                        <Input
-                            as="textarea"
-                            value={complaintSymptoms.associatedSymptoms || ""}
-                            onChange={(value) =>
-                                setComplaintSymptoms((prev) => ({
-                                    ...prev,
-                                    associatedSymptoms: value
-                                }))
-                            }
-                            style={{ width: 300, marginTop: 0 }}
-                            rows={3}
-                        />
-
-                    </Form>
-                </Form>
-                <Form fluid layout='inline' style={{ display: 'flex' }}>
-                    <MyInput
-                        width={165}
-                        column
-                        fieldType="date"
-                        fieldLabel="Onset Date"
-                        fieldName="onsetDate"
-                        record={complaintSymptoms}
-                        setRecord={setComplaintSymptoms}
-                    />
-                    <MyInput
-                        width={165}
-                        column
-                        fieldType="number"
-                        fieldLabel="Duration"
-                        fieldName="duration"
-                        record={complaintSymptoms}
-                        setRecord={setComplaintSymptoms}
-                    />
-                    <MyInput
-                        column
-                        width={165}
-                        fieldLabel="Unit"
-                        fieldType="select"
-                        fieldName="unitLkey"
-                        selectData={unitLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={complaintSymptoms}
-                        setRecord={setComplaintSymptoms}
-                    />
-                    <MyInput
-                        column
-                        width={165}
-                        fieldLabel="Pain Characteristics"
-                        fieldName="painCharacteristics"
-                        record={complaintSymptoms}
-                        setRecord={setComplaintSymptoms}
-                    />
-                    <MyInput
-                        column
-                        width={165}
-                        fieldLabel="Pain Location"
-                        fieldType="select"
-                        fieldName="painLocationLkey"
-                        selectData={bodyPartsLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={complaintSymptoms}
-                        setRecord={setComplaintSymptoms}
-                    />
-                    <MyInput
-                        width={165}
-                        column
-                        fieldLabel="Radiation"
-                        fieldName="radiation"
-                        record={complaintSymptoms}
-                        setRecord={setComplaintSymptoms}
-                    />
-                    <MyInput
-                        width={165}
-                        column
-                        fieldLabel="Aggravating Factors"
-                        fieldName="aggravatingFactors"
-                        record={complaintSymptoms}
-                        setRecord={setComplaintSymptoms}
-                    />
-                    <MyInput
-                        width={165}
-                        column
-                        fieldLabel="Relieving Factors"
-                        fieldName="relievingFactors"
-                        record={complaintSymptoms}
-                        setRecord={setComplaintSymptoms}
-                    />
-
-                </Form>
-
-             
-                <ButtonToolbar style={{ zoom: .8, marginTop: '10px' }}>
-                    <Button
-                        appearance="primary"
-                        onClick={() => handleSave()}
-                        style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: '5px' }}
-                    >
-                        <FontAwesomeIcon icon={faCheckDouble} style={{ marginRight: '5px' }} />
-
-                        <Translate>Save</Translate>
-                    </Button>
-                    <Button
-                        appearance="ghost"
-                        style={{ backgroundColor: 'white', color: 'var(--primary-blue)', marginLeft: "5px" }}
-                        onClick={handleClearField}
-                    >
-                        <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px' }} />
-                        <span>Clear</span>
-                    </Button>
-                </ButtonToolbar>
-            </Panel>
-
-            <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <ButtonToolbar>
-                    <Button
-                        appearance="primary"
-                        style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: "5px", zoom: .8 }}
-                        onClick={() => { setPopupCancelOpen(true) }}
-                        disabled={!complaintSymptoms?.key}
-                    >
-                        <CloseOutlineIcon style={{ marginRight: '7px' }} />
-                        <Translate>Cancel</Translate>
-                    </Button>
-
-                </ButtonToolbar>
-                <Checkbox
-                    onChange={(value, checked) => {
-                        if (checked) {
-                            setComplaintSymptomsStatus('3196709905099521');
-                            //TODO convert key to code
-                        }
-                        else {
-                            setComplaintSymptomsStatus('');
-                        }
-                    }}
-                >
+        <div>
+            <div className='bt-div'>
+                <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!complaintSymptoms?.key}>
+                    <Translate>Cancel</Translate>
+                </MyButton>
+                <Checkbox onChange={(value, checked) => {
+                    if (checked) {
+                        //TODO convert key to code
+                        setComplaintSymptomsStatus('3196709905099521');
+                    }
+                    else {
+                        setComplaintSymptomsStatus('');
+                    }
+                }}>
                     Show Cancelled
                 </Checkbox>
-                <Checkbox
-                    onChange={(value, checked) => {
-                        if (checked) {
-                            setAllData(true);
-                        }
-                        else {
-                            setAllData(false);
-                        }
-                    }}
-                >
+                <Checkbox onChange={(value, checked) => {
+                    if (checked) {
+                        setAllData(true);
+                    }
+                    else {
+                        setAllData(false);
+                    }
+                }}>
                     Show All
                 </Checkbox>
-            </Form>
+                <div className='bt-right'>
+                    <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>Add </MyButton>
+                </div>
+            </div>
+            <AddChiefComplaintSymptoms open={open} setOpen={setOpen} patient={patient} encounter={encounter} complaintSymptom={complaintSymptoms} refetch={refetchComplaintSymptoms} />
             <Table
                 height={600}
                 data={complaintSymptomsResponse?.object ?? []}
@@ -551,8 +304,6 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
                 expandedRowKeys={expandedRowKeys}
                 renderRowExpanded={renderRowExpanded}
                 shouldUpdateScroll={false}
-                bordered
-                cellBordered
                 onRowClick={rowData => {
                     setComplaintSymptoms({
                         ...rowData
@@ -580,7 +331,6 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
                     <Cell>
                         {rowData =>
                             <>
-
                                 {rowData?.duration}
                                 {" "}
                                 {rowData?.unitLvalue
@@ -633,49 +383,9 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
                         {rowData => rowData?.relievingFactors}
                     </Cell>
                 </Column>
-
             </Table>
-
-            <Modal
-                open={popupCancelOpen}
-                onClose={() => setPopupCancelOpen(false)}
-                size="sm"
-            >
-                <Modal.Header>
-                    <Translate><h6>Confirm Cancel</h6></Translate>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form layout="inline" fluid>
-                        <MyInput
-                            width={600}
-                            column
-                            fieldLabel="Cancellation Reason"
-                            fieldType="textarea"
-                            fieldName="cancellationReason"
-                            height={120}
-                            record={complaintSymptoms}
-                            setRecord={setComplaintSymptoms}
-                            //TODO convert key to code
-                            disabled={complaintSymptoms?.statusLkey === "3196709905099521"}
-                        />
-                    </Form>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button appearance="primary" onClick={handleCancle}
-                    //TODO convert key to code
-                        disabled={complaintSymptoms?.statusLkey === "3196709905099521"}
-                        style={{ backgroundColor: 'var(--primary-blue)', color: 'white', zoom: .8 }}
-                    >
-                        Cancel
-                    </Button>
-                    <Divider vertical />
-                    <Button appearance="ghost" color='blue' onClick={() => { setPopupCancelOpen(false) }}
-                        style={{ color: 'var(--primary-blue)', backgroundColor: 'white', zoom: .8 }}>
-                        Close
-                    </Button>
-                </Modal.Footer>
-            </Modal>
-        </Panel>
+            <CancellationModal title="Cancel Chief Complaint Symptoms" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={complaintSymptoms} setObject={setComplaintSymptoms} handleCancle={handleCancle} fieldName="cancellationReason" />
+        </div>
     );
 };
 export default ChiefComplaintSymptoms;
