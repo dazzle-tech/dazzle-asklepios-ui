@@ -97,6 +97,7 @@ const QuickPatient = ({ open, setOpen }) => {
         vr={validationResult}
         column
         fieldType="date"
+        fieldLabel="DOB"
         fieldName="dob"
         record={localPatient}
         setRecord={setLocalPatient}
