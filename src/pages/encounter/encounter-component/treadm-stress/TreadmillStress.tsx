@@ -1,56 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { useGetPatientVaccinationRecordQuery } from '@/services/observationService'
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppSelector, useAppDispatch } from '@/hooks';
-import {
-    InputGroup,
-    Form,
-    Input,
-    Panel,
-    DatePicker,
-    Text,
-    Checkbox,
-    Dropdown,
-    Button,
-    IconButton,
-    SelectPicker,
-    Table,
-    Modal,
-    Stack,
-    Divider,
-    Toggle,
-    ButtonToolbar,
-    Grid,
-    Row,
-    Col,
-} from 'rsuite';
-import {
-    useGetLovValuesByCodeQuery,
-} from '@/services/setupService';
-import {
-    useSaveTreadmillStresseMutation,
-    useGetTreadmillStressesQuery
-} from '@/services/encounterService';
-import MyInput from '@/components/MyInput';
+import { Checkbox, IconButton, Table } from 'rsuite';
+import { useSaveTreadmillStresseMutation, useGetTreadmillStressesQuery } from '@/services/encounterService';
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import Translate from '@/components/Translate';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import MyLabel from '@/components/MyLabel';
-import {
-    newApTreadmillStress
-} from '@/types/model-types-constructor';
-import {
-    ApTreadmillStress
-} from '@/types/model-types';
+import MyButton from '@/components/MyButton/MyButton';
+import { newApTreadmillStress } from '@/types/model-types-constructor';
+import { ApTreadmillStress } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
+import PlusIcon from '@rsuite/icons/Plus';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
-import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBroom } from '@fortawesome/free-solid-svg-icons';
+import CancellationModal from '@/components/CancellationModal';
+import AddTreadmillStress from './AddTreadmillStress';
 const { Column, HeaderCell, Cell } = Table
 const TreadmillStress = ({ patient, encounter }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
+    const [open, setOpen] = useState(false);
     const [treadmillStress, setTreadmillStress] = useState<ApTreadmillStress>({
         ...newApTreadmillStress,
         preTestSystolicBp: null,
@@ -62,11 +30,13 @@ const TreadmillStress = ({ patient, encounter }) => {
         postTestDiastolicBp: null,
         recoveryTime: null,
     });
-    const [saveTreadmillStress, saveTreadmillStressMutation] = useSaveTreadmillStresseMutation();
+    const [saveTreadmillStress] = useSaveTreadmillStresseMutation();
     const [popupCancelOpen, setPopupCancelOpen] = useState(false);
     const [treadmillStressStatus, setTreadmillStressStatus] = useState('');
     const [allData, setAllData] = useState(false);
-    const dispatch = useAppDispatch()
+    const dispatch = useAppDispatch();
+
+    // Initialize list request with default filters
     const [treadmillStressListRequest, setTreadmillStressListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -87,40 +57,16 @@ const TreadmillStress = ({ patient, encounter }) => {
             }
         ],
     });
-    //LOV
-    const { data: baselineECGFindingsLovQueryResponse } = useGetLovValuesByCodeQuery('CARDIAC_ECG_FINDINGS');
-    const { data: numbersLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
-    const { data: cardiacLovQueryResponse } = useGetLovValuesByCodeQuery('CARDIAC_ST_CHANGES');
-    const { data: arrythmiasLovQueryResponse } = useGetLovValuesByCodeQuery('ARRYTHMIAS');
-    const { data: treadmillLovQueryResponse } = useGetLovValuesByCodeQuery('TREADMILL_OUTCOMES');
+
+    // Fetch the list of  Treadmill Stress based on the provided request, and provide a refetch function
     const { data: treadmillStressResponse, refetch: refetchTreadmillStress } = useGetTreadmillStressesQuery(treadmillStressListRequest);
+
+    // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
     const isSelected = rowData => {
         if (rowData && treadmillStress && treadmillStress.key === rowData.key) {
             return 'selected-row';
         } else return '';
     };
-    const handleSave = async () => {
-        //TODO convert key to code
-        try {
-            if (treadmillStress.key === undefined) {
-                await saveTreadmillStress({ ...treadmillStress, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap();
-                dispatch(notify('Patient Treadmill Stress Added Successfully'));
-                setTreadmillStress({ ...newApTreadmillStress, statusLkey: "9766169155908512" })
-            } else {
-                await saveTreadmillStress({ ...treadmillStress, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap();
-    
-                dispatch(notify('Patient Treadmill Stress Updated Successfully'));
-            }
-    
-            await refetchTreadmillStress();
-            handleClearField();
-            
-        } catch (error) {
-            console.error("Error saving Treadmill Stress:", error);
-            dispatch(notify('Failed to save Treadmill Stress'));
-        }
-    };
-
 
     const handleExpanded = (rowData) => {
         let open = false;
@@ -140,9 +86,7 @@ const TreadmillStress = ({ patient, encounter }) => {
         setExpandedRowKeys(nextExpandedRowKeys);
     };
     const renderRowExpanded = rowData => {
-
         return (
-
             <Table
                 data={[rowData]}
                 bordered
@@ -192,8 +136,6 @@ const TreadmillStress = ({ patient, encounter }) => {
                     <Cell dataKey="cancellationReason" />
                 </Column>
             </Table>
-
-
         );
     };
     const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
@@ -213,27 +155,18 @@ const TreadmillStress = ({ patient, encounter }) => {
             />
         </Cell>
     );
+
+    // Handle Cancle Function
     const handleCancle = () => {
         //TODO convert key to code
         saveTreadmillStress({ ...treadmillStress, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
             dispatch(notify('Treadmill Stress Canceled Successfully'));
             refetchTreadmillStress();
         });
-    };
-    const handleClearField = () => {
         setPopupCancelOpen(false);
-        setTreadmillStress({
-            ...newApTreadmillStress,
-            baselineEcgFindingsLkey: null,
-            bruceProtocolStageLkey: null,
-            segmentChangeLkey: null,
-            typeLkey: null,
-            statusLkey: null,
-            testOutcomeLkey: null,
-            arrhythmiaNoted: false
-        });
     };
-    ///useEffect
+
+    // Effects
     useEffect(() => {
         setTreadmillStressListRequest((prev) => ({
             ...prev,
@@ -344,443 +277,146 @@ const TreadmillStress = ({ patient, encounter }) => {
         });
     }, [allData, treadmillStressStatus]);
     return (
-        <Panel>
-            <Panel bordered style={{ padding: '10px' }}>
-                <Form fluid layout='inline' style={{ display: 'flex' }}>
-
-                    <MyInput
-                        width={165}
-                        column
-                        fieldLabel="Test Indication"
-                        fieldName="indication"
-                        record={treadmillStress}
-                        setRecord={setTreadmillStress}
-                    />
-                    <MyInput
-                        column
-                        width={165}
-                        fieldLabel="Baseline ECG Findings"
-                        fieldType="select"
-                        fieldName="baselineEcgFindingsLkey"
-                        selectData={baselineECGFindingsLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={treadmillStress}
-                        setRecord={setTreadmillStress}
-                    />
-                     <Form style={{ display: 'flex', flexDirection: 'column', zoom: .8 }}>
-                        <MyLabel label="Pre-Test Blood Pressure" />
-                        <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px', width: 300 }}>
-
-                            <Input
-                                width={100}
-
-                                type="number"
-                                value={treadmillStress.preTestSystolicBp}
-                                onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        preTestSystolicBp: Number(e)
-                                    })} />
-                            <span style={{ textAlign: 'center' }}>/</span>
-                            <Input
-                                width={100}
-                                type="number"
-                                value={treadmillStress.preTestDiastolicBp}
-                                onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        preTestDiastolicBp: Number(e)
-                                    })} />
-                                
-                        </Form>
-                    </Form>
-
-                    <MyInput
-                        column
-                        width={165}
-                        fieldLabel="Bruce Protocol Stage "
-                        fieldType="select"
-                        fieldName="bruceProtocolStageLkey"
-                        selectData={numbersLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={treadmillStress}
-                        setRecord={setTreadmillStress}
-                    />
-                    <MyInput
-                        column
-                        width={165}
-                        fieldLabel="ST Segment Change"
-                        fieldType="select"
-                        fieldName="segmentChangeLkey"
-                        selectData={cardiacLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={treadmillStress}
-                        setRecord={setTreadmillStress}
-                    />
-                    <MyInput
-                        width={165}
-                        column
-                        fieldLabel="Arrhythmia Noted"
-                        fieldType="checkbox"
-                        fieldName="arrhythmiaNoted"
-                        record={treadmillStress}
-                        setRecord={setTreadmillStress}
-                    />
-                    <MyInput
-                        width={165}
-                        column
-                        fieldLabel="Type"
-                        fieldType="select"
-                        fieldName="typeLkey"
-                        selectData={arrythmiasLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={treadmillStress}
-                        setRecord={setTreadmillStress}
-                        disabled={!treadmillStress?.arrhythmiaNoted}
-                    />
-                    <MyInput
-                        width={165}
-                        column
-                        fieldLabel="Test Outcome "
-                        fieldType="select"
-                        fieldName="testOutcomeLkey"
-                        selectData={treadmillLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={treadmillStress}
-                        setRecord={setTreadmillStress}
-                    />
-                   
-
-                </Form>
-                <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px', zoom: .8 }}>
-                    <Form style={{ display: 'flex', flexDirection: 'column' }}>
-                        <MyLabel label="Exercise Duration" />
-                        <InputGroup style={{ width: 210 }}>
-
-                            <Input
-                                type="number"
-                                width={165}
-                                value={treadmillStress.exerciseDuration}
-                                onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        exerciseDuration: Number(e),
-                                    })
-                                }
-                            />
-                            <InputGroup.Addon><Text>Minutes</Text></InputGroup.Addon>
-                        </InputGroup>
-                    </Form>
-                    <Form style={{ display: 'flex', flexDirection: 'column' }}>
-                        <MyLabel label="Maximum Heart Rate Achieved" />
-                        <InputGroup style={{ width: 210 }}>
-
-                            <Input
-                                type="number"
-                                width={165}
-                                value={treadmillStress.maximumHeartRateAchieved}
-                                onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        maximumHeartRateAchieved: Number(e),
-                                    })
-                                }
-                            />
-                            <InputGroup.Addon><Text>BPM</Text></InputGroup.Addon>
-                        </InputGroup>
-                    </Form>
-                    <Form style={{ display: 'flex', flexDirection: 'column' }}>
-                        <MyLabel label="Target Heart Rate" />
-                        <InputGroup style={{ width: 210 }}>
-                            <Input
-                                type="number"
-                                width={165}
-                                value={treadmillStress.targetHeartRate}
-                                onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        targetHeartRate: Number(e),
-                                    })
-                                }
-                            />
-                            <InputGroup.Addon><Text>% of Max HR</Text></InputGroup.Addon>
-                        </InputGroup>
-                    </Form>
-                    <Form style={{ display: 'flex', flexDirection: 'column' }}>
-                        <MyLabel label="Recovery Time" />
-                        <InputGroup style={{ width: 210 }}>
-                            <Input
-                                type="number"
-                                width={165}
-                                value={treadmillStress.recoveryTime}
-                                onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        recoveryTime: Number(e),
-                                    })
-                                }
-                            />
-                            <InputGroup.Addon><Text>Minutes</Text></InputGroup.Addon>
-                        </InputGroup>
-                    </Form>
-                    <Form style={{ display: 'flex', flexDirection: 'column', marginTop: '10px' }}>
-                        <MyLabel label="Post-Test BP " />
-                        <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px', width: 300 }}>
-
-                            <Input
-                                width={100}
-
-                                type="number"
-                                value={treadmillStress.postTestSystolicBp}
-                                onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        postTestSystolicBp: Number(e)
-                                    })} />
-                            <span style={{ textAlign: 'center' }}>/</span>
-                            <Input
-                                width={100}
-                                type="number"
-                                value={treadmillStress.postTestDiastolicBp}
-                                onChange={e =>
-                                    setTreadmillStress({
-                                        ...treadmillStress,
-                                        postTestDiastolicBp: Number(e)
-                                    })} />
-                
-                        </Form>
-                    </Form>
-                </Form>
-                <Form style={{ display: 'flex', flexDirection: 'column',zoom:.8 }}>
-                    <MyLabel label="Cardiologist Notes" />
-                    <Input
-                        as="textarea"
-                        value={treadmillStress.cardiologistNotes}
-                        onChange={(e) => setTreadmillStress({
-                            ...treadmillStress,
-                            cardiologistNotes: e
-                        })}
-                        style={{ width: 330 }}
-                        rows={3}
-                    />
-                </Form>
-                <ButtonToolbar style={{ zoom: .8, marginTop: '10px' }}>
-                    <Button
-                        appearance="primary"
-                        onClick={() => handleSave()}
-                        style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: '5px' }}
-                    >
-                        <FontAwesomeIcon icon={faCheckDouble} style={{ marginRight: '5px' }} />
-
-                        <Translate>Save</Translate>
-                    </Button>
-                    <Button
-                        appearance="ghost"
-                        style={{ backgroundColor: 'white', color: 'var(--primary-blue)', marginLeft: "5px" }}
-                        onClick={handleClearField}
-                    >
-                        <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px' }} />
-                        <span>Clear</span>
-                    </Button>
-                </ButtonToolbar>
-            </Panel>
-         
-                <Form fluid layout='inline' style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <ButtonToolbar>
-                        <Button
-                            appearance="primary"
-                            style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: "5px", zoom: .8 }}
-                            onClick={() => { setPopupCancelOpen(true) }}
-                            disabled={!treadmillStress?.key}
-                        >
-                            <CloseOutlineIcon style={{ marginRight: '7px' }} />
-                            <Translate>Cancel</Translate>
-                        </Button>
-
-                    </ButtonToolbar>
-                    <Checkbox
-                        onChange={(value, checked) => {
-                            if (checked) {
-                                //TODO convert key to code
-                                setTreadmillStressStatus('3196709905099521');
-                            }
-                            else {
-                                setTreadmillStressStatus('');
-                            }
-                        }}
-                    >
-                        Show Cancelled
-                    </Checkbox>
-                    <Checkbox
-                        onChange={(value, checked) => {
-                            if (checked) {
-                                setAllData(true);
-                            }
-                            else {
-                                setAllData(false);
-                            }
-                        }}
-                    >
-                        Show All
-                    </Checkbox>
-                </Form>
-                <Table
-                    height={600}
-                    data={treadmillStressResponse?.object ?? []}
-                    rowKey="key"
-                    expandedRowKeys={expandedRowKeys}
-                    renderRowExpanded={renderRowExpanded}
-                    shouldUpdateScroll={false}
-                    bordered
-                    cellBordered
-                    onRowClick={rowData => {
-                        setTreadmillStress({
-                            ...rowData
-                        });
-                    }}
-                    rowClassName={isSelected}
-                >
-                    <Column width={70} align="center">
-                        <HeaderCell>#</HeaderCell>
-                        <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-                    </Column>
-
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Test Indication</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.indication}
-                        </Cell>
-                    </Column >
-                    <Column flexGrow={3} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Baseline ECG Findings</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                rowData?.baselineEcgFindingsLvalue
-                                    ? rowData?.baselineEcgFindingsLvalue.lovDisplayVale
-                                    : rowData?.baselineEcgFindingsLkey
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={3} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Bruce Protocol Stage</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                rowData?.bruceProtocolStageLvalue
-                                    ? rowData?.bruceProtocolStageLvalue.lovDisplayVale
-                                    : rowData?.bruceProtocolStageLkey
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Exercise Duration</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                <> {rowData?.exerciseDuration} {" Minutes"}
-
-                                </>
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={4} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Maximum Heart Rate Achieved</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                <> {rowData?.maximumHeartRateAchieved} {" BPM"}
-
-                                </>
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Recovery Time </Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData =>
-                                <> {rowData?.recoveryTime} {" Minutes"}
-                                </>
-                            }
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Pre-Test BP</Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.preTestDiastolicBp != null && rowData?.preTestSystolicBp != null
-                                ? ((2 * rowData?.preTestDiastolicBp + rowData?.preTestSystolicBp) / 3).toFixed(2)
-                                : ''}
-                        </Cell>
-                    </Column>
-                    <Column flexGrow={2} fullText>
-                        <HeaderCell align="center">
-                            <Translate>Post-Test BP </Translate>
-                        </HeaderCell>
-                        <Cell>
-                            {rowData => rowData?.postTestDiastolicBp != null && rowData?.postTestSystolicBp != null
-                                ? ((2 * rowData?.postTestDiastolicBp + rowData?.postTestSystolicBp) / 3).toFixed(2)
-                                : ''}
-                        </Cell>
-                    </Column>
-                </Table>
-            
-            <Modal
-                open={popupCancelOpen}
-                onClose={() => setPopupCancelOpen(false)}
-                size="sm"
+        <div>
+            <div className='bt-div'>
+                <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!treadmillStress?.key}>
+                    <Translate>Cancel</Translate>
+                </MyButton>
+                <Checkbox onChange={(value, checked) => {
+                    if (checked) {
+                        //TODO convert key to code
+                        setTreadmillStressStatus('3196709905099521');
+                    }
+                    else {
+                        setTreadmillStressStatus('');
+                    }
+                }}>
+                    Show Cancelled
+                </Checkbox>
+                <Checkbox onChange={(value, checked) => {
+                    if (checked) {
+                        setAllData(true);
+                    }
+                    else {
+                        setAllData(false);
+                    }
+                }}>
+                    Show All
+                </Checkbox>
+                <div className='bt-right'>
+                    <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>Add </MyButton>
+                </div>
+            </div>
+            <Table
+                height={600}
+                data={treadmillStressResponse?.object ?? []}
+                rowKey="key"
+                expandedRowKeys={expandedRowKeys}
+                renderRowExpanded={renderRowExpanded}
+                shouldUpdateScroll={false}
+                onRowClick={rowData => {
+                    setTreadmillStress({
+                        ...rowData
+                    });
+                }}
+                rowClassName={isSelected}
             >
-                <Modal.Header>
-                    <Translate><h6>Confirm Cancel</h6></Translate>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form layout="inline" fluid>
-                        <MyInput
-                            width={600}
-                            column
-                            fieldLabel="Cancellation Reason"
-                            fieldType="textarea"
-                            fieldName="cancellationReason"
-                            height={120}
-                            record={treadmillStress}
-                            setRecord={setTreadmillStress}
-                            //TODO convert key to code
-                            disabled={treadmillStress?.statusLkey === "3196709905099521"}
-                        />
-                    </Form>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button appearance="primary" onClick={handleCancle}
-                    //TODO convert key to code
-                        disabled={treadmillStress?.statusLkey === "3196709905099521"}
-                        style={{ backgroundColor: 'var(--primary-blue)', color: 'white', zoom: .8 }}
-                    >
-                        Cancel
-                    </Button>
-                    <Divider vertical />
-                    <Button appearance="ghost" color='blue' onClick={() => { setPopupCancelOpen(false) }}
-                        style={{ color: 'var(--primary-blue)', backgroundColor: 'white', zoom: .8 }}>
-                        Close
-                    </Button>
-                </Modal.Footer>
-            </Modal>
-        </Panel>
+                <Column width={70} align="center">
+                    <HeaderCell>#</HeaderCell>
+                    <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
+                </Column>
 
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Test Indication</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => rowData?.indication}
+                    </Cell>
+                </Column >
+                <Column flexGrow={3} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Baseline ECG Findings</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            rowData?.baselineEcgFindingsLvalue
+                                ? rowData?.baselineEcgFindingsLvalue.lovDisplayVale
+                                : rowData?.baselineEcgFindingsLkey
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={3} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Bruce Protocol Stage</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            rowData?.bruceProtocolStageLvalue
+                                ? rowData?.bruceProtocolStageLvalue.lovDisplayVale
+                                : rowData?.bruceProtocolStageLkey
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Exercise Duration</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            <> {rowData?.exerciseDuration} {" Minutes"}
 
+                            </>
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={4} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Maximum Heart Rate Achieved</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            <> {rowData?.maximumHeartRateAchieved} {" BPM"}
+
+                            </>
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Recovery Time </Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData =>
+                            <> {rowData?.recoveryTime} {" Minutes"}
+                            </>
+                        }
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Pre-Test BP</Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => rowData?.preTestDiastolicBp != null && rowData?.preTestSystolicBp != null
+                            ? ((2 * rowData?.preTestDiastolicBp + rowData?.preTestSystolicBp) / 3).toFixed(2)
+                            : ''}
+                    </Cell>
+                </Column>
+                <Column flexGrow={2} fullText>
+                    <HeaderCell align="center">
+                        <Translate>Post-Test BP </Translate>
+                    </HeaderCell>
+                    <Cell>
+                        {rowData => rowData?.postTestDiastolicBp != null && rowData?.postTestSystolicBp != null
+                            ? ((2 * rowData?.postTestDiastolicBp + rowData?.postTestSystolicBp) / 3).toFixed(2)
+                            : ''}
+                    </Cell>
+                </Column>
+            </Table>
+            <AddTreadmillStress open={open} setOpen={setOpen} patient={patient} encounter={encounter} treadmillStressObject={treadmillStress} refetch={refetchTreadmillStress} />
+            <CancellationModal title="Cancel Chief Complaint Symptoms" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={treadmillStress} setObject={setTreadmillStress} handleCancle={handleCancle} fieldName="cancellationReason" />
+        </div>
     );
 };
 export default TreadmillStress;
