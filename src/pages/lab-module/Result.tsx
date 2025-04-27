@@ -28,7 +28,6 @@ import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import MyTable from "@/components/MyTable";
 import CancellationModal from "@/components/CancellationModal";
 import SampleModal from "./SampleModal";
-import { Log } from "@rsuite/icons";
 import LogResult from "./LogResult";
 type ResultProps = {
     test: any;
@@ -39,9 +38,16 @@ type ResultProps = {
     patient: any;
     labDetails: any;
     samplesList: any;
+    fecthSample: () => void;
     fetchTest: () => void;
+    listResultResponse: any;
+    setListResultResponse:any;
 }
-const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, result, setResult, patient, labDetails, samplesList, fetchTest }, ref) => {
+
+const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, result, setResult, patient, labDetails, samplesList, fetchTest ,fecthSample ,listResultResponse ,setListResultResponse}, ref) => {
+    useImperativeHandle(ref, () => ({
+        resultFetch
+        }));
     const dispatch = useAppDispatch();
     const uiSlice = useAppSelector(state => state.auth);
     const [localUser, setLocalUser] = useState(uiSlice?.user);
@@ -54,18 +60,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
     const [saveResult] = useSaveDiagnosticOrderTestResultMutation();
     const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
     const [saveResultLog, saveResultLogMutation] = useSaveLabResultLogMutation();
-    const [listResultResponse, setListResultResponse] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: "order_test_key",
-                operator: "match",
-                value: test?.key || undefined,
-            }
 
-
-        ],
-    });
     const [listPrevResultResponse, setListPrevResultResponse] = useState<ListRequest>({
         ...initialListRequest,
         sortBy: "createdAt",
@@ -86,19 +81,16 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
         ],
     });
     const { data: messagesResultList, refetch: fecthResultNotes } = useGetOrderTestResultNotesByResultIdQuery(result?.key || undefined, { skip: result.key == null });
-    const { data: resultsList, refetch: resultFetch, isLoading: resultLoding } = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
+    const { data: resultsList, refetch: resultFetch, isLoading: resultLoding  ,isFetching:featchingTest} = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
     const { data: prevResultsList, refetch: prevResultFetch } = useGetDiagnosticOrderTestResultQuery({ ...listPrevResultResponse });
     const isResultSelected = rowData => {
         if (rowData && result && rowData.key === result.key) {
             return 'selected-row';
         } else return '';
     };
-
+    
     useEffect(() => {
         setResult({ ...newApDiagnosticOrderTestsResult })
-        // const cat = laboratoryList?.object?.find((item) => item.testKey === test.testKey);
-        // setLabDetails(cat);
-        // setCurrentStep(test.processingStatusLkey);
         const updatedFilters = [
             {
                 fieldName: "order_test_key",
@@ -112,6 +104,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
             ...prevRequest,
             filters: updatedFilters,
         }));
+
         const updatedPrevFilters = [
             {
                 fieldName: "patient_key",
@@ -132,7 +125,42 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
         }));
 
     }, [test]);
+   useEffect(() => {
+    
+       const updatedFilters = [
+        {
+            fieldName: "order_test_key",
+            operator: "match",
+            value: test?.key || undefined,
+        }
 
+    ];
+         setListResultResponse((prevRequest) => ({
+              ...prevRequest,
+              filters: updatedFilters,
+         }));
+         const updatedPrevFilters = [
+          {
+                fieldName: "patient_key",
+                operator: "match",
+                value: patient?.key || undefined,
+          },
+          {
+                fieldName: "medical_test_key",
+                operator: "match",
+                value: test?.testKey || undefined,
+          }
+    
+    
+     ];
+         setListPrevResultResponse((prevRequest) => ({
+              ...prevRequest,
+              filters: updatedPrevFilters,
+         }));
+    
+   
+    }
+    , [resultFetch]);
     const handleValueChange = async (value, rowData) => {
 
         const Response = await saveResult({ ...rowData, resultLkey: String(value) }).unwrap();
@@ -234,13 +262,11 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
                     );
                   }
                   else if (rowData.normalRange?.resultTypeLkey == "6209569237704618") {
-                    return activeRowKey === rowData.key ? (<Input
+                    return activeRowKey === rowData.key ? (
+                    <Input
                       type='number'
-
                       onChange={(value) => {
-
                         setResult({ ...result, resultValueNumber: Number(value) });
-
                       }}
                       onPressEnter={async (event) => {
                         const Respons = await saveResult({ ...result }).unwrap();
@@ -423,8 +449,8 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
 
                     ></Input>) : (
                       <span>
-                        {rowData.resultValueNumber}
                         <FontAwesomeIcon onClick={() => setActiveRowKey(rowData.key)} icon={faPenToSquare} style={{ fontSize: "1em", marginLeft: "5px", cursor: "pointer" }} />
+                        {rowData.resultValueNumber}
                       </span>)
 
                   }
@@ -804,7 +830,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
         <MyTable
             columns={tableColomns}
             data={resultsList?.object || []}
-            loading={resultLoding}
+            loading={featchingTest}
             onRowClick={rowData => {
                 setResult(rowData);
             }}
@@ -832,7 +858,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
                 }
             }
             } object={test} setObject={setTest} fieldLabel={"Reject Reason"} title="Reject" />
-        <SampleModal open={openSampleModal} setOpen={setOpenSampleModal} samplesList={samplesList} labDetails={labDetails} saveTest={saveTest} test={test} setTest={setTest} fetchTest={fetchTest} />
+        <SampleModal open={openSampleModal} setOpen={setOpenSampleModal} samplesList={samplesList} labDetails={labDetails} saveTest={saveTest} test={test} setTest={setTest} fetchTest={fetchTest} fecthSample={fecthSample} />
         <LogResult open={openLogModal} setOpen={setOpenLogModal} result={result} />
     </Panel>
 

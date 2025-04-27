@@ -68,8 +68,11 @@ const Lab = () => {
     TestRef.current?.refetchTest(); 
   };
   const refetchResult = () => {
-    ResultRef.current?.handleClear(); 
+    ResultRef.current?.resultFetch(); 
   };
+   useEffect(() => {
+          console.log("resultFetch in Lab", refetchResult)
+      },[refetchResult]);
   const [localUser, setLocalUser] = useState(uiSlice?.user);
   const [currentStep, setCurrentStep] = useState("6055029972709625");
   const [encounter, setEncounter] = useState({ ...newApEncounter });
@@ -81,20 +84,18 @@ const Lab = () => {
     ...initialListRequest
 
   });
-  const [listLogRequest, setListLogRequest] = useState({
-    ...initialListRequest,
-    filters: [
-      {
+const [listResultResponse, setListResultResponse] = useState<ListRequest>({
+        ...initialListRequest,
+        filters: [
+            {
+                fieldName: "order_test_key",
+                operator: "match",
+                value: test?.key || undefined,
+            }
 
-        fieldName: "result_key",
-        operator: "match",
-        value: result?.key ?? undefined,
 
-      }
-    ]
-
-  })
-  const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
+        ],
+    });
 
   const { data: samplesList, refetch: fecthSample } = useGetOrderTestSamplesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
   const divContent = (
@@ -106,81 +107,58 @@ const Lab = () => {
   dispatch(setPageCode('Lab'));
   dispatch(setDivContent(divContentHTML));
 
-  const [listOrdersTestResponse, setListOrdersTestResponse] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: "order_key",
-        operator: "match",
-        value: order?.key ?? undefined,
-      },
-      {
-        fieldName: "order_type_lkey",
-        operator: "match",
-        value: "862810597620632",
-      }
 
-
-    ],
-  });
 
   const [dateFilter, setDateFilter] = useState({
     fromDate: new Date(),//new Date(),
     toDate: new Date()
   });
-  const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
+
   const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
     ...initialListRequest
 
-  });
-  const [selectedCatValue, setSelectedCatValue] = useState(null)
-  const { data: laboratoryListToFilter } = useGetDiagnosticsTestLaboratoryListQuery({
-    ...initialListRequest,
-    filters: [
-      {
-
-        fieldName: "category_lkey",
-        operator: "match",
-        value: selectedCatValue,
-      }
-    ]
-
-  }, {
-    skip: !selectedCatValue
-  });
-
-  const [listResultResponse, setListResultResponse] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: "order_test_key",
-        operator: "match",
-        value: test?.key || undefined,
-      }
-
-
-    ],
   });
 
 
   const [labDetails, setLabDetails] = useState<any>({ ...newApDiagnosticTestLaboratory });
   const [saveTest] = useSaveDiagnosticOrderTestMutation();
-  const [saveResult] = useSaveDiagnosticOrderTestResultMutation();
-  const [saveResultLog, saveResultLogMutation] = useSaveLabResultLogMutation();
+
 
   useEffect(() => {
     handleManualSearch();
   }, []);
+
+  useEffect(() => {
+         setResult({ ...newApDiagnosticOrderTestsResult })
+         const updatedFilters = [
+             {
+                 fieldName: "order_test_key",
+                 operator: "match",
+                 value: test?.key || undefined,
+             }
+ 
+ 
+         ];
+         setListResultResponse((prevRequest) => ({
+             ...prevRequest,
+             filters: updatedFilters,
+         }));
+ 
+    
+ 
+     }, [test]);
   useEffect(() => {
     setPatient(order.patient);
     setEncounter(order.encounter);
   }, [order]);
+
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent("  "));
     };
   }, [location.pathname, dispatch]);
+
   useEffect(() => {
 
     if (dateFilter.fromDate && dateFilter.toDate) {
@@ -210,38 +188,12 @@ const Lab = () => {
       setListOrdersResponse({ ...listOrdersResponse, filters: [] });
     }
   }, [dateFilter]);
+
   useEffect(() => {
     setResult({ ...newApDiagnosticOrderTestsResult })
     const cat = laboratoryList?.object?.find((item) => item.testKey === test.testKey);
     setLabDetails(cat);
     setCurrentStep(test.processingStatusLkey);
-    const updatedFilters = [
-      {
-        fieldName: "order_test_key",
-        operator: "match",
-        value: test?.key || undefined,
-      }
-
-
-    ];
-    setListResultResponse((prevRequest) => ({
-      ...prevRequest,
-      filters: updatedFilters,
-    }));
-    const updatedPrevFilters = [
-      {
-        fieldName: "patient_key",
-        operator: "match",
-        value: patient?.key || undefined,
-      },
-      {
-        fieldName: "medical_test_key",
-        operator: "match",
-        value: test?.testKey || undefined,
-      }
-
-    ];
-    
 
   }, [test]);
 
@@ -250,53 +202,6 @@ const Lab = () => {
     handleManualSearch();
   }, []);
 
-  useEffect(() => {
-    if (selectedCatValue != null && selectedCatValue !== "") {
-
-      if (laboratoryListToFilter?.object?.length == 0) {
-        const value = undefined;
-        setListOrdersTestResponse(
-          addFilterToListRequest(
-            fromCamelCaseToDBName("testKey"),
-            "in",
-            value,
-            listOrdersTestResponse
-          )
-        );
-      }
-      else {
-        const value = laboratoryListToFilter?.object
-          ?.map(cat => `(${cat.testKey})`)
-          .join(" ");
-        setListOrdersTestResponse(
-          addFilterToListRequest(
-            fromCamelCaseToDBName("testKey"),
-            "in",
-            value,
-            listOrdersTestResponse
-          )
-        );
-      }
-
-
-
-    }
-    else {
-      setListOrdersTestResponse({
-        ...listOrdersTestResponse, filters: [
-          {
-            fieldName: "order_key",
-            operator: "match",
-            value: order?.key ?? undefined,
-          },
-          {
-            fieldName: "order_type_lkey",
-            operator: "match",
-            value: "862810597620632",
-          }]
-      })
-    }
-  }, [selectedCatValue, laboratoryListToFilter]);
 
   const handleManualSearch = () => {
 
@@ -346,8 +251,6 @@ const Lab = () => {
 
     <div className='container'>
       <div className='left-box' >
-
-
         <Row>
           <Col xs={14}>
             <Orders order={order} setOrder={setOrder} listOrdersResponse={listOrdersResponse} setListOrdersResponse={setListOrdersResponse} />
@@ -414,7 +317,7 @@ const Lab = () => {
         </Row>
         <Row>
           {order.key &&
-            <Tests order={order} setTest={setTest} test={test} samplesList={samplesList} />}
+            <Tests order={order} setTest={setTest} test={test} samplesList={samplesList} resultFetch={refetchResult} fecthSample={fecthSample}/>}
         </Row>
         <Row>
           {test.key &&
@@ -427,7 +330,10 @@ const Lab = () => {
               labDetails={labDetails}
               patient={patient}
               samplesList={samplesList} 
-              fetchTest={refetchTest}/>
+              fetchTest={refetchTest}
+              fecthSample={fecthSample}
+              listResultResponse={listResultResponse}
+              setListResultResponse={setListResultResponse}/>
           }
         </Row>
 

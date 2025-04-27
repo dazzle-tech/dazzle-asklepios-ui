@@ -23,15 +23,16 @@ import ChatModal from "@/components/ChatModal";
 import CancellationModal from "@/components/CancellationModal";
 const { Column, HeaderCell, Cell } = Table;
 type Props = {
-    order: any;         
-    test: any; 
+    order: any;
+    test: any;
     setTest: any;
     samplesList: any;
-    resultFetch: any;    
-  };
-const Tests =forwardRef<unknown,Props>(({ order, test, setTest, samplesList,resultFetch },ref)=>{
-   useImperativeHandle(ref, () => ({
-    fetchTest
+    resultFetch: any;
+    fecthSample: () => void;
+};
+const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, resultFetch, fecthSample }, ref) => {
+    useImperativeHandle(ref, () => ({
+        fetchTest
     }));
     const dispatch = useAppDispatch();
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
@@ -62,7 +63,7 @@ const Tests =forwardRef<unknown,Props>(({ order, test, setTest, samplesList,resu
     const { data: messagesList, refetch: fecthNotes } = useGetOrderTestNotesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
     const [savenotes] = useSaveDiagnosticOrderTestNotesMutation();
     const [saveNewResult] = useSaveDiagnosticTestResultMutation();
-    const [saveTest] = useSaveDiagnosticOrderTestMutation();
+    const [saveTest ,saveTestMutation] = useSaveDiagnosticOrderTestMutation();
     const isTestSelected = rowData => {
         if (rowData && test && rowData.key === test.key) {
             return 'selected-row';
@@ -87,6 +88,7 @@ const Tests =forwardRef<unknown,Props>(({ order, test, setTest, samplesList,resu
     }, {
         skip: !selectedCatValue
     });
+
     useEffect(() => {
         if (selectedCatValue != null && selectedCatValue !== "") {
 
@@ -157,6 +159,21 @@ const Tests =forwardRef<unknown,Props>(({ order, test, setTest, samplesList,resu
 
 
     }, [order]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                await resultFetch();
+            } catch (error) {
+                console.error('Fetch error:', error);
+            }
+        };
+
+        fetchData();
+    }, [test]);
+    useEffect(() => {
+        console.log("resultFetch in Test", resultFetch)
+    },[resultFetch]);
     const renderRowExpanded = rowData => {
 
         return (
@@ -280,7 +297,7 @@ const Tests =forwardRef<unknown,Props>(({ order, test, setTest, samplesList,resu
                     acceptedAt: Date.now()
                 }).unwrap();
 
-                const rResponse = await saveNewResult({
+              await saveNewResult({
                     ...newApDiagnosticOrderTestsResult,
                     orderKey: order.key,
                     orderTestKey: test.key,
@@ -292,10 +309,14 @@ const Tests =forwardRef<unknown,Props>(({ order, test, setTest, samplesList,resu
 
                 setTest({ ...newApDiagnosticOrderTests })
                 dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-
                 setTest({ ...Response });
                 await fetchTest();
-                await resultFetch();
+                try {
+                    await resultFetch();
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                }
+            
             }
             catch (error) {
                 console.error("Error saving test:", error);
@@ -322,6 +343,7 @@ const Tests =forwardRef<unknown,Props>(({ order, test, setTest, samplesList,resu
         fecthNotes();
 
     };
+
     const handleRejectedTest = async () => {
         try {
             const Response = await saveTest({ ...test, processingStatusLkey: "6055192099058457", rejectedAt: Date.now() }).unwrap();
@@ -607,8 +629,8 @@ const Tests =forwardRef<unknown,Props>(({ order, test, setTest, samplesList,resu
                 }}
                 total={testsList?.extraNumeric || 0}
             />
-            <SampleModal open={openSampleModal} setOpen={setOpenSampleModal} samplesList={samplesList} labDetails={laboratoryList?.object?.find((item) => item.testKey === test.testKey)} saveTest={saveTest} fetchTest={fetchTest} test={test} setTest={setTest} />
-            <ChatModal open={openNoteModal} setOpen={setOpenNoteModal} handleSendMessage={handleSendMessage} title={"Comments"} list={messagesList?.object} fieldShowName={'notes'} />
+            <SampleModal open={openSampleModal} setOpen={setOpenSampleModal} samplesList={samplesList} labDetails={laboratoryList?.object?.find((item) => item.testKey === test.testKey)} saveTest={saveTest} fetchTest={fetchTest} test={test} setTest={setTest} fecthSample={fecthSample} />
+            <ChatModal open={openNoteModal} setOpen={setOpenNoteModal} handleSendMessage={handleSendMessage} title={"Technician Notes"} list={messagesList?.object} fieldShowName={'notes'} />
             <CancellationModal open={openRejectedModal} setOpen={setOpenRejectedModal} fieldName='rejectedReason' handleCancle={handleRejectedTest} object={test} setObject={setTest} fieldLabel={"Reject Reason"} title="Reject" />
         </Panel>
     );
