@@ -1,26 +1,30 @@
 import Translate from '@/components/Translate';
 import React, { useEffect, useState } from 'react';
-import {Panel, Table, Toggle, Form } from 'rsuite';
+import { Panel, Toggle, Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
-const { Column, HeaderCell, Cell } = Table;
-import {
-  useGetScreenAccessMatrixQuery,
-  useSaveScreenAccessMatrixMutation
-} from '@/services/setupService';
-import {IconButton } from 'rsuite';
+import { useGetScreenAccessMatrixQuery, useSaveScreenAccessMatrixMutation } from '@/services/setupService';
+import { IconButton } from 'rsuite';
 import ArowBackIcon from '@rsuite/icons/ArowBack';
-import CheckIcon from '@rsuite/icons/Check';
 import { FaLockOpen } from 'react-icons/fa6';
 import MyButton from '@/components/MyButton/MyButton';
 import './styles.less';
-const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
-  const { data: screenAccessMatrixResponse } = useGetScreenAccessMatrixQuery(accessRole);
-  const [saveMatrix, saveMatrixMutationResponse] = useSaveScreenAccessMatrixMutation();
+import MyTable from '@/components/MyTable';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCheck } from '@fortawesome/free-solid-svg-icons';
+
+const AccessRoleScreenMatrix = ({ accessRole, goBack }) => {
   const [searchTerm, setSearchTerm] = useState<string>();
   const [matrixData, setMatrixData] = useState([]);
-  const [recordOfSearch, setRecordOfSearch] = useState({screenName: ""});
-  
+  const [recordOfSearch, setRecordOfSearch] = useState({ screenName: '' });
+  const [load, setLoad] = useState<boolean>(false);
 
+  // Fetch screenAccessMatrix List response
+  const { data: screenAccessMatrixResponse } = useGetScreenAccessMatrixQuery(accessRole);
+
+  // Save matrix of Access Roles
+  const [saveMatrix] = useSaveScreenAccessMatrixMutation();
+
+  // Effects
   useEffect(() => {
     if (screenAccessMatrixResponse) {
       const filteredData =
@@ -34,12 +38,11 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
       setMatrixData(filteredData);
     }
   }, [screenAccessMatrixResponse, searchTerm]);
-
   useEffect(() => {
-      handleFilterChange('objectName', recordOfSearch['screenName']);
-    }, [recordOfSearch]);
+    handleFilterChange('objectName', recordOfSearch['screenName']);
+  }, [recordOfSearch]);
 
-
+  // Handle change Read Permission
   const handleReadChange = (checked, index) => {
     let matrixClone = [...matrixData];
     if (checked) {
@@ -54,7 +57,7 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
     }
     setMatrixData(matrixClone);
   };
-
+  // Handle change Write Permission
   const handleWriteChange = (checked, index) => {
     let matrixClone = [...matrixData];
     if (checked) {
@@ -68,12 +71,13 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
     }
     setMatrixData(matrixClone);
   };
-
+  // Handle change Delete Permission
   const handleDeleteChange = (checked, index) => {
     let matrixClone = [...matrixData];
     matrixClone[index] = { ...matrixClone[index], canDelete: checked };
     setMatrixData(matrixClone);
   };
+  // Handle change all permission
   const grantAll = index => {
     let matrixClone = [...matrixData];
     matrixClone[index] = {
@@ -84,40 +88,86 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
     };
     setMatrixData(matrixClone);
   };
-
-  const handleSave = () => {
+  // Handle save changes
+  const handleSave = async () => {
     if (matrixData) {
-      saveMatrix(matrixData).unwrap();
+      setLoad(true);
+     await saveMatrix(matrixData).unwrap();
+     setLoad(false);
     }
   };
-
-  
+  // Handle filter by screen name
   const handleFilterChange = (fieldName, e) => {
     setSearchTerm(e);
   };
-
+  //table columns
+  const tableColumns = [
+    {
+      key: 'screenName',
+      title: <Translate>Screen</Translate>,
+      flexGrow: 5,
+      dataKey: 'screenName'
+    },
+    {
+      key: 'canRead',
+      title: <Translate>Can Read</Translate>,
+      flexGrow: 2,
+      render: (rowData, i) => (
+        <Toggle onChange={checked => handleReadChange(checked, i)} checked={rowData.canRead} />
+      )
+    },
+    {
+      key: 'canWrite',
+      title: <Translate>Can Write</Translate>,
+      flexGrow: 2,
+      render: (rowData, i) => (
+        <Toggle onChange={checked => handleWriteChange(checked, i)} checked={rowData.canWrite} />
+      )
+    },
+    {
+      key: 'canDelete',
+      title: <Translate>Can Delete</Translate>,
+      flexGrow: 2,
+      render: (rowData, i) => (
+        <Toggle onChange={checked => handleDeleteChange(checked, i)} checked={rowData.canDelete} />
+      )
+    },
+    {
+      key: 'grantAll',
+      title: <Translate>Grant All</Translate>,
+      flexGrow: 2,
+      render: (rowData, i) => (
+        <IconButton
+          onClick={() => {
+            grantAll(i);
+          }}
+          icon={<FaLockOpen size="0.8em" />}
+        />
+      )
+    }
+  ];
   return (
     <Panel
       header={
-        <p>
+        <p className="title-matrix">
           <Translate> Screen Access Matrix for </Translate> <i>{accessRole?.name ?? ''}</i>
         </p>
       }
     >
-
-      <div className='container-of-header-actions'>
-        <div className='container-of-back-and-search'>
-          <MyButton
-            prefixIcon={() => <ArowBackIcon />}
-            color="var(--deep-blue)"
-            ghost
-            onClick={goBack}
-            width="82px"
-            height="40px"
-          >
-            Back
-          </MyButton>
-          <Form>
+      <div className="container-of-header-actions-matrix">
+        <div className="container-of-back-and-search-matrix">
+          <div>
+            <MyButton
+              prefixIcon={() => <ArowBackIcon />}
+              color="var(--deep-blue)"
+              appearance={'ghost'}
+              onClick={goBack}
+              width="82px"
+            >
+              Back
+            </MyButton>
+          </div>
+          <Form layout="inline">
             <MyInput
               fieldName="screenName"
               fieldType="text"
@@ -129,81 +179,19 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack, ...props }) => {
             />
           </Form>
         </div>
+        <div>
           <MyButton
-            prefixIcon={() => <CheckIcon />}
+            prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
             color="var(--deep-blue)"
             onClick={handleSave}
-            width='111px'
-            height='40px'
+            width="120px"
+            height="40px"
           >
             Save Changes
           </MyButton>
+        </div>
       </div>
-      <Table height={600} data={matrixData}>
-        <Column sortable flexGrow={5}>
-          <HeaderCell>
-            {/* <Input
-              onChange={e => handleFilterChange('description', e)}
-            /> */}
-            <Translate>Screen</Translate>
-          </HeaderCell>
-          <Cell dataKey="screenName" />
-        </Column>
-        <Column align="center" flexGrow={2}>
-          <HeaderCell>
-            <Translate>Can Read</Translate>
-          </HeaderCell>
-          <Cell>
-            {(rowData, i) => (
-              <Toggle
-                onChange={checked => handleReadChange(checked, i)}
-                checked={rowData.canRead}
-              />
-            )}
-          </Cell>
-        </Column>
-        <Column align="center" flexGrow={2}>
-          <HeaderCell>
-            <Translate>Can Write</Translate>
-          </HeaderCell>
-          <Cell>
-            {(rowData, i) => (
-              <Toggle
-                onChange={checked => handleWriteChange(checked, i)}
-                checked={rowData.canWrite}
-              />
-            )}
-          </Cell>
-        </Column>
-        <Column align="center" flexGrow={2}>
-          <HeaderCell>
-            <Translate>Can Delete</Translate>
-          </HeaderCell>
-          <Cell>
-            {(rowData, i) => (
-              <Toggle
-                onChange={checked => handleDeleteChange(checked, i)}
-                checked={rowData.canDelete}
-              />
-            )}
-          </Cell>
-        </Column>
-        <Column align="center" flexGrow={1}>
-          <HeaderCell>
-            <Translate>Grant All</Translate>
-          </HeaderCell>
-          <Cell>
-            {(rowData, i) => (
-              <IconButton
-                onClick={() => {
-                  grantAll(i);
-                }}
-                icon={<FaLockOpen size="0.8em" />}
-              />
-            )}
-          </Cell>
-        </Column>
-      </Table>
+      <MyTable height={450} data={matrixData} columns={tableColumns} loading={load}/>
     </Panel>
   );
 };
