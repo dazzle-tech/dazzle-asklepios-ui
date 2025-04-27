@@ -78,8 +78,12 @@ import {
     useGetIcdListQuery,
 } from '@/services/setupService';
 import './styles.less';
-const DrugOrder = ({edit,patient,encounter}) => {
-   
+import Substitues from './Substitutes';
+import CancellationModal from '@/components/CancellationModal';
+import InfoCardList from '@/components/InfoCardList';
+import DetailsModal from './DetailsModal';
+const DrugOrder = ({ edit, patient, encounter }) => {
+
     const dispatch = useAppDispatch();
     const [drugKey, setDrugKey] = useState(null);
     const [searchKeyword, setSearchKeyword] = useState('');
@@ -95,13 +99,14 @@ const DrugOrder = ({edit,patient,encounter}) => {
     const [isdraft, setIsDraft] = useState(false);
     const [selectedFirstDate, setSelectedFirstDate] = useState(null);
     const [editDuration, setEditDuration] = useState(false);
-    const [isMinimized, setIsMinimized] = useState(true);
+    const [isMinimized, setIsMinimized] = useState(true); //for allergy float
     const [adminInstructions, setAdminInstructions] = useState("");
     const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
-    const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
+    
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
     const [indicationsIcd, setIndicationsIcd] = useState({ indicationIcd: null });
     const [edit_new, setEdit_new] = useState(true);
+    const [openDetailsModel, setOpenDetailsModel] = useState(false);
     const [indicationsDescription, setindicationsDescription] = useState<string>('');
     const [listGenericRequest, setListGenericRequest] = useState<ListRequest>({ ...initialListRequest });
     const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
@@ -119,7 +124,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value:patient.key
+                value: patient.key
             },
             ,
             {
@@ -140,12 +145,12 @@ const DrugOrder = ({edit,patient,encounter}) => {
             {
                 fieldName: "patient_key",
                 operator: "match",
-                value:patient.key,
+                value: patient.key,
             },
             {
                 fieldName: "visit_key",
                 operator: "match",
-                value:encounter.key,
+                value: encounter.key,
             }
 
         ],
@@ -167,9 +172,6 @@ const DrugOrder = ({edit,patient,encounter}) => {
     const { data: activeIngredientListResponseData } = useGetActiveIngredientQuery({ ...initialListRequest });
     const [listGinricRequest, setListGinricRequest] = useState({
         ...initialListRequest,
-
-
-
         sortType: 'desc'
         ,
         filters: [
@@ -341,7 +343,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
 
             if (foundOrder?.key != null) {
                 setDrugKey(foundOrder?.key);
-            
+
             }
 
         }
@@ -428,10 +430,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
     const handleDateChange = (date) => {
         if (date) {
             const timestamp = date.getTime();
-
             setSelectedFirstDate(date);
-
-
         }
     };
     const handleSearch = value => {
@@ -498,14 +497,14 @@ const DrugOrder = ({edit,patient,encounter}) => {
         );
     };
     const handleSaveOrder = async () => {
-      handleCleare();
+        handleCleare();
 
         if (patient && encounter) {
             try {
 
                 const response = await saveDrugorder({
                     ...newApDrugOrder,
-                    patientKey:patient.key,
+                    patientKey: patient.key,
                     visitKey: encounter.key,
                     statusLkey: "164797574082125",
                 });
@@ -516,9 +515,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
                 setDrugKey(response?.data?.key);
 
                 ordRefetch().then(() => {
-                    console.log("Refetch complete pres");
-                    console.log(orders?.object);
-                    console.log(drugKey);
+                 
                 }).catch((error) => {
                     console.error("Refetch failed:", error);
                 });
@@ -600,8 +597,8 @@ const DrugOrder = ({edit,patient,encounter}) => {
             const tagcompine = joinValuesFromArray(tags);
             saveDrugorderMedication({
                 ...orderMedication,
-                patientKey:patient.key,
-                visitKey:encounter.key,
+                patientKey: patient.key,
+                visitKey: encounter.key,
                 drugOrderKey: drugKey,
                 genericMedicationsKey: selectedGeneric.key,
                 parametersToMonitor: tagcompine,
@@ -657,9 +654,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
     const CloseCancellationReasonModel = () => {
         setOpenCancellationReasonModel(false);
     }
-    const CloseSubstitutesModel = () => {
-        setOpenSubstitutesModel(false);
-    }
+   
     const renderRowExpanded = rowData => {
         // Add this line to check children data
 
@@ -720,9 +715,6 @@ const DrugOrder = ({edit,patient,encounter}) => {
             nextExpandedRowKeys.push(rowData.key);
         }
 
-
-
-        console.log(nextExpandedRowKeys)
         setExpandedRowKeys(nextExpandedRowKeys);
     };
 
@@ -808,7 +800,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
                     <List style={{ height: '190px', width: '250px', overflow: 'auto' }}>
                         {allergiesListResponse?.object?.map((order, index) => (
                             <List.Item key={index}>
-                                {order.allergyTypeLvalue?.lovDisplayVale}, {order.severityLvalue.lovDisplayVale},{order.allergensName}
+                                {order.allergyTypeLvalue?.lovDisplayVale}, {order.severityLvalue?.lovDisplayVale},{order.allergensName}
                             </List.Item>
                         ))}
                     </List>
@@ -880,7 +872,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
                     <InputGroup inside className='input-search-p'>
                         <Input
                             disabled={drugKey != null ? editing : true}
-                            placeholder={'Search'}
+                            placeholder={'Medication Name'}
                             value={searchKeyword}
                             onChange={handleSearch}
                         />
@@ -917,19 +909,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
 
             </div>
 
-            <Button
-                color="cyan"
-                appearance="primary"
-                style={{ height: '30px', marginTop: '23px' }}
-                onClick={() => {
-                    setOpenSubstitutesModel(true);
-                }}
-
-            >
-
-                <FontAwesomeIcon icon={faCircleInfo} style={{ marginRight: '5px' }} />
-                <span>Substitutes</span>
-            </Button>
+          
 
             {selectedGeneric && <span style={{ marginTop: "25px", fontWeight: "bold" }}>
                 {[selectedGeneric.genericName,
@@ -947,10 +927,10 @@ const DrugOrder = ({edit,patient,encounter}) => {
                         appearance="primary"
                         onClick={saveDraft}
                         icon={<DocPassIcon />}
-                        disabled={ drugKey?
+                        disabled={drugKey ?
                             orders?.object?.find(order =>
                                 order.key === drugKey
-                            )?.statusLkey === '1804482322306061':true
+                            )?.statusLkey === '1804482322306061' : true
                         }
                     >
                         <Translate> Save draft</Translate>
@@ -964,10 +944,10 @@ const DrugOrder = ({edit,patient,encounter}) => {
                         appearance="primary"
                         onClick={cancleDraft}
                         icon={<DocPassIcon />}
-                        disabled={ drugKey?
+                        disabled={drugKey ?
                             orders?.object?.find(order =>
                                 order.key === drugKey
-                            )?.statusLkey === '1804482322306061':true
+                            )?.statusLkey === '1804482322306061' : true
                         }
                     >
                         <Translate> Cancle draft</Translate>
@@ -979,10 +959,10 @@ const DrugOrder = ({edit,patient,encounter}) => {
                     appearance="primary"
                     onClick={handleSubmitPres}
 
-                    disabled={ drugKey?
+                    disabled={drugKey ?
                         orders?.object?.find(order =>
                             order.key === drugKey
-                        )?.statusLkey === '1804482322306061':true
+                        )?.statusLkey === '1804482322306061' : true
                     }
 
                     icon={<CheckIcon />}
@@ -1120,7 +1100,9 @@ const DrugOrder = ({edit,patient,encounter}) => {
                                 appearance="primary"
                                 style={{ height: '35px', width: '170px', marginTop: '25px' }}
                                 icon={<PlusIcon />}
+                                onClick={() => {setOpenDetailsModel(true)}}
                             >
+                                
                                 <Translate>Create Titration Plan</Translate>
                             </IconButton>
                         </Form>
@@ -1170,7 +1152,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
                                 }
                                 style={{ width: 300 }} rows={4} />
                         </div>
-                        <div style={{ marginBottom: '3px'}}>
+                        <div style={{ marginBottom: '3px' }}>
                             <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
                                 <Input
                                     disabled={drugKey != null ? editing : true}
@@ -1227,73 +1209,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
 
 
             </div>
-            <div className='form-search-container-p ' style={{ minWidth: "620px" }}>
-                <Table
-                    bordered
-                    onRowClick={rowData => console.log("Row clicked:", rowData)}
-                    data={genericMedicationActiveIngredientListResponseData?.object || []}
-                    height={300}
-                >
-                    <Table.Column flexGrow={2} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient</Table.HeaderCell>
-                        <Table.Cell>
-                            {rowData => {
-                                if (!rowData) return " ";
-                                const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name || " ";
-                                return nameg;
-                            }}
-                        </Table.Cell>
-                    </Table.Column>
-
-                    <Table.Column flexGrow={2} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient ATC Code</Table.HeaderCell>
-                        <Table.Cell>
-                            {rowData => {
-                                if (!rowData) return " ";
-                                const atcg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode || " ";
-                                return atcg;
-                            }}
-                        </Table.Cell>
-                    </Table.Column>
-
-                    <Table.Column flexGrow={1} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
-                        <Table.Cell>
-                            {rowData => rowData?.strength+rowData?.unitLvalue?.lovDisplayVale }
-                        </Table.Cell>
-                    </Table.Column>
-
-                    <Table.Column flexGrow={1} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }}>IsControlled</Table.HeaderCell>
-                        <Table.Cell>
-                            {rowData => {
-                                if (!rowData) return " ";
-                                const isControlled = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled;
-                                return isControlled ? "Yes" : "No";
-                            }}
-                        </Table.Cell>
-                    </Table.Column>
-
-                    <Table.Column flexGrow={2} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }}>Controlled</Table.HeaderCell>
-                        <Table.Cell>
-                            {rowData => {
-                                if (!rowData) return " ";
-                                const controlledValue = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.controlledLvalue?.lovDisplayVale || " ";
-                                return controlledValue;
-                            }}
-                        </Table.Cell>
-                    </Table.Column>
-
-                    <Table.Column flexGrow={1} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }}>Details</Table.HeaderCell>
-                        <Table.Cell>
-                            <IconButton icon={<OthersIcon />} />
-                        </Table.Cell>
-                    </Table.Column>
-                </Table>
-
-            </div>
+        
         </div>
         <br />
         <div className={edit ? "disabled-panel" : ""} style={{ display: 'flex', flexDirection: 'column', border: '1px solid #b6b7b8' }}>
@@ -1440,7 +1356,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
                 </Form>
                 <Input as="textarea" onChange={(e) => setAdminInstructions(e)}
                     value={adminInstructions}
-                    style={{ width: 250, height: '100px'}}
+                    style={{ width: 250, height: '100px' }}
                 />
                 <Form layout="inline" fluid>
                     <MyInput
@@ -1587,7 +1503,7 @@ const DrugOrder = ({edit,patient,encounter}) => {
                     </HeaderCell>
                     <Cell>
                         {rowData => {
-                            return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale,rowData.drugOrderTypeLkey == '2937757567806213'? "STAT":"every " + rowData.frequency + " hours", rowData.roaLvalue?.lovDisplayVale]);
+                            return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, rowData.drugOrderTypeLkey == '2937757567806213' ? "STAT" : "every " + rowData.frequency + " hours", rowData.roaLvalue?.lovDisplayVale]);
                         }
                         }
                     </Cell>
@@ -1633,167 +1549,27 @@ const DrugOrder = ({edit,patient,encounter}) => {
                     </Cell>
                 </Column>
             </Table>
-            <Modal open={openCancellationReasonModel} onClose={CloseCancellationReasonModel} overflow  >
-                <Modal.Title>
-                    <Translate><h6>Confirm Cancel</h6></Translate>
-                </Modal.Title>
-                <Modal.Body>
 
+            <CancellationModal
+                open={openCancellationReasonModel}
+                setOpen={setOpenCancellationReasonModel}
+                handleCancle={handleCancle}
+                fieldName='cancellationReason'
+                title="Cancellation"
+                fieldLabel="Cancellation Reason"
+                object={orderMedication}
+                setObject={setOrderMedication}>
 
-                    <Form layout="inline" fluid>
-                        <MyInput
-                            width={250}
-
-                            column
-                            fieldLabel="Cancellation Reason"
-                            fieldType="textarea"
-                            fieldName="cancellationReason"
-                            height={120}
-                            record={orderMedication}
-                            setRecord={setOrderMedication}
-                        //   disabled={!editing}
-                        />
-                    </Form>
-
-                </Modal.Body>
-                <Modal.Footer>
-                    <Stack spacing={2} divider={<Divider vertical />}>
-                        <Button appearance="primary" onClick={handleCancle}>
-                            Cancel
-                        </Button>
-                        <Button appearance="ghost" color="cyan" onClick={CloseCancellationReasonModel}>
-                            Close
-                        </Button>
-                    </Stack>
-                </Modal.Footer>
-            </Modal>
-            <Modal size={'lg'} open={openSubstitutesModel} onClose={CloseSubstitutesModel} overflow  >
-                <Modal.Title>
-                    <Translate><h6>Substitues</h6></Translate>
-                </Modal.Title>
-                <Modal.Body>
-                    <Table
-                        height={400}
-
-                        headerHeight={50}
-                        rowHeight={60}
-                        bordered
-                        cellBordered
-                        data={lisOfLinkedBrand?.object ?? []}
-                    //   onRowClick={rowData => {
-                    //     setGenericMedication(rowData);
-                    //   }}
-                    //   rowClassName={isSelected}
-                    >
-                        <Column sortable flexGrow={2}>
-                            <HeaderCell align="center">
-                                <Translate>Code </Translate>
-                            </HeaderCell>
-                            <Cell dataKey="code" />
-                        </Column>
-                        <Column sortable flexGrow={2}>
-                            <HeaderCell align="center">
-                                <Translate>Brand Name </Translate>
-                            </HeaderCell>
-                            <Cell dataKey="genericName" />
-                        </Column>
-                        <Column sortable flexGrow={2}>
-                            <HeaderCell align="center">
-
-                                <Translate>Manufacturer</Translate>
-                            </HeaderCell>
-                            <Cell dataKey="manufacturerLkey">
-                                {rowData =>
-                                    rowData.manufacturerLvalue ? rowData.manufacturerLvalue.lovDisplayVale : rowData.manufacturerLkey
-                                }
-                            </Cell>
-                        </Column>
-                        <Column sortable flexGrow={2} fullText>
-                            <HeaderCell align="center">
-
-                                <Translate>Dosage Form</Translate>
-                            </HeaderCell>
-                            <Cell>
-                                {rowData =>
-                                    rowData.dosageFormLvalue ? rowData.dosageFormLvalue.lovDisplayVale : rowData.dosageFormLkey
-                                }
-                            </Cell>
-                        </Column>
-
-                        <Column sortable flexGrow={3} fullText>
-                            <HeaderCell align="center">
-
-                                <Translate>Usage Instructions</Translate>
-                            </HeaderCell>
-                            <Cell dataKey="usageInstructions" />
-                        </Column>
-                        <Column sortable flexGrow={2} fixed fullText>
-                            <HeaderCell align="center">
-
-                                <Translate>Rout</Translate>
-                            </HeaderCell>
-                            <Cell>
-                                {rowData => rowData.roaList?.map((item, index) => {
-                                    const value = conjureValueBasedOnKeyFromList(
-                                        medRoutLovQueryResponse?.object ?? [],
-                                        item,
-                                        'lovDisplayVale'
-                                    );
-                                    return (
-                                        <span key={index}>
-                                            {value}
-                                            {index < rowData.roaList.length - 1 && ', '}
-                                        </span>
-                                    );
-                                })}
-                            </Cell>
-                        </Column>
-                        <Column sortable flexGrow={2}>
-                            <HeaderCell align="center">
-
-                                <Translate>Expires After Opening</Translate>
-                            </HeaderCell>
-                            <Cell>
-                                {rowData =>
-                                    rowData.expiresAfterOpening ? 'Yes' : 'No'
-                                }
-                            </Cell>
-                        </Column>
-                        <Column sortable flexGrow={3}>
-                            <HeaderCell align="center">
-
-                                <Translate>Single Patient Use</Translate>
-                            </HeaderCell>
-                            <Cell>
-                                {rowData =>
-                                    rowData.singlePatientUse ? 'Yes' : 'No'
-                                }
-                            </Cell>
-                        </Column>
-                        <Column sortable flexGrow={1}>
-                            <HeaderCell align="center">
-
-                                <Translate>Status</Translate>
-                            </HeaderCell>
-                            <Cell>
-                                {rowData =>
-                                    rowData.deletedAt === null ? 'Active' : 'InActive'
-                                }
-                            </Cell>
-                        </Column>
-
-                    </Table>
-
-                </Modal.Body>
-                <Modal.Footer>
-                    <Stack spacing={2} divider={<Divider vertical />}>
-
-                        <Button appearance="ghost" color="cyan" onClick={CloseSubstitutesModel}>
-                            Close
-                        </Button>
-                    </Stack>
-                </Modal.Footer>
-            </Modal>
+                </CancellationModal>
+           
+            <DetailsModal
+                open={openDetailsModel}
+                setOpen={setOpenDetailsModel}
+                orderMedication={orderMedication}
+                setOrderMedication={setOrderMedication}
+             
+              
+            ></DetailsModal>
         </div>
 
     </>)
