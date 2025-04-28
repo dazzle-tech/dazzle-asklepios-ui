@@ -3,7 +3,7 @@ import { useGetActiveIngredientQuery, useGetGenericMedicationActiveIngredientQue
 import { initialListRequest } from "@/types/types";
 import React, { useEffect, useState } from "react";
 const ActiveIngredient = ({ selectedGeneric }) => {
-    console.log("Selected    Generic:", selectedGeneric);
+
     const [listGinricRequest, setListGinricRequest] = useState({
         ...initialListRequest,
         sortType: 'desc'
@@ -41,7 +41,7 @@ const ActiveIngredient = ({ selectedGeneric }) => {
                    value: selectedGeneric?.key || null
                }
            ];
-           console.log(updatedFilters);
+       console.log(updatedFilters);
            setListGinricRequest((prevRequest) => ({
    
                ...prevRequest,
