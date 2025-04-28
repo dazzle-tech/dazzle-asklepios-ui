@@ -1,7 +1,6 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
-
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import ChangeListIcon from '@rsuite/icons/ChangeList';
