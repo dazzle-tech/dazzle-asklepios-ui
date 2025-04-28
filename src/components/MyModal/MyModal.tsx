@@ -45,10 +45,15 @@ const MyModal = ({
             updateStep(prev => prev - 1);
         }
     };
+    const handleCancel = () => {
+        setInternalStep(0);
+        setOpen(false);
+    };
+    
     return (
         <Modal
             open={open}
-            onClose={() => setOpen(false)}
+            onClose={handleCancel}
             size={size}
             className={modalClass}
         >
@@ -93,7 +98,7 @@ const MyModal = ({
             ) && <Divider className='divider-line' />}
             <Modal.Footer className='footer-modal'>
                 <Form className='footer-modal-content'>
-                    {!hideCanel && <MyButton appearance={'subtle'} onClick={() => setOpen(false)}>Cancel</MyButton>}
+                    {!hideCanel && <MyButton appearance={'subtle'} onClick={handleCancel}>Cancel</MyButton>}
                     {!hideBack && activeStep > 0 && <MyButton appearance={'subtle'} onClick={handlePrev}>Back</MyButton>}
                     {!(activeStep === computedPagesCount - 1) && <MyButton onClick={handleNext} disabled={steps[activeStep]?.disabledNext}>Next</MyButton>} {steps[activeStep]?.footer}
                     {(activeStep === computedPagesCount - 1) && !hideActionBtn && <MyButton onClick={actionButtonFunction} disabled={isDisabledActionBtn}>{actionButtonLabel}</MyButton>}
