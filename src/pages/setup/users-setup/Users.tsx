@@ -38,7 +38,7 @@ import {
   conjureValueBasedOnKeyFromList,
   fromCamelCaseToDBName
 } from '@/utils';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
+import ArowBackIcon from '@rsuite/icons/ArrowBack';
 import {
   useGetLovValuesByCodeQuery,
   useRemoveUserMutation

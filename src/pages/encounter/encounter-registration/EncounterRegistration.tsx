@@ -6,7 +6,7 @@ import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import { ApPatient } from '@/types/model-types';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import ChangeListIcon from '@rsuite/icons/ChangeList';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
+import ArowBackIcon from '@rsuite/icons/ArrowBack';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import ReloadIcon from '@rsuite/icons/Reload';
 

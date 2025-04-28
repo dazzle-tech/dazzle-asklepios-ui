@@ -4,7 +4,7 @@ import { Panel, Toggle, Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useGetScreenAccessMatrixQuery, useSaveScreenAccessMatrixMutation } from '@/services/setupService';
 import { IconButton } from 'rsuite';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
+import ArowBackIcon from '@rsuite/icons/ArrowBack';
 import { FaLockOpen } from 'react-icons/fa6';
 import MyButton from '@/components/MyButton/MyButton';
 import './styles.less';

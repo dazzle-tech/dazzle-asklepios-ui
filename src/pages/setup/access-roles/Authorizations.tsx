@@ -5,7 +5,7 @@ import { Input, Pagination, Panel, Table } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import { useGetAccessRolesQuery } from '@/services/setupService';
 import { ButtonToolbar, IconButton } from 'rsuite';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
+import ArowBackIcon from '@rsuite/icons/ArrowBack';
 const Authorizations = ({ accessRole, goBack, ...props }) => {
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
 

@@ -9,7 +9,7 @@ import Allergies from './AllergiesNurse';
 import { Check } from '@rsuite/icons';
 import BlockIcon from '@rsuite/icons/Block';
 import Warning from './warning';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
+import ArowBackIcon from '@rsuite/icons/ArrowBack';
 import {  } from '@rsuite/icons';
 import './styles.less';
 import MyButton from '@/components/MyButton/MyButton';

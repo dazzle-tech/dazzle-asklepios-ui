@@ -12,7 +12,7 @@ import TrashIcon from '@rsuite/icons/Trash';
 import { ApLovValues } from '@/types/model-types';
 import { newApLovValues } from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
+import ArowBackIcon from '@rsuite/icons/ArrowBack';
 
 import {
   addFilterToListRequest,

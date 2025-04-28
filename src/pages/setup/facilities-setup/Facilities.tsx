@@ -16,7 +16,7 @@ import { newApAddresses, newApFacility, newApDepartment } from '@/types/model-ty
 import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
+import ArowBackIcon from '@rsuite/icons/ArrowBack';
 
 import {
   useGetLovValuesByCodeAndParentQuery,

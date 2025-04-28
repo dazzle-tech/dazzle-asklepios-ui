@@ -25,7 +25,7 @@ import { newApActiveIngredient, newApDiagnosticCoding, newApDiagnosticTest, newA
 import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useNavigate } from 'react-router-dom';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
+import ArowBackIcon from '@rsuite/icons/ArrowBack';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import Laboratory from './Laboratory';
 import Pathology from './Pathology';

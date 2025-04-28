@@ -20,7 +20,7 @@ import { newApActiveIngredient, newApGenericMedication } from '@/types/model-typ
 import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useNavigate } from 'react-router-dom';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
+import ArowBackIcon from '@rsuite/icons/ArrowBack';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import ActiveIngredient from './ActiveIngredients';

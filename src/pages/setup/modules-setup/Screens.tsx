@@ -11,7 +11,7 @@ import { MdDelete } from 'react-icons/md';
 import { MdModeEdit } from 'react-icons/md';
 import { newApScreen } from '@/types/model-types-constructor';
 import { Form } from 'rsuite';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
+import ArowBackIcon from '@rsuite/icons/ArrowBack';
 import MyButton from '@/components/MyButton/MyButton';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import MyInput from '@/components/MyInput';

@@ -3,7 +3,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import { Pagination, Panel, Form } from 'rsuite';
 import { useGetMetadataFieldsQuery } from '@/services/setupService';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
+import ArowBackIcon from '@rsuite/icons/ArrowBack';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';

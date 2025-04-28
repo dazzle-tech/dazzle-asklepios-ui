@@ -18,7 +18,7 @@ import { newApActiveIngredient } from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useNavigate } from 'react-router-dom';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
+import ArowBackIcon from '@rsuite/icons/ArrowBack';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import Indications from './Indications';
 import Contraindications from './Contraindications';

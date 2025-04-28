@@ -23,7 +23,7 @@ import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService'
 import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentModal';
 import PatientSide from '../encounter-main-info-section/PatienSide';
 import MyButton from '@/components/MyButton/MyButton';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
+import ArowBackIcon from '@rsuite/icons/ArrowBack';
 import BarChartHorizontalIcon from '@rsuite/icons/BarChartHorizontal';
 import {
   faBolt,

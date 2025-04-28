@@ -5,7 +5,7 @@ import { Button, ButtonToolbar, IconButton } from 'rsuite';
 import { Form, Stack, Divider } from 'rsuite';
 import Translate from '@/components/Translate';
 const { Column, HeaderCell, Cell } = Table;
-import ArowBackIcon from '@rsuite/icons/ArowBack';
+import ArowBackIcon from '@rsuite/icons/ArrowBack';
 import ReloadIcon from '@rsuite/icons/Reload';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import TrashIcon from '@rsuite/icons/Trash';
