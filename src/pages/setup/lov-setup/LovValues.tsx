@@ -12,7 +12,6 @@ import TrashIcon from '@rsuite/icons/Trash';
 import { ApLovValues } from '@/types/model-types';
 import { newApLovValues } from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
-
 import {
   addFilterToListRequest,
   conjureValueBasedOnKeyFromList,

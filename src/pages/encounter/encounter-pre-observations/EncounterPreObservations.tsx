@@ -9,7 +9,6 @@ import Allergies from './AllergiesNurse';
 import { Check } from '@rsuite/icons';
 import BlockIcon from '@rsuite/icons/Block';
 import Warning from './warning';
-
 import './styles.less';
 import MyButton from '@/components/MyButton/MyButton';
 import { ApEncounter } from '@/types/model-types';
