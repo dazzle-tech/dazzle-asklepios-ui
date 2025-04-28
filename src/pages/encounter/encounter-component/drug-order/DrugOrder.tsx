@@ -330,7 +330,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
         setOrderMedication({ ...orderMedication, administrationInstructions: null })
     }, [orderMedication.administrationInstructions])
     useEffect(() => {
-        console.log("ischronic", orderMedication.chronicMedication);
+  
         setEditDuration(orderMedication.chronicMedication);
         setOrderMedication({ ...orderMedication, duration: null, durationTypeLkey: null })
     }, [orderMedication.chronicMedication]);

@@ -4,12 +4,12 @@ import { Form, Modal, Row, Col, Button, DatePicker, Table, Divider, Pagination, 
 import './styles.less';
 import SearchIcon from '@rsuite/icons/Search';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
 import AdvancedModal from "@/components/AdvancedModal";
 import InfoCardList from "@/components/InfoCardList";
 import ActiveIngrediantList from './ActiveIngredient'
 import { useGetActiveIngredientQuery, useGetGenericMedicationActiveIngredientQuery, useGetGenericMedicationWithActiveIngredientQuery } from "@/services/medicationsSetupService";
-import { initialListRequest } from "@/types/types";
+import { initialListRequest, ListRequest } from "@/types/types";
 import Substitues from "./Substitutes";
 import MyButton from "@/components/MyButton/MyButton";
 import { faCircleInfo } from "@fortawesome/free-solid-svg-icons";
@@ -20,18 +20,84 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication }) =>
     const [searchKeywordicd, setSearchKeywordicd] = useState('');
     const [drugKey, setDrugKey] = useState({ key: "njnj" });
     const [editing, setEditing] = useState(true);
+    const [edit_new, setEdit_new] = useState(true);
+    const [indicationsIcd, setIndicationsIcd] = useState({ indicationIcd: null });
     const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
     const [selectedGeneric, setSelectedGeneric] = useState(null);
     const [selectedFirstDate, setSelectedFirstDate] = useState(null);
     const [filteredList, setFilteredList] = useState([]);
+    const [adminInstructions, setAdminInstructions] = useState("");
+    const [editDuration, setEditDuration] = useState(false);
+    const [indicationsDescription, setindicationsDescription] = useState<string>('');
     const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
+    const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ORDER_ADMIN_NSTRUCTIONS');
     const { data: orderTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MEDCATION_ORDER_TYPE');
     const { data: priorityLevelLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
+    const { data: indicationLovQueryResponse } = useGetLovValuesByCodeQuery('MED_INDICATION_USE');
     const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
+    const [icdListRequest, setIcdListRequest] = useState<ListRequest>({
+        ...initialListRequest,
+        filters: [
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
+            }
+        ],
+    });
+    const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
+    const modifiedData = (icdListResponseLoading?.object ?? []).map(item => ({
+        ...item,
+        combinedLabel: `${item.icdCode} - ${item.description}`,
+    }));
+    useEffect(() => {
+
+        setEditDuration(orderMedication.chronicMedication);
+        setOrderMedication({ ...orderMedication, duration: null, durationTypeLkey: null })
+    }, [orderMedication.chronicMedication]);
     useEffect(() => {
         console.log("Selected Generic:", selectedGeneric);
     }, [selectedGeneric]);
+    useEffect(() => {
+        if (indicationsIcd.indicationIcd != null || indicationsIcd.indicationIcd != "") {
+
+            setindicationsDescription(prevadminInstructions => {
+                const currentIcd = icdListResponseLoading?.object?.find(
+                    item => item.key === indicationsIcd.indicationIcd
+                );
+
+                if (!currentIcd) return prevadminInstructions;
+
+                const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
+
+                return prevadminInstructions
+                    ? `${prevadminInstructions}\n${newEntry}`
+                    : newEntry;
+            });
+        }
+    }, [indicationsIcd.indicationIcd]);
+    useEffect(() => {
+        if (orderMedication.administrationInstructions != null) {
+
+            setAdminInstructions(prevadminInstructions =>
+                prevadminInstructions ? `${prevadminInstructions}, ${administrationInstructionsLovQueryResponse?.object?.find(
+                    item => item.key === orderMedication.administrationInstructions
+                )?.lovDisplayVale}` :
+                    administrationInstructionsLovQueryResponse?.object?.find(
+                        item => item.key === orderMedication.administrationInstructions
+                    )?.lovDisplayVale
+            );
+        }
+
+        setOrderMedication({ ...orderMedication, administrationInstructions: null })
+    }, [orderMedication.administrationInstructions])
+    useEffect(() => {
+
+        setEditDuration(orderMedication.chronicMedication);
+        setOrderMedication({ ...orderMedication, duration: null, durationTypeLkey: null })
+    }, [orderMedication.chronicMedication]);
+
     const handleSearch = value => {
         setSearchKeyword(value);
     };
@@ -48,6 +114,11 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication }) =>
             (Generic.roaList).includes(item.key)
         );
         setFilteredList(newList);
+    };
+    const handleSearchIcd = value => {
+        setSearchKeywordicd(value);
+
+
     };
     const handleDateChange = (date) => {
         if (date) {
@@ -216,9 +287,9 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication }) =>
                                 </Form>
                             </div>
                         </div>
-                       <Translate>Indication</Translate> 
-                        <div className="fields-div" style={{display: 'flex', flexDirection: 'row'}}>
-                            <div className="child-div"> <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
+                        <Translate>Indication</Translate>
+                        <div className="fields-div" style={{ display: 'flex', flexDirection: 'row' ,gap:'10px' }}>
+                            <div className="child-div"> <InputGroup inside >
                                 <Input
                                     disabled={drugKey != null ? editing : true}
                                     placeholder="Search ICD-10"
@@ -229,37 +300,80 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication }) =>
                                     <SearchIcon />
                                 </InputGroup.Button>
                             </InputGroup>
-                            {searchKeywordicd && (
-                                <Dropdown.Menu disabled={!edit_new} className="dropdown-menuresult">
-                                    {modifiedData?.map(mod => (
-                                        <Dropdown.Item
-                                            key={mod.key}
-                                            eventKey={mod.key}
-                                            onClick={() => {
-                                                setIndicationsIcd({
-                                                    ...indicationsIcd,
-                                                    indicationIcd: mod.key
-                                                })
-                                                setSearchKeywordicd("");
-                                            }}
-                                        >
-                                            <span style={{ marginRight: "19px" }}>{mod.icdCode}</span>
-                                            <span>{mod.description}</span>
-                                        </Dropdown.Item>
-                                    ))}
-                                </Dropdown.Menu>
-                            )}
-                            <Input as="textarea"
-                                disabled={true}
-                                onChange={(e) => setindicationsDescription} value={indicationsDescription
-                                    || orderMedication.indicationIcd
-                                }
-                                style={{ width: 300 }} rows={4} /></div>
-                            <div className="child-div">2</div>
+                                {searchKeywordicd && (
+                                    <Dropdown.Menu disabled={!edit_new} className="dropdown-menuresult">
+                                        {modifiedData?.map(mod => (
+                                            <Dropdown.Item
+                                                key={mod.key}
+                                                eventKey={mod.key}
+                                                onClick={() => {
+                                                    setIndicationsIcd({
+                                                        ...indicationsIcd,
+                                                        indicationIcd: mod.key
+                                                    })
+                                                    setSearchKeywordicd("");
+                                                }}
+                                            >
+                                                <span style={{ marginRight: "19px" }}>{mod.icdCode}</span>
+                                                <span>{mod.description}</span>
+                                            </Dropdown.Item>
+                                        ))}
+                                    </Dropdown.Menu>
+                                )}
+                                <Input as="textarea"
+                                    disabled={true}
+                                    onChange={(e) => setindicationsDescription} value={indicationsDescription
+                                        || orderMedication.indicationIcd
+                                    }
+                                    rows={4} /></div>
+                            <div className="child-div">
+                                <InputGroup inside >
+                                    <Input
+                                        disabled={drugKey != null ? editing : true}
+                                        placeholder="Search SNOMED-CT"
+                                        value={""}
+
+                                    />
+                                    <InputGroup.Button>
+                                        <SearchIcon />
+                                    </InputGroup.Button>
+                                </InputGroup>
+
+                                <Input as="textarea"
+                                    disabled={true}
+
+                                    rows={4} />
+                            </div>
+                        </div>
+                        <div className="fields-div">
+                        <Form  fluid style={{width:'100%'}}  >
+                                <MyInput
+                                    column
+                                    disabled={drugKey != null ? editing : true}
+                                    width="100%"
+                                    fieldType="select"
+                                    fieldLabel="Indication Use"
+                                    selectData={indicationLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName={'indicationUseLkey'}
+                                    record={orderMedication}
+                                    setRecord={setOrderMedication}
+
+                                />
+                            </Form>
                         </div>
                         <div className="fields-div">1</div>
                     </div>
-                    <div className="child-div">2</div>
+                    <div className="child-div">
+                        <Form>
+                            <MyInput
+                            fieldType="textarea"
+                            fieldName='indicationManually'
+                            record={orderMedication}
+                            setRecord={setOrderMedication}
+                            />
+                        </Form></div>
                 </div>}
         ></AdvancedModal>
         <Substitues open={openSubstitutesModel} setOpen={setOpenSubstitutesModel} selectedGeneric={selectedGeneric}></Substitues></>);

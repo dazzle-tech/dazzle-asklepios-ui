@@ -17,7 +17,7 @@ const AdvancedModal = ({
     hideCanel = false,
     actionButtonLabel = "Save",
     actionButtonFunction = null,
-    height = 600,
+    height = 695,
     size="1400px"
 }) => {
     return (
