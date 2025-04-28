@@ -1114,7 +1114,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
 
                         <div style={{ marginBottom: '3px' }}>
-                            <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
+                          <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
                                 <Input
                                     disabled={drugKey != null ? editing : true}
                                     placeholder="Search ICD-10"
@@ -1150,7 +1150,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                                 onChange={(e) => setindicationsDescription} value={indicationsDescription
                                     || orderMedication.indicationIcd
                                 }
-                                style={{ width: 300 }} rows={4} />
+                                style={{ width: 300 }} rows={4} />  
                         </div>
                         <div style={{ marginBottom: '3px' }}>
                             <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>

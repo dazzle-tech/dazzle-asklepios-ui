@@ -28,7 +28,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication }) =>
     const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
     const { data: orderTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MEDCATION_ORDER_TYPE');
     const { data: priorityLevelLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
-
+    const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
     useEffect(() => {
         console.log("Selected Generic:", selectedGeneric);
     }, [selectedGeneric]);
@@ -156,13 +156,12 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication }) =>
                         </div>
                         <div className="fields-div">
                             <div style={{ flex: 1 }}>
-                                <Form layout="inline" >
+                                <Form layout="inline" disabled={drugKey != null ? editing : true} >
                                     <MyInput
-                                        width={"105px"}
                                         column
-                                        disabled={drugKey != null ? editing : true}
-                                        fieldType="number"
-                                        fieldName={'maximumDose'}
+                                        width={105}
+                                        fieldType='number'
+                                        fieldName={'dose'}
                                         record={orderMedication}
                                         setRecord={setOrderMedication}
                                     />
@@ -172,17 +171,15 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication }) =>
                                 <Form layout="inline" >
                                     <MyInput
                                         column
-                                        disabled={drugKey != null ? editing : true}
-                                        width={"105px"}
+                                        width={105}
                                         fieldType="select"
-                                        fieldLabel="priority Level"
-                                        selectData={priorityLevelLovQueryResponse?.object ?? []}
+                                        fieldLabel="Unit"
+                                        selectData={unitLovQueryResponse?.object ?? []}
                                         selectDataLabel="lovDisplayVale"
                                         selectDataValue="key"
-                                        fieldName={'priorityLkey'}
+                                        fieldName={'doseUnitLkey'}
                                         record={orderMedication}
                                         setRecord={setOrderMedication}
-
                                     />
                                 </Form>
                             </div>
@@ -191,12 +188,14 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication }) =>
 
                                     <MyInput
                                         column
-                                        width={"105px"}
+                                        width={"80px"}
                                         disabled={drugKey != null ? editing : true}
+                                        fieldLabel="Frequency"
                                         fieldType="number"
-                                        fieldName={'maximumDose'}
+                                        fieldName={'drugOrderTypeLkey'}
                                         record={orderMedication}
                                         setRecord={setOrderMedication}
+                                        rightAddon="Hr"
                                     />
                                 </Form>
                             </div>
@@ -204,23 +203,61 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication }) =>
                                 <Form layout="inline" >
                                     <MyInput
                                         column
-                                        disabled={drugKey != null ? editing : true}
-                                        width={"105px"}
+                                        width={105}
                                         fieldType="select"
-                                        fieldLabel="priority Level"
-                                        selectData={priorityLevelLovQueryResponse?.object ?? []}
+                                        fieldLabel="ROA"
+                                        selectData={filteredList ?? []}
                                         selectDataLabel="lovDisplayVale"
                                         selectDataValue="key"
-                                        fieldName={'priorityLkey'}
+                                        fieldName={'roaLkey'}
                                         record={orderMedication}
                                         setRecord={setOrderMedication}
-
                                     />
                                 </Form>
                             </div>
                         </div>
-                        <div className="details-basic-div">1</div>
-                        <div className="details-basic-div">1</div>
+                       <Translate>Indication</Translate> 
+                        <div className="fields-div" style={{display: 'flex', flexDirection: 'row'}}>
+                            <div className="child-div"> <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
+                                <Input
+                                    disabled={drugKey != null ? editing : true}
+                                    placeholder="Search ICD-10"
+                                    value={searchKeywordicd}
+                                    onChange={handleSearchIcd}
+                                />
+                                <InputGroup.Button>
+                                    <SearchIcon />
+                                </InputGroup.Button>
+                            </InputGroup>
+                            {searchKeywordicd && (
+                                <Dropdown.Menu disabled={!edit_new} className="dropdown-menuresult">
+                                    {modifiedData?.map(mod => (
+                                        <Dropdown.Item
+                                            key={mod.key}
+                                            eventKey={mod.key}
+                                            onClick={() => {
+                                                setIndicationsIcd({
+                                                    ...indicationsIcd,
+                                                    indicationIcd: mod.key
+                                                })
+                                                setSearchKeywordicd("");
+                                            }}
+                                        >
+                                            <span style={{ marginRight: "19px" }}>{mod.icdCode}</span>
+                                            <span>{mod.description}</span>
+                                        </Dropdown.Item>
+                                    ))}
+                                </Dropdown.Menu>
+                            )}
+                            <Input as="textarea"
+                                disabled={true}
+                                onChange={(e) => setindicationsDescription} value={indicationsDescription
+                                    || orderMedication.indicationIcd
+                                }
+                                style={{ width: 300 }} rows={4} /></div>
+                            <div className="child-div">2</div>
+                        </div>
+                        <div className="fields-div">1</div>
                     </div>
                     <div className="child-div">2</div>
                 </div>}
