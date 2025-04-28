@@ -18,7 +18,7 @@ const AdvancedModal = ({
     actionButtonLabel = "Save",
     actionButtonFunction = null,
     height = 695,
-    size="1400px"
+    size="1450px"
 }) => {
     return (
         <Modal

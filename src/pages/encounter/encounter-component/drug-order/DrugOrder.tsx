@@ -477,11 +477,12 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 <Input
                     className="tag-input"
                     size="xs"
-                    style={{ width: 70 }}
+                    style={{ width: 70 ,borderRadius: 5}}
                     value={inputValue}
                     onChange={setInputValue}
                     onBlur={addTag}
                     onPressEnter={addTag}
+                    
                 />
             );
         }

@@ -45,6 +45,7 @@ const MyInput = ({
   leftAddonwidth = null,
   setRecord = undefined,
   vr = undefined,
+  rows = 1,
   showLabel = true, // form validation result
   ...props
 }) => {
@@ -77,11 +78,11 @@ const MyInput = ({
             style={{ width: props?.width ?? 200, height: props?.height ?? 70 }}
             disabled={props.disabled}
             name={fieldName}
-
             placeholder={props.placeholder}
             value={record[fieldName] ? record[fieldName] : ''}
             accepter={Textarea}
             onChange={handleValueChange}
+            
           />
         );
       case 'checkbox':
