@@ -23,13 +23,14 @@ const Substitues = ({ open, setOpen, selectedGeneric }) => {
             },
         },
         {
-            key: "brandName",
-            dataKey: "brandName",
+            key: "genericName",
+            dataKey: "genericName",
             title: <Translate>Brand Name</Translate>,
             flexGrow: 1,
             fillText: true,
             render: (rowData: any) => {
-                return rowData.brandName;
+                return rowData.genericName
+                ;
             },
         },
         {
@@ -128,6 +129,8 @@ const Substitues = ({ open, setOpen, selectedGeneric }) => {
         title={<Translate>Substitutes</Translate>}
         steps={[{ title: "Substitutes", icon:faRightLeft }]}
         position="right"
+        hideActionBtn
+        hideCanel
         content={<>
         <MyTable
         data={lisOfLinkedBrand?.object ?? []}

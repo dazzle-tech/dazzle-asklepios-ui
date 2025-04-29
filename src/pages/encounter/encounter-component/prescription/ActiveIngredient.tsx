@@ -69,20 +69,20 @@ const ActiveIngredient = ({ selectedGeneric }) => {
                 isControlledDisplay: 'Is Controlled',
                 controlledDisplay: 'Controlled',
             }}
-            // computedFields={{
-            //     activeIngredientName: (item) =>
-            //         activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.name || " ",
-            //     activeIngredientATCCode: (item) =>
-            //         activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.atcCode || " ",
-            //     strengthDisplay: (item) =>
-            //         (item?.strength || '') + (item?.unitLvalue?.lovDisplayVale || ''),
-            //     isControlledDisplay: (item) => {
-            //         const isControlled = activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.isControlled;
-            //         return isControlled ? "Yes" : "No";
-            //     },
-            //     controlledDisplay: (item) =>
-            //         activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.controlledLvalue?.lovDisplayVale || " ",
-            // }}
+            computedFields={{
+                activeIngredientName: (item) =>
+                    activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.name || " ",
+                activeIngredientATCCode: (item) =>
+                    activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.atcCode || " ",
+                strengthDisplay: (item) =>
+                    (item?.strength || '') + (item?.unitLvalue?.lovDisplayVale || ''),
+                isControlledDisplay: (item) => {
+                    const isControlled = activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.isControlled;
+                    return isControlled ? "Yes" : "No";
+                },
+                controlledDisplay: (item) =>
+                    activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.controlledLvalue?.lovDisplayVale || " ",
+            }}
          
         /></>)
 }
