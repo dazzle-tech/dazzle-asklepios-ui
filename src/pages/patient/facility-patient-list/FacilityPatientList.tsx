@@ -1,87 +1,50 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Panel } from 'rsuite';
-import {
-    IconButton,
-    Input,
-    Table,
-    ButtonToolbar,
-    DateRangePicker,
-    Stack,
-    Pagination,
-    Form
-} from 'rsuite';
-import { DatePicker } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
+import {Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import SearchPeopleIcon from '@rsuite/icons/SearchPeople';
-import MyLabel from '@/components/MyLabel';
-import {
-    ApPatient,
-    ApPatientInsurance
-} from '@/types/model-types';
+import { ApPatient, ApPatientInsurance } from '@/types/model-types';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import Translate from '@/components/Translate';
+import MyTable from '@/components/MyTable';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { addFilterToListRequest, formatDate, fromCamelCaseToDBName } from '@/utils';
-import {
-    useGetPatientsQuery,
-} from '@/services/patientService';
+import { addFilterToListRequest } from '@/utils';
 import './styles.less'
-import { newApEncounter, newApPatient, newApPatientInsurance } from '@/types/model-types-constructor';
-import FileDownloadIcon from '@rsuite/icons/FileDownload';
-import { useDispatch, useSelector } from 'react-redux';
+import { newApPatient, newApPatientInsurance } from '@/types/model-types-constructor';
+import { useDispatch } from 'react-redux';
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
-import { RootState } from '@/store';
-import { setDivContent ,setPageCode } from '@/reducers/divSlice';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import { faFileCsv } from '@fortawesome/free-solid-svg-icons';
-import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { faBolt } from '@fortawesome/free-solid-svg-icons';
 import ReactDOMServer from 'react-dom/server';
-
+import MyButton from '@/components/MyButton/MyButton';
 const FacilityPatientList = () => {
-    const divElement = useSelector((state: RootState) => state.div?.divElement);
-    const dispatch = useDispatch();
-    const divContent = (
-        <div style={{ display: 'flex' }}>
-          <h5>Facility Patients List</h5>
-        </div>
-      );
-
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-    dispatch (setPageCode('P_Facility'));
-    dispatch(setDivContent(divContentHTML));
+    const [searchPatient, setSearchPatient] = useState<ApPatient>({ ...newApPatient });
+    const [insurancePatient, setInsurancePatient] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
+    const [dateFilter, setDateFilter] = useState({ fromDate: '', toDate: '' });
+    // Fetch LOV data for various fields
     const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
     const { data: documentTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
     const { data: primaryInsuranceProviderLovQueryResponse } = useGetLovValuesByCodeQuery('INS_PROVIDER');
-    const [searchPatient, setSearchPatient] = useState<ApPatient>({ ...newApPatient });
-    const [insurancePatient, setInsurancePatient] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
-    const [dateFilter, setDateFilter] = useState({
-        fromDate: '',
-        toDate: '',
-    });
-    const [patient, setLocalPatient] = useState({ ...newApEncounter });
-    const [listRequest, setListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        ignore: true,
-        filters: [],
-    });
-    const {
-        data: patientListResponse,
-        refetch: refetchPatients
-    } = useGetPatientsQuery({ ...listRequest, filterLogic: 'or' }); //replace to newList 
-    const handleDateChange = (value) => {
-        const [startDate, endDate] = value;
-        setDateFilter({
-            fromDate: startDate,
-            toDate: endDate,
-        });
-    };
+    // Initialize list request with default filters
+    const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest, filters: [] });
+    // table columns
+    const columns = [
+        { key: 'index', title: '#', render: (rowData, rowIndex) => rowIndex + 1 },
+        { key: 'created_at', title: 'REGISTRATION DATE', dataKey: 'created_at' },
+        { key: 'patientMrn', title: 'MRN', dataKey: 'patientMrn' },
+        { key: 'fullName', title: 'FULL NAME', dataKey: 'fullName' },
+        { key: 'gender', title: 'SEX AT BIRTH', render: rowData => rowData.genderLvalue ? rowData.genderLvalue.lovDisplayVale : rowData.genderLkey },
+        { key: 'dob', title: 'DOB', dataKey: 'dob' },
+        { key: 'documentType', title: 'DOCUMENT TYPE', render: rowData => rowData.documentTypeLvalue ? rowData.documentTypeLvalue.lovDisplayVale : rowData.documentTypeLkey },
+        { key: 'documentNo', title: 'DOCUMENT NUMBER', dataKey: 'documentNo' },
+        { key: 'phone', title: 'PRIMARY PHONE NUMBER', dataKey: 'phone' },
+        { key: 'insurance', title: 'PRIMARY INSURANCE PROVIDER', dataKey: 'insurance' },
+        { key: 'plan', title: 'PLAN', dataKey: 'plan' },
+    ];
+    // handle manual search from date to date 
     const handleManualSearch = () => {
         if (dateFilter.fromDate && dateFilter.toDate) {
-            const formattedFromDate = formatDate(dateFilter.fromDate);
-            const formattedToDate = formatDate(dateFilter.toDate);
+            const formattedFromDate = dateFilter.fromDate;
+            const formattedToDate = dateFilter.toDate;
             setListRequest(
                 addFilterToListRequest(
                     'created_at',
@@ -91,12 +54,12 @@ const FacilityPatientList = () => {
                 )
             );
         } else if (dateFilter.fromDate) {
-            const formattedFromDate = formatDate(dateFilter.fromDate);
+            const formattedFromDate = dateFilter.fromDate;
             setListRequest(
                 addFilterToListRequest('created_at', 'gte', formattedFromDate, listRequest)
             );
         } else if (dateFilter.toDate) {
-            const formattedToDate = formatDate(dateFilter.toDate);
+            const formattedToDate = dateFilter.toDate;
             setListRequest(
                 addFilterToListRequest('created_at', 'lte', formattedToDate, listRequest)
             );
@@ -104,8 +67,9 @@ const FacilityPatientList = () => {
             setListRequest({ ...listRequest, filters: [] });
         }
     };
-    const handleDOFSearch = (value) => {
-        const dob = formatDate(value);
+    // handle search of dob
+    const handleDOFSearch = () => {
+        const dob = searchPatient?.dob;
         setListRequest(
             addFilterToListRequest(
                 'dob',
@@ -116,11 +80,7 @@ const FacilityPatientList = () => {
         );
 
     };
-    const isSelected = rowData => {
-        if (rowData && patient && rowData.key === patient.key) {
-            return 'selected-row';
-        } else return '';
-    };
+    // Effects
     useEffect(() => {
         handleManualSearch();
     }, []);
@@ -155,217 +115,97 @@ const FacilityPatientList = () => {
     useEffect(() => {
         handleManualSearch();
     }, [dateFilter]);
+    useEffect(() => {
+        handleDOFSearch();
+    }, [searchPatient?.dob]);
+
+    const dispatch = useDispatch();
+    const divContent = (
+        <div style={{ display: 'flex' }}>
+            <h5>Facility Patients List</h5>
+        </div>
+    );
+    // page header setup
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+    dispatch(setPageCode('P_Facility'));
+    dispatch(setDivContent(divContentHTML));
     return (
-     
-            <Panel className='box-style'>
-                <div  >
-                    <div >
-                        <Form layout='inline' fluid className='divStyle'>
-                            <div className='divContainFiledSearch'>
-                                <Stack spacing={5} direction="column" alignItems="flex-start" style={{ zoom: .8 }}>
-                                    <MyLabel label="Registration Date " />
-                                    <DateRangePicker
-                                        format="MM/dd/yyyy"
-                                        character=" – "
-                                        onChange={handleDateChange}
-                                    />
-                                </Stack>
-                                <Stack spacing={5} direction="column" alignItems="flex-start" style={{ zoom: .8 }}>
-                                    <MyLabel label="Date of Birth " />
-                                    <DatePicker format="MM/dd/yyyy" onChange={handleDOFSearch} />
-                                </Stack >
-                                <MyInput
-                                    width={165}
-                                    heigth={27}
-                                    column
-                                    fieldLabel="Sex at Birth"
-                                    fieldType="select"
-                                    fieldName="genderLkey"
-                                    selectData={genderLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    record={searchPatient}
-                                    setRecord={setSearchPatient}
-                                />
-                                <MyInput
-                                    width={165}
-                                    column
-                                    fieldLabel="Document Type"
-                                    fieldType="select"
-                                    fieldName="documentTypeLkey"
-                                    selectData={documentTypeLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    record={searchPatient}
-                                    setRecord={setSearchPatient}
-                                />
-                                <MyInput
-                                    width={165}
-                                    column
-                                    fieldLabel="Primary Insurance Provider"
-                                    fieldType="select"
-                                    fieldName="insuranceProviderLkey"
-                                    selectData={primaryInsuranceProviderLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    record={insurancePatient}
-                                    setRecord={setInsurancePatient}
-                                />
-                            </div>
-                            <div>
-                                <ButtonToolbar style={{ zoom: .8 }}>
-                                    <Button appearance="primary" style={{ backgroundColor: 'var(--primary-blue)' }}>
-                                        <FontAwesomeIcon icon={faMagnifyingGlass} />
-                                    </Button>
-                                    <Button appearance="primary" style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: "3px" }} >
-                                        <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px', color: 'white' }} />
-                                        <Translate>Clear</Translate>
-                                    </Button>
-                                    <Button
-                                        appearance="primary"
-                                        style={{ backgroundColor: 'var(--primary-blue)', color: 'white', marginLeft: "3px" }}
-                                    >
-                                        <FontAwesomeIcon icon={faFileCsv} style={{ marginRight: '5px', color: 'white' }} />
-                                        <Translate>Export to Xsl</Translate>
-                                    </Button>
-                                </ButtonToolbar>
-                            </div>
-
-
-
-                        </Form>
-
+        <div className='container-div'>
+            <div className='field-btn-div'>
+                <Form layout='inline' fluid>
+                    <MyInput
+                        column
+                        fieldLabel="From Date"
+                        fieldType="date"
+                        fieldName="fromDate"
+                        record={dateFilter}
+                        setRecord={setDateFilter}
+                    />
+                    <MyInput
+                        column
+                        fieldLabel="To Date"
+                        fieldType="date"
+                        fieldName="toDate"
+                        record={dateFilter}
+                        setRecord={setDateFilter}
+                    />
+                    <MyInput
+                        column
+                        fieldLabel="Date of Birth"
+                        fieldType="date"
+                        fieldName="dob"
+                        record={searchPatient}
+                        setRecord={setSearchPatient}
+                    />
+                    <MyInput
+                        column
+                        fieldLabel="Sex at Birth"
+                        fieldType="select"
+                        fieldName="genderLkey"
+                        selectData={genderLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={searchPatient}
+                        setRecord={setSearchPatient}
+                    />
+                    <MyInput
+                        column
+                        fieldLabel="Document Type"
+                        fieldType="select"
+                        fieldName="documentTypeLkey"
+                        selectData={documentTypeLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={searchPatient}
+                        setRecord={setSearchPatient}
+                    />
+                    <MyInput
+                        column
+                        fieldLabel="Primary Insurance Provider"
+                        fieldType="select"
+                        fieldName="insuranceProviderLkey"
+                        selectData={primaryInsuranceProviderLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={insurancePatient}
+                        setRecord={setInsurancePatient}
+                    />
+                </Form>
+                <div className='bt-right-group'>
+                    <div className='btns-group'>
+                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />} ></MyButton>
+                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} >Clear</MyButton>
+                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faFileCsv} />} >Export to Xsl</MyButton>
                     </div>
-                   
-                        <Table
-                            height={460}
-                            sortColumn={listRequest.sortBy}
-                            sortType={listRequest.sortType}
-                            onSortColumn={(sortBy, sortType) => {
-                                if (sortBy)
-                                    setListRequest({
-                                        ...listRequest,
-                                        sortBy,
-                                        sortType
-                                    });
-                            }}
-                          
-                            data={patientListResponse?.object ?? []}
-                            // onRowClick={rowData => {
-                            //     setLocalPatient(rowData);
-                            // }}
-                            rowClassName={(rowData, rowIndex) => {
-                                if (rowIndex === -1) return "first-row";
-                                return ""; 
-                            }}
-                            
-                        >
-                            <Column sortable flexGrow={1.5}>
-                                <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-                                    <Translate># </Translate>
-                                </HeaderCell>
-                                <Cell>  {(rowData, rowIndex) => rowIndex + 1}</Cell>
-                            </Column>
-                            <Column sortable flexGrow={4}>
-                                <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-                                    <Translate>REGISTRATION DATE</Translate>
-                                </HeaderCell>
-                                <Cell dataKey="created_at" />
-                            </Column>
-                            <Column sortable flexGrow={2}>
-                                <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-                                    <Translate>MRN</Translate>
-                                </HeaderCell>
-                                <Cell dataKey="patientMrn" />
-                            </Column>
-                            <Column sortable flexGrow={4}>
-                                <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-                                    <Translate>FULL NAME </Translate>
-                                </HeaderCell>
-                                <Cell dataKey="fullName" />
-                            </Column>
-                            <Column sortable flexGrow={4}>
-                                <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-                                    <Translate> SEX AT  BIRTH</Translate>
-                                </HeaderCell>
-                                <Cell>
-                                    {rowData =>
-                                        rowData.genderLvalue
-                                            ? rowData.genderLvalue.lovDisplayVale
-                                            : rowData.genderLkey
-                                    }
-                                </Cell>
-                            </Column>
-                            <Column sortable flexGrow={4}>
-                                <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-                                    <Translate >DOB </Translate>
-                                </HeaderCell>
-                                <Cell dataKey="dob" />
-                            </Column>
-                            <Column sortable flexGrow={4}>
-                                <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-                                    <Translate> DOCUMENT TYPE</Translate>
-                                </HeaderCell>
-                                <Cell>
-                                    {rowData =>
-                                        rowData.encounterStatusLvalue
-                                            ? rowData.documentTypeLvalue.lovDisplayVale
-                                            : rowData.documentTypeLkey
-                                    }
-                                </Cell>
-                            </Column>
-                            <Column sortable flexGrow={4}>
-                                <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-                                    <Translate> DOCUMENT NUMBER</Translate>
-                                </HeaderCell>
-                                <Cell dataKey="documentNo" />
-                            </Column>
-                            <Column sortable flexGrow={4}>
-                                <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-                                    <Translate>PRIMARY PHONE NUMBER</Translate>
-                                </HeaderCell>
-                                <Cell dataKey="" />
-                            </Column>
-                            <Column sortable flexGrow={4}>
-                                <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-                                    <Translate>PRIMARY INSURANCE PROVIDER</Translate>
-                                </HeaderCell>
-                                <Cell dataKey="" />
-                            </Column>
-                            <Column sortable flexGrow={2}>
-                                <HeaderCell style={{ backgroundColor: "#f4f7fe", color: "#333" }}>
-                                    <Translate>PLAN</Translate>
-                                </HeaderCell>
-                                <Cell dataKey="" />
-                            </Column>
-                        </Table>
-                        <div className="first-row" style={{ padding:40 }}>
-                            <Pagination
-                                prev
-                                next
-                                first
-                                last
-                                ellipsis
-                                boundaryLinks
-                                maxButtons={5}
-                                size="xs"
-                                layout={['limit', '|', 'pager']}
-                                limitOptions={[5, 15, 30]}
-                                limit={listRequest.pageSize}
-                                activePage={listRequest.pageNumber}
-                                onChangePage={pageNumber => {
-                                    setListRequest({ ...listRequest, pageNumber });
-                                }}
-                                onChangeLimit={pageSize => {
-                                    setListRequest({ ...listRequest, pageSize });
-                                }}
-                                total={patientListResponse?.extraNumeric ?? 0}
-                            />
-                        </div>
-                    
                 </div>
-            </Panel>
-        
+            </div>
+            <MyTable
+                data={[]}
+                columns={columns}
+                height={800}
+                loading={false}
+            />
+        </div>
     );
 };
 
