@@ -6,7 +6,7 @@ import Consultation from '../encounter-component/consultation';
 import DiagnosticsOrder from '../encounter-component/diagnostics-order';
 import DiagnosticsResult from '../encounter-component/diagnostics-result/DiagnosticsResult';
 import MedicationsRecord from '../encounter-component/medications-record';
-import PatientHistory from '../encounter-component/patient-history';
+import PatientHistory from '../encounter-component/patient-history/PatientHistory';
 import PatientSummary from '../encounter-component/patient-summary';
 import Prescription from '../encounter-component/prescription';
 import Referrals from '../encounter-component/procedure';
