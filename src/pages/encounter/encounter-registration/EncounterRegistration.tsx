@@ -3,33 +3,26 @@ import Translate from '@/components/Translate';
 import { useAppDispatch, useAppSelector } from '@/hooks';
 
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import { ApPatient } from '@/types/model-types';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import ChangeListIcon from '@rsuite/icons/ChangeList';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import ReloadIcon from '@rsuite/icons/Reload';
 
 import {
-  addFilterToListRequest,
-  conjureValueBasedOnKeyFromList,
+  addFilterToListRequest
 
 } from '@/utils';
-import {
-  useGetUsersQuery
-} from '@/services/setupService';
 import { DatePicker } from 'rsuite';
 
 const { Column, HeaderCell, Cell } = Table;
 import { faBolt } from '@fortawesome/free-solid-svg-icons';
 import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
-import { Block, Check, DocPass, Edit, Icon, PlusRound } from '@rsuite/icons';
-import { Modal, Placeholder, PanelGroup, Checkbox } from 'rsuite';
+import { Block, Check } from '@rsuite/icons';
+import { Modal, PanelGroup, Checkbox } from 'rsuite';
 import React, { useEffect, useState } from 'react';
 import {
   InputGroup,
   ButtonToolbar,
-  FlexboxGrid,
   Form,
   IconButton,
   Input,
@@ -73,6 +66,7 @@ import {
 
   newApPatientRelation
 } from '@/types/model-types-constructor';
+import BackButton from '@/components/BackButton/BackButton';
 const EncounterRegistration = () => {
   const encounter = useSelector((state: RootState) => state.patient.encounter);
   const patientSlice = useAppSelector(state => state.patient);
@@ -425,15 +419,7 @@ const EncounterRegistration = () => {
         >
           <Panel bordered>
             <ButtonToolbar>
-              <IconButton
-
-                appearance="primary"
-                color="violet"
-                icon={<ArowBackIcon />}
-                onClick={handleGoBack}
-              >
-                <Translate>Go Back</Translate>
-              </IconButton>
+              <BackButton onClick={handleGoBack}/>
               <IconButton appearance="primary" color="blue" icon={<Block />} onClick={handleCancel}>
                 <Translate>Cancel</Translate>
               </IconButton>

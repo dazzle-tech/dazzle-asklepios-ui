@@ -1,11 +1,10 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState } from 'react';
-import { Input, Pagination, Panel, Table } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
+import { Panel } from 'rsuite';
 import { useGetAccessRolesQuery } from '@/services/setupService';
 import { ButtonToolbar, IconButton } from 'rsuite';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
+import { FaArrowLeft } from 'react-icons/fa6';
 const Authorizations = ({ accessRole, goBack, ...props }) => {
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
 
@@ -20,7 +19,7 @@ const Authorizations = ({ accessRole, goBack, ...props }) => {
       }
     >
       <ButtonToolbar>
-        <IconButton appearance="ghost" color="cyan" icon={<ArowBackIcon />} onClick={goBack}>
+        <IconButton appearance="ghost" color="cyan" icon={<FaArrowLeft />} onClick={goBack}>
           Go Back
         </IconButton>
       </ButtonToolbar>

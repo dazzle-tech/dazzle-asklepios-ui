@@ -12,7 +12,6 @@ import TrashIcon from '@rsuite/icons/Trash';
 import { ApLovValues } from '@/types/model-types';
 import { newApLovValues } from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
 
 import {
   addFilterToListRequest,
@@ -21,13 +20,16 @@ import {
 } from '@/utils';
 import MyInput from '@/components/MyInput';
 import { notify } from '@/utils/uiReducerActions';
+import BackButton from '@/components/BackButton/BackButton';
 
 const LovValues = ({ lov, goBack, ...props }) => {
-  const [lovValue, setLovValue] = useState<ApLovValues>({ ...newApLovValues, valueColor: "#ffffff" });
+  const [lovValue, setLovValue] = useState<ApLovValues>({
+    ...newApLovValues,
+    valueColor: '#ffffff'
+  });
   const [lovValuePopupOpen, setLovValuePopupOpen] = useState(false);
 
-   const dispatch = useAppDispatch();
-
+  const dispatch = useAppDispatch();
 
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const [parentLovValueListRequest, setParentLovValueListRequest] = useState<ListRequest>({
@@ -42,13 +44,12 @@ const LovValues = ({ lov, goBack, ...props }) => {
   const { data: parentLovValueListResponse } = useGetLovValuesQuery(parentLovValueListRequest);
 
   useEffect(() => {
-    console.log(lov)
+    console.log(lov);
     if (lov && lov.key) {
       setListRequest(addFilterToListRequest('lov_key', 'match', lov.key, listRequest));
-
     }
     setLovValuePopupOpen(false);
-    setLovValue({ ...newApLovValues, valueColor: "#ffffff" });
+    setLovValue({ ...newApLovValues, valueColor: '#ffffff' });
 
     if (lov.parentLov) {
       // load the master LOV values of the parent LOV
@@ -61,14 +62,12 @@ const LovValues = ({ lov, goBack, ...props }) => {
   useEffect(() => {
     if (lovValueListResponse?.object) {
       const foundDefault = lovValueListResponse.object.find(Default => {
-
         return Default.isdefault === true;
       });
-      console.log(foundDefault?.key)
+      console.log(foundDefault?.key);
       if (foundDefault?.key != null) {
         setIsDefault(true);
-      }
-      else {
+      } else {
         setIsDefault(false);
       }
     }
@@ -86,11 +85,12 @@ const LovValues = ({ lov, goBack, ...props }) => {
 
   const handleLovValueSave = () => {
     setLovValuePopupOpen(false);
-    console.log("LovValue:",lovValue);
-    saveLovValue(lovValue).unwrap().then(()=>{
-      
-       dispatch(notify({ msg: 'Saved Successfully',sev: 'success'}));
-    });
+    console.log('LovValue:', lovValue);
+    saveLovValue(lovValue)
+      .unwrap()
+      .then(() => {
+        dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+      });
   };
 
   useEffect(() => {
@@ -126,7 +126,6 @@ const LovValues = ({ lov, goBack, ...props }) => {
           }
         ]
       });
-
     }
   };
 
@@ -141,9 +140,7 @@ const LovValues = ({ lov, goBack, ...props }) => {
           }
         >
           <ButtonToolbar>
-            <IconButton appearance="ghost" color="cyan" icon={<ArowBackIcon />} onClick={goBack}>
-              Go Back
-            </IconButton>
+            <BackButton onClick={goBack} appearance="ghost" />
             <Divider vertical />
             <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleLovValueNew}>
               Add New
@@ -277,7 +274,6 @@ const LovValues = ({ lov, goBack, ...props }) => {
               <Translate>New/Edit LovValue</Translate>
             </Modal.Title>
             <Modal.Body>
-
               <Form fluid>
                 <MyInput fieldName="valueCode" record={lovValue} setRecord={setLovValue} />
                 <MyInput fieldName="lovDisplayVale" record={lovValue} setRecord={setLovValue} />
@@ -311,13 +307,11 @@ const LovValues = ({ lov, goBack, ...props }) => {
                   setRecord={setLovValue}
                 />
               </Form>
-
               select color
               <Input
                 type="color"
                 value={lovValue.valueColor}
-                onChange={(value) => setLovValue({ ...lovValue, valueColor:value })}
-
+                onChange={value => setLovValue({ ...lovValue, valueColor: value })}
               />
             </Modal.Body>
             <Modal.Footer>
@@ -339,9 +333,11 @@ const LovValues = ({ lov, goBack, ...props }) => {
       )}
 
       {(!lov || !lov.key) && (
-        <IconButton appearance="ghost" color="cyan" icon={<ArowBackIcon />} onClick={goBack}>
-          No Valid Lov Header Selected, Go Back
-        </IconButton>
+        <BackButton
+          text="No Valid Lov Header Selected, Go Back"
+          appearance="ghost"
+          onClick={goBack}
+        />
       )}
     </>
   );

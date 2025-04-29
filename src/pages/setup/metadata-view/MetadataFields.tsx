@@ -3,14 +3,13 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import { Pagination, Panel, Form } from 'rsuite';
 import { useGetMetadataFieldsQuery } from '@/services/setupService';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import MyInput from '@/components/MyInput';
-import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import './styles.less';
 import { ApMetadataField } from '@/types/model-types';
 import { newApMetadataField } from '@/types/model-types-constructor';
+import BackButton from '@/components/BackButton/BackButton';
 const MetadataFields = ({ metadata, goBack }) => {
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const [recordOFSearch, setRecordOFSearch] = useState({ fieldName: '' });
@@ -19,7 +18,7 @@ const MetadataFields = ({ metadata, goBack }) => {
 
   // Fetch metaDataFields list response
   const { data: metadataFieldListResponse, isLoading } = useGetMetadataFieldsQuery(listRequest);
-  
+
   // className for selected row
   const isSelected = rowData => {
     if (rowData && metadataField && rowData.key === metadataField.key) {
@@ -92,15 +91,7 @@ const MetadataFields = ({ metadata, goBack }) => {
           }
         >
           <div className="container-of-header-actions-metadata">
-            <MyButton
-              prefixIcon={() => <ArowBackIcon />}
-              color="var(--deep-blue)"
-              appearance={'ghost'}
-              onClick={goBack}
-              width="82px"
-            >
-              Back
-            </MyButton>
+            <BackButton appearance="ghost" onClick={goBack} text="Back" />
             <Form layout="inline">
               <MyInput
                 fieldName="fieldName"

@@ -11,7 +11,6 @@ import { MdDelete } from 'react-icons/md';
 import { MdModeEdit } from 'react-icons/md';
 import { newApScreen } from '@/types/model-types-constructor';
 import { Form } from 'rsuite';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
 import MyButton from '@/components/MyButton/MyButton';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import MyInput from '@/components/MyInput';
@@ -20,6 +19,7 @@ import * as icons from 'react-icons/fa6';
 import './styles.less';
 import MyTable from '@/components/MyTable';
 import AddEditScreen from './AddEditScreen';
+import BackButton from '@/components/BackButton/BackButton';
 const Screens = ({ module, goBack }) => {
   const [screen, setScreen] = useState<ApScreen>({ ...newApScreen });
   const [screenPopupOpen, setScreenPopupOpen] = useState(false);
@@ -165,15 +165,7 @@ const Screens = ({ module, goBack }) => {
           <div className="container-of-header-actions-screen">
             <div className={'container-of-back-and-search-screen'}>
               <div>
-                <MyButton
-                  prefixIcon={() => <ArowBackIcon />}
-                  color="var(--deep-blue)"
-                  appearance={'ghost'}
-                  onClick={goBack}
-                  width="82px"
-                >
-                  Back
-                </MyButton>
+                <BackButton onClick={goBack} text="Back" appearance="ghost" />
               </div>
               <Form layout="inline">
                 <MyInput
@@ -265,9 +257,7 @@ const Screens = ({ module, goBack }) => {
         </Drawer.Body>
       </Drawer>
       {(!module || !module.key) && (
-        <IconButton appearance="ghost" color="cyan" icon={<ArowBackIcon />} onClick={goBack}>
-          No Valid Module Selected, Go Back
-        </IconButton>
+        <BackButton onClick={goBack} text=" No Valid Module Selected, Go Back" appearance="ghost" />
       )}
     </>
   );

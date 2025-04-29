@@ -2,15 +2,18 @@ import Translate from '@/components/Translate';
 import React, { useEffect, useState } from 'react';
 import { Panel, Toggle, Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { useGetScreenAccessMatrixQuery, useSaveScreenAccessMatrixMutation } from '@/services/setupService';
+import {
+  useGetScreenAccessMatrixQuery,
+  useSaveScreenAccessMatrixMutation
+} from '@/services/setupService';
 import { IconButton } from 'rsuite';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
 import { FaLockOpen } from 'react-icons/fa6';
 import MyButton from '@/components/MyButton/MyButton';
 import './styles.less';
 import MyTable from '@/components/MyTable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import BackButton from '@/components/BackButton/BackButton';
 
 const AccessRoleScreenMatrix = ({ accessRole, goBack }) => {
   const [searchTerm, setSearchTerm] = useState<string>();
@@ -92,8 +95,8 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack }) => {
   const handleSave = async () => {
     if (matrixData) {
       setLoad(true);
-     await saveMatrix(matrixData).unwrap();
-     setLoad(false);
+      await saveMatrix(matrixData).unwrap();
+      setLoad(false);
     }
   };
   // Handle filter by screen name
@@ -157,15 +160,7 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack }) => {
       <div className="container-of-header-actions-matrix">
         <div className="container-of-back-and-search-matrix">
           <div>
-            <MyButton
-              prefixIcon={() => <ArowBackIcon />}
-              color="var(--deep-blue)"
-              appearance={'ghost'}
-              onClick={goBack}
-              width="82px"
-            >
-              Back
-            </MyButton>
+            <BackButton onClick={goBack} text="Back" appearance="ghost" />
           </div>
           <Form layout="inline">
             <MyInput
@@ -191,7 +186,7 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack }) => {
           </MyButton>
         </div>
       </div>
-      <MyTable height={450} data={matrixData} columns={tableColumns} loading={load}/>
+      <MyTable height={450} data={matrixData} columns={tableColumns} loading={load} />
     </Panel>
   );
 };

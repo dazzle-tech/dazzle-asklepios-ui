@@ -17,15 +17,26 @@ import {
   useGetActiveIngredientQuery,
   useSaveActiveIngredientMutation
 } from '@/services/medicationsSetupService';
-import { Accordion, ButtonToolbar, IconButton, Checkbox, TagGroup, Tag, Modal, CheckboxGroup, InputGroup } from 'rsuite';
-import { Block, Check, Edit, PlusRound, ArrowDown, ArrowUp } from '@rsuite/icons';
+import {
+  ButtonToolbar,
+  IconButton,
+} from 'rsuite';
+import { Block, Check } from '@rsuite/icons';
 import PlusIcon from '@rsuite/icons/Plus';
-import { ApActiveIngredient, ApDiagnosticTest, ApDiagnosticTestSpecialPopulation } from '@/types/model-types';
-import { newApActiveIngredient, newApDiagnosticCoding, newApDiagnosticTest, newApDiagnosticTestSpecialPopulation } from '@/types/model-types-constructor';
+import {
+  ApActiveIngredient,
+  ApDiagnosticTest,
+  ApDiagnosticTestSpecialPopulation
+} from '@/types/model-types';
+import {
+  newApActiveIngredient,
+  newApDiagnosticCoding,
+  newApDiagnosticTest,
+  newApDiagnosticTestSpecialPopulation
+} from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useNavigate } from 'react-router-dom';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import Laboratory from './Laboratory';
 import Pathology from './Pathology';
@@ -34,6 +45,7 @@ import Genetics from './Genetics';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import DiagnosticsTest from './DiagnosticsTest';
+import BackButton from '@/components/BackButton/BackButton';
 // import EyeExam from './EyeExam';
 
 const { Column, HeaderCell, Cell } = Table;
@@ -43,31 +55,43 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
   const [basicDataSaved, setBasicDataSaved] = useState(false);
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
 
-  const [diagnosticsTest, setDiagnosticsTest] = useState<ApDiagnosticTest>({ ...newApDiagnosticTest });
-  
+  const [diagnosticsTest, setDiagnosticsTest] = useState<ApDiagnosticTest>({
+    ...newApDiagnosticTest
+  });
+
   const [listCodingRequest, setListCosingRequest] = useState<ListRequest>({
     ...initialListRequest,
-    filters: [{
-      fieldName:'diagnostics_key',
-      operator: 'match',
-      value: diagnosticsTest?.key
-    }]
+    filters: [
+      {
+        fieldName: 'diagnostics_key',
+        operator: 'match',
+        value: diagnosticsTest?.key
+      }
+    ]
   });
 
   const [saveDiagnosticsTest, saveDiagnosticsTestMutation] = useSaveDiagnosticsTestMutation();
   const [saveCoding, saveCodingMutation] = useSaveDiagnosticsCodingMutation();
-  const [removeDiagnosticCoding, removeDiagnosticCodingMutation] = useRemoveDiagnosticsCodingMutation();
-  const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] = useState<ApDiagnosticTestSpecialPopulation>({ ...newApDiagnosticTestSpecialPopulation });
-  const [saveDiagnosticsTestSpecialPopulation, saveDiagnosticsTestpecialPopulationMutation] = useSaveDiagnosticsTestSpecialPopulationMutation();
+  const [removeDiagnosticCoding, removeDiagnosticCodingMutation] =
+    useRemoveDiagnosticsCodingMutation();
+  const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] =
+    useState<ApDiagnosticTestSpecialPopulation>({ ...newApDiagnosticTestSpecialPopulation });
+  const [saveDiagnosticsTestSpecialPopulation, saveDiagnosticsTestpecialPopulationMutation] =
+    useSaveDiagnosticsTestSpecialPopulationMutation();
 
-  const { data: DiagnosticsTestTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_TEST-TYPES');
-  const { data: CodingList,refetch:fetchCoding } = useGetDiagnosticsCodingListQuery({ ...listCodingRequest });
+  const { data: DiagnosticsTestTypeLovQueryResponse } =
+    useGetLovValuesByCodeQuery('DIAG_TEST-TYPES');
+  const { data: CodingList, refetch: fetchCoding } = useGetDiagnosticsCodingListQuery({
+    ...listCodingRequest
+  });
   const { data: CurrencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
   const { data: GenderLovQueryResponse } = useGetLovValuesByCodeQuery('MEDICAL_GNDR');
-  const { data: SpecialPopulationLovQueryResponse } = useGetLovValuesByCodeQuery('SPECIAL_POPULATION_GROUPS');
+  const { data: SpecialPopulationLovQueryResponse } = useGetLovValuesByCodeQuery(
+    'SPECIAL_POPULATION_GROUPS'
+  );
   const { data: AgeGroupLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_GROUPS');
   const { data: LabReagentsLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_REAGENTS');
-   const { data: codeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('INTERNATIONAL_CODES');
+  const { data: codeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('INTERNATIONAL_CODES');
   const [tags, setTags] = useState([]);
   const [typing, setTyping] = React.useState(false);
   const [inputValue, setInputValue] = React.useState('');
@@ -76,9 +100,9 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
   const [genderDetails, setGenderDetails] = useState(false);
   const [specialPopulationDetails, setSpecialPopulationDetails] = useState(false);
   const [ageGroupSpecificDetails, setAgeGroupSpecificDetailsDetails] = useState(false);
-  const[diagnosticCoding,setDiagnosticCoding]=useState({...newApDiagnosticCoding});
+  const [diagnosticCoding, setDiagnosticCoding] = useState({ ...newApDiagnosticCoding });
   const [popupOpen, setPopupOpen] = useState(false);
-  const [componentToDisplay, setComponentToDisplay] = useState("");
+  const [componentToDisplay, setComponentToDisplay] = useState('');
   const removeTag = tag => {
     const nextTags = tags.filter(item => item !== tag);
     setTags(nextTags);
@@ -104,8 +128,8 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
           style={{ width: 70 }}
           value={inputValue}
           onChange={setInputValue}
-        // onBlur={addTag}
-        // onPressEnter={addTag}
+          // onBlur={addTag}
+          // onPressEnter={addTag}
         />
       );
     }
@@ -124,24 +148,25 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
     navigate('/DiagnosticsTest');
   };
 
-
   useEffect(() => {
     if (saveDiagnosticsTestMutation.data) {
       setListRequest({ ...listRequest, timestamp: new Date().getTime() });
       dispatch(notify('Saved Successfully'));
     }
   }, [saveDiagnosticsTestMutation.data]);
- useEffect(()=>{
-  const updatedFilters =[{
-    fieldName:'diagnostics_key',
-    operator: 'match',
-    value: diagnosticsTest?.key
-  }];
-  setListCosingRequest((prevRequest) => ({
-    ...prevRequest,
-    filters: updatedFilters,
-  }));
- },[diagnosticsTest.key])
+  useEffect(() => {
+    const updatedFilters = [
+      {
+        fieldName: 'diagnostics_key',
+        operator: 'match',
+        value: diagnosticsTest?.key
+      }
+    ];
+    setListCosingRequest(prevRequest => ({
+      ...prevRequest,
+      filters: updatedFilters
+    }));
+  }, [diagnosticsTest.key]);
 
   useEffect(() => {
     if (selectedDiagnosticsTest) {
@@ -173,47 +198,39 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
     }
   };
 
-
   const handleSaveBasicInfo = async () => {
     try {
-    const Response=  await saveDiagnosticsTest({
+      const Response = await saveDiagnosticsTest({
         ...diagnosticsTest,
         createdBy: 'Administrator'
       }).unwrap();
       dispatch(notify('Saved Successfully'));
       setBasicDataSaved(true);
-      setDiagnosticsTest({...Response});
+      setDiagnosticsTest({ ...Response });
     } catch (error) {
-      console.error("Error saving diagnostics test:", error);
+      console.error('Error saving diagnostics test:', error);
       dispatch(notify('Error saving diagnostics test'));
     }
     if (diagnosticsTest.testTypeLkey === null) {
       return null;
     }
   };
-  const handleSaveCoding=async()=>{
-    try{
-      await saveCoding({...diagnosticCoding,diagnosticsKey:diagnosticsTest.key}).unwrap();
-      dispatch(notify({msg:'Saved Successfully',sev:'Success'}));
+  const handleSaveCoding = async () => {
+    try {
+      await saveCoding({ ...diagnosticCoding, diagnosticsKey: diagnosticsTest.key }).unwrap();
+      dispatch(notify({ msg: 'Saved Successfully', sev: 'Success' }));
       fetchCoding();
-    }
-    catch{
-
-    }
-  }
+    } catch {}
+  };
   const handleShowComponent = () => {
     switch (matchingItem.data?.object) {
       case 'Laboratory':
-      
         return <Laboratory diagnosticsTest={diagnosticsTest} />;
       case 'Radiology':
-     
         return <Radiology diagnosticsTest={diagnosticsTest} />;
       case 'Pathology':
-       
         return <Pathology diagnosticsTest={diagnosticsTest} />;
       case 'Genetics':
-       
         return <Genetics diagnosticsTest={diagnosticsTest} />;
       // case 'Eye Exam':
       //   console.log("Ete");
@@ -221,8 +238,7 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
       default:
         return <div>No component available</div>;
     }
-
-  }
+  };
 
   return (
     <Panel
@@ -233,11 +249,8 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
       }
     >
       <ButtonToolbar>
-        <IconButton appearance="ghost" color="cyan" icon={<ArowBackIcon />} onClick={goBack}>
-          Go Back
-        </IconButton>
+        <BackButton onClick={goBack} appearance="ghost" />
         <Divider vertical />
-
 
         <IconButton
           onClick={handleSaveBasicInfo}
@@ -245,7 +258,7 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
           color="green"
           icon={<Check />}
         >
-          <Translate> {"Save"} </Translate>
+          <Translate> {'Save'} </Translate>
         </IconButton>
 
         <IconButton appearance="primary" color="red" icon={<Block />}>
@@ -262,7 +275,6 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
           </h5>
         }
       >
-
         <Stack>
           <Stack.Item grow={8}>
             <Form layout="inline" fluid>
@@ -277,9 +289,27 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
                 record={diagnosticsTest}
                 setRecord={setDiagnosticsTest}
               />
-              <MyInput width={250} column fieldName="testName" record={diagnosticsTest} setRecord={setDiagnosticsTest} />
-              <MyInput width={250} column fieldName="internalCode" record={diagnosticsTest} setRecord={setDiagnosticsTest} />
-              <MyInput width={250} column fieldName="price" record={diagnosticsTest} setRecord={setDiagnosticsTest} />
+              <MyInput
+                width={250}
+                column
+                fieldName="testName"
+                record={diagnosticsTest}
+                setRecord={setDiagnosticsTest}
+              />
+              <MyInput
+                width={250}
+                column
+                fieldName="internalCode"
+                record={diagnosticsTest}
+                setRecord={setDiagnosticsTest}
+              />
+              <MyInput
+                width={250}
+                column
+                fieldName="price"
+                record={diagnosticsTest}
+                setRecord={setDiagnosticsTest}
+              />
               <MyInput
                 width={250}
                 column
@@ -326,7 +356,6 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
                   isabled={!editing}
                   setRecord={setDiagnosticsTest}
                 />
-
               )}
               <MyInput
                 width={400}
@@ -339,13 +368,12 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
                 setRecord={setDiagnosticsTest}
               />
               {diagnosticsTest.specialPopulation && (
-                <InlineEdit
-                  placeholder="Special Pouplation"
-                  style={{ width: 200 }}
-
-                >
-                  <TagPicker data={SpecialPopulationLovQueryResponse?.object ?? []}
-                    labelKey="lovDisplayVale" valueKey="key" block
+                <InlineEdit placeholder="Special Pouplation" style={{ width: 200 }}>
+                  <TagPicker
+                    data={SpecialPopulationLovQueryResponse?.object ?? []}
+                    labelKey="lovDisplayVale"
+                    valueKey="key"
+                    block
                     value={diagnosticTestSpecialPopulation.testKey}
                     onChange={e =>
                       setDiagnosticTestSpecialPopulation({
@@ -353,11 +381,9 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
                         testKey: String(e)
                       })
                     }
-
                   />
                 </InlineEdit>
-              )
-              }
+              )}
               <MyInput
                 width={400}
                 column
@@ -369,17 +395,15 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
                 setRecord={setDiagnosticsTest}
               />
               {diagnosticsTest.ageSpecific && (
-
-                <InlineEdit
-                  placeholder="Age Group"
-                  style={{ width: 200 }}
-                >
-                  <TagPicker data={AgeGroupLovQueryResponse?.object ?? []}
-                    labelKey="lovDisplayVale" valueKey="key" block
+                <InlineEdit placeholder="Age Group" style={{ width: 200 }}>
+                  <TagPicker
+                    data={AgeGroupLovQueryResponse?.object ?? []}
+                    labelKey="lovDisplayVale"
+                    valueKey="key"
+                    block
                   />
                 </InlineEdit>
-              )
-              }
+              )}
               <MyInput
                 width={400}
                 column
@@ -389,12 +413,20 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
                 setRecord={setDiagnosticsTest}
               />
               <br />
-
-
             </Form>
-            <div className={diagnosticsTest.key ? "" :"disabled-panel"} style={{ display: 'flex', flexDirection: 'column' ,border:'1px solid #e5e5ea',borderRadius:'10px', width:'450px',paddingLeft:'10px'}}>
-              <Panel style={{ display: 'flex' }} >
-                <Form layout="inline" fluid style={{ display: 'flex' }} >
+            <div
+              className={diagnosticsTest.key ? '' : 'disabled-panel'}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                border: '1px solid #e5e5ea',
+                borderRadius: '10px',
+                width: '450px',
+                paddingLeft: '10px'
+              }}
+            >
+              <Panel style={{ display: 'flex' }}>
+                <Form layout="inline" fluid style={{ display: 'flex' }}>
                   <MyInput
                     column
                     width={150}
@@ -419,36 +451,32 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
                     record={diagnosticCoding}
                     setRecord={setDiagnosticCoding}
                   />
-                  <ButtonToolbar zoom={.8} style={{ padding: '6px', display: 'flex', marginTop: '20px' }}>
+                  <ButtonToolbar
+                    zoom={0.8}
+                    style={{ padding: '6px', display: 'flex', marginTop: '20px' }}
+                  >
                     <IconButton
                       size="xs"
                       onClick={handleSaveCoding}
                       appearance="primary"
                       color="violet"
                       icon={<MdSave />}
-                    >
-
-                    </IconButton>
+                    ></IconButton>
 
                     <IconButton
                       size="xs"
                       appearance="primary"
                       color="blue"
                       onClick={() => {
-                        
-                        removeDiagnosticCoding({ ...diagnosticCoding}).unwrap().then(() => {
-                          fetchCoding();
-                          dispatch(notify("deleted succsessfuly"))
-                        });
-
+                        removeDiagnosticCoding({ ...diagnosticCoding })
+                          .unwrap()
+                          .then(() => {
+                            fetchCoding();
+                            dispatch(notify('deleted succsessfuly'));
+                          });
                       }}
                       icon={<TrashIcon />}
-                    >
-
-                    </IconButton>
-
-
-
+                    ></IconButton>
                   </ButtonToolbar>
                 </Form>
               </Panel>
@@ -466,7 +494,6 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
                   }}
                   headerHeight={33}
                   rowHeight={40}
-
                   data={CodingList?.object ?? []}
                   onRowClick={rowData => {
                     setDiagnosticCoding(rowData);
@@ -475,43 +502,36 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
                 >
                   <Column sortable flexGrow={1}>
                     <HeaderCell align="center">
-
                       <Translate>Code Type</Translate>
                     </HeaderCell>
                     <Cell align="center">
-                      {rowData => rowData.codeTypeLkey ? rowData.codeTypeLvalue.lovDisplayVale : rowData.codeTypeLkey}
-                    </Cell  >
+                      {rowData =>
+                        rowData.codeTypeLkey
+                          ? rowData.codeTypeLvalue.lovDisplayVale
+                          : rowData.codeTypeLkey
+                      }
+                    </Cell>
                   </Column>
                   <Column sortable flexGrow={2}>
                     <HeaderCell align="center">
-
                       <Translate>international Code</Translate>
                     </HeaderCell>
-                    <Cell align="center">
-                      {rowData => rowData.internationalCodeKey}
-                    </Cell  >
+                    <Cell align="center">{rowData => rowData.internationalCodeKey}</Cell>
                   </Column>
-
-
                 </Table>
               </div>
             </div>
           </Stack.Item>
         </Stack>
-
       </Panel>
       {diagnosticsTest.key && (
-        <Panel >
+        <Panel>
           {/* {console.log("the value is " + handleShowComponent() + basicDataSaved)} */}
           {handleShowComponent()}
         </Panel>
       )}
     </Panel>
-
   );
-
 };
 
 export default NewDiagnosticsTest;
-
-

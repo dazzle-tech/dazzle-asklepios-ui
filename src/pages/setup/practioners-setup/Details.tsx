@@ -1,39 +1,33 @@
-import React, { useEffect, useState } from "react";
-import { Input, Modal, Pagination, Panel, Table, TagPicker, Radio, RadioGroup, PanelGroup, Placeholder, InputGroup, Drawer } from 'rsuite';
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import { Button, ButtonToolbar, IconButton } from 'rsuite';
-import { Form, Stack, Divider } from 'rsuite';
+import React, { useEffect, useState } from 'react';
+import {
+  Input,
+  Pagination,
+  Panel,
+  Table,
+  InputGroup,
+  Drawer
+} from 'rsuite';
+import { ButtonToolbar, IconButton } from 'rsuite';
+import { Form } from 'rsuite';
 import Translate from '@/components/Translate';
 const { Column, HeaderCell, Cell } = Table;
-import ArowBackIcon from '@rsuite/icons/ArowBack';
-import ReloadIcon from '@rsuite/icons/Reload';
-import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import TrashIcon from '@rsuite/icons/Trash';
-import { Block, Check, DocPass, Edit, History, Icon, PlusRound, Detail } from '@rsuite/icons';
+import { Check, Edit } from '@rsuite/icons';
 import MyInput from '@/components/MyInput';
-import Practitioners from "./Practitioners";
-import {
-  newApPractitioner,
-  newApUser
-} from '@/types/model-types-constructor';
+import { newApPractitioner } from '@/types/model-types-constructor';
 import {
   useGetUsersQuery,
   useGetLovValuesByCodeQuery,
-  useRemoveUserMutation,
   useSavePractitionerMutation,
   useGetUserRecordQuery
-
 } from '@/services/setupService';
-import PageIcon from '@rsuite/icons/Page';
-import { initialListRequest, ListRequest } from "@/types/types";
+import { initialListRequest, ListRequest } from '@/types/types';
 import SearchIcon from '@rsuite/icons/Search';
-import { useGetPatientsQuery } from "@/services/patientService";
-import { ApPractitioner, ApUser } from "@/types/model-types";
+import { ApPractitioner } from '@/types/model-types';
 import UserChangeIcon from '@rsuite/icons/UserChange';
-import { conjureValueBasedOnKeyFromList } from "@/utils";
+import { conjureValueBasedOnKeyFromList } from '@/utils';
+import BackButton from '@/components/BackButton/BackButton';
 
-
-const Details = (props) => {
+const Details = props => {
   const [editing, setEditing] = useState(false);
 
   const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
@@ -46,10 +40,8 @@ const Details = (props) => {
   const [searchKeyword, setSearchKeyword] = useState('');
 
   const [listRequest, setListRequest] = useState<ListRequest>({
-    ...initialListRequest
-    ,
-    ignore: !searchKeyword
-      || searchKeyword.length < 3
+    ...initialListRequest,
+    ignore: !searchKeyword || searchKeyword.length < 3
   });
   const [practitioner, setPractitioner] = useState<ApPractitioner>({ ...newApPractitioner });
   const { data: getOneUser } = useGetUserRecordQuery(
@@ -57,10 +49,9 @@ const Details = (props) => {
     { skip: !practitioner?.linkedUser }
   );
 
-
   useEffect(() => {
-    console.log(getOneUser)
-  }, [getOneUser])
+    console.log(getOneUser);
+  }, [getOneUser]);
 
   const [savePractitioner, savePractitionerMutation] = useSavePractitionerMutation();
   const { data: userListResponse } = useGetUsersQuery(initialListRequest);
@@ -68,26 +59,26 @@ const Details = (props) => {
 
   useEffect(() => {
     if (props.newPrac === false) {
-      setPractitioner(props.practitionerData)
+      setPractitioner(props.practitionerData);
     }
-  }, [props.practitionerData])
+  }, [props.practitionerData]);
 
   useEffect(() => {
     if (practitioner.linkedUser) {
-      console.log(practitioner.linkedUser)
+      console.log(practitioner.linkedUser);
     }
-  }, [practitioner])
-
+  }, [practitioner]);
 
   const handleSave = () => {
-
-
-    savePractitioner(practitioner).unwrap().then(() => {
-      console.log(getOneUser)
-
-    }).then(props.refetchPractitioners).then(() => {
-      setEditing(false)
-    });
+    savePractitioner(practitioner)
+      .unwrap()
+      .then(() => {
+        console.log(getOneUser);
+      })
+      .then(props.refetchPractitioners)
+      .then(() => {
+        setEditing(false);
+      });
   };
 
   useEffect(() => {
@@ -97,12 +88,12 @@ const Details = (props) => {
   }, [savePractitionerMutation.data]);
 
   useEffect(() => {
-    console.log(props.practitionerData)
-  }, [props.practitionerData])
+    console.log(props.practitionerData);
+  }, [props.practitionerData]);
 
   const search = () => {
     // setPatientSearchTarget(target);
-    console.log(searchKeyword.length)
+    console.log(searchKeyword.length);
     if (searchKeyword && searchKeyword.length >= 3) {
       setSearchResultVisible(true);
 
@@ -113,58 +104,78 @@ const Details = (props) => {
           {
             operator: 'containsIgnoreCase',
             value: searchKeyword,
-            fieldName: "full_name"
-          },
+            fieldName: 'full_name'
+          }
         ]
       });
     }
   };
 
   useEffect(() => {
-    if (props.practitioner)
-      console.log(props.practitioner)
-  }, [props.practitioner])
-
-
+    if (props.practitioner) console.log(props.practitioner);
+  }, [props.practitioner]);
 
   useEffect(() => {
     console.log(searchKeyword);
-  }, [searchKeyword])
+  }, [searchKeyword]);
 
-  const handleSelectLinkedUser = (userData) => {
-    setPractitioner({ ...practitioner, linkedUser: userData.key })
-    console.log({ ...practitioner, linkedUser: userData.key })
+  const handleSelectLinkedUser = userData => {
+    setPractitioner({ ...practitioner, linkedUser: userData.key });
+    console.log({ ...practitioner, linkedUser: userData.key });
+  };
 
-  }
-
-
-  const InputForms = (editing) => {
+  const InputForms = editing => {
     return (
       <div>
-        <Form layout='inline' fluid>
-          <MyInput disabled={!editing} column fieldName="practitionerFirstName" required
-            record={practitioner} setRecord={setPractitioner}
+        <Form layout="inline" fluid>
+          <MyInput
+            disabled={!editing}
+            column
+            fieldName="practitionerFirstName"
+            required
+            record={practitioner}
+            setRecord={setPractitioner}
           />
 
-
-          <MyInput disabled={!editing} column fieldName="practitionerLastName" required
-            record={practitioner} setRecord={setPractitioner}
+          <MyInput
+            disabled={!editing}
+            column
+            fieldName="practitionerLastName"
+            required
+            record={practitioner}
+            setRecord={setPractitioner}
           />
 
-          <MyInput disabled={true} column fieldName="practitionerFullName" required
-            record={practitioner} setRecord={setPractitioner}
+          <MyInput
+            disabled={true}
+            column
+            fieldName="practitionerFullName"
+            required
+            record={practitioner}
+            setRecord={setPractitioner}
           />
-
-
         </Form>
 
+        <Form layout="inline" fluid>
+          <MyInput
+            disabled={!editing}
+            column
+            fieldName="practitionerEmail"
+            required
+            record={practitioner}
+            setRecord={setPractitioner}
+          />
+          <MyInput
+            disabled={!editing}
+            column
+            fieldName="practitionerPhoneNumber"
+            required
+            record={practitioner}
+            setRecord={setPractitioner}
+          />
 
-
-        <Form layout='inline' fluid>
-          <MyInput disabled={!editing} column fieldName="practitionerEmail" required record={practitioner} setRecord={setPractitioner} />
-          <MyInput disabled={!editing} column fieldName="practitionerPhoneNumber" required record={practitioner} setRecord={setPractitioner} />
-
-          <MyInput disabled={!editing}
+          <MyInput
+            disabled={!editing}
             column
             fieldLabel="sex at birth"
             fieldType="select"
@@ -172,20 +183,20 @@ const Details = (props) => {
             selectData={gndrLovQueryResponse?.object ?? []}
             selectDataLabel="lovDisplayVale"
             selectDataValue="key"
-            record={practitioner} setRecord={setPractitioner} />
+            record={practitioner}
+            setRecord={setPractitioner}
+          />
 
-
-          <MyInput disabled={!editing}
+          <MyInput
+            disabled={!editing}
             column
             fieldType="date"
             fieldLabel="DOB"
             fieldName="dob"
-            record={practitioner} setRecord={setPractitioner} />
-
-
-
+            record={practitioner}
+            setRecord={setPractitioner}
+          />
         </Form>
-
 
         <Form
           // onClick={() => {
@@ -197,27 +208,28 @@ const Details = (props) => {
 
           //   console.log(filteredFacilities); // This will log the filtered facilities based on user._facilitiesInput
           // }}
-          layout='inline'
+          layout="inline"
           fluid
         >
-
-
-
-          <MyInput disabled={!editing}
+          <MyInput
+            disabled={!editing}
             column
             fieldLabel="job role"
             fieldType="select"
             fieldName="jobRoleLkey"
             selectData={
-              // jobRoleLovQueryResponse?.object ?? 
-              []}
+              // jobRoleLovQueryResponse?.object ??
+              []
+            }
             selectDataLabel="lovDisplayVale"
             selectDataValue="key"
-            record={practitioner} setRecord={setPractitioner} />
+            record={practitioner}
+            setRecord={setPractitioner}
+          />
 
-
-          <Form layout='inline' fluid>
-            <MyInput disabled={!editing}
+          <Form layout="inline" fluid>
+            <MyInput
+              disabled={!editing}
               column
               fieldLabel="Speciality"
               fieldType="select"
@@ -225,9 +237,12 @@ const Details = (props) => {
               selectData={specialityLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
               selectDataValue="key"
-              record={practitioner} setRecord={setPractitioner} />
+              record={practitioner}
+              setRecord={setPractitioner}
+            />
 
-            <MyInput disabled={!editing}
+            <MyInput
+              disabled={!editing}
               column
               fieldLabel="Sub Speciality"
               fieldType="select"
@@ -235,62 +250,76 @@ const Details = (props) => {
               selectData={subSpecialityLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
               selectDataValue="key"
-              record={practitioner} setRecord={setPractitioner} />
+              record={practitioner}
+              setRecord={setPractitioner}
+            />
 
-            <MyInput disabled={!editing}
+            <MyInput
+              disabled={!editing}
               column
               fieldLabel="Default Medical License"
               fieldName="defaultMedicalLicense"
-              record={practitioner} setRecord={setPractitioner}
+              record={practitioner}
+              setRecord={setPractitioner}
             />
 
-            <MyInput disabled={!editing}
+            <MyInput
+              disabled={!editing}
               column
               fieldType="date"
               fieldLabel="Valid Until"
               fieldName="defaultLicenseValidUntil"
-              record={practitioner} setRecord={setPractitioner} />
+              record={practitioner}
+              setRecord={setPractitioner}
+            />
 
-
-            <MyInput disabled={!editing}
+            <MyInput
+              disabled={!editing}
               column
               fieldLabel="Secondary License"
               fieldName="secondaryMedicalLicense"
-              record={practitioner} setRecord={setPractitioner} />
+              record={practitioner}
+              setRecord={setPractitioner}
+            />
 
-            <MyInput disabled={!editing}
+            <MyInput
+              disabled={!editing}
               column
               fieldType="date"
               fieldLabel="Valid Until"
               fieldName="secondaryLicenseValidUntil"
-              record={practitioner} setRecord={setPractitioner} />
+              record={practitioner}
+              setRecord={setPractitioner}
+            />
 
-            <MyInput disabled={!editing}
+            <MyInput
+              disabled={!editing}
               column
               fieldLabel="Educational Level"
               fieldType="select"
               fieldName="educationalLevel"
-              selectData={eduLvlLovQueryResponse?.object ??
-                []}
+              selectData={eduLvlLovQueryResponse?.object ?? []}
               selectDataLabel="lovDisplayVale"
               selectDataValue="key"
-              record={practitioner} setRecord={setPractitioner} />
-
+              record={practitioner}
+              setRecord={setPractitioner}
+            />
           </Form>
 
-          <MyInput disabled={!editing}
+          <MyInput
+            disabled={!editing}
             width={165}
             column
             fieldLabel="Appointable"
             fieldType="checkbox"
             fieldName="appointable"
-            record={practitioner} setRecord={setPractitioner}
-
+            record={practitioner}
+            setRecord={setPractitioner}
           />
         </Form>
       </div>
-    )
-  }
+    );
+  };
 
   useEffect(() => {
     setLinkedUserName(
@@ -298,37 +327,31 @@ const Details = (props) => {
         userListResponse?.object ?? [],
         practitioner?.linkedUser,
         'fullName'
-      ))
-
-  }, [practitioner])
+      )
+    );
+  }, [practitioner]);
 
   const changeLinkedUser = () => {
-    setPractitioner({ ...practitioner, linkedUser: null })
-
-  }
+    setPractitioner({ ...practitioner, linkedUser: null });
+  };
 
   const handleBack = () => {
     setPractitioner(newApPractitioner);
     props.back();
-  }
-
+  };
 
   return (
-
-    <div style={{ height: "900px" }}>
-      <Panel style={{ background: 'white' }}
+    <div style={{ height: '900px' }}>
+      <Panel
+        style={{ background: 'white' }}
         header={
-          <p className="title" style={{ marginBottom: "10px" }}>
+          <p className="title" style={{ marginBottom: '10px' }}>
             <Translate>practitioner Details</Translate>
           </p>
         }
       >
         <ButtonToolbar>
-          <IconButton appearance="primary" icon={<ArowBackIcon />}
-            onClick={handleBack}
-          >
-            Back
-          </IconButton>
+          <BackButton text="Back" onClick={handleBack} />
           <IconButton
             //   disabled={selectedLicense}
             appearance="primary"
@@ -349,51 +372,48 @@ const Details = (props) => {
             <Translate>Save</Translate>
           </IconButton>
 
-          {
-            practitioner?.linkedUser ?
-              <div style={{ marginBottom: '10px' }}>
-                <label htmlFor="searchInput" style={{ display: 'block', marginBottom: '7px', fontWeight: 'bold' }} >
-                  Linked Users
-                </label>
-                <InputGroup inside style={{ width: '350px', direction: 'ltr' }}>
-                  <Input
-                    id="searchInput"
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        search();
-                      }
-                    }}
-                    placeholder="Search Users to link"
-                    value={practitioner?.linkedUser ? linkedUserName : searchKeyword}
-                    onChange={e => setSearchKeyword(e)}
-                  />
-                  <InputGroup.Button onClick={() => changeLinkedUser()}>
-                    <UserChangeIcon style={{ scale: "1.2" }} />
-                  </InputGroup.Button>
-                </InputGroup>
-              </div>
-
-              :
-
+          {practitioner?.linkedUser ? (
+            <div style={{ marginBottom: '10px' }}>
+              <label
+                htmlFor="searchInput"
+                style={{ display: 'block', marginBottom: '7px', fontWeight: 'bold' }}
+              >
+                Linked Users
+              </label>
               <InputGroup inside style={{ width: '350px', direction: 'ltr' }}>
                 <Input
+                  id="searchInput"
                   onKeyDown={e => {
                     if (e.key === 'Enter') {
                       search();
                     }
                   }}
-                  placeholder={'Search Users to link '}
-                  value={searchKeyword}
+                  placeholder="Search Users to link"
+                  value={practitioner?.linkedUser ? linkedUserName : searchKeyword}
                   onChange={e => setSearchKeyword(e)}
                 />
-                <InputGroup.Button onClick={() => search()} >
-                  <SearchIcon />
+                <InputGroup.Button onClick={() => changeLinkedUser()}>
+                  <UserChangeIcon style={{ scale: '1.2' }} />
                 </InputGroup.Button>
               </InputGroup>
-
-          }
-
-
+            </div>
+          ) : (
+            <InputGroup inside style={{ width: '350px', direction: 'ltr' }}>
+              <Input
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    search();
+                  }
+                }}
+                placeholder={'Search Users to link '}
+                value={searchKeyword}
+                onChange={e => setSearchKeyword(e)}
+              />
+              <InputGroup.Button onClick={() => search()}>
+                <SearchIcon />
+              </InputGroup.Button>
+            </InputGroup>
+          )}
         </ButtonToolbar>
         <hr />
 
@@ -403,7 +423,9 @@ const Details = (props) => {
           size="lg"
           placement={'left'}
           open={searchResultVisible}
-          onClose={() => { setSearchResultVisible(false) }}
+          onClose={() => {
+            setSearchResultVisible(false);
+          }}
         >
           <Drawer.Header>
             <Drawer.Title>User List - Search Results</Drawer.Title>
@@ -443,11 +465,9 @@ const Details = (props) => {
                   genderLkey: rowData.sexAtBirthLkey,
                   jobRole: rowData.jobRoleKey,
                   dob: rowData.dob
-                })
+                });
               }}
-              data=
-              {userListResponse?.object ??
-                []}
+              data={userListResponse?.object ?? []}
             >
               <Column sortable flexGrow={3}>
                 <HeaderCell>
@@ -463,7 +483,6 @@ const Details = (props) => {
                 </HeaderCell>
                 <Cell dataKey="phoneNumber" />
               </Column>
-
             </Table>
             <div style={{ padding: 20 }}>
               <Pagination
@@ -487,26 +506,15 @@ const Details = (props) => {
                 }}
                 total={
                   // patientListResponse?.extraNumeric ??
-                  0}
+                  0
+                }
               />
             </div>
           </Drawer.Body>
         </Drawer>
-
-
       </Panel>
     </div>
-
-
-
-
-
-
-
-
-
-  )
+  );
 };
-
 
 export default Details;

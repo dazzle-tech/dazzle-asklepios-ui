@@ -1,8 +1,7 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Input, Modal, Pagination, Panel, Table, Container, Row, Col, Nav } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
+import { Panel} from 'rsuite';
 import Substitutes from './Substitutes';
 import {
   useGetLovValuesByCodeQuery,
@@ -20,12 +19,9 @@ import { newApActiveIngredient, newApGenericMedication } from '@/types/model-typ
 import { Form, Stack, Divider } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { useNavigate } from 'react-router-dom';
-import ArowBackIcon from '@rsuite/icons/ArowBack';
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import ActiveIngredient from './ActiveIngredients';
-import UOM from './UOM';
-import Price from './Price';
+import BackButton from '@/components/BackButton/BackButton';
 
 const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...props}) => {
   const [genericMedication, setGenericMedication] = useState<ApGenericMedication>({ ...newApGenericMedication });
@@ -93,9 +89,7 @@ const NewEditGenericMedication = ({ selectedGenericMedication,  goBack , ...prop
       }
     >
       <ButtonToolbar>
-        <IconButton appearance="ghost" color="cyan" icon={<ArowBackIcon />} onClick={goBack}>
-          Go Back
-        </IconButton>
+        <BackButton onClick={goBack}/>
         <Divider vertical />
         <IconButton
               appearance="primary"
