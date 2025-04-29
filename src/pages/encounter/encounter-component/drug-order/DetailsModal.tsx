@@ -18,6 +18,7 @@ import MyInput from "@/components/MyInput";
 import PlusIcon from '@rsuite/icons/Plus';
 import { newApDrugOrderMedications } from "@/types/model-types-constructor";
 import { useSaveDrugOrderMedicationMutation } from "@/services/encounterService";
+import MyLabel from "@/components/MyLabel";
 const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drugKey, editing, patient, encounter, medicRefetch }) => {
     const dispatch = useAppDispatch();
     const [searchKeyword, setSearchKeyword] = useState('');
@@ -82,6 +83,31 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
         }
 
     }, [drugKey]);
+  
+    
+     useEffect(() => {
+            if (searchKeywordicd.trim() !== "") {
+                setIcdListRequest(
+                    {
+                        ...initialListRequest,
+                        filterLogic: 'or',
+                        filters: [
+                            {
+                                fieldName: 'icd_code',
+                                operator: 'containsIgnoreCase',
+                                value: searchKeywordicd
+                            },
+                            {
+                                fieldName: 'description',
+                                operator: 'containsIgnoreCase',
+                                value: searchKeywordicd
+                            }
+    
+                        ]
+                    }
+                );
+            }
+        }, [searchKeywordicd]);
     useEffect(() => {
 
         setEditDuration(orderMedication.chronicMedication);
@@ -288,7 +314,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                                                         onClick={() => handleItemClick(Generic)}
 
                                                     >
-                                                        <span style={{ marginRight: "15px" }}>
+                                                        <span >
                                                             {[Generic.genericName,
                                                             Generic.dosageFormLvalue?.lovDisplayVale,
                                                             Generic.manufacturerLvalue?.lovDisplayVale,
@@ -421,7 +447,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                                 </div>
                             </div>
                             <Translate>Indication</Translate>
-                            <div className="fields-div" style={{ display: 'flex', flexDirection: 'row', gap: '10px' }}>
+                            <div className="fields-div" style={{ gap: '10px' }}>
                                 <div className="child-div"> <InputGroup inside >
                                     <Input
                                         disabled={drugKey != null ? editing : true}
@@ -447,8 +473,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                                                         setSearchKeywordicd("");
                                                     }}
                                                 >
-                                                    <span style={{ marginRight: "19px" }}>{mod.icdCode}</span>
-                                                    <span>{mod.description}</span>
+                                                     {mod.icdCode} {" - "} {mod.description}
                                                 </Dropdown.Item>
                                             ))}
                                         </Dropdown.Menu>
@@ -479,7 +504,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                                 </div>
                             </div>
                             <div className="fields-div">
-                                <Form fluid style={{ width: '100%' }}  >
+                                <Form fluid className="fill-width"  >
                                     <MyInput
 
                                         disabled={drugKey != null ? editing : true}
@@ -497,7 +522,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                                 </Form>
                             </div>
                             <div className="fields-div">
-                                <Form fluid style={{ width: '100%' }}  >
+                                <Form fluid className="fill-width" >
                                     <MyInput
 
                                         disabled={drugKey != null ? editing : true}
@@ -515,7 +540,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                                 </Form>
                             </div>
                             <div className="fields-div">
-                                <Form fluid style={{ width: '100%' }}  >
+                                <Form fluid className="fill-width" >
                                     <MyInput
                                         width="100%"
                                         disabled={drugKey != null ? editing : true}
@@ -634,7 +659,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                             </Row>
 
                             <div className="fields-div">
-                                <Form fluid style={{ width: '100%' }}   >
+                                <Form fluid className="fill-width"   >
                                     <MyInput
 
                                         disabled={drugKey != null ? editing : true}
@@ -650,7 +675,11 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
 
                             </div>
                             <Row>
-                                <Text style={{ marginBottom: "10px" }}>Parameters to monitor</Text>
+                                <Row>
+                                <MyLabel label="Parameters to monitor"  />
+                                </Row>
+                                <Row></Row>
+                                <Row>
                                 <TagGroup className='taggroup-style'>
                                     {tags.map((item, index) => (
                                         <Tag key={index} closable onClose={() => removeTag(item)}>
@@ -659,6 +688,8 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                                     ))}
                                     {renderInput()}
                                 </TagGroup>
+                                </Row>
+                              
                             </Row>
                             <Row>
                                 <Col md={12}>
@@ -693,7 +724,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                             </Row>
                             <Row>
                                 <Col md={24}>
-                                    <Form fluid style={{ width: '100%' }} layout="vertical" >
+                                    <Form fluid className="fill-width" layout="vertical" >
                                         <MyInput
 
                                             disabled={drugKey != null ? editing : true}

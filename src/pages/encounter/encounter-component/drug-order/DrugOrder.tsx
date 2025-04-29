@@ -1,118 +1,51 @@
-import React, { useEffect, useState } from 'react';
+import CancellationModal from '@/components/CancellationModal';
+import MyButton from '@/components/MyButton/MyButton';
+import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
-import './styles.less';
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import PageIcon from '@rsuite/icons/Page';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { conjureValueBasedOnKeyFromList } from '@/utils';
-import { faBroom } from '@fortawesome/free-solid-svg-icons';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
-import DocPassIcon from '@rsuite/icons/DocPass';
+import { useAppDispatch } from '@/hooks';
 import {
-    InputGroup,
-    Form,
-    Input,
-    Panel,
-    Text,
-    Checkbox,
-    Dropdown,
-    Button,
-    IconButton,
-    Table,
-    Modal,
-    Stack,
-    Divider,
-    Radio,
-    RadioGroup,
-    TagInput,
-    TagGroup,
-    SelectPicker,
-    Tag,
-    DatePicker,
-    Row,
-    Col,
-
-
-
-} from 'rsuite';
-import { List } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import { useGetGenericMedicationActiveIngredientQuery, useGetActiveIngredientQuery } from '@/services/medicationsSetupService';
-import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
-import CheckIcon from '@rsuite/icons/Check';
-import PlusIcon from '@rsuite/icons/Plus';
-import OthersIcon from '@rsuite/icons/Others';
-import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
-import BlockIcon from '@rsuite/icons/Block';
-import SearchIcon from '@rsuite/icons/Search';
-import MyInput from '@/components/MyInput';
-import { initialListRequest, ListRequest } from '@/types/types';
-import {
-    useGetGenericMedicationQuery,
-    useGetGenericMedicationWithActiveIngredientQuery,
-    useGetLinkedBrandQuery
-} from '@/services/medicationsSetupService';
-import {
-    useGetLovValuesByCodeQuery,
-} from '@/services/setupService';
-import {
-    useGetDrugOrderQuery,
-    useSaveDrugOrderMutation,
     useGetDrugOrderMedicationQuery,
+    useGetDrugOrderQuery,
     useSaveDrugOrderMedicationMutation,
-
+    useSaveDrugOrderMutation,
 } from '@/services/encounterService';
 import {
-    useGetAllergiesQuery
-} from '@/services/observationService';
-import {
-    useGetDepartmentsQuery,
-
-} from '@/services/setupService';
-import { notify } from '@/utils/uiReducerActions';
+    useGetGenericMedicationWithActiveIngredientQuery
+} from '@/services/medicationsSetupService';
 import { ApDrugOrderMedications } from '@/types/model-types';
 import { newApDrugOrder, newApDrugOrderMedications } from '@/types/model-types-constructor';
-import { filter } from 'lodash';
+import { initialListRequest } from '@/types/types';
+import { notify } from '@/utils/uiReducerActions';
+import { faBroom } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import BlockIcon from '@rsuite/icons/Block';
+import CheckIcon from '@rsuite/icons/Check';
+import DocPassIcon from '@rsuite/icons/DocPass';
+import PlusIcon from '@rsuite/icons/Plus';
+import React, { useEffect, useState } from 'react';
 import {
-    useGetIcdListQuery,
-} from '@/services/setupService';
-import './styles.less';
-import Substitues from './Substitutes';
-import CancellationModal from '@/components/CancellationModal';
-import InfoCardList from '@/components/InfoCardList';
+    Checkbox,
+    Divider,
+    SelectPicker,
+    Table,
+    Text
+} from 'rsuite';
 import DetailsModal from './DetailsModal';
-import MyTable from '@/components/MyTable';
-import MyButton from '@/components/MyButton/MyButton';
+import './styles.less';
+const { Column, HeaderCell, Cell } = Table;
 const DrugOrder = ({ edit, patient, encounter }) => {
 
     const dispatch = useAppDispatch();
     const [drugKey, setDrugKey] = useState(null);
     const [searchKeyword, setSearchKeyword] = useState('');
-    const [searchKeywordicd, setSearchKeywordicd] = useState('');
-    const [tags, setTags] = React.useState([]);
     const [showCanceled, setShowCanceled] = useState(true);
     const [editing, setEditing] = useState(false);
-    const [typing, setTyping] = React.useState(false);
-    const [inputValue, setInputValue] = React.useState('');
-    const [selectedRows, setSelectedRows] = useState([]);
     const [selectedGeneric, setSelectedGeneric] = useState(null);
-    const [filteredList, setFilteredList] = useState([]);
     const [isdraft, setIsDraft] = useState(false);
-    const [selectedFirstDate, setSelectedFirstDate] = useState(null);
-    const [editDuration, setEditDuration] = useState(false);
-    const [adminInstructions, setAdminInstructions] = useState("");
-    const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
 
-    const [indicationsIcd, setIndicationsIcd] = useState({ indicationIcd: null });
+    const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
     const [openDetailsModel, setOpenDetailsModel] = useState(false);
-    const [indicationsDescription, setindicationsDescription] = useState<string>('');
-    const [listGenericRequest, setListGenericRequest] = useState<ListRequest>({ ...initialListRequest });
     const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
-    const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ORDER_ADMIN_NSTRUCTIONS');
-    const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
 
     const { data: orders, refetch: ordRefetch } = useGetDrugOrderQuery({
         ...initialListRequest,
@@ -130,40 +63,6 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
         ],
     });
-    const { data: departmentListResponse } = useGetDepartmentsQuery({
-        ...initialListRequest
-        ,
-        filters: [
-
-            {
-                fieldName: "department_type_lkey",
-                operator: "match",
-                value: '5673990729647012',
-            },
-
-
-        ]
-    });
-    const { data: activeIngredientListResponseData } = useGetActiveIngredientQuery({ ...initialListRequest });
-    const [listGinricRequest, setListGinricRequest] = useState({
-        ...initialListRequest,
-        sortType: 'desc'
-        ,
-        filters: [
-            {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined
-            }
-            ,
-            {
-                fieldName: 'generic_medication_key',
-                operator: 'match',
-                value: selectedGeneric?.key
-
-            }
-        ]
-    });
     const [orderMedication, setOrderMedication] = useState<ApDrugOrderMedications>(
         {
             ...newApDrugOrderMedications,
@@ -173,11 +72,9 @@ const DrugOrder = ({ edit, patient, encounter }) => {
         });
     const [saveDrugorder, saveDrugorderMutation] = useSaveDrugOrderMutation();
     const [saveDrugorderMedication, saveDrugorderMedicationMutation] = useSaveDrugOrderMedicationMutation();
-    const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({ ...listGinricRequest });
-    const { data: ActiveIngredientListResponseData, refetch: refetchGen } = useGetGenericMedicationActiveIngredientQuery({ ...initialListRequest });
-    const { data: orderMedications, refetch: medicRefetch } = useGetDrugOrderMedicationQuery({
+    const [listOrderMedicationsRequest, setListOrderMedicationsRequest] = useState({
         ...initialListRequest,
-
+       
         filters: [
             {
                 fieldName: "drug_order_key",
@@ -191,124 +88,19 @@ const DrugOrder = ({ edit, patient, encounter }) => {
             }
         ],
     });
-    const { data: lisOfLinkedBrand } = useGetLinkedBrandQuery(selectedGeneric?.key, { skip: selectedGeneric?.key == null });
+    const { data: orderMedications, refetch: medicRefetch } = useGetDrugOrderMedicationQuery({...listOrderMedicationsRequest});
     const filteredorders = orders?.object?.filter(
         (item) => item.statusLkey === "1804482322306061"
     ) ?? [];
-    const [icdListRequest, setIcdListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined
-            }
-        ],
-    });
-    const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
-    const modifiedData = (icdListResponseLoading?.object ?? []).map(item => ({
-        ...item,
-        combinedLabel: `${item.icdCode} - ${item.description}`,
-    }));
+
+
+
     const isSelected = rowData => {
         if (rowData && orderMedication && rowData.key === orderMedication.key) {
-            return 'selected-row';
+          return 'selected-row';
         } else return '';
-    };
-    useEffect(() => {
-        if (searchKeyword.trim() !== "") {
-            setListGenericRequest({
-                ...listGenericRequest,
-                filters: [
-                    {
-                        fieldName: "generic_name",
-                        operator: "containsIgnoreCase",
-                        value: searchKeyword,
-                    },
-                    {
-                        fieldName: 'deleted_at',
-                        operator: 'isNull',
-                        value: undefined
-                    }
-                ],
-            });
-        }
-    }, [searchKeyword]);
-
-    useEffect(() => {
-        if (searchKeywordicd.trim() !== "") {
-            setIcdListRequest(
-                {
-                    ...initialListRequest,
-                    filterLogic: 'or',
-                    filters: [
-                        {
-                            fieldName: 'icd_code',
-                            operator: 'containsIgnoreCase',
-                            value: searchKeywordicd
-                        },
-                        {
-                            fieldName: 'description',
-                            operator: 'containsIgnoreCase',
-                            value: searchKeywordicd
-                        }
-
-                    ]
-                }
-            );
-        }
-    }, [searchKeywordicd]);
-    useEffect(() => {
-
-        const updatedFilters = [
-            {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined
-            }
-            ,
-
-            {
-                fieldName: 'generic_medication_key',
-                operator: 'match',
-                value: selectedGeneric?.key || null
-            }
-        ];
-        console.log(updatedFilters);
-        setListGinricRequest((prevRequest) => ({
-
-            ...prevRequest,
-            filters: updatedFilters,
-
-        }));
-    }, [selectedGeneric]);
-
-    useEffect(() => {
-        refetchGenric().then(() => {
-
-        })
-    }, [listGinricRequest]);
-    useEffect(() => {
-        if (orderMedication.administrationInstructions != null) {
-
-            console.log(orderMedication.administrationInstructions)
-            setAdminInstructions(prevadminInstructions =>
-                prevadminInstructions ? `${prevadminInstructions}, ${administrationInstructionsLovQueryResponse?.object?.find(
-                    item => item.key === orderMedication.administrationInstructions
-                )?.lovDisplayVale}` :
-                    administrationInstructionsLovQueryResponse?.object?.find(
-                        item => item.key === orderMedication.administrationInstructions
-                    )?.lovDisplayVale
-            );
-        }
-
-        setOrderMedication({ ...orderMedication, administrationInstructions: null })
-    }, [orderMedication.administrationInstructions])
-    useEffect(() => {
-
-        setEditDuration(orderMedication.chronicMedication);
-        setOrderMedication({ ...orderMedication, duration: null, durationTypeLkey: null })
-    }, [orderMedication.chronicMedication]);
+      };
+  
     useEffect(() => {
         if (orders?.object) {
             const foundOrder = orders.object.find(order => {
@@ -339,41 +131,8 @@ const DrugOrder = ({ edit, patient, encounter }) => {
         }
 
     }, [orders, drugKey]);
-    useEffect(() => {
-        if (indicationsIcd.indicationIcd != null || indicationsIcd.indicationIcd != "") {
 
-            setindicationsDescription(prevadminInstructions => {
-                const currentIcd = icdListResponseLoading?.object?.find(
-                    item => item.key === indicationsIcd.indicationIcd
-                );
-
-                if (!currentIcd) return prevadminInstructions;
-
-                const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
-
-                return prevadminInstructions
-                    ? `${prevadminInstructions}\n${newEntry}`
-                    : newEntry;
-            });
-        }
-    }, [indicationsIcd.indicationIcd]);
-    const handleItemClick = (Generic) => {
-        setSelectedGeneric(Generic);
-        refetchGenric().then(() => {
-            console.log("Refetch Genric");
-
-
-
-        }).catch((error) => {
-            console.error("Refetch failed:", error);
-        });
-        setSearchKeyword("")
-        const newList = roaLovQueryResponse.object.filter((item) =>
-            (Generic.roaList).includes(item.key)
-        );
-        setFilteredList(newList);
-
-    };
+ 
     const saveDraft = async () => {
         try {
             await saveDrugorder({
@@ -402,76 +161,13 @@ const DrugOrder = ({ edit, patient, encounter }) => {
         } catch (error) { }
 
     }
-    const handleDateChange = (date) => {
-        if (date) {
-            const timestamp = date.getTime();
-            setSelectedFirstDate(date);
-        }
-    };
-    const handleSearch = value => {
-        setSearchKeyword(value);
+  
 
-
-    };
-    const handleSearchIcd = value => {
-        setSearchKeywordicd(value);
-
-
-    };
-
-    const handleCheckboxChange = (key) => {
-        setSelectedRows((prev) => {
-            if (prev.includes(key)) {
-                return prev.filter(item => item !== key);
-            } else {
-                return [...prev, key];
-            }
-        });
-    };
-    const addTag = () => {
-        const nextTags = inputValue ? [...tags, inputValue] : tags;
-        setTags(nextTags);
-        setTyping(false);
-        setInputValue('');
-    };
-
-    const handleButtonClick = () => {
-        setTyping(true);
-    };
-    const removeTag = tag => {
-        const nextTags = tags.filter(item => item !== tag);
-        setTags(nextTags);
-    };
     const joinValuesFromArray = (values) => {
         return values.filter(Boolean).join(', ');
     };
 
-    const renderInput = () => {
-        if (typing) {
-            return (
-                <Input
-                    className="tag-input"
-                    size="xs"
-                    style={{ width: 70, borderRadius: 5 }}
-                    value={inputValue}
-                    onChange={setInputValue}
-                    onBlur={addTag}
-                    onPressEnter={addTag}
-
-                />
-            );
-        }
-
-        return (
-            <IconButton
-                className="tag-add-btn"
-                onClick={handleButtonClick}
-                icon={<PlusIcon />}
-                appearance="ghost"
-                size="xs"
-            />
-        );
-    };
+  
     const handleSaveOrder = async () => {
         handleCleare();
 
@@ -566,31 +262,6 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
 
     }
-
-    const handleSaveMedication = () => {
-        try {
-            const tagcompine = joinValuesFromArray(tags);
-            saveDrugorderMedication({
-                ...orderMedication,
-                patientKey: patient.key,
-                visitKey: encounter.key,
-                drugOrderKey: drugKey,
-                genericMedicationsKey: selectedGeneric.key,
-                parametersToMonitor: tagcompine,
-                statusLkey: "164797574082125",
-                startDateTime: selectedFirstDate ? selectedFirstDate.getTime() : null,
-                indicationIcd: indicationsDescription,
-                administrationInstructions: adminInstructions
-            }).unwrap().then(() => {
-                dispatch(notify("added sucssesfily"));
-                handleCleare();
-                medicRefetch();
-            })
-        } catch (error) {
-            dispatch(notify("added feild"))
-        }
-    }
-
     const handleCleare = () => {
         setOrderMedication({
             ...newApDrugOrderMedications,
@@ -609,17 +280,9 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
 
         })
-        setAdminInstructions("");
-        setSelectedGeneric(null);
-        setSelectedFirstDate(null);
-        setindicationsDescription("");
 
-
-        setTags([])
     }
-    const OpenCancellationReasonModel = () => {
-        setOpenCancellationReasonModel(true);
-    }
+  
     const CloseCancellationReasonModel = () => {
         setOpenCancellationReasonModel(false);
     }
@@ -742,16 +405,15 @@ const DrugOrder = ({ edit, patient, encounter }) => {
             }
         }
     ];
-    return (<><h5 style={{ marginTop: "10px" }}>Drug Order</h5>
+    return (<>
        
-     
         <div className='bt-div'
         //  className={edit ? "disabled-panel" : ""}
          >
         <div style={{ width: '500px' }}>
                 <SelectPicker
 
-                    style={{ width: '100%' }}
+                    className='fill-width'
                     data={filteredorders ?? []}
                     labelKey="drugorderId"
                     valueKey="key"
@@ -867,6 +529,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                     setEditing(rowData.statusLkey == "3196709905099521" ? true : false);
                     setSelectedGeneric(genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey))
                 }}
+                rowClassName={isSelected}
 
             ></MyTable>
 
