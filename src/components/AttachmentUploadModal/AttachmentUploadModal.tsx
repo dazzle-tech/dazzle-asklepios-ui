@@ -218,7 +218,6 @@ const AttachmentModal = ({
             size="sm"
             content={content}
             hideCanel={false}
-            bodyheight={550}
             hideBack={true}
             steps={[{ title: "Attachments", icon: faPaperclip }]}
             actionButtonLabel="Save"

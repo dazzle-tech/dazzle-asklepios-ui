@@ -282,7 +282,7 @@ const VaccinationTab = ({ disabled, patient, encounter }) => {
                 Show All Vaccines
             </Checkbox>
             <div className='bt-right'>
-                <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setPopupOpen(true)}>Add Vaccine</MyButton>
+                <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setPopupOpen(true)}>Add</MyButton>
             </div>
         </div>
         <Table
