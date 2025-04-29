@@ -141,10 +141,13 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 ),
                 saveDraft: true
             }).then(() => {
-                dispatch(notify('Saved Draft successfully'));
+                dispatch(notify({msg:'Saved Draft successfully' ,type:'success'}));
                 setIsDraft(true);
             })
-        } catch (error) { }
+        } catch (error) { 
+            dispatch(notify({msg:'Error Saving draft' ,type:'error'}));
+           
+        }
 
     }
     const cancleDraft = async () => {
@@ -155,7 +158,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 ),
                 saveDraft: false
             }).then(() => {
-                dispatch(notify(' Draft Canceld'));
+                dispatch(notify({msg:' Draft Canceld' ,sev:'warning'}));
                 setIsDraft(false);
             })
         } catch (error) { }
@@ -196,7 +199,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 console.error("Error saving order:", error);
             }
         } else {
-            dispatch(notify("Patient or encounter is missing. Cannot save order."));
+            dispatch(notify({mag:"Patient or encounter is missing. Cannot save order.",sev:"warning"}));
         }
     };
     const handleCancle = async () => {
@@ -207,7 +210,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 saveDrugorderMedication({ ...orderMedication, statusLkey: "1804447528780744", deletedAt: Date.now() }).unwrap();
 
 
-            dispatch(notify(' medication deleted successfully'));
+            dispatch(notify({msg:' medication deleted successfully' ,type:'success'}));
             CloseCancellationReasonModel();
             medicRefetch().then(() => {
                 console.log("Refetch complete");
@@ -217,7 +220,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
         } catch (error) {
 
-            dispatch(notify(' deleted failed'));
+            dispatch(notify({msg:' deleted failed' ,sev:'error'}));
 
         }
     };
@@ -232,7 +235,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 , saveDraft: false,
                 submittedAt: Date.now()
             }).unwrap();
-            dispatch(notify('submetid  Successfully'));
+            dispatch(notify({msg:'Submetid  Successfully' ,sev:'success'}));
             handleCleare();
             ordRefetch().then(() => {
                 console.log("Refetch complete");

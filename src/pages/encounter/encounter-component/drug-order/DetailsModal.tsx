@@ -196,7 +196,8 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                 indicationIcd: indicationsDescription,
                 administrationInstructions: adminInstructions
             }).unwrap().then(() => {
-                dispatch(notify("added sucssesfily"));
+                dispatch(notify({msg:"added sucssesfily" ,sev:"success"}))
+                setOpen(false);
                 handleCleare();
                 medicRefetch();
             })
