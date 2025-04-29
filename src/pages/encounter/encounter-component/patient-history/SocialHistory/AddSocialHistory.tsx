@@ -16,7 +16,7 @@ const AddSocialHistory = ({ open, setOpen }) => {
     const { data: frequentLovQueryResponse } = useGetLovValuesByCodeQuery('FREQUENT_USE');
     const { data: physicalLimitationsLovQueryResponse } = useGetLovValuesByCodeQuery('PHYSICAL_LIMITATION');
     const { data: diagnosedLovQueryResponse } = useGetLovValuesByCodeQuery('EATING_DISORDERS');
-    
+
     // Modal Content 
     const content = (
         <Form fluid layout='inline' className='fields-container'>
@@ -29,7 +29,7 @@ const AddSocialHistory = ({ open, setOpen }) => {
                 record={openCurrentSmokerField}
                 setRecord={setOpenCurrentSmokerField}
             />
-            {!openCurrentSmokerField?.open &&
+            {openCurrentSmokerField?.open &&
                 <>
                     <MyInput
                         width={200}
@@ -58,7 +58,6 @@ const AddSocialHistory = ({ open, setOpen }) => {
                         fieldName=""
                         record={""}
                         setRecord={""}
-                        disabled={!openCurrentSmokerField?.open}
                     />
                 </>
             }
@@ -71,16 +70,15 @@ const AddSocialHistory = ({ open, setOpen }) => {
                 record={openPreviousSmokerField}
                 setRecord={setOpenPreviousSmokerField}
             />
-            {!openPreviousSmokerField &&
-                <MyInput
-                    width={200}
-                    column
-                    fieldLabel="Quit date"
-                    fieldType='date'
-                    fieldName=""
-                    record={""}
-                    setRecord={""}
-                />}
+            {openPreviousSmokerField?.open && <MyInput
+                width={200}
+                column
+                fieldLabel="Quit date"
+                fieldType='date'
+                fieldName=""
+                record={""}
+                setRecord={""}
+            />}
             <MyInput
                 width={200}
                 column
@@ -99,7 +97,7 @@ const AddSocialHistory = ({ open, setOpen }) => {
                 record={openAlcoholConsumptionField}
                 setRecord={setOpenAlcoholConsumptionField}
             />
-            {!openAlcoholConsumptionField?.open &&
+            {openAlcoholConsumptionField?.open &&
                 <MyInput
                     width={200}
                     column
@@ -107,7 +105,6 @@ const AddSocialHistory = ({ open, setOpen }) => {
                     fieldName=""
                     record={""}
                     setRecord={""}
-                    disabled={!openAlcoholConsumptionField?.open}
                 />
             }
             <MyInput
@@ -128,7 +125,7 @@ const AddSocialHistory = ({ open, setOpen }) => {
                 record={openSubstanceUseField}
                 setRecord={setOpenSubstanceUseField}
             />
-            {!openSubstanceUseField &&
+            {openSubstanceUseField.open &&
                 <>
                     <MyInput
                         width={200}
