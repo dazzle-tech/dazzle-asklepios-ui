@@ -9,8 +9,7 @@ const InfoCardList = ({
   fieldLabels = {},
   titleField = null,
   computedFields = {},
-  showDetailsButton = false, // جديد
-  onDetailsClick = () => {},
+  onCardClick = () => {},
 }) => {
   const getFieldValue = (item, field) => {
     if (computedFields[field]) {
@@ -30,7 +29,7 @@ const InfoCardList = ({
   return (
     <div className='div-list'>
       {list?.map((item, index) => (
-        <div key={index} className='card-style'>
+        <div key={index} className='card-style' onClick={() => onCardClick()}>
           <Text className='title-style'>
             {getFieldValue(item, titleField)}
           </Text>
@@ -42,15 +41,7 @@ const InfoCardList = ({
               </div>
             ))}
           </div>
-          {/* {showDetailsButton && (
-            <div style={{ marginTop: 10 }}>
-              <IconButton
-                icon={<OthersIcon />}
-                size="sm"
-                onClick={() => onDetailsClick(item)}
-              />
-            </div>
-          )} */}
+         
         </div>
       ))}
     </div>

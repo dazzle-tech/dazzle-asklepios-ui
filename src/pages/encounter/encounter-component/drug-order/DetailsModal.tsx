@@ -210,15 +210,9 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
     };
     const handleItemClick = (Generic) => {
         setSelectedGeneric(Generic);
-        // refetchGenric().then(() => {
-        //     console.log("Refetch Genric");
-
-        // }).catch((error) => {
-        //     console.error("Refetch failed:", error);
-        // });
         setSearchKeyword("")
         const newList = roaLovQueryResponse.object.filter((item) =>
-            (Generic.roaList).includes(item.key)
+            (Generic.roaList)?.includes(item.key)
         );
         setFilteredList(newList);
     };

@@ -83,8 +83,7 @@ const ActiveIngredient = ({ selectedGeneric }) => {
                 controlledDisplay: (item) =>
                     activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.controlledLvalue?.lovDisplayVale || " ",
             }}
-            showDetailsButton
-        // onDetailsClick={(item) => console.log('Details clicked for:', item)}
+         
         /></>)
 }
 export default ActiveIngredient;
