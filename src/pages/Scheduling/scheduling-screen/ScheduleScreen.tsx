@@ -61,6 +61,9 @@ const ScheduleScreen = () => {
     const [filteredMonth, setFilteredMonth] = useState<Date>()
     const [showReasonModal, setShowReasonModal] = useState(false);
     const [finalResourceLit, setFinalResourceLit] = useState();
+    const [currentView, setCurrentView] =  useState("day");
+
+
     useEffect(() => {
         return () => {
             dispatch(setPageCode(''));
@@ -106,7 +109,8 @@ const ScheduleScreen = () => {
                 return {
                     id: appointment?.key,
                     title: ` ${appointment?.patient?.fullName}, ${isNaN(dob) ? "Unknown" : today.getFullYear() - dob.getFullYear()
-                        }Y , ${resource?.resourceName || "Unknown Resource"} `, // Customize title as needed
+                        }Y  ${!(currentView === 'day' || currentView === 'week') ? ', ' + (resource?.resourceName || "Unknown Resource") : ''}
+ `, // Customize title as needed
                     start: convertDate(appointment.appointmentStart),
                     end: convertDate(appointment.appointmentEnd),
                     text: appointment.notes || "No additional details available",
@@ -118,7 +122,7 @@ const ScheduleScreen = () => {
             });
             setAppointmentsData(formattedAppointments);
         }
-    }, [appointments, resourcesListResponse]);
+    }, [appointments, resourcesListResponse,currentView]);
     const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
     const { data: resourcesListResponse } = useGetResourcesQuery(listRequest);
     useEffect(() => {
@@ -146,49 +150,46 @@ const ScheduleScreen = () => {
     };
 
 
-    const closeModal = () => {
-        setModalOpen(false);
-
-    };
+   
 
     const { data: facilityListResponse, refetch: refetchFacility } = useGetFacilitiesQuery({
         ...initialListRequest
     });
 
-    const eventPropGetter = (event) => {
-        const status = event?.appointmentData.appointmentStatus;
-        switch (status) {
-            case "Confirmed":
-                return {
-                    style: { backgroundColor: "#dab1da", color: "black" }, // Light Purple
-                }
-            case "Checked-In":
-                return {
-                    style: { backgroundColor: "#AAFFFC", color: "black" }, // Light Cyan
-                }
-            case "Completed":
-                return {
-                    style: { backgroundColor: "#90d5ff", color: "black" }, // Light Blue
-                }
-            case "Canceled":
-                return {
-                    style: { backgroundColor: "#cbcbcb", color: "black" }, // Cool Grey 
-                }
-            case "No-Show":
-                return {
-                    style: { backgroundColor: "#fffd8d", color: "black" }, // Cool Grey 
-                }
-            // default:
-            //     return <p>Unknown status</p>;
-        }
+    // const eventPropGetter = (event) => {
+    //     const status = event?.appointmentData.appointmentStatus;
+    //     switch (status) {
+    //         case "Confirmed":
+    //             return {
+    //                 style: { backgroundColor: "#dab1da", color: "black" }, // Light Purple
+    //             }
+    //         case "Checked-In":
+    //             return {
+    //                 style: { backgroundColor: "#AAFFFC", color: "black" }, // Light Cyan
+    //             }
+    //         case "Completed":
+    //             return {
+    //                 style: { backgroundColor: "#90d5ff", color: "black" }, // Light Blue
+    //             }
+    //         case "Canceled":
+    //             return {
+    //                 style: { backgroundColor: "#cbcbcb", color: "black" }, // Cool Grey 
+    //             }
+    //         case "No-Show":
+    //             return {
+    //                 style: { backgroundColor: "#fffd8d", color: "black" }, // Cool Grey 
+    //             }
+    //         // default:
+    //         //     return <p>Unknown status</p>;
+    //     }
 
-        if (event?.appointmentData.appointmentStatus === "Confirmed") { // Example: Identify "activities" by a property
-            return {
-                style: { backgroundColor: "#AAFFFC", color: "black" }, // Blue background, white text
-            };
-        }
-        return {}; // Default style for other events
-    };
+    //     if (event?.appointmentData.appointmentStatus === "Confirmed") { // Example: Identify "activities" by a property
+    //         return {
+    //             style: { backgroundColor: "#AAFFFC", color: "black" }, // Blue background, white text
+    //         };
+    //     }
+    //     return {}; // Default style for other events
+    // };
 
 
     const convertDate = (appointmentEnd) => {
@@ -260,15 +261,14 @@ const ScheduleScreen = () => {
                         >
                             <SearchIcon />
                         </InputGroup.Button>
-                    </InputGroup>
+                    </InputGroup> 
                 </ButtonToolbar>
             </Panel>
 
         );
     };
 
-    const [currentView, setCurrentView] = React.useState("month");
-    const [currentDate, setCurrentDate] = React.useState(new Date());
+     const [currentDate, setCurrentDate] = React.useState(new Date());
     const handleDateSelection = (date) => {
         if (currentView === "month") {
             setCurrentView("day"); // Switch to day view
@@ -300,14 +300,7 @@ const ScheduleScreen = () => {
 
     }, [filteredMonth])
 
-    const handleDateChange = (date) => {
-        if (date) {
-            // Set to the first day of the selected month
-            const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-            setFilteredMonth(firstDayOfMonth);
-            console.log(firstDayOfMonth);
-        }
-    };
+
 
     const CustomToolbar = ({ label, onNavigate, onView }) => {
         return (
@@ -335,25 +328,19 @@ const ScheduleScreen = () => {
                     >
 
                         {label}
-                        {/* {drowerOpen ? <DatePicker value={filteredMonth} defaultOpen appearance="subtle" onChange={handleDateChange} format="yyyy-MM" /> : label} */}
                     </span>
                     <button style={{ margin: "7px", height: "35px" }} onClick={() => onNavigate("NEXT")}><ArrowRightLineIcon /></button>
 
                 </div>
 
-                 <ButtonGroup style={{borderRadius:"5px",backgroundColor:"#F3F4F6" }} size="md">
-                    <Button style={{border:"none", height:"35px"}} onClick={() => onView(Views.MONTH)}>Month</Button>
-                    <Button style={{border:"none", height:"35px"}}  onClick={() => onView(Views.WEEK)}>Week </Button>
-                    <Button style={{border:"none", height:"35px"}}  onClick={() => onView(Views.DAY)}>Day</Button>
-                    <Button style={{border:"none", height:"35px"}}  onClick={() => onView(Views.AGENDA)}>Agenda</Button>
-                </ButtonGroup> 
+                <ButtonGroup style={{ borderRadius: "5px", backgroundColor: "#F3F4F6" }} size="md">
+                    <Button style={{ border: "none", height: "35px" }} onClick={() => { setCurrentView(Views.MONTH), console.log(Views.MONTH), onView(Views.MONTH) }}>Month</Button>
+                    <Button style={{ border: "none", height: "35px" }} onClick={() => { setCurrentView(Views.WEEK), onView(Views.WEEK) }}>Week </Button>
+                    <Button style={{ border: "none", height: "35px" }} onClick={() => { setCurrentView(Views.DAY), onView(Views.DAY) }}>Day</Button>
+                    <Button style={{ border: "none", height: "35px" }} onClick={() => { setCurrentView(Views.AGENDA), onView(Views.AGENDA) }}>Agenda</Button>
+                </ButtonGroup>
 
-                {/* <span className="rbc-btn-group">
-                    <button style={{ fontSize: "14px" }} onClick={() => onView(Views.MONTH)}>Month</button>
-                    <button style={{ fontSize: "14px" }} onClick={() => onView(Views.WEEK)}>Week</button>
-                    <button style={{ fontSize: "14px" }} onClick={() => onView(Views.DAY)}>Day</button>
-                    <button style={{ fontSize: "14px" }} onClick={() => onView(Views.AGENDA)}>Agenda</button>
-                </span> */}
+
             </div>
         );
     };
@@ -416,21 +403,7 @@ const ScheduleScreen = () => {
             localizer.format(date, 'h A', culture),
     };
 
-    // const ResourceHeader = ({ label, resource }) => {
-    //     return (
-    //       <div className="flex items-center gap-2 p-1">
-    //         <img
-    //           src={resource?.avatarUrl || "/default-avatar.png"}
-    //           alt="avatar"
-    //           className="w-8 h-8 rounded-full object-cover"
-    //         />
-    //         <div>
-    //           <div className="font-semibold text-sm">{label}</div>
-    //           <div className="text-xs text-gray-500">{resource?.role || "Physician"}</div>
-    //         </div>
-    //       </div>
-    //     );
-    //   };
+
 
 
     const [copyEvent, setCopyEvent] = useState(true)
@@ -446,8 +419,7 @@ const ScheduleScreen = () => {
         { id: 1, name: 'Name', date: '20-01-2025', avatar: 'https://i.pravatar.cc/150?u=1' },
         { id: 2, name: 'Name', date: '20-01-2025', avatar: 'https://i.pravatar.cc/150?u=3' },
         { id: 3, name: 'Name', date: '20-01-2025', avatar: 'https://i.pravatar.cc/150?u=1' },
-        { id: 4, name: 'Name', date: '20-01-2025', avatar: 'https://i.pravatar.cc/150?u=3' },
-        { id: 5, name: 'Name', date: '20-01-2025', avatar: 'https://i.pravatar.cc/150?u=1' },
+
     ];
     const minTime = new Date();
     minTime.setHours(8, 0, 0);
@@ -462,21 +434,18 @@ const ScheduleScreen = () => {
 
         let finalList = filteredResourcesList;
 
-        // فلترة حسب النوع
         if (selectedTypeKey) {
             finalList = finalList.filter(resource =>
                 resource.resourceTypeLkey === selectedTypeKey
             );
         }
 
-        // فلترة حسب الريسورس
         if (Array.isArray(selectedKeys) && selectedKeys.length > 0) {
             finalList = finalList.filter(resource =>
                 selectedKeys.includes(resource.key)
             );
         }
 
-        // ✅ إذا ما في داتا بعد الفلترة → استخدم resourcesListResponse.object
         if (!finalList || finalList.length === 0) {
             finalList = resourcesListResponse?.object || [];
         }
@@ -492,6 +461,68 @@ const ScheduleScreen = () => {
         console.log(resourceTypeQueryResponse?.object ?? [])
     }, [resourceTypeQueryResponse])
 
+
+    const hexToRgba = (hex, alpha = 0.1) => {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    };
+
+
+    const MyEvent = ({ event }) => {
+
+
+        const normalize = (str) => str?.toLowerCase().replace(/[-_]/g, ' ').trim();
+
+        const getBackgroundColor = (status) => {
+            const item = legendItems.find(i => normalize(i.label) === normalize(status));
+            return item ? hexToRgba(item.color, 0.1) : '#ffffff';
+        };
+
+        const status = event?.appointmentData?.appointmentStatus;
+        const backgroundColor = getBackgroundColor(status);
+
+        return (
+            <div style={{
+                padding: "7px",
+                display: "flex",
+                gap: "9px",
+                backgroundColor,
+                borderRadius: "8px",
+            }}>
+                <Avatar size="xs" circle src="https://i.pravatar.cc/150?u=1" />
+                <div>
+                    <p style={{ fontSize: "12px", color: "black" }}>{event.title}</p>
+                    <p style={{
+                        fontSize: "10px",
+                        marginTop: "9px",
+                        color: "#8F98AB",
+                    }}>
+                        {event.start.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} › {event.end.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </p>
+                </div>
+            </div>
+        );
+    };
+
+    const normalize = (str) => str?.toLowerCase().replace(/[-_]/g, ' ').trim();
+
+    const getBackgroundColor = (status) => {
+        const item = legendItems.find(i => normalize(i.label) === normalize(status));
+        return item ? hexToRgba(item.color, 0.1) : '#ffffff';
+    };
+
+    const eventPropGetter = () => ({
+        style: {
+            backgroundColor: '#ffffff',
+            borderRadius: '8px',
+            padding: '5px',
+            color: 'black'
+        }
+    });
+
+
     return (
         <div   >
             <div style={{
@@ -502,6 +533,7 @@ const ScheduleScreen = () => {
                 justifyContent: "flex-start"
                 // justifyContent: 'flex-end'
             }} className="inline-two-four-container">
+
                 <Panel className="left-section" bordered>
 
 
@@ -515,7 +547,7 @@ const ScheduleScreen = () => {
                             <MyInput
                                 disabled
                                 height={"40px"}
-                                width={"15vw"}
+                                width={"12vw"}
                                 vr={validationResult}
                                 column
                                 fieldLabel="City"
@@ -533,9 +565,8 @@ const ScheduleScreen = () => {
                         <Form fluid layout="inline"  >
 
                             <MyInput
-                                width={"15vw"}
+                                width={"12vw"}
                                 height={"40px"}
-
                                 column
                                 fieldLabel="Facility"
                                 selectData={facilityListResponse?.object ?? []}
@@ -550,8 +581,7 @@ const ScheduleScreen = () => {
                         <Form fluid layout="inline"  >
                             <MyInput
                                 height={"40px"}
-
-                                width={"15vw"}
+                                width={"12vw"}
                                 vr={validationResult}
                                 column
                                 fieldLabel="Resources Type"
@@ -569,8 +599,7 @@ const ScheduleScreen = () => {
 
                             <MyInput
                                 height={"40px"}
-
-                                width={"15vw"}
+                                width={"12vw"}
                                 column
                                 fieldLabel="Resources"
                                 selectData={filteredResourcesList.length > 0 ? filteredResourcesList : !selectedResourceType?.resourcesType ? resourcesListResponse?.object : []}
@@ -588,20 +617,20 @@ const ScheduleScreen = () => {
 
 
 
-                    <p style={{ color: 'gray', marginTop: '50px' }}>WAITING LIST</p>
+                    <p style={{ color: 'gray', marginTop: '30px' }}>WAITING LIST</p>
 
-                    <div style={{ width: '100%', height: 200, marginTop: 20, overflow: 'auto' }}>
+                    <div style={{ width: '100%', height: 300, marginTop: 18, overflow: 'auto' }}>
                         {data.map((item) => (
-                            <Panel key={item.id} style={{ marginBottom: 10 }}>
-                                <div style={{ padding: 10 }}>
-                                    <Stack direction="row" spacing={16}  >
-                                        <Avatar circle src={item.avatar} alt="Avatar" />
-                                        <div>
-                                            <p style={{ margin: 0 }}>{item.name}</p>
-                                            <p style={{ margin: 0 }}>{item.date}</p>
-                                        </div>
-                                    </Stack>
-                                </div>
+                            <Panel key={item.id} style={{ height: "37", marginBottom: 10 }}>
+
+                                <Stack direction="row" spacing={10}  >
+                                    <Avatar style={{ fontSize: "37px" }} circle src={item.avatar} alt="Avatar" />
+                                    <div>
+                                        <p style={{ fontSize: "14px", margin: 0 }}>{item.name}</p>
+                                        <p style={{ fontSize: "12px", margin: 0 }}>{item.date}</p>
+                                    </div>
+                                </Stack>
+
                             </Panel>
                         ))}
                     </div>
@@ -682,6 +711,7 @@ const ScheduleScreen = () => {
                         min={minTime}
                         resourceIdAccessor="key"
                         resources={finalResourceLit}
+
                         formats={formats}
                         resourceTitleAccessor="resourceName"
                         localizer={localizer}
@@ -695,7 +725,7 @@ const ScheduleScreen = () => {
                         startAccessor="start"
                         endAccessor="end"
                         views={["month", "week", "day", "agenda"]}
-                        defaultView="day"
+                        defaultView={currentView}
                         selectable={true}
                         onSelectEvent={(event) => {
                             handleSelectEvent(event);  // select event
@@ -707,6 +737,7 @@ const ScheduleScreen = () => {
                         components={{
                             toolbar: CustomToolbar,
                             resourceHeader: ResourceHeader,
+                            event: MyEvent,
                         }}
                         date={filteredMonth}
                     />

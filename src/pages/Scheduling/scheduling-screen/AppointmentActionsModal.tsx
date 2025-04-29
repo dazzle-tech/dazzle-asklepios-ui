@@ -36,6 +36,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             dispatch(notify('Appointment Checked-In Successfully'));
             onStatusChange()
             onActionsModalClose()
+            setLocalEncounter({ ...newApEncounter })
 
         })
     }
@@ -69,6 +70,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             dispatch(notify('Appointment Confirmed Successfully'));
             onStatusChange()
             onActionsModalClose()
+            setLocalEncounter({ ...newApEncounter })
 
         }).then(() => {
             handleSaveVisit(appointment?.appointmentData)
@@ -92,6 +94,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             setResonType(null)
             setOtherReason(null)
             setResonKey(null)
+            setLocalEncounter({ ...newApEncounter })
+
 
         })
     }
