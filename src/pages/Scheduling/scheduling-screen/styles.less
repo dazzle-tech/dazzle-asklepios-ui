@@ -1,46 +1,118 @@
 .inline-two-four-container {
-    display: grid;
-    grid-template-columns: 2.5fr 6fr; 
-    gap: 15px; 
-    width: 100%; 
-    height: 100vh; 
-  }
-  
-  .right-section {
-    // padding-right: 20px; 
-    height: 86vh;
-    width: 75vw ;
-    background-color: rgb(255, 255, 255);
+  display: grid;
+  grid-template-columns: 2.5fr 6fr;
+  gap: 15px;
+  width: 100%;
+  height: 100vh;
+}
 
-   }
-  
+.right-section {
+  // padding-right: 20px; 
+  height: 86vh;
+  width: 80vw;
+  background-color: rgb(255, 255, 255);
+
+}
+
+.left-section {
+  width: 16vw;
+  max-width: 273px;
+  padding: 16px;
+  background-color: #fff;
+  box-sizing: border-box;
+  flex-shrink: 1;
+}
+
+@media (max-width: 600px) {
   .left-section {
-    padding:20px; 
-    width: 18vw;
-    background-color: rgb(255, 255, 255);
-
-   }
-
-  
-   .rbc-day-slot .rbc-time-slot {
-    height: 80px;
+    max-width: 200px;
   }
-  .rbc-row {
-    height: 60px;  
-    // display: flex;
-    // align-items: center;
+}
+
+@media (max-width: 450px) {
+  .left-section {
+    max-width: 160px;
+  }
+}
+
+.rbc-day-slot .rbc-time-slot {
+  height: 80px;
+}
+
+.rbc-row {
+  height: 60px;
+
+}
+
+
+.rbc-time-header {
+  height: 62px;
+}
+
+.rbc-time-content>*>.rbc-timeslot-group {
+  min-height: 81px;
+
+}
+ 
+.rbc-time-gutter {
+  width: 41px;
+  font-size: 12px;
+}
+.rbc-time-content > .rbc-time-gutter {
+  min-width: 41px !important;
+  max-width: 41px !important;
+  flex: none !important;
 }
 
  
-.rbc-time-header {
-  height: 62px;   
+.rbc-time-content > .rbc-day-slot {
+  min-width: 300px !important;
+ }
+ .rbc-header {
+  min-width: 300px !important;
+  flex: none !important;
+  text-align: center;
 }
 
-.rbc-time-content > * > .rbc-timeslot-group {
-  min-height: 81px; 
+ 
+ 
 
+.rbc-time-header-cell.rbc-today {
+  background-color: #04aa6d !important;
 }
-.rbc-time-gutter {
-  width: 41px;  
-  font-size: 12px;
+
+
+
+
+.rbc-event,
+.rbc-background-event {
+  z-index: 2;
+  padding: 0px !important;
+  border: none !important;
+  background-color: #ffe5d9;
+  /* لون خلفية الحدث */
+  border-radius: 10px;
+  overflow: hidden;
 }
+
+.rbc-event-label {
+  display: none !important;
+}
+
+
+.rbc-today {
+  background-color: rgba(255, 255, 255, 0.288) !important;
+}
+
+.event-label-badge {
+  margin-left: auto;
+  background-color: #bbdff7;
+  font-size: 10px;
+  border-radius: 10px;
+  padding: 2px 5px;
+  white-space: nowrap;
+}
+
+ 
+ 
+ 
