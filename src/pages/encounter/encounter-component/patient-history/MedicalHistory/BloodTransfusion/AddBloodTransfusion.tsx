@@ -10,7 +10,6 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
     // Fetch LOV data for various fields
     const { data: bloodProductsLovQueryResponse } = useGetLovValuesByCodeQuery('BLOOD_PRODUCTS');
     const { data: bloodTransSourceLovQueryResponse } = useGetLovValuesByCodeQuery('BLOOD_TRANS_SOURCE');
-    const { data: relationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
 
     // Modal Content 
     const content = (
