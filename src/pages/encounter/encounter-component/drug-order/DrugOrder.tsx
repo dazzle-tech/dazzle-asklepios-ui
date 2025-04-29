@@ -72,7 +72,8 @@ const DrugOrder = ({ edit, patient, encounter }) => {
         });
     const [saveDrugorder, saveDrugorderMutation] = useSaveDrugOrderMutation();
     const [saveDrugorderMedication, saveDrugorderMedicationMutation] = useSaveDrugOrderMedicationMutation();
-    const [listOrderMedicationsRequest, setListOrderMedicationsRequest] = useState({
+
+    const { data: orderMedications, refetch: medicRefetch } = useGetDrugOrderMedicationQuery({
         ...initialListRequest,
        
         filters: [
@@ -88,7 +89,6 @@ const DrugOrder = ({ edit, patient, encounter }) => {
             }
         ],
     });
-    const { data: orderMedications, refetch: medicRefetch } = useGetDrugOrderMedicationQuery({...listOrderMedicationsRequest});
     const filteredorders = orders?.object?.filter(
         (item) => item.statusLkey === "1804482322306061"
     ) ?? [];
