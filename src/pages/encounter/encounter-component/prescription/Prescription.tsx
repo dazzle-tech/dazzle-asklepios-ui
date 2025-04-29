@@ -72,9 +72,11 @@ import {
 import {
     useGetIcdListQuery,
 } from '@/services/setupService';
-const Prescription = ({edit,patient,encounter}) => {
+import MyButton from '@/components/MyButton/MyButton';
+import DetailsModal from './DetailsModal';
+import MyTable from '@/components/MyTable';
+const Prescription = ({ edit, patient, encounter }) => {
 
-    
     const dispatch = useAppDispatch();
     const [searchKeyword, setSearchKeyword] = useState('');
     const [selectedOption, setSelectedOption] = useState(null);
@@ -98,7 +100,7 @@ const Prescription = ({edit,patient,encounter}) => {
             {
                 fieldName: 'patient_key',
                 operator: 'match',
-                value:patient.key
+                value: patient.key
             },
             ,
             {
@@ -124,7 +126,7 @@ const Prescription = ({edit,patient,encounter}) => {
     });
     const [indicationsIcd, setIndicationsIcd] = useState({ indicationIcd: null });
     const [filteredList, setFilteredList] = useState([]);
-
+    const [openDetailsModal, setOpenDetailsModal] = useState(false);
     const [selectedRows, setSelectedRows] = useState([]);
     const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
     const { data: FrequencyLovQueryResponse } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
@@ -170,12 +172,12 @@ const Prescription = ({edit,patient,encounter}) => {
             {
                 fieldName: "patient_key",
                 operator: "match",
-                value:patient.key,
+                value: patient.key,
             },
             {
                 fieldName: "visit_key",
                 operator: "match",
-                value:encounter.key,
+                value: encounter.key,
             }
 
         ],
@@ -411,8 +413,8 @@ const Prescription = ({edit,patient,encounter}) => {
                 try {
                     await savePrescriptionMedication({
                         ...prescriptionMedication,
-                        patientKey:patient.key,
-                        visitKey:encounter.key,
+                        patientKey: patient.key,
+                        visitKey: encounter.key,
                         prescriptionKey: preKey,
                         genericMedicationsKey: selectedGeneric.key,
                         parametersToMonitor: tagcompine,
@@ -481,8 +483,6 @@ const Prescription = ({edit,patient,encounter}) => {
     }, [indicationsIcd.indicationIcd]);
     const handleSearch = value => {
         setSearchKeyword(value);
-
-
     };
     const handleFilterChange = (fieldName, value) => {
         if (value) {
@@ -573,7 +573,6 @@ const Prescription = ({edit,patient,encounter}) => {
 
     const handleSaveMedication = () => {
 
-
         if (selectedOption === '3010591042600262') {
             setInst(selectedPreDefine.key);
         }
@@ -583,11 +582,6 @@ const Prescription = ({edit,patient,encounter}) => {
         else {
             setInst("");
         }
-
-
-
-
-
     }
 
     const handleCleare = () => {
@@ -610,8 +604,6 @@ const Prescription = ({edit,patient,encounter}) => {
     }
     const handleSearchIcd = value => {
         setSearchKeywordicd(value);
-
-
     };
 
     const addTag = () => {
@@ -722,136 +714,238 @@ const Prescription = ({edit,patient,encounter}) => {
             />
         );
     };
-    return (< >
-        <h5 style={{ marginTop: "10px" }}>Create Prescription</h5>
-        <div className='top-container-p'>
+
+    const tableColumns = [
+        {
+            key:"#",         
+            title:<Translate>#</Translate> ,
+            flexGrow: 1,
+            render: (rowData: any) => {
+                return (
+                    <Checkbox
+                        key={rowData.id}
+                        checked={selectedRows.includes(rowData)}
+                        onChange={() => handleCheckboxChange(rowData)}
+                        disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
+                    />
+                )
+            },
+
+        }
+        ,
+
+        {
+            key: 'medicationName',
+            dataKey: 'genericMedicationsKey',
+            title: 'Medication Name',
+            flexGrow: 2,
+            render: (rowData: any) => {
+                return genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName;
+            }
+        },
+        {
+            key: 'instructions',
+            dataKey: '',
+            title: 'Instructions',
+            flexGrow:3,
+            render: (rowData: any) =>  {
+                if (rowData.instructionsTypeLkey === "3010591042600262") {
+                    const generic = predefinedInstructionsListResponse?.object?.find(
+                        item => item.key === rowData.instructions
+                    );
+
+                    if (generic) {
+                        console.log("Found generic:", generic);
+                    } else {
+                        console.warn("No matching generic found for key:", rowData.instructions);
+                    }
+                    return [
+                        generic?.dose,
+                        generic?.unitLvalue?.lovDisplayVale,
+                        generic?.routLvalue?.lovDisplayVale,
+                        generic?.frequencyLvalue?.lovDisplayVale
+
+
+                    ]
+                        .filter(Boolean)
+                        .join(', ');
+                }
+                if (rowData.instructionsTypeLkey === "3010573499898196") {
+                    return rowData.instructions
+
+                }
+                if (rowData.instructionsTypeLkey === "3010606785535008") {
+                    return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose +
+                        "," + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue.lovDisplayVale + "," +
+                        customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue.lovDisplayVale
+
+
+                }
+
+                return "no";
+            }
+        },
+        {
+            key: 'instruction',
+            dataKey: '',
+            title: 'Instruction',
+            flexGrow: 2,
+            render: (rowData: any) => {
+                return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, rowData.drugOrderTypeLkey == '2937757567806213' ? "STAT" : "every " + rowData.frequency + " hours", rowData.roaLvalue?.lovDisplayVale]);
+            }
+        },
+        {
+            key: 'instructionsType',
+            dataKey: 'instructionsTypeLkey',
+            title: 'Instructions Type',
+            flexGrow: 2,
+            render: (rowData: any) => {
+                return rowData.instructionsTypeLvalue ? rowData.instructionsTypeLvalue.lovDisplayVale : rowData.instructionsTypeLkey;
+            }
+        },
+        {
+            key: 'validUtil',
+            dataKey: 'validUtil',
+            title: 'Valid Util',
+            flexGrow: 2,
+            
+        },
+        {
+            key: 'isChronic',
+            dataKey: 'chronicMedication',
+            title: 'Is Chronic',
+            flexGrow: 2,
+            render: (rowData: any) => {
+                return rowData.chronicMedication ? "Yes" : "No";
+            }
+        },
+      
+        {
+            key: 'status',
+            dataKey: 'statusLkey',
+            title: 'Status',
+            flexGrow: 1,
+            render: (rowData: any) => {
+                return rowData.statusLvalue ? rowData.statusLvalue?.lovDisplayVale : rowData.statusLkey;
+            },
+        },
+        {
+            key: 'createdAt',
+            dataKey: 'createdAt',
+            title: 'Created At',
+            flexGrow: 2,
+            expandable: true,
+            render: (rowData: any) => {
+                return rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "";
+            }
+        },
+        {
+            key: 'createdBy',
+            dataKey: 'createdBy',
+            title: 'Created By',
+            flexGrow: 2,
+            render: (rowData: any) => {
+                return rowData.createdBy;
+            }
+        }
+        ,
+        {
+            key: 'deletedAt',
+            dataKey: 'deletedAt',
+            title: 'Cancelled At',
+            flexGrow: 2,
+            expandable: true,
+            render: (rowData: any) => {
+                return rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : "";
+            }
+        },
+        {
+            key: 'deletedBy',
+            dataKey: 'deletedBy',
+            title: 'Cancelled By',
+            flexGrow: 2,
+            expandable: true,
+            render: (rowData: any) => {
+                return rowData.deletedBy;
+            }
+        }
+        
+    ];
+    return (
+    < >
+        <div className={edit ? "disabled-panel bt-div" : "bt-div"} >
             <div style={{ width: '500px' }}>
                 <SelectPicker
-
-                    style={{ width: '100%' }}
+                    className='fill-width'
                     data={filteredPrescriptions ?? []}
                     labelKey="prescriptionId"
                     valueKey="key"
                     placeholder="prescription"
                     value={preKey ?? null}
                     onChange={e => {
-                        console.log(e);
+
                         setPreKey(e);
                     }}
 
                 />
+
             </div>
-            <div>
-                <Text>Current Prescription ID : {prescriptions?.object?.find(prescription =>
-                    prescription.key === preKey
-                )?.prescriptionId}</Text>
+            <Text>Prescription# {prescriptions?.object?.find(prescription =>
+                prescription.key === preKey
+            )?.prescriptionId}</Text>
+
+            <div className='bt-right'>
+                <MyButton
+                    onClick={handleSavePrescription}
+                    disabled={isdraft}
+                    prefixIcon={() => <PlusIcon />}
+                >New Prescription</MyButton>
+                <MyButton
+                    onClick={handleSubmitPres}
+                    disabled={preKey ?
+                        prescriptions?.object?.find(prescription =>
+                            prescription.key === preKey
+                        )?.statusLkey === '1804482322306061' : true
+                    }
+                    prefixIcon={() => <CheckIcon />}>
+                    Submit Prescription
+                </MyButton>
+                {
+                    !isdraft &&
+                    <MyButton
+                        onClick={saveDraft}
+                        prefixIcon={() => <DocPassIcon />}
+                        disabled={preKey ?
+                            prescriptions?.object?.find(prescription =>
+                                prescription.key === preKey
+                            )?.statusLkey === '1804482322306061' : true
+                        }
+                    >
+                        Save draft
+                    </MyButton>
+
+                }
+                {
+                    isdraft &&
+                    <MyButton
+                        appearance="ghost"
+                        onClick={cancleDraft}
+                        prefixIcon={() => <DocPassIcon />}
+                        disabled={preKey ?
+                            prescriptions?.object?.find(prescription =>
+                                prescription.key === preKey
+                            )?.statusLkey === '1804482322306061' : true
+                        }
+                    >
+                        Cancle draft
+                    </MyButton>
+
+                }
             </div>
-            {!isMinimized && <div className="custom-fab">
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ display: 'flex', marginTop: '12px', justifyContent: 'space-between', width: '100%' }}>
-                        <Text style={{
-                            fontWeight: 'bold',
-                            marginBottom: '10px',
-                            fontFamily: "'Times New Roman', serif"
-                        }}>
-                            Patient's Allergies
-                        </Text>
-
-                        <div style={{ marginLeft: 'auto', display: 'flex' }}>
-                            <button onClick={() => setIsMinimized(true)}
-                                style={{
-                                    backgroundColor: 'white',
-                                    padding: '5px',
-                                    cursor: 'pointer',
-                                    fontWeight: 'bold',
-                                    marginBottom: '10px',
-                                    fontSize: '18px'
-                                }}>
-                                -
-                            </button>
-                            <button onClick={() => setIsMinimized(false)}
-                                style={{
-                                    backgroundColor: 'white',
-                                    padding: '5px',
-                                    cursor: 'pointer',
-                                    fontWeight: 'bold',
-                                    marginBottom: '10px',
-                                    marginLeft: '2px',
-                                    fontSize: '18px'
-                                }}>
-                                +
-                            </button>
-                        </div>
-                    </div>
-
-                    <List style={{ height: '190px', width: '250px', overflow: 'auto' }}>
-                        {allergiesListResponse?.object?.map((order, index) => (
-                            <List.Item key={index}>
-                                {order.allergyTypeLvalue?.lovDisplayVale}-{order.allergensName}-{order.severityLvalue.lovDisplayVale}
-                            </List.Item>
-                        ))}
-                    </List>
-                </div>
-            </div>}
-            {isMinimized &&
-                <div className="custom-fab" style={{ height: '60px' }}>
-                    <div style={{ display: 'flex', marginTop: '12px', justifyContent: 'space-between', width: '100%' }}>
-                        <Text style={{
-                            fontWeight: 'bold',
-                            marginBottom: '10px',
-                            fontFamily: "'Times New Roman', serif"
-                        }}>
-                            Patient's Allergies
-                        </Text>
-
-                        <div style={{ marginLeft: 'auto', display: 'flex' }}>
-                            <button onClick={() => setIsMinimized(true)}
-                                style={{
-                                    backgroundColor: 'white',
-                                    padding: '5px',
-                                    cursor: 'pointer',
-                                    fontWeight: 'bold',
-                                    marginBottom: '10px',
-                                    fontSize: '18px'
-                                }}>
-                                -
-                            </button>
-                            <button onClick={() => setIsMinimized(false)}
-                                style={{
-                                    backgroundColor: 'white',
-                                    padding: '5px',
-                                    cursor: 'pointer',
-                                    fontWeight: 'bold',
-                                    marginBottom: '10px',
-                                    marginLeft: '2px',
-                                    fontSize: '18px'
-                                }}>
-                                +
-                            </button>
-                        </div>
-                    </div>
-
-                </div>}
-
-            <IconButton
-                color="cyan"
-                appearance="ghost"
-                onClick={handleSavePrescription}
-                disabled={isdraft}
-                style={{ marginLeft: 'auto' }}
-                className={edit ? "disabled-panel" : ""}
-                icon={<PlusIcon />}
-            >
-                <Translate>New Prescription</Translate>
-            </IconButton>
-
-
-
-
-
         </div>
-        <br />
-        <div   className={`top-container-p ${edit ? "disabled-panel" : ""}`}>
+        <Divider />
+
+        <div className={`top-container-p ${edit ? "disabled-panel" : ""}`}>
             <div className='form-search-container-p '>
                 <Form>
                     <Text>Medication Name</Text>
@@ -1001,7 +1095,7 @@ const Prescription = ({edit,patient,encounter}) => {
                     <div style={{ marginLeft: "10px" }}>
                         {selectedOption === "3010606785535008" &&
                             <div className='form-search-container-p ' style={{ width: "600px" }}>
-                                <Form  layout="inline" fluid disabled={preKey != null ? editing : true}>
+                                <Form layout="inline" fluid disabled={preKey != null ? editing : true}>
                                     <MyInput
                                         column
 
@@ -1081,7 +1175,7 @@ const Prescription = ({edit,patient,encounter}) => {
                             </Form>
                         }
                         {selectedOption === "3010573499898196" &&
-                            <Form  layout="inline" fluid>
+                            <Form layout="inline" fluid>
                                 <textarea
                                     rows={4}
                                     style={{ width: '350px' }}
@@ -1102,7 +1196,7 @@ const Prescription = ({edit,patient,encounter}) => {
 
 
 
-                    <div style={{ marginBottom: '3px'}}>
+                    <div style={{ marginBottom: '3px' }}>
                         <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
                             <Input
                                 disabled={preKey != null ? editing : true}
@@ -1141,7 +1235,7 @@ const Prescription = ({edit,patient,encounter}) => {
                             }
                             style={{ width: 300 }} rows={4} />
                     </div>
-                    <div style={{ marginBottom: '3px'}}>
+                    <div style={{ marginBottom: '3px' }}>
                         <InputGroup inside style={{ width: '300px', marginTop: '28px' }}>
                             <Input
                                 disabled={preKey != null ? editing : true}
@@ -1194,81 +1288,13 @@ const Prescription = ({edit,patient,encounter}) => {
 
                 </div>
             </div>
-            <div className='form-search-container-p ' style={{ minWidth: "600px" }}>
-                <Table
-                    bordered
-                    onRowClick={rowData => console.log("Row clicked:", rowData)}
-                    data={genericMedicationActiveIngredientListResponseData?.object || []}
-                    height={300}
-                >
-                    <Table.Column flexGrow={2} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient</Table.HeaderCell>
-                        <Table.Cell>
-                            {rowData => {
-                                if (!rowData) return " ";
-                                const nameg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.name || " ";
-                                return nameg;
-                            }}
-                        </Table.Cell>
-                    </Table.Column>
 
-                    <Table.Column flexGrow={2} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }}>Active Ingredient ATC Code</Table.HeaderCell>
-                        <Table.Cell>
-                            {rowData => {
-                                if (!rowData) return " ";
-                                const atcg = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.atcCode || " ";
-                                return atcg;
-                            }}
-                        </Table.Cell>
-                    </Table.Column>
-
-                    <Table.Column flexGrow={1} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }}>Strength</Table.HeaderCell>
-                        <Table.Cell>
-                            {rowData => rowData?.strength + rowData?.unitLvalue?.lovDisplayVale}
-                        </Table.Cell>
-                    </Table.Column>
-
-                    <Table.Column flexGrow={1} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }}>IsControlled</Table.HeaderCell>
-                        <Table.Cell>
-                            {rowData => {
-                                if (!rowData) return " ";
-                                const isControlled = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.isControlled;
-                                return isControlled ? "Yes" : "No";
-                            }}
-                        </Table.Cell>
-                    </Table.Column>
-
-                    <Table.Column flexGrow={2} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }}>Controlled</Table.HeaderCell>
-                        <Table.Cell>
-                            {rowData => {
-                                if (!rowData) return " ";
-                                const controlledValue = activeIngredientListResponseData?.object?.find(item => item.key === rowData.activeIngredientKey)?.controlledLvalue?.lovDisplayVale || " ";
-                                return controlledValue;
-                            }}
-                        </Table.Cell>
-                    </Table.Column>
-
-                    <Table.Column flexGrow={1} fullText>
-                        <Table.HeaderCell style={{ fontSize: '14px' }}>Details</Table.HeaderCell>
-                        <Table.Cell>
-                            <IconButton icon={<OthersIcon />} />
-                        </Table.Cell>
-                    </Table.Column>
-                </Table>
-
-
-
-            </div>
         </div>
         <br />
         <div className={edit ? "disabled-panel" : ""} style={{ display: 'flex', flexDirection: 'column', border: '1px solid #b6b7b8' }}>
 
             <div style={{ display: 'flex', gap: '10px', padding: '4px' }}>
-                <Form  layout="inline" fluid>
+                <Form layout="inline" fluid>
 
 
                     <MyInput
@@ -1308,7 +1334,7 @@ const Prescription = ({edit,patient,encounter}) => {
                     />
 
                 </Form>
-                <Form  fluid>
+                <Form fluid>
 
                     <MyInput
 
@@ -1365,7 +1391,7 @@ const Prescription = ({edit,patient,encounter}) => {
 
             </div>
             <div style={{ display: 'flex', gap: '10px', padding: '4px' }}>
-                <Form  layout="inline" fluid>
+                <Form layout="inline" fluid>
 
 
                     <MyInput
@@ -1406,7 +1432,7 @@ const Prescription = ({edit,patient,encounter}) => {
                     value={adminInstructions}
                     style={{ width: 250 }}
                     rows={3} />
-                <Form  layout="inline" fluid>
+                <Form layout="inline" fluid>
                     <MyInput
                         column
                         disabled={preKey != null ? editing : true}
@@ -1419,7 +1445,7 @@ const Prescription = ({edit,patient,encounter}) => {
 
                     />
                 </Form>
-                <Form  layout="inline" fluid>
+                <Form layout="inline" fluid>
                     <MyInput
                         column
                         disabled={preKey != null ? editing : true}
@@ -1434,341 +1460,401 @@ const Prescription = ({edit,patient,encounter}) => {
                 </Form>
             </div>
         </div>
-
-        <div className='mid-container-p '>
-            <div >
-                <IconButton
-                    color="cyan"
-                    appearance="primary"
-                    onClick={handleSaveMedication}
-                    icon={<PlusIcon />}
-                    disabled={
-                        prescriptions?.object?.find(prescription =>
-                            prescription.key === preKey
-                        )?.statusLkey === '1804482322306061'
-                    }
-                >
-                    <Translate>Add</Translate>
-                </IconButton>
-                <IconButton
-                    color="cyan"
-                    appearance="primary"
-                    style={{ marginLeft: "5px" }}
-                    icon={<BlockIcon />}
-                    onClick={handleCancle}
-                    disabled={selectedRows.length === 0}
-                >
-                    <Translate> Cancle</Translate>
-                </IconButton>
-                <Button
-                    color="cyan"
-                    appearance="primary"
-                    style={{ marginLeft: "5px" }}
-                    onClick={handleCleare}
+        <div className='bt-div'>
+            <MyButton
+                prefixIcon={() => <BlockIcon />}
+                onClick={handleCancle}
+                disabled={selectedRows.length === 0}
+            >
+                Cancle
+            </MyButton>
+            <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
+                onClick={handleCleare}
+            >
+                Clear
+            </MyButton>
+            <Checkbox
+                checked={!showCanceled}
+                onChange={() => {
+                    setShowCanceled(!showCanceled);
+                }}
+            >
+                Show canceled Prescription
+            </Checkbox>
+            <div className='bt-right'>
+                <MyButton
+                    prefixIcon={() => <PlusIcon />}
+                    onClick={() => setOpenDetailsModal(true)}
 
                 >
-
-                    <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px' }} />
-                    <span>Clear</span>
-                </Button>
-
-                <Checkbox
-                    checked={!showCanceled}
-                    onChange={() => {
-
-
-                        setShowCanceled(!showCanceled);
-                    }}
-                >
-                    Show canceled Prescription
-                </Checkbox>
+                    Add Medication
+                </MyButton>
             </div>
+        </div>
 
-            <div>
+        <div >
+            <IconButton
+                color="cyan"
+                appearance="primary"
+                onClick={handleSaveMedication}
+                icon={<PlusIcon />}
+                disabled={
+                    prescriptions?.object?.find(prescription =>
+                        prescription.key === preKey
+                    )?.statusLkey === '1804482322306061'
+                }
+            >
+                <Translate>Add</Translate>
+            </IconButton>
+            <IconButton
+                color="cyan"
+                appearance="primary"
+                style={{ marginLeft: "5px" }}
+                icon={<BlockIcon />}
+                onClick={handleCancle}
+                disabled={selectedRows.length === 0}
+            >
+                <Translate> Cancle</Translate>
+            </IconButton>
+            <Button
+                color="cyan"
+                appearance="primary"
+                style={{ marginLeft: "5px" }}
+                onClick={handleCleare}
+
+            >
+
+                <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px' }} />
+                <span>Clear</span>
+            </Button>
+
+            <Checkbox
+                checked={!showCanceled}
+                onChange={() => {
+
+
+                    setShowCanceled(!showCanceled);
+                }}
+            >
+                Show canceled Prescription
+            </Checkbox>
+        </div>
+        <MyTable 
+        columns={tableColumns}
+         data={prescriptionMedications?.object ?? []}
+         onRowClick={rowData => {
+             setPrescriptionMedications(rowData);
+             setSelectedGeneric(genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey))
+             setTags(rowData.parametersToMonitor.split(",").map(word => word.trim()))
+             if (rowData.instructionsTypeLkey == "3010591042600262") {
+                 setSelectedPreDefine(predefinedInstructionsListResponse?.object?.find(item => item.key === rowData.instructions))
+                 setSelectedOption("3010591042600262")
+             }
+             else if (rowData.instructionsTypeLkey == "3010573499898196") {
+                 setMunial(rowData.instructions)
+                 setSelectedOption("3010573499898196")
+             }
+             else if (rowData.instructionsTypeLkey == "3010606785535008") {
+                 setSelectedOption("3010606785535008")
+                 setSelectedRowoMedicationKey(rowData.key);
+             }
+             setEditing(rowData.statusLkey == "164797574082125" ? false : true)
+         }}
+         loading={isLoadingPrescriptionMedications}
+        ></MyTable>
+        {/* <Table
+            height={400}
+            sortColumn={listRequest.sortBy}
+            sortType={listRequest.sortType}
+            onSortColumn={(sortBy, sortType) => {
+                if (sortBy)
+                    setListRequest({
+                        ...listRequest,
+                        sortBy,
+                        sortType
+                    });
+            }}
+            headerHeight={80}
+            rowHeight={60}
+
+            data={prescriptionMedications?.object ?? []}
+            onRowClick={rowData => {
+                setPrescriptionMedications(rowData);
+                setSelectedGeneric(genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey))
+                setTags(rowData.parametersToMonitor.split(",").map(word => word.trim()))
+                if (rowData.instructionsTypeLkey == "3010591042600262") {
+                    setSelectedPreDefine(predefinedInstructionsListResponse?.object?.find(item => item.key === rowData.instructions))
+                    setSelectedOption("3010591042600262")
+                }
+                else if (rowData.instructionsTypeLkey == "3010573499898196") {
+                    setMunial(rowData.instructions)
+                    setSelectedOption("3010573499898196")
+                }
+                else if (rowData.instructionsTypeLkey == "3010606785535008") {
+                    setSelectedOption("3010606785535008")
+                    setSelectedRowoMedicationKey(rowData.key);
+                }
+                setEditing(rowData.statusLkey == "164797574082125" ? false : true)
+            }}
+            rowClassName={isSelected}
+        >
+            <Column flexGrow={1}>
+                <HeaderCell align="center">
+
+                    <Translate>#</Translate>
+                </HeaderCell>
+                <Cell>
+                    {rowData => (
+                        <Checkbox
+                            key={rowData.id}
+                            checked={selectedRows.includes(rowData)}
+                            onChange={() => handleCheckboxChange(rowData)}
+                            disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
+                        />
+                    )}
+                </Cell>
+
+
+            </Column>
+            <Column flexGrow={2}>
+                <HeaderCell align="center">
+                    <Input onChange={e => handleFilterChange('genericMedicationsKey', e)} />
+                    <Translate>Medication Name</Translate>
+                </HeaderCell>
+
+                <Cell dataKey="genericMedicationsKey" >
+                    {rowData =>
+                        genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName
+                    }
+                </Cell>
+            </Column>
+            <Column flexGrow={4}>
+                <HeaderCell align="center">
+                    <Input onChange={e => handleFilterChange('instructions', e)} />
+                    <Translate>Instructions</Translate>
+                </HeaderCell>
+                <Cell>
+                    {rowData => {
+                        if (rowData.instructionsTypeLkey === "3010591042600262") {
+                            const generic = predefinedInstructionsListResponse?.object?.find(
+                                item => item.key === rowData.instructions
+                            );
+
+                            if (generic) {
+                                console.log("Found generic:", generic);
+                            } else {
+                                console.warn("No matching generic found for key:", rowData.instructions);
+                            }
+                            return [
+                                generic?.dose,
+                                generic?.unitLvalue?.lovDisplayVale,
+                                generic?.routLvalue?.lovDisplayVale,
+                                generic?.frequencyLvalue?.lovDisplayVale
+
+
+                            ]
+                                .filter(Boolean)
+                                .join(', ');
+                        }
+                        if (rowData.instructionsTypeLkey === "3010573499898196") {
+                            return rowData.instructions
+
+                        }
+                        if (rowData.instructionsTypeLkey === "3010606785535008") {
+                            return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose +
+                                "," + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue.lovDisplayVale + "," +
+                                customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue.lovDisplayVale
+
+
+                        }
+
+                        return "no";
+                    }}
+
+
+
+
+                </Cell>
+            </Column>
+            <Column flexGrow={2}>
+                <HeaderCell align="center">
+                    <Input onChange={e => handleFilterChange('validUtil', e)} />
+                    <Translate>Instructions Type</Translate>
+                </HeaderCell>
+                <Cell >
+                    {rowData => rowData.instructionsTypeLkey ? rowData.instructionsTypeLvalue.lovDisplayVale : rowData.instructionsTypeLkey}
+                </Cell>
+            </Column>
+            <Column flexGrow={2}>
+                <HeaderCell align="center">
+                    <Input onChange={e => handleFilterChange('validUtil', e)} />
+                    <Translate>Valid until</Translate>
+                </HeaderCell>
+                <Cell dataKey="validUtil" />
+            </Column>
+
+            <Column flexGrow={2}>
+                <HeaderCell align="center">
+                    <Input onChange={e => handleFilterChange('ststusLvalue', e)} />
+                    <Translate>Status</Translate>
+                </HeaderCell>
+                <Cell >{rowData => rowData.statusLvalue?.lovDisplayVale || ''}
+                </Cell>
+            </Column>
+
+
+            <Column flexGrow={2}>
+                <HeaderCell align="center">
+
+                    <Translate>Is Chronic</Translate>
+                </HeaderCell>
+                <Cell  >
+                    {rowData => rowData.chronicMedication ? "Yes" : "NO"}
+
+
+                </Cell>
+            </Column>
+        </Table> */}
+
+        <DetailsModal open={openDetailsModal}
+            setOpen={setOpenDetailsModal}
+            patient={patient}
+            encounter={encounter}
+            prescriptionMedication={prescriptionMedication}
+            setPrescriptionMedications={setPrescriptionMedications}
+            preKey={preKey}
+            editing={editing}
+            medicRefetch={medicRefetch} />
+        <Modal size={'lg'} open={openSubstitutesModel} onClose={CloseSubstitutesModel} overflow  >
+            <Modal.Title>
+                <Translate><h6>Substitues</h6></Translate>
+            </Modal.Title>
+            <Modal.Body>
                 <Table
                     height={400}
-                    sortColumn={listRequest.sortBy}
-                    sortType={listRequest.sortType}
-                    onSortColumn={(sortBy, sortType) => {
-                        if (sortBy)
-                            setListRequest({
-                                ...listRequest,
-                                sortBy,
-                                sortType
-                            });
-                    }}
-                    headerHeight={80}
+
+                    headerHeight={50}
                     rowHeight={60}
                     bordered
                     cellBordered
-
-                    data={prescriptionMedications?.object ?? []}
-                    onRowClick={rowData => {
-                        setPrescriptionMedications(rowData);
-                        setSelectedGeneric(genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey))
-                        setTags(rowData.parametersToMonitor.split(",").map(word => word.trim()))
-                        if (rowData.instructionsTypeLkey == "3010591042600262") {
-                            setSelectedPreDefine(predefinedInstructionsListResponse?.object?.find(item => item.key === rowData.instructions))
-                            setSelectedOption("3010591042600262")
-                        }
-                        else if (rowData.instructionsTypeLkey == "3010573499898196") {
-                            setMunial(rowData.instructions)
-                            setSelectedOption("3010573499898196")
-                        }
-                        else if (rowData.instructionsTypeLkey == "3010606785535008") {
-                            setSelectedOption("3010606785535008")
-                            setSelectedRowoMedicationKey(rowData.key);
-                        }
-                        setEditing(rowData.statusLkey == "164797574082125" ? false : true)
-                    }}
-                    rowClassName={isSelected}
+                    data={lisOfLinkedBrand?.object ?? []}
+                //   onRowClick={rowData => {
+                //     setGenericMedication(rowData);
+                //   }}
+                //   rowClassName={isSelected}
                 >
-                    <Column flexGrow={1}>
+                    <Column sortable flexGrow={2}>
                         <HeaderCell align="center">
-
-                            <Translate>#</Translate>
+                            <Translate>Code </Translate>
                         </HeaderCell>
-                        <Cell>
-                            {rowData => (
-                                <Checkbox
-                                    key={rowData.id}
-                                    checked={selectedRows.includes(rowData)}
-                                    onChange={() => handleCheckboxChange(rowData)}
-                                    disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
-                                />
-                            )}
-                        </Cell>
-
-
+                        <Cell dataKey="code" />
                     </Column>
-                    <Column flexGrow={2}>
+                    <Column sortable flexGrow={2}>
                         <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('genericMedicationsKey', e)} />
-                            <Translate>Medication Name</Translate>
+                            <Translate>Brand Name </Translate>
                         </HeaderCell>
+                        <Cell dataKey="genericName" />
+                    </Column>
+                    <Column sortable flexGrow={2}>
+                        <HeaderCell align="center">
 
-                        <Cell dataKey="genericMedicationsKey" >
+                            <Translate>Manufacturer</Translate>
+                        </HeaderCell>
+                        <Cell dataKey="manufacturerLkey">
                             {rowData =>
-                                genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName
+                                rowData.manufacturerLvalue ? rowData.manufacturerLvalue.lovDisplayVale : rowData.manufacturerLkey
                             }
                         </Cell>
                     </Column>
-                    <Column flexGrow={4}>
+                    <Column sortable flexGrow={2} fullText>
                         <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('instructions', e)} />
-                            <Translate>Instructions</Translate>
+
+                            <Translate>Dosage Form</Translate>
                         </HeaderCell>
                         <Cell>
-                            {rowData => {
-                                if (rowData.instructionsTypeLkey === "3010591042600262") {
-                                    const generic = predefinedInstructionsListResponse?.object?.find(
-                                        item => item.key === rowData.instructions
-                                    );
-
-                                    if (generic) {
-                                        console.log("Found generic:", generic);
-                                    } else {
-                                        console.warn("No matching generic found for key:", rowData.instructions);
-                                    }
-                                    return [
-                                        generic?.dose,
-                                        generic?.unitLvalue?.lovDisplayVale,
-                                        generic?.routLvalue?.lovDisplayVale,
-                                        generic?.frequencyLvalue?.lovDisplayVale
-                                              
-                                     
-                                    ]
-                                        .filter(Boolean)
-                                        .join(', ');
-                                }
-                                if (rowData.instructionsTypeLkey === "3010573499898196") {
-                                    return rowData.instructions
-
-                                }
-                                if (rowData.instructionsTypeLkey === "3010606785535008") {
-                                    return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose +
-                                        "," + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue.lovDisplayVale + "," +
-                                        customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue.lovDisplayVale
-
-
-                                }
-
-                                return "no";
-                            }}
-
-
-
-
+                            {rowData =>
+                                rowData.dosageFormLvalue ? rowData.dosageFormLvalue.lovDisplayVale : rowData.dosageFormLkey
+                            }
                         </Cell>
                     </Column>
-                    <Column flexGrow={2}>
+
+                    <Column sortable flexGrow={3} fullText>
                         <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('validUtil', e)} />
-                            <Translate>Instructions Type</Translate>
+
+                            <Translate>Usage Instructions</Translate>
                         </HeaderCell>
-                        <Cell >
-                            {rowData => rowData.instructionsTypeLkey ? rowData.instructionsTypeLvalue.lovDisplayVale : rowData.instructionsTypeLkey}
+                        <Cell dataKey="usageInstructions" />
+                    </Column>
+                    <Column sortable flexGrow={2} fixed fullText>
+                        <HeaderCell align="center">
+
+                            <Translate>Rout</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData => rowData.roaList?.map((item, index) => {
+                                const value = conjureValueBasedOnKeyFromList(
+                                    medRoutLovQueryResponse?.object ?? [],
+                                    item,
+                                    'lovDisplayVale'
+                                );
+                                return (
+                                    <span key={index}>
+                                        {value}
+                                        {index < rowData.roaList.length - 1 && ', '}
+                                    </span>
+                                );
+                            })}
                         </Cell>
                     </Column>
-                    <Column flexGrow={2}>
+                    <Column sortable flexGrow={2}>
                         <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('validUtil', e)} />
-                            <Translate>Valid until</Translate>
-                        </HeaderCell>
-                        <Cell dataKey="validUtil" />
-                    </Column>
 
-                    <Column flexGrow={2}>
+                            <Translate>Expires After Opening</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.expiresAfterOpening ? 'Yes' : 'No'
+                            }
+                        </Cell>
+                    </Column>
+                    <Column sortable flexGrow={3}>
                         <HeaderCell align="center">
-                            <Input onChange={e => handleFilterChange('ststusLvalue', e)} />
+
+                            <Translate>Single Patient Use</Translate>
+                        </HeaderCell>
+                        <Cell>
+                            {rowData =>
+                                rowData.singlePatientUse ? 'Yes' : 'No'
+                            }
+                        </Cell>
+                    </Column>
+                    <Column sortable flexGrow={1}>
+                        <HeaderCell align="center">
+
                             <Translate>Status</Translate>
                         </HeaderCell>
-                        <Cell >{rowData => rowData.statusLvalue?.lovDisplayVale || ''}
-                        </Cell>
-                    </Column>
-
-
-                    <Column flexGrow={2}>
-                        <HeaderCell align="center">
-
-                            <Translate>Is Chronic</Translate>
-                        </HeaderCell>
-                        <Cell  >
-                            {rowData => rowData.chronicMedication ? "Yes" : "NO"}
-
-
+                        <Cell>
+                            {rowData =>
+                                rowData.deletedAt === null ? 'Active' : 'InActive'
+                            }
                         </Cell>
                     </Column>
                 </Table>
 
-            </div>
-            <Modal size={'lg'} open={openSubstitutesModel} onClose={CloseSubstitutesModel} overflow  >
-                <Modal.Title>
-                    <Translate><h6>Substitues</h6></Translate>
-                </Modal.Title>
-                <Modal.Body>
-                    <Table
-                        height={400}
+            </Modal.Body>
+            <Modal.Footer>
+                <Stack spacing={2} divider={<Divider vertical />}>
 
-                        headerHeight={50}
-                        rowHeight={60}
-                        bordered
-                        cellBordered
-                        data={lisOfLinkedBrand?.object ?? []}
-                    //   onRowClick={rowData => {
-                    //     setGenericMedication(rowData);
-                    //   }}
-                    //   rowClassName={isSelected}
-                    >
-                        <Column sortable flexGrow={2}>
-                            <HeaderCell align="center">
-                                <Translate>Code </Translate>
-                            </HeaderCell>
-                            <Cell dataKey="code" />
-                        </Column>
-                        <Column sortable flexGrow={2}>
-                            <HeaderCell align="center">
-                                <Translate>Brand Name </Translate>
-                            </HeaderCell>
-                            <Cell dataKey="genericName" />
-                        </Column>
-                        <Column sortable flexGrow={2}>
-                            <HeaderCell align="center">
+                    <Button appearance="ghost" color="cyan" onClick={CloseSubstitutesModel}>
+                        Close
+                    </Button>
+                </Stack>
+            </Modal.Footer>
+        </Modal>
+        </>
+       
+);}
 
-                                <Translate>Manufacturer</Translate>
-                            </HeaderCell>
-                            <Cell dataKey="manufacturerLkey">
-                                {rowData =>
-                                    rowData.manufacturerLvalue ? rowData.manufacturerLvalue.lovDisplayVale : rowData.manufacturerLkey
-                                }
-                            </Cell>
-                        </Column>
-                        <Column sortable flexGrow={2} fullText>
-                            <HeaderCell align="center">
 
-                                <Translate>Dosage Form</Translate>
-                            </HeaderCell>
-                            <Cell>
-                                {rowData =>
-                                    rowData.dosageFormLvalue ? rowData.dosageFormLvalue.lovDisplayVale : rowData.dosageFormLkey
-                                }
-                            </Cell>
-                        </Column>
-
-                        <Column sortable flexGrow={3} fullText>
-                            <HeaderCell align="center">
-
-                                <Translate>Usage Instructions</Translate>
-                            </HeaderCell>
-                            <Cell dataKey="usageInstructions" />
-                        </Column>
-                        <Column sortable flexGrow={2} fixed fullText>
-                            <HeaderCell align="center">
-
-                                <Translate>Rout</Translate>
-                            </HeaderCell>
-                            <Cell>
-                                {rowData => rowData.roaList?.map((item, index) => {
-                                    const value = conjureValueBasedOnKeyFromList(
-                                        medRoutLovQueryResponse?.object ?? [],
-                                        item,
-                                        'lovDisplayVale'
-                                    );
-                                    return (
-                                        <span key={index}>
-                                            {value}
-                                            {index < rowData.roaList.length - 1 && ', '}
-                                        </span>
-                                    );
-                                })}
-                            </Cell>
-                        </Column>
-                        <Column sortable flexGrow={2}>
-                            <HeaderCell align="center">
-
-                                <Translate>Expires After Opening</Translate>
-                            </HeaderCell>
-                            <Cell>
-                                {rowData =>
-                                    rowData.expiresAfterOpening ? 'Yes' : 'No'
-                                }
-                            </Cell>
-                        </Column>
-                        <Column sortable flexGrow={3}>
-                            <HeaderCell align="center">
-
-                                <Translate>Single Patient Use</Translate>
-                            </HeaderCell>
-                            <Cell>
-                                {rowData =>
-                                    rowData.singlePatientUse ? 'Yes' : 'No'
-                                }
-                            </Cell>
-                        </Column>
-                        <Column sortable flexGrow={1}>
-                            <HeaderCell align="center">
-
-                                <Translate>Status</Translate>
-                            </HeaderCell>
-                            <Cell>
-                                {rowData =>
-                                    rowData.deletedAt === null ? 'Active' : 'InActive'
-                                }
-                            </Cell>
-                        </Column>
-                    </Table>
-
-                </Modal.Body>
-                <Modal.Footer>
-                    <Stack spacing={2} divider={<Divider vertical />}>
-
-                        <Button appearance="ghost" color="cyan" onClick={CloseSubstitutesModel}>
-                            Close
-                        </Button>
-                    </Stack>
-                </Modal.Footer>
-            </Modal>
-        </div>
-    </>);
-};
-export default Prescription;
+        export default Prescription;
