@@ -411,7 +411,14 @@ const VaccinationTab = ({ disabled, patient, encounter }) => {
                 </Cell>
             </Column>
         </Table>
-        <CancellationModal open={popupCancelOpen} setOpen={setPopupCancelOpen} object={encounterVaccination} setObject={setEncounterVaccination} handleCancle={handleCancle} fieldName="cancellationReason" />
+        <CancellationModal open={popupCancelOpen}
+         setOpen={setPopupCancelOpen} 
+         object={encounterVaccination} 
+         setObject={setEncounterVaccination} 
+         handleCancle={handleCancle} 
+         fieldName="cancellationReason" 
+         fieldLabel="Cancellation Reason"
+         title="Cancellation"/>
     </div>);
 };
 export default VaccinationTab;

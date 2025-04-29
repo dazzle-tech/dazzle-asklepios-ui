@@ -35,12 +35,19 @@
 
 }
 
-.instructions-container-p {
+.details-basic-div{
     display: flex;
     flex-direction: row;
-    
-    gap: 20px;
+    gap:15px;
 
+}
+.child-div{
+    flex:1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 97%;
+    height: auto !important;
 }
 
 .toggle-style {
@@ -59,10 +66,8 @@
 .mid-container-p {
     display: flex;
     flex-direction:column;
-  
     padding: 10px;
     gap: 15px;
-    
     position: relative;
 }
 .buttons-sect-left{
@@ -95,7 +100,7 @@
     width: 300px; 
     height:250px;
     background-color: white;
-    border-radius: 4px;
+    border-radius: 10px;
     box-shadow: 0px 3px 5px -1px rgba(0, 0, 0, 0.2), 
                 0px 6px 10px 0px rgba(0, 0, 0, 0.14), 
                 0px 1px 18px 0px rgba(0, 0, 0, 0.12); 
@@ -118,3 +123,24 @@
     pointer-events: none;
     opacity: 0.6;
   }
+ 
+.fields-div{
+    display: flex;
+    flex-direction: row;
+  
+}
+.bt-div{
+    display: flex;
+     gap: 5px;
+  }
+  .bt-right{
+    display: flex;
+    margin-left:auto;
+    gap: 5px;
+  }
+  .fill-width{
+    width: 100%;
+  }
+    .margin-label{
+        margin-bottom: 10px !important;
+    }
