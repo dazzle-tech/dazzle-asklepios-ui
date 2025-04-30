@@ -136,7 +136,7 @@ const Prescription = ({ edit, patient, encounter }) => {
 
             if (foundPrescription?.key != null) {
                 setPreKey(foundPrescription?.key);
-                setPrescription(foundPrescription)
+               
             }
 
         }
@@ -245,12 +245,9 @@ const Prescription = ({ edit, patient, encounter }) => {
             refillIntervalUnitLkey: null,
             indicationUseLkey: null
         })
-        setAdminInstructions("");
-        setSelectedGeneric(null);
-        setindicationsDescription(null);
 
         setCustomeinst({ dose: null, frequency: null, unit: null, roa: null })
-        setTags([])
+      
     }
 
     const saveDraft = async () => {
@@ -284,7 +281,7 @@ const Prescription = ({ edit, patient, encounter }) => {
     const handleSavePrescription = async () => {
         handleCleare();
         setPreKey(null);
-        setPrescription(null);
+       
 
         if (patient && encounter) {
             try {
@@ -300,7 +297,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                 dispatch(notify('Start New Prescription whith ID:' + response?.data?.prescriptionId));
 
                 setPreKey(response?.data?.key);
-                setPrescription(response?.data);
+                
                 preRefetch().then(() => "");
 
             } catch (error) {
