@@ -1234,6 +1234,7 @@ const Rad = () => {
             </Col>
           </Row>
           <Row>
+            <div style={{width:'1150px'}}>
             {openorders && (
               <Panel
                 header="Order's Tests"
@@ -1258,9 +1259,11 @@ const Rad = () => {
                 />
              
               </Panel>
-            )}
+            )}</div>
+          
           </Row>
           <Row>
+          <div style={{width:'1150px'}}>
             {openresults && (
               <Panel
                 header="Test's Results Processing"
@@ -1290,6 +1293,7 @@ const Rad = () => {
               
               </Panel>
             )}
+            </div>
           </Row>
         </div>
 
