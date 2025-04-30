@@ -75,6 +75,8 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import ReactDOMServer from 'react-dom/server';
 import { Button, Col, Panel, Steps } from 'rsuite';
 import PatientSide from '../lab-module/PatienSide';
+import CancellationModal from '@/components/CancellationModal';
+import MyModal from '@/components/MyModal/MyModal';
 const { Column, HeaderCell, Cell } = Table;
 const Rad = () => {
   const dispatch = useAppDispatch();
@@ -304,12 +306,12 @@ const Rad = () => {
     try {
       await savenotes({
         ...note,
-        notes:value,
+        notes: value,
         testKey: test.key,
         orderKey: order.key
       }).unwrap();
       dispatch(notify({ msg: 'Send successfully', sev: 'success' }));
-      
+
     } catch (error) {
       dispatch(notify({ msg: 'Send Faild', sev: 'error' }));
     }
@@ -325,7 +327,7 @@ const Rad = () => {
         reportKey: report.key
       }).unwrap();
       dispatch(notify({ msg: 'Send successfully', sev: 'success' }));
-     
+
     } catch (error) {
       dispatch(notify({ msg: 'Send Faild', sev: 'error' }));
     }
@@ -874,16 +876,16 @@ const Rad = () => {
                     </Cell>
                   </Column>
                   <Column sortable flexGrow={2} fullText>
-                  <HeaderCell>
+                    <HeaderCell>
 
-                    <Translate>PHYSICIAN</Translate>
-                  </HeaderCell>
-                  <Cell>
-                    {rowData => { return rowData.createdBy, " At", rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "" }}
+                      <Translate>PHYSICIAN</Translate>
+                    </HeaderCell>
+                    <Cell>
+                      {rowData => { return rowData.createdBy, " At", rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "" }}
 
-                  </Cell>
+                    </Cell>
 
-                </Column>
+                  </Column>
                   <Column sortable flexGrow={2} fullText>
                     <HeaderCell>
                       <Translate>ORDERS NOTES</Translate>
@@ -960,12 +962,12 @@ const Rad = () => {
                                 marginRight: 10,
                                 color:
                                   rowData.processingStatusLkey !== '6055029972709625' &&
-                                  rowData.processingStatusLkey !== '6816324725527414'
+                                    rowData.processingStatusLkey !== '6816324725527414'
                                     ? 'gray'
                                     : 'inherit',
                                 cursor:
                                   rowData.processingStatusLkey !== '6055029972709625' &&
-                                  rowData.processingStatusLkey !== '6816324725527414'
+                                    rowData.processingStatusLkey !== '6816324725527414'
                                     ? 'not-allowed'
                                     : 'pointer'
                               }}
@@ -987,12 +989,12 @@ const Rad = () => {
                                 marginRight: 10,
                                 color:
                                   rowData.processingStatusLkey !== '6055029972709625' &&
-                                  rowData.processingStatusLkey !== '6816324725527414'
+                                    rowData.processingStatusLkey !== '6816324725527414'
                                     ? 'gray'
                                     : 'inherit',
                                 cursor:
                                   rowData.processingStatusLkey !== '6055029972709625' &&
-                                  rowData.processingStatusLkey !== '6816324725527414'
+                                    rowData.processingStatusLkey !== '6816324725527414'
                                     ? 'not-allowed'
                                     : 'pointer'
                               }}
@@ -1314,149 +1316,106 @@ const Rad = () => {
           <PatientSide patient={patient} encounter={encounter} />
         </div>
       </div>
-       <ChatModal open={openNoteResultModal} setOpen={setOpenNoteResultModal} handleSendMessage={handleSendResultMessage} title={"Comments"} list={messagesResultList?.object} fieldShowName={'notes'}/>
-          <ChatModal open={openNoteModal} setOpen={setOpenNoteModal} handleSendMessage={handleSendMessage} title={"Comments"} list={messagesList?.object} fieldShowName={'notes'}/>
-      <Modal open={openSampleModal} onClose={() => setOpenSampleModal(false)} size="xs">
-        <Modal.Header>
-          <Modal.Title>Patient Arrived</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Col xs={24}>
+      <ChatModal open={openNoteResultModal} setOpen={setOpenNoteResultModal} handleSendMessage={handleSendResultMessage} title={"Comments"} list={messagesResultList?.object} fieldShowName={'notes'} />
+      <ChatModal open={openNoteModal} setOpen={setOpenNoteModal} handleSendMessage={handleSendMessage} title={"Comments"} list={messagesList?.object} fieldShowName={'notes'} />
+      <MyModal
+        open={openSampleModal}
+        setOpen={setOpenSampleModal}
+        title="Patient Arrived"
+        steps={[{ title: "Arrived", icon: faHospitalUser }]}
+        size="450px"
+        bodyheight={300}
+        content={
+          <Col md={24}>
             <Row>
-              <Form>
-                <MyInput
-                  fieldLabel="Patient Arrival Note"
-                  fieldName={'patientArrivedNoteRad'}
-                  fieldType="textarea"
-                  record={test}
-                  setRecord={setTest}
-                />
-              </Form>
+              <Col md={24}>
+                <Form fluid>
+                  <MyInput
+                    width='100%'
+                    fieldLabel="Patient Arrival Note"
+                    fieldName={'patientArrivedNoteRad'}
+                    fieldType="textarea"
+                    record={test}
+                    setRecord={setTest}
+                  />
+                </Form></Col>
             </Row>
             <Row>
-              <Text style={{ fontWeight: 'bold' }}>Patient Arrived </Text>
-              <DatePicker
-                style={{ width: '270' }}
-                format="dd MMM yyyy hh:mm:ss aa"
-                showMeridiem
-                caretAs={FaCalendar}
-                value={selectedSampleDate}
-                onChange={handleDateChange}
-              />
+              <Col md={24}>
+                <Form fluid>
+                  <MyInput
+                    width="100%"
+                    fieldName="patientArrivedAt"
+                    fieldType='datetime'
+                    record={test}
+                    setRecord={setTest}
+
+                  />
+                </Form></Col>
             </Row>
-          </Col>
-        </Modal.Body>
-        <Modal.Footer style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            appearance="primary"
-            color="cyan"
-            onClick={async () => {
-              const Response = await saveTest({
-                ...test,
-                patientArrivedAt: selectedSampleDate ? selectedSampleDate.getTime() : null,
-                processingStatusLkey: '6816324725527414'
+          </Col>}
+      ></MyModal>
+    
+      <CancellationModal
+        open={openRejectedModal}
+        setOpen={setOpenRejectedModal}
+        fieldName='rejectedReason'
+        fieldLabel="Rejected Reason"
+        title="Reject"
+        object={test}
+        setObject={setTest}
+        handleCancle={handleRejectedTest}
+      />
+      <CancellationModal
+        open={openRejectedResultModal}
+        setOpen={setOpenRejectedResultModal}
+        fieldName='rejectedReason'
+        fieldLabel="Rejected Reason"
+        title="Reject"
+        object={report}
+        setObject={setReport}
+        handleCancle={async () => {
+          {
+            try {
+              await saveReport({
+                ...report,
+                statusLkey: '6488555526802885',
+                rejectedAt: Date.now()
               }).unwrap();
               dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-              setSelectedSampleDate(null);
-              setOpenSampleModal(false);
-              setTest({ ...newApDiagnosticOrderTests });
-              await fetchTest();
-              orderFetch();
-              setTest({ ...Response });
-            }}
-          >
-            Save
-          </Button>
-          <Button appearance="ghost" color="cyan" onClick={() => setOpenSampleModal(false)}>
-            Cancel
-          </Button>
-        </Modal.Footer>
-      </Modal>
-      <Modal open={openRejectedModal} onClose={() => setOpenRejectedModal(false)} size="xs">
-        <Modal.Header>
-          <Modal.Title>Why do you want to reject the Test? </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <MyInput
-              disabled={false}
-              fieldType={'textarea'}
-              fieldName={'rejectedReason'}
-              record={test}
-              setRecord={setTest}
-            />
-          </Form>
-        </Modal.Body>
-        <Modal.Footer style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button appearance="primary" color="cyan" onClick={handleRejectedTest}>
-            Save
-          </Button>
-          <Button appearance="ghost" color="cyan" onClick={() => setOpenRejectedModal(false)}>
-            Cancel
-          </Button>
-        </Modal.Footer>
-      </Modal>
-      <Modal
-        open={openRejectedResultModal}
-        onClose={() => setOpenRejectedResultModal(false)}
-        size="xs"
-      >
-        <Modal.Header>
-          <Modal.Title>Why do you want to reject the Test? </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <MyInput
-              disabled={false}
-              fieldType={'textarea'}
-              fieldName={'rejectedReason'}
-              record={report}
-              setRecord={setReport}
-            />
-          </Form>
-        </Modal.Body>
-        <Modal.Footer style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            appearance="primary"
-            color="cyan"
-            onClick={async () => {
-              {
-                try {
-                  await saveReport({
-                    ...report,
-                    statusLkey: '6488555526802885',
-                    rejectedAt: Date.now()
-                  }).unwrap();
-                  dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                  resultFetch();
-                  setOpenRejectedResultModal(false);
-                } catch (error) {
-                  dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-                }
-              }
-            }}
-          >
-            Save
-          </Button>
-          <Button appearance="ghost" color="cyan" onClick={() => setOpenRejectedResultModal(false)}>
-            Cancel
-          </Button>
-        </Modal.Footer>
-      </Modal>
-      <Modal open={openReportModal} onClose={() => setOpenReportModal(false)} size="md">
-        <Modal.Header>
-          <Modal.Title></Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div style={{ border: '1px solid #ccc', borderRadius: 5, padding: 10, width: 500 }}>
-            <ButtonGroup>
+              resultFetch();
+              setOpenRejectedResultModal(false);
+            } catch (error) {
+              dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+            }
+          }
+        }}
+      />
+     <MyModal
+     title="Add Report"
+     open={openReportModal}
+     setOpen={setOpenReportModal}
+     steps={[{title:"Report" ,icon:faFileLines}]}
+     size="450px"
+        bodyheight={300}
+     content={<>
+     <Row>
+      <Col md={24}>
+      <ButtonGroup>
               <IconButton icon={<FaBold />} />
               <IconButton icon={<FaItalic />} />
               <IconButton icon={<List />} />
               <IconButton icon={<FaLink />} />
               <IconButton icon={<Image />} />
-              <Form>
+              
+              </ButtonGroup>
+      </Col>
+     </Row>
+     <Row >
+      <Col md={24}>
+      <Form fluid>
                 <MyInput
+                  width="100%"
                   disabled={report.statusLkey == '265089168359400' ? true : false}
                   fieldName={'severityLkey'}
                   fieldType="select"
@@ -1467,11 +1426,14 @@ const Rad = () => {
                   setRecord={setReport}
                 />
               </Form>
-            </ButtonGroup>
-            <Form>
+      </Col>
+     </Row>
+     <Row >
+      <Col md={24}>
+      <Form fluid>
               <MyInput
                 disabled={report.statusLkey == '265089168359400' ? true : false}
-                width={450}
+                width="100%"
                 hight={200}
                 fieldLabel={''}
                 fieldName={'reportValue'}
@@ -1479,39 +1441,12 @@ const Rad = () => {
                 record={report}
                 setRecord={setReport}
               />
-            </Form>
-            {/* <Input as="textarea" rows={5} placeholder="Write Report.." /> */}
-          </div>
-        </Modal.Body>
-        <Modal.Footer style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            disabled={report.statusLkey == '265089168359400' ? true : false}
-            appearance="primary"
-            color="cyan"
-            onClick={async () => {
-              saveReport({ ...report, statusLkey: '265123250697000' }).unwrap();
+            </Form></Col>
 
-              const Response = await saveTest({
-                ...test,
-                processingStatusLkey: '265123250697000'
-              }).unwrap();
-
-              setTest({ ...newApDiagnosticOrderTests });
-              dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-              setTest({ ...Response });
-              await fetchTest();
-              await resultFetch();
-
-              setOpenReportModal(false);
-            }}
-          >
-            Save
-          </Button>
-          <Button appearance="ghost" color="cyan" onClick={() => setOpenReportModal(false)}>
-            Cancel
-          </Button>
-        </Modal.Footer>
-      </Modal>
+     </Row>
+     </>}
+     ></MyModal>
+   
     </div>
   );
 };
