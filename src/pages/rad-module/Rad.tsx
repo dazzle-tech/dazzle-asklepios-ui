@@ -77,6 +77,7 @@ import { Button, Col, Panel, Steps } from 'rsuite';
 import PatientSide from '../lab-module/PatienSide';
 import CancellationModal from '@/components/CancellationModal';
 import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
 const { Column, HeaderCell, Cell } = Table;
 const Rad = () => {
   const dispatch = useAppDispatch();
@@ -89,11 +90,14 @@ const Rad = () => {
   const [encounter, setEncounter] = useState({ ...newApEncounter });
   const [showFilterInput, setShowFilterInput] = useState(false);
   const [patient, setPatient] = useState({ ...newApPatient });
-  const [order, setOrder] = useState({ ...newApDiagnosticOrders });
-  const [test, setTest] = useState({ ...newApDiagnosticOrderTests });
+  const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders });
+  const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
   const [note, setNote] = useState({ ...newApDiagnosticOrderTestsNotes });
   const [report, setReport] = useState({ ...newApDiagnosticOrderTestsRadReport });
   const [selectedSampleDate, setSelectedSampleDate] = useState(null);
+  const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+  const [manualSearchTriggeredTest, setManualSearchTriggeredTest] = useState(false);
+  const [manualSearchTriggeredReport, setManualSearchTriggeredReport] = useState(false);
   const [listOrdersResponse, setListOrdersResponse] = useState<ListRequest>({
     ...initialListRequest
   });
@@ -221,6 +225,7 @@ const Rad = () => {
   useEffect(() => {
     handleManualSearch();
   }, []);
+
   useEffect(() => {
     setPatient(order.patient);
     setEncounter(order.encounter);
@@ -433,86 +438,6 @@ const Rad = () => {
       setListOrdersResponse({ ...listOrdersResponse, filters: [] });
     }
   };
-  const renderRowExpanded = rowData => {
-    return (
-      <Table
-        data={[rowData]}
-        bordered
-        cellBordered
-        headerHeight={30}
-        rowHeight={40}
-        style={{ width: '100%', marginTop: '5px', marginBottom: '5px' }}
-        height={100}
-      >
-        <Column flexGrow={1} align="center" fullText>
-          <HeaderCell>ACCEPTED AT</HeaderCell>
-          <Cell dataKey="acceptedAt">
-            {rowData => (rowData.acceptedAt ? new Date(rowData.acceptedAt).toLocaleString() : '')}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} align="center" fullText>
-          <HeaderCell>ACCEPTED BY</HeaderCell>
-          <Cell dataKey="acceptedBy" />
-        </Column>
-        <Column flexGrow={1} align="center" fullText>
-          <HeaderCell>REJECTED AT</HeaderCell>
-          <Cell dataKey="rejectedAt">
-            {rowData => (rowData.rejectedAt ? new Date(rowData.rejectedAt).toLocaleString() : '')}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} align="center" fullText>
-          <HeaderCell>REJECTED BY</HeaderCell>
-          <Cell dataKey="rejectedBy" />
-        </Column>
-        <Column flexGrow={2} align="center" fullText>
-          <HeaderCell>REJECTED REASON</HeaderCell>
-          <Cell dataKey="rejectedReason">{rowData => rowData.rejectedReason}</Cell>
-        </Column>
-        <Column flexGrow={1} align="center" fullText>
-          <HeaderCell>ATTACHMENT</HeaderCell>
-          <Cell />
-        </Column>
-      </Table>
-    );
-  };
-
-  const handleExpanded = rowData => {
-    let open = false;
-    const nextExpandedRowKeys = [];
-
-    expandedRowKeys.forEach(key => {
-      if (key === rowData.key) {
-        open = true;
-      } else {
-        nextExpandedRowKeys.push(key);
-      }
-    });
-
-    if (!open) {
-      nextExpandedRowKeys.push(rowData.key);
-    }
-
-    console.log(nextExpandedRowKeys);
-    setExpandedRowKeys(nextExpandedRowKeys);
-  };
-
-  const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
-    <Cell {...props} style={{ padding: 5 }}>
-      <IconButton
-        appearance="subtle"
-        onClick={() => {
-          onChange(rowData);
-        }}
-        icon={
-          expandedRowKeys.some(key => key === rowData['key']) ? (
-            <CollaspedOutlineIcon />
-          ) : (
-            <ExpandOutlineIcon />
-          )
-        }
-      />
-    </Cell>
-  );
 
   const stepsData = [
     {
@@ -551,153 +476,693 @@ const Rad = () => {
       dispatch(setDivContent('  '));
     };
   }, [location.pathname, dispatch]);
+  const orderColumns = [
+    {
+      key: "orderId",
+      dataKey: "orderId",
+      title: <Translate>ORDER ID</Translate>,
+      flexGrow: 1,
+      fullText: true,
+      render: (rowData: any) => {
+        return rowData.orderId ?? '';
+      }
+    },
+    {
+      key: "submittedAt",
+      dataKey: "submittedAt",
+      title: <Translate>DATE,TIME</Translate>,
+      flexGrow: 1,
+      fullText: true,
+      render: (rowData: any) => {
+        return rowData.submittedAt ? new Date(rowData.submittedAt).toLocaleString() : '';
+      }
+    },
+    {
+      key: "mrn",
+      title: <Translate>MRN</Translate>,
+      flexGrow: 1,
+      fullText: true,
+      render: (rowData: any) => {
+        return rowData.patient?.patientMrn ?? '';
+      }
+    },
+    {
+      key: "name",
+      title: <Translate>PATIENT NAME</Translate>,
+      flexGrow: 2,
+      fullText: true,
+      render: (rowData: any) => {
+        return rowData.patient?.fullName ?? '';
+      }
+    },
+    {
+      key: "radStatusLkey",
+      dataKey: "radStatusLkey",
+      title: <Translate>STATUS</Translate>,
+      flexGrow: 1,
+      fullText: true,
+      render: (rowData: any) => {
+        return rowData.radStatusLvalue?.lovDisplayVale ?? rowData.radStatusLkey;
+      }
+    },
+    {
+      key: "marker",
+      title: <Translate>MARKER</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return rowData.isUrgent ? (
+          <Whisper
+            placement="top"
+            trigger="hover"
+            speaker={<Tooltip>Urgent</Tooltip>}
+          >
+            <FontAwesomeIcon
+              icon={faLandMineOn}
+              style={{
+                fontSize: '1em',
+                marginRight: 10,
+                color: 'red',
+                cursor: 'pointer'
+              }}
+            />
+          </Whisper>
+        ) : (
+          null
+        );
+      }
+    }
+  ];
+  ////order
+  const pageIndex = listOrdersResponse.pageNumber - 1;
+  // how many rows per page:
+  const rowsPerPage = listOrdersResponse.pageSize;
+  // total number of items in the backend:
+  const totalCount = filterdOrderList?.length ?? 0;
+  // handler when the user clicks a new page number:
+  const handlePageChange = (_: unknown, newPage: number) => {
+    // MUI gives you a zero-based page, so add 1 for your API
+    setManualSearchTriggered(true);
+    setListOrdersResponse({ ...listOrdersResponse, pageNumber: newPage + 1 });
+  };
+  // handler when the user chooses a different rows-per-page:
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setManualSearchTriggered(true);
+    setListOrdersResponse({
+      ...listOrdersResponse,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1 // reset to first page
+    });
+
+
+  };
+  const testColumns = [
+    {
+      key: "categoryLvalue",
+      dataKey: "categoryLvalue",
+      title: <Translate>TEST CATEGORY</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        const cat = laboratoryList?.object?.find(
+          item => item.testKey === rowData.testKey
+        );
+        if (cat) {
+          return cat.categoryLvalue?.lovDisplayVale ?? '';
+        }
+        return '';
+      }
+    }
+    ,
+    {
+      key: "name",
+      dataKey: "name",
+      title: <Translate>TEST NAME</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return  rowData.test.testName
+      }
+
+    }
+    ,
+    {
+      key: "reasonLkey",
+      dataKey: "reasonLkey",
+      title: <Translate>REASON</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return  rowData.reasonLvalue
+        ? rowData.reasonLvalue.lovDisplayVale
+        : rowData.reasonLkey
+      }
+
+    },
+    {
+      key: "priorityLkey",
+      dataKey: "priorityLkey",
+      title: <Translate>PROIRITY</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return  rowData.priorityLvalue
+        ? rowData.priorityLvalue.lovDisplayVale
+        : rowData.priorityLkey
+      }
+
+    }
+    ,
+    {
+      key: "duration",
+      dataKey: "duration",
+      title: <Translate>DURATION</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        const cat = laboratoryList?.object?.find(
+          item => item.testKey === rowData.testKey
+        );
+        if (cat) {
+          return `${cat.testDurationTime ?? ''} ${cat.timeUnitLvalue?.lovDisplayVale ?? ''}`;
+        }
+        return '';
+      }
+    }
+    ,
+    {
+      key: "physician",
+      dataKey: "physician",
+      title: <Translate>PHYSICIAN</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return rowData.createdBy, " At", rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "" 
+      }
+
+    },
+    {
+      key: "notes",
+      dataKey: "notes",
+      title: <Translate>ORDERS NOTES</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return rowData.notes
+      }
+
+    },
+    {
+      key: "technicianNotes", 
+      title: <Translate>Technician Notes</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return <HStack spacing={10}>
+        <FontAwesomeIcon
+          icon={faComment}
+          style={{ fontSize: '1em' }}
+          onClick={() => setOpenNoteModal(true)}
+        />
+      </HStack>
+      }
+
+    },
+    {
+      key: "patientArrived",
+      title: <Translate>PATIENT ARRIVED</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return  <HStack spacing={10}>
+        <FontAwesomeIcon
+          icon={faHospitalUser}
+          style={{ fontSize: '1em' }}
+          onClick={() => setOpenSampleModal(true)}
+        />
+      </HStack>
+      }
+
+    },
+    ,
+    {
+      key: "processingStatusLkey",
+      dataKey: "processingStatusLkey",
+      title: <Translate>SATUTS</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+       
+       return rowData.processingStatusLvalue
+          ? rowData.processingStatusLvalue.lovDisplayVale
+          : rowData.processingStatusLkey
+      }
+
+    }
+    ,
+    ,
+    {
+      key: "",
+      dataKey: "",
+      title: <Translate>ACTION</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+         
+     return   <HStack spacing={10}>
+        <Whisper
+          placement="top"
+          trigger="hover"
+          speaker={<Tooltip>Accepted</Tooltip>}
+        >
+          <CheckRoundIcon
+            onClick={() =>
+              (rowData.processingStatusLkey === '6055029972709625' ||
+                rowData.processingStatusLkey == '6816324725527414') &&
+              handleAcceptTest(rowData)
+            }
+            style={{
+              fontSize: '1em',
+              marginRight: 10,
+              color:
+                rowData.processingStatusLkey !== '6055029972709625' &&
+                  rowData.processingStatusLkey !== '6816324725527414'
+                  ? 'gray'
+                  : 'inherit',
+              cursor:
+                rowData.processingStatusLkey !== '6055029972709625' &&
+                  rowData.processingStatusLkey !== '6816324725527414'
+                  ? 'not-allowed'
+                  : 'pointer'
+            }}
+          />
+        </Whisper>
+        <Whisper
+          placement="top"
+          trigger="hover"
+          speaker={<Tooltip>Rejected</Tooltip>}
+        >
+          <WarningRoundIcon
+            onClick={() =>
+              (rowData.processingStatusLkey === '6055029972709625' ||
+                rowData.processingStatusLkey === '6816324725527414') &&
+              setOpenRejectedModal(true)
+            }
+            style={{
+              fontSize: '1em',
+              marginRight: 10,
+              color:
+                rowData.processingStatusLkey !== '6055029972709625' &&
+                  rowData.processingStatusLkey !== '6816324725527414'
+                  ? 'gray'
+                  : 'inherit',
+              cursor:
+                rowData.processingStatusLkey !== '6055029972709625' &&
+                  rowData.processingStatusLkey !== '6816324725527414'
+                  ? 'not-allowed'
+                  : 'pointer'
+            }}
+          />
+        </Whisper>
+        <Whisper
+          placement="top"
+          trigger="hover"
+          speaker={<Tooltip>Send to External Lab</Tooltip>}
+        >
+          <FontAwesomeIcon
+            icon={faRightFromBracket}
+            style={{ fontSize: '1em', marginRight: 10 }}
+          />
+        </Whisper>
+      </HStack>
+   
+      }
+
+    },
+    ,
+    {
+      key: "acceptedAt",
+      dataKey: "acceptedAt",
+      title: <Translate>ACCEPTED AT</Translate>,
+      flexGrow: 1,
+      expandable: true,
+      render: (rowData: any) => {
+        return (rowData.acceptedAt ? new Date(rowData.acceptedAt).toLocaleString() : '')
+      }
+    },
+    ,
+    {
+      key: "acceptedBy",
+      dataKey: "acceptedBy",
+      title: <Translate>ACCEPTED BY</Translate>,
+      flexGrow: 1,
+      expandable: true,
+      
+    }
+    ,
+    ,
+    {
+      key: "rejectedAt",
+      dataKey: "rejectedAt",
+      title: <Translate>REJECTED AT</Translate>,
+      flexGrow: 1,
+      expandable: true,
+      render: (rowData: any) => {
+        return (rowData.rejectedAt ? new Date(rowData.rejectedAt).toLocaleString() : '')
+      }
+    }
+    ,
+    {
+      key: "rejectedBy",
+      dataKey: "rejectedBy",
+      title: <Translate>REJECTED BY</Translate>,
+      flexGrow: 1,
+      expandable: true,
+     
+    }
+    ,
+    {
+      key: "rejectedReason",
+      dataKey: "rejectedReason",
+      title: <Translate>REJECTED REASON</Translate>,
+      flexGrow: 1,
+      expandable: true,
+      render: (rowData: any) => {
+        return (rowData.rejectedAt ? new Date(rowData.rejectedAt).toLocaleString() : '')
+      }
+    }
+  ]
+
+   ////test
+   const pageTestIndex = listOrdersTestResponse.pageNumber - 1;
+   // how many rows per page:
+   const rowsPerPageTest = listOrdersTestResponse.pageSize;
+   // total number of items in the backend:
+   const totalCountTest = testsList?.extraNumeric?? 0;
+   // handler when the user clicks a new page number:
+   const handlePageChangeTest = (_: unknown, newPage: number) => {
+     // MUI gives you a zero-based page, so add 1 for your API
+     setManualSearchTriggeredTest(true);
+     setListOrdersTestResponse({ ...listOrdersTestResponse, pageNumber: newPage + 1 });
+   };
+   // handler when the user chooses a different rows-per-page:
+   const handleRowsPerPageChangeTest = (event: React.ChangeEvent<HTMLInputElement>) => {
+     setManualSearchTriggeredTest(true);
+     setListOrdersTestResponse({
+       ...listOrdersTestResponse,
+       pageSize: parseInt(event.target.value, 10),
+       pageNumber: 1 // reset to first page
+     });
+ 
+ 
+   };
+  //report
+  const reportColumns = [
+    {
+      key: "testName",
+      dataKey: "testName",
+      title: <Translate>TEST NAME</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+       return test?.test?.testName;
+      }
+    }
+    ,
+    {
+      key: "report",
+      dataKey: "report",
+      title: <Translate>Report</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return  (
+          <HStack spacing={10}>
+            <FontAwesomeIcon
+              icon={faFileLines}
+              style={{ fontSize: '1em' }}
+              onClick={() => setOpenReportModal(true)}
+            />
+          </HStack>
+        )
+      }
+
+    }
+    ,
+    {
+      key: "comment",
+      
+      title: <Translate>COMMENTS</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => (
+        <HStack spacing={10}>
+          <FontAwesomeIcon
+            icon={faComment}
+            style={{ fontSize: '1em' }}
+            onClick={() => setOpenNoteResultModal(true)}
+          />
+        </HStack>
+      )
+
+    },
+    {
+      key: "previousResult",
+      title: <Translate>PREVIOUS RESULT</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        const prev = prevResultsList?.object?.[1];
+    
+        if (!prev) return '';
+    
+        switch (prev.normalRangeKey) {
+          case '6209578532136054':
+            return prev.reasonLvalue?.lovDisplayVale ?? prev.reasonLkey;
+          case '6209569237704618':
+            return prev.resultValueNumber ?? '';
+          default:
+            return '';
+        }
+      }
+    },
+    {
+      key: "preDate",
+     
+      title: <Translate>PREVIOUS REPORT DATE</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) =>  {
+       return prevResultsList?.object[0]
+        ? new Date(prevResultsList?.object[0]?.createdAt).toLocaleString()
+        : ''}
+    }
+    ,
+    {
+      key: "",
+      
+      title: <Translate>EXTERNEL STATUS</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return null;
+      }
+
+    },
+    {
+      key: "statusLkey",
+      dataKey: "statusLkey",
+      title: <Translate>REPORT SATUTS</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return rowData.statusLvalue
+        ? rowData.statusLvalue.lovDisplayVale
+        : rowData.statusLkey
+      }
+
+    },
+    {
+      key: "", 
+      title: <Translate>EXTERNEL LAB NAME</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return null;
+      }
+
+    },
+    {
+      key: "patientArrived",
+      title: <Translate>ATTACHMENT</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return null;
+      }
+
+    },
+    ,
+    {
+      key: " ",
+      
+      title: <Translate>ATTACHED BY/DATE</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+       
+       return null;
+
+    }}
+    ,
+    ,
+    {
+      key: "",
+      dataKey: "",
+      title: <Translate>ACTION</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+         
+     return  (
+      <HStack spacing={10}>
+        <Whisper
+          placement="top"
+          trigger="hover"
+          speaker={<Tooltip>Approve</Tooltip>}
+        >
+          <CheckRoundIcon
+            style={{
+              fontSize: '1em',
+              marginRight: 10,
+              color: rowData.statusLkey == '265089168359400' ? 'gray' : 'inherit',
+              cursor:
+                rowData.statusLkey == '265089168359400'
+                  ? 'not-allowed'
+                  : 'pointer'
+            }}
+            onClick={async () => {
+              if (rowData.statusLkey !== '265089168359400') {
+                try {
+                  saveReport({
+                    ...rowData,
+                    statusLkey: '265089168359400',
+                    approvedAt: Date.now()
+                  }).unwrap();
+                  const Response = await saveTest({
+                    ...test,
+                    processingStatusLkey: '265089168359400',
+                    approvedAt: Date.now()
+                  }).unwrap();
+
+                  setTest({ ...newApDiagnosticOrderTests });
+                  dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                  setTest({ ...Response });
+                  await fetchTest();
+
+                  await resultFetch();
+                } catch (error) {
+                  dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+                }
+              }
+            }}
+          />
+        </Whisper>
+        <Whisper
+          placement="top"
+          trigger="hover"
+          speaker={<Tooltip>Reject</Tooltip>}
+        >
+          <WarningRoundIcon
+            style={{
+              fontSize: '1em',
+              marginRight: 10,
+              color: rowData.statusLkey == '265089168359400' ? 'gray' : 'inherit',
+              cursor:
+                rowData.statusLkey == '265089168359400'
+                  ? 'not-allowed'
+                  : 'pointer'
+            }}
+            onClick={() =>
+              rowData.statusLkey !== '265089168359400' &&
+              setOpenRejectedResultModal(true)
+            }
+          />
+        </Whisper>
+
+        <Whisper
+          placement="top"
+          trigger="hover"
+          speaker={<Tooltip>Print</Tooltip>}
+        >
+          <FontAwesomeIcon
+            icon={faPrint}
+            style={{ fontSize: '1em', marginRight: 10 }}
+          />
+        </Whisper>
+        <Whisper
+          placement="top"
+          trigger="hover"
+          speaker={<Tooltip>Review</Tooltip>}
+        >
+          <FontAwesomeIcon
+            icon={faStar}
+            style={{
+              fontSize: '1em',
+              marginRight: 10,
+              color: rowData.reviewAt ? '#e0a500' : '#343434'
+            }}
+            onClick={async () => {
+              try {
+                await saveReport({ ...report, reviewAt: Date.now() }).unwrap();
+                dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                resultFetch();
+              } catch (error) {
+                dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
+              }
+            }}
+          />
+        </Whisper>
+      </HStack>
+    )
+   
+      }
+
+    },
+   
+  ]
+    
+    const pageIndexReport = listResultResponse.pageNumber - 1;
+  
+    // how many rows per page:
+    const rowsPerPageReport = listResultResponse.pageSize;
+  
+    // total number of items in the backend:
+    const totalCountReport = reportList?.extraNumeric ?? 0;
+  
+    // handler when the user clicks a new page number:
+    const handlePageChangeReport = (_: unknown, newPage: number) => {
+      // MUI gives you a zero-based page, so add 1 for your API
+      setManualSearchTriggeredReport(true);
+      setListResultResponse({ ...listResultResponse, pageNumber: newPage + 1 });
+    };
+  
+    // handler when the user chooses a different rows-per-page:
+    const handleRowsPerPageChangeReport = (event: React.ChangeEvent<HTMLInputElement>) => {
+      setManualSearchTriggeredReport(true);
+      setListResultResponse({
+        ...listResultResponse,
+        pageSize: parseInt(event.target.value, 10),
+        pageNumber: 1 // reset to first page
+      });
+    };
+  
   return (
     <div>
       <div className="container">
         <div className="left-box">
           <Row>
             <Col xs={14}>
-              <Panel style={{ border: '1px solid #e5e5ea' }}>
-                <Table
-                  height={200}
-                  width={700}
-                  sortColumn={listOrdersResponse.sortBy}
-                  sortType={listOrdersResponse.sortType}
-                  onSortColumn={(sortBy, sortType) => {
-                    if (sortBy)
-                      setListOrdersResponse({
-                        ...listOrdersResponse,
-                        sortBy,
-                        sortType
-                      });
-                  }}
-                  headerHeight={35}
-                  rowHeight={40}
-                  data={filterdOrderList ?? []}
-                  onRowClick={rowData => {
-                    setOrder(rowData);
-                    setOpenOrders(true);
-                    setTest({ ...newApDiagnosticOrderTests });
-                    setReport({ ...newApDiagnosticOrderTestsRadReport });
-                  }}
-                  rowClassName={isSelected}
-                  loading={isOrderFetching}
-                >
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      {showFilterInput ? (
-                        <Input
-                          placeholder="Search ORDER ID"
-                          // value={filterValue}
-                          onChange={value => handleFilterChange('orderId', value)}
-                          // onKeyPress={handleKeyPress}
-                          onBlur={() => setShowFilterInput(false)}
-                          style={{ width: '80%', height: '23px', marginBottom: '3px' }}
-                        />
-                      ) : (
-                        <div onClick={() => setShowFilterInput(true)} style={{ cursor: 'pointer' }}>
-                          <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-                          <Translate> ORDER ID</Translate>
-                        </div>
-                      )}
-                    </HeaderCell>
-                    <Cell>{rowData => rowData.orderId}</Cell>
-                  </Column>
-                  <Column sortable flexGrow={3} fullText>
-                    <HeaderCell>
-                      <FontAwesomeIcon icon={faFilter} />
-                      <Translate> DATE,TIME</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.submittedAt ? new Date(rowData.submittedAt).toLocaleString() : ''
-                      }
-                    </Cell>
-                  </Column>
+              {/* <Panel style={{ border: '1px solid #e5e5ea' }}> */}
+              <MyTable
+                data={filterdOrderList ?? []}
+                columns={orderColumns}
+                onRowClick={rowData => {
+                  setOrder(rowData);
+                  setOpenOrders(true);
+                  setTest({ ...newApDiagnosticOrderTests });
+                  setReport({ ...newApDiagnosticOrderTestsRadReport });
+                }}
+                sortColumn={listOrdersResponse.sortBy}
+                sortType={listOrdersResponse.sortType}
+                onSortChange={(sortBy, sortType) => {
+                  setListOrdersResponse({ ...listOrdersResponse, sortBy, sortType });
+                }}
+                page={pageIndex}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+              />
 
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-                      <Translate>MRN</Translate>
-                    </HeaderCell>
-                    <Cell>{rowData => rowData.patient?.patientMrn}</Cell>
-                  </Column>
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-                      <Translate>PATIENT NAME</Translate>
-                    </HeaderCell>
-                    <Cell>{rowData => rowData.patient?.fullName}</Cell>
-                  </Column>
 
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-                      <Translate>SATUTS</Translate>
-                    </HeaderCell>
-                    <Cell
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      {rowData =>
-                        rowData.radStatusLvalue
-                          ? rowData.radStatusLvalue.lovDisplayVale
-                          : rowData.radStatusLkey
-                      }
-                    </Cell>
-                  </Column>
-
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate>MARKER</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.isUrgent ? (
-                          <Whisper
-                            placement="top"
-                            trigger="hover"
-                            speaker={<Tooltip>Urgent</Tooltip>}
-                          >
-                            <FontAwesomeIcon
-                              icon={faLandMineOn}
-                              style={{
-                                fontSize: '1em',
-                                marginRight: 10,
-                                color: 'red',
-                                cursor: 'pointer'
-                              }}
-                            />
-                          </Whisper>
-                        ) : (
-                          ''
-                        )
-                      }
-                    </Cell>
-                  </Column>
-                </Table>
-                <Divider style={{ margin: '4px 4px' }} />
-                <Pagination
-                  prev
-                  next
-                  first
-                  last
-                  ellipsis
-                  boundaryLinks
-                  maxButtons={5}
-                  size="xs"
-                  layout={['total', '-', 'limit', '|', 'pager', 'skip']}
-                  limitOptions={[4, 15, 30]}
-                  limit={listOrdersResponse.pageSize}
-                  activePage={listOrdersResponse.pageNumber}
-                  onChangePage={pageNumber => {
-                    setListOrdersResponse({ ...listOrdersResponse, pageNumber });
-                  }}
-                  onChangeLimit={pageSize => {
-                    setListOrdersResponse({ ...listOrdersResponse, pageSize });
-                  }}
-                  total={filterdOrderList?.length || 0}
-                />
-              </Panel>
             </Col>
             <Col xs={10}>
               <Row>
@@ -776,267 +1241,22 @@ const Rad = () => {
                 defaultExpanded
                 style={{ border: '1px solid #e5e5ea' }}
               >
-                <Table
-                  height={200}
-                  sortColumn={listOrdersTestResponse.sortBy}
-                  sortType={listOrdersTestResponse.sortType}
-                  onSortColumn={(sortBy, sortType) => {
-                    if (sortBy)
-                      setListOrdersTestResponse({
-                        ...listOrdersTestResponse,
-                        sortBy,
-                        sortType
-                      });
-                  }}
-                  rowKey="key"
-                  expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
-                  renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
-                  shouldUpdateScroll={false}
-                  data={testsList?.object ?? []}
-                  onRowClick={rowData => {
-                    setOpenResults(true);
-                    setTest(rowData);
-                    setReport({ ...newApDiagnosticOrderTestsRadReport });
-                  }}
-                  rowClassName={isTestSelected}
-                  loading={isTestFetching}
-                >
-                  <Column width={70} align="center">
-                    <HeaderCell>#</HeaderCell>
-                    <ExpandCell
-                      rowData={rowData => rowData}
-                      dataKey="key"
-                      expandedRowKeys={expandedRowKeys}
-                      onChange={handleExpanded}
-                    />
-                  </Column>
-
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate>TEST CATEGORY</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData => {
-                        const cat = laboratoryList?.object?.find(
-                          item => item.testKey === rowData.testKey
-                        );
-                        if (cat) {
-                          return cat.categoryLvalue.lovDisplayVale;
-                        }
-                        return '';
-                      }}
-                    </Cell>
-                  </Column>
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate>TEST NAME</Translate>
-                    </HeaderCell>
-                    <Cell>{rowData => rowData.test.testName}</Cell>
-                  </Column>
-
-                  <Column sortable flexGrow={1} fullText>
-                    <HeaderCell>
-                      <Translate>REASON</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.reasonLvalue
-                          ? rowData.reasonLvalue.lovDisplayVale
-                          : rowData.reasonLkey
-                      }
-                    </Cell>
-                  </Column>
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate>PROIRITY</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData =>
-                        rowData.priorityLvalue
-                          ? rowData.priorityLvalue.lovDisplayVale
-                          : rowData.priorityLkey
-                      }
-                    </Cell>
-                  </Column>
-
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate>DURATION</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData => {
-                        const cat = laboratoryList?.object?.find(
-                          item => item.testKey === rowData.testKey
-                        );
-                        if (cat) {
-                          return cat?.testDurationTime + ' ' + cat?.timeUnitLvalue?.lovDisplayVale;
-                        }
-                        return '';
-                      }}
-                    </Cell>
-                  </Column>
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-
-                      <Translate>PHYSICIAN</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData => { return rowData.createdBy, " At", rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "" }}
-
-                    </Cell>
-
-                  </Column>
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate>ORDERS NOTES</Translate>
-                    </HeaderCell>
-                    <Cell>{rowData => rowData.notes}</Cell>
-                  </Column>
-
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate>Technician Notes</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData => (
-                        <HStack spacing={10}>
-                          <FontAwesomeIcon
-                            icon={faComment}
-                            style={{ fontSize: '1em' }}
-                            onClick={() => setOpenNoteModal(true)}
-                          />
-                        </HStack>
-                      )}
-                    </Cell>
-                  </Column>
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate>PATIENT ARRIVED</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData => (
-                        <HStack spacing={10}>
-                          <FontAwesomeIcon
-                            icon={faHospitalUser}
-                            style={{ fontSize: '1em' }}
-                            onClick={() => setOpenSampleModal(true)}
-                          />
-                        </HStack>
-                      )}
-                    </Cell>
-                  </Column>
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate>SATUTS</Translate>
-                    </HeaderCell>
-                    <Cell
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      {rowData =>
-                        rowData.processingStatusLvalue
-                          ? rowData.processingStatusLvalue.lovDisplayVale
-                          : rowData.processingStatusLkey
-                      }
-                    </Cell>
-                  </Column>
-                  <Column sortable flexGrow={4} fullText>
-                    <HeaderCell>
-                      <Translate>ACTION</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData => (
-                        <HStack spacing={10}>
-                          <Whisper
-                            placement="top"
-                            trigger="hover"
-                            speaker={<Tooltip>Accepted</Tooltip>}
-                          >
-                            <CheckRoundIcon
-                              onClick={() =>
-                                (rowData.processingStatusLkey === '6055029972709625' ||
-                                  rowData.processingStatusLkey == '6816324725527414') &&
-                                handleAcceptTest(rowData)
-                              }
-                              style={{
-                                fontSize: '1em',
-                                marginRight: 10,
-                                color:
-                                  rowData.processingStatusLkey !== '6055029972709625' &&
-                                    rowData.processingStatusLkey !== '6816324725527414'
-                                    ? 'gray'
-                                    : 'inherit',
-                                cursor:
-                                  rowData.processingStatusLkey !== '6055029972709625' &&
-                                    rowData.processingStatusLkey !== '6816324725527414'
-                                    ? 'not-allowed'
-                                    : 'pointer'
-                              }}
-                            />
-                          </Whisper>
-                          <Whisper
-                            placement="top"
-                            trigger="hover"
-                            speaker={<Tooltip>Rejected</Tooltip>}
-                          >
-                            <WarningRoundIcon
-                              onClick={() =>
-                                (rowData.processingStatusLkey === '6055029972709625' ||
-                                  rowData.processingStatusLkey === '6816324725527414') &&
-                                setOpenRejectedModal(true)
-                              }
-                              style={{
-                                fontSize: '1em',
-                                marginRight: 10,
-                                color:
-                                  rowData.processingStatusLkey !== '6055029972709625' &&
-                                    rowData.processingStatusLkey !== '6816324725527414'
-                                    ? 'gray'
-                                    : 'inherit',
-                                cursor:
-                                  rowData.processingStatusLkey !== '6055029972709625' &&
-                                    rowData.processingStatusLkey !== '6816324725527414'
-                                    ? 'not-allowed'
-                                    : 'pointer'
-                              }}
-                            />
-                          </Whisper>
-                          <Whisper
-                            placement="top"
-                            trigger="hover"
-                            speaker={<Tooltip>Send to External Lab</Tooltip>}
-                          >
-                            <FontAwesomeIcon
-                              icon={faRightFromBracket}
-                              style={{ fontSize: '1em', marginRight: 10 }}
-                            />
-                          </Whisper>
-                        </HStack>
-                      )}
-                    </Cell>
-                  </Column>
-                </Table>
-                <Divider style={{ margin: '4px 4px' }} />
-                <Pagination
-                  prev
-                  next
-                  first
-                  last
-                  ellipsis
-                  boundaryLinks
-                  maxButtons={5}
-                  size="xs"
-                  layout={['total', '-', 'limit', '|', 'pager', 'skip']}
-                  limitOptions={[5, 15, 30]}
-                  limit={listOrdersTestResponse.pageSize}
-                  activePage={listOrdersTestResponse.pageNumber}
-                  onChangePage={pageNumber => {
-                    setListOrdersTestResponse({ ...listOrdersTestResponse, pageNumber });
-                  }}
-                  onChangeLimit={pageSize => {
-                    setListOrdersTestResponse({ ...listOrdersTestResponse, pageSize });
-                  }}
-                  total={testsList?.extraNumeric || 0}
+                <MyTable
+                columns={testColumns}
+                 data={testsList?.object ?? []}
+                 onRowClick={rowData => {
+                   setOpenResults(true);
+                   setTest(rowData);
+                   setReport({ ...newApDiagnosticOrderTestsRadReport });
+                 }}
+                 loading={isTestFetching}
+                 page={pageTestIndex}
+                 rowsPerPage={rowsPerPageTest}
+                 totalCount={totalCountTest}
+                 onPageChange={handlePageChangeTest}
+                 onRowsPerPageChange={handleRowsPerPageChangeTest}
                 />
+             
               </Panel>
             )}
           </Row>
@@ -1048,265 +1268,26 @@ const Rad = () => {
                 defaultExpanded
                 style={{ border: '1px solid #e5e5ea' }}
               >
-                <Table
-                  height={200}
-                  //   sortColumn={listRequest.sortBy}
-                  //   sortType={listRequest.sortType}
-                  //   onSortColumn={(sortBy, sortType) => {
-                  //     if (sortBy)
-                  //       setListRequest({
-                  //         ...listRequest,
-                  //         sortBy,
-                  //         sortType
-                  //       });
-                  //   }}
-                  headerHeight={35}
-                  rowHeight={40}
-                  data={reportList?.object ?? []}
-                  onRowClick={rowData => {
-                    setReport(rowData);
-                  }}
-                  rowClassName={isReporttSelected}
-                >
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate>TEST NAME</Translate>
-                    </HeaderCell>
-                    <Cell>{test?.test?.testName}</Cell>
-                  </Column>
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate>Report</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData => (
-                        <HStack spacing={10}>
-                          <FontAwesomeIcon
-                            icon={faFileLines}
-                            style={{ fontSize: '1em' }}
-                            onClick={() => setOpenReportModal(true)}
-                          />
-                        </HStack>
-                      )}
-                    </Cell>
-                  </Column>
-
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate>COMMENTS</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData => (
-                        <HStack spacing={10}>
-                          <FontAwesomeIcon
-                            icon={faComment}
-                            style={{ fontSize: '1em' }}
-                            onClick={() => setOpenNoteResultModal(true)}
-                          />
-                        </HStack>
-                      )}
-                    </Cell>
-                  </Column>
-
-                  <Column sortable flexGrow={3} fullText>
-                    <HeaderCell>
-                      <Translate>PREVIOUS RESULT</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {prevResultsList?.object[1]?.normalRangeKey === '6209578532136054' &&
-                        (prevResultsList?.object[1]?.reasonLvalue
-                          ? prevResultsList?.object[1]?.reasonLvalue.lovDisplayVale
-                          : prevResultsList?.object[1].reasonLkey)}
-
-                      {prevResultsList?.object[1]?.normalRangeKey === '6209569237704618' &&
-                        prevResultsList?.object[1]?.resultValueNumber}
-
-                      {!['6209578532136054', '6209569237704618'].includes(
-                        prevResultsList?.object[0]?.normalRangeKey
-                      ) && <></>}
-                    </Cell>
-                  </Column>
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate>PREVIOUS REPORT DATE</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {prevResultsList?.object[0]
-                        ? new Date(prevResultsList?.object[0]?.createdAt).toLocaleString()
-                        : ''}
-                    </Cell>
-                  </Column>
-
-                  <Column sortable flexGrow={1} fullText>
-                    <HeaderCell>
-                      <Translate>EXTERNEL STATUS</Translate>
-                    </HeaderCell>
-                    <Cell>K</Cell>
-                  </Column>
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate> REPORT SATUTS</Translate>
-                    </HeaderCell>
-                    <Cell
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    >
-                      {rowData =>
-                        rowData.statusLvalue
-                          ? rowData.statusLvalue.lovDisplayVale
-                          : rowData.statusLkey
-                      }
-                    </Cell>
-                  </Column>
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate>EXTERNEL LAB NAME</Translate>
-                    </HeaderCell>
-                    <Cell>ll</Cell>
-                  </Column>
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate>ATTACHMENT</Translate>
-                    </HeaderCell>
-                    <Cell>ll</Cell>
-                  </Column>
-                  <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                      <Translate>ATTACHED BY/DATE</Translate>
-                    </HeaderCell>
-                    <Cell>ll</Cell>
-                  </Column>
-                  <Column sortable flexGrow={4} fullText>
-                    <HeaderCell>
-                      <Translate>ACTION</Translate>
-                    </HeaderCell>
-                    <Cell>
-                      {rowData => (
-                        <HStack spacing={10}>
-                          <Whisper
-                            placement="top"
-                            trigger="hover"
-                            speaker={<Tooltip>Approve</Tooltip>}
-                          >
-                            <CheckRoundIcon
-                              style={{
-                                fontSize: '1em',
-                                marginRight: 10,
-                                color: rowData.statusLkey == '265089168359400' ? 'gray' : 'inherit',
-                                cursor:
-                                  rowData.statusLkey == '265089168359400'
-                                    ? 'not-allowed'
-                                    : 'pointer'
-                              }}
-                              onClick={async () => {
-                                if (rowData.statusLkey !== '265089168359400') {
-                                  try {
-                                    saveReport({
-                                      ...rowData,
-                                      statusLkey: '265089168359400',
-                                      approvedAt: Date.now()
-                                    }).unwrap();
-                                    const Response = await saveTest({
-                                      ...test,
-                                      processingStatusLkey: '265089168359400',
-                                      approvedAt: Date.now()
-                                    }).unwrap();
-
-                                    setTest({ ...newApDiagnosticOrderTests });
-                                    dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                    setTest({ ...Response });
-                                    await fetchTest();
-
-                                    await resultFetch();
-                                  } catch (error) {
-                                    dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-                                  }
-                                }
-                              }}
-                            />
-                          </Whisper>
-                          <Whisper
-                            placement="top"
-                            trigger="hover"
-                            speaker={<Tooltip>Reject</Tooltip>}
-                          >
-                            <WarningRoundIcon
-                              style={{
-                                fontSize: '1em',
-                                marginRight: 10,
-                                color: rowData.statusLkey == '265089168359400' ? 'gray' : 'inherit',
-                                cursor:
-                                  rowData.statusLkey == '265089168359400'
-                                    ? 'not-allowed'
-                                    : 'pointer'
-                              }}
-                              onClick={() =>
-                                rowData.statusLkey !== '265089168359400' &&
-                                setOpenRejectedResultModal(true)
-                              }
-                            />
-                          </Whisper>
-
-                          <Whisper
-                            placement="top"
-                            trigger="hover"
-                            speaker={<Tooltip>Print</Tooltip>}
-                          >
-                            <FontAwesomeIcon
-                              icon={faPrint}
-                              style={{ fontSize: '1em', marginRight: 10 }}
-                            />
-                          </Whisper>
-                          <Whisper
-                            placement="top"
-                            trigger="hover"
-                            speaker={<Tooltip>Review</Tooltip>}
-                          >
-                            <FontAwesomeIcon
-                              icon={faStar}
-                              style={{
-                                fontSize: '1em',
-                                marginRight: 10,
-                                color: rowData.reviewAt ? '#e0a500' : '#343434'
-                              }}
-                              onClick={async () => {
-                                try {
-                                  await saveReport({ ...report, reviewAt: Date.now() }).unwrap();
-                                  dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                  resultFetch();
-                                } catch (error) {
-                                  dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-                                }
-                              }}
-                            />
-                          </Whisper>
-                        </HStack>
-                      )}
-                    </Cell>
-                  </Column>
-                </Table>
-                <Divider style={{ margin: '4px 4px' }} />
-                <Pagination
-                  prev
-                  next
-                  first
-                  last
-                  ellipsis
-                  boundaryLinks
-                  maxButtons={5}
-                  size="xs"
-                  layout={['total', '-', 'limit', '|', 'pager', 'skip']}
-                  limitOptions={[5, 15, 30]}
-                  //  limit={listRequest.pageSize}
-                  //  activePage={listRequest.pageNumber}
-
-                  //  onChangePage={pageNumber => {
-                  //    setListRequest({ ...listRequest, pageNumber });
-                  //  }}
-                  //  onChangeLimit={pageSize => {
-                  //    setListRequest({ ...listRequest, pageSize });
-                  //  }}
-                  total={40}
+                <MyTable
+                columns={reportColumns}
+                data={reportList?.object ?? []}
+                onRowClick={rowData => {
+                  setReport(rowData);
+                }}
+                rowClassName={isReporttSelected}
+                loading={isTestFetching}
+                page={pageIndexReport}
+                rowsPerPage={rowsPerPageReport}
+                totalCount={totalCountReport}
+                onPageChange={handlePageChangeReport}
+                onRowsPerPageChange={handleRowsPerPageChangeReport}
+                sortColumn={listResultResponse.sortBy}
+                sortType={listResultResponse.sortType}
+                onSortChange={(sortBy, sortType) => {
+                  setListResultResponse({ ...listResultResponse, sortBy, sortType });
+                }}
                 />
+              
               </Panel>
             )}
           </Row>
@@ -1355,7 +1336,7 @@ const Rad = () => {
             </Row>
           </Col>}
       ></MyModal>
-    
+
       <CancellationModal
         open={openRejectedModal}
         setOpen={setOpenRejectedModal}
@@ -1391,29 +1372,29 @@ const Rad = () => {
           }
         }}
       />
-     <MyModal
-     title="Add Report"
-     open={openReportModal}
-     setOpen={setOpenReportModal}
-     steps={[{title:"Report" ,icon:faFileLines}]}
-     size="450px"
+      <MyModal
+        title="Add Report"
+        open={openReportModal}
+        setOpen={setOpenReportModal}
+        steps={[{ title: "Report", icon: faFileLines }]}
+        size="450px"
         bodyheight={300}
-     content={<>
-     <Row>
-      <Col md={24}>
-      <ButtonGroup>
-              <IconButton icon={<FaBold />} />
-              <IconButton icon={<FaItalic />} />
-              <IconButton icon={<List />} />
-              <IconButton icon={<FaLink />} />
-              <IconButton icon={<Image />} />
-              
+        content={<>
+          <Row>
+            <Col md={24}>
+              <ButtonGroup>
+                <IconButton icon={<FaBold />} />
+                <IconButton icon={<FaItalic />} />
+                <IconButton icon={<List />} />
+                <IconButton icon={<FaLink />} />
+                <IconButton icon={<Image />} />
+
               </ButtonGroup>
-      </Col>
-     </Row>
-     <Row >
-      <Col md={24}>
-      <Form fluid>
+            </Col>
+          </Row>
+          <Row >
+            <Col md={24}>
+              <Form fluid>
                 <MyInput
                   width="100%"
                   disabled={report.statusLkey == '265089168359400' ? true : false}
@@ -1426,27 +1407,27 @@ const Rad = () => {
                   setRecord={setReport}
                 />
               </Form>
-      </Col>
-     </Row>
-     <Row >
-      <Col md={24}>
-      <Form fluid>
-              <MyInput
-                disabled={report.statusLkey == '265089168359400' ? true : false}
-                width="100%"
-                hight={200}
-                fieldLabel={''}
-                fieldName={'reportValue'}
-                fieldType="textarea"
-                record={report}
-                setRecord={setReport}
-              />
-            </Form></Col>
+            </Col>
+          </Row>
+          <Row >
+            <Col md={24}>
+              <Form fluid>
+                <MyInput
+                  disabled={report.statusLkey == '265089168359400' ? true : false}
+                  width="100%"
+                  hight={200}
+                  fieldLabel={''}
+                  fieldName={'reportValue'}
+                  fieldType="textarea"
+                  record={report}
+                  setRecord={setReport}
+                />
+              </Form></Col>
 
-     </Row>
-     </>}
-     ></MyModal>
-   
+          </Row>
+        </>}
+      ></MyModal>
+
     </div>
   );
 };
