@@ -399,6 +399,24 @@ const Departments = () => {
     }
   ];
 
+   // Pagination values
+   const pageIndex = listRequest.pageNumber - 1;
+   const rowsPerPage = listRequest.pageSize;
+   const totalCount = departmentListResponse?.extraNumeric ?? 0;
+
+
+   const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+};
+
+ const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setListRequest({
+            ...listRequest,
+            pageSize: parseInt(event.target.value, 10),
+            pageNumber: 1 // Reset to first page
+        });
+    };
+
   return (
     <Panel>
       {/* <ButtonToolbar> */}
@@ -468,6 +486,14 @@ const Departments = () => {
         onSortChange={(sortBy, sortType) => {
           if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
         }}
+
+
+        // filters={filters()}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
       />
 
      
