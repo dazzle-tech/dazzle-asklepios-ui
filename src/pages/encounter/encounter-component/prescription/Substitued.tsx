@@ -140,7 +140,7 @@ const Substitues = ({ open, setOpen, selectedGeneric }) => {
 
     ></MyModal>
 
-    
+
         </>);
 }
 export default Substitues;

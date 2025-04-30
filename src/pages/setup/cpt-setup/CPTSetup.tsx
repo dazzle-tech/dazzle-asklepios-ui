@@ -22,6 +22,7 @@ const CPTSetup = () => {
                 value: undefined
             }
         ],
+        pageSize: 15
     });
 
     // State to handle the filter form inputs
@@ -145,7 +146,7 @@ const CPTSetup = () => {
     const rowsPerPage = listRequest.pageSize;
     const totalCount = cptListResponseLoading?.extraNumeric ?? 0;
 
-
+    // Effects
     // Trigger filter logic when filter form changes
     useEffect(() => {
         if (record['filter']) {
