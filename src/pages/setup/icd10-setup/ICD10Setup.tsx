@@ -148,8 +148,23 @@ const ICD10Setup = () => {
     useEffect(() => {
         if (record['filter']) {
             handleFilterChange(record['filter'], record['value']);
+        } else {
+            // reset the listRequest if filter is cleared
+            setListRequest({
+                ...initialListRequest,
+                filters: [
+                    {
+                        fieldName: 'deleted_at',
+                        operator: 'isNull',
+                        value: undefined
+                    }
+                ],
+                pageSize: listRequest.pageSize,
+                pageNumber: 1
+            });
         }
     }, [record]);
+    
     // Clear page info on component unmount
     useEffect(() => {
         return () => {

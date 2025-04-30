@@ -1,22 +1,18 @@
-import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
-import React, { useState,useEffect } from 'react';
-
-import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
+import React, { useState, useEffect } from 'react';
+import MyTable from '@/components/MyTable';
+import { Form } from 'rsuite';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import { BlockUI } from 'primereact/blockui';
-import {
-    useGetLoincListQuery
-} from '@/services/setupService';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { useGetLoincListQuery } from '@/services/setupService';
+import MyInput from '@/components/MyInput';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+
 const LOINCSetup = () => {
     const dispatch = useAppDispatch();
 
+    // Initial table request with default filter (excluding deleted records)
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -28,17 +24,24 @@ const LOINCSetup = () => {
         ],
         pageSize: 15
     });
-    const { data:loincListResponseLoading } =  useGetLoincListQuery(listRequest);
-    const divElement = useSelector((state: RootState) => state.div?.divElement);
+
+    // State to handle the filter form inputs
+    const [record, setRecord] = useState({ filter: '', value: '' });
+
+    // Fetch the Loinc list data based on current filters
+    const { data: loincListResponseLoading } = useGetLoincListQuery(listRequest);
+
+    // Header setup
     const divContent = (
-      <div style={{ display: 'flex' }}>
-        <h5>LOINC List</h5>
-      </div>
+        <div style={{ display: 'flex' }}>
+            <h5>LOINC List</h5>
+        </div>
     );
     const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('LOINC'));
     dispatch(setDivContent(divContentHTML));
-    console.log(loincListResponseLoading ?.object)
+
+    // Handle changes in filter fields
     const handleFilterChange = (fieldName, value) => {
         if (value) {
             setListRequest(
@@ -51,105 +54,140 @@ const LOINCSetup = () => {
             );
         } else {
             setListRequest({
-                ...listRequest, filters: [
+                ...listRequest,
+                filters: [
                     {
                         fieldName: 'deleted_at',
                         operator: 'isNull',
                         value: undefined
                     }
                 ],
-                pageSize: 15
             });
         }
     };
+
+    // Change page event handler
+    const handlePageChange = (_: unknown, newPage: number) => {
+        setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+    };
+
+    // Change number of rows per page
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setListRequest({
+            ...listRequest,
+            pageSize: parseInt(event.target.value, 10),
+            pageNumber: 1
+        });
+    };
+
+    // Table columns definition
+    const columns = [
+        {
+            key: 'loincCode',
+            title: 'Code',
+            render: (rowData) => rowData?.loincCode ?? 'N/A',
+        },
+        {
+            key: 'category',
+            title: 'Category',
+            render: (rowData) =>
+                rowData.categoryLvalue
+                    ? rowData.categoryLvalue.lovDisplayVale
+                    : rowData.categoryLkey,
+        },
+        {
+            key: 'name',
+            title: 'Name',
+            render: (rowData) => rowData?.name ?? 'N/A',
+        }
+    ];
+
+    // Available fields for filtering
+    const filterFields = [
+        { label: 'Code', value: 'loincCode' },
+        { label: 'Category', value: 'categoryLvalue.lovDisplayVale' },
+        { label: 'Name', value: 'name' }
+    ];
+
+    // Filter form rendered above the table
+    const filters = () => (
+        <Form layout="inline" fluid>
+            <MyInput
+                selectDataValue="value"
+                selectDataLabel="label"
+                selectData={filterFields}
+                fieldName="filter"
+                fieldType="select"
+                record={record}
+                setRecord={(updatedRecord) => {
+                    setRecord({
+                        ...record,
+                        filter: updatedRecord.filter,
+                        value: ''
+                    });
+                }}
+                showLabel={false}
+                placeholder="Select Filter"
+                searchable={false}
+            />
+
+            <MyInput
+                fieldName="value"
+                fieldType="text"
+                record={record}
+                setRecord={setRecord}
+                showLabel={false}
+                placeholder="Search"
+            />
+        </Form>
+    );
+
+    // Pagination values
+    const pageIndex = listRequest.pageNumber - 1;
+    const rowsPerPage = listRequest.pageSize;
+    const totalCount = loincListResponseLoading?.extraNumeric ?? 0;
+
+    // Effects
+    // Trigger filter logic when filter form changes
+    useEffect(() => {
+        if (record['filter']) {
+            handleFilterChange(record['filter'], record['value']);
+        } else {
+            // reset the listRequest if filter is cleared
+            setListRequest({
+                ...initialListRequest,
+                filters: [
+                    {
+                        fieldName: 'deleted_at',
+                        operator: 'isNull',
+                        value: undefined
+                    }
+                ],
+                pageSize: listRequest.pageSize,
+                pageNumber: 1
+            });
+        }
+    }, [record]);
+    // Clear page info on component unmount
     useEffect(() => {
         return () => {
-          dispatch(setPageCode(''));
-          dispatch(setDivContent("  "));
+            dispatch(setPageCode(''));
+            dispatch(setDivContent("  "));
         };
-      }, [location.pathname, dispatch])
-    return (<>
-        <Panel
-        
-        >
-            <Table
-                height={400}
-                sortColumn={listRequest.sortBy}
-                sortType={listRequest.sortType}
-                onSortColumn={(sortBy, sortType) => {
-                    if (sortBy)
-                        setListRequest({
-                            ...listRequest,
-                            sortBy,
-                            sortType
-                        });
-                }}
-                headerHeight={80}
-                rowHeight={60}
-                bordered
-                cellBordered
-                data={loincListResponseLoading ?.object ?? []}>
-                <Table.Column sortable flexGrow={2}>
-                    <Table.HeaderCell align="center">
-                        <Input onChange={value => handleFilterChange('loincCode', value)} />
-                        <Translate>Code</Translate>
-                    </Table.HeaderCell>
-                    <Table.Cell>
-                        {rowData => rowData?.loincCode ?? ' '}
-                    </Table.Cell>
-                </Table.Column>
+    }, [location.pathname, dispatch]);
 
-                <Table.Column sortable flexGrow={2}>
-                    <Table.HeaderCell align="center">
-                        <Input onChange={value => handleFilterChange('categoryLvalue.lovDisplayVale', value)} />
-                        <Translate>Category</Translate>
-                    </Table.HeaderCell>
-                    <Table.Cell>
-                        
-                                {rowData =>
-                          rowData.categoryLvalue
-                            ? rowData.categoryLvalue.lovDisplayVale
-                            : rowData.categoryLkey
-                        }
-                    </Table.Cell>
-                </Table.Column>
+    return (
+        <MyTable
+            data={loincListResponseLoading?.object ?? []}
+            columns={columns}
+            filters={filters()}
+            page={pageIndex}
+            rowsPerPage={rowsPerPage}
+            totalCount={totalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+        />
+    );
+};
 
-                <Table.Column sortable flexGrow={2}>
-                    <Table.HeaderCell align="center">
-                        <Input onChange={value => handleFilterChange('name', value)} />
-                        <Translate>Name</Translate>
-                    </Table.HeaderCell>
-                    <Table.Cell>
-                        {rowData => rowData?.name ?? ' '}
-                    </Table.Cell>
-                </Table.Column>
-            </Table>
-
-            <div style={{ padding: 20 }}>
-                <Pagination
-                    prev
-                    next
-                    first
-                    last
-                    ellipsis
-                    boundaryLinks
-                    maxButtons={5}
-                    size="xs"
-                    layout={['limit', '|', 'pager']}
-                    limitOptions={[5, 15, 30]}
-                    limit={listRequest.pageSize}
-                    activePage={listRequest.pageNumber}
-                    onChangePage={pageNumber => {
-                        setListRequest({ ...listRequest, pageNumber });
-                    }}
-                    onChangeLimit={pageSize => {
-                        setListRequest({ ...listRequest, pageSize });
-                    }}
-                    total={loincListResponseLoading ?.extraNumeric ?? 0}
-                />
-            </div>
-
-        </Panel>
-    </>)
-}
 export default LOINCSetup;
