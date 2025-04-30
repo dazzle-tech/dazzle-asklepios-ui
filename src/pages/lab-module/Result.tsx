@@ -42,7 +42,6 @@ type ResultProps = {
     fetchTest: () => void;
 }
 const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, result, setResult, patient, labDetails, samplesList, fetchTest }, ref) => {
-    console.log("Lab Details", labDetails)
     const dispatch = useAppDispatch();
     const uiSlice = useAppSelector(state => state.auth);
     const [localUser, setLocalUser] = useState(uiSlice?.user);
@@ -800,7 +799,8 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
             },
         },
     ];
-    return (<Panel ref={ref} header="Test's Results Processing" collapsible defaultExpanded className="panel-border">
+    return (<Panel ref={ref} header="Test's Results Processing" collapsible defaultExpanded className="panel-border"  >
+        <div style={{width:"1150px"}}>
         <MyTable
             columns={tableColomns}
             data={resultsList?.object || []}
@@ -810,8 +810,10 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
             }}
             rowClassName={isResultSelected}
             height={250}
-            rowHeight={40}
+           
         ></MyTable>
+        </div>
+       
         <ChatModal open={openNoteResultModal} setOpen={setOpenNoteResultModal} handleSendMessage={handleSendResultMessage} title={"Comments"} list={messagesResultList?.object} fieldShowName={'notes'} />
         <CancellationModal open={openRejectedResultModal}
             setOpen={setOpenRejectedResultModal}
