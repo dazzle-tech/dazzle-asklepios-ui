@@ -341,6 +341,15 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                             </Row>
 
                             <div className="fields-div">
+                            <div style={{ flex: 1 }}>
+                                    <Form layout="inline" >
+                                        <MyInput
+                                            fieldType="datetime"
+                                            fieldName="startDateTime"
+                                            record={orderMedication}
+                                            setRecord={setOrderMedication}
+                                        /></Form>
+                                </div>
                                 <div style={{ flex: 1 }}>
                                     <Form layout="inline" >
                                         <MyInput
@@ -357,7 +366,8 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                                     </Form>
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <Form layout="inline" >
+                                    {orderMedication.drugOrderTypeLkey == '2937712448460454' ?
+                                    (<Form layout="inline" >
                                         <MyInput
                                             disabled={orderMedication.drugOrderTypeLkey != '2937712448460454' ? true : false}
                                             column
@@ -366,17 +376,10 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                                             record={orderMedication}
                                             setRecord={setOrderMedication}
                                         />
-                                    </Form>
+                                    </Form>):""}
+                                    
                                 </div>
-                                <div style={{ flex: 1 }}>
-                                    <Form layout="inline" >
-                                        <MyInput
-                                            fieldType="datetime"
-                                            fieldName="startDateTime"
-                                            record={orderMedication}
-                                            setRecord={setOrderMedication}
-                                        /></Form>
-                                </div>
+                                
 
                             </div>
                             <div className="fields-div">
@@ -640,7 +643,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                                             disabled={drugKey != null ? editing : true}
                                             width={230}
                                             fieldType="select"
-                                            fieldLabel="priority Level"
+                                            fieldLabel="Priority Level"
                                             selectData={priorityLevelLovQueryResponse?.object ?? []}
                                             selectDataLabel="lovDisplayVale"
                                             selectDataValue="key"
@@ -671,11 +674,15 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                             </div>
                             <Row>
                                 <Row>
-                                <MyLabel label="Parameters to monitor"  />
+                                    <Col md={24}>
+                                    <MyLabel label="Parameters to monitor"  />
+                                    </Col>
+                                
                                 </Row>
                                 <Row></Row>
                                 <Row>
-                                <TagGroup className='taggroup-style'>
+                                    <Col md={24}>
+                                    <TagGroup className='taggroup-style'>
                                     {tags.map((item, index) => (
                                         <Tag key={index} closable onClose={() => removeTag(item)}>
                                             {item}
@@ -683,6 +690,8 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                                     ))}
                                     {renderInput()}
                                 </TagGroup>
+                                    </Col>
+                                
                                 </Row>
                               
                             </Row>
