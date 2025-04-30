@@ -1,44 +1,67 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect, useRef } from 'react';
-import { Input, Modal, Pagination, Panel, Schema, Table, Col, Row } from 'rsuite';
+import { Input, Modal, Pagination, Panel, Table, Col, Row } from 'rsuite';
 import CheckIcon from '@rsuite/icons/Check';
 import CloseIcon from '@rsuite/icons/Close';
-
+import { MdModeEdit } from 'react-icons/md';
+import { MdDelete } from 'react-icons/md';
 const { Column, HeaderCell, Cell } = Table;
+import { faSheetPlastic } from '@fortawesome/free-solid-svg-icons';
+import { RxComponent2 } from 'react-icons/rx';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   useGetFacilitiesQuery,
   useGetDepartmentsQuery,
   useSaveDepartmentMutation
 } from '@/services/setupService';
-import { Button, ButtonToolbar, IconButton } from 'rsuite';
+import { Button } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
 import { ApDepartment } from '@/types/model-types';
 import { newApDepartment, newApMedicalSheets } from '@/types/model-types-constructor';
-import { Form, Stack, Divider } from 'rsuite';
+import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
+import { faRotateRight } from '@fortawesome/free-solid-svg-icons';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import {
-  useGetLovValuesByCodeQuery
-} from '@/services/setupService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { faLaptop } from '@fortawesome/free-solid-svg-icons';
 import { SchemaModel, StringType } from 'schema-typed';
 import { notify } from '@/utils/uiReducerActions';
 import { useDispatch } from 'react-redux';
-import CombinationIcon from '@rsuite/icons/Combination';
-import { useSaveMedicalSheetMutation, useGetMedicalSheetsByDepartmentIdQuery } from '@/services/setupService';
+import {
+  useSaveMedicalSheetMutation,
+  useGetMedicalSheetsByDepartmentIdQuery
+} from '@/services/setupService';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useAppDispatch } from '@/hooks';
-const Departments = () => {
+import MyTable from '@/components/MyTable';
+import MyModal from '@/components/MyModal/MyModal';
+import './styles.less';
+import MyButton from '@/components/MyButton/MyButton';
+import AddEditDepartment from './AddEditDepartment';
+import ChooseDepartment from './ChooseScreen';
 
+const Departments = () => {
   const [department, setDepartment] = useState<ApDepartment>({ ...newApDepartment });
   const [popupOpen, setPopupOpen] = useState(false);
   const [openScreensPopup, setOpenScreensPopup] = useState(false);
-  const [generateCode, setGenerateCode] = useState();
+  // const [generateCode, setGenerateCode] = useState();
+  // const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
+
+  const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
+        const [generateCode, setGenerateCode] = useState();
+  
+         useEffect(() => {
+            setRecordOfDepartmentCode({ departmentCode: department?.departmentCode ?? generateCode });
+          }, [recordOfDepartmentCode]);
+
+  const [recordOfSearch, setRecordOfSearch] = useState({ name: '' });
+  // useEffect(() => {
+  //   setRecordOfDepartmentCode({ departmentCode: department?.departmentCode ?? generateCode });
+  // }, [recordOfDepartmentCode]);
+
   const inputRef = useRef(null);
   const formRef = React.useRef();
   const dispatch = useDispatch();
@@ -60,22 +83,20 @@ const Departments = () => {
     vaccineReccord: true,
     diagnosticsResult: true,
     observation: true
-
   });
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const [facilityListRequest, setFacilityListRequest] = useState<ListRequest>({
-    ...initialListRequest
-  });
+  // const [facilityListRequest, setFacilityListRequest] = useState<ListRequest>({
+  //   ...initialListRequest
+  // });
 
   const [saveDepartment, saveDepartmentMutation] = useSaveDepartmentMutation();
-  const [saveMedicalSheet] = useSaveMedicalSheetMutation();
-  const { data: depTTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
-  const { data: encTypesLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
-  const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(
-    department?.key,
-    { skip: !department.key }
-  );
-  const { data: facilityListResponse } = useGetFacilitiesQuery(facilityListRequest);
+  // const [saveMedicalSheet] = useSaveMedicalSheetMutation();
+  // const { data: depTTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
+  // const { data: encTypesLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
+  const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(department?.key, {
+    skip: !department.key
+  });
+  // const { data: facilityListResponse } = useGetFacilitiesQuery(facilityListRequest);
   const { data: departmentListResponse } = useGetDepartmentsQuery(listRequest);
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
@@ -88,22 +109,22 @@ const Departments = () => {
   dispatch(setDivContent(divContentHTML));
 
   const handleNew = () => {
-    generateFiveDigitCode()
-    setDepartment({ ...newApDepartment })
+    generateFiveDigitCode();
+    setDepartment({ ...newApDepartment });
     setPopupOpen(true);
-    console.log(depTTypesLovQueryResponse)
   };
 
-
-
-  const handleSave = () => {
-
-    setPopupOpen(false);
-    saveDepartment({ ...department, departmentCode: generateCode }).unwrap().then(() => {
-      dispatch(notify({ msg: 'Departments Saved successfully' }));
-
-    })
-  };
+  // const handleSave = () => {
+  //   setPopupOpen(false);
+  //   saveDepartment({ ...department, departmentCode: generateCode })
+  //     .unwrap()
+  //     .then(() => {
+  //       dispatch(notify({ msg: 'Departments Saved successfully' }));
+  //     });
+  // };
+  useEffect(() => {
+    handleFilterChange('name', recordOfSearch['name']);
+  }, [recordOfSearch]);
 
   useEffect(() => {
     if (saveDepartmentMutation.data) {
@@ -117,11 +138,10 @@ const Departments = () => {
     } else return '';
   };
   useEffect(() => {
-    console.log("medical" + department.key)
+    console.log('medical' + department.key);
     if (medicalSheet?.object?.key !== null) {
       setShowScreen({ ...medicalSheet?.object });
-    }
-    else {
+    } else {
       setShowScreen({
         ...newApMedicalSheets,
         departmentKey: department.key,
@@ -140,20 +160,19 @@ const Departments = () => {
         vaccineReccord: true,
         diagnosticsResult: true,
         observation: true
-
-      })
+      });
     }
   }, [medicalSheet]);
   useEffect(() => {
-    console.log("sh", showScreen)
+    console.log('sh', showScreen);
   }, [showScreen]);
 
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent("  "));
+      dispatch(setDivContent('  '));
     };
-  }, [location.pathname, dispatch])
+  }, [location.pathname, dispatch]);
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -173,32 +192,241 @@ const Departments = () => {
     setGenerateCode(code);
   };
 
-
   const model = SchemaModel({
-    facilityKey: StringType().isRequiredOrEmpty('Facility is Required'),
-
+    facilityKey: StringType().isRequiredOrEmpty('Facility is Required')
   });
 
-  const handleSubmit = async (values: any) => {
-    const errors = model.getErrorMessages();
-    if (errors.length > 0) {
-      console.log("Validation failed", errors);
-      return
-    } else {
-      console.log("Validation succeeded", values);
-      handleSave()
-    }
-  };
+  // const handleSubmit = async (values: any) => {
+  //   const errors = model.getErrorMessages();
+  //   if (errors.length > 0) {
+  //     console.log("Validation failed", errors);
+  //     return
+  //   } else {
+  //     console.log("Validation succeeded", values);
+  //     handleSave()
+  //   }
+  // };
 
+  const iconsForActions = (rowData: ApDepartment) => (
+    <div className="container-of-icons">
+      <MdModeEdit
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => setPopupOpen(true)}
+      />
+      {rowData?.deletedAt ? (
+        // back to this function when update the filter(status) in back end
+        <FontAwesomeIcon title="Active" icon={faRotateRight} fill="var(--primary-gray)" />
+      ) : (
+        <MdDelete title="Deactivate" size={24} fill="var(--primary-pink)" />
+      )}
+
+     <FontAwesomeIcon
+      icon={faSheetPlastic} 
+      style={{
+        cursor: ['5673990729647001', '5673990729647002', '5673990729647005'].includes(rowData?.departmentTypeLkey) ? 'pointer' : 'not-allowed',
+        color: "var(--primary-gray)"
+      }}
+     title="Medical Sheets"
+      // fill="var(--primary-gray)"
+      size={"lg"}
+      onClick={() => setOpenScreensPopup(true)}
+      />
+
+      {/* <RxComponent2
+      style={{
+        cursor: ['5673990729647001', '5673990729647002', '5673990729647005'].includes(rowData?.departmentTypeLkey) ? 'pointer' : 'not-allowed'
+    }}
+        title="Medical Sheets"
+        size={20}
+        fill="var(--primary-gray)"
+        onClick={() => setOpenScreensPopup(true)}
+      /> */}
+    </div>
+  );
+
+  // const conjureFormContent = (stepNumber = 0) => {
+  //   switch (stepNumber) {
+  //     case 0:
+  //       return (
+  //         <Form
+  //           //  ref={formRef} model={model} formValue={department} onSubmit={handleSubmit}
+  //           fluid
+  //         >
+  //           <div className="container-of-two-fields-departments">
+  //             <MyInput
+  //               width={250}
+  //               fieldName="facilityKey"
+  //               required
+  //               fieldType="select"
+  //               selectData={facilityListResponse?.object ?? []}
+  //               selectDataLabel="facilityName"
+  //               selectDataValue="key"
+  //               record={department}
+  //               setRecord={setDepartment}
+  //             />
+  //             <MyInput
+  //               width={250}
+  //               fieldName="departmentTypeLkey"
+  //               fieldLabel="Department Type"
+  //               fieldType="select"
+  //               selectData={depTTypesLovQueryResponse?.object ?? []}
+  //               selectDataLabel="lovDisplayVale"
+  //               selectDataValue="key"
+  //               record={department}
+  //               setRecord={setDepartment}
+  //             />
+  //           </div>
+
+  //           <MyInput width={520} fieldName="name" record={department} setRecord={setDepartment} />
+  //           <div className="container-of-two-fields-departments">
+  //             <MyInput
+  //               width={250}
+  //               fieldName="phoneNumber"
+  //               record={department}
+  //               setRecord={setDepartment}
+  //             />
+  //             <MyInput
+  //               width={250}
+  //               fieldName="email"
+  //               record={department}
+  //               setRecord={setDepartment}
+  //             />
+  //           </div>
+
+  //           <MyInput
+  //             width={520}
+  //             fieldName="departmentCode"
+  //             record={recordOfDepartmentCode}
+  //             setRecord={setRecordOfDepartmentCode}
+  //             disabled={true}
+  //           />
+
+  //           {/* <label>Department Code</label>
+  //           <Input style={{ width: 260 }} disabled value={department?.departmentCode ?? generateCode} /> */}
+
+  //           <div className="container-of-two-fields-departments">
+  //             <Form style={{ width: 250 }}>
+  //               <MyInput
+  //                 fieldLabel="Appointable"
+  //                 fieldType="checkbox"
+  //                 fieldName="appointable"
+  //                 record={department}
+  //                 setRecord={setDepartment}
+  //               />
+  //             </Form>
+  //             {department?.appointable ? (
+  //               <MyInput
+  //                 width={250}
+  //                 fieldName="encountertypelkey"
+  //                 fieldType="select"
+  //                 fieldLabel="Encounter Type"
+  //                 selectData={encTypesLovQueryResponse?.object ?? []}
+  //                 selectDataLabel="lovDisplayVale"
+  //                 selectDataValue="key"
+  //                 record={department}
+  //                 setRecord={setDepartment}
+  //               />
+  //             ) : null}
+  //           </div>
+
+  //           {/* <Stack spacing={2} divider={<Divider vertical />}>
+  //             <Button appearance="primary" type='submit'
+  //             >
+  //               Save
+  //             </Button>
+  //             <Button appearance="primary" color="red" onClick={() => setPopupOpen(false)}>
+  //               Cancel
+  //             </Button>
+  //           </Stack> */}
+  //         </Form>
+  //       );
+  //   }
+  // };
+
+  //table columns
+  const tableColumns = [
+    {
+      key: 'facilityKey',
+      title: <Translate>Facility</Translate>,
+      flexGrow: 1,
+      dataKey: 'facilityKey'
+    },
+    {
+      key: 'name',
+      title: <Translate>Department Name</Translate>,
+      flexGrow: 4,
+      dataKey: 'name'
+    },
+    {
+      key: 'departmentType',
+      title: <Translate>Department Type</Translate>,
+      flexGrow: 4,
+      render: rowData => <p>{rowData?.departmentTypeLvalue.lovDisplayVale}</p>
+    },
+    {
+      key: 'phoneNumber',
+      title: <Translate>Phone Number</Translate>,
+      flexGrow: 4,
+      dataKey: 'phoneNumber'
+    },
+    {
+      key: 'email',
+      title: <Translate>Email</Translate>,
+      flexGrow: 4,
+      dataKey: 'email'
+    },
+    {
+      key: 'departmentCode',
+      title: <Translate>Department Code</Translate>,
+      flexGrow: 1,
+      dataKey: 'departmentCode'
+    },
+    {
+      key: 'deletedAt',
+      title: <Translate>Status</Translate>,
+      flexGrow: 4,
+      render: (rowData: ApDepartment) => {
+        return <p>{rowData?.deletedAt ? 'Inactive' : 'Active'}</p>;
+      }
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      flexGrow: 4,
+      render: rowData => iconsForActions(rowData)
+    }
+  ];
 
   return (
-    <Panel
-    >
-      <ButtonToolbar>
-        <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
+    <Panel>
+      {/* <ButtonToolbar> */}
+      {/* <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
           Add New
-        </IconButton>
-        <IconButton
+        </IconButton> */}
+      <div className="container-of-header-actions-department">
+      <Form layout="inline">
+        <MyInput
+          placeholder="Search by Department Name"
+          fieldName="name"
+          fieldType="text"
+          record={recordOfSearch}
+          setRecord={setRecordOfSearch}
+          showLabel={false}
+          width={'220px'}
+        />
+      </Form>
+      <MyButton
+        prefixIcon={() => <AddOutlineIcon />}
+        color="var(--deep-blue)"
+        onClick={handleNew}
+        width="109px"
+      >
+        Add New
+      </MyButton>
+      </div>
+      {/* <IconButton
           disabled={!department.key}
           appearance="primary"
           onClick={() => setPopupOpen(true)}
@@ -222,101 +450,28 @@ const Departments = () => {
           onClick={() => setOpenScreensPopup(true)}
         >
           Screen Components
-        </IconButton>
-      </ButtonToolbar>
-      <hr />
-      <Table
+        </IconButton> */}
+      {/* </ButtonToolbar> */}
+      {/* <hr /> */}
+
+      <MyTable
         height={400}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortColumn={(sortBy, sortType) => {
-          if (sortBy)
-            setListRequest({
-              ...listRequest,
-              sortBy,
-              sortType
-            });
-        }}
-        headerHeight={80}
-        rowHeight={60}
-        bordered
-        cellBordered
         data={departmentListResponse?.object ?? []}
+        columns={tableColumns}
+        rowClassName={isSelected}
+        // loading={isLoading}
         onRowClick={rowData => {
           setDepartment(rowData);
-
         }}
-        rowClassName={isSelected}
-      >
-        <Column sortable flexGrow={1}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('facilityKey', e)} />
-            <Translate>Facility</Translate>
-          </HeaderCell>
-          <Cell dataKey="facilityKey" />
-        </Column>
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortChange={(sortBy, sortType) => {
+          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+        }}
+      />
 
-        <Column sortable flexGrow={4}>
-          <HeaderCell>
-            <Input onChange={e => handleFilterChange('name', e)} />
-            <Translate>Department Name</Translate>
-          </HeaderCell>
-          <Cell dataKey="name" />
-        </Column>
-
-        <Column sortable flexGrow={4}>
-          <HeaderCell>
-            <Input onChange={e => handleFilterChange('name', e)} />
-            <Translate>Department Type</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData => (
-              <Translate>{rowData?.departmentTypeLvalue.lovDisplayVale}</Translate>
-            )}
-
-          </Cell>
- 
-        </Column>
-
-        <Column sortable flexGrow={4}>
-          <HeaderCell>
-            <Input onChange={e => handleFilterChange('phoneNumber', e)} />
-            <Translate>Phone Number</Translate>
-          </HeaderCell>
-          <Cell dataKey="phoneNumber" />
-        </Column>
-
-        <Column sortable flexGrow={4}>
-          <HeaderCell>
-            <Input onChange={e => handleFilterChange('email', e)} />
-            <Translate>Email</Translate>
-          </HeaderCell>
-          <Cell dataKey="email" />
-        </Column>
-        <Column sortable flexGrow={1}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('departmentCode', e)} />
-            <Translate>Department Code</Translate>
-          </HeaderCell>
-          <Cell dataKey="departmentCode" />
-        </Column>
-
-        {/* <Column sortable flexGrow={1}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('appointable', e)} />
-            <Translate>Appointable</Translate>
-          </HeaderCell>
-          <Cell >
-          {rowData =>
-             rowData.appointable?<CheckIcon style={{ fontSize: "2rem", marginRight: 10 }}/>:<CloseIcon style={{ fontSize: "2rem", marginRight: 10 }}/>
-          }
-          </Cell>
-        </Column>         */}
-
-
-
-      </Table>
-      <div style={{ padding: 20 }}>
+     
+      {/* <div style={{ padding: 20 }}>
         <Pagination
           prev
           next
@@ -338,15 +493,35 @@ const Departments = () => {
           }}
           total={departmentListResponse?.extraNumeric ?? 0}
         />
-      </div>
+      </div> */}
 
-      <Modal open={popupOpen} overflow>
+
+      <AddEditDepartment 
+      open={popupOpen}
+      setOpen={setPopupOpen}
+      department={department}
+      setDepartment={setDepartment}
+      saveDepartment={saveDepartment}
+      recordOfDepartmentCode={recordOfDepartmentCode}
+      setRecordOfDepartmentCode={setRecordOfDepartmentCode}
+      />
+      {/* <MyModal
+        open={popupOpen}
+        setOpen={setPopupOpen}
+        title={department?.key ? 'Edit Department' : 'New Department'}
+        position="right"
+        content={conjureFormContent}
+        actionButtonLabel={department?.key ? 'Save' : 'Create'}
+        actionButtonFunction={handleSave}
+        steps={[{ title: 'Department Info', icon: faLaptop }]}
+      /> */}
+
+      {/* <Modal open={popupOpen} overflow>
         <Modal.Title>
           <Translate>New/Edit Department</Translate>
         </Modal.Title>
         <Modal.Body>
           <Form ref={formRef} model={model} formValue={department} onSubmit={handleSubmit} fluid>
-
             <Stack direction="row" spacing={10}>
               <MyInput
                 width={290}
@@ -359,10 +534,8 @@ const Departments = () => {
                 record={department}
                 setRecord={setDepartment}
               />
-
               <MyInput
                 width={290}
-
                 fieldName="departmentTypeLkey"
                 fieldLabel="Department Type"
                 fieldType="select"
@@ -374,21 +547,15 @@ const Departments = () => {
               />
             </Stack>
             <br />
-
             <Stack direction="row" spacing={10}>
               <MyInput width={200} fieldName="name" record={department} setRecord={setDepartment} />
               <MyInput width={170} fieldName="phoneNumber" record={department} setRecord={setDepartment} />
               <MyInput width={200} fieldName="email" record={department} setRecord={setDepartment} />
             </Stack>
             <br />
-
-
             <label>Department Code</label>
             <Input style={{ width: 260 }} disabled value={department?.departmentCode ?? generateCode} />
             <br />
-
-
-
             <MyInput
               fieldLabel="Appointable"
               fieldType="checkbox"
@@ -410,7 +577,6 @@ const Departments = () => {
                 />
                 : null
             }
-
             <MyInput
               fieldLabel="Is Valid"
               checkedLabel="Valid"
@@ -420,7 +586,6 @@ const Departments = () => {
               record={department}
               setRecord={setDepartment}
             />
-
             <Stack spacing={2} divider={<Divider vertical />}>
               <Button appearance="primary" type='submit'
               >
@@ -432,217 +597,232 @@ const Departments = () => {
             </Stack>
           </Form>
         </Modal.Body>
+      </Modal> */}
 
-      </Modal>
-      <Modal open={openScreensPopup} onClose={() => setOpenScreensPopup(false)} size="lg">
+     <ChooseDepartment   
+        open={openScreensPopup}
+        setOpen={setOpenScreensPopup}
+        showScreen={showScreen}
+        setShowScreen={setShowScreen}
+        department={department}
+      />
+
+
+      {/* <Modal open={openScreensPopup} onClose={() => setOpenScreensPopup(false)} size="lg">
         <Modal.Header>
-          <Modal.Title>
-            Choose the screens you want to appear</Modal.Title>
+          <Modal.Title>Choose the screens you want to appear</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
-            <Panel style={{ border: '1px solid #87e6ed', borderRadius: '10px', paddingLeft: '5px' }}>
-              <Row >
+            <Panel
+              style={{ border: '1px solid #87e6ed', borderRadius: '10px', paddingLeft: '5px' }}
+            >
+              <Row>
                 <Col xs={6}>
-                  <MyInput
-                    fieldType='check'
+                  <MyInput  
+                    fieldType="check"
                     fieldName={'patientDashboard'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'clinicalVisit'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'diagnosticsOrder'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'prescription'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
-
-
               </Row>
-              <Row >
+              <Row>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'procedures'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'patientHistory'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'allergies'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'medicalWarnings'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
-
-
               </Row>
-              <Row  >
+              <Row>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'optometricExam'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'vaccineReccord'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'diagnosticsResult'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'dentalCare'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
-
-
-              </Row >
-              <Row  >
+              </Row>
+              <Row>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'drugOrder'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'consultation'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'cardiology'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'audiometryPuretone'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
-
               </Row>
-              <Row >
+              <Row>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'psychologicalExam'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'observation'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
                 <Col xs={6}>
                   <MyInput
-                    fieldType='check'
+                    fieldType="check"
                     fieldName={'vaccination'}
                     showLabel={false}
                     record={showScreen}
-                    setRecord={setShowScreen} />
+                    setRecord={setShowScreen}
+                  />
                 </Col>
-                <Col xs={6}>
-                </Col>
+                <Col xs={6}></Col>
               </Row>
             </Panel>
           </Form>
         </Modal.Body>
-        <Modal.Footer style={{ display: "flex", justifyContent: 'flex-end' }}>
+        <Modal.Footer style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button
             appearance="primary"
             color="cyan"
             onClick={() => {
               try {
                 saveMedicalSheet({ ...showScreen, departmentKey: department.key }).unwrap();
-                dispatch(notify({ msg: 'Saved successfully', sev: "success" }));
+                dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                 setOpenScreensPopup(false);
+              } catch (error) {
+                dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
               }
-              catch (error) {
-                dispatch(notify({ msg: 'Saved Faild', sev: "error" }));
-              }
-            }
-            }
+            }}
           >
             Save
           </Button>
-          <Button
-            appearance="ghost"
-            color="cyan"
-            onClick={() => setOpenScreensPopup(false)}
-          >
+          <Button appearance="ghost" color="cyan" onClick={() => setOpenScreensPopup(false)}>
             Cancel
           </Button>
         </Modal.Footer>
-      </Modal>
+      </Modal> */}
     </Panel>
   );
 };
