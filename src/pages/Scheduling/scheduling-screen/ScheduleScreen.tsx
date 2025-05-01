@@ -62,6 +62,8 @@ const ScheduleScreen = () => {
     const [showReasonModal, setShowReasonModal] = useState(false);
     const [finalResourceLit, setFinalResourceLit] = useState();
     const [currentView, setCurrentView] = useState("day");
+    const [totalAppointmentsText, setTotalAppointmentsText] = useState<string>()
+    // const [localVisibleAppointments, setLocalVisibleAppointments] = useState([]);
 
 
     useEffect(() => {
@@ -156,40 +158,7 @@ const ScheduleScreen = () => {
         ...initialListRequest
     });
 
-    // const eventPropGetter = (event) => {
-    //     const status = event?.appointmentData.appointmentStatus;
-    //     switch (status) {
-    //         case "Confirmed":
-    //             return {
-    //                 style: { backgroundColor: "#dab1da", color: "black" }, // Light Purple
-    //             }
-    //         case "Checked-In":
-    //             return {
-    //                 style: { backgroundColor: "#AAFFFC", color: "black" }, // Light Cyan
-    //             }
-    //         case "Completed":
-    //             return {
-    //                 style: { backgroundColor: "#90d5ff", color: "black" }, // Light Blue
-    //             }
-    //         case "Canceled":
-    //             return {
-    //                 style: { backgroundColor: "#cbcbcb", color: "black" }, // Cool Grey 
-    //             }
-    //         case "No-Show":
-    //             return {
-    //                 style: { backgroundColor: "#fffd8d", color: "black" }, // Cool Grey 
-    //             }
-    //         // default:
-    //         //     return <p>Unknown status</p>;
-    //     }
 
-    //     if (event?.appointmentData.appointmentStatus === "Confirmed") { // Example: Identify "activities" by a property
-    //         return {
-    //             style: { backgroundColor: "#AAFFFC", color: "black" }, // Blue background, white text
-    //         };
-    //     }
-    //     return {}; // Default style for other events
-    // };
 
 
     const convertDate = (appointmentEnd) => {
@@ -280,6 +249,10 @@ const ScheduleScreen = () => {
         ? appointmentsData
         : appointmentsData.filter((event) => !event.hidden);
 
+    useEffect(() => {
+        console.log(visibleAppointments)
+    }, [visibleAppointments])
+
 
     const handleChangeAppointment = () => {
         setAppointment(selectedEvent.appointmentData)
@@ -303,17 +276,116 @@ const ScheduleScreen = () => {
 
 
     const CustomToolbar = ({ label, onNavigate, onView }) => {
+        const [localVisibleAppointments, setLocalVisibleAppointments] = useState([]);
+
+        useEffect(() => {
+            console.log("Triggered useEffect with: ", { label, currentView, visibleAppointments });
+
+            switch (currentView) {
+                case "day": {
+                    setTotalAppointmentsText("today appointments");
+                    const [, monthStrDay, dayStr] = label.split(" "); // e.g. "Wednesday Apr 30"
+                    const day = parseInt(dayStr);
+                    const month = new Date(`${monthStrDay} 1, ${new Date().getFullYear()}`).getMonth();
+                    const year = new Date().getFullYear();
+
+                    const dayAppointments = visibleAppointments.filter(appointment => {
+                        const appointmentDate = new Date(appointment.start);
+                        return (
+                            appointmentDate.getDate() === day &&
+                            appointmentDate.getMonth() === month &&
+                            appointmentDate.getFullYear() === year
+                        );
+                    });
+
+                    if (dayAppointments !== localVisibleAppointments) {
+                        setLocalVisibleAppointments(dayAppointments);
+                    }
+                    break;
+                }
+
+                case "week": {
+                    setTotalAppointmentsText("this week appointments");
+                    const [startDateStr, endDateStr] = label.split(" – ");
+                    const startDate = new Date(`${startDateStr}, ${new Date().getFullYear()}`);
+                    const endDate = new Date(`${endDateStr}, ${new Date().getFullYear()}`);
+
+                    const weekAppointments = visibleAppointments.filter(appointment => {
+                        const appointmentDate = new Date(appointment.start);
+                        return appointmentDate >= startDate && appointmentDate <= endDate;
+                    });
+
+                    if (JSON.stringify(weekAppointments) !== JSON.stringify(localVisibleAppointments)) {
+                        setLocalVisibleAppointments(weekAppointments);
+                    }
+                    break;
+                }
+
+                case "month": {
+                    setTotalAppointmentsText("this month appointments");
+
+                    const [monthStr, yearStr] = label.split(" "); // example "April 2025"
+                    const month = new Date(`${monthStr} 1, ${yearStr}`).getMonth();
+                    const year = parseInt(yearStr);
+
+                    const filteredAppointments = visibleAppointments.filter(appointment => {
+                        const appointmentDate = new Date(appointment.start);
+                        return (
+                            appointmentDate.getMonth() === month &&
+                            appointmentDate.getFullYear() === year
+                        );
+                    });
+
+                    if (filteredAppointments !== localVisibleAppointments) {
+                        setLocalVisibleAppointments(filteredAppointments);
+                    }
+                    break;
+                }
+
+                case "agenda": {
+                    setTotalAppointmentsText("this period appointments");
+
+                    // تقسيم التواريخ
+                    const [startDateStr, endDateStr] = label.split(" – ");
+
+                    // تحويل النصوص إلى تواريخ
+                    const startDateParts = startDateStr.split("/");
+                    const endDateParts = endDateStr.split("/");
+
+                    const startDate = new Date(`${startDateParts[2]}-${startDateParts[0]}-${startDateParts[1]}`);
+                    const endDate = new Date(`${endDateParts[2]}-${endDateParts[0]}-${endDateParts[1]}`);
+
+                    const agendaAppointments = visibleAppointments.filter(appointment => {
+                        const appointmentDate = new Date(appointment.start);
+                        return appointmentDate >= startDate && appointmentDate <= endDate;
+                    });
+
+                    if (JSON.stringify(agendaAppointments) !== JSON.stringify(localVisibleAppointments)) {
+                        setLocalVisibleAppointments(agendaAppointments);
+                    }
+
+                    break;
+                }
+
+
+                default:
+                    break;
+            }
+        }, [visibleAppointments, currentView, label]);
+
+
         return (
             <div style={{ marginInline: "15px" }} className="rbc-toolbar">
                 <span className="rbc-btn-group">
-
                     <div style={{ display: 'flex', alignItems: 'center', fontSize: '16px' }}>
                         <div style={{ borderRadius: "5px", display: "flex", alignItems: "center", justifyContent: "center", width: "35px", height: "35px", backgroundColor: "#E3E4E8" }}>
                             <CalenderSimpleIcon style={{ fontSize: "17px" }} />
                         </div>
 
-                        <strong style={{ fontSize: '19px', marginInline: '8px', color: "#2D3B4C" }}>{visibleAppointments.length}</strong>
-                        <span style={{ fontSize: '14px', color: "#969FB0" }}>total appointments</span>
+                        <strong style={{ fontSize: '19px', marginInline: '8px', color: "#2D3B4C" }}>
+                            {localVisibleAppointments.length}
+                        </strong>
+                        <span style={{ fontSize: '14px', color: "#969FB0" }}>{totalAppointmentsText}</span>
                     </div>
                 </span>
 
@@ -322,25 +394,20 @@ const ScheduleScreen = () => {
 
                     <button style={{ margin: "7px", height: "35px" }} onClick={() => onNavigate("PREV")}><ArrowLeftLineIcon /></button>
                     <span
-
                         onClick={() => setDrowerOpen(true)}
                         style={{ fontSize: "14px", color: "#3B3E45", margin: "7px", cursor: "pointer", fontWeight: "bold" }}
                     >
-
                         {label}
                     </span>
                     <button style={{ margin: "7px", height: "35px" }} onClick={() => onNavigate("NEXT")}><ArrowRightLineIcon /></button>
-
                 </div>
 
                 <ButtonGroup style={{ borderRadius: "5px", backgroundColor: "#F3F4F6" }} size="md">
-                    <Button style={{ border: "none", height: "35px" }} onClick={() => { setCurrentView(Views.MONTH), console.log(Views.MONTH), onView(Views.MONTH) }}>Month</Button>
-                    <Button style={{ border: "none", height: "35px" }} onClick={() => { setCurrentView(Views.WEEK), onView(Views.WEEK) }}>Week </Button>
+                    <Button style={{ border: "none", height: "35px" }} onClick={() => { setCurrentView(Views.MONTH), onView(Views.MONTH) }}>Month</Button>
+                    <Button style={{ border: "none", height: "35px" }} onClick={() => { setCurrentView(Views.WEEK), onView(Views.WEEK) }}>Week</Button>
                     <Button style={{ border: "none", height: "35px" }} onClick={() => { setCurrentView(Views.DAY), onView(Views.DAY) }}>Day</Button>
                     <Button style={{ border: "none", height: "35px" }} onClick={() => { setCurrentView(Views.AGENDA), onView(Views.AGENDA) }}>Agenda</Button>
                 </ButtonGroup>
-
-
             </div>
         );
     };
@@ -384,7 +451,6 @@ const ScheduleScreen = () => {
 
 
     const ResourceHeader = ({ resource }) => {
-        console.log(resource);  // تحقق من البيانات هنا
         return (
             <div style={{ marginLeft: "5px", display: "flex", alignItems: "center", gap: "8px", height: "65px" }}>
                 <Avatar size="md" circle src="https://i.pravatar.cc/150?u=1" />
@@ -645,7 +711,7 @@ const ScheduleScreen = () => {
                         flexDirection: 'column',
                         width: '100%',
                         height: 'fit-content',
-                        position: 'relative' 
+                        position: 'relative'
                     }}
                 >
 
@@ -750,9 +816,9 @@ const ScheduleScreen = () => {
                         date={filteredMonth}
                     />
 
-                     <Stack   style={{ margin: "0.4%" }}>
+                    <Stack style={{ margin: "0.4%" }}>
                         {legendItems.map(({ label, color }) => (
-                            <Stack style={{ marginRight:"36px" }} spacing={6} align="center" key={label}>
+                            <Stack style={{ marginRight: "36px" }} spacing={6} align="center" key={label}>
                                 <div
                                     style={{
                                         width: 12,
