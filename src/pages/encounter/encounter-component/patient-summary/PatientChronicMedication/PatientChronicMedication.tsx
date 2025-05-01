@@ -183,12 +183,12 @@ const PatientChronicMedication = ({ patient }) => {
 
                 const matchingActiveIngredient = genericMedicationActiveIngredientListResponseData?.object?.find(ingredient => {
 
-                    return ingredient.genericMedicationKey === genericMedicationsKey && ingredient.activeIngredientKey === obj.key;
+                    return ingredient?.genericMedicationKey === genericMedicationsKey && ingredient?.activeIngredientKey === obj.key;
                 });
 
 
                 if (matchingActiveIngredient) {
-                    return `${obj.name}:${matchingActiveIngredient.strength} ${matchingActiveIngredient.unitLvalue.lovDisplayVale} `;
+                    return `${obj.name}:${matchingActiveIngredient?.strength} ${matchingActiveIngredient?.unitLvalue?.lovDisplayVale} `;
                 }
 
                 return obj.name;
