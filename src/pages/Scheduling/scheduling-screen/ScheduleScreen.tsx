@@ -61,7 +61,7 @@ const ScheduleScreen = () => {
     const [filteredMonth, setFilteredMonth] = useState<Date>()
     const [showReasonModal, setShowReasonModal] = useState(false);
     const [finalResourceLit, setFinalResourceLit] = useState();
-    const [currentView, setCurrentView] =  useState("day");
+    const [currentView, setCurrentView] = useState("day");
 
 
     useEffect(() => {
@@ -122,7 +122,7 @@ const ScheduleScreen = () => {
             });
             setAppointmentsData(formattedAppointments);
         }
-    }, [appointments, resourcesListResponse,currentView]);
+    }, [appointments, resourcesListResponse, currentView]);
     const { data: resourceTypeQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
     const { data: resourcesListResponse } = useGetResourcesQuery(listRequest);
     useEffect(() => {
@@ -150,7 +150,7 @@ const ScheduleScreen = () => {
     };
 
 
-   
+
 
     const { data: facilityListResponse, refetch: refetchFacility } = useGetFacilitiesQuery({
         ...initialListRequest
@@ -261,14 +261,14 @@ const ScheduleScreen = () => {
                         >
                             <SearchIcon />
                         </InputGroup.Button>
-                    </InputGroup> 
+                    </InputGroup>
                 </ButtonToolbar>
             </Panel>
 
         );
     };
 
-     const [currentDate, setCurrentDate] = React.useState(new Date());
+    const [currentDate, setCurrentDate] = React.useState(new Date());
     const handleDateSelection = (date) => {
         if (currentView === "month") {
             setCurrentView("day"); // Switch to day view
@@ -312,8 +312,8 @@ const ScheduleScreen = () => {
                             <CalenderSimpleIcon style={{ fontSize: "17px" }} />
                         </div>
 
-                        <strong style={{ fontSize: '23px', marginInline: '10px', color: "#2D3B4C" }}>{visibleAppointments.length}</strong>
-                        <span style={{ fontSize: '16px', color: "#969FB0" }}>total appointments</span>
+                        <strong style={{ fontSize: '19px', marginInline: '8px', color: "#2D3B4C" }}>{visibleAppointments.length}</strong>
+                        <span style={{ fontSize: '14px', color: "#969FB0" }}>total appointments</span>
                     </div>
                 </span>
 
@@ -546,8 +546,8 @@ const ScheduleScreen = () => {
                         <Form fluid layout="inline"  >
                             <MyInput
                                 disabled
-                                height={"40px"}
-                                width={"12vw"}
+                                height={"35px"}
+                                width={"11.5vw"}
                                 vr={validationResult}
                                 column
                                 fieldLabel="City"
@@ -565,8 +565,8 @@ const ScheduleScreen = () => {
                         <Form fluid layout="inline"  >
 
                             <MyInput
-                                width={"12vw"}
-                                height={"40px"}
+                                height={"35px"}
+                                width={"11.5vw"}
                                 column
                                 fieldLabel="Facility"
                                 selectData={facilityListResponse?.object ?? []}
@@ -580,8 +580,8 @@ const ScheduleScreen = () => {
                         </Form>
                         <Form fluid layout="inline"  >
                             <MyInput
-                                height={"40px"}
-                                width={"12vw"}
+                                height={"35px"}
+                                width={"11.5vw"}
                                 vr={validationResult}
                                 column
                                 fieldLabel="Resources Type"
@@ -598,8 +598,8 @@ const ScheduleScreen = () => {
                         <Form fluid layout="inline"   >
 
                             <MyInput
-                                height={"40px"}
-                                width={"12vw"}
+                                height={"35px"}
+                                width={"11.5vw"}
                                 column
                                 fieldLabel="Resources"
                                 selectData={filteredResourcesList.length > 0 ? filteredResourcesList : !selectedResourceType?.resourcesType ? resourcesListResponse?.object : []}
@@ -639,7 +639,15 @@ const ScheduleScreen = () => {
 
                 {/* =================== Right Side ============= */}
 
-                <Panel bordered className="right-section">
+                <Panel bordered className="right-section"
+                    style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        width: '100%',
+                        height: 'fit-content',
+                        position: 'relative' 
+                    }}
+                >
 
                     <div style={{ marginTop: "27px", marginInline: "14px", display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                         {/* Left  */}
@@ -706,7 +714,7 @@ const ScheduleScreen = () => {
 
 
                     <BigCalendar
-                        style={{ height: "70vh" }}
+                        style={{ height: "73vh" }}
 
                         min={minTime}
                         resourceIdAccessor="key"
@@ -742,10 +750,9 @@ const ScheduleScreen = () => {
                         date={filteredMonth}
                     />
 
-                    <br />
-                    <Stack spacing={16} align="center">
+                     <Stack   style={{ margin: "0.4%" }}>
                         {legendItems.map(({ label, color }) => (
-                            <Stack spacing={6} align="center" key={label}>
+                            <Stack style={{ marginRight:"36px" }} spacing={6} align="center" key={label}>
                                 <div
                                     style={{
                                         width: 12,
