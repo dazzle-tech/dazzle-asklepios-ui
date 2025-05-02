@@ -160,7 +160,7 @@ const OptometricExam = ({ patient, encounter }) => {
             : 0,
           updatedBy: authSlice.user.key,
           timeOfMeasurement:
-            time.time.split(':').reduce((acc, time) => acc * 60 + Number(time), 0) * 60
+            time?.time?.split(':').reduce((acc, time) => acc * 60 + Number(time), 0) * 60
         }).unwrap();
 
         dispatch(notify('Patient Optometric Exam Updated Successfully'));
