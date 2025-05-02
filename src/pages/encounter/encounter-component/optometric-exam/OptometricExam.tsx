@@ -146,7 +146,7 @@ const OptometricExam = ({ patient, encounter }) => {
           statusLkey: '9766169155908512',
           createdBy: authSlice.user.key,
           timeOfMeasurement:
-            time.time.split(':').reduce((acc, time) => acc * 60 + Number(time), 0) * 60
+            time?.time?.split(':').reduce((acc, time) => acc * 60 + Number(time), 0) * 60
         }).unwrap();
         dispatch(notify('Patient Optometric Exam Added Successfully'));
         setOptometricExam({ ...optometricExam, statusLkey: '9766169155908512' });
@@ -156,7 +156,7 @@ const OptometricExam = ({ patient, encounter }) => {
           patientKey: patient.key,
           encounterKey: encounter.key,
           followUpDate: optometricExam?.followUpDate
-            ? new Date(optometricExam.followUpDate).getTime()
+            ? new Date(optometricExam?.followUpDate).getTime()
             : 0,
           updatedBy: authSlice.user.key,
           timeOfMeasurement:
@@ -1077,8 +1077,8 @@ const OptometricExam = ({ patient, encounter }) => {
             setOptometricExam({
               ...rowData
             });
-            setSelectedIcd10(`${rowData.icdCode.icdCode} - ${rowData.icdCode.description}`);
-            setSecondSelectedicd10(`${rowData.icdCode2.icdCode} - ${rowData.icdCode2.description}`);
+            setSelectedIcd10(`${rowData.icdCode?.icdCode} - ${rowData?.icdCode?.description}`);
+            setSecondSelectedicd10(`${rowData?.icdCode2?.icdCode} - ${rowData?.icdCode2?.description}`);
             setTime({ time: formatTime(rowData?.timeOfMeasurement) });
           }}
         >

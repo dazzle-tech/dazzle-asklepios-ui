@@ -68,7 +68,7 @@ const AddPsychologicalExam = ({
             scoreLkey: null,
             resultInterpretationLkey: null,
             statusLkey: null,
-            requireFollowUp: null
+            requireFollowUp: false
         });
     };
     //handle Save Psychological Exam
