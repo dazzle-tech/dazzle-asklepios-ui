@@ -348,10 +348,10 @@ const Departments = () => {
   //table columns
   const tableColumns = [
     {
-      key: 'facilityKey',
-      title: <Translate>Facility</Translate>,
-      flexGrow: 1,
-      dataKey: 'facilityKey'
+      key: 'facilityName',
+      title: <Translate>Facility Name</Translate>,
+      flexGrow: 4,
+      dataKey: 'facilityName'
     },
     {
       key: 'name',
@@ -404,6 +404,46 @@ const Departments = () => {
    const rowsPerPage = listRequest.pageSize;
    const totalCount = departmentListResponse?.extraNumeric ?? 0;
 
+   // State to handle the filter form inputs
+       const [record, setRecord] = useState({ filter: '', value: '' });
+    // Available fields for filtering
+    const filterFields = [
+      { label: 'Facility Name', value: 'facilityName' },
+      { label: 'Department Name', value: 'name' },
+      { label: 'Department Type', value: 'departmentType' }
+  ];
+   // Filter form rendered above the table
+       const filters = () => (
+           <Form layout="inline" fluid>
+               <MyInput
+                   selectDataValue="value"
+                   selectDataLabel="label"
+                   selectData={filterFields}
+                   fieldName="filter"
+                   fieldType="select"
+                   record={record}
+                   setRecord={(updatedRecord) => {
+                       setRecord({
+                           ...record,
+                           filter: updatedRecord.filter,
+                           value: '' // Clear the text input whenever filter is changed
+                       });
+                   }}
+                   showLabel={false}
+                   placeholder="Select Filter"
+                   searchable={false}
+               />
+   
+               <MyInput
+                   fieldName="value"
+                   fieldType="text"
+                   record={record}
+                   setRecord={setRecord}
+                   showLabel={false}
+                   placeholder="Search"
+               />
+           </Form>
+       );
 
    const handlePageChange = (_: unknown, newPage: number) => {
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
