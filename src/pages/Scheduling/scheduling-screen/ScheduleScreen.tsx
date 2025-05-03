@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Calendar as BigCalendar, Views, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -64,6 +64,7 @@ const ScheduleScreen = () => {
     const [currentView, setCurrentView] = useState("day");
     const [totalAppointmentsText, setTotalAppointmentsText] = useState<string>()
     // const [localVisibleAppointments, setLocalVisibleAppointments] = useState([]);
+    const [calendarDate, setCalendarDate] = useState<Date>(null);
 
 
     useEffect(() => {
@@ -198,11 +199,11 @@ const ScheduleScreen = () => {
     ];
 
     const legendItems = [
-        { label: 'No-Show', color: '#FDE68A' },      // أصفر
-        { label: 'Checked In', color: '#FDBA74' },   // برتقالي فاتح
-        { label: 'New', color: '#6366F1' },          // أزرق
-        { label: 'Confirmed', color: '#34D399' },    // أخضر
-        { label: 'Completed', color: '#93C5FD' },    // أزرق فاتح
+        { label: 'No-Show', color: '#FDE68A' },
+        { label: 'Checked In', color: '#FDBA74' },
+        { label: 'New', color: '#6366F1' },
+        { label: 'Confirmed', color: '#34D399' },
+        { label: 'Completed', color: '#93C5FD' },
     ];
 
 
@@ -275,8 +276,26 @@ const ScheduleScreen = () => {
 
 
 
+
     const CustomToolbar = ({ label, onNavigate, onView }) => {
         const [localVisibleAppointments, setLocalVisibleAppointments] = useState([]);
+        const datePickerRef = useRef();
+        const [showDatePicker, setShowDatePicker] = useState(false);
+
+        useEffect(() => {
+            console.log(calendarDate)
+            if (calendarDate) {
+                console.log("Navigating to:", calendarDate.toDateString());
+                setCalendarDate(calendarDate); // لتحديث التاريخ المعروض
+            }
+        }, [calendarDate])
+
+        const handleClickCalinderSearch = () => {
+            setShowDatePicker(true);
+            if (datePickerRef.current) {
+                datePickerRef.current.open();
+            }
+        };
 
         useEffect(() => {
             console.log("Triggered useEffect with: ", { label, currentView, visibleAppointments });
@@ -345,10 +364,8 @@ const ScheduleScreen = () => {
                 case "agenda": {
                     setTotalAppointmentsText("this period appointments");
 
-                    // تقسيم التواريخ
                     const [startDateStr, endDateStr] = label.split(" – ");
 
-                    // تحويل النصوص إلى تواريخ
                     const startDateParts = startDateStr.split("/");
                     const endDateParts = endDateStr.split("/");
 
@@ -393,12 +410,31 @@ const ScheduleScreen = () => {
                     <button style={{ fontSize: "14px", margin: "7px", height: "35px" }} onClick={() => onNavigate("TODAY")}>Today</button>
 
                     <button style={{ margin: "7px", height: "35px" }} onClick={() => onNavigate("PREV")}><ArrowLeftLineIcon /></button>
-                    <span
-                        onClick={() => setDrowerOpen(true)}
-                        style={{ fontSize: "14px", color: "#3B3E45", margin: "7px", cursor: "pointer", fontWeight: "bold" }}
+                    <Button
+                        onClick={handleClickCalinderSearch}
+                        style={{ display: showDatePicker ? "none" : "inline-block", border: "none", height: "35px" }} // إخفاء الزر عند فتح التقويم
                     >
-                        {label}
-                    </span>
+                       <strong>{label}</strong> 
+                    </Button>
+
+                    {showDatePicker && (
+                        <DatePicker
+                            ref={datePickerRef}
+                            onChange={(date) => {
+                                if (date) {
+                                    setCalendarDate(date);
+                                    setCurrentCalView("day");
+                                }
+                            }}
+                            placement="bottomStart"
+                            defaultOpen
+                            format={currentView === "month" ? "yyyy-MM" : "yyyy-MM-dd"}  
+                            onClose={() => {
+                                  console.log("DatePicker closed");
+                                  setShowDatePicker(false);  // إخفاء الـ DatePicker عند إغلاقه
+                                }}
+                        />
+                    )}
                     <button style={{ margin: "7px", height: "35px" }} onClick={() => onNavigate("NEXT")}><ArrowRightLineIcon /></button>
                 </div>
 
@@ -579,14 +615,19 @@ const ScheduleScreen = () => {
         return item ? hexToRgba(item.color, 0.1) : '#ffffff';
     };
 
-    const eventPropGetter = () => ({
-        style: {
-            backgroundColor: '#ffffff',
-            borderRadius: '8px',
-            padding: '5px',
-            color: 'black'
-        }
-    });
+    const eventPropGetter = () => (
+        {
+            style: {
+                backgroundColor: '#ffffff',
+                borderRadius: '8px',
+                padding: '5px',
+                color: 'black'
+            }
+
+
+
+
+        });
 
 
     return (
@@ -778,23 +819,25 @@ const ScheduleScreen = () => {
                         </div>
                     </div>
 
-
                     <BigCalendar
+                        date={calendarDate}
+                        onNavigate={(date) => setCalendarDate(date)}
+                        className={`my-calendar ${currentView}`}
                         style={{ height: "73vh" }}
-
                         min={minTime}
-                        resourceIdAccessor="key"
-                        resources={finalResourceLit}
-
+                        {...(currentView === "day" && {
+                            resources: finalResourceLit,
+                            resourceIdAccessor: "key",
+                            resourceTitleAccessor: "resourceName",
+                        })}
                         formats={formats}
-                        resourceTitleAccessor="resourceName"
                         localizer={localizer}
                         events={visibleAppointments}
                         step={60}
                         timeslots={1}
                         onSelectSlot={(slotInfo) => {
                             console.log("Selected slot:", slotInfo);
-                            setModalOpen(true)
+                            setModalOpen(true);
                         }}
                         startAccessor="start"
                         endAccessor="end"
@@ -802,18 +845,17 @@ const ScheduleScreen = () => {
                         defaultView={currentView}
                         selectable={true}
                         onSelectEvent={(event) => {
-                            handleSelectEvent(event);  // select event
+                            handleSelectEvent(event);
                         }}
-                        tooltipAccessor={(event) => getTooltipContent(event)} // Dynamic tooltip content
+                        tooltipAccessor={(event) => getTooltipContent(event)}
                         onView={(view) => setCurrentView(view)}
-
                         eventPropGetter={eventPropGetter}
                         components={{
                             toolbar: CustomToolbar,
                             resourceHeader: ResourceHeader,
                             event: MyEvent,
                         }}
-                        date={filteredMonth}
+
                     />
 
                     <Stack style={{ margin: "0.4%" }}>

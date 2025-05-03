@@ -41,7 +41,7 @@
 }
 
 .rbc-row {
-  height: 60px;
+  height: 64px;
 
 }
 
@@ -54,6 +54,7 @@
   min-height: 81px; 
 
 }
+
 .rbc-time-gutter {
   width: 41px;  
   font-size: 12px;
@@ -66,17 +67,16 @@
 }
 
  
-.rbc-time-content > .rbc-day-slot {
+.my-calendar.day .rbc-time-view .rbc-time-content > .rbc-day-slot {
   min-width: 300px !important;
- }
- .rbc-header {
+}
+
+.my-calendar.day .rbc-time-view .rbc-header {
   min-width: 300px !important;
   flex: none !important;
   text-align: center;
 }
 
- 
- 
 
 .rbc-time-header-cell.rbc-today {
   background-color: #04aa6d !important;
@@ -113,3 +113,18 @@
   padding: 2px 5px;
   white-space: nowrap;
 }
+
+ 
+.rbc-month-view .rbc-row:first-child {
+  height: 18px;
+  // background-color: #b8d3c977;
+  overflow: hidden;
+}
+
+ 
+.my-calendar.week .rbc-allday-cell,
+.my-calendar.week .rbc-allday-events {
+  display: none !important;
+}
+
+ 
