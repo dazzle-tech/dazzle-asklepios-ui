@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ButtonToolbar, Form, Panel, Stack } from 'rsuite';
+import { Form, Panel, Stack } from 'rsuite';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch } from '@/hooks';
 import 'react-tabs/style/react-tabs.css';
@@ -49,7 +49,7 @@ const EncounterPatientPrivateLogin = () => {
   return (
       <Panel header={<h3 className="title"><Translate>This Patient is a Private Patient</Translate></h3>}>
         <br />
-        <Panel bordered style={{ padding: "16px" }}  header={ <h5 className="title"> <Translate>Only Authorized Users can Access this Page !</Translate> <br /></h5> } >
+        <Panel bordered className='custom-panel'  header={ <h5 className="title"> <Translate>Only Authorized Users can Access this Page !</Translate> <br /></h5> } >
           <br />
           <Stack>
             <Stack.Item grow={1}>
@@ -64,7 +64,7 @@ const EncounterPatientPrivateLogin = () => {
               </div>
             </Stack.Item>
             <Stack.Item grow={15}>
-              <Form layout="inline" fluid>
+              <Form layout="inline" fluid className="form-content-fields" >
                 <MyInput
                   required
                   width={165}
@@ -92,10 +92,9 @@ const EncounterPatientPrivateLogin = () => {
                   setRecord={setLocalLoginUser}
 
                 />
-                  <MyButton
+                <MyButton
                     prefixIcon={()=> <FontAwesomeIcon icon={faCheckDouble} />}
-                    onClick={handleSave}
-                    className="margin-top"                    
+                    onClick={handleSave}                    
                     disabled={localUser.password === "" || localUser.username === "" || localLoginUser.reason ===""}
                   >
                     <Translate>Confirm</Translate>
