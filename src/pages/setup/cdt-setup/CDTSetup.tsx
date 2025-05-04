@@ -13,6 +13,7 @@ import {
   useUnlinkCdtServiceMutation
 } from '@/services/setupService';
 import { Button, ButtonToolbar, IconButton } from 'rsuite';
+import MyTable from '@/components/MyTable';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import EditIcon from '@rsuite/icons/Edit';
 import TrashIcon from '@rsuite/icons/Trash';
@@ -29,34 +30,26 @@ import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
 import MyButton from '@/components/MyButton/MyButton';
+import MyModal from '@/components/MyModal/MyModal';
+import { faTooth } from '@fortawesome/free-solid-svg-icons';
+import LinkedServices from './LinkedServices';
 const CDTSetup = () => {
   const dispatch = useAppDispatch();
   const [cdt, setCdt] = useState<ApCdt>({ ...newApCdt });
   const [selectedServiceKey, setSelectedServiceKey] = useState('');
   const [popupOpen, setPopupOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
-  const [serviceMap, setServiceMap] = useState({});
+  const [saveCdt, saveCdtMutation] = useSaveCdtMutation();
+  // Initial table request with default filter 
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
-    pageSize: 15
+    pageSize: 1000
   });
 
-  const [saveCdt, saveCdtMutation] = useSaveCdtMutation();
-  const [linkCdtService, linkCdtServiceMutation] = useLinkCdtServiceMutation();
-  const [unlinkCdtService, unlinkCdtServiceMutation] = useUnlinkCdtServiceMutation();
+  // State to handle the filter form inputs
+  const [record, setRecord] = useState({ filter: '', value: '' });
 
-  const { data: cdtListResponse, isFetching: cdtListResponseLoading } =
-    useGetCdtsQuery(listRequest);
-
-  const { data: serviceListResponse } = useGetServicesQuery({
-    ...initialListRequest,
-    pageSize: 1000,
-    skipDetails: true
-  });
-
-  const { data: cdtTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CDT_TYPE');
-  const { data: cdtClassLovQueryResponse } = useGetLovValuesByCodeQuery('CDT_CLASS');
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  // Header page setUp
   const divContent = (
     <div style={{ display: 'flex' }}>
       <h5>CDT Codes</h5>
@@ -65,65 +58,32 @@ const CDTSetup = () => {
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('CDT_Codes'));
   dispatch(setDivContent(divContentHTML));
-  const handleNew = () => {
-    setCdt({ ...newApCdt });
-    setPopupOpen(true);
-  };
 
-  const handleSave = () => {
-    setPopupOpen(false);
-    saveCdt(cdt).unwrap();
-  };
-
-  useEffect(() => {
-    if (saveCdtMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveCdtMutation.data]);
-
-  useEffect(() => {
-    if (serviceListResponse && serviceListResponse.object) {
-      let map = {};
-      serviceListResponse.object.forEach(item => {
-        map[item.key] = item.name;
-      });
-      setServiceMap(map);
-    }
-  }, serviceListResponse);
-
-  useEffect(() => {
-    if (linkCdtServiceMutation.data) {
-      // add the new linked service to selected cdt service list
-      let currentServiceList = [...cdt['linkedServices']];
-      currentServiceList.push(linkCdtServiceMutation.data);
-      let clone = { ...cdt };
-      clone['linkedServices'] = currentServiceList;
-      setCdt({ ...clone });
-    }
-  }, [linkCdtServiceMutation.data]);
-
-  useEffect(() => {
-    if (unlinkCdtServiceMutation.data) {
-      // remove the unlinked services from selected procedure
-      const serviceKeyToRemove = unlinkCdtServiceMutation.data.serviceKey;
-      // Filter out the service with the matching serviceKey
-      const updatedServiceList = cdt['linkedServices'].filter(
-        service => service.serviceKey !== serviceKeyToRemove
-      );
-      let clone = { ...cdt };
-      clone['linkedServices'] = updatedServiceList;
-      setCdt({ ...clone });
-    }
-  }, [unlinkCdtServiceMutation.data]);
-
+  // Fetch cdt List Response
+  const { data: cdtListResponse, isLoading } = useGetCdtsQuery(listRequest);
+  // Fetch LOV data for various fields
+  const { data: cdtTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CDT_TYPE');
+  const { data: cdtClassLovQueryResponse } = useGetLovValuesByCodeQuery('CDT_CLASS');
+  // Function to check if the current row is the selected one
   const isSelected = rowData => {
     if (rowData && cdt && rowData.key === cdt.key) {
       return 'selected-row';
     } else return '';
   };
-
+  //Handle New Cdt Object
+  const handleNew = () => {
+    setCdt({ ...newApCdt });
+    setPopupOpen(true);
+  };
+  // Handle Save Cdt Object
+  const handleSave = () => {
+    setPopupOpen(false);
+    saveCdt(cdt).unwrap();
+  };
+  // Handle changes in filter fields
   const handleFilterChange = (fieldName, value) => {
     if (value) {
+      // Add new filter to the list request
       setListRequest(
         addFilterToListRequest(
           fromCamelCaseToDBName(fieldName),
@@ -133,9 +93,166 @@ const CDTSetup = () => {
         )
       );
     } else {
-      setListRequest({ ...listRequest, filters: [] });
+      // Reset to default filter if value is empty
+      setListRequest({
+        ...listRequest, filters: [
+          {
+            fieldName: 'deleted_at',
+            operator: 'isNull',
+            value: undefined
+          }
+        ],
+      });
     }
   };
+
+  // Change page event handler
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+  // Change number of rows per page
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1 // Reset to first page
+    });
+  };
+
+  // Available fields for filtering
+  const filterFields = [
+    { label: 'Code', value: 'cdtCode' },
+    { label: 'Description', value: 'description' },
+    { label: 'Class', value: 'classLkey' }
+  ];
+  // Table columns definition
+  const columns = [
+    {
+      key: 'cdtCode',
+      title: 'Code',
+      render: (rowData) => rowData?.cdtCode ?? 'N/A',
+    },
+    {
+      key: 'description',
+      title: 'Description',
+      render: (rowData) => rowData?.description ?? 'N/A',
+    },
+    {
+      key: 'classLkey',
+      title: 'Class',
+      render: (rowData) =>
+        rowData.classLvalue
+          ? rowData.classLvalue.lovDisplayVale
+          : rowData.classLkey,
+    }
+  ];
+  // Filter form rendered above the table
+  const filters = () => (
+    <Form layout="inline" fluid>
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={record}
+        setRecord={(updatedRecord) => {
+          setRecord({
+            ...record,
+            filter: updatedRecord.filter,
+            value: '' // Clear the text input whenever filter is changed
+          });
+        }}
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+      />
+
+      <MyInput
+        fieldName="value"
+        fieldType="text"
+        record={record}
+        setRecord={setRecord}
+        showLabel={false}
+        placeholder="Search"
+      />
+    </Form>
+  );
+
+  // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = cdtListResponse?.extraNumeric ?? 0;
+
+  // MyModal content 
+  const modalContent = (
+    <Form fluid layout='inline'>
+      <MyInput
+        width={350}
+        column
+        fieldName="typeLkey"
+        fieldType="select"
+        selectData={cdtTypeLovQueryResponse?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        selectDataValue="key"
+        record={cdt}
+        setRecord={setCdt}
+      />
+      <MyInput
+        width={350}
+        column
+        fieldLabel="CDT Code"
+        fieldName="cdtCode"
+        record={cdt}
+        setRecord={setCdt}
+      />
+      <MyInput
+        width={350}
+        column
+        fieldName="classLkey"
+        fieldType="select"
+        selectData={cdtClassLovQueryResponse?.object ?? []}
+        selectDataLabel="lovDisplayVale"
+        selectDataValue="key"
+        record={cdt}
+        setRecord={setCdt}
+      />
+      <MyInput
+        width={350}
+        column
+        fieldType="textarea"
+        fieldName="description"
+        record={cdt}
+        setRecord={setCdt}
+      />
+    </Form>
+  );
+
+  // Effects
+  useEffect(() => {
+    if (record['filter']) {
+      handleFilterChange(record['filter'], record['value']);
+    } else {
+      // reset the listRequest if filter is cleared
+      setListRequest({
+        ...initialListRequest,
+        filters: [
+          {
+            fieldName: 'deleted_at',
+            operator: 'isNull',
+            value: undefined
+          }
+        ],
+        pageSize: listRequest.pageSize,
+        pageNumber: 1
+      });
+    }
+  }, [record]);
+  useEffect(() => {
+    if (saveCdtMutation.data) {
+      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+    }
+  }, [saveCdtMutation.data]);
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
@@ -143,238 +260,50 @@ const CDTSetup = () => {
     };
   }, [location.pathname, dispatch])
   return (
-    <Panel
-    >
-      <ButtonToolbar>
-        <MyButton prefixIcon={()=><AddOutlineIcon />} onClick={handleNew}>
+    <div>
+      <div className='bt-div'>
+        <MyButton prefixIcon={() => <AddOutlineIcon />} backgroundColor="var(--deep-blue)" onClick={handleNew}>
           Add New
         </MyButton>
-        <MyButton disabled={!cdt.key} onClick={() => setPopupOpen(true)} color="green"  prefixIcon={()=><EditIcon />}>
+        <MyButton disabled={!cdt.key} onClick={() => setPopupOpen(true)} backgroundColor="var(--deep-blue)" prefixIcon={() => <EditIcon />}>
           Edit Selected
         </MyButton>
-        <MyButton disabled={true || !cdt.key} color="red" prefixIcon={()=><TrashIcon />}>
+        <MyButton disabled={true || !cdt.key} backgroundColor="var(--primary-pink)" prefixIcon={() => <TrashIcon />}>
           Delete Selected
         </MyButton>
-        <MyButton disabled={!cdt.key} onClick={() => setServicesOpen(true)} color="cyan">
+        <MyButton disabled={!cdt.key} onClick={() => setServicesOpen(true)} backgroundColor="var(--light-blue)">
           Linked Services
         </MyButton>
-      </ButtonToolbar>
-      <hr />
-      <BlockUI
-        template={
-          <h3 style={{ textAlign: 'center', color: 'white', top: '10%', position: 'absolute' }}>
-            <Translate>Loading...</Translate>
-          </h3>
-        }
-        blocked={cdtListResponseLoading}
-      >
-        <Table
-          height={550}
-          sortColumn={listRequest.sortBy}
-          sortType={listRequest.sortType}
-          onSortColumn={(sortBy, sortType) => {
-            if (sortBy)
-              setListRequest({
-                ...listRequest,
-                sortBy,
-                sortType
-              });
-          }}
-          headerHeight={80}
-          rowHeight={60}
-          bordered
-          cellBordered
-          data={cdtListResponse?.object ?? []}
-          onRowClick={rowData => {
-            setCdt(rowData);
-          }}
-          rowClassName={isSelected}
-        >
-      
-          <Column sortable flexGrow={1}>
-            <HeaderCell align="center">
-              <Input onChange={e => handleFilterChange('cdtCode', e)} />
-              <Translate>Code</Translate>
-            </HeaderCell>
-            <Cell dataKey="cdtCode" />
-          </Column>
-          <Column sortable flexGrow={1}>
-            <HeaderCell align="center">
-              <Input onChange={e => handleFilterChange('description', e)} />
-              <Translate>Description</Translate>
-            </HeaderCell>
-            <Cell dataKey="description" />
-          </Column>
-          <Column sortable flexGrow={1}>
-            <HeaderCell align="center">
-              <Input onChange={e => handleFilterChange('classLkey', e)} />
-              <Translate>Class</Translate>
-            </HeaderCell>
-            <Cell>
-              {rowData =>
-                rowData.classLvalue ? rowData.classLvalue.lovDisplayVale : rowData.classLkey
-              }
-            </Cell>
-          </Column>
-        </Table>
-      </BlockUI>
-      <div style={{ padding: 20 }}>
-        <Pagination
-          prev
-          next
-          first
-          last
-          ellipsis
-          boundaryLinks
-          maxButtons={5}
-          size="xs"
-          layout={['limit', '|', 'pager']}
-          limitOptions={[5, 15, 30]}
-          limit={listRequest.pageSize}
-          activePage={listRequest.pageNumber}
-          onChangePage={pageNumber => {
-            setListRequest({ ...listRequest, pageNumber });
-          }}
-          onChangeLimit={pageSize => {
-            setListRequest({ ...listRequest, pageSize });
-          }}
-          total={cdtListResponse?.extraNumeric ?? 0}
-        />
       </div>
-
-      <Modal open={popupOpen} overflow>
-        <Modal.Title>
-          <Translate>New/Edit Cdt</Translate>
-        </Modal.Title>
-        <Modal.Body>
-          <Form fluid>
-            <MyInput
-              fieldName="typeLkey"
-              fieldType="select"
-              selectData={cdtTypeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={cdt}
-              setRecord={setCdt}
-            />
-            <MyInput fieldLabel="CDT Code" fieldName="cdtCode" record={cdt} setRecord={setCdt} />
-            <MyInput fieldType="textarea" fieldName="description" record={cdt} setRecord={setCdt} />
-            <MyInput
-              fieldName="classLkey"
-              fieldType="select"
-              selectData={cdtClassLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={cdt}
-              setRecord={setCdt}
-            />
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="primary" onClick={handleSave}>
-              Save
-            </Button>
-            <Button appearance="primary" color="red" onClick={() => setPopupOpen(false)}>
-              Cancel
-            </Button>
-          </Stack>
-        </Modal.Footer>
-      </Modal>
-
-      <Drawer
-        size="lg"
-        onEsc={() => setServicesOpen(false)}
-        onClose={() => setServicesOpen(false)}
-        open={servicesOpen}
-      >
-        <Drawer.Header>
-          <Translate>CDT Linked Services</Translate>
-        </Drawer.Header>
-        <Drawer.Body>
-          <Stack justifyContent={'space-between'} style={{ marginBottom: '10px' }}>
-            <Stack.Item>
-              <SelectPicker
-                placeholder="Select Service"
-                data={serviceListResponse?.object ?? []}
-                labelKey={'name'}
-                valueKey="key"
-                style={{ width: '300px' }}
-                value={selectedServiceKey}
-                onChange={e => {
-                  if (e) setSelectedServiceKey(e);
-                  else setSelectedServiceKey('');
-                }}
-              />
-            </Stack.Item>
-            <Stack.Item>
-              <IconButton
-                appearance="primary"
-                icon={<Check />}
-                onClick={() => {
-                  linkCdtService({
-                    ...newApServiceCdt,
-                    serviceKey: selectedServiceKey,
-                    cdtKey: cdt.key
-                  }).unwrap();
-                }}
-              >
-                Link Service to CDT Procedure
-              </IconButton>
-            </Stack.Item>
-          </Stack>
-
-          <Table
-            height={550}
-            headerHeight={80}
-            rowHeight={60}
-            bordered
-            cellBordered
-            data={cdt['linkedServices']}
-          >
-            <Column sortable flexGrow={2}>
-              <HeaderCell align="center">
-                <Translate>Service Key</Translate>
-              </HeaderCell>
-              <Cell>{rowData => rowData.serviceKey}</Cell>
-            </Column>
-            <Column sortable flexGrow={5}>
-              <HeaderCell align="center">
-                <Translate>Service Name</Translate>
-              </HeaderCell>
-              <Cell>
-                {rowData =>
-                  serviceMap[rowData.serviceKey]
-                    ? serviceMap[rowData.serviceKey]
-                    : 'Error fetching name'
-                }
-              </Cell>
-            </Column>
-            <Column sortable flexGrow={1}>
-              <HeaderCell align="center">
-                <Translate>Remove</Translate>
-              </HeaderCell>
-              <Cell>
-                {rowData => (
-                  <IconButton
-                    onClick={() => {
-                      unlinkCdtService({
-                        ...newApServiceCdt,
-                        serviceKey: rowData.serviceKey,
-                        cdtKey: rowData.cdtKey
-                      }).unwrap();
-                    }}
-                    color="red"
-                    appearance="ghost"
-                    icon={<Trash />}
-                  />
-                )}
-              </Cell>
-            </Column>
-          </Table>
-        </Drawer.Body>
-      </Drawer>
-    </Panel>
+      <hr />
+      <MyTable
+        data={cdtListResponse?.object ?? []}
+        columns={columns}
+        filters={filters()}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        rowClassName={isSelected}
+        onRowClick={rowData => { setCdt(rowData) }}
+        loading={isLoading}
+      />
+      <MyModal
+        open={popupOpen}
+        setOpen={setPopupOpen}
+        title={<Translate>New/Edit Cdt</Translate>}
+        content={modalContent}
+        hideBack={true}
+        actionButtonLabel="Save"
+        actionButtonFunction={handleSave}
+        size="xs"
+        position='right'
+        bodyheight={550}
+        steps={[{ title: 'CDT', icon: faTooth }]}
+      />
+      <LinkedServices open={servicesOpen} setOpen={setServicesOpen} cdt={cdt} setCdt={setCdt} />
+    </div>
   );
 };
 
