@@ -101,7 +101,7 @@ const Orders = ({ order, setOrder, listOrdersResponse, setListOrdersResponse }) 
                 data={filterdOrderList || []}
                 columns={tableColomns}
                 height={200}
-                rowHeight={40}
+               
                 sortColumn={listOrdersResponse.sortBy}
                 sortType={listOrdersResponse.sortType}
                 onSortChange={(sortBy, sortType) => {

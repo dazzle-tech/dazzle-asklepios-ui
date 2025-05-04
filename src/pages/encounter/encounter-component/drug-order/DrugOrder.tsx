@@ -30,6 +30,7 @@ import {
     Table,
     Text
 } from 'rsuite';
+import { MdModeEdit } from 'react-icons/md';
 import DetailsModal from './DetailsModal';
 import './styles.less';
 const { Column, HeaderCell, Cell } = Table;
@@ -158,7 +159,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 ),
                 saveDraft: false
             }).then(() => {
-                dispatch(notify({msg:' Draft Canceld' ,sev:'warning'}));
+                dispatch(notify({msg:'Draft Cancelled' ,sev:'info'}));
                 setIsDraft(false);
             })
         } catch (error) { }
@@ -293,8 +294,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
     const tableColumns = [
 
-        {
-            key: 'medicationName',
+        {key: 'medicationName',
             dataKey: 'genericMedicationsKey',
             title: 'Medication Name',
             flexGrow: 2,
@@ -302,8 +302,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName;
             }
         },
-        {
-            key: 'drugOrderType',
+        {key: 'drugOrderType',
             dataKey: 'drugOrderTypeLkey',
             title: 'Drug Order Type',
             flexGrow: 1,
@@ -311,8 +310,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return rowData.drugOrderTypeLvalue ? rowData.drugOrderTypeLvalue?.lovDisplayVale : rowData.drugOrderTypeLkey;
             }
         },
-        {
-            key: 'instruction',
+        { key: 'instruction',
             dataKey: '',
             title: 'Instruction',
             flexGrow: 2,
@@ -320,8 +318,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, rowData.drugOrderTypeLkey == '2937757567806213' ? "STAT" : "every " + rowData.frequency + " hours", rowData.roaLvalue?.lovDisplayVale]);
             }
         },
-        {
-            key: 'startDateTime',
+        { key: 'startDateTime',
             dataKey: 'startDateTime',
             title: 'Start Date Time',
             flexGrow: 2,
@@ -329,8 +326,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return rowData.startDateTime ? new Date(rowData.startDateTime).toLocaleString() : "";
             }
         },
-        {
-            key: 'isChronic',
+        {key: 'isChronic',
             dataKey: 'chronicMedication',
             title: 'Is Chronic',
             flexGrow: 2,
@@ -338,8 +334,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return rowData.chronicMedication ? "Yes" : "No";
             }
         },
-        {
-            key: 'priorityLevel',
+        {key: 'priorityLevel',
             dataKey: 'priorityLkey',
             title: 'Priority Level',
             flexGrow: 2,
@@ -347,8 +342,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return rowData.priorityLvalue ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey;
             }
         },
-        {
-            key: 'status',
+        {key: 'status',
             dataKey: 'statusLkey',
             title: 'Status',
             flexGrow: 1,
@@ -356,6 +350,19 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return rowData.statusLvalue ? rowData.statusLvalue?.lovDisplayVale : rowData.statusLkey;
             },
         },
+               {key:'edit',
+                title:<Translate>Edit</Translate>,
+                 flexGrow:1,
+                    render:rowData => {
+                                 return( <MdModeEdit
+                                     title="Edit"
+                                     size={24}
+                                     fill="var(--primary-gray)"
+                                     onClick={()=>setOpenDetailsModel(true)}
+                                   />)
+                             } 
+        
+                },
         {
             key: 'createdAt',
             dataKey: 'createdAt',
@@ -371,6 +378,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
             dataKey: 'createdBy',
             title: 'Created By',
             flexGrow: 2,
+            expandable:true,
             render: (rowData: any) => {
                 return rowData.createdBy;
             }
@@ -520,7 +528,9 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 <div className='bt-right'>
                     <MyButton
                         prefixIcon={() => <PlusIcon />}
-                        onClick={() => setOpenDetailsModel(true)}
+                        onClick={() => {setOpenDetailsModel(true)
+                            setOrderMedication({...newApDrugOrderMedications})
+                        }}
                     >Add Medication</MyButton>
                 </div>
             </div>

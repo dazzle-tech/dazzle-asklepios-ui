@@ -2,6 +2,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
+import { MdModeEdit } from 'react-icons/md';
 import {
     useGetCustomeInstructionsQuery,
     useGetPrescriptionMedicationsQuery,
@@ -33,6 +34,8 @@ import {
 } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
+import { render } from 'react-dom';
+import { title } from 'process';
 const { Column, HeaderCell, Cell } = Table;
 const Prescription = ({ edit, patient, encounter }) => {
 
@@ -272,7 +275,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                 ),
                 saveDraft: false
             }).then(() => {
-                dispatch(notify(' Draft Canceld'));
+                dispatch(notify('Draft Cancelled'));
                 setIsDraft(false);
             })
         } catch (error) { }
@@ -309,8 +312,7 @@ const Prescription = ({ edit, patient, encounter }) => {
     };
 
     const tableColumns = [
-        {
-            key:"#",         
+        {key:"#",         
             title:<Translate>#</Translate> ,
             flexGrow: 1,
             render: (rowData: any) => {
@@ -327,8 +329,7 @@ const Prescription = ({ edit, patient, encounter }) => {
         }
         ,
 
-        {
-            key: 'medicationName',
+        {key: 'medicationName',
             dataKey: 'genericMedicationsKey',
             title: 'Medication Name',
             flexGrow: 2,
@@ -336,8 +337,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName;
             }
         },
-        {
-            key: 'instructions',
+        {key: 'instructions',
             dataKey: '',
             title: 'Instructions',
             flexGrow:3,
@@ -378,17 +378,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return "no";
             }
         },
-        {
-            key: 'instruction',
-            dataKey: '',
-            title: 'Instruction',
-            flexGrow: 2,
-            render: (rowData: any) => {
-                return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, rowData.drugOrderTypeLkey == '2937757567806213' ? "STAT" : "every " + rowData.frequency + " hours", rowData.roaLvalue?.lovDisplayVale]);
-            }
-        },
-        {
-            key: 'instructionsType',
+        {key: 'instructionsType',
             dataKey: 'instructionsTypeLkey',
             title: 'Instructions Type',
             flexGrow: 2,
@@ -396,15 +386,22 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return rowData.instructionsTypeLvalue ? rowData.instructionsTypeLvalue.lovDisplayVale : rowData.instructionsTypeLkey;
             }
         },
-        {
-            key: 'validUtil',
+        {key: 'instruction',
+            dataKey: '',
+            title: 'Instruction',
+            flexGrow: 2,
+            render: (rowData: any) => {
+                return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, rowData.drugOrderTypeLkey == '2937757567806213' ? "STAT" : "every " + rowData.frequency + " hours", rowData.roaLvalue?.lovDisplayVale]);
+            }
+        },
+        
+        {key: 'validUtil',
             dataKey: 'validUtil',
             title: 'Valid Util',
             flexGrow: 2,
             
         },
-        {
-            key: 'isChronic',
+        {key: 'isChronic',
             dataKey: 'chronicMedication',
             title: 'Is Chronic',
             flexGrow: 2,
@@ -413,8 +410,7 @@ const Prescription = ({ edit, patient, encounter }) => {
             }
         },
       
-        {
-            key: 'status',
+        {key: 'status',
             dataKey: 'statusLkey',
             title: 'Status',
             flexGrow: 1,
@@ -422,8 +418,20 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return rowData.statusLvalue ? rowData.statusLvalue?.lovDisplayVale : rowData.statusLkey;
             },
         },
-        {
-            key: 'createdAt',
+        {key:'edit',
+        title:<Translate>Edit</Translate>,
+         flexGrow:1,
+            render:rowData => {
+                         return( <MdModeEdit
+                             title="Edit"
+                             size={24}
+                             fill="var(--primary-gray)"
+                             onClick={()=>setOpenDetailsModal(true)}
+                           />)
+                     } 
+
+        },
+        {key: 'createdAt',
             dataKey: 'createdAt',
             title: 'Created At',
             flexGrow: 2,
@@ -432,18 +440,17 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "";
             }
         },
-        {
-            key: 'createdBy',
+        { key: 'createdBy',
             dataKey: 'createdBy',
             title: 'Created By',
             flexGrow: 2,
+            expandable: true,
             render: (rowData: any) => {
                 return rowData.createdBy;
             }
         }
         ,
-        {
-            key: 'deletedAt',
+        { key: 'deletedAt',
             dataKey: 'deletedAt',
             title: 'Cancelled At',
             flexGrow: 2,
@@ -563,7 +570,9 @@ const Prescription = ({ edit, patient, encounter }) => {
             <div className='bt-right'>
                 <MyButton
                     prefixIcon={() => <PlusIcon />}
-                    onClick={() => setOpenDetailsModal(true)}
+                    onClick={() => {setOpenDetailsModal(true)
+                        handleCleare();
+                    }}
 
                 >
                     Add Medication
@@ -605,7 +614,8 @@ const Prescription = ({ edit, patient, encounter }) => {
             setPrescriptionMedications={setPrescriptionMedications}
             preKey={preKey}
             editing={editing}
-            medicRefetch={medicRefetch} />
+            medicRefetch={medicRefetch} 
+           />
        
         </>
        
