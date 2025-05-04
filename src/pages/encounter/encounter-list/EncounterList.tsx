@@ -184,7 +184,7 @@ const EncounterList = () => {
           <Whisper trigger="hover" placement="top" speaker={tooltipSpeaker}>
             <div style={{ display: 'inline-block' }}>
               {rowData?.patientObject?.privatePatient ? (
-                <Badge color="cyan" content="Private">
+                <Badge color='blue' content="Private">
                   <p style={{ marginTop: '5px', cursor: 'pointer' }}>
                     {rowData?.patientObject?.fullName}
                   </p>
