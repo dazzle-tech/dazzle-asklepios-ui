@@ -313,8 +313,9 @@ const Prescription = ({ edit, patient, encounter }) => {
 
     const tableColumns = [
         {key:"#",         
-            title:<Translate>#</Translate> ,
+            title:<Translate> #</Translate> ,
             flexGrow: 1,
+          
             render: (rowData: any) => {
                 return (
                     <Checkbox
@@ -331,7 +332,7 @@ const Prescription = ({ edit, patient, encounter }) => {
 
         {key: 'medicationName',
             dataKey: 'genericMedicationsKey',
-            title: 'Medication Name',
+            title:<Translate> Medication Name</Translate>,
             flexGrow: 2,
             render: (rowData: any) => {
                 return genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName;
@@ -363,7 +364,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                         .join(', ');
                 }
                 if (rowData.instructionsTypeLkey === "3010573499898196") {
-                    console.log("munil")
+                  
                     return rowData.instructions
 
                 }
@@ -386,15 +387,6 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return rowData.instructionsTypeLvalue ? rowData.instructionsTypeLvalue.lovDisplayVale : rowData.instructionsTypeLkey;
             }
         },
-        {key: 'instruction',
-            dataKey: '',
-            title: 'Instruction',
-            flexGrow: 2,
-            render: (rowData: any) => {
-                return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, rowData.drugOrderTypeLkey == '2937757567806213' ? "STAT" : "every " + rowData.frequency + " hours", rowData.roaLvalue?.lovDisplayVale]);
-            }
-        },
-        
         {key: 'validUtil',
             dataKey: 'validUtil',
             title: 'Valid Util',
@@ -480,7 +472,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                     data={filteredPrescriptions ?? []}
                     labelKey="prescriptionId"
                     valueKey="key"
-                    placeholder="prescription"
+                    placeholder="Prescription"
                     value={preKey ?? null}
                     onChange={e => {
 

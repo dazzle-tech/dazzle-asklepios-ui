@@ -284,6 +284,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
 
         })
+        setSelectedGeneric(null)
 
     }
   
@@ -529,7 +530,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                     <MyButton
                         prefixIcon={() => <PlusIcon />}
                         onClick={() => {setOpenDetailsModel(true)
-                            setOrderMedication({...newApDrugOrderMedications})
+                            handleCleare()
                         }}
                     >Add Medication</MyButton>
                 </div>

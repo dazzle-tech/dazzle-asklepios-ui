@@ -81,7 +81,8 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                 setTags(orderMedication.parametersToMonitor.split(","))
             }
             else{
-                setTags([])
+                setTags([]);
+               setSelectedGeneric(null)
             }
         },[orderMedication])
     useEffect(() => {
@@ -92,7 +93,13 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
 
     }, [drugKey]);
   
-    
+     useEffect(()=>{
+        if(open==false){
+            handleCleare();
+            setSelectedGeneric(null);
+            setTags(null)
+        }
+     },[open])
      useEffect(() => {
             if (searchKeywordicd.trim() !== "") {
                 setIcdListRequest(
@@ -691,7 +698,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                                 <Row>
                                     <Col md={24}>
                                     <TagGroup className='taggroup-style'>
-                                    {tags.map((item, index) => (
+                                    {tags?.map((item, index) => (
                                         <Tag key={index} closable onClose={() => removeTag(item)}>
                                             {item}
                                         </Tag>
