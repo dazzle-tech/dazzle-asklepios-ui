@@ -26,8 +26,9 @@ import { FaYoutube } from "react-icons/fa";
 import { TableColumn } from "@rsuite/icons";
 import MyTable from "@/components/MyTable";
 import MyLabel from "@/components/MyLabel";
+import { faVialCircleCheck } from "@fortawesome/free-solid-svg-icons";
 
-const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, saveTest ,fetchTest }) => {
+const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, saveTest ,fetchTest ,fecthSample}) => {
   const dispatch = useAppDispatch();
   const [sample, setSample] = useState({ ...newApDiagnosticOrderTestsSamples });
   const [selectedSampleDate, setSelectedSampleDate] = useState(null);
@@ -55,7 +56,7 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
       setTest({ ...Response });
       await fetchTest();
-      // await fecthSample();
+     await fecthSample();
       setOpen(false);
       setSample({ ...newApDiagnosticOrderTestsSamples });
       setSelectedSampleDate(null);
@@ -96,10 +97,10 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
         open={open}
         setOpen={setOpen}
         size="md"
-        bodyheight={1000}
+        bodyheight={550}
         actionButtonFunction={handleSaveSample}
         title="Collect Sample"
-        steps={[{ title: "Sample", icon: FaYoutube }]}
+        steps={[{ title: "Sample", icon: faVialCircleCheck }]}
         position="right"
         content={<>
           <Row>
