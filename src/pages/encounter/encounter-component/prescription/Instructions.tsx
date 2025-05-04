@@ -13,7 +13,7 @@ const Instructions = ({prescriptionMedication, selectedOption, customeinst, setC
     const [selectedPreDefine, setSelectedPreDefine] = useState(null);
     const [munial, setMunial] = useState(null);
     const [adminInstructions, setAdminInstructions] = useState("");
-
+   
     useEffect(() => {
         const newList = roaLovQueryResponse?.object?.filter((item) =>
             (selectedGeneric?.roaList)?.includes(item.key)
@@ -112,9 +112,9 @@ const Instructions = ({prescriptionMedication, selectedOption, customeinst, setC
 
             }
             {selectedOption === "3010591042600262" &&
-                <Form layout="inline" fluid>
+                <Form  fluid>
 
-                    <Dropdown style={{ width: "200px" }} title={!selectedPreDefine ? "Pre-defined Instructions" : [
+                    <Dropdown className="fill-width" title={!selectedPreDefine ? "Pre-defined Instructions" : [
                         selectedPreDefine.dose,
 
                         selectedPreDefine.unitLvalue?.lovDisplayVale,
@@ -139,10 +139,10 @@ const Instructions = ({prescriptionMedication, selectedOption, customeinst, setC
                 </Form>
             }
             {selectedOption === "3010573499898196" &&
-                <Form layout="inline" fluid>
+                <Form  fluid>
                     <textarea
                         rows={4}
-                        style={{ width: '350px' }}
+                        style={{ width: '100%' }}
                         disabled={false}
                         value={munial}
                         onChange={(e) => setMunial(e.target.value)}

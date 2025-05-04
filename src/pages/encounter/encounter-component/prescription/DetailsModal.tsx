@@ -17,7 +17,7 @@ import Translate from "@/components/Translate";
 import MyInput from "@/components/MyInput";
 import PlusIcon from '@rsuite/icons/Plus';
 import { newApDrugOrderMedications, newApPrescriptionMedications } from "@/types/model-types-constructor";
-import { useSaveDrugOrderMedicationMutation, useSavePrescriptionMedicationMutation } from "@/services/encounterService";
+import { useGetCustomeInstructionsQuery, useSaveDrugOrderMedicationMutation, useSavePrescriptionMedicationMutation } from "@/services/encounterService";
 import MyLabel from "@/components/MyLabel";
 import Substitues from "./Substitued";
 import Instructions from "./Instructions";
@@ -26,10 +26,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
     const dispatch = useAppDispatch();
     const [selectedGeneric, setSelectedGeneric] = useState(null);
     const [tags, setTags] = React.useState([]);
-    const { data: predefinedInstructionsListResponse } = useGetPrescriptionInstructionQuery({ ...initialListRequest });
     const [searchKeyword, setSearchKeyword] = useState('');
-    const [selectedPreDefine, setSelectedPreDefine] = useState(null);
-    const [munial, setMunial] = useState(null);
     const [adminInstructions, setAdminInstructions] = useState("");
     const [customeinst, setCustomeinst] = useState({
         dose: null,
@@ -53,7 +50,9 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
     const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
     const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
     const [editDuration, setEditDuration] = useState(false);
-
+     const { data: customeInstructions, isLoading: isLoadingCustomeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
+            ...initialListRequest,
+        }); 
     const [icdListRequest, setIcdListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -78,10 +77,17 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
             setSelectedOption(prescriptionMedication.instructionsTypeLkey);
             setAdminInstructions(prescriptionMedication.administrationInstructions);
             setTags(prescriptionMedication.parametersToMonitor.split(","))
+            if(prescriptionMedication.instructionsTypeLkey==="3010606785535008"){
+                console.log(prescriptionMedication.key);
+                const instruc=customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === prescriptionMedication.key)
+                
+                setCustomeinst({...customeinst,
+                    dose:instruc?.dose,
+                    unit:instruc.unitLkey,
+                    frequency:instruc.frequencyLkey})
+            }
         }
-        else{
-            setTags([])
-        }
+      
     },[prescriptionMedication])
     useEffect(() => {
         if (searchKeywordicd.trim() !== "") {
@@ -145,9 +151,14 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
     }, [indicationsIcd.indicationIcd]);
 
     useEffect(() => {
-        setPrescriptionMedications({ ...prescriptionMedication, instructionsTypeLkey: selectedOption })
+        setPrescriptionMedications({ ...prescriptionMedication, instructionsTypeLkey:selectedOption })
 
     }, [selectedOption])
+    useEffect(()=>{
+        if(open==false){
+            handleCleare()
+        }
+    },[open])
     const joinValuesFromArray = (values) => {
         return values.filter(Boolean).join(', ');
     };
@@ -160,7 +171,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
         else {
             if(selectedGeneric !==null){
             if (prescriptionMedication.instructionsTypeLkey != null) {
-                console.log("Selected Genric" ,selectedGeneric)
+                
                 const tagcompine = joinValuesFromArray(tags);
                 try {
                     await savePrescriptionMedication({
@@ -279,6 +290,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
             open={open}
             setOpen={setOpen}
             actionButtonFunction={handleSaveMedication}
+            
             actionButtonLabel="Save"
             leftTitle={selectedGeneric ? selectedGeneric.genericName : "Select Generic"}
             rightTitle="Medication Order Details"
@@ -343,11 +355,13 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
                         </Row>
                         <Row className="rows-gap">
                             <RadioGroup
-
+                               value={selectedOption}
                                 inline
                                 name="radio-group"
                                 disabled={preKey != null ? editing : true}
-                                onChange={(value) => setSelectedOption(String(value))}
+                                onChange={(value) => {setSelectedOption(String(value))
+                                    setPrescriptionMedications({...prescriptionMedication,instructionsTypeLkey:String(value)})
+                                }}
                             >
                                 <Row gutter={10}>
                                     {instructionTypeQueryResponse?.object?.map((instruction, index) => (
