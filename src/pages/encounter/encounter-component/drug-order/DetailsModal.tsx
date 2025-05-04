@@ -80,10 +80,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                 setAdminInstructions(orderMedication.administrationInstructions);
                 setTags(orderMedication.parametersToMonitor.split(","))
             }
-            else{
-                setTags([]);
-               setSelectedGeneric(null)
-            }
+           
         },[orderMedication])
     useEffect(() => {
 
