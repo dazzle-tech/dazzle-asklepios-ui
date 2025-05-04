@@ -28,6 +28,7 @@ import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+import MyButton from '@/components/MyButton/MyButton';
 const CDTSetup = () => {
   const dispatch = useAppDispatch();
   const [cdt, setCdt] = useState<ApCdt>({ ...newApCdt });
@@ -145,35 +146,18 @@ const CDTSetup = () => {
     <Panel
     >
       <ButtonToolbar>
-        <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
+        <MyButton prefixIcon={()=><AddOutlineIcon />} onClick={handleNew}>
           Add New
-        </IconButton>
-        <IconButton
-          disabled={!cdt.key}
-          appearance="primary"
-          onClick={() => setPopupOpen(true)}
-          color="green"
-          icon={<EditIcon />}
-        >
+        </MyButton>
+        <MyButton disabled={!cdt.key} onClick={() => setPopupOpen(true)} color="green"  prefixIcon={()=><EditIcon />}>
           Edit Selected
-        </IconButton>
-        <IconButton
-          disabled={true || !cdt.key}
-          appearance="primary"
-          color="red"
-          icon={<TrashIcon />}
-        >
+        </MyButton>
+        <MyButton disabled={true || !cdt.key} color="red" prefixIcon={()=><TrashIcon />}>
           Delete Selected
-        </IconButton>
-        <IconButton
-          disabled={!cdt.key}
-          appearance="primary"
-          onClick={() => setServicesOpen(true)}
-          color="cyan"
-          icon={<EditIcon />}
-        >
+        </MyButton>
+        <MyButton disabled={!cdt.key} onClick={() => setServicesOpen(true)} color="cyan">
           Linked Services
-        </IconButton>
+        </MyButton>
       </ButtonToolbar>
       <hr />
       <BlockUI
