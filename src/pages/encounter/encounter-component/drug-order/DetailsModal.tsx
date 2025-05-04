@@ -70,12 +70,20 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
         ...item,
         combinedLabel: `${item.icdCode} - ${item.description}`,
     }));
-    useEffect(() => {
-        if(orderMedication.parametersToMonitor != null || orderMedication.parametersToMonitor != "") {
-        const parameters = orderMedication.parametersToMonitor || "";
-        const parametersArray = parameters.split(",");
-        setTags(parametersArray);}
-    }, [orderMedication])
+ 
+     useEffect(()=>{
+            if(orderMedication.key!=null)
+                
+            {
+                setSelectedGeneric(genericMedicationListResponse?.object?.find(item => item.key ===orderMedication.genericMedicationsKey))
+                
+                setAdminInstructions(orderMedication.administrationInstructions);
+                setTags(orderMedication.parametersToMonitor.split(","))
+            }
+            else{
+                setTags([])
+            }
+        },[orderMedication])
     useEffect(() => {
 
         if (drugKey == null) {

@@ -275,7 +275,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                 ),
                 saveDraft: false
             }).then(() => {
-                dispatch(notify(' Draft Canceld'));
+                dispatch(notify('Draft Cancelled'));
                 setIsDraft(false);
             })
         } catch (error) { }
@@ -378,14 +378,6 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return "no";
             }
         },
-        {key: 'instruction',
-            dataKey: '',
-            title: 'Instruction',
-            flexGrow: 2,
-            render: (rowData: any) => {
-                return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, rowData.drugOrderTypeLkey == '2937757567806213' ? "STAT" : "every " + rowData.frequency + " hours", rowData.roaLvalue?.lovDisplayVale]);
-            }
-        },
         {key: 'instructionsType',
             dataKey: 'instructionsTypeLkey',
             title: 'Instructions Type',
@@ -394,6 +386,15 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return rowData.instructionsTypeLvalue ? rowData.instructionsTypeLvalue.lovDisplayVale : rowData.instructionsTypeLkey;
             }
         },
+        {key: 'instruction',
+            dataKey: '',
+            title: 'Instruction',
+            flexGrow: 2,
+            render: (rowData: any) => {
+                return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, rowData.drugOrderTypeLkey == '2937757567806213' ? "STAT" : "every " + rowData.frequency + " hours", rowData.roaLvalue?.lovDisplayVale]);
+            }
+        },
+        
         {key: 'validUtil',
             dataKey: 'validUtil',
             title: 'Valid Util',
@@ -613,7 +614,8 @@ const Prescription = ({ edit, patient, encounter }) => {
             setPrescriptionMedications={setPrescriptionMedications}
             preKey={preKey}
             editing={editing}
-            medicRefetch={medicRefetch} />
+            medicRefetch={medicRefetch} 
+           />
        
         </>
        

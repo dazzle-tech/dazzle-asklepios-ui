@@ -74,6 +74,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
         if(prescriptionMedication.key!=null)
             
         {
+            setSelectedGeneric(genericMedicationListResponse?.object?.find(item => item.key ===prescriptionMedication.genericMedicationsKey))
             setSelectedOption(prescriptionMedication.instructionsTypeLkey);
             setAdminInstructions(prescriptionMedication.administrationInstructions);
             setTags(prescriptionMedication.parametersToMonitor.split(","))
@@ -157,7 +158,9 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
             return;
         }
         else {
+            if(selectedGeneric !==null){
             if (prescriptionMedication.instructionsTypeLkey != null) {
+                console.log("Selected Genric" ,selectedGeneric)
                 const tagcompine = joinValuesFromArray(tags);
                 try {
                     await savePrescriptionMedication({
@@ -165,7 +168,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
                         patientKey: patient.key,
                         visitKey: encounter.key,
                         prescriptionKey: preKey,
-                        genericMedicationsKey: selectedGeneric?.key,
+                        genericMedicationsKey:selectedGeneric?.key,
                         parametersToMonitor: tagcompine,
                         statusLkey: "164797574082125",
                         instructions: inst,
@@ -177,7 +180,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
                         indicationIcd: indicationsDescription
                     }).unwrap();
 
-                    dispatch(notify({msg:'Saved successfully' ,sev:"warning"}));
+                    dispatch(notify({msg:'Saved successfully' ,sev:"success"}));
 
                     await Promise.all([
                         medicRefetch().then(() => ""),
@@ -194,6 +197,9 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
             }
             else {
                 dispatch(notify({ msg: 'Please Select Instruction type ', sev: 'warning' }));
+            }}
+            else{
+                dispatch(notify({ msg: 'Please Select Brand ', sev: 'warning' }));
             }
         }
 

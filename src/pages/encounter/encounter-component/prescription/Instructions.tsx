@@ -27,8 +27,9 @@ const Instructions = ({prescriptionMedication, selectedOption, customeinst, setC
     }
     else if(selectedOption ==="3010591042600262") // Pre defined Instruction
     {
-        console.log(prescriptionMedication.instructions)
-        setSelectedPreDefine(prescriptionMedication.instructions)
+        const t=predefinedInstructionsListResponse?.object?.find((item)=>item.key===prescriptionMedication.instructions)
+        console.log("t" ,t)
+        setSelectedPreDefine(t)
     }
     else if(selectedOption==="3010573499898196") //Mnuil  Instruction
     {
