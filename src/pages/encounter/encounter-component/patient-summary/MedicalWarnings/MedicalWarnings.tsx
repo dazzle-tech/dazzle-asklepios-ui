@@ -59,7 +59,7 @@ const MedicalWarnings = ({ patient }) => {
                     <MyTable
                         data={warningsListResponse?.object || []}
                         columns={warningsColumns}
-                        height={500}
+                        height={250}
                         loading={isLoading}
                         onRowClick={(rowData) => { }}
                     />

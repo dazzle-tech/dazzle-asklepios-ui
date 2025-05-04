@@ -67,7 +67,7 @@ const ActiveAllergies = ({ patient }) => {
                     <MyTable
                         data={allergiesListResponse?.object || []}
                         columns={allergyColumns}
-                        height={500}
+                        height={250}
                         loading={isLoading}
                         onRowClick={(rowData) => {
                         }}

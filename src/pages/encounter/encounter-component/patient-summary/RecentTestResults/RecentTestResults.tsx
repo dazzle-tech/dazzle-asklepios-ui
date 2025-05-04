@@ -41,7 +41,7 @@ const RecentTestResults = ({ patient }) => {
                     <MyTable
                         data={[]}
                         columns={orderColumns}
-                        height={500}
+                        height={250}
                         onRowClick={(rowData) => { }}
                     />
                 </div>
