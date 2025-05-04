@@ -16,12 +16,14 @@
     padding: 20px;
   }
 }
+
 .my-table-container {
   overflow-y: auto;
+
   &.MuiPaper-root {
     border: none;
     box-shadow: none;
-    --Paper-shadow: none;
+
     .MuiTableHead-root {
       .MuiTableRow-root {
         .MuiTableCell-root {
@@ -30,29 +32,60 @@
           font-weight: var(--text-weight-extra-bold);
           color: #464f60;
           border: none;
+          white-space: nowrap;
         }
       }
     }
 
     .MuiTableBody-root {
-      .MuiTableRow-root {
-        border: none;
+      // Main data rows only
+      .MuiTableRow-root.main-row {
         .MuiTableCell-root {
           border: none;
           max-width: 274px;
+          padding-top: 16px;
+          padding-bottom: 16px;
+          background-color: transparent;
         }
-        &:nth-child(even) {
+
+        &.even-row {
           .MuiTableCell-root {
-            background: var(--light-gray);
+            background-color: var(--light-gray);
           }
         }
+
         &:hover {
           .MuiTableCell-root {
             background-color: rgba(#415be7, 0.05);
           }
         }
+
+        &.selected-row {
+          .MuiTableCell-root {
+            background-color: #dfe9fc;
+          }
+        }
+      }
+
+      // Expanded row
+      .MuiTableRow-root.expanded-table {
+        .MuiTableCell-root {
+          padding: 0 !important;
+        }
+
+        .MuiTableHead-root .MuiTableCell-root {
+          background: #f9f9f9;
+          font-weight: 600;
+        }
       }
     }
+  }
+}
+
+.expanded-row {
+  .expanded-table {
+    padding: 0;
+    border: none;
   }
 }
 

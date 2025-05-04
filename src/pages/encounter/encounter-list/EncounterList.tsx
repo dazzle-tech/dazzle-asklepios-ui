@@ -372,7 +372,7 @@ const EncounterList = () => {
     <Panel>
       <MyTable
         filters={filters()}
-        height={500}
+        height={600}
         data={encounterListResponse?.object ?? []}
         columns={tableColumns}
         rowClassName={isSelected}

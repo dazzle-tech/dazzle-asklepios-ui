@@ -1,54 +1,54 @@
-.status-no{
-    background-color: rgba(150, 159, 176, 0.19) !important;
-    color: #969FB0!important;
-    padding: 5px 19px !important;
-    border-radius: 12px !important;
-    font-size: 12px !important;
-    font-weight: bold !important;
+.status-no {
+  background-color: rgba(150, 159, 176, 0.19) !important;
+  color: #969fb0 !important;
+  padding: 5px 19px !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
+  font-weight: bold !important;
 }
-.status-yes{
-    background-color: #DAF1E7 !important;
-    color: #45B887 !important;
-    padding: 5px 19px !important;
-    border-radius: 12px !important;
-    font-size: 12px !important;
-    font-weight: bold !important;
+.status-yes {
+  background-color: #daf1e7 !important;
+  color: #45b887 !important;
+  padding: 5px 19px !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
+  font-weight: bold !important;
 }
 
-.search-btn{
- 
-   height:100% ;
-   padding-top:30px ;
-   margin-left:auto}
-.nurse-doctor-btn{
-    padding:0 !important; ;
-    margin-top: 10px !important;
-    height: 32px !important;
-    width: 32px !important;
+.search-btn {
+  height: 100%;
+  padding-top: 30px;
+  margin-left: auto;
 }
+
 .date-filter-form {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    flex-wrap: wrap; /* important for smaller screens */
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap; /* important for smaller screens */
+}
+.centered-container {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.nurse-doctor-form {
+  .rs-btn , > div {
+    margin-bottom: 0;
   }
-  .centered-container {
-    display: flex !important;
-    align-items: center !important;
+}
+
+@media (max-width: 680px) {
+  .date-filter-form {
+    flex-direction: column;
+    align-items: stretch;
   }
-  
-  
-  @media (max-width: 680px) {
-    .date-filter-form {
-      flex-direction: column;
-      align-items: stretch;
-    }
-  
-    .date-filter-form .search-btn {
-      width: 100%;
-    }
+
+  .date-filter-form .search-btn {
+    width: 100%;
   }
-  .nurse-doctor-form{
-    display: flex;
-    align-items: center;
-  }
+}
+.nurse-doctor-form {
+  display: flex;
+  align-items: center;
+}

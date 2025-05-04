@@ -30,6 +30,7 @@ import { ArrowRightLine } from '@rsuite/icons';
 import MyInput from '@/components/MyInput';
 import PatientCard from '@/components/PatientCard';
 import { FaArrowRight, FaEllipsis } from 'react-icons/fa6';
+import { Box } from '@mui/material';
 
 interface ProfileSidebarProps {
   expand: boolean;
@@ -182,7 +183,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                     <FaArrowRight />
                   </Button>
                   {conjurePatientSearchBar(patientSearchTarget)}
-                  <div className="patient-list">
+                  <Box className="patient-list">
                     {patientListResponse?.object?.map(patient => (
                       <PatientCard
                         key={patient.key}
@@ -195,7 +196,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                         }
                       />
                     ))}
-                  </div>
+                  </Box>
                 </Panel>
               ) : (
                 <Button

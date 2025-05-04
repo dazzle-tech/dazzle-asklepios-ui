@@ -1,5 +1,4 @@
 import React from 'react';
-import './styles.less';
 import { FaArrowLeft } from 'react-icons/fa6';
 import MyButton from '../MyButton/MyButton';
 type Appearance = 'ghost' | 'default';
