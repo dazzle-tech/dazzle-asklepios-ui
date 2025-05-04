@@ -1,59 +1,39 @@
 import MyModal from '@/components/MyModal/MyModal';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { faLaptop } from '@fortawesome/free-solid-svg-icons';
-import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery, useSaveModuleMutation } from '@/services/setupService';
-import MyIconInput from '@/components/MyInput/MyIconInput';
+import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import clsx from 'clsx';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useDispatch } from 'react-redux';
-import { notify } from '@/utils/uiReducerActions';
+import './styles.less';
 const AddEditDepartment = ({
   open,
   setOpen,
-//   width,
+  width,
   department,
   setDepartment,
-  saveDepartment,
   recordOfDepartmentCode,
-  setRecordOfDepartmentCode
-//   refetch, 
+  setRecordOfDepartmentCode,
+  handleSave
 }) => {
-  
-    const dispatch = useDispatch();
-    const [facilityListRequest, setFacilityListRequest] = useState<ListRequest>({
-        ...initialListRequest
-      });
-    const { data: facilityListResponse } = useGetFacilitiesQuery(facilityListRequest);
-    const { data: encTypesLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
-      const { data: depTTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
-    //   const [recordOfDepartmentCode, setRecordOfDepartmentCode] = useState({ departmentCode: '' });
-    //   const [generateCode, setGenerateCode] = useState();
+  const [facilityListRequest] = useState<ListRequest>({
+    ...initialListRequest
+  });
+  // Fetch  facility list response
+  const { data: facilityListResponse } = useGetFacilitiesQuery(facilityListRequest);
+  // Fetch  encTypesLov list response
+  const { data: encTypesLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_TYPE');
+  // Fetch  depTTypesLov list response
+  const { data: depTTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
 
-    //    useEffect(() => {
-    //       setRecordOfDepartmentCode({ departmentCode: department?.departmentCode ?? generateCode });
-    //     }, [recordOfDepartmentCode]);
-
-        const handleSave = () => {
-            setOpen(false);
-            saveDepartment({ ...department, departmentCode: generateCode })
-              .unwrap()
-              .then(() => {
-                dispatch(notify({ msg: 'Departments Saved successfully' }));
-              });
-          };
-    
-
-
-const conjureFormContent = (stepNumber = 0) => {
+  // Modal content
+  const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
         return (
-          <Form
-            fluid
-          >
-            <div className="container-of-two-fields-departments">
+          <Form fluid>
+            <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
               <MyInput
                 width={250}
                 fieldName="facilityKey"
@@ -77,9 +57,13 @@ const conjureFormContent = (stepNumber = 0) => {
                 setRecord={setDepartment}
               />
             </div>
-
-            <MyInput width={520} fieldName="name" record={department} setRecord={setDepartment} />
-            <div className="container-of-two-fields-departments">
+            <MyInput
+              width={width > 600 ? 520 : 250}
+              fieldName="name"
+              record={department}
+              setRecord={setDepartment}
+            />
+            <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
               <MyInput
                 width={250}
                 fieldName="phoneNumber"
@@ -93,17 +77,15 @@ const conjureFormContent = (stepNumber = 0) => {
                 setRecord={setDepartment}
               />
             </div>
-
             <MyInput
-              width={520}
+              width={width > 600 ? 520 : 250}
               fieldName="departmentCode"
               record={recordOfDepartmentCode}
               setRecord={setRecordOfDepartmentCode}
               disabled={true}
             />
-
-            <div className="container-of-two-fields-departments">
-              <Form style={{ width: 250 }}>
+            <div className={clsx('', { 'container-of-two-fields-departments': width > 600 })}>
+              <Form className="container-of-appointable">
                 <MyInput
                   fieldLabel="Appointable"
                   fieldType="checkbox"
@@ -130,20 +112,17 @@ const conjureFormContent = (stepNumber = 0) => {
         );
     }
   };
-
- 
-
-
   return (
     <MyModal
-    open={open}
-    setOpen={setOpen}
-    title={department?.key ? 'Edit Department' : 'New Department'}
-    position="right"
-    content={conjureFormContent}
-    actionButtonLabel={department?.key ? 'Save' : 'Create'}
-    actionButtonFunction={handleSave}
-    steps={[{ title: 'Department Info', icon: faLaptop }]}
+      open={open}
+      setOpen={setOpen}
+      title={department?.key ? 'Edit Department' : 'New Department'}
+      position="right"
+      content={conjureFormContent}
+      actionButtonLabel={department?.key ? 'Save' : 'Create'}
+      actionButtonFunction={handleSave}
+      steps={[{ title: 'Department Info', icon: faLaptop }]}
+      size={width > 600 ? '570px' : '300px'}
     />
   );
 };
