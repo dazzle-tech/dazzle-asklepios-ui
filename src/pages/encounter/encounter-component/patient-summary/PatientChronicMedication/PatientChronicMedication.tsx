@@ -211,7 +211,7 @@ const PatientChronicMedication = ({ patient }) => {
                     <MyTable
                         data={combinedArray ?? []}
                         columns={columns}
-                        height={500}
+                        height={250}
                         onRowClick={(rowData) => {
                         }}
                     />

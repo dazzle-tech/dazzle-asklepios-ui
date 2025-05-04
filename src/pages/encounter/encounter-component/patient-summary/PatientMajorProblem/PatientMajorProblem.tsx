@@ -63,7 +63,7 @@ const PatientMajorProblem = ({ patient }) => {
                     <MyTable
                         data={majorDiagnosesCodes ?? []}
                         columns={diagnosesColumns}
-                        height={500}
+                        height={250}
                         onRowClick={(rowData) => { }}
                     />
                 </div>
