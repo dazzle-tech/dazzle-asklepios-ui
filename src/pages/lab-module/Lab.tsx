@@ -1,23 +1,22 @@
-import { useEffect, useState,useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
   useGetDiagnosticsTestLaboratoryListQuery,
 } from '@/services/setupService';
-import { RootState } from '@/store';
-import { notify } from '@/utils/uiReducerActions';
-
 
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
-import { useSelector } from 'react-redux';
 
 import './styles.less';
-
 import {
-  useGetLovAllValuesQuery,
-} from '@/services/setupService';
+  Box,
+  Step,
+  StepLabel,
+  Stepper,
+  Typography
+} from '@mui/material';
 import {
   DatePicker,
   Row,
@@ -25,12 +24,9 @@ import {
 } from 'rsuite';
 
 import {
-  useGetLabResultLogListQuery,
-  useGetOrderTestSamplesByTestIdQuery,
-  useSaveDiagnosticOrderTestResultMutation,
-  useSaveLabResultLogMutation
+  useGetOrderTestSamplesByTestIdQuery
 } from '@/services/labService';
-import { addFilterToListRequest, fromCamelCaseToDBName, getNumericTimestamp } from '@/utils';
+import { addFilterToListRequest, getNumericTimestamp } from '@/utils';
 
 
 import {
@@ -39,14 +35,12 @@ import {
 import {
   newApDiagnosticOrders,
   newApDiagnosticOrderTests,
-  newApDiagnosticOrderTestsNotes,
   newApDiagnosticOrderTestsResult,
   newApDiagnosticTestLaboratory,
   newApEncounter,
-  newApLabResultLog,
   newApPatient
 } from '@/types/model-types-constructor';
-import { initialListRequest, initialListRequestAllValues, ListRequest } from '@/types/types';
+import { initialListRequest, ListRequest } from '@/types/types';
 import {
   Col,
   Steps
@@ -65,14 +59,14 @@ const Lab = () => {
   const ResultRef = useRef(null);
   const TestRef = useRef(null);
   const refetchTest = () => {
-    TestRef.current?.refetchTest(); 
+    TestRef.current?.refetchTest();
   };
   const refetchResult = () => {
-    ResultRef.current?.resultFetch(); 
+    ResultRef.current?.resultFetch();
   };
-   useEffect(() => {
-      
-      },[refetchResult]);
+  useEffect(() => {
+
+  }, [refetchResult]);
   const [localUser, setLocalUser] = useState(uiSlice?.user);
   const [currentStep, setCurrentStep] = useState("6055029972709625");
   const [encounter, setEncounter] = useState({ ...newApEncounter });
@@ -84,18 +78,18 @@ const Lab = () => {
     ...initialListRequest
 
   });
-const [listResultResponse, setListResultResponse] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: "order_test_key",
-                operator: "match",
-                value: test?.key || undefined,
-            }
+  const [listResultResponse, setListResultResponse] = useState<ListRequest>({
+    ...initialListRequest,
+    filters: [
+      {
+        fieldName: "order_test_key",
+        operator: "match",
+        value: test?.key || undefined,
+      }
 
 
-        ],
-    });
+    ],
+  });
 
   const { data: samplesList, refetch: fecthSample } = useGetOrderTestSamplesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
   const divContent = (
@@ -129,24 +123,24 @@ const [listResultResponse, setListResultResponse] = useState<ListRequest>({
   }, []);
 
   useEffect(() => {
-         setResult({ ...newApDiagnosticOrderTestsResult })
-         const updatedFilters = [
-             {
-                 fieldName: "order_test_key",
-                 operator: "match",
-                 value: test?.key || undefined,
-             }
- 
- 
-         ];
-         setListResultResponse((prevRequest) => ({
-             ...prevRequest,
-             filters: updatedFilters,
-         }));
- 
-    
- 
-     }, [test]);
+    setResult({ ...newApDiagnosticOrderTestsResult })
+    const updatedFilters = [
+      {
+        fieldName: "order_test_key",
+        operator: "match",
+        value: test?.key || undefined,
+      }
+
+
+    ];
+    setListResultResponse((prevRequest) => ({
+      ...prevRequest,
+      filters: updatedFilters,
+    }));
+
+
+
+  }, [test]);
   useEffect(() => {
     setPatient(order.patient);
     setEncounter(order.encounter);
@@ -197,7 +191,7 @@ const [listResultResponse, setListResultResponse] = useState<ListRequest>({
 
   }, [test]);
 
- 
+
   useEffect(() => {
     handleManualSearch();
   }, []);
@@ -232,7 +226,7 @@ const [listResultResponse, setListResultResponse] = useState<ListRequest>({
       setListOrdersResponse({ ...listOrdersResponse, filters: [] });
     }
   };
-;
+  ;
 
   const stepsData = [
     { key: "6055207372976955", value: "Sample Collected", time: " " },
@@ -246,7 +240,7 @@ const [listResultResponse, setListResultResponse] = useState<ListRequest>({
     currentStep == "6055192099058457" ? step.value !== "Accepted" : step.value !== "Rejected"
   );
 
-
+  const activeStep = filteredStepsData.findIndex(step => step.key === currentStep);
   return (<>
 
     <div className='container'>
@@ -278,46 +272,35 @@ const [listResultResponse, setListResultResponse] = useState<ListRequest>({
 
             {test.key &&
               <Row>
-                <Steps current={filteredStepsData.findIndex(step => step.key === currentStep)} small={true} >
+                <Col md={24}>
+                <Stepper activeStep={activeStep} alternativeLabel>
                   {filteredStepsData.map((step, index) => {
-                    let stepStatus = "process";
-                    let stepColor = "inherit";
-
-                    const currentIndex = filteredStepsData.findIndex(s => s.key === currentStep);
-
-                    if (index < currentIndex) {
-                      stepStatus = "finish";
-                    }
-                    else if (step.key === currentStep) {
-                      if (currentStep == "6055192099058457") {
-                        stepStatus = "error"
-                      }
-                      else {
-                        stepStatus = "process";
-                        stepColor = "blue";
-                      }
-                    } else {
-                      stepStatus = "wait";
-
-                    }
+                    const isErrorStep = currentStep === "6055192099058457" && step.key === currentStep;
 
                     return (
-                      <Steps.Item
-                        key={step.key}
-                        title={<span style={{ color: stepColor }}>{step.value}</span>}
-                        description={<span style={{ color: stepColor }}>{step.time}</span>}
-                        status={stepStatus}
-                      />
+                      <Step key={step.key}>
+                        <StepLabel
+                          error={isErrorStep}
+                          optional={
+                            <Typography variant="caption" color="text.secondary">
+                              {step.time}
+                            </Typography>
+                          }
+                        >
+                          {step.value}
+                        </StepLabel>
+                      </Step>
                     );
                   })}
-                </Steps>
+                </Stepper></Col>
+                
               </Row>}
             {test.key && <Row>Number of Samples Collected:{samplesList?.object?.length}</Row>}
           </Col>
         </Row>
         <Row>
           {order.key &&
-            <Tests order={order} setTest={setTest} test={test} samplesList={samplesList} resultFetch={refetchResult} fecthSample={fecthSample}/>}
+            <Tests order={order} setTest={setTest} test={test} samplesList={samplesList} resultFetch={refetchResult} fecthSample={fecthSample} />}
         </Row>
         <Row>
           {test.key &&
@@ -329,11 +312,11 @@ const [listResultResponse, setListResultResponse] = useState<ListRequest>({
               saveTest={saveTest}
               labDetails={labDetails}
               patient={patient}
-              samplesList={samplesList} 
+              samplesList={samplesList}
               fetchTest={refetchTest}
               fecthSample={fecthSample}
               listResultResponse={listResultResponse}
-              setListResultResponse={setListResultResponse}/>
+              setListResultResponse={setListResultResponse} />
           }
         </Row>
 
