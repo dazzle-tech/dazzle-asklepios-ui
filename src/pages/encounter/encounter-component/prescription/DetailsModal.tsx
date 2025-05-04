@@ -38,23 +38,18 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
         roa: null
     });
     const [indicationsIcd, setIndicationsIcd] = useState({ indicationIcd: null });
-    const [filteredList, setFilteredList] = useState([]);
     const [searchKeywordicd, setSearchKeywordicd] = useState('');
-    const [selectedRows, setSelectedRows] = useState([]);
     const [inst, setInst] = useState(null);
     const [typing, setTyping] = React.useState(false);
     const [inputValue, setInputValue] = React.useState('');
     const [selectedOption, setSelectedOption] = useState("3010606785535008");
     const [indicationsDescription, setindicationsDescription] = useState<string>('');
-    const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
-    const { data: FrequencyLovQueryResponse } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
     const { data: DurationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_DURATION');
     const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery('PRESC_INSTRUCTIONS');
     const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const { data: instructionTypeQueryResponse } = useGetLovValuesByCodeQuery('PRESC_INSTR_TYPE');
     const { data: refillunitQueryResponse } = useGetLovValuesByCodeQuery('REFILL_INTERVAL');
     const { data: indicationLovQueryResponse } = useGetLovValuesByCodeQuery('MED_INDICATION_USE');
-    const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
     const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
     const [editDuration, setEditDuration] = useState(false);
@@ -75,25 +70,18 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
         combinedLabel: `${item.icdCode} - ${item.description}`,
     }));
     const [savePrescriptionMedication, { isLoading: isSavingPrescriptionMedication }] = useSavePrescriptionMedicationMutation();
-    //  useEffect(() => {
-    //        if (searchKeyword.trim() !== "") {
-    //            setListGenericRequest({
-    //                ...listGenericRequest,
-    //                filters: [
-    //                    {
-    //                        fieldName: "generic_name",
-    //                        operator: "containsIgnoreCase",
-    //                        value: searchKeyword,
-    //                    },
-    //                    {
-    //                        fieldName: 'deleted_at',
-    //                        operator: 'isNull',
-    //                        value: undefined
-    //                    }
-    //                ],
-    //            });
-    //        }
-    //    }, [searchKeyword]);
+    useEffect(()=>{
+        if(prescriptionMedication.key!=null)
+            
+        {
+            setSelectedOption(prescriptionMedication.instructionsTypeLkey);
+            setAdminInstructions(prescriptionMedication.administrationInstructions);
+            setTags(prescriptionMedication.parametersToMonitor.split(","))
+        }
+        else{
+            setTags([])
+        }
+    },[prescriptionMedication])
     useEffect(() => {
         if (searchKeywordicd.trim() !== "") {
             setIcdListRequest(
@@ -177,7 +165,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
                         patientKey: patient.key,
                         visitKey: encounter.key,
                         prescriptionKey: preKey,
-                        genericMedicationsKey: selectedGeneric.key,
+                        genericMedicationsKey: selectedGeneric?.key,
                         parametersToMonitor: tagcompine,
                         statusLkey: "164797574082125",
                         instructions: inst,
@@ -223,7 +211,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
             refillIntervalUnitLkey: null,
             indicationUseLkey: null
         })
-        setAdminInstructions("");
+        setAdminInstructions(null);
         setSelectedGeneric(null);
         setindicationsDescription(null);
 
@@ -236,7 +224,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
         const newList = roaLovQueryResponse.object.filter((item) =>
             (Generic.roaList)?.includes(item.key)
         );
-        setFilteredList(newList);
+      
     };
     const handleSearchIcd = value => {
         setSearchKeywordicd(value);
@@ -373,6 +361,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
                                 customeinst={customeinst}
                                 selectedGeneric={selectedGeneric}
                                 setInst={setInst}
+                                prescriptionMedication={prescriptionMedication}
                             />
                         </Row>
 

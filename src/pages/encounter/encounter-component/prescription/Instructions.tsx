@@ -4,7 +4,7 @@ import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { initialListRequest } from "@/types/types";
 import React, { useState, useEffect } from "react";
 import { Col, Dropdown, Form, Row } from "rsuite";
-const Instructions = ({ selectedOption, customeinst, setCustomeinst, selectedGeneric,setInst }) => {
+const Instructions = ({prescriptionMedication, selectedOption, customeinst, setCustomeinst, selectedGeneric,setInst }) => {
     const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
     const { data: FrequencyLovQueryResponse } = useGetLovValuesByCodeQuery('MED_FREQUENCY');
     const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
@@ -20,9 +20,21 @@ const Instructions = ({ selectedOption, customeinst, setCustomeinst, selectedGen
         );
         setFilteredList(newList);
     }, [selectedGeneric]);
-    useEffect(()=>{
-        console.log("ggg" ,customeinst)
-    },[customeinst])
+  useEffect(()=>{
+    if(selectedOption==="3010606785535008")//Custome  Instruction
+        {
+       
+    }
+    else if(selectedOption ==="3010591042600262") // Pre defined Instruction
+    {
+        console.log(prescriptionMedication.instructions)
+        setSelectedPreDefine(prescriptionMedication.instructions)
+    }
+    else if(selectedOption==="3010573499898196") //Mnuil  Instruction
+    {
+      setMunial(prescriptionMedication.instructions)
+    }
+  },[selectedOption])
     useEffect(()=>{
         setInst(munial);
     },[munial])

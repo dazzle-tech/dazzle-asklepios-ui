@@ -1155,6 +1155,7 @@ const Rad = () => {
                 onSortChange={(sortBy, sortType) => {
                   setListOrdersResponse({ ...listOrdersResponse, sortBy, sortType });
                 }}
+                loading={isOrderFetching}
                 page={pageIndex}
                 rowsPerPage={rowsPerPage}
                 totalCount={totalCount}
