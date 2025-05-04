@@ -71,7 +71,7 @@ const Lab = () => {
     ResultRef.current?.resultFetch(); 
   };
    useEffect(() => {
-          console.log("resultFetch in Lab", refetchResult)
+      
       },[refetchResult]);
   const [localUser, setLocalUser] = useState(uiSlice?.user);
   const [currentStep, setCurrentStep] = useState("6055029972709625");

@@ -6,7 +6,7 @@ import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsResult, newApDiagno
 import { initialListRequest, initialListRequestAllValues, ListRequest } from "@/types/types";
 import React, { useState, useEffect } from "react";
 import { HStack, Input, Panel, SelectPicker, Tooltip, Whisper } from "rsuite";
-import { notify } from '@/utils/uiReducerActions';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import { useAppSelector, useAppDispatch } from "@/hooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -57,7 +57,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
     const [openRejectedResultModal, setOpenRejectedResultModal] = useState(false);
     const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
     const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
-    const [saveResult] = useSaveDiagnosticOrderTestResultMutation();
+    const [saveResult,saveResultMutation] = useSaveDiagnosticOrderTestResultMutation();
     const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
     const [saveResultLog, saveResultLogMutation] = useSaveLabResultLogMutation();
 
@@ -88,9 +88,17 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
             return 'selected-row';
         } else return '';
     };
-    
+     useEffect(() => {
+       
+        if (saveResultMutation.isLoading) {
+          dispatch(showSystemLoader());
+        } else {
+          dispatch(hideSystemLoader());
+        }
+      }, [saveResultMutation.isLoading]);
     useEffect(() => {
-        setResult({ ...newApDiagnosticOrderTestsResult })
+       
+         resultFetch();
         const updatedFilters = [
             {
                 fieldName: "order_test_key",
@@ -126,7 +134,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
 
     }, [test]);
    useEffect(() => {
-    
+     
        const updatedFilters = [
         {
             fieldName: "order_test_key",
@@ -161,6 +169,10 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
    
     }
     , [resultFetch]);
+    useEffect(()=>{
+      
+        resultFetch();
+    },[saveResultMutation.isSuccess])
     const handleValueChange = async (value, rowData) => {
 
         const Response = await saveResult({ ...rowData, resultLkey: String(value) }).unwrap();
@@ -218,21 +230,19 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
 
     };
     const tableColomns = [
-        {
-            key: "testName",
+        { key: "testName",
             title: <Translate>TEST NAME</Translate>,
             flexGrow: 2,
             fullText: true,
             render: (rowData: any) => {
                 if (rowData.isProfile) {
-                    return test.profileList.find((item) => item.key == rowData.testProfileKey)?.testName;
+                    return test.profileList.find((item) => item.key == rowData?.testProfileKey)?.testName;
                 } else {
-                    return test.test.testName;
+                    return test?.test?.testName;
                 }
             },
         },
-        {
-            key: "testResultUnit",
+        {key: "testResultUnit",
             title: <Translate>TEST RESULT,UNIT</Translate>,
             flexGrow: 2,
             fullText: true,
@@ -464,7 +474,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
 
                       // setResult({ ...result, resultText: value });
                       setResult({ ...result, resultText: value, statusLkey: '265123250697000' });
-                      resultFetch();
+                   
                     }}
                     onPressEnter={async () => {
 
@@ -491,8 +501,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
               }
 
         },
-        {
-            key: "normalRange",
+        {key: "normalRange",
             title: <Translate>NORMAL RANGE</Translate>,
             flexGrow: 2,
             fullText: true,
@@ -535,8 +544,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
                 }
             },
         },
-        {
-            key: "marker",
+        {key: "marker",
             title: <Translate>MARKER</Translate>,
             flexGrow: 2,
             fullText: true,
@@ -566,8 +574,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
                 }
             },
         },
-        {
-            key: "comments",
+        {key: "comments",
             title: <Translate>COMMENTS</Translate>,
             flexGrow: 1,
             fullText: true,
@@ -583,8 +590,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
                 );
             },
         },
-        {
-            key: "previousResult",
+        { key: "previousResult",
             title: <Translate>PREVIOUS RESULT</Translate>,
             flexGrow: 1,
             fullText: true,
@@ -616,8 +622,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
                 );
             }
         },
-        {
-            key: "resultDate",
+        {key: "resultDate",
             title: <Translate>PREVIOUS RESULT DATE</Translate>,
             flexGrow: 1,
             fullText: true,
@@ -629,8 +634,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
                 return "";
             },
         },
-        {
-            key: "compareWithAllPrevious",
+        {key: "compareWithAllPrevious",
             title: <Translate>COMPARE WITH ALL PREVIOUS</Translate>,
             flexGrow: 1,
             fullText: true,
@@ -643,35 +647,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
 
             },
         },
-        // { key: "externelStatus",
-        //     title: <Translate>EXTERNEL STATUS</Translate>,
-        //     flexGrow: 1,
-        //     fullText: true,
-        //     render: (rowData: any) => {
-        //         return null;
-
-        //     },
-        // },
-        // { key: "externelLabName",
-        //     title: <Translate>EXTERNEL LAB NAME</Translate>,
-        //     flexGrow: 1,
-        //     fullText: true,
-        //     render: (rowData: any) => {
-        //         return null;
-
-        //     },
-        // },
-        // { key: "attachment",
-        //     title: <Translate>ATTACHMENT</Translate>,
-        //     flexGrow: 1,
-        //     fullText: true,
-        //     render: (rowData: any) => {
-        //         return null;
-
-        //     },
-        // },
-        {
-            key: "resultStatus",
+        {key: "resultStatus",
             title: <Translate>RESULT SATUTS</Translate>,
             flexGrow: 1,
             fullText: true,
@@ -701,6 +677,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
                                 cursor: (rowData.statusLkey == "265089168359400") ? 'not-allowed' : 'pointer',
                             }}
                                 onClick={async () => {
+                                    setResult(rowData);
                                     if (rowData.statusLkey !== "265089168359400") {
                                         try {
                                             function value(rowData) {
@@ -719,16 +696,17 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
                                             }
 
                                             const resultValue = value(rowData);
-
+                                            const object=rowData;
+                                          
 
                                             const response = await saveTest({
                                                 ...test,
                                                 processingStatusLkey: "265089168359400",
                                                 approvedAt: Date.now()
                                             }).unwrap();
-
+                                           
                                             await saveResult({
-                                                ...result,
+                                                ...object,
                                                 statusLkey: "265089168359400",
                                                 approvedAt: Date.now(),
                                                 normalRangeValue: String(resultValue),
@@ -758,7 +736,12 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
                                     color: (rowData.statusLkey == "265089168359400") ? 'gray' : 'inherit',
                                     cursor: (rowData.statusLkey == "265089168359400") ? 'not-allowed' : 'pointer',
                                 }}
-                                onClick={() => rowData.statusLkey !== "265089168359400" && setOpenRejectedResultModal(true)} />
+                                onClick={() => {
+                                    if (rowData.statusLkey !== "265089168359400") {
+                                      setOpenRejectedResultModal(true);
+                                      setResult({ ...rowData });
+                                    }
+                                  }}/>
                         </Whisper>
                         <Whisper
                             placement="top"
@@ -775,8 +758,10 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
                                 onClick={async () => {
                                     if (rowData.statusLkey !== "265089168359400") {
                                         await setOpenSampleModal(true);
+                                        const object =rowData
+                                       await saveTest({...test,processingStatusLkey: '6055029972709625'})
                                         saveResult({
-                                            ...rowData,
+                                            ...object,
                                             statusLkey: '6055029972709625'
                                         }).unwrap();
                                         await resultFetch()
@@ -847,8 +832,11 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
             handleCancle={async () => {
                 {
                     try {
-                        await saveResult({ ...result, statusLkey: '6488555526802885', rejectedAt: Date.now() }).unwrap();
+                        const object=result
+                        console.log({object})
+                        await saveResult({ ...object, statusLkey: '6488555526802885', rejectedAt: Date.now() }).unwrap();
                         dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+                        setTest({...test})
                         resultFetch();
                         setOpenRejectedResultModal(false)
                     }

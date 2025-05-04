@@ -62,7 +62,7 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
     });
     const { data: messagesList, refetch: fecthNotes } = useGetOrderTestNotesByTestIdQuery(test?.key || undefined, { skip: test.key == null });
     const [savenotes] = useSaveDiagnosticOrderTestNotesMutation();
-    const [saveNewResult] = useSaveDiagnosticTestResultMutation();
+    const [saveNewResult ,saveNewResultMutation] = useSaveDiagnosticTestResultMutation();
     const [saveTest ,saveTestMutation] = useSaveDiagnosticOrderTestMutation();
     const isTestSelected = rowData => {
         if (rowData && test && rowData.key === test.key) {
@@ -172,8 +172,12 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
         fetchData();
     }, [test]);
     useEffect(() => {
-        console.log("resultFetch in Test", resultFetch)
+        
     },[resultFetch]);
+    useEffect(()=>{
+        resultFetch();
+    }
+    ,[saveNewResultMutation.isSuccess])
     const renderRowExpanded = rowData => {
 
         return (
@@ -230,7 +234,7 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
             if (key === rowData.key) {
                 open = true;
             } else {
-                nextExpandedRowKeys.push(key);
+                nextExpandedRowKeys?.push(key);
             }
         });
 
@@ -307,19 +311,21 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
                     statusLkey: '6055029972709625'
                 }).unwrap();
 
-                setTest({ ...newApDiagnosticOrderTests })
+                
                 dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                setTest({ ...Response });
+              
                 await fetchTest();
                 try {
                     await resultFetch();
                 } catch (error) {
                     console.error('Fetch error:', error);
                 }
+                setTest({...Response})
+               
             
             }
             catch (error) {
-                console.error("Error saving test:", error);
+              
                 dispatch(notify({ msg: error, sev: 'error' }));
             }
         }
@@ -569,7 +575,8 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
                                     <CheckRoundIcon
                                         onClick={() =>
                                             (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") &&
-                                            handleAcceptTest(rowData)}
+                                            handleAcceptTest(rowData)
+                                        }
                                         style={{
                                             fontSize: '1em',
                                             marginRight: 10,
