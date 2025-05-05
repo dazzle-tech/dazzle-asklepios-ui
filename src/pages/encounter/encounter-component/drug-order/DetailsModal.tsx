@@ -78,7 +78,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                 setSelectedGeneric(genericMedicationListResponse?.object?.find(item => item.key ===orderMedication.genericMedicationsKey))
                 
                 setAdminInstructions(orderMedication.administrationInstructions);
-                setTags(orderMedication.parametersToMonitor.split(","))
+                setTags(orderMedication?.parametersToMonitor?.split(","))
             }
            
         },[orderMedication])
@@ -256,7 +256,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
         setTags(nextTags);
     };
     const joinValuesFromArray = (values) => {
-        return values.filter(Boolean).join(', ');
+        return values?.filter(Boolean).join(', ');
     };
 
     const renderInput = () => {
