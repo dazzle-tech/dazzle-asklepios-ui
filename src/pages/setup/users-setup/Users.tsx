@@ -1,22 +1,18 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import {
-  Input,
-  Modal,
-  Pagination,
-  Panel,
-  Table,
-  Radio,
-  RadioGroup,
-  PanelGroup,
-} from 'rsuite';
+import { Input, Modal, Pagination, Panel, Table, Radio, RadioGroup, PanelGroup } from 'rsuite';
+import { faUser } from '@fortawesome/free-solid-svg-icons';
 const { Column, HeaderCell, Cell } = Table;
 import { Check, Edit, PlusRound } from '@rsuite/icons';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import ReloadIcon from '@rsuite/icons/Reload';
 import UserChangeIcon from '@rsuite/icons/UserChange';
-
+import { MdModeEdit } from 'react-icons/md';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faRotateRight } from '@fortawesome/free-solid-svg-icons';
+import { MdDelete } from 'react-icons/md';
+import { IoSettingsSharp } from 'react-icons/io5';
 import {
   useGetAccessRolesQuery,
   useGetFacilitiesQuery,
@@ -52,6 +48,11 @@ import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
 import BackButton from '@/components/BackButton/BackButton';
+import MyTable from '@/components/MyTable';
+import MyModal from '@/components/MyModal/MyModal';
+import AddEditUser from './AddEditUser';
+import { notify } from '@/utils/uiReducerActions';
+
 const Users = () => {
   // const [facilities, setFacilities] = useState([])
 
@@ -129,8 +130,8 @@ const Users = () => {
   const { data: userDepartmentsResponse, refetch: refetchUserDepartments } =
     useGetUserDepartmentsQuery(user?.key);
 
-  const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-  const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
+  // const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+  // const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
   const [detailsPanle, setDetailsPanle] = useState(false);
   const [editing, setEditing] = useState();
   const [filteredFacilities, setFilteredFacilities] = useState([]);
@@ -215,7 +216,7 @@ const Users = () => {
 
       setUser(updatedUser);
       setReadyUser(updatedUser);
-
+      console.log("on save");
       setEditing(false);
       refetchUsers();
       refetchFacility();
@@ -268,12 +269,6 @@ const Users = () => {
     }
   }, [saveUserMutation.data]);
 
-  const isSelected = rowData => {
-    if (rowData && user && rowData.key === user.key) {
-      return 'selected-row';
-    } else return '';
-  };
-
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -290,10 +285,17 @@ const Users = () => {
   };
 
   const handleAddNew = () => {
+    console.log("on Add New");
+    // setReadyUser(newApUser);
+    // setUser(newApUser);
     setPopupOpen(true);
-    setReadyUser(newApUser);
-    setUser(newApUser);
+    
+    console.log("new");
+    
   };
+  useEffect(()=>{
+     console.log("username: " + readyUser?.username);
+  },[readyUser]);
 
   const handleRemoveUser = async data => {
     console.log('removing ' + data.key);
@@ -313,20 +315,18 @@ const Users = () => {
   };
 
   const handleDactivateUser = async data => {
-    console.log('Dactivate User ' + data.key);
+    const process = data.isValid ? "Deactivated" : "Activated";
     try {
-      const response = await deactivateActivateUser({
+         await deactivateActivateUser({
         user: { ...data, isValid: !data.isValid }
       })
         .unwrap()
         .then(() => {
+          dispatch(notify({msg: "The user was successfully " + process , sev: "success"}));
           refetchUsers();
-          console.log({ ...data, isValid: !data.isValid });
         });
 
-      console.log('user Dactivated successfully:', response);
     } catch (error) {
-      console.error('Error Dactivate user:', error);
     }
   };
 
@@ -341,175 +341,197 @@ const Users = () => {
     }
   };
 
-  const InputForms = editing => {
-    return (
-      <div>
-        <Form layout="inline" fluid>
-          <MyInput
-            disabled={!editing}
-            column
-            fieldName="firstName"
-            required
-            record={user}
-            setRecord={setUser}
-          />
-          <MyInput
-            disabled={!editing}
-            column
-            fieldName="secondName"
-            required
-            record={user}
-            setRecord={setUser}
-          />
-          <MyInput
-            disabled={!editing}
-            column
-            fieldName="lastName"
-            required
-            record={user}
-            setRecord={setUser}
-          />
-          <MyInput
-            disabled={true}
-            column
-            fieldName="fullName"
-            required
-            record={user}
-            setRecord={setUser}
-          />
-        </Form>
-
-        <Form layout="inline" fluid>
-          <MyInput
-            disabled={!editing}
-            column
-            fieldName="username"
-            required
-            record={readyUser}
-            setRecord={setReadyUser}
-          />
-
-          <MyInput
-            disabled={!editing}
-            column
-            fieldName="password"
-            required
-            fieldType="password"
-            record={user}
-            setRecord={setUser}
-          />
-        </Form>
-
-        <Form layout="inline" fluid>
-          <MyInput
-            disabled={!editing}
-            column
-            fieldName="email"
-            required
-            record={user}
-            setRecord={setUser}
-          />
-          <MyInput
-            disabled={!editing}
-            column
-            fieldName="phoneNumber"
-            required
-            record={user}
-            setRecord={setUser}
-          />
-
-          <MyInput
-            disabled={!editing}
-            column
-            fieldLabel="sex at birth"
-            fieldType="select"
-            fieldName="sexAtBirthLkey"
-            selectData={gndrLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={user}
-            setRecord={setUser}
-          />
-
-          <MyInput
-            disabled={!editing}
-            column
-            fieldType="date"
-            fieldLabel="DOB"
-            fieldName="dob"
-            record={user}
-            setRecord={setUser}
-          />
-        </Form>
-
-        <Form
-          // onClick={() => {
-          //   const filterKeys = user._facilitiesInput; // This is the array you want to filter on ['3', '32260644964500']
-
-          //   const filteredFacilities = facilityListResponse?.object?.filter(facility =>
-          //     filterKeys.includes(facility.key)
-          //   ) ?? [];
-
-          //   console.log(filteredFacilities); // This will log the filtered facilities based on user._facilitiesInput
-          // }}
-          layout="inline"
-          fluid
-        >
-          <MyInput
-            disabled={!editing}
-            width={300}
-            column
-            fieldLabel="Facility"
-            selectData={facilityListResponse?.object ?? []}
-            fieldType="multyPicker"
-            selectDataLabel="facilityName"
-            selectDataValue="key"
-            fieldName="_facilitiesInput"
-            record={user}
-            setRecord={setUser}
-          />
-
-          <MyInput
-            disabled={!editing}
-            column
-            fieldName="accessRoleKey"
-            fieldType="select"
-            selectData={accessRoleListResponse?.object ?? []}
-            selectDataLabel="name"
-            selectDataValue="key"
-            record={user}
-            setRecord={setUser}
-          />
-
-          <MyInput
-            disabled={!editing}
-            column
-            fieldLabel="job role"
-            fieldType="select"
-            fieldName="jobRoleLkey"
-            selectData={jobRoleLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={user}
-            setRecord={setUser}
-          />
-
-          <MyInput
-            disabled={!editing}
-            column
-            fieldName="jobDescription"
-            required
-            record={user}
-            setRecord={setUser}
-          />
-        </Form>
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
+    });
+  };
+  
+     //icons column (View Departments, Add Details, Edite, Active/Deactivate)
+     const iconsForActions = (rowData: ApUser) => (
+      <div className='container-of-icons-facilities'>
+        <IoSettingsSharp
+                title="Setup Module Screens"
+                size={24}
+                fill="var(--primary-gray)"
+               
+              />
+        <MdModeEdit
+          title="Edit"
+          size={24}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setPopupOpen(true);
+            setUser(rowData);
+            setReadyUser(rowData);
+          }}
+        />
+        {rowData?.isValid ?
+        // back to this function when update the filter(status) in back end 
+        <MdDelete
+         title="Deactivate"
+         size={24}
+         fill="var(--primary-pink)"
+         onClick={() => handleDactivateUser(rowData)}
+         />
+        :
+        <FontAwesomeIcon title="Active" icon={faRotateRight} style={{color: "var(--primary-gray)" }} onClick={() => handleDactivateUser(rowData)}/>
+        }
       </div>
     );
-  };
+
+  //Table columns
+  const tableColumns = [
+    {
+      key: 'fullName',
+      title: <Translate>Full Name</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: 'username',
+      title: <Translate>User Name</Translate>,
+      flexGrow: 3
+    },
+    {
+      key: 'email',
+      title: <Translate>Email</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: 'phoneNumber',
+      title: <Translate>Phone Number</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: 'jobRoleLvalue',
+      title: <Translate>job Role</Translate>,
+      flexGrow: 4,
+      render: rowData => {
+        return (
+          <p>
+            {rowData.jobRoleLvalue ? rowData.jobRoleLvalue.lovDisplayVale : rowData.jobRoleLkey}
+          </p>
+        );
+      }
+    },
+    {
+      key: 'organizationKey',
+      title: <Translate>Facility</Translate>,
+      flexGrow: 3,
+      render: rowData => (
+        <span>
+          {conjureValueBasedOnKeyFromList(
+            facilityListResponse?.object ?? [],
+            rowData.accessRoleKey,
+            'facilityName'
+          )}
+        </span>
+      )
+    },
+    {
+      key: 'accessRoleKey',
+      title: <Translate>Access Role</Translate>,
+      flexGrow: 3,
+      render: rowData => (
+        <span>
+          {conjureValueBasedOnKeyFromList(
+            accessRoleListResponse?.object ?? [],
+            rowData.accessRoleKey,
+            'name'
+          )}
+        </span>
+      )
+    },
+    {
+      key: 'isValid',
+      title: <Translate>Is Valid</Translate>,
+      flexGrow: 3,
+      render: rowData => (rowData.isValid ? 'Active' : 'InActive')
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      flexGrow: 3,
+      render: rowData => iconsForActions(rowData)
+    }
+  ];
+  // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = userListResponse?.extraNumeric ?? 0;
+  const [record, setRecord] = useState({ filter: '', value: '' });
+  // Available fields for filtering
+  const filterFields = [
+    { label: 'Full Name', value: 'fullName' },
+    { label: 'User Name', value: 'username' },
+    { label: 'job Role', value: 'jobRoleLvalue' },
+    { label: 'Facility', value: 'organizationKey' },
+    { label: 'Access Role', value: 'accessRoleKey' }
+  ];
+
+  useEffect(() => {
+    if (record['filter']) {
+      handleFilterChange(record['filter'], record['value']);
+    } else {
+      setListRequest({
+        ...initialListRequest,
+        filters: [
+          {
+            fieldName: 'deleted_at',
+            operator: 'isNull',
+            value: undefined
+          }
+        ],
+        pageSize: listRequest.pageSize,
+        pageNumber: 1
+      });
+    }
+  }, [record]);
+  // Filter form rendered above the table
+  const filters = () => (
+    <Form layout="inline" fluid className="container-of-filter-fields-department">
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={record}
+        setRecord={updatedRecord => {
+          setRecord({
+            ...record,
+            filter: updatedRecord.filter,
+            value: ''
+          });
+        }}
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+      />
+
+      <MyInput
+        fieldName="value"
+        fieldType="text"
+        record={record}
+        setRecord={setRecord}
+        showLabel={false}
+        placeholder="Search"
+      />
+    </Form>
+  );
+
+ 
+
 
   useEffect(() => {
     console.log(user);
-
+    console.log("in effect 2 use username: " + user.username);
+    console.log("in effect 2 readyUser username: " + readyUser.username);
     if (user.username.trim() !== '' && user.username != null) {
       setReadyUser({ ...user, username: readyUser.username ? readyUser.username : user.username });
     } else if (user.firstName) {
@@ -519,7 +541,7 @@ const Users = () => {
         username: (user.firstName.slice(0, 1) + (user.lastName || '')).toLowerCase()
       });
     }
-  }, [user]);
+  }, [user.firstName, user.lastName]);
 
   useEffect(() => {
     console.log(resetPasswordPopupOpen);
@@ -537,6 +559,7 @@ const Users = () => {
   const handleBack = () => {
     setDetailsPanle(false);
     setReadyUser(newApUser);
+    console.log("on back");
   };
 
   return (
@@ -584,7 +607,7 @@ const Users = () => {
             </ButtonToolbar>
             <hr />
 
-            {InputForms(editing)}
+            {/* {InputForms(editing)} */}
 
             <Tabs>
               <TabList>
@@ -802,168 +825,33 @@ const Users = () => {
             </ButtonToolbar>
             <hr />
             {/* hanan */}
-            <Table
-              height={400}
+            
+            <MyTable
+              data={userListResponse?.object ?? []}
+              columns={tableColumns}
               sortColumn={listRequest.sortBy}
               sortType={listRequest.sortType}
-              onSortColumn={(sortBy, sortType) => {
-                if (sortBy)
-                  setListRequest({
-                    ...listRequest,
-                    sortBy,
-                    sortType
-                  });
+              onSortChange={(sortBy, sortType) => {
+                if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
               }}
-              headerHeight={80}
-              rowHeight={60}
-              bordered
-              cellBordered
-              data={userListResponse?.object ?? []}
-              onRowClick={rowData => {
-                setUser(rowData);
-              }}
-              rowClassName={isSelected}
-            >
-              <Column sortable flexGrow={4}>
-                <HeaderCell>
-                  <Input onChange={e => handleFilterChange('fullName', e)} />
-                  <Translate>Full Name</Translate>
-                </HeaderCell>
-                <Cell dataKey="fullName" />
-              </Column>
-
-              <Column sortable flexGrow={3}>
-                <HeaderCell align="center">
-                  <Input onChange={e => handleFilterChange('username', e)} />
-                  <Translate>Username</Translate>
-                </HeaderCell>
-                <Cell dataKey="username" />
-              </Column>
-
-              <Column sortable flexGrow={4}>
-                <HeaderCell>
-                  <Input onChange={e => handleFilterChange('email', e)} />
-                  <Translate>Email</Translate>
-                </HeaderCell>
-                <Cell dataKey="email" />
-              </Column>
-              <Column sortable flexGrow={4}>
-                <HeaderCell>
-                  <Input onChange={e => handleFilterChange('phoneNumber', e)} />
-                  <Translate>Phone Number</Translate>
-                </HeaderCell>
-                <Cell dataKey="phoneNumber" />
-              </Column>
-
-              <Column sortable flexGrow={4}>
-                <HeaderCell>
-                  <Input onChange={e => handleFilterChange('jobRoleLvalue', e)} />
-                  <Translate>Job Role</Translate>
-                </HeaderCell>
-
-                <Cell dataKey="jobRoleLvalue">
-                  {rowData =>
-                    rowData.jobRoleLvalue
-                      ? rowData.jobRoleLvalue.lovDisplayVale
-                      : rowData.jobRoleLkey
-                  }
-                </Cell>
-              </Column>
-
-              <Column sortable flexGrow={4}>
-                <HeaderCell>
-                  <Input onChange={e => handleFilterChange('organizationKey', e)} />
-                  <Translate>Organization</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData => (
-                    <span>
-                      {conjureValueBasedOnKeyFromList(
-                        facilityListResponse?.object ?? [],
-                        rowData.accessRoleKey,
-                        'facilityName'
-                      )}
-                    </span>
-                  )}
-                </Cell>
-              </Column>
-              <Column sortable flexGrow={4}>
-                <HeaderCell>
-                  <Input onChange={e => handleFilterChange('accessRoleKey', e)} />
-                  <Translate>Access Role</Translate>
-                </HeaderCell>
-                <Cell>
-                  {rowData => (
-                    <span>
-                      {conjureValueBasedOnKeyFromList(
-                        accessRoleListResponse?.object ?? [],
-                        rowData.accessRoleKey,
-                        'name'
-                      )}
-                    </span>
-                  )}
-                </Cell>
-              </Column>
-
-              <Column sortable flexGrow={3}>
-                <HeaderCell align="center">
-                  <Input onChange={e => handleFilterChange('isValid', e)} />
-                  <Translate>Status</Translate>
-                </HeaderCell>
-                <Cell>{rowData => (rowData.isValid ? 'Active' : 'InActive')}</Cell>
-              </Column>
-            </Table>
-            <div style={{ padding: 20 }}>
-              <Pagination
-                prev
-                next
-                first
-                last
-                ellipsis
-                boundaryLinks
-                maxButtons={5}
-                size="xs"
-                layout={['limit', '|', 'pager']}
-                limitOptions={[5, 15, 30]}
-                limit={listRequest.pageSize}
-                activePage={listRequest.pageNumber}
-                onChangePage={pageNumber => {
-                  setListRequest({ ...listRequest, pageNumber });
-                }}
-                onChangeLimit={pageSize => {
-                  setListRequest({ ...listRequest, pageSize });
-                }}
-                total={userListResponse?.extraNumeric ?? 0}
-              />
-            </div>
-
-            <Modal size={'lg'} open={popupOpen} overflow>
-              <Modal.Title>
-                <Translate>New/Edit User</Translate>
-              </Modal.Title>
-              <Modal.Body>{InputForms(true)}</Modal.Body>
-              <Modal.Footer>
-                <Stack spacing={2} divider={<Divider vertical />}>
-                  <Button
-                    appearance="primary"
-                    onClick={() => {
-                      handleSave(), setUserBrowsing(false);
-                    }}
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    appearance="primary"
-                    color="red"
-                    onClick={() => {
-                      setPopupOpen(false), setUserBrowsing(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </Stack>
-              </Modal.Footer>
-            </Modal>
+              page={pageIndex}
+              rowsPerPage={rowsPerPage}
+              totalCount={totalCount}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={handleRowsPerPageChange}
+              filters={filters()}
+            />
+            <AddEditUser
+             open={popupOpen}
+             setOpen={setPopupOpen}
+           //   width,
+             user={user}
+             setUser={setUser}
+             readyUser={readyUser}
+             setReadyUser={setReadyUser}
+             handleSave={handleSave}
+             facilityListResponse={facilityListResponse}
+            />
           </Panel>
         </div>
       )}
