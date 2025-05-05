@@ -35,6 +35,7 @@ const ChooseDepartment = ({
     switch (stepNumber) {
       case 0:
         return (
+
           <Form layout='inline' fluid >
             <div className="container-of-medical-sheets">
               <div className="container-of-specific-sheets">
@@ -47,6 +48,7 @@ const ChooseDepartment = ({
                     record={''}
                     setRecord={() => ''}
                   />
+
                 <div className="sheets">
                     <MyInput
                       fieldType="check"
@@ -104,7 +106,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-
                     <MyInput
                       fieldType="check"
                       fieldName={'patientHistory'}
