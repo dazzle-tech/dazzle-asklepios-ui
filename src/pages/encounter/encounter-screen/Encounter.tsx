@@ -554,7 +554,6 @@ const Encounter = () => {
                       handleMenuItemClick(
                         <VaccineReccord
                           patient={propsData.patient}
-                          encounter={propsData.encounter}
                         />
                       )
                     }
