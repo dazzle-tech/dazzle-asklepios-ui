@@ -133,7 +133,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
     }, [orders, drugKey]);
 
- 
+
     const saveDraft = async () => {
         try {
             await saveDrugorder({
@@ -237,17 +237,9 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 submittedAt: Date.now()
             }).unwrap();
             dispatch(notify({msg:'Submetid  Successfully' ,sev:'success'}));
-            handleCleare();
-            ordRefetch().then(() => {
-                console.log("Refetch complete");
-            }).catch((error) => {
-                console.error("Refetch failed:", error);
-            });
-            medicRefetch().then(() => {
-                console.log("Refetch complete");
-            }).catch((error) => {
-                console.error("Refetch failed:", error);
-            });
+           await handleCleare();
+           await ordRefetch()
+          await  medicRefetch()
 
         }
         catch (error) {
@@ -358,8 +350,17 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                                  return( <MdModeEdit
                                      title="Edit"
                                      size={24}
+                                     style={{
+
+                                        color: (rowData.statusLvalue?.lovDisplayVale !== 'New') ? 'gray' : 'inherit',
+                                        cursor: (rowData.statusLvalue?.lovDisplayVale !== 'New') ? 'not-allowed' : 'pointer',
+                                    }}
                                      fill="var(--primary-gray)"
-                                     onClick={()=>setOpenDetailsModel(true)}
+                                     onClick={()=>{
+                                        if(rowData.statusLvalue?.lovDisplayVale == 'New'){
+                                            setOpenDetailsModel(true)
+                                        }
+                                        }}
                                    />)
                              } 
         
@@ -528,6 +529,11 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 </Checkbox>
                 <div className='bt-right'>
                     <MyButton
+                        disabled={drugKey ?
+                            orders?.object?.find(order =>
+                                order.key === drugKey
+                            )?.statusLkey === '1804482322306061' : true
+                        }
                         prefixIcon={() => <PlusIcon />}
                         onClick={() => {setOpenDetailsModel(true)
                             handleCleare()

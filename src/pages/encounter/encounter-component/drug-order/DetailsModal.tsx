@@ -204,7 +204,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
                 genericMedicationsKey: selectedGeneric.key,
                 parametersToMonitor: tagcompine,
                 statusLkey: "164797574082125",
-                startDateTime: orderMedication.startDateTime ? orderMedication.startDateTime.getTime() : null,
+                startDateTime: orderMedication.startDateTime ? new Date(orderMedication?.startDateTime)?.getTime() : null,
                 indicationIcd: indicationsDescription,
                 administrationInstructions: adminInstructions
             }).unwrap().then(() => {
@@ -215,6 +215,8 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
             })
         } catch (error) {
             dispatch(notify({ msg: "added feild", sev: "error" }))
+           console.log(error);
+           
         }
     }
     const handleSearch = value => {

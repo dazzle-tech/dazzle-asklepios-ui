@@ -417,8 +417,19 @@ const Prescription = ({ edit, patient, encounter }) => {
                          return( <MdModeEdit
                              title="Edit"
                              size={24}
+                             style={{
+
+                                color: (rowData.statusLvalue?.lovDisplayVale !== 'New') ? 'gray' : 'inherit',
+                                cursor: (rowData.statusLvalue?.lovDisplayVale !== 'New') ? 'not-allowed' : 'pointer',
+                            }}
                              fill="var(--primary-gray)"
-                             onClick={()=>setOpenDetailsModal(true)}
+                             onClick={()=>{
+                                if(rowData.statusLvalue?.lovDisplayVale == 'New')
+                                    {
+                                        setOpenDetailsModal(true)
+
+                                    }
+                            }}
                            />)
                      } 
 
@@ -561,6 +572,11 @@ const Prescription = ({ edit, patient, encounter }) => {
             </Checkbox>
             <div className='bt-right'>
                 <MyButton
+                 disabled={preKey ?
+                    prescriptions?.object?.find(pre =>
+                        pre.key === preKey
+                    )?.statusLkey === '1804482322306061' : true
+                }
                     prefixIcon={() => <PlusIcon />}
                     onClick={() => {setOpenDetailsModal(true)
                         handleCleare();
@@ -577,18 +593,8 @@ const Prescription = ({ edit, patient, encounter }) => {
          data={prescriptionMedications?.object ?? []}
          onRowClick={rowData => {
              setPrescriptionMedications(rowData);
-            //  setSelectedGeneric(genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey))
-            //  setTags(rowData.parametersToMonitor.split(",").map(word => word.trim()))
-             if (rowData.instructionsTypeLkey == "3010591042600262") {
-                //  setSelectedPreDefine(predefinedInstructionsListResponse?.object?.find(item => item.key === rowData.instructions))
-                //  setSelectedOption("3010591042600262")
-             }
-             else if (rowData.instructionsTypeLkey == "3010573499898196") {
-                //  setMunial(rowData.instructions)
-                //  setSelectedOption("3010573499898196")
-             }
-             else if (rowData.instructionsTypeLkey == "3010606785535008") {
-                //  setSelectedOption("3010606785535008")
+            if (rowData.instructionsTypeLkey == "3010606785535008") {
+              
                  setSelectedRowoMedicationKey(rowData.key);
              }
              setEditing(rowData.statusLkey == "164797574082125" ? false : true)

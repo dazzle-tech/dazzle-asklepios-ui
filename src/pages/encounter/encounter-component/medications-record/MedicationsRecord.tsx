@@ -781,9 +781,9 @@ const MedicationsRecord = ({patient ,encounter}) => {
                                 }
                                 if (rowData.instructionsTypeLkey === "3010606785535008") {
                                     return customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose + ","
-                                        + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.roaLvalue.lovDisplayVale +
-                                        "," + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue.lovDisplayVale + "," +
-                                        customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue.lovDisplayVale
+                                        + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.roaLvalue?.lovDisplayVale +
+                                        "," + customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue?.lovDisplayVale + "," +
+                                        customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue?.lovDisplayVale
 
 
                                 }
