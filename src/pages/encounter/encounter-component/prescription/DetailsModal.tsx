@@ -184,10 +184,10 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
                         parametersToMonitor: tagcompine,
                         statusLkey: "164797574082125",
                         instructions: inst,
-                        dose: selectedOption === "3010606785535008" ? customeinst.dose : null,
-                        frequencyLkey: selectedOption === "3010606785535008" ? customeinst.frequency : null,
-                        unitLkey: selectedOption === "3010606785535008" ? customeinst.unit : null,
-                        roaLkey: selectedOption === "3010606785535008" ? customeinst.roa : null,
+                        dose: selectedOption === "3010606785535008" ? customeinst?.dose : null,
+                        frequencyLkey: selectedOption === "3010606785535008" ? customeinst?.frequency : null,
+                        unitLkey: selectedOption === "3010606785535008" ? customeinst?.unit : null,
+                        roaLkey: selectedOption === "3010606785535008" ? customeinst?.roa : null,
                         administrationInstructions: adminInstructions,
                         indicationIcd: indicationsDescription
                     }).unwrap();
