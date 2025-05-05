@@ -1307,6 +1307,20 @@ const Rad = () => {
       <MyModal
         open={openSampleModal}
         setOpen={setOpenSampleModal}
+        actionButtonFunction={async () => {
+          const Response = await saveTest({
+            ...test,
+            patientArrivedAt: selectedSampleDate ? selectedSampleDate.getTime() : null,
+            processingStatusLkey: '6816324725527414'
+          }).unwrap();
+          dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+          setSelectedSampleDate(null);
+          setOpenSampleModal(false);
+          setTest({ ...newApDiagnosticOrderTests });
+          await fetchTest();
+          orderFetch();
+          setTest({ ...Response });
+        }}
         title="Patient Arrived"
         steps={[{ title: "Arrived", icon: faHospitalUser }]}
         size="450px"

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import Check from '@mui/icons-material/Check';
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -15,7 +17,8 @@ import {
   Step,
   StepLabel,
   Stepper,
-  Typography
+  Typography,
+ 
 } from '@mui/material';
 import {
   DatePicker,
@@ -53,11 +56,15 @@ const { Column, HeaderCell, Cell } = Table;
 import Orders from './Orders';
 import Result from './Result';
 import Tests from './Tests';
+import MyStepper from '@/components/MyStepper';
+import MyButton from '@/components/MyButton/MyButton';
+import MyModal from '@/components/MyModal/MyModal';
 const Lab = () => {
   const dispatch = useAppDispatch();
   const uiSlice = useAppSelector(state => state.auth);
   const ResultRef = useRef(null);
   const TestRef = useRef(null);
+  const [openSteper,setOpenSteper]=useState(false);
   const refetchTest = () => {
     TestRef.current?.refetchTest();
   };
@@ -229,11 +236,11 @@ const Lab = () => {
   ;
 
   const stepsData = [
-    { key: "6055207372976955", value: "Sample Collected", time: " " },
-    { key: "6055074111734636", value: "Accepted", time: test.acceptedAt ? new Date(test.acceptedAt).toLocaleString() : "" },
-    { key: "6055192099058457", value: "Rejected", time: test.rejectedAt ? new Date(test.rejectedAt).toLocaleString() : "" },
-    { key: "265123250697000", value: "Result Ready", time: test.readyAt ? new Date(test.readyAt).toLocaleString() : "" },
-    { key: "265089168359400", value: "Result Approved", time: test.approvedAt ? new Date(test.approvedAt).toLocaleString() : "" },
+    { key: "6055207372976955", value: "Sample Collected", description: " "  ,isError:false ,customIcon: <ReportProblemIcon fontSize="small" />},
+    { key: "6055074111734636", value: "Accepted", description: test.acceptedAt ? new Date(test.acceptedAt).toLocaleString() : "" ,isError:false},
+    { key: "6055192099058457", value: "Rejected", description: test.rejectedAt ? new Date(test.rejectedAt).toLocaleString() : "" ,isError:true },
+    { key: "265123250697000", value: "Result Ready", description: test.readyAt ? new Date(test.readyAt).toLocaleString() : "" ,isError:false},
+    { key: "265089168359400", value: "Result Approved", description: test.approvedAt ? new Date(test.approvedAt).toLocaleString() : "" ,isError:false ,customIcon: <ReportProblemIcon  /> },
   ];
 
   const filteredStepsData = stepsData.filter(step =>
@@ -241,6 +248,7 @@ const Lab = () => {
   );
 
   const activeStep = filteredStepsData.findIndex(step => step.key === currentStep);
+ 
   return (<>
 
     <div className='container'>
@@ -273,27 +281,18 @@ const Lab = () => {
             {test.key &&
               <Row>
                 <Col md={24}>
-                <Stepper activeStep={activeStep} alternativeLabel>
-                  {filteredStepsData.map((step, index) => {
-                    const isErrorStep = currentStep === "6055192099058457" && step.key === currentStep;
-
-                    return (
-                      <Step key={step.key}>
-                        <StepLabel
-                          error={isErrorStep}
-                          optional={
-                            <Typography variant="caption" color="text.secondary">
-                              {step.time}
-                            </Typography>
-                          }
-                        >
-                          {step.value}
-                        </StepLabel>
-                      </Step>
-                    );
-                  })}
-                </Stepper></Col>
                 
+               
+                 <MyStepper  stepsList={filteredStepsData} activeStep={activeStep}/>
+                 <MyModal
+                 open={openSteper}
+                 setOpen={setOpenSteper}
+                 title="title"
+                 
+                 content={<MyStepper  stepsList={filteredStepsData} activeStep={activeStep}/>}
+                 ></MyModal>
+                </Col>
+               
               </Row>}
             {test.key && <Row>Number of Samples Collected:{samplesList?.object?.length}</Row>}
           </Col>
