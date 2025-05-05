@@ -286,8 +286,8 @@ const Users = () => {
 
   const handleAddNew = () => {
     console.log("on Add New");
-    // setReadyUser(newApUser);
-    // setUser(newApUser);
+    setReadyUser(newApUser);
+    setUser(newApUser);
     setPopupOpen(true);
     
     console.log("new");
@@ -608,7 +608,7 @@ const Users = () => {
             <hr />
 
             {/* {InputForms(editing)} */}
-
+{/* 
             <Tabs>
               <TabList>
                 <Tab>
@@ -790,7 +790,7 @@ const Users = () => {
               <TabPanel>
                 <h4>Edit Log</h4>
               </TabPanel>
-            </Tabs>
+            </Tabs> */}
           </Panel>
         </div>
       ) : (

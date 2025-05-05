@@ -31,8 +31,7 @@ const AddEditUser = ({
      const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
      console.log("ready user in popup: " + readyUser);
      console.log("ruser in popup: " + user);
-       setReadyUser(newApUser);
-         setUser(newApUser);
+
 
   // Modal content
   const conjureFormContent = stepNumber => {
