@@ -35,11 +35,10 @@ const ChooseDepartment = ({
     switch (stepNumber) {
       case 0:
         return (
-          <Form fluid>
+          <Form layout='inline' fluid >
             <div className="container-of-medical-sheets">
               <div className="container-of-specific-sheets">
                 <h6>Default Sheets</h6>
-                <Form>
                   <MyInput
                     fieldType="check"
                     fieldName={''}
@@ -48,9 +47,7 @@ const ChooseDepartment = ({
                     record={''}
                     setRecord={() => ''}
                   />
-                </Form>
                 <div className="sheets">
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'patientDashboard'}
@@ -58,8 +55,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'clinicalVisit'}
@@ -67,8 +62,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'observation'}
@@ -76,8 +69,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'diagnosticsOrder'}
@@ -85,8 +76,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'prescription'}
@@ -94,8 +83,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'drugOrder'}
@@ -103,8 +90,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'consultation'}
@@ -112,8 +97,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'procedures'}
@@ -121,8 +104,7 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
+
                     <MyInput
                       fieldType="check"
                       fieldName={'patientHistory'}
@@ -130,8 +112,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'allergies'}
@@ -139,8 +119,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'medicalWarnings'}
@@ -148,8 +126,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'medicationsRecord'}
@@ -157,8 +133,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'vaccineReccord'}
@@ -166,8 +140,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'diagnosticsResult'}
@@ -175,12 +147,10 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
                 </div>
               </div>
               <div className="container-of-specific-sheets">
                 <h6>Specialty Sheets</h6>
-                <Form>
                   <MyInput
                     fieldType="check"
                     fieldName={''}
@@ -189,9 +159,7 @@ const ChooseDepartment = ({
                     record={''}
                     setRecord={() => ''}
                   />
-                </Form>
                 <div className="sheets">
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'psychologicalExam'}
@@ -199,8 +167,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'audiometryPuretone'}
@@ -208,8 +174,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'optometricExam'}
@@ -217,8 +181,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'dentalCare'}
@@ -226,8 +188,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'cardiology'}
@@ -235,8 +195,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
-                  <Form>
                     <MyInput
                       fieldType="check"
                       fieldName={'vaccination'}
@@ -244,7 +202,6 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
-                  </Form>
                 </div>
               </div>
             </div>
