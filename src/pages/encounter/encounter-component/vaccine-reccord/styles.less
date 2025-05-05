@@ -1,0 +1,88 @@
+.form-content-vaccine-fields {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: 0px 13px;
+
+    .cancel-checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+}
+
+.loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Arial', sans-serif;
+    font-size: 18px;
+    color: #007bff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 20px;
+    background-color: #f0f8ff;
+    border-radius: 5px;
+    border: 2px solid #007bff;
+    animation: loadingAnimation 2s infinite;
+}
+
+@keyframes loadingAnimation {
+    0% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+.main-container-list-table {
+    display: flex;
+    height: 70vh;
+    overflow: auto;
+
+    .vaccine-sidebar {
+        width: 250px;
+        height: 100%;
+        overflow-y: auto;
+        border-right: 1px solid #e5e5e5;
+        font-size: 14px;
+        font-family: 'Inter Medium';
+        padding: 10px;
+
+        .full-width-button {
+            width: 100%;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+    }
+
+    .vaccine-details-container {
+        flex: 1;
+        padding: 10px;
+        overflow-y: auto;
+        width: 700px;
+    }
+
+}
+
+.main-container-btns {
+    margin-bottom: 20px;
+
+    .main-content-btn {
+        margin-right: 12px;
+    }
+}
