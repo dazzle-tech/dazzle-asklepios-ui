@@ -13,17 +13,22 @@ import { Form, Stack, Divider } from 'rsuite';
 import './styles.less';
 import { newApUser } from '@/types/model-types-constructor';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import Translate from '@/components/Translate';
+import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import TrashIcon from '@rsuite/icons/Trash';
 
+const { Column, HeaderCell, Cell } = Table;
 const AddEditUser = ({
   open,
   setOpen,
 //   width,
   user,
-  setUser,
-  readyUser,
-  setReadyUser,
+//   setUser,
+//   readyUser,
+//   setReadyUser,
   handleSave,
-  facilityListResponse,
+//   facilityListResponse,
+  selectedFacility
 //   accessRoleListResponse
 }) => {
  
@@ -59,7 +64,7 @@ const AddEditUser = ({
                               appearance="primary"
                               icon={<AddOutlineIcon />}
                               disabled={!selectedFacility?.key}
-                              onClick={() => setNewDepartmentPopupOpen(true)}
+                            //   onClick={() => setNewDepartmentPopupOpen(true)}
                             >
                               New Department
                             </IconButton>
