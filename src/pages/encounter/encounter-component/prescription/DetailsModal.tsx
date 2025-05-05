@@ -39,7 +39,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
     const [inst, setInst] = useState(null);
     const [typing, setTyping] = React.useState(false);
     const [inputValue, setInputValue] = React.useState('');
-    const [selectedOption, setSelectedOption] = useState("3010606785535008");
+    const [selectedOption, setSelectedOption] = useState(null);
     const [indicationsDescription, setindicationsDescription] = useState<string>('');
     const { data: DurationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_DURATION');
     const { data: administrationInstructionsLovQueryResponse } = useGetLovValuesByCodeQuery('PRESC_INSTRUCTIONS');
@@ -83,8 +83,9 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
                 
                 setCustomeinst({...customeinst,
                     dose:instruc?.dose,
-                    unit:instruc.unitLkey,
-                    frequency:instruc.frequencyLkey})
+                    unit:instruc?.unitLkey,
+                    frequency:instruc?.frequencyLkey,
+                    roa:instruc?.roaLkey})
             }
         }
       

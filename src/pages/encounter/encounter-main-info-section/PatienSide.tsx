@@ -40,12 +40,7 @@ import { newApEncounter } from '@/types/model-types-constructor';
 import { ApAttachment } from '@/types/model-types';
 import './styles.less'
 const PatientSide = ({ patient, encounter }) => {
-    const [openAllargyModal, setOpenAllargyModal] = useState(false);
-    const [openWarningModal, setOpenWarningModal] = useState(false);
-    const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
     const profileImageFileInputRef = useRef(null);
-    const [upload, uploadMutation] = useUploadMutation();
-    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
     const [showCanceled, setShowCanceled] = useState(true);
 
@@ -63,8 +58,6 @@ const PatientSide = ({ patient, encounter }) => {
     ];
 
 
-    const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({ ...initialListRequest, filters });
-    const { data: warningsListResponse, refetch: fetchwarning } = useGetWarningsQuery({ ...initialListRequest, filters });
     const { data: patirntObservationlist } = useGetObservationSummariesQuery({
         ...initialListRequest,
         sortBy: 'createdAt',
@@ -152,7 +145,7 @@ const PatientSide = ({ patient, encounter }) => {
 
             <div className='info-section'>
                 <div className='info-column'>
-                    <Text className='info-label'>Document No</Text>
+                    <Text className='info-label'>Document Type</Text>
                     <Text className='info-value'>
 
                         {patient?.documentTypeLvalue?.lovDisplayVale}
@@ -162,7 +155,7 @@ const PatientSide = ({ patient, encounter }) => {
 
                 <div className='info-column'
                 >
-                    <Text className='info-label'>Document Type</Text>
+                    <Text className='info-label'>Document No</Text>
                     <Text className='info-value'
                     > {patient?.documentNo}</Text>
 

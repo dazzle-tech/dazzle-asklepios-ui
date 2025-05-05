@@ -219,7 +219,8 @@ const Prescription = ({ edit, patient, encounter }) => {
                 submittedAt: Date.now()
             }).unwrap();
             dispatch(notify('submetid  Successfully'));
-            handleCleare();
+           await handleCleare();
+            setPreKey(null)
             preRefetch().then(() => "");
             medicRefetch().then(() => "");
 
@@ -249,7 +250,8 @@ const Prescription = ({ edit, patient, encounter }) => {
             indicationUseLkey: null
         })
 
-        setCustomeinst({ dose: null, frequency: null, unit: null, roa: null })
+        setCustomeinst({ dose: null, frequency: null, unit: null, roa: null });
+        
       
     }
 
@@ -282,7 +284,7 @@ const Prescription = ({ edit, patient, encounter }) => {
 
     }
     const handleSavePrescription = async () => {
-        handleCleare();
+       await handleCleare();
         setPreKey(null);
        
 
@@ -556,12 +558,7 @@ const Prescription = ({ edit, patient, encounter }) => {
             >
                 Cancle
             </MyButton>
-            <MyButton
-                prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
-                onClick={handleCleare}
-            >
-                Clear
-            </MyButton>
+       
             <Checkbox
                 checked={!showCanceled}
                 onChange={() => {

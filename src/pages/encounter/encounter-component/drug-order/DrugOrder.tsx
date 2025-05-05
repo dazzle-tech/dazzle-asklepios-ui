@@ -64,7 +64,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
         ],
     });
-    const [orderMedication, setOrderMedication] = useState<ApDrugOrderMedications>(
+    const [orderMedication, setOrderMedication] = useState<any>(
         {
             ...newApDrugOrderMedications,
             drugOrderKey: drugKey,
@@ -238,8 +238,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
             }).unwrap();
             dispatch(notify({msg:'Submetid  Successfully' ,sev:'success'}));
            await handleCleare();
-           await ordRefetch()
-          await  medicRefetch()
+           setDrugKey(null)
 
         }
         catch (error) {
@@ -505,18 +504,11 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
                     prefixIcon={() => <BlockIcon />}
                     onClick={() => setOpenCancellationReasonModel(true)}
-                    disabled={orderMedication.key == null ? true : false}
+                    disabled={orderMedication.statusLvalue?.lovDisplayVale !== 'New'}
                 >
                     <Translate> Cancle</Translate>
                 </MyButton>
-                <MyButton
-                    prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
-                    onClick={handleCleare}
-
-                >
-                    Clear
-                </MyButton>
-
+               
                 <Checkbox
                     checked={!showCanceled}
                     onChange={() => {
