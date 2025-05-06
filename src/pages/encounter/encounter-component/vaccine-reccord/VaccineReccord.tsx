@@ -233,61 +233,22 @@ const VaccineReccord = ({ patient }) => {
                     <Loader content="Loading Vaccines ..." />
                 </div>
             )}
-            {vaccineListResponseLoading?.object?.length > 0 ? (
-                <div className="main-container-list-table">
-                    <div className="vaccine-sidebar">
-                        <List bordered>
-                            {vaccineListResponseLoading.object.map((vaccine, index) => (
-                                <List.Item key={index} className="vaccine-list-item">
-                                    <Whisper
-                                        trigger="hover"
-                                        placement="top"
-                                        container={() => document.querySelector('.vaccine-list-item')}
-                                        speaker={<Tooltip>{vaccine.vaccineName}</Tooltip>}
-                                    >
-                                        <MyButton
-                                            className="full-width-button"
-                                            onClick={() => {
-                                                setSelectedVaccine(vaccine);
-                                                setVaccine(vaccine);
-                                            }}
-                                            appearance={
-                                                selectedVaccine?.vaccineName === vaccine.vaccineName
-                                                    ? 'primary'
-                                                    : 'ghost'
-                                            }
-                                        >
-                                            {vaccine.vaccineName}
-                                        </MyButton>
-                                    </Whisper>
-                                </List.Item>
-                            ))}
-                        </List>
-                    </div>
-                    <div className="vaccine-details-container">
-                        {formAndTable}
-                    </div>
-                </div>
-            ) : (
-                <>
-                    <div className='main-container-btns'>
-                        {vaccineListResponseLoading?.object?.map((vaccine, index) => (
-                            <MyButton
-                                key={index}
-                                className='main-content-btn'
-                                onClick={() => {
-                                    setSelectedVaccine(vaccine);
-                                    setVaccine(vaccine);
-                                }}
-                                appearance={selectedVaccine?.vaccineName === vaccine.vaccineName ? 'primary' : 'ghost'}
-                            >
-                                {vaccine.vaccineName}
-                            </MyButton>
-                        ))}
-                    </div>
-                    {formAndTable}
-                </>
-            )}
+            <div className='main-container-btns'>
+                {vaccineListResponseLoading?.object?.map((vaccine, index) => (
+                    <MyButton
+                        key={index}
+                        className='main-content-btn'
+                        onClick={() => {
+                            setSelectedVaccine(vaccine);
+                            setVaccine(vaccine);
+                        }}
+                        appearance={selectedVaccine?.vaccineName === vaccine.vaccineName ? 'primary' : 'ghost'}
+                    >
+                        {vaccine.vaccineName}
+                    </MyButton>
+                ))}
+            </div>
+            {formAndTable}
         </>
     );
 };
