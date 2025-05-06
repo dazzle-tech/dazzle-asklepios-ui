@@ -24,6 +24,7 @@ const AddEncounterVaccine = ({
     vaccineObject,
     vaccineDoseObjet,
     vaccineBrandObject,
+    refetch,
     isDisabled=false
 }) => {
     const authSlice = useAppSelector(state => state.auth);
@@ -118,8 +119,6 @@ const AddEncounterVaccine = ({
     });
     // Fetch full vaccine list
     const { data: vaccineListResponseLoading } = useGetVaccineListQuery(vaccineListRequest);
-    // Refetch encounter vaccine data when needed
-    const {refetch: encounterVaccine } = useGetEncounterVaccineQuery(encounterVaccineListRequest);
     // Fetch vaccine brands list based on selected vaccine
     const { data: vaccineBrandsListResponseLoading } = useGetVaccineBrandsListQuery(vaccineBrandsListRequest, {
         skip: !vaccine?.key,
@@ -182,7 +181,7 @@ const AddEncounterVaccine = ({
         setVaccineDoseInterval({ ...newApVaccineDosesInterval });
         setHasExternalFacility({ isHas: false });
         setAdministrationReactions({ administrationReactionsLkey: null });
-        setSearchKeyword(" ");
+        setSearchKeyword("");
     };
     //handle Save Encounter Vaccine
     const handleSaveEncounterVaccine = () => {
@@ -190,14 +189,14 @@ const AddEncounterVaccine = ({
             saveEncounterVaccine({ ...encounterVaccination, vaccineKey: vaccine.key, vaccineBrandKey: vaccineBrand.key, vaccineDoseKey: vaccineDose.key, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
                 dispatch(notify('Encounter Vaccine Added Successfully'));
                 setEncounterVaccination({ ...newApEncounterVaccination, statusLkey: null })
-                encounterVaccine();
+                refetch();
                 handleClearField();
                 setOpen(false);
             });
         } else if (encounterVaccination.key) {
             saveEncounterVaccine({ ...encounterVaccination, vaccineKey: vaccine.key, vaccineBrandKey: vaccineBrand.key, vaccineDoseKey: vaccineDose.key, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap().then(() => {
                 dispatch(notify('Encounter Vaccine Updated Successfully'));
-                encounterVaccine();
+                refetch();
                 handleClearField();
                 setOpen(false);
             });
