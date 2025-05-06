@@ -1,5 +1,6 @@
 import { camelCaseToLabel, fromCamelCaseToDBName } from '@/utils';
 import React, { useEffect, useState, ForwardedRef } from 'react';
+import { TimePicker } from 'rsuite';
 import {
   Checkbox,
   DatePicker,
@@ -82,7 +83,7 @@ const MyInput = ({
             value={record[fieldName] ? record[fieldName] : ''}
             accepter={Textarea}
             onChange={handleValueChange}
-            
+
           />
         );
       case 'checkbox':
@@ -101,13 +102,29 @@ const MyInput = ({
         return (
           <Form.Control
             className="custom-date-input"
-            style={{ width: props?.width ?? 145, '--input-height': `${props?.height ?? 30}px` } as React.CSSProperties}
+            style={{ width: props?.width ?? 145, '--input-height': `${props?.height ?? 20}px` } as React.CSSProperties}
             disabled={props.disabled}
             name={fieldName}
             value={record[fieldName] ? new Date(record[fieldName]) : null}
             accepter={CustomDateTimePicker}
             onChange={handleValueChange}
             placeholder={props.placeholder}
+          />
+        );
+      case 'time':
+        return (
+          <Form.Control
+            className="custom-time-input"
+            style={{ width: props?.width ?? 145, '--custom-time-input': `${props?.height ?? 30}px` } as React.CSSProperties}
+            disabled={props.disabled}
+            name={fieldName}
+            value={record[fieldName] ? record[fieldName] : null}
+            accepter={TimePicker}
+            onChange={(value) => { handleValueChange(value) }}
+            onClean={() => { handleValueChange(null) }}
+            placeholder={props.placeholder}
+            format="HH:mm"
+            cleanable
           />
         );
       case 'select':

@@ -15,21 +15,31 @@ const AdvancedModal = ({
     rightContent,
     footerButtons = null,
     hideCanel = false,
+    position = "center",
     actionButtonLabel = "Save",
     actionButtonFunction = null,
     height = 650,
-    size="1450px"
+    size = "1450px",
+    leftWidth = "30%",
+    rightWidth = "70%",
+    isDisabledActionBtn = false,
+
 }) => {
+    const modalClass =
+        position === "left"
+            ? "left-modal"
+            : position === "right"
+                ? "rigth-modal"
+                : "";
     return (
         <Modal
             open={open}
             onClose={() => setOpen(false)}
             size={size}
-            className="custom-advanced-modal"
+            className={`custom-advanced-modal ${modalClass}`}
         >
-            <Modal.Body className="modal-body-flex" style={{ height: `${height}px` , maxHeight:"none"}}
-            >
-                <div className="modal-left-content" >
+            <Modal.Body className="modal-body-flex" style={{ height: `${height}px`, maxHeight: "none" }}>
+                <div className="modal-left-content" style={{ width: `${leftWidth}` }}>
                     <div className="modal-left-header">
                         <div className="modal-left-title">
                             <span>{leftTitle}</span>
@@ -38,7 +48,7 @@ const AdvancedModal = ({
                     <div className="modal-left-body" style={{ height: `${height - 108}px` }}
                     >{leftContent}</div>
                 </div>
-                <div className="modal-right-content">
+                <div className="modal-right-content" style={{ width: `${rightWidth}` }}>
                     <div className="modal-right-header">
                         <div className="modal-right-title">
                             <span className="modal-right-main-title">{rightTitle}</span>
@@ -55,7 +65,7 @@ const AdvancedModal = ({
                         <div className="modal-right-footer-buttons">
                             {!hideCanel && <MyButton appearance="subtle" onClick={() => setOpen(false)}>Cancel</MyButton>}
                             {footerButtons}
-                            <MyButton onClick={actionButtonFunction}>{actionButtonLabel}</MyButton>
+                            <MyButton disabled={isDisabledActionBtn} onClick={actionButtonFunction}>{actionButtonLabel}</MyButton>
                         </div>
                     </div>
                 </div>
