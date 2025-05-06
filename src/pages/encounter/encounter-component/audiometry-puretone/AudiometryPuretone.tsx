@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppSelector, useAppDispatch } from '@/hooks';
-import { Checkbox, IconButton, Table } from 'rsuite';
+import { Checkbox } from 'rsuite';
 import { useSaveAudiometryPuretoneMutation, useGetAudiometryPuretonesQuery } from '@/services/encounterService';
 import PlusIcon from '@rsuite/icons/Plus';
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import Translate from '@/components/Translate';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
+import { MdModeEdit } from 'react-icons/md';
 import MyButton from '@/components/MyButton/MyButton';
 import CancellationModal from '@/components/CancellationModal';
 import { newApAudiometryPuretone } from '@/types/model-types-constructor';
@@ -14,10 +13,9 @@ import { ApAudiometryPuretone } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import AddAudiometryPuretone from './AddAudiometryPuretone';
-const { Column, HeaderCell, Cell } = Table
+import MyTable from '@/components/MyTable';
 const AudiometryPuretone = ({ patient, encounter }) => {
     const authSlice = useAppSelector(state => state.auth);
-    const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
     const [open, setOpen] = useState(false);
     const [audiometryPuretone, setAudiometryPuretone] = useState<ApAudiometryPuretone>({
         ...newApAudiometryPuretone
@@ -34,7 +32,7 @@ const AudiometryPuretone = ({ patient, encounter }) => {
         hearingLossTypeLkey: null,
         hearingLossDegreeLkey: null,
     });
-    const [ saveAudiometryPureton ] = useSaveAudiometryPuretoneMutation();
+    const [saveAudiometryPureton] = useSaveAudiometryPuretoneMutation();
     const [popupCancelOpen, setPopupCancelOpen] = useState(false);
     const [audiometryPuretonStatus, setAudiometryPuretonStatus] = useState('');
     const [allData, setAllData] = useState(false);
@@ -71,98 +69,33 @@ const AudiometryPuretone = ({ patient, encounter }) => {
             return 'selected-row';
         } else return '';
     };
-
-    const handleExpanded = (rowData) => {
-        let open = false;
-        const nextExpandedRowKeys = [];
-
-        expandedRowKeys.forEach(key => {
-            if (key === rowData.key) {
-                open = true;
-            } else {
-                nextExpandedRowKeys.push(key);
-            }
+    // Change page event handler
+    const handlePageChange = (_: unknown, newPage: number) => {
+        setAudiometryPuretoneListRequest({ ...audiometryPuretoneListRequest, pageNumber: newPage + 1 });
+    };
+    // Change number of rows per page
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setAudiometryPuretoneListRequest({
+            ...audiometryPuretoneListRequest,
+            pageSize: parseInt(event.target.value, 10),
+            pageNumber: 1 // Reset to first page
         });
-
-        if (!open) {
-            nextExpandedRowKeys.push(rowData.key);
-        }
-        setExpandedRowKeys(nextExpandedRowKeys);
     };
-    const renderRowExpanded = rowData => {
-        return (
-            <Table
-                data={[rowData]}
-                bordered
-                cellBordered
-                style={{ width: '100%', marginTop: '10px', overflow: "visible" }}
-                height={100}
-            >
-                <Column flexGrow={2} align="center" fullText>
-                    <HeaderCell>Created At / Created By</HeaderCell>
-                    <Cell>
-                        {rowData => (
-                            <>
-                                {rowData.createdAt ? new Date(rowData.createdAt).toLocaleString("en-GB") : ""}
-                                {" / "}
-                                {rowData?.createByUser?.fullName}
-                            </>
-                        )}
-                    </Cell>
-
-                </Column>
-                <Column flexGrow={2} align="center" fullText>
-                    <HeaderCell>Updated At / Updated By</HeaderCell>
-                    <Cell>
-                        {rowData => (
-                            <>
-                                {rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
-                                {" / "}
-                                {rowData?.updateByUser?.fullName}
-                            </>
-                        )}
-                    </Cell>
-                </Column>
-
-                <Column flexGrow={2} align="center" fullText>
-                    <HeaderCell>Cancelled At / Cancelled By</HeaderCell>
-                    <Cell dataKey="deletedAt" >
-                        {rowData => (
-                            <>
-                                {rowData.deletedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
-                                {" / "}
-                                {rowData?.deleteByUser?.fullName}
-                            </>
-                        )}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} align="center" fullText>
-                    <HeaderCell>Cancelliton Reason</HeaderCell>
-                    <Cell dataKey="cancellationReason" />
-                </Column>
-            </Table>
-
-
-        );
-    };
-    const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
-        <Cell {...props} style={{ padding: 5 }}>
-            <IconButton
-                appearance="subtle"
-                onClick={() => {
-                    onChange(rowData);
-                }}
-                icon={
-                    expandedRowKeys.some(key => key === rowData["key"]) ? (
-                        <CollaspedOutlineIcon />
-                    ) : (
-                        <ExpandOutlineIcon />
-                    )
-                }
-            />
-        </Cell>
-    );
-
+    // Handle Add NewAudiometry Puretone Record
+    const handleAddNewAudiometryPuretone = () => {
+        handleClearField();
+        setOpen(true);
+    }
+    // Handle Clear Fields
+    const handleClearField = () => {
+        setAudiometryPuretone({
+            ...newApAudiometryPuretone,
+            earExamFindingsLkey: null,
+            maskedUsed: false,
+            hearingLossTypeLkey: null,
+            hearingLossDegreeLkey: null,
+        });
+    }
     // Handle Audiometry Puretone Record
     const handleCancle = () => {
         //TODO convert key to code
@@ -283,6 +216,115 @@ const AudiometryPuretone = ({ patient, encounter }) => {
             };
         });
     }, [allData, audiometryPuretonStatus]);
+    // Pagination values
+    const pageIndex = audiometryPuretoneListRequest.pageNumber - 1;
+    const rowsPerPage = audiometryPuretoneListRequest.pageSize;
+    const totalCount = audiometryPuretonResponse?.extraNumeric ?? 0;
+
+    // Table Columns
+    const columns = [
+        {
+            key: 'expand',
+            title: '',
+            expandable: true,
+            render: (rowData) => (
+                <span style={{ fontWeight: 600 }}>#{rowData.key}</span>
+            )
+        },
+        {
+            key: 'testEnvironment',
+            title: 'Test Environment',
+            render: rowData => rowData?.testEnvironment
+        },
+        {
+            key: 'testReason',
+            title: 'Test Reason',
+            render: rowData => rowData?.testReason
+        },
+        {
+            key: 'earExamFindings',
+            title: 'Ear Exam Findings',
+            render: rowData =>
+                rowData?.earExamFindingsLvalue
+                    ? rowData.earExamFindingsLvalue.lovDisplayVale
+                    : rowData.earExamFindingsLkey
+        },
+        {
+            key: 'maskedUsed',
+            title: 'Masked Used',
+            render: rowData => rowData?.maskedUsed
+        },
+        {
+            key: 'hearingLossType',
+            title: 'Hearing Loss Type',
+            render: rowData =>
+                rowData?.hearingLossTypeLvalue
+                    ? rowData.hearingLossTypeLvalue.lovDisplayVale
+                    : rowData.hearingLossTypeLkey
+        },
+        {
+            key: 'hearingLossDegree',
+            title: 'Hearing Loss Degree',
+            render: rowData =>
+                rowData?.hearingLossDegreeLvalue
+                    ? rowData.hearingLossDegreeLvalue.lovDisplayVale
+                    : rowData.hearingLossDegreeLkey
+        },
+        {
+            key: 'recommendations',
+            title: 'Recommendations',
+            render: rowData => rowData?.recommendations
+        },
+        {
+            key: 'additionalNotes',
+            title: 'Additional Notes',
+            render: rowData => rowData?.additionalNotes
+        },
+        {
+            key: "details",
+            title: <Translate>Add details</Translate>,
+            flexGrow: 2,
+            fullText: true,
+            render: rowData => {
+                return (
+                    <MdModeEdit
+                        title="Edit"
+                        size={24}
+                        fill="var(--primary-gray)"
+                        onClick={() => {
+                            setAudiometryPuretone(rowData);
+                            setOpen(true);
+                        }}
+
+                    />
+                );
+            }
+        },
+        {
+            key: 'createdAt',
+            title: 'Created At / Created By',
+            expandable: true,
+            render: (row: any) => `${new Date(row.createdAt).toLocaleString('en-GB')} / ${row?.createByUser?.fullName}`
+        },
+        {
+            key: 'updatedAt',
+            title: 'Updated At / Updated By',
+            expandable: true,
+            render: (row: any) => row?.updatedAt ? `${new Date(row.updatedAt).toLocaleString('en-GB')} / ${row?.updateByUser?.fullName}` : ' '
+        },
+        {
+            key: 'deletedAt',
+            title: 'Cancelled At / Cancelled By',
+            expandable: true,
+            render: (row: any) => row?.deletedAt ? `${new Date(row.deletedAt).toLocaleString('en-GB')} / ${row?.deleteByUser?.fullName}` : ' '
+        },
+        {
+            key: 'cancellationReason',
+            title: 'Cancellation Reason',
+            dataKey: 'cancellationReason',
+            expandable: true,
+        }
+    ];
     return (
         <div>
             <div className='bt-div'>
@@ -311,108 +353,23 @@ const AudiometryPuretone = ({ patient, encounter }) => {
                     Show All
                 </Checkbox>
                 <div className='bt-right'>
-                    <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>Add </MyButton>
+                    <MyButton prefixIcon={() => <PlusIcon />} onClick={handleAddNewAudiometryPuretone}>Add </MyButton>
                 </div>
             </div>
-            <Table
-                height={600}
+            <MyTable
                 data={audiometryPuretonResponse?.object ?? []}
-                rowKey="key"
-                expandedRowKeys={expandedRowKeys}
-                renderRowExpanded={renderRowExpanded}
-                shouldUpdateScroll={false}
+                columns={columns}
+                height={600}
                 onRowClick={rowData => {
-                    setAudiometryPuretone({
-                        ...rowData
-                    });
+                    setAudiometryPuretone({ ...rowData });
                 }}
                 rowClassName={isSelected}
-            >
-                <Column width={70} align="center">
-                    <HeaderCell>#</HeaderCell>
-                    <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Test Environmen</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            rowData?.testEnvironment
-                        }
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Test Reason</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            rowData?.testReason
-                        }
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Ear Exam Findings</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.earExamFindingsLvalue
-                            ? rowData?.earExamFindingsLvalue.lovDisplayVale
-                            : rowData?.earExamFindingsLkey
-                        }
-                    </Cell>
-                </Column >
-
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Masked used</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            rowData?.maskedUsed
-                        }
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Hearing Loss Type</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.hearingLossTypeLvalue
-                            ? rowData?.hearingLossTypeLvalue.lovDisplayVale
-                            : rowData?.hearingLossTypeLkey
-                        }
-                    </Cell>
-                </Column>
-                <Column flexGrow={3} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Hearing Loss Degree</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.hearingLossDegreeLvalue
-                            ? rowData?.hearingLossDegreeLvalue.lovDisplayVale
-                            : rowData?.hearingLossDegreeLkey
-                        }
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Recommendations </Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.recommendations}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Additional Notes</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.additionalNotes}
-                    </Cell>
-                </Column>
-            </Table>
+                page={pageIndex}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+            />
             <CancellationModal title="Cancel Audiometry Puretone" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={audiometryPuretone} setObject={setAudiometryPuretone} handleCancle={handleCancle} fieldName="cancellationReason" />
             <AddAudiometryPuretone open={open} setOpen={setOpen} patient={patient} encounter={encounter} audiometryPuretoneObject={audiometryPuretone} refetch={refetchAudiometryPureton} />
         </div>

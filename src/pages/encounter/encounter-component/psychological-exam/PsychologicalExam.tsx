@@ -51,7 +51,7 @@ const PsychologicalExam = ({ patient, encounter }) => {
         } else return '';
     };
     // Handle Add New  Psychological Exam Record
-    const handleAddNewOptometricExam = () => {
+    const handleAddNewPsychologicalExam = () => {
         handleClearField();
         setOpenAddModal(true);
     }
@@ -318,7 +318,7 @@ const PsychologicalExam = ({ patient, encounter }) => {
                     Show All
                 </Checkbox>
                 <div className='bt-right'>
-                    <MyButton prefixIcon={() => <PlusIcon />} onClick={handleAddNewOptometricExam}>Add </MyButton>
+                    <MyButton prefixIcon={() => <PlusIcon />} onClick={handleAddNewPsychologicalExam}>Add </MyButton>
                 </div>
             </div>
             <MyTable

@@ -84,6 +84,18 @@ const OptometricExam = ({ patient, encounter }) => {
       return 'selected-row';
     } else return '';
   };
+  // Change page event handler
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setOptometricExamListRequest({ ...optometricExamListRequest, pageNumber: newPage + 1 });
+  };
+  // Change number of rows per page
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setOptometricExamListRequest({
+      ...optometricExamListRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1 // Reset to first page
+    });
+  };
   // Handle Cancel Optometric Exam Record
   const handleCancle = () => {
     //TODO convert key to code
@@ -242,6 +254,11 @@ const OptometricExam = ({ patient, encounter }) => {
       };
     });
   }, [allData, optometricExamStatus]);
+
+  // Pagination values
+  const pageIndex = optometricExamListRequest.pageNumber - 1;
+  const rowsPerPage = optometricExamListRequest.pageSize;
+  const totalCount = optometricExamResponse?.extraNumeric ?? 0;
 
   // Table Columns
   const columns = [
@@ -454,6 +471,11 @@ const OptometricExam = ({ patient, encounter }) => {
           setTime({ time: formatTime(rowData?.timeOfMeasurement) });
         }}
         rowClassName={isSelected}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
       />
       <CancellationModal title="Cancel Optometric Exam" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={optometricExam} setObject={setOptometricExam} handleCancle={handleCancle} fieldName="cancellationReason" />
     </div>
