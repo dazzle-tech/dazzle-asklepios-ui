@@ -61,7 +61,7 @@ const AudiometryPuretone = ({ patient, encounter }) => {
     });
 
     // Fetch the list of Audiometry Pureton based on the provided request, and provide a refetch function
-    const { data: audiometryPuretonResponse, refetch: refetchAudiometryPureton } = useGetAudiometryPuretonesQuery(audiometryPuretoneListRequest);
+    const { data: audiometryPuretonResponse, refetch: refetchAudiometryPureton, isLoading } = useGetAudiometryPuretonesQuery(audiometryPuretoneListRequest);
 
     // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
     const isSelected = rowData => {
@@ -359,6 +359,7 @@ const AudiometryPuretone = ({ patient, encounter }) => {
             <MyTable
                 data={audiometryPuretonResponse?.object ?? []}
                 columns={columns}
+                loading={isLoading}
                 height={600}
                 onRowClick={rowData => {
                     setAudiometryPuretone({ ...rowData });

@@ -316,6 +316,7 @@ const OptometricExam = ({ patient, encounter }) => {
     {
       key: 'pinholeTestResult',
       title: 'Pinhole Test Result',
+      expandable: true,
       render: (row: any) =>
         row?.pinholeTestResultLvalue
           ? row.pinholeTestResultLvalue.lovDisplayVale
