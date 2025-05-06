@@ -8,11 +8,13 @@ import {
     Text,
     Dropdown,
     DatePicker,
+    Row,
+    Col,
 } from 'rsuite';
 import PatientOrder from '../diagnostics-order';
 import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
 import CheckIcon from '@rsuite/icons/Check';
-import { faBroom ,faFile} from '@fortawesome/free-solid-svg-icons';
+import { faBroom, faFile } from '@fortawesome/free-solid-svg-icons';
 
 import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
@@ -32,7 +34,10 @@ import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
-const Details = ({ patient, encounter, edit, procedure, setProcedure ,openDetailsModal,setOpenDetailsModal}) => {
+import AdvancedModal from '@/components/AdvancedModal';
+import './styles.less'
+import Diagnosis from './Diagnosis';
+const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetailsModal, setOpenDetailsModal ,proRefetch }) => {
     const [openOrderModel, setOpenOrderModel] = useState(false);
     const [editing, setEditing] = useState(false);
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -79,64 +84,64 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure ,openDetail
     const department = departmentListResponse?.object.filter(
         item => item.departmentTypeLkey === '5673990729647006'
     );
-     useEffect(() => {
+    useEffect(() => {
         if (procedure.indications != null || procedure.indications != '') {
-          setindicationsDescription(prevadminInstructions => {
-            const currentIcd = icdListResponseLoading?.object?.find(
-              item => item.key === procedure.indications
-            );
-    
-            if (!currentIcd) return prevadminInstructions;
-    
-            const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
-    
-            return prevadminInstructions ? `${prevadminInstructions}\n${newEntry}` : newEntry;
-          });
+            setindicationsDescription(prevadminInstructions => {
+                const currentIcd = icdListResponseLoading?.object?.find(
+                    item => item.key === procedure.indications
+                );
+
+                if (!currentIcd) return prevadminInstructions;
+
+                const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
+
+                return prevadminInstructions ? `${prevadminInstructions}\n${newEntry}` : newEntry;
+            });
         }
-      }, [procedure.indications]);
-      useEffect(() => {
+    }, [procedure.indications]);
+    useEffect(() => {
         if (searchKeywordicd.trim() !== '') {
-          setIcdListRequest({
-            ...initialListRequest,
-            filterLogic: 'or',
-            filters: [
-              {
-                fieldName: 'icd_code',
-                operator: 'containsIgnoreCase',
-                value: searchKeywordicd
-              },
-              {
-                fieldName: 'description',
-                operator: 'containsIgnoreCase',
-                value: searchKeywordicd
-              }
-            ]
-          });
+            setIcdListRequest({
+                ...initialListRequest,
+                filterLogic: 'or',
+                filters: [
+                    {
+                        fieldName: 'icd_code',
+                        operator: 'containsIgnoreCase',
+                        value: searchKeywordicd
+                    },
+                    {
+                        fieldName: 'description',
+                        operator: 'containsIgnoreCase',
+                        value: searchKeywordicd
+                    }
+                ]
+            });
         }
-      }, [searchKeywordicd]);
-    
-      useEffect(() => {
+    }, [searchKeywordicd]);
+
+    useEffect(() => {
         setListRequestPro(prev => ({
-          ...prev,
-          filters: [
-            ...(procedure?.categoryKey
-              ? [
-                {
-                  fieldName: 'category_lkey',
-                  operator: 'match',
-                  value: procedure?.categoryKey
-                }
-              ]
-              : [])
-          ]
+            ...prev,
+            filters: [
+                ...(procedure?.categoryKey
+                    ? [
+                        {
+                            fieldName: 'category_lkey',
+                            operator: 'match',
+                            value: procedure?.categoryKey
+                        }
+                    ]
+                    : [])
+            ]
         }));
-      }, [procedure?.categoryKey]);
-      useEffect(() => {
+    }, [procedure?.categoryKey]);
+    useEffect(() => {
         if (procedure.currentDepartment) {
-          setProcedure({ ...procedure, departmentKey: null, faciltyLkey: null });
+            setProcedure({ ...procedure, departmentKey: null, faciltyLkey: null });
         }
-      }, [procedure.currentDepartment]);
- 
+    }, [procedure.currentDepartment]);
+
     const dispatch = useAppDispatch();
     const handleClear = () => {
         setProcedure({
@@ -154,37 +159,35 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure ,openDetail
             procedureNameKey: null
         });
     };
-    const handleSave = async () => {      
+    const handleSave = async () => {
         try {
             await saveProcedures({
                 ...procedure,
                 statusLkey: '3621653475992516',
                 indications: indicationsDescription,
-                encounterKey: encounter.key
+                encounterKey: encounter.key,
+                scheduledDateTime: procedure.scheduledDateTime ? new Date(procedure?.scheduledDateTime)?.getTime() : null,
             })
                 .unwrap()
                 .then(() => {
-                   
-                });
+                    proRefetch();
+                    setOpenDetailsModal(false)
+                });   
             handleClear();
             setOpenDetailsModal(false);
-            dispatch(notify('saved  Successfully'));
+            dispatch(notify({ msg: 'Saved  Successfully', sev: "success" }));
         } catch (error) {
-            dispatch(notify('Save Failed'));
+            dispatch(notify({ msg: 'Save Failed', sev: "error" }));
         }
     };
     const handleSearchIcd = value => {
         setSearchKeywordicd(value);
     };
     return (<>
-        <MyModal
+        <AdvancedModal
             open={openDetailsModal}
             setOpen={setOpenDetailsModal}
-            title='Procedure Details'
             actionButtonFunction={handleSave}
-            position='right'
-            size='800'
-
             footerButtons={<div className='footer-buttons'>
                 <MyButton
                     onClick={handleClear}
@@ -203,287 +206,254 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure ,openDetail
                     Order Related Tests
                 </MyButton>
                 <MyButton
-                onClick={() => setAttachmentsModalOpen(true)}
-                prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
-              >Attachment File</MyButton></div>}
-            content={
-                <div className='basuc-div'>
-                    <div className='div-parent' >
-                        <div style={{ flex: 1 }} >
-                            <Form layout="inline" fluid >
-                                <MyInput
-                                    column
-                                    disabled={editing}
-                                    width={200}
-                                    fieldType="select"
-                                    fieldLabel="Category Type"
-                                    selectData={CategoryLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    fieldName={'categoryKey'}
-                                    record={procedure}
-                                    setRecord={setProcedure}
-                                />
-                            </Form>
-                        </div>
-                        <div style={{ flex: 1 }} >
-                            <Form layout="inline" fluid >
-                                <MyInput
-                                    column
-                                    disabled={editing}
-                                    width={200}
-                                    fieldType="select"
-                                    fieldLabel="Procedure Name"
-                                    selectData={procedureQueryResponse?.object ?? []}
-                                    selectDataLabel="name"
-                                    selectDataValue="key"
-                                    fieldName={'procedureNameKey'}
-                                    record={procedure}
-                                    setRecord={setProcedure}
-                                />
-                            </Form>
-                        </div>
-                        <div style={{ flex: 1 }} >
-                            <Form layout="inline" fluid >
-                                <MyInput
-                                    column
-                                    disabled={editing}
-                                    width={200}
-                                    fieldType="select"
-                                    fieldLabel="Procedure Level"
-                                    selectData={ProcedureLevelLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    fieldName={'procedureLevelLkey'}
-                                    record={procedure}
-                                    setRecord={setProcedure}
-                                />
-                            </Form>
-                        </div>
+                    onClick={() => setAttachmentsModalOpen(true)}
+                    prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
+                >Attachment File</MyButton></div>}
+            rightContent={<>
+                <Row gutter={20}>
+                    <Col md={12}>
+                        <Row className="rows-gap">
+                            <Col md={12}>
+                                <Form fluid>
+                                    <MyInput
 
-                    </div>
-                    <div className='div-parent' >
-                        <div style={{ flex: 1 }} >
-                            <Form layout="inline" fluid >
-                                <MyInput
-                                    column
-                                    disabled={editing}
-                                    width={200}
-                                    fieldType="select"
-                                    fieldLabel="Priority"
-                                    selectData={priorityLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    fieldName={'priorityLkey'}
-                                    record={procedure}
-                                    setRecord={setProcedure}
-                                />
+                                        disabled={editing}
+                                        width="100%"
+                                        fieldType="select"
+                                        fieldLabel="Category Type"
+                                        selectData={CategoryLovQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        fieldName={'categoryKey'}
+                                        record={procedure}
+                                        setRecord={setProcedure}
+                                    />
+                                </Form>
+                            </Col>
+                            <Col md={12}>
+                                <Form fluid>
+                                    <MyInput
 
-                            </Form>
-                        </div>
-                        <div style={{ flex: 1 }} >
-                            <Form layout="inline" fluid >
+                                        disabled={editing}
+                                        width="100%"
+                                        fieldType="select"
+                                        fieldLabel="Procedure Name"
+                                        selectData={procedureQueryResponse?.object ?? []}
+                                        selectDataLabel="name"
+                                        selectDataValue="key"
+                                        fieldName={'procedureNameKey'}
+                                        record={procedure}
+                                        setRecord={setProcedure}
+                                    />
+                                </Form></Col>
+                        </Row>
+                        <Row className="rows-gap">
+                            <Col md={12}>
+                                <Form fluid>
+                                    <MyInput
 
-                                <MyInput
-                                    column
-                                    disabled={editing ? editing : procedure.currentDepartment}
-                                    width={200}
-                                    fieldType="select"
-                                    fieldLabel="Facilty "
-                                    selectData={faciltyypesLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    fieldName={'faciltyLkey'}
-                                    record={procedure}
-                                    setRecord={setProcedure}
-                                />
-                            </Form>
-                        </div>
-                        <div style={{ flex: 1 }} >
-                            <Form layout="inline" fluid >
-                                <MyInput
-                                    column
-                                    disabled={editing ? editing : procedure.currentDepartment}
-                                    width={200}
-                                    fieldType="select"
-                                    fieldLabel="Department"
-                                    selectData={department ?? []}
-                                    selectDataLabel="name"
-                                    selectDataValue="key"
-                                    fieldName={'departmentKey'}
-                                    record={procedure}
-                                    setRecord={setProcedure}
-                                />
-                            </Form>
-                        </div>
+                                        disabled={editing}
+                                        width="100%"
+                                        fieldType="select"
+                                        fieldLabel="Procedure Level"
+                                        selectData={ProcedureLevelLovQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        fieldName={'procedureLevelLkey'}
+                                        record={procedure}
+                                        setRecord={setProcedure}
+                                    />
+                                </Form>
+                            </Col>
+                            <Col md={12}>
+                                <Form fluid>
+                                    <MyInput
 
-                    </div>
-                    <div className='div-parent' >
-                        <div style={{ flex: 1 }} >
-                            <Form layout="inline" fluid >
-                                <MyInput
-                                    column
-                                    width={200}
-                                    fieldType="select"
-                                    fieldLabel="Body Part "
-                                    selectData={bodypartLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    fieldName={'bodyPartLkey'}
-                                    record={procedure}
-                                    setRecord={setProcedure}
-                                />
-                            </Form>
-                        </div>
-                        <div style={{ flex: 1 }} >
-                            <Form layout="inline" fluid >
-                                <MyInput
-                                    column
-                                    width={200}
-                                    fieldType="select"
-                                    fieldLabel="Side"
-                                    selectData={sideLovQueryResponse?.object ?? []}
-                                    selectDataLabel="lovDisplayVale"
-                                    selectDataValue="key"
-                                    fieldName={'sideLkey'}
-                                    record={procedure}
-                                    setRecord={setProcedure}
-                                />
-                            </Form>
-                        </div>
-                        <div style={{ flex: 1 }} >
-                            <Form layout="inline" fluid >
+                                        disabled={editing}
+                                        width="100%"
+                                        fieldType="select"
+                                        fieldLabel="Priority"
+                                        selectData={priorityLovQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        fieldName={'priorityLkey'}
+                                        record={procedure}
+                                        setRecord={setProcedure}
+                                    />
+                                </Form></Col>
+                        </Row>
+                        <Row className="rows-gap">
+                            <Text className="font-style">Indication</Text>
+                        </Row>
+                        <Row className="rows-gap">
+                            <Col md={24}>
+                              
+                                <Row>
+                                    <Col md={24}>
+                                        <InputGroup inside style={{ width: "100%" }}>
+                                            <Input
+                                                placeholder="Search ICD-10"
+                                                value={searchKeywordicd}
+                                                onChange={handleSearchIcd}
+                                            />
+                                            <InputGroup.Button>
+                                                <SearchIcon />
+                                            </InputGroup.Button>
+                                        </InputGroup>
+                                        {searchKeywordicd && (
+                                            <Dropdown.Menu className="dropdown-menuresult">
+                                                {modifiedData?.map(mod => (
+                                                    <Dropdown.Item
+                                                        key={mod.key}
+                                                        eventKey={mod.key}
+                                                        onClick={() => {
+                                                            setProcedure({
+                                                                ...procedure,
+                                                                indications: mod.key
+                                                            });
+                                                            setSearchKeywordicd('');
+                                                        }}
+                                                    >
+                                                        <span style={{ marginRight: '19px' }}>{mod.icdCode}</span>
+                                                        <span>{mod.description}</span>
+                                                    </Dropdown.Item>
+                                                ))}
+                                            </Dropdown.Menu>
+                                        )}</Col>
 
-                                <MyInput
-                                    disabled={editing}
-                                    column
-                                    fieldType="checkbox"
-                                    fieldName="currentDepartment"
-                                    record={procedure}
-                                    setRecord={setProcedure}
-                                />
-                            </Form>
-                        </div>
+                                </Row>
+                                <Row>
+                                    <Col md={24}>
+                                        <Input
+                                            as="textarea"
+                                            disabled={true}
+                                            onChange={e => setindicationsDescription}
+                                            value={indicationsDescription || procedure.indications}
+                                            style={{ width: "100%" }}
+                                            rows={4}
+                                        /></Col>
+                                </Row>
+                            </Col>
+                        </Row>
 
-                    </div>
-                    <div className='div-parent' >
-                        <div style={{ flex: 1 }} >
+                    </Col>
+                    <Col md={12}>
+                        <Row className="rows-gap">
+                            <Col md={12}>
+                                <Form fluid>
 
-                            <Text style={{ marginTop: '6px', fontWeight: 'bold' }}>Scheduled Date</Text>
-                            <DatePicker
-                                disabled={editing}
-                                format="MM/dd/yyyy hh:mm aa"
-                                showMeridian
-                                value={
-                                    procedure.scheduledDateTime != 0
-                                        ? new Date(procedure.scheduledDateTime)
-                                        : new Date()
-                                }
-                                onChange={value => {
-                                    setProcedure({
-                                        ...procedure,
-                                        scheduledDateTime: value.getTime()
-                                    });
-                                }}
-                            />
+                                    <MyInput
 
-                        </div>
-                        <div style={{ flex: 1 }} >
-                            <Form layout="inline" fluid >
-                                <MyInput
-                                    column
-                                    width={200}
+                                        disabled={editing ? editing : procedure.currentDepartment}
+                                        width="100%"
+                                        fieldType="select"
+                                        fieldLabel="Facilty "
+                                        selectData={faciltyypesLovQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        fieldName={'faciltyLkey'}
+                                        record={procedure}
+                                        setRecord={setProcedure}
+                                    />
+                                </Form>
+                            </Col>
+                            <Col md={12}>
+                                <Form fluid>
+                                    <MyInput
 
-                                    disabled={editing}
-                                    fieldName="notes"
-                                    fieldType="textarea"
-                                    record={procedure}
-                                    setRecord={setProcedure}
-                                />
-                            </Form>
-                        </div>
-                        <div style={{ flex: 1 }} >
+                                        disabled={editing ? editing : procedure.currentDepartment}
+                                        width="100%"
+                                        fieldType="select"
+                                        fieldLabel="Department"
+                                        selectData={department ?? []}
+                                        selectDataLabel="name"
+                                        selectDataValue="key"
+                                        fieldName={'departmentKey'}
+                                        record={procedure}
+                                        setRecord={setProcedure}
+                                    />
+                                </Form></Col>
+                        </Row>
+                        <Row className="rows-gap">
+                            <Col md={12}>
+                                <Form fluid>
+                                    <MyInput
 
-                            <Text style={{ fontWeight: 'bold' }}>Indications</Text>
-                            <InputGroup inside style={{ width: ' 200px', margin: '3px' }}>
-                                <Input
-                                    placeholder="Search ICD-10"
-                                    value={searchKeywordicd}
-                                    onChange={handleSearchIcd}
-                                />
-                                <InputGroup.Button>
-                                    <SearchIcon />
-                                </InputGroup.Button>
-                            </InputGroup>
-                            {searchKeywordicd && (
-                                <Dropdown.Menu className="dropdown-menuresult">
-                                    {modifiedData?.map(mod => (
-                                        <Dropdown.Item
-                                            key={mod.key}
-                                            eventKey={mod.key}
-                                            onClick={() => {
-                                                setProcedure({
-                                                    ...procedure,
-                                                    indications: mod.key
-                                                });
-                                                setSearchKeywordicd('');
-                                            }}
-                                        >
-                                            <span style={{ marginRight: '19px' }}>{mod.icdCode}</span>
-                                            <span>{mod.description}</span>
-                                        </Dropdown.Item>
-                                    ))}
-                                </Dropdown.Menu>
-                            )}
-                            <Input
-                                as="textarea"
-                                disabled={true}
-                                onChange={e => setindicationsDescription}
-                                value={indicationsDescription || procedure.indications}
-                                style={{ width: 200 }}
-                                rows={4}
-                            />
+                                        width="100%"
+                                        fieldType="select"
+                                        fieldLabel="Body Part "
+                                        selectData={bodypartLovQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        fieldName={'bodyPartLkey'}
+                                        record={procedure}
+                                        setRecord={setProcedure}
+                                    />
+                                </Form>
+                            </Col>
+                            <Col md={12}>
+                                <Form fluid>
+                                    <MyInput
 
-                        </div>
+                                        width="100%"
+                                        fieldType="select"
+                                        fieldLabel="Side"
+                                        selectData={sideLovQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        fieldName={'sideLkey'}
+                                        record={procedure}
+                                        setRecord={setProcedure}
+                                    />
+                                </Form></Col>
+                        </Row>
+                        <Row className="rows-gap">
+                            <Col md={12}>
+                                <Form fluid>
+                                    <MyInput
+                                        width="100%"
+                                        disabled={editing}
+                                        fieldName='scheduledDateTime'
+                                        fieldType='datetime'
+                                        record={procedure}
+                                        setRecord={setProcedure}
+                                    />
+                                </Form></Col>
+                            <Col md={12}>
+                                <Form fluid>
+                                    <MyInput
+                                        disabled={editing}
+                                        width="100%"
+                                        fieldType="checkbox"
+                                        fieldName="currentDepartment"
+                                        record={procedure}
+                                        setRecord={setProcedure}
+                                    />
+                                </Form></Col>
+                        </Row>
+                        <Row className="rows-gap">
+                            <Col md={24}>
+                                <Form fluid>
+                                    <MyInput
+                                        width="100%"
+                                        disabled={editing}
+                                        fieldName="notes"
+                                        fieldType="textarea"
+                                        record={procedure}
+                                        setRecord={setProcedure}
+                                    />
+                                </Form>
+                            </Col>
+                        </Row>
+                    </Col>
+                </Row>
+            </>}
+            rightTitle="Procedure"
+            leftContent={<>
+            <Diagnosis patient={patient} encounter={encounter}/></>}
+        ></AdvancedModal>
 
-                    </div>
-                </div>
-            }
 
-
-        ></MyModal>
-        {/* <div style={{ display: 'flex', flexDirection: 'column', width: '300px' }}>
-          <Form layout="inline" fluid>
-            <Text>Diagnose</Text>
-            <textarea
-              value={
-                selectedDiagnose && selectedDiagnose.icdCode && selectedDiagnose.description
-                  ? `${selectedDiagnose.icdCode}, ${selectedDiagnose.description}`
-                  : ''
-              }
-              readOnly
-              rows={3}
-              cols={50}
-              style={{ width: '100%' }}
-            />
-            <Text>Finding Summery</Text>
-            <textarea value={summaryText} readOnly rows={5} cols={50} style={{ width: '100%' }} />
-          </Form>
-          <div style={{ display: 'flex', flexDirection: 'row' }}>
-            {fetchOrderAttachResponse.status != 'uninitialized' && (
-              <Button
-                style={{ marginTop: '20px' }}
-                appearance="link"
-                onClick={() =>
-                  handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)
-                }
-              >
-                Download <FileDownloadIcon style={{ scale: '1.4' }} />
-              </Button>
-            )}
-          
-          </div>
-        </div> */}
         <AttachmentModal
             isOpen={attachmentsModalOpen}
             setIsOpen={setAttachmentsModalOpen}
