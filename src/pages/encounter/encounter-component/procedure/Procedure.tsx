@@ -4,12 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { FaBedPulse, FaFileArrowDown } from "react-icons/fa6";
 import { MdModeEdit } from 'react-icons/md';
 import {
-  Button,
   Checkbox,
-  Divider,
-  Form,
-  Modal,
-  Stack,
   Table
 } from 'rsuite';
 import './styles.less';
@@ -22,8 +17,8 @@ import {
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
 
+import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
-import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import {
@@ -33,14 +28,12 @@ import {
 import {
   useGetDepartmentsQuery
 } from '@/services/setupService';
-import { ApProcedure } from '@/types/model-types';
 import { newApProcedure } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import BlockIcon from '@rsuite/icons/Block';
 import Details from './Details';
 import Perform from './Perform';
-import CancellationModal from '@/components/CancellationModal';
 
 const Referrals = ({ edit, patient, encounter }) => {
   const dispatch = useAppDispatch();
