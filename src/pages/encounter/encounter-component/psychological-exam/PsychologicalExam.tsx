@@ -2,11 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
 import PlusIcon from '@rsuite/icons/Plus';
 import { useAppSelector, useAppDispatch } from '@/hooks';
-import { Checkbox, IconButton, Table, } from 'rsuite';
+import { Checkbox, } from 'rsuite';
 import { useSavePsychologicalExamsMutation, useGetPsychologicalExamsQuery } from '@/services/encounterService';
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-import Translate from '@/components/Translate';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
+import { MdModeEdit } from 'react-icons/md'; import Translate from '@/components/Translate';
 import { newApPsychologicalExam } from '@/types/model-types-constructor';
 import { ApPsychologicalExam } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
@@ -14,11 +12,10 @@ import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import MyButton from '@/components/MyButton/MyButton';
 import AddPsychologicalExam from './AddPsychologicalExam';
 import CancellationModal from '@/components/CancellationModal';
-const { Column, HeaderCell, Cell } = Table
+import MyTable from '@/components/MyTable';
 const PsychologicalExam = ({ patient, encounter }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [openAddModal, setOpenAddModal] = useState(false);
-    const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
     const [psychologicalExam, setPsychologicalExam] = useState<ApPsychologicalExam>({ ...newApPsychologicalExam });
     const [savePsychologicalExam] = useSavePsychologicalExamsMutation();
     const [popupCancelOpen, setPopupCancelOpen] = useState(false);
@@ -46,99 +43,32 @@ const PsychologicalExam = ({ patient, encounter }) => {
         ],
     });
     // Fetch the list of psychological exams based on the provided request, and provide a refetch function
-    const { data: psychologicalExamResponse, refetch: refetchPsychologicalExam } = useGetPsychologicalExamsQuery(psychologicalExamListRequest);
+    const { data: psychologicalExamResponse, refetch: refetchPsychologicalExam, isLoading } = useGetPsychologicalExamsQuery(psychologicalExamListRequest);
     // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
     const isSelected = rowData => {
         if (rowData && psychologicalExam && psychologicalExam.key === rowData.key) {
             return 'selected-row';
         } else return '';
     };
-    // handle Expanded Table Functions
-    const handleExpanded = (rowData) => {
-        let open = false;
-        const nextExpandedRowKeys = [];
-        expandedRowKeys.forEach(key => {
-            if (key === rowData.key) {
-                open = true;
-            } else {
-                nextExpandedRowKeys.push(key);
-            }
-        });
+    // Handle Add New  Psychological Exam Record
+    const handleAddNewOptometricExam = () => {
+        handleClearField();
+        setOpenAddModal(true);
+    }
 
-        if (!open) {
-            nextExpandedRowKeys.push(rowData.key);
-        }
-        setExpandedRowKeys(nextExpandedRowKeys);
+    //handle Clear Fields
+    const handleClearField = () => {
+        setPsychologicalExam({
+            ...newApPsychologicalExam,
+            testTypeLkey: null,
+            unitLkey: null,
+            scoreLkey: null,
+            resultInterpretationLkey: null,
+            statusLkey: null,
+            requireFollowUp: false
+        });
     };
-    const renderRowExpanded = rowData => {
-        return (
-            <Table
-                data={[rowData]}
-                bordered
-                cellBordered
-                style={{ width: '100%', marginTop: '10px' }}
-                height={100}
-            >
-                <Column flexGrow={2} align="center" fullText>
-                    <HeaderCell>Created At / Created By</HeaderCell>
-                    <Cell>
-                        {rowData => (
-                            <>
-                                {rowData.createdAt ? new Date(rowData.createdAt).toLocaleString("en-GB") : ""}
-                                {" / "}
-                                {rowData?.createByUser?.fullName}
-                            </>
-                        )}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} align="center" fullText>
-                    <HeaderCell>Updated At / Updated By</HeaderCell>
-                    <Cell>
-                        {rowData => (
-                            <>
-                                {rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
-                                {" / "}
-                                {rowData?.updateByUser?.fullName}
-                            </>
-                        )}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} align="center" fullText>
-                    <HeaderCell>Cancelled At / Cancelled By</HeaderCell>
-                    <Cell dataKey="deletedAt" >
-                        {rowData => (
-                            <>
-                                {rowData.deletedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
-                                {" / "}
-                                {rowData?.deleteByUser?.fullName}
-                            </>
-                        )}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} align="center" fullText>
-                    <HeaderCell>Cancelliton Reason</HeaderCell>
-                    <Cell dataKey="cancellationReason" />
-                </Column>
-            </Table>
-        );
-    };
-    const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
-        <Cell {...props} style={{ padding: 5 }}>
-            <IconButton
-                appearance="subtle"
-                onClick={() => {
-                    onChange(rowData);
-                }}
-                icon={
-                    expandedRowKeys.some(key => key === rowData["key"]) ? (
-                        <CollaspedOutlineIcon />
-                    ) : (
-                        <ExpandOutlineIcon />
-                    )
-                }
-            />
-        </Cell>
-    );
+    // handle Cancel Psychological Exam Record
     const handleCancle = () => {
         //TODO convert key to code
         savePsychologicalExam({ ...psychologicalExam, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
@@ -147,7 +77,18 @@ const PsychologicalExam = ({ patient, encounter }) => {
             setPopupCancelOpen(false);
         });
     };
-
+    // Change page event handler
+    const handlePageChange = (_: unknown, newPage: number) => {
+        setPsychologicalExamListRequest({ ...psychologicalExamListRequest, pageNumber: newPage + 1 });
+    };
+    // Change number of rows per page
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setPsychologicalExamListRequest({
+            ...psychologicalExamListRequest,
+            pageSize: parseInt(event.target.value, 10),
+            pageNumber: 1 // Reset to first page
+        });
+    };
     // Effects
     useEffect(() => {
         setPsychologicalExamListRequest((prev) => ({
@@ -258,6 +199,111 @@ const PsychologicalExam = ({ patient, encounter }) => {
             };
         });
     }, [allData, psychologicalExamStatus]);
+
+    // Pagination values
+    const pageIndex = psychologicalExamListRequest.pageNumber - 1;
+    const rowsPerPage = psychologicalExamListRequest.pageSize;
+    const totalCount = psychologicalExamResponse?.extraNumeric ?? 0;
+
+
+    // Table Columns
+    const columns = [
+        {
+            key: 'index',
+            title: '#',
+            width: 70,
+            render: (rowData: any, index: number) => index + 1
+        },
+        {
+            key: 'testType',
+            title: <Translate>Test Type</Translate>,
+            render: (rowData: any) => rowData?.testTypeLvalue ? rowData?.testTypeLvalue.lovDisplayVale : rowData?.testTypeLkey
+        },
+        {
+            key: 'reason',
+            title: <Translate>Reason</Translate>,
+            render: (rowData: any) => rowData?.reason
+        },
+        {
+            key: 'testDuration',
+            title: <Translate>Test Duration</Translate>,
+            render: (rowData: any) => rowData?.testDuration ? `${rowData?.testDuration} ${rowData?.unitLvalue ? rowData?.unitLvalue.lovDisplayVale : rowData?.unitLkey}` : ' '
+        },
+        {
+            key: 'score',
+            title: <Translate>Score</Translate>,
+            render: (rowData: any) => rowData?.scoreLvalue ? rowData?.scoreLvalue.lovDisplayVale : rowData?.scoreLkey
+        },
+        {
+            key: 'resultInterpretation',
+            title: <Translate>Result Interpretation</Translate>,
+            render: (rowData: any) => rowData?.resultInterpretationLvalue ? rowData?.resultInterpretationLvalue.lovDisplayVale : rowData?.resultInterpretationLkey
+        },
+        {
+            key: 'clinicalObservations',
+            title: <Translate>Clinical Observations</Translate>,
+            render: (rowData: any) => rowData?.clinicalObservations
+        },
+        {
+            key: 'treatmentPlan',
+            title: <Translate>Treatment Plan</Translate>,
+            render: (rowData: any) => rowData?.treatmentPlan
+        },
+        {
+            key: 'additionalNotes',
+            title: <Translate>Additional Notes</Translate>,
+            render: (rowData: any) => rowData?.additionalNotes,
+            expandable: true,
+        },
+        {
+            key: 'followUpDate',
+            title: <Translate>Follow-up Date</Translate>,
+            render: (rowData: any) => rowData?.followUpDate ? new Date(rowData.followUpDate).toLocaleString("en-GB") : ""
+        },
+        {
+            key: "details",
+            title: <Translate>Add details</Translate>,
+            flexGrow: 2,
+            fullText: true,
+            render: rowData => {
+                return (
+                    <MdModeEdit
+                        title="Edit"
+                        size={24}
+                        fill="var(--primary-gray)"
+                        onClick={() => {
+                            setPsychologicalExam(rowData);
+                            setOpenAddModal(true);
+                        }}
+                    />
+                );
+            }
+        },
+        {
+            key: 'createdAt',
+            title: 'Created At / Created By',
+            expandable: true,
+            render: (row: any) => `${new Date(row.createdAt).toLocaleString('en-GB')} / ${row?.createByUser?.fullName}`
+        },
+        {
+            key: 'updatedAt',
+            title: 'Updated At / Updated By',
+            expandable: true,
+            render: (row: any) => row?.updatedAt ? `${new Date(row.updatedAt).toLocaleString('en-GB')} / ${row?.updateByUser?.fullName}` : ' '
+        },
+        {
+            key: 'deletedAt',
+            title: 'Cancelled At / Cancelled By',
+            expandable: true,
+            render: (row: any) => row?.deletedAt ? `${new Date(row.deletedAt).toLocaleString('en-GB')} / ${row?.deleteByUser?.fullName}` : ' '
+        },
+        {
+            key: 'cancellationReason',
+            title: 'Cancellation Reason',
+            dataKey: 'cancellationReason',
+            expandable: true,
+        }
+    ];
     return (
         <div>
             <AddPsychologicalExam open={openAddModal} setOpen={setOpenAddModal} patient={patient} encounter={encounter} encounterPsychologicalExam={psychologicalExam} />
@@ -269,131 +315,25 @@ const PsychologicalExam = ({ patient, encounter }) => {
                     Show Cancelled
                 </Checkbox>
                 <Checkbox onChange={(value, checked) => { if (checked) { setAllData(true); } else { setAllData(false); } }}>
-                    Show All 
+                    Show All
                 </Checkbox>
                 <div className='bt-right'>
-                    <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setOpenAddModal(true)}>Add </MyButton>
+                    <MyButton prefixIcon={() => <PlusIcon />} onClick={handleAddNewOptometricExam}>Add </MyButton>
                 </div>
             </div>
-            <Table
-                height={600}
+            <MyTable
                 data={psychologicalExamResponse?.object ?? []}
-                rowKey="key"
-                expandedRowKeys={expandedRowKeys}
-                renderRowExpanded={renderRowExpanded}
-                shouldUpdateScroll={false}
-                onRowClick={rowData => {
-                    setPsychologicalExam({
-                        ...rowData
-                    });
-                }}
-                rowClassName={isSelected}
-            >
-                <Column width={70} align="center">
-                    <HeaderCell>#</HeaderCell>
-                    <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Test Type</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.testTypeLvalue
-                            ? rowData?.testTypeLvalue.lovDisplayVale
-                            : rowData?.testTypeLkey
-                        }
-                    </Cell>
-                </Column >
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Reason</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            rowData?.reason
-                        }
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Test Duration</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            <> {rowData?.testDuration} {" "}
-                                {
-                                    rowData?.unitLvalue
-                                        ? rowData?.unitLvalue.lovDisplayVale
-                                        : rowData?.unitLkey
-                                }
-                            </>
-                        }
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Score</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.scoreLvalue
-                            ? rowData?.scoreLvalue.lovDisplayVale
-                            : rowData?.scoreLkey
-                        }
-                    </Cell>
-                </Column>
-                <Column flexGrow={3} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Result Interpretation</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.resultInterpretationLvalue
-                            ? rowData?.resultInterpretationLvalue.lovDisplayVale
-                            : rowData?.resultInterpretationLkey
-                        }
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Clinical Observations</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.clinicalObservations}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Treatment Plan</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.treatmentPlan}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Treatment Plan</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.treatmentPlan}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Additional Notes</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.additionalNotes}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Follow-up Date</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.followUpDate ? new Date(rowData.followUpDate).toLocaleString("en-GB") : ""}
-                    </Cell>
-                </Column>
-            </Table>
-            <CancellationModal open={popupCancelOpen} setOpen={setPopupCancelOpen} object={psychologicalExam} setObject={setPsychologicalExam} handleCancle={handleCancle} fieldName="cancellationReason"  fieldLabel="Cancellation Reason" title="Cancellation"/>
+                columns={columns}
+                loading={isLoading}
+                onRowClick={(rowData) => { setPsychologicalExam({ ...rowData }) }}
+                rowClassName={(rowData) => isSelected(rowData)}
+                page={pageIndex}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+            />
+            <CancellationModal open={popupCancelOpen} setOpen={setPopupCancelOpen} object={psychologicalExam} setObject={setPsychologicalExam} handleCancle={handleCancle} fieldName="cancellationReason" fieldLabel="Cancellation Reason" title="Cancellation" />
         </div>
     );
 };

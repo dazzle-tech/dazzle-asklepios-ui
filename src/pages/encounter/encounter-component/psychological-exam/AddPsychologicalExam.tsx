@@ -200,6 +200,24 @@ const AddPsychologicalExam = ({
                     setRecord={setPsychologicalExam}
                     disabled={isDisabledField}
                 />
+                 <MyInput
+                    column
+                    fieldLabel="Require Follow-up"
+                    fieldType="checkbox"
+                    fieldName="requireFollowUp"
+                    record={psychologicalExam}
+                    setRecord={setPsychologicalExam}
+                    disabled={isDisabledField}
+                />
+                <MyInput
+                    column
+                    fieldType="date"
+                    fieldLabel="Require Follow-up"
+                    fieldName="followUpDate"
+                    record={psychologicalExam}
+                    setRecord={setPsychologicalExam}
+                    disabled={isDisabledField || !psychologicalExam?.requireFollowUp}
+                />
                 <MyInput
                     column
                     fieldLabel="Score"
@@ -223,24 +241,6 @@ const AddPsychologicalExam = ({
                     record={psychologicalExam}
                     setRecord={setPsychologicalExam}
                     disabled={isDisabledField}
-                />
-                <MyInput
-                    column
-                    fieldLabel="Require Follow-up"
-                    fieldType="checkbox"
-                    fieldName="requireFollowUp"
-                    record={psychologicalExam}
-                    setRecord={setPsychologicalExam}
-                    disabled={isDisabledField}
-                />
-                <MyInput
-                    column
-                    fieldType="date"
-                    fieldLabel="Require Follow-up"
-                    fieldName="followUpDate"
-                    record={psychologicalExam}
-                    setRecord={setPsychologicalExam}
-                    disabled={isDisabledField || !psychologicalExam?.requireFollowUp}
                 />
                 <MyInput
                     column
