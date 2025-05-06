@@ -1,208 +1,93 @@
-import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import Translate from '@/components/Translate';
-import './styles.less';
-import * as icons from '@rsuite/icons';
-
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { faList, faPlay, faCheck, faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
-import EncounterMainInfoSection from '../../encounter-main-info-section';
-import FileDownloadIcon from '@rsuite/icons/FileDownload';
-import FileUploadIcon from '@rsuite/icons/FileUpload';
-import PatientOrder from '../diagnostics-order';
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import { useGetPractitionersQuery } from '@/services/setupService';
+import { useAppDispatch } from '@/hooks';
+import React, { useEffect, useState } from 'react';
+import { FaBedPulse, FaFileArrowDown } from "react-icons/fa6";
+import { MdModeEdit } from 'react-icons/md';
 import {
-  InputGroup,
-  Form,
-  Input,
-  Panel,
-  Text,
-  Checkbox,
-  Dropdown,
   Button,
-  IconButton,
-  SelectPicker,
-  Table,
+  Checkbox,
+  Divider,
+  Form,
   Modal,
   Stack,
-  Divider,
-  DatePicker,
-  Steps,
-  ButtonToolbar
+  Table
 } from 'rsuite';
+import './styles.less';
 const { Column, HeaderCell, Cell } = Table;
 
-import { notify } from '@/utils/uiReducerActions';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import {
-  useFetchAttachmentQuery,
-  useFetchAttachmentLightQuery,
   useFetchAttachmentByKeyQuery,
-  useUploadMutation,
-  useDeleteAttachmentMutation,
-  useUpdateAttachmentDetailsMutation
+  useFetchAttachmentQuery
 } from '@/services/attachmentService';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { notify } from '@/utils/uiReducerActions';
 
-import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
-import CheckIcon from '@rsuite/icons/Check';
-import PlusIcon from '@rsuite/icons/Plus';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBroom ,faPen} from '@fortawesome/free-solid-svg-icons';
-import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
-import OthersIcon from '@rsuite/icons/Others';
-import RemindOutlineIcon from '@rsuite/icons/RemindOutline';
-import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
-import SearchIcon from '@rsuite/icons/Search';
-import BlockIcon from '@rsuite/icons/Block';
+import MyButton from '@/components/MyButton/MyButton';
 import MyInput from '@/components/MyInput';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetIcdListQuery } from '@/services/setupService';
+import MyModal from '@/components/MyModal/MyModal';
+import MyTable from '@/components/MyTable';
 import {
-  useGetEncounterReviewOfSystemsQuery,
   useGetProceduresQuery,
   useSaveProceduresMutation
 } from '@/services/encounterService';
-import { useGetPatientDiagnosisQuery } from '@/services/encounterService';
-import { ApPatientDiagnose, ApProcedure } from '@/types/model-types';
-import { newApPatientDiagnose, newApProcedure } from '@/types/model-types-constructor';
 import {
-  useGetDepartmentsQuery,
-  useGetProcedureListQuery,
-  useGetProcedureCodingListQuery
+  useGetDepartmentsQuery
 } from '@/services/setupService';
-import Indications from '@/pages/medications/active-ingredients-setup/Indications';
-import MyButton from '@/components/MyButton/MyButton';
-import AdvancedModal from '@/components/AdvancedModal';
-import InfoCardList from '@/components/InfoCardList';
-import MyModal from '@/components/MyModal/MyModal';
-import Perform from './Perform';
-import { title } from 'process';
+import { ApProcedure } from '@/types/model-types';
+import { newApProcedure } from '@/types/model-types-constructor';
+import { initialListRequest, ListRequest } from '@/types/types';
+import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
+import BlockIcon from '@rsuite/icons/Block';
 import Details from './Details';
+import Perform from './Perform';
+import CancellationModal from '@/components/CancellationModal';
 
 const Referrals = ({ edit, patient, encounter }) => {
   const dispatch = useAppDispatch();
-  const [selectedRows, setSelectedRows] = useState([]);
   const [showCanceled, setShowCanceled] = useState(true);
-  const [showPrev, setShowPrev] = useState(true);
   const [actionType, setActionType] = useState(null);
   const [editing, setEditing] = useState(false);
   const [openPerformModal, setOpenPerformModal] = useState(false);
-  const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
+ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const [indicationsDescription, setindicationsDescription] = useState<string>('');
-  const [searchKeywordicd, setSearchKeywordicd] = useState('');
-  const [openConfirmDeleteModel, setConfirmDeleteModel] = useState(false);
-  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-  const patientDiagnoseListResponse = useGetPatientDiagnosisQuery({
-    ...initialListRequest,
-
-    timestamp: new Date().getMilliseconds(),
-    sortBy: 'createdAt',
-    sortType: 'desc',
-    filters: [
-      {
-        fieldName: 'patient_key',
-        operator: 'match',
-        value: patient.key
-      },
-      {
-        fieldName: 'visit_key',
-        operator: 'match',
-        value: encounter.key
-      }
-    ]
-  });
+  
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
-  const [openOrderModel, setOpenOrderModel] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
-  console.log("open", openDetailsModal);
-  const [procedure, setProcedure] = useState<ApProcedure>({
+  const [procedure, setProcedure] = useState<any>({
     ...newApProcedure,
     encounterKey: encounter.key,
     currentDepartment: true
   });
   const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
-  const { data: ProcedureLevelLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
-  const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
-  const { data: depTTypesLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
-  const { data: faciltyypesLovQueryResponse } = useGetLovValuesByCodeQuery('FSLTY_TYP');
-  const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
-  const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
   const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
-  const [listRequestPro, setListRequestPro] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'category_lkey',
-        operator: 'match',
-        value: procedure.categoryKey
-      }
-    ]
-  });
-  const { data: procedureQueryResponse, refetch: profetch } = useGetProcedureListQuery(
-    listRequestPro,
-    { skip: procedure.categoryKey == undefined }
-  );
-  const { data: procedurecodingQueryResponse, refetch: procfetch } = useGetProcedureCodingListQuery(
-    {
-      ...initialListRequest,
-      filters: [
-        {
-          fieldName: 'procedure_key',
-          operator: 'match',
-          value: procedure.procedureNameKey
-        }
-      ]
-    },
-    { skip: procedure.procedureNameKey == undefined }
-  );
+
+  const isSelected = rowData => {
+    if (rowData && procedure && rowData.key === procedure.key) {
+        return 'selected-row';
+    } else return '';
+};
 
   const department = departmentListResponse?.object.filter(
     item => item.departmentTypeLkey === '5673990729647006'
   );
   const [saveProcedures, saveProcedureMutation] = useSaveProceduresMutation();
-  const { data: encounterReviewOfSystemsSummaryResponse, refetch } =
-    useGetEncounterReviewOfSystemsQuery(encounter.key);
-  const summaryText =
-    encounterReviewOfSystemsSummaryResponse?.object
-      ?.map((item, index) => {
-        const systemDetail = item.systemDetailLvalue
-          ? item.systemDetailLvalue.lovDisplayVale
-          : item.systemDetailLkey;
-        return `${index + 1} :${systemDetail}\n note : ${item.notes}`;
-      })
-      .join('\n') +
-
-    (encounter?.physicalExamNote || '');
-  const isSelected = rowData => {
-    if (rowData && procedure && rowData.key === procedure.key) {
-      return 'selected-row';
-    } else return '';
-  };
-  const [selectedDiagnose, setSelectedDiagnose] = useState<ApPatientDiagnose>({
-    ...newApPatientDiagnose,
-    visitKey: encounter.key,
-    patientKey: patient.key,
-    createdBy: 'Administrator'
-  });
-  const { data: procedures, refetch: proRefetch } = useGetProceduresQuery({
-    ...initialListRequest,
-
-    filters: [
-      {
-        fieldName: 'encounter_key',
-        operator: 'match',
-        value: encounter.key
-      },
-      {
-        fieldName: 'status_lkey',
-        operator: showCanceled ? 'notMatch' : 'match',
-        value: '3621690096636149'
-      }
-    ]
-  });
+ 
+    const [listRequest, setListRequest] = useState<ListRequest>({
+      ...initialListRequest,
+      filters: [
+        {
+          fieldName: 'encounter_key',
+          operator: 'match',
+          value: encounter.key
+        },
+        {
+          fieldName: 'status_lkey',
+          operator: showCanceled ? 'notMatch' : 'match',
+          value: '3621690096636149'
+        }
+      ]
+    });
+  const { data: procedures, refetch: proRefetch ,isLoading:procedureLoding } = useGetProceduresQuery(listRequest);
   const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
   const fetchOrderAttachResponse = useFetchAttachmentQuery(
     {
@@ -225,80 +110,26 @@ const Referrals = ({ edit, patient, encounter }) => {
        || !procedure.key
     }
   );
-  const [icdListRequest, setIcdListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ]
-  });
-  const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
 
-  useEffect(() => {
-    if (procedure.indications != null || procedure.indications != '') {
-      setindicationsDescription(prevadminInstructions => {
-        const currentIcd = icdListResponseLoading?.object?.find(
-          item => item.key === procedure.indications
-        );
-
-        if (!currentIcd) return prevadminInstructions;
-
-        const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
-
-        return prevadminInstructions ? `${prevadminInstructions}\n${newEntry}` : newEntry;
-      });
+ useEffect(()=>{
+ const upateFilter=[
+    {
+      fieldName: 'encounter_key',
+      operator: 'match',
+      value: encounter.key
+    },
+    {
+      fieldName: 'status_lkey',
+      operator: showCanceled ? 'notMatch' : 'match',
+      value: '3621690096636149'
     }
-  }, [procedure.indications]);
-  useEffect(() => {
-    if (searchKeywordicd.trim() !== '') {
-      setIcdListRequest({
-        ...initialListRequest,
-        filterLogic: 'or',
-        filters: [
-          {
-            fieldName: 'icd_code',
-            operator: 'containsIgnoreCase',
-            value: searchKeywordicd
-          },
-          {
-            fieldName: 'description',
-            operator: 'containsIgnoreCase',
-            value: searchKeywordicd
-          }
-        ]
-      });
-    }
-  }, [searchKeywordicd]);
+  ]
+  setListRequest((prevRequest) => ({
+    ...prevRequest,
+    filters:upateFilter,
+  }));
+ },[showCanceled]);
 
-  useEffect(() => {
-    setListRequestPro(prev => ({
-      ...prev,
-      filters: [
-        ...(procedure?.categoryKey
-          ? [
-            {
-              fieldName: 'category_lkey',
-              operator: 'match',
-              value: procedure?.categoryKey
-            }
-          ]
-          : [])
-      ]
-    }));
-  }, [procedure?.categoryKey]);
-  useEffect(() => {
-    if (procedure.currentDepartment) {
-      setProcedure({ ...procedure, departmentKey: null, faciltyLkey: null });
-    }
-  }, [procedure.currentDepartment]);
-  useEffect(() => {
-    if (patientDiagnoseListResponse.data?.object?.length > 0) {
-      setSelectedDiagnose(patientDiagnoseListResponse?.data?.object[0]?.diagnosisObject);
-    }
-  }, [patientDiagnoseListResponse.data]);
   const handleDownload = async attachment => {
     try {
       if (!attachment?.fileContent || !attachment?.contentType || !attachment?.fileName) {
@@ -344,12 +175,8 @@ const Referrals = ({ edit, patient, encounter }) => {
   const OpenPerformModel = () => {
     setOpenPerformModal(true);
   };
-  const ClosePerformModel = () => {
-    setOpenPerformModal(false);
-  };
-  const handleSearchIcd = value => {
-    setSearchKeywordicd(value);
-  };
+ 
+
   const handleSave = async () => {
     try {
       await saveProcedures({
@@ -388,102 +215,7 @@ const Referrals = ({ edit, patient, encounter }) => {
     });
   };
 
-  const renderRowExpanded = rowData => {
-    // Add this line to check children data
 
-    return (
-      <Table
-        data={[rowData]} // Pass the data as an array to populate the table
-        autoHeight
-      >
-        <Column flexGrow={2} fullText>
-          <HeaderCell>Facelity</HeaderCell>
-          <Cell dataKey="faciltyLvalue.lovDisplayVale">
-            {rowData =>
-              rowData.faciltyLkey ? rowData.faciltyLvalue.lovDisplayVale : rowData.faciltyLkey
-            }
-          </Cell>
-        </Column>
-        <Column flexGrow={2} fullText>
-          <HeaderCell>Department</HeaderCell>
-          <Cell dataKey="departmentKey">
-            {rowData => {
-              const d = department?.find(item => item.key === rowData.departmentKey);
-
-              return d?.name || '';
-            }}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Current Department</HeaderCell>
-          <Cell>{rowData => (rowData.currentDepartment ? 'Yes' : '')}</Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Body Part</HeaderCell>
-          <Cell dataKey="bodyPartLvalue.lovDisplayVale">
-            {rowData =>
-              rowData.bodyPartLkey ? rowData.bodyPartLvalue.lovDisplayVale : rowData.bodyPartLkey
-            }
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Side</HeaderCell>
-          <Cell dataKey="sideLvalue.lovDisplayVale">
-            {rowData => (rowData.sideLkey ? rowData.sideLvalue.lovDisplayVale : rowData.sideLkey)}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Note</HeaderCell>
-          <Cell dataKey="notes">{rowData => rowData.notes}</Cell>
-        </Column>
-        <Column flexGrow={2} fullText>
-          <HeaderCell>Created At</HeaderCell>
-          <Cell dataKey="createdAt">
-            {rowData => (rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : '')}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Created By</HeaderCell>
-          <Cell dataKey="createdBy" />
-        </Column>
-
-        <Column flexGrow={2} fullText>
-          <HeaderCell>Cancelled At</HeaderCell>
-          <Cell dataKey="deletedAt">
-            {rowData => (rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : '')}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Cancelled By</HeaderCell>
-          <Cell dataKey="deletedBy" />
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Cancelliton Reason</HeaderCell>
-          <Cell dataKey="cancellationReason" />
-        </Column>
-      </Table>
-    );
-  };
-
-  const handleExpanded = rowData => {
-    let open = false;
-    const nextExpandedRowKeys = [];
-
-    expandedRowKeys.forEach(key => {
-      if (key === rowData.key) {
-        open = true;
-      } else {
-        nextExpandedRowKeys.push(key);
-      }
-    });
-
-    if (!open) {
-      nextExpandedRowKeys.push(rowData.key);
-    }
-
-    console.log(nextExpandedRowKeys);
-    setExpandedRowKeys(nextExpandedRowKeys);
-  };
   const handleCancle = async () => {
     try {
       await saveProcedures({ ...procedure, statusLkey: '3621690096636149', deletedAt: Date.now() })
@@ -492,61 +224,269 @@ const Referrals = ({ edit, patient, encounter }) => {
           proRefetch();
         });
 
-      dispatch(notify(' procedure deleted successfully'));
+      dispatch(notify({msg:' procedure deleted successfully' ,sev:"success"}));
       CloseCancellationReasonModel();
     } catch (error) {
-      dispatch(notify(' deleted failed'));
+      dispatch(notify({msg:' deleted failed' ,sev:'error'}));
     }
   };
-  const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
-    <Cell {...props} style={{ padding: 5 }}>
-      <IconButton
-        appearance="subtle"
-        onClick={() => {
-          onChange(rowData);
-        }}
-        icon={
-          expandedRowKeys.some(key => key === rowData['key']) ? (
-            <CollaspedOutlineIcon />
-          ) : (
-            <ExpandOutlineIcon />
-          )
-        }
-      />
-    </Cell>
-  );
+
   const handelAddNew = () => {
     handleClear();
     setOpenDetailsModal(true)
   }
+  const tableColumns=[
+    {
+      key:"procedureId",
+      dataKey:"procedureId",
+      title:<Translate>Procedure ID</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+            return rowData.procedureId;
+      }
+    },
+    {
+      key:"procedureName",
+      dataKey:"procedureName",
+      title:<Translate>Procedure Name</Translate>,
+      flexGrow:1,
+     
+    },
+    {
+      key:"scheduledDateTime",
+      dataKey:"scheduledDateTime",
+      title:<Translate>Scheduled Date Time</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+           return  rowData.scheduledDateTime ? new Date(rowData.scheduledDateTime).toLocaleString() : ' '
+      }
+    },
+    {
+      key:"categoryKey",
+      dataKey:"categoryKey",
+      title:<Translate>Category</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+        const category = CategoryLovQueryResponse?.object?.find(item => {
+          return item.key === rowData.categoryKey;
+        });
+
+        return category?.lovDisplayVale || ' ';
+      }
+    },
+    {
+      key:"priorityLkey",
+      dataKey:"priorityLkey",
+      title:<Translate>Priority</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+       return rowData.priorityLkey ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey
+      }
+    },
+    {
+      key:"procedureLevelLkey",
+      dataKey:"procedureLevelLkey",
+      title:<Translate>Level</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+           return  rowData.procedureLevelLkey
+           ? rowData.procedureLevelLvalue?.lovDisplayVale
+           : rowData.procedureLevelLkey
+      }
+    },
+    {
+      key:"indications",
+      dataKey:"indications",
+      title:<Translate>Indications</Translate>,
+      flexGrow:1,
+    
+    },
+    {
+      key:"statusLkey",
+      dataKey:"statusLkey",
+      title:<Translate>Status</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+           return rowData.statusLvalue?.lovDisplayVale??null
+      }
+    },
+    {
+      key:"",
+      dataKey:"",
+      title:<Translate>Attached File</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+        return <FaFileArrowDown
+        title="Edit"
+        size={22}
+        fill="var(--primary-gray)"
+        onClick={() =>  handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)}
+      />
+      }
+    },
+    {
+      key:"",
+      dataKey:"",
+      title:<Translate>Perform</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+          return <FaBedPulse
+          title="Edit"
+          size={22}
+          fill="var(--primary-gray)"
+          onClick={OpenPerformModel}
+        />
+      }
+    },
+    {
+      key:"",
+      dataKey:"",
+      title:<Translate>Edit</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+        return <MdModeEdit
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={()=>setOpenDetailsModal(true)}
+      />
+      }
+    },
+    {
+      key:"faciltyLkey",
+      dataKey:"faciltyLkey",
+      title:<Translate>Facelity</Translate>,
+      flexGrow:1,
+      expandable:true,
+      render:(rowData:any)=>{
+         return rowData.faciltyLkey ? rowData.faciltyLvalue.lovDisplayVale : rowData.faciltyLkey
+      }
+    },
+    {
+      key:"",
+      dataKey:"",
+      title:<Translate>Department</Translate>,
+      flexGrow:1,
+      expandable:true,
+      render:(rowData:any)=> {
+        const d = department?.find(item => item.key === rowData.departmentKey);
+
+        return d?.name || '';
+      }
+    },
+    {
+      key:"currentDepartment",
+      dataKey:"currentDepartment",
+      title:<Translate>Current Department</Translate>,
+      flexGrow:1,
+      expandable:true,
+      render:(rowData:any)=>{
+        return rowData.currentDepartment ? 'Yes' : '';
+      }
+    },
+    {
+      key:"bodyPartLkey",
+      dataKey:"bodyPartLkey",
+      title:<Translate>Body Part</Translate>,
+      flexGrow:1,
+      expandable:true,
+      render:(rowData:any)=>{
+        return rowData.bodyPartLkey ? rowData.bodyPartLvalue.lovDisplayVale : rowData.bodyPartLkey
+      } 
+    },
+    {
+      key:"sideLkey",
+      dataKey:"sideLkey",
+      title:<Translate>Side</Translate>,
+      flexGrow:1,
+      expandable:true,
+      render:(rowData:any)=>{
+        return rowData.sideLkey ? rowData.sideLvalue.lovDisplayVale : rowData.sideLkey;
+      }
+    },
+    {
+      key:"notes",
+      dataKey:"notes",
+      title:<Translate>Note</Translate>,
+      flexGrow:1,
+      expandable:true,
+     
+    },
+    {
+      key:"createdAt",
+      dataKey:"createdAt",
+      title:<Translate>Created At</Translate>,
+      flexGrow:1,
+      expandable:true,
+      render:(rowData:any)=>{
+        return rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''
+      }
+    },
+    {
+      key:"createdBy",
+      dataKey:"createdBy",
+      title:<Translate>Created At</Translate>,
+      flexGrow:1,
+      expandable:true,
+    
+    },
+    {
+      key:"deletedAt",
+      dataKey:"deletedAt",
+      title:<Translate>Cancelled At</Translate>,
+      flexGrow:1,
+      expandable:true,
+      render:(rowData:any)=>{
+         return rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''
+      }
+    },
+    {
+      key:"deletedBy",
+      dataKey:"deletedBy",
+      title:<Translate>Cancelled By</Translate>,
+      flexGrow:1,
+      expandable:true
+    },
+    {
+      key:"cancellationReason",
+      dataKey:"cancellationReason",
+      title:<Translate>Cancelliton Reason</Translate>,
+      flexGrow:1,
+      expandable:true
+    }
+  
+  ]
+    const pageIndex = listRequest.pageNumber - 1;
+  
+    // how many rows per page:
+    const rowsPerPage = listRequest.pageSize;
+  
+    // total number of items in the backend:
+    const totalCount = procedures?.extraNumeric ?? 0;
+  
+    // handler when the user clicks a new page number:
+    const handlePageChange = (_: unknown, newPage: number) => {
+      // MUI gives you a zero-based page, so add 1 for your API
+      setManualSearchTriggered(true);
+      setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+    };
+  
+    // handler when the user chooses a different rows-per-page:
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      setManualSearchTriggered(true);
+      setListRequest({
+        ...listRequest,
+        pageSize: parseInt(event.target.value, 10),
+        pageNumber: 1 // reset to first page
+      });
+    };
   return (
     <>
-      <h5>Procedure Order</h5>
-      <br />
-      <div className={`top-div ${edit ? 'disabled-panel' : ''}`}>
-        <div style={{ flex: 1 }}>
-          <Text>Diagnose</Text>
-          <textarea
-            value={
-              selectedDiagnose && selectedDiagnose.icdCode && selectedDiagnose.description
-                ? `${selectedDiagnose.icdCode}, ${selectedDiagnose.description}`
-                : ''
-            }
-            readOnly
-            rows={5}
-
-            className='fil-width'
-          />
-        </div>
-        <div style={{ flex: 1 }}>
-          <Text>Finding Summery</Text>
-          <textarea value={summaryText} readOnly rows={5} className='fil-width' />
-        </div>
-      </div>
+   
       <div className='bt-div'>
         <MyButton
           onClick={() => setOpenCancellationReasonModel(true)}
-          disabled={procedure.key ? false : true}
+          disabled={procedure.key ? procedure.statusLvalue.lovCode=="PROC_CANCL"?true:false : true}
           prefixIcon={() => <BlockIcon />}
         >Cancle</MyButton>
         <Checkbox
@@ -564,139 +504,28 @@ const Referrals = ({ edit, patient, encounter }) => {
           >Add Procedure</MyButton>
         </div>
       </div>
-      <Table
-        autoHeight
-        data={procedures?.object ?? []}
-        rowKey="key"
-        expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
-        renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
-        shouldUpdateScroll={false}
-        onRowClick={rowData => {
-          setProcedure(rowData);
-          setEditing(rowData.statusLkey == '3621690096636149' ? true : false);
-        }}
-        rowClassName={isSelected}
-      >
-        <Column width={70}  >
-          <HeaderCell>#</HeaderCell>
-          <ExpandCell
-            rowData={rowData => rowData}
-            dataKey="key"
-            expandedRowKeys={expandedRowKeys}
-            onChange={handleExpanded}
-          />
-        </Column>
 
-        <Column flexGrow={1} fullText>
-          <HeaderCell  >
-            <Translate>Procedure ID</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.procedureId}</Cell>
-        </Column>
-
-        <Column flexGrow={2} fullText>
-          <HeaderCell  >
-            <Translate>Procedure Name</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.procedureName}</Cell>
-        </Column>
-
-        <Column flexGrow={2} fullText>
-          <HeaderCell  >
-            <Translate>Scheduled Date Time</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.scheduledDateTime ? new Date(rowData.scheduledDateTime).toLocaleString() : ' '
-            }
-          </Cell>
-        </Column>
-
-        <Column flexGrow={2} fullText>
-          <HeaderCell  >
-            <Translate>Category</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData => {
-              const category = CategoryLovQueryResponse?.object?.find(item => {
-                return item.key === rowData.categoryKey;
-              });
-
-              return category?.lovDisplayVale || ' ';
-            }}
-          </Cell>
-        </Column>
-
-        <Column flexGrow={1} fullText>
-          <HeaderCell  >
-            <Translate>Priority</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.priorityLkey ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey
-            }
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell  >
-            <Translate>Level</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.procedureLevelLkey
-                ? rowData.procedureLevelLvalue?.lovDisplayVale
-                : rowData.procedureLevelLkey
-            }
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell  >
-            <Translate>Indications</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.indications}</Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell  >
-            <Translate>Status</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.statusLvalue?.lovDisplayVale}</Cell>
-        </Column>
-        <Column flexGrow={1}>
-          <HeaderCell  >
-            <Translate>Perform</Translate>
-          </HeaderCell>
-          <Cell  >
-            <MyButton
-            size='xsmall'
-              appearance='subtle'
-              color="var(--primary-gray)"
-              onClick={OpenPerformModel}><FontAwesomeIcon icon={faBedPulse} /></MyButton>
-
-          </Cell>
-        </Column>
-        <Column flexGrow={1}>
-          <HeaderCell  >
-            <Translate>Attached File</Translate>
-          </HeaderCell>
-          <Cell  >
-          <MyButton
-                size='xsmall'
-                appearance='subtle'
-                color="var(--primary-gray)"
-                onClick={() =>  handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)}><FileDownloadIcon /></MyButton>
-          </Cell>
-        </Column>
-        <Column>
-        <HeaderCell  >
-            <Translate>Edit</Translate>
-          </HeaderCell>
-          <Cell >
-            <MyButton
-              size='xsmall'
-              appearance='subtle'
-              color="var(--primary-gray)"
-              onClick={()=>setOpenDetailsModal(true)}><FontAwesomeIcon icon={faPen} /></MyButton></Cell></Column>
-      </Table>
+      <MyTable 
+      columns={tableColumns}
+      data={procedures?.object ?? []}
+      onRowClick={rowData => {
+        setProcedure(rowData);
+        setEditing(rowData.statusLkey == '3621690096636149' ? true : false);
+      }}
+      loading={procedureLoding}
+      rowClassName={isSelected}
+      sortColumn={listRequest.sortBy}
+      sortType={listRequest.sortType}
+      onSortChange={(sortBy, sortType) => {
+        setListRequest({ ...listRequest, sortBy, sortType });
+      }}
+      page={pageIndex}
+      rowsPerPage={rowsPerPage}
+      totalCount={totalCount}
+      onPageChange={handlePageChange}
+      onRowsPerPageChange={handleRowsPerPageChange}
+      />
+     
       <MyModal
         open={openPerformModal}
         setOpen={setOpenPerformModal}
@@ -714,42 +543,27 @@ const Referrals = ({ edit, patient, encounter }) => {
 
         content={<Perform encounter={encounter} patient={patient} procedure={procedure} setProcedure={setProcedure} edit={edit} />}
       ></MyModal>
-      <Details patient={patient} encounter={encounter} edit={edit}
+
+
+
+      <Details patient={patient} 
+      proRefetch={proRefetch}
+      encounter={encounter} edit={edit}
         procedure={procedure} setProcedure={setProcedure}
         openDetailsModal={openDetailsModal} setOpenDetailsModal={setOpenDetailsModal} />
-     
-      <Modal open={openCancellationReasonModel} onClose={CloseCancellationReasonModel} overflow>
-        <Modal.Title>
-          <Translate>
-            <h6>Confirm Cancel</h6>
-          </Translate>
-        </Modal.Title>
-        <Modal.Body>
-          <Form layout="inline" fluid>
-            <MyInput
-              width={200}
-              column
-              fieldLabel="Cancellation Reason"
-              fieldType="textarea"
-              fieldName="cancellationReason"
-              height={120}
-              record={procedure}
-              setRecord={setProcedure}
-            //   disabled={!editing}
-            />
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="primary" onClick={handleCancle}>
-              Cancel
-            </Button>
-            <Button appearance="ghost" color="cyan" onClick={CloseCancellationReasonModel}>
-              Close
-            </Button>
-          </Stack>
-        </Modal.Footer>
-      </Modal>
+
+
+      <CancellationModal
+      open={openCancellationReasonModel}
+      setOpen={setOpenCancellationReasonModel}
+      fieldName='cancellationReason'
+      fieldLabel="Cancellation Reason"
+      title="Cancell"
+      object={procedure}
+      setObject={setProcedure}
+      handleCancle={handleCancle}
+       ></CancellationModal>
+  
     </>
   );
 };

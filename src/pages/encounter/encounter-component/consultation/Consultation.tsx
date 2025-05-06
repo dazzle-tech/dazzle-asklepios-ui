@@ -80,7 +80,6 @@ const Consultation = ({ edit, patient, encounter }) => {
   const { data: practitionerListResponse } = useGetPractitionersQuery({ ...initialListRequest });
   const { data: encounterReviewOfSystemsSummaryResponse, refetch } =
     useGetEncounterReviewOfSystemsQuery(encounter.key);
-  console.log(encounterReviewOfSystemsSummaryResponse?.object);
   const summaryText =
     encounterReviewOfSystemsSummaryResponse?.object
       ?.map((item, index) => {
