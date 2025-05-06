@@ -93,14 +93,12 @@ const Departments = () => {
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Departments'));
   dispatch(setDivContent(divContentHTML));
-
   // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
   useEffect(() => {
     setRecordOfDepartmentCode({ departmentCode: department?.departmentCode ?? generateCode });
   }, [recordOfDepartmentCode]);
@@ -176,11 +174,11 @@ const Departments = () => {
     saveDepartment({ ...department, departmentCode: generateCode })
       .unwrap()
       .then(() => {
-        dispatch(notify({ msg: 'Departments Saved successfully',sev: 'success'}));
+        dispatch(notify({ msg: 'Departments Saved successfully', sev: 'success' }));
       }).catch(() => {
-         dispatch(notify({ msg: 'Failed to save this Departments', sev: 'error' }));
+        dispatch(notify({ msg: 'Failed to save this Departments', sev: 'error' }));
       });
-      setLoad(false);
+    setLoad(false);
   };
   // Filter table
   const handleFilterChange = (fieldName, value) => {
@@ -218,7 +216,7 @@ const Departments = () => {
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
-        onClick={() => {setPopupOpen(true); setDepartment(rowData);}}
+        onClick={() => { setPopupOpen(true); setDepartment(rowData); }}
       />
       {rowData?.deletedAt ? (
         <FontAwesomeIcon title="Active" icon={faRotateRight} fill="var(--primary-gray)" />
@@ -246,7 +244,9 @@ const Departments = () => {
     {
       key: 'facilityName',
       title: <Translate>Facility Name</Translate>,
-      flexGrow: 4
+      flexGrow: 4,
+      render: rowData => rowData?.facility?.facilityName ? rowData?.facility?.facilityName : ' '
+
     },
     {
       key: 'name',
@@ -333,6 +333,7 @@ const Departments = () => {
       pageNumber: 1
     });
   };
+
   return (
     <Panel>
       <div className='container-of-add-new-button-departments'>
