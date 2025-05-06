@@ -200,7 +200,7 @@ const AddPsychologicalExam = ({
                     setRecord={setPsychologicalExam}
                     disabled={isDisabledField}
                 />
-                 <MyInput
+                <MyInput
                     column
                     fieldLabel="Require Follow-up"
                     fieldType="checkbox"
