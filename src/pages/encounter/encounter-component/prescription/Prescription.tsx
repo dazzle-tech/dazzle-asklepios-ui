@@ -76,7 +76,8 @@ const Prescription = ({ edit, patient, encounter }) => {
     ) ?? [];
 
     const [preKey, setPreKey] = useState(null);
-
+    console.log(preKey);
+    console.log(prescriptions)
     const [prescriptionMedication, setPrescriptionMedications] = useState<ApPrescriptionMedications>(
         {
             ...newApPrescriptionMedications,

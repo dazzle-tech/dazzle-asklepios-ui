@@ -21,6 +21,7 @@ import { useGetCustomeInstructionsQuery, useSaveDrugOrderMedicationMutation, use
 import MyLabel from "@/components/MyLabel";
 import Substitues from "./Substitued";
 import Instructions from "./Instructions";
+import MyTagInput from "@/components/MyTagInput/MyTagInput";
 
 const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMedications, preKey, editing, patient, encounter, medicRefetch }) => {
     const dispatch = useAppDispatch();
@@ -592,14 +593,15 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
                         </Row>
                         <Row className="rows-gap">
                             <Col md={24}>
-                                <TagGroup className='taggroup-style'>
+                            <MyTagInput tags={tags} setTags={setTags}/>
+                                {/* <TagGroup className='taggroup-style'>
                                     {tags.map((item, index) => (
                                         <Tag key={index} closable onClose={() => removeTag(item)}>
                                             {item}
                                         </Tag>
                                     ))}
                                     {renderInput()}
-                                </TagGroup>
+                                </TagGroup> */}
                             </Col>
                         </Row>
                         <Row className="rows-gap">
