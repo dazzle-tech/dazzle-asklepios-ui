@@ -160,7 +160,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly }
                 vr={validationResult}
                 column
                 fieldType="select"
-                fieldName="admissionOrigin"
+                fieldName="originLkey"
                 selectData={patOriginLovQueryResponse?.object ?? []}
                 selectDataLabel="lovDisplayVale"
                 selectDataValue="key"

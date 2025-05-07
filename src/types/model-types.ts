@@ -1234,7 +1234,7 @@ export interface ApEncounter {
 	specialArrangementLkey:string;
 	specialArrangementText:string;
 	specialCourtesyLkey:string;
-	admissionOrigin:string;
+	originLkey:string;
 	admissionSource:string;
 	readmission:boolean;
 	dischargeDestination:string;

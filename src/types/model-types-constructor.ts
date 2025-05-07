@@ -1235,7 +1235,7 @@ export const newApEncounter:modelTypes.ApEncounter = {
 	specialArrangementLkey:undefined,
 	specialArrangementText:'',
 	specialCourtesyLkey:undefined,
-	admissionOrigin:'',
+	originLkey:undefined,
 	admissionSource:'',
 	readmission:undefined,
 	dischargeDestination:'',
