@@ -209,12 +209,6 @@ const PsychologicalExam = ({ patient, encounter }) => {
     // Table Columns
     const columns = [
         {
-            key: 'index',
-            title: '#',
-            width: 70,
-            render: (rowData: any, index: number) => index + 1
-        },
-        {
             key: 'testType',
             title: <Translate>TEST TYPE</Translate>,
             render: (rowData: any) => rowData?.testTypeLvalue ? rowData?.testTypeLvalue.lovDisplayVale : rowData?.testTypeLkey

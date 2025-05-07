@@ -224,12 +224,6 @@ const TreadmillStress = ({ patient, encounter }) => {
     // Table Columns
     const columns = [
         {
-            key: 'expand',
-            title: '#',
-            width: 70,
-            expandable: true,
-        },
-        {
             key: 'indication',
             title: 'TEST INDICATION',
             dataKey: 'indication',
