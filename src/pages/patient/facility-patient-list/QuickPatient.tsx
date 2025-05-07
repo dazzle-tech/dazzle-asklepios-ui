@@ -119,7 +119,6 @@ const QuickPatient = ({ open, setOpen }) => {
       steps={[{ title: "Basic Information", icon: faBoltLightning }]}
       size="xs"
       position='right'
-      bodyheight={500}
       actionButtonLabel="Create"
       actionButtonFunction={handleSave}
       content={quickPatientContent}

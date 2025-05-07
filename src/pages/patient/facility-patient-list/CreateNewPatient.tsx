@@ -389,7 +389,6 @@ const CreateNewPatient = ({ open, setOpen }) => {
             ]}
             size="xs"
             position='right'
-            bodyheight={550}
             actionButtonLabel="Create"
             actionButtonFunction={handleSave}
             content={conjureFormContent}

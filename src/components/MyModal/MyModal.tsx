@@ -10,7 +10,7 @@ const MyModal = ({
     title,
     icon = null,
     pagesCount = 1,
-    bodyheight = 400,
+    bodyheight = 550,
     content,
     size = "sm",
     steps = [],

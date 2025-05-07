@@ -115,8 +115,6 @@ const EncounterList = () => {
         }
       });
     }
-    const currentDateTime = new Date().toLocaleString();
-    setDateClickToVisit(currentDateTime);
   };
   const handleGoToPreVisitObservations = async (encounterData, patientData) => {
     const privatePatientPath = '/user-access-patient-private';
@@ -341,9 +339,8 @@ const EncounterList = () => {
     return (
       <Form layout="inline" fluid className="date-filter-form">
         <MyInput
-          width={291}
-          height={40}
           column
+          width={180}
           fieldType="date"
           fieldLabel="From Date"
           fieldName="fromDate"
@@ -351,8 +348,7 @@ const EncounterList = () => {
           setRecord={setDateFilter}
         />
         <MyInput
-          height={40}
-          width={291}
+          width={180}
           column
           fieldType="date"
           fieldLabel="To Date"
