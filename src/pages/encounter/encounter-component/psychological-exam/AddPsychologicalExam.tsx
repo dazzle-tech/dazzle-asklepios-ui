@@ -152,7 +152,8 @@ const AddPsychologicalExam = ({
             actionButtonFunction={handleSave}
             position='right'
             isDisabledActionBtn={isDisabledField}
-            size='700px'
+            bodyheight={550}
+            size='500px'
             steps={[{
                 title: "Psychology Exam",
                 icon: faBrain,
@@ -160,6 +161,7 @@ const AddPsychologicalExam = ({
             },]}
             content={<Form fluid layout='inline'>
                 <MyInput
+                    width={200}
                     column
                     fieldLabel="Test Type"
                     fieldType="select"
@@ -173,6 +175,7 @@ const AddPsychologicalExam = ({
                 />
                 <MyInput
                     column
+                    width={200}
                     fieldLabel="Reason"
                     fieldName="reason"
                     record={psychologicalExam}
@@ -183,6 +186,7 @@ const AddPsychologicalExam = ({
                     fieldType="number"
                     fieldLabel="Test Duration"
                     column
+                    width={200}
                     fieldName="testDuration"
                     record={psychologicalExam}
                     setRecord={setPsychologicalExam}
@@ -190,6 +194,7 @@ const AddPsychologicalExam = ({
                 />
                 <MyInput
                     column
+                    width={200}
                     fieldLabel="Unit"
                     fieldType="select"
                     fieldName="unitLkey"
@@ -199,9 +204,11 @@ const AddPsychologicalExam = ({
                     record={psychologicalExam}
                     setRecord={setPsychologicalExam}
                     disabled={isDisabledField}
+                    searchable={false}
                 />
                 <MyInput
                     column
+                    width={200}
                     fieldLabel="Require Follow-up"
                     fieldType="checkbox"
                     fieldName="requireFollowUp"
@@ -211,6 +218,7 @@ const AddPsychologicalExam = ({
                 />
                 <MyInput
                     column
+                    width={200}
                     fieldType="date"
                     fieldLabel="Require Follow-up"
                     fieldName="followUpDate"
@@ -220,6 +228,7 @@ const AddPsychologicalExam = ({
                 />
                 <MyInput
                     column
+                    width={200}
                     fieldLabel="Score"
                     fieldType="select"
                     fieldName="scoreLkey"
@@ -229,9 +238,11 @@ const AddPsychologicalExam = ({
                     record={psychologicalExam}
                     setRecord={setPsychologicalExam}
                     disabled={isDisabledField}
+                    searchable={false}
                 />
                 <MyInput
                     column
+                    width={200}
                     fieldLabel="Result Interpretation"
                     fieldType="select"
                     fieldName="resultInterpretationLkey"
@@ -241,9 +252,11 @@ const AddPsychologicalExam = ({
                     record={psychologicalExam}
                     setRecord={setPsychologicalExam}
                     disabled={isDisabledField}
+                    searchable={false}
                 />
                 <MyInput
                     column
+                    width={200}
                     fieldType="textarea"
                     fieldLabel="Clinical Observations"
                     fieldName="clinicalObservations"
@@ -254,6 +267,7 @@ const AddPsychologicalExam = ({
                 />
                 <MyInput
                     column
+                    width={200}
                     fieldType="textarea"
                     fieldLabel="Treatment Plan"
                     fieldName="treatmentPlan"
@@ -264,6 +278,7 @@ const AddPsychologicalExam = ({
                 />
                 <MyInput
                     column
+                    width={200}
                     fieldType="textarea"
                     fieldLabel="Additional Notes"
                     fieldName="additionalNotes"

@@ -147,6 +147,7 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
                 record={complaintSymptoms}
                 setRecord={setComplaintSymptoms}
                 disabled={isDisabledField}
+                searchable={false}
             />
             <MyInput
                 column
