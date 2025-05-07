@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppSelector, useAppDispatch } from '@/hooks';
-import { Checkbox, IconButton, Table } from 'rsuite';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { Checkbox } from 'rsuite';
+import MyTable from '@/components/MyTable';
 import { useSaveElectrocardiogramECGMutation, useGetElectrocardiogramECGsQuery } from '@/services/encounterService';
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import Translate from '@/components/Translate';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
+import { MdModeEdit } from 'react-icons/md';
 import PlusIcon from '@rsuite/icons/Plus';
 import { newApElectrocardiogramEcg } from '@/types/model-types-constructor';
 import { ApElectrocardiogramEcg } from '@/types/model-types';
@@ -15,11 +14,9 @@ import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import AddElectrocardiogram from './AddElectrocardiogram';
-const { Column, HeaderCell, Cell } = Table
 const ElectrocardiogramECG = ({ patient, encounter }) => {
     const authSlice = useAppSelector(state => state.auth);
-    const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
-    const [open , setOpen] = useState(false);
+    const [open, setOpen] = useState(false);
     const [electrocardiogramEcg, setElectrocardiogramEcg] = useState<ApElectrocardiogramEcg>({
         ...newApElectrocardiogramEcg,
         stSegmentChangesLkey: null,
@@ -29,7 +26,7 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
         qrsDuration: null,
         qtInterval: null
     });
-    const [ saveElectrocardiogramECG ] = useSaveElectrocardiogramECGMutation();
+    const [saveElectrocardiogramECG] = useSaveElectrocardiogramECGMutation();
     const [popupCancelOpen, setPopupCancelOpen] = useState(false);
     const [electrocardiogramEcgStatus, setElectrocardiogramEcgStatus] = useState('');
     const [allData, setAllData] = useState(false);
@@ -56,106 +53,42 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
             }
         ],
     });
-    
+
     // Fetch the list of Electrocardiogram ECG based on the provided request, and provide a refetch function
-    const { data: electrocardiogramEcgResponse, refetch: refetchelectrocardiogramEcg } = useGetElectrocardiogramECGsQuery(electrocardiogramEcgListRequest);
-    
+    const { data: electrocardiogramEcgResponse, refetch: refetchelectrocardiogramEcg, isLoading } = useGetElectrocardiogramECGsQuery(electrocardiogramEcgListRequest);
+
     // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
     const isSelected = rowData => {
         if (rowData && electrocardiogramEcg && electrocardiogramEcg.key === rowData.key) {
             return 'selected-row';
         } else return '';
     };
- 
-    const handleExpanded = (rowData) => {
-        let open = false;
-        const nextExpandedRowKeys = [];
-
-        expandedRowKeys.forEach(key => {
-            if (key === rowData.key) {
-                open = true;
-            } else {
-                nextExpandedRowKeys.push(key);
-            }
+    // Handle Clear Fields Function
+    const handleClearField = () => {
+        setElectrocardiogramEcg({
+            ...newApElectrocardiogramEcg,
+            stSegmentChangesLkey: null,
+            waveAbnormalitiesLkey: null
         });
-
-        if (!open) {
-            nextExpandedRowKeys.push(rowData.key);
-        }
-        setExpandedRowKeys(nextExpandedRowKeys);
     };
-    const renderRowExpanded = rowData => {
-        return (
-            <Table
-                data={[rowData]}
-                bordered
-                cellBordered
-                style={{ width: '100%', marginTop: '10px' }}
-                height={100}
-            >
-                <Column flexGrow={2} align="center" fullText>
-                    <HeaderCell>Created At / Created By</HeaderCell>
-                    <Cell>
-                        {rowData => (
-                            <>
-                                {rowData.createdAt ? new Date(rowData.createdAt).toLocaleString("en-GB") : ""}
-                                {" / "}
-                                {rowData?.createByUser?.fullName}
-                            </>
-                        )}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} align="center" fullText>
-                    <HeaderCell>Updated At / Updated By</HeaderCell>
-                    <Cell>
-                        {rowData => (
-                            <>
-                                {rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
-                                {" / "}
-                                {rowData?.updateByUser?.fullName}
-                            </>
-                        )}
-                    </Cell>
-                </Column>
 
-                <Column flexGrow={2} align="center" fullText>
-                    <HeaderCell>Cancelled At / Cancelled By</HeaderCell>
-                    <Cell dataKey="deletedAt" >
-                        {rowData => (
-                            <>
-                                {rowData.deletedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
-                                {" / "}
-                                {rowData?.deleteByUser?.fullName}
-                            </>
-                        )}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} align="center" fullText>
-                    <HeaderCell>Cancelliton Reason</HeaderCell>
-                    <Cell dataKey="cancellationReason" />
-                </Column>
-            </Table>
-
-
-        );
+    // Handle Add New Electrocardiogram ECG Record
+    const handleAddNewElectrocardiogram = () => {
+        handleClearField();
+        setOpen(true);
+    }
+    // Change page event handler
+    const handlePageChange = (_: unknown, newPage: number) => {
+        setElectrocardiogramEcgListRequest({ ...electrocardiogramEcgListRequest, pageNumber: newPage + 1 });
     };
-    const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
-        <Cell {...props} style={{ padding: 5 }}>
-            <IconButton
-                appearance="subtle"
-                onClick={() => {
-                    onChange(rowData);
-                }}
-                icon={
-                    expandedRowKeys.some(key => key === rowData["key"]) ? (
-                        <CollaspedOutlineIcon />
-                    ) : (
-                        <ExpandOutlineIcon />
-                    )
-                }
-            />
-        </Cell>
-    );
+    // Change number of rows per page
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setElectrocardiogramEcgListRequest({
+            ...electrocardiogramEcgListRequest,
+            pageSize: parseInt(event.target.value, 10),
+            pageNumber: 1 // Reset to first page
+        });
+    };
 
     // Handle Cancel ElectrocardiogramECG Record Function
     const handleCancle = () => {
@@ -277,10 +210,110 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
             };
         });
     }, [allData, electrocardiogramEcgStatus]);
+    // Pagination values
+    const pageIndex = electrocardiogramEcgListRequest.pageNumber - 1;
+    const rowsPerPage = electrocardiogramEcgListRequest.pageSize;
+    const totalCount = electrocardiogramEcgResponse?.extraNumeric ?? 0;
+
+    // Table Column 
+    const columns = [
+        {
+            key: 'expand',
+            title: '#',
+            expandable: true,
+            render: (rowData) => <div>#{rowData.key}</div>
+        },
+        {
+            key: 'indication',
+            title: <Translate>INDICATION</Translate>,
+            render: (rowData) => rowData?.indication,
+        },
+        {
+            key: 'ecgLeadType',
+            title: <Translate>ECG LEAD TYPE</Translate>,
+            render: (rowData) => rowData?.ecgLeadType,
+        },
+        {
+            key: 'heartRate',
+            title: <Translate>HEART RATE</Translate>,
+            render: (rowData) => rowData?.heartRate ? `${rowData?.heartRate ?? ''} BPM`:" ",
+        },
+        {
+            key: 'prInterval',
+            title: <Translate>PR INTERVAL</Translate>,
+            render: (rowData) => rowData?.prInterval ? `${rowData?.prInterval ?? ''} ms`:" ",
+        },
+        {
+            key: 'qrsDuration',
+            title: <Translate>QRS DURATION</Translate>,
+            render: (rowData) => rowData?.qrsDuration  ? `${rowData?.qrsDuration ?? ''} ms`:" ",
+        },
+        {
+            key: 'qtInterval',
+            title: <Translate>QT INTERVAL</Translate>,
+            render: (rowData) => rowData?.qtInterval ? `${rowData?.qtInterval ?? ''} ms`:" ",
+        },
+        {
+            key: 'stSegmentChanges',
+            title: <Translate>ST SEGMENT CHANGES</Translate>,
+            render: (rowData) =>
+                rowData?.stSegmentChangesLvalue?.lovDisplayVale ?? rowData?.stSegmentChangesLkey,
+        },
+        {
+            key: 'waveAbnormalities',
+            title: <Translate>T WAVE ABNORMALITIES</Translate>,
+            render: (rowData) =>
+                rowData?.waveAbnormalitiesLvalue?.lovDisplayVale ?? rowData?.waveAbnormalitiesLkey,
+        },
+        {
+            key: "details",
+            title: <Translate>EDIT</Translate>,
+            flexGrow: 2,
+            fullText: true,
+            render: rowData => {
+                return (
+                    <MdModeEdit
+                        title="Edit"
+                        size={24}
+                        fill="var(--primary-gray)"
+                        onClick={() => {
+                            setElectrocardiogramEcg(rowData);
+                            setOpen(true);
+                        }}
+
+                    />
+                );
+            }
+        },
+        {
+            key: 'createdAt',
+            title: 'CREATED AT / CREATED BY',
+            expandable: true,
+            render: (row: any) => `${new Date(row.createdAt).toLocaleString('en-GB')} / ${row?.createByUser?.fullName}`
+        },
+        {
+            key: 'updatedAt',
+            title: 'UPDATED AT / UPDATED BY',
+            expandable: true,
+            render: (row: any) => row?.updatedAt ? `${new Date(row.updatedAt).toLocaleString('en-GB')} / ${row?.updateByUser?.fullName}` : ' '
+        },
+        {
+            key: 'deletedAt',
+            title: 'CANCELLED AT / CANCELLED BY',
+            expandable: true,
+            render: (row: any) => row?.deletedAt ? `${new Date(row.deletedAt).toLocaleString('en-GB')} / ${row?.deleteByUser?.fullName}` : ' '
+        },
+        {
+            key: 'cancellationReason',
+            title: 'CANCELLATION REASON',
+            dataKey: 'cancellationReason',
+            expandable: true,
+        }
+    ]
     return (
         <div>
             <div className='bt-div'>
-            <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!electrocardiogramEcg?.key}>
+                <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!electrocardiogramEcg?.key}>
                     <Translate>Cancel</Translate>
                 </MyButton>
                 <Checkbox onChange={(value, checked) => {
@@ -305,122 +338,23 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
                     Show All
                 </Checkbox>
                 <div className='bt-right'>
-                    <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>Add </MyButton>
+                    <MyButton prefixIcon={() => <PlusIcon />} onClick={handleAddNewElectrocardiogram}>Add </MyButton>
                 </div>
             </div>
-            <Table
-                height={600}
+            <MyTable
                 data={electrocardiogramEcgResponse?.object ?? []}
-                rowKey="key"
-                expandedRowKeys={expandedRowKeys}
-                renderRowExpanded={renderRowExpanded}
-                shouldUpdateScroll={false}
-                onRowClick={rowData => {
-                    setElectrocardiogramEcg({
-                        ...rowData
-                    });
-                }}
+                loading={isLoading}
+                height={600}
+                onRowClick={(rowData) => setElectrocardiogramEcg({ ...rowData })}
                 rowClassName={isSelected}
-            >
-                <Column width={70} align="center">
-                    <HeaderCell>#</HeaderCell>
-                    <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-                </Column>
-
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Indication</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.indication}
-                    </Cell>
-                </Column >
-                <Column flexGrow={3} fullText>
-                    <HeaderCell align="center">
-                        <Translate>ECG Lead Type</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.ecgLeadType}
-                    </Cell>
-                </Column>
-                <Column flexGrow={3} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Heart Rate</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            <>
-                                {rowData?.heartRate}
-                                {" BPM"}
-                            </>}
-
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>PR Interval </Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            <>
-                                {rowData?.prInterval}
-                                {" ms"}
-                            </>}
-
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>QRS Duration </Translate>
-                    </HeaderCell>
-                    <Cell>
-
-                        {rowData =>
-                            <>
-                                {rowData?.qrsDuration}
-                                {" ms"}
-                            </>}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>QT Interval</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            <>
-                                {rowData?.qtInterval}
-                                {" ms"}
-                            </>}
-
-                    </Cell>
-                </Column>
-                <Column flexGrow={3} fullText>
-                    <HeaderCell align="center">
-                        <Translate>ST Segment Changes</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            rowData?.stSegmentChangesLvalue
-                                ? rowData?.stSegmentChangesLvalue.lovDisplayVale
-                                : rowData?.stSegmentChangesLkey
-                        }
-                    </Cell>
-                </Column>
-                <Column flexGrow={3} fullText>
-                    <HeaderCell align="center">
-                        <Translate>T Wave Abnormalities</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            rowData?.waveAbnormalitiesLvalue
-                                ? rowData?.waveAbnormalitiesLvalue.lovDisplayVale
-                                : rowData?.waveAbnormalitiesLkey
-                        }
-                    </Cell>
-                </Column>
-            </Table>
-            <AddElectrocardiogram open={open} setOpen={setOpen}  patient={patient} encounter={encounter} electrocardiogramEcgObject={electrocardiogramEcg} refetch={refetchelectrocardiogramEcg}/>
+                page={pageIndex}
+                columns={columns}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+            />
+            <AddElectrocardiogram open={open} setOpen={setOpen} patient={patient} encounter={encounter} electrocardiogramEcgObject={electrocardiogramEcg} refetch={refetchelectrocardiogramEcg} />
             <CancellationModal title="Cancel ECG" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={electrocardiogramEcg} setObject={setElectrocardiogramEcg} handleCancle={handleCancle} fieldName="cancellationReason" />
         </div>
     );
