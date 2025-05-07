@@ -3,7 +3,7 @@ import './styles.less';
 import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
 import { faPersonDotsFromLine } from '@fortawesome/free-solid-svg-icons';
-import { DatePicker, Form, Input } from 'rsuite';
+import { Col, DatePicker, Form, Input, Row } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import {
     useGetLovValuesByCodeQuery,
@@ -11,7 +11,11 @@ import {
 } from '@/services/setupService';
 import { initialListRequest } from '@/types/types';
 import MyLabel from '@/components/MyLabel';
-const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, handleSave ,handleClear }) => {
+import { useSaveAllergiesMutation } from '@/services/observationService';
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
+const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, patient, encounter, handleClear, fetchallerges }) => {
+    const dispatch = useAppDispatch();
     const { data: allergyTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGEN_TYPES');
     const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
     const { data: onsetLovQueryResponse } = useGetLovValuesByCodeQuery('ONSET');
@@ -20,51 +24,74 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, han
     const { data: sourceofinformationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
     const { data: allgPropnLovQueryResponse } = useGetLovValuesByCodeQuery('ALLG_PROPN');
     const { data: criticalityLovQueryResponse } = useGetLovValuesByCodeQuery('CRITICALITY');
+    const [saveAllergies, saveAllergiesMutation] = useSaveAllergiesMutation();
     const [selectedOnsetDate, setSelectedOnsetDate] = useState(null);
     const [reactionDescription, setReactionDescription] = useState();
     const [editOnset, setEditOnset] = useState({ editdate: true });
     const [editSourceof, seteditSourceof] = useState({ editSource: true });
-     const { data: allergensListResponse } = useGetAllergensQuery({
-       ...initialListRequest,
-       filters: [
-         {
-           fieldName: 'allergen_type_lkey',
-           operator: 'match',
-           value: allerges.allergyTypeLkey
-         }
-       ]
-     });
-       useEffect(() => {
-         if (allerges.reactionDescription != null) {
-           
-           setReactionDescription(prevadminInstructions =>
-             prevadminInstructions
-               ? `${prevadminInstructions}, ${reactionLovQueryResponse?.object?.find(
-                 item => item.key === allerges.reactionDescription
-               )?.lovDisplayVale
-               }`
-               : reactionLovQueryResponse?.object?.find(
-                 item => item.key === allerges.reactionDescription
-               )?.lovDisplayVale
-           );
-         }
-       }, [allerges.reactionDescription]);
-        useEffect(() => {
-           if (allerges.onsetDate != 0) {
-             setEditOnset({ editdate: false });
-             setSelectedOnsetDate(new Date(allerges.onsetDate));
-           }
-           if (allerges.sourceOfInformationLkey != null) {
-             seteditSourceof({ editSource: false });
-           }
-         }, [allerges]);
-     const handleDateChange = date => {
-        if (date) {
-          if (!editOnset) {
-            setSelectedOnsetDate(date);
-          }
+    const { data: allergensListResponse } = useGetAllergensQuery({
+        ...initialListRequest,
+        filters: [
+            {
+                fieldName: 'allergen_type_lkey',
+                operator: 'match',
+                value: allerges.allergyTypeLkey
+            }
+        ]
+    });
+    useEffect(() => {
+        if (allerges.reactionDescription != null) {
+
+            setReactionDescription(prevadminInstructions =>
+                prevadminInstructions
+                    ? `${prevadminInstructions}, ${reactionLovQueryResponse?.object?.find(
+                        item => item.key === allerges.reactionDescription
+                    )?.lovDisplayVale
+                    }`
+                    : reactionLovQueryResponse?.object?.find(
+                        item => item.key === allerges.reactionDescription
+                    )?.lovDisplayVale
+            );
         }
-      };
+    }, [allerges.reactionDescription]);
+    useEffect(() => {
+        if (allerges.onsetDate != 0) {
+            setEditOnset({ editdate: false });
+            
+        }
+        if (allerges.sourceOfInformationLkey != null) {
+            seteditSourceof({ editSource: false });
+        }
+    }, [allerges]);
+    useEffect(()=>{
+        if(editOnset.editdate){
+            setAllerges({...allerges,onsetDate:0})
+        }
+    },[editOnset.editdate])
+  
+    const handleSave = async () => {
+
+        try {
+            await saveAllergies({
+                ...allerges,
+                patientKey: patient?.key,
+                visitKey: encounter?.key,
+                statusLkey: '9766169155908512',
+                reactionDescription: reactionDescription,
+                onsetDate: allerges.onsetDate ? new Date(allerges.onsetDate).getTime() : null
+            }).unwrap();
+            dispatch(notify({msg:'Saved Successfully',sev:"success"}));
+            setOpen(false)
+           await fetchallerges()
+            await handleClear();
+
+        } catch (error) {
+            dispatch(notify({msg:'Save Failed',sev:"error"}));
+            
+
+        }
+    };
+    
     return (<>
         <MyModal
             open={open}
@@ -86,13 +113,13 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, han
             content={
 
                 <div className={edit ? 'disabled-panel' : ""} >
-                    <div className="div-parent">
-                        <div style={{ flex: 1 }}>
-                            <Form layout="inline" fluid>
+                    <Row className='rows-gap' >
+                        <Col md={8}>
+                            <Form fluid>
                                 <MyInput
-                                    column
+
                                     disabled={editing}
-                                    width={200}
+                                    width="100%"
                                     fieldType="select"
                                     fieldLabel="Allergy Type"
                                     selectData={allergyTypeLovQueryResponse?.object ?? []}
@@ -101,15 +128,16 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, han
                                     fieldName={'allergyTypeLkey'}
                                     record={allerges}
                                     setRecord={setAllerges}
+                                    searchable={false}
                                 />
                             </Form>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <Form layout="inline" fluid>
+                        </Col>
+                        <Col md={8}>
+                            <Form fluid>
                                 <MyInput
-                                    column
+
                                     disabled={editing}
-                                    width={200}
+                                    width="100%"
                                     fieldType="select"
                                     fieldLabel="Allergen"
                                     selectData={allergensListResponse?.object ?? []}
@@ -118,15 +146,16 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, han
                                     fieldName={'allergenKey'}
                                     record={allerges}
                                     setRecord={setAllerges}
+                                    searchable={false}
                                 />
                             </Form>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <Form layout="inline" fluid>
+                        </Col>
+                        <Col md={8}>
+                            <Form fluid>
                                 <MyInput
-                                    column
+
                                     disabled={editing}
-                                    width={200}
+                                    width="100%"
                                     fieldType="select"
                                     fieldLabel="Severity"
                                     selectData={severityLovQueryResponse?.object ?? []}
@@ -135,18 +164,18 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, han
                                     fieldName={'severityLkey'}
                                     record={allerges}
                                     setRecord={setAllerges}
+                                    searchable={false}
                                 />
                             </Form>
-                        </div>
-
-                    </div>
-                    <div className="div-parent">
-                        <div style={{ flex: 1 }}>
-                            <Form layout="inline" fluid>
+                        </Col>
+                    </Row>
+                    <Row className='rows-gap'>
+                        <Col md={8}>
+                            <Form fluid>
                                 <MyInput
-                                    column
+
                                     disabled={editing}
-                                    width={200}
+                                    width="100%"
                                     fieldType="select"
                                     fieldLabel="Criticality"
                                     selectData={criticalityLovQueryResponse?.object ?? []}
@@ -155,27 +184,28 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, han
                                     fieldName={'criticalityLkey'}
                                     record={allerges}
                                     setRecord={setAllerges}
+                                    searchable={false}
                                 />
                             </Form>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <Form layout="inline" fluid>
+                        </Col>
+                        <Col md={8}>
+                            <Form fluid>
                                 <MyInput
-                                    column
+
                                     disabled={editing}
-                                    width={200}
+                                    width="100%"
                                     fieldName={'certainty'}
                                     record={allerges}
                                     setRecord={setAllerges}
                                 />
                             </Form>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <Form layout="inline" fluid>
+                        </Col>
+                        <Col md={8}>
+                            <Form fluid>
                                 <MyInput
-                                    column
+
                                     disabled={editing}
-                                    width={200}
+                                    width="100%"
                                     fieldType="select"
                                     fieldLabel="Treatment Strategy"
                                     selectData={treatmentstrategyLovQueryResponse?.object ?? []}
@@ -184,18 +214,17 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, han
                                     fieldName={'treatmentStrategyLkey'}
                                     record={allerges}
                                     setRecord={setAllerges}
+                                    searchable={false}
                                 />
                             </Form>
-                        </div>
-
-                    </div>
-                    <div className="div-parent">
-                        <div style={{ flex: 1 }}>
-                            <Form layout="inline" fluid>
+                        </Col>
+                    </Row>
+                    <Row className='rows-gap'>
+                        <Col md={8}>
+                            <Form fluid>
                                 <MyInput
-                                    column
                                     disabled={editing}
-                                    width={200}
+                                    width="100%"
                                     fieldType="select"
                                     fieldLabel="Onset"
                                     selectData={onsetLovQueryResponse?.object ?? []}
@@ -204,47 +233,42 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, han
                                     fieldName={'onsetLkey'}
                                     record={allerges}
                                     setRecord={setAllerges}
-                                />
+                                    searchable={false}
+                                     />
                             </Form>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <div>
-                                <Form className='margin-label'>
-                                    <MyLabel label='Onset Date' />
-                                </Form>
-
-                                <DatePicker
-                                    className='date-width'
-                                    format="MM/dd/yyyy hh:mm aa"
-                                    showMeridian
-                                    value={selectedOnsetDate}
-                                    onChange={handleDateChange}
+                        </Col>
+                        <Col md={8}>
+                            <Form fluid>
+                                <MyInput
+                                    width="100%"
+                                    fieldType='datetime'
+                                    fieldName="onsetDate"
+                                    record={allerges}
+                                    setRecord={setAllerges}
                                     disabled={editOnset.editdate}
                                 />
-                            </div>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <Form layout="inline" fluid>
+                            </Form>
+                        </Col>
+                        <Col md={8}>
+                            <Form fluid>
                                 <MyInput
                                     fieldLabel="Undefined"
                                     fieldName="editdate"
-                                    column
-                                    width={67}
+                                    width="100%"
                                     fieldType='checkbox'
                                     record={editOnset}
                                     setRecord={setEditOnset}
                                 />
                             </Form>
-                        </div>
-
-                    </div>
-                    <div className="div-parent">
-                    <div style={{ flex: 1 }}>
-                            <Form layout="inline" fluid>
+                        </Col>
+                    </Row>
+                    <Row className='rows-gap'>
+                        <Col md={8}>
+                            <Form fluid>
                                 <MyInput
-                                    column
+
                                     disabled={editing}
-                                    width={200}
+                                    width="100%"
                                     fieldType="select"
                                     fieldLabel="Type of Propensity"
                                     selectData={allgPropnLovQueryResponse?.object ?? []}
@@ -253,15 +277,16 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, han
                                     fieldName={'typeOfPropensityLkey'}
                                     record={allerges}
                                     setRecord={setAllerges}
+                                    searchable={false}
                                 />
                             </Form>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <Form layout="inline" fluid>
+                        </Col>
+                        <Col md={8}>
+                            <Form fluid>
                                 <MyInput
-                                    column
+
                                     disabled={editSourceof.editSource}
-                                    width={200}
+                                    width="100%"
                                     fieldType="select"
                                     fieldLabel="Source of Information"
                                     selectData={sourceofinformationLovQueryResponse?.object ?? []}
@@ -272,41 +297,44 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, han
                                     setRecord={setAllerges}
                                 />
                             </Form>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <Form layout="inline" fluid>
+                        </Col>
+                        <Col md={8}>
+                            <Form fluid>
                                 <MyInput
                                     fieldLabel="BY Patient"
                                     fieldName="editSource"
-                                    column
-                                    width={67}
+                                    width="100%"
                                     fieldType='checkbox'
                                     record={editSourceof}
                                     setRecord={seteditSourceof}
                                 />
                             </Form>
-                        </div>
-                     
+                        </Col>
+                    </Row>
+                    <Row className='rows-gap'>
+                        <Col md={12}>
+                            <Row>
+                                <Col md={24}>
+                                    <Form fluid>
+                                        <MyInput
 
-                    </div>
-                    <div className="div-parent">
-                        <div style={{ flex: 1 }}>
-                            <Form fluid>
-                                <div className='column-div'>
-                                    <MyInput
-                                        column
-                                        disabled={editing}
-                                        width='100%'
-                                        fieldType="select"
-                                        fieldLabel="Allergic Reactions"
-                                        selectData={reactionLovQueryResponse?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
-                                        selectDataValue="key"
-                                        fieldName={'reactionDescription'}
-                                        record={allerges}
-                                        setRecord={setAllerges}
-                                    />
-                                    <Input
+                                            disabled={editing}
+                                            width='100%'
+                                            fieldType="select"
+                                            fieldLabel="Allergic Reactions"
+                                            selectData={reactionLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            fieldName={'reactionDescription'}
+                                            record={allerges}
+                                            setRecord={setAllerges}
+                                        />
+                                    </Form>
+                                </Col>
+                            </Row>
+                            <Row>
+                                <Col md={24}>
+                                <Input
                                         as="textarea"
                                         disabled={editing}
                                         onChange={e => setReactionDescription(e)}
@@ -314,14 +342,13 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, han
                                         className='fill-width'
                                         rows={3}
                                     />
-                                </div>
-                            </Form>
-                        </div>
-                        <div style={{ flex: 1 }}>
+                                </Col>
+                            </Row>
+                        </Col>
+                        <Col md={12}>
                             <Form fluid>
                                 <MyInput
                                     width='100%'
-                                    column
                                     fieldLabel="Note"
                                     fieldType="textarea"
                                     fieldName="notes"
@@ -330,9 +357,9 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, han
                                     setRecord={setAllerges}
                                     disabled={editing}
                                 />
-                            </Form>
-                        </div>
-                    </div>
+                            </Form></Col>
+                    </Row>
+                 
 
 
                 </div>
@@ -341,3 +368,5 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, han
     </>)
 }
 export default DetailsModal;
+
+

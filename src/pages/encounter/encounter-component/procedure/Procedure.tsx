@@ -245,8 +245,7 @@ const Referrals = ({ edit, patient, encounter }) => {
       flexGrow:1,
      
     },
-    {
-      key:"scheduledDateTime",
+    {key:"scheduledDateTime",
       dataKey:"scheduledDateTime",
       title:<Translate>Scheduled Date Time</Translate>,
       flexGrow:1,
@@ -254,8 +253,7 @@ const Referrals = ({ edit, patient, encounter }) => {
            return  rowData.scheduledDateTime ? new Date(rowData.scheduledDateTime).toLocaleString() : ' '
       }
     },
-    {
-      key:"categoryKey",
+    {key:"categoryKey",
       dataKey:"categoryKey",
       title:<Translate>Category</Translate>,
       flexGrow:1,
@@ -267,8 +265,7 @@ const Referrals = ({ edit, patient, encounter }) => {
         return category?.lovDisplayVale || ' ';
       }
     },
-    {
-      key:"priorityLkey",
+    {key:"priorityLkey",
       dataKey:"priorityLkey",
       title:<Translate>Priority</Translate>,
       flexGrow:1,
@@ -276,8 +273,7 @@ const Referrals = ({ edit, patient, encounter }) => {
        return rowData.priorityLkey ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey
       }
     },
-    {
-      key:"procedureLevelLkey",
+    {key:"procedureLevelLkey",
       dataKey:"procedureLevelLkey",
       title:<Translate>Level</Translate>,
       flexGrow:1,
@@ -287,15 +283,13 @@ const Referrals = ({ edit, patient, encounter }) => {
            : rowData.procedureLevelLkey
       }
     },
-    {
-      key:"indications",
+    {key:"indications",
       dataKey:"indications",
       title:<Translate>Indications</Translate>,
       flexGrow:1,
     
     },
-    {
-      key:"statusLkey",
+    {  key:"statusLkey",
       dataKey:"statusLkey",
       title:<Translate>Status</Translate>,
       flexGrow:1,

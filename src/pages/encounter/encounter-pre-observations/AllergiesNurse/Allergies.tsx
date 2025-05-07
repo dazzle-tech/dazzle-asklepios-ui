@@ -1,38 +1,34 @@
-import React, { useEffect, useState } from 'react';
-import Translate from '@/components/Translate';
-import './styles.less';
-import { useAppDispatch, useAppSelector } from '@/hooks';
+import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import ReloadIcon from '@rsuite/icons/Reload';
-import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
+import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
+import { useAppDispatch } from '@/hooks';
+import { useGetAllergiesQuery, useSaveAllergiesMutation } from '@/services/observationService';
 import {
-  Form,
-  Input,
-  DatePicker,
-  Checkbox,
-  IconButton,
-  Table,
-} from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
-import MyInput from '@/components/MyInput';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { notify } from '@/utils/uiReducerActions';
-import PlusIcon from '@rsuite/icons/Plus';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowRotateRight, faCheck, faPersonDotsFromLine } from '@fortawesome/free-solid-svg-icons';
-import {
-  useGetLovValuesByCodeQuery,
   useGetAllergensQuery
 } from '@/services/setupService';
-import { useGetAllergiesQuery, useSaveAllergiesMutation } from '@/services/observationService';
 import { ApVisitAllergies } from '@/types/model-types';
 import { newApVisitAllergies } from '@/types/model-types-constructor';
-import MyLabel from '@/components/MyLabel/index';
-import CancellationModal from '@/components/CancellationModal';
+import { initialListRequest, ListRequest } from '@/types/types';
+import { notify } from '@/utils/uiReducerActions';
+import { faArrowRotateRight, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
+import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
+import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
+import PlusIcon from '@rsuite/icons/Plus';
+import ReloadIcon from '@rsuite/icons/Reload';
+import React, { useEffect, useState } from 'react';
+import { MdModeEdit } from 'react-icons/md';
+import {
+  Checkbox,
+  IconButton,
+  Table
+} from 'rsuite';
 import DetailsModal from './DetailsModal';
+import './styles.less';
+const { Column, HeaderCell, Cell } = Table;
 const Allergies = ({ edit, patient, encounter }) => {
   const [allerges, setAllerges] = useState<ApVisitAllergies>({ ...newApVisitAllergies });
   const [showCanceled, setShowCanceled] = useState(true);
@@ -40,7 +36,7 @@ const Allergies = ({ edit, patient, encounter }) => {
   const [showPrev, setShowPrev] = useState(true);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
 
-  const [listRequestallerg, setListRequestallerg] = useState<ListRequest>({
+  const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
       {
@@ -56,8 +52,8 @@ const Allergies = ({ edit, patient, encounter }) => {
     ]
   });
 
-  const { data: allergiesListResponse, refetch: fetchallerges } = useGetAllergiesQuery({
-    ...listRequestallerg
+  const { data: allergiesListResponse, refetch: fetchallerges,isLoading } = useGetAllergiesQuery({
+    ...listRequest
   });
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
 
@@ -65,18 +61,12 @@ const Allergies = ({ edit, patient, encounter }) => {
 
   const [openConfirmUndoResolvedModel, setOpenConfirmUndoResolvedModel] = useState(false);
 
-  const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
+  
 
   const { data: allergensListToGetName } = useGetAllergensQuery({
     ...initialListRequest
   });
-
-  const [selectedOnsetDate, setSelectedOnsetDate] = useState(null);
   const [saveAllergies, saveAllergiesMutation] = useSaveAllergiesMutation();
-  const [reactionDescription, setReactionDescription] = useState();
-  const [editOnset, setEditOnset] = useState({ editdate: true });
- 
-
   const dispatch = useAppDispatch();
 
   const isSelected = rowData => {
@@ -107,7 +97,7 @@ const Allergies = ({ edit, patient, encounter }) => {
           value: encounter.key
         }
       ];
-      setListRequestallerg(prevRequest => ({
+      setListRequest(prevRequest => ({
         ...prevRequest,
         filters: updatedFilters
       }));
@@ -124,7 +114,7 @@ const Allergies = ({ edit, patient, encounter }) => {
           value: '3196709905099521'
         }
       ];
-      setListRequestallerg(prevRequest => ({
+      setListRequest(prevRequest => ({
         ...prevRequest,
         filters: updatedFilters
       }));
@@ -132,13 +122,13 @@ const Allergies = ({ edit, patient, encounter }) => {
   }, [showPrev]);
 //Effect when do save allergy , refetch allergies 
   useEffect(() => {
-    setShowPrev(true);
+   
     fetchallerges();
   }, [saveAllergiesMutation]);
 
   useEffect(() => {
     fetchallerges();
-  }, [listRequestallerg]);
+  }, [listRequest]);
 
   useEffect(() => {
     if (showPrev) {
@@ -159,7 +149,7 @@ const Allergies = ({ edit, patient, encounter }) => {
           value: encounter.key
         }
       ];
-      setListRequestallerg(prevRequest => ({
+      setListRequest(prevRequest => ({
         ...prevRequest,
         filters: updatedFilters
       }));
@@ -176,124 +166,13 @@ const Allergies = ({ edit, patient, encounter }) => {
           value: '3196709905099521'
         }
       ];
-      setListRequestallerg(prevRequest => ({
+      setListRequest(prevRequest => ({
         ...prevRequest,
         filters: updatedFilters
       }));
     }
   }, [showCanceled]);
 
-  useEffect(() => {
-    if (editOnset.editdate) {
-      setSelectedOnsetDate(null);
-    }
-  }, [editOnset.editdate])
- 
-  const renderRowExpanded = rowData => {
-    return (
-      <Table
-        data={[rowData]} // Pass the data as an array to populate the table
-        height={100} // Adjust height as needed
-      >
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Created At</HeaderCell>
-          <Cell dataKey="onsetDate">
-            {rowData => (rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : '')}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Created By</HeaderCell>
-          <Cell dataKey="createdBy" />
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Updated At</HeaderCell>
-          <Cell dataKey="updatedAt">
-            {rowData => (rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString() : '')}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Updated By</HeaderCell>
-          <Cell dataKey="updatedBy" />
-        </Column>
-        <Column flexGrow={2} fullText>
-          <HeaderCell>Resolved At</HeaderCell>
-          <Cell dataKey="resolvedAt">
-            {rowData => {
-              if (rowData.statusLkey != '9766169155908512') {
-                return rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : '';
-              }
-            }}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Resolved By</HeaderCell>
-          <Cell dataKey="resolvedBy" />
-        </Column>
-        <Column flexGrow={2} fullText>
-          <HeaderCell>Cancelled At</HeaderCell>
-          <Cell dataKey="deletedAt">
-            {rowData => (rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : '')}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Cancelled By</HeaderCell>
-          <Cell dataKey="deletedBy" />
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell  >
-            <Translate>Notes</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.notes}</Cell>
-        </Column>
-        <Column flexGrow={2} fullText>
-          <HeaderCell  >
-            <Translate>Certainty</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.certainty}</Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Cancelliton Reason</HeaderCell>
-          <Cell dataKey="cancellationReason" />
-        </Column>
-      </Table>
-    );
-  };
-
-  const handleExpanded = rowData => {
-    let open = false;
-    const nextExpandedRowKeys = [];
-
-    expandedRowKeys.forEach(key => {
-      if (key === rowData.key) {
-        open = true;
-      } else {
-        nextExpandedRowKeys.push(key);
-      }
-    });
-
-    if (!open) {
-      nextExpandedRowKeys.push(rowData.key);
-    }
-    setExpandedRowKeys(nextExpandedRowKeys);
-  };
-
-  const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
-    <Cell {...props} style={{ padding: 5 }}>
-      <IconButton
-        appearance="subtle"
-        onClick={() => {
-          onChange(rowData);
-        }}
-        icon={
-          expandedRowKeys.some(key => key === rowData['key']) ? (
-            <CollaspedOutlineIcon />
-          ) : (
-            <ExpandOutlineIcon />
-          )
-        }
-      />
-    </Cell>
-  );
 
  
   const handleClear = () => {
@@ -309,33 +188,10 @@ const Allergies = ({ edit, patient, encounter }) => {
       criticalityLkey: null,
       typeOfPropensityLkey: null
     });
-    setSelectedOnsetDate(null);
-    setEditOnset({ editdate: true });
-    setReactionDescription(null);
+   
   };
 
-  const handleSave = async () => {
-    setShowPrev(true);
-    try {
-      await saveAllergies({
-        ...allerges,
-        patientKey: patient.key,
-        visitKey: encounter.key,
-        statusLkey: '9766169155908512',
-        reactionDescription: reactionDescription,
-        onsetDate: selectedOnsetDate ? selectedOnsetDate.getTime() : null
-      }).unwrap();
-      dispatch(notify('Saved Successfully'));
-      setOpenDetailsModal(false)
-      setShowPrev(false);
-      await fetchallerges(); // Ensure refetch is awaited
-      await handleClear();
-      setShowPrev(true);
-    } catch (error) {
-      dispatch(notify('Save Failed'));
-      console.error('An error occurred:', error);
-    }
-  };
+ 
 
   const OpenCancellationReasonModel = () => {
     setOpenCancellationReasonModel(true);
@@ -363,8 +219,8 @@ const Allergies = ({ edit, patient, encounter }) => {
         isValid: false,
         deletedAt: Date.now()
       }).unwrap();
-      dispatch(notify(' deleted successfully'));
-      setShowCanceled(false);
+      dispatch(notify({msg:'Deleted successfully' ,sev:'success'}));
+     
       fetchallerges()
         .then(() => {
          
@@ -374,7 +230,9 @@ const Allergies = ({ edit, patient, encounter }) => {
         });
 
       CloseCancellationReasonModel();
-    } catch { }
+    } catch { 
+      dispatch(notify({msg:' Deleted Faild' ,sev:'error'}));
+    }
   };
 
   const handleResolved = async () => {
@@ -427,6 +285,200 @@ const Allergies = ({ edit, patient, encounter }) => {
       dispatch(notify('Undo Resolved Fill'));
     }
   };
+  const tableColumns = [
+    {key: "allergyTypeLvalue",
+      dataKey: "allergyTypeLvalue",
+      title: <Translate>Allergy Type</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) => rowData.allergyTypeLvalue?.lovDisplayVale
+    },
+    {key: "allergenKey",
+      dataKey: "allergenKey",
+      title: <Translate>Allergen</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) => {
+        if (!allergensListToGetName?.object) return "Loading...";
+        const found = allergensListToGetName.object.find(
+          (item) => item.key === rowData.allergenKey
+        );
+        return found?.allergenName || "No Name";
+      }
+    },
+    { key: "severityLvalue",
+      dataKey: "severityLvalue",
+      title: <Translate>Severity</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => rowData.severityLvalue?.lovDisplayVale
+    },
+    {key: "criticalityLkey",
+      dataKey: "criticalityLkey",
+      title: <Translate>Certainty type</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) =>
+        rowData.criticalityLkey
+          ? rowData.criticalityLvalue?.lovDisplayVale
+          : rowData.criticalityLkey
+    },
+    {key: "onsetLvalue",
+      dataKey: "onsetLvalue",
+      title: <Translate>Onset</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) => rowData.onsetLvalue?.lovDisplayVale
+    },
+    {key: "onsetDate",
+      dataKey: "onsetDate",
+      title: <Translate>Onset Date Time</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) =>
+        rowData.onsetDate
+          ? new Date(rowData.onsetDate).toLocaleString()
+          : "Undefind"
+    },
+    {key: "treatmentStrategyLvalue",
+      dataKey: "treatmentStrategyLvalue",
+      title: <Translate>Treatment Strategy</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) => rowData.treatmentStrategyLvalue?.lovDisplayVale
+    },
+    {key: "sourceOfInformationLvalue",
+      dataKey: "sourceOfInformationLvalue",
+      title: <Translate>Source of information</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) =>
+        rowData.sourceOfInformationLvalue?.lovDisplayVale || "BY Patient"
+    },
+    {key: "reactionDescription",
+      dataKey: "reactionDescription",
+      title: <Translate>Reaction Description</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) => rowData.reactionDescription
+    },
+    {key: "typeOfPropensityLkey",
+      dataKey: "typeOfPropensityLkey",
+      title: <Translate>Type Of Propensity</Translate>,
+      flexGrow: 2,
+      render: (rowData: any) =>
+        rowData.typeOfPropensityLkey
+          ? rowData.typeOfPropensityLvalue?.lovDisplayVale
+          : rowData.typeOfPropensityLkey
+    },
+    {key: "statusLvalue",
+      dataKey: "statusLvalue",
+      title: <Translate>Status</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => rowData.statusLvalue?.lovDisplayVale
+    },
+    { key:"#",
+      dataKey:"",
+      title:<Translate>Edit</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+        return <MdModeEdit
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={()=>setOpenDetailsModal(true)}
+      />
+      }
+    },
+    {key:"notes",
+      dataKey:"notes",
+      title:<Translate>Notes</Translate>,
+      expandable:true
+    }
+    ,
+    {key:"certainty",
+      dataKey:"certainty",
+      title:<Translate>Certainty</Translate>,
+      expandable:true
+    }
+    ,
+    {key:"cancellationReason",
+      dataKey:"cancellationReason",
+      title:<Translate>Cancellation Reason</Translate>,
+      expandable:true
+    }
+    ,
+    {key:"",
+      title: <Translate>Created At/By</Translate>,
+     expandable:true,
+     render:(rowData:any)=>{
+      return(<>
+       <span>{rowData.createdBy}</span>
+        <br/>
+       <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+      </>)
+     }
+
+    },
+    {key:"",
+      title: <Translate>Updated At/By</Translate>,
+     expandable:true,
+     render:(rowData:any)=>{
+      return(<>
+       <span>{rowData.updatedBy}</span>
+        <br/>
+       <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+      </>)
+     }
+
+    },
+ 
+    {key:"",
+      title: <Translate>Cancelled At/By</Translate>,
+     expandable:true,
+     render:(rowData:any)=>{
+      return(<>
+       <span>{rowData.deletedBy}</span>
+        <br/>
+       <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
+      </>)
+     }
+
+    },
+    {key:"",
+      title: <Translate>Resolved At/By</Translate>,
+     expandable:true,
+     render:(rowData:any)=>{
+      if (rowData.statusLkey != '9766169155908512') {
+      return(<>
+     
+       <span>{rowData.resolvedBy}</span>
+        <br/>
+       <span className='date-table-style'>{rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : ''}</span>
+      </>)}
+      else {
+        return null;
+      }
+     }
+
+    },
+
+  ];
+    const pageIndex = listRequest.pageNumber - 1;
+    
+      // how many rows per page:
+      const rowsPerPage = listRequest.pageSize;
+    
+      // total number of items in the backend:
+      const totalCount = allergiesListResponse?.extraNumeric ?? 0;
+    
+      // handler when the user clicks a new page number:
+      const handlePageChange = (_: unknown, newPage: number) => {
+        // MUI gives you a zero-based page, so add 1 for your API
+       
+        setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+      };
+    
+      // handler when the user chooses a different rows-per-page:
+      const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      
+        setListRequest({
+          ...listRequest,
+          pageSize: parseInt(event.target.value, 10),
+          pageNumber: 1 // reset to first page
+        });
+      };
   return (
     <div>
 
@@ -469,130 +521,34 @@ const Allergies = ({ edit, patient, encounter }) => {
         <div className='bt-right'>
           <MyButton
             prefixIcon={() => <PlusIcon />}
-            onClick={() => setOpenDetailsModal(true)}
+            onClick={() => {
+              handleClear();
+              setOpenDetailsModal(true)}}
           >Add Allergy</MyButton>
         </div>
       </div>
+ <MyTable   
+ columns={tableColumns} 
+ data={allergiesListResponse?.object || []}
+ onRowClick={rowData => {
+  setAllerges(rowData);
+  setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
+}}
+rowClassName={isSelected}
+sortColumn={listRequest.sortBy}
+sortType={listRequest.sortType}
+onSortChange={(sortBy, sortType) => {
+  setListRequest({ ...listRequest, sortBy, sortType });
+}}
+page={pageIndex}
+rowsPerPage={rowsPerPage}
+totalCount={totalCount}
+onPageChange={handlePageChange}
+onRowsPerPageChange={handleRowsPerPageChange}
+loading={isLoading}
 
-      <Table
-        autoHeight
-        data={allergiesListResponse?.object || []}
-        rowKey="key"
-        expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
-        renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
-        shouldUpdateScroll={false}
-        onRowClick={rowData => {
-          setAllerges(rowData);
-          setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
-        }}
-        rowClassName={isSelected}
-      >
-        <Column width={70}  >
-          <HeaderCell>#</HeaderCell>
-          <ExpandCell
-            rowData={rowData => rowData}
-            dataKey="key"
-            expandedRowKeys={expandedRowKeys}
-            onChange={handleExpanded}
-          />
-        </Column>
-
-        <Column flexGrow={2} fullText>
-          <HeaderCell >
-            <Translate>Allergy Type</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.allergyTypeLvalue?.lovDisplayVale}</Cell>
-        </Column>
-        <Column flexGrow={2} fullText>
-          <HeaderCell >
-            <Translate>Allergen</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData => {
-              if (!allergensListToGetName?.object) {
-                return 'Loading...';
-              }
-              const getname = allergensListToGetName.object.find(
-                item => item.key === rowData.allergenKey
-              );
-
-              return getname?.allergenName || 'No Name';
-            }}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell >
-            <Translate>Severity</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.severityLvalue?.lovDisplayVale}</Cell>
-        </Column>
-        <Column flexGrow={2} fullText>
-          <HeaderCell  >
-            <Translate>Certainty type</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.criticalityLkey
-                ? rowData.criticalityLvalue.lovDisplayVale
-                : rowData.criticalityLkey
-            }
-          </Cell>
-        </Column>
-        <Column flexGrow={2} fullText>
-          <HeaderCell  >
-            <Translate>Onset</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.onsetLvalue?.lovDisplayVale}</Cell>
-        </Column>
-        <Column flexGrow={2} fullText>
-          <HeaderCell  >
-            <Translate>Onset Date Time</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.onsetDate ? new Date(rowData.onsetDate).toLocaleString() : 'Undefind'
-            }
-          </Cell>
-        </Column>
-        <Column flexGrow={2} fullText>
-          <HeaderCell  >
-            <Translate>Treatment Strategy</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.treatmentStrategyLvalue?.lovDisplayVale}</Cell>
-        </Column>
-        <Column flexGrow={2} fullText>
-          <HeaderCell  >
-            <Translate>Source of information</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData => rowData.sourceOfInformationLvalue?.lovDisplayVale || 'BY Patient'}
-          </Cell>
-        </Column>
-        <Column flexGrow={2} fullText>
-          <HeaderCell  >
-            <Translate>Reaction Description</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.reactionDescription}</Cell>
-        </Column>
-        <Column flexGrow={2} fullText>
-          <HeaderCell  >
-            <Translate>Type Of Propensity</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.typeOfPropensityLkey
-                ? rowData.typeOfPropensityLvalue.lovDisplayVale
-                : rowData.typeOfPropensityLkey
-            }
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell  >
-            <Translate>Status</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.statusLvalue?.lovDisplayVale}</Cell>
-        </Column>
-      </Table>
+ />
+    
 
       {/* modal for cancell the allergy and write the reason */}
       <CancellationModal
@@ -629,7 +585,14 @@ const Allergies = ({ edit, patient, encounter }) => {
       ></MyModal>
 
       {/*modal for add details for allergy and save it */}
-      <DetailsModal open={openDetailsModal} setOpen={setOpenDetailsModal} allerges={allerges} setAllerges={setAllerges} handleClear={handleClear} handleSave={handleSave} edit={edit} editing={editing} />
+      <DetailsModal 
+      open={openDetailsModal} setOpen={setOpenDetailsModal} 
+      allerges={allerges} setAllerges={setAllerges} 
+      handleClear={handleClear}  
+      edit={edit} editing={editing}
+      patient={patient}
+      encounter={encounter}
+      fetchallerges={fetchallerges} />
     
     </div>
   );

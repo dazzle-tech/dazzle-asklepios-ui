@@ -272,8 +272,7 @@ const Consultation = ({ edit, patient, encounter }) => {
       }
 
     },
-    {
-      key: "createdAt ",
+    {key: "createdAt ",
       dataKey: "createdAt ",
       title: <Translate>Consultation Date</Translate>,
       flexGrow: 1,
