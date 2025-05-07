@@ -102,7 +102,7 @@ const MyInput = ({
         return (
           <Form.Control
             className="custom-date-input"
-            style={{ width: props?.width ?? 145, '--input-height': `${props?.height ?? 20}px` } as React.CSSProperties}
+            style={{ width: props?.width ?? 145, '--input-height': `${props?.height ?? 30}px` } as React.CSSProperties}
             disabled={props.disabled}
             name={fieldName}
             value={record[fieldName] ? new Date(record[fieldName]) : null}

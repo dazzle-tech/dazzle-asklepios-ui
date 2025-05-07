@@ -1,56 +1,34 @@
-import React, { useEffect, useState } from 'react';
-import { Footer, Placeholder } from 'rsuite';
-import Translate from '@/components/Translate';
-import './styles.less';
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { Tag } from 'rsuite';
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import CheckOutlineIcon from '@rsuite/icons/CheckOutline';
-import ReloadIcon from '@rsuite/icons/Reload';
-import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
+import CancellationModal from '@/components/CancellationModal';
+import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
-import {
-  InputGroup,
-  Form,
-  Input,
-  Panel,
-  DatePicker,
-  Text,
-  Checkbox,
-  Dropdown,
-  Button,
-  IconButton,
-  SelectPicker,
-  Table,
-  Modal,
-  Stack,
-  Divider,
-  Toggle
-} from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
-
-import { FaCalendar, FaClock } from 'react-icons/fa';
-import { BsCalendar2MonthFill } from 'react-icons/bs';
-import MyInput from '@/components/MyInput';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { notify } from '@/utils/uiReducerActions';
-import CheckIcon from '@rsuite/icons/Check';
-import PlusIcon from '@rsuite/icons/Plus';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowRotateRight, faBroom, faCheck, faWarning } from '@fortawesome/free-solid-svg-icons';
-import {
-  useGetLovValuesByCodeQuery,
-  useGetLovValuesQuery,
-  useGetAllergensQuery
-} from '@/services/setupService';
+import MyTable from '@/components/MyTable';
+import Translate from '@/components/Translate';
+import { useAppDispatch } from '@/hooks';
 import { useGetWarningsQuery, useSaveWarningsMutation } from '@/services/observationService';
+import {
+  useGetLovValuesByCodeQuery
+} from '@/services/setupService';
 import { ApVisitWarning } from '@/types/model-types';
 import { newApVisitWarning } from '@/types/model-types-constructor';
-import MyButton from '@/components/MyButton/MyButton';
+import { initialListRequest, ListRequest } from '@/types/types';
+import { notify } from '@/utils/uiReducerActions';
+import { faArrowRotateRight, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
+import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
+import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
+import PlusIcon from '@rsuite/icons/Plus';
+import ReloadIcon from '@rsuite/icons/Reload';
+import React, { useEffect, useState } from 'react';
+import { MdModeEdit } from 'react-icons/md';
+import {
+  Checkbox,
+  IconButton,
+  Table
+} from 'rsuite';
+import DetailsModal from './DetailsModal';
 import './styles.less';
-import CancellationModal from '@/components/CancellationModal';
+const { Column, HeaderCell, Cell } = Table;
 const Warning = ({ edit, patient, encounter }) => {
   const { data: warningTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_WARNING_TYPS');
   const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
@@ -66,7 +44,7 @@ const Warning = ({ edit, patient, encounter }) => {
   const [showCanceled, setShowCanceled] = useState(true);
   const [editing, setEditing] = useState(false);
   const [showPrev, setShowPrev] = useState(true);
-  const [listRequestWar, setListRequestWar] = useState<ListRequest>({
+  const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
       {
@@ -82,12 +60,10 @@ const Warning = ({ edit, patient, encounter }) => {
     ]
   });
 
-  const { data: warningsListResponse, refetch: fetchwarnings } = useGetWarningsQuery({
-    ...listRequestWar
+  const { data: warningsListResponse, refetch: fetchwarnings ,isLoading} = useGetWarningsQuery({
+    ...listRequest
   });
-  const [selectedFirstDate, setSelectedFirstDate] = useState(null);
-  const [editDate, setEditDate] = useState({ editdate: true });
-  const [editSourceof, seteditSourceof] = useState({ editSource: true });
+const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const dispatch = useAppDispatch();
 
   const isSelected = rowData => {
@@ -95,19 +71,11 @@ const Warning = ({ edit, patient, encounter }) => {
       return 'selected-row';
     } else return '';
   };
-  useEffect(() => { }, [selectedFirstDate]);
-  useEffect(() => {
-    if (warning.firstTimeRecorded != 0) {
-      setEditDate({ editdate: false });
-      setSelectedFirstDate(new Date(warning.firstTimeRecorded));
-    }
-    if (warning.sourceOfInformationLkey != null) {
-      seteditSourceof({ editSource: false });
-    }
-  }, [warning]);
+
+
  
   useEffect(() => {
-    console.log('showPrev ', showPrev);
+
     if (showPrev) {
       const updatedFilters = [
         {
@@ -126,7 +94,7 @@ const Warning = ({ edit, patient, encounter }) => {
           value: encounter.key
         }
       ];
-      setListRequestWar(prevRequest => ({
+      setListRequest(prevRequest => ({
         ...prevRequest,
         filters: updatedFilters
       }));
@@ -143,7 +111,7 @@ const Warning = ({ edit, patient, encounter }) => {
           value: '3196709905099521'
         }
       ];
-      setListRequestWar(prevRequest => ({
+      setListRequest(prevRequest => ({
         ...prevRequest,
         filters: updatedFilters
       }));
@@ -170,7 +138,7 @@ const Warning = ({ edit, patient, encounter }) => {
           value: encounter.key
         }
       ];
-      setListRequestWar(prevRequest => ({
+      setListRequest(prevRequest => ({
         ...prevRequest,
         filters: updatedFilters
       }));
@@ -187,7 +155,7 @@ const Warning = ({ edit, patient, encounter }) => {
           value: '3196709905099521'
         }
       ];
-      setListRequestWar(prevRequest => ({
+      setListRequest(prevRequest => ({
         ...prevRequest,
         filters: updatedFilters
       }));
@@ -195,60 +163,13 @@ const Warning = ({ edit, patient, encounter }) => {
   }, [showCanceled]);
 
   useEffect(() => {
-    setShowPrev(true);
-
     fetchwarnings();
   }, [saveWarningMutation]);
 
   useEffect(() => {
-
     fetchwarnings();
-  }, [listRequestWar]);
+  }, [listRequest]);
 
-  useEffect(() => {
-    if (editDate.editdate) {
-      setSelectedFirstDate(null);
-    }
-  }, [editDate.editdate])
-
-  useEffect(() => {
-    if (editSourceof.editSource) {
-      setWarning({ ...warning, sourceOfInformationLkey: null });
-    }
-  }, [editDate.editdate])
-
-  const handleDateChange = date => {
-    if (date) {
-      const timestamp = date.getTime();
-      if (!editDate.editdate) {
-        setSelectedFirstDate(date);
-      }
-    }
-  };
-  const handleSave = async () => {
-    setShowPrev(true);
-    try {
-      const Response = await saveWarning({
-        ...warning,
-        patientKey: patient.key,
-        visitKey: encounter.key,
-        statusLkey: '9766169155908512',
-        firstTimeRecorded: selectedFirstDate ? selectedFirstDate.getTime() : null
-      }).unwrap();
-      setWarning({ ...newApVisitWarning });
-      dispatch(notify('saved  Successfully'));
-
-      setShowPrev(false);
-      setOpenDetailsModal(false);
-      await fetchwarnings();
-
-      handleClear();
-      setShowPrev(true);
-    } catch (error) {
-      dispatch(notify('Save Failed'));
-      console.error('An error occurred:', error);
-    }
-  };
   const handleClear = () => {
     setWarning({
       ...newApVisitWarning,
@@ -286,8 +207,8 @@ const Warning = ({ edit, patient, encounter }) => {
         isValid: false,
         deletedAt: Date.now()
       }).unwrap();
-      dispatch(notify(' deleted successfully'));
-      await setShowCanceled(false);
+      dispatch(notify({msg:' Deleted successfully' ,sev:"success"}));
+     
       await fetchwarnings()
         .then(() => {
           console.log('Refetch complete');
@@ -342,99 +263,193 @@ const Warning = ({ edit, patient, encounter }) => {
       dispatch(notify('Undo Resolved Fill'));
     }
   }
-  const renderRowExpanded = rowData => {
-    return (
-      <Table
-        data={[rowData]} // Pass the data as an array to populate the table
-        height={100} // Adjust height as needed
-      >
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Created At</HeaderCell>
-          <Cell dataKey="createdAt">
-            {rowData => (rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : '')}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Created By</HeaderCell>
-          <Cell dataKey="createdBy" />
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Updated At</HeaderCell>
-          <Cell dataKey="updatedAt">
-            {rowData => (rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString() : '')}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Updated By</HeaderCell>
-          <Cell dataKey="updatedBy" />
-        </Column>
-        <Column flexGrow={2} fullText>
-          <HeaderCell>Resolved At</HeaderCell>
-          <Cell dataKey="resolvedAt">
-            {rowData => {
-              if (rowData.statusLkey != '9766169155908512') {
-                return rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : '';
-              }
-            }}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Resolved By</HeaderCell>
-          <Cell dataKey="resolvedBy" />
-        </Column>
-        <Column flexGrow={2} fullText>
-          <HeaderCell>Cancelled At</HeaderCell>
-          <Cell dataKey="deletedAt">
-            {rowData => (rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : '')}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Cancelled By</HeaderCell>
-          <Cell dataKey="deletedBy" />
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell>Cancelliton Reason</HeaderCell>
-          <Cell dataKey="cancellationReason" />
-        </Column>
-      </Table>
-    );
-  };
+  const handelAddNew = () => {
+    handleClear();
+    setOpenDetailsModal(true)
+  }
 
-  const handleExpanded = rowData => {
-    let open = false;
-    const nextExpandedRowKeys = [];
-
-    expandedRowKeys.forEach(key => {
-      if (key === rowData.key) {
-        open = true;
-      } else {
-        nextExpandedRowKeys.push(key);
+  const tableColumns=[
+    { key:"warningTypeLkey",
+      dataKey:"warningTypeLkey",
+      title:<Translate>Warning Type</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+        return rowData.warningTypeLvalue?.lovDisplayVale;
       }
-    });
-
-    if (!open) {
-      nextExpandedRowKeys.push(rowData.key);
-    }
-    setExpandedRowKeys(nextExpandedRowKeys);
-  };
-
-  const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
-    <Cell {...props} className='padding-expand-table'>
-      <IconButton
-        appearance="subtle"
-        onClick={() => {
-          onChange(rowData);
-        }}
-        icon={
-          expandedRowKeys.some(key => key === rowData['key']) ? (
-            <CollaspedOutlineIcon />
-          ) : (
-            <ExpandOutlineIcon />
-          )
-        }
+    },
+    { key:"severityLkey",
+      dataKey:"severityLkey",
+      title:<Translate>Severity</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+        return rowData.severityLvalue?.lovDisplayVale;
+      }
+    },
+    { key:"firstTimeRecorded",
+      dataKey:"firstTimeRecorded",
+      title:<Translate>First Time Recorded</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+        return  rowData.firstTimeRecorded
+        ? new Date(rowData.firstTimeRecorded).toLocaleString()
+        : 'Undefind'
+;
+      }
+    },
+    {key:"sourceOfInformationLkey",
+      dataKey:"sourceOfInformationLkey",
+      title:<Translate>Source of information</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+        return rowData.sourceOfInformationLvalue?.lovDisplayVale || 'BY Patient';
+      }
+    },
+    {key:"warning",
+      dataKey:"warning",
+      title:<Translate>Warning</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+        return rowData.warning;
+      }
+    },
+    {key:"actionTake",
+      dataKey:"actionTake",
+      title:<Translate>Action Taken</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+        return rowData.actionTake;
+      }
+    },
+    { key:"notes",
+      dataKey:"notes",
+      title:<Translate>Notes</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+        return rowData.notes;
+      }
+    },
+    {key:"statusLkey",
+      dataKey:"statusLkey",
+      title:<Translate>Status</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+        return rowData.statusLvalue?.lovDisplayVale;
+      }
+    },
+    { key:"#",
+      dataKey:"",
+      title:<Translate>Edit</Translate>,
+      flexGrow:1,
+      render:(rowData:any)=>{
+        return <MdModeEdit
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={()=>setOpenDetailsModal(true)}
       />
-    </Cell>
-  );
+      }
+    },
+    {key:"createdAt",
+      dataKey:"createdAt",
+      title:<Translate>Created At</Translate>,
+      flexGrow:1,
+      expandable:true,
+      render:(rowData:any)=>{
+        return rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : '';
+      }
+    },
+    { key:"createdBy",
+      dataKey:"createdBy",
+      title:<Translate>Created By</Translate>,
+      flexGrow:1,
+      expandable:true,
+    
+    },
+    {key:"updatedAt",
+      dataKey:"updatedAt",
+      title:<Translate>Updated At</Translate>,
+      flexGrow:1,
+      expandable:true,
+      render:(rowData:any)=>{
+        return rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString() : '';
+      }
+    },
+    {key:"updatedBy",
+      dataKey:"updatedBy",
+      title:<Translate>Updated By</Translate>,
+      flexGrow:1,
+      expandable:true,
+     
+    },
+    {key:"resolvedAt",
+      dataKey:"resolvedAt",
+      title:<Translate>Resolved At</Translate>,
+      flexGrow:1,
+      expandable:true,
+      render:(rowData:any)=>{
+         if (rowData.statusLkey != '9766169155908512') {
+                return rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : ''
+      }
+    }
+   },
+    {key:"resolvedBy",
+      dataKey:"resolvedBy",
+      title:<Translate>Resolved By</Translate>,
+      flexGrow:1,
+      expandable:true,
+      render:(rowData:any)=>{
+        return null;
+      }
+    },
+    {key:"deletedAt",
+      dataKey:"deletedAt",
+      title:<Translate>Cancelled At</Translate>,
+      flexGrow:1,
+      expandable:true,
+      render:(rowData:any)=>{
+        return rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : '';
+      }
+    },
+    {key:"deletedBy",
+      dataKey:"deletedBy",
+      title:<Translate>Cancelled By</Translate>,
+      flexGrow:1,
+      expandable:true,
+   
+    },
+    { key:"cancellationReason",
+      dataKey:"cancellationReason",
+      title:<Translate>Cancelliton Reason</Translate>,
+      flexGrow:1,
+      expandable:true
+    
+    }
+  
+  ]
+    const pageIndex = listRequest.pageNumber - 1;
+  
+    // how many rows per page:
+    const rowsPerPage = listRequest.pageSize;
+  
+    // total number of items in the backend:
+    const totalCount = warningsListResponse?.extraNumeric ?? 0;
+  
+    // handler when the user clicks a new page number:
+    const handlePageChange = (_: unknown, newPage: number) => {
+      // MUI gives you a zero-based page, so add 1 for your API
+      setManualSearchTriggered(true);
+      setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+    };
+  
+    // handler when the user chooses a different rows-per-page:
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      setManualSearchTriggered(true);
+      setListRequest({
+        ...listRequest,
+        pageSize: parseInt(event.target.value, 10),
+        pageNumber: 1 // reset to first page
+      });
+    };
   return (
     <div >
        {/* buttons actions section */}
@@ -477,95 +492,33 @@ const Warning = ({ edit, patient, encounter }) => {
           <MyButton
             prefixIcon={() => <PlusIcon />}
 
-            onClick={() => setOpenDetailsModal(true)}
+            onClick={() =>{ setOpenDetailsModal(true);
+              handleClear();
+            }}
           >Add Warning</MyButton>
         </div>
       </div>
+      <MyTable
+      columns={tableColumns}
+      data={warningsListResponse?.object || []}
+      onRowClick={rowData => {
+        setWarning(rowData);
+        setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
+      }}
+      rowClassName={isSelected}
+      sortColumn={listRequest.sortBy}
+      sortType={listRequest.sortType}
+      onSortChange={(sortBy, sortType) => {
+        setListRequest({ ...listRequest, sortBy, sortType });
+      }}
+      page={pageIndex}
+      rowsPerPage={rowsPerPage}
+      totalCount={totalCount}
+      onPageChange={handlePageChange}
+      onRowsPerPageChange={handleRowsPerPageChange}
+      loading={isLoading}
+      />
 
-      <Table
-        autoHeight
-        data={warningsListResponse?.object || []}
-        rowKey="key"
-        expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
-        renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
-        shouldUpdateScroll={false}
-
-        onRowClick={rowData => {
-          setWarning(rowData);
-          setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
-        }}
-        rowClassName={isSelected}
-      >
-        <Column width={70} >
-          <HeaderCell>#</HeaderCell>
-          <ExpandCell
-            rowData={rowData => rowData}
-            dataKey="key"
-            expandedRowKeys={expandedRowKeys}
-            onChange={handleExpanded}
-          />
-        </Column>
-
-        <Column flexGrow={2} fullText>
-          <HeaderCell   >
-            <Translate>Warning Type</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.warningTypeLvalue?.lovDisplayVale}</Cell>
-        </Column>
-
-        <Column flexGrow={2} fullText>
-          <HeaderCell   >
-            <Translate>Severity</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.severityLvalue?.lovDisplayVale}</Cell>
-        </Column>
-
-        <Column flexGrow={2} fullText>
-          <HeaderCell   >
-            <Translate>First Time Recorded</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.firstTimeRecorded
-                ? new Date(rowData.firstTimeRecorded).toLocaleString()
-                : 'Undefind'
-            }
-          </Cell>
-        </Column>
-
-        <Column flexGrow={2} fullText>
-          <HeaderCell   >
-            <Translate>Source of information</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData => rowData.sourceOfInformationLvalue?.lovDisplayVale || 'BY Patient'}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell   >
-            <Translate>Warning</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.warning}</Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell   >
-            <Translate>Action Taken</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.actionTake}</Cell>
-        </Column>
-        <Column flexGrow={2} fullText>
-          <HeaderCell   >
-            <Translate>Notes</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.notes}</Cell>
-        </Column>
-        <Column flexGrow={1} fullText>
-          <HeaderCell   >
-            <Translate>Status</Translate>
-          </HeaderCell>
-          <Cell>{rowData => rowData.statusLvalue?.lovDisplayVale}</Cell>
-        </Column>
-      </Table> 
 
   {/* modal for esolve warning */}
       <MyModal
@@ -603,175 +556,12 @@ const Warning = ({ edit, patient, encounter }) => {
       ></CancellationModal>
 
 
-     {/* open modal to add or edit details for warning */}
-      <MyModal
-        open={openDetailsModal}
-        setOpen={setOpenDetailsModal}
-        title="Add Warning"
-        actionButtonFunction={handleSave}
-        bodyheight={550}
-        size='680px'
-        position='right'
-        steps={[
-
-          {
-            title: 'Warning', icon: faWarning, footer: <MyButton
-
-              onClick={handleClear}
-            >Clear</MyButton>
-          },
-        ]}
-        content={
-
-
-          <div >
-            <div className="div-parent">
-              <div style={{ flex: 1 }}>
-                <Form layout="inline" fluid>
-                  <MyInput
-                    column
-                    disabled={editing}
-                    width={200}
-                    fieldType="select"
-                    fieldLabel="Warning Type"
-                    selectData={warningTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    fieldName={'warningTypeLkey'}
-                    record={warning}
-                    setRecord={setWarning}
-                  />
-                </Form>
-              </div>
-              <div style={{ flex: 1 }}>
-                <Form layout="inline" fluid>
-                  <MyInput
-                    column
-                    disabled={editing}
-                    width={200}
-                    fieldName={'warning'}
-                    record={warning}
-                    setRecord={setWarning}
-                  />
-                </Form>
-              </div>
-              <div style={{ flex: 1 }}>
-                <Form layout="inline" fluid>
-                  <MyInput
-                    column
-                    disabled={editing}
-                    width={200}
-                    fieldType="select"
-                    fieldLabel="Severity"
-                    selectData={severityLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    fieldName={'severityLkey'}
-                    record={warning}
-                    setRecord={setWarning}
-                  />
-                </Form>
-              </div>
-            </div>
-            <div className="div-parent">
-              <div style={{ flex: 1 }}>
-                <Form layout="inline" fluid>
-                  <MyInput
-                    column
-                    disabled={editSourceof.editSource}
-                    width={200}
-                    fieldType="select"
-                    selectData={sourceofinformationLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    fieldName={'sourceOfInformationLkey'}
-                    record={warning}
-                    setRecord={setWarning}
-                  />
-                </Form>
-              </div>
-              <div style={{ flex: 1 }}>
-                <Form layout="inline" fluid>
-                  <MyInput
-                    fieldLabel="By Patient"
-                    fieldName="editSource"
-                    column
-                    width={75}
-                    fieldType='checkbox'
-                    record={editSourceof}
-                    setRecord={seteditSourceof}
-                  />
-                </Form>
-              </div>
-              <div style={{ flex: 1 }}>
-
-                <div>
-                  <Text className='font-style'>First Time Recorded</Text>
-                  <DatePicker
-                    className='date-width'
-                    format="MM/dd/yyyy hh:mm aa"
-                    showMeridian
-                    value={selectedFirstDate}
-                    onChange={handleDateChange}
-                    disabled={editDate.editdate}
-                  />
-                </div>
-              </div>
-              <div style={{ flex: 1 }}>
-                <Form layout="inline" fluid>
-                  <MyInput
-                    fieldLabel="Undefined"
-                    fieldName="editdate"
-                    column
-                    width={67}
-                    fieldType='checkbox'
-                    record={editDate}
-                    setRecord={setEditDate}
-                  />
-                </Form>
-              </div>
-            </div>
-            <div className="div-parent">
-              <div style={{ flex: 1 }}>
-                <Form fluid>
-                  <MyInput
-                    width={'100%'}
-                    column
-                    fieldLabel="Notes"
-                    fieldType="textarea"
-                    fieldName="notes"
-                    height={100}
-                    record={warning}
-                    setRecord={setWarning}
-                    disabled={editing}
-                  />
-                </Form>
-              </div>
-              <div style={{ flex: 1 }}>
-                <Form fluid>
-                  <MyInput
-                    width={'100%'}
-                    column
-                    fieldLabel="Action Taken"
-                    fieldType="textarea"
-                    fieldName="actionTake"
-                    height={100}
-                    record={warning}
-                    setRecord={setWarning}
-                    disabled={editing}
-                  />
-                </Form>
-              </div>
-            </div>
-
-
-          </div>
-
-
-        }
-
-
-      />
+    
+      <DetailsModal patient={patient} 
+      open={openDetailsModal} setOpen={setOpenDetailsModal}
+       warning={warning} setWarning={setWarning}
+       encounter={encounter} editing={editing}
+       fetchwarnings={fetchwarnings}/>
     </div>
   );
 };
