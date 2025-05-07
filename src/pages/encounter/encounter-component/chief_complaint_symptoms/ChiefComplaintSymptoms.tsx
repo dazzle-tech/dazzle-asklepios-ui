@@ -64,7 +64,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
             painLocationLkey: null
         });
     };
-    // Handle Add NewAudiometry Puretone Record
+    // Handle Add New Complaint Symptoms Puretone Record
     const handleAddNewComplaintSymptoms = () => {
         handleClearField();
         setOpen(true);
