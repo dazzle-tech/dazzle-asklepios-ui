@@ -216,53 +216,54 @@ const PsychologicalExam = ({ patient, encounter }) => {
         },
         {
             key: 'testType',
-            title: <Translate>Test Type</Translate>,
+            title: <Translate>TEST TYPE</Translate>,
             render: (rowData: any) => rowData?.testTypeLvalue ? rowData?.testTypeLvalue.lovDisplayVale : rowData?.testTypeLkey
         },
         {
             key: 'reason',
-            title: <Translate>Reason</Translate>,
+            title: <Translate>REASON</Translate>,
             render: (rowData: any) => rowData?.reason
         },
         {
             key: 'testDuration',
-            title: <Translate>Test Duration</Translate>,
+            title: <Translate>TEST DURATION</Translate>,
             render: (rowData: any) => rowData?.testDuration ? `${rowData?.testDuration} ${rowData?.unitLvalue ? rowData?.unitLvalue.lovDisplayVale : rowData?.unitLkey}` : ' '
         },
         {
             key: 'score',
-            title: <Translate>Score</Translate>,
+            title: <Translate>SCORE</Translate>,
             render: (rowData: any) => rowData?.scoreLvalue ? rowData?.scoreLvalue.lovDisplayVale : rowData?.scoreLkey
         },
         {
             key: 'resultInterpretation',
-            title: <Translate>Result Interpretation</Translate>,
+            title: <Translate>RESULT INTERPRETATION</Translate>,
             render: (rowData: any) => rowData?.resultInterpretationLvalue ? rowData?.resultInterpretationLvalue.lovDisplayVale : rowData?.resultInterpretationLkey
         },
         {
             key: 'clinicalObservations',
-            title: <Translate>Clinical Observations</Translate>,
+            title: <Translate>CLINICAL OBSERVATIONS</Translate>,
             render: (rowData: any) => rowData?.clinicalObservations
         },
         {
             key: 'treatmentPlan',
-            title: <Translate>Treatment Plan</Translate>,
-            render: (rowData: any) => rowData?.treatmentPlan
+            title: <Translate>TREATMENT PLAN</Translate>,
+            render: (rowData: any) => rowData?.treatmentPlan,
+            expandable: true,
         },
         {
             key: 'additionalNotes',
-            title: <Translate>Additional Notes</Translate>,
+            title: <Translate>ADDITIONAL NOTES</Translate>,
             render: (rowData: any) => rowData?.additionalNotes,
             expandable: true,
         },
         {
             key: 'followUpDate',
-            title: <Translate>Follow-up Date</Translate>,
+            title: <Translate>FOLLOW-UP DATE</Translate>,
             render: (rowData: any) => rowData?.followUpDate ? new Date(rowData.followUpDate).toLocaleString("en-GB") : ""
         },
         {
             key: "details",
-            title: <Translate>Add details</Translate>,
+            title: <Translate>ADD DETAILS</Translate>,
             flexGrow: 2,
             fullText: true,
             render: rowData => {
@@ -281,25 +282,25 @@ const PsychologicalExam = ({ patient, encounter }) => {
         },
         {
             key: 'createdAt',
-            title: 'Created At / Created By',
+            title: 'CREATED AT / CREATED BY',
             expandable: true,
             render: (row: any) => `${new Date(row.createdAt).toLocaleString('en-GB')} / ${row?.createByUser?.fullName}`
         },
         {
             key: 'updatedAt',
-            title: 'Updated At / Updated By',
+            title: 'UPDATED AT / UPDATED BY',
             expandable: true,
             render: (row: any) => row?.updatedAt ? `${new Date(row.updatedAt).toLocaleString('en-GB')} / ${row?.updateByUser?.fullName}` : ' '
         },
         {
             key: 'deletedAt',
-            title: 'Cancelled At / Cancelled By',
+            title: 'CANCELLED AT / CANCELLED BY',
             expandable: true,
             render: (row: any) => row?.deletedAt ? `${new Date(row.deletedAt).toLocaleString('en-GB')} / ${row?.deleteByUser?.fullName}` : ' '
         },
         {
             key: 'cancellationReason',
-            title: 'Cancellation Reason',
+            title: 'CANCELLATION REASON',
             dataKey: 'cancellationReason',
             expandable: true,
         }

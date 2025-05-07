@@ -233,17 +233,17 @@ const AudiometryPuretone = ({ patient, encounter }) => {
         },
         {
             key: 'testEnvironment',
-            title: 'Test Environment',
+            title: 'TEST ENVIRONMENT',
             render: rowData => rowData?.testEnvironment
         },
         {
             key: 'testReason',
-            title: 'Test Reason',
+            title: 'TEST REASON',
             render: rowData => rowData?.testReason
         },
         {
             key: 'earExamFindings',
-            title: 'Ear Exam Findings',
+            title: 'EAR EXAM FINDINGS',
             render: rowData =>
                 rowData?.earExamFindingsLvalue
                     ? rowData.earExamFindingsLvalue.lovDisplayVale
@@ -251,12 +251,12 @@ const AudiometryPuretone = ({ patient, encounter }) => {
         },
         {
             key: 'maskedUsed',
-            title: 'Masked Used',
+            title: 'MASKED USED',
             render: rowData => rowData?.maskedUsed
         },
         {
             key: 'hearingLossType',
-            title: 'Hearing Loss Type',
+            title: 'HEARING LOSS TYPE',
             render: rowData =>
                 rowData?.hearingLossTypeLvalue
                     ? rowData.hearingLossTypeLvalue.lovDisplayVale
@@ -264,25 +264,28 @@ const AudiometryPuretone = ({ patient, encounter }) => {
         },
         {
             key: 'hearingLossDegree',
-            title: 'Hearing Loss Degree',
+            title: 'HEARING LOSS DEGREE',
             render: rowData =>
                 rowData?.hearingLossDegreeLvalue
                     ? rowData.hearingLossDegreeLvalue.lovDisplayVale
-                    : rowData.hearingLossDegreeLkey
+                    : rowData.hearingLossDegreeLkey,
+                    expandable: true,
         },
         {
             key: 'recommendations',
-            title: 'Recommendations',
-            render: rowData => rowData?.recommendations
+            title: 'RECOMMENDATIONS',
+            render: rowData => rowData?.recommendations,
+            expandable: true,
         },
         {
             key: 'additionalNotes',
-            title: 'Additional Notes',
-            render: rowData => rowData?.additionalNotes
+            title: 'ADDITIONAL NOTES',
+            render: rowData => rowData?.additionalNotes,
+            expandable: true,
         },
         {
             key: "details",
-            title: <Translate>Add details</Translate>,
+            title: <Translate>ADD DETAILS</Translate>,
             flexGrow: 2,
             fullText: true,
             render: rowData => {
@@ -302,25 +305,25 @@ const AudiometryPuretone = ({ patient, encounter }) => {
         },
         {
             key: 'createdAt',
-            title: 'Created At / Created By',
+            title: 'CREATED AT / CREATED BY',
             expandable: true,
             render: (row: any) => `${new Date(row.createdAt).toLocaleString('en-GB')} / ${row?.createByUser?.fullName}`
         },
         {
             key: 'updatedAt',
-            title: 'Updated At / Updated By',
+            title: 'UPDATED AT / UPDATED BY',
             expandable: true,
             render: (row: any) => row?.updatedAt ? `${new Date(row.updatedAt).toLocaleString('en-GB')} / ${row?.updateByUser?.fullName}` : ' '
         },
         {
             key: 'deletedAt',
-            title: 'Cancelled At / Cancelled By',
+            title: 'CANCELLED AT / CANCELLED BY',
             expandable: true,
             render: (row: any) => row?.deletedAt ? `${new Date(row.deletedAt).toLocaleString('en-GB')} / ${row?.deleteByUser?.fullName}` : ' '
         },
         {
             key: 'cancellationReason',
-            title: 'Cancellation Reason',
+            title: 'CANCELLATION REASON',
             dataKey: 'cancellationReason',
             expandable: true,
         }

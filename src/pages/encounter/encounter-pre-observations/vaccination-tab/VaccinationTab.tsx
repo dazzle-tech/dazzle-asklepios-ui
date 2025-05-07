@@ -217,24 +217,24 @@ const VaccinationTab = ({ disabled, patient, encounter }) => {
     const columns = [
         {
             key: 'vaccineName',
-            title: 'Vaccine Name',
+            title: 'VACCINE NAME',
             render: (rowData: any) => rowData.vaccine?.vaccineName
         },
         {
             key: 'brandName',
-            title: 'Brand Name',
+            title: 'BRAND NAME',
             render: (rowData: any) => rowData.vaccineBrands?.brandName
         },
         {
             key: 'doseNumber',
-            title: 'Dose Number',
+            title: 'DOSE NUMBER',
             render: (rowData: any) =>
                 rowData.vaccineDose?.doseNameLvalue?.lovDisplayVale ||
                 rowData.vaccineDose?.doseNameLkey
         },
         {
             key: 'dateAdministered',
-            title: 'Date of Administration',
+            title: 'DATE OF ADMINISTRATION',
             render: (rowData: any) => {
                 if (!rowData.dateAdministered) return '';
                 const date = new Date(rowData.dateAdministered);
@@ -243,7 +243,7 @@ const VaccinationTab = ({ disabled, patient, encounter }) => {
         },
         {
             key: 'actualSide',
-            title: 'Actual Side and Site of Administration',
+            title: 'ACTUAL SIDE AND SITE OF ADMINISTRATION',
             dataKey: 'actualSide',
             expandable: true,
         },
@@ -256,7 +256,7 @@ const VaccinationTab = ({ disabled, patient, encounter }) => {
         },
         {
             key: 'externalFacilityName',
-            title: 'Vaccination Location',
+            title: 'VACCINATION LOCATION',
             dataKey: 'externalFacilityName',
             expandable: true,
         },
@@ -267,20 +267,20 @@ const VaccinationTab = ({ disabled, patient, encounter }) => {
         },
         {
             key: 'totalDoses',
-            title: 'Total Vaccine Doses',
+            title: 'TOTAL VACCINE DOSES',
             render: (rowData: any) =>
                 rowData.vaccine?.numberOfDosesLvalue?.lovDisplayVale ||
                 rowData.vaccine?.numberOfDosesLkey
         },
         {
             key: 'status',
-            title: 'Status',
+            title: 'STATUS',
             render: (rowData: any) =>
                 rowData.statusLvalue?.lovDisplayVale || rowData.statusLkey
         },
         {
             key: "details",
-            title: <Translate>Add details</Translate>,
+            title: <Translate>ADD DETAILS</Translate>,
             flexGrow: 2,
             fullText: true,
             render: rowData => {
@@ -305,25 +305,25 @@ const VaccinationTab = ({ disabled, patient, encounter }) => {
         },
         {
             key: 'createdAt',
-            title: 'Created At / Created By',
+            title: 'CREATED AT / CREATED BY',
             expandable: true,
             render: (row: any) => `${new Date(row.createdAt).toLocaleString('en-GB')} / ${row?.createByUser?.fullName}`
         },
         {
             key: 'updatedAt',
-            title: 'Updated At / Updated By',
+            title: 'UPDATED AT / UPDATED BY',
             expandable: true,
             render: (row: any) => row?.updatedAt ? `${new Date(row.updatedAt).toLocaleString('en-GB')} / ${row?.updateByUser?.fullName}` : ' '
         },
         {
             key: 'deletedAt',
-            title: 'Cancelled At / Cancelled By',
+            title: 'CANCELLED AT / CANCELLED BY',
             expandable: true,
             render: (row: any) => row?.deletedAt ? `${new Date(row.deletedAt).toLocaleString('en-GB')} / ${row?.deleteByUser?.fullName}` : ' '
         },
         {
             key: 'cancellationReason',
-            title: 'Cancellation Reason',
+            title: 'CANCELLATION REASON',
             dataKey: 'cancellationReason',
             expandable: true,
         }
