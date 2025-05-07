@@ -114,8 +114,8 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
             }
             await refetch();
         } catch (error) {
-            console.error('Error saving Patient ECG:', error);
-            dispatch(notify('Failed to save Patient ECG'));
+            console.error('Error saving Patient Optometric Exam:', error);
+            dispatch(notify('Failed to save Patient Optometric Exam'));
         }
     };
     // Effects

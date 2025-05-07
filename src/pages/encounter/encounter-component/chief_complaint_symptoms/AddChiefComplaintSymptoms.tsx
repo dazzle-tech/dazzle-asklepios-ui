@@ -51,8 +51,8 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
                     onsetDate: complaintSymptoms?.onsetDate ? new Date(complaintSymptoms.onsetDate).getTime() : 0,
                     updatedBy: authSlice.user.key
                 }).unwrap();
-
                 dispatch(notify('Patient Complaint Symptom Updated Successfully'));
+                setOpen(false);
             }
             await refetch();
             handleClearField();

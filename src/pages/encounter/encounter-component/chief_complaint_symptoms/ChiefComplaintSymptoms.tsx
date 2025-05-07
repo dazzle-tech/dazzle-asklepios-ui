@@ -1,20 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppSelector, useAppDispatch } from '@/hooks';
-import { Checkbox, IconButton, Table } from 'rsuite';
+import { Checkbox } from 'rsuite';
 import { useSaveComplaintSymptomsMutation, useGetComplaintSymptomsQuery } from '@/services/encounterService';
 import PlusIcon from '@rsuite/icons/Plus';
 import MyButton from '@/components/MyButton/MyButton';
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import Translate from '@/components/Translate';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
 import { newApComplaintSymptoms } from '@/types/model-types-constructor';
 import { ApComplaintSymptoms } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import CancellationModal from '@/components/CancellationModal';
 import AddChiefComplaintSymptoms from './AddChiefComplaintSymptoms';
-const { Column, HeaderCell, Cell } = Table
+import { MdModeEdit } from 'react-icons/md';
+import MyTable from '@/components/MyTable';
 const ChiefComplaintSymptoms = ({ patient, encounter }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
@@ -49,102 +48,39 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
     });
 
     // Fetch the list of Complaint Symptoms based on the provided request, and provide a refetch function
-    const { data: complaintSymptomsResponse, refetch: refetchComplaintSymptoms } = useGetComplaintSymptomsQuery(complaintSymptomsListRequest);
-    const handleExpanded = (rowData) => {
-        let open = false;
-        const nextExpandedRowKeys = [];
+    const { data: complaintSymptomsResponse, refetch: refetchComplaintSymptoms, isLoading } = useGetComplaintSymptomsQuery(complaintSymptomsListRequest);
 
-        expandedRowKeys.forEach(key => {
-            if (key === rowData.key) {
-                open = true;
-            } else {
-                nextExpandedRowKeys.push(key);
-            }
-        });
-        if (!open) {
-            nextExpandedRowKeys.push(rowData.key);
-        }
-        setExpandedRowKeys(nextExpandedRowKeys);
-    };
-    const renderRowExpanded = rowData => {
-        return (
-            <Table
-                data={[rowData]}
-                bordered
-                cellBordered
-                style={{ width: '100%', marginTop: '10px' }}
-                height={100}
-            >
-                <Column flexGrow={2} align="center" fullText>
-                    <HeaderCell>Created At / Created By</HeaderCell>
-                    <Cell>
-                        {rowData => (
-                            <>
-                                {rowData.createdAt ? new Date(rowData.createdAt).toLocaleString("en-GB") : ""}
-                                {" / "}
-                                {rowData?.createByUser?.fullName}
-                            </>
-                        )}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} align="center" fullText>
-                    <HeaderCell>Updated At / Updated By</HeaderCell>
-                    <Cell>
-                        {rowData => (
-                            <>
-                                {rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
-                                {" / "}
-                                {rowData?.updateByUser?.fullName}
-                            </>
-                        )}
-                    </Cell>
-                </Column>
-
-                <Column flexGrow={2} align="center" fullText>
-                    <HeaderCell>Cancelled At / Cancelled By</HeaderCell>
-                    <Cell dataKey="deletedAt" >
-                        {rowData => (
-                            <>
-                                {rowData.deletedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : ""}
-                                {" / "}
-                                {rowData?.deleteByUser?.fullName}
-                            </>
-                        )}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} align="center" fullText>
-                    <HeaderCell>Cancelliton Reason</HeaderCell>
-                    <Cell dataKey="cancellationReason" />
-                </Column>
-            </Table>
-
-
-        );
-    };
-    const ExpandCell = ({ rowData, dataKey, expandedRowKeys, onChange, ...props }) => (
-        <Cell {...props} style={{ padding: 5 }}>
-            <IconButton
-                appearance="subtle"
-                onClick={() => {
-                    onChange(rowData);
-                }}
-                icon={
-                    expandedRowKeys.some(key => key === rowData["key"]) ? (
-                        <CollaspedOutlineIcon />
-                    ) : (
-                        <ExpandOutlineIcon />
-                    )
-                }
-            />
-        </Cell>
-    );
     // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
     const isSelected = rowData => {
         if (rowData && complaintSymptoms && complaintSymptoms.key === rowData.key) {
             return 'selected-row';
         } else return '';
     };
-
+    // Handle Clear Fields
+    const handleClearField = () => {
+        setComplaintSymptoms({
+            ...newApComplaintSymptoms,
+            unitLkey: null,
+            painLocationLkey: null
+        });
+    };
+    // Handle Add NewAudiometry Puretone Record
+    const handleAddNewComplaintSymptoms = () => {
+        handleClearField();
+        setOpen(true);
+    }
+    // Change page event handler
+    const handlePageChange = (_: unknown, newPage: number) => {
+        setComplaintSymptomsListRequest({ ...complaintSymptomsListRequest, pageNumber: newPage + 1 });
+    };
+    // Change number of rows per page
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setComplaintSymptomsListRequest({
+            ...complaintSymptomsListRequest,
+            pageSize: parseInt(event.target.value, 10),
+            pageNumber: 1 // Reset to first page
+        });
+    };
     // Handle Cancel Complaint Symptoms Record
     const handleCancle = () => {
         //TODO convert key to code
@@ -265,6 +201,110 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
             };
         });
     }, [allData, complaintSymptomsStatus]);
+
+    // Pagination values
+    const pageIndex = complaintSymptomsListRequest.pageNumber - 1;
+    const rowsPerPage = complaintSymptomsListRequest.pageSize;
+    const totalCount = complaintSymptomsResponse?.extraNumeric ?? 0;
+
+    // Table Column 
+    const columns = [
+        {
+            key: 'expand',
+            title: '#',
+            width: 70,
+            expandable: true,
+        },
+        {
+            key: 'onsetDate',
+            title: 'ONSET DATE',
+            render: (rowData: any) =>
+                rowData?.onsetDate
+                    ? new Date(rowData.onsetDate).toLocaleDateString("en-GB")
+                    : ''
+        },
+        {
+            key: 'duration',
+            title: 'DURATION',
+            render: (rowData: any) => (
+                <>
+                    {rowData?.duration}{" "}
+                    {rowData?.unitLvalue
+                        ? rowData?.unitLvalue.lovDisplayVale
+                        : rowData?.unitLkey}
+                </>
+            )
+        },
+        {
+            key: 'painCharacteristics',
+            title: 'PAIN CHARACTERISTICS',
+        },
+        {
+            key: 'painLocation',
+            title: 'PAIN LOCATION',
+            render: (rowData: any) =>
+                rowData?.painLocationLvalue
+                    ? rowData.painLocationLvalue.lovDisplayVale
+                    : rowData.painLocationLkey
+        },
+        {
+            key: 'radiation',
+            title: 'RADIATION',
+        },
+        {
+            key: 'aggravatingFactors',
+            title: 'AGGRAVATING FACTORS',
+        },
+        {
+            key: 'relievingFactors',
+            title: 'RELIEVING FACTORS',
+        },
+        {
+            key: "details",
+            title: <Translate>ADD DETAILS</Translate>,
+            flexGrow: 2,
+            fullText: true,
+            render: rowData => {
+                return (
+                    <MdModeEdit
+                        title="Edit"
+                        size={24}
+                        fill="var(--primary-gray)"
+                        onClick={() => {
+                            setComplaintSymptoms(rowData);
+                            setOpen(true);
+                        }}
+
+                    />
+                );
+            }
+        },
+        {
+            key: 'createdAt',
+            title: 'CREATED AT / CREATED BY',
+            expandable: true,
+            render: (row: any) => `${new Date(row.createdAt).toLocaleString('en-GB')} / ${row?.createByUser?.fullName}`
+        },
+        {
+            key: 'updatedAt',
+            title: 'UPDATED AT / UPDATED BY',
+            expandable: true,
+            render: (row: any) => row?.updatedAt ? `${new Date(row.updatedAt).toLocaleString('en-GB')} / ${row?.updateByUser?.fullName}` : ' '
+        },
+        {
+            key: 'deletedAt',
+            title: 'CANCELLED AT / CANCELLED BY',
+            expandable: true,
+            render: (row: any) => row?.deletedAt ? `${new Date(row.deletedAt).toLocaleString('en-GB')} / ${row?.deleteByUser?.fullName}` : ' '
+        },
+        {
+            key: 'cancellationReason',
+            title: 'CANCELLATION REASON',
+            dataKey: 'cancellationReason',
+            expandable: true,
+        }
+    ];
+
     return (
         <div>
             <div className='bt-div'>
@@ -293,97 +333,25 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
                     Show All
                 </Checkbox>
                 <div className='bt-right'>
-                    <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>Add </MyButton>
+                    <MyButton prefixIcon={() => <PlusIcon />} onClick={handleAddNewComplaintSymptoms}>Add </MyButton>
                 </div>
             </div>
             <AddChiefComplaintSymptoms open={open} setOpen={setOpen} patient={patient} encounter={encounter} complaintSymptom={complaintSymptoms} refetch={refetchComplaintSymptoms} />
-            <Table
-                height={600}
+            <MyTable
                 data={complaintSymptomsResponse?.object ?? []}
-                rowKey="key"
-                expandedRowKeys={expandedRowKeys}
-                renderRowExpanded={renderRowExpanded}
-                shouldUpdateScroll={false}
+                columns={columns}
+                height={600}
+                loading={isLoading}
                 onRowClick={rowData => {
-                    setComplaintSymptoms({
-                        ...rowData
-                    });
+                    setComplaintSymptoms({ ...rowData });
                 }}
                 rowClassName={isSelected}
-            >
-                <Column width={70} align="center">
-                    <HeaderCell>#</HeaderCell>
-                    <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-                </Column>
-
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Onset Date</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.onsetDate ? new Date(rowData.onsetDate).toLocaleString("en-GB") : ""}
-                    </Cell>
-                </Column >
-                <Column flexGrow={3} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Duration</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData =>
-                            <>
-                                {rowData?.duration}
-                                {" "}
-                                {rowData?.unitLvalue
-                                    ? rowData?.unitLvalue.lovDisplayVale
-                                    : rowData?.unitLkey}
-                            </>
-
-                        }
-                    </Cell>
-                </Column>
-                <Column flexGrow={3} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Pain Characteristics</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.painCharacteristics}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Pain Location</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.painLocationLvalue
-                            ? rowData?.painLocationLvalue.lovDisplayVale
-                            : rowData?.painLocationLkey}
-                    </Cell>
-                </Column>
-                <Column flexGrow={4} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Radiation</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.radiation}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Aggravating Factors</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.aggravatingFactors}
-                    </Cell>
-                </Column>
-                <Column flexGrow={2} fullText>
-                    <HeaderCell align="center">
-                        <Translate>Relieving Factors</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData?.relievingFactors}
-                    </Cell>
-                </Column>
-            </Table>
+                page={pageIndex}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
+            />
             <CancellationModal title="Cancel Chief Complaint Symptoms" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={complaintSymptoms} setObject={setComplaintSymptoms} handleCancle={handleCancle} fieldName="cancellationReason" />
         </div>
     );
