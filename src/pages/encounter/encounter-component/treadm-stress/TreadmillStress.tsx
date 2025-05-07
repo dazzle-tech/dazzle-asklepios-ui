@@ -286,7 +286,7 @@ const TreadmillStress = ({ patient, encounter }) => {
         },
         {
             key: "details",
-            title: <Translate>ADD DETAILS</Translate>,
+            title: <Translate>EDIT</Translate>,
             flexGrow: 2,
             fullText: true,
             render: rowData => {
