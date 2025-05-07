@@ -227,9 +227,6 @@ const AudiometryPuretone = ({ patient, encounter }) => {
             key: 'expand',
             title: '',
             expandable: true,
-            render: (rowData) => (
-                <span style={{ fontWeight: 600 }}>#{rowData.key}</span>
-            )
         },
         {
             key: 'testEnvironment',

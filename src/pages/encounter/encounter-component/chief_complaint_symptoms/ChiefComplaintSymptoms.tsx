@@ -210,12 +210,6 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
     // Table Column 
     const columns = [
         {
-            key: 'expand',
-            title: '#',
-            width: 70,
-            expandable: true,
-        },
-        {
             key: 'onsetDate',
             title: 'ONSET DATE',
             render: (rowData: any) =>

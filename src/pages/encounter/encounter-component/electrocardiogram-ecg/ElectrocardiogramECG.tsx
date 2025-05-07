@@ -218,12 +218,6 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
     // Table Column 
     const columns = [
         {
-            key: 'expand',
-            title: '#',
-            expandable: true,
-            render: (rowData) => <div>#{rowData.key}</div>
-        },
-        {
             key: 'indication',
             title: <Translate>INDICATION</Translate>,
             render: (rowData) => rowData?.indication,
