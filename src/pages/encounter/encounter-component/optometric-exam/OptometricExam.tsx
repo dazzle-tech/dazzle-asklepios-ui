@@ -8,11 +8,10 @@ import { newApOptometricExam } from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import MyButton from '@/components/MyButton/MyButton';
-import MyTable from '@/components/MyTable';
 import PlusIcon from '@rsuite/icons/Plus';
 import CancellationModal from '@/components/CancellationModal';
 import AddOptometricTest from './AddOptometricTest';
-import { MdModeEdit } from 'react-icons/md';
+import OptometricExamTabs from './OptometricExamTabs';
 const OptometricExam = ({ patient, encounter }) => {
   const authSlice = useAppSelector(state => state.auth);
   const [open, setOpen] = useState(false);
@@ -77,25 +76,6 @@ const OptometricExam = ({ patient, encounter }) => {
   // Fetch optometric exam data based on the current request filters
   const { data: optometricExamResponse, refetch: refetchOptometricExam, isLoading } = useGetOptometricExamsQuery(optometricExamListRequest);
 
-
-  // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
-  const isSelected = rowData => {
-    if (rowData && optometricExam && optometricExam.key === rowData.key) {
-      return 'selected-row';
-    } else return '';
-  };
-  // Change page event handler
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setOptometricExamListRequest({ ...optometricExamListRequest, pageNumber: newPage + 1 });
-  };
-  // Change number of rows per page
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setOptometricExamListRequest({
-      ...optometricExamListRequest,
-      pageSize: parseInt(event.target.value, 10),
-      pageNumber: 1 // Reset to first page
-    });
-  };
   // Handle Cancel Optometric Exam Record
   const handleCancle = () => {
     //TODO convert key to code
@@ -114,6 +94,8 @@ const OptometricExam = ({ patient, encounter }) => {
   };
   // Handle Clear Field
   const handleClearField = () => {
+    setSelectedIcd10({ text: ' ' });
+    setSecondSelectedicd10({ text: ' ' });
     setOptometricExam({
       ...newApOptometricExam,
       medicalHistoryLkey: null,
@@ -130,20 +112,6 @@ const OptometricExam = ({ patient, encounter }) => {
     handleClearField();
     setOpen(true);
   }
-
-  // Format Time From Seconds To Formal Time
-  const formatTime = totalSeconds => {
-    if (!totalSeconds) return '-';
-
-    const hours = Math.floor(totalSeconds / 3600)
-      .toString()
-      .padStart(2, '0');
-    const minutes = Math.floor((totalSeconds % 3600) / 60)
-      .toString()
-      .padStart(2, '0');
-
-    return `${hours}:${minutes}`;
-  };
 
   // Effects
   useEffect(() => {
@@ -255,169 +223,6 @@ const OptometricExam = ({ patient, encounter }) => {
     });
   }, [allData, optometricExamStatus]);
 
-  // Pagination values
-  const pageIndex = optometricExamListRequest.pageNumber - 1;
-  const rowsPerPage = optometricExamListRequest.pageSize;
-  const totalCount = optometricExamResponse?.extraNumeric ?? 0;
-
-  // Table Columns
-  const columns = [
-    {
-      key: 'testReason',
-      title: 'REASON',
-      dataKey: 'testReason',
-    },
-    {
-      key: 'medicalHistory',
-      title: 'MEDICAL HISTORY',
-      render: (row: any) =>
-        row?.medicalHistoryLvalue
-          ? row.medicalHistoryLvalue.lovDisplayVale
-          : row.medicalHistoryLkey
-    },
-    {
-      key: 'performedWith',
-      title: 'TEST PERFORMED WITH',
-      render: (row: any) =>
-        row?.performedWithLvalue
-          ? row.performedWithLvalue.lovDisplayVale
-          : row.performedWithLkey
-    },
-    {
-      key: 'distanceAcuity',
-      title: 'DISTANCE ACUITY',
-      render: (row: any) => row?.distanceAcuity ? `${row?.distanceAcuity ?? ''} m` : ' '
-    },
-    {
-      key: 'rightEyeOd',
-      title: 'RIGHT EYE',
-      render: (row: any) => row?.rightEyeOd ? `20/ ${row?.rightEyeOd} ` : ' '
-    },
-    {
-      key: 'leftEyeOd',
-      title: 'LEFT EYE',
-      render: (row: any) => row?.leftEyeOd ? `20/ ${row?.leftEyeOd}` : ' '
-    },
-    {
-      key: 'nearAcuity',
-      title: 'NEAR ACUITY',
-      render: (row: any) => row?.nearAcuity ? `${row?.nearAcuity ?? ''} m` : ' '
-    },
-    {
-      key: 'rightEyeOs',
-      title: 'RIGHT EYE ',
-      render: (row: any) => row?.rightEyeOs ? `J ${row?.rightEyeOs}` : ' '
-    },
-    {
-      key: 'leftEyeOs',
-      title: 'LEFT EYE ',
-      render: (row: any) => row?.leftEyeOs ? `J ${row?.leftEyeOs}` : ' '
-    },
-    {
-      key: 'pinholeTestResult',
-      title: 'PINHOLE TEST RESULT',
-      expandable: true,
-      render: (row: any) =>
-        row?.pinholeTestResultLvalue
-          ? row.pinholeTestResultLvalue.lovDisplayVale
-          : row.pinholeTestResultLkey
-    },
-    {
-      key: "details",
-      title: <Translate>EDIT</Translate>,
-      flexGrow: 2,
-      fullText: true,
-      render: rowData => {
-        return (
-          <MdModeEdit
-            title="Edit"
-            size={24}
-            fill="var(--primary-gray)"
-            onClick={() => {
-              setOptometricExam(rowData);
-              setOpen(true);
-            }}
-
-          />
-        );
-      }
-    },
-    {
-      key: 'numberOfPlatesTested',
-      title: 'NUMBER OF PLATES TESTED',
-      dataKey: 'numberOfPlatesTested',
-      expandable: true,
-    },
-    {
-      key: 'correctAnswersCount',
-      title: 'CORRECT ANSWERS COUNT',
-      dataKey: 'correctAnswersCount',
-      expandable: true,
-    },
-    {
-      key: 'deficiencyType',
-      title: 'DEFICIENCY TYPE',
-      expandable: true,
-      render: (row: any) =>
-        row?.deficiencyTypeLvalue
-          ? row.deficiencyTypeLvalue.lovDisplayVale
-          : row.deficiencyTypeLkey
-    },
-    {
-      key: 'rightEye',
-      title: 'RIGHT EYE',
-      dataKey: 'rightEye',
-      expandable: true,
-    },
-    {
-      key: 'leftEye',
-      title: 'LEFT EYE',
-      dataKey: 'leftEye',
-      expandable: true,
-    },
-    {
-      key: 'measurementMethod',
-      title: 'MEASUREMENT METHOD',
-      dataKey: 'measurementMethod',
-      expandable: true,
-    },
-    {
-      key: 'timeOfMeasurement',
-      title: 'TIME OF MEASUREMENT',
-      expandable: true,
-      render: (row: any) => {
-        if (!row?.timeOfMeasurement) return '-';
-        const totalSeconds = row.timeOfMeasurement;
-        const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-        const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-        return `${hours}:${minutes}`;
-      }
-    },
-    {
-      key: 'createdAt',
-      title: 'CREATED AT / CREATED BY',
-      expandable: true,
-      render: (row: any) => `${new Date(row.createdAt).toLocaleString('en-GB')} / ${row?.createByUser?.fullName}`
-    },
-    {
-      key: 'updatedAt',
-      title: 'UPDATED AT / UPDATED BY',
-      expandable: true,
-      render: (row: any) => row?.updatedAt ? `${new Date(row.updatedAt).toLocaleString('en-GB')} / ${row?.updateByUser?.fullName}` : ' '
-    },
-    {
-      key: 'deletedAt',
-      title: 'CANCELLED AT / CANCELLED BY',
-      expandable: true,
-      render: (row: any) => row?.deletedAt ? `${new Date(row.deletedAt).toLocaleString('en-GB')} / ${row?.deleteByUser?.fullName}` : ' '
-    },
-    {
-      key: 'cancellationReason',
-      title: 'CANCELLATION REASON',
-      dataKey: 'cancellationReason',
-      expandable: true,
-    }
-  ];
   return (
     <div>
       <div className='bt-div'>
@@ -448,6 +253,7 @@ const OptometricExam = ({ patient, encounter }) => {
           <MyButton prefixIcon={() => <PlusIcon />} onClick={handleAddNewOptometricExam}>Add </MyButton>
         </div>
       </div>
+      
       <AddOptometricTest
         open={open}
         setOpen={setOpen}
@@ -460,24 +266,18 @@ const OptometricExam = ({ patient, encounter }) => {
         selectedicd10={selectedicd10}
         setSelectedIcd10={setSelectedIcd10}
         timeM={time} />
-      <MyTable
-        data={optometricExamResponse?.object ?? []}
-        columns={columns}
-        height={420}
-        loading={isLoading}
-        onRowClick={rowData => {
-          setOptometricExam({ ...rowData, });
-          rowData?.icdCode?.icdCode && rowData?.icdCode?.description ? setSelectedIcd10({ text: `${rowData.icdCode.icdCode} - ${rowData.icdCode.description}` }) : null;
-          rowData?.icdCode2?.icdCode && rowData?.icdCode2?.description ? setSecondSelectedicd10({ text: `${rowData.icdCode2.icdCode} - ${rowData.icdCode2.description}` }) : null;
-          setTime({ time: formatTime(rowData?.timeOfMeasurement) });
-        }}
-        rowClassName={isSelected}
-        page={pageIndex}
-        rowsPerPage={rowsPerPage}
-        totalCount={totalCount}
-        onPageChange={handlePageChange}
-        onRowsPerPageChange={handleRowsPerPageChange}
-      />
+
+      <OptometricExamTabs
+        isLoading={isLoading}
+        optometricExamResponse={optometricExamResponse}
+        setOpen={setOpen}
+        optometricExam={optometricExam}
+        setOptometricExam={setOptometricExam}
+        optometricExamListRequest={optometricExamListRequest}
+        setOptometricExamListRequest={setOptometricExamListRequest}
+        setSelectedIcd10={setSelectedIcd10}
+        setSecondSelectedicd10={setSecondSelectedicd10}
+        setTime={setTime} />
       <CancellationModal title="Cancel Optometric Exam" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={optometricExam} setObject={setOptometricExam} handleCancle={handleCancle} fieldName="cancellationReason" />
     </div>
   );

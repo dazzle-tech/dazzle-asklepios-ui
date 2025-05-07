@@ -216,6 +216,7 @@ const AttachmentModal = ({
             setOpen={setIsOpen}
             title="New/Edit Patient Attachments"
             size="sm"
+            bodyheight={400}
             content={content}
             hideCanel={false}
             hideBack={true}
