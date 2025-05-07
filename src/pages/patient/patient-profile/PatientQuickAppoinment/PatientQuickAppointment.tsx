@@ -41,10 +41,10 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
 
                 if (e.status === 422) {
                     console.log("Validation error: Unprocessable Entity", e);
-                    // dispatch(notify({ msg: 'Patient Already Registered on this Resource.', sev: 'error' })); --- No Need For it , handled on api.ts
+                  
                 } else {
                     console.log("An unexpected error occurred", e);
-                    dispatch(notify({ msg: '"An unexpected error occurred', sev: 'warn' }));
+                    dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
                 }
             });;
         } else {

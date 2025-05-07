@@ -306,7 +306,7 @@ const PatientSide = ({ patient, encounter }) => {
                     >
                         <Text className='info-label'>Origin</Text>
                         <Text className='info-value'
-                        > {encounter?.admissionOrigin}</Text>
+                        > {encounter?.originLvalue?.lovDisplayVale}</Text>
 
                     </div>
                 </div>
