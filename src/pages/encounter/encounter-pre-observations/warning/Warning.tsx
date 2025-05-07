@@ -263,10 +263,6 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
       dispatch(notify('Undo Resolved Fill'));
     }
   }
-  const handelAddNew = () => {
-    handleClear();
-    setOpenDetailsModal(true)
-  }
 
   const tableColumns=[
     { key:"warningTypeLkey",
@@ -274,7 +270,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
       title:<Translate>Warning Type</Translate>,
       flexGrow:1,
       render:(rowData:any)=>{
-        return rowData.warningTypeLvalue?.lovDisplayVale;
+        return rowData.warningTypeLvalue?.lovDisplayVale ;
       }
     },
     { key:"severityLkey",
