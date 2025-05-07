@@ -425,7 +425,7 @@ const Encounter = () => {
                     }
                   >
                     <FontAwesomeIcon icon={faSyringe} className="icon" />
-                    <Translate>VaccinationTab </Translate>
+                    <Translate>Vaccination </Translate>
                   </List.Item>
                 )}
                 {medicalSheet?.object?.prescription && (
