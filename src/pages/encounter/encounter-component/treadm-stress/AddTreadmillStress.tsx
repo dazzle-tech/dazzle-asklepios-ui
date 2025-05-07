@@ -114,6 +114,7 @@ const AddTreadmillStress = ({ open, setOpen, treadmillStressObject, patient, enc
                 record={treadmillStress}
                 setRecord={setTreadmillStress}
                 disabled={isDisabledField}
+                searchable={false}
             />
             <div className="bp-input-group" >
                 <div>
@@ -154,6 +155,7 @@ const AddTreadmillStress = ({ open, setOpen, treadmillStressObject, patient, enc
                 record={treadmillStress}
                 setRecord={setTreadmillStress}
                 disabled={isDisabledField}
+                searchable={false}
             />
             <MyInput
                 column
@@ -167,6 +169,7 @@ const AddTreadmillStress = ({ open, setOpen, treadmillStressObject, patient, enc
                 record={treadmillStress}
                 setRecord={setTreadmillStress}
                 disabled={isDisabledField}
+                searchable={false}
             />
             <MyInput
                 width={200}
@@ -203,6 +206,7 @@ const AddTreadmillStress = ({ open, setOpen, treadmillStressObject, patient, enc
                 record={treadmillStress}
                 setRecord={setTreadmillStress}
                 disabled={isDisabledField}
+                searchable={false}
             />
             <MyInput
                 width={120}

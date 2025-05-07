@@ -241,6 +241,7 @@ const AddAudiometryPuretone = ({ open, setOpen, patient, encounter, audiometryPu
                 record={audiometryPuretone}
                 setRecord={setAudiometryPuretone}
                 disabled={isDisabledField}
+                searchable={false}
             />
             <MyInput
                 column
@@ -254,6 +255,7 @@ const AddAudiometryPuretone = ({ open, setOpen, patient, encounter, audiometryPu
                 record={audiometryPuretone}
                 setRecord={setAudiometryPuretone}
                 disabled={isDisabledField}
+                searchable={false}
             />
             <MyInput
                 column
