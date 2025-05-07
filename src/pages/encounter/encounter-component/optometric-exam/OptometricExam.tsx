@@ -264,12 +264,12 @@ const OptometricExam = ({ patient, encounter }) => {
   const columns = [
     {
       key: 'testReason',
-      title: 'Reason',
+      title: 'REASON',
       dataKey: 'testReason',
     },
     {
       key: 'medicalHistory',
-      title: 'Medical History',
+      title: 'MEDICAL HISTORY',
       render: (row: any) =>
         row?.medicalHistoryLvalue
           ? row.medicalHistoryLvalue.lovDisplayVale
@@ -277,7 +277,7 @@ const OptometricExam = ({ patient, encounter }) => {
     },
     {
       key: 'performedWith',
-      title: 'Test Performed With',
+      title: 'TEST PERFORMED WITH',
       render: (row: any) =>
         row?.performedWithLvalue
           ? row.performedWithLvalue.lovDisplayVale
@@ -285,37 +285,37 @@ const OptometricExam = ({ patient, encounter }) => {
     },
     {
       key: 'distanceAcuity',
-      title: 'Distance Acuity',
+      title: 'DISTANCE ACUITY',
       render: (row: any) => row?.distanceAcuity ? `${row?.distanceAcuity ?? ''} m` : ' '
     },
     {
       key: 'rightEyeOd',
-      title: 'Right Eye',
+      title: 'RIGHT EYE',
       render: (row: any) => row?.rightEyeOd ? `20/ ${row?.rightEyeOd} ` : ' '
     },
     {
       key: 'leftEyeOd',
-      title: 'Left Eye',
+      title: 'LEFT EYE',
       render: (row: any) => row?.leftEyeOd ? `20/ ${row?.leftEyeOd}` : ' '
     },
     {
       key: 'nearAcuity',
-      title: 'Near Acuity',
+      title: 'NEAR ACUITY',
       render: (row: any) => row?.nearAcuity ? `${row?.nearAcuity ?? ''} m` : ' '
     },
     {
       key: 'rightEyeOs',
-      title: 'Right Eye ',
+      title: 'RIGHT EYE ',
       render: (row: any) => row?.rightEyeOs ? `J ${row?.rightEyeOs}` : ' '
     },
     {
       key: 'leftEyeOs',
-      title: 'Left Eye ',
+      title: 'LEFT EYE ',
       render: (row: any) => row?.leftEyeOs ? `J ${row?.leftEyeOs}` : ' '
     },
     {
       key: 'pinholeTestResult',
-      title: 'Pinhole Test Result',
+      title: 'PINHOLE TEST RESULT',
       expandable: true,
       render: (row: any) =>
         row?.pinholeTestResultLvalue
@@ -324,7 +324,7 @@ const OptometricExam = ({ patient, encounter }) => {
     },
     {
       key: "details",
-      title: <Translate>Add details</Translate>,
+      title: <Translate>ADD DETAILS</Translate>,
       flexGrow: 2,
       fullText: true,
       render: rowData => {
@@ -344,19 +344,19 @@ const OptometricExam = ({ patient, encounter }) => {
     },
     {
       key: 'numberOfPlatesTested',
-      title: 'Number of Plates Tested',
+      title: 'NUMBER OF PLATES TESTED',
       dataKey: 'numberOfPlatesTested',
       expandable: true,
     },
     {
       key: 'correctAnswersCount',
-      title: 'Correct Answers Count',
+      title: 'CORRECT ANSWERS COUNT',
       dataKey: 'correctAnswersCount',
       expandable: true,
     },
     {
       key: 'deficiencyType',
-      title: 'Deficiency Type',
+      title: 'DEFICIENCY TYPE',
       expandable: true,
       render: (row: any) =>
         row?.deficiencyTypeLvalue
@@ -365,25 +365,25 @@ const OptometricExam = ({ patient, encounter }) => {
     },
     {
       key: 'rightEye',
-      title: 'Right Eye',
+      title: 'RIGHT EYE',
       dataKey: 'rightEye',
       expandable: true,
     },
     {
       key: 'leftEye',
-      title: 'Left Eye',
+      title: 'LEFT EYE',
       dataKey: 'leftEye',
       expandable: true,
     },
     {
       key: 'measurementMethod',
-      title: 'Measurement Method',
+      title: 'MEASUREMENT METHOD',
       dataKey: 'measurementMethod',
       expandable: true,
     },
     {
       key: 'timeOfMeasurement',
-      title: 'Time of Measurement',
+      title: 'TIME OF MEASUREMENT',
       expandable: true,
       render: (row: any) => {
         if (!row?.timeOfMeasurement) return '-';
@@ -395,25 +395,25 @@ const OptometricExam = ({ patient, encounter }) => {
     },
     {
       key: 'createdAt',
-      title: 'Created At / Created By',
+      title: 'CREATED AT / CREATED BY',
       expandable: true,
       render: (row: any) => `${new Date(row.createdAt).toLocaleString('en-GB')} / ${row?.createByUser?.fullName}`
     },
     {
       key: 'updatedAt',
-      title: 'Updated At / Updated By',
+      title: 'UPDATED AT / UPDATED BY',
       expandable: true,
       render: (row: any) => row?.updatedAt ? `${new Date(row.updatedAt).toLocaleString('en-GB')} / ${row?.updateByUser?.fullName}` : ' '
     },
     {
       key: 'deletedAt',
-      title: 'Cancelled At / Cancelled By',
+      title: 'CANCELLED AT / CANCELLED BY',
       expandable: true,
       render: (row: any) => row?.deletedAt ? `${new Date(row.deletedAt).toLocaleString('en-GB')} / ${row?.deleteByUser?.fullName}` : ' '
     },
     {
       key: 'cancellationReason',
-      title: 'Cancellation Reason',
+      title: 'CANCELLATION REASON',
       dataKey: 'cancellationReason',
       expandable: true,
     }

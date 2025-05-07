@@ -91,26 +91,6 @@ const AddEncounterVaccine = ({
             }
         ],
     });
-    const [encounterVaccineListRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined,
-            },
-            {
-                fieldName: 'patient_key',
-                operator: 'match',
-                value: patient?.key
-            },
-            {
-                fieldName: 'encounter_key',
-                operator: 'match',
-                value: encounter?.key
-            }
-        ],
-    });
 
     //List Responses
     // Fetch vaccine doses list based on selected vaccine, brand, & dose
