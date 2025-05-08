@@ -286,26 +286,26 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
                         <div className='visual-form-sub-fields'>
                             <MyInput
                                 column
-                                width={40}
+                                width={60}
                                 fieldLabel="Right Eye"
                                 fieldType="number"
                                 fieldName="rightEyeOd"
                                 record={optometricExam}
                                 setRecord={setOptometricExam}
                                 leftAddon="20/"
-                                leftAddonwidth={50}
+                                leftAddonwidth={38}
                                 disabled={isDisabledField}
                             />
                             <MyInput
                                 column
-                                width={40}
+                                width={60}
                                 fieldLabel="Left Eye"
                                 fieldType="number"
                                 fieldName="leftEyeOd"
                                 record={optometricExam}
                                 setRecord={setOptometricExam}
                                 leftAddon="20/"
-                                leftAddonwidth={50}
+                                leftAddonwidth={38}
                                 disabled={isDisabledField}
                             />
                         </div>
@@ -329,26 +329,27 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
                         <div className='visual-form-sub-fields'>
                             <MyInput
                                 column
-                                width={40}
+                                width={60}
                                 fieldLabel="Right Eye"
                                 fieldType="number"
                                 fieldName="rightEyeOs"
                                 record={optometricExam}
                                 setRecord={setOptometricExam}
                                 leftAddon="J"
-                                leftAddonwidth={50}
+                                leftAddonwidth={38}
                                 disabled={isDisabledField}
                             />
                             <MyInput
+                                className="number-input"
                                 column
-                                width={40}
+                                width={60}
                                 fieldLabel="Left Eye"
                                 fieldType="number"
                                 fieldName="leftEyeOs"
                                 record={optometricExam}
                                 setRecord={setOptometricExam}
                                 leftAddon="J"
-                                leftAddonwidth={50}
+                                leftAddonwidth={38}
                                 disabled={isDisabledField}
                             />
                         </div>
