@@ -265,18 +265,15 @@ const TreadmillStress = ({ patient, encounter }) => {
             title: 'PRE-TEST BP',
             expandable: true,
             render: (row: any) =>
-                (row?.preTestDiastolicBp != null && row?.preTestDiastolicBp != 0) && (row?.preTestSystolicBp != null && row?.preTestSystolicBp != 0)
-                    ? ((2 * row.preTestDiastolicBp + row.preTestSystolicBp) / 3).toFixed(2)
-                    : '',
+                (row?.preTestDiastolicBp != null && row?.preTestDiastolicBp != 0) && (row?.preTestSystolicBp != null && row?.preTestSystolicBp != 0) ? `${row?.preTestDiastolicBp} / ${row?.preTestSystolicBp}` :" "
         },
         {
             key: 'postTestBp',
             title: 'POST-TEST BP',
             expandable: true,
             render: (row: any) =>
-                (row?.postTestDiastolicBp != null && row?.postTestDiastolicBp != 0) && (row?.postTestSystolicBp != null && row?.postTestSystolicBp != 0)
-                    ? ((2 * row.postTestDiastolicBp + row.postTestSystolicBp) / 3).toFixed(2)
-                    : '',
+                (row?.postTestDiastolicBp != null && row?.postTestDiastolicBp != 0) && (row?.postTestSystolicBp != null && row?.postTestSystolicBp != 0) ? `${row?.postTestDiastolicBp} / ${row?.postTestSystolicBp}` :" "
+                  
         },
         {
             key: "details",
