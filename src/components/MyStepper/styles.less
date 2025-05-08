@@ -1,53 +1,95 @@
-.text-value{
-    font-family:'Inter Medium';
+.text-value {
+    font-family: 'Inter Medium';
     font-size: 14px;
 
 }
-.border-style-error{
-    padding:4px;
-    border:2px dashed #fa7f37;
+
+.border-style-error {
+    padding: 4px;
+    border: 2px dashed #fa7f37;
     border-radius: 50%;
     display: flex;
-    align-items:center;
-    justify-content:center;
+    align-items: center;
+    justify-content: center;
 }
-.border-style-active{
-    padding:4px;
-    border:2px dashed #415BE7;
+
+.border-style-active {
+    padding: 4px;
+    border: 2px dashed #415BE7;
     border-radius: 50%;
     display: flex;
-    align-items:center;
-    justify-content:center;
+    align-items: center;
+    justify-content: center;
 }
-.border-style{
-    padding:4px;
-    border:none;
+
+.border-style {
+    padding: 4px;
+    border: none;
     border-radius: 50%;
     display: flex;
-    align-items:center;
-    justify-content:center;
+    align-items: center;
+    justify-content: center;
 }
-.step-style-inactive{
-    width: 40;
-    height: 40;
-    border-radius:50%;
-    
+
+.step-style-inactive {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+
     color: #888;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:bold;
-    border:  '1px solid #ccc',
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border:1px solid #ccc,
 }
-.step-style-active{
-    width: 40;
-    height: 40;
-    border-radius:50%;
-    
+
+.step-style-active {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+
     color: #fff;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:bold;
-    border:none,
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border: none,
+}
+
+@media (max-width: 650px) {
+    .step-style-active,.step-style-inactive  {
+        width: 32px;
+        height: 32px;
+
+    }
+
+}
+
+@media (max-width: 800px) {
+
+    .step-style-active,.step-style-inactive  {
+        width: 34px;
+        height: 34px;
+
+    }
+
+}
+
+@media (width: 950px) {
+
+    .step-style-active,.step-style-inactive  {
+        width: 36px;
+        height: 36px;
+
+    }
+
+}
+
+@media (width: 1050px) {
+    .step-style-active,.step-style-inactive  {
+        width: 38px;
+        height: 38px;
+
+    }
 }
