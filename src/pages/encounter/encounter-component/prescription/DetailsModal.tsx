@@ -1,34 +1,31 @@
-import React, { useEffect, useState, useRef } from "react";
-import { notify } from '@/utils/uiReducerActions';
-import { Form, Modal, Row, Col, Button, DatePicker, Table, Divider, Pagination, Panel, Text, Stack, InputGroup, Input, Dropdown, TagGroup, Tag, RadioGroup, Radio } from "rsuite";
-import './styles.less';
-import SearchIcon from '@rsuite/icons/Search';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useGetDepartmentsQuery, useGetIcdListQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
 import AdvancedModal from "@/components/AdvancedModal";
 import { useAppDispatch } from '@/hooks';
-import ActiveIngrediantList from './ActiveIngredient'
-import { useGetActiveIngredientQuery, useGetGenericMedicationActiveIngredientQuery, useGetGenericMedicationWithActiveIngredientQuery, useGetPrescriptionInstructionQuery } from "@/services/medicationsSetupService";
+import { useGetGenericMedicationWithActiveIngredientQuery } from "@/services/medicationsSetupService";
+import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { initialListRequest, ListRequest } from "@/types/types";
-
+import { notify } from '@/utils/uiReducerActions';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import SearchIcon from '@rsuite/icons/Search';
+import React, { useEffect, useState } from "react";
+import { Col, Dropdown, Form, Input, InputGroup, Radio, RadioGroup, Row, Text } from "rsuite";
+import ActiveIngrediantList from './ActiveIngredient';
+import './styles.less';
+import { FaFilePrescription } from "react-icons/fa6";
 import MyButton from "@/components/MyButton/MyButton";
-import { faCircleInfo, faCirclePlus, faCircleXmark, faLeftRight, faRightLeft } from "@fortawesome/free-solid-svg-icons";
-import Translate from "@/components/Translate";
 import MyInput from "@/components/MyInput";
-import PlusIcon from '@rsuite/icons/Plus';
-import { newApDrugOrderMedications, newApPrescriptionMedications } from "@/types/model-types-constructor";
-import { useGetCustomeInstructionsQuery, useSaveDrugOrderMedicationMutation, useSavePrescriptionMedicationMutation } from "@/services/encounterService";
 import MyLabel from "@/components/MyLabel";
-import Substitues from "./Substitued";
-import Instructions from "./Instructions";
 import MyTagInput from "@/components/MyTagInput/MyTagInput";
+import { useGetCustomeInstructionsQuery, useSavePrescriptionMedicationMutation } from "@/services/encounterService";
+import { newApPrescriptionMedications } from "@/types/model-types-constructor";
+import { faRightLeft } from "@fortawesome/free-solid-svg-icons";
+import Instructions from "./Instructions";
+import Substitues from "./Substitued";
 
 const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMedications, preKey, editing, patient, encounter, medicRefetch }) => {
     const dispatch = useAppDispatch();
     const [selectedGeneric, setSelectedGeneric] = useState(null);
     const [tags, setTags] = React.useState([]);
     const [searchKeyword, setSearchKeyword] = useState('');
-    const [adminInstructions, setAdminInstructions] = useState("");
     const [customeinst, setCustomeinst] = useState({
         dose: null,
         unit: null,
@@ -38,8 +35,6 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
     const [indicationsIcd, setIndicationsIcd] = useState({ indicationIcd: null });
     const [searchKeywordicd, setSearchKeywordicd] = useState('');
     const [inst, setInst] = useState(null);
-    const [typing, setTyping] = React.useState(false);
-    const [inputValue, setInputValue] = React.useState('');
     const [selectedOption, setSelectedOption] = useState(null);
     const [indicationsDescription, setindicationsDescription] = useState<string>('');
     const { data: DurationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_DURATION');
@@ -50,7 +45,10 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
     const { data: indicationLovQueryResponse } = useGetLovValuesByCodeQuery('MED_INDICATION_USE');
     const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
     const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
+    const [instructionList,setInstructionList]=useState([]);
+    const [instr,setInstruc]=useState(null)
     const [editDuration, setEditDuration] = useState(false);
+    const [slectInst,setSelectInt]=useState({inst:null})
      const { data: customeInstructions, isLoading: isLoadingCustomeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
             ...initialListRequest,
         }); 
@@ -69,19 +67,22 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
         ...item,
         combinedLabel: `${item.icdCode} - ${item.description}`,
     }));
+
     const [savePrescriptionMedication, { isLoading: isSavingPrescriptionMedication }] = useSavePrescriptionMedicationMutation();
     useEffect(()=>{
-        if(prescriptionMedication.key!=null)
-            
+        setSelectInt(null)
+        if(prescriptionMedication.key!=null)           
         {
             setSelectedGeneric(genericMedicationListResponse?.object?.find(item => item.key ===prescriptionMedication.genericMedicationsKey))
             setSelectedOption(prescriptionMedication.instructionsTypeLkey);
-            setAdminInstructions(prescriptionMedication.administrationInstructions);
+            const prevadmin=prescriptionMedication.administrationInstructions.split(",")
+            setInstructionList(prevadmin)
+            
             setTags(prescriptionMedication.parametersToMonitor.split(","))
             if(prescriptionMedication.instructionsTypeLkey==="3010606785535008"){
-                console.log(prescriptionMedication.key);
+               
                 const instruc=customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === prescriptionMedication.key)
-                
+         
                 setCustomeinst({...customeinst,
                     dose:instruc?.dose,
                     unit:instruc?.unitLkey,
@@ -89,8 +90,10 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
                     roa:instruc?.roaLkey})
             }
         }
+ 
       
     },[prescriptionMedication])
+
     useEffect(() => {
         if (searchKeywordicd.trim() !== "") {
             setIcdListRequest(
@@ -114,28 +117,43 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
             );
         }
     }, [searchKeywordicd]);
+    useEffect(()=>{
+     console.log("in",instr)
+    },[instr])
+    
+    useEffect(()=>{
+        console.log("instruction as a list ",instructionList)
+        setInstruc(joinValuesFromArray(instructionList))
+    },[instructionList])
+
+
     useEffect(() => {
-        if (prescriptionMedication.administrationInstructions != null) {
-            setAdminInstructions(prevadminInstructions =>
-                prevadminInstructions ? `${prevadminInstructions}, ${administrationInstructionsLovQueryResponse?.object?.find(
-                    item => item.key === prescriptionMedication.administrationInstructions
-                )?.lovDisplayVale}` :
-                    administrationInstructionsLovQueryResponse?.object?.find(
-                        item => item.key === prescriptionMedication.administrationInstructions
-                    )?.lovDisplayVale
-            );
+        if (slectInst?.inst != null) {
+          const foundItem = administrationInstructionsLovQueryResponse?.object?.find(
+            item => item.key === slectInst?.inst
+          );
+      
+          const value = foundItem?.lovDisplayVale;
+      
+          if (value) {
+            console.log("✅ Adding instruction value:", value);
+           
+            setInstructionList(prev => [...prev, foundItem?.lovDisplayVale]);
+          } else {
+            console.warn("⚠️ Could not find display value for key:", slectInst.inst);
+          }
         }
+      }, [slectInst?.inst]);
 
-        setPrescriptionMedications({ ...prescriptionMedication, administrationInstructions: null })
-    }, [prescriptionMedication.administrationInstructions])
+
     useEffect(() => {
-
         setEditDuration(prescriptionMedication.chronicMedication);
         setPrescriptionMedications({ ...prescriptionMedication, duration: null, durationTypeLkey: null })
-    }, [prescriptionMedication.chronicMedication])
+    }, [prescriptionMedication.chronicMedication]);
+
     useEffect(() => {
         if (indicationsIcd.indicationIcd != null || indicationsIcd.indicationIcd != "") {
-
+            
             setindicationsDescription(prevadminInstructions => {
                 const currentIcd = icdListResponseLoading?.object?.find(
                     item => item.key === indicationsIcd.indicationIcd
@@ -156,11 +174,14 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
         setPrescriptionMedications({ ...prescriptionMedication, instructionsTypeLkey:selectedOption })
 
     }, [selectedOption])
+
     useEffect(()=>{
         if(open==false){
             handleCleare()
         }
-    },[open])
+    },[open]);
+
+
     const joinValuesFromArray = (values) => {
         return values.filter(Boolean).join(', ');
     };
@@ -189,7 +210,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
                         frequencyLkey: selectedOption === "3010606785535008" ? customeinst?.frequency : null,
                         unitLkey: selectedOption === "3010606785535008" ? customeinst?.unit : null,
                         roaLkey: selectedOption === "3010606785535008" ? customeinst?.roa : null,
-                        administrationInstructions: adminInstructions,
+                        administrationInstructions:instr,
                         indicationIcd: indicationsDescription
                     }).unwrap();
 
@@ -230,10 +251,11 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
             refillIntervalUnitLkey: null,
             indicationUseLkey: null
         })
-        setAdminInstructions(null);
+        
         setSelectedGeneric(null);
         setindicationsDescription(null);
-
+        setSelectedOption(null);
+        setInstruc(null);
         setCustomeinst({ dose: null, frequency: null, unit: null, roa: null })
         setTags([])
     }
@@ -251,48 +273,12 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
     const handleSearch = value => {
         setSearchKeyword(value);
     };
-    const addTag = () => {
-        const nextTags = inputValue ? [...tags, inputValue] : tags;
-        setTags(nextTags);
-        setTyping(false);
-        setInputValue('');
-    };
-
-    const handleButtonClick = () => {
-        setTyping(true);
-    };
-    const removeTag = tag => {
-        const nextTags = tags.filter(item => item !== tag);
-        setTags(nextTags);
-    };
-
-    const renderInput = () => {
-        if (typing) {
-            return (
-                <Input
-                    className="tag-input"
-                    size="xs"
-                    style={{ width: '86px', height: '24px' }}
-                    value={inputValue}
-                    onChange={setInputValue}
-                    onBlur={addTag}
-                    onPressEnter={addTag}
-
-                />
-            );
-        }
-
-        return (
-
-            <FontAwesomeIcon icon={faCirclePlus} onClick={handleButtonClick} style={{ marginRight: '5px' }} />
-        );
-    };
+ 
     return (<>
         <AdvancedModal
             open={open}
             setOpen={setOpen}
-            actionButtonFunction={handleSaveMedication}
-            
+            actionButtonFunction={handleSaveMedication}           
             actionButtonLabel="Save"
             leftTitle={selectedGeneric ? selectedGeneric.genericName : "Select Generic"}
             rightTitle="Medication Order Details"
@@ -519,6 +505,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
                                         fieldName={'durationTypeLkey'}
                                         record={prescriptionMedication}
                                         setRecord={setPrescriptionMedications}
+                                        searchable={false}
 
                                     />
                                 </Form>
@@ -594,14 +581,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
                         <Row className="rows-gap">
                             <Col md={24}>
                             <MyTagInput tags={tags} setTags={setTags}/>
-                                {/* <TagGroup className='taggroup-style'>
-                                    {tags.map((item, index) => (
-                                        <Tag key={index} closable onClose={() => removeTag(item)}>
-                                            {item}
-                                        </Tag>
-                                    ))}
-                                    {renderInput()}
-                                </TagGroup> */}
+                            
                             </Col>
                         </Row>
                         <Row className="rows-gap">
@@ -644,6 +624,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
                                         fieldName={'refillIntervalUnitLkey'}
                                         record={prescriptionMedication}
                                         setRecord={setPrescriptionMedications}
+                                        searchable={false}
                                     />
                                 </Form>
                             </Col>
@@ -662,14 +643,14 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
                                             selectData={administrationInstructionsLovQueryResponse?.object ?? []}
                                             selectDataLabel="lovDisplayVale"
                                             selectDataValue="key"
-                                            fieldName={'administrationInstructions'}
-                                            record={prescriptionMedication}
-                                            setRecord={setPrescriptionMedications}
+                                            fieldName={'inst'}
+                                            record={slectInst}
+                                            setRecord={setSelectInt}
                                         /></Form>
                                 </Row>
                                 <Row>
-                                    <Input as="textarea" onChange={(e) => setAdminInstructions(e)}
-                                        value={adminInstructions}
+                                    <Input as="textarea" onChange={(e) =>setInstruc(e.target.value)}
+                                        value={instr}
                                         style={{ width: '100%' }}
                                         rows={3} />
                                 </Row>

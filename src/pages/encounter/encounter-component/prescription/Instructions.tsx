@@ -12,8 +12,7 @@ const Instructions = ({prescriptionMedication, selectedOption, customeinst, setC
     const [filteredList, setFilteredList] = useState([]);
     const [selectedPreDefine, setSelectedPreDefine] = useState(null);
     const [munial, setMunial] = useState(null);
-    const [adminInstructions, setAdminInstructions] = useState("");
-   
+  
     useEffect(() => {
         const newList = roaLovQueryResponse?.object?.filter((item) =>
             (selectedGeneric?.roaList)?.includes(item.key)
@@ -21,6 +20,7 @@ const Instructions = ({prescriptionMedication, selectedOption, customeinst, setC
         setFilteredList(newList);
     }, [selectedGeneric]);
   useEffect(()=>{
+  
     if(selectedOption==="3010606785535008")//Custome  Instruction
         {
        
@@ -28,7 +28,7 @@ const Instructions = ({prescriptionMedication, selectedOption, customeinst, setC
     else if(selectedOption ==="3010591042600262") // Pre defined Instruction
     {
         const t=predefinedInstructionsListResponse?.object?.find((item)=>item.key===prescriptionMedication.instructions)
-        console.log("t" ,t)
+      
         setSelectedPreDefine(t)
     }
     else if(selectedOption==="3010573499898196") //Mnuil  Instruction
