@@ -5,7 +5,7 @@ import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import { faKey } from '@fortawesome/free-solid-svg-icons';
 import clsx from 'clsx';
-
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 const AddEditAccessRole = ({
   open,
   setOpen,
@@ -99,7 +99,7 @@ const AddEditAccessRole = ({
       content={conjureFormContent}
       actionButtonLabel={accessRole?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
-      steps={[{ title: 'Access Rule Rule info', icon: faKey }]}
+      steps={[{ title: 'Access Rule Rule info', icon: <FontAwesomeIcon icon={faKey }/>}]}
       size={width > 600 ? '570px' : '300px'}
     />
   );

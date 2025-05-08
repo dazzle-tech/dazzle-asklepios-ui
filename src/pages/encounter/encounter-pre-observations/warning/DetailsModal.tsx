@@ -7,6 +7,7 @@ import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { newApVisitWarning } from "@/types/model-types-constructor";
 import { notify } from "@/utils/uiReducerActions";
 import { faWarning } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState, useEffect } from "react";
 import { Col, Form, Row, Text } from "rsuite";
 const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patient, encounter, editing }) => {
@@ -64,7 +65,7 @@ const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patie
             steps={[
 
                 {
-                    title: 'Warning', icon: faWarning
+                    title: 'Warning', icon: <FontAwesomeIcon icon={faWarning}/>
                     , footer: <MyButton
 
                         onClick={handleClear}

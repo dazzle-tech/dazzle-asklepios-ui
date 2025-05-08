@@ -4,6 +4,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { faHospitalUser } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const AddHospitalizations = ({ open, setOpen }) => {
 
@@ -83,7 +84,7 @@ const AddHospitalizations = ({ open, setOpen }) => {
             open={open}
             setOpen={setOpen}
             title="Add/Edit Hospitalizations"
-            steps={[{title: "Hospitalizations",icon: faHospitalUser}]}
+            steps={[{title: "Hospitalizations",icon:<FontAwesomeIcon icon={ faHospitalUser}/>}]}
             actionButtonFunction={""}
             position='right'
             bodyheight={550}

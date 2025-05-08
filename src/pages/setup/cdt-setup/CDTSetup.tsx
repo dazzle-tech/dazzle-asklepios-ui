@@ -1,31 +1,21 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Drawer, Input, List, Modal, Pagination, Panel, SelectPicker, Table } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
 import {
-  useGetFacilitiesQuery,
   useGetCdtsQuery,
   useSaveCdtMutation,
   useGetLovValuesByCodeQuery,
-  useGetServicesQuery,
-  useLinkCdtServiceMutation,
-  useUnlinkCdtServiceMutation
 } from '@/services/setupService';
-import { Button, ButtonToolbar, IconButton } from 'rsuite';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyTable from '@/components/MyTable';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import EditIcon from '@rsuite/icons/Edit';
 import TrashIcon from '@rsuite/icons/Trash';
 import { ApCdt } from '@/types/model-types';
-import { newApCdt, newApServiceCdt } from '@/types/model-types-constructor';
-import { Form, Stack, Divider } from 'rsuite';
+import { newApCdt } from '@/types/model-types-constructor';
+import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import { BlockUI } from 'primereact/blockui';
-import { Check, Trash } from '@rsuite/icons';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
@@ -36,7 +26,6 @@ import LinkedServices from './LinkedServices';
 const CDTSetup = () => {
   const dispatch = useAppDispatch();
   const [cdt, setCdt] = useState<ApCdt>({ ...newApCdt });
-  const [selectedServiceKey, setSelectedServiceKey] = useState('');
   const [popupOpen, setPopupOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const [saveCdt, saveCdtMutation] = useSaveCdtMutation();
@@ -300,7 +289,7 @@ const CDTSetup = () => {
         size="xs"
         position='right'
         bodyheight={550}
-        steps={[{ title: 'CDT', icon: faTooth }]}
+        steps={[{ title: 'CDT', icon:<FontAwesomeIcon icon={ faTooth }/>}]}
       />
       <LinkedServices open={servicesOpen} setOpen={setServicesOpen} cdt={cdt} setCdt={setCdt} />
     </div>

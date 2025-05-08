@@ -52,7 +52,7 @@ const Allergies = ({ edit, patient, encounter }) => {
     ]
   });
 
-  const { data: allergiesListResponse, refetch: fetchallerges,isLoading } = useGetAllergiesQuery({
+  const { data: allergiesListResponse, refetch: fetchallerges, isLoading } = useGetAllergiesQuery({
     ...listRequest
   });
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
@@ -61,7 +61,7 @@ const Allergies = ({ edit, patient, encounter }) => {
 
   const [openConfirmUndoResolvedModel, setOpenConfirmUndoResolvedModel] = useState(false);
 
-  
+
 
   const { data: allergensListToGetName } = useGetAllergensQuery({
     ...initialListRequest
@@ -74,10 +74,10 @@ const Allergies = ({ edit, patient, encounter }) => {
       return 'selected-row';
     } else return '';
   };
- //Effect when reactionDescription get new value and push it to prev 
+  //Effect when reactionDescription get new value and push it to prev 
 
 
-//Effect when check Show Prev Allergy and update filter to get prev allergies
+  //Effect when check Show Prev Allergy and update filter to get prev allergies
   useEffect(() => {
     if (showPrev) {
       const updatedFilters = [
@@ -120,9 +120,9 @@ const Allergies = ({ edit, patient, encounter }) => {
       }));
     }
   }, [showPrev]);
-//Effect when do save allergy , refetch allergies 
+  //Effect when do save allergy , refetch allergies 
   useEffect(() => {
-   
+
     fetchallerges();
   }, [saveAllergiesMutation]);
 
@@ -174,7 +174,7 @@ const Allergies = ({ edit, patient, encounter }) => {
   }, [showCanceled]);
 
 
- 
+
   const handleClear = () => {
     setAllerges({
       ...newApVisitAllergies,
@@ -188,10 +188,10 @@ const Allergies = ({ edit, patient, encounter }) => {
       criticalityLkey: null,
       typeOfPropensityLkey: null
     });
-   
+
   };
 
- 
+
 
   const OpenCancellationReasonModel = () => {
     setOpenCancellationReasonModel(true);
@@ -219,19 +219,19 @@ const Allergies = ({ edit, patient, encounter }) => {
         isValid: false,
         deletedAt: Date.now()
       }).unwrap();
-      dispatch(notify({msg:'Deleted successfully' ,sev:'success'}));
-     
+      dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
+
       fetchallerges()
         .then(() => {
-         
+
         })
         .catch(error => {
           console.error('Refetch failed:', error);
         });
 
       CloseCancellationReasonModel();
-    } catch { 
-      dispatch(notify({msg:' Deleted Faild' ,sev:'error'}));
+    } catch {
+      dispatch(notify({ msg: ' Deleted Faild', sev: 'error' }));
     }
   };
 
@@ -243,7 +243,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         statusLkey: '9766179572884232',
         resolvedAt: Date.now()
       }).unwrap();
-      dispatch(notify({msg:'Resolved Successfully',sev:'success'}));
+      dispatch(notify({ msg: 'Resolved Successfully', sev: 'success' }));
       setShowPrev(false);
       await fetchallerges()
         .then(() => {
@@ -268,11 +268,11 @@ const Allergies = ({ edit, patient, encounter }) => {
         ...allerges,
         statusLkey: '9766169155908512'
       }).unwrap();
-      dispatch(notify({msg:'Undo Resolved Successfully',sev:'success'}));
+      dispatch(notify({ msg: 'Undo Resolved Successfully', sev: 'success' }));
       setShowPrev(false);
       await fetchallerges()
         .then(() => {
-          
+
         })
         .catch(error => {
           console.error('Refetch failed:', error);
@@ -286,13 +286,15 @@ const Allergies = ({ edit, patient, encounter }) => {
     }
   };
   const tableColumns = [
-    {key: "allergyTypeLvalue",
+    {
+      key: "allergyTypeLvalue",
       dataKey: "allergyTypeLvalue",
       title: <Translate>Allergy Type</Translate>,
       flexGrow: 2,
       render: (rowData: any) => rowData.allergyTypeLvalue?.lovDisplayVale
     },
-    {key: "allergenKey",
+    {
+      key: "allergenKey",
       dataKey: "allergenKey",
       title: <Translate>Allergen</Translate>,
       flexGrow: 2,
@@ -304,13 +306,15 @@ const Allergies = ({ edit, patient, encounter }) => {
         return found?.allergenName || "No Name";
       }
     },
-    { key: "severityLvalue",
+    {
+      key: "severityLvalue",
       dataKey: "severityLvalue",
       title: <Translate>Severity</Translate>,
       flexGrow: 1,
       render: (rowData: any) => rowData.severityLvalue?.lovDisplayVale
     },
-    {key: "criticalityLkey",
+    {
+      key: "criticalityLkey",
       dataKey: "criticalityLkey",
       title: <Translate>Certainty type</Translate>,
       flexGrow: 2,
@@ -319,13 +323,15 @@ const Allergies = ({ edit, patient, encounter }) => {
           ? rowData.criticalityLvalue?.lovDisplayVale
           : rowData.criticalityLkey
     },
-    {key: "onsetLvalue",
+    {
+      key: "onsetLvalue",
       dataKey: "onsetLvalue",
       title: <Translate>Onset</Translate>,
       flexGrow: 2,
       render: (rowData: any) => rowData.onsetLvalue?.lovDisplayVale
     },
-    {key: "onsetDate",
+    {
+      key: "onsetDate",
       dataKey: "onsetDate",
       title: <Translate>Onset Date Time</Translate>,
       flexGrow: 2,
@@ -334,26 +340,30 @@ const Allergies = ({ edit, patient, encounter }) => {
           ? new Date(rowData.onsetDate).toLocaleString()
           : "Undefind"
     },
-    {key: "treatmentStrategyLvalue",
+    {
+      key: "treatmentStrategyLvalue",
       dataKey: "treatmentStrategyLvalue",
       title: <Translate>Treatment Strategy</Translate>,
       flexGrow: 2,
       render: (rowData: any) => rowData.treatmentStrategyLvalue?.lovDisplayVale
     },
-    {key: "sourceOfInformationLvalue",
+    {
+      key: "sourceOfInformationLvalue",
       dataKey: "sourceOfInformationLvalue",
       title: <Translate>Source of information</Translate>,
       flexGrow: 2,
       render: (rowData: any) =>
         rowData.sourceOfInformationLvalue?.lovDisplayVale || "BY Patient"
     },
-    {key: "reactionDescription",
+    {
+      key: "reactionDescription",
       dataKey: "reactionDescription",
       title: <Translate>Reaction Description</Translate>,
       flexGrow: 2,
       render: (rowData: any) => rowData.reactionDescription
     },
-    {key: "typeOfPropensityLkey",
+    {
+      key: "typeOfPropensityLkey",
       dataKey: "typeOfPropensityLkey",
       title: <Translate>Type Of Propensity</Translate>,
       flexGrow: 2,
@@ -362,123 +372,133 @@ const Allergies = ({ edit, patient, encounter }) => {
           ? rowData.typeOfPropensityLvalue?.lovDisplayVale
           : rowData.typeOfPropensityLkey
     },
-    {key: "statusLvalue",
+    {
+      key: "statusLvalue",
       dataKey: "statusLvalue",
       title: <Translate>Status</Translate>,
       flexGrow: 1,
       render: (rowData: any) => rowData.statusLvalue?.lovDisplayVale
     },
-    { key:"#",
-      dataKey:"",
-      title:<Translate>Edit</Translate>,
-      flexGrow:1,
-      render:(rowData:any)=>{
+    {
+      key: "#",
+      dataKey: "",
+      title: <Translate>Edit</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
         return <MdModeEdit
-        title="Edit"
-        size={24}
-        fill="var(--primary-gray)"
-        onClick={()=>setOpenDetailsModal(true)}
-      />
+          title="Edit"
+          size={24}
+          fill="var(--primary-gray)"
+          onClick={() => setOpenDetailsModal(true)}
+        />
       }
     },
-    {key:"notes",
-      dataKey:"notes",
-      title:<Translate>Notes</Translate>,
-      expandable:true
+    {
+      key: "notes",
+      dataKey: "notes",
+      title: <Translate>Notes</Translate>,
+      expandable: true
     }
     ,
-    {key:"certainty",
-      dataKey:"certainty",
-      title:<Translate>Certainty</Translate>,
-      expandable:true
+    {
+      key: "certainty",
+      dataKey: "certainty",
+      title: <Translate>Certainty</Translate>,
+      expandable: true
     }
     ,
-    {key:"cancellationReason",
-      dataKey:"cancellationReason",
-      title:<Translate>Cancellation Reason</Translate>,
-      expandable:true
+    {
+      key: "cancellationReason",
+      dataKey: "cancellationReason",
+      title: <Translate>Cancellation Reason</Translate>,
+      expandable: true
     }
     ,
-    {key:"",
+    {
+      key: "",
       title: <Translate>Created At/By</Translate>,
-     expandable:true,
-     render:(rowData:any)=>{
-      return(<>
-       <span>{rowData.createdBy}</span>
-        <br/>
-       <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
-      </>)
-     }
-
-    },
-    {key:"",
-      title: <Translate>Updated At/By</Translate>,
-     expandable:true,
-     render:(rowData:any)=>{
-      return(<>
-       <span>{rowData.updatedBy}</span>
-        <br/>
-       <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
-      </>)
-     }
-
-    },
- 
-    {key:"",
-      title: <Translate>Cancelled At/By</Translate>,
-     expandable:true,
-     render:(rowData:any)=>{
-      return(<>
-       <span>{rowData.deletedBy}</span>
-        <br/>
-       <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
-      </>)
-     }
-
-    },
-    {key:"",
-      title: <Translate>Resolved At/By</Translate>,
-     expandable:true,
-     render:(rowData:any)=>{
-      if (rowData.statusLkey != '9766169155908512') {
-      return(<>
-     
-       <span>{rowData.resolvedBy}</span>
-        <br/>
-       <span className='date-table-style'>{rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : ''}</span>
-      </>)}
-      else {
-        return null;
+      expandable: true,
+      render: (rowData: any) => {
+        return (<>
+          <span>{rowData.createdBy}</span>
+          <br />
+          <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+        </>)
       }
-     }
+
+    },
+    {
+      key: "",
+      title: <Translate>Updated At/By</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        return (<>
+          <span>{rowData.updatedBy}</span>
+          <br />
+          <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+        </>)
+      }
+
+    },
+
+    {
+      key: "",
+      title: <Translate>Cancelled At/By</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        return (<>
+          <span>{rowData.deletedBy}</span>
+          <br />
+          <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
+        </>)
+      }
+
+    },
+    {
+      key: "",
+      title: <Translate>Resolved At/By</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        if (rowData.statusLkey != '9766169155908512') {
+          return (<>
+
+            <span>{rowData.resolvedBy}</span>
+            <br />
+            <span className='date-table-style'>{rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : ''}</span>
+          </>)
+        }
+        else {
+          return null;
+        }
+      }
 
     },
 
   ];
-    const pageIndex = listRequest.pageNumber - 1;
-    
-      // how many rows per page:
-      const rowsPerPage = listRequest.pageSize;
-    
-      // total number of items in the backend:
-      const totalCount = allergiesListResponse?.extraNumeric ?? 0;
-    
-      // handler when the user clicks a new page number:
-      const handlePageChange = (_: unknown, newPage: number) => {
-        // MUI gives you a zero-based page, so add 1 for your API
-       
-        setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-      };
-    
-      // handler when the user chooses a different rows-per-page:
-      const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      
-        setListRequest({
-          ...listRequest,
-          pageSize: parseInt(event.target.value, 10),
-          pageNumber: 1 // reset to first page
-        });
-      };
+  const pageIndex = listRequest.pageNumber - 1;
+
+  // how many rows per page:
+  const rowsPerPage = listRequest.pageSize;
+
+  // total number of items in the backend:
+  const totalCount = allergiesListResponse?.extraNumeric ?? 0;
+
+  // handler when the user clicks a new page number:
+  const handlePageChange = (_: unknown, newPage: number) => {
+    // MUI gives you a zero-based page, so add 1 for your API
+
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+
+  // handler when the user chooses a different rows-per-page:
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1 // reset to first page
+    });
+  };
   return (
     <div>
 
@@ -523,32 +543,33 @@ const Allergies = ({ edit, patient, encounter }) => {
             prefixIcon={() => <PlusIcon />}
             onClick={() => {
               handleClear();
-              setOpenDetailsModal(true)}}
+              setOpenDetailsModal(true)
+            }}
           >Add Allergy</MyButton>
         </div>
       </div>
- <MyTable   
- columns={tableColumns} 
- data={allergiesListResponse?.object || []}
- onRowClick={rowData => {
-  setAllerges(rowData);
-  setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
-}}
-rowClassName={isSelected}
-sortColumn={listRequest.sortBy}
-sortType={listRequest.sortType}
-onSortChange={(sortBy, sortType) => {
-  setListRequest({ ...listRequest, sortBy, sortType });
-}}
-page={pageIndex}
-rowsPerPage={rowsPerPage}
-totalCount={totalCount}
-onPageChange={handlePageChange}
-onRowsPerPageChange={handleRowsPerPageChange}
-loading={isLoading}
+      <MyTable
+        columns={tableColumns}
+        data={allergiesListResponse?.object || []}
+        onRowClick={rowData => {
+          setAllerges(rowData);
+          setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
+        }}
+        rowClassName={isSelected}
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortChange={(sortBy, sortType) => {
+          setListRequest({ ...listRequest, sortBy, sortType });
+        }}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        loading={isLoading}
 
- />
-    
+      />
+
 
       {/* modal for cancell the allergy and write the reason */}
       <CancellationModal
@@ -561,39 +582,39 @@ loading={isLoading}
         fieldLabel={'Cancellation Reason'}
         title={'Cancellation'}
       ></CancellationModal>
-     {/* open modal to resolve allergy */}
+      {/* open modal to resolve allergy */}
       <MyModal
-      open={openConfirmResolvedModel}
-      setOpen={setOpenConfirmResolvedModel}
-      actionButtonFunction={handleResolved}
-      actionButtonLabel='Yes'
-      title="Resolve"
-      bodyheight={150}
-      steps={[{title:"Is this allergy resolved?" ,icon:faCheck}]}
-     content={<></>}
+        open={openConfirmResolvedModel}
+        setOpen={setOpenConfirmResolvedModel}
+        actionButtonFunction={handleResolved}
+        actionButtonLabel='Yes'
+        title="Resolve"
+        bodyheight={150}
+        steps={[{ title: "Resolve", icon: <FontAwesomeIcon icon={faCheck }/>}]}
+        content={<>Is this allergy resolved?</>}
       ></MyModal>
-  
-       <MyModal
-      open={openConfirmUndoResolvedModel}
-      setOpen={setOpenConfirmUndoResolvedModel}
-      actionButtonFunction={handleUndoResolved}
-      actionButtonLabel='Yes'
-      title="Undo Resolve"
-      bodyheight={150}
-      steps={[{title:"Is this allergy active?" ,icon:faArrowRotateRight}]}
-     content={<></>}
+
+      <MyModal
+        open={openConfirmUndoResolvedModel}
+        setOpen={setOpenConfirmUndoResolvedModel}
+        actionButtonFunction={handleUndoResolved}
+        actionButtonLabel='Yes'
+        title="Undo Resolve"
+        bodyheight={150}
+        steps={[{ title: "Undo Resolve", icon: <FontAwesomeIcon icon={faArrowRotateRight }/>}]}
+        content={<>Is this allergy active?</>}
       ></MyModal>
 
       {/*modal for add details for allergy and save it */}
-      <DetailsModal 
-      open={openDetailsModal} setOpen={setOpenDetailsModal} 
-      allerges={allerges} setAllerges={setAllerges} 
-      handleClear={handleClear}  
-      edit={edit} editing={editing}
-      patient={patient}
-      encounter={encounter}
-      fetchallerges={fetchallerges} />
-    
+      <DetailsModal
+        open={openDetailsModal} setOpen={setOpenDetailsModal}
+        allerges={allerges} setAllerges={setAllerges}
+        handleClear={handleClear}
+        edit={edit} editing={editing}
+        patient={patient}
+        encounter={encounter}
+        fetchallerges={fetchallerges} />
+
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { useSaveModuleMutation } from '@/services/setupService';
 import MyIconInput from '@/components/MyInput/MyIconInput';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import clsx from 'clsx';
 const AddEditModule = ({
   open,
@@ -79,7 +80,7 @@ const AddEditModule = ({
       content={conjureFormContent}
       actionButtonLabel={operationState === 'New' ? 'Create' : 'Save'}
       actionButtonFunction={handleModuleSave}
-      steps={[{ title: 'Module Info', icon: faLaptop }]}
+      steps={[{ title: 'Module Info', icon:<FontAwesomeIcon icon={faLaptop }/>}]}
       size={width > 600 ? '570px' : '300px'}
     />
   );

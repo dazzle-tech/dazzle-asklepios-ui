@@ -6,6 +6,8 @@ import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import clsx from 'clsx';
 import { initialListRequest, ListRequest } from '@/types/types';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 import './styles.less';
 const AddEditDepartment = ({
   open,
@@ -121,7 +123,7 @@ const AddEditDepartment = ({
       content={conjureFormContent}
       actionButtonLabel={department?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
-      steps={[{ title: 'Department Info', icon: faLaptop }]}
+      steps={[{ title: 'Department Info', icon:<FontAwesomeIcon icon={ faLaptop }/>}]}
       size={width > 600 ? '570px' : '300px'}
     />
   );

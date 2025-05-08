@@ -6,6 +6,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { faShieldAlt } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import '../styles.less'
 import MyButton from '@/components/MyButton/MyButton';
 const AddVerification = ({ localPatient, setLocalPatient, validationResult, open,setOpen}) => {
@@ -35,7 +36,7 @@ const AddVerification = ({ localPatient, setLocalPatient, validationResult, open
     <MyModal
     open={open}
     setOpen={setOpen}
-    bodyheight={200}
+    bodyheight={250}
     title="Patient Verification"
     actionButtonLabel="Verify"
     actionButtonFunction={() =>
@@ -44,7 +45,7 @@ const AddVerification = ({ localPatient, setLocalPatient, validationResult, open
           patientId: localPatient.key
         }).unwrap()
       }
-    steps={[{ title: "Patient Verification", icon: faShieldAlt ,footer :<MyButton onClick={() => sendOtp(localPatient.key).unwrap()} appearance="subtle"> Send Code</MyButton>}]}
+    steps={[{ title: "Patient Verification", icon:<FontAwesomeIcon icon={ faShieldAlt }/>,footer :<MyButton onClick={() => sendOtp(localPatient.key).unwrap()} appearance="subtle"> Send Code</MyButton>}]}
     size="xs"
     content={       
      <Form layout='inline' fluid className='add-verification'>

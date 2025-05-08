@@ -10,6 +10,7 @@ import { newApTreadmillStress } from '@/types/model-types-constructor';
 import { ApTreadmillStress } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import { faPersonRunning } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import './styles.less';
 const AddTreadmillStress = ({ open, setOpen, treadmillStressObject, patient, encounter, refetch }) => {
     const authSlice = useAppSelector(state => state.auth);
@@ -306,7 +307,7 @@ const AddTreadmillStress = ({ open, setOpen, treadmillStressObject, patient, enc
             size='500px'
             steps={[{
                 title: "Treadmill Stress",
-                icon: faPersonRunning,
+                icon: <FontAwesomeIcon icon={faPersonRunning}/>,
                 footer: <MyButton appearance='ghost' onClick={handleClearField} >Clear</MyButton>
             },]}
             content={content}

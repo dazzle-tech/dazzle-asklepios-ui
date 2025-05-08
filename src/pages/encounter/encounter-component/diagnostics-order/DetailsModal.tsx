@@ -117,7 +117,8 @@ const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveT
             steps={[
 
                 {
-                    title: (test?.testTypeLvalue?.lovDisplayVale || '') + ' - ' + (test?.testName || ''), icon: faVials,
+                    title: (test?.testTypeLvalue?.lovDisplayVale || '') + ' - ' + (test?.testName || ''), 
+                    icon:<FontAwesomeIcon icon={faVials}/>,
                     footer:
                         <MyButton
                             onClick={() => setAttachmentsModalOpen(true)}

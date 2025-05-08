@@ -31,6 +31,13 @@ const VaccineReccord = ({ patient }) => {
             render: (_, index) => index + 1
         },
         {
+            key: 'location',
+            title: 'VACCINATION LOCATION',
+            expandable: true,
+            render: (row) =>
+                row?.apEncounterVaccination?.externalFacilityName ?? ''
+        },
+        {
             key: 'createdAt',
             title: 'CREATED AT/BY',
             expandable: true,
@@ -90,12 +97,6 @@ const VaccineReccord = ({ patient }) => {
             title: 'ROA',
             render: () =>
                 vaccine?.roaLvalue?.lovDisplayVale ?? vaccine?.roaLkey ?? ''
-        },
-        {
-            key: 'location',
-            title: 'VACCINATION LOCATION',
-            render: (row) =>
-                row?.apEncounterVaccination?.externalFacilityName ?? ''
         },
         {
             key: 'reviewed',

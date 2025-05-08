@@ -7,6 +7,8 @@ import { useGetLovValuesByCodeAndParentQuery } from '@/services/setupService';
 import { faLocationDot } from '@fortawesome/free-solid-svg-icons';
 import clsx from 'clsx';
 import { faUser, faPhone } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 const AddEditFacility = ({
   open,
   setOpen,
@@ -239,9 +241,9 @@ const AddEditFacility = ({
       actionButtonFunction={handleSave}
       size={width > 600 ? '570px' : '300px'}
       steps={[
-        { title: 'Basic Info', icon: faUser },
-        { title: 'Address', icon: faLocationDot },
-        { title: 'Contact', icon: faPhone }
+        { title: 'Basic Info', icon:<FontAwesomeIcon icon={ faUser }/>},
+        { title: 'Address', icon:<FontAwesomeIcon icon={ faLocationDot }/>},
+        { title: 'Contact', icon: <FontAwesomeIcon icon={faPhone }/>}
       ]}
     />
   );

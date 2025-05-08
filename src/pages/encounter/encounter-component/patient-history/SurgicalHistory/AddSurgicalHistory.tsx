@@ -4,6 +4,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const AddSurgicalHistory = ({ open, setOpen }) => {
     const [openOtherField, setOpenOtherField] = useState({ open: false });
@@ -125,7 +126,7 @@ const AddSurgicalHistory = ({ open, setOpen }) => {
             open={open}
             setOpen={setOpen}
             title="Add/Edit Surgical History"
-            steps={[{ title: "Surgical History", icon: faBedPulse }]}
+            steps={[{ title: "Surgical History", icon: <FontAwesomeIcon icon={faBedPulse }/>}]}
             actionButtonFunction={""}
             position='right'
             bodyheight={550}

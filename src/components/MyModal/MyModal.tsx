@@ -3,7 +3,7 @@ import { Modal, Steps, Divider, Form } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import './styles.less';
 import MyButton from '../MyButton/MyButton';
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import MyStepper from '../MyStepper';
 const MyModal = ({
     open,
     setOpen,
@@ -49,7 +49,7 @@ const MyModal = ({
         setInternalStep(0);
         setOpen(false);
     };
-    
+
     return (
         <Modal
             open={open}
@@ -65,27 +65,17 @@ const MyModal = ({
             </Modal.Header>
             <Divider className='divider-line' />
             <Modal.Body style={{ height: bodyheight }}>
-                <Steps current={activeStep} className={`steps-modal ${steps.length === 1 ? 'centered-step' : ''}`}>
-                    {steps.map((step, index) => (
-                        <Steps.Item
-                            key={index}
-                            title={<div className='title-modal'>
-                                <FontAwesomeIcon
-                                    icon={activeStep > index ? faCheck : step.icon}
-                                    className={
-                                        activeStep > index
-                                            ? 'step-past'
-                                            : activeStep === index
-                                                ? 'step-active'
-                                                : 'step-future'
-                                    }
-                                />
-                                <div>{step.title}</div>
-                            </div>}
-                            icon={<></>}
-                        />
-                    ))}
-                </Steps>
+                <MyStepper
+                    activeStep={activeStep}
+                    stepsList={steps.map((step, index) => ({
+                        key: index,
+                        value: step.title,
+                        description: step.description || '',
+                        customIcon: step.icon ? step.icon : null,
+                        isError: step.isError || false,
+                    }))}
+                />
+
                 {typeof content === 'function' ? content(activeStep) : (activeStep === 0 && content)}
             </Modal.Body>
             {(

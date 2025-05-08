@@ -5,7 +5,9 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppSelector, useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import MyButton from '@/components/MyButton/MyButton';
-import './styles.less'
+import './styles.less';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 import { faBrain } from "@fortawesome/free-solid-svg-icons";
 import { newApPsychologicalExam } from '@/types/model-types-constructor';
 import { ApPsychologicalExam } from '@/types/model-types';
@@ -156,7 +158,7 @@ const AddPsychologicalExam = ({
             size='500px'
             steps={[{
                 title: "Psychology Exam",
-                icon: faBrain,
+                icon:<FontAwesomeIcon icon={ faBrain}/>,
                 footer: <MyButton appearance='ghost' onClick={handleClearField} >Clear</MyButton>
             },]}
             content={<Form fluid layout='inline'>

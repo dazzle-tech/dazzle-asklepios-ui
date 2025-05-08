@@ -3,7 +3,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyInput from '@/components/MyInput';
 import { faBan } from '@fortawesome/free-solid-svg-icons';
 import {Form} from 'rsuite';
-import { title } from 'process';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";;
 const CancellationModal = ({
     open,
     setOpen,
@@ -25,7 +25,7 @@ const CancellationModal = ({
             actionButtonFunction={handleCancle}
             isDisabledActionBtn={object?.[statusField] === statusKey}
             steps={[
-                {title:title,icon: faBan },
+                {title:title,icon: <FontAwesomeIcon icon={faBan }/>},
             ]}
             content={(step) => <Form layout="inline" fluid>
                 <MyInput
