@@ -59,8 +59,9 @@ const PatientSearch = ({ selectedPatientRelation, setSelectedPatientRelation, se
                     placeholder="Select Search Criteria"
                     searchable={false}
                     width="250px"
+                    height={40}
                 />
-                <InputGroup className='input-search' inside>
+                <InputGroup className='family-member-input-search' inside>
                     <Form fluid style={{ width: '100%' }}>
                         <MyInput
                             fieldType="input"
@@ -114,6 +115,7 @@ const PatientSearch = ({ selectedPatientRelation, setSelectedPatientRelation, se
             open={searchResultVisible}
             onClose={() => {
                 setSearchResultVisible(false);
+                setSelectedCriterion('');
             }}
         >
             <Drawer.Header>

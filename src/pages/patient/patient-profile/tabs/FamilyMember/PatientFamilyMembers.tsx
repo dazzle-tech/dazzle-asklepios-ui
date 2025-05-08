@@ -28,19 +28,25 @@ const PatientFamilyMembers = ({ localPatient }) => {
             key: 'relationType',
             title: <Translate>Relation Type</Translate>,
             flexGrow: 4,
-            dataKey: 'relationTypeLvalue.lovDisplayVale'
+            render: (row: any) =>
+                row?.relationTypeLvalue
+                    ? row.relationTypeLvalue.lovDisplayVale
+                    : row.relationTypeLkey,
         },
         {
             key: 'relativePatientName',
             title: <Translate>Relative Patient Name</Translate>,
             flexGrow: 4,
-            dataKey: 'relativePatientObject.fullName'
+            render: (row: any) =>row?.relativePatientObject?.fullName
         },
         {
             key: 'relationCategory',
             title: <Translate>Relation Category</Translate>,
             flexGrow: 4,
-            dataKey: 'categoryTypeLvalue.lovDisplayVale'
+            render: (row: any) =>
+                row?.categoryTypeLvalue
+                    ? row.categoryTypeLvalue.lovDisplayVale
+                    : row.categoryTypeLkey,
         }
     ];
     // Initialize patient Relation list request with default filters
