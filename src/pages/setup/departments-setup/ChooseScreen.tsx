@@ -7,6 +7,7 @@ import { useDispatch } from 'react-redux';
 import { notify } from '@/utils/uiReducerActions';
 import { faSheetPlastic } from '@fortawesome/free-solid-svg-icons';
 import './styles.less';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const ChooseDepartment = ({
   open,
@@ -220,7 +221,7 @@ const ChooseDepartment = ({
       actionButtonLabel='Save'
       actionButtonFunction={handleSave}
       size={width > 600 ? '570px' : '300px'}
-      steps={[{ title: 'Medical Sheets', icon: faSheetPlastic }]}
+      steps={[{ title: 'Medical Sheets', icon: <FontAwesomeIcon icon={faSheetPlastic }/>}]}
     />
   );
 };
