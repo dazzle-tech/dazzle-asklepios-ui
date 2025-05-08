@@ -1,6 +1,6 @@
 import MyInput from '@/components/MyInput';
 import React, { useEffect, useState } from 'react';
-import { InputGroup, Form, Drawer, } from 'rsuite';
+import { InputGroup, Form, Drawer, Input } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import '../styles.less';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -63,24 +63,26 @@ const PatientSearch = ({ selectedPatientRelation, setSelectedPatientRelation, se
                 />
                 <InputGroup className='family-member-input-search' inside>
                     <Form fluid style={{ width: '100%' }}>
-                        <MyInput
-                            fieldType="input"
-                            fieldName="searchKeyword"
-                            showLabel={false}
-                            record={{ searchKeyword }}
-                            setRecord={record => setSearchKeyword(record.searchKeyword)}
-                            placeholder="Search Patients"
-                            onKeyDown={e => {
-                                if (e.key === 'Enter') {
-                                    search(target);
-                                }
-                            }}
-                            width="100%"
-                        />
+                        <InputGroup inside>
+                            <Input
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        if (target === 'relation') {
+                                            search(target);
+                                        }
+                                    }
+                                }}
+                                placeholder={'Search Patients'}
+                                value={searchKeyword}
+                                onChange={e => setSearchKeyword(e)}
+                                width="auto"
+                            />
+                            <InputGroup.Button onClick={() => search(target)}>
+                                <SearchIcon />
+                            </InputGroup.Button>
+                        </InputGroup>
                     </Form>
-                    <InputGroup.Button onClick={() => search(target)}>
-                        <SearchIcon />
-                    </InputGroup.Button>
                 </InputGroup>
             </Form>
         );
@@ -104,6 +106,13 @@ const PatientSearch = ({ selectedPatientRelation, setSelectedPatientRelation, se
             });
         }
     };
+    // Handle Close Drawet
+    const handleClose=()=>{
+        setSearchResultVisible(false);
+        setSelectedCriterion('');
+        setSearchKeyword('');
+        setListRequest({ ...initialListRequest, ignore: true });
+    }
     // Effects
     useEffect(() => {
         setSearchKeyword('');
@@ -113,10 +122,8 @@ const PatientSearch = ({ selectedPatientRelation, setSelectedPatientRelation, se
             size="xs"
             placement={'left'}
             open={searchResultVisible}
-            onClose={() => {
-                setSearchResultVisible(false);
-                setSelectedCriterion('');
-            }}
+            onClose={handleClose}
+
         >
             <Drawer.Header>
                 <Drawer.Title>Patient List - Search Results</Drawer.Title>
@@ -142,9 +149,9 @@ const PatientSearch = ({ selectedPatientRelation, setSelectedPatientRelation, se
                             }
                             showMore={true}
                             arrowClick={() => {
-                                console.log("Selected patient:", patient);
                                 handleSelectPatient(patient);
                                 setSearchKeyword(null);
+                                handleClose();
                             }}
                             footerContant={`# ${patient.patientMrn}`}
                         />
