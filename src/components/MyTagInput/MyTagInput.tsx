@@ -9,9 +9,7 @@ const MyTagInput=({tags=[] ,setTags})=>{
 const handleDelete = (tagToDelete) => {
   setTags((prevTags) => prevTags.filter((tag) => tag !== tagToDelete));
 };
- useEffect(()=>{
-    console.log(tags)
- },[tags])
+
  return (
     <Autocomplete
       multiple

@@ -2,7 +2,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import { MdModeEdit } from 'react-icons/md';
+import { FaFilePrescription } from "react-icons/fa6";
 import {
     useGetCustomeInstructionsQuery,
     useGetPrescriptionMedicationsQuery,
@@ -18,24 +18,23 @@ import { ApPrescriptionMedications } from '@/types/model-types';
 import { newApPrescription, newApPrescriptionMedications } from '@/types/model-types-constructor';
 import { initialListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
-import { faBroom } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BlockIcon from '@rsuite/icons/Block';
 import CheckIcon from '@rsuite/icons/Check';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import PlusIcon from '@rsuite/icons/Plus';
 import React, { useEffect, useState } from 'react';
+import { MdModeEdit } from 'react-icons/md';
 import {
     Checkbox,
+    Col,
     Divider,
+    Row,
     SelectPicker,
     Table,
     Text
 } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
-import { render } from 'react-dom';
-import { title } from 'process';
 const { Column, HeaderCell, Cell } = Table;
 const Prescription = ({ edit, patient, encounter }) => {
 
@@ -53,7 +52,7 @@ const Prescription = ({ edit, patient, encounter }) => {
     });
 
     const [openDetailsModal, setOpenDetailsModal] = useState(false);
-    const [selectedRows, setSelectedRows] = useState([]);  
+    const [selectedRows, setSelectedRows] = useState([]);
     const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
     const { data: prescriptions, isLoading: isLoadingPrescriptions, refetch: preRefetch } = useGetPrescriptionsQuery({
         ...initialListRequest,
@@ -76,8 +75,6 @@ const Prescription = ({ edit, patient, encounter }) => {
     ) ?? [];
 
     const [preKey, setPreKey] = useState(null);
-    console.log(preKey);
-    console.log(prescriptions)
     const [prescriptionMedication, setPrescriptionMedications] = useState<ApPrescriptionMedications>(
         {
             ...newApPrescriptionMedications,
@@ -116,8 +113,8 @@ const Prescription = ({ edit, patient, encounter }) => {
     const [selectedRowoMedicationKey, setSelectedRowoMedicationKey] = useState("");
     const { data: customeInstructions, isLoading: isLoadingCustomeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
         ...initialListRequest,
-    }); 
-    
+    });
+
     const [isdraft, setIsDraft] = useState(prescriptions?.object?.find(prescription =>
         prescription.key === preKey
     )?.saveDraft);
@@ -140,7 +137,7 @@ const Prescription = ({ edit, patient, encounter }) => {
 
             if (foundPrescription?.key != null) {
                 setPreKey(foundPrescription?.key);
-               
+
             }
 
         }
@@ -148,7 +145,7 @@ const Prescription = ({ edit, patient, encounter }) => {
     }, [prescriptions]);
 
     useEffect(() => {
-      
+
         refetchCo();
         setCustomeinst({
             ...customeinst,
@@ -163,11 +160,11 @@ const Prescription = ({ edit, patient, encounter }) => {
         if (preKey == null) {
             handleCleare()
         }
-       
+
     }, [preKey]);
 
 
-   
+
     const handleCheckboxChange = (key) => {
         setSelectedRows((prev) => {
             if (prev.includes(key)) {
@@ -220,7 +217,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                 submittedAt: Date.now()
             }).unwrap();
             dispatch(notify('submetid  Successfully'));
-           await handleCleare();
+            await handleCleare();
             setPreKey(null)
             preRefetch().then(() => "");
             medicRefetch().then(() => "");
@@ -252,8 +249,8 @@ const Prescription = ({ edit, patient, encounter }) => {
         })
 
         setCustomeinst({ dose: null, frequency: null, unit: null, roa: null });
-        
-      
+
+
     }
 
     const saveDraft = async () => {
@@ -285,9 +282,9 @@ const Prescription = ({ edit, patient, encounter }) => {
 
     }
     const handleSavePrescription = async () => {
-       await handleCleare();
+        await handleCleare();
         setPreKey(null);
-       
+
 
         if (patient && encounter) {
             try {
@@ -303,7 +300,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                 dispatch(notify('Start New Prescription whith ID:' + response?.data?.prescriptionId));
 
                 setPreKey(response?.data?.key);
-                
+
                 preRefetch().then(() => "");
 
             } catch (error) {
@@ -315,10 +312,11 @@ const Prescription = ({ edit, patient, encounter }) => {
     };
 
     const tableColumns = [
-        {key:"#",         
-            title:<Translate> #</Translate> ,
+        {
+            key: "#",
+            title: <Translate> #</Translate>,
             flexGrow: 1,
-          
+
             render: (rowData: any) => {
                 return (
                     <Checkbox
@@ -333,26 +331,28 @@ const Prescription = ({ edit, patient, encounter }) => {
         }
         ,
 
-        {key: 'medicationName',
+        {
+            key: 'medicationName',
             dataKey: 'genericMedicationsKey',
-            title:<Translate> Medication Name</Translate>,
+            title: <Translate> Medication Name</Translate>,
             flexGrow: 2,
             render: (rowData: any) => {
                 return genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName;
             }
         },
-        {key: 'instructions',
+        {
+            key: 'instructions',
             dataKey: '',
             title: 'Instructions',
-            flexGrow:3,
-            render: (rowData: any) =>  {
+            flexGrow: 3,
+            render: (rowData: any) => {
                 if (rowData.instructionsTypeLkey === "3010591042600262") {
                     const generic = predefinedInstructionsListResponse?.object?.find(
                         item => item.key === rowData.instructions
                     );
 
                     if (generic) {
-                      
+
                     } else {
                         console.warn("No matching generic found for key:", rowData.instructions);
                     }
@@ -367,7 +367,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                         .join(', ');
                 }
                 if (rowData.instructionsTypeLkey === "3010573499898196") {
-                  
+
                     return rowData.instructions
 
                 }
@@ -382,7 +382,8 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return "no";
             }
         },
-        {key: 'instructionsType',
+        {
+            key: 'instructionsType',
             dataKey: 'instructionsTypeLkey',
             title: 'Instructions Type',
             flexGrow: 2,
@@ -390,13 +391,15 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return rowData.instructionsTypeLvalue ? rowData.instructionsTypeLvalue.lovDisplayVale : rowData.instructionsTypeLkey;
             }
         },
-        {key: 'validUtil',
+        {
+            key: 'validUtil',
             dataKey: 'validUtil',
             title: 'Valid Util',
             flexGrow: 2,
-            
+
         },
-        {key: 'isChronic',
+        {
+            key: 'isChronic',
             dataKey: 'chronicMedication',
             title: 'Is Chronic',
             flexGrow: 2,
@@ -404,8 +407,9 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return rowData.chronicMedication ? "Yes" : "No";
             }
         },
-      
-        {key: 'status',
+
+        {
+            key: 'status',
             dataKey: 'statusLkey',
             title: 'Status',
             flexGrow: 1,
@@ -413,31 +417,32 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return rowData.statusLvalue ? rowData.statusLvalue?.lovDisplayVale : rowData.statusLkey;
             },
         },
-        {key:'edit',
-        title:<Translate>Edit</Translate>,
-         flexGrow:1,
-            render:rowData => {
-                         return( <MdModeEdit
-                             title="Edit"
-                             size={24}
-                             style={{
+        {
+            key: 'edit',
+            title: <Translate>Edit</Translate>,
+            flexGrow: 1,
+            render: rowData => {
+                return (<MdModeEdit
+                    title="Edit"
+                    size={24}
+                    style={{
 
-                                color: (rowData.statusLvalue?.lovDisplayVale !== 'New') ? 'gray' : 'inherit',
-                                cursor: (rowData.statusLvalue?.lovDisplayVale !== 'New') ? 'not-allowed' : 'pointer',
-                            }}
-                             fill="var(--primary-gray)"
-                             onClick={()=>{
-                                if(rowData.statusLvalue?.lovDisplayVale == 'New')
-                                    {
-                                        setOpenDetailsModal(true)
+                        color: (rowData.statusLvalue?.lovDisplayVale !== 'New') ? 'gray' : 'inherit',
+                        cursor: (rowData.statusLvalue?.lovDisplayVale !== 'New') ? 'not-allowed' : 'pointer',
+                    }}
+                    fill="var(--primary-gray)"
+                    onClick={() => {
+                        if (rowData.statusLvalue?.lovDisplayVale == 'New') {
+                            setOpenDetailsModal(true)
 
-                                    }
-                            }}
-                           />)
-                     } 
+                        }
+                    }}
+                />)
+            }
 
         },
-        {key: 'createdAt',
+        {
+            key: 'createdAt',
             dataKey: 'createdAt',
             title: 'Created At',
             flexGrow: 2,
@@ -446,7 +451,8 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "";
             }
         },
-        { key: 'createdBy',
+        {
+            key: 'createdBy',
             dataKey: 'createdBy',
             title: 'Created By',
             flexGrow: 2,
@@ -456,7 +462,8 @@ const Prescription = ({ edit, patient, encounter }) => {
             }
         }
         ,
-        { key: 'deletedAt',
+        {
+            key: 'deletedAt',
             dataKey: 'deletedAt',
             title: 'Cancelled At',
             flexGrow: 2,
@@ -475,147 +482,160 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return rowData.deletedBy;
             }
         }
-        
+
     ];
     return (
-    < >
-        <div className={edit ? "disabled-panel bt-div" : "bt-div"} >
-            <div style={{ width: '500px' }}>
-                <SelectPicker
-                    className='fill-width'
-                    data={filteredPrescriptions ?? []}
-                    labelKey="prescriptionId"
-                    valueKey="key"
-                    placeholder="Prescription"
-                    value={preKey ?? null}
-                    onChange={e => {
+        < >
+            <div className={edit ? "disabled-panel bt-div" : "bt-div"} >
+                <div style={{ width: '500px' }}>
+                    <SelectPicker
+                        className='fill-width'
+                        data={filteredPrescriptions ?? []}
+                        labelKey="prescriptionId"
+                        valueKey="key"
+                        placeholder="Prescription"
+                        value={preKey ?? null}
+                        onChange={e => {
 
-                        setPreKey(e);
-                    }}
+                            setPreKey(e);
+                        }}
 
-                />
+                    />
 
-            </div>
-            <Text>Prescription# {prescriptions?.object?.find(prescription =>
-                prescription.key === preKey
-            )?.prescriptionId}</Text>
+                </div>
+                <Text>Prescription# {prescriptions?.object?.find(prescription =>
+                    prescription.key === preKey
+                )?.prescriptionId}</Text>
 
-            <div className='bt-right'>
-                <MyButton
-                    onClick={handleSavePrescription}
-                    disabled={isdraft}
-                    prefixIcon={() => <PlusIcon />}
-                >New Prescription</MyButton>
-                <MyButton
-                    onClick={handleSubmitPres}
-                    disabled={preKey ?
-                        prescriptions?.object?.find(prescription =>
-                            prescription.key === preKey
-                        )?.statusLkey === '1804482322306061' : true
+                <div className='bt-right'>
+                    <MyButton
+                        onClick={handleSavePrescription}
+                        disabled={isdraft}
+                        prefixIcon={() => <PlusIcon />}
+                    >New Prescription</MyButton>
+                    <MyButton
+                        onClick={handleSubmitPres}
+                        disabled={preKey ?
+                            prescriptions?.object?.find(prescription =>
+                                prescription.key === preKey
+                            )?.statusLkey === '1804482322306061' : true
+                        }
+                        prefixIcon={() => <CheckIcon />}>
+                        Submit Prescription
+                    </MyButton>
+                    {
+                        !isdraft &&
+                        <MyButton
+                            onClick={saveDraft}
+                            prefixIcon={() => <DocPassIcon />}
+                            disabled={preKey ?
+                                prescriptions?.object?.find(prescription =>
+                                    prescription.key === preKey
+                                )?.statusLkey === '1804482322306061' : true
+                            }
+                        >
+                            Save draft
+                        </MyButton>
+
                     }
-                    prefixIcon={() => <CheckIcon />}>
-                    Submit Prescription
-                </MyButton>
-                {
-                    !isdraft &&
-                    <MyButton
-                        onClick={saveDraft}
-                        prefixIcon={() => <DocPassIcon />}
-                        disabled={preKey ?
-                            prescriptions?.object?.find(prescription =>
-                                prescription.key === preKey
-                            )?.statusLkey === '1804482322306061' : true
-                        }
-                    >
-                        Save draft
-                    </MyButton>
+                    {
+                        isdraft &&
+                        <MyButton
+                            appearance="ghost"
+                            onClick={cancleDraft}
+                            prefixIcon={() => <DocPassIcon />}
+                            disabled={preKey ?
+                                prescriptions?.object?.find(prescription =>
+                                    prescription.key === preKey
+                                )?.statusLkey === '1804482322306061' : true
+                            }
+                        >
+                            Cancle draft
+                        </MyButton>
 
-                }
-                {
-                    isdraft &&
-                    <MyButton
-                        appearance="ghost"
-                        onClick={cancleDraft}
-                        prefixIcon={() => <DocPassIcon />}
-                        disabled={preKey ?
-                            prescriptions?.object?.find(prescription =>
-                                prescription.key === preKey
-                            )?.statusLkey === '1804482322306061' : true
-                        }
-                    >
-                        Cancle draft
-                    </MyButton>
-
-                }
+                    }
+                </div>
             </div>
-        </div>
-        <Divider />
+            <Divider />
 
-        <div className='bt-div'>
-            <MyButton
-                prefixIcon={() => <BlockIcon />}
-                onClick={handleCancle}
-                disabled={selectedRows.length === 0}
-            >
-                Cancle
-            </MyButton>
-       
-            <Checkbox
-                checked={!showCanceled}
-                onChange={() => {
-                    setShowCanceled(!showCanceled);
+            <div className='bt-div'>
+                <div className='icon-style'>
+                    <FaFilePrescription size={18} />
+                </div>
+                <div>
+                  <div className='prescripton-word-style'>Prescription</div>
+                  <div>
+                  {prescriptions?.object?.find(prescription =>
+                    prescription.key === preKey
+                )?.prescriptionId || "_"}
+                  </div>
+                </div>
+                <div className='bt-right'>
+                    <MyButton
+                        disabled={preKey ?
+                            prescriptions?.object?.find(pre =>
+                                pre.key === preKey
+                            )?.statusLkey === '1804482322306061' : true
+                        }
+                        prefixIcon={() => <PlusIcon />}
+                        onClick={() => {
+                            setOpenDetailsModal(true)
+                            handleCleare();
+                        }}
+
+                    >
+                        Add Medication
+                    </MyButton>
+                    <MyButton
+                        prefixIcon={() => <BlockIcon />}
+                        onClick={handleCancle}
+                        disabled={selectedRows.length === 0}
+                    >
+                        Cancle
+                    </MyButton>
+
+                    <Checkbox
+                        checked={!showCanceled}
+                        onChange={() => {
+                            setShowCanceled(!showCanceled);
+                        }}
+                    >
+                        Show cancelled
+                    </Checkbox>
+                </div>
+            </div>
+
+            <MyTable
+                columns={tableColumns}
+                data={prescriptionMedications?.object ?? []}
+                onRowClick={rowData => {
+                    setPrescriptionMedications(rowData);
+                    if (rowData.instructionsTypeLkey == "3010606785535008") {
+
+                        setSelectedRowoMedicationKey(rowData.key);
+                    }
+                    setEditing(rowData.statusLkey == "164797574082125" ? false : true)
                 }}
-            >
-                Show canceled Prescription
-            </Checkbox>
-            <div className='bt-right'>
-                <MyButton
-                 disabled={preKey ?
-                    prescriptions?.object?.find(pre =>
-                        pre.key === preKey
-                    )?.statusLkey === '1804482322306061' : true
-                }
-                    prefixIcon={() => <PlusIcon />}
-                    onClick={() => {setOpenDetailsModal(true)
-                        handleCleare();
-                    }}
+                loading={isLoadingPrescriptionMedications}
+                rowClassName={isSelected}
+            ></MyTable>
 
-                >
-                    Add Medication
-                </MyButton>
-            </div>
-        </div>
 
-        <MyTable 
-        columns={tableColumns}
-         data={prescriptionMedications?.object ?? []}
-         onRowClick={rowData => {
-             setPrescriptionMedications(rowData);
-            if (rowData.instructionsTypeLkey == "3010606785535008") {
-              
-                 setSelectedRowoMedicationKey(rowData.key);
-             }
-             setEditing(rowData.statusLkey == "164797574082125" ? false : true)
-         }}
-         loading={isLoadingPrescriptionMedications}
-         rowClassName={isSelected}
-        ></MyTable>
-      
+            <DetailsModal open={openDetailsModal}
+                setOpen={setOpenDetailsModal}
+                patient={patient}
+                encounter={encounter}
+                prescriptionMedication={prescriptionMedication}
+                setPrescriptionMedications={setPrescriptionMedications}
+                preKey={preKey}
+                editing={editing}
+                medicRefetch={medicRefetch}
+            />
 
-        <DetailsModal open={openDetailsModal}
-            setOpen={setOpenDetailsModal}
-            patient={patient}
-            encounter={encounter}
-            prescriptionMedication={prescriptionMedication}
-            setPrescriptionMedications={setPrescriptionMedications}
-            preKey={preKey}
-            editing={editing}
-            medicRefetch={medicRefetch} 
-           />
-       
         </>
-       
-);}
+
+    );
+}
 
 
-        export default Prescription;
+export default Prescription;

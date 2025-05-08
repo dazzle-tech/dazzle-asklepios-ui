@@ -41,7 +41,7 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
     });
     useEffect(() => {
         if (allerges.reactionDescription != null) {
-
+ 
             setReactionDescription(prevadminInstructions =>
                 prevadminInstructions
                     ? `${prevadminInstructions}, ${reactionLovQueryResponse?.object?.find(
