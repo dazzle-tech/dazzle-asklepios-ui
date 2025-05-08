@@ -281,21 +281,21 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
         },
         {
             key: 'createdAt',
-            title: 'CREATED AT / CREATED BY',
+            title: 'CREATED AT/BY',
             expandable: true,
-            render: (row: any) => `${new Date(row.createdAt).toLocaleString('en-GB')} / ${row?.createByUser?.fullName}`
+            render: (row: any) => row?.createdAt ? <>{row?.createByUser?.fullName}<br /><span className='date-table-style'>{new Date(row.createdAt).toLocaleString('en-GB')}</span> </> : ' '
         },
         {
             key: 'updatedAt',
-            title: 'UPDATED AT / UPDATED BY',
+            title: 'UPDATED AT/BY',
             expandable: true,
-            render: (row: any) => row?.updatedAt ? `${new Date(row.updatedAt).toLocaleString('en-GB')} / ${row?.updateByUser?.fullName}` : ' '
+            render: (row: any) => row?.updatedAt ? <>{row?.updateByUser?.fullName}<br /><span className='date-table-style'>{new Date(row.updatedAt).toLocaleString('en-GB')}</span> </> : ' '
         },
         {
             key: 'deletedAt',
-            title: 'CANCELLED AT / CANCELLED BY',
+            title: 'CANCELLED AT/BY',
             expandable: true,
-            render: (row: any) => row?.deletedAt ? `${new Date(row.deletedAt).toLocaleString('en-GB')} / ${row?.deleteByUser?.fullName}` : ' '
+            render: (row: any) => row?.deletedAt ? <>{row?.deleteByUser?.fullName}  <br /><span className='date-table-style'>{new Date(row.deletedAt).toLocaleString('en-GB')}</span></> : ' '
         },
         {
             key: 'cancellationReason',
