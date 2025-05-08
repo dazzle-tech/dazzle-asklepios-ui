@@ -524,7 +524,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
         actionButtonLabel='Yes'
         title="Resolve"
         bodyheight={150}
-        steps={[{ title: "Is this Warning resolved?", icon: faCheck }]}
+        steps={[{ title: "Is this Warning resolved?", icon: <FontAwesomeIcon icon={faCheck}/>}]}
         content={<></>}
       ></MyModal>
   {/* modal for undo resolve for warning */}
@@ -535,7 +535,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
         actionButtonLabel='Yes'
         title="Undo Resolve"
         bodyheight={150}
-        steps={[{ title: "Is this Warning active?", icon: faArrowRotateRight }]}
+        steps={[{ title: "Is this Warning active?", icon:<FontAwesomeIcon icon={ faArrowRotateRight}/> }]}
         content={<></>}
       ></MyModal>
 

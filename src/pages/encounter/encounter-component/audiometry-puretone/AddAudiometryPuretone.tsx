@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useAppSelector, useAppDispatch } from '@/hooks';
 import { faEarListen } from '@fortawesome/free-solid-svg-icons';
-import { Form, Panel, Table } from 'rsuite';
+import { Form, Panel } from 'rsuite';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useSaveAudiometryPuretoneMutation } from '@/services/encounterService';
 import MyInput from '@/components/MyInput';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyButton from '@/components/MyButton/MyButton';
 import { newApAudiometryPuretone } from '@/types/model-types-constructor';
 import { ApAudiometryPuretone } from '@/types/model-types';
@@ -292,7 +293,7 @@ const AddAudiometryPuretone = ({ open, setOpen, patient, encounter, audiometryPu
             size='500px'
             steps={[{
                 title: "Audiometry Puretone",
-                icon: faEarListen,
+                icon: <FontAwesomeIcon icon={faEarListen}/>,
                 footer: <MyButton appearance='ghost' onClick={handleClearField} >Clear</MyButton>
             },]}
             content={content}

@@ -9,6 +9,7 @@ import { faHeartPulse } from '@fortawesome/free-solid-svg-icons';
 import { newApComplaintSymptoms } from '@/types/model-types-constructor';
 import { ApComplaintSymptoms } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyModal from '@/components/MyModal/MyModal';
 const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complaintSymptom, refetch }) => {
     const authSlice = useAppSelector(state => state.auth);
@@ -243,7 +244,7 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
             size='500px'
             steps={[{
                 title: "Chief Complain",
-                icon: faHeartPulse,
+                icon: <FontAwesomeIcon icon={faHeartPulse}/>,
                 footer: <MyButton appearance='ghost' onClick={handleClearField} >Clear</MyButton>
             },]}
             content={content}

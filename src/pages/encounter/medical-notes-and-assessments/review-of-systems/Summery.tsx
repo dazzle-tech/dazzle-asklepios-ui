@@ -1,6 +1,7 @@
 import MyModal from '@/components/MyModal/MyModal';
 import { faListCheck } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useState } from 'react';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 const Summary =({open ,setOpen,list})=>{
     return(<>
           <MyModal
@@ -13,7 +14,7 @@ const Summary =({open ,setOpen,list})=>{
         steps={[
 
           {
-            title: "Summery", icon:faListCheck,
+            title: "Summery", icon:<FontAwesomeIcon icon={faListCheck}/>,
            
           },
         ]}

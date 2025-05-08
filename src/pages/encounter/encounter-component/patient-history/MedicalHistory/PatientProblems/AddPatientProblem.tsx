@@ -4,7 +4,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { faLungsVirus } from '@fortawesome/free-solid-svg-icons';
-
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 const AddPatientProblem = ({ open, setOpen }) => {
 
     // Fetch LOV data for various fields
@@ -97,7 +97,7 @@ const AddPatientProblem = ({ open, setOpen }) => {
             open={open}
             setOpen={setOpen}
             title="Add/Edit Patient Problem"
-            steps={[{title: "Patient Problem",icon: faLungsVirus}]}
+            steps={[{title: "Patient Problem",icon:<FontAwesomeIcon icon={ faLungsVirus}/>}]}
             actionButtonFunction={""}
             position='right'
             bodyheight={550}

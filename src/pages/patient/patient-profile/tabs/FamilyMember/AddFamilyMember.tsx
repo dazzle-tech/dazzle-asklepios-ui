@@ -10,6 +10,7 @@ import SearchIcon from '@rsuite/icons/Search';
 import { faPeopleRoof } from '@fortawesome/free-solid-svg-icons';
 import { useSavePatientRelationMutation } from '@/services/patientService';
 import { useAppDispatch } from '@/hooks';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import PatientSearch from './PatientSearch';
 const AddFamilyMember = ({ open, setOpen, localPatient, selectedPatientRelation, setSelectedPatientRelation, refetch }) => {
     const [patientSearchTarget, setPatientSearchTarget] = useState('primary'); // primary, relation, etc..
@@ -93,7 +94,7 @@ const AddFamilyMember = ({ open, setOpen, localPatient, selectedPatientRelation,
                 open={open}
                 setOpen={setOpen}
                 title="New/Edit Patient Relation"
-                steps={[{ title: "Patient Relation", icon: faPeopleRoof }]}
+                steps={[{ title: "Patient Relation", icon:<FontAwesomeIcon icon={ faPeopleRoof }/>}]}
                 bodyheight={400}
                 footerButtons={null}
                 actionButtonLabel="Save"

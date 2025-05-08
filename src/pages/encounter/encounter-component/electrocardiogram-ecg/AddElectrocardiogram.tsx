@@ -10,6 +10,7 @@ import { ApElectrocardiogramEcg } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 const AddElectrocardiogram = ({ open, setOpen, patient, encounter, electrocardiogramEcgObject, refetch }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [electrocardiogramEcg, setElectrocardiogramEcg] = useState<ApElectrocardiogramEcg>(electrocardiogramEcgObject);
@@ -213,7 +214,7 @@ const AddElectrocardiogram = ({ open, setOpen, patient, encounter, electrocardio
             size='500px'
             steps={[{
                 title: "Electrocardiogram",
-                icon: faFileWaveform,
+                icon: <FontAwesomeIcon icon={faFileWaveform}/>,
                 footer: <MyButton appearance='ghost' onClick={handleClearField} >Clear</MyButton>
             },]}
             content={content}

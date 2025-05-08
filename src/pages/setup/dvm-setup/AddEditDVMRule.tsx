@@ -5,6 +5,7 @@ import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import { faClipboardCheck } from '@fortawesome/free-solid-svg-icons';
 import { useGetMetadataFieldsQuery } from '@/services/setupService';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 const AddEditDVMRule = ({
   open,
   setOpen,
@@ -218,7 +219,7 @@ const AddEditDVMRule = ({
       content={conjureFormContent}
       actionButtonLabel={dvmRule?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
-      steps={[{ title: 'DVM Rule info', icon: faClipboardCheck }]}
+      steps={[{ title: 'DVM Rule info', icon:<FontAwesomeIcon icon={ faClipboardCheck }/>}]}
       size={width > 600 ? '570px' : '300px'}
     />
   );

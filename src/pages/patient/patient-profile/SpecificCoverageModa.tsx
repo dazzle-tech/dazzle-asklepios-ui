@@ -12,6 +12,7 @@ import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { ApPatientInsuranceCoverage } from '@/types/model-types';
 import MyTable from '@/components/MyTable';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useSavePatientInsuranceCovgMutation, useDeletePatientInsuranceCovgMutation } from '@/services/patientService';
 import { notify } from '@/utils/uiReducerActions';
 import { newApPatientInsuranceCoverage } from '@/types/model-types-constructor';
@@ -132,25 +133,21 @@ const SpecificCoverageModa = ({ open, setOpen, insurance }) => {
                     {
                         key: 'type',
                         title: 'Type',
-                        flexGrow: 2,
                         dataKey: 'type'
                     },
                     {
                         key: 'coverageType',
                         title: 'Coverage Type',
-                        flexGrow: 2,
                         dataKey: 'coverageType'
                     },
                     {
                         key: 'coveredAmount',
                         title: 'Covered Amount',
-                        flexGrow: 2,
                         dataKey: 'coveredAmount'
                     },
                     {
                         key: 'actions',
                         title: 'Actions',
-                        flexGrow: 1,
                         render: (rowData: any) => (
                             <MdDelete
                                 title="Deactivate"
@@ -172,12 +169,12 @@ const SpecificCoverageModa = ({ open, setOpen, insurance }) => {
             title="Coverage List"
             position="right"
             size="sm"
-            bodyheight={700}
+            bodyheight={550}
             hideActionBtn={true}
             content={CoverageContent}
             steps={[
                 {
-                    title: "Coverage", icon: faUsersBetweenLines,
+                    title: "Coverage", icon:<FontAwesomeIcon icon={ faUsersBetweenLines}/>,
                 },
             ]}
         />

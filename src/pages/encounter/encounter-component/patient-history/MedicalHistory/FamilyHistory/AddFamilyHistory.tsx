@@ -4,6 +4,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { faPeopleRoof } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const AddFamilyHistory = ({ open, setOpen }) => {
 
@@ -50,7 +51,7 @@ const AddFamilyHistory = ({ open, setOpen }) => {
             open={open}
             setOpen={setOpen}
             title="Add/Edit Family History"
-            steps={[{title: "Family History",icon: faPeopleRoof}]}
+            steps={[{title: "Family History",icon: <FontAwesomeIcon icon={faPeopleRoof}/>}]}
             actionButtonFunction={""}
             position='right'
             bodyheight={550}

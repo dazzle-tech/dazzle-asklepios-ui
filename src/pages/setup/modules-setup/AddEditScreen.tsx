@@ -6,6 +6,7 @@ import MyIconInput from '@/components/MyInput/MyIconInput';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import clsx from 'clsx';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 const AddEditScreen = ({
   open,
   setOpen,
@@ -70,7 +71,7 @@ const AddEditScreen = ({
       content={conjureFormContent}
       actionButtonLabel={operationState === 'New' ? 'Create' : 'Save'}
       actionButtonFunction={handleScreenSave}
-      steps={[{ title: 'Screen Info', icon: faLaptop }]}
+      steps={[{ title: 'Screen Info', icon:<FontAwesomeIcon icon={faLaptop }/>}]}
       size={width > 600 ? '570px' : '300px'}
     />
   );

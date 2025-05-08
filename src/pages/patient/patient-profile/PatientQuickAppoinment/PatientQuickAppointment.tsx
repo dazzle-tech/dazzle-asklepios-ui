@@ -4,8 +4,8 @@ import MyButton from '@/components/MyButton/MyButton';
 import { newApEncounter } from '@/types/model-types-constructor';
 import React, { useEffect, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCalendarCheck } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import { faMoneyBillWave } from '@fortawesome/free-solid-svg-icons';
 import { faFileInvoiceDollar } from '@fortawesome/free-solid-svg-icons';
@@ -41,7 +41,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
 
                 if (e.status === 422) {
                     console.log("Validation error: Unprocessable Entity", e);
-                  
+
                 } else {
                     console.log("An unexpected error occurred", e);
                     dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
@@ -117,23 +117,23 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
             setOpen={setQuickAppointmentModel}
             title="Quick Appointment"
             steps={[{
-                title: 'Encounter', disabledNext: !localEncounter?.key, icon: faCalendarCheck, footer: <><MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={handleClear} disabled={isReadOnly} >Clear</MyButton>
+                title: 'Encounter', disabledNext: !localEncounter?.key, icon: <FontAwesomeIcon icon={faCalendarCheck} />, footer: <><MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} onClick={handleClear} disabled={isReadOnly} >Clear</MyButton>
                     <MyButton
                         disabled={isReadOnly}
                         onClick={handleSave}
                         prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}>Save</MyButton> </>
             }
                 , {
-                title: 'Payment', icon: faFileInvoiceDollar, footer: <MyButton
+                title: 'Payment', icon: <FontAwesomeIcon icon={faFileInvoiceDollar} />, footer: <MyButton
                     disabled={isReadOnly}
                     prefixIcon={() => <AddOutlineIcon />}
                 >
                     <span>Add payment</span>
                 </MyButton>
             }
-                , { title: 'Add Payment', icon: faMoneyBillWave }]}
+                , { title: 'Add Payment', icon: <FontAwesomeIcon icon={faMoneyBillWave} /> }]}
             content={(step) => conjureFormContent(step)}
-            size="750px"
+            size="700px"
             bodyheight={400}
         />
     );

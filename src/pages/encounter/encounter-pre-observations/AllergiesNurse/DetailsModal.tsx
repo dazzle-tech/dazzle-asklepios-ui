@@ -4,6 +4,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
 import { faPersonDotsFromLine } from '@fortawesome/free-solid-svg-icons';
 import { Col, DatePicker, Form, Input, Row } from 'rsuite';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyInput from '@/components/MyInput';
 import {
     useGetLovValuesByCodeQuery,
@@ -104,7 +105,7 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
             steps={[
 
                 {
-                    title: 'Allergy', icon: faPersonDotsFromLine, footer: <MyButton
+                    title: 'Allergy', icon: <FontAwesomeIcon icon={faPersonDotsFromLine}/>, footer: <MyButton
 
                         onClick={handleClear}
                     >Clear</MyButton>

@@ -10,8 +10,7 @@ import { faHospitalUser } from '@fortawesome/free-solid-svg-icons';
 import { notify } from '@/utils/uiReducerActions';
 import MyModal from '@/components/MyModal/MyModal';
 import { newApPractitioner, newApPatientPreferredHealthProfessional } from '@/types/model-types-constructor';
-import { ApPractitioner } from '@/types/model-types';
-import { initialListRequest, ListRequest } from '@/types/types';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetFacilitiesQuery } from '@/services/setupService';
 
 const AddPrefferdHealthProfessionalModal = ({ open, setOpen, patient, patientHP, setPatientHP,practitioner,setPractitioner ,refetch }) => {
@@ -178,8 +177,8 @@ const AddPrefferdHealthProfessionalModal = ({ open, setOpen, patient, patientHP,
             actionButtonLabel="Save"
             bodyheight={400}
             actionButtonFunction={handleSave}
-            steps={[{ title: "Preferred Health Professional", icon: faHospitalUser }]}
-            size="sm"
+            steps={[{ title: "Preferred Health Professional", icon: <FontAwesomeIcon icon={faHospitalUser }/>}]}
+            size="550px"
             content={content}
         />
     );

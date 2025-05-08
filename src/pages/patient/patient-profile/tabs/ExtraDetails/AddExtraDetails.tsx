@@ -8,6 +8,7 @@ import { newApPatientSecondaryDocuments } from '@/types/model-types-constructor'
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
 import { faIdCard } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import '../styles.less'
 import MyModal from '@/components/MyModal/MyModal';
 const AddExtraDetails = ({ localPatient, open, setOpen, secondaryDocument, setSecondaryDocument, refetch }) => {
@@ -132,7 +133,7 @@ const AddExtraDetails = ({ localPatient, open, setOpen, secondaryDocument, setSe
             actionButtonLabel="Save"
             hideBack={true}
             hideCanel={false}
-            steps={[{ title: 'Secondary Document', icon: faIdCard }]}
+            steps={[{ title: 'Secondary Document', icon:<FontAwesomeIcon icon={ faIdCard }/>}]}
         />
     );
 };

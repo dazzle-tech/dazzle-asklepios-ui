@@ -4,6 +4,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { faHandHoldingDroplet } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const AddBloodTransfusion = ({ open, setOpen }) => {
 
@@ -93,7 +94,7 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
             open={open}
             setOpen={setOpen}
             title="Add/Edit Blood Transfusion"
-             steps={[{title: "Blood Transfusion",icon: faHandHoldingDroplet}]}
+             steps={[{title: "Blood Transfusion",icon: <FontAwesomeIcon icon={faHandHoldingDroplet}/>}]}
             actionButtonFunction={""}
             position='right'
             bodyheight={550}

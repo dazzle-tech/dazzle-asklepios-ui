@@ -10,6 +10,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { newApPatient } from '@/types/model-types-constructor';
 import { faBoltLightning } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 const QuickPatient = ({ open, setOpen }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -116,7 +117,7 @@ const QuickPatient = ({ open, setOpen }) => {
       open={open}
       setOpen={setOpen}
       title="Quick Patient"
-      steps={[{ title: "Basic Information", icon: faBoltLightning }]}
+      steps={[{ title: "Basic Information", icon: <FontAwesomeIcon icon={faBoltLightning }/>}]}
       size="xs"
       position='right'
       actionButtonLabel="Create"

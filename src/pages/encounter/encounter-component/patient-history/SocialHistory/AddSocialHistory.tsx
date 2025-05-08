@@ -4,6 +4,7 @@ import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import MyModal from '@/components/MyModal/MyModal';
 import { faSmoking } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const AddSocialHistory = ({ open, setOpen }) => {
     const [openCurrentSmokerField, setOpenCurrentSmokerField] = useState({ open: false });
@@ -184,7 +185,7 @@ const AddSocialHistory = ({ open, setOpen }) => {
             open={open}
             setOpen={setOpen}
             title="Add/Edit Social History"
-            steps={[{ title: "Social History", icon: faSmoking }]}
+            steps={[{ title: "Social History", icon: <FontAwesomeIcon icon={faSmoking}/>}]}
             actionButtonFunction={""}
             position='right'
             bodyheight={550}

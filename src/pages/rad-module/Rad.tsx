@@ -211,7 +211,7 @@ const Rad = () => {
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
     <div style={{ display: 'flex' }}>
-      <h5>Radiology</h5>
+      <h5>Clinical Radiology</h5>
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
@@ -1310,7 +1310,7 @@ const Rad = () => {
         actionButtonFunction={async () => {
           const Response = await saveTest({
             ...test,
-            patientArrivedAt: selectedSampleDate ? selectedSampleDate.getTime() : null,
+            patientArrivedAt: test.patientArrivedAt ?new  Date(test.patientArrivedAt).getTime() : null,
             processingStatusLkey: '6816324725527414'
           }).unwrap();
           dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
@@ -1322,7 +1322,7 @@ const Rad = () => {
           setTest({ ...Response });
         }}
         title="Patient Arrived"
-        steps={[{ title: "Arrived", icon: faHospitalUser }]}
+        steps={[{ title: "Arrived", icon:<FontAwesomeIcon icon={ faHospitalUser }/>}]}
         size="450px"
         bodyheight={300}
         content={
@@ -1395,7 +1395,7 @@ const Rad = () => {
         title="Add Report"
         open={openReportModal}
         setOpen={setOpenReportModal}
-        steps={[{ title: "Report", icon: faFileLines }]}
+        steps={[{ title: "Report", icon:<FontAwesomeIcon icon={ faFileLines }/>}]}
         size="450px"
         bodyheight={300}
         content={<>

@@ -6,6 +6,7 @@ import { initialListRequest } from '@/types/types';
 import { useGetAllergensQuery } from '@/services/setupService';
 import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
 import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
    IconButton,
   Table,
@@ -140,7 +141,7 @@ const AllergiesModal =({open,setOpen ,patient})=>{
     size='900px'
     open={open}
     setOpen={setOpen}
-    steps={[{ title: "Allergy", icon:faHandDots}]}
+    steps={[{ title: "Allergy", icon:<FontAwesomeIcon icon={faHandDots}/>}]}
     title="Allergy"
     content={<><div>
         <Checkbox

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import { useAppDispatch } from '@/hooks';
-import { faUser, faIdCard, faPhone, faShieldHalved} from '@fortawesome/free-solid-svg-icons';
+import { faUser, faIdCard, faPhone, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
 import MyInput from '@/components/MyInput';
 import './styles.less';
 import { newApPatientInsurance } from '@/types/model-types-constructor';
@@ -26,7 +26,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
     const [savePatient, savePatientMutation] = useSavePatientMutation();
 
-  // Fetch LOV data for various fields
+    // Fetch LOV data for various fields
     const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
     const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
     const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
@@ -35,7 +35,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const { data: isnuranceProviderTypeResponse } = useGetLovValuesByCodeQuery('INS_PROVIDER');
     const { data: isnurancePlanTypeResponse } = useGetLovValuesByCodeQuery('INS_PLAN_TYPS');
 
-// Handle Save Patient
+    // Handle Save Patient
     const handleSave = () => {
         savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false })
             .unwrap()
@@ -43,7 +43,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                 dispatch(notify('Patient Added Successfully'));
             });
     };
-// Handle Save Patient Insurance Then Go To Patient Profile 
+    // Handle Save Patient Insurance Then Go To Patient Profile 
     const goToPatientProfile = () => {
         handleSaveInsurance();
         setOpen(false);
@@ -68,7 +68,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                 setPatientInsurance({ ...patientInsurance, primaryInsurance: false });
             });
     };
-     // Modal Content 
+    // Modal Content 
     const conjureFormContent = stepNumber => {
         switch (stepNumber) {
             case 0:
@@ -370,7 +370,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
         }
     };
 
-// Effects
+    // Effects
     useEffect(() => {
         if (savePatientMutation && savePatientMutation.status === 'fulfilled') {
             setLocalPatient(savePatientMutation.data);
@@ -382,10 +382,10 @@ const CreateNewPatient = ({ open, setOpen }) => {
             setOpen={setOpen}
             title="Quick Patient"
             steps={[
-                { title: 'Basic Info', icon: faUser , footer:<MyButton onClick={handleSave}>Save</MyButton>},
-                { title: 'Document', icon: faIdCard ,footer:<MyButton onClick={handleSave} >Save</MyButton>},
-                { title: 'Contact', icon: faPhone ,footer:<MyButton onClick={handleSave} >Save</MyButton>},
-                { title: 'Insurance', icon: faShieldHalved ,footer:<MyButton onClick={goToPatientProfile} prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble}/>}>Create</MyButton> }
+                { title: 'Basic Info', icon: <FontAwesomeIcon icon={faUser} />, footer: <MyButton onClick={handleSave}>Save</MyButton> },
+                { title: 'Document', icon: <FontAwesomeIcon icon={faIdCard} />, footer: <MyButton onClick={handleSave} >Save</MyButton> },
+                { title: 'Contact', icon: <FontAwesomeIcon icon={faPhone} />, footer: <MyButton onClick={handleSave} >Save</MyButton> },
+                { title: 'Insurance', icon: <FontAwesomeIcon icon={faShieldHalved} />, footer: <MyButton onClick={goToPatientProfile} prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}>Create</MyButton> }
             ]}
             size="xs"
             position='right'

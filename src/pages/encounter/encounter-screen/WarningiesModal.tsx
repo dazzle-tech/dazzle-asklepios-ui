@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './styles.less';
 import Translate from '@/components/Translate';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyModal from '@/components/MyModal/MyModal';
 import { initialListRequest } from '@/types/types';
 import {
@@ -137,7 +138,7 @@ const WarningiesModal = ({ open, setOpen, patient }) => {
             title="Warning"
             open={open}
             setOpen={setOpen}
-            steps={[{ title: "Warning", icon:faWarning}]}
+            steps={[{ title: "Warning", icon:<FontAwesomeIcon icon={faWarning}/>}]}
             content={<>
                 <div>
                     <Checkbox

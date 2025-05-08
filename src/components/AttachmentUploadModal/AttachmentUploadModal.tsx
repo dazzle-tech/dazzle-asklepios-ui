@@ -7,6 +7,7 @@ import DetailIcon from '@rsuite/icons/Detail';
 import { Form, Input } from "rsuite";
 import Attachment from '@/images/Attachment.png';
 import React, { useEffect, useRef, useState } from 'react';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyInput from "@/components/MyInput";
 import './styles.less'
 interface AttachmentModalProps {
@@ -216,11 +217,11 @@ const AttachmentModal = ({
             setOpen={setIsOpen}
             title="New/Edit Patient Attachments"
             size="sm"
-            bodyheight={400}
+            bodyheight={450}
             content={content}
             hideCanel={false}
             hideBack={true}
-            steps={[{ title: "Attachments", icon: faPaperclip }]}
+            steps={[{ title: "Attachments", icon: <FontAwesomeIcon icon={faPaperclip }/>}]}
             actionButtonLabel="Save"
             actionButtonFunction={() => handleUploadAction()}
             isDisabledActionBtn={actionType ? false : !uploadedAttachmentOpject?.formData}
