@@ -32,59 +32,27 @@ const VaccineReccord = ({ patient }) => {
         },
         {
             key: 'createdAt',
-            title: <Translate>Created At</Translate>,
+            title: 'CREATED AT/BY',
             expandable: true,
-            render: (rowData) => rowData?.apEncounterVaccination?.createdAt
-                ? new Date(rowData.createdAt).toLocaleString("en-GB")
-                : "",
-        },
-        {
-            key: 'createdBy',
-            title: <Translate>Created By</Translate>,
-            expandable: true,
-            render: (rowData) => rowData?.apEncounterVaccination?.createByUser?.fullName,
+            render: (row: any) => row?.apEncounterVaccination?.createdAt ? <>{row?.apEncounterVaccination?.createByUser?.fullName}<br /><span className='date-table-style'>{new Date(row?.apEncounterVaccination?.createdAt).toLocaleString('en-GB')}</span> </> : ' '
         },
         {
             key: 'updatedAt',
-            title: <Translate>Updated At</Translate>,
+            title: 'UPDATED AT/BY',
             expandable: true,
-            render: (rowData) => rowData?.apEncounterVaccination?.updatedAt
-                ? new Date(rowData.updatedAt).toLocaleString("en-GB")
-                : "",
-        },
-        {
-            key: 'updatedBy',
-            title: <Translate>Updated By</Translate>,
-            expandable: true,
-            render: (rowData) => rowData?.apEncounterVaccination?.updateByUser?.fullName,
+            render: (row: any) => row?.apEncounterVaccination?.updatedAt ? <>{row?.apEncounterVaccination?.updateByUser?.fullName}<br /><span className='date-table-style'>{new Date(row?.apEncounterVaccination?.updatedAt).toLocaleString('en-GB')}</span> </> : ' '
         },
         {
             key: 'reviewedAt',
-            title: <Translate>Reviewed At</Translate>,
+            title: 'REVIEWED AT/BY',
             expandable: true,
-            render: (rowData) => rowData?.apEncounterVaccination?.reviewedAt
-                ? new Date(rowData.reviewedAt).toLocaleString("en-GB")
-                : "",
-        },
-        {
-            key: 'reviewedBy',
-            title: <Translate>Reviewed By</Translate>,
-            expandable: true,
-            render: (rowData) => rowData?.apEncounterVaccination?.reviewedByUser?.fullName,
+            render: (row: any) => row?.apEncounterVaccination?.reviewedAt ? <>{row?.apEncounterVaccination?.reviewedByUser?.fullName}<br /><span className='date-table-style'>{new Date(row?.apEncounterVaccination?.reviewedAt).toLocaleString('en-GB')}</span> </> : ' '
         },
         {
             key: 'cancelledAt',
-            title: <Translate>Cancelled At</Translate>,
+            title: 'CANCELLED AT/BY',
             expandable: true,
-            render: (rowData) => rowData?.apEncounterVaccination?.deletedAt
-                ? new Date(rowData.deletedAt).toLocaleString("en-GB")
-                : "",
-        },
-        {
-            key: 'cancelledBy',
-            title: <Translate>Cancelled By</Translate>,
-            expandable: true,
-            render: (rowData) => rowData?.apEncounterVaccination?.deleteByUser?.fullName,
+            render: (row: any) => row?.apEncounterVaccination?.deletedAt ? <>{row?.apEncounterVaccination?.deleteByUser?.fullName}<br /><span className='date-table-style'>{new Date(row?.apEncounterVaccination?.deletedAt).toLocaleString('en-GB')}</span> </> : ' '
         },
         {
             key: 'cancellationReason',

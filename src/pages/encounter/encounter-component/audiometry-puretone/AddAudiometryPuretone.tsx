@@ -114,6 +114,7 @@ const AddAudiometryPuretone = ({ open, setOpen, patient, encounter, audiometryPu
                 record={audiometryPuretone}
                 setRecord={setAudiometryPuretone}
                 disabled={isDisabledField}
+                searchable={false}
             />
             <Panel header={"Right Ear"} bordered>
                 <Form fluid layout='inline' className='fields-container'>
