@@ -56,24 +56,24 @@ const VaccineReccord = ({ patient }) => {
         },
         {
             key: 'cancellationReason',
-            title: <Translate>Cancellation Reason</Translate>,
+            title: <Translate>CANCELLATION REASON</Translate>,
             expandable: true,
             render: (rowData) => rowData?.apEncounterVaccination?.cancellationReason,
         },
         {
             key: 'brandName',
-            title: 'Brand Name',
+            title: 'BRAND NAME',
             render: (row) => row?.apVaccineBrands?.brandName ?? ''
         },
         {
             key: 'doseNumber',
-            title: 'Dose Number',
+            title: 'DOSE NUMBER',
             render: (row) =>
                 row?.doseNameLvalue?.lovDisplayVale ?? row?.doseNameLkey ?? ''
         },
         {
             key: 'dateAdministered',
-            title: 'Date of Administration',
+            title: 'DATE OF ADMINISTRATION',
             render: (row) => {
                 const date = row?.apEncounterVaccination?.dateAdministered;
                 return date ? new Date(date).toLocaleString('en-GB') : '';
@@ -81,7 +81,7 @@ const VaccineReccord = ({ patient }) => {
         },
         {
             key: 'actualSide',
-            title: 'Actual Side and Site of Administration',
+            title: 'ACTUAL SIDE AND SITE OF ADMINISTRATION',
             render: (row) =>
                 row?.apEncounterVaccination?.actualSide ?? ''
         },
@@ -93,19 +93,19 @@ const VaccineReccord = ({ patient }) => {
         },
         {
             key: 'location',
-            title: 'Vaccination Location',
+            title: 'VACCINATION LOCATION',
             render: (row) =>
                 row?.apEncounterVaccination?.externalFacilityName ?? ''
         },
         {
             key: 'reviewed',
-            title: 'Is Reviewed',
+            title: 'IS REVIEWED',
             render: (row) =>
                 row?.apEncounterVaccination?.reviewedAt === 0 ? 'No' : 'Yes'
         },
         {
             key: 'status',
-            title: 'Status',
+            title: 'STATUS',
             render: (row) =>
                 row?.apEncounterVaccination?.statusLvalue?.lovDisplayVale ??
                 row?.apEncounterVaccination?.statusLkey ?? ''
