@@ -3,7 +3,7 @@ import { Calendar as BigCalendar, Views, momentLocalizer } from "react-big-calen
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Calendar as RsuiteCalendar, TagPicker, ButtonToolbar, Panel, InputGroup, SelectPicker, Input, IconButton, Button, Form, Drawer, Calendar, TagGroup, Tag, Divider, DatePicker, Checkbox, Modal, Avatar, Stack, ButtonGroup, } from "rsuite";
-import "./styles.less";
+import "./AppoitmentModal.less";
 import SearchIcon from '@rsuite/icons/Search';
 import {
     newApAppointment,

@@ -298,7 +298,7 @@ const MyInput = ({
   };
 
   return (
-    <Form.Group className="my-input-container">
+    <Form.Group  className="my-input-container">
       <Form.ControlLabel >
         {showLabel && <MyLabel label={fieldLabel} error={validationResult} />}
         {props.required && <span className="required-field ">*</span>}

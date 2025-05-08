@@ -1,0 +1,78 @@
+.container {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  flex-wrap: nowrap;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #F5F7FB;
+  transition: all 0.3s ease;
+}
+
+.left {
+  background-color: #F5F7FB;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.left.closed {
+  width: 0;
+  opacity: 0;
+  flex: 0;
+}
+.container.left-closed {
+  background-color: transparent;
+}
+
+.left.open {
+  width: 370px;
+  opacity: 1;
+  flex: 0 0 370px;
+  padding: 20px;
+}
+
+.right {
+  flex: 1;
+  background-color: white;
+  border-radius: 12px;
+  // padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.right.shifted {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.content-wrapper {
+  display: flex;
+  // gap: 20px;
+  flex-wrap: nowrap;
+}
+
+.left-input, .right-output {
+  flex: 1;
+   padding: 10px;
+  border-radius: 8px;
+}
+
+.toggle-btn {
+  margin-top: 20px;
+  padding: 10px 15px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .content-wrapper {
+    flex-direction: column;
+  }
+  
+  .left.open {
+    width: 100%;
+    flex: 0 0 100%;
+  }
+}
