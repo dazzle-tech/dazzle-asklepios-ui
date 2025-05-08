@@ -338,11 +338,7 @@ const Rad = () => {
     }
     fecthResultNotes();
   };
-  const handleDateChange = date => {
-    if (date) {
-      setSelectedSampleDate(date);
-    }
-  };
+
 
   const handleRejectedTest = async () => {
     try {
@@ -396,20 +392,6 @@ const Rad = () => {
     }
   };
 
-  const handleFilterChange = (fieldName, value) => {
-    if (value) {
-      setListOrdersResponse(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'startsWithIgnoreCase',
-          value,
-          listOrdersResponse
-        )
-      );
-    } else {
-      setListOrdersResponse({ ...listOrdersResponse, filters: [] });
-    }
-  };
   const handleManualSearch = () => {
     if (dateFilter.fromDate && dateFilter.toDate) {
       const formattedFromDate = getNumericTimestamp(dateFilter.fromDate, true);

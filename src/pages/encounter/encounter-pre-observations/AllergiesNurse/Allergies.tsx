@@ -590,8 +590,9 @@ const Allergies = ({ edit, patient, encounter }) => {
         actionButtonLabel='Yes'
         title="Resolve"
         bodyheight={150}
-        steps={[{ title: "Resolve", icon: <FontAwesomeIcon icon={faCheck }/>}]}
+       steps={[{ title: "Resolve", icon: <FontAwesomeIcon icon={faCheck }/>}]}
         content={<>Is this allergy resolved?</>}
+
       ></MyModal>
 
       <MyModal
@@ -603,6 +604,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         bodyheight={150}
         steps={[{ title: "Undo Resolve", icon: <FontAwesomeIcon icon={faArrowRotateRight }/>}]}
         content={<>Is this allergy active?</>}
+
       ></MyModal>
 
       {/*modal for add details for allergy and save it */}

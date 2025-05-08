@@ -240,7 +240,7 @@ const Lab = () => {
     { key: "6055074111734636", value: "Accepted", description: test.acceptedAt ? new Date(test.acceptedAt).toLocaleString() : "" ,isError:false},
     { key: "6055192099058457", value: "Rejected", description: test.rejectedAt ? new Date(test.rejectedAt).toLocaleString() : "" ,isError:true },
     { key: "265123250697000", value: "Result Ready", description: test.readyAt ? new Date(test.readyAt).toLocaleString() : "" ,isError:false},
-    { key: "265089168359400", value: "Result Approved", description: test.approvedAt ? new Date(test.approvedAt).toLocaleString() : "" ,isError:false ,customIcon: <ReportProblemIcon  /> },
+    { key: "265089168359400", value: "Result Approved", description: test.approvedAt ? new Date(test.approvedAt).toLocaleString() : "" ,isError:false  },
   ];
 
   const filteredStepsData = stepsData.filter(step =>
@@ -248,7 +248,7 @@ const Lab = () => {
   );
 
   const activeStep = filteredStepsData.findIndex(step => step.key === currentStep);
- 
+  
   return (<>
 
     <div className='container'>
@@ -281,16 +281,7 @@ const Lab = () => {
             {test.key &&
               <Row>
                 <Col md={24}>
-                
-               
                  <MyStepper  stepsList={filteredStepsData} activeStep={activeStep}/>
-                 <MyModal
-                 open={openSteper}
-                 setOpen={setOpenSteper}
-                 title="title"
-                 
-                 content={<MyStepper  stepsList={filteredStepsData} activeStep={activeStep}/>}
-                 ></MyModal>
                 </Col>
                
               </Row>}
