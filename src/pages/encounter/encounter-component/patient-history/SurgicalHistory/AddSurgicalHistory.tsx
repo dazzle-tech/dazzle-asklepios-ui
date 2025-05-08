@@ -66,7 +66,7 @@ const AddSurgicalHistory = ({ open, setOpen }) => {
             <MyInput
                 width={200}
                 column
-                fieldLabel="Complications"
+                fieldLabel="Anesthesia Type"
                 fieldType="select"
                 fieldName=""
                 selectData={anesthTypeLovQueryResponse?.object ?? []}
@@ -74,11 +74,12 @@ const AddSurgicalHistory = ({ open, setOpen }) => {
                 selectDataValue="key"
                 record={""}
                 setRecord={""}
+                searchable={false}
             />
             <MyInput
                 width={200}
                 column
-                fieldLabel="Type of Anesthesia used"
+                fieldLabel="Complications"
                 fieldType="select"
                 fieldName=""
                 selectData={procLovQueryResponse?.object ?? []}

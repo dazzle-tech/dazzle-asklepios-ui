@@ -43,6 +43,7 @@ const AddPatientProblem = ({ open, setOpen }) => {
                 selectDataValue="key"
                 record={""}
                 setRecord={""}
+                searchable={false}
             />
             <MyInput
                 width={200}
@@ -55,6 +56,7 @@ const AddPatientProblem = ({ open, setOpen }) => {
                 selectDataValue="key"
                 record={""}
                 setRecord={""}
+                searchable={false}
             />
             <MyInput
                 width={200}
@@ -77,6 +79,7 @@ const AddPatientProblem = ({ open, setOpen }) => {
                 selectDataValue="key"
                 record={""}
                 setRecord={""}
+                searchable={false}
             />
             <MyInput
                 width={200}

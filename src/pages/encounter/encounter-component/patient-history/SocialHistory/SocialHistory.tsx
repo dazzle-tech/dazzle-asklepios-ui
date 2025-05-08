@@ -5,6 +5,8 @@ import MyButton from '@/components/MyButton/MyButton';
 import '../styles.less'
 import MyTable from '@/components/MyTable';
 import AddSocialHistory from './AddSocialHistory';
+import Translate from '@/components/Translate';
+import { MdModeEdit } from 'react-icons/md';
 const SocialHistory = ({ patient, encounter }) => {
     const [open, setOpen] = useState(false);
 
@@ -15,9 +17,10 @@ const SocialHistory = ({ patient, encounter }) => {
         { key: '', title: 'AMOUNT', dataKey: '' },
         { key: '', title: 'CIGARETTE TYPE', dataKey: '' },
         { key: '', title: 'PREVIOUS SMOKER', dataKey: '' },
-        { key: '', title: 'QUIT DATE', dataKey: '' },
+        { key: '', title: 'QUIT DATE', dataKey: '',expandable: true },
         { key: '', title: 'ALCOHOL CONSUMPTION ', dataKey: '' },
         { key: '', title: 'TYPE OF ALCOHOL', dataKey: '' },
+        {key: "details",title: <Translate>EDIT</Translate>,  fullText: true,render: rowData => { return (<MdModeEdit title="Edit" size={24} fill="var(--primary-gray)"/>  ) }},
     ];
     return (
         <div className='medical-main-container'>
