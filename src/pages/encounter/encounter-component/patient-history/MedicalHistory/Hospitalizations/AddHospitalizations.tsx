@@ -40,6 +40,7 @@ const AddHospitalizations = ({ open, setOpen }) => {
                 selectDataValue="key"
                 record={""}
                 setRecord={""}
+                searchable={false}
             />
             <MyInput
                 width={200}
