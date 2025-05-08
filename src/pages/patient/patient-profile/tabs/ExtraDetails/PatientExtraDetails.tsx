@@ -178,7 +178,6 @@ const PatientExtraDetails = ({ localPatient }) => {
                 height={600}
                 data={patientSecondaryDocumentsResponse?.object ?? []}
                 columns={columns}
-                rowHeight={50}
                 onRowClick={rowData => {
                     setSelectedSecondaryDocument(rowData);
                 }}
