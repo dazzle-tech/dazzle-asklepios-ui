@@ -196,6 +196,7 @@ const MyInput = ({
 
         const inputControl = (
           <Form.Control
+            className='arrow-number-style'
             style={{ width: inputWidth, height: props?.height ?? 30 }}
             disabled={props.disabled}
             name={fieldName}
