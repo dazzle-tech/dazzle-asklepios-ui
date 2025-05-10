@@ -324,7 +324,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                         />
 
                         {/* Search Patients */}
-                        <div style={{ flex: 1 }}>
+                        <div style={{ flex: 1 }} className="input-wrapper" >
                             <Form.Group controlId="search">
                                 <Form.ControlLabel>Search Patients</Form.ControlLabel>
                                 <InputGroup inside style={{ height: "40px", width: '100%', direction: 'ltr' }}>
@@ -871,7 +871,8 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                                 style={{
                                                                     height: "40px",
                                                                     border: '1px solid #2264E5',
-                                                                    color: "#2264E5"
+                                                                    color: "#2264E5",
+                                                                    width: "100%"
                                                                 }}
                                                                 onClick={() => setQuickPatientModalOpen(true)}
                                                             >
@@ -911,7 +912,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                             <div className="show-grid">
                                                 <div style={{ display: "flex", gap: "10px", width: "100%" }}>
 
-                                                    <div style={{ flex: 1, padding: 2, backgroundColor: "#F5F7FB" }}>
+                                                    <div className="input-wrapper" style={{ flex: 1, padding: 2, backgroundColor: "#F5F7FB" }}>
                                                         <MyInput
                                                             height={35}
                                                             width={"100%"}
@@ -927,7 +928,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
                                                     {/* Second column - Other fields */}
                                                     <div style={{ flex: 6, display: "flex", gap: "10px", padding: 2 }}>
-                                                        <div style={{ flex: 2, backgroundColor: "#F5F7FB" }}> {/* Color: White */}
+                                                        <div className="input-wrapper" style={{ flex: 2, backgroundColor: "#F5F7FB" }}> {/* Color: White */}
                                                             <MyInput
                                                                 height={35}
                                                                 width={"100%"}
@@ -939,7 +940,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                                 disabled
                                                             />
                                                         </div>
-                                                        <div style={{ flex: 1, backgroundColor: "#F5F7FB" }}>
+                                                        <div className="input-wrapper" style={{ flex: 1, backgroundColor: "#F5F7FB" }}>
                                                             <MyInput
                                                                 height={35}
                                                                 required
@@ -952,7 +953,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                                 disabled
                                                             />
                                                         </div>
-                                                        <div style={{ flex: 1, backgroundColor: "#F5F7FB" }}>
+                                                        <div className="input-wrapper" style={{ flex: 1, backgroundColor: "#F5F7FB" }}>
                                                             <MyInput
                                                                 height={35}
                                                                 width={"100%"}
@@ -982,7 +983,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
                                             <div className="show-grid">
                                                 <div style={{ display: "flex", gap: "10px", width: "100%" }}>
-                                                    <div style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                    <div className="input-wrapper" style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                         <MyInput
                                                             width={"100%"}
                                                             height={35}
@@ -996,7 +997,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                             disabled
                                                         />
                                                     </div>
-                                                    <div style={{ flex: 3, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                    <div className="input-wrapper" style={{ flex: 3, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                         <MyInput
                                                             // vr={validationResult}
                                                             width={"100%"}
@@ -1010,7 +1011,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                             disabled
                                                         />
                                                     </div>
-                                                    <div style={{ flex: 3, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                    <div className="input-wrapper" style={{ flex: 3, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                         <MyInput
                                                             width={"100%"}
                                                             height={35}
@@ -1037,7 +1038,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
                                             <div className="show-grid">
                                                 <div style={{ display: "flex", gap: "10px", width: "100%" }}>
-                                                    <div style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                    <div className="input-wrapper" style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                         <MyInput
                                                             width={"100%"}
                                                             height={35}
@@ -1049,7 +1050,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                             disabled
                                                         />
                                                     </div>
-                                                    <div style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                    <div className="input-wrapper" style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                         <MyInput
                                                             height={35}
                                                             width={"100%"}
@@ -1079,7 +1080,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
                                             <div className="show-grid">
                                                 <div style={{ display: "flex", gap: "10px", width: "100%" }}>
-                                                    <div style={{ flex: 2, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                    <div className="input-wrapper" style={{ flex: 2, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                         <MyInput
                                                             height={35}
                                                             disabled
@@ -1094,7 +1095,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                             selectDataValue="key"
                                                         />
                                                     </div>
-                                                    <div style={{ flex: 4, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                    <div className="input-wrapper" style={{ flex: 4, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                         <MyInput
                                                             height={35}
                                                             width={"100%"}
@@ -1119,7 +1120,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
                                             <div className="show-grid">
                                                 <div style={{ display: "flex", gap: "10px", width: "100%" }}>
-                                                    <div style={{ flex: 2, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                    <div className="input-wrapper" style={{ flex: 2, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                         <MyInput
                                                             height={35}
                                                             disabled={showOnly}
@@ -1137,7 +1138,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                             setRecord={setAppoitment}
                                                         />
                                                     </div>
-                                                    <div style={{ flex: 4, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                    <div className="input-wrapper" style={{ flex: 4, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                         <MyInput
                                                             height={35}
                                                             disabled={showOnly}
@@ -1159,7 +1160,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
                                             <div className="show-grid">
                                                 <div style={{ display: "flex", gap: "10px", width: "100%" }}>
-                                                    <div style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                    <div className="input-wrapper" style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                         <MyInput
                                                             height={35}
                                                             required
@@ -1177,7 +1178,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                             disabled={showOnly}
                                                         />
                                                     </div>
-                                                    <div style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                    <div className="input-wrapper" style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                         <MyInput
                                                             height={35}
                                                             required
@@ -1368,7 +1369,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
                                                 <div className="show-grid">
                                                     <div style={{ display: "flex", gap: "10px", width: "100%" }}>
-                                                        <div style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                        <div className="input-wrapper" style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                             <MyInput
                                                                 disabled={showOnly}
                                                                 required
@@ -1402,7 +1403,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
                                                 <div className="show-grid">
                                                     <div style={{ display: "flex", gap: "10px", width: "100%" }}>
-                                                        <div style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                        <div className="input-wrapper" style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                             <MyInput
                                                                 disabled={showOnly}
                                                                 required
@@ -1419,7 +1420,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                                 setRecord={setAppoitment}
                                                             />
                                                         </div>
-                                                        <div style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                        <div className="input-wrapper" style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
 
                                                             <MyInput
                                                                 disabled={showOnly}
@@ -1431,7 +1432,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                                 setRecord={setAppoitment}
                                                             />
                                                         </div>
-                                                        <div style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                        <div className="input-wrapper" style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                             <MyInput
                                                                 disabled={showOnly}
                                                                 required
@@ -1455,7 +1456,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
                                                 <div className="show-grid">
                                                     <div style={{ display: "flex", gap: "10px", width: "100%" }}>
-                                                        <div style={{ flex: 9, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                        <div className="input-wrapper" style={{ flex: 9, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                             <MyInput
                                                                 disabled={showOnly}
                                                                 required
@@ -1500,7 +1501,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
                                             <div className="show-grid">
                                                 <div style={{ display: "flex", gap: "10px", width: "100%" }}>
-                                                    <div style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                    <div className="input-wrapper" style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                         <MyInput
                                                             disabled={showOnly}
                                                             width={"100%"}
@@ -1512,7 +1513,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                             setRecord={setAppoitment}
                                                         />
                                                     </div>
-                                                    <div style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                    <div className="input-wrapper" style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                         <MyInput
                                                             disabled={showOnly}
                                                             width={165}
@@ -1524,7 +1525,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                             setRecord={setAppoitment}
                                                         />
                                                     </div>
-                                                    <div style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                    <div className="input-wrapper" style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                         <MyInput
                                                             disabled={!appointment?.isReminder}
                                                             required
@@ -1547,7 +1548,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
 
                                             <div style={{ display: "flex", gap: "10px", width: "100%" }}>
-                                                <div style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
+                                                <div className="input-wrapper" style={{ flex: 1, backgroundColor: "#F5F7FB", padding: 2 }}>
                                                     <MyInput
                                                         disabled={showOnly}
                                                         vr={validationResult}
