@@ -134,6 +134,7 @@ const EncounterPreObservations = ({}) => {
                 </Tabs.Tab>
                 <Tabs.Tab eventKey="4" title="Vaccination">
                   <VaccinationTab
+                  edit={propsData.edit}
                     disabled={isEncounterStatusClosed || readOnly}
                     patient={propsData.patient}
                     encounter={propsData.encounter}
