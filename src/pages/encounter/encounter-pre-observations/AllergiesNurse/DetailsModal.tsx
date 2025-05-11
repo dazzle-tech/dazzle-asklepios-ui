@@ -100,6 +100,7 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
             title="Add Allergy"
             actionButtonFunction={handleSave}
             bodyheight={550}
+            isDisabledActionBtn={edit}
             size='700px'
             position='right'
             steps={[

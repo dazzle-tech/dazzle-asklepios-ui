@@ -507,18 +507,18 @@ const Allergies = ({ edit, patient, encounter }) => {
         <MyButton
           prefixIcon={() => <CloseOutlineIcon />}
           onClick={OpenCancellationReasonModel}
-          disabled={allerges?.key == null ? true : false}
+          disabled={!edit?allerges?.key == null ? true : false:true}
         >Cancel</MyButton>
 
         <MyButton
-          disabled={allerges?.statusLkey != '9766169155908512' ? true : false}
+          disabled={!edit?allerges?.statusLkey != '9766169155908512' ? true : false:true}
           prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
           onClick={OpenConfirmResolvedModel}
         >
           Resolved</MyButton>
         <MyButton
           prefixIcon={() => <ReloadIcon />}
-          disabled={allerges?.statusLkey != '9766179572884232' ? true : false}
+          disabled={!edit?allerges?.statusLkey != '9766179572884232' ? true : false:true}
           onClick={OpenConfirmUndoResolvedModel}
         >Undo Resolved</MyButton>
 
@@ -540,6 +540,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         </Checkbox>
         <div className='bt-right'>
           <MyButton
+            disabled={edit}
             prefixIcon={() => <PlusIcon />}
             onClick={() => {
               handleClear();
