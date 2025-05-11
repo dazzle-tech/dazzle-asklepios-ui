@@ -30,18 +30,25 @@ import BackButton from '@/components/BackButton/BackButton';
 const Details = props => {
   const [editing, setEditing] = useState(false);
 
-  const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-  const { data: eduLvlLovQueryResponse } = useGetLovValuesByCodeQuery('EDU_LEVEL');
+  // const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+  // const { data: eduLvlLovQueryResponse } = useGetLovValuesByCodeQuery('EDU_LEVEL');
   const [searchResultVisible, setSearchResultVisible] = useState(false);
   const [patientSearchTarget, setPatientSearchTarget] = useState('primary'); // primary, relation, etc..
-  const { data: specialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SPECIALTY');
-  const { data: subSpecialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
+  // const { data: specialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SPECIALTY');
+  // const { data: subSpecialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
 
   const [searchKeyword, setSearchKeyword] = useState('');
 
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
-    ignore: !searchKeyword || searchKeyword.length < 3
+    ignore: !searchKeyword || searchKeyword.length < 3,
+    filters: [
+      {
+        fieldName: 'full_name',
+        operator: 'containsIgnoreCase',
+        value: searchKeyword
+    }
+    ]
   });
   const [practitioner, setPractitioner] = useState<ApPractitioner>({ ...newApPractitioner });
   const { data: getOneUser } = useGetUserRecordQuery(
@@ -50,11 +57,14 @@ const Details = props => {
   );
 
   useEffect(() => {
+      console.log("searchedKeyWord: " + searchKeyword);
+  },[searchKeyword]);
+  useEffect(() => {
     console.log(getOneUser);
   }, [getOneUser]);
 
   const [savePractitioner, savePractitionerMutation] = useSavePractitionerMutation();
-  const { data: userListResponse } = useGetUsersQuery(initialListRequest);
+  const { data: userListResponse } = useGetUsersQuery(listRequest);
   const [linkedUserName, setLinkedUserName] = useState('');
 
   useEffect(() => {
@@ -93,8 +103,9 @@ const Details = props => {
 
   const search = () => {
     // setPatientSearchTarget(target);
-    console.log(searchKeyword.length);
+     console.log("in search"); 
     if (searchKeyword && searchKeyword.length >= 3) {
+      console.log("in if");
       setSearchResultVisible(true);
 
       setListRequest({
@@ -124,202 +135,202 @@ const Details = props => {
     console.log({ ...practitioner, linkedUser: userData.key });
   };
 
-  const InputForms = editing => {
-    return (
-      <div>
-        <Form layout="inline" fluid>
-          <MyInput
-            disabled={!editing}
-            column
-            fieldName="practitionerFirstName"
-            required
-            record={practitioner}
-            setRecord={setPractitioner}
-          />
+  // const InputForms = editing => {
+  //   return (
+  //     <div>
+  //       <Form layout="inline" fluid>
+  //         <MyInput
+  //           disabled={!editing}
+  //           column
+  //           fieldName="practitionerFirstName"
+  //           required
+  //           record={practitioner}
+  //           setRecord={setPractitioner}
+  //         />
 
-          <MyInput
-            disabled={!editing}
-            column
-            fieldName="practitionerLastName"
-            required
-            record={practitioner}
-            setRecord={setPractitioner}
-          />
+  //         <MyInput
+  //           disabled={!editing}
+  //           column
+  //           fieldName="practitionerLastName"
+  //           required
+  //           record={practitioner}
+  //           setRecord={setPractitioner}
+  //         />
 
-          <MyInput
-            disabled={true}
-            column
-            fieldName="practitionerFullName"
-            required
-            record={practitioner}
-            setRecord={setPractitioner}
-          />
-        </Form>
+  //         <MyInput
+  //           disabled={true}
+  //           column
+  //           fieldName="practitionerFullName"
+  //           required
+  //           record={practitioner}
+  //           setRecord={setPractitioner}
+  //         />
+  //       </Form>
 
-        <Form layout="inline" fluid>
-          <MyInput
-            disabled={!editing}
-            column
-            fieldName="practitionerEmail"
-            required
-            record={practitioner}
-            setRecord={setPractitioner}
-          />
-          <MyInput
-            disabled={!editing}
-            column
-            fieldName="practitionerPhoneNumber"
-            required
-            record={practitioner}
-            setRecord={setPractitioner}
-          />
+  //       <Form layout="inline" fluid>
+  //         <MyInput
+  //           disabled={!editing}
+  //           column
+  //           fieldName="practitionerEmail"
+  //           required
+  //           record={practitioner}
+  //           setRecord={setPractitioner}
+  //         />
+  //         <MyInput
+  //           disabled={!editing}
+  //           column
+  //           fieldName="practitionerPhoneNumber"
+  //           required
+  //           record={practitioner}
+  //           setRecord={setPractitioner}
+  //         />
 
-          <MyInput
-            disabled={!editing}
-            column
-            fieldLabel="sex at birth"
-            fieldType="select"
-            fieldName="sexAtBirthLkey"
-            selectData={gndrLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={practitioner}
-            setRecord={setPractitioner}
-          />
+  //         <MyInput
+  //           disabled={!editing}
+  //           column
+  //           fieldLabel="sex at birth"
+  //           fieldType="select"
+  //           fieldName="sexAtBirthLkey"
+  //           selectData={gndrLovQueryResponse?.object ?? []}
+  //           selectDataLabel="lovDisplayVale"
+  //           selectDataValue="key"
+  //           record={practitioner}
+  //           setRecord={setPractitioner}
+  //         />
 
-          <MyInput
-            disabled={!editing}
-            column
-            fieldType="date"
-            fieldLabel="DOB"
-            fieldName="dob"
-            record={practitioner}
-            setRecord={setPractitioner}
-          />
-        </Form>
+  //         <MyInput
+  //           disabled={!editing}
+  //           column
+  //           fieldType="date"
+  //           fieldLabel="DOB"
+  //           fieldName="dob"
+  //           record={practitioner}
+  //           setRecord={setPractitioner}
+  //         />
+  //       </Form>
 
-        <Form
-          // onClick={() => {
-          //   const filterKeys = user._facilitiesInput; // This is the array you want to filter on ['3', '32260644964500']
+  //       <Form
+  //         // onClick={() => {
+  //         //   const filterKeys = user._facilitiesInput; // This is the array you want to filter on ['3', '32260644964500']
 
-          //   const filteredFacilities = facilityListResponse?.object?.filter(facility =>
-          //     filterKeys.includes(facility.key)
-          //   ) ?? [];
+  //         //   const filteredFacilities = facilityListResponse?.object?.filter(facility =>
+  //         //     filterKeys.includes(facility.key)
+  //         //   ) ?? [];
 
-          //   console.log(filteredFacilities); // This will log the filtered facilities based on user._facilitiesInput
-          // }}
-          layout="inline"
-          fluid
-        >
-          <MyInput
-            disabled={!editing}
-            column
-            fieldLabel="job role"
-            fieldType="select"
-            fieldName="jobRoleLkey"
-            selectData={
-              // jobRoleLovQueryResponse?.object ??
-              []
-            }
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={practitioner}
-            setRecord={setPractitioner}
-          />
+  //         //   console.log(filteredFacilities); // This will log the filtered facilities based on user._facilitiesInput
+  //         // }}
+  //         layout="inline"
+  //         fluid
+  //       >
+  //         <MyInput
+  //           disabled={!editing}
+  //           column
+  //           fieldLabel="job role"
+  //           fieldType="select"
+  //           fieldName="jobRoleLkey"
+  //           selectData={
+  //             // jobRoleLovQueryResponse?.object ??
+  //             []
+  //           }
+  //           selectDataLabel="lovDisplayVale"
+  //           selectDataValue="key"
+  //           record={practitioner}
+  //           setRecord={setPractitioner}
+  //         />
 
-          <Form layout="inline" fluid>
-            <MyInput
-              disabled={!editing}
-              column
-              fieldLabel="Speciality"
-              fieldType="select"
-              fieldName="speciality"
-              selectData={specialityLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={practitioner}
-              setRecord={setPractitioner}
-            />
+  //         <Form layout="inline" fluid>
+  //           <MyInput
+  //             disabled={!editing}
+  //             column
+  //             fieldLabel="Speciality"
+  //             fieldType="select"
+  //             fieldName="speciality"
+  //             selectData={specialityLovQueryResponse?.object ?? []}
+  //             selectDataLabel="lovDisplayVale"
+  //             selectDataValue="key"
+  //             record={practitioner}
+  //             setRecord={setPractitioner}
+  //           />
 
-            <MyInput
-              disabled={!editing}
-              column
-              fieldLabel="Sub Speciality"
-              fieldType="select"
-              fieldName="subSpeciality"
-              selectData={subSpecialityLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={practitioner}
-              setRecord={setPractitioner}
-            />
+  //           <MyInput
+  //             disabled={!editing}
+  //             column
+  //             fieldLabel="Sub Speciality"
+  //             fieldType="select"
+  //             fieldName="subSpeciality"
+  //             selectData={subSpecialityLovQueryResponse?.object ?? []}
+  //             selectDataLabel="lovDisplayVale"
+  //             selectDataValue="key"
+  //             record={practitioner}
+  //             setRecord={setPractitioner}
+  //           />
 
-            <MyInput
-              disabled={!editing}
-              column
-              fieldLabel="Default Medical License"
-              fieldName="defaultMedicalLicense"
-              record={practitioner}
-              setRecord={setPractitioner}
-            />
+  //           <MyInput
+  //             disabled={!editing}
+  //             column
+  //             fieldLabel="Default Medical License"
+  //             fieldName="defaultMedicalLicense"
+  //             record={practitioner}
+  //             setRecord={setPractitioner}
+  //           />
 
-            <MyInput
-              disabled={!editing}
-              column
-              fieldType="date"
-              fieldLabel="Valid Until"
-              fieldName="defaultLicenseValidUntil"
-              record={practitioner}
-              setRecord={setPractitioner}
-            />
+  //           <MyInput
+  //             disabled={!editing}
+  //             column
+  //             fieldType="date"
+  //             fieldLabel="Valid Until"
+  //             fieldName="defaultLicenseValidUntil"
+  //             record={practitioner}
+  //             setRecord={setPractitioner}
+  //           />
 
-            <MyInput
-              disabled={!editing}
-              column
-              fieldLabel="Secondary License"
-              fieldName="secondaryMedicalLicense"
-              record={practitioner}
-              setRecord={setPractitioner}
-            />
+  //           <MyInput
+  //             disabled={!editing}
+  //             column
+  //             fieldLabel="Secondary License"
+  //             fieldName="secondaryMedicalLicense"
+  //             record={practitioner}
+  //             setRecord={setPractitioner}
+  //           />
 
-            <MyInput
-              disabled={!editing}
-              column
-              fieldType="date"
-              fieldLabel="Valid Until"
-              fieldName="secondaryLicenseValidUntil"
-              record={practitioner}
-              setRecord={setPractitioner}
-            />
+  //           <MyInput
+  //             disabled={!editing}
+  //             column
+  //             fieldType="date"
+  //             fieldLabel="Valid Until"
+  //             fieldName="secondaryLicenseValidUntil"
+  //             record={practitioner}
+  //             setRecord={setPractitioner}
+  //           />
 
-            <MyInput
-              disabled={!editing}
-              column
-              fieldLabel="Educational Level"
-              fieldType="select"
-              fieldName="educationalLevel"
-              selectData={eduLvlLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={practitioner}
-              setRecord={setPractitioner}
-            />
-          </Form>
+  //           <MyInput
+  //             disabled={!editing}
+  //             column
+  //             fieldLabel="Educational Level"
+  //             fieldType="select"
+  //             fieldName="educationalLevel"
+  //             selectData={eduLvlLovQueryResponse?.object ?? []}
+  //             selectDataLabel="lovDisplayVale"
+  //             selectDataValue="key"
+  //             record={practitioner}
+  //             setRecord={setPractitioner}
+  //           />
+  //         </Form>
 
-          <MyInput
-            disabled={!editing}
-            width={165}
-            column
-            fieldLabel="Appointable"
-            fieldType="checkbox"
-            fieldName="appointable"
-            record={practitioner}
-            setRecord={setPractitioner}
-          />
-        </Form>
-      </div>
-    );
-  };
+  //         <MyInput
+  //           disabled={!editing}
+  //           width={165}
+  //           column
+  //           fieldLabel="Appointable"
+  //           fieldType="checkbox"
+  //           fieldName="appointable"
+  //           record={practitioner}
+  //           setRecord={setPractitioner}
+  //         />
+  //       </Form>
+  //     </div>
+  //   );
+  // };
 
   useEffect(() => {
     setLinkedUserName(
@@ -372,7 +383,7 @@ const Details = props => {
             <Translate>Save</Translate>
           </IconButton>
 
-          {practitioner?.linkedUser ? (
+          { practitioner?.linkedUser ? (
             <div style={{ marginBottom: '10px' }}>
               <label
                 htmlFor="searchInput"
@@ -417,7 +428,7 @@ const Details = props => {
         </ButtonToolbar>
         <hr />
 
-        {InputForms(editing)}
+        {/* {InputForms(editing)} */}
 
         <Drawer
           size="lg"
@@ -429,7 +440,6 @@ const Details = props => {
         >
           <Drawer.Header>
             <Drawer.Title>User List - Search Results</Drawer.Title>
-            {/* <Drawer.Actions>{conjurePatientSearchBar(patientSearchTarget)}</Drawer.Actions> */}
           </Drawer.Header>
           <Drawer.Body>
             <small>
@@ -471,14 +481,12 @@ const Details = props => {
             >
               <Column sortable flexGrow={3}>
                 <HeaderCell>
-                  {/* <Input onChange={e => handleFilterChange('fullName', e)} /> */}
                   <Translate>User Name</Translate>
                 </HeaderCell>
                 <Cell dataKey="fullName" />
               </Column>
               <Column sortable flexGrow={3}>
                 <HeaderCell>
-                  {/* <Input onChange={e => handleFilterChange('mobileNumber', e)} /> */}
                   <Translate>Mobile Number</Translate>
                 </HeaderCell>
                 <Cell dataKey="phoneNumber" />
