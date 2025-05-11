@@ -451,19 +451,19 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
        {/* buttons actions section */}
       <div className='bt-div'>
         <MyButton
-          disabled={warning.key ? warning?.statusLkey == '3196709905099521' ? true : false : true}
+          disabled={!edit?warning.key ? warning?.statusLkey == '3196709905099521' ? true : false : true:true}
           prefixIcon={() => <CloseOutlineIcon />}
           onClick={OpenCancellationReasonModel}
         >Cancel</MyButton>
         <MyButton
-          disabled={warning?.statusLkey != '9766169155908512' ? true : false}
+          disabled={!edit ? warning?.statusLkey != '9766169155908512' ? true : false:true}
           prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
           onClick={OpenConfirmResolvedModel}
         >
           Resolved</MyButton>
         <MyButton
           prefixIcon={() => <ReloadIcon />}
-          disabled={warning?.statusLkey != '9766179572884232' ? true : false}
+          disabled={!edit ? warning?.statusLkey != '9766179572884232' ? true : false:true}
           onClick={OpenConfirmUndoResolvedModel}
         >Undo Resolved</MyButton>
 
@@ -487,7 +487,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
         <div className='bt-right'>
           <MyButton
             prefixIcon={() => <PlusIcon />}
-
+            disabled={edit}
             onClick={() =>{ setOpenDetailsModal(true);
               handleClear();
             }}
@@ -557,7 +557,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
       open={openDetailsModal} setOpen={setOpenDetailsModal}
        warning={warning} setWarning={setWarning}
        encounter={encounter} editing={editing}
-       fetchwarnings={fetchwarnings}/>
+       fetchwarnings={fetchwarnings} edit={edit}/>
     </div>
   );
 };

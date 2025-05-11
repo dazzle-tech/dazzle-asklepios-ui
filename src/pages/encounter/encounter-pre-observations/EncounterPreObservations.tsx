@@ -120,14 +120,14 @@ const EncounterPreObservations = ({}) => {
                 </Tabs.Tab>
                 <Tabs.Tab eventKey="2" title="Allergies">
                   <Allergies
-                    edit={false}
+                    edit={propsData.edit}
                     patient={propsData.patient}
                     encounter={propsData.encounter}
                   />
                 </Tabs.Tab>
                 <Tabs.Tab eventKey="3" title="Medical Warnings">
                   <Warning
-                    edit={false}
+                    edit={propsData.edit}
                     patient={propsData.patient}
                     encounter={propsData.encounter}
                   />

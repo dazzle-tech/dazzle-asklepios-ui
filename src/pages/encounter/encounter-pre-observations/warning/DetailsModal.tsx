@@ -10,7 +10,7 @@ import { faWarning } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState, useEffect } from "react";
 import { Col, Form, Row, Text } from "rsuite";
-const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patient, encounter, editing }) => {
+const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patient, encounter, editing ,edit}) => {
     const [editDate, setEditDate] = useState({ editdate: true });
     const [editSourceof, seteditSourceof] = useState({ editSource: true });
     const dispatch = useAppDispatch();
@@ -59,6 +59,7 @@ const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patie
             setOpen={setOpen}
             title="Add Warning"
             actionButtonFunction={handleSave}
+            isDisabledActionBtn={edit}
             bodyheight={550}
             size='680px'
             position='right'
@@ -73,7 +74,7 @@ const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patie
                 },
             ]}
             content={
-                <Row gutter={20}>
+                <Row gutter={20} className={edit?"disabled-panel":""}>
                     <Col md={12}>
                         <Row>
                             <Col md={12}>
@@ -225,159 +226,7 @@ const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patie
                     </Col>
                 </Row>
 
-                // <div >
-                //     <div className="div-parent">
-                //         <div style={{ flex: 1 }}>
-                //             <Form layout="inline" fluid>
-                //                 <MyInput
-                //                     column
-                //                     disabled={editing}
-                //                     width={200}
-                //                     fieldType="select"
-                //                     fieldLabel="Warning Type"
-                //                     selectData={warningTypeLovQueryResponse?.object ?? []}
-                //                     selectDataLabel="lovDisplayVale"
-                //                     selectDataValue="key"
-                //                     fieldName={'warningTypeLkey'}
-                //                     record={warning}
-                //                     setRecord={setWarning}
-                //                 />
-                //             </Form>
-                //         </div>
-                //         <div style={{ flex: 1 }}>
-                //             <Form layout="inline" fluid>
-                //                 <MyInput
-                //                     column
-                //                     disabled={editing}
-                //                     width={200}
-                //                     fieldName={'warning'}
-                //                     record={warning}
-                //                     setRecord={setWarning}
-                //                 />
-                //             </Form>
-                //         </div>
-                //         <div style={{ flex: 1 }}>
-                //             <Form layout="inline" fluid>
-                //                 <MyInput
-                //                     column
-                //                     disabled={editing}
-                //                     width={200}
-                //                     fieldType="select"
-                //                     fieldLabel="Severity"
-                //                     selectData={severityLovQueryResponse?.object ?? []}
-                //                     selectDataLabel="lovDisplayVale"
-                //                     selectDataValue="key"
-                //                     fieldName={'severityLkey'}
-                //                     record={warning}
-                //                     setRecord={setWarning}
-                //                 />
-                //             </Form>
-                //         </div>
-                //     </div>
-                //     <div className="div-parent">
-                //         <div style={{ flex: 1 }}>
-                //             <Form layout="inline" fluid>
-                //                 <MyInput
-                //                     column
-                //                     disabled={editSourceof.editSource}
-                //                     width={200}
-                //                     fieldType="select"
-                //                     selectData={sourceofinformationLovQueryResponse?.object ?? []}
-                //                     selectDataLabel="lovDisplayVale"
-                //                     selectDataValue="key"
-                //                     fieldName={'sourceOfInformationLkey'}
-                //                     record={warning}
-                //                     setRecord={setWarning}
-                //                 />
-                //             </Form>
-                //         </div>
-                //         <div style={{ flex: 1 }}>
-                //             <Form layout="inline" fluid>
-                //                 <MyInput
-                //                     fieldLabel="By Patient"
-                //                     fieldName="editSource"
-                //                     column
-                //                     width={75}
-                //                     fieldType='checkbox'
-                //                     record={editSourceof}
-                //                     setRecord={seteditSourceof}
-                //                 />
-                //             </Form>
-                //         </div>
-                //         <div style={{ flex: 1 }}>
-
-                //             <div>
-                //                 {/* <Text className='font-style'>First Time Recorded</Text>
-                //                 <DatePicker
-                //                     className='date-width'
-                //                     format="MM/dd/yyyy hh:mm aa"
-                //                     showMeridian
-                //                     value={selectedFirstDate}
-                //                     onChange={handleDateChange}
-                //                     disabled={editDate.editdate}
-                //                 /> */}
-                //                 <Form fluid >
-                //                     <MyInput 
-                //                     disabled={editDate.editdate}
-                //                     width="100%"
-                //                     fieldName="firstTimeRecorded"
-                //                     fieldType="datetime"
-                //                     record={warning}
-                //                     setRecord={setWarning}
-                //                     />
-                //                 </Form>
-                //             </div>
-                //         </div>
-                //         <div style={{ flex: 1 }}>
-                //             <Form layout="inline" fluid>
-                //                 <MyInput
-                //                     fieldLabel="Undefined"
-                //                     fieldName="editdate"
-                //                     column
-                //                     width={67}
-                //                     fieldType='checkbox'
-                //                     record={editDate}
-                //                     setRecord={setEditDate}
-                //                 />
-                //             </Form>
-                //         </div>
-                //     </div>
-                //     <div className="div-parent">
-                //         <div style={{ flex: 1 }}>
-                //             <Form fluid>
-                //                 <MyInput
-                //                     width={'100%'}
-                //                     column
-                //                     fieldLabel="Notes"
-                //                     fieldType="textarea"
-                //                     fieldName="notes"
-                //                     height={100}
-                //                     record={warning}
-                //                     setRecord={setWarning}
-                //                     disabled={editing}
-                //                 />
-                //             </Form>
-                //         </div>
-                //         <div style={{ flex: 1 }}>
-                //             <Form fluid>
-                //                 <MyInput
-                //                     width={'100%'}
-                //                     column
-                //                     fieldLabel="Action Taken"
-                //                     fieldType="textarea"
-                //                     fieldName="actionTake"
-                //                     height={100}
-                //                     record={warning}
-                //                     setRecord={setWarning}
-                //                     disabled={editing}
-                //                 />
-                //             </Form>
-                //         </div>
-                //     </div>
-
-
-                // </div>
-
+              
 
             }
 

@@ -16,7 +16,7 @@ import { useSaveEncounterVaccineMutation, useGetEncounterVaccineQuery } from '@/
 import { ApVaccine, ApVaccineBrands, ApEncounterVaccination } from '@/types/model-types';
 import { newApVaccine, newApVaccineBrands, newApVaccineDose, newApEncounterVaccination } from '@/types/model-types-constructor';
 import AddEncounterVaccine from './AddEncounterVaccine';
-const VaccinationTab = ({ disabled, patient, encounter }) => {
+const VaccinationTab = ({ disabled, patient, encounter ,edit }) => {
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
     const [vaccine, setVaccine] = useState<ApVaccine>({ ...newApVaccine });
@@ -329,7 +329,7 @@ const VaccinationTab = ({ disabled, patient, encounter }) => {
         }
     ];
     return (<div>
-        <AddEncounterVaccine open={popupOpen} setOpen={setPopupOpen} patient={patient} encounter={encounter} encounterVaccination={encounterVaccination} setEncounterVaccination={setEncounterVaccination} vaccineObject={vaccine} vaccineDoseObjet={vaccineDose} vaccineBrandObject={vaccineBrand} isDisabled={disabled} refetch={encounterVaccine} />
+        <AddEncounterVaccine open={popupOpen} setOpen={setPopupOpen} patient={patient} encounter={encounter} encounterVaccination={encounterVaccination} setEncounterVaccination={setEncounterVaccination} vaccineObject={vaccine} vaccineDoseObjet={vaccineDose} vaccineBrandObject={vaccineBrand} isDisabled={disabled} refetch={encounterVaccine} edit={edit}/>
         <div className='bt-div'>
             <MyButton prefixIcon={() => <CloseOutlineIcon />} onClick={() => { setPopupCancelOpen(true) }} disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey : false} >
                 Cancel
@@ -344,7 +344,7 @@ const VaccinationTab = ({ disabled, patient, encounter }) => {
                 Show All Vaccines
             </Checkbox>
             <div className='bt-right'>
-                <MyButton prefixIcon={() => <PlusIcon />} onClick={handleAddNewVaccine}>Add</MyButton>
+                <MyButton prefixIcon={() => <PlusIcon />} onClick={handleAddNewVaccine} disabled={edit}>Add</MyButton>
             </div>
         </div>
         <MyTable

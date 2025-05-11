@@ -25,7 +25,8 @@ const AddEncounterVaccine = ({
     vaccineDoseObjet,
     vaccineBrandObject,
     refetch,
-    isDisabled=false
+    isDisabled=false,
+    edit
 }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
@@ -417,6 +418,7 @@ const AddEncounterVaccine = ({
         <AdvancedModal
             open={open}
             setOpen={setOpen}
+            isDisabledActionBtn={edit}
             leftTitle={`${vaccine?.vaccineName} Vaccine`}
             rightTitle='Add Vaccine'
             actionButtonFunction={handleSaveEncounterVaccine}
@@ -424,7 +426,7 @@ const AddEncounterVaccine = ({
                 <MyButton appearance='ghost' onClick={handleClearField}>Clear</MyButton>
             }
             rightContent={
-                <div className="right-main-container">
+                <div className={`right-main-container ${edit?"disabled-panel":""}`}>
                     <div className='search-list'>
                         <MyLabel label="Vaccine Name" />
                         <InputGroup inside >
