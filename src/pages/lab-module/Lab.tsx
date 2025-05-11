@@ -64,7 +64,6 @@ const Lab = () => {
   const uiSlice = useAppSelector(state => state.auth);
   const ResultRef = useRef(null);
   const TestRef = useRef(null);
-  const [openSteper,setOpenSteper]=useState(false);
   const refetchTest = () => {
     TestRef.current?.refetchTest();
   };

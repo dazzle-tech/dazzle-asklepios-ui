@@ -171,14 +171,13 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
 
         fetchData();
     }, [test]);
-    useEffect(() => {
 
-    }, [resultFetch]);
+
     useEffect(() => {
         resultFetch();
     }
-        , [saveNewResultMutation.isSuccess])
-
+  , [saveNewResultMutation.isSuccess])
+ //When the test is accepted, a report is generated for it,but the sample must have collected
     const handleAcceptTest = async (rowData) => {
         if (samplesList?.object?.length > 0) {
             try {
@@ -236,7 +235,7 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
         fecthNotes();
 
     };
-
+   //set test status reject ,from reject modal
     const handleRejectedTest = async () => {
         try {
             const Response = await saveTest({ ...test, processingStatusLkey: "6055192099058457", rejectedAt: Date.now() }).unwrap();
@@ -251,6 +250,7 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
             dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
         }
     }
+
     const tableClumns = [
         {
             key: "",
@@ -545,6 +545,7 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
             });
         }
     };
+    //test category filter
      const filters = () => {
         return (  <SelectPicker
             style={{ width:'200px' }}
@@ -593,253 +594,6 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
                 onRowsPerPageChange={handleRowsPerPageChange}
 
             />
-            {/* <Table
-
-                height={200}
-                sortColumn={listRequest.sortBy}
-                sortType={listRequest.sortType}
-                onSortColumn={(sortBy, sortType) => {
-                    if (sortBy)
-                       setListRequest({
-                            ...listRequest,
-                            sortBy,
-                            sortType
-                        });
-                }}
-                rowKey="key"
-                expandedRowKeys={expandedRowKeys} // Ensure expanded row state is correctly handled
-                renderRowExpanded={renderRowExpanded} // This is the function rendering the expanded child table
-                shouldUpdateScroll={false}
-                data={testsList?.object ?? []}
-                onRowClick={rowData => {
-
-                    setTest(rowData);
-
-                }}
-                rowClassName={isTestSelected}
-                loading={isTestsFetching}
-            >
-                <Column width={70} align="center">
-                    <HeaderCell>#</HeaderCell>
-                    <ExpandCell rowData={rowData => rowData} dataKey="key" expandedRowKeys={expandedRowKeys} onChange={handleExpanded} />
-                </Column>
-
-                <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                        {showListFilter ? (
-                            <SelectPicker
-                                style={{ width: '80%' }}
-                                placeholder={<Translate>Select Action From List</Translate>}
-                                data={labCatLovQueryResponse?.object}
-                                labelKey="lovDisplayVale"
-                                valueKey="key"
-                                onSelect={(value) => {
-                                    setSelectedCatValue(value);
-                                    handleFilterResultChange('testKey', value)
-                                }}
-
-                                onClean={() => {
-                                    setTimeout(() => setShowListFilter(false), 200)
-                                    handleFilterResultChange('testKey', null)
-                                }
-
-
-                                }
-
-                            />
-                        ) : (
-                            <div onClick={() => setShowListFilter(true)} style={{ cursor: 'pointer' }}>
-                                <FontAwesomeIcon icon={faFilter} style={{ marginRight: '5px' }} />
-                                <Translate> TEST CATEGORY</Translate>
-                            </div>
-                        )}
-                    </HeaderCell>
-
-
-                    <Cell >
-                        {rowData => {
-                            const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)
-                            if (cat) {
-                                return cat?.categoryLvalue?.lovDisplayVale
-                            }
-                            return "";
-                        }}
-                    </Cell>
-                </Column>
-                <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                        <Translate>TEST NAME</Translate>
-                    </HeaderCell>
-                    <Cell  >
-                        {rowData => rowData.test.testName}
-                    </Cell>
-                </Column>
-
-                <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-                        <Translate>IS PROFILE</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => {
-                            const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)
-                            return cat?.isProfile ? "Yes" : "NO"
-                        }}
-                    </Cell>
-                </Column>
-                <Column sortable flexGrow={1} fullText>
-                    <HeaderCell>
-
-                        <Translate>REASON</Translate>
-                    </HeaderCell>
-                    <Cell >
-                        {rowData => rowData.reasonLvalue ? rowData.reasonLvalue.lovDisplayVale : rowData.reasonLkey}
-                    </Cell>
-                </Column>
-                <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-
-                        <Translate>PROIRITY</Translate>
-                    </HeaderCell>
-                    <Cell >
-                        {rowData => rowData.priorityLvalue ? rowData.priorityLvalue.lovDisplayVale : rowData.priorityLkey}
-                    </Cell>
-                </Column>
-                <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-
-                        <Translate>PHYSICIAN</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => { return rowData.createdBy, " At", rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "" }}
-
-                    </Cell>
-
-                </Column>
-
-                <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-
-                        <Translate>DURATION</Translate>
-                    </HeaderCell>
-                    <Cell >
-                        {rowData => {
-                            const cat = laboratoryList?.object?.find((item) => item.testKey === rowData.testKey)
-                            if (cat) {
-                                return cat?.testDurationTime + " " + cat?.timeUnitLvalue?.lovDisplayVale
-                            }
-                            return "";
-
-                        }}
-                    </Cell>
-                </Column>
-                <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-
-                        <Translate>ORDERS NOTES</Translate>
-                    </HeaderCell>
-                    <Cell>
-                        {rowData => rowData.notes}
-
-                    </Cell>
-
-                </Column>
-
-                <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-
-                        <Translate>TECHNICIAN NOTES</Translate>
-                    </HeaderCell>
-                    <Cell >
-                        {rowData => (
-                            <HStack spacing={10}>
-
-                                <FontAwesomeIcon icon={faComment} style={{ fontSize: '1em' }} onClick={() => setOpenNoteModal(true)} />
-
-                            </HStack>
-
-                        )}
-                    </Cell>
-
-                </Column>
-                <Column sortable flexGrow={2} fullText>
-                    <HeaderCell>
-
-                        <Translate>COLLECT SAMPLE</Translate>
-                    </HeaderCell>
-                    <Cell >
-                        {rowData => (
-                            <HStack spacing={10}>
-
-                                <FontAwesomeIcon icon={faVialCircleCheck} style={{ fontSize: '1em' }} onClick={() => setOpenSampleModal(true)} />
-
-                            </HStack>
-
-                        )}
-                    </Cell>
-
-                </Column>
-                <Column sortable flexGrow={2} fullText >
-                    <HeaderCell>
-                        <Translate>SATUTS</Translate>
-                    </HeaderCell>
-                    <Cell style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {rowData => rowData.processingStatusLvalue ? rowData.processingStatusLvalue.lovDisplayVale : rowData.processingStatusLkey}
-                    </Cell>
-                </Column>
-                <Column sortable flexGrow={4} fullText>
-                    <HeaderCell>
-
-                        <Translate>ACTION</Translate>
-                    </HeaderCell>
-                    <Cell >
-                        {rowData => (
-                            <HStack spacing={10}>
-                                <Whisper
-                                    placement="top"
-                                    trigger="hover"
-                                    speaker={<Tooltip>Accept</Tooltip>}
-                                >
-                                    <CheckRoundIcon
-                                        onClick={() =>
-                                            (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") &&
-                                            handleAcceptTest(rowData)
-                                        }
-                                        style={{
-                                            fontSize: '1em',
-                                            marginRight: 10,
-                                            color: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'gray' : 'inherit',
-                                            cursor: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'not-allowed' : 'pointer',
-                                        }}
-                                    />
-                                </Whisper>
-                                <Whisper
-                                    placement="top"
-                                    trigger="hover"
-                                    speaker={<Tooltip>Reject</Tooltip>}
-                                >
-                                    <WarningRoundIcon
-                                        onClick={() => (rowData.processingStatusLkey === "6055029972709625" || rowData.processingStatusLkey === "6055207372976955") && setOpenRejectedModal(true)}
-                                        style={{
-                                            fontSize: '1em', marginRight: 10,
-                                            color: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'gray' : 'inherit',
-                                            cursor: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'not-allowed' : 'pointer',
-                                        }} />
-                                </Whisper>
-                                <Whisper
-                                    placement="top"
-                                    trigger="hover"
-                                    speaker={<Tooltip>Send to External Lab</Tooltip>}
-                                >
-                                    <FontAwesomeIcon icon={faRightFromBracket} style={{ fontSize: '1em', marginRight: 10 }} />
-                                </Whisper>
-                            </HStack>
-
-                        )}
-                    </Cell>
-
-                </Column>
-            </Table> */}
-
 
             <SampleModal open={openSampleModal} setOpen={setOpenSampleModal} samplesList={samplesList} labDetails={laboratoryList?.object?.find((item) => item.testKey === test.testKey)} saveTest={saveTest} fetchTest={fetchTest} test={test} setTest={setTest} fecthSample={fecthSample} />
             <ChatModal open={openNoteModal} setOpen={setOpenNoteModal} handleSendMessage={handleSendMessage} title={"Technician Notes"} list={messagesList?.object} fieldShowName={'notes'} />
