@@ -14,7 +14,6 @@ import { useSavePatientMutation } from '@/services/patientService';
 import { useNavigate } from 'react-router-dom';
 import { useSavePatientInsuranceMutation } from '@/services/patientService';
 import { notify } from '@/utils/uiReducerActions';
-import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import MyButton from '@/components/MyButton/MyButton';
 import './styles.less';
@@ -25,7 +24,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const [savePatientInsurance, savePatientInsuranceMutation] = useSavePatientInsuranceMutation();
     const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
     const [savePatient, savePatientMutation] = useSavePatientMutation();
-
+    const [openNextDocument, setOpenNextDocument] = useState(false);
     // Fetch LOV data for various fields
     const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
     const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
@@ -43,9 +42,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
                 dispatch(notify('Patient Added Successfully'));
             });
     };
-    // Handle Save Patient Insurance Then Go To Patient Profile 
+    // Handle Go To Patient Profile 
     const goToPatientProfile = () => {
-        handleSaveInsurance();
         setOpen(false);
         const privatePatientPath = '/patient-profile';
         navigate(privatePatientPath, { state: { patient: localPatient } });
@@ -77,9 +75,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
                         <span className="custom-text">
                             Basic Information
                         </span>
-                        <br />
                         <MyInput
-                            width={165}
+                            width={200}
                             required
                             column
                             fieldName="firstName"
@@ -87,7 +84,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                             setRecord={setLocalPatient}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
                             required
                             column
                             fieldName="secondName"
@@ -95,14 +92,14 @@ const CreateNewPatient = ({ open, setOpen }) => {
                             setRecord={setLocalPatient}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
                             column
                             fieldName="thirdName"
                             record={localPatient}
                             setRecord={setLocalPatient}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
                             required
                             column
                             fieldName="lastName"
@@ -110,7 +107,17 @@ const CreateNewPatient = ({ open, setOpen }) => {
                             setRecord={setLocalPatient}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
+                            column
+                            fieldType="date"
+                            fieldLabel="DOB"
+                            fieldName="dob"
+                            record={localPatient}
+                            setRecord={setLocalPatient}
+                        />
+
+                        <MyInput
+                            width={200}
                             required
                             column
                             fieldLabel="Sex at Birth"
@@ -122,19 +129,10 @@ const CreateNewPatient = ({ open, setOpen }) => {
                             record={localPatient}
                             setRecord={setLocalPatient}
                         />
-                        <MyInput
-                            width={165}
-                            column
-                            fieldType="date"
-                            fieldLabel="DOB"
-                            fieldName="dob"
-                            record={localPatient}
-                            setRecord={setLocalPatient}
-                        />
                         <br />
                         <MyInput
                             column
-                            width={165}
+                            width={200}
                             required
                             fieldName="phoneNumber"
                             fieldLabel="Primary Mobile Number"
@@ -143,7 +141,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                         />
                         <MyInput
                             column
-                            width={165}
+                            width={200}
                             fieldLabel="Private Patient"
                             fieldType="checkbox"
                             fieldName="privatePatient"
@@ -158,9 +156,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
                         <span className="custom-text">
                             Document Information
                         </span>
-                        <br />
                         <MyInput
-                            width={165}
+                            width={200}
                             required
                             column
                             fieldLabel="Document Type"
@@ -174,7 +171,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                         />
                         <MyInput
                             required
-                            width={165}
+                            width={200}
                             column
                             fieldLabel="Document Country"
                             fieldType="select"
@@ -187,7 +184,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                             disabled={localPatient.documentTypeLkey === 'NO_DOC'}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
                             required
                             column
                             fieldLabel="Document Number"
@@ -200,13 +197,12 @@ const CreateNewPatient = ({ open, setOpen }) => {
                 );
             case 2:
                 return (
-                    <Form fluid layout="inline">
+                    <Form fluid layout="inline" >
                         <span className="custom-text">
                             Contact Information
                         </span>
-                        <br />
                         <MyInput
-                            width={165}
+                            width={200}
                             column
                             fieldLabel="Secondary Number"
                             fieldName="secondaryMobileNumber"
@@ -214,21 +210,21 @@ const CreateNewPatient = ({ open, setOpen }) => {
                             setRecord={setLocalPatient}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
                             column
                             fieldName="homePhone"
                             record={localPatient}
                             setRecord={setLocalPatient}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
                             column
                             fieldName="email"
                             record={localPatient}
                             setRecord={setLocalPatient}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
                             column
                             fieldLabel="Preferred Way of Contact"
                             fieldType="select"
@@ -240,26 +236,24 @@ const CreateNewPatient = ({ open, setOpen }) => {
                             setRecord={setLocalPatient}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
                             column
                             fieldName="emergencyContactName"
                             record={localPatient}
                             setRecord={setLocalPatient}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
                             column
                             fieldName="emergencyContactPhone"
                             record={localPatient}
                             setRecord={setLocalPatient}
                         />
-                        <br />
                         <span className="custom-text">
                             Address Information
                         </span>
-                        <br />
                         <MyInput
-                            width={165}
+                            width={200}
                             column
                             fieldLabel="Country"
                             fieldType="select"
@@ -271,7 +265,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                             setRecord={setLocalPatient}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
                             column
                             fieldLabel="State/Province"
                             fieldType="select"
@@ -283,7 +277,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                             setRecord={setLocalPatient}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
                             column
                             fieldLabel="City"
                             fieldType="select"
@@ -295,7 +289,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                             setRecord={setLocalPatient}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
                             column
                             fieldLabel="Postal/ZIP code"
                             fieldName="postalCode"
@@ -303,6 +297,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                             setRecord={setLocalPatient}
                         />
                     </Form>
+
                 );
             case 3:
                 return (
@@ -310,10 +305,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
                         <span className="custom-text">
                             Insurance Information
                         </span>
-                        <br />
                         <MyInput
                             column
-                            width={165}
+                            width={200}
                             fieldLabel="Insurance Provider"
                             fieldType="select"
                             fieldName="insuranceProviderLkey"
@@ -325,7 +319,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                             disabled={!localPatient.key}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
                             column
                             fieldLabel="Insurance Policy Number"
                             fieldName="insurancePolicyNumber"
@@ -334,7 +328,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                             disabled={!localPatient.key}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
                             column
                             fieldLabel="Insurance Plan Type"
                             fieldType="select"
@@ -347,7 +341,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                             disabled={!localPatient.key}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
                             column
                             fieldLabel="Group Number"
                             fieldName="groupNumber"
@@ -356,7 +350,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                             disabled={!localPatient.key}
                         />
                         <MyInput
-                            width={165}
+                            width={200}
                             column
                             fieldType="date"
                             fieldLabel="Expiration Date"
@@ -374,23 +368,26 @@ const CreateNewPatient = ({ open, setOpen }) => {
     useEffect(() => {
         if (savePatientMutation && savePatientMutation.status === 'fulfilled') {
             setLocalPatient(savePatientMutation.data);
+            if (localPatient.documentTypeLkey) {
+                setOpenNextDocument(true);
+            }
         }
     }, [savePatientMutation]);
     return (
         <MyModal
             open={open}
             setOpen={setOpen}
-            title="Quick Patient"
+            title="Patient Registration"
             steps={[
-                { title: 'Basic Info', icon: <FontAwesomeIcon icon={faUser} />, footer: <MyButton onClick={handleSave}>Save</MyButton> },
-                { title: 'Document', icon: <FontAwesomeIcon icon={faIdCard} />, footer: <MyButton onClick={handleSave} >Save</MyButton> },
+                { title: 'Basic Info', icon: <FontAwesomeIcon icon={faUser} />, disabledNext: !localPatient?.key, footer: <MyButton onClick={handleSave}>Save</MyButton> },
+                { title: 'Document', icon: <FontAwesomeIcon icon={faIdCard} />, disabledNext: !openNextDocument, footer: <MyButton onClick={handleSave} >Save</MyButton> },
                 { title: 'Contact', icon: <FontAwesomeIcon icon={faPhone} />, footer: <MyButton onClick={handleSave} >Save</MyButton> },
-                { title: 'Insurance', icon: <FontAwesomeIcon icon={faShieldHalved} />, footer: <MyButton onClick={goToPatientProfile} prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}>Create</MyButton> }
+                { title: 'Insurance', icon: <FontAwesomeIcon icon={faShieldHalved} />, footer: <MyButton onClick={handleSaveInsurance} >Save Insurance</MyButton> }
             ]}
-            size="xs"
+            size="480px"
             position='right'
             actionButtonLabel="Create"
-            actionButtonFunction={handleSave}
+            actionButtonFunction={() => { handleSave(); goToPatientProfile() }}
             content={conjureFormContent}
         />
     );
