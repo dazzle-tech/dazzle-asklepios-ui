@@ -1,6 +1,6 @@
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import { ApDiagnosticOrders, ApDiagnosticOrderTests, ApDiagnosticTest, ApPatientEncounterOrder } from '@/types/model-types';
+import { ApDiagnosticOrders, ApDiagnosticOrderTests, ApDiagnosticTest } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import {
     faLandMineOn,
@@ -8,14 +8,15 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import React, { useEffect, useState } from 'react';
+import { GrTestDesktop } from "react-icons/gr";
 import { MdModeEdit } from 'react-icons/md';
 import {
     Checkbox, Divider,
     Row,
-    SelectPicker, Table, Text, Tooltip, Whisper
+    SelectPicker
 } from 'rsuite';
 import './styles.less';
-const { Column, HeaderCell, Cell } = Table;
+
 
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
@@ -26,11 +27,8 @@ import {
     useSaveDiagnosticOrderMutation,
     useSaveDiagnosticOrderTestMutation
 } from '@/services/encounterService';
-import {
-    useGetDiagnosticsTestListQuery,
-} from '@/services/setupService';
-import { newApDiagnosticOrders, newApDiagnosticOrderTests, newApDiagnosticTest, newApPatientEncounterOrder } from '@/types/model-types-constructor';
-import { initialListRequest, initialListRequestAllValues, ListRequest, ListRequestAllValues } from '@/types/types';
+import { newApDiagnosticOrders, newApDiagnosticOrderTests, newApDiagnosticTest } from '@/types/model-types-constructor';
+import { initialListRequest, ListRequest } from '@/types/types';
 import CheckIcon from '@rsuite/icons/Check';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import PlusIcon from '@rsuite/icons/Plus';
@@ -41,10 +39,8 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
     const dispatch = useAppDispatch();
     const [showCanceled, setShowCanceled] = useState(true);
-    const [order, setOrder] = useState<ApPatientEncounterOrder>({ ...newApPatientEncounterOrder });
     const [test, setTest] = useState<ApDiagnosticTest>({ ...newApDiagnosticTest });
-    const [flag, setFlag] = useState('');
-    const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest});
+    const [flag, setFlag] = useState(false);
     const [listOrderRequest, setListOrderRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -81,6 +77,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         ]
     });
     const [orders, setOrders] = useState<ApDiagnosticOrders>({ ...newApDiagnosticOrders });
+
     const [orderTest, setOrderTest] = useState<ApDiagnosticOrderTests>({ ...newApDiagnosticOrderTests, processingStatusLkey: '6055029972709625' });
     const [listOrdersTestRequest, setListOrdersTestRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -103,7 +100,6 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         ]
     });
     const [selectedRows, setSelectedRows] = useState([]);
-    const { data: testsList } = useGetDiagnosticsTestListQuery(listTestRequest);
     const { data: ordersList, refetch: ordersRefetch } = useGetDiagnosticOrderQuery(listOrdersRequest);
     const { data: orderTestList, refetch: orderTestRefetch, isLoading: loadTests } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
     const [saveOrders, saveOrdersMutation] = useSaveDiagnosticOrderMutation();
@@ -115,7 +111,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
     const [isdraft, setIsDraft] = useState(false);
     const isSelected = rowData => {
-        if (rowData && order && rowData.key === order.key) {
+        if (rowData && orderTest && rowData.key === orderTest.key) {
             return 'selected-row';
         } else return '';
     };
@@ -184,7 +180,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
     }, [orders])
     //
 
-   
+
 
     const OpenDetailsModel = () => {
         setOpenDetailsModel(true);
@@ -264,27 +260,20 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
 
             }).unwrap();
-            dispatch(notify('saved  Successfully'));
+            dispatch(notify({msg:'Saved  Successfully' ,sev:"success"}));
 
-            orderTestRefetch().then(() => {
-                console.log("Refetch complete");
-            }).catch((error) => {
-                console.error("Refetch failed:", error);
-            });
+            orderTestRefetch();
             setFlag(true);
         }
         catch (error) {
 
             console.error("Encounter save failed:", error);
-            dispatch(notify('Save Failed'));
+            dispatch(notify({msg:'Save Failed',sev:"error"}));
         }
     };
     const handleSaveOrders = async () => {
-
-
         if (patient && encounter) {
             try {
-
                 const response = await saveOrders({
                     ...newApDiagnosticOrders,
                     patientKey: patient.key,
@@ -362,7 +351,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         {
             key: 'check',
             title: <Translate>#</Translate>,
-            flexGrow:1,
+            flexGrow: 1,
             fullText: true,
             render: rowData => (
                 <Checkbox
@@ -379,12 +368,8 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             flexGrow: 1,
             fullText: true,
             render: rowData => {
-
-                const matchedTest = testsList?.object?.find(item => item.testTypeLkey === rowData.test.testTypeLkey);
-
-                return matchedTest ? matchedTest.
-                    testTypeLvalue
-                    .lovDisplayVale : "";
+              
+                return rowData.test?.testTypeLvalue?.lovDisplayVale?? "";
             }
         },
         {
@@ -491,23 +476,23 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             title: <Translate>Submit Date</Translate>,
             flexGrow: 2,
             fullText: true,
-            render:rowData => rowData.submitDate ? new Date(rowData.submitDate).toLocaleString() : ""
+            render: rowData => rowData.submitDate ? new Date(rowData.submitDate).toLocaleString() : ""
 
         }
         ,
         {
             key: "details",
-           
+
             title: <Translate>Add details</Translate>,
             flexGrow: 2,
             fullText: true,
-            render:rowData => {
-                return( <MdModeEdit
+            render: rowData => {
+                return (<MdModeEdit
                     title="Edit"
                     size={24}
                     fill="var(--primary-gray)"
                     onClick={OpenDetailsModel}
-                  />)
+                />)
             }
 
         }
@@ -534,57 +519,22 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                         }}
 
                     />
-                    <div className='form-search-container'>
-                        <Text> Order # {orders.orderId}</Text>
-                        <div>
-                            {orders.key && orders.statusLkey !== '1804482322306061' ? (
-                                <Whisper
-                                    placement="top"
-                                    trigger="hover"
-                                    speaker={<Tooltip>Urgent</Tooltip>}
-                                >
-                                    <FontAwesomeIcon
-                                        icon={faLandMineOn}
-                                        onClick={() =>
-                                            setOrders({ ...orders, isUrgent: !orders.isUrgent })
-                                        }
-                                        style={{
-
-                                            color: orders.isUrgent ? 'red' : 'grey',
-                                            cursor: 'pointer',
-                                        }}
-                                    />
-                                </Whisper>
-                            ) : (
-                                <Whisper
-                                    placement="top"
-                                    trigger="hover"
-                                    speaker={<Tooltip>Urgent</Tooltip>}
-                                >
-                                    <FontAwesomeIcon
-                                        icon={faLandMineOn}
-                                        style={{
-
-                                            color: 'grey',
-                                            opacity: 0.5,
-                                            cursor: 'not-allowed',
-                                        }}
-                                    />
-                                </Whisper>
-                            )}
-
-                            <MyButton
-                                appearance="subtle"
-                                size='small'
-                                onClick={handleSaveOrders}
-                                disabled={isdraft}
-                            ><PlusIcon /></MyButton>
-
-                        </div>
-                    </div>
 
                     <div className='buttons-sect'>
+                        <MyButton
+                            onClick={handleSaveOrders}
+                            disabled={isdraft}
+                            prefixIcon={() => <PlusIcon />}
+                        >New Order</MyButton>
+                        <MyButton
+                        prefixIcon={()=> <FontAwesomeIcon icon={faLandMineOn}    />}
+                            onClick={() =>
+                                setOrders({ ...orders, isUrgent: !orders.isUrgent })
+                            }
+                           backgroundColor={orders.isUrgent?"var(--primary-orange)":'var(--primary-blue)'}
 
+                        >
+                          Urgent</MyButton>
 
                         <MyButton
                             onClick={handleSubmitPres}
@@ -628,8 +578,16 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
                     <div className='top-container'>
 
-                      <TestDropdown handleItemClick={handleItemClick} disabled={orders.key == null} flag={flag}/>
-
+                        <TestDropdown handleItemClick={handleItemClick} disabled={orders.key == null} flag={flag} />
+                        <div className='icon-style'>
+                            <GrTestDesktop size={18} />
+                        </div>
+                        <div>
+                            <div className='prescripton-word-style'>Order</div>
+                            <div className='prescripton-number-style'>
+                                {orders?.orderId || "_"}
+                            </div>
+                        </div>
                         <div className="buttons-sect">
                             <Checkbox
                                 checked={!showCanceled}
@@ -658,7 +616,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             <Row >   </Row>
             <Row style={{ margin: '5px' }}>
 
-             
+
 
                 <MyTable
                     columns={tableColumns}
@@ -682,7 +640,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             </Row>
 
             <DetailsModal
-                order={order}
+                order={orders}
                 test={test}
                 openDetailsModel={openDetailsModel}
                 setOpenDetailsModel={setOpenDetailsModel}
