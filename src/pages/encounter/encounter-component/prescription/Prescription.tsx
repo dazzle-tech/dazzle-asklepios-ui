@@ -244,7 +244,7 @@ const Prescription = ({ edit, patient, encounter }) => {
         })
 
         setCustomeinst({ dose: null, frequency: null, unit: null, roa: null });
-
+        
 
     }
 
@@ -481,7 +481,7 @@ const Prescription = ({ edit, patient, encounter }) => {
     ];
     return (
         < >
-            <div className={edit ? "disabled-panel bt-div" : "bt-div"} >
+            <div className="bt-div" >
                 <div style={{ width: '500px' }}>
                     <SelectPicker
                         className='fill-width'
@@ -500,7 +500,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                 </div>
           
 
-                <div className='bt-right'>
+                <div className={`bt-right ${edit?"disabled-panel":""}`}>
                     <MyButton
                         onClick={handleSavePrescription}
                         disabled={isdraft}
@@ -565,10 +565,10 @@ const Prescription = ({ edit, patient, encounter }) => {
                 </div>
                 <div className='bt-right'>
                     <MyButton
-                        disabled={preKey ?
+                        disabled={!edit?preKey ?
                             prescriptions?.object?.find(pre =>
                                 pre.key === preKey
-                            )?.statusLkey === '1804482322306061' : true
+                            )?.statusLkey === '1804482322306061' : true:true
                         }
                         prefixIcon={() => <PlusIcon />}
                         onClick={() => {
@@ -614,8 +614,9 @@ const Prescription = ({ edit, patient, encounter }) => {
             ></MyTable>
 
 
-            <DetailsModal open={openDetailsModal}
-                setOpen={setOpenDetailsModal}
+            <DetailsModal
+            edit={edit}
+             open={openDetailsModal} setOpen={setOpenDetailsModal}
                 patient={patient}
                 encounter={encounter}
                 prescriptionMedication={prescriptionMedication}
