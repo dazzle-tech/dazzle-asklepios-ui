@@ -329,7 +329,7 @@ const Encounter = () => {
                     onClick={() =>
                       handleMenuItemClick(
                         <Warning
-                          edit={propsData.fromPage == 'PatientEMR'}
+                          edit={edit}
                           patient={propsData.patient}
                           encounter={propsData.encounter}
                         />
@@ -424,6 +424,7 @@ const Encounter = () => {
                       handleMenuItemClick(
                         <VaccinationTab
                           disabled={false}
+                          edit={edit}
                           patient={propsData.patient}
                           encounter={propsData.encounter}
                         />

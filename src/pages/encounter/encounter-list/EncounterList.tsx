@@ -125,7 +125,7 @@ const EncounterList = () => {
         state: { info: 'toNurse', patient: patientData, encounter: encounterData }
       });
     } else {
-      navigate(targetPath, { state: { patient: patientData, encounter: encounterData ,edit:false } });
+      navigate(targetPath, { state: { patient: patientData, encounter: encounterData ,edit:encounterData.encounterStatusLvalue.valueCode=="CLOSED"} });
     }
   };
 
