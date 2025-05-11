@@ -21,7 +21,7 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
     const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
     const dispatch = useAppDispatch();
 
-  // Fetch LOV data for various fields
+    // Fetch LOV data for various fields
     const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
     const { data: bodyPartsLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
     const { data: adversLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ADVERS_EFFECTS');
@@ -129,6 +129,15 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
             <MyInput
                 column
                 width={200}
+                fieldLabel="Pain Characteristics"
+                fieldName="painCharacteristics"
+                record={complaintSymptoms}
+                setRecord={setComplaintSymptoms}
+                disabled={isDisabledField}
+            />
+            <MyInput
+                column
+                width={200}
                 fieldType="number"
                 fieldLabel="Duration"
                 fieldName="duration"
@@ -149,15 +158,6 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
                 setRecord={setComplaintSymptoms}
                 disabled={isDisabledField}
                 searchable={false}
-            />
-            <MyInput
-                column
-                width={200}
-                fieldLabel="Pain Characteristics"
-                fieldName="painCharacteristics"
-                record={complaintSymptoms}
-                setRecord={setComplaintSymptoms}
-                disabled={isDisabledField}
             />
             <MyInput
                 column
@@ -193,6 +193,15 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
             <MyInput
                 column
                 width={200}
+                fieldLabel="Relieving Factors"
+                fieldName="relievingFactors"
+                record={complaintSymptoms}
+                setRecord={setComplaintSymptoms}
+                disabled={isDisabledField}
+            />
+            <MyInput
+                column
+                width={200}
                 fieldLabel="Associated Symptoms"
                 fieldType="select"
                 fieldName="associatedSymptomsLkey"
@@ -221,15 +230,6 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
                 setRecord={setComplaintSymptoms}
                 disabled={isDisabledField}
             />
-            <MyInput
-                column
-                width={200}
-                fieldLabel="Relieving Factors"
-                fieldName="relievingFactors"
-                record={complaintSymptoms}
-                setRecord={setComplaintSymptoms}
-                disabled={isDisabledField}
-            />
         </Form>
     )
     return (
@@ -244,7 +244,7 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
             size='500px'
             steps={[{
                 title: "Chief Complain",
-                icon: <FontAwesomeIcon icon={faHeartPulse}/>,
+                icon: <FontAwesomeIcon icon={faHeartPulse} />,
                 footer: <MyButton appearance='ghost' onClick={handleClearField} >Clear</MyButton>
             },]}
             content={content}
