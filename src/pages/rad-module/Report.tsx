@@ -14,7 +14,7 @@ import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import React, { useEffect, useRef, useState } from "react";
 import { HStack, Tooltip, Whisper } from "rsuite";
 import { forwardRef, useImperativeHandle } from 'react';
-import AddReportModal from "./addReportModal";
+import AddReportModal from "./AddReportModal";
 type props = {
     report: any,
     setReport: any,
