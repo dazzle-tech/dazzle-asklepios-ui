@@ -13,13 +13,14 @@ import { FaUndo } from 'react-icons/fa';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import { FaAddressCard } from 'react-icons/fa';
 
 const ViewLicenses = ({ open, setOpen, user, width }) => {
   const dispatch = useAppDispatch();
   const userKey = user.key;
   const [license, setLicense] = useState();
-  const [openConfirmDeleteLicenseModal, setOpenConfirmDeleteLicenseModal] =
-    useState<boolean>(false);
+  const [openConfirmDeleteLicenseModal, setOpenConfirmDeleteLicenseModal] = useState<boolean>(false);
+  const[stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>("delete");
 
   const [licenseListRequest, setLicenseListRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -120,7 +121,7 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
                 title="Deactivate"
                 size={24}
                 fill="var(--primary-pink)"
-                onClick={() => setOpenConfirmDeleteLicenseModal(true)}
+                onClick={() => {setStateOfDeleteUserModal("deactivate"); setOpenConfirmDeleteLicenseModal(true);}}
               />
             )}
           </div>
@@ -158,6 +159,7 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
               setOpen={setOpenConfirmDeleteLicenseModal}
               itemToDelete="User"
               actionButtonFunction={() => handleRemoveLicense(license)}
+              actionType={stateOfDeleteUserModal}
             />
           </div>
         );
@@ -172,7 +174,7 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
       content={conjureFormContent}
       hideActionBtn
       size={width > 600 ? '570px' : '300px'}
-      //   steps={[{ title: 'Departments', icon: faUnlockKeyhole }]}
+      steps={[{ title: 'License', icon: <FaAddressCard /> }]}
     />
   );
 };

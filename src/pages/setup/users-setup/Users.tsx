@@ -53,6 +53,7 @@ const Users = () => {
   const [width, setWidth] = useState<number>(window.innerWidth);
 
   const [openConfirmDeleteUserModal, setOpenConfirmDeleteUserModal] = useState<boolean>(false);
+  const[stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>("delete");
   const [popupOpen, setPopupOpen] = useState(false);
   const [licensePopupOpen, setLicensePopupOpen] = useState(false);
   const [departmentsPopupOpen, setDepartmentsPopupOpen] = useState(false);
@@ -286,7 +287,7 @@ const Users = () => {
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
-          onClick={() => setOpenConfirmDeleteUserModal(true)}
+          onClick={() =>{setStateOfDeleteUserModal("deactivate"); setOpenConfirmDeleteUserModal(true);}}
         />
       ) : (
         <FaUndo
@@ -294,7 +295,7 @@ const Users = () => {
           title="Activate"
           size={24}
           fill="var(--primary-gray)"
-          onClick={() => setOpenConfirmDeleteUserModal(true)}
+          onClick={() => {setStateOfDeleteUserModal("reactivate"); setOpenConfirmDeleteUserModal(true);}}
         />
       )}
     </div>
@@ -483,13 +484,15 @@ const Users = () => {
         open={newDepartmentPopupOpen}
         setOpen={setNewDepartmentPopupOpen}
         user={user}
+        width={width}
       />
-      <AddLicense open={newLicensePopupOpen} setOpen={setNewLicensePopupOpen} user={user} />
+      <AddLicense open={newLicensePopupOpen} setOpen={setNewLicensePopupOpen} user={user} width={width} />
       <DeletionConfirmationModal
         open={openConfirmDeleteUserModal}
         setOpen={setOpenConfirmDeleteUserModal}
         itemToDelete="User"
         actionButtonFunction={() => handleDactivateUser(user)}
+        actionType={stateOfDeleteUserModal}
       />
     </div>
   );

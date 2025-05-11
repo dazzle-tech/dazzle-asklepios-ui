@@ -14,13 +14,14 @@ import { FaUndo } from 'react-icons/fa';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import { FaBuilding } from 'react-icons/fa';
 
 const ViewDepartments = ({ open, setOpen, user, width }) => {
   const dispatch = useAppDispatch();
 
   const [department, setDepartment] = useState();
-  const [openConfirmDeleteDepartmentModal, setOpenConfirmDeleteDepartmentModal] =
-    useState<boolean>(false);
+  const [openConfirmDeleteDepartmentModal, setOpenConfirmDeleteDepartmentModal] = useState<boolean>(false);
+  const[stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>("delete");
   // Fetch user departments list response
   const { data: userDepartmentsResponse, refetch: refetchUserDepartments } =
     useGetUserDepartmentsQuery(user?.key);
@@ -76,7 +77,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
             title="Deactivate"
             size={24}
             fill="var(--primary-pink)"
-            onClick={() => setOpenConfirmDeleteDepartmentModal(true)}
+            onClick={() => {setStateOfDeleteUserModal("deactivate"); setOpenConfirmDeleteDepartmentModal(true);}}
           />
         );
       }
@@ -112,6 +113,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
               setOpen={setOpenConfirmDeleteDepartmentModal}
               itemToDelete="User"
               actionButtonFunction={() => handleRemoveUserFacilityDepartment(department)}
+              actionType={stateOfDeleteUserModal}
             />
           </div>
         );
@@ -126,7 +128,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
       content={conjureFormContent}
       hideActionBtn
       size={width > 600 ? '570px' : '300px'}
-      //   steps={[{ title: 'Departments', icon: faUnlockKeyhole }]}
+      steps={[{ title: 'Departments', icon: <FaBuilding /> }]}
     />
   );
 };

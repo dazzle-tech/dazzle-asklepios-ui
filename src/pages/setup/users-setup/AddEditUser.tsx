@@ -6,6 +6,7 @@ import { Form } from 'rsuite';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import clsx from 'clsx';
 import { initialListRequest } from '@/types/types';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import './styles.less';
 const AddEditUser = ({
   open,
@@ -182,7 +183,7 @@ const AddEditUser = ({
       actionButtonLabel={user?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       size={width > 600 ? '570px' : '300px'}
-      steps={[{ title: 'User Info', icon: faUser }]}
+      steps={[{ title: 'User Info', icon:<FontAwesomeIcon icon={ faUser }/> }]}
     />
   );
 };

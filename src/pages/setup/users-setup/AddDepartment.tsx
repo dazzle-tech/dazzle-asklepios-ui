@@ -3,24 +3,23 @@ import React, { useEffect, useState } from 'react';
 import { useGetFacilitiesQuery, useSaveFacilityDepartmentMutation } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
-import clsx from 'clsx';
 import { initialListRequest } from '@/types/types';
 import './styles.less';
-import { ApFacility } from '@/types/model-types';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import { FaBuilding } from 'react-icons/fa';
 
 const AddDepartment = ({
   open,
   setOpen,
-  //   width,
+  width,
   user
 }) => {
   const dispatch = useAppDispatch();
 
   const [selectedDepartment, setSelectedDepartment] = useState({ department: '' });
   const [facilityRecord, setFacilityRecord] = useState({ facility: ' ' });
-  const [selectedFacility, setSelectedFacility] = useState<ApFacility>();
+  const [selectedFacility, setSelectedFacility] = useState<any>();
   // Fetch Facilities list response
   const { data: facilityListResponse } = useGetFacilitiesQuery({
     ...initialListRequest,
@@ -71,7 +70,7 @@ const AddDepartment = ({
               selectDataValue="key"
               record={facilityRecord}
               setRecord={setFacilityRecord}
-              width={520}
+              width={width > 600 ? 520 : 250}
             />
             <MyInput
               column
@@ -83,7 +82,7 @@ const AddDepartment = ({
               selectDataValue="key"
               record={selectedDepartment}
               setRecord={setSelectedDepartment}
-              width={520}
+              width={width > 600 ? 520 : 250}
             />
           </Form>
         );
@@ -99,8 +98,8 @@ const AddDepartment = ({
       content={conjureFormContent}
       actionButtonLabel="Create"
       actionButtonFunction={handleFacilityDepartmentSave}
-      // size={width > 600 ? '570px' : '300px'}
-      //   steps={[{ title: 'User Info', icon: faUser }]}
+      size={width > 600 ? '570px' : '300px'}
+      steps={[{ title: 'User Info', icon: <FaBuilding /> }]}
     />
   );
 };

@@ -7,6 +7,7 @@ import './styles.less';
 import { Radio, RadioGroup } from 'rsuite';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import { RiLockPasswordFill } from 'react-icons/ri';
 
 const ResetPassword = ({
   open,
@@ -81,9 +82,7 @@ const ResetPassword = ({
       actionButtonLabel="Reset"
       actionButtonFunction={handleResetPassword}
       size={width > 600 ? '570px' : '300px'}
-      //  steps={[
-      //         { title: 'Reset Password', icon: faUnlockKeyhole }
-      //  ]}
+       steps={[{ title: 'Reset Password', icon: <RiLockPasswordFill /> }]}
     />
   );
 };

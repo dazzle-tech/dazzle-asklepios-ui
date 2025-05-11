@@ -3,17 +3,18 @@ import React, { useState } from 'react';
 import { useSaveUserMidicalLicenseMutation } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
-import clsx from 'clsx';
 import './styles.less';
 import { newApUserMedicalLicense } from '@/types/model-types-constructor';
 import { ApUserMedicalLicense } from '@/types/model-types';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import { FaAddressCard } from 'react-icons/fa';
 
 const AddLicense = ({
   open,
   setOpen,
-  user
+  user,
+  width
 }) => {
   const dispatch = useAppDispatch();
 
@@ -51,14 +52,14 @@ const AddLicense = ({
               required
               record={userLicense}
               setRecord={setUserLicense}
-              width={520}
+              width={width > 600 ? 520 : 250}
             />
             <MyInput
               fieldName="licenseNumber"
               required
               record={userLicense}
               setRecord={setUserLicense}
-              width={520}
+              width={width > 600 ? 520 : 250}
             />
             <MyInput
               fieldType="date"
@@ -66,7 +67,7 @@ const AddLicense = ({
               fieldName="validTo"
               record={userLicense}
               setRecord={setUserLicense}
-              width={520}
+              width={width > 600 ? 520 : 250}
             />
           </Form>
         );
@@ -82,8 +83,8 @@ const AddLicense = ({
       content={conjureFormContent}
       actionButtonLabel="Create"
       actionButtonFunction={handleSaveLicense}
-      // size={width > 600 ? '570px' : '300px'}
-      //   steps={[{ title: 'User Info', icon: faUser }]}
+      size={width > 600 ? '570px' : '300px'}
+      steps={[{ title: 'License Info', icon: <FaAddressCard /> }]}
     />
   );
 };
