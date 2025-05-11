@@ -22,7 +22,7 @@ import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import BackButton from '@/components/BackButton/BackButton';
 
-const EncounterPreObservations = () => {
+const EncounterPreObservations = ({}) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const propsData = location.state;
@@ -112,6 +112,7 @@ const EncounterPreObservations = () => {
               <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
                 <Tabs.Tab eventKey="1" title="Observations">
                   <Observations
+                  edit={propsData.edit}
                     ref={obsRef}
                     patient={propsData.patient}
                     encounter={propsData.encounter}

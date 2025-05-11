@@ -125,7 +125,7 @@ const EncounterList = () => {
         state: { info: 'toNurse', patient: patientData, encounter: encounterData }
       });
     } else {
-      navigate(targetPath, { state: { patient: patientData, encounter: encounterData } });
+      navigate(targetPath, { state: { patient: patientData, encounter: encounterData ,edit:false } });
     }
   };
 
