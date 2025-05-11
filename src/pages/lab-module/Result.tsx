@@ -96,6 +96,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
           dispatch(hideSystemLoader());
         }
       }, [saveResultMutation.isLoading]);
+
     useEffect(() => {
        
          resultFetch();
@@ -133,6 +134,8 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
         }));
 
     }, [test]);
+
+
    useEffect(() => {
      
        const updatedFilters = [
@@ -169,10 +172,13 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
    
     }
     , [resultFetch]);
+
+
     useEffect(()=>{
       
         resultFetch();
-    },[saveResultMutation.isSuccess])
+    },[saveResultMutation.isSuccess]);
+    //if can normal range type lov 
     const handleValueChange = async (value, rowData) => {
 
         const Response = await saveResult({ ...rowData, resultLkey: String(value) }).unwrap();
@@ -209,6 +215,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
         });
         setActiveRowKey(null)
     };
+    
     const joinValuesFromArray = (keys) => {
 
         return keys
