@@ -27,6 +27,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
   const [insuranceBrowsing, setInsuranceBrowsing] = useState(false);
   const [deleteInsurance] = useDeletePatientInsuranceMutation();
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [hideSaveBtn,setHideSaveBtn] = useState(false);
   // Define the table columns
   const columns = [
     {
@@ -102,6 +103,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
   const handleEditModal = () => {
     if (selectedInsurance) {
       setInsuranceModalOpen(true);
+      setHideSaveBtn(false);
     }
   };
   // Handle close insurance modal
@@ -115,6 +117,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
   const handleShowInsuranceDetails = () => {
     setInsuranceModalOpen(true);
     setInsuranceBrowsing(true);
+    setHideSaveBtn(true);
   };
 
   // Handle delete insurance
@@ -138,6 +141,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
           onClick={() => {
             setInsuranceModalOpen(true);
             setSelectedInsurance(newApPatientInsurance);
+            setHideSaveBtn(false);
           }}
           disabled={!localPatient.key}
           prefixIcon={() => <PlusRound />}
@@ -171,6 +175,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
         setOpen={setInsuranceModalOpen}
         insuranceBrowsing={insuranceBrowsing}
         onClose={handleCloseInsuranceModal}
+        hideSaveBtn={hideSaveBtn}
       />
       <SpecificCoverageModa
         insurance={selectedInsurance?.key}

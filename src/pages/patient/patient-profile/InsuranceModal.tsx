@@ -11,7 +11,17 @@ import { notify } from '@/utils/uiReducerActions';
 import { newApPatientInsurance } from '@/types/model-types-constructor';
 import MyModal from '@/components/MyModal/MyModal';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-const InsuranceModal = ({ open, setOpen, onClose, patientKey, refetchInsurance, editing, insuranceBrowsing, relations }) => {
+const InsuranceModal = ({ 
+  open, 
+  setOpen, 
+  onClose, 
+  patientKey, 
+  refetchInsurance, 
+  editing, 
+  insuranceBrowsing, 
+  relations, 
+  hideSaveBtn = false
+}) => {
   const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
   const [savePatientInsurance] = useSavePatientInsuranceMutation();
   const [relationsList, setRelationsList] = useState()
@@ -254,6 +264,7 @@ const InsuranceModal = ({ open, setOpen, onClose, patientKey, refetchInsurance, 
       ]}
       actionButtonLabel="Save"
       actionButtonFunction={handleSave}
+      hideActionBtn={hideSaveBtn}
     />
   );
 };
