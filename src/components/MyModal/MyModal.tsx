@@ -22,6 +22,7 @@ const MyModal = ({
     isDisabledActionBtn = false,
     actionButtonLabel = "Save",
     actionButtonFunction = null,
+    customClassName = "",
 }) => {
 
     const [internalStep, setInternalStep] = useState(0);
@@ -55,7 +56,7 @@ const MyModal = ({
             open={open}
             onClose={handleCancel}
             size={size}
-            className={modalClass}
+            className={`${modalClass} ${customClassName}`}
         >
             <Modal.Header>
                 <Modal.Title>
