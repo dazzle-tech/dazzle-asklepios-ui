@@ -21,7 +21,7 @@ import { faRightLeft } from "@fortawesome/free-solid-svg-icons";
 import Instructions from "./Instructions";
 import Substitues from "./Substitued";
 
-const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMedications, preKey, editing, patient, encounter, medicRefetch }) => {
+const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescriptionMedications, preKey, editing, patient, encounter, medicRefetch }) => {
     const dispatch = useAppDispatch();
     const [selectedGeneric, setSelectedGeneric] = useState(null);
     const [tags, setTags] = React.useState(null);
@@ -136,7 +136,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
           const value = foundItem?.lovDisplayVale;
       
           if (value) {
-            console.log("✅ Adding instruction value:", value);
+
            
             setInstructionList(prev => [...prev, foundItem?.lovDisplayVale]);
           } else {
@@ -284,7 +284,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
             rightTitle="Medication Order Details"
             leftContent={<> <ActiveIngrediantList selectedGeneric={selectedGeneric} /></>}
             rightContent={
-                <Row gutter={15}>
+                <Row gutter={15} className={edit?"disabled-panel":""}>
                     <Col xs={24} md={12}>
                         <Row className="rows-gap">
                             <Col md={20}>
