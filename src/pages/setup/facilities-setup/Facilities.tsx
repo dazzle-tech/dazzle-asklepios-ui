@@ -19,7 +19,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRotateRight } from '@fortawesome/free-solid-svg-icons';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import { FcDepartment } from 'react-icons/fc';
 import { RiInformationFill } from 'react-icons/ri';
 import { Address } from 'cluster';
 import ReactDOMServer from 'react-dom/server';
@@ -31,6 +30,7 @@ import './styles.less';
 import AddEditFacility from './AddEditFacility';
 import FacilityDepartment from './FacilityDepartment';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { FaBuilding } from 'react-icons/fa';
 const Facilities = () => {
 
   const dispatch = useAppDispatch();
@@ -96,8 +96,9 @@ const Facilities = () => {
   //icons column (View Departments, Add Details, Edite, Active/Deactivate)
   const iconsForActions = (rowData: ApFacility) => (
     <div className='container-of-icons-facilities'>
-      <FcDepartment
+      <FaBuilding
         title="View Departments"
+        fill="var(--primary-gray)"
         size={24}
         onClick={() => {
           setFacility(rowData);
@@ -155,7 +156,7 @@ const Facilities = () => {
         refetchFacility();
         dispatch(notify({ msg: 'The Facility was deactivated  successfully', sev: 'success' }));
       }).catch(() => {
-        dispatch(notify({ msg: 'Failed to delete this Facility', sev: 'error' }));
+        dispatch(notify({ msg: 'Failed to deactivated this Facility', sev: 'error' }));
       });
       setLoad(false);
       setOpenConfirmDeleteModel(false);
