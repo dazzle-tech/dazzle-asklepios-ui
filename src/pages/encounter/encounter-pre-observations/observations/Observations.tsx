@@ -164,7 +164,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
       },
       listRequest: patientObservationsListRequest
     }).unwrap().then(() => {
-      dispatch(notify('Added Successfully'));
+      dispatch(notify('Saved Successfully'));
     });;
   };
   useImperativeHandle(ref, () => ({
