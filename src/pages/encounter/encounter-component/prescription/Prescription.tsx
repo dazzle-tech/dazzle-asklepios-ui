@@ -164,7 +164,6 @@ const Prescription = ({ edit, patient, encounter }) => {
     }, [preKey]);
 
 
-
     const handleCheckboxChange = (key) => {
         setSelectedRows((prev) => {
             if (prev.includes(key)) {
@@ -175,9 +174,6 @@ const Prescription = ({ edit, patient, encounter }) => {
         });
     };
 
-    const joinValuesFromArray = (values) => {
-        return values.filter(Boolean).join(', ');
-    };
     const handleCancle = async () => {
         try {
             await Promise.all(
@@ -195,7 +191,6 @@ const Prescription = ({ edit, patient, encounter }) => {
             }).catch((error) => {
 
             });
-
 
             setSelectedRows([]);
 
@@ -275,7 +270,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                 ),
                 saveDraft: false
             }).then(() => {
-                dispatch(notify('Draft Cancelled'));
+                dispatch(notify({msg:'Draft Cancelled',sev:"success"}));
                 setIsDraft(false);
             })
         } catch (error) { }
@@ -503,9 +498,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                     />
 
                 </div>
-                <Text>Prescription# {prescriptions?.object?.find(prescription =>
-                    prescription.key === preKey
-                )?.prescriptionId}</Text>
+          
 
                 <div className='bt-right'>
                     <MyButton
@@ -564,7 +557,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                 </div>
                 <div>
                   <div className='prescripton-word-style'>Prescription</div>
-                  <div>
+                  <div className='prescripton-number-style'>
                   {prescriptions?.object?.find(prescription =>
                     prescription.key === preKey
                 )?.prescriptionId || "_"}

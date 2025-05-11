@@ -24,7 +24,7 @@ import Substitues from "./Substitued";
 const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMedications, preKey, editing, patient, encounter, medicRefetch }) => {
     const dispatch = useAppDispatch();
     const [selectedGeneric, setSelectedGeneric] = useState(null);
-    const [tags, setTags] = React.useState([]);
+    const [tags, setTags] = React.useState(null);
     const [searchKeyword, setSearchKeyword] = useState('');
     const [customeinst, setCustomeinst] = useState({
         dose: null,
@@ -74,12 +74,12 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
         if(prescriptionMedication.key!=null)           
         {
             setSelectedGeneric(genericMedicationListResponse?.object?.find(item => item.key ===prescriptionMedication.genericMedicationsKey))
-            setSelectedOption(prescriptionMedication.instructionsTypeLkey);
-            const prevadmin=prescriptionMedication.administrationInstructions.split(",")
+            setSelectedOption(prescriptionMedication?.instructionsTypeLkey);
+            const prevadmin=prescriptionMedication.administrationInstructions?.split(",")
             setInstructionList(prevadmin)
             
-            setTags(prescriptionMedication.parametersToMonitor.split(","))
-            if(prescriptionMedication.instructionsTypeLkey==="3010606785535008"){
+            setTags(prescriptionMedication?.parametersToMonitor.split(","))
+            if(prescriptionMedication?.instructionsTypeLkey==="3010606785535008"){
                
                 const instruc=customeInstructions?.object?.find(item => item.prescriptionMedicationsKey === prescriptionMedication.key)
          
@@ -183,7 +183,7 @@ const DetailsModal = ({ open, setOpen, prescriptionMedication, setPrescriptionMe
 
 
     const joinValuesFromArray = (values) => {
-        return values.filter(Boolean).join(', ');
+        return values?.filter(Boolean)?.join(', ');
     };
     const handleSaveMedication = async () => {
 

@@ -26,8 +26,6 @@ type props = {
     setListReportResponse: any
     patient: any,
     order: any
-
-
 }
 const Report = forwardRef<unknown, props>(({ report, setReport, saveReport, test, setTest, listReportResponse, setListReportResponse, saveTest, patient, order }, ref) => {
     useImperativeHandle(ref, () => ({
