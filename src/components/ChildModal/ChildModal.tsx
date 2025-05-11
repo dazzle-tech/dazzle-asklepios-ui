@@ -1,0 +1,65 @@
+import React, {useEffect } from 'react';
+import MyModal from '../MyModal/MyModal';
+import './styles.less';
+const SIZE_WIDTH_MAP = {
+    xs: 400,
+    sm: 600,
+    md: 800,
+    lg: 970,
+};
+const GAP = 20;
+const ChildModal = ({
+    open,
+    setOpen,
+    showChild,
+    setShowChild,
+    title,
+    mainContent,
+    mainStep = null,
+    childTitle,
+    childStep = null,
+    childContent,
+    mainSize = "xs",
+    childSize = "xs"
+}) => {
+    const mainWidth = SIZE_WIDTH_MAP[mainSize] || 300;
+    const childRight = mainWidth + GAP;
+
+    useEffect(() => {
+        if (showChild) {
+            const childModal = document.querySelector('.child-right-modal');
+            if (childModal instanceof HTMLElement) {
+                childModal.style.position = 'fixed';
+                childModal.style.top = '0px';
+                childModal.style.right = `${childRight}px`;
+                childModal.style.zIndex = '1051';
+            }
+        }
+    }, [showChild, childRight]);
+    return (
+        <>
+            {/* Main Modal */}
+            <MyModal
+                open={open}
+                setOpen={(val) => { setOpen(val); if (!val) setShowChild(false); }}
+                title={title}
+                steps={mainStep}
+                size={mainSize}
+                position="right"
+                content={mainContent} />
+            {/* Child Modal */}
+            <MyModal
+                open={showChild}
+                setOpen={setShowChild}
+                steps={childStep}
+                title={childTitle}
+                size={childSize}
+                content={() => childContent}
+                hideActionBtn
+                customClassName="child-right-modal"
+            />
+        </>
+    );
+};
+
+export default ChildModal;

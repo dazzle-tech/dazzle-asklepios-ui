@@ -128,7 +128,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly }
                 selectDataLabel="lovDisplayVale"
                 selectDataValue="key"
                 record={localEncounter}
-                setRecord={setLocalEncounter}
+                setRecord={() => { }} // No updates allowed
                 disabled={isReadOnly}
             />
             <MyInput
