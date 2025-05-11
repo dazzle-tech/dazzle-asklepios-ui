@@ -312,7 +312,7 @@ const Encounter = () => {
                     onClick={() =>
                       handleMenuItemClick(
                         <Allergies
-                          edit={propsData.fromPage == 'PatientEMR'}
+                          edit={edit}
                           patient={propsData.patient}
                           encounter={propsData.encounter}
                         />
