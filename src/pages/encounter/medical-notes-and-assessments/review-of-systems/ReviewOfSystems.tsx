@@ -25,7 +25,7 @@ import { newApLovValues } from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
 import './styles.less';
 import Summary from './Summery';
-const ReviewOfSystems = ({ patient, encounter }) => {
+const ReviewOfSystems = ({edit, patient, encounter }) => {
 
   const [openModel, setOpenModel] = useState(false);
   const dispatch = useAppDispatch();
@@ -118,6 +118,7 @@ const ReviewOfSystems = ({ patient, encounter }) => {
         flexGrow: 1,
         render: rowData => (
           <Checkbox
+          disabled={edit}
             onChange={(value, checked) => {
               
               if (checked) {
@@ -138,7 +139,7 @@ const ReviewOfSystems = ({ patient, encounter }) => {
                   bodySystemDetailKey: rowData.key,
                   notes: mainData[rowData.key] ? mainData[rowData.key].notes : ''
                 }).unwrap();
-                dispatch(notify('Findings Deleted Successfully'));
+                dispatch(notify({msg:'Findings Deleted Successfully',sev:"success"}));
                 refetch();
               }
             }}
@@ -158,7 +159,7 @@ const ReviewOfSystems = ({ patient, encounter }) => {
         flexGrow: 4,
         render:rowData => (
           <Input
-            disabled={!mainData[rowData.key]}
+            disabled={(!mainData[rowData.key]) &&(edit)}
             value={mainData[rowData.key] ? mainData[rowData.key].notes : ''}
             onChange={e => {
               setMainData({

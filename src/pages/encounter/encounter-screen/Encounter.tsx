@@ -70,7 +70,7 @@ const Encounter = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const propsData = location.state;
-  const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...propsData.encounter });
+  const [localEncounter, setLocalEncounter] = useState<any>({ ...propsData.encounter });
   const divContent = (
     <div style={{ display: 'flex' }}>
       <h5>Clinical Visit</h5>
@@ -87,6 +87,7 @@ const Encounter = () => {
   const [medicalSheetSourceKey, setMedicalSheetSourceKey] = useState<string | undefined>();
   const [medicalSheetRowSourceKey, setMedicalSheetRowSourceKey] = useState<string | undefined>();
   const [selectedResources, setSelectedResources] = useState([]);
+  const[edit,setEdit]=useState(false);
   const {
     data: appointments,
     refetch: refitchAppointments,
@@ -141,8 +142,13 @@ const Encounter = () => {
     if (!propsData.encounter) {
       navigate('/encounter-list');
     }
+    else{
+      setEdit(propsData.fromPage == 'PatientEMR' || localEncounter.encounterStatusLvalue.valueCode=="CLOSED");
+    }
   }, []);
-
+ useEffect(()=>{
+  console.log(edit)
+ },[edit])
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
@@ -274,7 +280,7 @@ const Encounter = () => {
                     onClick={() =>
                       handleMenuItemClick(
                         <SOAP
-                          edit={propsData.fromPage == 'PatientEMR'}
+                          edit={edit}
                           patient={propsData.patient}
                           encounter={localEncounter}
                           setEncounter={setLocalEncounter}

@@ -272,7 +272,7 @@ const SOAP = ({ edit, patient, encounter, setEncounter }) => {
         </Tabs.Tab>
         <Tabs.Tab eventKey="2" title="Physical Examination & Findings">
 
-            <ReviewOfSystems patient={patient} encounter={encounter} />
+            <ReviewOfSystems patient={patient} encounter={encounter} edit={edit} />
          
         </Tabs.Tab>
         <Tabs.Tab eventKey="3" title="Physical Examination & Findings BY Image">
