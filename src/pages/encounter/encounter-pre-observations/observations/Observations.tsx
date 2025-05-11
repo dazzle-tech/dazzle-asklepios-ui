@@ -34,13 +34,14 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import MyLabel from '@/components/MyLabel';
 type ObservationsProps = {
   patient: any;         
-  encounter: any;     
+  encounter: any;  
+  edit:boolean;   
 };
 export type ObservationsRef = {
   handleSave: () => void;
 };
 const Observations = forwardRef<ObservationsRef, ObservationsProps>(
-  ({ patient, encounter }, ref) => {
+  ({ patient, encounter,edit }, ref) => {
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...patient })
   const dispatch = useAppDispatch();
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
@@ -197,7 +198,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
 
   return (
    
-      <div ref={ref} className='basuc-div'>
+      <div ref={ref} className={`basuc-div ${edit ? "disabled-panel" : ""}`}>
 
         < div className='container-Column'>
           <div className='container-form'>

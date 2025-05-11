@@ -298,7 +298,7 @@ const Encounter = () => {
                     //!patientSlice.encounter.editable
                     onClick={() =>
                       handleMenuItemClick(
-                        <Observations patient={propsData.patient} encounter={propsData.encounter} />
+                        <Observations patient={propsData.patient} encounter={propsData.encounter} edit={edit}/>
                       )
                     }
                   >
