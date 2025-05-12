@@ -496,6 +496,7 @@ export const newApConsultationOrder:modelTypes.ApConsultationOrder = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	cancellationReason:'',
 } 
 
 export const newApCpt:modelTypes.ApCpt = { 

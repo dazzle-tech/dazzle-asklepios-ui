@@ -495,6 +495,7 @@ export interface ApConsultationOrder {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	cancellationReason:string;
 } 
 
 export interface ApCpt { 
