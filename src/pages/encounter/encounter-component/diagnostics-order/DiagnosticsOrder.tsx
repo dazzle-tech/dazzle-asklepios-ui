@@ -178,7 +178,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         }));
 
     }, [orders])
-    //
+  
 
 
 
@@ -522,8 +522,9 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
                     <div className='buttons-sect'>
                         <MyButton
+
                             onClick={handleSaveOrders}
-                            disabled={isdraft}
+                            disabled={!edit? isdraft:true}
                             prefixIcon={() => <PlusIcon />}
                         >New Order</MyButton>
                         <MyButton
@@ -532,6 +533,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                                 setOrders({ ...orders, isUrgent: !orders.isUrgent })
                             }
                            backgroundColor={orders.isUrgent?"var(--primary-orange)":'var(--primary-blue)'}
+                           disabled={!edit?!orderTest.key:true}
 
                         >
                           Urgent</MyButton>
@@ -624,7 +626,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                     sortType={listOrderRequest.sortType}
                     loading={loadTests}
                     onSortChange={(sortBy, sortType) => {
-                        setListRequest({ ...listOrderRequest, sortBy, sortType });
+                        setListOrderRequest({ ...listOrderRequest, sortBy, sortType });
                     }}
 
 
