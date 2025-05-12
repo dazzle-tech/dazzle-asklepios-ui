@@ -37,8 +37,6 @@ import { notify } from '@/utils/uiReducerActions';
 import MyButton from '@/components/MyButton/MyButton';
 import ResetPassword from './ResetPassword';
 import './styles.less';
-import AddDepartment from './AddDepartment';
-import AddLicense from './AddLicense';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 const Users = () => {
   const dispatch = useAppDispatch();
@@ -58,8 +56,6 @@ const Users = () => {
   const [licensePopupOpen, setLicensePopupOpen] = useState(false);
   const [departmentsPopupOpen, setDepartmentsPopupOpen] = useState(false);
   const [resetPasswordPopupOpen, setResetPasswordPopupOpen] = useState<boolean>();
-  const [newDepartmentPopupOpen, setNewDepartmentPopupOpen] = useState(false);
-  const [newLicensePopupOpen, setNewLicensePopupOpen] = useState(false);
   
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   // Save user
@@ -182,7 +178,6 @@ const Users = () => {
       setReadyUser(updatedUser);
       refetchUsers();
       refetchFacility();
-      setNewDepartmentPopupOpen(false);
       setPopupOpen(false);
     } catch (error) {
       dispatch(notify({ msg: 'Failed to save this User', sev: 'error' }));
@@ -480,13 +475,6 @@ const Users = () => {
       />
       <ViewDepartments open={departmentsPopupOpen} setOpen={setDepartmentsPopupOpen} user={user} width={width} />
       <ViewLicenses open={licensePopupOpen} setOpen={setLicensePopupOpen} user={user} width={width} />
-      <AddDepartment
-        open={newDepartmentPopupOpen}
-        setOpen={setNewDepartmentPopupOpen}
-        user={user}
-        width={width}
-      />
-      <AddLicense open={newLicensePopupOpen} setOpen={setNewLicensePopupOpen} user={user} width={width} />
       <DeletionConfirmationModal
         open={openConfirmDeleteUserModal}
         setOpen={setOpenConfirmDeleteUserModal}
