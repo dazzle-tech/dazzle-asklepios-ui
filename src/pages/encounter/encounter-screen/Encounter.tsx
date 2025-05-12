@@ -374,6 +374,7 @@ const Encounter = () => {
                     onClick={() =>
                       handleMenuItemClick(
                         <OptometricExam
+                          edit={edit}
                           patient={propsData.patient}
                           encounter={propsData.encounter}
                         />

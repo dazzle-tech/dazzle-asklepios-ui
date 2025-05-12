@@ -12,7 +12,7 @@ import { useSaveOptometricExamMutation } from '@/services/encounterService';
 import { newApOptometricExam } from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
 import AdvancedModal from '@/components/AdvancedModal';
-const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject, refetch, secondSelectedicd10, setSecondSelectedicd10, selectedicd10, setSelectedIcd10, timeM }) => {
+const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject, refetch, secondSelectedicd10, setSecondSelectedicd10, selectedicd10, setSelectedIcd10, timeM,edit }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [optometricExam, setOptometricExam] = useState<any>(optometricObject);
     const [openTest, setOpenTest] = useState("Visual Acuity Test");
@@ -213,6 +213,7 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
     );
     // Right Content Modal
     const rightContent = (
+        <div className={edit?"disabled-panel":""}>
         <Form fluid layout="inline">
             <MyInput
                 width={200}
@@ -674,7 +675,7 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
                     disabled={isDisabledField}
                 />
             </>}
-        </Form>
+        </Form></div>
     );
     return (
         <AdvancedModal
@@ -686,6 +687,7 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
             size='750px'
             leftWidth='40%'
             rightWidth='60%'
+            
             actionButtonFunction={handleSave}
             footerButtons={<>
                 <MyButton appearance='ghost' onClick={handleClearField}>Clear</MyButton>
@@ -694,7 +696,7 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
             }
             rightContent={rightContent}
             leftContent={liftContent}
-            isDisabledActionBtn={isDisabledField}
+            isDisabledActionBtn={!edit ? isDisabledField:true}
         ></AdvancedModal>
     );
 };
