@@ -13,7 +13,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import AddPsychologicalExam from './AddPsychologicalExam';
 import CancellationModal from '@/components/CancellationModal';
 import MyTable from '@/components/MyTable';
-const PsychologicalExam = ({ patient, encounter }) => {
+const PsychologicalExam = ({ patient, encounter,edit }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [openAddModal, setOpenAddModal] = useState(false);
     const [psychologicalExam, setPsychologicalExam] = useState<ApPsychologicalExam>({ ...newApPsychologicalExam });
@@ -303,9 +303,9 @@ const PsychologicalExam = ({ patient, encounter }) => {
     ];
     return (
         <div>
-            <AddPsychologicalExam open={openAddModal} setOpen={setOpenAddModal} patient={patient} encounter={encounter} encounterPsychologicalExam={psychologicalExam} />
+            <AddPsychologicalExam open={openAddModal} setOpen={setOpenAddModal} patient={patient} encounter={encounter} encounterPsychologicalExam={psychologicalExam} edit={edit}/>
             <div className='bt-div'>
-                <MyButton prefixIcon={() => <CloseOutlineIcon />} onClick={() => { setPopupCancelOpen(true) }} >
+                <MyButton prefixIcon={() => <CloseOutlineIcon />} onClick={() => { setPopupCancelOpen(true) }} disabled={edit}>
                     Cancel
                 </MyButton>
                 <Checkbox onChange={(value, checked) => { if (checked) { setPsychologicalExamStatus('3196709905099521'); } else { setPsychologicalExamStatus(''); } }}>
@@ -315,7 +315,7 @@ const PsychologicalExam = ({ patient, encounter }) => {
                     Show All
                 </Checkbox>
                 <div className='bt-right'>
-                    <MyButton prefixIcon={() => <PlusIcon />} onClick={handleAddNewPsychologicalExam}>Add </MyButton>
+                    <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={handleAddNewPsychologicalExam}>Add </MyButton>
                 </div>
             </div>
             <MyTable

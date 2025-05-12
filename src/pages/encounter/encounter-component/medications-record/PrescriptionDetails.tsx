@@ -67,9 +67,9 @@ const PrescriptionDetails=({genericMedicationListResponse,customeInstructions ,p
                 }
                 if (rowData.instructionsTypeLkey === "3010606785535008") {
                     return customeInstructions?.find(item => item.prescriptionMedicationsKey === rowData.key)?.dose + ","
-                        + customeInstructions?.find(item => item.prescriptionMedicationsKey === rowData.key)?.roaLvalue.lovDisplayVale +
-                        "," + customeInstructions?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue.lovDisplayVale + "," +
-                        customeInstructions?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue.lovDisplayVale
+                        + customeInstructions?.find(item => item.prescriptionMedicationsKey === rowData.key)?.roaLvalue?.lovDisplayVale +
+                        "," + customeInstructions?.find(item => item.prescriptionMedicationsKey === rowData.key)?.unitLvalue?.lovDisplayVale + "," +
+                        customeInstructions?.find(item => item.prescriptionMedicationsKey === rowData.key)?.frequencyLvalue?.lovDisplayVale
 
 
                 }

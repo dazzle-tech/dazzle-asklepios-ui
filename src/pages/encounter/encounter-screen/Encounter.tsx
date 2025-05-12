@@ -406,6 +406,7 @@ const Encounter = () => {
                     onClick={() =>
                       handleMenuItemClick(
                         <PsychologicalExam
+                        edit={edit}
                           patient={propsData.patient}
                           encounter={propsData.encounter}
                         />
