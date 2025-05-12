@@ -1,109 +1,107 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
-import Details from './Details';
-const { Column, HeaderCell, Cell } = Table;
-import {
-  useGetDepartmentsQuery,
-  useGetFacilitiesQuery,
-  useGetPractitionersQuery,
-  useSavePractitionerMutation,
-  useDeactiveActivePractitionerMutation,
-  useRemovePractitionerMutation,
-  useGetUserRecordQuery,
-  useGetUsersQuery
-} from '@/services/setupService';
-import { Button, ButtonToolbar, IconButton } from 'rsuite';
+import { Form, Panel } from 'rsuite';
+import { useGetPractitionersQuery, useDeactiveActivePractitionerMutation, useGetUsersQuery } from '@/services/setupService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
 import { ApPractitioner } from '@/types/model-types';
 import { newApPractitioner } from '@/types/model-types-constructor';
-import { Form, Stack, Divider } from 'rsuite';
-import MyInput from '@/components/MyInput';
-import { addFilterToListRequest, conjureValueBasedOnKeyFromList, fromCamelCaseToDBName } from '@/utils';
-import AdminIcon from '@rsuite/icons/Admin';
-import { notify } from '@/utils/uiReducerActions';
-import ReloadIcon from '@rsuite/icons/Reload';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { addFilterToListRequest, conjureValueBasedOnKeyFromList, fromCamelCaseToDBName} from '@/utils';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
 import MyTable from '@/components/MyTable';
 import AddEditPractitioner from './AddEditPractitioner';
+import { FaUndo } from 'react-icons/fa';
+import { MdModeEdit } from 'react-icons/md';
+import { MdDelete } from 'react-icons/md';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { notify } from '@/utils/uiReducerActions';
+import './styles.less';
+
 const Practitioners = () => {
   const dispatch = useAppDispatch();
   const [practitioner, setPractitioner] = useState<ApPractitioner>({ ...newApPractitioner });
-  const [popupOpen, setPopupOpen] = useState(false);
+  const [width, setWidth] = useState<number>(window.innerWidth);
   const [openAddEditPractitioner, setOpenAddEditPractitioner] = useState<boolean>(false);
-  const [newPrac, setnewPrac] = useState(false);
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const { data: userListResponse, refetch: refetchUsers } = useGetUsersQuery(listRequest);
-  const [facilityListRequest, setFacilityListRequest] = useState<ListRequest>({
-    ...initialListRequest
+  const [openConfirmDeleteUserModal, setOpenConfirmDeleteUserModal] = useState<boolean>(false);
+  const [stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>('delete');
+  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
+  const [listRequest, setListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    filters: [
+      {
+        fieldName: 'deleted_at',
+        operator: 'isNull',
+        value: undefined
+      }
+    ],
+    pageSize: 15
   });
   const [departmentListRequest, setDepartmentListRequest] = useState<ListRequest>({
     ...initialListRequest,
     ignore: true
   });
+  const [userListRequest, setUserListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+  });
+   // Fetch users list response
+  const {data: userListResponse } = useGetUsersQuery(userListRequest);
+  // Fetch practitioners list response
+  const {data: practitionerListResponse, refetch: refetchPractitioners, isFetching} = useGetPractitionersQuery(listRequest);
+  // Deactivate/Reactivate practitioner
+  const [dactivePractitioner] = useDeactiveActivePractitionerMutation();
 
-  const [edit_new, setEdit_new] = useState(false);
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  // Header page setUp
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className='title-practitioners'>
       <h5>Practitioners</h5>
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Practitioners'));
   dispatch(setDivContent(divContentHTML));
-  const handleBack = () => {
-    setEdit_new(false)
-    setPractitioner(newApPractitioner)
-    refetchPractitioners()
+  // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = practitionerListResponse?.extraNumeric ?? 0;
+  // Available fields for filtering
+  const filterFields = [
+    { label: 'Prcatitioner Name', value: 'practitionerFullName' },
+    { label: 'Linked User', value: 'linkedUser' },
+    { label: 'Specialty', value: 'specialty' },
+    { label: 'Job Role', value: 'jobRole' },
+    { label: 'status', value: 'isValid' }
+  ];
 
-    setnewPrac(false)
-
-  }
-
-  const [dactivePractitioner, dactivePractitionerMutation] = useDeactiveActivePractitionerMutation();
-  const [removePractitioner, removePractitionerMutation] = useRemovePractitionerMutation();
-  const { data: getOneUser } = useGetUserRecordQuery(
-    { userId: practitioner.linkedUser },
-    { skip: !practitioner.linkedUser }
-  );
+  // Effects
+  useEffect(() => {
+      const handleResize = () => setWidth(window.innerWidth);
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
   useEffect(() => {
-    if (getOneUser) {
-      setPractitioner({
-        ...practitioner,
-        practitionerFullName: getOneUser.fullName,
-        practitionerFirstName: getOneUser.firstName,
-        practitionerLastName: getOneUser.lastName,
-        practitionerEmail: getOneUser.email,
-        genderLkey: getOneUser.sexAtBirthLkey,
-        practitionerPhoneNumber: getOneUser.phoneNumber
-
+    if (recordOfFilter['filter']) {
+      handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
+    } else {
+      setListRequest({
+        ...initialListRequest,
+        filters: [
+          {
+            fieldName: 'deleted_at',
+            operator: 'isNull',
+            value: undefined
+          }
+        ],
+        pageSize: listRequest.pageSize,
+        pageNumber: 1
       });
     }
-  }, [getOneUser]);
+  }, [recordOfFilter]);
 
-  const { data: facilityListResponse } = useGetFacilitiesQuery(facilityListRequest);
-  const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
-  const { data: practitionerListResponse, refetch: refetchPractitioners } = useGetPractitionersQuery(listRequest);
-
-  const handleNew = () => {
-    setEdit_new(true);
-    setnewPrac(true)
-  };
-
-  const handleEdit = () => {
-    setEdit_new(true);
-    setnewPrac(false)
-
-  };
   useEffect(() => {
     if (practitioner.primaryFacilityKey) {
       setDepartmentListRequest(
@@ -114,19 +112,33 @@ const Practitioners = () => {
       );
     }
   }, [practitioner.primaryFacilityKey]);
+
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent("  "));
+      dispatch(setDivContent('  '));
     };
-  }, [location.pathname, dispatch])
+  }, [location.pathname, dispatch]);
 
+   // Handle page change in navigation
+   const handlePageChange = (_: unknown, newPage: number) => {
+      setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+    };
+   // Handle change rows per page in navigation
+   const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      setListRequest({
+        ...listRequest,
+        pageSize: parseInt(event.target.value, 10),
+        pageNumber: 1
+      });
+    };
+  // Class Name for selected row
   const isSelected = rowData => {
     if (rowData && practitioner && rowData.key === practitioner.key) {
       return 'selected-row';
     } else return '';
   };
-
+  // Filter table
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -138,209 +150,205 @@ const Practitioners = () => {
         )
       );
     } else {
-      setListRequest({ ...listRequest, filters: [] });
+      setListRequest({
+        ...listRequest,
+        filters: [
+          {
+            fieldName: 'deleted_at',
+            operator: 'isNull',
+            value: undefined
+          }
+        ]
+      });
     }
   };
-
+  // Handle deactivate/reactivate
   const handleDeactive = () => {
-    console.log(practitioner)
-    dactivePractitioner(practitioner).unwrap().then(() => {
-      refetchPractitioners()
-      setPractitioner(newApPractitioner)
-    })
+    dactivePractitioner(practitioner)
+      .unwrap()
+      .then(() => {
+        refetchPractitioners();
+        setPractitioner(newApPractitioner);
+        setOpenConfirmDeleteUserModal(false);
+        dispatch(
+          notify({
+            msg: 'The Practitioner was successfully ' + stateOfDeleteUserModal,
+            sev: 'success'
+          })
+        );
+      })
+      .catch(() => {
+        setOpenConfirmDeleteUserModal(false);
+      });
   };
-
-  const handleDelete = () => {
-    removePractitioner(practitioner).unwrap().then(() => {
-      refetchPractitioners()
-      setPractitioner(newApPractitioner)
-    })
-  };
-
   //Table columns
-    const tableColumns = [
-      {
-        key: 'practitionerFullName',
-        title: <Translate>Practitioner Name</Translate>,
-        flexGrow: 4,
-      },
-      {
-        key: 'linkedUser',
-        title: <Translate>Linked User</Translate>,
-        flexGrow: 4,
-        render: rowData => (
-          <span>
-            {conjureValueBasedOnKeyFromList(
-              userListResponse?.object ?? [],
-              rowData.linkedUser,
-              'fullName'
-            )}
-          </span>
-        )
-      },
-      {
-        key: 'specialty',
-        title: <Translate>Specialty</Translate>,
-        flexGrow: 3,
-      },
-      {
-        key: 'jobRole',
-        title: <Translate>Job Role</Translate>,
-        flexGrow: 3,
-      },
-      {
-        key: 'isValid',
-        title: <Translate>Status</Translate>,
-        flexGrow: 3,
-        render: rowData => (rowData.isValid ? <span style={{ color: "green" }}>Valid
+  const tableColumns = [
+    {
+      key: 'practitionerFullName',
+      title: <Translate>Practitioner Name</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: 'linkedUser',
+      title: <Translate>Linked User</Translate>,
+      flexGrow: 4,
+      render: rowData => (
+        <span>
+          {conjureValueBasedOnKeyFromList(
+            userListResponse?.object ?? [],
+            rowData.linkedUser,
+            'fullName'
+          )}
+        </span>
+      )
+    },
+    {
+      key: 'specialty',
+      title: <Translate>Specialty</Translate>,
+      flexGrow: 3
+    },
+    {
+      key: 'jobRole',
+      title: <Translate>Job Role</Translate>,
+      flexGrow: 3
+    },
+    {
+      key: 'isValid',
+      title: <Translate>Status</Translate>,
+      flexGrow: 3,
+      render: rowData => <span>{rowData?.isValid ? 'Active' : 'InActive'}</span>
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      flexGrow: 3,
+      render: rowData => iconsForActions(rowData)
+    }
+  ];
+  // Icons column (Edite, reactive/Deactivate)
+  const iconsForActions = (rowData: ApPractitioner) => (
+    <div className="container-of-icons-practitioners">
+      <MdModeEdit
+        className="icons-practitioners"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setOpenAddEditPractitioner(true);
+        }}
+      />
+      {rowData?.isValid ? (
+        <MdDelete
+          className="icons-practitioners"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            setStateOfDeleteUserModal('deactivate');
+            setOpenConfirmDeleteUserModal(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-practitioners"
+          title="Activate"
+          size={24}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setStateOfDeleteUserModal('reactivate');
+            setOpenConfirmDeleteUserModal(true);
+          }}
+        />
+      )}
+    </div>
+  );
+  // Filter table
+  const filters = () => (
+    <Form layout="inline" fluid className="container-of-filter-fields-practitioners">
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={recordOfFilter}
+        setRecord={updatedRecord => {
+          setRecordOfFilter({
+            ...recordOfFilter,
+            filter: updatedRecord.filter,
+            value: ''
+          });
+        }}
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+      />
 
-          </span> : <span style={{ color: "red" }}>Invalid
-
-          </span>)
-      },
-    ];
-
+      <MyInput
+        fieldName="value"
+        fieldType="text"
+        record={recordOfFilter}
+        setRecord={setRecordOfFilter}
+        showLabel={false}
+        placeholder="Search"
+      />
+    </Form>
+  );
   return (
     <div>
-
-
-      {
-        !edit_new ?
-          <Panel
+      <Panel>
+        <div className="container-of-add-new-button-practitioners">
+          <MyButton
+            prefixIcon={() => <AddOutlineIcon />}
+            color="var(--deep-blue)"
+            onClick={() => {
+              setPractitioner({ ...newApPractitioner });
+              setOpenAddEditPractitioner(true);
+            }}
+            width="109px"
           >
-            <ButtonToolbar>
-              <IconButton appearance="primary" icon={<AddOutlineIcon />} 
-              // onClick={handleNew}
-              onClick={() => setOpenAddEditPractitioner(true)}
-              >
-                Add New
-              </IconButton>
-              <IconButton
-                disabled={!practitioner.key}
-                appearance="primary"
-                onClick={() => handleEdit()}
-                color="green"
-                icon={<EditIcon />}
-              >
-                Edit Selected
-              </IconButton>
-
-
-              <IconButton
-                disabled={!practitioner.key}
-                appearance="primary"
-                color="red"
-                icon={<TrashIcon />}
-                onClick={() => { handleDelete() }}
-              >
-                Delete Selected
-              </IconButton>
-              {
-                practitioner.isValid || practitioner.key == null ?
-                  <IconButton
-                    disabled={!practitioner.key}
-                    appearance="primary"
-                    color="orange"
-                    icon={<TrashIcon />}
-                    onClick={() => {
-                      handleDeactive()
-                    }}
-                  >
-                    Deactivate Selected
-                  </IconButton>
-                  :
-                  <IconButton
-                    disabled={!practitioner.key}
-                    appearance="primary"
-                    color="green"
-                    icon={<ReloadIcon />}
-                    onClick={() => {
-                      handleDeactive()
-                    }}
-                  >
-                    Activate
-                  </IconButton>
-
-              }
-
-
-            </ButtonToolbar>
-            <hr />
-            <MyTable 
-            height={450}
-            data={practitionerListResponse?.object ?? []}
-            // loading={isFetching || load}
-            columns={tableColumns}
-            rowClassName={isSelected}
-            // filters={filters()}
-            onRowClick={rowData => {
-              setPractitioner(rowData);
-            }}
-            sortColumn={listRequest.sortBy}
-            sortType={listRequest.sortType}
-            onSortChange={(sortBy, sortType) => {
-              if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-            }}
-            
-            />
-           
-
-
-
-            {/* <Modal open={popupOpen} overflow>
-        <Modal.Title>
-          <Translate>New/Edit Practitioner</Translate>
-        </Modal.Title>
-        <Modal.Body>
-          <Form fluid>
-            <MyInput
-              fieldName="practitionerFullName"
-              record={practitioner}
-              setRecord={setPractitioner}
-            />
-            <MyInput
-              fieldName="primaryFacilityKey"
-              fieldType="select"
-              selectData={facilityListResponse?.object ?? []}
-              selectDataLabel="facilityName"
-              selectDataValue="key"
-              record={practitioner}
-              setRecord={setPractitioner}
-            />
-            <MyInput
-              fieldName="departmentKey"
-              fieldType="select"
-              selectData={departmentListResponse?.object ?? []}
-              selectDataLabel="name"
-              selectDataValue="key"
-              record={practitioner}
-              setRecord={setPractitioner}
-            />
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="primary" onClick={handleSave}>
-              Save
-            </Button>
-            <Button appearance="primary" color="red" onClick={() => setPopupOpen(false)}>
-              Cancel
-            </Button>
-          </Stack>
-        </Modal.Footer>
-      </Modal> */}
-          </Panel>
-          :
-
-          // setEditSelected(false) ----  this will take me back to main page
-          <Details practitionerData={practitioner} newPrac={newPrac} back={() => handleBack()} refetchPractitioners={() => refetchPractitioners()} />
-      }
-
+            Add New
+          </MyButton>
+        </div>
+        <MyTable
+          height={450}
+          data={practitionerListResponse?.object ?? []}
+          loading={isFetching}
+          columns={tableColumns}
+          rowClassName={isSelected}
+          filters={filters()}
+          onRowClick={rowData => {
+            setPractitioner(rowData);
+          }}
+          sortColumn={listRequest.sortBy}
+          sortType={listRequest.sortType}
+          onSortChange={(sortBy, sortType) => {
+            if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+          }}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
+      </Panel>
       <AddEditPractitioner
-       open={openAddEditPractitioner}
-       setOpen={setOpenAddEditPractitioner}
-       practitioner={practitioner}
-       setPractitioner={setPractitioner}
+        open={openAddEditPractitioner}
+        setOpen={setOpenAddEditPractitioner}
+        practitioner={practitioner}
+        setPractitioner={setPractitioner}
+        refetchPractitioners={refetchPractitioners}
+        userListResponse={userListResponse}
+        listRequest={userListRequest}
+        setListRequest={setUserListRequest}
+        width={width}
+      />
+      <DeletionConfirmationModal
+        open={openConfirmDeleteUserModal}
+        setOpen={setOpenConfirmDeleteUserModal}
+        itemToDelete="Practitioner"
+        actionButtonFunction={handleDeactive}
+        actionType={stateOfDeleteUserModal}
       />
     </div>
   );

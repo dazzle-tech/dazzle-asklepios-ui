@@ -1,80 +1,151 @@
-import MyModal from '@/components/MyModal/MyModal';
-import React from 'react';
-import { useGetAccessRolesQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
+import React, { useEffect, useState } from 'react';
+import { useGetLovValuesByCodeQuery, useSavePractitionerMutation } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
-import { faUser } from '@fortawesome/free-solid-svg-icons';
-import clsx from 'clsx';
-import { initialListRequest } from '@/types/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserNurse } from '@fortawesome/free-solid-svg-icons';
 import './styles.less';
+import ChildModal from '@/components/ChildModal';
+import Translate from '@/components/Translate';
+import MyTable from '@/components/MyTable';
+import { conjureValueBasedOnKeyFromList } from '@/utils';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+import clsx from 'clsx';
 const AddEditPractitioner = ({
   open,
   setOpen,
-//   width,
   practitioner,
   setPractitioner,
-//   handleSave,
+  refetchPractitioners,
+  userListResponse,
+  listRequest,
+  setListRequest,
+  width
 }) => {
-  const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
-  const { data: eduLvlLovQueryResponse } = useGetLovValuesByCodeQuery('EDU_LEVEL');
-  const { data: specialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SPECIALTY');
-  const { data: subSpecialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
+  const dispatch = useAppDispatch();
 
-  // Modal content
-  const conjureFormContent = stepNumber => {
+  const [searchResultVisible, setSearchResultVisible] = useState<boolean>(false);
+  const [linkedUserName, setLinkedUserName] = useState('');
+  const [recordOfSearch, setRecordOfSearch] = useState({ searchKeyword: linkedUserName });
+
+  // Fetch gender Lov list response
+  const { data: gndrLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
+  // Fetch educational level Lov list response
+  const { data: eduLvlLovQueryResponse } = useGetLovValuesByCodeQuery('EDU_LEVEL');
+  // Fetch Specialty Lov list response
+  const { data: specialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SPECIALTY');
+  // Fetch Sub Specialty Lov list response
+  const { data: subSpecialityLovQueryResponse } = useGetLovValuesByCodeQuery('PRACT_SUB_SPECIALTY');
+  // Fetch Job role Lov list response
+  const { data: jobRoleLovQueryResponse } = useGetLovValuesByCodeQuery('JOB_ROLE');
+  // Save practitiner
+  const [savePractitioner, savePractitionerMutation] = useSavePractitionerMutation();
+
+  // Effects
+  useEffect(() => {
+    if (savePractitionerMutation.data) {
+      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+    }
+  }, [savePractitionerMutation.data]);
+
+  useEffect(() => {
+    setLinkedUserName(
+      conjureValueBasedOnKeyFromList(
+        userListResponse?.object ?? [],
+        practitioner?.linkedUser,
+        'fullName'
+      )
+    );
+  }, [practitioner]);
+
+  useEffect(() => {
+    console.log("link: " + linkedUserName);
+    setRecordOfSearch({ searchKeyword: linkedUserName });
+  }, [linkedUserName]);
+
+  // Handle Search In User List
+  const search = () => {
+    if (recordOfSearch['searchKeyword'] && recordOfSearch['searchKeyword'].length >= 3) {
+      setSearchResultVisible(true); 
+
+      setListRequest({
+        ...listRequest,
+        ignore: false,
+        filters: [
+          {
+            operator: 'containsIgnoreCase',
+            value: recordOfSearch['searchKeyword'],
+            fieldName: 'full_name'
+          }
+        ]
+      });
+    }
+  };
+
+  //Table columns
+  const tableColumns = [
+    {
+      key: 'fullName',
+      title: <Translate>User Name</Translate>,
+      flexGrow: 3
+    },
+    {
+      key: 'phoneNumber',
+      title: <Translate>Mobile Number</Translate>,
+      flexGrow: 3
+    }
+  ];
+  // Handle save practitioner
+  const handleSave = () => {
+    savePractitioner(practitioner)
+      .unwrap()
+      .then(() => {
+        setOpen(false);
+        dispatch(notify({ msg: 'The Practitioner has been saved successfully', sev: 'success' }));
+        refetchPractitioners();
+      })
+      .catch(() => {
+        dispatch(notify({ msg: 'Failed to save this Practitioner', sev: 'error' }));
+      });
+  };
+
+  // Main modal content
+  const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
       case 0:
         return (
           <Form layout="inline" fluid>
+            {practitioner?.linkedUser ? (
+              <div>
+                <MyInput
+                  column
+                  fieldLabel="Linked Users"
+                  fieldName={'searchKeyword'}
+                  record={recordOfSearch}
+                  setRecord={setRecordOfSearch}
+                  showLabel={true}
+                  enterClick={search}
+                  placeholder="Search Users to link"
+                  width={width > 600 ? 520 : 250}
+                />
+              </div>
+            ) : (
+              <div>
+                <MyInput
+                  fieldName={'searchKeyword'}
+                  record={recordOfSearch}
+                  setRecord={setRecordOfSearch}
+                  showLabel={false}
+                  enterClick={search}
+                  placeholder="Search Users to link"
+                  width={width > 600 ? 520 : 250}
+                />
+              </div>
+            )}
 
-            {/* { practitioner?.linkedUser ? (
-                        <div style={{ marginBottom: '10px' }}>
-                          <label
-                            htmlFor="searchInput"
-                            style={{ display: 'block', marginBottom: '7px', fontWeight: 'bold' }}
-                          >
-                            Linked Users
-                          </label>
-                          <InputGroup inside style={{ width: '350px', direction: 'ltr' }}>
-                            <Input
-                              id="searchInput"
-                              onKeyDown={e => {
-                                if (e.key === 'Enter') {
-                                  search();
-                                }
-                              }}
-                              placeholder="Search Users to link"
-                              value={practitioner?.linkedUser ? linkedUserName : searchKeyword}
-                              onChange={e => setSearchKeyword(e)}
-                            />
-                            <InputGroup.Button onClick={() => changeLinkedUser()}>
-                              <UserChangeIcon style={{ scale: '1.2' }} />
-                            </InputGroup.Button>
-                          </InputGroup>
-                        </div>
-                      ) : (
-                        <InputGroup inside style={{ width: '350px', direction: 'ltr' }}>
-                          <Input
-                            onKeyDown={e => {
-                              if (e.key === 'Enter') {
-                                search();
-                              }
-                            }}
-                            placeholder={'Search Users to link '}
-                            value={searchKeyword}
-                            onChange={e => setSearchKeyword(e)}
-                          />
-                          <InputGroup.Button onClick={() => search()}>
-                            <SearchIcon />
-                          </InputGroup.Button>
-                        </InputGroup>
-                      )} */}
-
-            <div className="container-of-two-fields-practitioner">
+            <div className={clsx('', { 'container-of-two-fields-practitioner': width > 600 })}>
               <MyInput
-                // disabled={!editing}
                 column
                 fieldName="practitionerFirstName"
                 required
@@ -82,9 +153,7 @@ const AddEditPractitioner = ({
                 setRecord={setPractitioner}
                 width={250}
               />
-
               <MyInput
-                // disabled={!editing}
                 column
                 fieldName="practitionerLastName"
                 required
@@ -93,9 +162,8 @@ const AddEditPractitioner = ({
                 width={250}
               />
             </div>
-            <div className="container-of-two-fields-practitioner">
+            <div className={clsx('', { 'container-of-two-fields-practitioner': width > 600 })}>
               <MyInput
-                // disabled={!editing}
                 column
                 fieldLabel="sex at birth"
                 fieldType="select"
@@ -107,9 +175,7 @@ const AddEditPractitioner = ({
                 setRecord={setPractitioner}
                 width={250}
               />
-
               <MyInput
-                // disabled={!editing}
                 column
                 fieldType="date"
                 fieldLabel="DOB"
@@ -119,9 +185,8 @@ const AddEditPractitioner = ({
                 width={250}
               />
             </div>
-            <div className="container-of-two-fields-practitioner">
+            <div className={clsx('', { 'container-of-two-fields-practitioner': width > 600 })}>
               <MyInput
-                // disabled={!editing}
                 column
                 fieldName="practitionerEmail"
                 required
@@ -130,7 +195,6 @@ const AddEditPractitioner = ({
                 width={250}
               />
               <MyInput
-                // disabled={!editing}
                 column
                 fieldName="practitionerPhoneNumber"
                 required
@@ -139,31 +203,13 @@ const AddEditPractitioner = ({
                 width={250}
               />
             </div>
-
-            {/* <Form
-          onClick={() => {
-            const filterKeys = user._facilitiesInput; // This is the array you want to filter on ['3', '32260644964500']
-
-            const filteredFacilities = facilityListResponse?.object?.filter(facility =>
-              filterKeys.includes(facility.key)
-            ) ?? [];
-
-            console.log(filteredFacilities); // This will log the filtered facilities based on user._facilitiesInput
-          }}
-          layout="inline"
-          fluid
-        > */}
-            <div className="container-of-two-fields-practitioner">
+            <div className={clsx('', { 'container-of-two-fields-practitioner': width > 600 })}>
               <MyInput
-                // disabled={!editing}
                 column
                 fieldLabel="job role"
                 fieldType="select"
                 fieldName="jobRoleLkey"
-                selectData={
-                  // jobRoleLovQueryResponse?.object ??
-                  []
-                }
+                selectData={jobRoleLovQueryResponse?.object ?? []}
                 selectDataLabel="lovDisplayVale"
                 selectDataValue="key"
                 record={practitioner}
@@ -171,7 +217,6 @@ const AddEditPractitioner = ({
                 width={250}
               />
               <MyInput
-                //   disabled={!editing}
                 column
                 fieldLabel="Educational Level"
                 fieldType="select"
@@ -183,23 +228,9 @@ const AddEditPractitioner = ({
                 setRecord={setPractitioner}
                 width={250}
               />
-              {/* <MyInput
-                //   disabled={!editing}
-                column
-                fieldLabel="Speciality"
-                fieldType="select"
-                fieldName="speciality"
-                selectData={specialityLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={practitioner}
-                setRecord={setPractitioner}
-                width={250}
-              /> */}
             </div>
-            <div className="container-of-two-fields-practitioner">
-            <MyInput
-                //   disabled={!editing}
+            <div className={clsx('', { 'container-of-two-fields-practitioner': width > 600 })}>
+              <MyInput
                 column
                 fieldLabel="Speciality"
                 fieldType="select"
@@ -212,7 +243,6 @@ const AddEditPractitioner = ({
                 width={250}
               />
               <MyInput
-                //   disabled={!editing}
                 column
                 fieldLabel="Sub Speciality"
                 fieldType="select"
@@ -224,20 +254,9 @@ const AddEditPractitioner = ({
                 setRecord={setPractitioner}
                 width={250}
               />
-
-              {/* <MyInput
-                //   disabled={!editing}
-                column
-                fieldLabel="Default Medical License"
-                fieldName="defaultMedicalLicense"
-                record={practitioner}
-                setRecord={setPractitioner}
-                width={250}
-              /> */}
             </div>
-            <div className="container-of-two-fields-practitioner">
-            <MyInput
-                //   disabled={!editing}
+            <div className={clsx('', { 'container-of-two-fields-practitioner': width > 600 })}>
+              <MyInput
                 column
                 fieldLabel="Default Medical License"
                 fieldName="defaultMedicalLicense"
@@ -246,7 +265,6 @@ const AddEditPractitioner = ({
                 width={250}
               />
               <MyInput
-                //   disabled={!editing}
                 column
                 fieldType="date"
                 fieldLabel="Valid Until"
@@ -255,12 +273,9 @@ const AddEditPractitioner = ({
                 setRecord={setPractitioner}
                 width={250}
               />
-
-             
             </div>
-            <div className="container-of-two-fields-practitioner">
-            <MyInput
-                //   disabled={!editing}
+            <div className={clsx('', { 'container-of-two-fields-practitioner': width > 600 })}>
+              <MyInput
                 column
                 fieldLabel="Secondary License"
                 fieldName="secondaryMedicalLicense"
@@ -269,7 +284,6 @@ const AddEditPractitioner = ({
                 width={250}
               />
               <MyInput
-                //   disabled={!editing}
                 column
                 fieldType="date"
                 fieldLabel="Valid Until"
@@ -278,23 +292,8 @@ const AddEditPractitioner = ({
                 setRecord={setPractitioner}
                 width={250}
               />
-
-              {/* <MyInput
-            //   disabled={!editing}
-              column
-              fieldLabel="Educational Level"
-              fieldType="select"
-              fieldName="educationalLevel"
-              selectData={eduLvlLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={practitioner}
-              setRecord={setPractitioner}
-              width={250}
-            /> */}
             </div>
             <MyInput
-              // disabled={!editing}
               width={165}
               column
               fieldLabel="Appointable"
@@ -307,18 +306,57 @@ const AddEditPractitioner = ({
         );
     }
   };
-
+  // Child modal content
+  const conjureFormContentOfChildModal = () => {
+    return (
+      <Form layout="inline" fluid>
+        <small>
+          * <Translate>Click to select User</Translate>
+        </small>
+        <MyTable
+          height={450}
+          data={userListResponse?.object ?? []}
+          columns={tableColumns}
+          onRowClick={rowData => {
+            setSearchResultVisible(false);
+            setPractitioner({
+              ...practitioner,
+              practitionerFirstName: rowData?.firstName,
+              practitionerLastName: rowData?.lastName,
+              practitionerFullName: rowData?.fullName,
+              practitionerPhoneNumber: rowData?.phoneNumber,
+              practitionerEmail: rowData?.email,
+              linkedUser: rowData?.key,
+              genderLkey: rowData.sexAtBirthLkey,
+              jobRole: rowData.jobRoleKey,
+              dob: rowData.dob
+            });
+          }}
+          sortColumn={listRequest.sortBy}
+          sortType={listRequest.sortType}
+          onSortChange={(sortBy, sortType) => {
+            if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+          }}
+        />
+      </Form>
+    );
+  };
   return (
-    <MyModal
+    <ChildModal
+      actionButtonLabel={practitioner?.key ? 'Save' : 'Create'}
+      actionButtonFunction={handleSave}
       open={open}
       setOpen={setOpen}
+      showChild={searchResultVisible}
+      setShowChild={setSearchResultVisible}
       title={practitioner?.key ? 'Edit Practitioner' : 'New Practitioner'}
-      position="right"
-      content={conjureFormContent}
-      actionButtonLabel={practitioner?.key ? 'Save' : 'Create'}
-    //   actionButtonFunction={handleSave}
-    //   size={width > 600 ? '570px' : '300px'}
-      steps={[{ title: 'Practitioner Details', icon: <FontAwesomeIcon icon={faUserNurse} /> }]}
+      mainContent={conjureFormContentOfMainModal}
+      mainStep={[{ title: 'Practitioner Details', icon: <FontAwesomeIcon icon={faUserNurse} /> }]}
+      childTitle="User List - Search Results"
+      childContent={conjureFormContentOfChildModal}
+      //   mainSize = {width > 600 ? '570px' : '300px'}
+      mainSize="sm"
+      childSize="sm"
     />
   );
 };

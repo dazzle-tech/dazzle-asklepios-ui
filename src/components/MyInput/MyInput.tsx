@@ -256,6 +256,11 @@ const MyInput = ({
             value={record ? record[fieldName] : ''}
             onChange={handleValueChange}
             placeholder={props.placeholder}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                props.enterClick();
+              }
+            }}
           />
         );
 
