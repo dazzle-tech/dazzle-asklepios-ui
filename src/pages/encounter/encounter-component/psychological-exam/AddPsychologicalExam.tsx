@@ -19,7 +19,8 @@ const AddPsychologicalExam = ({
     setOpen,
     patient,
     encounter,
-    encounterPsychologicalExam
+    encounterPsychologicalExam,
+    edit
 }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [psychologicalExam, setPsychologicalExam] = useState<ApPsychologicalExam>({ ...encounterPsychologicalExam });
@@ -153,7 +154,7 @@ const AddPsychologicalExam = ({
             title="Add/Edit Psychology Exam"
             actionButtonFunction={handleSave}
             position='right'
-            isDisabledActionBtn={isDisabledField}
+            isDisabledActionBtn={!edit?isDisabledField:true}
             bodyheight={550}
             size='500px'
             steps={[{
@@ -161,7 +162,9 @@ const AddPsychologicalExam = ({
                 icon:<FontAwesomeIcon icon={ faBrain}/>,
                 footer: <MyButton appearance='ghost' onClick={handleClearField} >Clear</MyButton>
             },]}
-            content={<Form fluid layout='inline'>
+            content={
+           <div className={edit?"disabled-panel":""}>
+            <Form fluid layout='inline'>
                 <MyInput
                     width={200}
                     column
@@ -289,7 +292,7 @@ const AddPsychologicalExam = ({
                     disabled={isDisabledField}
                     rows={4}
                 />
-            </Form>}
+            </Form></div>}
         ></MyModal>
     );
 };
