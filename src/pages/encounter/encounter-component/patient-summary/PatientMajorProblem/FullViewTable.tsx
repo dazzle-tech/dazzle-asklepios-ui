@@ -3,6 +3,8 @@ import { faLungsVirus } from '@fortawesome/free-solid-svg-icons';
 import '../styles.less'
 import MyTable from '@/components/MyTable';
 import MyModal from '@/components/MyModal/MyModal';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 const FullViewTable = ({ open, setOpen, data }) => {
 
     const majorDiagnosesColumns = [
@@ -43,7 +45,7 @@ const FullViewTable = ({ open, setOpen, data }) => {
             hideCanel={false}
             bodyheight={400}
             hideBack={true}
-            steps={[{ title: "Major Diagnoses", icon: faLungsVirus }]}
+            steps={[{ title: "Major Diagnoses", icon:  <FontAwesomeIcon icon={faLungsVirus }/>}]}
             hideActionBtn={true}
         />
     );

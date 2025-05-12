@@ -76,7 +76,7 @@ const MyModal = ({
                         isError: step.isError || false,
                     }))}
                 />
-
+                <br />
                 {typeof content === 'function' ? content(activeStep) : (activeStep === 0 && content)}
             </Modal.Body>
             {(
