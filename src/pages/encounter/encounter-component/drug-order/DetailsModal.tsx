@@ -1,25 +1,25 @@
-import React, { useEffect, useState, useRef } from "react";
-import { notify } from '@/utils/uiReducerActions';
-import { Form, Modal, Row, Col, Button, DatePicker, Table, Divider, Pagination, Panel, Text, Stack, InputGroup, Input, Dropdown, TagGroup, Tag } from "rsuite";
-import './styles.less';
-import SearchIcon from '@rsuite/icons/Search';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useGetDepartmentsQuery, useGetIcdListQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
 import AdvancedModal from "@/components/AdvancedModal";
-import { useAppDispatch } from '@/hooks';
-import ActiveIngrediantList from './ActiveIngredient'
-import { useGetActiveIngredientQuery, useGetGenericMedicationActiveIngredientQuery, useGetGenericMedicationWithActiveIngredientQuery } from "@/services/medicationsSetupService";
-import { initialListRequest, ListRequest } from "@/types/types";
-import Substitues from "./Substitutes";
 import MyButton from "@/components/MyButton/MyButton";
-import { faCircleInfo, faLeftRight, faRightLeft } from "@fortawesome/free-solid-svg-icons";
-import Translate from "@/components/Translate";
 import MyInput from "@/components/MyInput";
-import PlusIcon from '@rsuite/icons/Plus';
-import { newApDrugOrderMedications } from "@/types/model-types-constructor";
-import { useSaveDrugOrderMedicationMutation } from "@/services/encounterService";
 import MyLabel from "@/components/MyLabel";
-const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drugKey, editing, patient, encounter, medicRefetch }) => {
+import Translate from "@/components/Translate";
+import { useAppDispatch } from '@/hooks';
+import { useSaveDrugOrderMedicationMutation } from "@/services/encounterService";
+import { useGetGenericMedicationWithActiveIngredientQuery } from "@/services/medicationsSetupService";
+import { useGetDepartmentsQuery, useGetIcdListQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
+import { newApDrugOrderMedications } from "@/types/model-types-constructor";
+import { initialListRequest, ListRequest } from "@/types/types";
+import { notify } from '@/utils/uiReducerActions';
+import { faRightLeft } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import PlusIcon from '@rsuite/icons/Plus';
+import SearchIcon from '@rsuite/icons/Search';
+import React, { useEffect, useState } from "react";
+import { Col, Dropdown, Form, Input, InputGroup, Row, Tag, TagGroup } from "rsuite";
+import ActiveIngrediantList from './ActiveIngredient';
+import './styles.less';
+import Substitues from "./Substitutes";
+const DetailsModal = ({edit, open, setOpen, orderMedication, setOrderMedication, drugKey, editing, patient, encounter, medicRefetch }) => {
     const dispatch = useAppDispatch();
     const [searchKeyword, setSearchKeyword] = useState('');
     const [searchKeywordicd, setSearchKeywordicd] = useState('');
@@ -235,12 +235,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
 
 
     };
-    const handleDateChange = (date) => {
-        if (date) {
-            const timestamp = date.getTime();
-            setSelectedFirstDate(date);
-        }
-    };
+
     const addTag = () => {
         const nextTags = inputValue ? [...tags, inputValue] : tags;
         setTags(nextTags);
@@ -288,6 +283,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
             setOpen={setOpen}
             actionButtonFunction={handleSaveMedication}
             actionButtonLabel="Save"
+            isDisabledActionBtn={!edit?encounter?.statusLvalue?.valueCode!=="DIAG_ORDER_STAT_NEW":true}
             leftTitle={selectedGeneric ? selectedGeneric.genericName : "Select Generic"}
             rightTitle="Medication Order Details"
             leftContent={<>
@@ -296,7 +292,7 @@ const DetailsModal = ({ open, setOpen, orderMedication, setOrderMedication, drug
             </>}
             rightContent={
 
-                <Row>
+                <Row gutter={20} className={edit?"disabled-panel":encounter?.statusLvalue?.valueCode!=="DIAG_ORDER_STAT_NEW"?"disabled-panel":""}>
                     <Col md={12}>
                         <div className="child-div">
 

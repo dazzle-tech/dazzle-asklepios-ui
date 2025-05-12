@@ -22,16 +22,16 @@ const BodyDiagram = ({ patient }) => {
             },
             { skip: !patient?.dob }
         );
-
+   
     // Render appropriate body image based on patient's age group and gender
     const content = (
         <>
             {
-                (patientAgeGroupResponse?.object?.key === '5945922992301153' ||
-                    patientAgeGroupResponse?.object?.key === '1790407842882435' ||
-                    patientAgeGroupResponse?.object?.key === '5946401407873394' ||
-                    patientAgeGroupResponse?.object?.key === '1375554380483561' ||
-                    patientAgeGroupResponse?.object?.key === '5945877765605378')
+                (patientAgeGroupResponse?.object?.valueCode=== 'AG_INFANT' ||
+                    patientAgeGroupResponse?.object?.valueCode === 'AG_CHILD' ||
+                    patientAgeGroupResponse?.object?.valueCode=== 'AG_ADOLS' ||
+                    patientAgeGroupResponse?.object?.valueCode === 'AG_TODDLER' ||
+                    patientAgeGroupResponse?.object?.valueCode=== 'AG_NEONATE')
                 && (
                     patient?.genderLkey === '1' ? (
                         <img className='image-style' src={ChildBoy} onClick={handleopenchartModel} />
@@ -41,9 +41,9 @@ const BodyDiagram = ({ patient }) => {
                 )
             }
             {
-                (patientAgeGroupResponse?.object?.key === '1790428129203615' ||
+                (patientAgeGroupResponse?.object?.valueCode === 'AG_ADULT' ||
 
-                    patientAgeGroupResponse?.object?.key === '1790525617633551')
+                    patientAgeGroupResponse?.object?.valueCode=== 'AG_GER')
                 && (
                     patient?.genderLkey === '1' ? (
                         <img className='image-style' src={Male} onClick={handleopenchartModel} />
