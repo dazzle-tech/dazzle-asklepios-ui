@@ -1,8 +1,9 @@
-import MyModal from '@/components/MyModal/MyModal';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  useGetFacilitiesQuery,
   useGetUserDepartmentsQuery,
-  useRemoveUserFacilityDepartmentMutation
+  useRemoveUserFacilityDepartmentMutation,
+  useSaveFacilityDepartmentMutation
 } from '@/services/setupService';
 import './styles.less';
 import MyTable from '@/components/MyTable';
@@ -15,6 +16,10 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { FaBuilding } from 'react-icons/fa';
+import ChildModal from '@/components/ChildModal';
+import { Form } from 'rsuite';
+import MyInput from '@/components/MyInput';
+import { initialListRequest } from '@/types/types';
 
 const ViewDepartments = ({ open, setOpen, user, width }) => {
   const dispatch = useAppDispatch();
@@ -22,17 +27,38 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
   const [department, setDepartment] = useState();
   const [openConfirmDeleteDepartmentModal, setOpenConfirmDeleteDepartmentModal] = useState<boolean>(false);
   const[stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>("delete");
+  const[openChildModal, setOpenChildModal] = useState<boolean>(false);
+  const [selectedDepartment, setSelectedDepartment] = useState({ department: '' });
+  const [facilityRecord, setFacilityRecord] = useState({ facility: ' ' });
+  const [selectedFacility, setSelectedFacility] = useState<any>();
   // Fetch user departments list response
   const { data: userDepartmentsResponse, refetch: refetchUserDepartments } =
     useGetUserDepartmentsQuery(user?.key);
   // Remove user facility department
   const [removeUserFacilityDepartment] = useRemoveUserFacilityDepartmentMutation();
+  // Fetch Facilities list response
+  const { data: facilityListResponse } = useGetFacilitiesQuery({
+       ...initialListRequest,
+       pageSize: 1000
+  });
+     // Save department
+     const [saveDepartment] = useSaveFacilityDepartmentMutation();
+
   // ClassName for selected row
   const isSelected = rowData => {
     if (rowData && department && rowData.key === department?.key) {
       return 'selected-row';
     } else return '';
   };
+
+  //Effects
+  useEffect(() => {
+      const targetFacility = facilityListResponse?.object?.find(
+        facility => facility.key === facilityRecord.facility
+      );
+      setSelectedFacility(targetFacility);
+    }, [facilityRecord]);
+
   // Handle remove user facility department
   const handleRemoveUserFacilityDepartment = rowData => {
     removeUserFacilityDepartment(rowData)
@@ -40,6 +66,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
       .then(() => {
         setOpenConfirmDeleteDepartmentModal(false);
         dispatch(notify({ msg: 'The Department was successfully Deactivated', sev: 'success' }));
+        setFacilityRecord({ facility: ' ' });
         refetchUserDepartments();
       })
       .catch(() => {
@@ -47,6 +74,27 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
         dispatch(notify({ msg: 'Failed to Deactivated this User', sev: 'error' }));
       });
   };
+
+  // Handle Save Facility Department
+    const handleFacilityDepartmentSave = () => {
+      const facilityDepartment = {
+        userKey: user?.key,
+        departmentKey: selectedDepartment?.department,
+        facilitiyKey: facilityRecord?.facility
+      };
+      saveDepartment(facilityDepartment)
+        .unwrap()
+        .then(() => {
+          setOpenChildModal(false);
+          dispatch(notify({ msg: 'The Department has been saved successfully', sev: 'success' }));
+          refetchUserDepartments();
+        })
+        .catch(() => {
+          setOpenChildModal(false);
+          dispatch(notify({ msg: 'Failed to save this Department', sev: 'error' }));
+        });
+    };
+
   //Table columns
   const departmentTableColumns = [
     {
@@ -83,8 +131,8 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
       }
     }
   ];
-  // Modal content
-  const conjureFormContent = stepNumber => {
+  // Main modal content
+  const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
       case 0:
         return (
@@ -93,7 +141,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
-                // onClick={handleAddNew}
+                onClick={() => {setFacilityRecord({ facility: ' ' }); setOpenChildModal(true)}}
                 width={width > 600 ? '150px' : '109px'}
               >
                 New Department
@@ -111,7 +159,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
             <DeletionConfirmationModal
               open={openConfirmDeleteDepartmentModal}
               setOpen={setOpenConfirmDeleteDepartmentModal}
-              itemToDelete="User"
+              itemToDelete="Department"
               actionButtonFunction={() => handleRemoveUserFacilityDepartment(department)}
               actionType={stateOfDeleteUserModal}
             />
@@ -119,16 +167,59 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
         );
     }
   };
+    // Cild modal content
+    const conjureFormContentOfChildModal = stepNumber => {
+      switch (stepNumber) {
+        case 0:
+          return (
+            <Form fluid layout="inline">
+              <MyInput
+                column
+                fieldLabel="Select Facility"
+                fieldType="select"
+                fieldName="facility"
+                selectData={facilityListResponse?.object ?? []}
+                selectDataLabel="facilityName"
+                selectDataValue="key"
+                record={facilityRecord}
+                setRecord={setFacilityRecord}
+                width={width > 600 ? 520 : 250}
+              />
+              <MyInput
+                column
+                fieldLabel="Select Departments"
+                fieldType="select"
+                fieldName="department"
+                selectData={selectedFacility?.department}
+                selectDataLabel="name"
+                selectDataValue="key"
+                record={selectedDepartment}
+                setRecord={setSelectedDepartment}
+                width={width > 600 ? 520 : 250}
+              />
+            </Form>
+          );
+      }
+    };
+
   return (
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title="Departments"
-      position="right"
-      content={conjureFormContent}
-      hideActionBtn
-      size={width > 600 ? '570px' : '300px'}
-      steps={[{ title: 'Departments', icon: <FaBuilding /> }]}
+    <ChildModal 
+          open={open}
+          setOpen={setOpen}
+          hideActionBtn
+          showChild={openChildModal}
+          setShowChild={setOpenChildModal}
+          title="Departments"
+          childTitle="New Department"
+          mainContent={conjureFormContentOfMainModal}
+          mainStep={[{ title: 'Departments', icon: <FaBuilding /> }]}
+          childStep={[{ title: 'User Info', icon: <FaBuilding /> }]}
+          childContent={conjureFormContentOfChildModal}
+          actionChildButtonLabel="Create"
+          actionChildButtonFunction={handleFacilityDepartmentSave}
+          //   mainSize = {width > 600 ? '570px' : '300px'}
+          mainSize="sm"
+          childSize="sm"
     />
   );
 };

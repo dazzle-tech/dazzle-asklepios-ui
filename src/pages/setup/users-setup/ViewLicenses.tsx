@@ -1,6 +1,5 @@
-import MyModal from '@/components/MyModal/MyModal';
 import React, { useEffect, useState } from 'react';
-import { useGetLicenseQuery, useRemoveUserMidicalLicenseMutation } from '@/services/setupService';
+import { useGetLicenseQuery, useRemoveUserMidicalLicenseMutation, useSaveUserMidicalLicenseMutation } from '@/services/setupService';
 import { MdModeEdit } from 'react-icons/md';
 import { initialListRequest, ListRequest } from '@/types/types';
 import './styles.less';
@@ -14,11 +13,18 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { FaAddressCard } from 'react-icons/fa';
+import { Form } from 'rsuite';
+import MyInput from '@/components/MyInput';
+import ChildModal from '@/components/ChildModal';
+import { ApUserMedicalLicense } from '@/types/model-types';
+import { newApUserMedicalLicense } from '@/types/model-types-constructor';
 
 const ViewLicenses = ({ open, setOpen, user, width }) => {
   const dispatch = useAppDispatch();
   const userKey = user.key;
   const [license, setLicense] = useState();
+  const [userLicense, setUserLicense] = useState<ApUserMedicalLicense>({...newApUserMedicalLicense});
+  const [openChildModal, setOpenChildModal] = useState<boolean>(false);
   const [openConfirmDeleteLicenseModal, setOpenConfirmDeleteLicenseModal] = useState<boolean>(false);
   const[stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>("delete");
 
@@ -32,6 +38,8 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
       }
     ]
   });
+  // Save MidicalLicense
+  const [saveUserMidicalLicense] = useSaveUserMidicalLicenseMutation();
   // Remove user medical license
   const [removeUserMidicalLicense] = useRemoveUserMidicalLicenseMutation();
   // Fetch licenses list response
@@ -78,6 +86,26 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
         refetchLicense();
       });
   };
+  // Handle Save License
+    const handleSaveLicense = () => {
+      saveUserMidicalLicense({
+        ...userLicense,
+        userKey: user.key
+      })
+        .unwrap()
+        .then(() => {
+          console.log('addedSuccessfully');
+          setOpenChildModal(false);
+          dispatch(notify({ msg: 'The License has been saved successfully', sev: 'success' }));
+          setUserLicense({...newApUserMedicalLicense});
+          refetchLicense();
+        })
+        .catch(() => {
+          setOpenChildModal(false);
+          setUserLicense({...newApUserMedicalLicense});
+          dispatch(notify({ msg: 'Failed to save this License', sev: 'error' }));
+        });
+    };
   //Table columns
   const licensesTableColumns = [
     {
@@ -130,7 +158,7 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
     }
   ];
   // Modal content
-  const conjureFormContent = stepNumber => {
+  const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
       case 0:
         return (
@@ -139,7 +167,7 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
-                // onClick={handleAddNew}
+                onClick={() => setOpenChildModal(true)}
                 width="120px"
               >
                 New License
@@ -157,7 +185,7 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
             <DeletionConfirmationModal
               open={openConfirmDeleteLicenseModal}
               setOpen={setOpenConfirmDeleteLicenseModal}
-              itemToDelete="User"
+              itemToDelete="License"
               actionButtonFunction={() => handleRemoveLicense(license)}
               actionType={stateOfDeleteUserModal}
             />
@@ -165,17 +193,67 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
         );
     }
   };
+  // Child modal content
+   const conjureFormContentOfChildModal = stepNumber => {
+      switch (stepNumber) {
+        case 0:
+          return (
+            <Form fluid layout="inline">
+              <MyInput
+                fieldName="licenseName"
+                required
+                record={userLicense}
+                setRecord={setUserLicense}
+                width={width > 600 ? 520 : 250}
+              />
+              <MyInput
+                fieldName="licenseNumber"
+                required
+                record={userLicense}
+                setRecord={setUserLicense}
+                width={width > 600 ? 520 : 250}
+              />
+              <MyInput
+                fieldType="date"
+                fieldLabel="Valid To"
+                fieldName="validTo"
+                record={userLicense}
+                setRecord={setUserLicense}
+                width={width > 600 ? 520 : 250}
+              />
+            </Form>
+          );
+      }
+    };
   return (
-    <MyModal
-      open={open}
-      setOpen={setOpen}
-      title="Licenses & Certifications"
-      position="right"
-      content={conjureFormContent}
-      hideActionBtn
-      size={width > 600 ? '570px' : '300px'}
-      steps={[{ title: 'License', icon: <FaAddressCard /> }]}
-    />
+     <ChildModal
+              open={open}
+              setOpen={setOpen}
+              hideActionBtn
+              showChild={openChildModal}
+              setShowChild={setOpenChildModal}
+              title="Licenses & Certifications"
+              childTitle="New Department"
+              mainContent={conjureFormContentOfMainModal}
+              mainStep={[{ title: 'License', icon: <FaAddressCard /> }]}
+              childStep={[{ title: 'License Info', icon: <FaAddressCard /> }]}
+              childContent={conjureFormContentOfChildModal}
+              actionChildButtonLabel="Create"
+              actionChildButtonFunction={handleSaveLicense}
+              //   mainSize = {width > 600 ? '570px' : '300px'}
+              mainSize="sm"
+              childSize="sm"
+        />
+    // <MyModal
+    //   open={open}
+    //   setOpen={setOpen}
+    //   title="Licenses & Certifications"
+    //   position="right"
+    //   content={conjureFormContent}
+    //   hideActionBtn
+    //   size={width > 600 ? '570px' : '300px'}
+    //   steps={[{ title: 'License', icon: <FaAddressCard /> }]}
+    // />
   );
 };
 export default ViewLicenses;
