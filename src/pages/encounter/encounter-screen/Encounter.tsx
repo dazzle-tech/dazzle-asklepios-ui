@@ -461,7 +461,7 @@ const Encounter = () => {
                     onClick={() =>
                       handleMenuItemClick(
                         <DiagnosticsOrder
-                          edit={propsData.fromPage == 'PatientEMR'}
+                          edit={edit}
                           patient={propsData.patient}
                           encounter={propsData.encounter}
                         />
