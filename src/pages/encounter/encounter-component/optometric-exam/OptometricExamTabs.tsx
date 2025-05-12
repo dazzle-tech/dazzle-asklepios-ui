@@ -50,7 +50,6 @@ const OptometricExamTabs = ({
     const pageIndex = optometricExamListRequest.pageNumber - 1;
     const rowsPerPage = optometricExamListRequest.pageSize;
     const totalCount = optometricExamResponse?.extraNumeric ?? 0;
-    console.log("optometricExamResponse---->", optometricExamResponse);
     // Table Visual Acuity Columns
     const visualAcuityColumns = [
         {

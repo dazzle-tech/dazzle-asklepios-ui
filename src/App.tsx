@@ -71,6 +71,7 @@ import PatientEMR from './pages/patient/patient-emr';
 import PatientProfileCopy from './pages/patient/patient-profile/PatientProfileCopy';
 import Lab from './pages/lab-module';
 import Rad from './pages/rad-module';
+import OptometricExam from './pages/encounter/encounter-component/optometric-exam';
 import SystemLoader from './components/Loaders/SystemLoader';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -156,6 +157,7 @@ const App = () => {
 
     setNavigationMap(navs);
   };
+  const { patient, encounter } = location.state || {}; 
 
   return (
     <IntlProvider locale="en" messages={locales.en}>
@@ -224,8 +226,15 @@ const App = () => {
               <Route path="patient-list" element={<PatientList />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="facility-patient-list" element={<FacilityPatientList />} />
-              <Route path="encounter" element={<Encounter />} />
-              <Route path="encounter-list" element={<EncounterList />} />
+              <Route path="/encounter/:patientId/:encounterId" element={<Encounter />}>
+              <Route
+          path="opto"
+          element={<OptometricExam patient={patient} encounter={encounter} />}
+        />
+        {/* أضف المزيد حسب الحاجة */}
+      </Route>
+     
+                    <Route path="encounter-list" element={<EncounterList />} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservations />} />
               <Route path="facilities" element={<Facilities />} />

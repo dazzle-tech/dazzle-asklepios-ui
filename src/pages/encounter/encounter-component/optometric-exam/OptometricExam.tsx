@@ -12,7 +12,10 @@ import PlusIcon from '@rsuite/icons/Plus';
 import CancellationModal from '@/components/CancellationModal';
 import AddOptometricTest from './AddOptometricTest';
 import OptometricExamTabs from './OptometricExamTabs';
+import ReactDOMServer from 'react-dom/server';
+import { setDivContent, setPageCode } from '@/reducers/divSlice';
 const OptometricExam = ({ patient, encounter ,edit}) => {
+
   const authSlice = useAppSelector(state => state.auth);
   const [open, setOpen] = useState(false);
   const [saveOptometricExam] = useSaveOptometricExamMutation();
@@ -51,6 +54,15 @@ const OptometricExam = ({ patient, encounter ,edit}) => {
   const [allData, setAllData] = useState(false);
   const [time, setTime] = useState({ time: '' });
   const dispatch = useAppDispatch();
+  const divContent = (
+      <div style={{ display: 'flex' }}>
+        <h5>Optometric Exam</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+    dispatch(setPageCode('Clinical_Visit'));
+    dispatch(setDivContent(divContentHTML));
+
   // Initialize the request state for fetching optometric exams with default filters
   const [optometricExamListRequest, setOptometricExamListRequest] = useState<ListRequest>({
     ...initialListRequest,
