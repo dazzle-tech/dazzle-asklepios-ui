@@ -45,7 +45,7 @@ import { Panel, List, Divider, Drawer } from 'rsuite';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import 'react-tabs/style/react-tabs.css';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Dental from '../dental-screen';
 import { useCompleteEncounterMutation } from '@/services/encounterService';
 
@@ -370,20 +370,20 @@ const Encounter = () => {
                 )}
                 {medicalSheet?.object?.optometricExam && (
                   <List.Item
-
-                  className="drawer-item"
-                  onClick={() => {
-                    navigate(`/encounter/${propsData.patient.patientMrn}/${propsData.encounter.visitId}/opto`, {
-                      state: {
-                        patient: propsData.patient,
-                        encounter: propsData.encounter
-                      }
-                    });
-                  }}
-                >
-                  <FontAwesomeIcon icon={faEye} className="icon" />
-                  <Translate>Optometric Exam</Translate>
-                </List.Item>
+                    className="drawer-item"
+                    onClick={() =>
+                      handleMenuItemClick(
+                        <OptometricExam
+                          edit={edit}
+                          patient={propsData.patient}
+                          encounter={propsData.encounter}
+                        />
+                      )
+                    }
+                  >
+                    <FontAwesomeIcon icon={faEye} className="icon" />
+                    <Translate>Optometric Exam</Translate>
+                  </List.Item>
                 )}
                 {medicalSheet?.object?.audiometryPuretone && (
                   <List.Item
@@ -594,7 +594,7 @@ const Encounter = () => {
               </List>
             </Drawer.Body>
           </Drawer>
-        <Outlet/>  
+          {activeContent} {/* Render the selected content */}
         </Panel>
 
         <AppointmentModal

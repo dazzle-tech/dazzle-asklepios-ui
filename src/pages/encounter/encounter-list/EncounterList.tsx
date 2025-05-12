@@ -94,7 +94,7 @@ const EncounterList = () => {
       dispatch(setPatient(encounterData['patientObject']));
     }
     const privatePatientPath = '/user-access-patient-private';
-    const encounterPath = `/encounter/patientId:${patientData?.patientMrn}/encounterId${encounterData?.visitId}`;
+    const encounterPath = '/encounter';
     const targetPath = patientData.privatePatient ? privatePatientPath : encounterPath;
     if (patientData.privatePatient) {
       navigate(targetPath, {
