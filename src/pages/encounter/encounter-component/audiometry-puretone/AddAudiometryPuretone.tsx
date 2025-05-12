@@ -11,7 +11,7 @@ import { newApAudiometryPuretone } from '@/types/model-types-constructor';
 import { ApAudiometryPuretone } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import MyModal from '@/components/MyModal/MyModal';
-const AddAudiometryPuretone = ({ open, setOpen, patient, encounter, audiometryPuretoneObject, refetch }) => {
+const AddAudiometryPuretone = ({ open, setOpen, patient, encounter, audiometryPuretoneObject, refetch ,edit}) => {
     const authSlice = useAppSelector(state => state.auth);
     const [audiometryPuretone, setAudiometryPuretone] = useState<ApAudiometryPuretone>(audiometryPuretoneObject);
     const [saveAudiometryPureton] = useSaveAudiometryPuretoneMutation();
@@ -84,6 +84,7 @@ const AddAudiometryPuretone = ({ open, setOpen, patient, encounter, audiometryPu
     }, [isEncounterStatusClosed, isEncounterAudiometryPuretonStatusClose]);
     // Modal Content 
     const content = (
+        <div className={edit?"disabled-panel":""} >
         <Form fluid layout='inline' className='fields-container'>
             <MyInput
                 width={200}
@@ -279,7 +280,7 @@ const AddAudiometryPuretone = ({ open, setOpen, patient, encounter, audiometryPu
                 setRecord={setAudiometryPuretone}
                 disabled={isDisabledField}
             />
-        </Form>
+        </Form></div>
     )
     return (
         <MyModal
@@ -288,7 +289,7 @@ const AddAudiometryPuretone = ({ open, setOpen, patient, encounter, audiometryPu
             title="Add/Edit Audiometry Puretone"
             actionButtonFunction={handleSave}
             position='right'
-            isDisabledActionBtn={isDisabledField}
+            isDisabledActionBtn={!edit?isDisabledField:true}
             bodyheight={550}
             size='500px'
             steps={[{

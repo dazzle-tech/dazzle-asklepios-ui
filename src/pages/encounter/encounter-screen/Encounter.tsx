@@ -390,6 +390,7 @@ const Encounter = () => {
                     onClick={() =>
                       handleMenuItemClick(
                         <AudiometryPuretone
+                          edit={edit}
                           patient={propsData.patient}
                           encounter={propsData.encounter}
                         />

@@ -14,7 +14,7 @@ import { notify } from '@/utils/uiReducerActions';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import AddAudiometryPuretone from './AddAudiometryPuretone';
 import MyTable from '@/components/MyTable';
-const AudiometryPuretone = ({ patient, encounter }) => {
+const AudiometryPuretone = ({ patient, encounter,edit }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [open, setOpen] = useState(false);
     const [audiometryPuretone, setAudiometryPuretone] = useState<ApAudiometryPuretone>({
@@ -328,7 +328,7 @@ const AudiometryPuretone = ({ patient, encounter }) => {
     return (
         <div>
             <div className='bt-div'>
-                <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!audiometryPuretone?.key}>
+                <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!edit?!audiometryPuretone?.key:true}>
                     <Translate>Cancel</Translate>
                 </MyButton>
                 <Checkbox onChange={(value, checked) => {
@@ -353,7 +353,7 @@ const AudiometryPuretone = ({ patient, encounter }) => {
                     Show All
                 </Checkbox>
                 <div className='bt-right'>
-                    <MyButton prefixIcon={() => <PlusIcon />} onClick={handleAddNewAudiometryPuretone}>Add </MyButton>
+                    <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={handleAddNewAudiometryPuretone}>Add </MyButton>
                 </div>
             </div>
             <MyTable
@@ -372,7 +372,7 @@ const AudiometryPuretone = ({ patient, encounter }) => {
                 onRowsPerPageChange={handleRowsPerPageChange}
             />
             <CancellationModal title="Cancel Audiometry Puretone" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={audiometryPuretone} setObject={setAudiometryPuretone} handleCancle={handleCancle} fieldName="cancellationReason" />
-            <AddAudiometryPuretone open={open} setOpen={setOpen} patient={patient} encounter={encounter} audiometryPuretoneObject={audiometryPuretone} refetch={refetchAudiometryPureton} />
+            <AddAudiometryPuretone open={open} setOpen={setOpen} patient={patient} encounter={encounter} audiometryPuretoneObject={audiometryPuretone} refetch={refetchAudiometryPureton} edit={edit}/>
         </div>
     );
 };
