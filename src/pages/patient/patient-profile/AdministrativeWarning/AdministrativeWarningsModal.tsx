@@ -214,7 +214,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={AddNewAdministrativeWarning}>Add</MyButton>
       </div>
       {isLoading ? (
-        <div className="loader-container">
+        <div className="loader-card-container">
           <span className="loader">Loading...</span>
         </div>
       ) : (
