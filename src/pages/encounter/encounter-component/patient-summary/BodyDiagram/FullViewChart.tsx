@@ -1,6 +1,8 @@
 import React from 'react';
 import { faPerson } from '@fortawesome/free-solid-svg-icons';
 import MyModal from '@/components/MyModal/MyModal';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 const FullViewChart = ({ 
     open, 
     setOpen, 
@@ -15,7 +17,7 @@ const FullViewChart = ({
             hideCanel={false}
             bodyheight={400}
             hideBack={true}
-            steps={[{ title:"Body Diagram", icon: faPerson }]}
+            steps={[{ title:"Body Diagram", icon:  <FontAwesomeIcon icon={faPerson }/>}]}
             hideActionBtn={true}
         />
     );

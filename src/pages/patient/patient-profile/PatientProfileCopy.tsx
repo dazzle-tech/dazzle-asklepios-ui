@@ -17,7 +17,7 @@ import PatientVisitHistory from './PatientVisitHistory';
 import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import { useSavePatientMutation } from '@/services/patientService';
 import clsx from 'clsx';
-import AdministrativeWarningsModal from './AdministrativeWarningsModal';
+import AdministrativeWarningsModal from './AdministrativeWarning/AdministrativeWarningsModal';
 
 const { getHeight } = DOMHelper;
 

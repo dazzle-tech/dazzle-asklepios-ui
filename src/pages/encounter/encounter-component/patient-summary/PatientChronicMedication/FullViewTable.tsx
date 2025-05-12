@@ -1,5 +1,5 @@
 import React from 'react';
-import { faLungsVirus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import '../styles.less'
 import MyTable from '@/components/MyTable';
 import MyModal from '@/components/MyModal/MyModal';
@@ -90,7 +90,7 @@ const FullViewTable = ({
             bodyheight={400}
             size='900px'
             hideBack={true}
-            steps={[{ title: "Chronic Medications", icon: faPills }]}
+            steps={[{ title: "Chronic Medications", icon:  <FontAwesomeIcon icon={faPills }/>}]}
             hideActionBtn={true}
         />
     );

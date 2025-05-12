@@ -1,4 +1,4 @@
-import React, {useEffect } from 'react';
+import React, { useEffect } from 'react';
 import MyModal from '../MyModal/MyModal';
 import './styles.less';
 const SIZE_WIDTH_MAP = {
@@ -15,9 +15,17 @@ const ChildModal = ({
     setShowChild,
     title,
     mainContent,
-    mainStep = null,
+    actionButtonFunction = null,
+    actionButtonLabel = "Save",
+    actionChildButtonFunction = null,
+    hideActionBtn = false,
+    hideCanel = false,
+    actionChildButtonLabel = "Save",
+    hideActionChildBtn = false,
+    hideChildCanel = false,
+    mainStep = [],
     childTitle,
-    childStep = null,
+    childStep = [],
     childContent,
     mainSize = "xs",
     childSize = "xs"
@@ -46,7 +54,12 @@ const ChildModal = ({
                 steps={mainStep}
                 size={mainSize}
                 position="right"
-                content={mainContent} />
+                actionButtonFunction={actionButtonFunction}
+                actionButtonLabel={actionButtonLabel}
+                hideActionBtn={hideActionBtn}
+                content={mainContent}
+                hideCanel={hideCanel} />
+
             {/* Child Modal */}
             <MyModal
                 open={showChild}
@@ -54,9 +67,12 @@ const ChildModal = ({
                 steps={childStep}
                 title={childTitle}
                 size={childSize}
-                content={() => childContent}
-                hideActionBtn
+                content={childContent}
+                hideActionBtn={hideActionChildBtn}
                 customClassName="child-right-modal"
+                actionButtonFunction={actionChildButtonFunction}
+                actionButtonLabel={actionChildButtonLabel}
+                hideCanel={hideChildCanel}
             />
         </>
     );
