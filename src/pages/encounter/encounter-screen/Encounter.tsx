@@ -345,7 +345,7 @@ const Encounter = () => {
                     className="drawer-item"
                     onClick={() =>
                       handleMenuItemClick(
-                        <Cardiology patient={propsData.patient} encounter={propsData.encounter} />
+                        <Cardiology patient={propsData.patient} encounter={propsData.encounter} edit={edit}/>
                       )
                     }
                   >

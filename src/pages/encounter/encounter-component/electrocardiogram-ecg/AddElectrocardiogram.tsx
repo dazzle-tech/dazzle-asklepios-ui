@@ -11,7 +11,7 @@ import { notify } from '@/utils/uiReducerActions';
 import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-const AddElectrocardiogram = ({ open, setOpen, patient, encounter, electrocardiogramEcgObject, refetch }) => {
+const AddElectrocardiogram = ({ open, setOpen, patient, encounter, electrocardiogramEcgObject, refetch ,edit}) => {
     const authSlice = useAppSelector(state => state.auth);
     const [electrocardiogramEcg, setElectrocardiogramEcg] = useState<ApElectrocardiogramEcg>(electrocardiogramEcgObject);
     const [saveElectrocardiogramECG] = useSaveElectrocardiogramECGMutation();
@@ -87,7 +87,8 @@ const AddElectrocardiogram = ({ open, setOpen, patient, encounter, electrocardio
 
     // Modal Content
     const content = (
-        <Form fluid layout='inline'>
+         <div className={edit?"disabled-panel":""}>
+             <Form fluid layout='inline'>
             <MyInput
                 width={200}
                 column
@@ -200,7 +201,8 @@ const AddElectrocardiogram = ({ open, setOpen, patient, encounter, electrocardio
                 fieldType='textarea'
                 disabled={isDisabledField}
             />
-        </Form>
+             </Form>
+        </div>
     );
     return (
         <MyModal
@@ -209,7 +211,7 @@ const AddElectrocardiogram = ({ open, setOpen, patient, encounter, electrocardio
             title="Add/Edit ECG"
             actionButtonFunction={handleSave}
             position='right'
-            isDisabledActionBtn={isDisabledField}
+            isDisabledActionBtn={!edit?isDisabledField:true}
             bodyheight={550}
             size='500px'
             steps={[{

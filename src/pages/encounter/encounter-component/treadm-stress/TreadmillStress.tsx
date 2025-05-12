@@ -14,7 +14,7 @@ import CancellationModal from '@/components/CancellationModal';
 import MyTable from '@/components/MyTable';
 import AddTreadmillStress from './AddTreadmillStress';
 import { MdModeEdit } from 'react-icons/md';
-const TreadmillStress = ({ patient, encounter }) => {
+const TreadmillStress = ({ patient, encounter ,edit}) => {
     const authSlice = useAppSelector(state => state.auth);
     const [open, setOpen] = useState(false);
     const [treadmillStress, setTreadmillStress] = useState<ApTreadmillStress>({
@@ -324,7 +324,7 @@ const TreadmillStress = ({ patient, encounter }) => {
     return (
         <div>
             <div className='bt-div'>
-                <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!treadmillStress?.key}>
+                <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!edit?!treadmillStress?.key:true}>
                     <Translate>Cancel</Translate>
                 </MyButton>
                 <Checkbox onChange={(value, checked) => {
@@ -349,7 +349,7 @@ const TreadmillStress = ({ patient, encounter }) => {
                     Show All
                 </Checkbox>
                 <div className='bt-right'>
-                    <MyButton prefixIcon={() => <PlusIcon />} onClick={handleAddNewTreadmillStress}>Add </MyButton>
+                    <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={handleAddNewTreadmillStress}>Add </MyButton>
                 </div>
             </div>
             <MyTable
@@ -365,7 +365,7 @@ const TreadmillStress = ({ patient, encounter }) => {
                 onPageChange={handlePageChange}
                 onRowsPerPageChange={handleRowsPerPageChange}
             />
-            <AddTreadmillStress open={open} setOpen={setOpen} patient={patient} encounter={encounter} treadmillStressObject={treadmillStress} refetch={refetchTreadmillStress} />
+            <AddTreadmillStress open={open} setOpen={setOpen} patient={patient} encounter={encounter} treadmillStressObject={treadmillStress} refetch={refetchTreadmillStress} edit={edit}/>
             <CancellationModal title="Cancel Treadmill Stress Test" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={treadmillStress} setObject={setTreadmillStress} handleCancle={handleCancle} fieldName="cancellationReason" />
         </div>
     );

@@ -14,7 +14,7 @@ import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import AddElectrocardiogram from './AddElectrocardiogram';
-const ElectrocardiogramECG = ({ patient, encounter }) => {
+const ElectrocardiogramECG = ({ patient, encounter ,edit}) => {
     const authSlice = useAppSelector(state => state.auth);
     const [open, setOpen] = useState(false);
     const [electrocardiogramEcg, setElectrocardiogramEcg] = useState<ApElectrocardiogramEcg>({
@@ -307,7 +307,7 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
     return (
         <div>
             <div className='bt-div'>
-                <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!electrocardiogramEcg?.key}>
+                <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!edit?!electrocardiogramEcg?.key:true}>
                     <Translate>Cancel</Translate>
                 </MyButton>
                 <Checkbox onChange={(value, checked) => {
@@ -332,7 +332,7 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
                     Show All
                 </Checkbox>
                 <div className='bt-right'>
-                    <MyButton prefixIcon={() => <PlusIcon />} onClick={handleAddNewElectrocardiogram}>Add </MyButton>
+                    <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={handleAddNewElectrocardiogram}>Add </MyButton>
                 </div>
             </div>
             <MyTable
@@ -348,7 +348,7 @@ const ElectrocardiogramECG = ({ patient, encounter }) => {
                 onPageChange={handlePageChange}
                 onRowsPerPageChange={handleRowsPerPageChange}
             />
-            <AddElectrocardiogram open={open} setOpen={setOpen} patient={patient} encounter={encounter} electrocardiogramEcgObject={electrocardiogramEcg} refetch={refetchelectrocardiogramEcg} />
+            <AddElectrocardiogram open={open} setOpen={setOpen} patient={patient} encounter={encounter} electrocardiogramEcgObject={electrocardiogramEcg} refetch={refetchelectrocardiogramEcg} edit={edit}/>
             <CancellationModal title="Cancel ECG" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={electrocardiogramEcg} setObject={setElectrocardiogramEcg} handleCancle={handleCancle} fieldName="cancellationReason" />
         </div>
     );

@@ -11,7 +11,8 @@ import { ApComplaintSymptoms } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyModal from '@/components/MyModal/MyModal';
-const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complaintSymptom, refetch }) => {
+import './styles.less'
+const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complaintSymptom, refetch ,edit}) => {
     const authSlice = useAppSelector(state => state.auth);
     const [complaintSymptoms, setComplaintSymptoms] = useState<ApComplaintSymptoms>({ ...complaintSymptom });
     const [associatedSymptoms, setAssociatedSymptoms] = useState({ associatedSymptomsLkey: '' });
@@ -113,9 +114,11 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
             setIsDisabledField(false);
         }
     }, [isEncounterStatusClosed, isEncounterChiefComplaintSymptomsStatusClose]);
+    console.log(edit);
     // Modal Content 
     const content = (
-        <Form fluid layout='inline'>
+        <div className={edit?"disabled-panel":""}>
+        <Form fluid layout='inline' disabled={edit} >
             <MyInput
                 column
                 width={200}
@@ -231,6 +234,7 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
                 disabled={isDisabledField}
             />
         </Form>
+        </div>
     )
     return (
         <MyModal
@@ -239,7 +243,7 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
             title="Add/Edit Chief Complaint Symptoms"
             actionButtonFunction={handleSave}
             position='right'
-            isDisabledActionBtn={isDisabledField}
+            isDisabledActionBtn={!edit?isDisabledField:true}
             bodyheight={550}
             size='500px'
             steps={[{

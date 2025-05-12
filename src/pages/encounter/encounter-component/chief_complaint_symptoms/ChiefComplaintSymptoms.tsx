@@ -14,7 +14,7 @@ import CancellationModal from '@/components/CancellationModal';
 import AddChiefComplaintSymptoms from './AddChiefComplaintSymptoms';
 import { MdModeEdit } from 'react-icons/md';
 import MyTable from '@/components/MyTable';
-const ChiefComplaintSymptoms = ({ patient, encounter }) => {
+const ChiefComplaintSymptoms = ({ patient, encounter,edit }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [complaintSymptoms, setComplaintSymptoms] = useState<ApComplaintSymptoms>({ ...newApComplaintSymptoms, duration: null });
     const [open, setOpen] = useState(false);
@@ -301,7 +301,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
     return (
         <div>
             <div className='bt-div'>
-                <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!complaintSymptoms?.key}>
+                <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!edit?!complaintSymptoms?.key:true}>
                     <Translate>Cancel</Translate>
                 </MyButton>
                 <Checkbox onChange={(value, checked) => {
@@ -326,10 +326,12 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
                     Show All
                 </Checkbox>
                 <div className='bt-right'>
-                    <MyButton prefixIcon={() => <PlusIcon />} onClick={handleAddNewComplaintSymptoms}>Add </MyButton>
+                    <MyButton 
+                    disabled={edit}
+                     prefixIcon={() => <PlusIcon />} onClick={handleAddNewComplaintSymptoms}>Add </MyButton>
                 </div>
             </div>
-            <AddChiefComplaintSymptoms open={open} setOpen={setOpen} patient={patient} encounter={encounter} complaintSymptom={complaintSymptoms} refetch={refetchComplaintSymptoms} />
+            <AddChiefComplaintSymptoms open={open} setOpen={setOpen} patient={patient} encounter={encounter} complaintSymptom={complaintSymptoms} refetch={refetchComplaintSymptoms} edit={edit} />
             <MyTable
                 data={complaintSymptomsResponse?.object ?? []}
                 columns={columns}
