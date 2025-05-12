@@ -18,12 +18,12 @@ import '../styles.less'
 import RegistrationEncounter from './RegistrationEncounter';
 import PatientPaymentInfo from './PatientPaymentInfo';
 import AddPayment from './AddPayment';
-const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuickAppointmentModel, localVisit }) => {
+const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuickAppointmentModel, localVisit, isDisabeld = false }) => {
     const dispatch = useAppDispatch();
     const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter, visitTypeLkey: '2041082245699228', patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob) });
     const [validationResult, setValidationResult] = useState({});
     const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
-    const [isReadOnly, setIsReadOnly] = useState(false);
+    const [isReadOnly, setIsReadOnly] = useState(isDisabeld);
     const encounterStatusNew = '91063195286200'; // TODO change this to be fetched from redis based on LOV CODE
 
     // Handle Save Encounter
@@ -36,7 +36,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                 encounterStatusLkey: encounterStatusNew,
                 patientAge: calculateAgeFormat(localPatient.dob),
                 visitTypeLkey: ['2039534205961578', '2039516279378421'].includes(localEncounter.resourceTypeLkey) ? '2041082245699228' : null
-                }).unwrap().then(() => {
+            }).unwrap().then(() => {
             }).catch((e) => {
 
                 if (e.status === 422) {
@@ -134,7 +134,8 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                 , { title: 'Add Payment', icon: <FontAwesomeIcon icon={faMoneyBillWave} /> }]}
             content={(step) => conjureFormContent(step)}
             size="700px"
-            bodyheight={400}
+            bodyheight={500}
+            hideActionBtn={isReadOnly}
         />
     );
 };

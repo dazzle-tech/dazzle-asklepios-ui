@@ -366,7 +366,7 @@ const TreadmillStress = ({ patient, encounter }) => {
                 onRowsPerPageChange={handleRowsPerPageChange}
             />
             <AddTreadmillStress open={open} setOpen={setOpen} patient={patient} encounter={encounter} treadmillStressObject={treadmillStress} refetch={refetchTreadmillStress} />
-            <CancellationModal title="Cancel Chief Complaint Symptoms" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={treadmillStress} setObject={setTreadmillStress} handleCancle={handleCancle} fieldName="cancellationReason" />
+            <CancellationModal title="Cancel Treadmill Stress Test" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={treadmillStress} setObject={setTreadmillStress} handleCancle={handleCancle} fieldName="cancellationReason" />
         </div>
     );
 };
