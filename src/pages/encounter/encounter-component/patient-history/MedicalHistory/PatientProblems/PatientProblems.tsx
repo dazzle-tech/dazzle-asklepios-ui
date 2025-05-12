@@ -6,7 +6,7 @@ import '../styles.less'
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import { MdModeEdit } from 'react-icons/md';import AddPatientProblem from './AddPatientProblem';
-const PatientProblems = ({ patient, encounter }) => {
+const PatientProblems = ({ patient, encounter ,edit}) => {
     const [open, setOpen] = useState(false);
 
     // Table Columns
@@ -27,7 +27,7 @@ const PatientProblems = ({ patient, encounter }) => {
                     Patient’s Problems
                 </div>
                 <div className='bt-right'>
-                    <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>Add</MyButton>
+                    <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>Add</MyButton>
                 </div>
             </div>
             <Divider className="divider-line" />

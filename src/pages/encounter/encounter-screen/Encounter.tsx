@@ -528,6 +528,7 @@ const Encounter = () => {
                     onClick={() =>
                       handleMenuItemClick(
                         <PatientHistory
+                          edit={edit}
                           patient={propsData.patient}
                           encounter={propsData.encounter}
                         />
