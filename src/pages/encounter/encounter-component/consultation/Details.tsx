@@ -72,6 +72,9 @@ const Details = ({ patient, encounter, consultationOrders, setConsultationOrder,
         <AdvancedModal
             open={open}
             setOpen={setOpen}
+            size="800px"
+            leftWidth="40%"
+            rightWidth="60%"
             actionButtonFunction={handleSave}
             footerButtons={<div style={{ display: 'flex', gap: '5px' }}>
                 <MyButton
@@ -86,132 +89,94 @@ const Details = ({ patient, encounter, consultationOrders, setConsultationOrder,
                 >Clear</MyButton>
             </div>}
             rightTitle='Add Consultation'
-            rightContent={<div >
-                <div className='div-parent' >
-                    <div style={{ flex: 1 }} >
-                        <Form layout="inline" fluid >
-                            <MyInput
-                                column
-                                disabled={editing}
-                                width={300}
-                                fieldType="select"
-                                fieldLabel="Consultant Specialty"
-                                selectData={consultantSpecialtyLovQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                fieldName={'consultantSpecialtyLkey'}
-                                record={consultationOrders}
-                                setRecord={setConsultationOrder}
-                            />
-                        </Form>
-                    </div>
-                    <div style={{ flex: 1 }} >
-                        <Form layout="inline" fluid >
-                            <MyInput
-                                column
-                                disabled={editing}
-                                width={300}
-                                fieldType="select"
-                                fieldLabel="City"
-                                selectData={cityLovQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                fieldName={'cityLkey'}
-                                record={consultationOrders}
-                                setRecord={setConsultationOrder}
-                            />
-                        </Form>
-                    </div>
-                    <div style={{ flex: 1 }} >
-                        <Form layout="inline" >
-
-                            <MyInput
-                                column
-                                disabled={editing}
-                                width={300}
-                                fieldType="select"
-                                fieldLabel="Preferred Consultant"
-                                fieldName={'preferredConsultantKey'}
-                                selectData={practitionerListResponse?.object ?? []}
-                                selectDataLabel="practitionerFullName"
-                                selectDataValue="key"
-                                record={consultationOrders}
-                                setRecord={setConsultationOrder}
-                            />
-                        </Form>
-                    </div>
-                </div>
-                <div className='div-parent' >
-                    <div style={{ flex: 1 }} >
-                        <Form layout="inline" fluid >
-                            <MyInput
-                                column
-                                disabled={editing}
-                                width={300}
-                                fieldType="select"
-                                fieldLabel="Consultation Method"
-                                selectData={consultationMethodLovQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                fieldName={'consultationMethodLkey'}
-                                record={consultationOrders}
-                                setRecord={setConsultationOrder}
-                            />
-                        </Form>
-                    </div>
-                    <div style={{ flex: 1 }} >
-                        <Form layout="inline" fluid >
-                            <MyInput
-                                column
-                                disabled={editing}
-                                width={300}
-                                fieldType="select"
-                                fieldLabel="Consultation Type"
-                                selectData={consultationTypeLovQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                fieldName={'consultationTypeLkey'}
-                                record={consultationOrders}
-                                setRecord={setConsultationOrder}
-                            />
-                        </Form>
-                    </div>
-                    <div style={{ flex: 1 }} ></div>
-                </div>
-                <div className="div-parent">
-                    <div style={{ flex: 1 }}>
-                        <Form fluid>
-                            <MyInput
-                                column
-                                width={'100%'}
-                                disabled={editing}
-                                fieldName="consultationContent"
-                                rows={6}
-                                fieldType="textarea"
-                                record={consultationOrders}
-                                setRecord={setConsultationOrder}
-                            />
-
-                        </Form>
-                    </div>
-                    <div style={{ flex: 1 }}>
-                        <Form fluid>
-                            <MyInput
-                                column
-                                width={'100%'}
-                                disabled={editing}
-                                fieldName="notes"
-                                rows={6}
-                                fieldType="textarea"
-                                record={consultationOrders}
-                                setRecord={setConsultationOrder}
-                            />
-                        </Form>
-                    </div>
-                </div>
-
-            </div>}
-
+            rightContent={<Form fluid layout="inline">
+                <MyInput
+                    column
+                    disabled={editing}
+                    width={200}
+                    fieldType="select"
+                    fieldLabel="Consultant Specialty"
+                    selectData={consultantSpecialtyLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    fieldName={'consultantSpecialtyLkey'}
+                    record={consultationOrders}
+                    setRecord={setConsultationOrder}
+                />
+                <MyInput
+                    column
+                    width={200}
+                    disabled={editing}
+                    fieldType="select"
+                    fieldLabel="City"
+                    selectData={cityLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    fieldName={'cityLkey'}
+                    record={consultationOrders}
+                    setRecord={setConsultationOrder}
+                />
+                <MyInput
+                    column
+                    width={200}
+                    disabled={editing}
+                    fieldType="select"
+                    fieldLabel="Preferred Consultant"
+                    fieldName={'preferredConsultantKey'}
+                    selectData={practitionerListResponse?.object ?? []}
+                    selectDataLabel="practitionerFullName"
+                    selectDataValue="key"
+                    record={consultationOrders}
+                    setRecord={setConsultationOrder}
+                />
+                <MyInput
+                    column
+                    width={200}
+                    disabled={editing}
+                    fieldType="select"
+                    fieldLabel="Consultation Method"
+                    selectData={consultationMethodLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    fieldName={'consultationMethodLkey'}
+                    record={consultationOrders}
+                    setRecord={setConsultationOrder}
+                />
+                <MyInput
+                    column
+                    width={200}
+                    disabled={editing}
+                    fieldType="select"
+                    fieldLabel="Consultation Type"
+                    selectData={consultationTypeLovQueryResponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    fieldName={'consultationTypeLkey'}
+                    record={consultationOrders}
+                    setRecord={setConsultationOrder}
+                />
+                <MyInput
+                    column
+                    width={400}
+                    disabled={editing}
+                    fieldName="consultationContent"
+                    rows={6}
+                    fieldType="textarea"
+                    record={consultationOrders}
+                    setRecord={setConsultationOrder}
+                />
+                <MyInput
+                    column
+                    width={400}
+                    disabled={editing}
+                    fieldName="notes"
+                    rows={6}
+                    fieldType="textarea"
+                    record={consultationOrders}
+                    setRecord={setConsultationOrder}
+                />
+            </Form>
+            }
             leftContent={<Diagnosis patient={patient} encounter={encounter} />}
         ></AdvancedModal>
     </>
