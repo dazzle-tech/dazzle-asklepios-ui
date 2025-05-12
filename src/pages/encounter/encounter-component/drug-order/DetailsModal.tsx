@@ -283,7 +283,7 @@ const DetailsModal = ({edit, open, setOpen, orderMedication, setOrderMedication,
             setOpen={setOpen}
             actionButtonFunction={handleSaveMedication}
             actionButtonLabel="Save"
-            isDisabledActionBtn={!edit?encounter?.statusLvalue?.valueCode!=="DIAG_ORDER_STAT_NEW":true}
+            isDisabledActionBtn={edit ?true: orderMedication.key ? orderMedication?.statusLvalue?.valueCode !== "DIAG_ORDER_STAT_NEW" : false}
             leftTitle={selectedGeneric ? selectedGeneric.genericName : "Select Generic"}
             rightTitle="Medication Order Details"
             leftContent={<>
@@ -292,7 +292,7 @@ const DetailsModal = ({edit, open, setOpen, orderMedication, setOrderMedication,
             </>}
             rightContent={
 
-                <Row gutter={20} className={edit?"disabled-panel":encounter?.statusLvalue?.valueCode!=="DIAG_ORDER_STAT_NEW"?"disabled-panel":""}>
+                <Row gutter={20} className={edit?"disabled-panel": orderMedication.key ? orderMedication?.statusLvalue?.valueCode!=="DIAG_ORDER_STAT_NEW"?"disabled-panel":"":""}>
                     <Col md={12}>
                         <div className="child-div">
 
