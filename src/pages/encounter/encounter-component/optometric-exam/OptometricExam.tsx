@@ -12,7 +12,7 @@ import PlusIcon from '@rsuite/icons/Plus';
 import CancellationModal from '@/components/CancellationModal';
 import AddOptometricTest from './AddOptometricTest';
 import OptometricExamTabs from './OptometricExamTabs';
-const OptometricExam = ({ patient, encounter }) => {
+const OptometricExam = ({ patient, encounter ,edit}) => {
   const authSlice = useAppSelector(state => state.auth);
   const [open, setOpen] = useState(false);
   const [saveOptometricExam] = useSaveOptometricExamMutation();
@@ -250,7 +250,7 @@ const OptometricExam = ({ patient, encounter }) => {
           Show All
         </Checkbox>
         <div className='bt-right'>
-          <MyButton prefixIcon={() => <PlusIcon />} onClick={handleAddNewOptometricExam}>Add </MyButton>
+          <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={handleAddNewOptometricExam}>Add </MyButton>
         </div>
       </div>
       
@@ -265,7 +265,8 @@ const OptometricExam = ({ patient, encounter }) => {
         setSecondSelectedicd10={setSecondSelectedicd10}
         selectedicd10={selectedicd10}
         setSelectedIcd10={setSelectedIcd10}
-        timeM={time} />
+        timeM={time}
+        edit={edit} />
 
       <OptometricExamTabs
         isLoading={isLoading}
