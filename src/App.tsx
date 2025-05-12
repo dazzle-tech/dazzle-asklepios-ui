@@ -213,6 +213,7 @@ const App = () => {
               </ProtectedRoute>
             }
           >
+            
             {/* {/* protected routes (needs authintication) */}
             {/* TODO load them dynamically based on user authorization matrix */}
             <Route path="/" element={<Frame navs={navigationMap} />}>
