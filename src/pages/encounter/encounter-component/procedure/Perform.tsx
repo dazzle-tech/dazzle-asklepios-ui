@@ -26,6 +26,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { initialListRequest, ListRequest } from '@/types/types';
 import PatientSide from '../../encounter-main-info-section/PatienSide';
 import MyButton from '@/components/MyButton/MyButton';
+import MyStepper from '@/components/MyStepper';
 const Perform = ({ edit, patient, encounter, procedure, setProcedure }) => {
     const dispatch = useAppDispatch();
     const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
@@ -60,13 +61,43 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure }) => {
 
                 });
 
-            dispatch(notify('Changed Status Successfully'));
+            dispatch(notify({msg:'Changed Status Successfully',sev:"succes"}));
         } catch (error) {
             dispatch(notify('Changed Status Failed'));
         }
     };
+
+    const stepsData = [
+    {
+      key: '1',
+      value: 'Procedure Registration'
+     
+    },
+    {
+      key: '2',
+      value: 'Pre-Procedure Assessment'
+    },
+    {
+      key: '3',
+      value: 'Procedure Performing'
+    }
+    ,
+    {
+        key:'4',
+        value:'Post-Procedure Care and Follow-up'
+    },
+    {
+        key:'5',
+        value:'Equipment and Logistics'
+    },
+    {
+        key:"6",
+        value:"Completed"
+    }
+  ];
     return (<div className='container'>
-        <div className='left-box'>  <Form layout="inline" fluid disabled={true}>
+        <div className='left-box'>
+              <Form layout="inline" fluid disabled={true}>
             <MyInput
                 column
                 width={200}
@@ -130,7 +161,7 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure }) => {
                 setRecord={setProcedure}
             />
         </Form>
-            <Divider style={{ margin: '4px 4px' }} />
+            <Divider />
             <div className='container'>
             <MyButton
                 appearance="ghost"
@@ -159,15 +190,8 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure }) => {
          
          </div>
             <Divider />
-          
-            <Steps current={1}>
-                <Steps.Item title="Procedure Registration" />
-                <Steps.Item title="Pre-Procedure Assessment" />
-                <Steps.Item title="Procedure Performing" />
-                <Steps.Item title="Post-Procedure Care and Follow-up" />
-                <Steps.Item title="Equipment and Logistics" />
-                <Steps.Item title="Completed" />
-            </Steps>
+
+            <MyStepper stepsList={stepsData} activeStep={1}/>
             <Divider />
             <Tabs defaultActiveKey="1" appearance="subtle">
                  <Tabs.Tab eventKey="1" title="Procedure Registration" ></Tabs.Tab>

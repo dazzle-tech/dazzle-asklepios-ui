@@ -510,7 +510,7 @@ const Encounter = () => {
                     onClick={() =>
                       handleMenuItemClick(
                         <Referrals
-                          edit={propsData.fromPage == 'PatientEMR'}
+                          edit={edit}
                           patient={propsData.patient}
                           encounter={propsData.encounter}
                         />

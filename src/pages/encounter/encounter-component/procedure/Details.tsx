@@ -185,9 +185,11 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
     };
     return (<>
         <AdvancedModal
+        size={'900px'}
             open={openDetailsModal}
             setOpen={setOpenDetailsModal}
             actionButtonFunction={handleSave}
+            isDisabledActionBtn={edit?true:procedure.key?procedure?.statusLvalue?.valueCode!=="PROC_REQ"?true:false:false}
             footerButtons={<div className='footer-buttons'>
                 <MyButton
                     onClick={handleClear}
@@ -210,7 +212,7 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                     prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
                 >Attachment File</MyButton></div>}
             rightContent={<>
-                <Row gutter={20}>
+                <Row gutter={20} className={edit?"disabled-panel":procedure.key?procedure?.statusLvalue?.valueCode!=="PROC_REQ"?"disabled-panel":"":""}>
                     <Col md={12}>
                         <Row className="rows-gap">
                             <Col md={12}>
