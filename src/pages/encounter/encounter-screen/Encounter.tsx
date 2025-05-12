@@ -373,7 +373,7 @@ const Encounter = () => {
 
                   className="drawer-item"
                   onClick={() => {
-                    navigate(`/encounter/${propsData.patient.key}/${propsData.encounter.key}/opto`, {
+                    navigate(`/encounter/${propsData.patient.patientMrn}/${propsData.encounter.visitId}/opto`, {
                       state: {
                         patient: propsData.patient,
                         encounter: propsData.encounter
