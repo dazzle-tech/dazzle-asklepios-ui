@@ -253,8 +253,10 @@ const PsychologicalExam = ({ patient, encounter }) => {
         {
             key: 'followUpDate',
             title: <Translate>FOLLOW-UP DATE</Translate>,
-            render: (rowData: any) => rowData?.followUpDate ? new Date(rowData.followUpDate).toLocaleString("en-GB") : ""
-        },
+            render: (rowData: any) => rowData?.followUpDate 
+                ? new Date(rowData.followUpDate).toLocaleDateString("en-GB") 
+                : ""
+        },        
         {
             key: "details",
             title: <Translate>EDIT</Translate>,

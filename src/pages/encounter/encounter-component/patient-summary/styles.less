@@ -6,18 +6,18 @@
   display: flex;
   margin: 5px;
   border-radius: 8px;
-  gap:0 !important;
+  gap: 0 !important;
 }
 
 .patient-summary-Column {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap:11px;
+  gap: 11px;
 }
 
 .patient-summary-panel {
- 
+
   height: 255px;
   width: 358px;
   background-color: #ffffff;
@@ -66,26 +66,30 @@
 .image-style {
   width: 100%;
   height: 200px;
-  object-fit:contain;
+  object-fit: contain;
   border-radius: 8px;
 
 }
+
 @media (max-width: 1200px) {
-  .image-style{
+  .image-style {
     height: 200px;
   }
-   .title{
+
+  .title {
     line-height: 18;
-   }
-   .panel-header{
+  }
+
+  .panel-header {
     width: 348px;
     height: 18px;
-   }
-   .patient-summary-panel{
+  }
+
+  .patient-summary-panel {
     height: 250px;
     width: 350px;
-   }
-   
+  }
+
 }
 
 
@@ -96,12 +100,12 @@
   justify-content: center;
   background-color: #F8FAFE;
   gap: 11px;
+
   .medical-dashboard-container-div {
     display: flex;
     flex-direction: column;
     width: 95%;
     background-color: white;
-    border: .1px solid white;
     border-radius: 8px;
     box-shadow: 0px 0px 0px 1px rgba(152, 161, 178, 0.1), 0px 1px 4px rgba(69, 75, 87, 0.12), 0px 0px 2px rgba(0, 0, 0, 0.08);
 
@@ -113,12 +117,20 @@
       top: 0;
       background-color: white;
       z-index: 10;
-      padding: 13px 15px 16px 15px;
+      padding: 12px 15px 12px 15px;
+      border-radius: 8px 8px 0px 0px;
+      background-color: rgba(34, 100, 229, 0.11) !important;
 
       .medical-dashboard-title-div {
         display: flex;
         font-size: 14px;
         font-family: "Inter Medium" !important;
+        color: #2264E5 !important;
+
+      }
+
+      .medical-dashboard-table-div {
+        border-radius: 0px 0px 8px 8px;
       }
 
     }
@@ -131,6 +143,7 @@
       background: #D9D9D9 !important;
       border: 1px solid #EFEFEF !important;
     }
+
     .clickable-link {
       color: var(--deep-blue) !important;
       text-decoration: underline !important;
@@ -138,7 +151,7 @@
       font-size: 12px !important;
       font-weight: 500;
     }
-    
+
     .medical-dashboard-content-div {
       padding: 15px 20px;
     }

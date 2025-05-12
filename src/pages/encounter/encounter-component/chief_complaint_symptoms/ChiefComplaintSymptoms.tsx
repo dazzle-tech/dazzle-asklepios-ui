@@ -16,7 +16,6 @@ import { MdModeEdit } from 'react-icons/md';
 import MyTable from '@/components/MyTable';
 const ChiefComplaintSymptoms = ({ patient, encounter }) => {
     const authSlice = useAppSelector(state => state.auth);
-    const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
     const [complaintSymptoms, setComplaintSymptoms] = useState<ApComplaintSymptoms>({ ...newApComplaintSymptoms, duration: null });
     const [open, setOpen] = useState(false);
     const [saveComplaintSymptoms] = useSaveComplaintSymptomsMutation();
@@ -346,7 +345,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter }) => {
                 onPageChange={handlePageChange}
                 onRowsPerPageChange={handleRowsPerPageChange}
             />
-            <CancellationModal title="Cancel Chief Complaint Symptoms" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={complaintSymptoms} setObject={setComplaintSymptoms} handleCancle={handleCancle} fieldName="cancellationReason" />
+            <CancellationModal title="Cancel Chief Complaint" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={complaintSymptoms} setObject={setComplaintSymptoms} handleCancle={handleCancle} fieldName="cancellationReason" />
         </div>
     );
 };

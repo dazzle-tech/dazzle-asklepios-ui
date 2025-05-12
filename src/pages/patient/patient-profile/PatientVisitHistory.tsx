@@ -97,7 +97,7 @@ const PatientVisitHistory = ({ visitHistoryModel, localPatient, setVisitHistoryM
             />
           </Drawer.Body>
         </Drawer>
-      {quickAppointmentModel ? <PatientQuickAppointment quickAppointmentModel={quickAppointmentModel} localPatient={localPatient} setQuickAppointmentModel={setQuickAppointmentModel} localVisit={selectedVisit} /> : <></>}
+      {quickAppointmentModel ? <PatientQuickAppointment quickAppointmentModel={quickAppointmentModel} localPatient={localPatient} setQuickAppointmentModel={setQuickAppointmentModel} localVisit={selectedVisit} isDisabeld={true}/> : <></>}
     </div>
   );
 };

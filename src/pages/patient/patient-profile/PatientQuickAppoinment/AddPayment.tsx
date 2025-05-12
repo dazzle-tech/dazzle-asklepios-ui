@@ -201,14 +201,14 @@ const AddPayment = ({ isReadOnly }) => {
                 <div className='payment-method-content'>
                     <MyButton prefixIcon={() => <ReloadIcon />} appearance="ghost" >refresh</MyButton>
                     <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBolt} />} appearance="ghost" color="var(--primary-pink)"> Exchange Rate</MyButton>
-                    <MyButton prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />} >Save</MyButton>
+                    {!isReadOnly && <MyButton prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />} >Save</MyButton>}
                 </div>
             </Form>
             <MyTable
                 data={[]}
                 columns={columns}
                 height={200}
-                rowHeight={50}
+
             />
         </div>
     )
