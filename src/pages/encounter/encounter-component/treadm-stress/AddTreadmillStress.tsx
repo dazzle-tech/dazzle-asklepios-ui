@@ -12,7 +12,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { faPersonRunning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import './styles.less';
-const AddTreadmillStress = ({ open, setOpen, treadmillStressObject, patient, encounter, refetch }) => {
+const AddTreadmillStress = ({ open, setOpen, treadmillStressObject, patient, encounter, refetch,edit }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [treadmillStress, setTreadmillStress] = useState<ApTreadmillStress>(treadmillStressObject);
     const [saveTreadmillStress] = useSaveTreadmillStresseMutation();
@@ -93,7 +93,8 @@ const AddTreadmillStress = ({ open, setOpen, treadmillStressObject, patient, enc
 
     // Modal Content
     const content = (
-        <Form fluid layout='inline' className="fields-container">
+         <div className={edit?"disabled-panel":""}>
+        <Form fluid layout='inline' >
             <MyInput
                 width={200}
                 column
@@ -293,7 +294,7 @@ const AddTreadmillStress = ({ open, setOpen, treadmillStressObject, patient, enc
                 setRecord={setTreadmillStress}
                 disabled={isDisabledField}
             />
-        </Form>
+        </Form> </div>
     )
     return (
         <MyModal
@@ -302,7 +303,7 @@ const AddTreadmillStress = ({ open, setOpen, treadmillStressObject, patient, enc
             title="Add/Edit Treadmill Stress"
             actionButtonFunction={handleSave}
             position='right'
-            isDisabledActionBtn={isDisabledField}
+            isDisabledActionBtn={!edit?isDisabledField:true}
             bodyheight={550}
             size='500px'
             steps={[{
