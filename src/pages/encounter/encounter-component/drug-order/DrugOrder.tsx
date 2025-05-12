@@ -12,17 +12,16 @@ import {
 import {
     useGetGenericMedicationWithActiveIngredientQuery
 } from '@/services/medicationsSetupService';
-import { ApDrugOrderMedications } from '@/types/model-types';
+import { FaPills } from "react-icons/fa";
 import { newApDrugOrder, newApDrugOrderMedications } from '@/types/model-types-constructor';
 import { initialListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
-import { faBroom } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BlockIcon from '@rsuite/icons/Block';
 import CheckIcon from '@rsuite/icons/Check';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import PlusIcon from '@rsuite/icons/Plus';
 import React, { useEffect, useState } from 'react';
+import { MdModeEdit } from 'react-icons/md';
 import {
     Checkbox,
     Divider,
@@ -30,7 +29,6 @@ import {
     Table,
     Text
 } from 'rsuite';
-import { MdModeEdit } from 'react-icons/md';
 import DetailsModal from './DetailsModal';
 import './styles.less';
 const { Column, HeaderCell, Cell } = Table;
@@ -349,17 +347,9 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                                  return( <MdModeEdit
                                      title="Edit"
                                      size={24}
-                                     style={{
-
-                                        color: (rowData.statusLvalue?.lovDisplayVale !== 'New') ? 'gray' : 'inherit',
-                                        cursor: (rowData.statusLvalue?.lovDisplayVale !== 'New') ? 'not-allowed' : 'pointer',
-                                    }}
+                                 
                                      fill="var(--primary-gray)"
-                                     onClick={()=>{
-                                        if(rowData.statusLvalue?.lovDisplayVale == 'New'){
-                                            setOpenDetailsModel(true)
-                                        }
-                                        }}
+                                     onClick={()=>{ setOpenDetailsModel(true)}}
                                    />)
                              } 
         
@@ -420,7 +410,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
     return (<>
        
         <div className='bt-div'
-        //  className={edit ? "disabled-panel" : ""}
+     
          >
         <div style={{ width: '500px' }}>
                 <SelectPicker
@@ -438,10 +428,8 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
                 />
             </div>
-            <Text>Order# : {orders?.object?.find(order =>
-                    order.key === drugKey
-                )?.drugorderId}</Text>
-            <div className='bt-right'>
+          
+            <div className={`bt-right ${edit?"disabled-panel":""}`}>
                 
                 <MyButton
                 prefixIcon={() => <PlusIcon />}
@@ -499,8 +487,31 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
         <div className='mid-container-p '>
             <div className='bt-div'>
-
-                <MyButton
+                <div className='icon-style'>
+                                   <FaPills  size={18} />
+                               </div>
+                               <div>
+                                 <div className='prescripton-word-style'>Order</div>
+                                 <div className='prescripton-number-style'>
+                                 {orders?.object?.find(order =>
+                                   order.key === drugKey
+                               )?.orderId || "_"}
+                                 </div>
+                               </div>
+               
+                <div className='bt-right'>
+                    <MyButton
+                        disabled={!edit?drugKey ?
+                            orders?.object?.find(order =>
+                                order.key === drugKey
+                            )?.statusLkey === '1804482322306061' : true:true
+                        }
+                        prefixIcon={() => <PlusIcon />}
+                        onClick={() => {setOpenDetailsModel(true)
+                            handleCleare()
+                        }}
+                    >Add Medication</MyButton>
+                     <MyButton
 
                     prefixIcon={() => <BlockIcon />}
                     onClick={() => setOpenCancellationReasonModel(true)}
@@ -519,18 +530,6 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 >
                     Show canceled orders
                 </Checkbox>
-                <div className='bt-right'>
-                    <MyButton
-                        disabled={drugKey ?
-                            orders?.object?.find(order =>
-                                order.key === drugKey
-                            )?.statusLkey === '1804482322306061' : true
-                        }
-                        prefixIcon={() => <PlusIcon />}
-                        onClick={() => {setOpenDetailsModel(true)
-                            handleCleare()
-                        }}
-                    >Add Medication</MyButton>
                 </div>
             </div>
             <MyTable
@@ -559,6 +558,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
             </CancellationModal>
 
             <DetailsModal
+                edit={edit}
                 open={openDetailsModel}
                 setOpen={setOpenDetailsModel}
                 orderMedication={orderMedication}
