@@ -144,7 +144,7 @@ const AddEditPractitioner = ({
               </div>
             )}
 
-            <div className={clsx('', { 'container-of-two-fields-practitioner': width > 600 })}>
+            <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
               <MyInput
                 column
                 fieldName="practitionerFirstName"
@@ -162,7 +162,7 @@ const AddEditPractitioner = ({
                 width={250}
               />
             </div>
-            <div className={clsx('', { 'container-of-two-fields-practitioner': width > 600 })}>
+            <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
               <MyInput
                 column
                 fieldLabel="sex at birth"
@@ -185,7 +185,7 @@ const AddEditPractitioner = ({
                 width={250}
               />
             </div>
-            <div className={clsx('', { 'container-of-two-fields-practitioner': width > 600 })}>
+            <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
               <MyInput
                 column
                 fieldName="practitionerEmail"
@@ -203,7 +203,7 @@ const AddEditPractitioner = ({
                 width={250}
               />
             </div>
-            <div className={clsx('', { 'container-of-two-fields-practitioner': width > 600 })}>
+            <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
               <MyInput
                 column
                 fieldLabel="job role"
@@ -229,7 +229,7 @@ const AddEditPractitioner = ({
                 width={250}
               />
             </div>
-            <div className={clsx('', { 'container-of-two-fields-practitioner': width > 600 })}>
+            <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
               <MyInput
                 column
                 fieldLabel="Speciality"
@@ -255,7 +255,7 @@ const AddEditPractitioner = ({
                 width={250}
               />
             </div>
-            <div className={clsx('', { 'container-of-two-fields-practitioner': width > 600 })}>
+            <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
               <MyInput
                 column
                 fieldLabel="Default Medical License"
@@ -274,7 +274,7 @@ const AddEditPractitioner = ({
                 width={250}
               />
             </div>
-            <div className={clsx('', { 'container-of-two-fields-practitioner': width > 600 })}>
+            <div className={clsx({ 'container-of-two-fields-practitioner': width > 600 })}>
               <MyInput
                 column
                 fieldLabel="Secondary License"
