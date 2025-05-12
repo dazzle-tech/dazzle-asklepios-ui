@@ -3,13 +3,13 @@ import PatientProblems from '@/pages/encounter/encounter-component/patient-histo
 import FamilyHistory from './FamilyHistory';
 import Hospitalizations from './Hospitalizations';
 import BloodTransfusion from './BloodTransfusion/BloodTransfusion';
-const MedicalHistory = ({ patient, encounter }) => {
+const MedicalHistory = ({ patient, encounter,edit }) => {
     return (
         <div className='medical-main-container'>
-           <PatientProblems patient={patient} encounter={encounter}/>
-           <FamilyHistory patient={patient} encounter={encounter}/>
-           <Hospitalizations patient={patient} encounter={encounter}/>
-           <BloodTransfusion patient={patient} encounter={encounter}/>
+           <PatientProblems patient={patient} encounter={encounter} edit={edit}/>
+           <FamilyHistory patient={patient} encounter={encounter} edit={edit}/>
+           <Hospitalizations patient={patient} encounter={encounter} edit={edit}/>
+           <BloodTransfusion patient={patient} encounter={encounter} edit={edit}/>
         </div>
     );
 };

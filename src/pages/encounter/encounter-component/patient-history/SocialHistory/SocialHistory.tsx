@@ -7,7 +7,7 @@ import MyTable from '@/components/MyTable';
 import AddSocialHistory from './AddSocialHistory';
 import Translate from '@/components/Translate';
 import { MdModeEdit } from 'react-icons/md';
-const SocialHistory = ({ patient, encounter }) => {
+const SocialHistory = ({ patient, encounter,edit }) => {
     const [open, setOpen] = useState(false);
 
     // Table Columns
@@ -30,7 +30,7 @@ const SocialHistory = ({ patient, encounter }) => {
                       Social History
                     </div>
                     <div className='bt-right'>
-                        <MyButton prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>Add</MyButton>
+                        <MyButton disabled={edit} prefixIcon={() => <PlusIcon />} onClick={() => setOpen(true)}>Add</MyButton>
                     </div>
                 </div>
                 <Divider className="divider-line" />
