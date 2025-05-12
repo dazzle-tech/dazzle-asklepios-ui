@@ -111,7 +111,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
             <DeletionConfirmationModal
               open={openConfirmDeleteDepartmentModal}
               setOpen={setOpenConfirmDeleteDepartmentModal}
-              itemToDelete="User"
+              itemToDelete="Department"
               actionButtonFunction={() => handleRemoveUserFacilityDepartment(department)}
               actionType={stateOfDeleteUserModal}
             />
