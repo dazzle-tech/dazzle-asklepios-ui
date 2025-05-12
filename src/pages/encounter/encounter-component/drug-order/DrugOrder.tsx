@@ -74,7 +74,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
     const { data: orderMedications, refetch: medicRefetch } = useGetDrugOrderMedicationQuery({
         ...initialListRequest,
-       
+
         filters: [
             {
                 fieldName: "drug_order_key",
@@ -96,10 +96,10 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
     const isSelected = rowData => {
         if (rowData && orderMedication && rowData.key === orderMedication.key) {
-          return 'selected-row';
+            return 'selected-row';
         } else return '';
-      };
-  
+    };
+
     useEffect(() => {
         if (orders?.object) {
             const foundOrder = orders.object.find(order => {
@@ -140,12 +140,12 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 ),
                 saveDraft: true
             }).then(() => {
-                dispatch(notify({msg:'Saved Draft successfully' ,type:'success'}));
+                dispatch(notify({ msg: 'Saved Draft successfully', type: 'success' }));
                 setIsDraft(true);
             })
-        } catch (error) { 
-            dispatch(notify({msg:'Error Saving draft' ,type:'error'}));
-           
+        } catch (error) {
+            dispatch(notify({ msg: 'Error Saving draft', type: 'error' }));
+
         }
 
     }
@@ -157,19 +157,19 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 ),
                 saveDraft: false
             }).then(() => {
-                dispatch(notify({msg:'Draft Cancelled' ,sev:'info'}));
+                dispatch(notify({ msg: 'Draft Cancelled', sev: 'info' }));
                 setIsDraft(false);
             })
         } catch (error) { }
 
     }
-  
+
 
     const joinValuesFromArray = (values) => {
         return values.filter(Boolean).join(', ');
     };
 
-  
+
     const handleSaveOrder = async () => {
         handleCleare();
 
@@ -198,7 +198,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 console.error("Error saving order:", error);
             }
         } else {
-            dispatch(notify({mag:"Patient or encounter is missing. Cannot save order.",sev:"warning"}));
+            dispatch(notify({ mag: "Patient or encounter is missing. Cannot save order.", sev: "warning" }));
         }
     };
     const handleCancle = async () => {
@@ -209,7 +209,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 saveDrugorderMedication({ ...orderMedication, statusLkey: "1804447528780744", deletedAt: Date.now() }).unwrap();
 
 
-            dispatch(notify({msg:' medication deleted successfully' ,type:'success'}));
+            dispatch(notify({ msg: ' medication deleted successfully', type: 'success' }));
             CloseCancellationReasonModel();
             medicRefetch().then(() => {
                 console.log("Refetch complete");
@@ -219,7 +219,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
         } catch (error) {
 
-            dispatch(notify({msg:' deleted failed' ,sev:'error'}));
+            dispatch(notify({ msg: ' deleted failed', sev: 'error' }));
 
         }
     };
@@ -234,9 +234,9 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 , saveDraft: false,
                 submittedAt: Date.now()
             }).unwrap();
-            dispatch(notify({msg:'Submetid  Successfully' ,sev:'success'}));
-           await handleCleare();
-           setDrugKey(null)
+            dispatch(notify({ msg: 'Submetid  Successfully', sev: 'success' }));
+            await handleCleare();
+            setDrugKey(null)
 
         }
         catch (error) {
@@ -276,7 +276,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
         setSelectedGeneric(null)
 
     }
-  
+
     const CloseCancellationReasonModel = () => {
         setOpenCancellationReasonModel(false);
     }
@@ -284,7 +284,8 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
     const tableColumns = [
 
-        {key: 'medicationName',
+        {
+            key: 'medicationName',
             dataKey: 'genericMedicationsKey',
             title: 'Medication Name',
             flexGrow: 2,
@@ -292,7 +293,8 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey)?.genericName;
             }
         },
-        {key: 'drugOrderType',
+        {
+            key: 'drugOrderType',
             dataKey: 'drugOrderTypeLkey',
             title: 'Drug Order Type',
             flexGrow: 1,
@@ -300,7 +302,8 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return rowData.drugOrderTypeLvalue ? rowData.drugOrderTypeLvalue?.lovDisplayVale : rowData.drugOrderTypeLkey;
             }
         },
-        { key: 'instruction',
+        {
+            key: 'instruction',
             dataKey: '',
             title: 'Instruction',
             flexGrow: 2,
@@ -308,7 +311,8 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return joinValuesFromArray([rowData.dose, rowData.doseUnitLvalue?.lovDisplayVale, rowData.drugOrderTypeLkey == '2937757567806213' ? "STAT" : "every " + rowData.frequency + " hours", rowData.roaLvalue?.lovDisplayVale]);
             }
         },
-        { key: 'startDateTime',
+        {
+            key: 'startDateTime',
             dataKey: 'startDateTime',
             title: 'Start Date Time',
             flexGrow: 2,
@@ -316,7 +320,8 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return rowData.startDateTime ? new Date(rowData.startDateTime).toLocaleString() : "";
             }
         },
-        {key: 'isChronic',
+        {
+            key: 'isChronic',
             dataKey: 'chronicMedication',
             title: 'Is Chronic',
             flexGrow: 2,
@@ -324,7 +329,8 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return rowData.chronicMedication ? "Yes" : "No";
             }
         },
-        {key: 'priorityLevel',
+        {
+            key: 'priorityLevel',
             dataKey: 'priorityLkey',
             title: 'Priority Level',
             flexGrow: 2,
@@ -332,7 +338,8 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return rowData.priorityLvalue ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey;
             }
         },
-        {key: 'status',
+        {
+            key: 'status',
             dataKey: 'statusLkey',
             title: 'Status',
             flexGrow: 1,
@@ -340,20 +347,21 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return rowData.statusLvalue ? rowData.statusLvalue?.lovDisplayVale : rowData.statusLkey;
             },
         },
-               {key:'edit',
-                title:<Translate>Edit</Translate>,
-                 flexGrow:1,
-                    render:rowData => {
-                                 return( <MdModeEdit
-                                     title="Edit"
-                                     size={24}
-                                 
-                                     fill="var(--primary-gray)"
-                                     onClick={()=>{ setOpenDetailsModel(true)}}
-                                   />)
-                             } 
-        
-                },
+        {
+            key: 'edit',
+            title: <Translate>Edit</Translate>,
+            flexGrow: 1,
+            render: rowData => {
+                return (<MdModeEdit
+                    title="Edit"
+                    size={24}
+
+                    fill="var(--primary-gray)"
+                    onClick={() => { setOpenDetailsModel(true) }}
+                />)
+            }
+
+        },
         {
             key: 'createdAt',
             dataKey: 'createdAt',
@@ -369,7 +377,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
             dataKey: 'createdBy',
             title: 'Created By',
             flexGrow: 2,
-            expandable:true,
+            expandable: true,
             render: (rowData: any) => {
                 return rowData.createdBy;
             }
@@ -408,11 +416,11 @@ const DrugOrder = ({ edit, patient, encounter }) => {
         }
     ];
     return (<>
-       
+
         <div className='bt-div'
-     
-         >
-        <div style={{ width: '500px' }}>
+
+        >
+            <div style={{ width: '500px' }}>
                 <SelectPicker
 
                     className='fill-width'
@@ -428,108 +436,109 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
                 />
             </div>
-          
-            <div className={`bt-right ${edit?"disabled-panel":""}`}>
-                
+
+            <div className={`bt-right ${edit ? "disabled-panel" : ""}`}>
+
                 <MyButton
-                prefixIcon={() => <PlusIcon />}
-                onClick={handleSaveOrder}
-                disabled={isdraft}
+                    prefixIcon={() => <PlusIcon />}
+                    onClick={handleSaveOrder}
+                    disabled={isdraft}
                 >New Order</MyButton>
                 <MyButton
-                prefixIcon={()=><CheckIcon />}
-                onClick={handleSubmitPres}
+                    prefixIcon={() => <CheckIcon />}
+                    onClick={handleSubmitPres}
 
-                disabled={drugKey ?
-                    orders?.object?.find(order =>
-                        order.key === drugKey
-                    )?.statusLkey === '1804482322306061' : true
-                }
+                    disabled={drugKey ?
+                        orders?.object?.find(order =>
+                            order.key === drugKey
+                        )?.statusLkey === '1804482322306061' : true
+                    }
                 >Submit Order</MyButton>
                 {
                     !isdraft &&
                     <MyButton
                         onClick={saveDraft}
-                       prefixIcon={()=><DocPassIcon />}
+                        prefixIcon={() => <DocPassIcon />}
                         disabled={drugKey ?
                             orders?.object?.find(order =>
                                 order.key === drugKey
                             )?.statusLkey === '1804482322306061' : true
                         }
                     >
-                       Save draft
+                        Save draft
                     </MyButton>
 
                 }
                 {
                     isdraft &&
                     <MyButton
-                      
+
                         appearance="ghost"
                         onClick={cancleDraft}
-                        prefixIcon={()=><DocPassIcon />}
+                        prefixIcon={() => <DocPassIcon />}
                         disabled={drugKey ?
                             orders?.object?.find(order =>
                                 order.key === drugKey
                             )?.statusLkey === '1804482322306061' : true
                         }
                     >
-                         Cancle draft
+                        Cancle draft
                     </MyButton>
 
                 }
             </div>
         </div>
-     
-        <Divider/>
-       
+
+        <Divider />
+
 
 
         <div className='mid-container-p '>
             <div className='bt-div'>
                 <div className='icon-style'>
-                                   <FaPills  size={18} />
-                               </div>
-                               <div>
-                                 <div className='prescripton-word-style'>Order</div>
-                                 <div className='prescripton-number-style'>
-                                 {orders?.object?.find(order =>
-                                   order.key === drugKey
-                               )?.orderId || "_"}
-                                 </div>
-                               </div>
-               
+                    <FaPills size={18} />
+                </div>
+                <div>
+                    <div className='prescripton-word-style'>Order</div>
+                    <div className='prescripton-number-style'>
+                        {orders?.object?.find(order =>
+                            order.key === drugKey
+                        )?.drugorderId || "_"}
+                    </div>
+                </div>
+
                 <div className='bt-right'>
                     <MyButton
-                        disabled={!edit?drugKey ?
+                        disabled={!edit ? drugKey ?
                             orders?.object?.find(order =>
                                 order.key === drugKey
-                            )?.statusLkey === '1804482322306061' : true:true
+                            )?.statusLkey === '1804482322306061' : true : true
                         }
                         prefixIcon={() => <PlusIcon />}
-                        onClick={() => {setOpenDetailsModel(true)
+                        onClick={() => {
+                            setOpenDetailsModel(true)
                             handleCleare()
                         }}
                     >Add Medication</MyButton>
-                     <MyButton
+                    <MyButton
 
-                    prefixIcon={() => <BlockIcon />}
-                    onClick={() => setOpenCancellationReasonModel(true)}
-                    disabled={orderMedication.statusLvalue?.lovDisplayVale !== 'New'}
-                >
-                    <Translate> Cancle</Translate>
-                </MyButton>
-               
-                <Checkbox
-                    checked={!showCanceled}
-                    onChange={() => {
+                        prefixIcon={() => <BlockIcon />}
+                        onClick={() => setOpenCancellationReasonModel(true)}
+                        disabled={orderMedication.statusLvalue?.lovDisplayVale !== 'New'}
+                    >
+                        <Translate> Cancle</Translate>
+                    </MyButton>
+
+                    <Checkbox
+                        checked={!showCanceled}
+                        onChange={() => {
 
 
-                        setShowCanceled(!showCanceled);
-                    }}
-                >
-                    Show canceled orders
-                </Checkbox>
+                            setShowCanceled(!showCanceled);
+                        }}
+                    >
+                        Show canceled orders
+                    </Checkbox>
                 </div>
             </div>
             <MyTable
