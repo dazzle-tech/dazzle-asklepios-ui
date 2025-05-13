@@ -19,7 +19,7 @@ import {
     useFetchAttachmentByKeyQuery,
 } from '@/services/attachmentService';
 const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveTest, orderTest, setOrderTest, order, edit }) => {
-    console.log("edit",edit)
+  
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [actionType, setActionType] = useState(null);
     const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
@@ -57,9 +57,7 @@ const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveT
             setReceivedType('');
         }
     }, [test]);
-    useEffect(() => {
-        console.log(receivedType)
-    }, [receivedType]);
+ 
     useEffect(() => {
 
         if (isSuccess && fetchAttachmentByKeyResponce) {
