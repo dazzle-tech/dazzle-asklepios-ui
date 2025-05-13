@@ -35,6 +35,7 @@ import PlusIcon from '@rsuite/icons/Plus';
 import DetailsModal from './DetailsModal';
 import TestDropdown from './TestDropdown';
 import CancellationModal from '@/components/CancellationModal';
+import Orders from '@/pages/lab-module/Orders';
 
 const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
@@ -78,7 +79,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             }
         ]
     });
-    const [orders, setOrders] = useState<ApDiagnosticOrders>({ ...newApDiagnosticOrders });
+    const [orders, setOrders] = useState<any>({ ...newApDiagnosticOrders });
 
     const [orderTest, setOrderTest] = useState<ApDiagnosticOrderTests>({ ...newApDiagnosticOrderTests, processingStatusLkey: '6055029972709625' });
     const [listOrdersTestRequest, setListOrdersTestRequest] = useState<ListRequest>({
@@ -247,7 +248,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         }
     };
     const handleItemClick = async (test) => {
-
+         setFlag(true);
         try {
 
             await saveOrderTests({
@@ -263,9 +264,9 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
             }).unwrap();
             dispatch(notify({ msg: 'Saved  Successfully', sev: "success" }));
-
-            orderTestRefetch();
-            setFlag(true);
+              
+           await orderTestRefetch();
+            
         }
         catch (error) {
 
@@ -320,7 +321,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             }
         })
         setIsDraft(false);
-
+        setFlag(true);
         await ordersRefetch();
 
         orderTestRefetch().then(() => "");
@@ -584,7 +585,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                                 setOrders({ ...orders, isUrgent: !orders.isUrgent })
                             }
                             backgroundColor={orders.isUrgent ? "var(--primary-orange)" : 'var(--primary-blue)'}
-                            disabled={!edit ? !orderTest.key : true}
+                            disabled={!edit ?orders.key?orders?.statusLvalue?.valueCode!==' DIAG_ORDER_STAT_NEW':true: true}
 
                         >
                             Urgent</MyButton>
@@ -631,7 +632,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
                     <div className='top-container'>
 
-                        <TestDropdown handleItemClick={handleItemClick} disabled={orders.key == null} flag={flag} />
+                        <TestDropdown handleItemClick={handleItemClick} disabled={orders.key?orders?.statusLvalue?.valueCode!==' DIAG_ORDER_STAT_NEW':true} flag={flag} setFlag={setFlag}/>
                         <div className='icon-style'>
                             <GrTestDesktop size={18} />
                         </div>

@@ -107,13 +107,14 @@ const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveT
         setActionType('download');
 
     };
+    
     return (<>
         <MyModal
             open={openDetailsModel}
             setOpen={setOpenDetailsModel}
             title="Add Test Details"
             actionButtonFunction={handleSaveTest}
-            isDisabledActionBtn={edit ? true : orderTest?.statusLvalue?.valueCode !== 'DIAG_ORDER_STAT_NEW'}
+            isDisabledActionBtn={edit ? true :orderTest?.statusLvalue?.valueCode !== ' DIAG_ORDER_STAT_NEW'}
             position='right'
             size='500px'
             bodyheight={350}
