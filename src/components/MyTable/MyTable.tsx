@@ -100,7 +100,7 @@ const MyTable: React.FC<MyTableProps> = ({
         <Table stickyHeader size="small">
           <TableHead className="my-table-header">
             <TableRow>
-              {expandableColumns.length > 0 && <TableCell />}
+              {expandableColumns.length > 0 && <TableCell  />}
               {visibleColumns.map(col => {
                 const isSortable = !!onSortChange;
                 const isActive = sortColumn === col.key;
@@ -181,7 +181,7 @@ const MyTable: React.FC<MyTableProps> = ({
                         <TableCell colSpan={visibleColumns.length + 1} className="expanded-table">
                           <Box>
                             <Table size="small">
-                              <TableHead>
+                              <TableHead className="my-table-header">
                                 <TableRow>
                                   {expandableColumns.map(col => (
                                     <TableCell
