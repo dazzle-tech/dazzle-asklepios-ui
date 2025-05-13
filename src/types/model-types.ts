@@ -2400,6 +2400,20 @@ export interface ApPsychologicalExam {
 	statusLkey:string;
 } 
 
+export interface ApRelationsMatrix { 
+	key:string;
+	firstPatientGender:string;
+	secondPatientGender:string;
+	firstRelationCode:string;
+	secondRelationCode:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
 export interface ApResources { 
 	key:string;
 	facilityKey:string;

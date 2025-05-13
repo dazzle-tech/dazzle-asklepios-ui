@@ -2401,6 +2401,20 @@ export const newApPsychologicalExam:modelTypes.ApPsychologicalExam = {
 	statusLkey:undefined,
 } 
 
+export const newApRelationsMatrix:modelTypes.ApRelationsMatrix = { 
+	key:undefined,
+	firstPatientGender:'',
+	secondPatientGender:'',
+	firstRelationCode:'',
+	secondRelationCode:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
 export const newApResources:modelTypes.ApResources = { 
 	key:undefined,
 	facilityKey:undefined,
