@@ -678,6 +678,7 @@ export interface ApDiagnosticOrderTests {
 	patientArrivedNoteRad:string;
 	readyAt:number;
 	approvedAt:number;
+	cancellationReason:string;
 } 
 
 export interface ApDiagnosticOrderTestsNotes { 

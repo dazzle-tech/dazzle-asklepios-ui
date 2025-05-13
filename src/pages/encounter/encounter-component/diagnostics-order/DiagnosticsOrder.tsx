@@ -34,6 +34,7 @@ import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import PlusIcon from '@rsuite/icons/Plus';
 import DetailsModal from './DetailsModal';
 import TestDropdown from './TestDropdown';
+import CancellationModal from '@/components/CancellationModal';
 
 const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
@@ -41,6 +42,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
     const [showCanceled, setShowCanceled] = useState(true);
     const [test, setTest] = useState<ApDiagnosticTest>({ ...newApDiagnosticTest });
     const [flag, setFlag] = useState(false);
+    const [reson, setReson] = useState({ cancellationReason: "" })
     const [listOrderRequest, setListOrderRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -138,9 +140,9 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                     value: patient.key
                 },
                 {
-                    fieldName: 'visit_key',
+                    fieldName: 'order_key',
                     operator: 'match',
-                    value: encounter.key
+                    value: orders.key || undefined
                 },
                 {
                     fieldName: 'is_valid',
@@ -178,7 +180,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         }));
 
     }, [orders])
-  
+
 
 
 
@@ -226,7 +228,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
         try {
             await Promise.all(
-                selectedRows.map(item => saveOrderTests({ ...item, statusLkey: '1804447528780744', isValid: false }).unwrap())
+                selectedRows.map(item => saveOrderTests({ ...item, deletedAt: Date.now(), statusLkey: '1804447528780744', isValid: false, cancellationReason: reson.cancellationReason }).unwrap())
             );
 
             dispatch(notify({ msg: 'All orders deleted successfully', sev: 'success' }));
@@ -260,7 +262,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
 
             }).unwrap();
-            dispatch(notify({msg:'Saved  Successfully' ,sev:"success"}));
+            dispatch(notify({ msg: 'Saved  Successfully', sev: "success" }));
 
             orderTestRefetch();
             setFlag(true);
@@ -268,7 +270,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         catch (error) {
 
             console.error("Encounter save failed:", error);
-            dispatch(notify({msg:'Save Failed',sev:"error"}));
+            dispatch(notify({ msg: 'Save Failed', sev: "error" }));
         }
     };
     const handleSaveOrders = async () => {
@@ -303,7 +305,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                 , saveDraft: false,
                 submittedAt: Date.now()
             }).unwrap();
-            dispatch(notify('submetid  Successfully'));
+            dispatch(notify({msg:'Submetid  Successfully',sev:"success"}));
             ordersRefetch();
             orderTestRefetch();
 
@@ -313,7 +315,9 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         }
 
         orderTestList?.object?.map((item) => {
-            saveOrderTests({ ...item, statusLkey: "1804482322306061", submitDate: Date.now() })
+            if (item.statusLkey !== "1804447528780744") {
+                saveOrderTests({ ...item, statusLkey: "1804482322306061", submitDate: Date.now() })
+            }
         })
         setIsDraft(false);
 
@@ -364,17 +368,17 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         },
         {
             key: 'orderTypeLkey',
-            title: <Translate>Order Type</Translate>,
+            title: <Translate>ORDER TYPE</Translate>,
             flexGrow: 1,
             fullText: true,
             render: rowData => {
-              
-                return rowData.test?.testTypeLvalue?.lovDisplayVale?? "";
+
+                return rowData.test?.testTypeLvalue?.lovDisplayVale ?? "";
             }
         },
         {
             key: 'test',
-            title: <Translate>Test Name</Translate>,
+            title: <Translate>TEST NAME</Translate>,
             flexGrow: 2,
             fullText: true,
             render: rowData => rowData.test.testName // or wrap in <span> if needed
@@ -383,7 +387,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         {
             key: "internalCode",
             dataKey: "internalCode",
-            title: <Translate>Internal Code</Translate>,
+            title: <Translate>INTERNAL CODE</Translate>,
             flexGrow: 2,
             fullText: true,
             render: rowData => rowData.test.internalCode
@@ -393,41 +397,17 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         {
             key: "statusLkey",
             dataKey: "statusLkey",
-            title: <Translate>Status</Translate>,
+            title: <Translate>STATUS</Translate>,
             flexGrow: 1,
             fullText: true,
             render: rowData => rowData.statusLvalue ? rowData.statusLvalue.lovDisplayVale : rowData.statusLkey
 
         }
         ,
-
-        {
-            key: " ",
-
-            title: <Translate>International Coding</Translate>,
-            flexGrow: 2,
-            render: rowData => {
-
-                return (
-                    <>
-                        <span>{rowData.test.internationalCodeOne}</span>
-                        <br />
-
-                        <span>{rowData.test.internationalCodeTwo}</span>
-
-                        <br />
-                        <span>{rowData.test.internationalCodeThree}</span>
-                    </>
-                );
-            }
-
-
-        }
-        ,
         {
             key: "receivedLabkey ",
             dataKey: "receivedLabkey ",
-            title: <Translate>Received Lab</Translate>,
+            title: <Translate>RECEIVED LAB</Translate>,
             fullText: true,
             flexGrow: 1,
         }
@@ -435,7 +415,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         {
             key: "processingStatusLkey",
             dataKey: "processingStatusLkey",
-            title: <Translate>Processing Status</Translate>,
+            title: <Translate>PROCESSING STATUS</Translate>,
             flexGrow: 1,
             fullText: true,
             render: rowData => rowData.processingStatusLvalue ? rowData.processingStatusLvalue?.lovDisplayVale : rowData.processingStatusLkey
@@ -445,7 +425,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         {
             key: "reasonLkey",
             dataKey: "reasonLkey",
-            title: <Translate>Reason</Translate>,
+            title: <Translate>REASON</Translate>,
             flexGrow: 1,
             fullText: true,
             render: rowData => rowData.reasonLkey ? rowData.reasonLvalue?.lovDisplayVale : rowData.reasonLkey
@@ -455,7 +435,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         {
             key: "priorityLkey",
             dataKey: "priorityLkey",
-            title: <Translate>Reason</Translate>,
+            title: <Translate>REASON</Translate>,
             flexGrow: 1,
             fullText: true,
             render: rowData => rowData.priorityLvalue ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey
@@ -465,7 +445,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         {
             key: "notes",
             dataKey: "notes ",
-            title: <Translate>Notes</Translate>,
+            title: <Translate>NOTES</Translate>,
             fullText: true,
             flexGrow: 1,
         }
@@ -473,7 +453,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         {
             key: "submitDate",
             dataKey: "submitDate",
-            title: <Translate>Submit Date</Translate>,
+            title: <Translate>SUBMIT DATE</Translate>,
             flexGrow: 2,
             fullText: true,
             render: rowData => rowData.submitDate ? new Date(rowData.submitDate).toLocaleString() : ""
@@ -483,7 +463,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         {
             key: "details",
 
-            title: <Translate>Add details</Translate>,
+            title: <Translate>ADD DETAILS</Translate>,
             flexGrow: 2,
             fullText: true,
             render: rowData => {
@@ -496,9 +476,80 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             }
 
         }
+        ,
+        {
+            key: "",
+            title: <Translate>Created At/By</Translate>,
+            expandable: true,
+            render: (rowData: any) => {
+                return (<>
+                    <span>{rowData.createdBy}</span>
+                    <br />
+                    <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+                </>)
+            }
+
+        },
+        {
+            key: "",
+            title: <Translate>Updated At/By</Translate>,
+            expandable: true,
+            render: (rowData: any) => {
+                return (<>
+                    <span>{rowData.updatedBy}</span>
+                    <br />
+                    <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+                </>)
+            }
+
+        },
+
+        {
+            key: "",
+            title: <Translate>Cancelled At/By</Translate>,
+            expandable: true,
+            render: (rowData: any) => {
+                return (<>
+                    <span>{rowData.deletedBy}</span>
+                    <br />
+                    <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
+                </>)
+            }
+
+        },
+
+        {
+            key: "cancellationReason",
+            dataKey: "cancellationReason",
+            title: <Translate>Cancellation Reason</Translate>,
+            expandable: true
+        }
     ];
 
+    const pageIndex = listOrdersTestRequest.pageNumber - 1;
 
+    // how many rows per page:
+    const rowsPerPage = listOrdersTestRequest.pageSize;
+
+    // total number of items in the backend:
+    const totalCount = orderTestList?.extraNumeric ?? 0;
+
+    // handler when the user clicks a new page number:
+    const handlePageChange = (_: unknown, newPage: number) => {
+        // MUI gives you a zero-based page, so add 1 for your API
+
+        setListOrdersTestRequest({ ...listOrdersTestRequest, pageNumber: newPage + 1 });
+    };
+
+    // handler when the user chooses a different rows-per-page:
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+
+        setListOrdersTestRequest({
+            ...listOrdersTestRequest,
+            pageSize: parseInt(event.target.value, 10),
+            pageNumber: 1 // reset to first page
+        });
+    };
     return (
         <>
             <div style={{ marginLeft: '10px', padding: '5px' }}>
@@ -524,19 +575,19 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                         <MyButton
 
                             onClick={handleSaveOrders}
-                            disabled={!edit? isdraft:true}
+                            disabled={!edit ? isdraft : true}
                             prefixIcon={() => <PlusIcon />}
                         >New Order</MyButton>
                         <MyButton
-                        prefixIcon={()=> <FontAwesomeIcon icon={faLandMineOn}    />}
+                            prefixIcon={() => <FontAwesomeIcon icon={faLandMineOn} />}
                             onClick={() =>
                                 setOrders({ ...orders, isUrgent: !orders.isUrgent })
                             }
-                           backgroundColor={orders.isUrgent?"var(--primary-orange)":'var(--primary-blue)'}
-                           disabled={!edit?!orderTest.key:true}
+                            backgroundColor={orders.isUrgent ? "var(--primary-orange)" : 'var(--primary-blue)'}
+                            disabled={!edit ? !orderTest.key : true}
 
                         >
-                          Urgent</MyButton>
+                            Urgent</MyButton>
 
                         <MyButton
                             onClick={handleSubmitPres}
@@ -638,6 +689,12 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
                     }}
                     rowClassName={isSelected}
+                    page={pageIndex}
+                    rowsPerPage={rowsPerPage}
+                    totalCount={totalCount}
+                    onPageChange={handlePageChange}
+                    onRowsPerPageChange={handleRowsPerPageChange}
+                
                 />
             </Row>
 
@@ -648,15 +705,19 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                 setOpenDetailsModel={setOpenDetailsModel}
                 orderTest={orderTest}
                 setOrderTest={setOrderTest}
-                handleSaveTest={handleSaveTest} />
+                handleSaveTest={handleSaveTest}
+                edit={edit} />
 
-            <DeletionConfirmationModal
+            <CancellationModal
                 open={openConfirmDeleteModel}
-                setOpen={setOpenDetailsModel}
-                itemToDelete="Test"
-                actionButtonFunction={handleCancle}
-
-            />
+                setOpen={setConfirmDeleteModel}
+                object={reson}
+                setObject={setReson}
+                handleCancle={handleCancle}
+                fieldName="cancellationReason"
+                fieldLabel={'Cancellation Reason'}
+                title={'Cancellation'}
+            ></CancellationModal>
         </>
     );
 };

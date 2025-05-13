@@ -3,7 +3,7 @@ import Translate from '@/components/Translate';
 import './styles.less';
 import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
-import { Form } from 'rsuite';
+import { Col, Form, Row } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
 import { faFile, faVials } from '@fortawesome/free-solid-svg-icons';
@@ -18,7 +18,8 @@ import {
 import {
     useFetchAttachmentByKeyQuery,
 } from '@/services/attachmentService';
-const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveTest, orderTest, setOrderTest, order }) => {
+const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveTest, orderTest, setOrderTest, order, edit }) => {
+    console.log("edit",edit)
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [actionType, setActionType] = useState(null);
     const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
@@ -112,13 +113,15 @@ const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveT
             setOpen={setOpenDetailsModel}
             title="Add Test Details"
             actionButtonFunction={handleSaveTest}
+            isDisabledActionBtn={edit ? true : orderTest?.statusLvalue?.valueCode !== 'DIAG_ORDER_STAT_NEW'}
             position='right'
-            size='700px'
+            size='500px'
+            bodyheight={350}
             steps={[
 
                 {
-                    title: (test?.testTypeLvalue?.lovDisplayVale || '') + ' - ' + (test?.testName || ''), 
-                    icon:<FontAwesomeIcon icon={faVials}/>,
+                    title: (test?.testTypeLvalue?.lovDisplayVale || '') + ' - ' + (test?.testName || ''),
+                    icon: <FontAwesomeIcon icon={faVials} />,
                     footer:
                         <MyButton
                             onClick={() => setAttachmentsModalOpen(true)}
@@ -126,75 +129,64 @@ const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveT
                         >Attachment File</MyButton>
                 },
             ]}
-            content={<>
-                <div className='div-parent'>
-                    <div style={{ flex: 1 }} >
-                        <Form layout="inline" fluid disabled={orderTest.statusLkey !== '164797574082125'}>
-                            <MyInput
-                                column
+            content={
+           <div className={edit?"disabled-panel":""}>
+            <Form fluid >
+                <Row>
 
-                                width={200}
-                                fieldType="select"
-                                fieldLabel="Order Priority"
-                                selectData={orderPriorityLovQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                fieldName={'priorityLkey'}
-                                record={orderTest}
-                                setRecord={setOrderTest}
-                            />
-                        </Form>
-                    </div>
-                    <div style={{ flex: 1 }} >
-                        <Form layout="inline" fluid disabled={orderTest.statusLkey !== '164797574082125'}>
-                            <MyInput
-                                column
-
-                                width={200}
-                                fieldType="select"
-                                fieldLabel="Reason"
-                                selectData={ReasonLovQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                fieldName={'reasonLkey'}
-                                record={orderTest}
-                                setRecord={setOrderTest}
-                            />
-                        </Form>
-                    </div>
-                    <div style={{ flex: 1 }} >
-                        <Form layout="inline" fluid disabled={orderTest.statusLkey !== '164797574082125'}>
-                            <MyInput
-                                column
-
-                                width={200}
-                                fieldType="select"
-                                fieldLabel="Received Lab"
-                                selectData={receivedLabList?.object ?? []}
-                                selectDataLabel="name"
-                                selectDataValue="key"
-                                fieldName={'receivedLabKey'}
-                                record={orderTest}
-                                setRecord={setOrderTest}
-                            />
-                        </Form>
-                    </div>
-
-                </div>
-                <div>
-                    <Form fluid disabled={orderTest.statusLkey !== '164797574082125'}>
+                    <Col md={8}>
                         <MyInput
-                            column
-                            rows={5}
-                            width={'100%'}
-
-                            fieldName={'notes'}
+                            width="100%"
+                            fieldType="select"
+                            fieldLabel="Order Priority"
+                            selectData={orderPriorityLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            fieldName={'priorityLkey'}
+                            record={orderTest}
+                            setRecord={setOrderTest}
+                        /></Col>
+                    <Col md={8}>
+                        <MyInput
+                            width="100%"
+                            fieldType="select"
+                            fieldLabel="Reason"
+                            selectData={ReasonLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            fieldName={'reasonLkey'}
+                            record={orderTest}
+                            setRecord={setOrderTest}
+                        /></Col>
+                    <Col md={8}>
+                        <MyInput
+                            width="100%"
+                            fieldType="select"
+                            fieldLabel="Received Lab"
+                            selectData={receivedLabList?.object ?? []}
+                            selectDataLabel="name"
+                            selectDataValue="key"
+                            fieldName={'receivedLabKey'}
                             record={orderTest}
                             setRecord={setOrderTest}
                         />
-                    </Form>
-                </div>
-            </>}
+                    </Col>
+
+                </Row>
+                <Row>
+                    <Col md={24}
+                    >
+                        <MyInput
+                          height={70}
+                            width={'100%'}
+                            fieldName={'notes'}
+                            record={orderTest}
+                            setRecord={setOrderTest}
+                        /></Col>
+                </Row>
+
+            </Form>
+            </div>}
         />
 
 

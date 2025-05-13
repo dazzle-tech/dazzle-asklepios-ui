@@ -679,6 +679,7 @@ export const newApDiagnosticOrderTests:modelTypes.ApDiagnosticOrderTests = {
 	patientArrivedNoteRad:'',
 	readyAt:0,
 	approvedAt:0,
+	cancellationReason:'',
 } 
 
 export const newApDiagnosticOrderTestsNotes:modelTypes.ApDiagnosticOrderTestsNotes = { 
