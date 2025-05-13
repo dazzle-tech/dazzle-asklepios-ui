@@ -42,7 +42,7 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
     });
     useEffect(() => {
         if (allerges.reactionDescription != null) {
- 
+
             setReactionDescription(prevadminInstructions =>
                 prevadminInstructions
                     ? `${prevadminInstructions}, ${reactionLovQueryResponse?.object?.find(
@@ -58,18 +58,18 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
     useEffect(() => {
         if (allerges.onsetDate != 0) {
             setEditOnset({ editdate: false });
-            
+
         }
         if (allerges.sourceOfInformationLkey != null) {
             seteditSourceof({ editSource: false });
         }
     }, [allerges]);
-    useEffect(()=>{
-        if(editOnset.editdate){
-            setAllerges({...allerges,onsetDate:0})
+    useEffect(() => {
+        if (editOnset.editdate) {
+            setAllerges({ ...allerges, onsetDate: 0 })
         }
-    },[editOnset.editdate])
-  
+    }, [editOnset.editdate])
+
     const handleSave = async () => {
 
         try {
@@ -81,18 +81,18 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                 reactionDescription: reactionDescription,
                 onsetDate: allerges.onsetDate ? new Date(allerges.onsetDate).getTime() : null
             }).unwrap();
-            dispatch(notify({msg:'Saved Successfully',sev:"success"}));
+            dispatch(notify({ msg: 'Saved Successfully', sev: "success" }));
             setOpen(false)
-           await fetchallerges()
+            await fetchallerges()
             await handleClear();
 
         } catch (error) {
-            dispatch(notify({msg:'Save Failed',sev:"error"}));
-            
+            dispatch(notify({ msg: 'Save Failed', sev: "error" }));
+
 
         }
     };
-    
+
     return (<>
         <MyModal
             open={open}
@@ -106,7 +106,7 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
             steps={[
 
                 {
-                    title: 'Allergy', icon: <FontAwesomeIcon icon={faPersonDotsFromLine}/>, footer: <MyButton
+                    title: 'Allergy', icon: <FontAwesomeIcon icon={faPersonDotsFromLine} />, footer: <MyButton
 
                         onClick={handleClear}
                     >Clear</MyButton>
@@ -236,14 +236,14 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                                     record={allerges}
                                     setRecord={setAllerges}
                                     searchable={false}
-                                     />
+                                />
                             </Form>
                         </Col>
                         <Col md={8}>
                             <Form fluid>
                                 <MyInput
                                     width="100%"
-                                    fieldType='datetime'
+                                    fieldType='date'
                                     fieldName="onsetDate"
                                     record={allerges}
                                     setRecord={setAllerges}
@@ -336,13 +336,13 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                             </Row>
                             <Row>
                                 <Col md={24}>
-                                <Input
+                                    <Input
                                         as="textarea"
                                         disabled={editing}
                                         onChange={e => setReactionDescription(e)}
                                         value={reactionDescription}
                                         className='fill-width'
-                                        rows={3}
+                                        rows={2}
                                     />
                                 </Col>
                             </Row>
@@ -354,16 +354,13 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                                     fieldLabel="Note"
                                     fieldType="textarea"
                                     fieldName="notes"
-                                    height={148}
+                                    height={90}
                                     record={allerges}
                                     setRecord={setAllerges}
                                     disabled={editing}
                                 />
                             </Form></Col>
                     </Row>
-                 
-
-
                 </div>
             }
         />
