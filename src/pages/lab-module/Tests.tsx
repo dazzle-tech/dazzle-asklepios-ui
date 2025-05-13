@@ -55,7 +55,13 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
                 fieldName: "order_type_lkey",
                 operator: "match",
                 value: "862810597620632",
+            },
+            {
+                fieldName: "status_lkey",
+                operator: "match",
+                value: "1804482322306061",
             }
+
 
 
         ],
@@ -74,6 +80,7 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
         ...initialListRequest
 
     });
+    
     const { data: laboratoryListToFilter } = useGetDiagnosticsTestLaboratoryListQuery({
         ...initialListRequest,
         filters: [
@@ -132,7 +139,14 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
                         fieldName: "order_type_lkey",
                         operator: "match",
                         value: "862810597620632",
-                    }]
+                    },
+                    ,
+                    {
+                        fieldName: "status_lkey",
+                        operator: "match",
+                        value: "1804482322306061",
+                    }
+                ]
             })
         }
     }, [selectedCatValue, laboratoryListToFilter]);
@@ -149,7 +163,13 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
                 fieldName: "order_type_lkey",
                 operator: "match",
                 value: "862810597620632",
+            },
+            {
+                fieldName: "status_lkey",
+                operator: "match",
+                value: "1804482322306061",
             }
+
 
         ];
         setListRequest((prevRequest) => ({
@@ -176,8 +196,8 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
     useEffect(() => {
         resultFetch();
     }
-  , [saveNewResultMutation.isSuccess])
- //When the test is accepted, a report is generated for it,but the sample must have collected
+        , [saveNewResultMutation.isSuccess])
+    //When the test is accepted, a report is generated for it,but the sample must have collected
     const handleAcceptTest = async (rowData) => {
         if (samplesList?.object?.length > 0) {
             try {
@@ -235,7 +255,7 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
         fecthNotes();
 
     };
-   //set test status reject ,from reject modal
+    //set test status reject ,from reject modal
     const handleRejectedTest = async () => {
         try {
             const Response = await saveTest({ ...test, processingStatusLkey: "6055192099058457", rejectedAt: Date.now() }).unwrap();
@@ -515,7 +535,7 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
             pageNumber: 1 // reset to first page
         });
     };
-    
+
     const handleFilterResultChange = (fieldName, value) => {
         if (value) {
             setListRequest(
@@ -538,7 +558,13 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
                         fieldName: "order_type_lkey",
                         operator: "match",
                         value: "862810597620632",
+                    },
+                    {
+                        fieldName: "status_lkey",
+                        operator: "match",
+                        value: "1804482322306061",
                     }
+
 
 
                 ]
@@ -546,9 +572,9 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
         }
     };
     //test category filter
-     const filters = () => {
-        return (  <SelectPicker
-            style={{ width:'200px' }}
+    const filters = () => {
+        return (<SelectPicker
+            style={{ width: '200px' }}
             placeholder={<Translate>Select Action From List</Translate>}
             data={labCatLovQueryResponse?.object}
             labelKey="lovDisplayVale"
@@ -568,7 +594,7 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
 
         />
         );
-      };
+    };
     return (
         <Panel ref={ref} header="Order's Tests" collapsible defaultExpanded className="panel-border">
             <MyTable

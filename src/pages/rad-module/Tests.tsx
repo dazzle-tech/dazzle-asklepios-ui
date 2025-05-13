@@ -11,8 +11,8 @@ import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import { notify } from "@/utils/uiReducerActions";
 import { faComment, faHospitalUser, faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useState, useEffect,useRef } from "react";
-import {  HStack, Tooltip, Whisper } from "rsuite";
+import React, { useState, useEffect, useRef } from "react";
+import { HStack, Tooltip, Whisper } from "rsuite";
 import ChatModal from "@/components/ChatModal";
 
 import PatientArrivalModal from "./PatientArrivalModal";
@@ -35,6 +35,11 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
                 fieldName: 'order_type_lkey',
                 operator: 'match',
                 value: '862828331135792'
+            },
+            {
+                fieldName: "status_lkey",
+                operator: "match",
+                value: "1804482322306061",
             }
         ]
     });
@@ -57,15 +62,42 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
         refetch: fetchTest,
         isFetching: isTestFetching
     } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestResponse });
-
+console.log("tests",testsList)
     //to set notes modal scroll in tha last massage
     const endOfMessagesRef = useRef(null);
-      useEffect(() => {
+    useEffect(() => {
         if (endOfMessagesRef.current) {
-          endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth' });
+            endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-      }, [messagesList]);
-
+    }, [messagesList]);
+       useEffect(() => {
+     
+             const updatedFilters = [
+                 {
+                     fieldName: "order_key",
+                     operator: "match",
+                     value: order?.key ?? undefined,
+                 },
+                 {
+                     fieldName: "order_type_lkey",
+                     operator: "match",
+                     value: "862828331135792",
+                 },
+                 {
+                     fieldName: "status_lkey",
+                     operator: "match",
+                     value: "1804482322306061",
+                 }
+     
+     
+             ];
+             setListOrdersTestResponse((prevRequest) => ({
+                 ...prevRequest,
+                 filters: updatedFilters,
+             }));
+     
+     
+         }, [order]);
     const handleRejectedTest = async () => {
         try {
             const Response = await saveTest({
@@ -83,7 +115,7 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
             dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
         }
     };
-//When the test is accepted, a report is generated for it,but the patient must have arrived
+    //When the test is accepted, a report is generated for it,but the patient must have arrived
     const handleAcceptTest = async rowData => {
         if (rowData.patientArrivedAt !== null) {
             try {
@@ -92,7 +124,7 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
                     processingStatusLkey: '6055074111734636',
                     acceptedAt: Date.now()
                 }).unwrap();
-              await  saveReport({
+                await saveReport({
                     ...newApDiagnosticOrderTestsRadReport,
                     orderKey: order.key,
                     orderTestKey: test.key,
@@ -102,13 +134,13 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
                     statusLkey: '6055029972709625'
                 }).unwrap();
 
-               
+
                 dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-             
-                setTest({...newApDiagnosticOrderTests})
+
+                setTest({ ...newApDiagnosticOrderTests })
                 await fetchTest();
                 await reportFetch();
-                
+
             } catch (error) {
                 dispatch(notify({ msg: 'Saved Failed', sev: 'error' }));
                 console.error('Error saving test or report:', error);
