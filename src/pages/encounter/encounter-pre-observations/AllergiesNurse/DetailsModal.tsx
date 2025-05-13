@@ -100,7 +100,7 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
             title="Add Allergy"
             actionButtonFunction={handleSave}
             bodyheight={550}
-            isDisabledActionBtn={edit}
+            isDisabledActionBtn={!edit?allerges.statusLvalue?.valueCode=="ARS_CANCEL"?true:false:true}
             size='700px'
             position='right'
             steps={[
@@ -114,7 +114,7 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
             ]}
             content={
 
-                <div className={edit ? 'disabled-panel' : ""} >
+                <div className={!edit?allerges.statusLvalue?.valueCode=="ARS_CANCEL"?"disabled-panel":"":"disabled-panel"}>
                     <Row className='rows-gap' >
                         <Col md={8}>
                             <Form fluid>

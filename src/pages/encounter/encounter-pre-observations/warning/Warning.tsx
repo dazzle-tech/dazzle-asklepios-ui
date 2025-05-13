@@ -34,7 +34,7 @@ const Warning = ({ edit, patient, encounter }) => {
   const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
   const { data: sourceofinformationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
   const { data: statusLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGY_RES_STATUS');
-  const [warning, setWarning] = useState<ApVisitWarning>({ ...newApVisitWarning });
+  const [warning, setWarning] = useState<any>({ ...newApVisitWarning });
   const [saveWarning, saveWarningMutation] = useSaveWarningsMutation();
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
   const [openConfirmResolvedModel, setOpenConfirmResolvedModel] = useState(false);
@@ -345,73 +345,65 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
       />
       }
     },
-    {key:"createdAt",
-      dataKey:"createdAt",
-      title:<Translate>Created At</Translate>,
-      flexGrow:1,
-      expandable:true,
-      render:(rowData:any)=>{
-        return rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : '';
+  
+    {
+      key: "",
+      title: <Translate>Created At/By</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        return (<>
+          <span>{rowData.createdBy}</span>
+          <br />
+          <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+        </>)
       }
+
     },
-    { key:"createdBy",
-      dataKey:"createdBy",
-      title:<Translate>Created By</Translate>,
-      flexGrow:1,
-      expandable:true,
-    
-    },
-    {key:"updatedAt",
-      dataKey:"updatedAt",
-      title:<Translate>Updated At</Translate>,
-      flexGrow:1,
-      expandable:true,
-      render:(rowData:any)=>{
-        return rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString() : '';
+    {
+      key: "",
+      title: <Translate>Updated At/By</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        return (<>
+          <span>{rowData.updatedBy}</span>
+          <br />
+          <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+        </>)
       }
+
     },
-    {key:"updatedBy",
-      dataKey:"updatedBy",
-      title:<Translate>Updated By</Translate>,
-      flexGrow:1,
-      expandable:true,
-     
-    },
-    {key:"resolvedAt",
-      dataKey:"resolvedAt",
-      title:<Translate>Resolved At</Translate>,
-      flexGrow:1,
-      expandable:true,
-      render:(rowData:any)=>{
-         if (rowData.statusLkey != '9766169155908512') {
-                return rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : ''
+
+    {
+      key: "",
+      title: <Translate>Cancelled At/By</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        return (<>
+          <span>{rowData.deletedBy}</span>
+          <br />
+          <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
+        </>)
       }
-    }
-   },
-    {key:"resolvedBy",
-      dataKey:"resolvedBy",
-      title:<Translate>Resolved By</Translate>,
-      flexGrow:1,
-      expandable:true,
-      render:(rowData:any)=>{
-        return null;
-      }
+
     },
-    {key:"deletedAt",
-      dataKey:"deletedAt",
-      title:<Translate>Cancelled At</Translate>,
-      flexGrow:1,
-      expandable:true,
-      render:(rowData:any)=>{
-        return rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : '';
+    {
+      key: "",
+      title: <Translate>Resolved At/By</Translate>,
+      expandable: true,
+      render: (rowData: any) => {
+        if (rowData.statusLkey != '9766169155908512') {
+          return (<>
+
+            <span>{rowData.resolvedBy}</span>
+            <br />
+            <span className='date-table-style'>{rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : ''}</span>
+          </>)
+        }
+        else {
+          return null;
+        }
       }
-    },
-    {key:"deletedBy",
-      dataKey:"deletedBy",
-      title:<Translate>Cancelled By</Translate>,
-      flexGrow:1,
-      expandable:true,
-   
+
     },
     { key:"cancellationReason",
       dataKey:"cancellationReason",
@@ -451,7 +443,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
        {/* buttons actions section */}
       <div className='bt-div'>
         <MyButton
-          disabled={!edit?warning.key ? warning?.statusLkey == '3196709905099521' ? true : false : true:true}
+          disabled={!edit?warning.key ? warning?.statusLvalue.valueCode == 'ARS_CANCEL' ? true : false : true:true}
           prefixIcon={() => <CloseOutlineIcon />}
           onClick={OpenCancellationReasonModel}
         >Cancel</MyButton>
@@ -499,7 +491,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
       data={warningsListResponse?.object || []}
       onRowClick={rowData => {
         setWarning(rowData);
-        setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
+        setEditing(rowData.statusLvalue.valueCode == 'ARS_CANCEL' ? true : false);
       }}
       rowClassName={isSelected}
       sortColumn={listRequest.sortBy}

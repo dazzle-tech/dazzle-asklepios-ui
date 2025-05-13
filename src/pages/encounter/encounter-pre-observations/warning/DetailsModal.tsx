@@ -59,7 +59,7 @@ const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patie
             setOpen={setOpen}
             title="Add Warning"
             actionButtonFunction={handleSave}
-            isDisabledActionBtn={edit}
+            isDisabledActionBtn={!edit?warning.statusLvalue?.valueCode=="ARS_CANCEL"?true:false:true}
             bodyheight={550}
             size='680px'
             position='right'
@@ -74,7 +74,7 @@ const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patie
                 },
             ]}
             content={
-                <Row gutter={20} className={edit?"disabled-panel":""}>
+                <Row gutter={20} className={!edit?warning.statusLvalue?.valueCode=="ARS_CANCEL"?"disabled-panel":"":"disabled-panel"}>
                     <Col md={12}>
                         <Row>
                             <Col md={12}>
