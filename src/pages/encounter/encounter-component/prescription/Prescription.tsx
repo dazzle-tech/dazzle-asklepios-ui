@@ -35,14 +35,15 @@ import {
 } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
+import CancellationModal from '@/components/CancellationModal';
 const { Column, HeaderCell, Cell } = Table;
 const Prescription = ({ edit, patient, encounter }) => {
 
     const dispatch = useAppDispatch();
     const [searchKeyword, setSearchKeyword] = useState('');
+    const [openToAdd, setOpenToAdd] = useState(true);
+    const [openCancellation,setOpenCancellation]=useState(false)
     const [showCanceled, setShowCanceled] = useState(true);
-    const [editing, setEditing] = useState(false);
-
     const { data: predefinedInstructionsListResponse } = useGetPrescriptionInstructionQuery({ ...initialListRequest });
     const [customeinst, setCustomeinst] = useState({
         dose: null,
@@ -162,7 +163,11 @@ const Prescription = ({ edit, patient, encounter }) => {
         }
 
     }, [preKey]);
-
+    useEffect(() => {
+        if (showCanceled) {
+            handleCleare();
+        }
+    }, [showCanceled])
 
     const handleCheckboxChange = (key) => {
         setSelectedRows((prev) => {
@@ -180,7 +185,8 @@ const Prescription = ({ edit, patient, encounter }) => {
                 selectedRows.map(item => savePrescriptionMedication({ ...item, isValid: false, statusLkey: "1804447528780744", deletedAt: Date.now() }).unwrap())
             );
 
-            dispatch(notify('All medication deleted successfully'));
+            dispatch(notify({msg:'All medication deleted successfully',sev:"success"}));
+            setOpenCancellation(false);
             medicRefetch().then(() => {
 
             }).catch((error) => {
@@ -244,7 +250,7 @@ const Prescription = ({ edit, patient, encounter }) => {
         })
 
         setCustomeinst({ dose: null, frequency: null, unit: null, roa: null });
-        
+
 
     }
 
@@ -270,7 +276,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                 ),
                 saveDraft: false
             }).then(() => {
-                dispatch(notify({msg:'Draft Cancelled',sev:"success"}));
+                dispatch(notify({ msg: 'Draft Cancelled', sev: "success" }));
                 setIsDraft(false);
             })
         } catch (error) { }
@@ -315,6 +321,7 @@ const Prescription = ({ edit, patient, encounter }) => {
             render: (rowData: any) => {
                 return (
                     <Checkbox
+                        className='check-box'
                         key={rowData.id}
                         checked={selectedRows.includes(rowData)}
                         onChange={() => handleCheckboxChange(rowData)}
@@ -429,6 +436,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                     onClick={() => {
                         if (rowData.statusLvalue?.lovDisplayVale == 'New') {
                             setOpenDetailsModal(true)
+                            setOpenToAdd(false);
 
                         }
                     }}
@@ -436,47 +444,47 @@ const Prescription = ({ edit, patient, encounter }) => {
             }
 
         },
-        {
-            key: 'createdAt',
-            dataKey: 'createdAt',
-            title: 'Created At',
-            flexGrow: 2,
-            expandable: true,
-            render: (rowData: any) => {
-                return rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "";
-            }
-        },
-        {
-            key: 'createdBy',
-            dataKey: 'createdBy',
-            title: 'Created By',
-            flexGrow: 2,
-            expandable: true,
-            render: (rowData: any) => {
-                return rowData.createdBy;
-            }
-        }
         ,
         {
-            key: 'deletedAt',
-            dataKey: 'deletedAt',
-            title: 'Cancelled At',
-            flexGrow: 2,
+            key: "",
+            title: <Translate>Created At/By</Translate>,
             expandable: true,
             render: (rowData: any) => {
-                return rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : "";
+                return (<>
+                    <span>{rowData.createdBy}</span>
+                    <br />
+                    <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+                </>)
             }
+
         },
         {
-            key: 'deletedBy',
-            dataKey: 'deletedBy',
-            title: 'Cancelled By',
-            flexGrow: 2,
+            key: "",
+            title: <Translate>Updated At/By</Translate>,
             expandable: true,
             render: (rowData: any) => {
-                return rowData.deletedBy;
+                return (<>
+                    <span>{rowData.updatedBy}</span>
+                    <br />
+                    <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+                </>)
             }
-        }
+
+        },
+
+        {
+            key: "",
+            title: <Translate>Cancelled At/By</Translate>,
+            expandable: true,
+            render: (rowData: any) => {
+                return (<>
+                    <span>{rowData.deletedBy}</span>
+                    <br />
+                    <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
+                </>)
+            }
+
+        },
 
     ];
     return (
@@ -498,9 +506,9 @@ const Prescription = ({ edit, patient, encounter }) => {
                     />
 
                 </div>
-          
 
-                <div className={`bt-right ${edit?"disabled-panel":""}`}>
+
+                <div className={`bt-right ${edit ? "disabled-panel" : ""}`}>
                     <MyButton
                         onClick={handleSavePrescription}
                         disabled={isdraft}
@@ -556,24 +564,24 @@ const Prescription = ({ edit, patient, encounter }) => {
                     <FaFilePrescription size={18} />
                 </div>
                 <div>
-                  <div className='prescripton-word-style'>Prescription</div>
-                  <div className='prescripton-number-style'>
-                  {prescriptions?.object?.find(prescription =>
-                    prescription.key === preKey
-                )?.prescriptionId || "_"}
-                  </div>
+                    <div className='prescripton-word-style'>Prescription</div>
+                    <div className='prescripton-number-style'>
+                        {prescriptions?.object?.find(prescription =>
+                            prescription.key === preKey
+                        )?.prescriptionId || "_"}
+                    </div>
                 </div>
                 <div className='bt-right'>
                     <MyButton
-                        disabled={!edit?preKey ?
+                        disabled={!edit ? preKey ?
                             prescriptions?.object?.find(pre =>
                                 pre.key === preKey
-                            )?.statusLkey === '1804482322306061' : true:true
+                            )?.statusLkey === '1804482322306061' : true : true
                         }
                         prefixIcon={() => <PlusIcon />}
                         onClick={() => {
                             setOpenDetailsModal(true)
-                            handleCleare();
+                            setOpenToAdd(true);
                         }}
 
                     >
@@ -581,7 +589,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                     </MyButton>
                     <MyButton
                         prefixIcon={() => <BlockIcon />}
-                        onClick={handleCancle}
+                        onClick={()=>setOpenCancellation(true)}
                         disabled={selectedRows.length === 0}
                     >
                         Cancle
@@ -603,11 +611,12 @@ const Prescription = ({ edit, patient, encounter }) => {
                 data={prescriptionMedications?.object ?? []}
                 onRowClick={rowData => {
                     setPrescriptionMedications(rowData);
+                    setOpenToAdd(false);
                     if (rowData.instructionsTypeLkey == "3010606785535008") {
 
                         setSelectedRowoMedicationKey(rowData.key);
                     }
-                    setEditing(rowData.statusLkey == "164797574082125" ? false : true)
+
                 }}
                 loading={isLoadingPrescriptionMedications}
                 rowClassName={isSelected}
@@ -615,16 +624,25 @@ const Prescription = ({ edit, patient, encounter }) => {
 
 
             <DetailsModal
-            edit={edit}
-             open={openDetailsModal} setOpen={setOpenDetailsModal}
+                edit={edit}
+                open={openDetailsModal} setOpen={setOpenDetailsModal}
                 patient={patient}
                 encounter={encounter}
                 prescriptionMedication={prescriptionMedication}
                 setPrescriptionMedications={setPrescriptionMedications}
                 preKey={preKey}
-                editing={editing}
+                openToAdd={openToAdd}
                 medicRefetch={medicRefetch}
             />
+            <CancellationModal
+                open={openCancellation}
+                setOpen={setOpenCancellation}
+                object={prescriptionMedication}
+                setObject={setPrescriptionMedications}
+                handleCancle={handleCancle}
+                withReason={false}
+                title={'Cancellation'}
+            ></CancellationModal>
 
         </>
 
