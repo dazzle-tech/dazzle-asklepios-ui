@@ -218,6 +218,7 @@ const Encounter = () => {
                 Create Follow-up
               </MyButton>
               <MyButton
+              disabled={propsData?.patient?.hasAllergy ?false:true}
                 backgroundColor={
                   propsData?.patient?.hasAllergy ? 'var(--primary-orange)' : 'var(--deep-blue)'
                 }
@@ -227,6 +228,7 @@ const Encounter = () => {
                 Allergy
               </MyButton>
               <MyButton
+              disabled={propsData?.patient?.hasWarning ?false:true}
                 backgroundColor={
                   propsData?.patient?.hasWarning ? 'var(--primary-orange)' : 'var(--deep-blue)'
                 }
