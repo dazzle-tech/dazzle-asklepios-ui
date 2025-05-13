@@ -337,9 +337,9 @@ const Allergies = ({ edit, patient, encounter }) => {
       flexGrow: 2,
       render: (rowData: any) =>
         rowData.onsetDate
-          ? new Date(rowData.onsetDate).toLocaleString()
-          : "Undefind"
-    },
+          ? new Date(rowData.onsetDate).toLocaleDateString("en-GB")
+          : "Undefined"
+    },    
     {
       key: "treatmentStrategyLvalue",
       dataKey: "treatmentStrategyLvalue",
