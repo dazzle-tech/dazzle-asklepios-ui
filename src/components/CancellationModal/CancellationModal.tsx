@@ -21,7 +21,7 @@ const CancellationModal = ({
             open={open}
             setOpen={setOpen}
             title={`Confirm ${title}`}
-            actionButtonLabel="Submit"
+            actionButtonLabel="Confirm"
             actionButtonFunction={handleCancle}
             isDisabledActionBtn={object?.[statusField] === statusKey}
             steps={[
@@ -42,6 +42,7 @@ const CancellationModal = ({
             </Form>}
             size="450px"
             bodyheight={350}
+            cancelButtonLabel='Close'
         />
     );
 };
