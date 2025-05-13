@@ -41,7 +41,7 @@ const CancellationModal = ({
                 />
             </Form>}
             size="450px"
-            bodyheight={300}
+            bodyheight={350}
         />
     );
 };
