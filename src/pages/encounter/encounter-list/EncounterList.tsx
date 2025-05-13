@@ -8,7 +8,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserNurse, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Table, Pagination, Tooltip, Whisper } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
+
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
 // import PeoplesTimeIcon from '@rsuite/icons/PeoplesTime';
@@ -22,6 +22,7 @@ import ReactDOMServer from 'react-dom/server';
 import './styles.less';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 
 const EncounterList = () => {
   const location = useLocation();
@@ -37,6 +38,7 @@ const EncounterList = () => {
   dispatch(setDivContent(divContentHTML));
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
+  console.log("Enc :",encounter)
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const [startEncounter] = useStartEncounterMutation();
   const [listRequest, setListRequest] = useState<ListRequest>({
@@ -152,6 +154,24 @@ const EncounterList = () => {
     }
   }, [isLoading]);
 
+function darkenColor(hex, percent = 20) {
+  let num = parseInt(hex.replace("#", ""), 16),
+      amt = Math.round(2.55 * percent),
+      R = (num >> 16) - amt,
+      G = ((num >> 8) & 0x00FF) - amt,
+      B = (num & 0x0000FF) - amt;
+
+  // تأكد من عدم النزول تحت 0
+  R = Math.max(R, 0);
+  G = Math.max(G, 0);
+  B = Math.max(B, 0);
+
+  // إعادة تجميع اللون
+  return "#" + (
+    (1 << 24) + (R << 16) + (G << 8) + B
+  ).toString(16).slice(1);
+}
+ 
   const tableColumns = [
     {
       key: 'queueNumber',
@@ -218,9 +238,9 @@ const EncounterList = () => {
       title: <Translate>PRESCRIPTION</Translate>,
       render: rowData =>
         rowData.hasPrescription ? (
-          <Badge content="YES" className="status-yes" />
+        <MyBadgeStatus contant="YES" backgroundColor='#daf1e7' color="#45b887"/>
         ) : (
-          <Badge content="NO" className="status-no" />
+           <MyBadgeStatus contant="NO" backgroundColor='#98a2b430' color="#969fb0"/>
         )
     },
     {
@@ -228,9 +248,9 @@ const EncounterList = () => {
       title: <Translate>HAS ORDER</Translate>,
       render: rowData =>
         rowData.hasOrder ? (
-          <Badge content="YES" className="status-yes" />
+         <MyBadgeStatus contant="YES" backgroundColor='#daf1e7' color="#45b887"/>
         ) : (
-          <Badge content="NO" className="status-no" />
+          <MyBadgeStatus contant="NO" backgroundColor='#98a2b430' color="#969fb0"/>
         )
     },
     {
@@ -249,19 +269,21 @@ const EncounterList = () => {
     {
       key: 'status',
       title: <Translate>STATUS</Translate>,
-      render: rowData =>
-        rowData.encounterStatusLvalue
+      render: rowData =><MyBadgeStatus backgroundColor={rowData?.encounterStatusLvalue?.valueColor} contant={rowData.encounterStatusLvalue
           ? rowData.encounterStatusLvalue.lovDisplayVale
-          : rowData.encounterStatusLkey
+          : rowData.encounterStatusLkey}/>
+    
+        
     },
     {
       key: 'hasObservation',
       title: <Translate>IS OBSERVED</Translate>,
       render: rowData =>
         rowData.hasObservation ? (
-          <Badge content="YES" className="status-yes" />
+          <MyBadgeStatus contant="YES" backgroundColor='#daf1e7' color="#45b887"/>
+      
         ) : (
-          <Badge content="NO" className="status-no" />
+          <MyBadgeStatus contant="NO" backgroundColor='#98a2b430' color="#969fb0"/>
         )
     },
     {
