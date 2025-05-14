@@ -2,9 +2,10 @@ import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import React, { useEffect, useState } from 'react';
 import { FaBedPulse, FaFileArrowDown } from "react-icons/fa6";
-import { MdModeEdit } from 'react-icons/md';
+import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import {
   Checkbox,
+  HStack,
   Table,
   Tooltip,
   Whisper
@@ -14,7 +15,8 @@ const { Column, HeaderCell, Cell } = Table;
 
 import {
   useFetchAttachmentByKeyQuery,
-  useFetchAttachmentQuery
+  useFetchAttachmentQuery,
+  useGetPatientAttachmentsListQuery
 } from '@/services/attachmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
@@ -36,12 +38,32 @@ import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import BlockIcon from '@rsuite/icons/Block';
 import Details from './Details';
 import Perform from './Perform';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
+import AttachmentUploadModal from '@/components/AttachmentUploadModal';
+import { at } from 'lodash';
+const handleDownload = attachment => {
+  const byteCharacters = atob(attachment.fileContent);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  const blob = new Blob([byteArray], { type: attachment.contentType });
+
+  // Create a temporary  element and trigger the download
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = attachment.fileName;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+};
 const Referrals = ({ edit, patient, encounter }) => {
   const dispatch = useAppDispatch();
   const [showCanceled, setShowCanceled] = useState(true);
-  const [actionType, setActionType] = useState(null);
+  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [openPerformModal, setOpenPerformModal] = useState(false);
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
@@ -78,30 +100,45 @@ const Referrals = ({ edit, patient, encounter }) => {
     ]
   });
   const { data: procedures, refetch: proRefetch, isLoading: procedureLoding } = useGetProceduresQuery(listRequest);
-  const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
-  const fetchOrderAttachResponse = useFetchAttachmentQuery(
-    {
-      type: 'PROCEDURE_ORDER',
-      refKey: procedure.key
-    },
-    { skip: !procedure.key }
-  );
-  const {
-    data: fetchAttachmentByKeyResponce,
-    error,
-    isLoading,
-    isFetching,
-    isSuccess,
-    refetch: refAtt
-  } = useFetchAttachmentByKeyQuery(
-    { key: requestedPatientAttacment },
-    {
-      skip: !requestedPatientAttacment
-        || !procedure.key
-    }
-  );
 
-  useEffect(() => {
+ 
+    const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
+      ...initialListRequest,
+      filters: [
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        },
+        {
+          fieldName: 'reference_object_key',
+          operator: "match",
+          value: procedure?.key
+        }
+      ]
+    });
+  
+    const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest, { skip: !procedure?.key });
+    useEffect(() => {
+      const updatedFilters = [
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        },
+        {
+          fieldName: 'reference_object_key',
+          operator: "match",
+          value: procedure?.key
+        }
+      ];
+      setAttachmentsListRequest((prevRequest) => ({
+        ...prevRequest,
+        filters: updatedFilters,
+      }));
+    }, [procedure])
+
+      useEffect(() => {
     const upateFilter = [
       {
         fieldName: 'encounter_key',
@@ -119,49 +156,28 @@ const Referrals = ({ edit, patient, encounter }) => {
       filters: upateFilter,
     }));
   }, [showCanceled]);
+  useEffect(()=>{
+    if(!attachmentsModalOpen){
+        const updatedFilters = [
+        {
+          fieldName: 'deleted_at',
+          operator: 'isNull',
+          value: undefined
+        },
+        {
+          fieldName: 'reference_object_key',
+          operator: "match",
+          value: procedure?.key
+        }
+      ];
+      setAttachmentsListRequest((prevRequest) => ({
+        ...prevRequest,
+        filters: updatedFilters,
+      }));
 
-  const handleDownload = async attachment => {
-    try {
-      if (!attachment?.fileContent || !attachment?.contentType || !attachment?.fileName) {
-        console.error('Invalid attachment data.');
-        return;
-      }
-
-      const byteCharacters = atob(attachment.fileContent);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: attachment.contentType });
-
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = attachment.fileName;
-
-      document.body.appendChild(a);
-      a.click();
-
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      console.log('File downloaded successfully:', attachment.fileName);
-      // attachmentRefetch().then(() => {
-      //     console.log("Refetch complete");
-      // }).catch((error) => {
-      //     console.error("Refetch failed:", error);
-      // });
-    } catch (error) {
-      console.error('Error during file download:', error);
     }
-  };
-  const handleDownloadSelectedPatientAttachment = attachmentKey => {
-    setRequestedPatientAttacment(attachmentKey);
-    setActionType('download');
-    handleDownload(fetchAttachmentByKeyResponce);
-  };
+
+  },[attachmentsModalOpen])
   const OpenPerformModel = () => {
     setOpenPerformModal(true);
   };
@@ -300,17 +316,25 @@ const Referrals = ({ edit, patient, encounter }) => {
         return rowData.statusLvalue?.lovDisplayVale ?? null
       }
     },
-    {
+     {
       key: "",
       dataKey: "",
       title: <Translate>ATTACHED FILE</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
-        return  <FaFileArrowDown
-          size={22}
-          fill="var(--primary-gray)"
-          onClick={() => handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)}
-        />
+        return <HStack>
+          <FaFileArrowDown
+            size={20}
+            fill="var(--primary-gray)"
+            onClick={() => handleDownload(fetchPatintAttachmentsResponce?.object[fetchPatintAttachmentsResponce?.object.length - 1])} />
+
+          <MdAttachFile
+            size={20}
+            fill="var(--primary-gray)"
+            onClick={() => setAttachmentsModalOpen(true)}
+          />
+        </HStack>
+
       }
     },
     {
@@ -522,15 +546,6 @@ const Referrals = ({ edit, patient, encounter }) => {
         title='Perform Details'
         actionButtonFunction={handleSave}
         size='full'
-
-        // steps={[
-
-        //   {
-        //     title: "Perform", icon:<FontAwesomeIcon icon={faBedPulse}/>,
-
-        //   },
-        // ]}
-
         content={<Perform encounter={encounter} patient={patient} procedure={procedure} setProcedure={setProcedure} edit={edit} />}
       ></MyModal>
 
@@ -553,6 +568,14 @@ const Referrals = ({ edit, patient, encounter }) => {
         setObject={setProcedure}
         handleCancle={handleCancle}
       ></CancellationModal>
+
+      <AttachmentUploadModal
+        isOpen={attachmentsModalOpen}
+        setIsOpen={setAttachmentsModalOpen}
+        actionType={'add'}
+        refecthData={attachmentRefetch}
+        attachmentSource={procedure}
+        attatchmentType="PROCEDURE" />
 
     </>
   );
