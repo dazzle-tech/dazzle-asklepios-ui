@@ -12,12 +12,12 @@ import { newApConsultationOrder } from "@/types/model-types-constructor";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBroom, faFile } from "@fortawesome/free-solid-svg-icons";
 import { useGetLovValuesByCodeQuery, useGetPractitionersQuery } from "@/services/setupService";
-import { initialListRequest } from "@/types/types";
-const Details = ({ patient, encounter, consultationOrders, setConsultationOrder, open, setOpen, refetchCon, editing ,editable}) => {
+import { initialListRequest, ListRequest } from "@/types/types";
+
+
+const Details = ({ patient, encounter, consultationOrders, setConsultationOrder, open, setOpen, refetchCon, editing, editable }) => {
     const dispatch = useAppDispatch();
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-
-
     const [saveconsultationOrders, saveConsultationOrdersMutation] =
         useSaveConsultationOrdersMutation();
 
@@ -27,6 +27,7 @@ const Details = ({ patient, encounter, consultationOrders, setConsultationOrder,
     const { data: cityLovQueryResponse } = useGetLovValuesByCodeQuery('CITY');
     const { data: consultationMethodLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_METHOD');
     const { data: consultationTypeLovQueryResponse } = useGetLovValuesByCodeQuery('CONSULT_TYPE');
+
 
     const handleClear = async () => {
         setConsultationOrder({
@@ -61,14 +62,11 @@ const Details = ({ patient, encounter, consultationOrders, setConsultationOrder,
             dispatch(notify('Save Failed'));
         }
     };
-    return (<>
 
-        <AttachmentModal
-            isOpen={attachmentsModalOpen}
-            setIsOpen={setAttachmentsModalOpen}
-            attachmentSource={consultationOrders}
-            attatchmentType={'CONSULTATION_ORDER'}
-        />
+    return (<>
+    
+       
+ 
         <AdvancedModal
             open={open}
             setOpen={setOpen}
@@ -79,7 +77,7 @@ const Details = ({ patient, encounter, consultationOrders, setConsultationOrder,
             isDisabledActionBtn={editable}
             footerButtons={<div style={{ display: 'flex', gap: '5px' }}>
                 <MyButton
-                    disabled={editable}
+                    disabled={consultationOrders.key?editable:true}
                     onClick={() => setAttachmentsModalOpen(true)}
                     prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
                 >Attachment File</MyButton>
@@ -92,93 +90,94 @@ const Details = ({ patient, encounter, consultationOrders, setConsultationOrder,
                 >Clear</MyButton>
             </div>}
             rightTitle='Add Consultation'
-            rightContent={<Form fluid layout="inline" className={editable ? "disabled-panel" : ""}>
-                <MyInput
-                    column
-                    disabled={editing}
-                    width={200}
-                    fieldType="select"
-                    fieldLabel="Consultant Specialty"
-                    selectData={consultantSpecialtyLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    fieldName={'consultantSpecialtyLkey'}
-                    record={consultationOrders}
-                    setRecord={setConsultationOrder}
-                />
-                <MyInput
-                    column
-                    width={200}
-                    disabled={editing}
-                    fieldType="select"
-                    fieldLabel="City"
-                    selectData={cityLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    fieldName={'cityLkey'}
-                    record={consultationOrders}
-                    setRecord={setConsultationOrder}
-                />
-                <MyInput
-                    column
-                    width={200}
-                    disabled={editing}
-                    fieldType="select"
-                    fieldLabel="Preferred Consultant"
-                    fieldName={'preferredConsultantKey'}
-                    selectData={practitionerListResponse?.object ?? []}
-                    selectDataLabel="practitionerFullName"
-                    selectDataValue="key"
-                    record={consultationOrders}
-                    setRecord={setConsultationOrder}
-                />
-                <MyInput
-                    column
-                    width={200}
-                    disabled={editing}
-                    fieldType="select"
-                    fieldLabel="Consultation Method"
-                    selectData={consultationMethodLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    fieldName={'consultationMethodLkey'}
-                    record={consultationOrders}
-                    setRecord={setConsultationOrder}
-                />
-                <MyInput
-                    column
-                    width={200}
-                    disabled={editing}
-                    fieldType="select"
-                    fieldLabel="Consultation Type"
-                    selectData={consultationTypeLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    fieldName={'consultationTypeLkey'}
-                    record={consultationOrders}
-                    setRecord={setConsultationOrder}
-                />
-                <MyInput
-                    column
-                    width={400}
-                    disabled={editing}
-                    fieldName="consultationContent"
-                    rows={6}
-                    fieldType="textarea"
-                    record={consultationOrders}
-                    setRecord={setConsultationOrder}
-                />
-                <MyInput
-                    column
-                    width={400}
-                    disabled={editing}
-                    fieldName="notes"
-                    rows={6}
-                    fieldType="textarea"
-                    record={consultationOrders}
-                    setRecord={setConsultationOrder}
-                />
-            </Form>
+            rightContent={
+                <Form fluid layout="inline" className={editable ? "disabled-panel" : ""}>
+                    <MyInput
+                        column
+                        disabled={editing}
+                        width={200}
+                        fieldType="select"
+                        fieldLabel="Consultant Specialty"
+                        selectData={consultantSpecialtyLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName={'consultantSpecialtyLkey'}
+                        record={consultationOrders}
+                        setRecord={setConsultationOrder}
+                    />
+                    <MyInput
+                        column
+                        width={200}
+                        disabled={editing}
+                        fieldType="select"
+                        fieldLabel="City"
+                        selectData={cityLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName={'cityLkey'}
+                        record={consultationOrders}
+                        setRecord={setConsultationOrder}
+                    />
+                    <MyInput
+                        column
+                        width={200}
+                        disabled={editing}
+                        fieldType="select"
+                        fieldLabel="Preferred Consultant"
+                        fieldName={'preferredConsultantKey'}
+                        selectData={practitionerListResponse?.object ?? []}
+                        selectDataLabel="practitionerFullName"
+                        selectDataValue="key"
+                        record={consultationOrders}
+                        setRecord={setConsultationOrder}
+                    />
+                    <MyInput
+                        column
+                        width={200}
+                        disabled={editing}
+                        fieldType="select"
+                        fieldLabel="Consultation Method"
+                        selectData={consultationMethodLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName={'consultationMethodLkey'}
+                        record={consultationOrders}
+                        setRecord={setConsultationOrder}
+                    />
+                    <MyInput
+                        column
+                        width={200}
+                        disabled={editing}
+                        fieldType="select"
+                        fieldLabel="Consultation Type"
+                        selectData={consultationTypeLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName={'consultationTypeLkey'}
+                        record={consultationOrders}
+                        setRecord={setConsultationOrder}
+                    />
+                    <MyInput
+                        column
+                        width={400}
+                        disabled={editing}
+                        fieldName="consultationContent"
+                        rows={6}
+                        fieldType="textarea"
+                        record={consultationOrders}
+                        setRecord={setConsultationOrder}
+                    />
+                    <MyInput
+                        column
+                        width={400}
+                        disabled={editing}
+                        fieldName="notes"
+                        rows={6}
+                        fieldType="textarea"
+                        record={consultationOrders}
+                        setRecord={setConsultationOrder}
+                    />
+                </Form>
             }
             leftContent={<Diagnosis patient={patient} encounter={encounter} />}
         ></AdvancedModal>

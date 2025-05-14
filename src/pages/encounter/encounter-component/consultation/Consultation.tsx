@@ -3,7 +3,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import { useFetchAttachmentByKeyQuery, useFetchAttachmentQuery } from '@/services/attachmentService';
+import { useFetchAttachmentByKeyQuery, useFetchAttachmentQuery, useGetPatientAttachmentsListQuery } from '@/services/attachmentService';
 import { useGetConsultationOrdersQuery, useSaveConsultationOrdersMutation } from '@/services/encounterService';
 import { ApConsultationOrder } from '@/types/model-types';
 import { newApConsultationOrder } from '@/types/model-types-constructor';
@@ -16,18 +16,37 @@ import CheckIcon from '@rsuite/icons/Check';
 import React, { useEffect, useState } from 'react';
 import { FaFileArrowDown } from "react-icons/fa6";
 import { IoIosMore } from "react-icons/io";
-import { MdModeEdit } from 'react-icons/md';
+import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import CancellationModal from '@/components/CancellationModal';
-import { Checkbox } from 'rsuite';
+import { Checkbox, HStack } from 'rsuite';
 import Details from './Details';
 import './styles.less';
+import AttachmentUploadModal from '@/components/AttachmentUploadModal';
+const handleDownload = attachment => {
+  const byteCharacters = atob(attachment.fileContent);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  const blob = new Blob([byteArray], { type: attachment.contentType });
 
+  // Create a temporary  element and trigger the download
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = attachment.fileName;
+  document.body.appendChild(a);
+  a.click();
+  window.URL.revokeObjectURL(url);
+};
 const Consultation = ({ edit, patient, encounter }) => {
   const dispatch = useAppDispatch();
   const [selectedRows, setSelectedRows] = useState([]);
   const [showCanceled, setShowCanceled] = useState(true);
   const [showPrev, setShowPrev] = useState(true);
-  const [actionType, setActionType] = useState(null);
+  const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [openDetailsMdal, setOpenDetailsModal] = useState(false);
   const [openConfirmCancelModel, setOpenConfirmCancelModel] = useState(false);
@@ -60,40 +79,52 @@ const Consultation = ({ edit, patient, encounter }) => {
 
   const [saveconsultationOrders, saveConsultationOrdersMutation] =
     useSaveConsultationOrdersMutation();
-
-
   const [consultationOrders, setConsultationOrder] = useState<ApConsultationOrder>({
     ...newApConsultationOrder
   });
+  const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    filters: [
+      {
+        fieldName: 'deleted_at',
+        operator: 'isNull',
+        value: undefined
+      },
+      {
+        fieldName: 'reference_object_key',
+        operator: "match",
+        value: consultationOrders?.key
+      }
+    ]
+  });
 
+  const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest, { skip: !consultationOrders?.key });
 
-  const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
-  const fetchOrderAttachResponse = useFetchAttachmentQuery(
-    {
-      type: 'CONSULTATION_ORDER',
-      refKey: consultationOrders.key
-    },
-    { skip: !consultationOrders.key }
-  );
-  const {
-    data: fetchAttachmentByKeyResponce,
-    error,
-    isLoading,
-    isFetching,
-    isSuccess,
-    refetch: refAtt
-  } = useFetchAttachmentByKeyQuery(
-    { key: requestedPatientAttacment },
-    { skip: !requestedPatientAttacment || !consultationOrders.key }
-  );
-
-
-
+  console.log("attach :", fetchPatintAttachmentsResponce?.object[0])
   const isSelected = rowData => {
     if (rowData && consultationOrders && rowData.key === consultationOrders.key) {
       return 'selected-row';
     } else return '';
   };
+
+  useEffect(() => {
+    const updatedFilters = [
+      {
+        fieldName: 'deleted_at',
+        operator: 'isNull',
+        value: undefined
+      },
+      {
+        fieldName: 'reference_object_key',
+        operator: "match",
+        value: consultationOrders?.key
+      }
+    ];
+    setAttachmentsListRequest((prevRequest) => ({
+      ...prevRequest,
+      filters: updatedFilters,
+    }));
+  }, [consultationOrders])
   useEffect(() => {
     const upateFilter = [
       {
@@ -112,51 +143,6 @@ const Consultation = ({ edit, patient, encounter }) => {
       filters: upateFilter,
     }));
   }, [showCanceled]);
-  const handleDownload = async attachment => {
-    try {
-      if (!attachment?.fileContent || !attachment?.contentType || !attachment?.fileName) {
-        console.error('Invalid attachment data.');
-        return;
-      }
-
-      const byteCharacters = atob(attachment.fileContent);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: attachment.contentType });
-
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = attachment.fileName;
-
-      document.body.appendChild(a);
-      a.click();
-
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      console.log('File downloaded successfully:', attachment.fileName);
-      attachmentRefetch()
-        .then(() => {
-          console.log('Refetch complete');
-        })
-        .catch(error => {
-          console.error('Refetch failed:', error);
-        });
-    } catch (error) {
-      console.error('Error during file download:', error);
-    }
-  };
-
-  const handleDownloadSelectedPatientAttachment = attachmentKey => {
-    setRequestedPatientAttacment(attachmentKey);
-    setActionType('download');
-    handleDownload(fetchAttachmentByKeyResponce);
-  };
 
   const handleCheckboxChange = key => {
     setSelectedRows(prev => {
@@ -317,7 +303,17 @@ const Consultation = ({ edit, patient, encounter }) => {
       dataKey: "",
       title: <Translate>ATTACHED FILE</Translate>,
       flexGrow: 1,
-      render: (rowData: any) => { return <FaFileArrowDown title="Edit" size={22} fill="var(--primary-gray)" onClick={() => handleDownloadSelectedPatientAttachment(fetchOrderAttachResponse.data.key)} />; }
+      render: (rowData: any) => {
+        return<HStack>
+          <MyButton
+          onClick={() => handleDownload(fetchPatintAttachmentsResponce?.object[fetchPatintAttachmentsResponce?.object.length-1])}
+        ><FaFileArrowDown /></MyButton>
+        <MyButton
+        onClick={()=>setAttachmentsModalOpen(true)}
+        ><MdAttachFile /></MyButton>
+        </HStack>
+         
+      }
     },
     {
       key: "",
@@ -455,8 +451,15 @@ const Consultation = ({ edit, patient, encounter }) => {
         setConsultationOrder={setConsultationOrder}
         open={openDetailsMdal}
         setOpen={setOpenDetailsModal}
-        refetchCon={refetchCon} 
-        editable={edit}/>
+        refetchCon={refetchCon}
+        editable={edit} />
+      <AttachmentUploadModal
+        isOpen={attachmentsModalOpen}
+        setIsOpen={setAttachmentsModalOpen}
+        actionType={'add'}
+        refecthData={attachmentRefetch}
+        attachmentSource={consultationOrders}
+        attatchmentType="CONSULTATION_ORDER" />
     </div>
 
   );
