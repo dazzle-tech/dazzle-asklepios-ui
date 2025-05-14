@@ -29,7 +29,7 @@ const CPTSetup = () => {
     const [record, setRecord] = useState({ filter: '', value: '' });
 
     // Fetch the CPT list data based on current filters
-    const { data: cptListResponseLoading } = useGetCptListQuery(listRequest);
+    const { data: cptListResponseLoading ,isFetching,isLoading} = useGetCptListQuery(listRequest);
 
     // Header page setUp
     const divContent = (
@@ -183,6 +183,7 @@ const CPTSetup = () => {
             columns={columns}
             filters={filters()}
             page={pageIndex}
+            loading={isFetching || isLoading}
             rowsPerPage={rowsPerPage}
             totalCount={totalCount}
             onPageChange={handlePageChange}

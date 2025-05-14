@@ -29,7 +29,7 @@ const LOINCSetup = () => {
     const [record, setRecord] = useState({ filter: '', value: '' });
 
     // Fetch the Loinc list data based on current filters
-    const { data: loincListResponseLoading } = useGetLoincListQuery(listRequest);
+    const { data: loincListResponseLoading,isFetching,isLoading } = useGetLoincListQuery(listRequest);
 
     // Header setup
     const divContent = (
@@ -182,6 +182,7 @@ const LOINCSetup = () => {
             columns={columns}
             filters={filters()}
             page={pageIndex}
+            loading={isFetching || isLoading}
             rowsPerPage={rowsPerPage}
             totalCount={totalCount}
             onPageChange={handlePageChange}
