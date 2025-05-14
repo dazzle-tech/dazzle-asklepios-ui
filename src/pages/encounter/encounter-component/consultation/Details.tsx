@@ -143,6 +143,7 @@ const Details = ({ patient, encounter, consultationOrders, setConsultationOrder,
                         fieldName={'consultationMethodLkey'}
                         record={consultationOrders}
                         setRecord={setConsultationOrder}
+                        searchable={false}
                     />
                     <MyInput
                         column
@@ -156,6 +157,7 @@ const Details = ({ patient, encounter, consultationOrders, setConsultationOrder,
                         fieldName={'consultationTypeLkey'}
                         record={consultationOrders}
                         setRecord={setConsultationOrder}
+                        searchable={false}
                     />
                     <MyInput
                         column
