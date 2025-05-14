@@ -2373,6 +2373,7 @@ export interface ApProcedureSetup {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
+	isAppointable:boolean;
 } 
 
 export interface ApPsychologicalExam { 
