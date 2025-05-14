@@ -399,9 +399,7 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
       title: <Translate>REJECTED REASON</Translate>,
       flexGrow: 1,
       expandable: true,
-      render: (rowData: any) => {
-        return rowData.rejectedAt ? new Date(rowData.rejectedAt).toLocaleString() : '';
-      }
+   
     }
   ];
 
