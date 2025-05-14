@@ -65,7 +65,7 @@ const PatientDiagnosis = ({ patient, encounter, setEncounter }) => {
   });
 
   const patientDiagnoseListResponse = useGetPatientDiagnosisQuery(listRequest);
-  const [listIcdRequest, setListIcdRequest] = useState({ ...initialListRequest });
+  const [listIcdRequest, setListIcdRequest] = useState({ ...initialListRequest,pageSize:1000 });
   const { data: icdListResponseData } = useGetIcdListQuery(listIcdRequest);
 
   useEffect(() => {
@@ -93,8 +93,6 @@ const PatientDiagnosis = ({ patient, encounter, setEncounter }) => {
     combinedLabel: `${item.icdCode} - ${item.description}`
   }));
   const { data: sourceOfInfoLovResponseData } = useGetLovValuesByCodeQuery('DIAGNOSIS_TYPE');
-  const { data: resolutionStatusLovResponseData } =
-    useGetLovValuesByCodeQuery('ALLERGY_RES_STATUS');
 
   const [savePatientDiagnose, savePatientDiagnoseMutation] = useSavePatientDiagnoseMutation();
   const [diagnosisIcd, setDiagnosisIcd] = useState(null);

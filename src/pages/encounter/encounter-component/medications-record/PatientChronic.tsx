@@ -4,38 +4,39 @@ import { useGetDrugOrderMedicationQuery, useGetPrescriptionMedicationsQuery } fr
 import { useGetGenericMedicationActiveIngredientQuery, useGetPrescriptionInstructionQuery } from "@/services/medicationsSetupService";
 import { initialListRequest } from "@/types/types";
 import React, { useState } from "react";
-const PatientChronic = ({ genericMedicationListResponse, customeInstructions ,patient}) => {
+const PatientChronic = ({ genericMedicationListResponse, customeInstructions, patient }) => {
+
     const [listGinricRequest, setListGinricRequest] = useState({
         ...initialListRequest,
         sortType: 'desc'
 
-        
+
     });
 
-     //if can type of instruction in prescription pre defined -get pre defined instruction list and search of instruction for prescription brand
+    //if can type of instruction in prescription pre defined -get pre defined instruction list and search of instruction for prescription brand
     const { data: predefinedInstructionsListResponse } = useGetPrescriptionInstructionQuery({ ...initialListRequest });
     // get list of brands(generic) to find search of order brand
     const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({ ...listGinricRequest });
     // Combine all of the patient's medications when it is chronic. from orders and prescription
     const combinedArray = [];
-   //get all medication for current patient from orders 
+    //get all medication for current patient from orders 
     const { data: orderMedicationsPatient } = useGetDrugOrderMedicationQuery({
-           ...initialListRequest,
-   
-           filters: [
-               {
-                   fieldName: "patient_key",
-                   operator: "match",
-                   value:patient.key,
-               },
-               {
-                   fieldName: "status_lkey",
-                   operator: "match",
-                   value: "1804482322306061",
-               }
-           ],
-       });
-   
+        ...initialListRequest,
+
+        filters: [
+            {
+                fieldName: "patient_key",
+                operator: "match",
+                value: patient.key,
+            },
+            {
+                fieldName: "status_lkey",
+                operator: "match",
+                value: "1804482322306061",
+            }
+        ],
+    });
+
     orderMedicationsPatient?.object?.forEach(order => {
         if (order.chronicMedication) {
             combinedArray.push({
@@ -61,22 +62,22 @@ const PatientChronic = ({ genericMedicationListResponse, customeInstructions ,pa
     });
     //get all medication for current patient from prescription 
     const { data: prescriptionMedicationsPatient } = useGetPrescriptionMedicationsQuery({
-           ...initialListRequest,
-   
-           filters: [
-               {
-                   fieldName: "patient_key",
-                   operator: "match",
-                   value: patient.key,
-               }
-               ,
-               {
-                   fieldName: "status_lkey",
-                   operator: "match",
-                   value: "1804482322306061",
-               }
-           ],
-       });
+        ...initialListRequest,
+
+        filters: [
+            {
+                fieldName: "patient_key",
+                operator: "match",
+                value: patient.key,
+            }
+            ,
+            {
+                fieldName: "status_lkey",
+                operator: "match",
+                value: "1804482322306061",
+            }
+        ],
+    });
     prescriptionMedicationsPatient?.object?.forEach(pre => {
         if (pre.chronicMedication) {
             combinedArray.push({
@@ -113,7 +114,7 @@ const PatientChronic = ({ genericMedicationListResponse, customeInstructions ,pa
 
 
                 if (matchingActiveIngredient) {
-                    return `${obj.name}:${matchingActiveIngredient.strength} ${matchingActiveIngredient.unitLvalue.lovDisplayVale} `;
+                    return `${obj.name}:${matchingActiveIngredient?.strength} ${matchingActiveIngredient.unitLvalue?.lovDisplayVale} `;
                 }
 
                 return obj.name;
@@ -228,11 +229,33 @@ const PatientChronic = ({ genericMedicationListResponse, customeInstructions ,pa
             title: <Translate>Note</Translate>,
             flexGrow: 1
         },
-    ]
+    ];
+    const [pageIndex, setPageIndex] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+
+    const handlePageChange = (_: unknown, newPage: number) => {
+        setPageIndex(newPage);
+    }
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPageIndex(0);
+
+    };
+    const totalCount = combinedArray?.length ?? 0;
+    const paginatedData = combinedArray?.slice(
+        pageIndex * rowsPerPage,
+        pageIndex * rowsPerPage + rowsPerPage
+    );
     return (<>
-    <MyTable 
-    data={combinedArray ??[]}
-    columns={tableColumns} />
+        <MyTable
+            data={paginatedData ?? []}
+            columns={tableColumns}
+            page={pageIndex}
+            rowsPerPage={rowsPerPage}
+            totalCount={totalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+        />
     </>)
 }
 export default PatientChronic

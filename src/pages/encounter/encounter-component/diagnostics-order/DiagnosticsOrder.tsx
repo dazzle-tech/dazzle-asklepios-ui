@@ -35,7 +35,6 @@ import PlusIcon from '@rsuite/icons/Plus';
 import DetailsModal from './DetailsModal';
 import TestDropdown from './TestDropdown';
 import CancellationModal from '@/components/CancellationModal';
-import Orders from '@/pages/lab-module/Orders';
 
 const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
@@ -124,6 +123,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
     // Effects
     useEffect(() => {
         const draftOrder = ordersList?.object?.find((order) => order.saveDraft === true);
+   
         if (draftOrder != null) {
             setIsDraft(true);
             setOrders({ ...draftOrder });
