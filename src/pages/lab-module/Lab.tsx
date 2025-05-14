@@ -235,7 +235,7 @@ const Lab = () => {
   ;
 
   const stepsData = [
-    { key: "6055207372976955", value: "Sample Collected", description: " "  ,isError:false ,customIcon: <ReportProblemIcon fontSize="small" />},
+    { key: "6055207372976955", value: "Sample Collected", description: " "  ,isError:false },
     { key: "6055074111734636", value: "Accepted", description: test.acceptedAt ? new Date(test.acceptedAt).toLocaleString() : "" ,isError:false},
     { key: "6055192099058457", value: "Rejected", description: test.rejectedAt ? new Date(test.rejectedAt).toLocaleString() : "" ,isError:true },
     { key: "265123250697000", value: "Result Ready", description: test.readyAt ? new Date(test.readyAt).toLocaleString() : "" ,isError:false},
