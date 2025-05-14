@@ -2374,6 +2374,7 @@ export const newApProcedureSetup:modelTypes.ApProcedureSetup = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
+	isAppointable:undefined,
 } 
 
 export const newApPsychologicalExam:modelTypes.ApPsychologicalExam = { 

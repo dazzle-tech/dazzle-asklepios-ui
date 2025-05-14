@@ -240,7 +240,7 @@ const ProcedureSetup = () => {
     setSearchKeywordicd2(value);
   };
   const handleClear = () => {
-    setProcedure({ ...newApProcedureSetup, categoryLkey: null });
+    setProcedure({ ...newApProcedureSetup, categoryLkey: null, isAppointable: false });
     setProcedureCode({ ...newApProcedureCoding, codeTypeLkey: null });
     setProcedurePrice({ ...newApProcedurePriceList, currencyLkey: null });
     setcontraindicationsDescription('');
@@ -404,7 +404,13 @@ const ProcedureSetup = () => {
             }
           </Cell>
         </Column>
-
+        <Column sortable flexGrow={2}>
+          <HeaderCell align="center">
+            <Input onChange={e => handleFilterChange('isAppointable', e)} />
+            <Translate>Appointable </Translate>
+          </HeaderCell>
+          <Cell align="center">{rowData => rowData?.isAppointable ? "YES" : "NO"}</Cell>
+        </Column>
         <Column flexGrow={2}>
           <HeaderCell align="center">
             <Input onChange={e => handleFilterChange('isValid', e)} />
@@ -471,6 +477,17 @@ const ProcedureSetup = () => {
                 record={procedure}
                 setRecord={setProcedure}
               />
+
+              <MyInput
+                column
+                width={150}
+                fieldLabel="Appointable"
+                fieldType="checkbox"
+                fieldName="isAppointable"
+                record={procedure}
+                setRecord={setProcedure}
+              />
+
             </Form>
             <div style={{ display: 'flex', gap: '10px' }}>
               <div style={{ margin: '3px' }}>
@@ -783,6 +800,7 @@ const ProcedureSetup = () => {
                         </HeaderCell>
                         <Cell align="center">{rowData => rowData.priceListKey}</Cell>
                       </Column>
+
                     </Table>
                   </div>
                 </div>
