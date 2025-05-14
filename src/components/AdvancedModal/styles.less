@@ -26,15 +26,23 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-
+    transition: all 0.3s ease;
 }
+.modal-left-content.closed {
+    width: 0 !important;
+    opacity: 0;
+    padding: 0;
+    overflow: hidden;
+    transition: width 0.3s ease ;
+  }
 
-.modal-right-content {
+  .modal-right-content {
     background-color: white;
     border-radius: 22px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition: width 0.3s ease  ;
 }
 
 .divider-line {
