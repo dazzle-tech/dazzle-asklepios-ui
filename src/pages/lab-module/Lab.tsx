@@ -280,7 +280,7 @@ const Lab = () => {
             {test.key &&
               <Row>
                 <Col md={24}>
-                 <MyStepper  stepsList={filteredStepsData} activeStep={activeStep}/>
+                 <MyStepper stepsList={filteredStepsData} activeStep={activeStep}/>
                 </Col>
                
               </Row>}
