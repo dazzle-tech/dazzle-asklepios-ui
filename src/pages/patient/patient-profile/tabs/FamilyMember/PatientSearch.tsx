@@ -8,6 +8,7 @@ import MyCard from '@/components/MyCard';
 import { useGetPatientsQuery } from '@/services/patientService';
 import SearchIcon from '@rsuite/icons/Search';
 import { fromCamelCaseToDBName } from '@/utils';
+import { Box, Skeleton } from '@mui/material';
 const PatientSearch = ({ selectedPatientRelation, setSelectedPatientRelation, searchResultVisible, setSearchResultVisible, patientSearchTarget, setPatientSearchTarget }) => {
     const [searchKeyword, setSearchKeyword] = useState('');
     const [selectedCriterion, setSelectedCriterion] = useState('');
@@ -26,7 +27,7 @@ const PatientSearch = ({ selectedPatientRelation, setSelectedPatientRelation, se
         ignore: !searchKeyword || searchKeyword.length < 3
     });
     // Fetch the patient list based on the current request
-    const { data: patientListResponse } = useGetPatientsQuery({ ...listRequest, filterLogic: 'or' });
+    const { data: patientListResponse, isFetching: isFetchingPatients } = useGetPatientsQuery({ ...listRequest, filterLogic: 'or' });
 
     // Function to handle the selection of a patient
     const handleSelectPatient = data => {
@@ -65,7 +66,7 @@ const PatientSearch = ({ selectedPatientRelation, setSelectedPatientRelation, se
                     <Form fluid style={{ width: '100%' }}>
                         <InputGroup inside>
                             <Input
-                                  onKeyDown={e => {
+                                onKeyDown={e => {
                                     if (e.key === 'Enter') {
                                         e.preventDefault();
                                         if (target === 'relation') {
@@ -107,7 +108,7 @@ const PatientSearch = ({ selectedPatientRelation, setSelectedPatientRelation, se
         }
     };
     // Handle Close Drawet
-    const handleClose=()=>{
+    const handleClose = () => {
         setSearchResultVisible(false);
         setSelectedCriterion('');
         setSearchKeyword('');
@@ -130,33 +131,52 @@ const PatientSearch = ({ selectedPatientRelation, setSelectedPatientRelation, se
             </Drawer.Header>
             <Drawer.Actions>{conjurePatientSearchBar(patientSearchTarget)}</Drawer.Actions>
             <Drawer.Body>
-                <div className="patient-search-list">
-                    {patientListResponse?.object?.map(patient => (
-                        <MyCard
-                            width={250}
-                            showArrow={true}
-                            key={patient.key}
-                            variant='profile'
-                            leftArrow={false}
-                            avatar={patient?.attachmentProfilePicture?.fileContent
-                                ? `data:${patient?.attachmentProfilePicture?.contentType};base64,${patient?.attachmentProfilePicture?.fileContent}`
-                                : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'}
-                            title={patient.fullName}
-                            contant={
-                                <>
-                                    {patient.createdAt ? new Date(patient?.createdAt).toLocaleString('en-GB') : ''}{' '}
-                                </>
-                            }
-                            showMore={true}
-                            arrowClick={() => {
-                                handleSelectPatient(patient);
-                                setSearchKeyword(null);
-                                handleClose();
-                            }}
-                            footerContant={`# ${patient.patientMrn}`}
-                        />
-                    ))}
-                </div>
+
+                <Box className="patient-search-list">
+                    {isFetchingPatients ? (
+                        // Show 4 skeleton cards as placeholder
+                        Array.from({ length: 4 }).map((_, index) => (
+                            <Box width={250} key={index} className="patient-list-loader" >
+                                <div  className="patient-list-loader-circle"> 
+                                    <Skeleton variant="circular" width={40} height={40} className='loader-circle' />
+                                    <Skeleton variant="text" width="80%" height={25} className='loader-text'/>
+                                </div>
+                                <Skeleton variant="rectangular" height={90} className='loader-rectangular' />
+                                <Skeleton width="100%" />
+                            </Box>
+                        ))
+                    ) : (
+                        patientListResponse?.object?.map(patient => (
+                            <MyCard
+                                width={250}
+                                showArrow={true}
+                                key={patient.key}
+                                variant="profile"
+                                leftArrow={false}
+                                avatar={
+                                    patient?.attachmentProfilePicture?.fileContent
+                                        ? `data:${patient?.attachmentProfilePicture?.contentType};base64,${patient?.attachmentProfilePicture?.fileContent}`
+                                        : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
+                                }
+                                title={patient.fullName}
+                                contant={
+                                    <>
+                                        {patient.createdAt
+                                            ? new Date(patient?.createdAt).toLocaleString('en-GB')
+                                            : ''}
+                                    </>
+                                }
+                                showMore={true}
+                                arrowClick={() => {
+                                    handleSelectPatient(patient);
+                                    setSearchKeyword(null);
+                                    handleClose();
+                                }}
+                                footerContant={`# ${patient.patientMrn}`}
+                            />
+                        ))
+                    )}
+                </Box>
             </Drawer.Body>
         </Drawer>
     );

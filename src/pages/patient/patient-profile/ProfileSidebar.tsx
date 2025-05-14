@@ -24,13 +24,12 @@ import MoreIcon from '@rsuite/icons/More';
 import SearchIcon from '@rsuite/icons/Search';
 import SearchPeopleIcon from '@rsuite/icons/SearchPeople';
 import clsx from 'clsx';
-import userSearch from '@/images/user-avatar.svg';
 import UserSearch from '@/images/svgs/UserSearch';
 import { ArrowRightLine } from '@rsuite/icons';
 import MyInput from '@/components/MyInput';
 import PatientCard from '@/components/PatientCard';
 import { FaArrowRight, FaEllipsis } from 'react-icons/fa6';
-import { Box } from '@mui/material';
+import { Box, Skeleton } from '@mui/material';
 
 interface ProfileSidebarProps {
   expand: boolean;
@@ -184,18 +183,32 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                   </Button>
                   {conjurePatientSearchBar(patientSearchTarget)}
                   <Box className="patient-list">
-                    {patientListResponse?.object?.map(patient => (
-                      <PatientCard
-                        key={patient.key}
-                        patient={patient}
-                        onClick={() => setLocalPatient(patient)}
-                        actions={
-                          <Button className="actions-button">
-                            <FaEllipsis/>
-                          </Button>
-                        }
-                      />
-                    ))}
+                    {isFetchingPatients ? (
+                      // Show 4 skeleton cards as placeholder
+                      Array.from({ length: 4 }).map((_, index) => (
+                        <Box width={250} key={index} className="patient-list-loader" >
+                          <div className="patient-list-loader-circle">
+                            <Skeleton variant="circular" width={40} height={40} className='loader-circle' />
+                            <Skeleton variant="text" width="80%" height={25} className='loader-text' />
+                          </div>
+                          <Skeleton variant="rectangular" height={90} className='loader-rectangular' />
+                          <Skeleton width="100%" />
+                        </Box>
+                      ))
+                    ) : (
+                      patientListResponse?.object?.map(patient => (
+                        <PatientCard
+                          key={patient.key}
+                          patient={patient}
+                          onClick={() => setLocalPatient(patient)}
+                          actions={
+                            <Button className="actions-button">
+                              <FaEllipsis />
+                            </Button>
+                          }
+                        />
+                      ))
+                    )}
                   </Box>
                 </Panel>
               ) : (
