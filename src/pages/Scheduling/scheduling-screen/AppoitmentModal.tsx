@@ -1094,7 +1094,6 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                             defaultValue={new Date().getFullYear()}
                                                             onChange={(selectedYear) => {
                                                                 setSelectedYear(selectedYear);
-                                                                updateAvailableDates(selectedYear, selectedMonth);
                                                             }}
                                                         />
                                                     </div>
@@ -1124,7 +1123,6 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                             defaultValue={new Date().getMonth()}
                                                             onChange={(selectedMonth) => {
                                                                 setSelectedMonth(selectedMonth);
-                                                                updateAvailableDates(selectedYear, selectedMonth);
                                                             }}
                                                         />
                                                     </div>
