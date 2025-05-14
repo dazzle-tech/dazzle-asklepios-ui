@@ -551,6 +551,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             pageNumber: 1 // reset to first page
         });
     };
+
     return (
         <>
             <div style={{ marginLeft: '10px', padding: '5px' }}>
@@ -585,7 +586,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                                 setOrders({ ...orders, isUrgent: !orders.isUrgent })
                             }
                             backgroundColor={orders.isUrgent ? "var(--primary-orange)" : 'var(--primary-blue)'}
-                            disabled={!edit ?orders.key?orders?.statusLvalue?.valueCode!==' DIAG_ORDER_STAT_NEW':true: true}
+                            disabled={edit ?true:orders.key?orders?.statusLkey!=='164797574082125':true}
 
                         >
                             Urgent</MyButton>
@@ -632,7 +633,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
                     <div className='top-container'>
 
-                        <TestDropdown handleItemClick={handleItemClick} disabled={orders.key?orders?.statusLvalue?.valueCode!==' DIAG_ORDER_STAT_NEW':true} flag={flag} setFlag={setFlag}/>
+                        <TestDropdown handleItemClick={handleItemClick} disabled={orders.key?orders?.statusLkey!=='164797574082125':true} flag={flag} setFlag={setFlag}/>
                         <div className='icon-style'>
                             <GrTestDesktop size={18} />
                         </div>
