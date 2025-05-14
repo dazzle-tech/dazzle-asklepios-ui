@@ -163,6 +163,7 @@ const Prescription = ({ edit, patient, encounter }) => {
         }
 
     }, [preKey]);
+    
     useEffect(() => {
         if (showCanceled) {
             handleCleare();

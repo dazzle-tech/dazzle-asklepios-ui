@@ -40,8 +40,10 @@ const DrugOrder = ({ edit, patient, encounter }) => {
     const [showCanceled, setShowCanceled] = useState(true);
     const [editing, setEditing] = useState(false);
     const [selectedGeneric, setSelectedGeneric] = useState(null);
+    const [openToAdd, setOpenToAdd] = useState(true);
+    const [reson, setReson] = useState({ cancellationReason: "" })
     const [isdraft, setIsDraft] = useState(false);
-
+    const [selectedRows, setSelectedRows] = useState([]);
     const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
     const [openDetailsModel, setOpenDetailsModel] = useState(false);
     const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
@@ -116,7 +118,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
     }, [orders]);
     useEffect(() => {
-        console.log(drugKey)
+
         if (drugKey == null) {
             handleCleare();
         }
@@ -202,14 +204,12 @@ const DrugOrder = ({ edit, patient, encounter }) => {
         }
     };
     const handleCancle = async () => {
-
-
         try {
-            await
-                saveDrugorderMedication({ ...orderMedication, statusLkey: "1804447528780744", deletedAt: Date.now() }).unwrap();
+            await Promise.all(
+                selectedRows.map(item => saveDrugorderMedication({ ...item, isValid: false, statusLkey: "1804447528780744", deletedAt: Date.now(), cancellationReason: reson.cancellationReason }).unwrap())
+            );
 
-
-            dispatch(notify({ msg: ' medication deleted successfully', type: 'success' }));
+            dispatch(notify({ msg: 'All medication deleted successfully', sev: "success" }));
             CloseCancellationReasonModel();
             medicRefetch().then(() => {
                 console.log("Refetch complete");
@@ -236,6 +236,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
             }).unwrap();
             dispatch(notify({ msg: 'Submetid  Successfully', sev: 'success' }));
             await handleCleare();
+            await ordRefetch()
             setDrugKey(null)
 
         }
@@ -276,13 +277,40 @@ const DrugOrder = ({ edit, patient, encounter }) => {
         setSelectedGeneric(null)
 
     }
-
+    const handleCheckboxChange = (key) => {
+        setSelectedRows((prev) => {
+            if (prev.includes(key)) {
+                return prev.filter(item => item !== key);
+            } else {
+                return [...prev, key];
+            }
+        });
+    };
     const CloseCancellationReasonModel = () => {
         setOpenCancellationReasonModel(false);
     }
 
 
     const tableColumns = [
+        {
+            key: "#",
+            title: <Translate> #</Translate>,
+            flexGrow: 1,
+
+            render: (rowData: any) => {
+                return (
+                    <Checkbox
+                        className='check-box'
+                        key={rowData.id}
+                        checked={selectedRows.includes(rowData)}
+                        onChange={() => handleCheckboxChange(rowData)}
+                        disabled={rowData.statusLvalue?.lovDisplayVale !== 'New'}
+                    />
+                )
+            },
+
+        }
+        ,
 
         {
             key: 'medicationName',
@@ -357,53 +385,51 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                     size={24}
 
                     fill="var(--primary-gray)"
-                    onClick={() => { setOpenDetailsModel(true) }}
+                    onClick={() => {  setOpenToAdd(false); setOpenDetailsModel(true) }}
                 />)
             }
 
         },
-        {
-            key: 'createdAt',
-            dataKey: 'createdAt',
-            title: 'Created At',
-            flexGrow: 2,
-            expandable: true,
-            render: (rowData: any) => {
-                return rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "";
-            }
-        },
-        {
-            key: 'createdBy',
-            dataKey: 'createdBy',
-            title: 'Created By',
-            flexGrow: 2,
-            expandable: true,
-            render: (rowData: any) => {
-                return rowData.createdBy;
-            }
-        }
         ,
         {
-            key: 'deletedAt',
-            dataKey: 'deletedAt',
-            title: 'Cancelled At',
-            flexGrow: 2,
+            key: "",
+            title: <Translate>Created At/By</Translate>,
             expandable: true,
             render: (rowData: any) => {
-                return rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : "";
+                return (<>
+                    <span>{rowData.createdBy}</span>
+                    <br />
+                    <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+                </>)
             }
+
         },
         {
-            key: 'deletedBy',
-            dataKey: 'deletedBy',
-            title: 'Cancelled By',
-            flexGrow: 2,
+            key: "",
+            title: <Translate>Updated At/By</Translate>,
             expandable: true,
             render: (rowData: any) => {
-                return rowData.deletedBy;
+                return (<>
+                    <span>{rowData.updatedBy}</span>
+                    <br />
+                    <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+                </>)
             }
-        }
-        ,
+
+        },
+
+        {
+            key: "",
+            title: <Translate>Cancelled At/By</Translate>,
+            expandable: true,
+            render: (rowData: any) => {
+                return (<>
+                    <span>{rowData.deletedBy}</span>
+                    <br />
+                    <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
+                </>)
+            }
+        },
         {
             key: 'cancellationReason',
             dataKey: 'cancellationReason',
@@ -517,7 +543,8 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                         prefixIcon={() => <PlusIcon />}
                         onClick={() => {
                             setOpenDetailsModel(true)
-                            handleCleare()
+                            handleCleare();
+                            setOpenToAdd(true);
                         }}
                     >Add Medication</MyButton>
                     <MyButton
@@ -547,6 +574,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 onRowClick={rowData => {
                     setOrderMedication(rowData);
                     setEditing(rowData.statusLkey == "3196709905099521" ? true : false);
+                    setOpenToAdd(false);
                     setSelectedGeneric(genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey))
                 }}
                 rowClassName={isSelected}
@@ -558,11 +586,11 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 open={openCancellationReasonModel}
                 setOpen={setOpenCancellationReasonModel}
                 handleCancle={handleCancle}
-                fieldName='cancellationReason'
-                title="Cancellation"
-                fieldLabel="Cancellation Reason"
-                object={orderMedication}
-                setObject={setOrderMedication}>
+                object={reson}
+                setObject={setReson}
+                fieldName="cancellationReason"
+                fieldLabel={'Cancellation Reason'}
+                title={'Cancellation'}>
 
             </CancellationModal>
 
@@ -577,7 +605,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 patient={patient}
                 encounter={encounter}
                 medicRefetch={medicRefetch}
-
+                openToAdd={openToAdd}
 
             ></DetailsModal>
         </div>

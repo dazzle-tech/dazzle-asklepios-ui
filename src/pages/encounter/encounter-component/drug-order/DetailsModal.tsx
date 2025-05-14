@@ -15,11 +15,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import PlusIcon from '@rsuite/icons/Plus';
 import SearchIcon from '@rsuite/icons/Search';
 import React, { useEffect, useState } from "react";
-import { Col, Dropdown, Form, Input, InputGroup, Row, Tag, TagGroup } from "rsuite";
+import { Col, Dropdown, Form, Input, InputGroup, Row, Tag, TagGroup, Text } from "rsuite";
 import ActiveIngrediantList from './ActiveIngredient';
 import './styles.less';
 import Substitues from "./Substitutes";
-const DetailsModal = ({edit, open, setOpen, orderMedication, setOrderMedication, drugKey, editing, patient, encounter, medicRefetch }) => {
+import MyTagInput from "@/components/MyTagInput/MyTagInput";
+const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication, drugKey, editing, patient, encounter, medicRefetch, openToAdd }) => {
     const dispatch = useAppDispatch();
     const [searchKeyword, setSearchKeyword] = useState('');
     const [searchKeywordicd, setSearchKeywordicd] = useState('');
@@ -34,6 +35,9 @@ const DetailsModal = ({edit, open, setOpen, orderMedication, setOrderMedication,
     const [filteredList, setFilteredList] = useState([]);
     const [adminInstructions, setAdminInstructions] = useState("");
     const [editDuration, setEditDuration] = useState(false);
+    const [slectInst, setSelectInt] = useState({ inst: null });
+    const [instructionList, setInstructionList] = useState([]);
+    const [instr,setInstruc]=useState(null)
     const [indicationsDescription, setindicationsDescription] = useState<string>('');
     const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
@@ -70,64 +74,89 @@ const DetailsModal = ({edit, open, setOpen, orderMedication, setOrderMedication,
         ...item,
         combinedLabel: `${item.icdCode} - ${item.description}`,
     }));
- 
-     useEffect(()=>{
-            if(orderMedication.key!=null)
-                
-            {
-                setSelectedGeneric(genericMedicationListResponse?.object?.find(item => item.key ===orderMedication.genericMedicationsKey))
-                
-                setAdminInstructions(orderMedication.administrationInstructions);
-                setTags(orderMedication?.parametersToMonitor?.split(","))
-            }
-           
-        },[orderMedication])
-    useEffect(() => {
 
+    useEffect(() => {
+        if (orderMedication.key != null) {
+            setSelectedGeneric(genericMedicationListResponse?.object?.find(item => item.key === orderMedication.genericMedicationsKey))
+            const prevadmin = orderMedication.administrationInstructions?.split(",")
+            setInstructionList(prevadmin)
+            setAdminInstructions(orderMedication.administrationInstructions);
+            setTags(orderMedication?.parametersToMonitor?.split(","))
+        }
+
+    }, [orderMedication]);
+
+      useEffect(()=>{
+            setInstruc(joinValuesFromArray(instructionList))
+        },[instructionList])
+    
+    useEffect(() => {
+        if (slectInst?.inst != null) {
+            const foundItem = administrationInstructionsLovQueryResponse?.object?.find(
+                item => item.key === slectInst?.inst
+            );
+
+            const value = foundItem?.lovDisplayVale;
+
+            if (value) {
+
+
+                setInstructionList(prev => [...prev, foundItem?.lovDisplayVale]);
+            } else {
+                console.warn("⚠️ Could not find display value for key:", slectInst.inst);
+            }
+        }
+    }, [slectInst?.inst]);
+    useEffect(() => {
         if (drugKey == null) {
             handleCleare();
         }
-
     }, [drugKey]);
-  
-     useEffect(()=>{
-        if(open==false){
+
+    //when close modal clear 
+    useEffect(() => {
+        if (open == false) {
             handleCleare();
-            setSelectedGeneric(null);
-            setTags(null)
+
         }
-     },[open])
-     useEffect(() => {
-            if (searchKeywordicd.trim() !== "") {
-                setIcdListRequest(
-                    {
-                        ...initialListRequest,
-                        filterLogic: 'or',
-                        filters: [
-                            {
-                                fieldName: 'icd_code',
-                                operator: 'containsIgnoreCase',
-                                value: searchKeywordicd
-                            },
-                            {
-                                fieldName: 'description',
-                                operator: 'containsIgnoreCase',
-                                value: searchKeywordicd
-                            }
-    
-                        ]
-                    }
-                );
-            }
-        }, [searchKeywordicd]);
+    }, [open]);
+    // cleare when open modal to add new medication
+    useEffect(() => {
+        if (openToAdd) {
+            handleCleare();
+
+        }
+    }, [openToAdd]);
+    useEffect(() => {
+        if (searchKeywordicd.trim() !== "") {
+            setIcdListRequest(
+                {
+                    ...initialListRequest,
+                    filterLogic: 'or',
+                    filters: [
+                        {
+                            fieldName: 'icd_code',
+                            operator: 'containsIgnoreCase',
+                            value: searchKeywordicd
+                        },
+                        {
+                            fieldName: 'description',
+                            operator: 'containsIgnoreCase',
+                            value: searchKeywordicd
+                        }
+
+                    ]
+                }
+            );
+        }
+    }, [searchKeywordicd]);
     useEffect(() => {
 
         setEditDuration(orderMedication.chronicMedication);
         setOrderMedication({ ...orderMedication, duration: null, durationTypeLkey: null })
     }, [orderMedication.chronicMedication]);
-    useEffect(() => {
 
-    }, [selectedGeneric]);
+
     useEffect(() => {
         if (indicationsIcd.indicationIcd != null || indicationsIcd.indicationIcd != "") {
 
@@ -146,7 +175,9 @@ const DetailsModal = ({edit, open, setOpen, orderMedication, setOrderMedication,
             });
         }
     }, [indicationsIcd.indicationIcd]);
+
     useEffect(() => {
+
         if (orderMedication.administrationInstructions != null) {
 
             setAdminInstructions(prevadminInstructions =>
@@ -206,17 +237,17 @@ const DetailsModal = ({edit, open, setOpen, orderMedication, setOrderMedication,
                 statusLkey: "164797574082125",
                 startDateTime: orderMedication.startDateTime ? new Date(orderMedication?.startDateTime)?.getTime() : null,
                 indicationIcd: indicationsDescription,
-                administrationInstructions: adminInstructions
+                administrationInstructions:instr
             }).unwrap().then(() => {
-                dispatch(notify({msg:"added sucssesfily" ,sev:"success"}))
+                dispatch(notify({ msg: "Added sucssesfily", sev: "success" }))
                 setOpen(false);
                 handleCleare();
                 medicRefetch();
             })
         } catch (error) {
-            dispatch(notify({ msg: "added feild", sev: "error" }))
-           console.log(error);
-           
+            dispatch(notify({ msg: "Added feild", sev: "error" }))
+            console.log(error);
+
         }
     }
     const handleSearch = value => {
@@ -246,96 +277,70 @@ const DetailsModal = ({edit, open, setOpen, orderMedication, setOrderMedication,
     const handleButtonClick = () => {
         setTyping(true);
     };
-    const removeTag = tag => {
-        const nextTags = tags.filter(item => item !== tag);
-        setTags(nextTags);
-    };
+   
     const joinValuesFromArray = (values) => {
         return values?.filter(Boolean).join(', ');
     };
 
-    const renderInput = () => {
-        if (typing) {
-            return (
-                <Input
-                    className="tag-input"
-                    size="xs"
-                    style={{ width: 70 }}
-                    value={inputValue}
-                    onChange={setInputValue}
-                    onBlur={addTag}
-                    onPressEnter={addTag}
-
-                />
-            );
-        }
-
-        return (
-            <PlusIcon
-                onClick={handleButtonClick}
-                style={{ marginRight: '5px' }}
-            />
-        );
-    };
+   
     return (<>
         <AdvancedModal
             open={open}
             setOpen={setOpen}
             actionButtonFunction={handleSaveMedication}
             actionButtonLabel="Save"
-            isDisabledActionBtn={edit ?true: orderMedication.key ? orderMedication?.statusLvalue?.valueCode !== "DIAG_ORDER_STAT_NEW" : false}
+            isDisabledActionBtn={edit ? true : orderMedication.key ? orderMedication?.statusLvalue?.valueCode !== " DIAG_ORDER_STAT_NEW" : false}
             leftTitle={selectedGeneric ? selectedGeneric.genericName : "Select Generic"}
             rightTitle="Medication Order Details"
             leftContent={<>
-            
+
                 <ActiveIngrediantList selectedGeneric={selectedGeneric} />
             </>}
             rightContent={
+                <Form fluid>
+                    <Row gutter={20} className={edit ? "disabled-panel" : orderMedication.key ? orderMedication?.statusLvalue?.valueCode !== " DIAG_ORDER_STAT_NEW" ? "disabled-panel" : "" : ""}>
+                        <Col md={12}>
 
-                <Row gutter={20} className={edit?"disabled-panel": orderMedication.key ? orderMedication?.statusLvalue?.valueCode!=="DIAG_ORDER_STAT_NEW"?"disabled-panel":"":""}>
-                    <Col md={12}>
-                        <div className="child-div">
-
-                            <Row>
+                            <Row className="rows-gap">
                                 <Col md={20}>
-                                    <Form layout="inline" >
-                                        <InputGroup inside className='input-search-p'>
-                                            <Input
 
-                                                placeholder={'Medication Name'}
-                                                value={searchKeyword}
-                                                onChange={handleSearch}
-                                            />
-                                            <InputGroup.Button>
-                                                <SearchIcon />
-                                            </InputGroup.Button>
-                                        </InputGroup>
-                                        {searchKeyword && (
-                                            <Dropdown.Menu className="dropdown-menuresult">
-                                                {genericMedicationListResponse && genericMedicationListResponse?.object?.map(Generic => (
-                                                    <Dropdown.Item
-                                                        key={Generic.key}
-                                                        eventKey={Generic.key}
-                                                        onClick={() => handleItemClick(Generic)}
+                                    <InputGroup inside className='input-search-p'>
+                                        <Input
 
-                                                    >
-                                                        <span >
-                                                            {[Generic.genericName,
-                                                            Generic.dosageFormLvalue?.lovDisplayVale,
-                                                            Generic.manufacturerLvalue?.lovDisplayVale,
-                                                            Generic.roaLvalue?.lovDisplayVale]
-                                                                .filter(Boolean)
-                                                                .join(', ')}
-                                                        </span>
-                                                        {Generic.activeIngredients}
-                                                    </Dropdown.Item>
-                                                ))}
-                                            </Dropdown.Menu>
-                                        )}
+                                            placeholder={'Medication Name'}
+                                            value={searchKeyword}
+                                            onChange={handleSearch}
+                                        />
+                                        <InputGroup.Button>
+                                            <SearchIcon />
+                                        </InputGroup.Button>
+                                    </InputGroup>
+                                    {searchKeyword && (
+                                        <Dropdown.Menu className="dropdown-menuresult">
+                                            {genericMedicationListResponse && genericMedicationListResponse?.object?.map(Generic => (
+                                                <Dropdown.Item
+                                                    key={Generic.key}
+                                                    eventKey={Generic.key}
+                                                    onClick={() => handleItemClick(Generic)}
+
+                                                >
+                                                    <span >
+                                                        {[Generic.genericName,
+                                                        Generic.dosageFormLvalue?.lovDisplayVale,
+                                                        Generic.manufacturerLvalue?.lovDisplayVale,
+                                                        Generic.roaLvalue?.lovDisplayVale]
+                                                            .filter(Boolean)
+                                                            .join(', ')}
+                                                    </span>
+                                                    {Generic.activeIngredients}
+                                                </Dropdown.Item>
+                                            ))}
+                                        </Dropdown.Menu>
+                                    )}
 
 
 
-                                    </Form></Col>
+                                </Col>
                                 <Col md={4}>
                                     <MyButton
                                         radius={'25px'}
@@ -349,116 +354,92 @@ const DetailsModal = ({edit, open, setOpen, orderMedication, setOrderMedication,
 
                                     </MyButton></Col>
                             </Row>
-
-                            <div className="fields-div">
-                            <div style={{ flex: 1 }}>
-                                    <Form layout="inline" >
-                                        <MyInput
-                                            fieldType="datetime"
-                                            fieldName="startDateTime"
-                                            record={orderMedication}
-                                            setRecord={setOrderMedication}
-                                        /></Form>
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <Form layout="inline" >
-                                        <MyInput
-                                            column
-                                            fieldType="select"
-                                            fieldLabel="Drug Order Type"
-                                            selectData={orderTypeLovQueryResponse?.object ?? []}
-                                            selectDataLabel="lovDisplayVale"
-                                            selectDataValue="key"
-                                            fieldName={'drugOrderTypeLkey'}
-                                            record={orderMedication}
-                                            setRecord={setOrderMedication}
-                                        />
-                                    </Form>
-                                </div>
-                                <div style={{ flex: 1 }}>
+                            <Row className="rows-gap">
+                                <Col md={8}>
+                                    <MyInput
+                                        width="100%"
+                                        fieldType="datetime"
+                                        fieldName="startDateTime"
+                                        record={orderMedication}
+                                        setRecord={setOrderMedication}
+                                    /></Col>
+                                <Col md={8}>
+                                    <MyInput
+                                        width="100%"
+                                        fieldType="select"
+                                        fieldLabel="Drug Order Type"
+                                        selectData={orderTypeLovQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
+                                        selectDataValue="key"
+                                        fieldName={'drugOrderTypeLkey'}
+                                        record={orderMedication}
+                                        setRecord={setOrderMedication}
+                                        searchable={false}
+                                    /></Col>
+                                <Col md={8}>
                                     {orderMedication.drugOrderTypeLkey == '2937712448460454' ?
-                                    (<Form layout="inline" >
-                                        <MyInput
-                                            disabled={orderMedication.drugOrderTypeLkey != '2937712448460454' ? true : false}
-                                            column
-                                            fieldLabel="PRN Indication"
-                                            fieldName={'prnIndication'}
-                                            record={orderMedication}
-                                            setRecord={setOrderMedication}
-                                        />
-                                    </Form>):""}
-                                    
-                                </div>
-                                
+                                        (
+                                            <MyInput
+                                                width="100%"
+                                                fieldLabel="PRN Indication"
+                                                fieldName={'prnIndication'}
+                                                record={orderMedication}
+                                                setRecord={setOrderMedication}
+                                            />
+                                        ) : ""}</Col>
+                            </Row>
+                            <Row className="rows-gap">
+                                <Col md={6}>
+                                    <MyInput
+                                        width="100%"
+                                        fieldType='number'
+                                        fieldName={'dose'}
+                                        record={orderMedication}
+                                        setRecord={setOrderMedication}
+                                    /></Col>
+                                <Col md={6}>  <MyInput
 
-                            </div>
-                            <div className="fields-div">
-                                <div style={{ flex: 1 }}>
-                                    <Form layout="inline" disabled={drugKey != null ? editing : true} >
-                                        <MyInput
-                                            column
-                                            width={105}
-                                            fieldType='number'
-                                            fieldName={'dose'}
-                                            record={orderMedication}
-                                            setRecord={setOrderMedication}
-                                        />
-                                    </Form>
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <Form layout="inline" >
-                                        <MyInput
-                                            column
-                                            width={105}
-                                            fieldType="select"
-                                            fieldLabel="Unit"
-                                            selectData={unitLovQueryResponse?.object ?? []}
-                                            selectDataLabel="lovDisplayVale"
-                                            selectDataValue="key"
-                                            fieldName={'doseUnitLkey'}
-                                            record={orderMedication}
-                                            setRecord={setOrderMedication}
-                                        />
-                                    </Form>
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <Form layout="inline" >
+                                    width="100%"
+                                    fieldType="select"
+                                    fieldLabel="Unit"
+                                    selectData={unitLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName={'doseUnitLkey'}
+                                    record={orderMedication}
+                                    setRecord={setOrderMedication}
+                                /></Col>
+                                <Col md={6}>      <MyInput
 
-                                        <MyInput
-                                            column
-                                            width={"80px"}
-                                            disabled={drugKey != null ? editing : true}
-                                            fieldLabel="Frequency"
-                                            fieldType="number"
-                                            fieldName={'frequency'}
-                                            record={orderMedication}
-                                            setRecord={setOrderMedication}
-                                            rightAddon="Hr"
-                                        />
-                                    </Form>
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <Form layout="inline" >
-                                        <MyInput
-                                            column
-                                            width={105}
-                                            fieldType="select"
-                                            fieldLabel="ROA"
-                                            selectData={filteredList ?? []}
-                                            selectDataLabel="lovDisplayVale"
-                                            selectDataValue="key"
-                                            fieldName={'roaLkey'}
-                                            record={orderMedication}
-                                            setRecord={setOrderMedication}
-                                        />
-                                    </Form>
-                                </div>
-                            </div>
-                            <Translate>Indication</Translate>
-                            <div className="fields-div" style={{ gap: '10px' }}>
-                                <div className="child-div"> <InputGroup inside >
+                                    width="100%"
+                                    disabled={drugKey != null ? editing : true}
+                                    fieldLabel="Frequency"
+                                    fieldType="number"
+                                    fieldName={'frequency'}
+                                    record={orderMedication}
+                                    setRecord={setOrderMedication}
+                                    rightAddon="Hr"
+                                /></Col>
+                                <Col md={6}>  <MyInput
+
+                                    width="100%"
+                                    fieldType="select"
+                                    fieldLabel="ROA"
+                                    selectData={filteredList ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName={'roaLkey'}
+                                    record={orderMedication}
+                                    setRecord={setOrderMedication}
+                                /></Col>
+                            </Row>
+                            <Row className="rows-gap">
+                                <Text className="font-style" >Indication</Text>
+                            </Row>
+                            <Row>
+                                <Col md={12}>    <InputGroup inside >
                                     <Input
-                                        disabled={drugKey != null ? editing : true}
+
                                         placeholder="Search ICD-10"
                                         value={searchKeywordicd}
                                         onChange={handleSearchIcd}
@@ -468,7 +449,7 @@ const DetailsModal = ({edit, open, setOpen, orderMedication, setOrderMedication,
                                     </InputGroup.Button>
                                 </InputGroup>
                                     {searchKeywordicd && (
-                                        <Dropdown.Menu  className="dropdown-menuresult">
+                                        <Dropdown.Menu className="dropdown-menuresult">
                                             {modifiedData?.map(mod => (
                                                 <Dropdown.Item
                                                     key={mod.key}
@@ -481,41 +462,40 @@ const DetailsModal = ({edit, open, setOpen, orderMedication, setOrderMedication,
                                                         setSearchKeywordicd("");
                                                     }}
                                                 >
-                                                     {mod.icdCode} {" - "} {mod.description}
+                                                    {mod.icdCode} {" - "} {mod.description}
                                                 </Dropdown.Item>
                                             ))}
                                         </Dropdown.Menu>
-                                    )}
-                                    <Input as="textarea"
-                                        disabled={true}
-                                        onChange={(e) => setindicationsDescription} value={indicationsDescription
-                                            || orderMedication.indicationIcd
-                                        }
-                                        rows={2} /></div>
-                                <div className="child-div">
-                                    <InputGroup inside >
-                                        <Input
-                                            disabled={drugKey != null ? editing : true}
-                                            placeholder="Search SNOMED-CT"
-                                            value={""}
-
-                                        />
-                                        <InputGroup.Button>
-                                            <SearchIcon />
-                                        </InputGroup.Button>
-                                    </InputGroup>
-
-                                    <Input as="textarea"
-                                        disabled={true}
-
-                                        rows={2} />
-                                </div>
-                            </div>
-                            <div className="fields-div">
-                                <Form fluid className="fill-width"  >
-                                    <MyInput
-
+                                    )}</Col>
+                                <Col md={12}> <InputGroup inside >
+                                    <Input
                                         disabled={drugKey != null ? editing : true}
+                                        placeholder="Search SNOMED-CT"
+                                        value={""}
+
+                                    />
+                                    <InputGroup.Button>
+                                        <SearchIcon />
+                                    </InputGroup.Button>
+                                </InputGroup>
+                                </Col>
+                            </Row>
+                            <Row className="rows-gap">
+                                <Col md={12}>  <Input as="textarea"
+                                    disabled={true}
+                                    onChange={(e) => setindicationsDescription} value={indicationsDescription
+                                        || orderMedication.indicationIcd
+                                    }
+                                    rows={2} /></Col>
+                                <Col md={12}>
+                                    <Input as="textarea"
+                                        disabled={true}
+
+                                        rows={2} /></Col>
+                            </Row>
+                            <Row className="rows-gap">
+                                <Col md={24}>
+                                    <MyInput
                                         width="100%"
                                         fieldType="select"
                                         fieldLabel="Indication Use"
@@ -525,15 +505,13 @@ const DetailsModal = ({edit, open, setOpen, orderMedication, setOrderMedication,
                                         fieldName={'indicationUseLkey'}
                                         record={orderMedication}
                                         setRecord={setOrderMedication}
-
-                                    />
-                                </Form>
-                            </div>
-                            <div className="fields-div">
-                                <Form fluid className="fill-width" >
+                                        searchable={false}
+                                    /></Col>
+                            </Row>
+                            <Row className="rows-gap">
+                                <Col md={24}>
                                     <MyInput
 
-                                        disabled={drugKey != null ? editing : true}
                                         width="100%"
                                         fieldType="select"
                                         fieldLabel="Send To Pharmacy"
@@ -543,134 +521,105 @@ const DetailsModal = ({edit, open, setOpen, orderMedication, setOrderMedication,
                                         fieldName={'pharmacyDepartmentKey'}
                                         record={orderMedication}
                                         setRecord={setOrderMedication}
+                                        searchable={false}
 
-                                    />
-                                </Form>
-                            </div>
-                            <div className="fields-div">
-                                <Form fluid className="fill-width" >
+                                    /></Col>
+                            </Row>
+                            <Row className="rows-gap">
+                                <Col md={24}>
                                     <MyInput
                                         width="100%"
-                                        disabled={drugKey != null ? editing : true}
                                         fieldType="textarea"
                                         fieldName='indicationManually'
                                         record={orderMedication}
                                         setRecord={setOrderMedication}
                                     />
-                                </Form></div>
-                        </div></Col>
-                    <Col md={12}>
-                        <div className="child-div">
-                            <div className="fields-div">
-                                <div style={{ flex: 1 }}>
-                                    <Form layout="inline"  >
-                                        <MyInput
-                                            column
-                                            disabled={drugKey != null ? (!editing ? editDuration : editing) : true}
+                                </Col>
+                            </Row>
+                        </Col>
+                        <Col md={12}>
+                            <Row className="rows-gap">
+                                <Col md={8}> <MyInput
+                                    disabled={editDuration}
+                                    fieldType="number"
+                                    fieldLabel="Duration"
+                                    fieldName={'duration'}
+                                    width="100%"
+                                    record={orderMedication}
+                                    setRecord={setOrderMedication}
+                                /></Col>
+                                <Col md={8}>   <MyInput
+                                    width="100%"
+                                    disabled={editDuration}
+                                    fieldType="select"
+                                    fieldLabel="Duration type"
+                                    selectData={DurationTypeLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName={'durationTypeLkey'}
+                                    record={orderMedication}
+                                    setRecord={setOrderMedication}
+                                    searchable={false}
 
-                                            fieldType="number"
-                                            fieldLabel="Duration"
-                                            fieldName={'duration'}
-                                            placholder={' '}
-                                            record={orderMedication}
-                                            setRecord={setOrderMedication}
-                                        />
-                                    </Form>
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <Form layout="inline" >
-                                        <MyInput
-                                            column
-                                            disabled={drugKey != null ? (!editing ? editDuration : editing) : true}
+                                /></Col>
+                                <Col md={8}> <MyInput
+                                    width="100%"
+                                    fieldLabel="Chronic Medication"
+                                    fieldType="checkbox"
+                                    fieldName="chronicMedication"
+                                    record={orderMedication}
+                                    setRecord={setOrderMedication}
+                                /></Col>
 
-                                            fieldType="select"
-                                            fieldLabel="Duration type"
-                                            selectData={DurationTypeLovQueryResponse?.object ?? []}
-                                            selectDataLabel="lovDisplayVale"
-                                            selectDataValue="key"
-                                            fieldName={'durationTypeLkey'}
-                                            record={orderMedication}
-                                            setRecord={setOrderMedication}
-
-                                        />
-                                    </Form>
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <Form layout="inline" >
-                                        <MyInput
-
-                                            disabled={drugKey != null ? editing : true}
-                                            column
-                                            fieldLabel="Chronic Medication"
-                                            fieldType="checkbox"
-                                            fieldName="chronicMedication"
-                                            record={orderMedication}
-                                            setRecord={setOrderMedication}
-
-                                        />
-                                    </Form>
-                                </div>
-
-                            </div>
-                            <div className="child-div">
-                                <Form fluid>
-
+                            </Row>
+                            <Row>
+                                <Col md={24}>
                                     <MyInput
-
                                         width="100%"
-                                        disabled={drugKey != null ? editing : true}
                                         fieldType="select"
                                         fieldLabel="Administration Instructions"
                                         selectData={administrationInstructionsLovQueryResponse?.object ?? []}
                                         selectDataLabel="lovDisplayVale"
                                         selectDataValue="key"
-                                        fieldName={'administrationInstructions'}
-                                        record={orderMedication}
-                                        setRecord={setOrderMedication}
-                                    /></Form>
-                                <Input as="textarea" onChange={(e) => setAdminInstructions(e)}
-                                    value={adminInstructions}
+                                        fieldName={'inst'}
+                                        record={slectInst}
+                                        setRecord={setSelectInt}
+                                    /></Col>
+                            </Row>
+                            <Row className="rows-gap">
+                                <Col md={24}>
+                                    <Input as="textarea" onChange={(e) => setInstruc(e.target.value)}
+                                        value={instr}
+                                        style={{ width: '100%' }}
+                                        rows={3} /></Col>
+                            </Row>
+                            <Row className="rows-gap">
+                                <Col md={12}>  <MyInput
+                                    width="100%"
+                                    fieldType="number"
+                                    fieldName={'maximumDose'}
+                                    record={orderMedication}
+                                    setRecord={setOrderMedication}
+                                /></Col>
+                                <Col md={12}><MyInput
 
-                                />
-                            </div>
-                            <Row>
-                                <Col md={12}>
-                                    <Form fluid layout="inline">
-                                        <MyInput
-                                            column
-                                            width={230}
-                                            disabled={drugKey != null ? editing : true}
-                                            fieldType="number"
-                                            fieldName={'maximumDose'}
-                                            record={orderMedication}
-                                            setRecord={setOrderMedication}
-                                        />
-                                    </Form></Col>
-                                <Col md={12}>
-                                    <Form fluid layout="inline">
-                                        <MyInput
-                                            column
-                                            disabled={drugKey != null ? editing : true}
-                                            width={230}
-                                            fieldType="select"
-                                            fieldLabel="Priority Level"
-                                            selectData={priorityLevelLovQueryResponse?.object ?? []}
-                                            selectDataLabel="lovDisplayVale"
-                                            selectDataValue="key"
-                                            fieldName={'priorityLkey'}
-                                            record={orderMedication}
-                                            setRecord={setOrderMedication}
+                                    width="100%"
+                                    fieldType="select"
+                                    fieldLabel="Priority Level"
+                                    selectData={priorityLevelLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    fieldName={'priorityLkey'}
+                                    record={orderMedication}
+                                    setRecord={setOrderMedication}
+                                    searchable={false}
 
-                                        />
-                                    </Form>
-                                </Col>
+                                /></Col>
                             </Row>
 
-                            <div className="fields-div">
-                                <Form fluid className="fill-width"   >
+                            <Row className="rows-gap">
+                                <Col md={24}>
                                     <MyInput
-
-                                        disabled={drugKey != null ? editing : true}
                                         height={30}
                                         fieldType="textarea"
                                         width="100%"
@@ -679,54 +628,38 @@ const DetailsModal = ({edit, open, setOpen, orderMedication, setOrderMedication,
                                         setRecord={setOrderMedication}
 
                                     />
-                                </Form>
-
-                            </div>
-                            <Row>
-                                <Row>
-                                    <Col md={24}>
-                                    <MyLabel label="Parameters to monitor"  />
-                                    </Col>
-                                
-                                </Row>
-                                <Row></Row>
-                                <Row>
-                                    <Col md={24}>
-                                    <TagGroup className='taggroup-style'>
-                                    {tags?.map((item, index) => (
-                                        <Tag key={index} closable onClose={() => removeTag(item)}>
-                                            {item}
-                                        </Tag>
-                                    ))}
-                                    {renderInput()}
-                                </TagGroup>
-                                    </Col>
-                                
-                                </Row>
-                              
+                                </Col>
                             </Row>
+
                             <Row>
+                                <Col md={24}>
+                                    <MyLabel label="Parameters to monitor" />
+                                </Col>
+
+                            </Row>
+                            <Row className="rows-gap">
+                                <Col md={24}>
+                                    <MyTagInput tags={tags} setTags={setTags} />
+
+                                </Col>
+                            </Row>
+                            <Row className="rows-gap">
                                 <Col md={12}>
-                                    <Form fluid layout="inline">
-                                        <MyInput
 
-                                            disabled={drugKey != null ? editing : true}
-                                            column
+                                    <MyInput
+                                        width="100%"
+                                        fieldLabel="Brand substitute allowed"
+                                        fieldType="checkbox"
+                                        fieldName="genericSubstitute"
+                                        record={orderMedication}
+                                        setRecord={setOrderMedication}
 
-                                            fieldLabel="Brand substitute allowed"
-                                            fieldType="checkbox"
-                                            fieldName="genericSubstitute"
-                                            record={orderMedication}
-                                            setRecord={setOrderMedication}
-
-                                        />
-                                    </Form></Col>
+                                    />
+                                </Col>
                                 <Col md={12}>
                                     <Form fluid layout="inline" >
                                         <MyInput
-
-                                            disabled={drugKey != null ? editing : true}
-                                            column
+                                            width="100%"
                                             fieldType="checkbox"
                                             fieldName="patientOwnMedication"
                                             record={orderMedication}
@@ -736,25 +669,24 @@ const DetailsModal = ({edit, open, setOpen, orderMedication, setOrderMedication,
                                     </Form>
                                 </Col>
                             </Row>
-                            <Row>
+                            <Row className="rows-gap">
                                 <Col md={24}>
-                                    <Form fluid className="fill-width" layout="vertical" >
-                                        <MyInput
+                                    <MyInput
 
-                                            disabled={drugKey != null ? editing : true}
-                                            height={90}
-                                            fieldType="textarea"
-                                            width="100%"
-                                            fieldName={'notes'}
-                                            record={orderMedication}
-                                            setRecord={setOrderMedication}
+                                        disabled={drugKey != null ? editing : true}
+                                        height={90}
+                                        fieldType="textarea"
+                                        width="100%"
+                                        fieldName={'notes'}
+                                        record={orderMedication}
+                                        setRecord={setOrderMedication}
 
-                                        />
-                                    </Form>
+                                    />
                                 </Col>
                             </Row>
-                        </div></Col>
-                </Row>
+                        </Col>
+                    </Row>
+                </Form>
             }
         ></AdvancedModal>
         <Substitues open={openSubstitutesModel} setOpen={setOpenSubstitutesModel} selectedGeneric={selectedGeneric}></Substitues></>);
