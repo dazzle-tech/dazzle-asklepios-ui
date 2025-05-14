@@ -21,7 +21,7 @@ import { faRightLeft } from "@fortawesome/free-solid-svg-icons";
 import Instructions from "./Instructions";
 import Substitues from "./Substitued";
 
-const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescriptionMedications, preKey, editing, patient, encounter, medicRefetch }) => {
+const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescriptionMedications, preKey,patient, encounter, medicRefetch,openToAdd }) => {
     const dispatch = useAppDispatch();
     const [selectedGeneric, setSelectedGeneric] = useState(null);
     const [tags, setTags] = React.useState(null);
@@ -117,12 +117,9 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
             );
         }
     }, [searchKeywordicd]);
-    useEffect(()=>{
-     console.log("in",instr)
-    },[instr])
+  
     
     useEffect(()=>{
-        console.log("instruction as a list ",instructionList)
         setInstruc(joinValuesFromArray(instructionList))
     },[instructionList])
 
@@ -180,7 +177,12 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
             handleCleare()
         }
     },[open]);
-
+    useEffect(()=>{
+        if(openToAdd){
+            handleCleare();
+            console.log(openToAdd)
+        }
+    },[openToAdd]);
 
     const joinValuesFromArray = (values) => {
         return values?.filter(Boolean)?.join(', ');
@@ -241,6 +243,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
 
     }
     const handleCleare = () => {
+       
         setPrescriptionMedications({
             ...newApPrescriptionMedications,
             durationTypeLkey: null,
@@ -346,7 +349,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                                value={selectedOption}
                                 inline
                                 name="radio-group"
-                                disabled={preKey != null ? editing : true}
+                                disabled={preKey != null ? false: true}
                                 onChange={(value) => {setSelectedOption(String(value))
                                     setPrescriptionMedications({...prescriptionMedication,instructionsTypeLkey:String(value)})
                                 }}
@@ -381,7 +384,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                                 <Row>
                                     <InputGroup inside >
                                         <Input
-                                            disabled={preKey != null ? editing : true}
+                                            disabled={preKey != null ? false: true}
                                             placeholder="Search ICD-10"
                                             value={searchKeywordicd}
                                             onChange={handleSearchIcd}
@@ -422,7 +425,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                                 <Row>
                                     <InputGroup inside >
                                         <Input
-                                            disabled={preKey != null ? editing : true}
+                                            disabled={preKey != null ? false : true}
                                             placeholder="Search SNOMED-CT"
                                             value={""}
 
@@ -442,7 +445,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                                 <Form fluid  >
                                     <MyInput
 
-                                        disabled={preKey != null ? editing : true}
+                                        disabled={preKey != null ? false: true}
                                         width="100%"
                                         fieldType="select"
                                         fieldLabel="Indication Use"
@@ -463,7 +466,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                                     <MyInput
                                         width="100%"
                                         height={40}
-                                        disabled={preKey != null ? editing : true}
+                                        disabled={preKey != null ? false : true}
                                         fieldType="textarea"
                                         fieldName='indicationManually'
                                         record={prescriptionMedication}
@@ -479,7 +482,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                                 <Form fluid>
                                     <MyInput
 
-                                        disabled={preKey != null ? (!editing ? editDuration : editing) : true}
+                                        disabled={preKey != null ?  editDuration  : true}
                                         width='100%'
                                         fieldType="number"
                                         fieldLabel="Duration"
@@ -495,7 +498,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                                 <Form fluid>
                                     <MyInput
 
-                                        disabled={preKey != null ? (!editing ? editDuration : editing) : true}
+                                        disabled={preKey != null ?  editDuration  : true}
                                         width='100%'
                                         fieldType="select"
                                         fieldLabel="Duration type"
@@ -515,7 +518,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                                 <Form fluid>
                                     <MyInput
 
-                                        disabled={preKey != null ? editing : true}
+                                        disabled={preKey != null ? false : true}
                                         width="100%"
                                         fieldLabel="Chronic Medication"
                                         fieldType="checkbox"
@@ -532,7 +535,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                                 <Form fluid>
                                     <MyInput
 
-                                        disabled={preKey != null ? editing : true}
+                                        disabled={preKey != null ? false : true}
                                         width='100%'
                                         fieldType="number"
                                         fieldName={'maximumDose'}
@@ -546,7 +549,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                                 <Form fluid>
                                     <MyInput
 
-                                        disabled={preKey != null ? editing : true}
+                                        disabled={preKey != null ? false : true}
                                         width="100%"
                                         fieldType="date"
                                         fieldName={'validUtil'}
@@ -560,7 +563,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                                 <Form fluid>
                                     <MyInput
 
-                                        disabled={preKey != null ? editing : true}
+                                        disabled={preKey != null ? false : true}
                                         width="100%"
                                         fieldLabel="Brand substitute allowed"
                                         fieldType="checkbox"
@@ -589,7 +592,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                                 <Form fluid>
                                     <MyInput
 
-                                        disabled={preKey != null ? editing : true}
+                                        disabled={preKey != null ? false : true}
                                         fieldType='number'
                                         width="100%"
                                         fieldName={'numberOfRefills'}
@@ -601,7 +604,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                             <Col md={8}>
                                 <Form fluid>
                                     <MyInput
-                                        disabled={preKey != null ? editing : true}
+                                        disabled={preKey != null ? false : true}
                                         fieldType='number'
                                         width="100%"
                                         fieldName={'refillIntervalValue'}
@@ -614,7 +617,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                             <Col md={8}>
                                 <Form fluid>
                                     <MyInput
-                                        disabled={preKey != null ? editing : true}
+                                        disabled={preKey != null ? false : true}
                                         width="100%"
                                         fieldType="select"
                                         fieldLabel="Refill Interval Unit"
@@ -637,7 +640,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                                         <MyInput
 
                                             width="100%"
-                                            disabled={preKey != null ? editing : true}
+                                            disabled={preKey != null ? false : true}
                                             fieldType="select"
                                             fieldLabel="Administration Instructions"
                                             selectData={administrationInstructionsLovQueryResponse?.object ?? []}
@@ -660,7 +663,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                             <Col md={24}>
                                 <Form fluid>
                                     <MyInput
-                                        disabled={preKey != null ? editing : true}
+                                        disabled={preKey != null ? false : true}
                                         height={40}
                                         fieldType="textarea"
                                         width="100%"

@@ -250,18 +250,17 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                 </Form></Col>
                         </Row>
                         <Row className="rows-gap">
-                            <Col md={12}>
+                        <Col md={12}>
                                 <Form fluid>
                                     <MyInput
-
-                                        disabled={editing}
+                                        disabled={editing ? editing : procedure.currentDepartment}
                                         width="100%"
                                         fieldType="select"
-                                        fieldLabel="Procedure Level"
-                                        selectData={ProcedureLevelLovQueryResponse?.object ?? []}
+                                        fieldLabel="Facilty "
+                                        selectData={faciltyypesLovQueryResponse?.object ?? []}
                                         selectDataLabel="lovDisplayVale"
                                         selectDataValue="key"
-                                        fieldName={'procedureLevelLkey'}
+                                        fieldName={'faciltyLkey'}
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
@@ -270,15 +269,14 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                             <Col md={12}>
                                 <Form fluid>
                                     <MyInput
-
-                                        disabled={editing}
+                                        disabled={editing ? editing : procedure.currentDepartment}
                                         width="100%"
                                         fieldType="select"
-                                        fieldLabel="Priority"
-                                        selectData={priorityLovQueryResponse?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
+                                        fieldLabel="Department"
+                                        selectData={department ?? []}
+                                        selectDataLabel="name"
                                         selectDataValue="key"
-                                        fieldName={'priorityLkey'}
+                                        fieldName={'departmentKey'}
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
@@ -341,19 +339,17 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                     </Col>
                     <Col md={12}>
                         <Row className="rows-gap">
-                            <Col md={12}>
+                        <Col md={12}>
                                 <Form fluid>
-
                                     <MyInput
-
-                                        disabled={editing ? editing : procedure.currentDepartment}
+                                        disabled={editing}
                                         width="100%"
                                         fieldType="select"
-                                        fieldLabel="Facilty "
-                                        selectData={faciltyypesLovQueryResponse?.object ?? []}
+                                        fieldLabel="Procedure Level"
+                                        selectData={ProcedureLevelLovQueryResponse?.object ?? []}
                                         selectDataLabel="lovDisplayVale"
                                         selectDataValue="key"
-                                        fieldName={'faciltyLkey'}
+                                        fieldName={'procedureLevelLkey'}
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
@@ -362,15 +358,14 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                             <Col md={12}>
                                 <Form fluid>
                                     <MyInput
-
-                                        disabled={editing ? editing : procedure.currentDepartment}
+                                        disabled={editing}
                                         width="100%"
                                         fieldType="select"
-                                        fieldLabel="Department"
-                                        selectData={department ?? []}
-                                        selectDataLabel="name"
+                                        fieldLabel="Priority"
+                                        selectData={priorityLovQueryResponse?.object ?? []}
+                                        selectDataLabel="lovDisplayVale"
                                         selectDataValue="key"
-                                        fieldName={'departmentKey'}
+                                        fieldName={'priorityLkey'}
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
@@ -378,6 +373,30 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                         </Row>
                         <Row className="rows-gap">
                             <Col md={12}>
+                                <Form fluid>
+                                    <MyInput
+                                        disabled={editing}
+                                        width="100%"
+                                        fieldType="checkbox"
+                                        fieldName="currentDepartment"
+                                        record={procedure}
+                                        setRecord={setProcedure}
+                                    />
+                                </Form></Col>
+                                <Col md={12}>
+                                <Form fluid>
+                                    <MyInput
+                                        width="100%"
+                                        disabled={editing}
+                                        fieldName='scheduledDateTime'
+                                        fieldType='datetime'
+                                        record={procedure}
+                                        setRecord={setProcedure}
+                                    />
+                                </Form></Col>
+                        </Row>
+                        <Row className="rows-gap">
+                        <Col md={12}>
                                 <Form fluid>
                                     <MyInput
 
@@ -404,30 +423,6 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         selectDataLabel="lovDisplayVale"
                                         selectDataValue="key"
                                         fieldName={'sideLkey'}
-                                        record={procedure}
-                                        setRecord={setProcedure}
-                                    />
-                                </Form></Col>
-                        </Row>
-                        <Row className="rows-gap">
-                            <Col md={12}>
-                                <Form fluid>
-                                    <MyInput
-                                        width="100%"
-                                        disabled={editing}
-                                        fieldName='scheduledDateTime'
-                                        fieldType='datetime'
-                                        record={procedure}
-                                        setRecord={setProcedure}
-                                    />
-                                </Form></Col>
-                            <Col md={12}>
-                                <Form fluid>
-                                    <MyInput
-                                        disabled={editing}
-                                        width="100%"
-                                        fieldType="checkbox"
-                                        fieldName="currentDepartment"
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />

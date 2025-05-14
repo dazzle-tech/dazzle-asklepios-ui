@@ -159,7 +159,7 @@ const ReviewOfSystems = ({edit, patient, encounter }) => {
         flexGrow: 4,
         render:rowData => (
           <Input
-            disabled={(!mainData[rowData.key]) &&(edit)}
+            disabled={(!mainData[rowData.key]) ||(edit)}
             value={mainData[rowData.key] ? mainData[rowData.key].notes : ''}
             onChange={e => {
               setMainData({
@@ -185,7 +185,7 @@ const ReviewOfSystems = ({edit, patient, encounter }) => {
     ];
   return (
     <>
-      <Panel  >
+      <Panel>
         <Grid fluid>
         {/* <InputGroup>
               <InputGroup.Addon>
@@ -235,6 +235,7 @@ const ReviewOfSystems = ({edit, patient, encounter }) => {
            <div className='system-details'>
             <MyTable
             data={bodySystemsDetailLovQueryResponse?.object ?? []}
+            
             columns={tableColumns}
             ></MyTable>
              

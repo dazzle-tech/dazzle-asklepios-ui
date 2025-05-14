@@ -392,7 +392,7 @@ const Consultation = ({ edit, patient, encounter }) => {
       <div className='bt-div'>
         <MyButton
           onClick={handleSubmit}
-          disabled={selectedRows.length === 0}
+          disabled={selectedRows.length === 0 || edit}
           prefixIcon={() => <CheckIcon />}
         >Submit</MyButton>
         <MyButton
@@ -418,7 +418,8 @@ const Consultation = ({ edit, patient, encounter }) => {
         >
           Show Previous Consultations
         </Checkbox>
-        <div className='bt-right'>
+        <div className={`bt-right ${edit ? "disabled-panel" : ""}`}>
+
           <MyButton
             onClick={handelAddNew}
           >Add Consultation</MyButton>
@@ -454,7 +455,8 @@ const Consultation = ({ edit, patient, encounter }) => {
         setConsultationOrder={setConsultationOrder}
         open={openDetailsMdal}
         setOpen={setOpenDetailsModal}
-        refetchCon={refetchCon} />
+        refetchCon={refetchCon} 
+        editable={edit}/>
     </div>
 
   );

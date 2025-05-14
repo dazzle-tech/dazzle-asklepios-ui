@@ -10,24 +10,25 @@ const CancellationModal = ({
     handleCancle,
     object,
     setObject,
-    fieldLabel,
+    fieldLabel=null,
     title,
     fieldName="",
     statusField="statusLkey",
-    statusKey="3196709905099521"  // TODO update status to be a LOV value
+    statusKey="3196709905099521" ,
+    withReason=true // TODO update status to be a LOV value
 }) => {
     return (
         <MyModal
             open={open}
             setOpen={setOpen}
             title={`Confirm ${title}`}
-            actionButtonLabel="Submit"
+            actionButtonLabel="Confirm"
             actionButtonFunction={handleCancle}
             isDisabledActionBtn={object?.[statusField] === statusKey}
             steps={[
                 {title:title,icon: <FontAwesomeIcon icon={faBan }/>},
             ]}
-            content={(step) => <Form layout="inline" fluid>
+            content={(step) => withReason?<Form layout="inline" fluid>
                 <MyInput
                     width={"400px"}
                     column
@@ -39,9 +40,10 @@ const CancellationModal = ({
                     setRecord={setObject}
                     disabled={object?.statusLkey === statusKey}
                 />
-            </Form>}
+            </Form>:<></>}
             size="450px"
-            bodyheight={300}
+            bodyheight={350}
+            cancelButtonLabel='Close'
         />
     );
 };

@@ -679,6 +679,7 @@ export const newApDiagnosticOrderTests:modelTypes.ApDiagnosticOrderTests = {
 	patientArrivedNoteRad:'',
 	readyAt:0,
 	approvedAt:0,
+	cancellationReason:'',
 } 
 
 export const newApDiagnosticOrderTestsNotes:modelTypes.ApDiagnosticOrderTestsNotes = { 
@@ -2398,6 +2399,20 @@ export const newApPsychologicalExam:modelTypes.ApPsychologicalExam = {
 	deletedAt:undefined,
 	cancellationReason:'',
 	statusLkey:undefined,
+} 
+
+export const newApRelationsMatrix:modelTypes.ApRelationsMatrix = { 
+	key:undefined,
+	firstPatientGender:'',
+	secondPatientGender:'',
+	firstRelationCode:'',
+	secondRelationCode:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
 } 
 
 export const newApResources:modelTypes.ApResources = { 

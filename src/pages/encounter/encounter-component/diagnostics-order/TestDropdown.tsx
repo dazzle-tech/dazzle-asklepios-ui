@@ -5,7 +5,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetDiagnosticsTestListQuery } from '@/services/setupService';
 import './styles.less';
 import MyLabel from '@/components/MyLabel';
-const TestDropdown = ({  handleItemClick, disabled ,flag }) => {
+const TestDropdown = ({  handleItemClick, disabled ,flag,setFlag }) => {
     const [searchKeyword, setSearchKeyword] = useState('');
     const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const { data: testsList } = useGetDiagnosticsTestListQuery(listTestRequest);
@@ -32,6 +32,7 @@ const TestDropdown = ({  handleItemClick, disabled ,flag }) => {
         if (flag) {
             setSearchKeyword('');
             setListRequest({ ...initialListRequest });
+            setFlag(false)
         }
     }, [flag]);
     const handleSearch = value => {

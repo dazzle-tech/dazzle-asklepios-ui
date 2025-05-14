@@ -678,6 +678,7 @@ export interface ApDiagnosticOrderTests {
 	patientArrivedNoteRad:string;
 	readyAt:number;
 	approvedAt:number;
+	cancellationReason:string;
 } 
 
 export interface ApDiagnosticOrderTestsNotes { 
@@ -2397,6 +2398,20 @@ export interface ApPsychologicalExam {
 	deletedAt:number;
 	cancellationReason:string;
 	statusLkey:string;
+} 
+
+export interface ApRelationsMatrix { 
+	key:string;
+	firstPatientGender:string;
+	secondPatientGender:string;
+	firstRelationCode:string;
+	secondRelationCode:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
 } 
 
 export interface ApResources { 

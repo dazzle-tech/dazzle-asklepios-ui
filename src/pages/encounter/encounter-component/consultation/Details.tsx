@@ -13,7 +13,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBroom, faFile } from "@fortawesome/free-solid-svg-icons";
 import { useGetLovValuesByCodeQuery, useGetPractitionersQuery } from "@/services/setupService";
 import { initialListRequest } from "@/types/types";
-const Details = ({ patient, encounter, consultationOrders, setConsultationOrder, open, setOpen, refetchCon, editing }) => {
+const Details = ({ patient, encounter, consultationOrders, setConsultationOrder, open, setOpen, refetchCon, editing ,editable}) => {
     const dispatch = useAppDispatch();
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
 
@@ -76,20 +76,23 @@ const Details = ({ patient, encounter, consultationOrders, setConsultationOrder,
             leftWidth="40%"
             rightWidth="60%"
             actionButtonFunction={handleSave}
+            isDisabledActionBtn={editable}
             footerButtons={<div style={{ display: 'flex', gap: '5px' }}>
                 <MyButton
+                    disabled={editable}
                     onClick={() => setAttachmentsModalOpen(true)}
                     prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
                 >Attachment File</MyButton>
 
 
                 <MyButton
+                    disabled={editable}
                     prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
                     onClick={handleClear}
                 >Clear</MyButton>
             </div>}
             rightTitle='Add Consultation'
-            rightContent={<Form fluid layout="inline">
+            rightContent={<Form fluid layout="inline" className={editable ? "disabled-panel" : ""}>
                 <MyInput
                     column
                     disabled={editing}
