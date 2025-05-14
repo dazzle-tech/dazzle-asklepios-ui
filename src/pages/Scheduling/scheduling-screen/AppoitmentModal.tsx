@@ -3,10 +3,10 @@ import Translate from "@/components/Translate";
 import QuickPatient from "@/pages/patient/facility-patient-list/QuickPatient";
 import { ApAppointment, ApPatient } from "@/types/model-types";
 import { newApAppointment, newApPatient } from "@/types/model-types-constructor";
-import { faBolt } from "@fortawesome/free-solid-svg-icons";
+import { faBan, faBolt, faBroom, faFile, faListCheck, faPlus, faUpload, faUser } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useState } from "react";
-import { Button, ButtonToolbar, DatePicker, Divider, Drawer, Form, IconButton, Input, InputGroup, Modal, Pagination, Panel, SelectPicker, Stack, Table } from "rsuite";
+import { Button, ButtonToolbar, Col, DatePicker, Divider, Drawer, FlexboxGrid, Form, Grid, IconButton, Input, InputGroup, Modal, Pagination, Panel, Placeholder, Row, SelectPicker, Stack, Table } from "rsuite";
 import InfoRoundIcon from '@rsuite/icons/InfoRound';
 import FileUploadIcon from '@rsuite/icons/FileUpload';
 import DocPassIcon from '@rsuite/icons/DocPass';
@@ -24,15 +24,22 @@ import AttachmentModal from "@/components/AttachmentUploadModal/AttachmentUpload
 import { object } from "prop-types";
 import { setPatient } from "@/reducers/patientSlice";
 import { notify } from "@/utils/uiReducerActions";
+import MyCard from "@/components/MyCard";
+import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
+import AdvancedModal from "@/components/AdvancedModal";
+import MyButton from "@/components/MyButton/MyButton";
+import { green } from "@mui/material/colors";
+import "./AppoitmentModal.less";
 
 
 
-const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, appointmentData, showOnly,from }) => {
+
+const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, appointmentData, showOnly, from }) => {
 
 
     useEffect(() => {
-    
-       
+
+
         if (appointmentData) {
             setAppoitment(appointmentData)
             console.log(appointmentData?.patient)
@@ -50,7 +57,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
         }
     }, [showOnly])
     const patientSlice = useAppSelector(state => state.patient);
-  
+
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
 
     const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
@@ -100,7 +107,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
             setSelectedTime(date);
         }
     }, [appointmentData?.appointmentStart]);
-  
+
     useEffect(() => {
         console.log(selectedMonthDay)
         console.log(appointment?.resourceKey)
@@ -160,7 +167,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
         }
     };
     const { Column, HeaderCell, Cell } = Table;
-  
+
 
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -176,7 +183,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     const [saveAppointment, saveAppointmentMutation] = useSaveAppointmentMutation()
 
     useEffect(() => {
-        console.log("patientslice",patientSlice)
+        console.log("patientslice", patientSlice)
         console.log(patientSlice.patient)
 
         if (patientSlice?.patient) {
@@ -197,6 +204,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     const { data: reminderTypeLovQueryResponse } = useGetLovValuesByCodeQuery('REMINDER_TYP');
     const { data: durationLovQueryResponse } = useGetLovValuesByCodeQuery('APNTMNT_DURATION');
     const { data: weekDaysLovQueryResponse } = useGetLovValuesByCodeQuery('DAYS_OF_WEEK');
+    const [isSideSearchOpen, setIsSideSearchOpen] = useState(false);
 
     // const { data: cityLovQueryResponse } = useGetLovValuesByCodeAndParentQuery({
     //     code: 'CITY',
@@ -244,6 +252,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     };
 
     const handleClear = () => {
+        setModalKey(prev => prev + 1);
         setLocalPatient(newApPatient)
         setAppoitment(newApAppointment)
         setPatientAge(null)
@@ -252,12 +261,13 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
         setInstructions(null)
         setInstructionsKey(null)
         setInstructionsValue(null)
+        setSelectedCriterion(null)
     }
     useEffect(() => {
         calculateAge(localPatient?.dob)
         console.log(patientSlice.patient)
         console.log(localPatient)
-        if(from==='Encounter'){
+        if (from === 'Encounter') {
             setLocalPatient(patientSlice.patient);
         }
     }, [localPatient])
@@ -272,8 +282,10 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     ];
 
     const search = target => {
+        setIsSideSearchOpen(true);
         setPatientSearchTarget(target);
-        setSearchResultVisible(true);
+        // setSearchResultVisible(true);
+        console.log(selectedCriterion)
 
         if (searchKeyword && searchKeyword.length >= 3 && selectedCriterion) {
             setListRequest({
@@ -281,7 +293,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                 ignore: false,
                 filters: [
                     {
-                        fieldName: fromCamelCaseToDBName(selectedCriterion),
+                        fieldName: fromCamelCaseToDBName(selectedCriterion?.value),
                         operator: 'containsIgnoreCase',
                         value: searchKeyword,
                     },
@@ -292,28 +304,60 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
     const conjurePatientSearchBar = target => {
         return (
-            <Panel>
+            <div style={{ width: "100%" }}>
+                <Form layout="inline" fluid>
+                    <div style={{
+                        display: 'flex',
+                        width: '100%',
+                        gap: '12px',
+                        alignItems: 'flex-end'
+                    }}>
 
-                <ButtonToolbar>
-                    <SelectPicker label="Search Criteria" data={searchCriteriaOptions} onChange={(e) => { setSelectedCriterion(e) }} style={{ width: 250 }} />
-
-                    <InputGroup inside style={{ width: '350px', direction: 'ltr' }}>
-                        <Input
-                            onKeyDown={e => {
-                                if (e.key === 'Enter') {
-                                    search(target);
-                                }
-                            }}
-                            placeholder={'Search Patients '}
-                            value={searchKeyword}
-                            onChange={e => setSearchKeyword(e)}
+                        {/* Search Criteria */}
+                        <MyInput
+                            width={150}
+                            height="40px"
+                            required
+                            vr={validationResult}
+                            column
+                            fieldLabel="Search Criteria"
+                            fieldType="select"
+                            fieldName="value"
+                            selectData={searchCriteriaOptions ?? []}
+                            selectDataLabel="label"
+                            selectDataValue="value"
+                            record={selectedCriterion}
+                            setRecord={setSelectedCriterion}
                         />
-                        <InputGroup.Button onClick={() => search(target)} >
-                            <SearchIcon />
-                        </InputGroup.Button>
-                    </InputGroup>
-                </ButtonToolbar>
-            </Panel>
+
+                        {/* Search Patients */}
+                        <div style={{ flex: 1 }} className="input-wrapper" >
+                            <Form.Group controlId="search">
+                                <Form.ControlLabel>Search Patients</Form.ControlLabel>
+                                <InputGroup inside style={{ height: "40px", width: '100%', direction: 'ltr' }}>
+                                    <Input
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') {
+                                                search(target);
+                                            }
+                                        }}
+                                        placeholder="Search Patients"
+                                        value={searchKeyword}
+                                        onChange={e => setSearchKeyword(e)}
+                                    />
+                                    <InputGroup.Button
+                                        style={{ marginTop: "1px" }}
+                                        disabled={!selectedCriterion}
+                                        onClick={() => search(target)}>
+                                        <SearchIcon />
+                                    </InputGroup.Button>
+                                </InputGroup>
+                            </Form.Group>
+                        </div>
+
+                    </div>
+                </Form>
+            </div>
 
         );
     };
@@ -354,7 +398,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     useEffect(() => {
         if (appointmentData) {
             setAppoitment({ ...appointment, patientKey: localPatient?.key })
-    
+
         }
 
     }, [localPatient])
@@ -431,23 +475,23 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                     ? appointment.appointmentStatus
                     : "New-Appointment",
             })
-            .unwrap()
-            .then(() => {
-                closeModal();
-                handleClear();
-                onSave();
-            })
-            .catch((e) => {
-                if (e.status === 422) {
-                    console.log("Validation error: Unprocessable Entity", e);
-                    dispatch(notify({ msg: 'The patient already has an appointment on this day.', sev: 'warn' }));
+                .unwrap()
+                .then(() => {
+                    closeModal();
+                    handleClear();
+                    onSave();
+                })
+                .catch((e) => {
+                    if (e.status === 422) {
+                        console.log("Validation error: Unprocessable Entity", e);
+                        // dispatch(notify({ msg: 'The patient already has an appointment on this day.', sev: 'warn' }));
 
-                } else {
-                    console.log("An unexpected error occurred", e);
-                    dispatch(notify({ msg: '"An unexpected error occurred', sev: 'warn' }));
+                    } else {
+                        console.log("An unexpected error occurred", e);
+                        dispatch(notify({ msg: '"An unexpected error occurred', sev: 'warn' }));
 
-                }
-            });
+                    }
+                });
         } else {
             dispatch(notify({ msg: 'Please make sure to fill in the required fields.', sev: 'warn' }));
 
@@ -495,9 +539,9 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                 periods: periods,
             }))
         );
-        console.log(availabilityPickerData??[])
+        console.log(availabilityPickerData ?? [])
 
-        setAvailabilDays(availabilityPickerData??[]);
+        setAvailabilDays(availabilityPickerData ?? []);
     };
 
 
@@ -592,7 +636,6 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
     const isMinuteAvailable = (hour, minute) => {
         const selectedDayName = selectedDay.split('-')[1];
-
         if (!selectedDayName || !availabilDays.some(day => day.label.includes(selectedDayName))) {
             return true;
         }
@@ -601,19 +644,15 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
         let isAvailable = true;
 
         periods.forEach((period) => {
-            const startTime = period.startTime; // وقت بداية الفترة بالثواني
+            const startTime = period.startTime;
             const endTime = period.endTi
             const periodStartHour = Math.floor(startTime / 3600)
             const periodStartMinute = Math.floor((startTime % 3600) / 60);
             const periodEndHour = Math.floor(endTime / 3600);
             const periodEndMinute = Math.floor((endTime % 3600) / 60);
-
-            // تحويل الساعة والدقيقة المختارة إلى ثواني
             const selectedTimeInSeconds = hour * 3600 + minute * 60;
-
-            // التحقق إذا كانت الدقيقة تقع ضمن فترة زمنية محددة
             if (selectedTimeInSeconds >= startTime && selectedTimeInSeconds < endTime) {
-                isAvailable = false; // إذا كانت ضمن فترة زمنية، أغلق الدقيقة
+                isAvailable = false;
             }
         });
 
@@ -661,616 +700,799 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
         const today = new Date();
         const currentDay = today.getDate();
 
-        // تصفية الأيام المتاحة لاستبعاد الأيام التي مضت
         const futureDates = availableDatesInMonth?.filter(date => date >= currentDay);
         setFilteredDates(futureDates);
     }, [availableDatesInMonth]);
 
+
+    useEffect(() => {
+        console.log(patientListResponse?.object)
+    }, [patientListResponse])
+
+
+    const [modalKey, setModalKey] = useState(0);
+
+
+
     return (
-
         <div>
+            <AdvancedModal
+                key={modalKey}
+                isLeftClosed={!isSideSearchOpen}
+                defaultClose={true}
+                size="1700px"
+                height={850}
+                open={isOpen}
+                setOpen={() => { onClose(), handleClear() }}
+                actionButtonFunction={
+                    handleSaveAppointment
+                }
+                footerButtons={<div style={{ display: 'flex', gap: '5px' }}>
+                    <MyButton
+                        appearance="ghost"
+                        prefixIcon={() => <FontAwesomeIcon icon={faBan} />}
+                        onClick={handleClear}
+                    >Clear</MyButton>
+                </div>}
+                rightTitle='Add Consultation'
+                rightContent={
+                    <div className="container"  >
+                        <div className="content-wrapper">
+                            <div className="left-input">
+                                {from === 'Schedule' &&
+                                    <Panel>
+                                        <div className="show-grid">
+                                            <div className="flex-container" >
+                                                <div style={{ flex: 5, padding: 2 }}>
+                                                    {conjurePatientSearchBar('primary')}
+                                                </div>
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <div style={{ flexShrink: 0, marginTop: "22px" }}>
+                                                        <Button
+                                                            appearance="ghost"
+                                                            className="quick-patient-button"
+                                                            onClick={() => setQuickPatientModalOpen(true)}
+                                                        >
+                                                            <FontAwesomeIcon
+                                                                icon={faBolt}
+                                                                className="quick-patient-icon"
+                                                            />
+                                                            <span>Quick Patient</span>
+                                                        </Button>
 
+                                                        <QuickPatient
+                                                            open={quickPatientModalOpen}
+                                                            setOpen={() => setQuickPatientModalOpen(false)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Panel>
+                                }
+                                <Panel
 
-            <Modal key={reRenderModal} size={1600} open={
-                isOpen
-            } onClose={closeModal}>
-                <Modal.Header>
-                    <Modal.Title>Add Appointment</Modal.Title>
-                </Modal.Header>
+                                    header={
+                                        <p style={{ fontSize: '12px', color: '#A1A9B8', fontWeight: 600 }}>
+                                            <Translate>Patient Information</Translate>
+                                        </p>}>
+                                    <Form
+                                        layout="inline" fluid>
+                                        <div className="show-grid">
+                                            <div className="flex-container"  >
 
-                <Modal.Body>
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <MyInput
+                                                        height={35}
+                                                        width={"100%"}
+                                                        vr={validationResult}
+                                                        column
+                                                        fieldLabel="MRN"
+                                                        fieldName="patientMrn"
+                                                        record={localPatient}
+                                                        setRecord={setLocalPatient}
+                                                        disabled
+                                                    />
+                                                </div>
 
-                { from==='Schedule'&&<Panel bordered>
-                        <ButtonToolbar>
-                            {conjurePatientSearchBar('primary')}
-                            <Divider vertical />
+                                                <div style={{ flex: 6, display: "flex", gap: "10px", padding: 2 }}>
+                                                    <div className="input-wrapper" style={{ flex: 2 }}>
+                                                        <MyInput
+                                                            height={35}
+                                                            width={"100%"}
+                                                            vr={validationResult}
+                                                            column
+                                                            fieldName="fullName"
+                                                            record={localPatient}
+                                                            setRecord={setLocalPatient}
+                                                            disabled
+                                                        />
+                                                    </div>
+                                                    <div className="input-wrapper" style={{ flex: 1 }}>
+                                                        <MyInput
+                                                            height={35}
+                                                            required
+                                                            width={"100%"}
+                                                            vr={validationResult}
+                                                            column
+                                                            fieldName="documentNo"
+                                                            record={localPatient}
+                                                            setRecord={setLocalPatient}
+                                                            disabled
+                                                        />
+                                                    </div>
+                                                    <div className="input-wrapper" style={{ flex: 1 }}>
+                                                        <MyInput
+                                                            height={35}
+                                                            width={"100%"}
+                                                            vr={validationResult}
+                                                            column
+                                                            fieldLabel="Document Type"
+                                                            fieldType="select"
+                                                            fieldName="documentTypeLkey"
+                                                            selectData={docTypeLovQueryResponse?.object ?? []}
+                                                            selectDataLabel="lovDisplayVale"
+                                                            selectDataValue="key"
+                                                            record={localPatient}
+                                                            setRecord={setLocalPatient}
+                                                            disabled
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Form>
+                                    <Form layout="inline" fluid>
+                                        <div className="show-grid">
+                                            <div className="flex-container">
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <MyInput
+                                                        width={"100%"}
+                                                        height={35}
+                                                        fieldLabel="Patient Age"
+                                                        vr={validationResult}
+                                                        column
+                                                        fieldName="patientAge"
+                                                        record={patientAge}
+                                                        setRecord={setPatientAge}
+                                                        disabled
+                                                    />
+                                                </div>
+                                                <div className="input-wrapper" style={{ flex: 3 }}>
+                                                    <MyInput
+                                                        // vr={validationResult}
+                                                        width={"100%"}
+                                                        height={35}
+                                                        column
+                                                        fieldType="date"
+                                                        fieldLabel="Birth date"
+                                                        fieldName="dob"
+                                                        record={localPatient}
+                                                        setRecord={setLocalPatient}
+                                                        disabled
+                                                    />
+                                                </div>
+                                                <div className="input-wrapper" style={{ flex: 3 }}>
+                                                    <MyInput
+                                                        width={"100%"}
+                                                        height={35}
+                                                        required
+                                                        vr={validationResult}
+                                                        column
+                                                        fieldLabel="Sex At birth"
+                                                        fieldType="select"
+                                                        fieldName="genderLkey"
+                                                        selectData={genderLovQueryResponse?.object ?? []}
+                                                        selectDataLabel="lovDisplayVale"
+                                                        selectDataValue="key"
+                                                        record={localPatient}
+                                                        setRecord={setLocalPatient}
+                                                        disabled
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Form>
+                                    <Form layout="inline" fluid>
+                                        <div className="show-grid">
+                                            <div className="flex-container">
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <MyInput
+                                                        width={"100%"}
+                                                        height={35}
+                                                        vr={validationResult}
+                                                        column
+                                                        fieldName="mobileNumber"
+                                                        record={localPatient}
+                                                        setRecord={setLocalPatient}
+                                                        disabled
+                                                    />
+                                                </div>
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <MyInput
+                                                        height={35}
+                                                        width={"100%"}
+                                                        vr={validationResult}
+                                                        column
+                                                        fieldName="email"
+                                                        record={localPatient}
+                                                        setRecord={setLocalPatient}
+                                                        disabled
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Form>
+                                </Panel>
+                                <Panel
+                                    header={
+                                        <p style={{ fontSize: '12px', color: '#A1A9B8', fontWeight: 600 }}>
+                                            <Translate>Visit Details</Translate>
+                                        </p>
+                                    } >
+                                    <Form layout="inline" fluid>
+                                        <div className="show-grid">
+                                            <div className="flex-container">
+                                                <div className="input-wrapper" style={{ flex: 2 }}>
+                                                    <MyInput
+                                                        height={35}
+                                                        disabled
+                                                        width={"100%"}
+                                                        vr={validationResult}
+                                                        column
+                                                        fieldLabel="City"
+                                                        fieldType="select"
+                                                        fieldName="durationLkey"
+                                                        selectData={[]}
+                                                        selectDataLabel="lovDisplayVale"
+                                                        selectDataValue="key"
+                                                    />
+                                                </div>
+                                                <div className="input-wrapper" style={{ flex: 4 }}>
+                                                    <MyInput
+                                                        height={35}
+                                                        width={"100%"}
 
+                                                        column
+                                                        fieldLabel="Facility"
+                                                        selectData={facilityListResponse?.object ?? []}
+                                                        fieldType="select"
+                                                        selectDataLabel="facilityName"
+                                                        selectDataValue="key"
+                                                        fieldName="facilityKey"
+                                                        disabled={showOnly}
+                                                        record={appointment}
+                                                        setRecord={setAppoitment}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="show-grid">
+                                            <div className="flex-container">
+                                                <div className="input-wrapper" style={{ flex: 2 }}>
+                                                    <MyInput
+                                                        height={35}
+                                                        disabled={showOnly}
+                                                        required
+                                                        width={"100%"}
+                                                        vr={validationResult}
+                                                        column
+                                                        fieldLabel="Resource Type"
+                                                        fieldType="select"
+                                                        fieldName="resourceTypeLkey"
+                                                        selectData={resourceTypeQueryResponse?.object ?? []}
+                                                        selectDataLabel="lovDisplayVale"
+                                                        selectDataValue="key"
+                                                        record={appointment}
+                                                        setRecord={setAppoitment}
+                                                    />
+                                                </div>
+                                                <div className="input-wrapper" style={{ flex: 4 }}>
+                                                    <MyInput
+                                                        height={35}
+                                                        disabled={showOnly}
+                                                        width={"100%"}
+                                                        column
+                                                        fieldLabel="Resources"
+                                                        selectData={filteredResourcesList.length > 0 ? filteredResourcesList : !appointment?.resourceTypeLkey ? resourcesListResponse?.object : []}
+                                                        fieldType="select"
+                                                        selectDataLabel="resourceName"
+                                                        selectDataValue="key"
+                                                        fieldName="resourceKey"
+                                                        record={appointment}
+                                                        setRecord={setAppoitment}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="show-grid">
+                                            <div className="flex-container">
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <MyInput
+                                                        height={35}
+                                                        required
+                                                        width={"100%"}
+                                                        vr={validationResult}
+                                                        column
+                                                        fieldLabel="Visit Type"
+                                                        fieldType="select"
+                                                        fieldName="visitTypeLkey"
+                                                        selectData={visitTypeQueryResponse?.object ?? []}
+                                                        selectDataLabel="lovDisplayVale"
+                                                        selectDataValue="key"
+                                                        record={appointment}
+                                                        setRecord={setAppoitment}
+                                                        disabled={showOnly}
+                                                    />
+                                                </div>
+                                                <div className="input-wrapper" style={{ flex: 2 }}>
+                                                    <div style={{ display: "flex", gap: "10px" }}>
+                                                        <div style={{ flex: 1 }}>
+                                                            <MyInput
+                                                                height={35}
+                                                                required
+                                                                width={"100%"}
+                                                                vr={validationResult}
+                                                                column
+                                                                fieldLabel="Duration"
+                                                                fieldType="select"
+                                                                fieldName="durationLkey"
+                                                                selectData={durationLovQueryResponse?.object ?? []}
+                                                                selectDataLabel="lovDisplayVale"
+                                                                selectDataValue="key"
+                                                                record={appointment}
+                                                                setRecord={setAppoitment}
+                                                                disabled={showOnly}
+                                                            />
+                                                        </div>
+                                                        <div style={{ flex: 1, display: "flex", alignItems: "end" }}>
+                                                            <Button
+                                                                disabled={showOnly}
 
-                            <div>
-                                <Button
-                                    appearance="ghost"
-                                    style={{ border: '1px solid rgb(130, 95, 196)', color: 'rgb(130, 95, 196)' }}
-                                    // disabled={editing || localPatient.key !== undefined}
-                                    onClick={() => setQuickPatientModalOpen(true)}
-                                >
-                                    <FontAwesomeIcon icon={faBolt} style={{ marginRight: '8px' }} />
-                                    <span>Quick Patient</span>
-                                </Button>
+                                                                onClick={() => setAttachmentsModalOpen(true)}
+                                                                appearance="primary"
+                                                                className="icon-button-primary"
+                                                                style={{ width: "100%" }}
+                                                            >
+                                                                <FontAwesomeIcon className="icon-button-primary-icon" icon={faListCheck} />
+                                                                <Translate>Add New Appointments</Translate>
+                                                            </Button>
+                                                        </div>
 
-                                <QuickPatient
-                                    open={quickPatientModalOpen}
-                                    setOpen={() => setQuickPatientModalOpen(false)}
-                                />
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+                                    </Form>
+                                </Panel>
                             </div>
+                            <div className="right-output">
+                                <Panel
+
+                                    header={
+                                        <p style={{ fontSize: '12px', color: '#A1A9B8', fontWeight: 600 }}>
+                                            <Translate>Schedule Appointment</Translate>
+                                        </p>
+                                    } >
+                                    <Form layout="inline" fluid>
+                                        <div className="show-grid">
+                                            <div className="flex-container">
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <div>
+                                                        <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
+                                                            Year
+                                                        </label>
+                                                        <SelectPicker
+                                                            disabled={showOnly}
+                                                            style={{ width: "100%" }}
+                                                            data={Array.from({ length: 5 }, (_, index) => {
+                                                                const year = new Date().getFullYear() + index;
+                                                                return { label: year.toString(), value: year };
+                                                            })}
+                                                            defaultValue={new Date().getFullYear()}
+                                                            onChange={(selectedYear) => {
+                                                                setSelectedYear(selectedYear);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <div>
+                                                        <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
+                                                            Month
+                                                        </label>
+                                                        <SelectPicker
+                                                            disabled={showOnly}
+                                                            style={{ width: "100%" }}
+                                                            data={[
+                                                                { label: "January", value: 0 },
+                                                                { label: "February", value: 1 },
+                                                                { label: "March", value: 2 },
+                                                                { label: "April", value: 3 },
+                                                                { label: "May", value: 4 },
+                                                                { label: "June", value: 5 },
+                                                                { label: "July", value: 6 },
+                                                                { label: "August", value: 7 },
+                                                                { label: "September", value: 8 },
+                                                                { label: "October", value: 9 },
+                                                                { label: "November", value: 10 },
+                                                                { label: "December", value: 11 },
+                                                            ]}
+                                                            defaultValue={new Date().getMonth()}
+                                                            onChange={(selectedMonth) => {
+                                                                setSelectedMonth(selectedMonth);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <div>
+                                                        <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
+                                                            Week Day
+                                                        </label>
+                                                        <SelectPicker
+                                                            disabled={showOnly}
+                                                            style={{ width: "100%" }}
+                                                            data={availabilDays ? availabilDays.map(item => ({ label: item.label, value: item.value })) : []}
+                                                            onChange={handleSelectDayOfWeek}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="show-grid">
+                                            <div className="flex-container">
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <div>
+                                                        <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
+                                                            Month Day
+                                                        </label>
+                                                        <SelectPicker
+                                                            disabled={!(availableDatesInMonth?.length > 0) || showOnly}
+                                                            style={{ width: "100%" }}
+                                                            data={filteredDates?.map(date => ({
+                                                                label: `Day ${date}`,
+                                                                value: date,
+                                                            }))}
+                                                            placeholder="Select a day"
+                                                            onChange={setSelectedMonthDay}
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <div>
+                                                        <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
+                                                            Time
+                                                        </label>
+                                                        <DatePicker
+                                                            style={{ width: "100%" }}
+                                                            disabled={!selectedMonthDay}
+                                                            format="HH:mm"
+                                                            ranges={[]}
+                                                            shouldDisableHour={(hour) => !isHourAvailable(hour)}
+                                                            shouldDisableMinute={(minute, selectedHour) => !isMinuteAvailable(selectedHour, minute)}
+                                                            onChange={(value) => setSelectedTime(value)}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </Form>
+                                </Panel>
+                                <Panel
+                                    header={
+                                        <p style={{ fontSize: '12px', color: '#A1A9B8', fontWeight: 600 }}>
+                                            <Translate>Additional Information</Translate>
+                                        </p>
+                                    } >
+
+                                    <Form layout="inline" fluid>
+
+                                        <div className="show-grid">
+                                            <div className="flex-container">
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <MyInput
+                                                        disabled={showOnly}
+                                                        required
+                                                        width={"100%"}
+                                                        vr={validationResult}
+                                                        column
+                                                        fieldLabel="Instructions"
+                                                        fieldType="select"
+                                                        fieldName="instructionsLkey"
+                                                        selectData={instractionsTypeQueryResponse?.object ?? []}
+                                                        selectDataLabel="lovDisplayVale"
+                                                        selectDataValue="key"
+                                                        record={instructionKey}
+                                                        setRecord={setInstructionsKey}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div style={{ display: "flex", width: "100%" }}>
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <Input
+                                                        as="textarea"
+                                                        disabled={showOnly}
+                                                        onChange={setInstructions}
+                                                        value={instructions}
+                                                        style={{ width: "100%" }}
+                                                        rows={3}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="show-grid">
+                                            <div className="flex-container">
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <MyInput
+                                                        disabled={showOnly}
+                                                        required
+                                                        width={"100%"}
+                                                        vr={validationResult}
+                                                        column
+                                                        fieldLabel="Refering Physician"
+                                                        fieldType="select"
+                                                        fieldName="referingPhysician"
+                                                        selectData={[]}
+                                                        selectDataLabel="lovDisplayVale"
+                                                        selectDataValue="key"
+                                                        record={appointment}
+                                                        setRecord={setAppoitment}
+                                                    />
+                                                </div>
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+
+                                                    <MyInput
+                                                        disabled={showOnly}
+                                                        width={"100%"}
+                                                        vr={validationResult}
+                                                        column
+                                                        fieldName="externalPhysician"
+                                                        record={appointment}
+                                                        setRecord={setAppoitment}
+                                                    />
+                                                </div>
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <MyInput
+                                                        disabled={showOnly}
+                                                        required
+                                                        width={"100%"}
+                                                        vr={validationResult}
+                                                        column
+                                                        fieldLabel="Procedure Level"
+                                                        fieldType="select"
+                                                        fieldName="procedureLevelLkey"
+                                                        selectData={procedureLevelQueryResponse?.object ?? []}
+                                                        selectDataLabel="lovDisplayVale"
+                                                        selectDataValue="key"
+                                                        record={appointment}
+                                                        setRecord={setAppoitment}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="show-grid">
+                                            <div className="flex-container">
+                                                <div className="input-wrapper" style={{ flex: 9 }}>
+                                                    <MyInput
+                                                        disabled={showOnly}
+                                                        required
+                                                        width={"100%"}
+                                                        vr={validationResult}
+                                                        column
+                                                        fieldLabel="Priority"
+                                                        fieldType="select"
+                                                        fieldName="priority"
+                                                        selectData={priorityQueryResponse?.object ?? []}
+                                                        selectDataLabel="lovDisplayVale"
+                                                        selectDataValue="key"
+                                                        record={appointment}
+                                                        setRecord={setAppoitment}
+                                                    />
+                                                </div>
+                                                <Button
+                                                    onClick={() => setAttachmentsModalOpen(true)}
+                                                    appearance="primary"
+                                                    className="icon-button-primary"
+                                                    disabled={(!localPatient?.key) || showOnly}>
+                                                    <FontAwesomeIcon className="icon-button-primary-icon"
+                                                        icon={faUpload}
+                                                    />
+                                                    <Translate>Attach File</Translate>
+                                                </Button>
+
+                                                <AttachmentModal
+                                                    isOpen={attachmentsModalOpen}
+                                                    setIsOpen={setAttachmentsModalOpen}
+                                                    attachmentSource={localPatient}
+                                                    attatchmentType={'APPOINTMENT_ATTACHMENT'}
+                                                />
+                                            </div>
+                                        </div>
 
 
-
-                        </ButtonToolbar>
-                    </Panel>}
-
-                    <br />
-                    <Panel   //  ===================== > Patient Information < ===================== 
-                        bordered
-                        header={
-                            <h5 className="title">
-                                <Translate>Patient Information</Translate>
-                            </h5>
-                        }
-                    >
-                        <Stack>
-                            <Stack.Item grow={1}>
-
-                                <Form layout="inline" fluid>
-                                    <MyInput
-                                        width={110}
-                                        vr={validationResult}
-                                        column
-                                        fieldLabel="MRN"
-                                        fieldName="patientMrn"
-                                        record={localPatient}
-                                        setRecord={setLocalPatient}
-                                        disabled
-                                    />
-
-                                    <MyInput
-                                        width={250}
-                                        vr={validationResult}
-                                        column
-                                        fieldName="fullName"
-                                        record={localPatient}
-                                        setRecord={setLocalPatient}
-                                        disabled
-                                    />
-
-                                    <MyInput
-                                        required
-                                        width={120}
-                                        vr={validationResult}
-                                        column
-                                        fieldName="documentNo"
-                                        record={localPatient}
-                                        setRecord={setLocalPatient}
-                                        disabled
-                                    />
-
-                                    <MyInput
-                                        width={150}
-
-                                        required
-                                        vr={validationResult}
-                                        column
-                                        fieldLabel="Document Type"
-                                        fieldType="select"
-                                        fieldName="documentTypeLkey"
-                                        selectData={docTypeLovQueryResponse?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
-                                        selectDataValue="key"
-                                        record={localPatient}
-                                        setRecord={setLocalPatient}
-                                        disabled
-                                    />
+                                        <div className="show-grid">
+                                            <div className="flex-container">
+                                                <div className="input-wrapper"  >
+                                                    <MyInput
+                                                        disabled={showOnly}
+                                                        width={"100%"}
+                                                        column
+                                                        fieldLabel="Consent Form"
+                                                        fieldType="checkbox"
+                                                        fieldName="consentForm"
+                                                        record={appointment}
+                                                        setRecord={setAppoitment}
+                                                    />
+                                                </div>
+                                                <div className="input-wrapper"  >
+                                                    <MyInput
+                                                        disabled={showOnly}
+                                                        width={165}
+                                                        column
+                                                        fieldLabel="Reminder"
+                                                        fieldType="checkbox"
+                                                        fieldName="isReminder"
+                                                        record={appointment}
+                                                        setRecord={setAppoitment}
+                                                    />
+                                                </div>
+                                                <div className="input-wrapper"  >
+                                                    <MyInput
+                                                        disabled={!appointment?.isReminder}
+                                                        required
+                                                        width={170}
+                                                        vr={validationResult}
+                                                        column
+                                                        fieldLabel="Reminder Type"
+                                                        fieldType="select"
+                                                        fieldName="reminderLkey"
+                                                        selectData={reminderTypeLovQueryResponse?.object ?? []}
+                                                        selectDataLabel="lovDisplayVale"
+                                                        selectDataValue="key"
+                                                        record={appointment}
+                                                        setRecord={setAppoitment}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
 
 
-                                    <MyInput
-                                        width={120}
-                                        vr={validationResult}
-                                        column
-                                        fieldName="patientAge"
-                                        record={patientAge}
-                                        setRecord={setPatientAge}
-                                        disabled
-                                    />
-                                    <MyInput
-                                        width={160}
-                                        //   vr={validationResult}
-                                        column
-                                        fieldType="date"
-                                        fieldLabel="DOB"
-                                        fieldName="dob"
-                                        record={localPatient}
-                                        setRecord={setLocalPatient}
-                                        disabled
-                                    />
-
-                                    <MyInput
-                                        required
-                                        width={80}
-                                        vr={validationResult}
-                                        column
-                                        fieldLabel="Sex At birth"
-                                        fieldType="select"
-                                        fieldName="genderLkey"
-                                        selectData={
-                                            genderLovQueryResponse?.object ??
-                                            []}
-                                        selectDataLabel="lovDisplayVale"
-                                        selectDataValue="key"
-                                        record={localPatient}
-                                        setRecord={setLocalPatient}
-                                        disabled
-                                    />
-
-                                    <MyInput
-                                        width={165}
-                                        vr={validationResult}
-                                        column
-                                        fieldName="mobileNumber"
-                                        record={localPatient}
-                                        setRecord={setLocalPatient}
-                                        disabled
-                                    />
-
-                                    <MyInput
-                                        width={165}
-                                        vr={validationResult}
-                                        column
-                                        fieldName="email"
-                                        record={localPatient}
-                                        setRecord={setLocalPatient}
-                                        disabled
-                                    />
-
-
-
-                                </Form>
-                            </Stack.Item>
-                        </Stack>
-                    </Panel>
-
-                    <br />
-
-                    {/* ===================== > Appoitment Details < =====================  */}
-
-                    <Form
-                        layout="inline" style={{ display: "flex", alignItems: "center" }} fluid>
-
-                        <MyInput
-                            disabled
-                            width={150}
-                            vr={validationResult}
-                            column
-                            fieldLabel="City"
-                            fieldType="select"
-                            fieldName="durationLkey"
-                            selectData={[]}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                        // record={appointment}
-                        // setRecord={setAppoitment}
-                        />
-
-                        <MyInput
-
-                            width={300}
-                            column
-                            fieldLabel="Facility"
-                            selectData={facilityListResponse?.object ?? []}
-                            fieldType="select"
-                            selectDataLabel="facilityName"
-                            selectDataValue="key"
-                            fieldName="facilityKey"
-                            disabled={showOnly}
-                            record={appointment}
-                            setRecord={setAppoitment}
-                        />
-
-                        <MyInput
-                            disabled={showOnly}
-                            required
-                            width={165}
-                            vr={validationResult}
-                            column
-                            fieldLabel="Resource Type"
-                            fieldType="select"
-                            fieldName="resourceTypeLkey"
-                            selectData={resourceTypeQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            record={appointment}
-                            setRecord={setAppoitment}
-                        />
-
-
-                        <MyInput
-                            disabled={showOnly}
-                            width={300}
-                            column
-                            fieldLabel="Resources"
-                            selectData={filteredResourcesList.length > 0 ? filteredResourcesList : !appointment?.resourceTypeLkey ? resourcesListResponse?.object : []}
-                            fieldType="select"
-                            selectDataLabel="resourceName"
-                            selectDataValue="key"
-                            fieldName="resourceKey"
-                            record={appointment}
-                            setRecord={setAppoitment}
-                        />
-
-                        <MyInput
-                            required
-                            width={165}
-                            vr={validationResult}
-                            column
-                            fieldLabel="Visit Type"
-                            fieldType="select"
-                            fieldName="visitTypeLkey"
-                            selectData={visitTypeQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            record={appointment}
-                            setRecord={setAppoitment}
-                            disabled={showOnly}
-                        />
-                        <MyInput
-                            required
-                            width={165}
-                            vr={validationResult}
-                            column
-                            fieldLabel="Duration"
-                            fieldType="select"
-                            fieldName="durationLkey"
-                            selectData={durationLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            record={appointment}
-                            setRecord={setAppoitment}
-                            disabled={showOnly}
-                        />
-
-
-
-                        <div style={{ display: "flex", width: "100%", justifyContent: "flex-end", marginTop: "30px" }}>
-                            <IconButton
-                                disabled={(!localPatient?.key) || showOnly}
-                                color="cyan"
-                                style={{ marginRight: "80px", width: 170 }}
-                                appearance="primary"
-                                icon={<DocPassIcon />}
-                            >
-                                Add To Waiting List
-                            </IconButton>
+                                        <div className="flex-container">
+                                            <div className="input-wrapper" style={{ flex: 1 }}>
+                                                <MyInput
+                                                    disabled={showOnly}
+                                                    vr={validationResult}
+                                                    fieldType='textarea'
+                                                    column
+                                                    fieldName="Notes"
+                                                    width={"100%"}
+                                                    height={81}
+                                                    record={appointment}
+                                                    setRecord={setAppoitment}
+                                                />
+                                            </div>
+                                        </div>
+                                    </Form>
+                                </Panel>
+                            </div>
                         </div>
-                    </Form>
-                    <br />
-                    <br />
 
-                    <Panel
-                        bordered
-                        header={
-                            <h5 className="title">
-                                <Translate>Schedule Appointment</Translate>
-                            </h5>
-                        }>
-                        <Form layout="inline" style={{ display: "flex" }} fluid>
-                            <div style={{ display: "flex", justifyItems: "left", gap: 10 }}>
-                                {/* Select Year */}
-                                <div>
-                                    <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
-                                        Month
-                                    </label>
-                                    <SelectPicker
-                                        disabled={showOnly}
-                                        style={{ width: 120 }}
-                                        data={Array.from({ length: 5 }, (_, index) => {
-                                            const year = new Date().getFullYear() + index; // السنوات الحالية + الأربع سنوات القادمة
-                                            return { label: year.toString(), value: year };
-                                        })}
-                                        defaultValue={new Date().getFullYear()} // تعيين السنة الحالية كقيمة افتراضية
-                                        onChange={(selectedYear) => {
-                                            setSelectedYear(selectedYear);
-                                            updateAvailableDates(selectedYear, selectedMonth); // تحديث الأيام المتاحة
+                    </div>}
+
+                leftContent={
+                    <div style={{ marginBottom: "20px" }}>
+                        <div className="show-grid" >
+                            <div className="flex-container" style={{ justifyContent: "space-between" }}   >
+                                <p className="left-side-title" >Patients List</p>
+                                <IconButton
+                                    onClick={() => setIsSideSearchOpen(false)}
+                                    circle
+                                    icon={<FontAwesomeIcon icon={faUser} />}
+                                    appearance="ghost" />
+                            </div>
+                        </div>
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '16px',
+                                padding: '16px',
+                                maxHeight: '700px',
+                                overflowY: 'auto',
+                                backgroundColor: '#F5F7FB',
+                                borderRadius: '12px',
+                            }}
+                        >
+                            {isFetchingPatients ? (
+                                Array.from({ length: 4 }).map((_, i) => (
+                                    <div
+                                        key={i}
+                                        style={{
+                                            height: 160,
+                                            backgroundColor: '#e0e0e0',
+                                            borderRadius: '12px',
+                                            padding: '16px'
                                         }}
-                                    />
-                                </div>
-
-                                {/* Select Month */}
-                                <div>
-                                    <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
-                                        Month
-                                    </label>
-                                    <SelectPicker
-                                        disabled={showOnly}
-
-                                        style={{ width: 120 }}
-                                        data={[
-                                            { label: "January", value: 0 },
-                                            { label: "February", value: 1 },
-                                            { label: "March", value: 2 },
-                                            { label: "April", value: 3 },
-                                            { label: "May", value: 4 },
-                                            { label: "June", value: 5 },
-                                            { label: "July", value: 6 },
-                                            { label: "August", value: 7 },
-                                            { label: "September", value: 8 },
-                                            { label: "October", value: 9 },
-                                            { label: "November", value: 10 },
-                                            { label: "December", value: 11 },
-                                        ]}
-                                        defaultValue={new Date().getMonth()} // Default to current month (0-based index)
-                                        onChange={(selectedMonth) => {
-                                            setSelectedMonth(selectedMonth);
-                                            updateAvailableDates(selectedYear, selectedMonth); // Update available dates
-                                        }}
-                                    />
-                                </div>
-                                {/* Seelct Week Day*/}
-                                <div>
-                                    <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
-                                        Week Day
-                                    </label>
-                                    <SelectPicker
-                                        disabled={showOnly}
-                                        style={{ width: 250 }}
-                                        data={availabilDays ? availabilDays.map(item => ({ label: item.label, value: item.value })) : []}
-                                        onChange={handleSelectDayOfWeek}
-                                    />
-                                </div>
-                                {/* Select Month Day */}
-                                <div>
-                                    <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
-                                        Month Day
-                                    </label>
-                                    {/* <SelectPicker
-                                        style={{ width: 120 }}
-                                        disabled={!(availableDatesInMonth && availableDatesInMonth.length > 0) || showOnly}
-                                        data={
-                                            availableDatesInMonth
-                                                ? availableDatesInMonth.map((date) => ({
-                                                    label: `Day ${date}`,
-                                                    value: date,
-                                                }))
-                                                : []
-                                        }
-                                        defaultValue={availableDatesInMonth && availableDatesInMonth.length > 0 ? availableDatesInMonth[0] : null} // تعيين أول يوم كقيمة افتراضية
-                                        placeholder="Select a day"
-                                        onChange={(selectedMonthDay) => setSelectedMonthDay(selectedMonthDay)}
-                                    /> */}
-
-                                    <SelectPicker
-                                       disabled={!(availableDatesInMonth && availableDatesInMonth.length > 0) || showOnly}
-                                        style={{ width: 120 }}
-                                         data={filteredDates?.map(date => ({
-                                            label: `Day ${date}`,
-                                            value: date,
-                                        }))}
-                                         placeholder="Select a day"
-                                        onChange={setSelectedMonthDay}
-                                    />
-
-                                </div>
-                                {/* Select Time */}
-                                <div>
-                                    <label style={{ fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>
-                                        Time
-                                    </label>
-                                    <div>
-                                        <DatePicker
-                                            disabled={!selectedMonthDay}
-                                            format="HH:mm" // Show hours and minutes only
-                                            ranges={[]}
-                                            shouldDisableHour={(hour) => !isHourAvailable(hour)} // Disable unavailable hours
-                                            shouldDisableMinute={(minute, selectedHour) => !isMinuteAvailable(selectedHour, minute)} // Disable unavailable minutes
-                                            onChange={(value) => setSelectedTime(value)}
+                                    >
+                                        <Placeholder.Paragraph rows={3} active />
+                                    </div>
+                                ))
+                            ) : patientListResponse?.object?.length > 0 ? (
+                                patientListResponse.object.map((patient, index) => (
+                                    <div key={index} style={{ flexShrink: 0 }}>
+                                        <MyCard
+                                            height={160}
+                                            showArrow={true}
+                                            key={patient.key}
+                                            variant="profile"
+                                            leftArrow={false}
+                                            avatar={
+                                                patient?.attachmentProfilePicture?.fileContent
+                                                    ? `data:${patient?.attachmentProfilePicture?.contentType};base64,${patient?.attachmentProfilePicture?.fileContent}`
+                                                    : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
+                                            }
+                                            title={patient.fullName}
+                                            contant={
+                                                <>
+                                                    {patient.createdAt
+                                                        ? new Date(patient?.createdAt).toLocaleString('en-GB')
+                                                        : ''}
+                                                </>
+                                            }
+                                            showMore={true}
+                                            arrowClick={() => {
+                                                handleSelectPatient(patient);
+                                                setSearchKeyword('');
+                                                setIsSideSearchOpen(false);
+                                                setSelectedCriterion(null)
+                                            }}
+                                            footerContant={`# ${patient.patientMrn}`}
                                         />
                                     </div>
-                                </div>
-                                <div style={{ marginTop: 30 }}>
-                                    <InfoRoundIcon style={{ marginLeft: "5px", fontSize: "22px", color: "blue" }} />
-
-                                </div>
-                            </div>
-                        </Form>
-                    </Panel>
-
-
-
-                    <Form layout="inline" style={{ display: "flex" }} fluid>
-
-                        <div style={{ display: "flex", flexDirection: 'column' }} >
-                            <MyInput
-                                disabled={showOnly}
-                                required
-                                width={450}
-                                vr={validationResult}
-                                column
-                                fieldLabel="Instructions"
-                                fieldType="select"
-                                fieldName="instructionsLkey"
-                                selectData={instractionsTypeQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                record={instructionKey}
-                                setRecord={setInstructionsKey}
-                            />
-                            <Input disabled={showOnly} as="textarea" onChange={(e) => setInstructions(e)} value={instructions} style={{ width: 450, marginTop: 20 }} rows={3} />
-
+                                ))
+                            ) : (
+                                // No Data case 
+                                <MyCard
+                                    height={160}
+                                    showArrow={false}
+                                    avatar={
+                                        <div
+                                            style={{
+                                                width: 48,
+                                                height: 48,
+                                                borderRadius: '50%',
+                                                backgroundColor: '#D3D3D3',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                fontSize: 24,
+                                                color: '#555',
+                                                fontWeight: 'bold'
+                                            }}
+                                        >
+                                            !
+                                        </div>
+                                    }
+                                    title="No patient found"
+                                    contant={`No patient found matching the entered ${searchCriteriaOptions.find(opt => opt.value === selectedCriterion?.value)?.label || 'criteria'}.`}
+                                />
+                            )}
                         </div>
+                    </div>
+                }
+            >
 
-
-                        <MyInput
-                            disabled={showOnly}
-                            vr={validationResult}
-                            fieldType='textarea'
-                            column
-                            fieldName="Notes"
-                            width={380}
-                            height={125}
-                            record={appointment}
-                            setRecord={setAppoitment}
-                        />
-
-                        <div style={{ display: "flex", flexDirection: 'column' }} >
-                            <MyInput
-                                disabled={showOnly}
-                                required
-                                width={165}
-                                vr={validationResult}
-                                column
-                                fieldLabel="Priority"
-                                fieldType="select"
-                                fieldName="priority"
-                                selectData={priorityQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                record={appointment}
-                                setRecord={setAppoitment}
-                            />
-                            <br /><br /><br />
-                            <div >
-                                <IconButton
-
-                                    disabled={(!localPatient?.key) || showOnly}
-                                    onClick={() => setAttachmentsModalOpen(true)}
-                                    style={{ marginRight: "70px", width: 165, height: "30px" }} color="cyan"
-                                    appearance="primary" icon={<FileUploadIcon />}
-                                >
-                                    Attach File
-                                </IconButton>
-
-                                {/* ===================AttachmentModal=================== */}
-                                <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} attachmentSource={localPatient} attatchmentType={'APPOINTMENT_ATTACHMENT'} />
-
-                            </div>
-                        </div>
-
-
-                        <MyInput
-                            disabled={showOnly}
-                            width={165}
-                            column
-                            fieldLabel="consent Form"
-                            fieldType="checkbox"
-                            fieldName="consentForm"
-                            record={appointment}
-                            setRecord={setAppoitment}
-                        />
-
-                        <MyInput
-                            disabled={showOnly}
-                            width={165}
-                            column
-                            fieldLabel="Reminder"
-                            fieldType="checkbox"
-                            fieldName="isReminder"
-                            record={appointment}
-                            setRecord={setAppoitment}
-                        />
-
-                        <MyInput
-                            disabled={!appointment?.isReminder}
-                            required
-                            width={170}
-                            vr={validationResult}
-                            column
-                            fieldLabel="Reminder Type"
-                            fieldType="select"
-                            fieldName="reminderLkey"
-                            selectData={reminderTypeLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            record={appointment}
-                            setRecord={setAppoitment}
-                        />
-                        {/* <div style={{ display: "flex", width: "20%", justifyContent: "flex-end", marginTop: "30px" }}>
-
-
-                        </div> */}
+            </AdvancedModal>
 
 
 
-                    </Form>
-
-
-                    <Form layout="inline" style={{ display: "flex", alignItems: "center" }} fluid>
-                        <MyInput
-                            disabled={showOnly}
-                            required
-                            width={165}
-                            vr={validationResult}
-                            column
-                            fieldLabel="Refering Physician"
-                            fieldType="select"
-                            fieldName="referingPhysician"
-                            selectData={[]}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            record={appointment}
-                            setRecord={setAppoitment}
-                        />
-
-                        <MyInput
-                            disabled={showOnly}
-                            width={165}
-                            vr={validationResult}
-                            column
-                            fieldName="externalPhysician"
-                            record={appointment}
-                            setRecord={setAppoitment}
-                        />
-                        <MyInput
-                            disabled={showOnly}
-                            required
-                            width={165}
-                            vr={validationResult}
-                            column
-                            fieldLabel="Procedure Level"
-                            fieldType="select"
-                            fieldName="procedureLevelLkey"
-                            selectData={procedureLevelQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            record={appointment}
-                            setRecord={setAppoitment}
-                        />
-                    </Form>
-
-
-                    {/* {selectedEvent ? (
-                    <>
-                        <p><strong>Start:</strong> {moment(selectedEvent.start).format("LLL")}</p>
-                        <p><strong>End:</strong> {moment(selectedEvent.end).format("LLL")}</p>
-                        <p><strong>Description:</strong> {selectedEvent.text}</p>
-                    </>
-                ) : (
-                    selectedSlot && (
-                        <>
-                            <p><strong>Start:</strong> {moment(selectedSlot.start).format("LLL")}</p>
-                            <p><strong>End:</strong> {moment(selectedSlot.end).format("LLL")}</p>
-                        </>
-                    )
-                )} */}
-                </Modal.Body>
-                <Modal.Footer>
-                    <IconButton disabled={showOnly} onClick={() => { console.log(selectedEvent || selectedSlot), console.log(appointment), handleSaveAppointment() }} color="violet" appearance="primary" icon={<CheckIcon />}>
-                        Save
-                    </IconButton>
-                    <IconButton disabled={showOnly} color="orange" onClick={handleClear} appearance="primary" icon={<TrashIcon />}>
-                        Clear
-                    </IconButton>
-                    <IconButton color="blue" onClick={closeModal} appearance="primary" icon={<BlockIcon />}>
-                        Cancel
-                    </IconButton>
-                </Modal.Footer>
-            </Modal>
 
             <Drawer
                 size="lg"

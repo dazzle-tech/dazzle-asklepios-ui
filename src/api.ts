@@ -51,7 +51,7 @@ export const dummyBaseQuery = fetchBaseQuery({
 export const onQueryStarted = async (body, { dispatch, queryFulfilled }) => {
   try {
     const { data } = await queryFulfilled;
-    console.log(data);
+    // console.log(data);
 
     if (data._responseMsg) {
       dispatch(notify(data._responseMsg));

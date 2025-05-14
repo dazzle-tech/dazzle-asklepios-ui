@@ -1,0 +1,151 @@
+ .container {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  flex-wrap: nowrap;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  height: 800px;
+
+
+  .input-wrapper {
+    flex: 1;
+    padding: 2px;
+
+    .rs-form-group {
+      width: 100%;
+
+      .rs-form-control {
+        width: 100%;
+      }
+    }
+  }
+}
+
+.left {
+  background-color: #F5F7FB;
+  transition: all 0.3s ease;
+  overflow: hidden;
+
+}
+
+.left.closed {
+  width: 0;
+  opacity: 0;
+  flex: 0;
+}
+
+.container.left-closed {
+  background-color: transparent;
+}
+
+.left.open {
+  width: 370px;
+  opacity: 1;
+  flex: 0 0 370px;
+  padding: 3px;
+}
+
+.right {
+  flex: 1;
+  border-radius: 12px;
+  // padding: 20px;
+  transition: all 0.3s ease;
+
+
+}
+
+.right.shifted {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.content-wrapper {
+  display: flex;
+  flex-wrap: nowrap;
+  max-width: 100%;
+   width: 1700px;
+}
+
+.left-input,
+.right-output {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.toggle-btn {
+  margin-top: 20px;
+  padding: 10px 15px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+@media (max-width: 1400px) {
+  .content-wrapper {
+    flex-direction: column;
+  }
+
+  .left.open {
+    width: 100%;
+    flex: 0 0 100%;
+
+  }
+}
+
+.flex-container {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+
+}
+
+.right-side-title {
+  font-size: 18px;
+  text-align: left;
+  width: 100%;
+  margin-left: 20px;
+  margin-top: 5px;
+}
+
+.left-side-title {
+  font-size: 18px;
+
+  margin-left: 20px;
+  margin-top: 5px;
+}
+
+.quick-patient-icon {
+  color: #415BE7;
+  margin-right: 10px;
+  font-size: 16px;
+}
+
+.quick-patient-button {
+  height: 38px;
+  border: 1px solid #415BE7;
+  color: #415BE7;
+  width: 100%;
+  margin-top: 12px;
+
+}
+
+.icon-button-primary {
+
+  background-color: #415BE7 !important;
+  margin-left: 3px;
+  text-align: left;
+  height: 38px;
+  margin-top: 33px;
+
+}
+
+.icon-button-primary-icon {
+  color: #ffffff;
+  margin-right: 10px;
+  font-size: 16px;
+}
