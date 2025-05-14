@@ -4,6 +4,7 @@ import '../styles.less'
 import MyTable from '@/components/MyTable';
 import { useGetWarningsQuery } from '@/services/observationService';
 import { initialListRequest } from '@/types/types';
+import Translate from '@/components/Translate';
 const MedicalWarnings = ({ patient }) => {
     // Define filters to retrieve warnings for a specific patient with a certain status
     const filters = [
@@ -37,14 +38,14 @@ const MedicalWarnings = ({ patient }) => {
             title: 'Warning',
             render: (rowData: any) => rowData.warning || ''
         },
+      ,
         {
-            key: 'firstTimeRecorded',
-            title: 'First Time Recorded',
-            render: (rowData: any) =>
-                rowData.firstTimeRecorded
-                    ? new Date(rowData.firstTimeRecorded).toLocaleString()
-                    : 'Undefined'
-        }
+            key: "severityLvalue",
+            dataKey: "severityLvalue",
+            title: <Translate>Severity</Translate>,
+            flexGrow: 1,
+            render: (rowData: any) => rowData.severityLvalue?.lovDisplayVale
+        },
     ];
     return (
         <div className='medical-dashboard-main-container'>

@@ -5,6 +5,7 @@ import MyTable from '@/components/MyTable';
 import { useGetAllergensQuery } from '@/services/setupService';
 import { useGetAllergiesQuery } from '@/services/observationService';
 import { initialListRequest } from '@/types/types';
+import Translate from '@/components/Translate';
 const ActiveAllergies = ({ patient }) => {
 
     // Define filters to fetch allergies specific to a patient and with a certain status
@@ -22,7 +23,7 @@ const ActiveAllergies = ({ patient }) => {
     ];
 
     // Fetch allergies based on the defined filters
-    const { data: allergiesListResponse,isLoading :isLoading } = useGetAllergiesQuery({
+    const { data: allergiesListResponse, isLoading: isLoading } = useGetAllergiesQuery({
         ...initialListRequest,
         filters
     });
@@ -48,11 +49,12 @@ const ActiveAllergies = ({ patient }) => {
             }
         },
         {
-            key: 'onsetDate',
-            title: 'ONSET DATE',
-            render: (rowData: any) =>
-                rowData.onsetDate ? new Date(rowData.onsetDate).toLocaleString() : 'Undefined'
-        }
+            key: "severityLvalue",
+            dataKey: "severityLvalue",
+            title: <Translate>Severity</Translate>,
+            flexGrow: 1,
+            render: (rowData: any) => rowData.severityLvalue?.lovDisplayVale
+        },
     ];
     return (
         <div className='medical-dashboard-main-container'>

@@ -144,6 +144,7 @@ const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveT
                             fieldName={'priorityLkey'}
                             record={orderTest}
                             setRecord={setOrderTest}
+                            searchable={false}
                         /></Col>
                     <Col md={8}>
                         <MyInput
