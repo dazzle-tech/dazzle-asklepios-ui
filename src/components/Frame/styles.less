@@ -292,3 +292,57 @@
     }
   }
  }
+
+
+ // Container style
+
+ .container {
+  display: flex;
+  gap: 10px;
+}
+
+.left-box {
+  width: calc(100% - 285px);
+  border-radius: 5px;
+  border: 1px solid var(--background-gray);
+}
+
+.right-box {
+  width: 275px;
+  border-radius: 5px;
+  border: 1px solid var(--background-gray);
+}
+@media (width: 769px) {
+  .container {
+    flex-direction: column;
+  }
+  .right-box {
+    width: 180px;
+  }
+}
+@media (width: 901px) {
+  .container {
+    flex-direction: column;
+  }
+  .right-box {
+    width: 200px;
+  }
+}
+@media (width: 950px) {
+  .container {
+    flex-direction: column;
+  }
+  .right-box {
+    width: 220px;
+  }
+}
+@media (max-width: 1141px) {
+  .container {
+    flex-direction: column;
+  }
+  .left-box,
+  .right-box {
+    flex-basis: 100%;
+    width: 100%;
+  }
+}

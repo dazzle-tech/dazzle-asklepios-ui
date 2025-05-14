@@ -33,6 +33,7 @@
           color: #464f60;
           border: none;
           white-space: nowrap;
+          text-transform: uppercase;
         }
       }
     }
@@ -43,9 +44,9 @@
         .MuiTableCell-root {
           border: none;
           max-width: 274px;
-          padding-top: 16px;
-          padding-bottom: 16px;
+          padding: 0 16px;
           background-color: transparent;
+          height: 60px;
         }
 
         &.even-row {
@@ -91,6 +92,15 @@
 
 .MuiTablePagination-root {
   background: var(--table-header-bg);
+  .MuiToolbar-root {
+    min-height: 32px;
+    padding-right: 16px;
+
+    .MuiTablePagination-selectLabel {
+      font-size: var(--small-font-size);
+      font-weight: var(--text-weight-extra-bold);
+    }
+  }
 }
 .my-table-header {
   text-transform: uppercase;
