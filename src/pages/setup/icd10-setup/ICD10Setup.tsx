@@ -29,7 +29,7 @@ const ICD10Setup = () => {
     const [record, setRecord] = useState({ filter: '', value: '' });
 
     // Fetch the ICD list data based on current filters
-    const { data: icdListResponseLoading } = useGetIcdListQuery(listRequest);
+    const { data: icdListResponseLoading ,isLoading,isFetching } = useGetIcdListQuery(listRequest);
 
     // Header page setUp
     const divContent = (
@@ -178,6 +178,7 @@ const ICD10Setup = () => {
             data={icdListResponseLoading?.object ?? []}
             columns={columns}
             filters={filters()}
+            loading={isFetching || isLoading}
             page={pageIndex}
             rowsPerPage={rowsPerPage}
             totalCount={totalCount}
