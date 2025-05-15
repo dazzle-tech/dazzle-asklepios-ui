@@ -736,7 +736,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                 </div>}
                 rightTitle='Add Consultation'
                 rightContent={
-                    <div className="container"  >
+                    <div className="appointment-container">
                         <div className="content-wrapper">
                             <div className="left-input">
                                 {from === 'Schedule' &&
