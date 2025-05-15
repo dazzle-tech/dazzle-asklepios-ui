@@ -287,7 +287,7 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         selectDataValue="key"
                                         record={procedure}
                                         setRecord={setProcedure}
-                                        searchable={false}
+                                       
                                     />
                                 </Form>
                             </Col>
@@ -376,6 +376,7 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         fieldName={'procedureLevelLkey'}
                                         record={procedure}
                                         setRecord={setProcedure}
+                                        searchable={false}
                                     />
                                 </Form>
                             </Col>
@@ -392,6 +393,7 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         fieldName={'priorityLkey'}
                                         record={procedure}
                                         setRecord={setProcedure}
+                                        searchable={false}
                                     />
                                 </Form></Col>
                         </Row>
@@ -449,6 +451,7 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         fieldName={'sideLkey'}
                                         record={procedure}
                                         setRecord={setProcedure}
+                                        searchable={false}
                                     />
                                 </Form></Col>
                         </Row>
