@@ -4,7 +4,6 @@ import './styles.less';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '../MyButton/MyButton';
-import { NONAME } from 'dns';
 const AdvancedModal = ({
     open,
     setOpen,
@@ -18,8 +17,8 @@ const AdvancedModal = ({
     position = "center",
     actionButtonLabel = "Save",
     actionButtonFunction = null,
-    height = 650,
-    size = "1450px",
+    height ="90vh",
+    size = "80vw",
     leftWidth = "30%",
     rightWidth = "70%",
     isDisabledActionBtn = false,
@@ -44,7 +43,7 @@ const AdvancedModal = ({
             size={size}
             className={`custom-advanced-modal ${modalClass}`}
         >
-            <Modal.Body className="modal-body-flex" style={{ height: `${height}px`, maxHeight: "none" }}>
+            <Modal.Body className="modal-body-flex" style={{height: height, maxHeight: "none" }}>
 
                 <div
                     className={`modal-left-content ${defaultClose && isLeftClosed ? 'closed' : ''}`}
@@ -57,7 +56,7 @@ const AdvancedModal = ({
                             <span>{leftTitle}</span>
                         </div>
                     </div>
-                    <div className="modal-left-body" style={{ height: `${height - 108}px` }}>
+                    <div className="modal-left-body" style={{ height: `calc(${height} - 108px)` }}>
                         {(!defaultClose || !isLeftClosed) && leftContent}
                     </div>
                 </div>
@@ -81,7 +80,7 @@ const AdvancedModal = ({
 
                         </div>
                     </div>
-                    <div className="modal-right-body" style={{ height: `${height - 108}px` }}>
+                    <div className="modal-right-body" style={{ height: `calc(${height} - 108px)` }}>
                         {rightContent}
                     </div>
                     <div className="modal-right-footer">

@@ -722,8 +722,8 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                 key={modalKey}
                 isLeftClosed={!isSideSearchOpen}
                 defaultClose={true}
-                size="1600px"
-                height={850}
+                size="90vw"
+                height="85vh"
                 open={isOpen}
                 setOpen={() => { onClose(), handleClear() }}
                 actionButtonFunction={

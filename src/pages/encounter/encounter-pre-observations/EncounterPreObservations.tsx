@@ -21,6 +21,7 @@ import Observations from './observations/Observations';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import BackButton from '@/components/BackButton/BackButton';
+import PreviousMeasurements from './previous-measurements';
 
 const EncounterPreObservations = ({}) => {
   const dispatch = useAppDispatch();
@@ -138,6 +139,11 @@ const EncounterPreObservations = ({}) => {
                     disabled={isEncounterStatusClosed || readOnly}
                     patient={propsData.patient}
                     encounter={propsData.encounter}
+                  />
+                </Tabs.Tab>
+                <Tabs.Tab eventKey="5" title="Previous Measurements">
+                  <PreviousMeasurements
+                    patient={propsData.patient}
                   />
                 </Tabs.Tab>
               </Tabs>
