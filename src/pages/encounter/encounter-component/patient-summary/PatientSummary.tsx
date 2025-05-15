@@ -7,8 +7,9 @@ import MedicalWarnings from './MedicalWarnings/MedicalWarnings';
 import RecentTestResults from './RecentTestResults/RecentTestResults';
 import PreviuosVisitData from './PreviuosVisitData';
 import BodyDiagram from './BodyDiagram/BodyDiagram';
+
 const PatientSummary = ({ patient, encounter }) => {
- 
+
     return (
         <div className='patient-summary-container'>
             <div className='patient-summary-Column'>

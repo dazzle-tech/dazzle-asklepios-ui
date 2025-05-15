@@ -2324,7 +2324,7 @@ export interface ApProcedure {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
-	faciltyLkey:string;
+	facilityKey:string;
 	encounterKey:string;
 	bodyPartLkey:string;
 	sideLkey:string;

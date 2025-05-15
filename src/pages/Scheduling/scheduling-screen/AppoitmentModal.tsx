@@ -717,24 +717,27 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     return (
         <div>
             <AdvancedModal
+                leftWidth={"25%"}
+                rightWidth = {"75%"}
                 key={modalKey}
                 isLeftClosed={!isSideSearchOpen}
                 defaultClose={true}
-                size="1700px"
+                size="1600px"
                 height={850}
                 open={isOpen}
                 setOpen={() => { onClose(), handleClear() }}
                 actionButtonFunction={
                     handleSaveAppointment
                 }
-                footerButtons={<div style={{ display: 'flex', gap: '5px' }}>
-                    <MyButton
-                        appearance="ghost"
-                        prefixIcon={() => <FontAwesomeIcon icon={faBan} />}
-                        onClick={handleClear}
-                    >Clear</MyButton>
-                </div>}
-                rightTitle='Add Consultation'
+                footerButtons={
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                        <MyButton
+                            appearance="ghost"
+                            prefixIcon={() => <FontAwesomeIcon icon={faBan} />}
+                            onClick={handleClear}
+                        >Clear</MyButton>
+                    </div>}
+                rightTitle='Add Appointment'
                 rightContent={
                     <div className="appointment-container">
                         <div className="content-wrapper">
@@ -1068,7 +1071,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                     </Form>
                                 </Panel>
                             </div>
-                            <div className="right-output">
+                            <div className="right-input">
                                 <Panel
 
                                     header={
@@ -1219,7 +1222,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                         disabled={showOnly}
                                                         onChange={setInstructions}
                                                         value={instructions}
-                                                        style={{ width: "100%" }}
+                                                        style={{ width: "100%",height:"50px" }}
                                                         rows={3}
                                                     />
                                                 </div>
@@ -1373,7 +1376,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                     column
                                                     fieldName="Notes"
                                                     width={"100%"}
-                                                    height={81}
+                                                    height={70}
                                                     record={appointment}
                                                     setRecord={setAppoitment}
                                                 />

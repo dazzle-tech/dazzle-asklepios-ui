@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppSelector, useAppDispatch } from '@/hooks';
-import { Checkbox } from 'rsuite';
+import { Checkbox, Text } from 'rsuite';
 import { useSaveAudiometryPuretoneMutation, useGetAudiometryPuretonesQuery } from '@/services/encounterService';
 import PlusIcon from '@rsuite/icons/Plus';
 import Translate from '@/components/Translate';
@@ -14,6 +14,7 @@ import { notify } from '@/utils/uiReducerActions';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import AddAudiometryPuretone from './AddAudiometryPuretone';
 import MyTable from '@/components/MyTable';
+
 const AudiometryPuretone = ({ patient, encounter,edit }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [open, setOpen] = useState(false);
@@ -36,8 +37,7 @@ const AudiometryPuretone = ({ patient, encounter,edit }) => {
     const [popupCancelOpen, setPopupCancelOpen] = useState(false);
     const [audiometryPuretonStatus, setAudiometryPuretonStatus] = useState('');
     const [allData, setAllData] = useState(false);
-    const dispatch = useAppDispatch();
-
+   
     // Initialize list request with default filters
     const [audiometryPuretoneListRequest, setAudiometryPuretoneListRequest] = useState<ListRequest>({
         ...initialListRequest,
