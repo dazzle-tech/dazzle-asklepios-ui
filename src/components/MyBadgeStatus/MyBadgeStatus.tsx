@@ -1,5 +1,6 @@
 import React from "react";
 import { Badge } from "rsuite";
+import './styles.less'
 const MyBadgeStatus = ({
     backgroundColor =null,
     color="#000000",
@@ -16,10 +17,11 @@ const MyBadgeStatus = ({
 
     return (<>
         <Badge content={contant}
+      
             style={{
                 backgroundColor:backgroundColor?backgroundColor:hexToRGBA(color,0.2),
                 color:color,
-                height: "25px",
+                 height: "25px",
                 borderRadius: "10px",
                 fontFamily: "Inter Regular",
                 fontSize: "12px",
@@ -27,6 +29,7 @@ const MyBadgeStatus = ({
                 alignItems: "center",      
                 justifyContent: "center",  
                 padding: "0 10px"
+              
             }} />
 
     </>)
