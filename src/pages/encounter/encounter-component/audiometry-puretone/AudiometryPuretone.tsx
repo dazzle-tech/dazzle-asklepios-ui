@@ -14,8 +14,7 @@ import { notify } from '@/utils/uiReducerActions';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import AddAudiometryPuretone from './AddAudiometryPuretone';
 import MyTable from '@/components/MyTable';
-import ReactDOMServer from 'react-dom/server';
-import { setDivContent, setPageCode } from '@/reducers/divSlice';
+
 const AudiometryPuretone = ({ patient, encounter,edit }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [open, setOpen] = useState(false);
@@ -38,14 +37,7 @@ const AudiometryPuretone = ({ patient, encounter,edit }) => {
     const [popupCancelOpen, setPopupCancelOpen] = useState(false);
     const [audiometryPuretonStatus, setAudiometryPuretonStatus] = useState('');
     const [allData, setAllData] = useState(false);
-    const dispatch = useAppDispatch();
-    
-        const divContent = (
-          <Text className='title-font-style'>Patient Visit &gt; Audiometry Puretone</Text>
-      );
-      const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-        dispatch(setPageCode('Audiometry_Puretone'));
-        dispatch(setDivContent(divContentHTML));
+   
     // Initialize list request with default filters
     const [audiometryPuretoneListRequest, setAudiometryPuretoneListRequest] = useState<ListRequest>({
         ...initialListRequest,

@@ -2,7 +2,10 @@ import MyModal from '@/components/MyModal/MyModal';
 import { faListCheck } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-const Summary =({open ,setOpen,list})=>{
+import { Col, Form, Row } from 'rsuite';
+import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
+const Summary =({open ,setOpen,list ,encounter,setEncounter,saveEncounter})=>{
     return(<>
           <MyModal
         position='right'
@@ -19,6 +22,7 @@ const Summary =({open ,setOpen,list})=>{
           },
         ]}
         content={
+            <Row>
            <div className='summery-div'>
           
             {list?.map((item, index) => (
@@ -29,9 +33,30 @@ const Summary =({open ,setOpen,list})=>{
                 <p> {item.notes}</p>
               </div>
             ))}
-
          
-        </div>}>
-        </MyModal></>)
+        </div>
+        <Row>
+          <Col md={21}>
+          <Form fluid>
+            <MyInput
+              width="100%"
+              fieldName='physicalExamSummery'
+              record={encounter}
+              setRecord={setEncounter}
+             showLabel={false}
+            />
+          </Form>
+          </Col>
+          <Col md={3}>
+
+           <MyButton
+           onClick={saveEncounter}
+           >Save</MyButton></Col>
+          
+           </Row>
+        </Row>
+       }>
+        </MyModal>
+        </>)
 }
 export default Summary;
