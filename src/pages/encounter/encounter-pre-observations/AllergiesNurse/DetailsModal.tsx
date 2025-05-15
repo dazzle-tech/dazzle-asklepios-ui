@@ -15,7 +15,7 @@ import MyLabel from '@/components/MyLabel';
 import { useSaveAllergiesMutation } from '@/services/observationService';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
-const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, patient, encounter, handleClear, fetchallerges }) => {
+const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, patient, encounter, handleClear, fetchallerges ,openToAdd}) => {
     const dispatch = useAppDispatch();
     const { data: allergyTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGEN_TYPES');
     const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
@@ -68,7 +68,13 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
         if (editOnset.editdate) {
             setAllerges({ ...allerges, onsetDate: 0 })
         }
-    }, [editOnset.editdate])
+    }, [editOnset.editdate]);
+    useEffect(()=>{
+        if(openToAdd){
+            handleClear();
+            setReactionDescription(null);
+        }
+    },[openToAdd])
 
     const handleSave = async () => {
 
@@ -115,11 +121,11 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
             content={
 
                 <div className={!edit?allerges.statusLvalue?.valueCode=="ARS_CANCEL"?"disabled-panel":"":"disabled-panel"}>
+                     <Form fluid>
                     <Row className='rows-gap' >
                         <Col md={8}>
-                            <Form fluid>
+          
                                 <MyInput
-
                                     disabled={editing}
                                     width="100%"
                                     fieldType="select"
@@ -132,12 +138,10 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                                     setRecord={setAllerges}
                                     searchable={false}
                                 />
-                            </Form>
                         </Col>
                         <Col md={8}>
-                            <Form fluid>
-                                <MyInput
 
+                                <MyInput
                                     disabled={editing}
                                     width="100%"
                                     fieldType="select"
@@ -150,12 +154,9 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                                     setRecord={setAllerges}
                                     searchable={false}
                                 />
-                            </Form>
                         </Col>
                         <Col md={8}>
-                            <Form fluid>
                                 <MyInput
-
                                     disabled={editing}
                                     width="100%"
                                     fieldType="select"
@@ -168,12 +169,10 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                                     setRecord={setAllerges}
                                     searchable={false}
                                 />
-                            </Form>
                         </Col>
                     </Row>
                     <Row className='rows-gap'>
                         <Col md={8}>
-                            <Form fluid>
                                 <MyInput
 
                                     disabled={editing}
@@ -188,10 +187,8 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                                     setRecord={setAllerges}
                                     searchable={false}
                                 />
-                            </Form>
                         </Col>
                         <Col md={8}>
-                            <Form fluid>
                                 <MyInput
 
                                     disabled={editing}
@@ -200,10 +197,9 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                                     record={allerges}
                                     setRecord={setAllerges}
                                 />
-                            </Form>
                         </Col>
                         <Col md={8}>
-                            <Form fluid>
+
                                 <MyInput
 
                                     disabled={editing}
@@ -218,12 +214,11 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                                     setRecord={setAllerges}
                                     searchable={false}
                                 />
-                            </Form>
                         </Col>
                     </Row>
                     <Row className='rows-gap'>
                         <Col md={8}>
-                            <Form fluid>
+
                                 <MyInput
                                     disabled={editing}
                                     width="100%"
@@ -237,10 +232,9 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                                     setRecord={setAllerges}
                                     searchable={false}
                                 />
-                            </Form>
                         </Col>
                         <Col md={8}>
-                            <Form fluid>
+
                                 <MyInput
                                     width="100%"
                                     fieldType='date'
@@ -249,10 +243,8 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                                     setRecord={setAllerges}
                                     disabled={editOnset.editdate}
                                 />
-                            </Form>
                         </Col>
                         <Col md={8}>
-                            <Form fluid>
                                 <MyInput
                                     fieldLabel="Undefined"
                                     fieldName="editdate"
@@ -261,12 +253,10 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                                     record={editOnset}
                                     setRecord={setEditOnset}
                                 />
-                            </Form>
                         </Col>
                     </Row>
                     <Row className='rows-gap'>
                         <Col md={8}>
-                            <Form fluid>
                                 <MyInput
 
                                     disabled={editing}
@@ -281,7 +271,6 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                                     setRecord={setAllerges}
                                     searchable={false}
                                 />
-                            </Form>
                         </Col>
                         <Col md={8}>
                             <Form fluid>
@@ -317,7 +306,6 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                         <Col md={12}>
                             <Row>
                                 <Col md={24}>
-                                    <Form fluid>
                                         <MyInput
 
                                             disabled={editing}
@@ -331,7 +319,6 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                                             record={allerges}
                                             setRecord={setAllerges}
                                         />
-                                    </Form>
                                 </Col>
                             </Row>
                             <Row>
@@ -348,7 +335,6 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                             </Row>
                         </Col>
                         <Col md={12}>
-                            <Form fluid>
                                 <MyInput
                                     width='100%'
                                     fieldLabel="Note"
@@ -359,8 +345,9 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit, editing, pat
                                     setRecord={setAllerges}
                                     disabled={editing}
                                 />
-                            </Form></Col>
+                           </Col>
                     </Row>
+                    </Form>
                 </div>
             }
         />

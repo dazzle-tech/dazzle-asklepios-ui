@@ -436,7 +436,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         {
             key: "priorityLkey",
             dataKey: "priorityLkey",
-            title: <Translate>REASON</Translate>,
+            title: <Translate>priority</Translate>,
             flexGrow: 1,
             fullText: true,
             render: rowData => rowData.priorityLvalue ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey

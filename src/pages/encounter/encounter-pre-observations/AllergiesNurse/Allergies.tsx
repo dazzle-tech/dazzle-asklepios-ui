@@ -35,7 +35,7 @@ const Allergies = ({ edit, patient, encounter }) => {
   const [editing, setEditing] = useState(false);
   const [showPrev, setShowPrev] = useState(true);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
-
+  const [openToAdd,setOpenToAdd]=useState(true);
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -389,7 +389,9 @@ const Allergies = ({ edit, patient, encounter }) => {
           title="Edit"
           size={24}
           fill="var(--primary-gray)"
-          onClick={() => setOpenDetailsModal(true)}
+          onClick={() => {setOpenDetailsModal(true)
+            setOpenToAdd(false)
+          }}
         />
       }
     },
@@ -545,6 +547,7 @@ const Allergies = ({ edit, patient, encounter }) => {
             onClick={() => {
               handleClear();
               setOpenDetailsModal(true)
+              setOpenToAdd(true)
             }}
           >Add Allergy</MyButton>
         </div>
@@ -555,6 +558,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         onRowClick={rowData => {
           setAllerges(rowData);
           setEditing(rowData.statusLkey == '3196709905099521' ? true : false);
+          setOpenToAdd(false)
         }}
         rowClassName={isSelected}
         sortColumn={listRequest.sortBy}
@@ -616,7 +620,8 @@ const Allergies = ({ edit, patient, encounter }) => {
         edit={edit} editing={editing}
         patient={patient}
         encounter={encounter}
-        fetchallerges={fetchallerges} />
+        fetchallerges={fetchallerges}
+        openToAdd={openToAdd} />
 
     </div>
   );
