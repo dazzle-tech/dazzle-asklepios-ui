@@ -154,23 +154,7 @@ const EncounterList = () => {
     }
   }, [isLoading]);
 
-function darkenColor(hex, percent = 20) {
-  let num = parseInt(hex.replace("#", ""), 16),
-      amt = Math.round(2.55 * percent),
-      R = (num >> 16) - amt,
-      G = ((num >> 8) & 0x00FF) - amt,
-      B = (num & 0x0000FF) - amt;
 
-  // تأكد من عدم النزول تحت 0
-  R = Math.max(R, 0);
-  G = Math.max(G, 0);
-  B = Math.max(B, 0);
-
-  // إعادة تجميع اللون
-  return "#" + (
-    (1 << 24) + (R << 16) + (G << 8) + B
-  ).toString(16).slice(1);
-}
  
   const tableColumns = [
     {
