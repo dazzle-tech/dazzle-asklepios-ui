@@ -70,7 +70,7 @@ const Details = ({ patient, encounter, consultationOrders, setConsultationOrder,
         <AdvancedModal
             open={open}
             setOpen={setOpen}
-            size="800px"
+            size="50vw"
             leftWidth="40%"
             rightWidth="60%"
             actionButtonFunction={handleSave}

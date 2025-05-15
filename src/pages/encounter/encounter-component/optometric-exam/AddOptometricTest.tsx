@@ -684,7 +684,7 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
             leftTitle="Test Type"
             rightTitle={`${openTest}`}
             position='right'
-            size='750px'
+            size='50vw'
             leftWidth='40%'
             rightWidth='60%'
             
