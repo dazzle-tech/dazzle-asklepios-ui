@@ -3,7 +3,6 @@ import Diagnosis from "../procedure/Diagnosis";
 import MyInput from "@/components/MyInput";
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import AttachmentModal from "@/components/AttachmentUploadModal/AttachmentUploadModal";
 import AdvancedModal from "@/components/AdvancedModal";
 import MyButton from "@/components/MyButton/MyButton";
 import { Form } from "rsuite";
@@ -17,7 +16,6 @@ import { initialListRequest, ListRequest } from "@/types/types";
 
 const Details = ({ patient, encounter, consultationOrders, setConsultationOrder, open, setOpen, refetchCon, editing, editable }) => {
     const dispatch = useAppDispatch();
-    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [saveconsultationOrders, saveConsultationOrdersMutation] =
         useSaveConsultationOrdersMutation();
 
@@ -75,20 +73,13 @@ const Details = ({ patient, encounter, consultationOrders, setConsultationOrder,
             rightWidth="60%"
             actionButtonFunction={handleSave}
             isDisabledActionBtn={editable}
-            footerButtons={<div style={{ display: 'flex', gap: '5px' }}>
-                <MyButton
-                    disabled={consultationOrders.key?editable:true}
-                    onClick={() => setAttachmentsModalOpen(true)}
-                    prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
-                >Attachment File</MyButton>
-
-
+            footerButtons={
                 <MyButton
                     disabled={editable}
                     prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}
                     onClick={handleClear}
                 >Clear</MyButton>
-            </div>}
+           }
             rightTitle='Add Consultation'
             rightContent={
                 <Form fluid layout="inline" className={editable ? "disabled-panel" : ""}>

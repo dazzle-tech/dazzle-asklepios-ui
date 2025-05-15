@@ -39,7 +39,7 @@ import Diagnosis from './Diagnosis';
 const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetailsModal, setOpenDetailsModal, proRefetch }) => {
     const [openOrderModel, setOpenOrderModel] = useState(false);
     const [editing, setEditing] = useState(false);
-    const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
+  
     const [saveProcedures, saveProcedureMutation] = useSaveProceduresMutation();
     const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
     const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
@@ -232,16 +232,15 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                     prefixIcon={() => <CheckIcon />}>
                     Order Related Tests
                 </MyButton>
-                <MyButton
-                    onClick={() => setAttachmentsModalOpen(true)}
-                    prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
-                >Attachment File</MyButton></div>}
+               </div>}
             rightContent={<>
-                <Row gutter={20} className={edit ? "disabled-panel" : procedure.key ? procedure?.statusLvalue?.valueCode !== "PROC_REQ" ? "disabled-panel" : "" : ""}>
+                <Row gutter={20} className={edit?"disabled-panel":procedure.key?procedure?.statusLvalue?.valueCode!=="PROC_REQ"?"disabled-panel":"":""}>
+                  <Form fluid>
+
                     <Col md={12}>
                         <Row className="rows-gap">
                             <Col md={12}>
-                                <Form fluid>
+                           
                                     <MyInput
 
                                         disabled={editing}
@@ -255,10 +254,10 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
-                                </Form>
+                             
                             </Col>
                             <Col md={12}>
-                                <Form fluid>
+                                
                                     <MyInput
 
                                         disabled={editing}
@@ -272,11 +271,13 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
-                                </Form></Col>
+                               </Col>
                         </Row>
                         <Row className="rows-gap">
-                            <Col md={12}>
-                                <Form fluid>
+
+
+                        <Col md={12}>
+
                                     <MyInput
                                         disabled={editing ? editing : procedure.currentDepartment}
                                         width="100%"
@@ -289,10 +290,10 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         setRecord={setProcedure}
                                        
                                     />
-                                </Form>
+                                
                             </Col>
                             <Col md={12}>
-                                <Form fluid>
+                               
                                     <MyInput
                                         disabled={editing ? editing : procedure.currentDepartment || !procedure?.facilityKey}
                                         width="100%"
@@ -304,7 +305,7 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
-                                </Form></Col>
+                           </Col>
                         </Row>
                         <Row className="rows-gap">
                             <Text className="font-style">Indication</Text>
@@ -363,8 +364,11 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                     </Col>
                     <Col md={12}>
                         <Row className="rows-gap">
-                            <Col md={12}>
-                                <Form fluid>
+
+
+                        <Col md={12}>
+                             
+
                                     <MyInput
                                         disabled={editing}
                                         width="100%"
@@ -378,10 +382,10 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         setRecord={setProcedure}
                                         searchable={false}
                                     />
-                                </Form>
+                          
                             </Col>
                             <Col md={12}>
-                                <Form fluid>
+                               
                                     <MyInput
                                         disabled={editing}
                                         width="100%"
@@ -395,11 +399,11 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         setRecord={setProcedure}
                                         searchable={false}
                                     />
-                                </Form></Col>
+                               </Col>
                         </Row>
                         <Row className="rows-gap">
                             <Col md={12}>
-                                <Form fluid>
+                              
                                     <MyInput
                                         disabled={editing}
                                         width="100%"
@@ -408,9 +412,13 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
-                                </Form></Col>
-                            <Col md={12}>
-                                <Form fluid>
+
+                               </Col>
+
+                             
+                                <Col md={12}>
+                             
+
                                     <MyInput
                                         width="100%"
                                         disabled={editing}
@@ -419,11 +427,12 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
-                                </Form></Col>
+                               </Col>
                         </Row>
                         <Row className="rows-gap">
-                            <Col md={12}>
-                                <Form fluid>
+                        <Col md={12}>
+                           
+
                                     <MyInput
 
                                         width="100%"
@@ -436,10 +445,10 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
-                                </Form>
+                             
                             </Col>
                             <Col md={12}>
-                                <Form fluid>
+                              
                                     <MyInput
 
                                         width="100%"
@@ -453,11 +462,11 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         setRecord={setProcedure}
                                         searchable={false}
                                     />
-                                </Form></Col>
+                                </Col>
                         </Row>
                         <Row className="rows-gap">
                             <Col md={24}>
-                                <Form fluid>
+                               
                                     <MyInput
                                         width="100%"
                                         disabled={editing}
@@ -466,22 +475,18 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
-                                </Form>
+                              
                             </Col>
                         </Row>
-                    </Col>
+                    </Col></Form>
                 </Row>
             </>}
             rightTitle="Procedure"
             leftContent={<>
                 <Diagnosis patient={patient} encounter={encounter} /></>}
         ></AdvancedModal>
-        <AttachmentModal
-            isOpen={attachmentsModalOpen}
-            setIsOpen={setAttachmentsModalOpen}
-            attachmentSource={procedure}
-            attatchmentType={'PROCEDURE_ORDER'}
-        />
+
+
         <MyModal
             open={openOrderModel}
             setOpen={setOpenOrderModel}

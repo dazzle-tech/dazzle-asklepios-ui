@@ -100,7 +100,6 @@ const Consultation = ({ edit, patient, encounter }) => {
 
   const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest, { skip: !consultationOrders?.key });
 
-  console.log("attach :", fetchPatintAttachmentsResponce?.object[0])
   const isSelected = rowData => {
     if (rowData && consultationOrders && rowData.key === consultationOrders.key) {
       return 'selected-row';
@@ -304,15 +303,19 @@ const Consultation = ({ edit, patient, encounter }) => {
       title: <Translate>ATTACHED FILE</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
-        return<HStack>
-          <MyButton
-          onClick={() => handleDownload(fetchPatintAttachmentsResponce?.object[fetchPatintAttachmentsResponce?.object.length-1])}
-        ><FaFileArrowDown /></MyButton>
-        <MyButton
-        onClick={()=>setAttachmentsModalOpen(true)}
-        ><MdAttachFile /></MyButton>
+        return <HStack>
+          <FaFileArrowDown
+            size={20}
+            fill="var(--primary-gray)"
+            onClick={() => handleDownload(fetchPatintAttachmentsResponce?.object[fetchPatintAttachmentsResponce?.object.length - 1])} />
+
+          <MdAttachFile
+            size={20}
+            fill="var(--primary-gray)"
+            onClick={() => setAttachmentsModalOpen(true)}
+          />
         </HStack>
-         
+
       }
     },
     {
