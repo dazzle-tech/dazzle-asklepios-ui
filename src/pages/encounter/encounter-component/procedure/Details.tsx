@@ -15,15 +15,14 @@ import PatientOrder from '../diagnostics-order';
 import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
 import CheckIcon from '@rsuite/icons/Check';
 import { faBroom, faFile } from '@fortawesome/free-solid-svg-icons';
-
 import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
-
 import { newApPatientDiagnose, newApProcedure } from '@/types/model-types-constructor';
 import { useGetIcdListQuery } from '@/services/setupService';
 import SearchIcon from '@rsuite/icons/Search';
 import { initialListRequest, ListRequest } from '@/types/types';
 import {
+    useGetFacilitiesQuery,
     useGetDepartmentsQuery,
     useGetProcedureListQuery,
 } from '@/services/setupService';
@@ -37,17 +36,28 @@ import MyInput from '@/components/MyInput';
 import AdvancedModal from '@/components/AdvancedModal';
 import './styles.less'
 import Diagnosis from './Diagnosis';
-const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetailsModal, setOpenDetailsModal ,proRefetch }) => {
+const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetailsModal, setOpenDetailsModal, proRefetch }) => {
     const [openOrderModel, setOpenOrderModel] = useState(false);
     const [editing, setEditing] = useState(false);
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [saveProcedures, saveProcedureMutation] = useSaveProceduresMutation();
-    const { data: faciltyypesLovQueryResponse } = useGetLovValuesByCodeQuery('FSLTY_TYP');
     const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
     const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
     const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
     const { data: ProcedureLevelLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
     const { data: priorityLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_PRIORITY');
+    const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+    const [departmentListRequest, setDepartmentListRequest] = useState<ListRequest>({
+        ...initialListRequest,
+        filters: [
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined,
+            },
+        ],
+    });
+
     const [listRequestPro, setListRequestPro] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -58,6 +68,7 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
             }
         ]
     });
+    const { data: facilityListResponse } = useGetFacilitiesQuery(listRequest);
     const { data: procedureQueryResponse, refetch: profetch } = useGetProcedureListQuery(
         listRequestPro,
         { skip: procedure.categoryKey == undefined }
@@ -80,10 +91,8 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
         ...item,
         combinedLabel: `${item.icdCode} - ${item.description}`
     }));
-    const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
-    const department = departmentListResponse?.object.filter(
-        item => item.departmentTypeLkey === '5673990729647006'
-    );
+    const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
+
     useEffect(() => {
         if (procedure.indications != null || procedure.indications != '') {
             setindicationsDescription(prevadminInstructions => {
@@ -137,6 +146,22 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
         }));
     }, [procedure?.categoryKey]);
     useEffect(() => {
+        setDepartmentListRequest(prev => ({
+            ...prev,
+            filters: [
+                ...(procedure?.facilityKey
+                    ? [
+                        {
+                            fieldName: 'facility_key',
+                            operator: 'match',
+                            value: procedure?.facilityKey
+                        }
+                    ]
+                    : [])
+            ]
+        }));
+    }, [procedure?.facilityKey]);
+    useEffect(() => {
         if (procedure.currentDepartment) {
             setProcedure({ ...procedure, departmentKey: null, faciltyLkey: null });
         }
@@ -172,7 +197,7 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                 .then(() => {
                     proRefetch();
                     setOpenDetailsModal(false)
-                });   
+                });
             handleClear();
             setOpenDetailsModal(false);
             dispatch(notify({ msg: 'Saved  Successfully', sev: "success" }));
@@ -185,11 +210,11 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
     };
     return (<>
         <AdvancedModal
-        size={'900px'}
+            size={'900px'}
             open={openDetailsModal}
             setOpen={setOpenDetailsModal}
             actionButtonFunction={handleSave}
-            isDisabledActionBtn={edit?true:procedure.key?procedure?.statusLvalue?.valueCode!=="PROC_REQ"?true:false:false}
+            isDisabledActionBtn={edit ? true : procedure.key ? procedure?.statusLvalue?.valueCode !== "PROC_REQ" ? true : false : false}
             footerButtons={<div className='footer-buttons'>
                 <MyButton
                     onClick={handleClear}
@@ -212,7 +237,7 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                     prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
                 >Attachment File</MyButton></div>}
             rightContent={<>
-                <Row gutter={20} className={edit?"disabled-panel":procedure.key?procedure?.statusLvalue?.valueCode!=="PROC_REQ"?"disabled-panel":"":""}>
+                <Row gutter={20} className={edit ? "disabled-panel" : procedure.key ? procedure?.statusLvalue?.valueCode !== "PROC_REQ" ? "disabled-panel" : "" : ""}>
                     <Col md={12}>
                         <Row className="rows-gap">
                             <Col md={12}>
@@ -250,33 +275,32 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                 </Form></Col>
                         </Row>
                         <Row className="rows-gap">
-                        <Col md={12}>
+                            <Col md={12}>
                                 <Form fluid>
                                     <MyInput
                                         disabled={editing ? editing : procedure.currentDepartment}
                                         width="100%"
+                                        fieldName="facilityKey"
                                         fieldType="select"
-                                        fieldLabel="Facilty "
-                                        selectData={faciltyypesLovQueryResponse?.object ?? []}
-                                        selectDataLabel="lovDisplayVale"
+                                        selectData={facilityListResponse?.object ?? []}
+                                        selectDataLabel="facilityName"
                                         selectDataValue="key"
-                                        fieldName={'faciltyLkey'}
                                         record={procedure}
                                         setRecord={setProcedure}
+                                        searchable={false}
                                     />
                                 </Form>
                             </Col>
                             <Col md={12}>
                                 <Form fluid>
                                     <MyInput
-                                        disabled={editing ? editing : procedure.currentDepartment}
+                                        disabled={editing ? editing : procedure.currentDepartment || !procedure?.facilityKey}
                                         width="100%"
+                                        fieldName="departmentKey"
                                         fieldType="select"
-                                        fieldLabel="Department"
-                                        selectData={department ?? []}
+                                        selectData={departmentListResponse?.object ?? []}
                                         selectDataLabel="name"
                                         selectDataValue="key"
-                                        fieldName={'departmentKey'}
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
@@ -287,7 +311,7 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                         </Row>
                         <Row className="rows-gap">
                             <Col md={24}>
-                              
+
                                 <Row>
                                     <Col md={24}>
                                         <InputGroup inside style={{ width: "100%" }}>
@@ -339,7 +363,7 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                     </Col>
                     <Col md={12}>
                         <Row className="rows-gap">
-                        <Col md={12}>
+                            <Col md={12}>
                                 <Form fluid>
                                     <MyInput
                                         disabled={editing}
@@ -383,7 +407,7 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         setRecord={setProcedure}
                                     />
                                 </Form></Col>
-                                <Col md={12}>
+                            <Col md={12}>
                                 <Form fluid>
                                     <MyInput
                                         width="100%"
@@ -396,7 +420,7 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                 </Form></Col>
                         </Row>
                         <Row className="rows-gap">
-                        <Col md={12}>
+                            <Col md={12}>
                                 <Form fluid>
                                     <MyInput
 
@@ -447,10 +471,8 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
             </>}
             rightTitle="Procedure"
             leftContent={<>
-            <Diagnosis patient={patient} encounter={encounter}/></>}
+                <Diagnosis patient={patient} encounter={encounter} /></>}
         ></AdvancedModal>
-
-
         <AttachmentModal
             isOpen={attachmentsModalOpen}
             setIsOpen={setAttachmentsModalOpen}
