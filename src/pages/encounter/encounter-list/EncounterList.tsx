@@ -38,7 +38,7 @@ const EncounterList = () => {
   dispatch(setDivContent(divContentHTML));
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
-  console.log("Enc :",encounter)
+  
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const [startEncounter] = useStartEncounterMutation();
   const [listRequest, setListRequest] = useState<ListRequest>({
@@ -238,9 +238,9 @@ function darkenColor(hex, percent = 20) {
       title: <Translate>PRESCRIPTION</Translate>,
       render: rowData =>
         rowData.hasPrescription ? (
-        <MyBadgeStatus contant="YES" backgroundColor='#daf1e7' color="#45b887"/>
+        <MyBadgeStatus contant="YES"  color="#45b887"/>
         ) : (
-           <MyBadgeStatus contant="NO" backgroundColor='#98a2b430' color="#969fb0"/>
+           <MyBadgeStatus contant="NO"  color="#969fb0"/>
         )
     },
     {
@@ -248,9 +248,9 @@ function darkenColor(hex, percent = 20) {
       title: <Translate>HAS ORDER</Translate>,
       render: rowData =>
         rowData.hasOrder ? (
-         <MyBadgeStatus contant="YES" backgroundColor='#daf1e7' color="#45b887"/>
+         <MyBadgeStatus contant="YES"  color="#45b887"/>
         ) : (
-          <MyBadgeStatus contant="NO" backgroundColor='#98a2b430' color="#969fb0"/>
+          <MyBadgeStatus contant="NO"  color="#969fb0"/>
         )
     },
     {
@@ -269,7 +269,7 @@ function darkenColor(hex, percent = 20) {
     {
       key: 'status',
       title: <Translate>STATUS</Translate>,
-      render: rowData =><MyBadgeStatus backgroundColor={rowData?.encounterStatusLvalue?.valueColor} contant={rowData.encounterStatusLvalue
+      render: rowData =><MyBadgeStatus color={rowData?.encounterStatusLvalue?.valueColor} contant={rowData.encounterStatusLvalue
           ? rowData.encounterStatusLvalue.lovDisplayVale
           : rowData.encounterStatusLkey}/>
     
@@ -280,10 +280,10 @@ function darkenColor(hex, percent = 20) {
       title: <Translate>IS OBSERVED</Translate>,
       render: rowData =>
         rowData.hasObservation ? (
-          <MyBadgeStatus contant="YES" backgroundColor='#daf1e7' color="#45b887"/>
+          <MyBadgeStatus contant="YES"  color="#45b887"/>
       
         ) : (
-          <MyBadgeStatus contant="NO" backgroundColor='#98a2b430' color="#969fb0"/>
+          <MyBadgeStatus contant="NO"  color="#969fb0"/>
         )
     },
     {

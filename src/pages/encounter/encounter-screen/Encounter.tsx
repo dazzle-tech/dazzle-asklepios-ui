@@ -41,7 +41,7 @@ import { faBars, faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import React, { useEffect, useState } from 'react';
 import './styles.less';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
-import { Panel, List, Divider, Drawer } from 'rsuite';
+import { Panel, List, Divider, Drawer, Text } from 'rsuite';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import 'react-tabs/style/react-tabs.css';
@@ -73,11 +73,11 @@ const Encounter = () => {
   const [localEncounter, setLocalEncounter] = useState<any>({ ...propsData.encounter });
   const divContent = (
     <div style={{ display: 'flex' }}>
-      <h5>Clinical Visit</h5>
+      <Text className='title-font-style'>Patient Visit</Text>
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-  dispatch(setPageCode('Clinical_Visit'));
+  dispatch(setPageCode('Patient_Visit'));
   dispatch(setDivContent(divContentHTML));
   const [modalOpen, setModalOpen] = useState(false);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
