@@ -112,83 +112,65 @@ const WarningiesModal = ({ open, setOpen, patient }) => {
                 return rowData.statusLvalue?.lovDisplayVale;
             }
         },
-
-        {
-            key: "createdAt",
-            dataKey: "createdAt",
-            title: <Translate>Created At</Translate>,
-            flexGrow: 1,
-            expandable: true,
-            render: (rowData: any) => {
-                return rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : '';
-            }
-        },
-        {
-            key: "createdBy",
-            dataKey: "createdBy",
-            title: <Translate>Created By</Translate>,
-            flexGrow: 1,
-            expandable: true,
-
-        },
-        {
-            key: "updatedAt",
-            dataKey: "updatedAt",
-            title: <Translate>Updated At</Translate>,
-            flexGrow: 1,
-            expandable: true,
-            render: (rowData: any) => {
-                return rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString() : '';
-            }
-        },
-        {
-            key: "updatedBy",
-            dataKey: "updatedBy",
-            title: <Translate>Updated By</Translate>,
-            flexGrow: 1,
-            expandable: true,
-
-        },
-        {
-            key: "resolvedAt",
-            dataKey: "resolvedAt",
-            title: <Translate>Resolved At</Translate>,
-            flexGrow: 1,
-            expandable: true,
-            render: (rowData: any) => {
-                if (rowData.statusLkey != '9766169155908512') {
-                    return rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : ''
-                }
-            }
-        },
-        {
-            key: "resolvedBy",
-            dataKey: "resolvedBy",
-            title: <Translate>Resolved By</Translate>,
-            flexGrow: 1,
-            expandable: true,
-            render: (rowData: any) => {
-                return null;
-            }
-        },
-        {
-            key: "deletedAt",
-            dataKey: "deletedAt",
-            title: <Translate>Cancelled At</Translate>,
-            flexGrow: 1,
-            expandable: true,
-            render: (rowData: any) => {
-                return rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : '';
-            }
-        },
-        {
-            key: "deletedBy",
-            dataKey: "deletedBy",
-            title: <Translate>Cancelled By</Translate>,
-            flexGrow: 1,
-            expandable: true,
-
-        },
+         {
+           key: "",
+           title: <Translate>Created At/By</Translate>,
+           expandable: true,
+           render: (rowData: any) => {
+             return (<>
+               <span>{rowData.createdBy}</span>
+               <br />
+               <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+             </>)
+           }
+     
+         },
+         {
+           key: "",
+           title: <Translate>Updated At/By</Translate>,
+           expandable: true,
+           render: (rowData: any) => {
+             return (<>
+               <span>{rowData.updatedBy}</span>
+               <br />
+               <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+             </>)
+           }
+     
+         },
+     
+         {
+           key: "",
+           title: <Translate>Cancelled At/By</Translate>,
+           expandable: true,
+           render: (rowData: any) => {
+             return (<>
+               <span>{rowData.deletedBy}</span>
+               <br />
+               <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
+             </>)
+           }
+     
+         },
+         {
+           key: "",
+           title: <Translate>Resolved At/By</Translate>,
+           expandable: true,
+           render: (rowData: any) => {
+             if (rowData.statusLkey != '9766169155908512') {
+               return (<>
+     
+                 <span>{rowData.resolvedBy}</span>
+                 <br />
+                 <span className='date-table-style'>{rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : ''}</span>
+               </>)
+             }
+             else {
+               return null;
+             }
+           }
+     
+         },
         {
             key: "cancellationReason",
             dataKey: "cancellationReason",
