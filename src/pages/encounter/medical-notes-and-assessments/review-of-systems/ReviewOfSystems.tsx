@@ -129,7 +129,7 @@ const ReviewOfSystems = ({edit, patient, encounter }) => {
                   systemLkey: String(selectedSystem.key),
                   notes: mainData[rowData.key] ? mainData[rowData.key].notes : ''
                 }).unwrap();
-                dispatch(notify('Findings Saved Successfully'));
+                dispatch(notify({msg:'Findings Saved Successfully' ,sev:"success"}));
                 refetch();
 
               } else {
@@ -187,27 +187,7 @@ const ReviewOfSystems = ({edit, patient, encounter }) => {
     <>
       <Panel>
         <Grid fluid>
-        {/* <InputGroup>
-              <InputGroup.Addon>
-                <IconButton
-                  circle
-
-                  icon={<CheckOutlineIcon />}
-                  size="xs"
-                  appearance="primary"
-                  color="green"
-                  onClick={saveChanges}
-                />
-              </InputGroup.Addon>
-              <Input
-                as={'textarea'}
-                rows={1}
-                style={{ fontSize: '12px', maxHeight: '50px', overflowY: 'auto', resize: 'vertical' }}
-                value={localEncounter.physicalExamSummery}
-                onChange={e => setLocalEncounter({ ...localEncounter, physicalExamSummery: e })}
-
-              />          
-            </InputGroup> */}
+       
           <div className='top-div'>
 
            <Translate>Physical Examination & Findings</Translate>
@@ -268,7 +248,7 @@ const ReviewOfSystems = ({edit, patient, encounter }) => {
               </div>
             </div>
         </Grid>
-  <Summary  open={openModel} setOpen={setOpenModel} list={encounterReviewOfSystemsSummaryResponse?.object}/>
+  <Summary  open={openModel} setOpen={setOpenModel} list={encounterReviewOfSystemsSummaryResponse?.object} encounter={localEncounter} setEncounter={setLocalEncounter} saveEncounter={saveChanges}/>
       </Panel>
     </>
   );

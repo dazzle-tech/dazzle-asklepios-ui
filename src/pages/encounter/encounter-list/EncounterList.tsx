@@ -38,7 +38,7 @@ const EncounterList = () => {
   dispatch(setDivContent(divContentHTML));
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
-  console.log("Enc :",encounter)
+  
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const [startEncounter] = useStartEncounterMutation();
   const [listRequest, setListRequest] = useState<ListRequest>({
@@ -154,23 +154,7 @@ const EncounterList = () => {
     }
   }, [isLoading]);
 
-function darkenColor(hex, percent = 20) {
-  let num = parseInt(hex.replace("#", ""), 16),
-      amt = Math.round(2.55 * percent),
-      R = (num >> 16) - amt,
-      G = ((num >> 8) & 0x00FF) - amt,
-      B = (num & 0x0000FF) - amt;
 
-  // تأكد من عدم النزول تحت 0
-  R = Math.max(R, 0);
-  G = Math.max(G, 0);
-  B = Math.max(B, 0);
-
-  // إعادة تجميع اللون
-  return "#" + (
-    (1 << 24) + (R << 16) + (G << 8) + B
-  ).toString(16).slice(1);
-}
  
   const tableColumns = [
     {
@@ -238,9 +222,9 @@ function darkenColor(hex, percent = 20) {
       title: <Translate>PRESCRIPTION</Translate>,
       render: rowData =>
         rowData.hasPrescription ? (
-        <MyBadgeStatus contant="YES" backgroundColor='#daf1e7' color="#45b887"/>
+        <MyBadgeStatus contant="YES"  color="#45b887"/>
         ) : (
-           <MyBadgeStatus contant="NO" backgroundColor='#98a2b430' color="#969fb0"/>
+           <MyBadgeStatus contant="NO"  color="#969fb0"/>
         )
     },
     {
@@ -248,9 +232,9 @@ function darkenColor(hex, percent = 20) {
       title: <Translate>HAS ORDER</Translate>,
       render: rowData =>
         rowData.hasOrder ? (
-         <MyBadgeStatus contant="YES" backgroundColor='#daf1e7' color="#45b887"/>
+         <MyBadgeStatus contant="YES"  color="#45b887"/>
         ) : (
-          <MyBadgeStatus contant="NO" backgroundColor='#98a2b430' color="#969fb0"/>
+          <MyBadgeStatus contant="NO"  color="#969fb0"/>
         )
     },
     {
@@ -269,7 +253,7 @@ function darkenColor(hex, percent = 20) {
     {
       key: 'status',
       title: <Translate>STATUS</Translate>,
-      render: rowData =><MyBadgeStatus backgroundColor={rowData?.encounterStatusLvalue?.valueColor} contant={rowData.encounterStatusLvalue
+      render: rowData =><MyBadgeStatus color={rowData?.encounterStatusLvalue?.valueColor} contant={rowData.encounterStatusLvalue
           ? rowData.encounterStatusLvalue.lovDisplayVale
           : rowData.encounterStatusLkey}/>
     
@@ -280,10 +264,10 @@ function darkenColor(hex, percent = 20) {
       title: <Translate>IS OBSERVED</Translate>,
       render: rowData =>
         rowData.hasObservation ? (
-          <MyBadgeStatus contant="YES" backgroundColor='#daf1e7' color="#45b887"/>
+          <MyBadgeStatus contant="YES"  color="#45b887"/>
       
         ) : (
-          <MyBadgeStatus contant="NO" backgroundColor='#98a2b430' color="#969fb0"/>
+          <MyBadgeStatus contant="NO"  color="#969fb0"/>
         )
     },
     {
