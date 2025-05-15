@@ -33,7 +33,7 @@ const FacilityDepartment = ({ open, setOpen, departments, width }) => {
       hideActionBtn
       hideBack
       hideCanel
-      size={width > 600 ? '570px' : '300px'}
+      size={width > 600 ? '36vw' : '25vw'}
     />
   );
 };

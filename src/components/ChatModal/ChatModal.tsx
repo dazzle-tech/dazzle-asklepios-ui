@@ -29,7 +29,7 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
                 open={open}
                 setOpen={setOpen}
                 size="xs"
-                bodyheight={410}
+                bodyheight="65vh"
                 steps={[{ title: title, icon:<FontAwesomeIcon icon={ faComments }/>}]}
                 content={
                     <div className="basic-div">

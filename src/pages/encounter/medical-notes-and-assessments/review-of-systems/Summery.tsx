@@ -7,7 +7,7 @@ import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 const Summary =({open ,setOpen,list ,encounter,setEncounter,saveEncounter})=>{
     return(<>
-          <MyModal
+        <MyModal
         position='right'
         open={open} 
         setOpen={setOpen}
@@ -15,7 +15,6 @@ const Summary =({open ,setOpen,list ,encounter,setEncounter,saveEncounter})=>{
         hideActionBtn
         hideCanel
         steps={[
-
           {
             title: "Summery", icon:<FontAwesomeIcon icon={faListCheck}/>,
            

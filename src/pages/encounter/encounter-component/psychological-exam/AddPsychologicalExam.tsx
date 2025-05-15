@@ -155,8 +155,7 @@ const AddPsychologicalExam = ({
             actionButtonFunction={handleSave}
             position='right'
             isDisabledActionBtn={!edit?isDisabledField:true}
-            bodyheight={550}
-            size='500px'
+            size='33vw'
             steps={[{
                 title: "Psychology Exam",
                 icon:<FontAwesomeIcon icon={ faBrain}/>,

@@ -81,8 +81,8 @@ const ResetPassword = ({
       content={conjureFormContent}
       actionButtonLabel="Reset"
       actionButtonFunction={handleResetPassword}
-      size={width > 600 ? '570px' : '300px'}
-       steps={[{ title: 'Reset Password', icon: <RiLockPasswordFill /> }]}
+      size={width > 600 ? '36vw' : '25vw'}    
+      steps={[{ title: 'Reset Password', icon: <RiLockPasswordFill /> }]}
     />
   );
 };

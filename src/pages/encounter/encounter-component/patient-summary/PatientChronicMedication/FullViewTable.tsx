@@ -87,8 +87,8 @@ const FullViewTable = ({
                 height={300}
             />}
             hideCanel={false}
-            bodyheight={400}
-            size='900px'
+            bodyheight="70vh"
+            size="70vw"
             hideBack={true}
             steps={[{ title: "Chronic Medications", icon:  <FontAwesomeIcon icon={faPills }/>}]}
             hideActionBtn={true}

@@ -15,7 +15,7 @@ const FullViewChart = ({
             title="Body Diagram"
             content={content}
             hideCanel={false}
-            bodyheight={400}
+            bodyheight="60vh"
             hideBack={true}
             steps={[{ title:"Body Diagram", icon:  <FontAwesomeIcon icon={faPerson }/>}]}
             hideActionBtn={true}

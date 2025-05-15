@@ -182,7 +182,7 @@ const AddEditUser = ({
       content={conjureFormContent}
       actionButtonLabel={user?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
-      size={width > 600 ? '570px' : '300px'}
+      size={width > 600 ? '36vw' : '25vw'}
       steps={[{ title: 'User Info', icon:<FontAwesomeIcon icon={ faUser }/> }]}
     />
   );

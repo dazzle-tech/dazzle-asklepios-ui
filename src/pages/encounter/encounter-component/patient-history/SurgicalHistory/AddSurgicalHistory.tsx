@@ -129,8 +129,7 @@ const AddSurgicalHistory = ({ open, setOpen }) => {
             steps={[{ title: "Surgical History", icon: <FontAwesomeIcon icon={faBedPulse }/>}]}
             actionButtonFunction={""}
             position='right'
-            bodyheight={550}
-            size='500px'
+            size='33vw'
             content={content}
         ></MyModal>
     );

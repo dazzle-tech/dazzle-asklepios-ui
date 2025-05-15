@@ -28,7 +28,8 @@ const CancellationModal = ({
             steps={[
                 {title:title,icon: <FontAwesomeIcon icon={faBan }/>},
             ]}
-            content={(step) => withReason?<Form layout="inline" fluid>
+            content={(step) => withReason?
+            <Form layout="inline" fluid>
                 <MyInput
                     width={"400px"}
                     column
@@ -41,8 +42,8 @@ const CancellationModal = ({
                     disabled={object?.statusLkey === statusKey}
                 />
             </Form>:<></>}
-            size="450px"
-            bodyheight={350}
+            size="30vw"
+            bodyheight="55vh"
             cancelButtonLabel='Close'
         />
     );

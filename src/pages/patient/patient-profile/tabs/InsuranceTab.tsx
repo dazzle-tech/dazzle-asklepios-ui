@@ -127,7 +127,7 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
     }).then(
       () => (
         patientInsuranceResponse.refetch(),
-        dispatch(notify('Insurance Deleted Successfully')),
+        dispatch(notify({ msg: 'Insurance Deleted Successfully', sev: "success" })),
         setSelectedInsurance(null),
         setOpenDeleteModal(false)
       )

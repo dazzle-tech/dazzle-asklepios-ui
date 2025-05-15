@@ -37,7 +37,7 @@ const DeletionConfirmationModal = ({
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        size="450px"
+        size="30vw"
         className="delete-modal"
       >
         <Modal.Header>

@@ -60,8 +60,7 @@ const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patie
             title="Add Warning"
             actionButtonFunction={handleSave}
             isDisabledActionBtn={!edit?warning.statusLvalue?.valueCode=="ARS_CANCEL"?true:false:true}
-            bodyheight={550}
-            size='680px'
+            size='40vw'
             position='right'
             steps={[
 

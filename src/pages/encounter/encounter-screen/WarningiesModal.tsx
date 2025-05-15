@@ -208,7 +208,7 @@ const WarningiesModal = ({ open, setOpen, patient }) => {
     return (<>
         <MyModal
             position='right'
-            size='900px'
+            size='50vw'
             title="Warning"
             open={open}
             setOpen={setOpen}

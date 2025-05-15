@@ -200,6 +200,7 @@ const AddElectrocardiogram = ({ open, setOpen, patient, encounter, electrocardio
                 setRecord={setElectrocardiogramEcg}
                 fieldType='textarea'
                 disabled={isDisabledField}
+                height={60}
             />
              </Form>
         </div>
@@ -212,8 +213,7 @@ const AddElectrocardiogram = ({ open, setOpen, patient, encounter, electrocardio
             actionButtonFunction={handleSave}
             position='right'
             isDisabledActionBtn={!edit?isDisabledField:true}
-            bodyheight={550}
-            size='500px'
+            size='32vw'
             steps={[{
                 title: "Electrocardiogram",
                 icon: <FontAwesomeIcon icon={faFileWaveform}/>,

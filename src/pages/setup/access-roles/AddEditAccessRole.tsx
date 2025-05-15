@@ -100,7 +100,7 @@ const AddEditAccessRole = ({
       actionButtonLabel={accessRole?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Access Rule Rule info', icon: <FontAwesomeIcon icon={faKey }/>}]}
-      size={width > 600 ? '570px' : '300px'}
+      size={width > 600 ? '36vw' : '25vw'}
     />
   );
 };

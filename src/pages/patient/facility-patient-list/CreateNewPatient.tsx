@@ -384,7 +384,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
                 { title: 'Contact', icon: <FontAwesomeIcon icon={faPhone} />, footer: <MyButton onClick={handleSave} >Save</MyButton> },
                 { title: 'Insurance', icon: <FontAwesomeIcon icon={faShieldHalved} />, footer: <MyButton onClick={handleSaveInsurance} >Save Insurance</MyButton> }
             ]}
-            size="480px"
+            size="33vw"
             position='right'
             actionButtonLabel="Create"
             actionButtonFunction={() => { handleSave(); goToPatientProfile() }}

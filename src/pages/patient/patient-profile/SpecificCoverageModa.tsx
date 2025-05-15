@@ -169,7 +169,6 @@ const SpecificCoverageModa = ({ open, setOpen, insurance }) => {
             title="Coverage List"
             position="right"
             size="sm"
-            bodyheight={550}
             hideActionBtn={true}
             content={CoverageContent}
             steps={[
