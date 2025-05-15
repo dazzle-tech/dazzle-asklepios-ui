@@ -34,7 +34,7 @@ const PatientArrivalModal = ({ open, setOpen, saveTest, test, setTest, fetchTest
         title="Patient Arrived"
         steps={[{ title: 'Arrived', icon: <FontAwesomeIcon icon={faHospitalUser} /> }]}
         size="450px"
-        bodyheight={300}
+        bodyheight="60vh"
         content={
           <Col md={24}>
             <Row>

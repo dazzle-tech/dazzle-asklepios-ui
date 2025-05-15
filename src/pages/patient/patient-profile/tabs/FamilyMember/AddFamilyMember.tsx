@@ -95,7 +95,7 @@ const AddFamilyMember = ({ open, setOpen, localPatient, selectedPatientRelation,
                 setOpen={setOpen}
                 title="New/Edit Patient Relation"
                 steps={[{ title: "Patient Relation", icon:<FontAwesomeIcon icon={ faPeopleRoof }/>}]}
-                bodyheight={400}
+                bodyheight='60vh'
                 footerButtons={null}
                 actionButtonLabel="Save"
                 actionButtonFunction={handleSaveFamilyMembers}

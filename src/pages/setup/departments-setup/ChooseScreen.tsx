@@ -220,7 +220,7 @@ const ChooseDepartment = ({
       content={conjureFormContent}
       actionButtonLabel='Save'
       actionButtonFunction={handleSave}
-      size={width > 600 ? '570px' : '300px'}
+      size={width > 600 ? '36vw' : '25vw'}
       steps={[{ title: 'Medical Sheets', icon: <FontAwesomeIcon icon={faSheetPlastic }/>}]}
     />
   );

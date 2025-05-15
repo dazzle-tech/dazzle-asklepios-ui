@@ -66,8 +66,7 @@ const AddPatientProblem = ({ open, setOpen }) => {
                 fieldName=""
                 record={""}
                 setRecord={""}
-            />Recent
-            
+            />
             <MyInput
                 width={200}
                 column
@@ -100,8 +99,7 @@ const AddPatientProblem = ({ open, setOpen }) => {
             steps={[{title: "Patient Problem",icon:<FontAwesomeIcon icon={ faLungsVirus}/>}]}
             actionButtonFunction={""}
             position='right'
-            bodyheight={550}
-            size='500px'
+            size='33vw'
             content={content}
         ></MyModal>
     );

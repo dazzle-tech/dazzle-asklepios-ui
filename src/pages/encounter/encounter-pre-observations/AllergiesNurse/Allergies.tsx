@@ -594,7 +594,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         actionButtonFunction={handleResolved}
         actionButtonLabel='Yes'
         title="Resolve"
-        bodyheight={150}
+        bodyheight='30vh'
        steps={[{ title: "Resolve", icon: <FontAwesomeIcon icon={faCheck }/>}]}
         content={<>Is this allergy resolved?</>}
 
@@ -606,7 +606,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         actionButtonFunction={handleUndoResolved}
         actionButtonLabel='Yes'
         title="Undo Resolve"
-        bodyheight={150}
+        bodyheight='30vh'
         steps={[{ title: "Undo Resolve", icon: <FontAwesomeIcon icon={faArrowRotateRight }/>}]}
         content={<>Is this allergy active?</>}
 

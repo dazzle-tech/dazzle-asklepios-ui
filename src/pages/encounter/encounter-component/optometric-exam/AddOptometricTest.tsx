@@ -686,8 +686,7 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
             position='right'
             size='50vw'
             leftWidth='40%'
-            rightWidth='60%'
-            
+            rightWidth='60%'    
             actionButtonFunction={handleSave}
             footerButtons={<>
                 <MyButton appearance='ghost' onClick={handleClearField}>Clear</MyButton>

@@ -78,8 +78,8 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
     // Effects
     useEffect(() => {
         if (saveEncounterMutation && saveEncounterMutation.status === 'fulfilled') {
-            setLocalEncounter(saveEncounterMutation.data);
-            dispatch(notify('Encounter Saved Successfuly!'));
+            setLocalEncounter(saveEncounterMutation.data);;
+            dispatch(notify({ msg: 'Encounter Saved Successfuly', sev: "success" }));
         } else if (saveEncounterMutation && saveEncounterMutation.status === 'rejected') {
             setValidationResult(saveEncounterMutation.error);
         }
@@ -133,8 +133,8 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
             }
                 , { title: 'Add Payment', icon: <FontAwesomeIcon icon={faMoneyBillWave} /> }]}
             content={(step) => conjureFormContent(step)}
-            size="700px"
-            bodyheight={500}
+            size="55vw"
+            bodyheight="65vh"
             hideActionBtn={isReadOnly}
         />
     );

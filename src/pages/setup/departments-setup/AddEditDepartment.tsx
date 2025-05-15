@@ -124,7 +124,7 @@ const AddEditDepartment = ({
       actionButtonLabel={department?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'Department Info', icon:<FontAwesomeIcon icon={ faLaptop }/>}]}
-      size={width > 600 ? '570px' : '300px'}
+      size={width > 600 ? '36vw' : '25vw'}
     />
   );
 };

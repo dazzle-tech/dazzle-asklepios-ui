@@ -206,7 +206,7 @@ const InsuranceModal = ({
     savePatientInsurance({ ...patientInsurance, patientKey: patientKey.key }).unwrap().then(() => {
       refetchInsurance()
       handleClearModal()
-      dispatch(notify('Insurance Saved Successfully'))
+      dispatch(notify({ msg: 'Insurance Saved Successfully', sev: "success" }));
     }).catch((error) => {
       console.log(error)
       setPatientInsurance({ ...patientInsurance, primaryInsurance: false })
@@ -254,7 +254,7 @@ const InsuranceModal = ({
       open={open}
       setOpen={setOpen}
       title="Patient Insurance"
-      bodyheight={410}
+      bodyheight='70vh'
       content={renderContent}
       size="lg"
       steps={[

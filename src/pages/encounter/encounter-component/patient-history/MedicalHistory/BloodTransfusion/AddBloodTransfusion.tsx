@@ -97,8 +97,7 @@ const AddBloodTransfusion = ({ open, setOpen }) => {
              steps={[{title: "Blood Transfusion",icon: <FontAwesomeIcon icon={faHandHoldingDroplet}/>}]}
             actionButtonFunction={""}
             position='right'
-            bodyheight={550}
-            size='500px'
+            size='33vw'
             content={content}
         ></MyModal>
     );

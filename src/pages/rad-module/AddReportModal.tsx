@@ -40,8 +40,8 @@ const AddReportModal = ({ open, setOpen, saveReport, report, setReport, saveTest
 
                 setOpen(false);
             }}
-            size="450px"
-            bodyheight={300}
+            size="30vw"
+            bodyheight="65vh"
             content={<>
                 <Row>
                     <Col md={24}>

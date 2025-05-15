@@ -290,8 +290,7 @@ const AddAudiometryPuretone = ({ open, setOpen, patient, encounter, audiometryPu
             actionButtonFunction={handleSave}
             position='right'
             isDisabledActionBtn={!edit?isDisabledField:true}
-            bodyheight={550}
-            size='500px'
+            size='35vw'
             steps={[{
                 title: "Audiometry Puretone",
                 icon: <FontAwesomeIcon icon={faEarListen}/>,

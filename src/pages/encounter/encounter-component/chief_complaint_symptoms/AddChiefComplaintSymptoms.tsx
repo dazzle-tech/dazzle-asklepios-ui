@@ -244,8 +244,7 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
             actionButtonFunction={handleSave}
             position='right'
             isDisabledActionBtn={!edit?isDisabledField:true}
-            bodyheight={550}
-            size='500px'
+            size='32vw'
             steps={[{
                 title: "Chief Complain",
                 icon: <FontAwesomeIcon icon={faHeartPulse} />,

@@ -132,9 +132,8 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit,  patient, en
             setOpen={setOpen}
             title="Add Allergy"
             actionButtonFunction={handleSave}
-            bodyheight={550}
-            isDisabledActionBtn={!edit ? allerges.statusLvalue?.valueCode == "ARS_CANCEL" ? true : false : true}
-            size='700px'
+            isDisabledActionBtn={!edit?allerges.statusLvalue?.valueCode=="ARS_CANCEL"?true:false:true}
+            size='sm'
             position='right'
             steps={[
 

@@ -175,10 +175,10 @@ const AddPrefferdHealthProfessionalModal = ({ open, setOpen, patient, patientHP,
             setOpen={setOpen}
             title="New/Edit Patient Preferred Health Professional"
             actionButtonLabel="Save"
-            bodyheight={400}
+            bodyheight='65vh'
             actionButtonFunction={handleSave}
             steps={[{ title: "Preferred Health Professional", icon: <FontAwesomeIcon icon={faHospitalUser }/>}]}
-            size="550px"
+            size="35vw"
             content={content}
         />
     );

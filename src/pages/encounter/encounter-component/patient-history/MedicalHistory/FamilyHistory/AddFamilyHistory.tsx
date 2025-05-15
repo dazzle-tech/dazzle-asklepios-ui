@@ -54,8 +54,7 @@ const AddFamilyHistory = ({ open, setOpen }) => {
             steps={[{title: "Family History",icon: <FontAwesomeIcon icon={faPeopleRoof}/>}]}
             actionButtonFunction={""}
             position='right'
-            bodyheight={550}
-            size='500px'
+            size='33vw'
             content={content}
         ></MyModal>
     );

@@ -1,5 +1,5 @@
 import React from "react";
-import { notify } from '@/utils/uiReducerActions';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyTable
     from "@/components/MyTable";
 import { conjureValueBasedOnKeyFromList } from '@/utils';
@@ -125,9 +125,8 @@ const Substitues = ({ open, setOpen, selectedGeneric }) => {
         open={open}
         setOpen={setOpen}
         size="md"
-        bodyheight={550}
         title={<Translate>Substitutes</Translate>}
-        steps={[{ title: "Substitutes", icon:faRightLeft }]}
+        steps={[{ title: "Substitutes", icon:<FontAwesomeIcon icon={faRightLeft }/>}]}
         position="right"
         hideActionBtn
         hideCanel

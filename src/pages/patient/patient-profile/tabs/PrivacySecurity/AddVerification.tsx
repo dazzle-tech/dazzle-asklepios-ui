@@ -36,7 +36,7 @@ const AddVerification = ({ localPatient, setLocalPatient, validationResult, open
     <MyModal
     open={open}
     setOpen={setOpen}
-    bodyheight={250}
+    bodyheight="40vh"
     title="Patient Verification"
     actionButtonLabel="Verify"
     actionButtonFunction={() =>

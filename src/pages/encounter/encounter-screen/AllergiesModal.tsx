@@ -246,7 +246,7 @@ const AllergiesModal =({open,setOpen ,patient})=>{
     return(<>
     <MyModal
     position='right'
-    size='900px'
+    size='50vw'
     open={open}
     setOpen={setOpen}
     steps={[{ title: "Allergy", icon:<FontAwesomeIcon icon={faHandDots}/>}]}

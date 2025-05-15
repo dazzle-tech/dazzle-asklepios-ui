@@ -304,8 +304,7 @@ const AddTreadmillStress = ({ open, setOpen, treadmillStressObject, patient, enc
             actionButtonFunction={handleSave}
             position='right'
             isDisabledActionBtn={!edit?isDisabledField:true}
-            bodyheight={550}
-            size='500px'
+            size='32vw'
             steps={[{
                 title: "Treadmill Stress",
                 icon: <FontAwesomeIcon icon={faPersonRunning}/>,

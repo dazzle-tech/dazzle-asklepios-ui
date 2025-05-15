@@ -288,7 +288,6 @@ const CDTSetup = () => {
         actionButtonFunction={handleSave}
         size="xs"
         position='right'
-        bodyheight={550}
         steps={[{ title: 'CDT', icon:<FontAwesomeIcon icon={ faTooth }/>}]}
       />
       <LinkedServices open={servicesOpen} setOpen={setServicesOpen} cdt={cdt} setCdt={setCdt} />
