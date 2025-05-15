@@ -55,17 +55,11 @@ const Referrals = ({ edit, patient, encounter }) => {
     currentDepartment: true
   });
   const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
-  const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
-
   const isSelected = rowData => {
     if (rowData && procedure && rowData.key === procedure.key) {
       return 'selected-row';
     } else return '';
   };
-
-  const department = departmentListResponse?.object.filter(
-    item => item.departmentTypeLkey === '5673990729647006'
-  );
   const [saveProcedures, saveProcedureMutation] = useSaveProceduresMutation();
 
   const [listRequest, setListRequest] = useState<ListRequest>({
@@ -347,25 +341,21 @@ const Referrals = ({ edit, patient, encounter }) => {
       }
     },
     {
-      key: "faciltyLkey",
-      dataKey: "faciltyLkey",
+      key: "facilityKey",
+      dataKey: "facilityKey",
       title: <Translate>FACILITY</Translate>,
       flexGrow: 1,
       expandable: true,
-      render: (rowData: any) => {
-        return rowData.faciltyLkey ? rowData.faciltyLvalue.lovDisplayVale : rowData.faciltyLkey
-      }
+      render: (rowData: any) => { return rowData.facilityKey ? rowData.facility?.facilityName :""}
     },
     {
-      key: "",
-      dataKey: "",
+      key: "departmentTypeLkey",
+      dataKey: "departmentTypeLkey",
       title: <Translate>DEPARTMENT</Translate>,
       flexGrow: 1,
       expandable: true,
       render: (rowData: any) => {
-        const d = department?.find(item => item.key === rowData.departmentKey);
-
-        return d?.name || '';
+         return rowData.departmentKey ? rowData.department?.departmentTypeLvalue?.lovDisplayVale : ""
       }
     },
     {

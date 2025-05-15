@@ -2325,7 +2325,7 @@ export const newApProcedure:modelTypes.ApProcedure = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
-	faciltyLkey:undefined,
+	facilityKey:undefined,
 	encounterKey:undefined,
 	bodyPartLkey:undefined,
 	sideLkey:undefined,
