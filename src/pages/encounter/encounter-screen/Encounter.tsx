@@ -70,7 +70,7 @@ const Encounter = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const propsData = location.state;
-  const [localEncounter, setLocalEncounter] = useState<any>({ ...propsData.encounter });
+  const [localEncounter, setLocalEncounter] = useState<any>({ ...propsData?.encounter });
   const divContent = (
     <div style={{ display: 'flex' }}>
       <Text className='title-font-style'>Patient Visit</Text>
@@ -132,7 +132,7 @@ const Encounter = () => {
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
   const [openWarningModal, setOpenWarningModal] = useState(false);
   const [activeContent, setActiveContent] = useState(
-    <PatientSummary patient={propsData.patient} encounter={propsData.encounter} />
+    <PatientSummary patient={propsData?.patient} encounter={propsData?.encounter} />
   );
   const handleMenuItemClick = content => {
     setActiveContent(content);
