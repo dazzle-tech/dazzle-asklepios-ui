@@ -47,7 +47,9 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             patientKey: data?.patient.key,
             patientFullName: data?.patient.fullName,
             encounterStatusLkey: "91084250213000",
-            plannedStartDate: data?.appointmentStart
+            plannedStartDate: data?.appointmentStart,
+            resourceTypeLkey:data?.resourceTypeLkey,
+            visitTypeLkey:data?.visitTypeLkey
         }
         saveEncounter(visit).unwrap();
         console.log(visit)
@@ -66,7 +68,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
     const handleConfirm = () => {
         const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Confirmed", reasonLkey: null, otherReason: null }).then(() => {
+        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Confirmed",  reasonLkey: null, otherReason: null }).then(() => {
             dispatch(notify('Appointment Confirmed Successfully'));
             onStatusChange()
             onActionsModalClose()
