@@ -715,7 +715,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
 
 
     return (
-        <div className="appointment-model-container">
+        <div>
             <AdvancedModal
                 leftWidth={"25%"}
                 rightWidth = {"75%"}
@@ -740,7 +740,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                 rightTitle='Add Appointment'
                 rightContent={
                     <div className="appointment-wrapper">
-                        <div className="content-wrapper">
+                        <div className="appointment-content-wrapper">
                             <div className="left-input">
                                 {from === 'Schedule' &&
                                     <Panel>
@@ -1390,7 +1390,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                     </div>}
 
                 leftContent={
-                    <div style={{ marginBottom: "20px" }}>
+                    <div className="appointment-wrapper" style={{ marginBottom: "20px" }}>
                         <div className="show-grid" >
                             <div className="flex-container" style={{ justifyContent: "space-between" }}   >
                                 <p className="left-side-title" >Patients List</p>
