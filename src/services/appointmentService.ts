@@ -109,6 +109,19 @@ export const appointmentService = createApi({
           return response.object;
         }
       }),
+      // TestTest
+      deactiveActiveResource: builder.mutation({
+            query: (resource: ApResources) => ({
+              url: `/appointment/remove-resource`,
+              method: 'POST',
+              body: resource,
+            }),
+            onQueryStarted: onQueryStarted,
+            transformResponse: (response: any) => {
+              return response.object;
+            },
+          }),
+
     })
 
   
@@ -125,6 +138,7 @@ export const {
   useSaveAppointmentMutation,
   useGetResourcesAvailabilityQuery,
   useGetAppointmentsQuery,
-  useChangeAppointmentStatusMutation
+  useChangeAppointmentStatusMutation,
+  useDeactiveActiveResourceMutation
 
 } = appointmentService;

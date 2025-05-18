@@ -204,22 +204,23 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
                 required
                 record={userLicense}
                 setRecord={setUserLicense}
-                width={width > 600 ? 520 : 250}
+                width={350}
               />
               <MyInput
                 fieldName="licenseNumber"
                 required
                 record={userLicense}
                 setRecord={setUserLicense}
-                width={width > 600 ? 520 : 250}
+                width={350}
               />
               <MyInput
+                column
                 fieldType="date"
                 fieldLabel="Valid To"
                 fieldName="validTo"
                 record={userLicense}
                 setRecord={setUserLicense}
-                width={width > 600 ? 520 : 250}
+                width={350}
               />
             </Form>
           );
@@ -240,20 +241,8 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
               childContent={conjureFormContentOfChildModal}
               actionChildButtonLabel="Create"
               actionChildButtonFunction={handleSaveLicense}
-              //   mainSize = {width > 600 ? '570px' : '300px'}
               mainSize="sm"
-              childSize="sm"
         />
-    // <MyModal
-    //   open={open}
-    //   setOpen={setOpen}
-    //   title="Licenses & Certifications"
-    //   position="right"
-    //   content={conjureFormContent}
-    //   hideActionBtn
-    //   size={width > 600 ? '570px' : '300px'}
-    //   steps={[{ title: 'License', icon: <FaAddressCard /> }]}
-    // />
   );
 };
 export default ViewLicenses;
