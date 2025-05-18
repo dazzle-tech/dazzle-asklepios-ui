@@ -19,7 +19,7 @@ import {
 import './styles.less';
 
 
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { formatDateWithoutSeconds } from '@/utils';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import {
@@ -535,7 +535,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             title: <Translate>SUBMIT DATE</Translate>,
             flexGrow: 2,
             fullText: true,
-            render: rowData => rowData.submitDate ? new Date(rowData.submitDate).toLocaleString() : ""
+            render: rowData =>   <span className='date-table-style'>{formatDateWithoutSeconds(rowData.submitDate)}</span>
 
         }
         ,
@@ -564,7 +564,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                 return (<>
                     <span>{rowData.createdBy}</span>
                     <br />
-                    <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.createdAt)}</span>
                 </>)
             }
 
@@ -577,7 +577,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                 return (<>
                     <span>{rowData.updatedBy}</span>
                     <br />
-                    <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.updatedAt)}</span>
                 </>)
             }
 
@@ -591,7 +591,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                 return (<>
                     <span>{rowData.deletedBy}</span>
                     <br />
-                    <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.deletedAt)}</span>
                 </>)
             }
 
