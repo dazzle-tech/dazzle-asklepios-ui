@@ -1,8 +1,8 @@
+import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
-import { FaFilePrescription } from "react-icons/fa6";
 import {
     useGetCustomeInstructionsQuery,
     useGetPrescriptionMedicationsQuery,
@@ -23,19 +23,17 @@ import CheckIcon from '@rsuite/icons/Check';
 import DocPassIcon from '@rsuite/icons/DocPass';
 import PlusIcon from '@rsuite/icons/Plus';
 import React, { useEffect, useState } from 'react';
+import { FaFilePrescription } from "react-icons/fa6";
 import { MdModeEdit } from 'react-icons/md';
+import { formatDateWithoutSeconds } from '@/utils';
 import {
     Checkbox,
-    Col,
     Divider,
-    Row,
     SelectPicker,
-    Table,
-    Text
+    Table
 } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
-import CancellationModal from '@/components/CancellationModal';
 const { Column, HeaderCell, Cell } = Table;
 const Prescription = ({ edit, patient, encounter }) => {
 
@@ -186,7 +184,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                 selectedRows.map(item => savePrescriptionMedication({ ...item, isValid: false, statusLkey: "1804447528780744", deletedAt: Date.now() }).unwrap())
             );
 
-            dispatch(notify({msg:'All medication deleted successfully',sev:"success"}));
+            dispatch(notify({msg:'All Medication Deleted Successfully',sev:"success"}));
             setOpenCancellation(false);
             medicRefetch().then(() => {
 
@@ -454,7 +452,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return (<>
                     <span>{rowData.createdBy}</span>
                     <br />
-                    <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.createdAt)}</span>
                 </>)
             }
 
@@ -467,7 +465,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return (<>
                     <span>{rowData.updatedBy}</span>
                     <br />
-                    <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.updatedAt )}</span>
                 </>)
             }
 
@@ -481,7 +479,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                 return (<>
                     <span>{rowData.deletedBy}</span>
                     <br />
-                    <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.deletedAt)}</span>
                 </>)
             }
 

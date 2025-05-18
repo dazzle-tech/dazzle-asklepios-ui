@@ -1,41 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import Translate from '@/components/Translate';
-import MoreIcon from '@rsuite/icons/More';
 import {
-    Panel,
-    IconButton,
+    useGetCustomeInstructionsQuery
+} from '@/services/encounterService';
+import {
+    useGetGenericMedicationQuery
+} from '@/services/medicationsSetupService';
+import { initialListRequest } from '@/types/types';
+import React from 'react';
+import {
     Table,
     Tabs
-
 } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import {
-    useGetGenericMedicationQuery,
-    useGetPrescriptionInstructionQuery,
-    useGetGenericMedicationActiveIngredientQuery
-} from '@/services/medicationsSetupService';
-import {
-
-    useGetPrescriptionsQuery,
-    useGetPrescriptionMedicationsQuery,
-    useGetCustomeInstructionsQuery
-
-} from '@/services/encounterService';
-import {
-    useGetDrugOrderQuery,
-    useGetDrugOrderMedicationQuery
-} from '@/services/encounterService';
-import { initialListRequest } from '@/types/types';
-import { ApDrugOrder, ApDrugOrderMedications, ApPrescription } from '@/types/model-types';
-import { newApDrugOrder, newApDrugOrderMedications, newApPrescription } from '@/types/model-types-constructor';
 import './styles.less';
+const { Column, HeaderCell, Cell } = Table;
 
-import Prescriptions from './Prescriptions';
 import DrugOrder from './DrugOrder';
 import PatientChronic from './PatientChronic';
+import Prescriptions from './Prescriptions';
 const MedicationsRecord = ({patient ,encounter}) => {   
     const { data: genericMedicationListResponse } = useGetGenericMedicationQuery({ ...initialListRequest });
     const { data: customeInstructions, isLoading: isLoadingCustomeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({

@@ -6,6 +6,7 @@ import { initialListRequest } from "@/types/types";
 import React, { useState } from "react";
 import DrugOrderDetails from "./DrugOrderDetails";
 import { Row } from "rsuite";
+import { formatDateWithoutSeconds } from "@/utils";
 const DrugOrder = ({ patient,genericMedicationListResponse }) => {
     const [order, setOrder] = useState({ ...newApDrugOrder });
     const { data: orders, refetch: ordRefetch } = useGetDrugOrderQuery({
@@ -59,7 +60,7 @@ const DrugOrder = ({ patient,genericMedicationListResponse }) => {
             title: <Translate>Visit Date</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
-                return rowData.encounter?.createdAt ? new Date(rowData.encounter?.createdAt).toLocaleString() : " ";
+                return formatDateWithoutSeconds(rowData.encounter?.createdAt );
             }
 
 
@@ -70,7 +71,7 @@ const DrugOrder = ({ patient,genericMedicationListResponse }) => {
             title: <Translate>Created At</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
-                return rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : " ";
+                return formatDateWithoutSeconds(rowData?.createdAt );
             }
 
 
@@ -104,7 +105,7 @@ const DrugOrder = ({ patient,genericMedicationListResponse }) => {
             title: <Translate>Submitted at</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
-                return rowData.submittedAt ? new Date(rowData.submittedAt).toLocaleString() : " ";
+                return formatDateWithoutSeconds(rowData.submittedAt);
             }
 
 

@@ -4,6 +4,7 @@ import { useGetDrugOrderMedicationQuery, useGetPrescriptionMedicationsQuery } fr
 import { useGetGenericMedicationActiveIngredientQuery, useGetPrescriptionInstructionQuery } from "@/services/medicationsSetupService";
 import { initialListRequest } from "@/types/types";
 import React, { useState } from "react";
+import { formatDateWithoutSeconds } from "@/utils";
 const PatientChronic = ({ genericMedicationListResponse, customeInstructions, patient }) => {
 
     const [listGinricRequest, setListGinricRequest] = useState({
@@ -214,7 +215,7 @@ const PatientChronic = ({ genericMedicationListResponse, customeInstructions, pa
             title: <Translate>Date of Prescribing</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
-                return rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : " ";
+                return formatDateWithoutSeconds(rowData.createdAt);
             }
         },
         {
