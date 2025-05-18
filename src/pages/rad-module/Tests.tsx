@@ -22,7 +22,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { useState, useEffect, useRef } from 'react';
 import { HStack, Tooltip, Whisper } from 'rsuite';
 import ChatModal from '@/components/ChatModal';
-
+import { formatDateWithoutSeconds } from '@/utils';
 import PatientArrivalModal from './PatientArrivalModal';
 const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport, reportFetch }) => {
   const dispatch = useAppDispatch();
@@ -227,11 +227,11 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
       title: <Translate>PHYSICIAN</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
-        return (
-          rowData.createdBy,
-          ' At',
-          rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''
-        );
+        return (<>
+          <span>{rowData.createdBy}</span>
+          <br />
+          <span className='date-table-style'>{formatDateWithoutSeconds(rowData.createdAt)}</span>
+        </>)
       }
     },
     {
@@ -308,12 +308,12 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
                   marginRight: 10,
                   color:
                     rowData.processingStatusLkey !== '6055029972709625' &&
-                    rowData.processingStatusLkey !== '6816324725527414'
+                      rowData.processingStatusLkey !== '6816324725527414'
                       ? 'gray'
                       : 'inherit',
                   cursor:
                     rowData.processingStatusLkey !== '6055029972709625' &&
-                    rowData.processingStatusLkey !== '6816324725527414'
+                      rowData.processingStatusLkey !== '6816324725527414'
                       ? 'not-allowed'
                       : 'pointer'
                 }}
@@ -331,12 +331,12 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
                   marginRight: 10,
                   color:
                     rowData.processingStatusLkey !== '6055029972709625' &&
-                    rowData.processingStatusLkey !== '6816324725527414'
+                      rowData.processingStatusLkey !== '6816324725527414'
                       ? 'gray'
                       : 'inherit',
                   cursor:
                     rowData.processingStatusLkey !== '6055029972709625' &&
-                    rowData.processingStatusLkey !== '6816324725527414'
+                      rowData.processingStatusLkey !== '6816324725527414'
                       ? 'not-allowed'
                       : 'pointer'
                 }}
@@ -357,49 +357,45 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
       }
     },
     ,
+
     {
       key: 'acceptedAt',
       dataKey: 'acceptedAt',
-      title: <Translate>ACCEPTED AT</Translate>,
-      flexGrow: 1,
+      title: <Translate>ACCEPTED AT/BY</Translate>,
       expandable: true,
       render: (rowData: any) => {
-        return rowData.acceptedAt ? new Date(rowData.acceptedAt).toLocaleString() : '';
+        return (<>
+          <span>{rowData.acceptedBy}</span>
+          <br />
+          <span className='date-table-style'>{formatDateWithoutSeconds(rowData.acceptedAt)}</span>
+        </>)
       }
+
     },
-    ,
-    {
-      key: 'acceptedBy',
-      dataKey: 'acceptedBy',
-      title: <Translate>ACCEPTED BY</Translate>,
-      flexGrow: 1,
-      expandable: true
-    },
-    ,
+
     {
       key: 'rejectedAt',
       dataKey: 'rejectedAt',
-      title: <Translate>REJECTED AT</Translate>,
+      title: <Translate>REJECTED AT/BY</Translate>,
       flexGrow: 1,
       expandable: true,
       render: (rowData: any) => {
-        return rowData.rejectedAt ? new Date(rowData.rejectedAt).toLocaleString() : '';
+        return <>
+          <span>{rowData.rejectedBy}</span>
+          <br />
+          <span className='date-table-style'>{formatDateWithoutSeconds(rowData.rejectedAt)}</span>
+        </>
+      
       }
     },
-    {
-      key: 'rejectedBy',
-      dataKey: 'rejectedBy',
-      title: <Translate>REJECTED BY</Translate>,
-      flexGrow: 1,
-      expandable: true
-    },
+  
     {
       key: 'rejectedReason',
       dataKey: 'rejectedReason',
       title: <Translate>REJECTED REASON</Translate>,
       flexGrow: 1,
       expandable: true,
-   
+
     }
   ];
 

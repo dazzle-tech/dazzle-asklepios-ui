@@ -15,6 +15,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { HStack, Tooltip, Whisper } from "rsuite";
 import { forwardRef, useImperativeHandle } from 'react';
 import AddReportModal from "./AddReportModal";
+import { formatDateWithoutSeconds } from '@/utils';
 type props = {
     report: any,
     setReport: any,
@@ -93,7 +94,7 @@ const Report = forwardRef<unknown, props>(({ report, setReport, saveReport, test
     }, [reportFetch])
   console.log(test);
     useEffect(() => {
-        console.log("test",test)
+    
         const updatedFilters = [
             {
                 fieldName: 'order_test_key',
@@ -192,9 +193,8 @@ const Report = forwardRef<unknown, props>(({ report, setReport, saveReport, test
             title: <Translate>PREVIOUS REPORT DATE</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
-                return prevResultsList?.object[0]
-                    ? new Date(prevResultsList?.object[0]?.createdAt).toLocaleString()
-                    : ''
+                return formatDateWithoutSeconds(prevResultsList?.object[0]?.createdAt) 
+              
             }
         }
         ,
