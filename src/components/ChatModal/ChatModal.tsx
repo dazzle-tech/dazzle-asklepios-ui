@@ -6,6 +6,7 @@ import MyInput from "../MyInput";
 import { Form } from "rsuite";
 import MyModal from "../MyModal/MyModal";
 import "./styles.less";
+import { formatDateWithoutSeconds } from "@/utils";
 const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowName }) => {
     const [newMessage, setNewMessage] = useState({ message: "" });
     const endOfMessagesRef = useRef(null);
@@ -43,7 +44,7 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
                                             {msg[fieldShowName]}
                                         </span>
                                         <div className="message-date">
-                                            {new Date(msg.createdAt).toLocaleString()}
+                                            { formatDateWithoutSeconds(msg.createdAt)}
                                         </div>
                                     </div>
                                 ))

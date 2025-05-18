@@ -1,27 +1,24 @@
+import CancellationModal from "@/components/CancellationModal";
+import ChatModal from "@/components/ChatModal";
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
-import { forwardRef, useImperativeHandle } from 'react';
+import { useAppDispatch } from "@/hooks";
 import { useGetDiagnosticOrderTestQuery, useGetOrderTestNotesByTestIdQuery, useSaveDiagnosticOrderTestMutation } from "@/services/encounterService";
+import { useSaveDiagnosticOrderTestNotesMutation, useSaveDiagnosticTestResultMutation } from "@/services/labService";
 import { useGetDiagnosticsTestLaboratoryListQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
+import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsNotes, newApDiagnosticOrderTestsResult } from "@/types/model-types-constructor";
 import { initialListRequest, ListRequest } from "@/types/types";
 import { addFilterToListRequest, fromCamelCaseToDBName } from "@/utils";
-import { faComment, faFilter, faRightFromBracket, faVialCircleCheck } from "@fortawesome/free-solid-svg-icons";
+import { notify } from "@/utils/uiReducerActions";
+import { faComment, faRightFromBracket, faVialCircleCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useState, useEffect } from "react";
-import { Divider, HStack, IconButton, Pagination, Panel, SelectPicker, Table, Tooltip, Whisper } from "rsuite";
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
-import './styles.less';
-import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsNotes, newApDiagnosticOrderTestsResult } from "@/types/model-types-constructor";
-import { useSaveDiagnosticOrderTestNotesMutation, useSaveDiagnosticTestResultMutation } from "@/services/labService";
-import { useAppDispatch } from "@/hooks";
-import { notify } from "@/utils/uiReducerActions";
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { HStack, Panel, SelectPicker, Table, Tooltip, Whisper } from "rsuite";
 import SampleModal from "./SampleModal";
-import ChatModal from "@/components/ChatModal";
-import CancellationModal from "@/components/CancellationModal";
-const { Column, HeaderCell, Cell } = Table;
+import './styles.less';
+import { formatDateWithoutSeconds } from "@/utils";
 type Props = {
     order: any;
     test: any;
@@ -336,7 +333,7 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
                 return (<>
                     <span>{rowData.createdBy}</span>
                     <br />
-                    <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.createdAt)}</span>
                 </>)
             }
 
@@ -473,7 +470,7 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
                 return (<>
                     <span>{rowData.acceptedBy}</span>
                     <br />
-                    <span className='date-table-style'>{rowData.acceptedAt ? new Date(rowData.acceptedAt).toLocaleString() : ''}</span>
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.acceptedAt)}</span>
                 </>)
             }
 
@@ -488,7 +485,7 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
                 return (<>
                     <span>{rowData.rejectedBy}</span>
                     <br />
-                    <span className='date-table-style'>{rowData.rejectedAt ? new Date(rowData.rejectedAt).toLocaleString() : ''}</span>
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.rejectedAt)}</span>
                 </>)
             }
 

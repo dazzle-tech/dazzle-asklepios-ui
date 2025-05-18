@@ -3,6 +3,7 @@ import Translate from "@/components/Translate";
 import { useGetDiagnosticOrderQuery } from "@/services/encounterService";
 import { faLandMineOn } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { formatDateWithoutSeconds } from "@/utils";
 import './styles.less';
 import React from "react";
 import { Divider, Pagination, Panel, Tooltip, Whisper } from "rsuite";
@@ -34,7 +35,7 @@ const Orders = ({ order, setOrder, listOrdersResponse, setListOrdersResponse }) 
             flexGrow: 2,
             fullText: true,
             render: (rowData: any) => {
-                return rowData.submittedAt ? new Date(rowData.submittedAt).toLocaleString() : "";
+                return formatDateWithoutSeconds(rowData.submittedAt);
             }
 
         }
@@ -121,29 +122,7 @@ const Orders = ({ order, setOrder, listOrdersResponse, setListOrdersResponse }) 
                 rowClassName={isSelected}
                 loading={isOrderFetcheng}
             ></MyTable>
-            <Divider />
-            <Pagination
-                prev
-                next
-                first
-                last
-                ellipsis
-                boundaryLinks
-                maxButtons={5}
-                size="xs"
-                layout={['total', '-', 'limit', '|', 'pager', 'skip']}
-                limitOptions={[4, 15, 30]}
-                limit={listOrdersResponse.pageSize}
-                activePage={listOrdersResponse.pageNumber}
-
-                onChangePage={pageNumber => {
-                    setListOrdersResponse({ ...listOrdersResponse, pageNumber });
-                }}
-                onChangeLimit={pageSize => {
-                    setListOrdersResponse({ ...listOrdersResponse, pageSize });
-                }}
-                total={filterdOrderList?.length || 0}
-            />
+          
         </Panel>
     );
 }

@@ -4,6 +4,7 @@ import Translate from "@/components/Translate";
 import { useGetLabResultLogListQuery } from "@/services/labService";
 import { initialListRequest } from "@/types/types";
 import React,{useState,useEffect} from "react";
+import {formatDateWithoutSeconds} from '@/utils'
 const LogResult = ({open,setOpen,result}) => {
       const [listLogRequest, setListLogRequest] = useState({
         ...initialListRequest,
@@ -53,7 +54,7 @@ const LogResult = ({open,setOpen,result}) => {
             title:<Translate>Time</Translate>,
             fullText: true,
             flexGrow: 2,
-            render: (rowData) => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "",
+            render:rowData=>formatDateWithoutSeconds(rowData.createdAt) ,
         },
         {
             key: "createdBy",

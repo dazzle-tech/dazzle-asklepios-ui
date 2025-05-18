@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import Check from '@mui/icons-material/Check';
-import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 
 import { useAppDispatch, useAppSelector } from '@/hooks';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -11,20 +9,12 @@ import {
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 
-import './styles.less';
-import {
-  Box,
-  Step,
-  StepLabel,
-  Stepper,
-  Typography,
- 
-} from '@mui/material';
 import {
   DatePicker,
   Row,
   Table
 } from 'rsuite';
+import './styles.less';
 
 import {
   useGetOrderTestSamplesByTestIdQuery
@@ -44,21 +34,19 @@ import {
   newApPatient
 } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
+import { formatDateWithoutSeconds } from '@/utils';
 import {
-  Col,
-  Steps
+  Col
 } from 'rsuite';
 import PatientSide from './PatienSide';
 import './styles.less';
 const { Column, HeaderCell, Cell } = Table;
 
 
+import MyStepper from '@/components/MyStepper';
 import Orders from './Orders';
 import Result from './Result';
 import Tests from './Tests';
-import MyStepper from '@/components/MyStepper';
-import MyButton from '@/components/MyButton/MyButton';
-import MyModal from '@/components/MyModal/MyModal';
 const Lab = () => {
   const dispatch = useAppDispatch();
   const uiSlice = useAppSelector(state => state.auth);
@@ -236,10 +224,10 @@ const Lab = () => {
 
   const stepsData = [
     { key: "6055207372976955", value: "Sample Collected", description: " "  ,isError:false },
-    { key: "6055074111734636", value: "Accepted", description: test.acceptedAt ? new Date(test.acceptedAt).toLocaleString() : "" ,isError:false},
-    { key: "6055192099058457", value: "Rejected", description: test.rejectedAt ? new Date(test.rejectedAt).toLocaleString() : "" ,isError:true },
-    { key: "265123250697000", value: "Result Ready", description: test.readyAt ? new Date(test.readyAt).toLocaleString() : "" ,isError:false},
-    { key: "265089168359400", value: "Result Approved", description: test.approvedAt ? new Date(test.approvedAt).toLocaleString() : "" ,isError:false  },
+    { key: "6055074111734636", value: "Accepted", description: formatDateWithoutSeconds(test.acceptedAt) ,isError:false},
+    { key: "6055192099058457", value: "Rejected", description: formatDateWithoutSeconds(test.rejectedAt ) ,isError:true },
+    { key: "265123250697000", value: "Result Ready", description:formatDateWithoutSeconds(test.readyAt )  ,isError:false},
+    { key: "265089168359400", value: "Result Approved", description:formatDateWithoutSeconds(test.approvedAt)  },
   ];
 
   const filteredStepsData = stepsData.filter(step =>

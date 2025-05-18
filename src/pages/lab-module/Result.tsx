@@ -9,6 +9,7 @@ import { HStack, Input, Panel, SelectPicker, Tooltip, Whisper } from "rsuite";
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import { useAppSelector, useAppDispatch } from "@/hooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { formatDateWithoutSeconds } from "@/utils";
 import {
     faArrowDown,
     faArrowUp,
@@ -634,11 +635,8 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
             flexGrow: 1,
             fullText: true,
             render: (rowData: any) => {
-                const createdAt = prevResultsList?.object[1]?.createdAt;
-                if (createdAt) {
-                    return new Date(createdAt).toLocaleString();
-                }
-                return "";
+             
+                return formatDateWithoutSeconds(prevResultsList?.object[1]?.createdAt);
             },
         },
         {key: "compareWithAllPrevious",
