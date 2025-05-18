@@ -3,6 +3,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
+import { formatDateWithoutSeconds } from '@/utils';
 import {
     useGetDrugOrderMedicationQuery,
     useGetDrugOrderQuery,
@@ -31,7 +32,6 @@ import {
 } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
-const { Column, HeaderCell, Cell } = Table;
 const DrugOrder = ({ edit, patient, encounter }) => {
 
     const dispatch = useAppDispatch();
@@ -241,7 +241,8 @@ const DrugOrder = ({ edit, patient, encounter }) => {
 
         }
         catch (error) {
-            console.error("Error saving order or medications:", error);
+           
+             dispatch(notify({ msg: 'Error saving order or medications', sev: 'error' }));
         }
 
         orderMedications?.object?.map((item) => {
@@ -345,7 +346,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
             title: 'Start Date Time',
             flexGrow: 2,
             render: (rowData: any) => {
-                return rowData.startDateTime ? new Date(rowData.startDateTime).toLocaleString() : "";
+                return formatDateWithoutSeconds(rowData.startDateTime);
             }
         },
         {
@@ -399,7 +400,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return (<>
                     <span>{rowData.createdBy}</span>
                     <br />
-                    <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.createdAt)}</span>
                 </>)
             }
 
@@ -412,7 +413,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return (<>
                     <span>{rowData.updatedBy}</span>
                     <br />
-                    <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.updatedAt)}</span>
                 </>)
             }
 
@@ -426,7 +427,7 @@ const DrugOrder = ({ edit, patient, encounter }) => {
                 return (<>
                     <span>{rowData.deletedBy}</span>
                     <br />
-                    <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.deletedAt) }</span>
                 </>)
             }
         },

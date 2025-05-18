@@ -1,11 +1,11 @@
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
-import { useGetPrescriptionMedicationsQuery, useGetPrescriptionsQuery } from "@/services/encounterService";
+import { useGetPrescriptionsQuery } from "@/services/encounterService";
 import { ApPrescription } from "@/types/model-types";
 import { newApPrescription } from "@/types/model-types-constructor";
 import { initialListRequest } from "@/types/types";
 import React, { useState } from "react";
-import { render } from "react-dom";
+import { formatDateWithoutSeconds } from "@/utils";
 import PrescriptionDetails from "./PrescriptionDetails";
 const Prescriptions = ({ patient,genericMedicationListResponse ,customeInstructions}) => {
     const [prescription, setPrescription] = useState<ApPrescription>({ ...newApPrescription });
@@ -56,7 +56,7 @@ const Prescriptions = ({ patient,genericMedicationListResponse ,customeInstructi
             title: <Translate>Visit Date</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
-                return rowData.encounter?.createdAt ? new Date(rowData.encounter?.createdAt).toLocaleString() : " ";
+                return formatDateWithoutSeconds(rowData.encounter?.createdAt);
             }
         },
         {
@@ -64,7 +64,7 @@ const Prescriptions = ({ patient,genericMedicationListResponse ,customeInstructi
             title: <Translate>Created At</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
-                return rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : " ";
+                return formatDateWithoutSeconds(rowData.createdAt);
             }
         },
         {
@@ -88,7 +88,7 @@ const Prescriptions = ({ patient,genericMedicationListResponse ,customeInstructi
             title: <Translate>Submitted at</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
-                return rowData.submittedAt ? new Date(rowData.submittedAt).toLocaleString() : " ";
+                return formatDateWithoutSeconds(rowData.submittedAt);
             }
         },
 

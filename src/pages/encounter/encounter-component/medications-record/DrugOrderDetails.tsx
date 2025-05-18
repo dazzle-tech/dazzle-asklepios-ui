@@ -4,6 +4,7 @@ import { useGetDrugOrderMedicationQuery } from "@/services/encounterService";
 import { newApDrugOrderMedications } from "@/types/model-types-constructor";
 import { initialListRequest } from "@/types/types";
 import React,{useState} from "react";
+import { formatDateWithoutSeconds } from "@/utils";
 const DrugOrderDetails=({genericMedicationListResponse ,order})=>{
       const [orderMedication, setOrderMedication] = useState(
             {
@@ -70,7 +71,7 @@ const DrugOrderDetails=({genericMedicationListResponse ,order})=>{
             title:<Translate>Start Date Time</Translate>,
             flexGrow:1,
             render:(rowData:any)=>{
-               return rowData.startDateTime ? new Date(rowData.startDateTime).toLocaleString() : " ";
+               return formatDateWithoutSeconds(rowData.startDateTime);
             }
        
            
@@ -133,7 +134,7 @@ const DrugOrderDetails=({genericMedicationListResponse ,order})=>{
             flexGrow:1,
             expandable:true,
             render:(rowData:any)=>{
-               return rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : "";
+               return formatDateWithoutSeconds(rowData.createdAt);
             }
            },
            ,
@@ -151,7 +152,7 @@ const DrugOrderDetails=({genericMedicationListResponse ,order})=>{
             flexGrow:1,
             expandable:true,
             render:(rowData:any)=>{
-               return rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : "";
+               return formatDateWithoutSeconds(rowData.deletedAt);
             }
            }
            ,
