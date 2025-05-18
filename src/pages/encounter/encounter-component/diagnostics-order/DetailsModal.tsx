@@ -121,11 +121,7 @@ const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveT
                 {
                     title: (test?.testTypeLvalue?.lovDisplayVale || '') + ' - ' + (test?.testName || ''),
                     icon: <FontAwesomeIcon icon={faVials} />,
-                    footer:
-                        <MyButton
-                            onClick={() => setAttachmentsModalOpen(true)}
-                            prefixIcon={() => <FontAwesomeIcon icon={faFile} />}
-                        >Attachment File</MyButton>
+                  
                 },
             ]}
             content={

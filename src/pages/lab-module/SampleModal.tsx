@@ -1,32 +1,30 @@
 import MyInput from "@/components/MyInput";
-import React,
-{
-  useState,
-  useEffect, useRef
-} from "react";
-import { notify } from '@/utils/uiReducerActions';
-import {
-  Form, Modal,
-  Row, Col, Button, DatePicker, Table, Divider, Pagination, Panel,
-  Text,
-  Stack
-} from "rsuite";
-import './styles.less';
-const { Column, HeaderCell, Cell } = Table;
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useGetLovValuesByCodeQuery } from "@/services/setupService";
-import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsSamples } from "@/types/model-types-constructor";
-import { FaCalendar } from "react-icons/fa6";
+import MyLabel from "@/components/MyLabel";
+import MyModal from "@/components/MyModal/MyModal";
+import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import { useAppDispatch } from "@/hooks";
 import { useSaveDiagnosticOrderTestSamplesMutation } from "@/services/labService";
-import MyModal from "@/components/MyModal/MyModal";
-import { title } from "process";
-import { FaYoutube } from "react-icons/fa";
-import { TableColumn } from "@rsuite/icons";
-import MyTable from "@/components/MyTable";
-import MyLabel from "@/components/MyLabel";
+import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsSamples } from "@/types/model-types-constructor";
+import { notify } from '@/utils/uiReducerActions';
 import { faVialCircleCheck } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import React, {
+  useState
+} from "react";
+import { FaCalendar } from "react-icons/fa6";
+import {
+  Col,
+  DatePicker,
+  Form,
+  Panel,
+  Row,
+  Stack,
+  Table
+} from "rsuite";
+import './styles.less';
+import {formatDateWithoutSeconds } from "@/utils";
 
 const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, saveTest ,fetchTest ,fecthSample}) => {
   const dispatch = useAppDispatch();
@@ -73,7 +71,7 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
       title: <Translate>COLLECTED AT</Translate>,
       fullText: true,
       flexGrow: 2,
-      render: (rowData) => rowData.sampleCollectedAt ? new Date(rowData.sampleCollectedAt).toLocaleString() : "",
+      render: (rowData) =>formatDateWithoutSeconds(rowData.sampleCollectedAt),
     },
     {
       key: "quantity",
@@ -102,22 +100,23 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
         steps={[{ title: "Sample", icon:<FontAwesomeIcon icon={ faVialCircleCheck }/>}]}
         position="right"
         content={<>
+        <Form fluid>
           <Row>
             <Col xs={8}>
-              <Form >
+             
                 <MyInput
-                  width={200}
+                  width="100%"
                   disabled={true}
                   fieldName={"systemLkey"}
                   record={labDetails}
                   setRecord={""}
 
-                /></Form>
+                />
             </Col>
             <Col xs={8}>
-              <Form >
+            
                 <MyInput
-                  width={200}
+                  width="100%"
                   disabled={true}
                   fieldName={"tubeColorLkey"}
                   fieldType='select'
@@ -127,12 +126,12 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
                   record={labDetails}
                   setRecord={""}
 
-                /></Form>
+                />
             </Col>
             <Col xs={8}>
-              <Form >
+           
                 <MyInput
-                  width={200}
+                  width="100%"
                   disabled={true}
                   fieldName={"tubeTypeLkey"}
                   fieldType='select'
@@ -142,14 +141,14 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
                   record={labDetails}
                   setRecord={""}
 
-                /></Form>
+                />
             </Col>
           </Row>
           <Row>
             <Col xs={8}>
-              <Form >
+             
                 <MyInput
-                  width={200}
+                  width="100%"
                   fieldName={"sampleContainerLkey"}
                   fieldType='select'
                   selectData={SampleContainerLovQueryResponse?.object ?? []}
@@ -158,25 +157,25 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
                   disabled={true}
                   record={labDetails}
                   setRecord={""}
-                /></Form>
+                />
             </Col>
             <Col xs={8}>
-              <Form >
+              
                 <MyInput
-                  width={200}
+                  width="100%"
                   fieldName={"sampleVolume"}
                   fieldType='number'
                   disabled={true}
                   record={labDetails ?? ""}
                   setRecord={""}
                 />
-              </Form>
+            
 
             </Col>
             <Col xs={8}>
-              <Form >
+             
                 <MyInput
-                  width={200}
+                  width="100%"
                   fieldName={"sampleVolumeUnitLkey"}
                   fieldType='select'
                   selectData={ValueUnitLovQueryResponse?.object ?? []}
@@ -186,26 +185,26 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
                   record={labDetails}
                   setRecord={""}
                 />
-              </Form>
+             
             </Col>
           </Row>
           <Row>
             <Col xs={8}>
-              <Form>
+              
                 <MyInput
                   fieldLabel={"Actual Sample Quantity"}
                   fieldName={"quantity"}
                   fieldType='number'
-                  width={200}
+                  width="100%"
                   record={sample}
                   setRecord={setSample}
                 />
-              </Form>
+             
             </Col>
             <Col xs={8}>
-              <Form>
+            
                 <MyInput
-                  width={200}
+                  width="100%"
                   fieldName={"unitLkey"}
                   fieldType='select'
                   selectData={ValueUnitLovQueryResponse?.object ?? []}
@@ -214,7 +213,7 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
                   record={sample}
                   setRecord={setSample}
                 />
-              </Form></Col>
+             </Col>
             <Col xs={8}>
               <div className='vaccine-input-wrapper'>
                 <div>  
@@ -233,6 +232,7 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
            </Col>
 
           </Row>
+          </Form>
           <Row>
             <Col xs={24}>
               <Panel
@@ -242,8 +242,7 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
                 <MyTable
                   columns={tableColumns}
                   data={samplesList?.object ?? []}
-                  height={200}
-                  rowHeight={40}
+                  
                 ></MyTable>
 
 
