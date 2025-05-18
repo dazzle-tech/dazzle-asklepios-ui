@@ -161,19 +161,9 @@ const ScheduleScreen = () => {
 
 
 
-
-    const convertDate = (appointmentEnd) => {
-        const endDate = new Date(appointmentEnd);
-        // Format to `new Date(year, month, day, hours, minutes)`
-        const formattedEnd = new Date(
-            endDate.getUTCFullYear(), // Year
-            endDate.getUTCMonth(),   // Month (0-based index)
-            endDate.getUTCDate(),    // Day
-            endDate.getUTCHours(),   // Hours
-            endDate.getUTCMinutes()  // Minutes
-        );
-        return (formattedEnd);
-    }
+    const convertDate = (appointmentTime) => {
+        return new Date(appointmentTime);
+    };
 
     const [open, setOpen] = React.useState(false);
     const [size, setSize] = React.useState();
@@ -414,7 +404,7 @@ const ScheduleScreen = () => {
                         onClick={handleClickCalinderSearch}
                         style={{ display: showDatePicker ? "none" : "inline-block", border: "none", height: "35px" }} // إخفاء الزر عند فتح التقويم
                     >
-                       <strong>{label}</strong> 
+                        <strong>{label}</strong>
                     </Button>
 
                     {showDatePicker && (
@@ -428,11 +418,11 @@ const ScheduleScreen = () => {
                             }}
                             placement="bottomStart"
                             defaultOpen
-                            format={currentView === "month" ? "yyyy-MM" : "yyyy-MM-dd"}  
+                            format={currentView === "month" ? "yyyy-MM" : "yyyy-MM-dd"}
                             onClose={() => {
-                                  console.log("DatePicker closed");
-                                  setShowDatePicker(false);  // إخفاء الـ DatePicker عند إغلاقه
-                                }}
+                                console.log("DatePicker closed");
+                                setShowDatePicker(false);  // إخفاء الـ DatePicker عند إغلاقه
+                            }}
                         />
                     )}
                     <button style={{ margin: "7px", height: "35px" }} onClick={() => onNavigate("NEXT")}><ArrowRightLineIcon /></button>
@@ -489,7 +479,11 @@ const ScheduleScreen = () => {
     const ResourceHeader = ({ resource }) => {
         return (
             <div style={{ marginLeft: "5px", display: "flex", alignItems: "center", gap: "8px", height: "65px" }}>
-                <Avatar size="md" circle src="https://i.pravatar.cc/150?u=1" />
+                <Avatar size="md" circle src={
+                    resource && resource.fileContent
+                        ? `data:${resource.contentType};base64,${resource.fileContent}`
+                        : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
+                } />
                 <div style={{ textAlign: "left" }}>
                     <div style={{ fontSize: "14px" }} className="font-semibold text-sm">
                         {resource?.resourceName}
