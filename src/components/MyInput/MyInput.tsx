@@ -1,6 +1,6 @@
 import { camelCaseToLabel, fromCamelCaseToDBName } from '@/utils';
 import React, { useEffect, useState, ForwardedRef } from 'react';
-import { TimePicker } from 'rsuite';
+import { CheckPicker, TimePicker } from 'rsuite';
 import {
   Checkbox,
   DatePicker,
@@ -146,6 +146,7 @@ const MyInput = ({
             placeholder={props.placeholder}
             className="my-input"
             searchable={props.searchable}
+            menuMaxHeight={props?.menuMaxHeight ?? ''}
           />
         );
       //<TagPicker data={data} style={{ width: 300 }} />
@@ -166,6 +167,24 @@ const MyInput = ({
             creatable={props.creatable ?? false} // Optional: Allow users to create new tags
             groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
             searchBy={props.searchBy} // Optional: Search function for TagPicker
+          />
+        );
+          case 'checkPicker':
+        return (
+          <Form.Control
+            style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
+            block
+            disabled={props.disabled}
+            accepter={CheckPicker}
+            name={fieldName}
+            data={props?.selectData ?? []}
+            labelKey={props?.selectDataLabel ?? ''}
+            valueKey={props?.selectDataValue ?? ''}
+            value={record ? record[fieldName] : []} // Multiple values as array
+            onChange={handleValueChange} // Pass handler for multiple value selection
+            placeholder={props.placeholder ?? 'Select...'}
+            groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
+            searchBy={props.searchBy} // Optional: Search function for checkPicker
           />
         );
       case 'date':
