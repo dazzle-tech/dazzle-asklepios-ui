@@ -739,7 +739,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                     </div>}
                 rightTitle='Add Appointment'
                 rightContent={
-                    <div className="appointment-wrapper">
+                    <div  className="appointment-wrapper">
                         <div className="appointment-content-wrapper">
                             <div className="left-input">
                                 {from === 'Schedule' &&
@@ -1390,9 +1390,9 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                     </div>}
 
                 leftContent={
-                    <div className="appointment-wrapper" style={{ marginBottom: "20px" }}>
-                        <div className="show-grid" >
-                            <div className="flex-container" style={{ justifyContent: "space-between" }}   >
+                    <div className="appointment-wrapper-left"  style={{ marginBottom: "20px" }}>
+                        <div   className="show-grid" >
+                            <div className="flex-container" style={{ justifyContent: "space-between"  }}   >
                                 <p className="left-side-title" >Patients List</p>
                                 <IconButton
                                     onClick={() => setIsSideSearchOpen(false)}
@@ -1405,13 +1405,14 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                             style={{
                                 display: 'flex',
                                 flexDirection: 'column',
+                                width:"100%",
                                 gap: '16px',
                                 padding: '16px',
                                 maxHeight: '700px',
                                 overflowY: 'auto',
                                 backgroundColor: '#F5F7FB',
                                 borderRadius: '12px',
-                            }}
+                             }}
                         >
                             {isFetchingPatients ? (
                                 Array.from({ length: 4 }).map((_, i) => (

@@ -1,104 +1,115 @@
+.appointment-wrapper {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  flex-wrap: nowrap;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  height: 700px;
 
-  .appointment-wrapper {
-    display: flex;
-    width: 100%;
-    max-width: 100%;
-    flex-wrap: nowrap;
-    border-radius: 12px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    height: 700px;
+  .input-wrapper {
+    flex: 1;
+    padding: 2px;
 
-    .input-wrapper {
-      flex: 1;
-      padding: 2px;
+    .rs-form-group {
+      width: 100%;
 
-      .rs-form-group {
+      .rs-form-control {
         width: 100%;
-
-        .rs-form-control {
-          width: 100%;
-        }
       }
     }
   }
+}
 
-  .appointment-wrapper.left-closed {
-    background-color: transparent;
-  }
+.appointment-wrapper-left {
+  display: flex;
+  width: 100%;
+  max-width: 100%;
+  flex-wrap: nowrap;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  height: 650px;
+  flex-direction: column;
+}
 
-  .appointment-content-wrapper {
-    display: flex;
-    flex-wrap: nowrap;
-    max-width: 100%;
-    gap: 20px;
-    width: 1700px;
-  }
+.appointment-wrapper.left-closed {
+  background-color: transparent;
+}
 
-  .left-input,
-  .right-input {
-    flex: 1;
-    padding: 10px;
-    border-radius: 8px;
-    width: 100%;
-  }
+.appointment-content-wrapper {
+  display: flex;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  gap: 20px;
+  width: 1700px;
+}
 
-  .toggle-btn {
-    margin-top: 20px;
-    padding: 10px 15px;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  .flex-container {
-    display: flex;
-    gap: 10px;
-    width: 100%;
-  }
+.left-input,
+.right-input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  width: 100%;
+}
 
-  .right-side-title {
-    font-size: 18px;
-    text-align: left;
-    width: 100%;
-    margin-left: 20px;
-    margin-top: 5px;
-  }
+.toggle-btn {
+  margin-top: 20px;
+  padding: 10px 15px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
 
-  .left-side-title {
-    font-size: 18px;
+.flex-container {
+  display: flex;
+  gap: 10px;
 
-    margin-left: 20px;
-    margin-top: 5px;
-  }
+}
 
-  .quick-patient-icon {
-    color: #415be7;
-    margin-right: 10px;
-    font-size: 16px;
-  }
+.right-side-title {
+  font-size: 18px;
+  text-align: left;
+  width: 100%;
+  margin-left: 20px;
+  margin-top: 5px;
+}
 
-  .quick-patient-button {
-    height: 38px;
-    border: 1px solid #415be7;
-    color: #415be7;
-    width: 100%;
-    margin-top: 12px;
-  }
+.left-side-title {
+  font-size: 18px;
+  margin-left: 20px;
+  margin-bottom: 10px;
+}
 
-  .icon-button-primary {
-    background-color: #415be7 !important;
-    margin-left: 3px;
-    text-align: left;
-    height: 38px;
-    margin-top: 33px;
-  }
+.quick-patient-icon {
+  color: #415be7;
+  margin-right: 10px;
+  font-size: 16px;
+}
 
-  .icon-button-primary-icon {
-    color: #ffffff;
-    margin-right: 10px;
-    font-size: 16px;
-  }
+.quick-patient-button {
+  height: 38px;
+  border: 1px solid #415be7;
+  color: #415be7;
+  width: 100%;
+  margin-top: 12px;
+}
+
+.icon-button-primary {
+  background-color: #415be7 !important;
+  margin-left: 3px;
+  text-align: left;
+  height: 38px;
+  margin-top: 33px;
+}
+
+.icon-button-primary-icon {
+  color: #ffffff;
+  margin-right: 10px;
+  font-size: 16px;
+}
 
 @media (max-width: 1600px) {
   .appointment-content-wrapper {
