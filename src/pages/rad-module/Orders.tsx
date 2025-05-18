@@ -1,7 +1,7 @@
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import { useGetDiagnosticOrderQuery } from "@/services/encounterService";
-import { initialListRequest, ListRequest } from "@/types/types";
+import { formatDateWithoutSeconds } from '@/utils';
 import { faLandMineOn } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState, useEffect } from "react";
@@ -39,7 +39,8 @@ const Orders = ({order,setOrder,listOrdersResponse,setListOrdersResponse}) => {
             flexGrow: 1,
             fullText: true,
             render: (rowData: any) => {
-                return rowData.submittedAt ? new Date(rowData.submittedAt).toLocaleString() : '';
+                return formatDateWithoutSeconds(rowData.submittedAt)
+                
             }
         },
         {

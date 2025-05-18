@@ -8,8 +8,7 @@ import {
   Row
 } from 'rsuite';
 import './styles.less';
-
-
+import { formatDateWithoutSeconds } from '@/utils';
 import MyStepper from '@/components/MyStepper';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import {
@@ -138,28 +137,31 @@ const Rad = () => {
     {
       key: '6816324725527414',
       value: 'Patient Arrived',
-      description: test.patientArrivedAt ? new Date(test.patientArrivedAt).toLocaleString() : ''
+      description:formatDateWithoutSeconds(test.patientArrivedAt)
+      
     },
     {
       key: '6055074111734636',
       value: 'Accepted',
-      description: test.acceptedAt ? new Date(test.acceptedAt).toLocaleString() : ''
+      description:formatDateWithoutSeconds(test.acceptedAt)
+      
     },
     {
       key: '6055192099058457',
       value: 'Rejected',
-      description: test.rejectedAt ? new Date(test.rejectedAt).toLocaleString() : '',
+      description:formatDateWithoutSeconds(test.rejectedAt),   
       isError:true
     },
     {
       key: '265123250697000',
       value: 'Result Ready',
-      description: test.readyAt ? new Date(test.readyAt).toLocaleString() : ''
+      description:formatDateWithoutSeconds(test.readyAt),
     },
     {
       key: '265089168359400',
       value: 'Result Approved',
-      description: test.approvedAt ? new Date(test.approvedAt).toLocaleString() : ''
+      description:formatDateWithoutSeconds(test.approvedAt)
+      
     }
   ];
 
