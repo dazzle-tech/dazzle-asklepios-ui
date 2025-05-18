@@ -135,6 +135,11 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
               title="Edit"
               size={24}
               fill="var(--primary-gray)"
+              onClick={() =>{
+                setUserLicense(rowData);
+                 setOpenChildModal(true);
+                   }
+                }
             />
             {rowData?.deletedAt ? (
               <FaUndo
@@ -167,7 +172,7 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
-                onClick={() => setOpenChildModal(true)}
+                onClick={() => {setUserLicense({...newApUserMedicalLicense}); setOpenChildModal(true);}}
                 width="120px"
               >
                 New License
@@ -234,12 +239,12 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
               showChild={openChildModal}
               setShowChild={setOpenChildModal}
               title="Licenses & Certifications"
-              childTitle="New Department"
+              childTitle={userLicense?.key ? 'Edit License' : 'New License'}
               mainContent={conjureFormContentOfMainModal}
               mainStep={[{ title: 'License', icon: <FaAddressCard /> }]}
               childStep={[{ title: 'License Info', icon: <FaAddressCard /> }]}
               childContent={conjureFormContentOfChildModal}
-              actionChildButtonLabel="Create"
+              actionChildButtonLabel={userLicense?.key ? 'Save' : 'Create'}
               actionChildButtonFunction={handleSaveLicense}
               mainSize="sm"
         />
