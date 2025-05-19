@@ -41,8 +41,8 @@ const DentalActions = () => {
   const [saveDentalAction, saveDentalActionMutation] = useSaveDentalActionMutation();
   const [linkCdtAction, linkCdtActionMutation] = useLinkCdtActionMutation();
   const [unlinkCdtAction, unlinkCdtActionMutation] = useUnlinkCdtActionMutation();
-  const { data: dentalActionListResponse, isLoading:isDentalActionLoading } = useGetDentalActionsQuery(listRequest);
-    const { data: cdtListResponse } = useGetCdtsQuery({
+  const { data: dentalActionListResponse, isLoading: isDentalActionLoading,isFetching:isDentalActionFetching} = useGetDentalActionsQuery(listRequest);
+  const { data: cdtListResponse } = useGetCdtsQuery({
     ...initialListRequest,
     pageSize: 1000,
     skipDetails: true
@@ -135,18 +135,21 @@ const DentalActions = () => {
 
 
 
-  
- 
-   
-   useEffect(() => {
-     console.log(isDentalActionLoading)
-     if (isDentalActionLoading) {
-       dispatch(showSystemLoader());
-     } else {
-       dispatch(hideSystemLoader());
-     }
- 
-   }, [isDentalActionLoading])
+
+
+
+  useEffect(() => {
+    if (isDentalActionLoading || isDentalActionFetching) {
+      dispatch(showSystemLoader());
+    } else {
+      dispatch(hideSystemLoader());
+    }
+    return () => {
+      dispatch(hideSystemLoader());
+    };
+  }, [isDentalActionLoading,isDentalActionFetching])
+
+
 
   return (
     <Panel>
@@ -293,7 +296,7 @@ const DentalActions = () => {
 
       <Drawer
         size="lg"
-        onEsc={() => setProceduresOpen(false)} 
+        onEsc={() => setProceduresOpen(false)}
         onClose={() => setProceduresOpen(false)}
         open={proceduresOpen}
       >
