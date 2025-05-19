@@ -90,7 +90,17 @@ const Screens = ({ module, goBack }) => {
         )
       );
     } else {
-      setListRequest({ ...listRequest, filters: [] });
+      // setListRequest(addFilterToListRequest('module_key', 'match', module.key, listRequest));
+      setListRequest({
+              ...initialListRequest,
+              filters: [
+                {
+                  fieldName: 'module_key',
+                  operator: 'match',
+                  value: module.key
+                }
+              ]
+            });
     }
   };
   //icons column (edit, deactivate)
