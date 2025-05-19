@@ -210,7 +210,7 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
     };
     return (<>
         <AdvancedModal
-            size={'900px'}
+            size="60vw"
             open={openDetailsModal}
             setOpen={setOpenDetailsModal}
             actionButtonFunction={handleSave}
