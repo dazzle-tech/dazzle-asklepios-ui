@@ -50,7 +50,7 @@ const PatientProfile = () => {
     savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false })
       .unwrap()
       .then(() => {
-        dispatch(notify('Patient Added Successfully'));
+           dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
       });
   };
 
