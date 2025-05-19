@@ -1,35 +1,25 @@
-import React, { useState } from 'react';
+import MyInput from '@/components/MyInput';
+import PatientCard from '@/components/PatientCard';
+import UserSearch from '@/images/svgs/UserSearch';
+import { useGetPatientsQuery } from '@/services/patientService';
 import type { ApPatient } from '@/types/model-types';
 import { initialListRequest, type ListRequest } from '@/types/types';
 import { fromCamelCaseToDBName } from '@/utils';
-import { useGetPatientsQuery } from '@/services/patientService';
-import ArrowLineToggle from '@/components/Frame/ArrowLineToggle';
+import { Box, Skeleton } from '@mui/material';
+import SearchIcon from '@rsuite/icons/Search';
+import clsx from 'clsx';
+import React, { useState } from 'react';
+import { FaArrowRight, FaEllipsis } from 'react-icons/fa6';
 import {
-  Sidebar,
-  Sidenav,
+  Button,
+  Form,
+  Input,
+  InputGroup,
   Nav,
   Panel,
-  ButtonToolbar,
-  Dropdown,
-  InputGroup,
-  Input,
-  Row,
-  Col,
-  Avatar,
-  Button,
-  Form
+  Sidebar,
+  Sidenav
 } from 'rsuite';
-import ArrowLeftLineIcon from '@rsuite/icons/ArrowLeftLine';
-import MoreIcon from '@rsuite/icons/More';
-import SearchIcon from '@rsuite/icons/Search';
-import SearchPeopleIcon from '@rsuite/icons/SearchPeople';
-import clsx from 'clsx';
-import UserSearch from '@/images/svgs/UserSearch';
-import { ArrowRightLine } from '@rsuite/icons';
-import MyInput from '@/components/MyInput';
-import PatientCard from '@/components/PatientCard';
-import { FaArrowRight, FaEllipsis } from 'react-icons/fa6';
-import { Box, Skeleton } from '@mui/material';
 
 interface ProfileSidebarProps {
   expand: boolean;
