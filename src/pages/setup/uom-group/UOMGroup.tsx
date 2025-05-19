@@ -1,78 +1,60 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
-import { useSaveUomGroupMutation, useGetUomGroupsQuery,useRemoveUomGroupMutation } from '@/services/setupService';
-import { Button, ButtonToolbar, Carousel, IconButton } from 'rsuite';
+import { Panel } from 'rsuite';
+import {
+  useSaveUomGroupMutation,
+  useGetUomGroupsQuery,
+  useRemoveUomGroupMutation
+} from '@/services/setupService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
-import ChangeListIcon from '@rsuite/icons/ChangeList';
-import { ApModule, ApUomGroups } from '@/types/model-types';
-import { newApModule, newApUomGroups } from '@/types/model-types-constructor';
-import { Form, Stack, Divider } from 'rsuite';
-import MyInput from '@/components/MyInput';
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import * as icons from 'react-icons/fa6';
-import MyIconInput from '@/components/MyInput/MyIconInput';
-import { Icon } from '@rsuite/icons';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { ApUomGroups } from '@/types/model-types';
+import { newApUomGroups } from '@/types/model-types-constructor';
+import { MdModeEdit } from 'react-icons/md';
+import { FaUndo } from 'react-icons/fa';
+import { MdDelete } from 'react-icons/md';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+import MyTable from '@/components/MyTable';
+import AddEditUom from './AddEditUom';
+import { notify } from '@/utils/uiReducerActions';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyButton from '@/components/MyButton/MyButton';
+import './styles.less';
 
 const UOMGroup = () => {
   const dispatch = useAppDispatch();
   const [uomGroup, setUomGroup] = useState<ApUomGroups>({ ...newApUomGroups });
   const [uomGrpupOpen, setUomGroupOpen] = useState(false);
-  const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
-  const [subView, setSubView] = useState('');
+  const [width, setWidth] = useState<number>(window.innerWidth);
+  const [openConfirmDeleteUOMGroupModal, setOpenConfirmDeleteUOMGroupModal] =
+    useState<boolean>(false);
+  const [stateOfDeleteUOMGroupModal, setStateOfDeleteUOMGroupModal] = useState<string>('delete');
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  // Save uom group
   const [saveUomGroup, saveUomGroupMutation] = useSaveUomGroupMutation();
-  const [removeUomGroup, { isLoading, isSuccess, isError }] = useRemoveUomGroupMutation();
-  const { data: uomGroupsListResponse,refetch:refetchUomGroups } = useGetUomGroupsQuery(listRequest);
-
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
-    const divContent = (
-      <div style={{ display: 'flex' }}>
-        <h5>UOM Groups</h5>
-      </div>
-    );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-    dispatch(setPageCode('UOM_Groups'));
-    dispatch(setDivContent(divContentHTML));
-  useEffect(() => { }, []);
-
-  const handleUomGroupNew = () => {
-    setUomGroupOpen(true);
-    setUomGroup({ ...newApUomGroups });
-  };
-
-  const handleUomGroupSave = () => {
-    setUomGroupOpen(false);
-    saveUomGroup(uomGroup).unwrap();
-  };
-  const handleRemoveUomGroup = async (data) => {
-    try {
-      const response = await removeUomGroup({
-        uomGroup: data
-      }).unwrap().then(()=>{
-        refetchUomGroups()
-      }); 
-      console.log('UOM group removed successfully:', response);
-    } catch (error) {
-      console.error('Error removing UOM group:', error);
-    }
-  };
-
-
-  useEffect(() => {
-    if (saveUomGroupMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveUomGroupMutation.data]);
+  // remove uom group
+  const [removeUomGroup] = useRemoveUomGroupMutation();
+  // Fetch uom groups list response
+  const {
+    data: uomGroupsListResponse,
+    refetch: refetchUomGroups,
+    isFetching
+  } = useGetUomGroupsQuery(listRequest);
+  // Header page setUp
+  const divContent = (
+    <div className='title-uom'>
+      <h5>UOM Groups</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('UOM_Groups'));
+  dispatch(setDivContent(divContentHTML));
+ // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = uomGroupsListResponse?.extraNumeric ?? 0;
 
   const isSelected = rowData => {
     if (rowData && uomGroup && rowData.key === uomGroup.key) {
@@ -80,180 +62,212 @@ const UOMGroup = () => {
     } else return '';
   };
 
-  const handleFilterChange = (fieldName, value) => {
-    if (value) {
-      setListRequest(
-        addFilterToListRequest(
-          fromCamelCaseToDBName(fieldName),
-          'startsWithIgnoreCase',
-          value,
-          listRequest
-        )
-      );
-    } else {
-      setListRequest({ ...listRequest, filters: [] });
+  // Effects
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (saveUomGroupMutation.data) {
+      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
     }
-  };
+  }, [saveUomGroupMutation.data]);
 
-  const conjureSubViews = () => {
-    if (carouselActiveIndex === 0) {
-      return null;
-    }
-
- 
-  };
-
-  const toSubView = (subview: string) => {
-    setCarouselActiveIndex(1);
-    setSubView(subview);
-  };
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent("  "));
+      dispatch(setDivContent('  '));
     };
   }, [location.pathname, dispatch]);
+
+  // handle click on Add New button
+  const handleUomGroupNew = () => {
+    setUomGroupOpen(true);
+    setUomGroup({ ...newApUomGroups });
+  };
+  // Handle page change in navigation
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+  // Handle change rows per page in navigation
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
+    });
+  };
+  // const handleUomGroupSave = () => {
+  //   setUomGroupOpen(false);
+  //   saveUomGroup(uomGroup).unwrap();
+  // };
+  // handle deactivate uom group
+  const handleDeactivateUomGroup = async data => {
+    setOpenConfirmDeleteUOMGroupModal(false);
+    try {
+      await removeUomGroup({
+        uomGroup: data
+      })
+        .unwrap()
+        .then(() => {
+          refetchUomGroups();
+          dispatch(
+            notify({
+              msg: 'The UOM group was successfully ' + stateOfDeleteUOMGroupModal,
+              sev: 'success'
+            })
+          );
+        });
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: 'Failed to ' + stateOfDeleteUOMGroupModal + ' this UOM group',
+          sev: 'error'
+        })
+      );
+    }
+  };
+  //handle Reactivate uom group
+  const handleReactiveUom = () => {
+    setOpenConfirmDeleteUOMGroupModal(false);
+    const updatedUom = { ...uomGroup, deletedAt: null };
+    saveUomGroup(updatedUom)
+      .unwrap()
+      .then(() => {
+        // display success message
+        dispatch(notify({ msg: 'The UOM group has been activated successfully', sev: 'success' }));
+      })
+      .catch(() => {
+        // display error message
+        dispatch(notify({ msg: 'Failed to activated this UOM group', sev: 'error' }));
+      });
+  };
+  // const handleFilterChange = (fieldName, value) => {
+  //   if (value) {
+  //     setListRequest(
+  //       addFilterToListRequest(
+  //         fromCamelCaseToDBName(fieldName),
+  //         'startsWithIgnoreCase',
+  //         value,
+  //         listRequest
+  //       )
+  //     );
+  //   } else {
+  //     setListRequest({ ...listRequest, filters: [] });
+  //   }
+  // };
+
+  // Icons column (Edite, reactive/Deactivate)
+  const iconsForActions = (rowData: ApUomGroups) => (
+    <div className="container-of-icons-uom">
+      {/* open edit resource when click on this icon */}
+      <MdModeEdit
+        className="icons-uom"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => setUomGroupOpen(true)}
+        // onClick={() => setPopupOpen(true)}
+      />
+      {/* deactivate/activate  when click on one of these icon */}
+      {!rowData?.deletedAt ? (
+        <MdDelete
+          className="icons-uom"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            setStateOfDeleteUOMGroupModal('deactivate');
+            setOpenConfirmDeleteUOMGroupModal(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-uom"
+          title="Activate"
+          size={20}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setStateOfDeleteUOMGroupModal('reactivate');
+            setOpenConfirmDeleteUOMGroupModal(true);
+          }}
+        />
+      )}
+    </div>
+  );
+  //Table columns
+  const tableColumns = [
+    {
+      key: 'description',
+      title: <Translate>Description</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: 'baseUom',
+      title: <Translate>Base Uom</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: 'uomEntries',
+      title: <Translate>Uom Entries</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      flexGrow: 3,
+      render: rowData => iconsForActions(rowData)
+    }
+  ];
   return (
-    <Carousel
-      style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
-      autoplay={false}
-      activeIndex={carouselActiveIndex}
-    >
-      <Panel>
-        <ButtonToolbar>
-          <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleUomGroupNew}>
-            Add New
-          </IconButton>
-          <IconButton
-            disabled={!uomGroup.key}
-            appearance="primary"
-            onClick={() => setUomGroupOpen(true)}
-            color="green"
-            icon={<EditIcon />}
-          >
-            Edit Selected
-          </IconButton>
-          <IconButton
-            disabled={!uomGroup.key}
-            onClick={() => handleRemoveUomGroup(uomGroup)}
-            appearance="primary"
-            color="red"
-            icon={<TrashIcon />}
-          >
-            Delete Selected
-          </IconButton>
-     
-        </ButtonToolbar>
-        <hr />
-        <Table
-          height={400}
-          sortColumn={listRequest.sortBy}
-          sortType={listRequest.sortType}
-          onSortColumn={(sortBy, sortType) => {
-            if (sortBy)
-              setListRequest({
-                ...listRequest,
-                sortBy,
-                sortType
-              });
-          }}
-          headerHeight={80}
-          rowHeight={60}
-          bordered
-          cellBordered
-          data={uomGroupsListResponse?.object ?? []}
-          onRowClick={rowData => {
-            setUomGroup(rowData);
-          }}
-          rowClassName={isSelected}
+    <Panel>
+      <div className="container-of-add-new-button-uom">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleUomGroupNew}
+          width="109px"
         >
-          <Column sortable flexGrow={4}>
-            <HeaderCell>
-              <Input onChange={e => handleFilterChange('description', e)} />
-              <Translate>Description</Translate>
-            </HeaderCell>
-            <Cell dataKey="description" />
-          </Column>
+          Add New
+        </MyButton>
+      </div>
+      <MyTable
+        height={450}
+        data={uomGroupsListResponse?.object ?? []}
+        loading={isFetching}
+        columns={tableColumns}
+        rowClassName={isSelected}
+        // filters={filters()}
+        onRowClick={rowData => {
+          setUomGroup(rowData);
+        }}
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortChange={(sortBy, sortType) => {
+          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+        }}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
 
-          {/* <Column sortable align="center" flexGrow={1}>
-            <HeaderCell>
-              <Input onChange={e => handleFilterChange('iconImagePath', e)} />
-              <Translate>Icon</Translate>
-            </HeaderCell>
-            <Cell>{rowData => <Icon size="2em" as={icons[rowData.iconImagePath]} />}</Cell>
-          </Column> */}
-          <Column sortable flexGrow={4}>
-            <HeaderCell>
-              <Input onChange={e => handleFilterChange('baseUom', e)} />
-              <Translate>Base UOM</Translate>
-            </HeaderCell>
-            <Cell dataKey="baseUom" />
-          </Column>
-
-          <Column sortable flexGrow={2}>
-            <HeaderCell>
-              <Input onChange={e => handleFilterChange('uomEntries', e)} />
-              <Translate>UOM Entries</Translate>
-            </HeaderCell>
-            <Cell dataKey="uomEntries" />
-          </Column>
-        </Table>
-        <div style={{ padding: 20 }}>
-          <Pagination
-            prev
-            next
-            first
-            last
-            ellipsis
-            boundaryLinks
-            maxButtons={5}
-            size="xs"
-            layout={['limit', '|', 'pager']}
-            limitOptions={[5, 15, 30]}
-            limit={listRequest.pageSize}
-            activePage={listRequest.pageNumber}
-            onChangePage={pageNumber => {
-              setListRequest({ ...listRequest, pageNumber });
-            }}
-            onChangeLimit={pageSize => {
-              setListRequest({ ...listRequest, pageSize });
-            }}
-            total={uomGroupsListResponse?.extraNumeric ?? 0}
-          />
-        </div>
-
-        <Modal open={uomGrpupOpen} overflow>
-          <Modal.Title>
-            <Translate>New/Edit Module</Translate>
-          </Modal.Title>
-          <Modal.Body>
-            <Form fluid>
-              <MyInput fieldName="description" record={uomGroup} setRecord={setUomGroup} />
-              <MyInput fieldName="baseUom" record={uomGroup} setRecord={setUomGroup} />
-
-              <MyInput
-                fieldName="uomEntries"
-                fieldType="number"
-                record={uomGroup}
-                setRecord={setUomGroup}
-              />
-          
-            </Form>
-          </Modal.Body>
-          <Modal.Footer>
-            <Stack spacing={2} divider={<Divider vertical />}>
-              <Button appearance="primary" onClick={handleUomGroupSave}>
-                Save
-              </Button>
-              <Button appearance="primary" color="red" onClick={() => setUomGroupOpen(false)}>
-                Cancel
-              </Button>
-            </Stack>
-          </Modal.Footer>
-        </Modal>
-      </Panel>
-      {conjureSubViews()}
-    </Carousel>
+      <AddEditUom open={uomGrpupOpen} setOpen={setUomGroupOpen} uom={uomGroup} width={width} />
+      <DeletionConfirmationModal
+        open={openConfirmDeleteUOMGroupModal}
+        setOpen={setOpenConfirmDeleteUOMGroupModal}
+        itemToDelete="UOM group"
+        actionButtonFunction={
+          stateOfDeleteUOMGroupModal == 'deactivate'
+            ? () => handleDeactivateUomGroup(uomGroup)
+            : handleReactiveUom
+        }
+        actionType={stateOfDeleteUOMGroupModal}
+      />
+    </Panel>
   );
 };
 
