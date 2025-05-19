@@ -14,8 +14,10 @@ import AddOptometricTest from './AddOptometricTest';
 import OptometricExamTabs from './OptometricExamTabs';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-const OptometricExam = ({ patient, encounter ,edit}) => {
-
+import { useLocation } from 'react-router-dom';
+const OptometricExam = () => {
+   const location = useLocation();
+     const { patient, encounter, edit } = location.state || {};
   const authSlice = useAppSelector(state => state.auth);
   const [open, setOpen] = useState(false);
   const [saveOptometricExam] = useSaveOptometricExamMutation();

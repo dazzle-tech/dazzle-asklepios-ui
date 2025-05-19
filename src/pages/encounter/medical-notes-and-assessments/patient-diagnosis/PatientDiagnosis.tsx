@@ -41,7 +41,7 @@ import {
 import { useGetIcdListQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { ApPatientDiagnose } from '@/types/model-types';
 import './styles.less';
-const PatientDiagnosis = ({ patient, encounter, setEncounter }) => {
+const PatientDiagnosis = ({ patient, encounter }) => {
   const dispatch = useAppDispatch();
   const [searchKeyword, setSearchKeyword] = useState('');
   const [listRequest, setListRequest] = useState({

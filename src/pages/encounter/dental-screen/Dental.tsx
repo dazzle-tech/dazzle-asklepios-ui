@@ -11,8 +11,11 @@ import ChartTab from './tabs/DentalChartTab';
 import ProgressNotesTab from './tabs/ProgressNotesTab';
 import TreatmentPlanTab from './tabs/TreatmentPlanTab';
 import XRayTab from './tabs/XRayTab';
+import { useLocation } from 'react-router-dom';
 
-const Dental = ({ encounter, patient }) => {
+const Dental = () => {
+   const location = useLocation();
+      const { patient, encounter, edit } = location.state || {};
   const dispatch = useAppDispatch();
 
   const [originalChart, setOriginalChart] = useState({ ...newApDentalChart });

@@ -29,8 +29,10 @@ import {
 import DetailsModal from './DetailsModal';
 import { formatDateWithoutSeconds } from '@/utils';
 import './styles.less';
-const { Column, HeaderCell, Cell } = Table;
-const Allergies = ({ edit, patient, encounter }) => {
+import { useLocation } from 'react-router-dom';
+const Allergies = () => {
+  const location = useLocation();
+    const { patient, encounter, edit } = location.state || {};
   const [allerges, setAllerges] = useState<ApVisitAllergies>({ ...newApVisitAllergies });
   const [showCanceled, setShowCanceled] = useState(true);
   const [editing, setEditing] = useState(false);

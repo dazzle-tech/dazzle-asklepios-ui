@@ -14,7 +14,10 @@ import AddPsychologicalExam from './AddPsychologicalExam';
 import CancellationModal from '@/components/CancellationModal';
 import MyTable from '@/components/MyTable';
 import { formatDateWithoutSeconds } from '@/utils';
-const PsychologicalExam = ({ patient, encounter,edit }) => {
+import { useLocation } from 'react-router-dom';
+const PsychologicalExam = () => {
+    const location = useLocation();
+     const { patient, encounter, edit } = location.state || {};
     const authSlice = useAppSelector(state => state.auth);
     const [openAddModal, setOpenAddModal] = useState(false);
     const [psychologicalExam, setPsychologicalExam] = useState<ApPsychologicalExam>({ ...newApPsychologicalExam });

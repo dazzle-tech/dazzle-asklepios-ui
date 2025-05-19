@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Divider} from 'rsuite';
+import { Col, Divider, Row} from 'rsuite';
 import { useAppDispatch } from '@/hooks';
 import MyInput from '@/components/MyInput';
 import { forwardRef, useImperativeHandle } from 'react';
@@ -32,18 +32,17 @@ import {
 import { ApPatient } from '@/types/model-types';
 import { initialListRequest, ListRequest } from '@/types/types';
 import MyLabel from '@/components/MyLabel';
-type ObservationsProps = {
-  patient: any;         
-  encounter: any;  
-  edit:boolean;   
-};
+import { useLocation } from 'react-router-dom';
+
+
 export type ObservationsRef = {
   handleSave: () => void;
 };
-const Observations = forwardRef<ObservationsRef, ObservationsProps>(
-  ({ patient, encounter,edit }, ref) => {
-  const [localPatient, setLocalPatient] = useState<ApPatient>({ ...patient })
+const Observations = forwardRef<ObservationsRef>((props, ref) => {
   const dispatch = useAppDispatch();
+  const location = useLocation();
+  const { patient, encounter, edit } = location.state || {};
+  const [localPatient, setLocalPatient] = useState<ApPatient>({ ...patient })
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
   const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...encounter })
   const [bmi, setBmi] = useState('');
@@ -199,9 +198,10 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
   return (
    
       <div ref={ref} className={`basuc-div ${edit ? "disabled-panel" : ""}`}>
-
-        < div className='container-Column'>
-          <div className='container-form'>
+        <Form fluid>
+        <Row>
+          <Col md={12}>
+           <div className='container-form'>
             <div className='title-div'>
               <Text>Vital Signs</Text>
 
@@ -209,9 +209,8 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
             <Divider />
             <div className='container-Column'>
               <div className='container-row'>
-                <Form layout='inline' fluid>
                   <MyInput
-                    column
+                    
                     fieldLabel='BP'
                     fieldName='latestbpSystolic'
                     disabled={isEncounterStatusClosed || readOnly}
@@ -220,11 +219,10 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
                     setRecord={setPatientObservationSummary}
                   ></MyInput>
 
-                </Form>
                 <span style={{ marginTop: '36px' }}>/</span>
-                <Form layout='inline' fluid>
+              
                   <MyInput
-                    column
+                    
                     fieldLabel='mmHg'
                     fieldName='latestbpDiastolic'
                     disabled={isEncounterStatusClosed || readOnly}
@@ -232,8 +230,6 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
                     record={patientObservationSummary}
                     setRecord={setPatientObservationSummary}
                   ></MyInput>
-
-                </Form>
                 <div className='container-Column'>
                   <MyLabel label="MAP" />
                   <div>
@@ -247,10 +243,9 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
               </div>
               <div className='container-row'>
                 <div style={{ flex: 1 }}>
-                  <Form layout='inline' fluid>
 
                     <MyInput
-                      column
+                      
                       fieldLabel='Pulse'
                       rightAddon="bpm"
                       width={'100%'}
@@ -261,13 +256,10 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
                       record={patientObservationSummary}
                       setRecord={setPatientObservationSummary}
                     ></MyInput>
-
-                  </Form>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <Form layout='inline' >
                     <MyInput
-                      column
+                      
                       fieldLabel='R.R'
                       rightAddon="bpm"
                       rightAddonwidth={50}
@@ -278,15 +270,11 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
                       record={patientObservationSummary}
                       setRecord={setPatientObservationSummary}
                     ></MyInput>
-                  </Form>
                 </div>
               </div>
               <div className='container-row'>
                 <div style={{ flex: 1 }}>
-                  <Form layout='inline' fluid>
-
                     <MyInput
-                      column
                       fieldLabel='SpO2'
                       rightAddon="%"
                       width={'100%'}
@@ -297,48 +285,41 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
                       record={patientObservationSummary}
                       setRecord={setPatientObservationSummary}
                     ></MyInput>
-
-                  </Form>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <Form layout='inline' >
                     <MyInput
-                      column
                       fieldLabel='Temp'
                       rightAddon="°C"
                       rightAddonwidth={40}
-                      width={'100%'}
+                      width='100%'
                       fieldName='latesttemperature'
                       disabled={isEncounterStatusClosed || readOnly}
                       fieldType='number'
                       record={patientObservationSummary}
                       setRecord={setPatientObservationSummary}
                     ></MyInput>
-                  </Form>
                 </div>
               </div>
               <div >
-                <Form fluid >
                   <MyInput
-                    column
+                 
                     fieldLabel='Note'
-                    height={'100px'}
-                    width={'100%'}
+                    height='100px'
+                    width='100%'
                     fieldName='latestnotes'
                     disabled={isEncounterStatusClosed || readOnly}
                     fieldType='textarea'
                     record={patientObservationSummary}
                     setRecord={setPatientObservationSummary}
                   ></MyInput>
-                </Form>
+              
               </div>
 
             </div>
           </div>
-
-
-        </div>
-        < div className='container-Column'>
+          </Col>
+          <Col md={12}>
+          <Row>
           <div className='container-form'>
             <div className='title-div'>
               <Text>Body Measurements</Text>
@@ -347,9 +328,8 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
             <Divider />
             <div className='container-Column'>
               <div className='container-row'>
-                <Form layout='inline' fluid>
                   <MyInput
-                    column
+                 
                     fieldLabel='Weight'
                     fieldName='latestweight'
                     rightAddon="Kg"
@@ -358,8 +338,6 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
                     record={patientObservationSummary}
                     setRecord={setPatientObservationSummary}
                   ></MyInput>
-
-                </Form>
 
 
                 <div className='container-Column'>
@@ -371,9 +349,8 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
                 </div>
               </div>
               <div className='container-row'>
-                <Form layout='inline' fluid>
                   <MyInput
-                    column
+                 
                     fieldLabel='Height'
                     fieldName='latestheight'
                     rightAddon="Kg"
@@ -382,8 +359,6 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
                     record={patientObservationSummary}
                     setRecord={setPatientObservationSummary}
                   ></MyInput>
-
-                </Form>
 
 
                 <div className='container-Column'>
@@ -395,14 +370,10 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
                 </div>
               </div>
               <div className='container-row'>
-
-                <Form layout='inline' fluid>
-
                   <MyInput
-                    column
+                   
                     fieldLabel='Head circumference'
                     rightAddon="Cm"
-
                     rightAddonwidth={40}
                     fieldName='latestheadcircumference'
                     disabled={isEncounterStatusClosed || readOnly}
@@ -410,16 +381,13 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
                     record={patientObservationSummary}
                     setRecord={setPatientObservationSummary}
                   ></MyInput>
-
-                </Form>
-
-
               </div>
 
 
             </div>
-          </div>
-          <div className='container-form'>
+          </div></Row>
+          <Row>
+             <div className='container-form'>
             <div className='title-div'>
               <Text>Pain Level</Text>
 
@@ -427,10 +395,9 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
             <Divider />
             <div className='container-Column'>
 
-              <Form fluid>
                 <MyInput
                   disabled={isEncounterStatusClosed || readOnly}
-                  width={'100%'}
+                  width='100%'
                   fieldLabel="Pain Degree"
                   fieldType="select"
                   fieldName="latestpainlevelLkey"
@@ -440,22 +407,21 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>(
                   record={patientObservationSummary}
                   setRecord={setPatientObservationSummary}
                 />
-              </Form>
-              <Form fluid>
+    
                 <MyInput
                   fieldType='textarea'
-                  width={'100%'}
-
+                  width='100%'
                   fieldLabel="Pain Description"
                   fieldName='latestpaindescription'
                   record={patientObservationSummary}
                   setRecord={setPatientObservationSummary} />
-              </Form>
 
             </div>
           </div>
-
-        </div>
+          </Row>
+          </Col>
+        </Row>
+      </Form>
        
       </div>
    

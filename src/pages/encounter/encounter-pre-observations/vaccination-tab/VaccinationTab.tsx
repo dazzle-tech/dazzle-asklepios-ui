@@ -17,7 +17,10 @@ import { ApVaccine, ApVaccineBrands, ApEncounterVaccination } from '@/types/mode
 import { newApVaccine, newApVaccineBrands, newApVaccineDose, newApEncounterVaccination } from '@/types/model-types-constructor';
 import { formatDateWithoutSeconds } from '@/utils';
 import AddEncounterVaccine from './AddEncounterVaccine';
-const VaccinationTab = ({ disabled, patient, encounter ,edit }) => {
+import { useLocation } from 'react-router-dom';
+const VaccinationTab = ({ disabled }) => {
+    const location = useLocation();
+    const { patient, encounter, edit } = location.state || {};
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
     const [vaccine, setVaccine] = useState<ApVaccine>({ ...newApVaccine });
@@ -328,7 +331,7 @@ const VaccinationTab = ({ disabled, patient, encounter ,edit }) => {
         }
     ];
     return (<div>
-        <AddEncounterVaccine open={popupOpen} setOpen={setPopupOpen} patient={patient} encounter={encounter} encounterVaccination={encounterVaccination} setEncounterVaccination={setEncounterVaccination} vaccineObject={vaccine} vaccineDoseObjet={vaccineDose} vaccineBrandObject={vaccineBrand} isDisabled={disabled} refetch={encounterVaccine} edit={edit}/>
+        <AddEncounterVaccine open={popupOpen} setOpen={setPopupOpen} patient={patient} encounter={encounter} encounterVaccination={encounterVaccination} setEncounterVaccination={setEncounterVaccination} vaccineObject={vaccine} vaccineDoseObjet={vaccineDose} vaccineBrandObject={vaccineBrand} isDisabled={disabled} refetch={encounterVaccine} edit={edit} />
         <div className='bt-div'>
             <MyButton prefixIcon={() => <CloseOutlineIcon />} onClick={() => { setPopupCancelOpen(true) }} disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey : false} >
                 Cancel

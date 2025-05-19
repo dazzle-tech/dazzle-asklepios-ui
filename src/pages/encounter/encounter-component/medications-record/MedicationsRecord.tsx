@@ -16,7 +16,10 @@ const { Column, HeaderCell, Cell } = Table;
 import DrugOrder from './DrugOrder';
 import PatientChronic from './PatientChronic';
 import Prescriptions from './Prescriptions';
-const MedicationsRecord = ({patient ,encounter}) => {   
+import { useLocation } from 'react-router-dom';
+const MedicationsRecord = () => {   
+     const location = useLocation();
+       const { patient, encounter, edit } = location.state || {};
     const { data: genericMedicationListResponse } = useGetGenericMedicationQuery({ ...initialListRequest });
     const { data: customeInstructions, isLoading: isLoadingCustomeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
         ...initialListRequest,

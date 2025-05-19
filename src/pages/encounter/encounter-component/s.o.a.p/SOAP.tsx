@@ -1,54 +1,50 @@
-import React, { useEffect, useState, useContext, useRef } from 'react';
-import { TagInput, Panel, Divider } from 'rsuite';
+import React, { useEffect, useState } from 'react';
+import { Divider } from 'rsuite';
 
-import './styles.less';
 import MyInput from '@/components/MyInput';
+import {
+  Form,
+  Tabs,
+  Text
+} from 'rsuite';
 import ChildBoy from '../../../../images/Chart_Child_Boy.svg';
 import ChildGirl from '../../../../images/Chart_Child_Girl.svg';
 import Female from '../../../../images/Chart_Female.svg';
 import Male from '../../../../images/Chart_Male.svg';
-import {
-  Input,
-  Table,
-  Text,
-  Button,
-  Form,
-  Tabs
-} from 'rsuite';
+import './styles.less';
 
-const { Column, HeaderCell, Cell } = Table;
+
 import {
   useGetAgeGroupValueQuery
 } from '@/services/patientService';
 import PatientDiagnosis from '../../medical-notes-and-assessments/patient-diagnosis';
 import ReviewOfSystems from '../../medical-notes-and-assessments/review-of-systems';
 
+import { useSaveEncounterChangesMutation } from '@/services/encounterService';
 import {
-  useGetLovValuesByCodeAndParentQuery,
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
-import { useSaveEncounterChangesMutation } from '@/services/encounterService';
 import { initialListRequest, ListRequest } from '@/types/types';
 
+import MyButton from '@/components/MyButton/MyButton';
 import { useAppDispatch } from '@/hooks';
 import {
   useGetObservationSummariesQuery,
-
 } from '@/services/observationService';
 import {
   ApPatientObservationSummary
 } from '@/types/model-types';
 import {
-  newApEncounter,
   newApPatientObservationSummary
 } from '@/types/model-types-constructor';
-import { values } from 'lodash';
 import { notify } from '@/utils/uiReducerActions';
-import MyButton from '@/components/MyButton/MyButton';
+import { useLocation } from 'react-router-dom';
 
 
-const SOAP = ({ edit, patient, encounter, setEncounter }) => {
+const SOAP = () => {
   const dispatch = useAppDispatch();
+  const location = useLocation();
+  const { patient, encounter,edit } = location.state || {};
   const [localEncounter, setLocalEncounter] = useState({ ...encounter });
 
   const { data: planLovQueryResponse } = useGetLovValuesByCodeQuery('VISIT_CAREPLAN_OPT');
@@ -78,12 +74,12 @@ const SOAP = ({ edit, patient, encounter, setEncounter }) => {
     ...patientObservationsListRequest,
   });
   const { data: patientAgeGroupResponse, refetch: patientAgeGroupRefetch } =
-  useGetAgeGroupValueQuery(
+    useGetAgeGroupValueQuery(
       {
-          dob: patient?.dob ? new Date(patient.dob).toISOString() : null
+        dob: patient?.dob ? new Date(patient.dob).toISOString() : null
       },
       { skip: !patient?.dob }
-  );
+    );
   const currentObservationSummary = getCurrenttObservationSummaries?.object?.length > 0 ? getCurrenttObservationSummaries.object[0] : null;
   const [patientObservationSummary, setPatientObservationSummary] = useState<ApPatientObservationSummary>({
     ...newApPatientObservationSummary,
@@ -145,7 +141,7 @@ const SOAP = ({ edit, patient, encounter, setEncounter }) => {
 
     try {
       await saveEncounterChanges({ ...localEncounter }).unwrap();
-      dispatch(notify({msg:'Saved Successfully',sev:'success'}));
+      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     } catch (error) {
 
 
@@ -165,22 +161,22 @@ const SOAP = ({ edit, patient, encounter, setEncounter }) => {
                   <Text>Chief Complaint </Text>
                   <MyButton
                     size='small'
-                   
+
                     onClick={saveChanges}
 
                   >Save</MyButton>
                 </div>
                 <Divider />
-                <Form fluid>  
-                <MyInput 
-                width='100%'
-                height="95px"
+                <Form fluid>
+                  <MyInput
+                    width='100%'
+                    height="95px"
 
-                showLabel={false}
-                fieldType='textarea'
-                fieldName="chiefComplaint"
-                record={localEncounter}
-                setRecord={setLocalEncounter}/></Form>
+                    showLabel={false}
+                    fieldType='textarea'
+                    fieldName="chiefComplaint"
+                    record={localEncounter}
+                    setRecord={setLocalEncounter} /></Form>
 
 
 
@@ -190,23 +186,23 @@ const SOAP = ({ edit, patient, encounter, setEncounter }) => {
                   <Text>Assessment</Text>
                   <MyButton
                     size='small'
-                   
+
                     onClick={saveChanges}
 
                   >Save</MyButton>
                 </div>
                 <Divider />
                 <Form fluid>
-                <MyInput 
-                width='100%'
-                height="95px"
-                showLabel={false}
-                placeholder={'Only you can see this Assessment'}
-                fieldType='textarea'
-                fieldName="assessmentSummery"
-                record={localEncounter}
-                setRecord={setLocalEncounter}/></Form>
-              
+                  <MyInput
+                    width='100%'
+                    height="95px"
+                    showLabel={false}
+                    placeholder={'Only you can see this Assessment'}
+                    fieldType='textarea'
+                    fieldName="assessmentSummery"
+                    record={localEncounter}
+                    setRecord={setLocalEncounter} /></Form>
+
               </div>
             </div>
 
@@ -220,7 +216,7 @@ const SOAP = ({ edit, patient, encounter, setEncounter }) => {
 
               </div>
               <Divider />
-              <PatientDiagnosis patient={patient} encounter={encounter} setEncounter={setEncounter} />
+              <PatientDiagnosis patient={patient} encounter={encounter}  />
             </div>
             <div className='flex1' >
 
@@ -261,7 +257,7 @@ const SOAP = ({ edit, patient, encounter, setEncounter }) => {
               <div className='flex-end'>
                 <MyButton
                   size='small'
-                 
+
                   onClick={savePlan}
 
                 >Save</MyButton>
@@ -272,36 +268,36 @@ const SOAP = ({ edit, patient, encounter, setEncounter }) => {
         </Tabs.Tab>
         <Tabs.Tab eventKey="2" title="Physical Examination & Findings">
 
-            <ReviewOfSystems patient={patient} encounter={encounter} edit={edit}/>
-         
+          <ReviewOfSystems patient={patient} encounter={encounter} edit={edit} />
+
         </Tabs.Tab>
         <Tabs.Tab eventKey="3" title="Physical Examination & Findings BY Image">
           {
-                                  (patientAgeGroupResponse?.object?.key === '5945922992301153' ||
-                                      patientAgeGroupResponse?.object?.key === '1790407842882435' ||
-                                      patientAgeGroupResponse?.object?.key === '5946401407873394' ||
-                                      patientAgeGroupResponse?.object?.key === '1375554380483561' ||
-                                      patientAgeGroupResponse?.object?.key === '5945877765605378')
-                                  && (
-                                      patient?.genderLkey === '1' ? (
-                                          <img className='image-style' src={ChildBoy} />
-                                      ) : (
-                                          <img className='image-style' src={ChildGirl}/>
-                                      )
-                                  )
-                              }
-                              {
-                                  (patientAgeGroupResponse?.object?.key === '1790428129203615' ||
-          
-                                      patientAgeGroupResponse?.object?.key === '1790525617633551')
-                                  && (
-                                      patient?.genderLkey === '1' ? (
-                                          <img className='image-style' src={Male}  />
-                                      ) : (
-                                          <img className='image-style' src={Female}  />
-                                      )
-                                  )
-                              }
+            (patientAgeGroupResponse?.object?.key === '5945922992301153' ||
+              patientAgeGroupResponse?.object?.key === '1790407842882435' ||
+              patientAgeGroupResponse?.object?.key === '5946401407873394' ||
+              patientAgeGroupResponse?.object?.key === '1375554380483561' ||
+              patientAgeGroupResponse?.object?.key === '5945877765605378')
+            && (
+              patient?.genderLkey === '1' ? (
+                <img className='image-style' src={ChildBoy} />
+              ) : (
+                <img className='image-style' src={ChildGirl} />
+              )
+            )
+          }
+          {
+            (patientAgeGroupResponse?.object?.key === '1790428129203615' ||
+
+              patientAgeGroupResponse?.object?.key === '1790525617633551')
+            && (
+              patient?.genderLkey === '1' ? (
+                <img className='image-style' src={Male} />
+              ) : (
+                <img className='image-style' src={Female} />
+              )
+            )
+          }
         </Tabs.Tab>
       </Tabs>
 

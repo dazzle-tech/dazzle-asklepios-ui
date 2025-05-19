@@ -9,7 +9,10 @@ import MyLabel from '@/components/MyLabel';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
 import { formatDateWithoutSeconds } from '@/utils';
-const VaccineReccord = ({ patient }) => {
+import { useLocation } from 'react-router-dom';
+const VaccineReccord = () => {
+   const location = useLocation();
+   const { patient, encounter, edit } = location.state || {};
     const [isCanelledValue, setIsCanelledValue] = useState("NULL");
     const [vaccine, setVaccine] = useState<any>();
     const [selectedVaccine, setSelectedVaccine] = useState(null);
