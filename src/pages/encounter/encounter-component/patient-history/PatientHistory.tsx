@@ -3,7 +3,10 @@ import {Tabs} from 'rsuite';
 import MedicalHistory from './MedicalHistory/MedicalHistory';
 import SurgicalHistory from './SurgicalHistory';
 import SocialHistory from './SocialHistory';
-const PatientHistory =({patient,encounter,edit})=>{
+import { useLocation } from 'react-router-dom';
+const PatientHistory =()=>{
+   const location = useLocation();
+     const { patient, encounter, edit } = location.state || {};
   return(
 
     <Tabs defaultActiveKey="1" appearance="subtle" className="tab-container">

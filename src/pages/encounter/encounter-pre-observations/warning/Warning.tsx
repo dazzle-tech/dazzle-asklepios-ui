@@ -28,8 +28,11 @@ import {
 } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
-const { Column, HeaderCell, Cell } = Table;
-const Warning = ({ edit, patient, encounter }) => {
+import { useLocation } from 'react-router-dom';
+
+const Warning = () => {
+  const location = useLocation();
+    const { patient, encounter, edit } = location.state || {};
   const { data: warningTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_WARNING_TYPS');
   const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
   const { data: sourceofinformationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');

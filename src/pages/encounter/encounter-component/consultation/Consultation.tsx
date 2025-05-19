@@ -23,6 +23,7 @@ import Details from './Details';
 import './styles.less';
 import { formatDateWithoutSeconds } from '@/utils';
 import AttachmentUploadModal from '@/components/AttachmentUploadModal';
+import { useLocation } from 'react-router-dom';
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
   const byteNumbers = new Array(byteCharacters.length);
@@ -42,7 +43,9 @@ const handleDownload = attachment => {
   a.click();
   window.URL.revokeObjectURL(url);
 };
-const Consultation = ({ edit, patient, encounter }) => {
+const Consultation = () => {
+  const location = useLocation();
+  const { patient, encounter, edit } = location.state || {};
   const dispatch = useAppDispatch();
   const [selectedRows, setSelectedRows] = useState([]);
   const [showCanceled, setShowCanceled] = useState(true);

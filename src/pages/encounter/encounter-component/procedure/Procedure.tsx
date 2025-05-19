@@ -41,6 +41,7 @@ import Perform from './Perform';
 import { formatDateWithoutSeconds } from '@/utils';
 import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import { at } from 'lodash';
+import { useLocation } from 'react-router-dom';
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
   const byteNumbers = new Array(byteCharacters.length);
@@ -60,7 +61,9 @@ const handleDownload = attachment => {
   a.click();
   window.URL.revokeObjectURL(url);
 };
-const Referrals = ({ edit, patient, encounter }) => {
+const Referrals = () => {
+   const location = useLocation();
+   const { patient, encounter, edit } = location.state || {};
   const dispatch = useAppDispatch();
   const [showCanceled, setShowCanceled] = useState(true);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);

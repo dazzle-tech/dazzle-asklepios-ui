@@ -15,7 +15,10 @@ import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import AddAudiometryPuretone from './AddAudiometryPuretone';
 import MyTable from '@/components/MyTable';
 import { formatDateWithoutSeconds } from '@/utils';
-const AudiometryPuretone = ({ patient, encounter,edit }) => {
+import { useLocation } from 'react-router-dom';
+const AudiometryPuretone = () => {
+    const location = useLocation();
+    const { patient, encounter, edit } = location.state || {};
     const authSlice = useAppSelector(state => state.auth);
     const [open, setOpen] = useState(false);
     const [audiometryPuretone, setAudiometryPuretone] = useState<ApAudiometryPuretone>({

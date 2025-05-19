@@ -34,9 +34,11 @@ import {
 } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
+import { useLocation } from 'react-router-dom';
 const { Column, HeaderCell, Cell } = Table;
-const Prescription = ({ edit, patient, encounter }) => {
-
+const Prescription = () => {
+    const location = useLocation();
+        const { patient, encounter, edit } = location.state || {};
     const dispatch = useAppDispatch();
     const [searchKeyword, setSearchKeyword] = useState('');
     const [openToAdd, setOpenToAdd] = useState(true);
