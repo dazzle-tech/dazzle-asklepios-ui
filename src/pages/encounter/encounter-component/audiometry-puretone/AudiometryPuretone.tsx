@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppSelector, useAppDispatch } from '@/hooks';
-import { Checkbox, Text } from 'rsuite';
+import { Checkbox } from 'rsuite';
 import { useSaveAudiometryPuretoneMutation, useGetAudiometryPuretonesQuery } from '@/services/encounterService';
 import PlusIcon from '@rsuite/icons/Plus';
 import Translate from '@/components/Translate';
@@ -14,7 +14,7 @@ import { notify } from '@/utils/uiReducerActions';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import AddAudiometryPuretone from './AddAudiometryPuretone';
 import MyTable from '@/components/MyTable';
-
+import { formatDateWithoutSeconds } from '@/utils';
 const AudiometryPuretone = ({ patient, encounter,edit }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [open, setOpen] = useState(false);
@@ -37,7 +37,7 @@ const AudiometryPuretone = ({ patient, encounter,edit }) => {
     const [popupCancelOpen, setPopupCancelOpen] = useState(false);
     const [audiometryPuretonStatus, setAudiometryPuretonStatus] = useState('');
     const [allData, setAllData] = useState(false);
-   
+    const dispatch = useAppDispatch();
     // Initialize list request with default filters
     const [audiometryPuretoneListRequest, setAudiometryPuretoneListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -304,19 +304,19 @@ const AudiometryPuretone = ({ patient, encounter,edit }) => {
             key: 'createdAt',
             title: 'CREATED AT/BY',
             expandable: true,
-            render: (row: any) => row?.createdAt ? <>{row?.createByUser?.fullName}<br /><span className='date-table-style'>{new Date(row.createdAt).toLocaleString('en-GB')}</span> </> : ' '
+            render: (row: any) => row?.createdAt ? <>{row?.createByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.createdAt)}</span> </> : ' '
         },
         {
             key: 'updatedAt',
             title: 'UPDATED AT/BY',
             expandable: true,
-            render: (row: any) => row?.updatedAt ? <>{row?.updateByUser?.fullName}<br /><span className='date-table-style'>{new Date(row.updatedAt).toLocaleString('en-GB')}</span> </> : ' '
+            render: (row: any) => row?.updatedAt ? <>{row?.updateByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.updatedAt)}</span> </> : ' '
         },
         {
             key: 'deletedAt',
             title: 'CANCELLED AT/BY',
             expandable: true,
-            render: (row: any) => row?.deletedAt ? <>{row?.deleteByUser?.fullName}  <br /><span className='date-table-style'>{new Date(row.deletedAt).toLocaleString('en-GB')}</span></> : ' '
+            render: (row: any) => row?.deletedAt ? <>{row?.deleteByUser?.fullName}  <br /><span className='date-table-style'>{formatDateWithoutSeconds(row.deletedAt)}</span></> : ' '
         },
         {
             key: 'cancellationReason',

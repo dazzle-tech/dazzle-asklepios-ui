@@ -213,7 +213,7 @@ export const getNumericTimestamp = (date, startOfDay = true) => {
 
 export function formatDateWithoutSeconds(dateString) {
   if (!dateString) return '';
-  return new Date(dateString).toLocaleString(undefined, {
+  return new Date(dateString).toLocaleString("en-GB", {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

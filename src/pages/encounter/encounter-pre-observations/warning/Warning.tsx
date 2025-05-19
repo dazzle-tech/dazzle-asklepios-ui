@@ -8,7 +8,7 @@ import { useGetWarningsQuery, useSaveWarningsMutation } from '@/services/observa
 import {
   useGetLovValuesByCodeQuery
 } from '@/services/setupService';
-import { ApVisitWarning } from '@/types/model-types';
+import { formatDateWithoutSeconds } from '@/utils';
 import { newApVisitWarning } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
@@ -287,7 +287,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
       flexGrow:1,
       render:(rowData:any)=>{
         return  rowData.firstTimeRecorded
-        ? new Date(rowData.firstTimeRecorded).toLocaleString()
+        ? formatDateWithoutSeconds(rowData.firstTimeRecorded)
         : 'Undefind'
 ;
       }
@@ -354,7 +354,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
         return (<>
           <span>{rowData.createdBy}</span>
           <br />
-          <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+          <span className='date-table-style'>{rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}</span>
         </>)
       }
 
@@ -367,7 +367,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
         return (<>
           <span>{rowData.updatedBy}</span>
           <br />
-          <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+          <span className='date-table-style'>{rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}</span>
         </>)
       }
 
@@ -381,7 +381,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
         return (<>
           <span>{rowData.deletedBy}</span>
           <br />
-          <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
+          <span className='date-table-style'>{rowData.deletedAt ? formatDateWithoutSeconds(rowData.deletedAt) : ''}</span>
         </>)
       }
 
@@ -396,7 +396,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
 
             <span>{rowData.resolvedBy}</span>
             <br />
-            <span className='date-table-style'>{rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : ''}</span>
+            <span className='date-table-style'>{rowData.resolvedAt ? formatDateWithoutSeconds(rowData.resolvedAt) : ''}</span>
           </>)
         }
         else {
