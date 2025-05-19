@@ -38,7 +38,7 @@ const EncounterList = () => {
   dispatch(setDivContent(divContentHTML));
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
-  
+
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const [startEncounter] = useStartEncounterMutation();
   const [listRequest, setListRequest] = useState<ListRequest>({
@@ -127,7 +127,7 @@ const EncounterList = () => {
         state: { info: 'toNurse', patient: patientData, encounter: encounterData }
       });
     } else {
-      navigate(targetPath, { state: { patient: patientData, encounter: encounterData ,edit:encounterData.encounterStatusLvalue.valueCode=="CLOSED"} });
+      navigate(targetPath, { state: { patient: patientData, encounter: encounterData, edit: encounterData.encounterStatusLvalue.valueCode == "CLOSED" } });
     }
   };
 
@@ -146,16 +146,21 @@ const EncounterList = () => {
     handleManualSearch();
   }, []);
 
+
   useEffect(() => {
-    if (isLoading) {
+       if (isLoading || (manualSearchTriggered && isFetching) ) {
       dispatch(showSystemLoader());
-    } else {
+    } else if ((isFetching && isLoading) ) {
       dispatch(hideSystemLoader());
     }
-  }, [isLoading]);
+
+    return () => {
+       dispatch(hideSystemLoader());
+    };
+  }, [isLoading, isFetching, dispatch]);
 
 
- 
+
   const tableColumns = [
     {
       key: 'queueNumber',
@@ -222,9 +227,9 @@ const EncounterList = () => {
       title: <Translate>PRESCRIPTION</Translate>,
       render: rowData =>
         rowData.hasPrescription ? (
-        <MyBadgeStatus contant="YES"  color="#45b887"/>
+          <MyBadgeStatus contant="YES" color="#45b887" />
         ) : (
-           <MyBadgeStatus contant="NO"  color="#969fb0"/>
+          <MyBadgeStatus contant="NO" color="#969fb0" />
         )
     },
     {
@@ -232,9 +237,9 @@ const EncounterList = () => {
       title: <Translate>HAS ORDER</Translate>,
       render: rowData =>
         rowData.hasOrder ? (
-         <MyBadgeStatus contant="YES"  color="#45b887"/>
+          <MyBadgeStatus contant="YES" color="#45b887" />
         ) : (
-          <MyBadgeStatus contant="NO"  color="#969fb0"/>
+          <MyBadgeStatus contant="NO" color="#969fb0" />
         )
     },
     {
@@ -253,21 +258,21 @@ const EncounterList = () => {
     {
       key: 'status',
       title: <Translate>STATUS</Translate>,
-      render: rowData =><MyBadgeStatus color={rowData?.encounterStatusLvalue?.valueColor} contant={rowData.encounterStatusLvalue
-          ? rowData.encounterStatusLvalue.lovDisplayVale
-          : rowData.encounterStatusLkey}/>
-    
-        
+      render: rowData => <MyBadgeStatus color={rowData?.encounterStatusLvalue?.valueColor} contant={rowData.encounterStatusLvalue
+        ? rowData.encounterStatusLvalue.lovDisplayVale
+        : rowData.encounterStatusLkey} />
+
+
     },
     {
       key: 'hasObservation',
       title: <Translate>IS OBSERVED</Translate>,
       render: rowData =>
         rowData.hasObservation ? (
-          <MyBadgeStatus contant="YES"  color="#45b887"/>
-      
+          <MyBadgeStatus contant="YES" color="#45b887" />
+
         ) : (
-          <MyBadgeStatus contant="NO"  color="#969fb0"/>
+          <MyBadgeStatus contant="NO" color="#969fb0" />
         )
     },
     {
