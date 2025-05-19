@@ -421,6 +421,7 @@ const AddEncounterVaccine = ({
             isDisabledActionBtn={edit}
             leftTitle={`${vaccine?.vaccineName} Vaccine`}
             rightTitle='Add Vaccine'
+            size = "87vw"
             actionButtonFunction={handleSaveEncounterVaccine}
             footerButtons={
                 <MyButton appearance='ghost' onClick={handleClearField}>Clear</MyButton>
@@ -730,7 +731,7 @@ const AddEncounterVaccine = ({
             leftContent={<div className="left-main-container">
                 <Form layout="inline" fluid className="fields-container">
                     <MyInput
-                        width={170}
+                        width={160}
                         column
                         fieldLabel="Vaccine Code"
                         fieldName="vaccineCode"
@@ -739,7 +740,7 @@ const AddEncounterVaccine = ({
                         disabled
                     />
                     <MyInput
-                        width={170}
+                        width={160}
                         column
                         fieldLabel="ATC Code"
                         fieldName="atcCode"
@@ -748,7 +749,7 @@ const AddEncounterVaccine = ({
                         disabled
                     />
                     <MyInput
-                        width={170}
+                        width={160}
                         column
                         fieldLabel="Post Opening Duration"
                         fieldName="postOpeningDuration"
@@ -757,7 +758,7 @@ const AddEncounterVaccine = ({
                         disabled
                     />
                     <MyInput
-                        width={170}
+                        width={160}
                         column
                         fieldLabel="Duration Unit"
                         fieldType="select"

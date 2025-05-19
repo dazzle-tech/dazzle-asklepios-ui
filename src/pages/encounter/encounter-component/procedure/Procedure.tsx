@@ -38,7 +38,7 @@ import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import BlockIcon from '@rsuite/icons/Block';
 import Details from './Details';
 import Perform from './Perform';
-
+import { formatDateWithoutSeconds } from '@/utils';
 import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import { at } from 'lodash';
 const handleDownload = attachment => {
@@ -264,7 +264,7 @@ const Referrals = ({ edit, patient, encounter }) => {
       title: <Translate>SCHEDULED DATE TIME</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
-        return rowData.scheduledDateTime ? new Date(rowData.scheduledDateTime).toLocaleString() : ' '
+        return rowData.scheduledDateTime ? formatDateWithoutSeconds(rowData.scheduledDateTime) : ' '
       }
     },
     {
@@ -429,7 +429,7 @@ const Referrals = ({ edit, patient, encounter }) => {
         return (<>
           <span>{rowData.createdBy}</span>
           <br />
-          <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+          <span className='date-table-style'>{rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}</span>
         </>)
       }
 
@@ -442,7 +442,7 @@ const Referrals = ({ edit, patient, encounter }) => {
         return (<>
           <span>{rowData.updatedBy}</span>
           <br />
-          <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+          <span className='date-table-style'>{rowData.createdAt ? formatDateWithoutSeconds(rowData.updatedAt) : ''}</span>
         </>)
       }
 
@@ -455,7 +455,7 @@ const Referrals = ({ edit, patient, encounter }) => {
         return (<>
           <span>{rowData.deletedBy}</span>
           <br />
-          <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
+          <span className='date-table-style'>{rowData.deletedAt ? formatDateWithoutSeconds(rowData.deletedAt) : ''}</span>
         </>)
       }
 

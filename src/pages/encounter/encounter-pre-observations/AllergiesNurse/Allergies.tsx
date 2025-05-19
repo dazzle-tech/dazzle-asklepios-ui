@@ -27,6 +27,7 @@ import {
   Table
 } from 'rsuite';
 import DetailsModal from './DetailsModal';
+import { formatDateWithoutSeconds } from '@/utils';
 import './styles.less';
 const { Column, HeaderCell, Cell } = Table;
 const Allergies = ({ edit, patient, encounter }) => {
@@ -424,7 +425,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         return (<>
           <span>{rowData.createdBy}</span>
           <br />
-          <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+          <span className='date-table-style'>{rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}</span>
         </>)
       }
 
@@ -437,7 +438,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         return (<>
           <span>{rowData.updatedBy}</span>
           <br />
-          <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+          <span className='date-table-style'>{rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}</span>
         </>)
       }
 
@@ -451,7 +452,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         return (<>
           <span>{rowData.deletedBy}</span>
           <br />
-          <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
+          <span className='date-table-style'>{rowData.deletedAt ? formatDateWithoutSeconds(rowData.deletedAt) : ''}</span>
         </>)
       }
 
@@ -466,7 +467,7 @@ const Allergies = ({ edit, patient, encounter }) => {
 
             <span>{rowData.resolvedBy}</span>
             <br />
-            <span className='date-table-style'>{rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : ''}</span>
+            <span className='date-table-style'>{rowData.resolvedAt ? formatDateWithoutSeconds(rowData.resolvedAt) : ''}</span>
           </>)
         }
         else {
