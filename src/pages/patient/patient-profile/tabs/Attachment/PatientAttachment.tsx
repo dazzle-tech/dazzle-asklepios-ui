@@ -15,6 +15,7 @@ import { faFileArrowDown } from '@fortawesome/free-solid-svg-icons';
 import { PlusRound } from '@rsuite/icons';
 import { notify } from '@/utils/uiReducerActions';
 import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
+import { formatDateWithoutSeconds } from '@/utils';
 
 // Handle Download Attachment
 const handleDownload = attachment => {
@@ -82,7 +83,7 @@ const PatientAttachment = ({ localPatient }) => {
             .then(() => {
                 attachmentRefetch();
                 fetchPatientImageResponse.refetch();
-                dispatch(notify('Attachment Deleted Successfully'));
+                dispatch(notify({msg:'Attachment Deleted Successfully',sev: 'success'}));
                 handleClearAttachmentDelete();
             })
     };
@@ -169,7 +170,7 @@ const PatientAttachment = ({ localPatient }) => {
             title: <Translate>Created At</Translate>,
             flexGrow: 4,
             render: (rowData: any) =>
-                rowData.createdAt ? new Date(rowData.createdAt).toLocaleString("en-GB") : '',
+                rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : '',
             fullText: true,
         },
         {
@@ -184,7 +185,7 @@ const PatientAttachment = ({ localPatient }) => {
             title: <Translate>Updated At</Translate>,
             flexGrow: 4,
             render: (rowData: any) =>
-                rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : '',
+                rowData.updatedAt ? formatDateWithoutSeconds(rowData.updatedAt): '',
             fullText: true,
         },
     ];

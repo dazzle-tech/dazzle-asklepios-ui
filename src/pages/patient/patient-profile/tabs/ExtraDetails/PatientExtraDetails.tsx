@@ -15,6 +15,7 @@ import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import AddExtraDetails from './AddExtraDetails';
+import { formatDateWithoutSeconds } from '@/utils';
 const PatientExtraDetails = ({ localPatient }) => {
     const dispatch = useAppDispatch();
     const [secondaryDocumentModalOpen, setSecondaryDocumentModalOpen] = useState(false);
@@ -48,7 +49,7 @@ const PatientExtraDetails = ({ localPatient }) => {
         }).then(
             () => (
                 patientSecondaryDocuments(),
-                dispatch(notify('Secondary Document Deleted')),
+                dispatch(notify({msg:'Secondary Document Deleted',sev: 'success'})),
                 setDeleteDocModalOpen(false)
             )
         );
@@ -103,7 +104,7 @@ const PatientExtraDetails = ({ localPatient }) => {
             title: <Translate>Created At</Translate>,
             flexGrow: 4,
             render: (rowData: any) =>
-                rowData.createdAt ? new Date(rowData.createdAt).toLocaleString("en-GB") : '',
+                rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : '',
         },
         {
             key: 'updatedBy',
@@ -116,7 +117,7 @@ const PatientExtraDetails = ({ localPatient }) => {
             title: <Translate>Updated At</Translate>,
             flexGrow: 4,
             render: (rowData: any) =>
-                rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : '',
+                rowData.updatedAt ? formatDateWithoutSeconds(rowData.updatedAt) : '',
         },
     ];
     // Handle adding a new Secondary Document Function
