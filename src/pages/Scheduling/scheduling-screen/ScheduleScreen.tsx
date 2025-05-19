@@ -26,7 +26,7 @@ import { initialListRequest, ListRequest } from "@/types/types";
 import AppointmentModal from "./AppoitmentModal";
 import { ApPatient, ApAppointment } from "@/types/model-types";
 import { faCross, faFileCsv, faPaperPlane, faPlus, faPrint, faUserPlus } from "@fortawesome/free-solid-svg-icons";
-import { notify } from "@/utils/uiReducerActions";
+import { hideSystemLoader, notify, showSystemLoader } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
 import AppointmentActionsModal from "./AppointmentActionsModal";
 import { useGetResourcesAvailabilityQuery, useGetResourcesQuery, useGetAppointmentsQuery } from '@/services/appointmentService';
@@ -67,6 +67,7 @@ const ScheduleScreen = () => {
     const [calendarDate, setCalendarDate] = useState<Date>(null);
 
 
+
     useEffect(() => {
         return () => {
             dispatch(setPageCode(''));
@@ -77,7 +78,8 @@ const ScheduleScreen = () => {
         data: appointments,
         refetch: refitchAppointments,
         error,
-        isLoading
+        isLoading:isLoadingAppointments,
+        isFetching:isFetchingAppointments
     } = useGetAppointmentsQuery({
         resource_type: selectedResourceType?.resourcesType || null,
         facility_id: selectedFacility?.facilityKey || null,
@@ -380,6 +382,18 @@ const ScheduleScreen = () => {
             }
         }, [visibleAppointments, currentView, label]);
 
+
+
+      useEffect(() => {
+          if (isFetchingAppointments||isLoadingAppointments) {
+           dispatch(showSystemLoader());
+         } else {
+           dispatch(hideSystemLoader());
+         }
+     
+       }, [isLoadingAppointments,isFetchingAppointments])
+
+       
 
         return (
             <div style={{ marginInline: "15px" }} className="rbc-toolbar">
