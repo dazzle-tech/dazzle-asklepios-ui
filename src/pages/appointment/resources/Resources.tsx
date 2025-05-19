@@ -169,11 +169,11 @@ const Resources = () => {
       .unwrap()
       .then(() => {
         // display success message
-        dispatch(notify({ msg: 'The Resource has been saved successfully', sev: 'success' }));
+        dispatch(notify({ msg: 'The Resource has been activated successfully', sev: 'success' }));
       })
       .catch(() => {
         // display error message
-        dispatch(notify({ msg: 'Failed to save this Resource', sev: 'error' }));
+        dispatch(notify({ msg: 'Failed to activated  this Resource', sev: 'error' }));
       });
   };
 
