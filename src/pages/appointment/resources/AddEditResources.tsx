@@ -18,11 +18,12 @@ const AddEditResources = ({
   const [isPractitioner, setISPractitioner] = useState(false);
   const [isDepartment, setISDepartment] = useState(false);
   const [isMedicalTest, setIsMedicalTest] = useState(false);
+  const [isProcedure, setIsProcedure] = useState(false);
   // Fetch resourceType Lov list response
   const { data: resourceTypeLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
   // Fetch resourceType list response
   const resourceTypeListResponse = useGetResourceTypeQuery(resources.resourceTypeLkey || '');
-
+  
   // Effects
   useEffect(() => {
       resourceTypeListResponse.refetch();
@@ -31,16 +32,25 @@ const AddEditResources = ({
           setISPractitioner(true);
           setISDepartment(false);
           setIsMedicalTest(false);
+           setIsProcedure(false);
           break;
         case '2039516279378421':
           setISDepartment(true);
           setISPractitioner(false);
           setIsMedicalTest(false);
+           setIsProcedure(false);
           break;
         case '2039620472612029':
           setISDepartment(false);
           setISPractitioner(false);
           setIsMedicalTest(true);
+          setIsProcedure(false);
+          break;
+           case '2039548173192779':
+          setISDepartment(false);
+          setISPractitioner(false);
+          setIsMedicalTest(false);
+          setIsProcedure(true);
           break;
       }
     }, [resources.resourceTypeLkey]);
@@ -72,7 +82,7 @@ const AddEditResources = ({
                 fieldName="resourceKey"
                 fieldType="select"
                 selectData={resourceTypeListResponse?.data?.object ?? []}
-                selectDataLabel={isPractitioner ? "practitionerFullName" : isDepartment ? "name" : isMedicalTest ? "testName" : ""}
+                selectDataLabel={isPractitioner ? "practitionerFullName" : isDepartment ? "name" : isMedicalTest ? "testName" :isProcedure? "name": ""}
                 selectDataValue="key"
                 record={resources}
                 setRecord={setResources}
@@ -94,7 +104,6 @@ const AddEditResources = ({
       actionButtonFunction={handleSave}
       steps={[{ title: 'Resource Info', icon:<GrScheduleNew />}]}
       size={width > 600 ? '36vw' : '70vw'}
-      
     />
   );
 };
