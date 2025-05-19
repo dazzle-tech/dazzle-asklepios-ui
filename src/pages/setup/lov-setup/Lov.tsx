@@ -1,17 +1,17 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
+import { Panel } from 'rsuite';
 import { useGetLovsQuery, useSaveLovMutation } from '@/services/setupService';
-import { Button, ButtonToolbar, Carousel, IconButton } from 'rsuite';
+import { Carousel } from 'rsuite';
+import { IoSettingsSharp } from 'react-icons/io5';
+import { MdModeEdit } from 'react-icons/md';
+import { FaUndo } from 'react-icons/fa';
+import { MdDelete } from 'react-icons/md';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
-import ChangeListIcon from '@rsuite/icons/ChangeList';
 import { ApLov } from '@/types/model-types';
 import { newApLov } from '@/types/model-types-constructor';
-import { Form, Stack, Divider } from 'rsuite';
+import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import LovValues from './LovValues';
 import {
@@ -19,54 +19,103 @@ import {
   conjureValueBasedOnKeyFromList,
   fromCamelCaseToDBName
 } from '@/utils';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+import MyTable from '@/components/MyTable';
+import AddEditLov from './AddEditLOV';
+import MyButton from '@/components/MyButton/MyButton';
+import { notify } from '@/utils/uiReducerActions';
+import './styles.less';
 const Lov = () => {
   const dispatch = useAppDispatch();
 
   const [lov, setLov] = useState<ApLov>({ ...newApLov });
   const [lovPopupOpen, setLovPopupOpen] = useState(false);
   const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
-
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest, pageSize: 100 });
-
+  const [width, setWidth] = useState<number>(window.innerWidth);
+  const [listRequest, setListRequest] = useState<ListRequest>({
+    ...initialListRequest
+  });
+  // Fetch lov list response
+  const { data: lovListResponse, isFetching } = useGetLovsQuery(listRequest);
+  // Save lov
   const [saveLov, saveLovMutation] = useSaveLovMutation();
-
-  const { data: lovListResponse } = useGetLovsQuery(listRequest);
-
-  const handleLovNew = () => {
-    setLovPopupOpen(true);
-    setLov({ ...newApLov });
-  };
-
-  const handleLovSave = () => {
-    setLovPopupOpen(false);
-    saveLov(lov).unwrap();
-  };
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = lovListResponse?.extraNumeric ?? 0;
+  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
+  // Available fields for filtering
+  const filterFields = [
+    { label: 'Code', value: 'lovCode' },
+    { label: 'Name', value: 'lovName' },
+    { label: 'Description', value: 'lovDescription' }
+  ];
   const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5>Lovs</h5>
+    <div className='title-lov'>
+      <h5>LOVs</h5>
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Lovs'));
   dispatch(setDivContent(divContentHTML));
-  useEffect(() => {
-    if (saveLovMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveLovMutation.data]);
-
   const isSelected = rowData => {
     if (rowData && lov && rowData.key === lov.key) {
       return 'selected-row';
     } else return '';
   };
 
+  // Effects
+  useEffect(() => {
+          const handleResize = () => setWidth(window.innerWidth);
+          window.addEventListener('resize', handleResize);
+          return () => window.removeEventListener('resize', handleResize);
+        }, []);
+
+  useEffect(() => {
+    if (recordOfFilter['filter']) {
+      handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
+    } else {
+      setListRequest({
+        ...initialListRequest,
+        pageSize: listRequest.pageSize,
+        pageNumber: 1
+      });
+    }
+  }, [recordOfFilter]);
+
+  useEffect(() => {
+    if (saveLovMutation.data) {
+      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+    }
+  }, [saveLovMutation.data]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent('  '));
+    };
+  }, [location.pathname, dispatch]);
+
+  // handle click on Add New button 
+  const handleLovNew = () => {
+    setLovPopupOpen(true);
+    setLov({ ...newApLov });
+  };
+  // handle save lov
+  const handleLovSave = () => {
+    setLovPopupOpen(false);
+    saveLov(lov)
+      .unwrap()
+      .then(() => {
+        dispatch(notify({ msg: 'The LOV has been saved successfully', sev: 'success' }));
+      })
+      .catch(() => {
+        dispatch(notify({ msg: 'Failed to save this LOV', sev: 'error' }));
+      });
+  };
+  // handle filter table
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -81,196 +130,183 @@ const Lov = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent("  "));
-    };
-  }, [location.pathname, dispatch])
+  // Handle page change in navigation
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+  // Handle change rows per page in navigation
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
+    });
+  };
+  // Filter table
+  const filters = () => (
+    <Form layout="inline" fluid className="container-of-filter-fields-lov">
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={recordOfFilter}
+        setRecord={updatedRecord => {
+          setRecordOfFilter({
+            ...recordOfFilter,
+            filter: updatedRecord.filter,
+            value: ''
+          });
+        }}
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+      />
+      <MyInput
+        fieldName="value"
+        fieldType="text"
+        record={recordOfFilter}
+        setRecord={setRecordOfFilter}
+        showLabel={false}
+        placeholder="Search"
+      />
+    </Form>
+  );
+  // Icons column (Setup Lov Values ,Edite, reactive/Deactivate)
+  const iconsForActions = (rowData: ApLov) => (
+    <div className="container-of-icons-lov">
+      {/* display lov values when click on this icon */}
+      <IoSettingsSharp
+        className="icons-lov"
+        title="Setup Lov Values"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => setCarouselActiveIndex(1)}
+      />
+      {/* open edit lov when click on this icon */}
+      <MdModeEdit
+        className="icons-lov"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => setLovPopupOpen(true)}
+      />
+      {/* deactivate/activate  when click on one of these icon */}
+      {!rowData?.deletedAt ? (
+        <MdDelete
+          className="icons-lov"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+        />
+      ) : (
+        <FaUndo
+          className="icons-lov"
+          title="Activate"
+          size={20}
+          fill="var(--primary-gray)"
+        />
+      )}
+    </div>
+  );
+  //Table columns
+  const tableColumns = [
+    {
+      key: 'lovCode',
+      title: <Translate>Code</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: 'lovName',
+      title: <Translate>Name</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: 'lovDescription',
+      title: <Translate>Description</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: 'autoSelectDefault',
+      title: <Translate>Auto Select Default</Translate>,
+      flexGrow: 4,
+      render: rowData => <span>{rowData.autoSelectDefault ? 'Yes' : 'No'}</span>
+    },
+    {
+      key: 'defaultValueId',
+      title: <Translate>Default Value Key</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: 'parentLOV',
+      title: <Translate>Parent LOV</Translate>,
+      flexGrow: 4,
+      render: rowData => (
+        <span>
+          {conjureValueBasedOnKeyFromList(
+            lovListResponse?.object ?? [],
+            rowData.parentLov,
+            'lovName'
+          )}
+        </span>
+      )
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      flexGrow: 3,
+      render: rowData => iconsForActions(rowData)
+    }
+  ];
+
   return (
     <Carousel
-      style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
+    className='container-of-lov'
       autoplay={false}
       activeIndex={carouselActiveIndex}
     >
-      <Panel
-      >
-        <ButtonToolbar>
-          <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleLovNew}>
+      <Panel>
+        <div className="container-of-add-new-button-lov">
+          <MyButton
+            prefixIcon={() => <AddOutlineIcon />}
+            color="var(--deep-blue)"
+            onClick={handleLovNew}
+            width="109px"
+          >
             Add New
-          </IconButton>
-          <IconButton
-            disabled={!lov.key}
-            appearance="primary"
-            onClick={() => setLovPopupOpen(true)}
-            color="green"
-            icon={<EditIcon />}
-          >
-            Edit Selected
-          </IconButton>
-          <IconButton
-            disabled={true || !lov.key}
-            appearance="primary"
-            color="red"
-            icon={<TrashIcon />}
-          >
-            Delete Selected
-          </IconButton>
-          <IconButton
-            disabled={!lov.key}
-            appearance="primary"
-            color="orange"
-            onClick={() => setCarouselActiveIndex(1)}
-            icon={<ChangeListIcon />}
-          >
-            Setup Lov Values
-          </IconButton>
-        </ButtonToolbar>
-        <hr />
-        <Table
-          height={400}
-          sortColumn={listRequest.sortBy}
-          sortType={listRequest.sortType}
-          onSortColumn={(sortBy, sortType) => {
-            if (sortBy)
-              setListRequest({
-                ...listRequest,
-                sortBy,
-                sortType
-              });
-          }}
-          headerHeight={80}
-          rowHeight={60}
-          bordered
-          cellBordered
+          </MyButton>
+        </div>
+        <MyTable
+          height={450}
           data={lovListResponse?.object ?? []}
+          loading={isFetching}
+          columns={tableColumns}
+          rowClassName={isSelected}
+          filters={filters()}
           onRowClick={rowData => {
             setLov(rowData);
           }}
-          rowClassName={isSelected}
-        >
-          <Column sortable flexGrow={4}>
-            <HeaderCell>
-              <Input onChange={e => handleFilterChange('lovCode', e)} />
-              <Translate>Code</Translate>
-            </HeaderCell>
-            <Cell dataKey="lovCode" />
-          </Column>
-          <Column sortable flexGrow={4}>
-            <HeaderCell>
-              <Input onChange={e => handleFilterChange('lovName', e)} />
-              <Translate>Name</Translate>
-            </HeaderCell>
-            <Cell dataKey="lovName" />
-          </Column>
-          <Column sortable flexGrow={4}>
-            <HeaderCell>
-              <Input onChange={e => handleFilterChange('lovDescription', e)} />
-              <Translate>Description</Translate>
-            </HeaderCell>
-            <Cell dataKey="lovDescription" />
-          </Column>
-          <Column sortable flexGrow={3}>
-            <HeaderCell>
-              <Translate>Auto Select Default</Translate>
-            </HeaderCell>
-            <Cell>{rowData => <span>{rowData.autoSelectDefault ? 'Yes' : 'No'}</span>}</Cell>
-          </Column>
-          <Column sortable flexGrow={3}>
-            <HeaderCell>
-              <Translate>Default Value Key</Translate>
-            </HeaderCell>
-            <Cell dataKey="defaultValueId" />
-          </Column>
-          <Column sortable flexGrow={3}>
-            <HeaderCell>
-              <Translate>Parent LOV</Translate>
-            </HeaderCell>
-            <Cell>
-              {rowData => (
-                <span>
-                  {conjureValueBasedOnKeyFromList(
-                    lovListResponse?.object ?? [],
-                    rowData.parentLov,
-                    'lovName'
-                  )}
-                </span>
-              )}
-            </Cell>
-          </Column>
-        </Table>
-        <div style={{ padding: 20 }}>
-          <Pagination
-            prev
-            next
-            first
-            last
-            ellipsis
-            boundaryLinks
-            maxButtons={5}
-            size="xs"
-            layout={['limit', '|', 'pager']}
-            limitOptions={[5, 15, 30]}
-            limit={listRequest.pageSize}
-            activePage={listRequest.pageNumber}
-            onChangePage={pageNumber => {
-              setListRequest({ ...listRequest, pageNumber });
-            }}
-            onChangeLimit={pageSize => {
-              setListRequest({ ...listRequest, pageSize });
-            }}
-            total={lovListResponse?.extraNumeric ?? 0}
-          />
-        </div>
-
-        <Modal open={lovPopupOpen} overflow>
-          <Modal.Title>
-            <Translate>New/Edit Lov</Translate>
-          </Modal.Title>
-          <Modal.Body>
-            <Form fluid>
-              <MyInput fieldName="lovCode" record={lov} setRecord={setLov} />
-              <MyInput fieldName="lovName" record={lov} setRecord={setLov} />
-              <MyInput
-                fieldName="lovDescription"
-                fieldType="textarea"
-                record={lov}
-                setRecord={setLov}
-              />
-              <MyInput
-                fieldName="autoSelectDefault"
-                fieldType="checkbox"
-                record={lov}
-                setRecord={setLov}
-              />
-              <MyInput
-                fieldName="defaultValueId"
-                record={lov}
-                disabled={!lov.autoSelectDefault}
-                setRecord={setLov}
-              />
-              <MyInput
-                fieldName="parentLov"
-                fieldType="select"
-                selectData={lovListResponse?.object ?? []}
-                selectDataLabel="lovName"
-                selectDataValue="key"
-                record={lov}
-                setRecord={setLov}
-              />
-            </Form>
-          </Modal.Body>
-          <Modal.Footer>
-            <Stack spacing={2} divider={<Divider vertical />}>
-              <Button appearance="primary" onClick={handleLovSave}>
-                Save
-              </Button>
-              <Button appearance="primary" color="red" onClick={() => setLovPopupOpen(false)}>
-                Cancel
-              </Button>
-            </Stack>
-          </Modal.Footer>
-        </Modal>
+          sortColumn={listRequest.sortBy}
+          sortType={listRequest.sortType}
+          onSortChange={(sortBy, sortType) => {
+            if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+          }}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
+        />
+        <AddEditLov
+          open={lovPopupOpen}
+          setOpen={setLovPopupOpen}
+          lov={lov}
+          setLov={setLov}
+          handleSave={handleLovSave}
+          width={width}
+          lovListResponse={lovListResponse}
+        />
       </Panel>
       <LovValues
         lov={lov}
@@ -278,6 +314,7 @@ const Lov = () => {
           setCarouselActiveIndex(0);
           setLov({ ...newApLov });
         }}
+        width={width}
       />
     </Carousel>
   );
