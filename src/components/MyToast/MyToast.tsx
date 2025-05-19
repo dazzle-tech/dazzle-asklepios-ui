@@ -12,7 +12,7 @@ const MyToast = () => {
       toaster.push(
         <Notification type={uiSlice.sev}  
          header={<span style={{ fontSize: '14px'}}>{uiSlice.sev.toUpperCase()}</span>}
-          className='notifcation-style '
+          className='notifcation-style'
           closable>
           {uiSlice.msg}
         </Notification>,
