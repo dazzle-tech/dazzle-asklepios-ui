@@ -34,14 +34,23 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import MyLabel from '@/components/MyLabel';
 import { useLocation } from 'react-router-dom';
 
-
 export type ObservationsRef = {
   handleSave: () => void;
 };
-const Observations = forwardRef<ObservationsRef>((props, ref) => {
-  const dispatch = useAppDispatch();
+
+type ObservationsProps = {
+  patient?: any;
+  encounter?: any;
+  edit?: boolean;
+};
+
+const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref) => {
   const location = useLocation();
-  const { patient, encounter, edit } = location.state || {};
+  const state = location.state || {};
+  const patient = props.patient || state.patient;
+  const encounter = props.encounter || state.encounter;
+  const edit = props.edit ?? state.edit;
+  
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...patient })
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
   const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...encounter })
