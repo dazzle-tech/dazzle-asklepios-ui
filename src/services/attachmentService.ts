@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import { onQueryStarted, baseQuery } from '@/api';
 import { ListRequest } from '@/types/types';
 import { fromListRequestToQueryParams } from '@/utils';
+import { ApAttachment } from '@/types/model-types';
 export const attachmentService = createApi({
   reducerPath: 'attachmentApi',
   baseQuery: baseQuery,
@@ -23,6 +24,22 @@ export const attachmentService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       }
+    }),
+    fetchAttachmentsList: builder.query<ApAttachment[], { type: string; refKeys: string[] }>({
+      query: (data) => ({
+        url: '/attachment/fetch-attachments-list', 
+        method: 'POST',
+        headers: {
+          type: data.type,
+          'Content-Type': 'application/json',
+        },
+        body: data.refKeys,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+      keepUnusedDataFor: 0,
     }),
     fetchAttachment: builder.query({
       query: (data: { type: string; refKey: string }) => ({
@@ -104,6 +121,7 @@ export const attachmentService = createApi({
 });
 
 export const { useUploadMutation,
+  useFetchAttachmentsListQuery,
    useFetchAttachmentQuery,
    useFetchAttachmentLightQuery,
    useFetchAttachmentByKeyQuery,

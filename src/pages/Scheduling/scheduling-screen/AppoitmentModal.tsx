@@ -692,9 +692,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     }, [appointment?.durationLkey])
 
 
-    useEffect(() => {
-        console.log(availableDatesInMonth)
-    }, [availableDatesInMonth])
+ 
 
     useEffect(() => {
         const today = new Date();
