@@ -49,7 +49,7 @@ const PatientExtraDetails = ({ localPatient }) => {
         }).then(
             () => (
                 patientSecondaryDocuments(),
-                dispatch(notify({msg:'Secondary Document Deleted',sev: 'success'})),
+                dispatch(notify({ msg: 'Secondary Document Deleted', sev: 'success' })),
                 setDeleteDocModalOpen(false)
             )
         );
@@ -94,30 +94,16 @@ const PatientExtraDetails = ({ localPatient }) => {
             dataKey: 'documentNo',
         },
         {
-            key: 'createdBy',
-            title: <Translate>Created By</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) => rowData?.createdByUser?.fullName || '',
-        },
-        {
             key: 'createdAt',
-            title: <Translate>Created At</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) =>
-                rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : '',
-        },
-        {
-            key: 'updatedBy',
-            title: <Translate>Updated By</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) => rowData?.updatedByUser?.fullName || '',
+            title: 'CREATED AT/BY',
+            fullText: true,
+            render: (row: any) => row?.createdAt ? <>{row?.createdByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.createdAt)}</span> </> : ' '
         },
         {
             key: 'updatedAt',
-            title: <Translate>Updated At</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) =>
-                rowData.updatedAt ? formatDateWithoutSeconds(rowData.updatedAt) : '',
+            title: 'UPDATED AT/BY',
+            fullText: true,
+            render: (row: any) => row?.updatedAt ? <>{row?.updatedByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.updatedAt)}</span> </> : ' '
         },
     ];
     // Handle adding a new Secondary Document Function

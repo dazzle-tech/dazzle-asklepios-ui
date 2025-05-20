@@ -168,7 +168,7 @@ const SpecificCoverageModa = ({ open, setOpen, insurance }) => {
             setOpen={setOpen}
             title="Coverage List"
             position="right"
-            size="sm"
+            size="40vw"
             hideActionBtn={true}
             content={CoverageContent}
             steps={[
