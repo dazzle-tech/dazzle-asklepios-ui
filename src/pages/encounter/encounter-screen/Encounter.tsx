@@ -18,7 +18,6 @@ import 'react-tabs/style/react-tabs.css';
 import { Divider, Drawer, List, Panel, Text } from 'rsuite';
 import PatientSide from '../encounter-main-info-section/PatienSide';
 import './styles.less';
-
 import BackButton from '@/components/BackButton/BackButton';
 import { useGetAppointmentsQuery } from '@/services/appointmentService';
 import { useGetMedicalSheetsByDepartmentIdQuery } from '@/services/setupService';
@@ -33,6 +32,7 @@ const Encounter = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const propsData = location.state;
+
   const [localEncounter, setLocalEncounter] = useState<any>({ ...propsData?.encounter });
 
 
@@ -70,32 +70,32 @@ const Encounter = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
   const [openWarningModal, setOpenWarningModal] = useState(false);
-    // get Midical Sheets Data Steps
-useEffect(() => {
-  if (!propsData?.encounter) {
-    navigate('/encounter-list');
-  } else {
-    setEdit(propsData.fromPage === 'PatientEMR' || localEncounter.encounterStatusLvalue.valueCode === "CLOSED");
-    if (propsData?.encounter?.resourceTypeLkey === '2039516279378421') {
-      // Clinic, then we need to get its resource details
-      setMedicalSheetRowSourceKey(propsData?.encounter?.resourceKey);
-      setMedicalSheetSourceKey(undefined);
+  // get Midical Sheets Data Steps
+  useEffect(() => {
+    if (!propsData?.encounter) {
+      navigate('/encounter-list');
     } else {
-       // Not Clinic, use department directly
-      setMedicalSheetSourceKey(propsData?.encounter?.departmentKey);
-      setMedicalSheetRowSourceKey(undefined);
+      setEdit(propsData.fromPage === 'PatientEMR' || localEncounter.encounterStatusLvalue.valueCode === "CLOSED");
+      if (propsData?.encounter?.resourceTypeLkey === '2039516279378421') {
+        // Clinic, then we need to get its resource details
+        setMedicalSheetRowSourceKey(propsData?.encounter?.resourceKey);
+        setMedicalSheetSourceKey(undefined);
+      } else {
+        // Not Clinic, use department directly
+        setMedicalSheetSourceKey(propsData?.encounter?.departmentKey);
+        setMedicalSheetRowSourceKey(undefined);
+      }
     }
-  }
-}, [propsData]);
+  }, [propsData]);
 
-   // Step 3: Set departmentKey from resource "IF Clinic"
+  // Step 3: Set departmentKey from resource "IF Clinic"
   useEffect(() => {
     if (resourcesResponse?.object?.resourceKey) {
       setMedicalSheetSourceKey(resourcesResponse.object.resourceKey);
     }
   }, [resourcesResponse]);
 
-   useEffect(() => {
+  useEffect(() => {
     if (completeEncounterMutation.status === 'fulfilled') {
       navigate('/encounter-list');
     }
@@ -104,7 +104,7 @@ useEffect(() => {
 
 
   const handleGoBack = () => {
-   
+
 
     if (propsData.fromPage === 'PatientEMR') {
       navigate('/patient-EMR', {
@@ -131,32 +131,32 @@ useEffect(() => {
     }
   };
 
- const headersMap = {
-  '/encounter/clinical-visit': 'Clinical Visit',
-  '/encounter/observations': 'Observation',
-  '/encounter/allergies': 'Allergies',
-  '/encounter/medical-warnings': 'Medical Warnings',
-  '/encounter/cardiology': 'Cardiology',
-  '/encounter/dental-care': 'Dental Care ',
-  '/encounter/optometric-exam': 'Optometric Exam',
-  '/encounter/audiometry': 'Audiometry Puretone',
-  '/encounter/psychological-exam': 'Psychological Exam',
-  '/encounter/vaccination': 'Vaccination',
-  '/encounter/prescription': 'Prescription ',
-  '/encounter/diagnostics-order': 'Diagnostics Order ',
-  '/encounter/consultation': 'Consultation',
-  '/encounter/drug-order': 'Drug Order ',
-  '/encounter/procedures': 'Procedures',
-  '/encounter/patient-history': 'Patient History',
-  '/encounter/medications-record': 'medications Record ',
-  '/encounter/vaccine-record': 'Vaccine Record',
-  '/encounter/diagnostics-result': 'Diagnostics Result '
-};
+  const headersMap = {
+    '/encounter/clinical-visit': 'Clinical Visit',
+    '/encounter/observations': 'Observation',
+    '/encounter/allergies': 'Allergies',
+    '/encounter/medical-warnings': 'Medical Warnings',
+    '/encounter/cardiology': 'Cardiology',
+    '/encounter/dental-care': 'Dental Care ',
+    '/encounter/optometric-exam': 'Optometric Exam',
+    '/encounter/audiometry': 'Audiometry Puretone',
+    '/encounter/psychological-exam': 'Psychological Exam',
+    '/encounter/vaccination': 'Vaccination',
+    '/encounter/prescription': 'Prescription ',
+    '/encounter/diagnostics-order': 'Diagnostics Order ',
+    '/encounter/consultation': 'Consultation',
+    '/encounter/drug-order': 'Drug Order ',
+    '/encounter/procedures': 'Procedures',
+    '/encounter/patient-history': 'Patient History',
+    '/encounter/medications-record': 'medications Record ',
+    '/encounter/vaccine-record': 'Vaccine Record',
+    '/encounter/diagnostics-result': 'Diagnostics Result '
+  };
 
   const menuItems = [
-    { key: 'clinicalVisit', label: 'Clinical Visit', icon:faUserDoctor, path: 'clinical-visit' },
-    { key: 'observation', label: 'Observation', icon:faBedPulse, path: 'observations' },
-    { key: 'allergies ', label: 'Allergies', icon:faPersonDotsFromLine, path: 'allergies' },
+    { key: 'clinicalVisit', label: 'Clinical Visit', icon: faUserDoctor, path: 'clinical-visit' },
+    { key: 'observation', label: 'Observation', icon: faBedPulse, path: 'observations' },
+    { key: 'allergies', label: 'Allergies', icon: faPersonDotsFromLine, path: 'allergies' },
     { key: 'medicalWarnings', label: 'Medical Warnings', icon: faTriangleExclamation, path: 'medical-warnings' },
     { key: 'cardiology', label: 'Cardiology', icon: faHeartPulse, path: 'cardiology' },
     { key: 'dentalCare', label: 'Dental Care', icon: faTooth, path: 'dental-care' },
@@ -167,14 +167,14 @@ useEffect(() => {
     { key: 'prescription', label: 'Prescription', icon: faFilePrescription, path: 'prescription' },
     { key: 'diagnosticsOrder', label: 'Diagnostics Order', icon: faVials, path: 'diagnostics-order' },
     { key: 'consultation', label: 'Consultation', icon: faStethoscope, path: 'consultation' },
-    { key: 'drugOrder', label: 'Drug Order', icon:faPills, path: 'drug-order' },
+    { key: 'drugOrder', label: 'Drug Order', icon: faPills, path: 'drug-order' },
     { key: 'procedures', label: 'Procedures', icon: faNotesMedical, path: 'procedures' },
     { key: 'patientHistory', label: 'Patient History', icon: faClockRotateLeft, path: 'patient-history' },
     { key: 'medicationsRecord', label: 'Medications Record', icon: faPills, path: 'medications-record' },
     { key: 'vaccineReccord', label: 'Vaccine Record', icon: faSyringe, path: 'vaccine-record' },
     { key: 'diagnosticsResult', label: 'Diagnostics Test Result', icon: faFileWaveform, path: 'diagnostics-result' },
   ];
-const [currentHeader,setCurrentHeader] =useState();
+  const [currentHeader, setCurrentHeader] = useState();
   const divContent = (
     <div style={{ display: 'flex' }}>
       <Text className='title-font-style'>Patient Visit &gt; {currentHeader}</Text>
@@ -185,9 +185,9 @@ const [currentHeader,setCurrentHeader] =useState();
     dispatch(setPageCode('Patient_Visit'));
     dispatch(setDivContent(divContentHTML));
   }, [currentHeader, dispatch]);
-    useEffect(() => {
+  useEffect(() => {
 
-    setCurrentHeader( headersMap[location.pathname] || 'Patient Dashboard')
+    setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard')
   }, [location.pathname, dispatch]);
   return (
     <div className="container">
@@ -261,21 +261,24 @@ const [currentHeader,setCurrentHeader] =useState();
 
                 {menuItems.map(({ key, label, icon, path }) =>
                   medicalSheet?.object?.[key] ? (
-                    <List.Item key={key} className="drawer-item"  
-                    onClick={() => setHeaders(label)} 
-                     >
+                    <List.Item key={key} className="drawer-item"
+                      onClick={() => {
+
+                        navigate(path, { state: { patient: propsData.patient, encounter: propsData.encounter, edit } });
+                      }}
+                    >
                       <Link
                         to={path}
                         state={{ patient: propsData.patient, encounter: propsData.encounter, edit }}
                         style={{ color: 'inherit', textDecoration: 'none' }}
                       >
-                        <FontAwesomeIcon icon={icon}  className="icon" />
+                        <FontAwesomeIcon icon={icon} className="icon" />
                         <Translate> {label} </Translate>
                       </Link>
                     </List.Item>
                   ) : null
                 )}
-               
+
 
               </List>
             </Drawer.Body>

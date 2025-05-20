@@ -30,9 +30,15 @@ import DetailsModal from './DetailsModal';
 import { formatDateWithoutSeconds } from '@/utils';
 import './styles.less';
 import { useLocation } from 'react-router-dom';
-const Allergies = () => {
+const Allergies = ({ patient: propPatient, encounter: propEncounter, edit: propEdit }) => {
   const location = useLocation();
-    const { patient, encounter, edit } = location.state || {};
+  const state = location.state || {};
+
+  
+  const patient = propPatient || state.patient;
+  const encounter = propEncounter || state.encounter;
+  const edit = propEdit ?? state.edit; 
+
   const [allerges, setAllerges] = useState<ApVisitAllergies>({ ...newApVisitAllergies });
   const [showCanceled, setShowCanceled] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -77,10 +83,7 @@ const Allergies = () => {
       return 'selected-row';
     } else return '';
   };
-  //Effect when reactionDescription get new value and push it to prev 
 
-
-  //Effect when check Show Prev Allergy and update filter to get prev allergies
   useEffect(() => {
     if (showPrev) {
       const updatedFilters = [
@@ -598,8 +601,8 @@ const Allergies = () => {
         actionButtonLabel='Yes'
         title="Resolve"
         bodyheight='30vh'
-       steps={[{ title: "Resolve", icon: <FontAwesomeIcon icon={faCheck }/>}]}
-        content={<>Is this allergy resolved?</>}
+       steps={[{ title: "Is this allergy resolved?", icon: <FontAwesomeIcon icon={faCheck }/>}]}
+        content={<></>}
 
       ></MyModal>
 
@@ -610,8 +613,8 @@ const Allergies = () => {
         actionButtonLabel='Yes'
         title="Undo Resolve"
         bodyheight='30vh'
-        steps={[{ title: "Undo Resolve", icon: <FontAwesomeIcon icon={faArrowRotateRight }/>}]}
-        content={<>Is this allergy active?</>}
+        steps={[{ title: "Is this allergy active?", icon: <FontAwesomeIcon icon={faArrowRotateRight }/>}]}
+        content={<></>}
 
       ></MyModal>
 
@@ -620,7 +623,7 @@ const Allergies = () => {
         open={openDetailsModal} setOpen={setOpenDetailsModal}
         allerges={allerges} setAllerges={setAllerges}
         handleClear={handleClear}
-        edit={edit} editing={editing}
+        edit={edit} 
         patient={patient}
         encounter={encounter}
         fetchallerges={fetchallerges}

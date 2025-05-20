@@ -18,9 +18,12 @@ import { newApVaccine, newApVaccineBrands, newApVaccineDose, newApEncounterVacci
 import { formatDateWithoutSeconds } from '@/utils';
 import AddEncounterVaccine from './AddEncounterVaccine';
 import { useLocation } from 'react-router-dom';
-const VaccinationTab = ({ disabled }) => {
+const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncounter, edit: propEdit }) => {
     const location = useLocation();
-    const { patient, encounter, edit } = location.state || {};
+    const state = location.state || {};
+    const patient = propPatient || state.patient;
+    const encounter = propEncounter || state.encounter;
+    const edit = propEdit ?? state.edit;
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
     const [vaccine, setVaccine] = useState<ApVaccine>({ ...newApVaccine });
@@ -239,9 +242,9 @@ const VaccinationTab = ({ disabled }) => {
         {
             key: 'dateAdministered',
             title: 'DATE OF ADMINISTRATION',
-         render: (rowData: any) => {
-         return !rowData.dateAdministered ? '' : formatDateWithoutSeconds(rowData.dateAdministered);
-         }
+            render: (rowData: any) => {
+                return !rowData.dateAdministered ? '' : formatDateWithoutSeconds(rowData.dateAdministered);
+            }
         },
         {
             key: 'actualSide',

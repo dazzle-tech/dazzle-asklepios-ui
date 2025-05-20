@@ -5,45 +5,37 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import { useGetWarningsQuery, useSaveWarningsMutation } from '@/services/observationService';
-import {
-  useGetLovValuesByCodeQuery
-} from '@/services/setupService';
-import { formatDateWithoutSeconds } from '@/utils';
 import { newApVisitWarning } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
+import { formatDateWithoutSeconds } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { faArrowRotateRight, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
 import PlusIcon from '@rsuite/icons/Plus';
 import ReloadIcon from '@rsuite/icons/Reload';
 import React, { useEffect, useState } from 'react';
 import { MdModeEdit } from 'react-icons/md';
+import { useLocation } from 'react-router-dom';
 import {
-  Checkbox,
-  IconButton,
-  Table
+  Checkbox
 } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
-import { useLocation } from 'react-router-dom';
-
-const Warning = () => {
+const Warning= ({ patient: propPatient, encounter: propEncounter, edit: propEdit }) => {
   const location = useLocation();
-    const { patient, encounter, edit } = location.state || {};
-  const { data: warningTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_WARNING_TYPS');
-  const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
-  const { data: sourceofinformationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
-  const { data: statusLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGY_RES_STATUS');
+  const state = location.state || {};
+  
+  const patient = propPatient || state.patient;
+  const encounter = propEncounter || state.encounter;
+  const edit = propEdit ?? state.edit; 
+
   const [warning, setWarning] = useState<any>({ ...newApVisitWarning });
   const [saveWarning, saveWarningMutation] = useSaveWarningsMutation();
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
   const [openConfirmResolvedModel, setOpenConfirmResolvedModel] = useState(false);
   const [openConfirmUndoResolvedModel, setOpenConfirmUndoResolvedModel] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
-  const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
   const [showCanceled, setShowCanceled] = useState(true);
   const [editing, setEditing] = useState(false);
   const [showPrev, setShowPrev] = useState(true);

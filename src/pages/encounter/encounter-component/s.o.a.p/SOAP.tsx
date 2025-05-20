@@ -100,7 +100,7 @@ const SOAP = () => {
 
   useEffect(() => {
     if (saveEncounterChangesMutation.status === 'fulfilled') {
-      setEncounter(saveEncounterChangesMutation.data);
+    
       setLocalEncounter(saveEncounterChangesMutation.data);
     }
   }, [saveEncounterChangesMutation]);
