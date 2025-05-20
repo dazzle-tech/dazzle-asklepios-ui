@@ -7,7 +7,6 @@ import { notify } from '@/utils/uiReducerActions';
 import MyButton from '@/components/MyButton/MyButton';
 import './styles.less';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
 import { faBrain } from "@fortawesome/free-solid-svg-icons";
 import { newApPsychologicalExam } from '@/types/model-types-constructor';
 import { ApPsychologicalExam } from '@/types/model-types';
@@ -80,19 +79,19 @@ const AddPsychologicalExam = ({
         try {
             if (psychologicalExam.key === undefined) {
                 await savePsychologicalExam({ ...psychologicalExam, patientKey: patient.key, encounterKey: encounter.key, followUpDate: psychologicalExam?.followUpDate ? new Date(psychologicalExam.followUpDate).getTime() : 0, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap();
-                dispatch(notify('Patient Psychological Exam Added Successfully'));
+                dispatch(notify({msg:'Patient Psychological Exam Added Successfully',sev:'success'}));
                 setPsychologicalExam({ ...newApPsychologicalExam, statusLkey: "9766169155908512" });
                 setOpen(false);
             } else {
                 await savePsychologicalExam({ ...psychologicalExam, patientKey: patient.key, encounterKey: encounter.key, followUpDate: psychologicalExam?.followUpDate ? new Date(psychologicalExam.followUpDate).getTime() : 0, updatedBy: authSlice.user.key }).unwrap();
-                dispatch(notify('Patient Psychological Exam Updated Successfully'));
+                dispatch(notify({msg:'Patient Psychological Exam Updated Successfully',sev:'success'}));
                 setOpen(false);
             }
             await refetchPsychologicalExam();
             handleClearField();
         } catch (error) {
             console.error("Error saving Psychological Exam:", error);
-            dispatch(notify('Failed to save Psychological Exam'));
+            dispatch(notify({msg:'Failed to save Psychological Exam',sev:'error'}));
         }
     };
 

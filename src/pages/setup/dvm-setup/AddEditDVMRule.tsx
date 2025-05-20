@@ -6,6 +6,8 @@ import { Form } from 'rsuite';
 import { faClipboardCheck } from '@fortawesome/free-solid-svg-icons';
 import { useGetMetadataFieldsQuery } from '@/services/setupService';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
 const AddEditDVMRule = ({
   open,
   setOpen,
@@ -19,6 +21,7 @@ const AddEditDVMRule = ({
   listRequest,
   setListRequest
 }) => {
+  const dispatch = useAppDispatch();
   const [ruleTypes, setRuleTypes] = useState([]);
   const [metadataFieldMap, setMetadataFieldMap] = useState({});
   //save dvm
@@ -76,15 +79,22 @@ const AddEditDVMRule = ({
   };
   // Handle save dvmRule
   const handleSave = async () => {
-    setOpen(false);
-    await saveDvm({
-      ...dvmRule,
-      screenMetadataKey: recordOfScreenMetaData['screenMetadataKey']
-    }).unwrap();
-    if (refetch != null) {
-      refetch();
+    try {
+      setOpen(false);
+      await saveDvm({
+        ...dvmRule,
+        screenMetadataKey: recordOfScreenMetaData['screenMetadataKey']
+      }).unwrap();
+      if (refetch != null) {
+        refetch();
+      }
+      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+    } catch (error) {
+      dispatch(notify({ msg: 'Error while saving DVM', sev: 'error' }));
+
     }
   };
+
   // modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
@@ -219,7 +229,7 @@ const AddEditDVMRule = ({
       content={conjureFormContent}
       actionButtonLabel={dvmRule?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
-      steps={[{ title: 'DVM Rule info', icon:<FontAwesomeIcon icon={ faClipboardCheck }/>}]}
+      steps={[{ title: 'DVM Rule info', icon: <FontAwesomeIcon icon={faClipboardCheck} /> }]}
       size={width > 600 ? '570px' : '300px'}
     />
   );

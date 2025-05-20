@@ -3,7 +3,7 @@ import MyInput from '@/components/MyInput';
 import AdvancedModal from '@/components/AdvancedModal';
 import { InputGroup, Form, Input, Dropdown, Stack, DatePicker } from 'rsuite';
 import { ApVaccine, ApVaccineBrands, ApVaccineDose, ApVaccineDosesInterval} from '@/types/model-types';
-import { useSaveEncounterVaccineMutation, useGetEncounterVaccineQuery } from '@/services/observationService'
+import { useSaveEncounterVaccineMutation } from '@/services/observationService'
 import { newApVaccine, newApVaccineBrands, newApVaccineDose, newApVaccineDosesInterval, newApEncounterVaccination } from '@/types/model-types-constructor';
 import { useGetLovValuesByCodeQuery, useGetVaccineListQuery, useGetVaccineBrandsListQuery, useGetVaccineDosesListQuery, useGetVaccineDosesIntervalListQuery } from '@/services/setupService';
 import SearchIcon from '@rsuite/icons/Search';
@@ -168,7 +168,7 @@ const AddEncounterVaccine = ({
     const handleSaveEncounterVaccine = () => {
         if (encounterVaccination.key === undefined) {
             saveEncounterVaccine({ ...encounterVaccination, vaccineKey: vaccine.key, vaccineBrandKey: vaccineBrand.key, vaccineDoseKey: vaccineDose.key, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap().then(() => {
-                dispatch(notify('Encounter Vaccine Added Successfully'));
+                dispatch(notify({msg:'Encounter Vaccine Added Successfully',sev:'success'}));
                 setEncounterVaccination({ ...newApEncounterVaccination, statusLkey: null })
                 refetch();
                 handleClearField();
@@ -176,7 +176,7 @@ const AddEncounterVaccine = ({
             });
         } else if (encounterVaccination.key) {
             saveEncounterVaccine({ ...encounterVaccination, vaccineKey: vaccine.key, vaccineBrandKey: vaccineBrand.key, vaccineDoseKey: vaccineDose.key, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap().then(() => {
-                dispatch(notify('Encounter Vaccine Updated Successfully'));
+                dispatch(notify({msg:'Encounter Vaccine Updated Successfully',sev:'success'}));
                 refetch();
                 handleClearField();
                 setOpen(false);

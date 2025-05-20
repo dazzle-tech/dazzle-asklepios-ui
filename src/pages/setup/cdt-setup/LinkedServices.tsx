@@ -8,10 +8,13 @@ import { useGetServicesQuery, useLinkCdtServiceMutation, useUnlinkCdtServiceMuta
 import { Check, Trash } from '@rsuite/icons';
 import { newApServiceCdt } from '@/types/model-types-constructor';
 import MyButton from '@/components/MyButton/MyButton';
-import './styles.less'
+import './styles.less';
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
 const LinkedServices = ({ open, setOpen, cdt, setCdt }) => {
     const [selectedServiceKey, setSelectedServiceKey] = useState('');
     const [serviceMap, setServiceMap] = useState({});
+    const dispatch = useAppDispatch()
     const [unlinkCdtService, unlinkCdtServiceMutation] = useUnlinkCdtServiceMutation();
     const [linkCdtService, linkCdtServiceMutation] = useLinkCdtServiceMutation();
     // Fetch the Service List data based on current filters
@@ -116,7 +119,9 @@ const LinkedServices = ({ open, setOpen, cdt, setCdt }) => {
                                         ...newApServiceCdt,
                                         serviceKey: selectedServiceKey,
                                         cdtKey: cdt.key
-                                    }).unwrap();
+                                    }).unwrap().then(() => {
+                                      dispatch(notify({ msg: 'Linked Successfully', sev: 'success' }));
+                                      });
                                 }}
                             >
                                 Link Service

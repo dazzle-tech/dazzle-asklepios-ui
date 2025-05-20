@@ -31,19 +31,19 @@ const AddAudiometryPuretone = ({ open, setOpen, patient, encounter, audiometryPu
         try {
             if (audiometryPuretone.key === undefined) {
                 await saveAudiometryPureton({ ...audiometryPuretone, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap();
-                dispatch(notify('Patient Audiometry Pureton Added Successfully'));
+                dispatch(notify({msg:'Patient Audiometry Pureton Added Successfully',sev:'success'}));
                 setAudiometryPuretone({ ...newApAudiometryPuretone, statusLkey: "9766169155908512" })
             } else {
                 await saveAudiometryPureton({ ...audiometryPuretone, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap();
 
-                dispatch(notify('Patient Audiometry Pureton Updated Successfully'));
+                dispatch(notify({msg:'Patient Audiometry Pureton Updated Successfully',sev:'success'}));
             }
             await refetch();
             handleClearField();
             setOpen(false);
         } catch (error) {
             console.error("Error saving Patient Audiometry:", error);
-            dispatch(notify('Failed to save Patient Audiometry'));
+            dispatch(notify({msg:'Failed to save Patient Audiometry',sev:'error'}));
         }
     };
     // Handle Clear Fields

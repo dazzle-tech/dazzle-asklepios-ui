@@ -76,7 +76,7 @@ const PsychologicalExam = () => {
     const handleCancle = () => {
         //TODO convert key to code
         savePsychologicalExam({ ...psychologicalExam, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
-            dispatch(notify('Psychological Exam Canceled Successfully'));
+            dispatch(notify({msg:'Psychological Exam Canceled Successfully',sev:'success'}));
             refetchPsychologicalExam();
             setPopupCancelOpen(false);
         });

@@ -100,7 +100,7 @@ const TreadmillStress = ({ patient, encounter ,edit}) => {
     const handleCancle = () => {
         //TODO convert key to code
         saveTreadmillStress({ ...treadmillStress, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
-            dispatch(notify('Treadmill Stress Canceled Successfully'));
+            dispatch(notify({msg:'Treadmill Stress Canceled Successfully',sev:'success'}));
             refetchTreadmillStress();
         });
         setPopupCancelOpen(false);

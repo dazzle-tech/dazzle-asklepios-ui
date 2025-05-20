@@ -41,7 +41,7 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
                     createdBy: authSlice.user.key
                 }).unwrap();
 
-                dispatch(notify('Patient Complaint Symptoms Added Successfully'));
+                dispatch(notify({msg:'Patient Complaint Symptoms Added Successfully',sev:'success'}));
                 //TODO convert key to code
                 setComplaintSymptoms({ ...complaintSymptoms, statusLkey: "9766169155908512" });
                 setOpen(false);
@@ -53,14 +53,14 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
                     onsetDate: complaintSymptoms?.onsetDate ? new Date(complaintSymptoms.onsetDate).getTime() : 0,
                     updatedBy: authSlice.user.key
                 }).unwrap();
-                dispatch(notify('Patient Complaint Symptom Updated Successfully'));
+                dispatch(notify({msg:'Patient Complaint Symptom Updated Successfully',sev:'success'}));
                 setOpen(false);
             }
             await refetch();
             handleClearField();
         } catch (error) {
             console.error("Error saving complaint symptoms:", error);
-            dispatch(notify('Failed to save complaint symptoms'));
+            dispatch(notify({msg:'Failed to save complaint symptoms',sev:'error'}));
         }
     };
 
