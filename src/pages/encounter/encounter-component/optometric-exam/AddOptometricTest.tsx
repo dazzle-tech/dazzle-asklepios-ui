@@ -634,7 +634,7 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
                         disabled={true}
                     />
                 </Form>
-                <MyInput
+                {/* <MyInput
                     width={200}
                     column
                     fieldLabel="Require Follow-up"
@@ -653,7 +653,7 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
                     record={optometricExam}
                     setRecord={setOptometricExam}
                     disabled={!optometricExam?.followUpRequired || isDisabledField}
-                />
+                /> */}
                 <MyInput
                     width={200}
                     column
