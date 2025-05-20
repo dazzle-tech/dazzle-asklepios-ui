@@ -94,7 +94,7 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
       <MyModal
         open={open}
         setOpen={setOpen}
-        size="md"
+        size="50vw"
         actionButtonFunction={handleSaveSample}
         title="Collect Sample"
         steps={[{ title: "Sample", icon:<FontAwesomeIcon icon={ faVialCircleCheck }/>}]}

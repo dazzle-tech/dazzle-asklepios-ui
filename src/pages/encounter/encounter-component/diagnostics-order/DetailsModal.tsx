@@ -115,7 +115,7 @@ const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveT
             isDisabledActionBtn={edit ? true :orderTest?.statusLvalue?.valueCode !== ' DIAG_ORDER_STAT_NEW'}
             position='right'
             bodyheight='60vh'
-            size='sm'
+            size='35vw'
             steps={[
 
                 {
