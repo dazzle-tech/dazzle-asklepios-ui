@@ -258,7 +258,7 @@ const DiagnosticsOrder = () => {
         try {
             await saveOrderTests(orderTest).unwrap();
             setOpenDetailsModel(false);
-            dispatch(notify('saved  Successfully'));
+            dispatch(notify({msg:'saved  Successfully',sev:'success'}));
 
             orderTestRefetch().then(() => {
                 console.log("Refetch complete");

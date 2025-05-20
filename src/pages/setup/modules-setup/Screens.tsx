@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Drawer, List, Pagination, Panel } from 'rsuite';
 import { useGetScreensQuery } from '@/services/setupService';
 import { useGetScreenMetadataQuery } from '@/services/dvmService';
-import { IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { ApScreen } from '@/types/model-types';
 import { MdDelete } from 'react-icons/md';

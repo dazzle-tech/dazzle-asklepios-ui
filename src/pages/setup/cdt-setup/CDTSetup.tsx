@@ -7,6 +7,7 @@ import {
   useGetLovValuesByCodeQuery,
 } from '@/services/setupService';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { notify } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import EditIcon from '@rsuite/icons/Edit';
@@ -67,7 +68,13 @@ const CDTSetup = () => {
   // Handle Save Cdt Object
   const handleSave = () => {
     setPopupOpen(false);
-    saveCdt(cdt).unwrap();
+    saveCdt(cdt).unwrap().then(() => {
+      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+    })
+    .catch((error) => {
+      dispatch(notify({ msg: 'Failed to save', sev: 'error' }));
+      console.error('Save error:', error);
+    });
   };
   // Handle changes in filter fields
   const handleFilterChange = (fieldName, value) => {

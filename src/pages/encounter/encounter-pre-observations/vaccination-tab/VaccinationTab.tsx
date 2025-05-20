@@ -116,7 +116,7 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
     //handle Cancle Vaccine
     const handleCancle = () => {
         saveEncounterVaccine({ ...encounterVaccination, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
-            dispatch(notify('Encounter Vaccine Canceled Successfully'));
+            dispatch(notify({msg:'Encounter Vaccine Canceled Successfully',sev:'success'}));
             encounterVaccine();
         });
         setPopupCancelOpen(false);
@@ -124,7 +124,7 @@ const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncount
     //handle Reviewe Vaccine
     const handleReviewe = () => {
         saveEncounterVaccine({ ...encounterVaccination, statusLkey: "3721622082897301", reviewedAt: reviewedAt, reviewedBy: authSlice.user.key, updatedBy: authSlice.user.key }).unwrap().then(() => {
-            dispatch(notify('Encounter Vaccine Reviewed Successfully'));
+            dispatch(notify({msg:'Encounter Vaccine Reviewed Successfully',sev:'success'}));
             encounterVaccine();
         });
     }

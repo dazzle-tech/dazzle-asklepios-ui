@@ -62,10 +62,10 @@ const ReviewOfSystems = ({edit, patient, encounter }) => {
     try {
       await saveEncounterChanges(localEncounter).unwrap();
 
-      dispatch(notify('Findings Saved Successfully'));
+      dispatch(notify({msg:'Findings Saved Successfully',sev:'success'}));
     } catch (error) {
       console.error("Encounter save failed:", error);
-      dispatch(notify('Findings Saved fill'));
+      dispatch(notify({msg:'Findings Saved fill',sev:'success'}));
     }
   };
 

@@ -203,7 +203,7 @@ const Prescription = () => {
 
         } catch (error) {
 
-            dispatch(notify('One or more deleted failed'));
+            dispatch(notify({msg:'One or more deleted failed',sev:'error'}));
 
         }
     };
@@ -263,7 +263,7 @@ const Prescription = () => {
                 ),
                 saveDraft: true
             }).then(() => {
-                dispatch(notify('Saved Draft successfully'));
+                dispatch(notify({msg:'Saved Draft successfully',sev:'success'}));
                 setIsDraft(true);
             })
         } catch (error) { }

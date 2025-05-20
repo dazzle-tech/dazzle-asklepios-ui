@@ -33,12 +33,9 @@ import { useLocation } from 'react-router-dom';
 const Allergies = ({ patient: propPatient, encounter: propEncounter, edit: propEdit }) => {
   const location = useLocation();
   const state = location.state || {};
-
-  
   const patient = propPatient || state.patient;
   const encounter = propEncounter || state.encounter;
   const edit = propEdit ?? state.edit; 
-
   const [allerges, setAllerges] = useState<ApVisitAllergies>({ ...newApVisitAllergies });
   const [showCanceled, setShowCanceled] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -249,7 +246,7 @@ const Allergies = ({ patient: propPatient, encounter: propEncounter, edit: propE
         statusLkey: '9766179572884232',
         resolvedAt: Date.now()
       }).unwrap();
-      dispatch(notify({ msg: 'Resolved Successfully', sev: 'success' }));
+      dispatch(notify('Resolved Successfully'));
       setShowPrev(false);
       await fetchallerges()
         .then(() => {
@@ -274,7 +271,7 @@ const Allergies = ({ patient: propPatient, encounter: propEncounter, edit: propE
         ...allerges,
         statusLkey: '9766169155908512'
       }).unwrap();
-      dispatch(notify({ msg: 'Undo Resolved Successfully', sev: 'success' }));
+      dispatch(notify('Undo Resolved Successfully'));
       setShowPrev(false);
       await fetchallerges()
         .then(() => {

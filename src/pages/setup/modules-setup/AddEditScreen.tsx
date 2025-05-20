@@ -6,6 +6,8 @@ import MyIconInput from '@/components/MyInput/MyIconInput';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import clsx from 'clsx';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 const AddEditScreen = ({
   open,
@@ -14,54 +16,61 @@ const AddEditScreen = ({
   width,
   screen,
   setScreen,
-  refetch, 
+  refetch,
 }) => {
-
+  const dispatch = useAppDispatch();
   //Save screen
   const [saveScreen] = useSaveScreenMutation();
-  
+
   //handle save screen
   const handleScreenSave = async () => {
-    setOpen(false);
-    await saveScreen(screen).unwrap();
-    if (refetch != null) {
+    try {
+      setOpen(false);
+      await saveScreen(screen).unwrap();
+      if (refetch != null) {
         refetch();
       }
+      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+    } catch (error) {
+      dispatch(notify({ msg: 'Error while saving', sev: 'error' }));
+
+    }
   };
-   const conjureFormContent = (stepNumber = 0) => {
-        switch (stepNumber) {
-          case 0:
-            return (
-              <Form fluid>
-                  <MyInput fieldName="name" record={screen} setRecord={setScreen} width={width > 600 ? 520 : 250} />
-                  <MyInput
-                    fieldName="description"
-                    fieldType="textarea"
-                    record={screen}
-                    setRecord={setScreen}
-                    width={width > 600 ? 520 : 250}
-                  />
-                  <MyInput
-                    fieldName="viewOrder"
-                    fieldType="number"
-                    record={screen}
-                    setRecord={setScreen}
-                    width={width > 600 ? 520 : 250}
-                  />
-                  <div className={clsx('', {'container-of-two-fields-module': width > 600})}>
-                    <MyIconInput
-                      fieldName="iconImagePath"
-                      fieldLabel="Icon"
-                      record={screen}
-                      setRecord={setScreen}
-                      width={250}
-                    />
-                    <MyInput fieldName="navPath" record={screen} setRecord={setScreen} width={250}/>
-                  </div>
-                </Form>
-            );
-        }
-      };
+
+  const conjureFormContent = (stepNumber = 0) => {
+    switch (stepNumber) {
+      case 0:
+        return (
+          <Form fluid>
+            <MyInput fieldName="name" record={screen} setRecord={setScreen} width={width > 600 ? 520 : 250} />
+            <MyInput
+              fieldName="description"
+              fieldType="textarea"
+              record={screen}
+              setRecord={setScreen}
+              width={width > 600 ? 520 : 250}
+            />
+            <MyInput
+              fieldName="viewOrder"
+              fieldType="number"
+              record={screen}
+              setRecord={setScreen}
+              width={width > 600 ? 520 : 250}
+            />
+            <div className={clsx('', { 'container-of-two-fields-module': width > 600 })}>
+              <MyIconInput
+                fieldName="iconImagePath"
+                fieldLabel="Icon"
+                record={screen}
+                setRecord={setScreen}
+                width={250}
+              />
+              <MyInput fieldName="navPath" record={screen} setRecord={setScreen} width={250} />
+            </div>
+          </Form>
+        );
+    }
+  };
   return (
     <MyModal
       open={open}
@@ -71,7 +80,7 @@ const AddEditScreen = ({
       content={conjureFormContent}
       actionButtonLabel={operationState === 'New' ? 'Create' : 'Save'}
       actionButtonFunction={handleScreenSave}
-      steps={[{ title: 'Screen Info', icon:<FontAwesomeIcon icon={faLaptop }/>}]}
+      steps={[{ title: 'Screen Info', icon: <FontAwesomeIcon icon={faLaptop} /> }]}
       size={width > 600 ? '36vw' : '25vw'}
     />
   );

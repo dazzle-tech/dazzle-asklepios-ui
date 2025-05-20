@@ -95,7 +95,7 @@ const ElectrocardiogramECG = ({ patient, encounter ,edit}) => {
     const handleCancle = () => {
         //TODO convert key to code
         saveElectrocardiogramECG({ ...electrocardiogramEcg, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
-            dispatch(notify('ECG Canceled Successfully'));
+            dispatch(notify({msg:'ECG Canceled Successfully',sev:'success'}));
             refetchelectrocardiogramEcg();
         });
         setPopupCancelOpen(false);
