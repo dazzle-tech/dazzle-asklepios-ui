@@ -241,7 +241,7 @@ const PatientSide = ({ patient, encounter }) => {
                     >
                         <Text className='info-label'>Blood Group</Text>
                         <Text className='info-value'
-                        >{encounter.bloodGroup ??"Nan"}</Text>
+                        >{encounter?.bloodGroup ??"Nan"}</Text>
 
                     </div>
                 </div>

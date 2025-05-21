@@ -11,12 +11,12 @@ const Summary =({open ,setOpen,list ,encounter,setEncounter,saveEncounter})=>{
         position='right'
         open={open} 
         setOpen={setOpen}
-        title="Summery"
+        title="Findings"
         hideActionBtn
         hideCanel
         steps={[
           {
-            title: "Summery", icon:<FontAwesomeIcon icon={faListCheck}/>,
+            title: "Findings", icon:<FontAwesomeIcon icon={faListCheck}/>,
            
           },
         ]}
