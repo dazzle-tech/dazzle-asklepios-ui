@@ -66,6 +66,8 @@ const Encounter = () => {
   const { data: medicalSheet } = useGetMedicalSheetsByDepartmentIdQuery(medicalSheetSourceKey!, {
     skip: !medicalSheetSourceKey
   });
+
+
   const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openAllargyModal, setOpenAllargyModal] = useState(false);

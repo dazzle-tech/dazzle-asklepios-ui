@@ -52,7 +52,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             encounterStatusLkey: "91084250213000",
             plannedStartDate: data?.appointmentStart,
             resourceTypeLkey: data?.resourceTypeLkey,
-            visitTypeLkey: data?.visitTypeLkey
+            visitTypeLkey: data?.visitTypeLkey,
+            resourceKey:data.resourceKey
         }
         saveEncounter(visit).unwrap();
         console.log(visit)
@@ -81,13 +82,6 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             handleSaveVisit(appointment?.appointmentData)
         })
     }
-
-
-    useEffect(() => {
-        console.log(reasonKey)
-        console.log(otherReason)
-
-    }, [otherReason, reasonKey])
 
     const handleNonShow = () => {
         console.log(localAppointmentData)
