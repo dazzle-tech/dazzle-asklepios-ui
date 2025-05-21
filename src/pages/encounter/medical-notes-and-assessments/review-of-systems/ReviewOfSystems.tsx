@@ -196,7 +196,7 @@ const ReviewOfSystems = ({edit, patient, encounter }) => {
                <MyButton
                   onClick={() => setOpenModel(true)}
                  
-                 prefixIcon={()=><icons.List  />}>Summary</MyButton>
+                 prefixIcon={()=><icons.List  />}>Findings</MyButton>
             </div>
 
           </div>
@@ -218,33 +218,7 @@ const ReviewOfSystems = ({edit, patient, encounter }) => {
             
             columns={tableColumns}
             ></MyTable>
-             
-              <div className='pagination' >
-              <Divider  />
-              <Pagination
-              
-                prev
-                next
-                first
-                last
-                ellipsis
-                boundaryLinks
-                maxButtons={5}
-                size="xs"
-                layout={['total', '-', 'limit', '|', 'pager', 'skip']}
-                limitOptions={[4, 15, 30]}
-                // limit={listOrdersResponse.pageSize}
-                // activePage={listOrdersResponse.pageNumber}
 
-                // onChangePage={pageNumber => {
-                //   setListOrdersResponse({ ...listOrdersResponse, pageNumber });
-                // }}
-                // onChangeLimit={pageSize => {
-                //   setListOrdersResponse({ ...listOrdersResponse, pageSize });
-                // }}
-                total={bodySystemsDetailLovQueryResponse?.extraNumeric || 0}
-              />
-              </div>
               </div>
             </div>
         </Grid>
