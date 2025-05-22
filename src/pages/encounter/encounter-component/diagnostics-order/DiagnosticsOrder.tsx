@@ -69,13 +69,12 @@ const DiagnosticsOrder = () => {
     const [flag, setFlag] = useState(false);
     const [reson, setReson] = useState({ cancellationReason: "" });
     const [openTestsModal, setOpenTestsModal] = useState(false);
+    const [searchTerm, setSearchTerm] = React.useState('');
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-    const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+    const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest ,pageSize: 1000 });
     const { data: testsList } = useGetDiagnosticsTestListQuery(listTestRequest);
-
     const [leftItems, setLeftItems] = useState([]);
     const [selectedTestsList, setSelectedTestsList] = useState([]);
-
     const [listOrdersRequest, setListOrdersRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -161,6 +160,25 @@ const DiagnosticsOrder = () => {
             setLeftItems(testsList.object);
         }
     }, [testsList]);
+    useEffect(() => {
+        if (searchTerm.trim() !== "") {
+            setListRequest(
+                {
+                    ...initialListRequest,
+                    filters: [
+                        {
+                            fieldName: 'test_name',
+                            operator: 'containsIgnoreCase',
+                            value: searchTerm
+                        }
+                    ]
+                }
+            );
+        } 
+        else {
+            setListRequest({ ...initialListRequest, pageSize: 1000 });
+        }
+    }, [searchTerm]);
     useEffect(() => {
         setLeftItems(testsList?.object??[]);
         setSelectedTestsList([]);
@@ -853,6 +871,8 @@ const DiagnosticsOrder = () => {
                     rightItems={selectedTestsList}
                     setLeftItems={setLeftItems}
                     setRightItems={setSelectedTestsList}
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
                 />}
             />
         </>
