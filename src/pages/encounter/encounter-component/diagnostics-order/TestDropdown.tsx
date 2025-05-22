@@ -42,9 +42,9 @@ const TestDropdown = ({  handleItemClick, disabled ,flag,setFlag,openTest,setOpe
 
     return (<div>
        
-        <InputGroup inside className='input-search'>
+        <InputGroup inside className='input-search'  disabled={disabled}>
             <Input
-                disabled={disabled}
+               
                 placeholder={'Search Test '}
                 value={searchKeyword}
                 onChange={handleSearch}
