@@ -16,9 +16,8 @@ import {
     Row,
     SelectPicker
 } from 'rsuite';
+import TransferList from "./TransferTestList";
 import './styles.less';
-
-
 import { formatDateWithoutSeconds } from '@/utils';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
@@ -40,6 +39,8 @@ import { useGetPatientAttachmentsListQuery } from '@/services/attachmentService'
 import { FaFileArrowDown } from 'react-icons/fa6';
 import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import { useLocation } from 'react-router-dom';
+import { useGetDiagnosticsTestListQuery } from '@/services/setupService';
+import MyModal from '@/components/MyModal/MyModal';
 const handleDownload = attachment => {
     const byteCharacters = atob(attachment.fileContent);
     const byteNumbers = new Array(byteCharacters.length);
@@ -67,22 +68,14 @@ const DiagnosticsOrder = () => {
     const [test, setTest] = useState<ApDiagnosticTest>({ ...newApDiagnosticTest });
     const [flag, setFlag] = useState(false);
     const [reson, setReson] = useState({ cancellationReason: "" });
+    const [openTestsModal, setOpenTestsModal] = useState(false);
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-    const [listOrderRequest, setListOrderRequest] = useState<ListRequest>({
-        ...initialListRequest,
-        filters: [
-            {
-                fieldName: 'patient_key',
-                operator: 'match',
-                value: patient.key
-            },
-            {
-                fieldName: 'visit_key',
-                operator: 'match',
-                value: encounter.key
-            }
-        ]
-    });
+    const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+    const { data: testsList } = useGetDiagnosticsTestListQuery(listTestRequest);
+
+    const [leftItems, setLeftItems] = useState([]);
+    const [selectedTestsList, setSelectedTestsList] = useState([]);
+
     const [listOrdersRequest, setListOrdersRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -163,6 +156,15 @@ const DiagnosticsOrder = () => {
         (item) => item.statusLkey === "1804482322306061"
     ) ?? [];
     // Effects
+    useEffect(() => {
+        if (testsList?.object) {
+            setLeftItems(testsList.object);
+        }
+    }, [testsList]);
+    useEffect(() => {
+        setLeftItems(testsList?.object??[]);
+        setSelectedTestsList([]);
+    }, [openTestsModal]);
     useEffect(() => {
         const draftOrder = ordersList?.object?.find((order) => order.saveDraft === true);
 
@@ -258,7 +260,7 @@ const DiagnosticsOrder = () => {
         try {
             await saveOrderTests(orderTest).unwrap();
             setOpenDetailsModel(false);
-            dispatch(notify({msg:'saved  Successfully',sev:'success'}));
+            dispatch(notify({ msg: 'saved  Successfully', sev: 'success' }));
 
             orderTestRefetch().then(() => {
                 console.log("Refetch complete");
@@ -304,6 +306,33 @@ const DiagnosticsOrder = () => {
             console.error("Encounter save failed:", error);
             dispatch(notify({ msg: 'One or more deleted failed', sev: 'error' }));
             CloseConfirmDeleteModel();
+        }
+    };
+    const handleSaveTests = async () => {
+        setOpenTestsModal(false);
+      
+        try {
+            await Promise.all(
+                selectedTestsList.map(item =>
+                    saveOrderTests({
+                        ...newApDiagnosticOrderTests,
+                        patientKey: patient.key,
+                        visitKey: encounter?.key,
+                        orderKey: orders?.key,
+                        testKey: item.key,
+                        statusLkey: "164797574082125",
+                        processingStatusLkey: '6055029972709625',
+                        orderTypeLkey: test.testTypeLkey
+                    }).unwrap()
+                )
+            );
+
+            dispatch(notify({ msg: 'All Tests Saved Successfully', sev: "success" }));
+
+            await orderTestRefetch();
+        } catch (error) {
+            console.error("Encounter save failed:", error);
+            dispatch(notify({ msg: 'Save Failed', sev: "error" }));
         }
     };
     const handleItemClick = async (test) => {
@@ -713,7 +742,11 @@ const DiagnosticsOrder = () => {
 
                     <div className='top-container'>
 
-                        <TestDropdown handleItemClick={handleItemClick} disabled={orders.key ? orders?.statusLkey !== '164797574082125' : true} flag={flag} setFlag={setFlag} />
+                        <TestDropdown handleItemClick={handleItemClick} 
+                        disabled={orders.key ? orders?.statusLkey !== '164797574082125' : true} 
+                        flag={flag} setFlag={setFlag} 
+                        openTest={openTestsModal} setOpenTests={setOpenTestsModal}/>
+                      
                         <div className='icon-style'>
                             <GrTestDesktop size={18} />
                         </div>
@@ -755,11 +788,11 @@ const DiagnosticsOrder = () => {
 
                 <MyTable
                     columns={tableColumns}
-                    sortColumn={listOrderRequest.sortBy}
-                    sortType={listOrderRequest.sortType}
+                    sortColumn={listOrdersRequest.sortBy}
+                    sortType={listOrdersRequest.sortType}
                     loading={loadTests}
                     onSortChange={(sortBy, sortType) => {
-                        setListOrderRequest({ ...listOrderRequest, sortBy, sortType });
+                        setListOrdersRequest({ ...listOrdersRequest, sortBy, sortType });
                     }}
 
 
@@ -808,6 +841,20 @@ const DiagnosticsOrder = () => {
                 refecthData={attachmentRefetch}
                 attachmentSource={orderTest}
                 attatchmentType="ORDER_TEST" />
+
+            <MyModal
+                open={openTestsModal}
+                setOpen={setOpenTestsModal}
+                title="Select Tests"
+                actionButtonFunction={handleSaveTests}
+                size='50vw'
+                content={<TransferList
+                    leftItems={leftItems}
+                    rightItems={selectedTestsList}
+                    setLeftItems={setLeftItems}
+                    setRightItems={setSelectedTestsList}
+                />}
+            />
         </>
     );
 };
