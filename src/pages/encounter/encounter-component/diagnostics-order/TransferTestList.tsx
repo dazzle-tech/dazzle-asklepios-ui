@@ -4,11 +4,11 @@ import Grid from '@mui/material/Grid';
 import { Col, Row } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
 
-const TransferTestList = ({ leftItems = [], rightItems = [], setLeftItems, setRightItems }) => {
+const TransferTestList = ({ leftItems = [], rightItems = [], setLeftItems, setRightItems,searchTerm,setSearchTerm}) => {
     const [checked, setChecked] = React.useState([]);
     const [left, setLeft] = React.useState(leftItems || []);
     const [right, setRight] = React.useState(rightItems || []);
-    const [searchTerm, setSearchTerm] = React.useState('');
+    
 
     const intersection = (array1, array2) => array1.filter(value => array2.includes(value));
     const not = (array1, array2) => array1.filter(value => !array2.includes(value));
