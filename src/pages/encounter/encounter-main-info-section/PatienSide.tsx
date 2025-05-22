@@ -137,7 +137,7 @@ const PatientSide = ({ patient, encounter }) => {
 
             </div>
 
-            <Text className="patient-info">
+            <Text >
                 <FontAwesomeIcon icon={faIdCard} className='icon-color' /> <span className='section-title'>Document  Information</span>
             </Text>
             <br />
