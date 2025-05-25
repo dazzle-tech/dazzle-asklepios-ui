@@ -11,8 +11,8 @@ const MyToast = () => {
     if (uiSlice.msg) {
       toaster.push(
         <Notification type={uiSlice.sev}  
-         header={<span style={{ fontSize: '14px'}}>{uiSlice.sev.toUpperCase()}</span>}
-          className='notifcation-style'
+         header={uiSlice.sev.toUpperCase()}
+          
           closable>
           {uiSlice.msg}
         </Notification>,
