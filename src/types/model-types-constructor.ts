@@ -2741,6 +2741,7 @@ export const newApUserAccessPrivatePatient:modelTypes.ApUserAccessPrivatePatient
 	updatedAt:undefined,
 	deletedAt:undefined,
 	reason:'',
+	patientKey:undefined,
 } 
 
 export const newApUserFacilities:modelTypes.ApUserFacilities = { 

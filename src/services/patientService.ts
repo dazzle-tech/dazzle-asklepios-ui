@@ -298,12 +298,13 @@ export const patientService = createApi({
       keepUnusedDataFor: 5
     }),
     saveUserAccessLoginPrivatePatient: builder.mutation({
-      query: (data: { user:ApUser , reason: string }) => ({
+      query: (data: { user:ApUser , reason: string ,patientKey:string }) => ({
         url: `/pas/user-access-private-patient`,
         method: 'POST',
         body: data.user, 
         headers: {
-          reason : data.reason
+          reason : data.reason,
+          patientKey:data.patientKey
         },
       }),
       transformResponse: (response) => {
