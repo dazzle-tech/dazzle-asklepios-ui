@@ -132,7 +132,7 @@ const AddExtraDetails = ({ localPatient, open, setOpen, secondaryDocument, setSe
             actionButtonFunction={handleSaveSecondaryDocument}
             actionButtonLabel="Save"
             hideBack={true}
-            hideCanel={false}
+            hideCancel={false}
             steps={[{ title: 'Secondary Document', icon:<FontAwesomeIcon icon={ faIdCard }/>}]}
         />
     );

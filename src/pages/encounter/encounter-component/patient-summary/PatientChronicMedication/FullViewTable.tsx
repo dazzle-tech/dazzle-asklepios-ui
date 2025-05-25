@@ -86,7 +86,7 @@ const FullViewTable = ({
                 columns={medicationColumns}
                 height={300}
             />}
-            hideCanel={false}
+            hideCancel={false}
             bodyheight="70vh"
             size="70vw"
             hideBack={true}

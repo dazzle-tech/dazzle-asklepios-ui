@@ -14,7 +14,7 @@ const FullViewChart = ({
             setOpen={setOpen}
             title="Body Diagram"
             content={content}
-            hideCanel={false}
+            hideCancel={false}
             bodyheight="60vh"
             hideBack={true}
             steps={[{ title:"Body Diagram", icon:  <FontAwesomeIcon icon={faPerson }/>}]}

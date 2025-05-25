@@ -32,7 +32,7 @@ const FacilityDepartment = ({ open, setOpen, departments, width }) => {
       content={conjureFormContent}
       hideActionBtn
       hideBack
-      hideCanel
+      hideCancel
       size={width > 600 ? '36vw' : '25vw'}
     />
   );

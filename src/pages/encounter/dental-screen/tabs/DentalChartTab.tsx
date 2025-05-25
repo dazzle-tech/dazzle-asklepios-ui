@@ -1,10 +1,8 @@
-'use client';
-
 import React from 'react';
 import { Panel, Stack, ButtonToolbar, SelectPicker, Whisper, Tooltip, IconButton } from 'rsuite';
 import * as icons from '@rsuite/icons';
 import Translate from '@/components/Translate';
-import DentalChart from '@/components/DentalChart';
+import DentalChart from '@/components/NewDentalChart';
 import { newApDentalChartTooth } from '@/types/model-types-constructor';
 import { useGetActionsQuery, useGetChartDataQuery } from '@/services/dentalService';
 import { useGetCdtsQuery, useGetServicesQuery } from '@/services/setupService';
@@ -12,6 +10,8 @@ import { initialListRequest } from '@/types/types';
 import { Box } from '@mui/material';
 import StackItem from 'rsuite/esm/Stack/StackItem';
 import MyTable from '@/components/MyTable'; // Update the path to your MyTable component
+import './styles.less';
+import ToothActionCard from '@/components/NewDentalChart/ToothActionCard/ToothActionCard';
 
 const ChartTab = ({
   currentChart,
@@ -112,101 +112,46 @@ const ChartTab = ({
     }
   }, [previousChartDataResponse, setCurrentChart]);
 
-  // Define table data
-  const columns = [
-    {
-      key: 'existing',
-      title: <Translate>Existing</Translate>,
-      render: rowData => <Translate>{rowData.existing ? 'Yes' : 'No'}</Translate>
-    },
-    {
-      key: 'toothNumber',
-      title: <Translate>Tooth #</Translate>,
-      dataKey: 'toothNumber'
-    },
-    {
-      key: 'actionKey',
-      title: <Translate>Action</Translate>,
-      render: rowData => (
-        <Translate>{dentalActionsMap[rowData.actionKey]?.description || '-'}</Translate>
-      )
-    },
-    {
-      key: 'type',
-      title: <Translate>Type</Translate>,
-      render: rowData => (
-        <small>
-          {dentalActionsMap[rowData.actionKey]?.type === 'treatment' ? (
-            <b style={{ color: 'green' }}>Treatment</b>
-          ) : (
-            <b style={{ color: 'red' }}>Condition</b>
-          )}
-        </small>
-      )
-    },
-    {
-      key: 'surfaceLvalue',
-      title: <Translate>Surface</Translate>,
-      render: rowData => <small>{rowData.surfaceLvalue?.lovDisplayVale ?? '-'}</small>
-    },
-    {
-      key: 'note',
-      title: <Translate>Note</Translate>,
-      render: rowData =>
-        rowData.note && (
-          <Whisper
-            placement="right"
-            controlId="control-id-hover"
-            trigger="hover"
-            speaker={
-              <Tooltip>
-                <span style={{ fontSize: '20px' }}>{rowData.note}</span>
-              </Tooltip>
-            }
-          >
-            <icons.Message style={{ fontSize: '20px' }} />
-          </Whisper>
-        )
-    }
-  ];
-
   return (
-    <>
+    <Box className="dental-chart-tab-container">
       <Panel
         bordered
+        className="dental-visit-chart"
         header={
           <Box>
-            <Translate>Current Chart Actions</Translate>
-            {currentChart.key !== originalChart.key && (
-              <small style={{ color: 'rgb(120,120,120)' }}>
-                Previewing History Chart ({currentChart.chartDate})
-              </small>
-            )}
-          </Box>
-        }
-      >
-        <MyTable
-          data={currentChart.chartActions || []}
-          columns={columns}
-          height={500}
-          loading={false}
-        />
-      </Panel>
+            <Stack justifyContent="space-between" alignItems="flex-start">
+              <StackItem>
+                <Translate>Current Visit Chart</Translate>
+                {currentChart.key !== originalChart.key && (
+                  <small style={{ color: 'rgb(120,120,120)' }}>
+                    Previewing History Chart ({currentChart.chartDate})
+                  </small>
+                )}
+                <br />
+              </StackItem>
 
-      <Panel
-        bordered
-        header={
-          <Stack justifyContent="space-between">
-            <StackItem>
-              <Translate>Current Visit Chart</Translate>
-              {currentChart.key !== originalChart.key && (
-                <small style={{ color: 'rgb(120,120,120)' }}>
-                  Previewing History Chart ({currentChart.chartDate})
-                </small>
-              )}
+              <StackItem>
+                <ButtonToolbar>
+                  <SelectPicker
+                    onClean={cancelPreviousChartView}
+                    placeholder="Previous Charts"
+                    data={previousCharts}
+                    labelKey={'chartDate'}
+                    valueKey="key"
+                    value={selectedPreviousChartKey}
+                    style={{ width: '200px' }}
+                    onChange={e => {
+                      if (e) setSelectedPreviousChartKey(e);
+                      else cancelPreviousChartView();
+                    }}
+                  />
+                </ButtonToolbar>
+              </StackItem>
+            </Stack>
+            <Box className="selected-tooth-cleaner">
               {selectedTooth?.key && (
-                <span>
-                  <small>(Selection: Tooth #{selectedTooth.toothNumber})</small>
+                <>
+                  <small>(Selected Tooth <strong>#{selectedTooth?.toothNumber}</strong>)</small>
                   <IconButton
                     title="Clear Selection"
                     appearance="link"
@@ -216,28 +161,10 @@ const ChartTab = ({
                     }}
                     icon={<icons.BlockRound />}
                   />
-                </span>
+                </>
               )}
-            </StackItem>
-
-            <StackItem>
-              <ButtonToolbar>
-                <SelectPicker
-                  onClean={cancelPreviousChartView}
-                  placeholder="Previous Charts"
-                  data={previousCharts}
-                  labelKey={'chartDate'}
-                  valueKey="key"
-                  value={selectedPreviousChartKey}
-                  style={{ width: '200px' }}
-                  onChange={e => {
-                    if (e) setSelectedPreviousChartKey(e);
-                    else cancelPreviousChartView();
-                  }}
-                />
-              </ButtonToolbar>
-            </StackItem>
-          </Stack>
+            </Box>
+          </Box>
         }
       >
         <DentalChart
@@ -256,10 +183,44 @@ const ChartTab = ({
           setTreatmentPlanTrigger={setTreatmentPlanTrigger}
           cdtLoading={cdtListResponse.isLoading}
           servicesLoading={dentalServicesListResponse.isLoading}
-          zoom={0.35}
         />
       </Panel>
-    </>
+      <Panel
+        bordered
+        className="dental-actions-table"
+        header={
+          <Box>
+            <Translate>Current Chart Actions</Translate>
+            {currentChart.key !== originalChart.key && (
+              <small style={{ color: 'rgb(120,120,120)' }}>
+                Previewing History Chart ({currentChart.chartDate})
+              </small>
+            )}
+          </Box>
+        }
+      >
+        {currentChart?.chartActions?.map(tooth => (
+          <ToothActionCard
+            key={tooth.key}
+            date={tooth.createdAt}
+            toothNumber={tooth.toothNumber}
+            action={dentalActionsMap[tooth.actionKey]?.description || '-'}
+            type={
+              dentalActionsMap[tooth.actionKey]?.type === 'treatment' ? 'Treatment' : 'Condition'
+            }
+            surface={tooth.surfaceLvalue?.lovDisplayVale ?? '-'}
+            note={tooth.note}
+            existing={tooth.existing}
+          />
+        ))}
+        {/* <MyTable
+          data={currentChart.chartActions || []}
+          columns={columns}
+          height={500}
+          loading={false}
+        /> */}
+      </Panel>
+    </Box>
   );
 };
 

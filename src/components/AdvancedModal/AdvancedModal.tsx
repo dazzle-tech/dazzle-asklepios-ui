@@ -1,9 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { Modal } from 'rsuite';
 import './styles.less';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import MyButton from '../MyButton/MyButton';
+
+// interface AdvancedModalProps {
+//     open: boolean;
+//     setOpen: () => void;
+//     leftTitle?: string;
+//     rightTitle: string;
+//     subRightTitle?: string;
+//     leftContent?: ReactNode;
+//     rightContent?: ReactNode;
+//     footerButtons?: ReactNode;
+//     hideCancel?: boolean;
+// }
 const AdvancedModal = ({
     open,
     setOpen,
@@ -13,7 +25,7 @@ const AdvancedModal = ({
     leftContent,
     rightContent,
     footerButtons = null,
-    hideCanel = false,
+    hideCancel = false,
     position = "center",
     actionButtonLabel = "Save",
     actionButtonFunction = null,
@@ -24,7 +36,6 @@ const AdvancedModal = ({
     isDisabledActionBtn = false,
     defaultClose = false,
     isLeftClosed = true,
-
 }) => {
 
 
@@ -85,7 +96,7 @@ const AdvancedModal = ({
                     </div>
                     <div className="modal-right-footer">
                         <div className="modal-right-footer-buttons">
-                            {!hideCanel && <MyButton appearance="subtle" onClick={() =>
+                            {!hideCancel && <MyButton appearance="subtle" onClick={() =>
                                 setOpen(false)
                             }>Cancel</MyButton>}
                             {footerButtons}

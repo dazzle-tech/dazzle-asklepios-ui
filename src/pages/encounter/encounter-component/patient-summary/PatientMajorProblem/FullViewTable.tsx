@@ -42,7 +42,7 @@ const FullViewTable = ({ open, setOpen, data }) => {
                 columns={majorDiagnosesColumns}
                 height={300}
             />}
-            hideCanel={false}
+            hideCancel={false}
             bodyheight="70vh"
             hideBack={true}
             steps={[{ title: "Major Diagnoses", icon:  <FontAwesomeIcon icon={faLungsVirus }/>}]}
