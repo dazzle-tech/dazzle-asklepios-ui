@@ -744,9 +744,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                 defaultClose={true}
                 size="90vw"
                 height="85vh"
-                // open={isOpen}
-                open={true}
-
+                open={isOpen}
                 setOpen={() => { onClose(), handleClear() }}
                 actionButtonFunction={
                     handleSaveAppointment
