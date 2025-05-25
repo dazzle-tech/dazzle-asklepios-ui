@@ -19,7 +19,7 @@ const ChildModal = ({
     actionButtonLabel = "Save",
     actionChildButtonFunction = null,
     hideActionBtn = false,
-    hideCanel = false,
+    hideCancel = false,
     actionChildButtonLabel = "Save",
     hideActionChildBtn = false,
     hideChildCanel = false,
@@ -58,7 +58,7 @@ const ChildModal = ({
                 actionButtonLabel={actionButtonLabel}
                 hideActionBtn={hideActionBtn}
                 content={mainContent}
-                hideCanel={hideCanel} />
+                hideCancel={hideCancel} />
 
             {/* Child Modal */}
             <MyModal
@@ -72,7 +72,7 @@ const ChildModal = ({
                 customClassName="child-right-modal"
                 actionButtonFunction={actionChildButtonFunction}
                 actionButtonLabel={actionChildButtonLabel}
-                hideCanel={hideChildCanel}
+                hideCancel={hideChildCanel}
             />
         </>
     );

@@ -110,7 +110,8 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                     <AddPayment isReadOnly={isReadOnly} />
                 );
         };
-    }
+    };
+    
     return (
         <MyModal
             open={quickAppointmentModel}

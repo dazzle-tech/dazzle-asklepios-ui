@@ -13,7 +13,7 @@ const Summary =({open ,setOpen,list ,encounter,setEncounter,saveEncounter})=>{
         setOpen={setOpen}
         title="Findings"
         hideActionBtn
-        hideCanel
+        hideCancel
         steps={[
           {
             title: "Findings", icon:<FontAwesomeIcon icon={faListCheck}/>,

@@ -129,7 +129,7 @@ const Substitues = ({ open, setOpen, selectedGeneric }) => {
         steps={[{ title: "Substitutes", icon:<FontAwesomeIcon icon={faRightLeft }/>}]}
         position="right"
         hideActionBtn
-        hideCanel
+        hideCancel
         content={<>
         <MyTable
         data={lisOfLinkedBrand?.object ?? []}

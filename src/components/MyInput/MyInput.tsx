@@ -14,7 +14,7 @@ import {
 } from 'rsuite';
 import MyLabel from '../MyLabel';
 import Translate from '../Translate';
-
+import clsx from "clsx";
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
 ));
@@ -48,6 +48,7 @@ const MyInput = ({
   vr = undefined,
   rows = 1,
   showLabel = true, // form validation result
+  className = "",
   ...props
 }) => {
   const [validationResult, setValidationResult] = useState(undefined);
@@ -323,7 +324,7 @@ const MyInput = ({
   };
 
   return (
-    <Form.Group className="my-input-container">
+    <Form.Group className={clsx(`my-input-container ${className}`)}>
       <Form.ControlLabel >
         {showLabel && <MyLabel label={fieldLabel} error={validationResult} />}
         {props.required && <span className="required-field ">*</span>}

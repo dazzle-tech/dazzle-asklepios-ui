@@ -231,7 +231,7 @@ const AttachmentModal = ({
             size="sm"
             bodyheight="65vh"
             content={content}
-            hideCanel={false}
+            hideCancel={false}
             hideBack={true}
             steps={[{ title: "Attachments", icon: <FontAwesomeIcon icon={faPaperclip }/>}]}
             actionButtonLabel="Save"

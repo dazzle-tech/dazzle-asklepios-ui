@@ -24,7 +24,7 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
     return (
         <div >
             <MyModal
-                hideCanel
+                hideCancel
                 hideActionBtn
                 title={title}
                 open={open}

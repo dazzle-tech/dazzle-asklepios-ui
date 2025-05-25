@@ -1,0 +1,83 @@
+.applied-actions-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 16px;
+  width: 100%;
+}
+
+.applied-actions-container {
+  height: calc(100vh - 450px);
+  .actions-chart {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 1.5rem;
+  }
+
+  .tooth-state-tab-content {
+    width: 100%;
+  }
+
+  h6 {
+    padding: 10px;
+    font-size: 18px;
+  }
+
+  .tooth-status-applied-actions-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+    width: 100%;
+    padding: 10px;
+  }
+}
+
+.tooth-status-tab-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  .my-input-container {
+    width: 100%;
+    .rs-form-control {
+      width: 100%;
+      .my-input,
+      input {
+        width: 100% !important;
+      }
+    }
+
+    &.existing-checkbox {
+      width: 100px;
+    }
+
+    &.note-field {
+      width: 100%;
+    }
+  }
+
+  .tooth-status-tab-actions {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-top: 1.3rem;
+
+    .rs-btn {
+      min-width: 100px;
+    }
+  }
+
+  .tooth-status-form-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+  }
+}
