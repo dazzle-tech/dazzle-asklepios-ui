@@ -93,6 +93,12 @@ const Departments = () => {
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Departments'));
   dispatch(setDivContent(divContentHTML));
+  // class name for selected row
+  const isSelected = rowData => {
+    if (rowData && department && rowData.key === department.key) {
+      return 'selected-row';
+    } else return '';
+  };
   // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
@@ -216,12 +222,13 @@ const Departments = () => {
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
-        onClick={() => { setPopupOpen(true); setDepartment(rowData); }}
+        className='icons-department'
+        onClick={() => { setPopupOpen(true); }}
       />
       {rowData?.deletedAt ? (
-        <FontAwesomeIcon title="Active" icon={faRotateRight} fill="var(--primary-gray)" />
+        <FontAwesomeIcon title="Active" icon={faRotateRight} fill="var(--primary-gray)" className='icons-department' />
       ) : (
-        <MdDelete title="Deactivate" size={24} fill="var(--primary-pink)" />
+        <MdDelete title="Deactivate" size={24} fill="var(--primary-pink)" className='icons-department'/>
       )}
       <FontAwesomeIcon
         icon={faSheetPlastic}
@@ -235,7 +242,12 @@ const Departments = () => {
         }}
         title="Medical Sheets"
         size={'lg'}
-        onClick={() => setOpenScreensPopup(true)}
+        onClick={() => {
+          if(['5673990729647001', '5673990729647002', '5673990729647005'].includes(
+            rowData?.departmentTypeLkey
+          ))
+          setOpenScreensPopup(true);
+        }}
       />
     </div>
   );
@@ -349,6 +361,10 @@ const Departments = () => {
       <MyTable
         data={departmentListResponse?.object ?? []}
         columns={tableColumns}
+        rowClassName={isSelected}
+        onRowClick={rowData => {
+            setDepartment(rowData);
+          }}
         filters={filters()}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
