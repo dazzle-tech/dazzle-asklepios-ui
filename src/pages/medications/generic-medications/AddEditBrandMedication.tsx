@@ -60,19 +60,35 @@ const AddEditBrandMedication = ({
     useGetGenericMedicationWithActiveIngredientQuery('');
 
   const [modifiedMedicationList, setModifiedMedicationList] = useState(
-    (genericMedicationListResponse?.object ?? []).map(item => ({
-      ...item,
-       customLabel: `${item.genericName}  , ${item.dosageFormLvalue?.lovDisplayVale} ${item.manufacturerLvalue?.lovDisplayVale} , ${item.roaLvalue?.lovDisplayVale}`
-    }))
+  (genericMedicationListResponse?.object ?? []).map(item => ({
+    ...item,
+    customLabel: [
+      item.genericName,
+      item.dosageFormLvalue?.lovDisplayVale,
+      item.manufacturerLvalue?.lovDisplayVale,
+      item.roaLvalue?.lovDisplayVale,
+      item.activeIngredients,
+    ]
+      .filter(Boolean) // يزيل العناصر الفارغة أو undefined/null
+      .join(', ')
+  }))
   );
 
   useEffect(() => {
-    setModifiedMedicationList(
-      (genericMedicationListResponse?.object ?? []).map(item => ({
-        ...item,
-        customLabel: `${item.genericName} - ${item.strength} ${item.form}`
-      }))
-    );
+   setModifiedMedicationList(
+  (genericMedicationListResponse?.object ?? []).map(item => ({
+    ...item,
+    customLabel: [
+      item.genericName,
+      item.dosageFormLvalue?.lovDisplayVale,
+      item.manufacturerLvalue?.lovDisplayVale,
+      item.roaLvalue?.lovDisplayVale,
+      item.activeIngredients,
+    ]
+      .filter(Boolean) // يزيل العناصر الفارغة أو undefined/null
+      .join(', ')
+  }))
+);
   }, [genericMedicationListResponse]);
 
   const { data: UOMLovResponseData } = useGetLovValuesByCodeQuery('VALUE_UNIT');
@@ -89,7 +105,6 @@ const AddEditBrandMedication = ({
   );
 
   const [brand, setBrand] = useState<ApGenericMedication>({ ...newApGenericMedication });
-  console.log('activeIngredientListResponseData: ' + activeIngredientListResponseData?.object);
 
   const isSelectedBrand = rowData => {
     if (rowData && brand && rowData.key === brand.key) {
@@ -123,6 +138,7 @@ const AddEditBrandMedication = ({
     useGetGenericMedicationActiveIngredientQuery(listRequest);
 
   useEffect(() => {
+    console.log("in effectt");
     setListRequest({
       ...initialListRequest,
       pageSize: 100,
@@ -303,20 +319,20 @@ const AddEditBrandMedication = ({
       key: 'roaList',
       title: <Translate>ROA</Translate>,
       flexGrow: 4,
-      render: rowData =>
-        rowData.roaList?.map((item, index) => {
-          const value = conjureValueBasedOnKeyFromList(
-            medRoutLovQueryResponse?.object ?? [],
-            item,
-            'lovDisplayVale'
-          );
-          return (
-            <span key={index}>
-              {value}
-              {index < rowData.roaList.length - 1 && ', '}
-            </span>
-          );
-        })
+      // render: rowData =>
+      //   rowData.roaList?.map((item, index) => {
+      //     const value = conjureValueBasedOnKeyFromList(
+      //       medRoutLovQueryResponse?.object ?? [],
+      //       item,
+      //       'lovDisplayVale'
+      //     );
+      //     return (
+      //       <span key={index}>
+      //         {value}
+      //         {index < rowData.roaList.length - 1 && ', '}
+      //       </span>
+      //     );
+      //   })
     },
     {
       key: 'expiresAfterOpening',
