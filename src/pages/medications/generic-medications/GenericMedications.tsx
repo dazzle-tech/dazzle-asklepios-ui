@@ -1,20 +1,17 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
-import { Form, Input, Modal, Pagination, Panel, Table } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
+import { Form, Panel} from 'rsuite';
 import { MdModeEdit } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
 import {
   useRemoveGenericMedicationMutation,
-  useGetGenericMedicationQuery
+  useGetGenericMedicationQuery,
+  useSaveGenericMedicationMutation
 } from '@/services/medicationsSetupService';
-import { ButtonToolbar, IconButton, Carousel } from 'rsuite';
+import {Carousel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
 import { ApGenericMedication } from '@/types/model-types';
 import { newApGenericMedication } from '@/types/model-types-constructor';
 import {
@@ -32,22 +29,28 @@ import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
+import AddEditBrandMedication from './AddEditBrandMEdication';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 const GenericMedications = () => {
   const dispatch = useAppDispatch();
+  const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
   const [genericMedication, setGenericMedication] = useState<ApGenericMedication>({
     ...newApGenericMedication
   });
+  const [openConfirmDeleteGenericMedicationModal, setOpenConfirmDeleteGenericMedicationModal] = useState<boolean>(false);
+    const [stateOfDeleteGenericMedicationModal, setStateOfDeleteGenericMedicationModal] = useState<string>('delete');
+  const [openAddEditPopup, setOpenAddEditPopup] = useState<boolean>(false);
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const {
-    data: genericMedicationListResponse,
-    refetch: genericMedicationRefetch,
-    isFetching
-  } = useGetGenericMedicationQuery(listRequest);
-  const [removeGenericMedication, removeGenericMedicationMutation] =
-    useRemoveGenericMedicationMutation();
-  const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
+  // Fetch generic Medication list response
+  const {data: genericMedicationListResponse, refetch: genericMedicationRefetch, isFetching} = useGetGenericMedicationQuery(listRequest);
+  // Remove Generic Medication
+  const [removeGenericMedication, removeGenericMedicationMutation] = useRemoveGenericMedicationMutation();
+  // Save Generic Medication
+  const [saveGenericMedication, saveGenericMedicationMutation] = useSaveGenericMedicationMutation();
+   // Fetch medRoutLov  list response
   const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
+   // Header page setUp
   const divContent = (
     <div style={{ display: 'flex' }}>
       <h5>Brand Medications List</h5>
@@ -56,7 +59,6 @@ const GenericMedications = () => {
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Brand_Medications'));
   dispatch(setDivContent(divContentHTML));
-
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
@@ -74,7 +76,7 @@ const GenericMedications = () => {
     { label: 'Single Patient Use', value: 'singlePatientUse' },
     { label: 'Status', value: 'deleted_at' }
   ];
-
+  // Effects
   // to handle filter change
   useEffect(() => {
     if (recordOfFilter['filter']) {
@@ -87,6 +89,35 @@ const GenericMedications = () => {
       });
     }
   }, [recordOfFilter]);
+  // update list after remove 
+  useEffect(() => {
+    if (removeGenericMedicationMutation.isSuccess) {
+      setListRequest({
+        ...listRequest,
+        timestamp: new Date().getTime()
+      });
+
+      setGenericMedication({ ...newApGenericMedication });
+    }
+  }, [removeGenericMedicationMutation]);
+  // baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaack
+  useEffect(() => {
+    genericMedicationRefetch();
+  }, [carouselActiveIndex]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent('  '));
+    };
+  }, [location.pathname, dispatch]);
+  // update list after new/edit Generic Medication
+  useEffect(() => {
+      if (saveGenericMedicationMutation.data) {
+        setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+      }
+    }, [saveGenericMedicationMutation.data]);
+
 
   // Handle page change in navigation
   const handlePageChange = (_: unknown, newPage: number) => {
@@ -103,14 +134,13 @@ const GenericMedications = () => {
 
   const handleNew = () => {
     setGenericMedication({ ...newApGenericMedication });
-    setCarouselActiveIndex(1);
+    setOpenAddEditPopup(true);
   };
 
-  const handleEdit = () => {
-    setCarouselActiveIndex(1);
-  };
+ 
 
-  const handleDelete = () => {
+  const deactivateReactivateMedication = () => {
+    setOpenConfirmDeleteGenericMedicationModal(false);
     if (genericMedication.key) {
       removeGenericMedication({
         ...genericMedication
@@ -118,6 +148,19 @@ const GenericMedications = () => {
       dispatch(notify('Brand Medication  DeactivateActivate Successfully'));
     }
   };
+
+  const handleSave = async () => {
+        try {
+      //   setEnableAddActive(true);
+      //   setEditing(true);
+        const response = await saveGenericMedication({ genericMedication}).unwrap();
+          dispatch(notify('Brand Medication Saved Successfully'));
+          setGenericMedication(response);
+          // setPreKey(response?.key);
+        } catch (error) {
+          console.error("Error saving Brand Medication:", error);
+      }
+      };
 
   const handleFilterChange = (fieldName, value) => {
     if (value) {
@@ -140,27 +183,7 @@ const GenericMedications = () => {
     } else return '';
   };
 
-  useEffect(() => {
-    if (removeGenericMedicationMutation.isSuccess) {
-      setListRequest({
-        ...listRequest,
-        timestamp: new Date().getTime()
-      });
-
-      setGenericMedication({ ...newApGenericMedication });
-    }
-  }, [removeGenericMedicationMutation]);
-
-  useEffect(() => {
-    genericMedicationRefetch();
-  }, [carouselActiveIndex]);
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
-
+  
   // Filter table
   const filters = () => (
     <Form layout="inline" fluid className="container-of-filter-fields-resources">
@@ -201,7 +224,7 @@ const GenericMedications = () => {
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
-        // onClick={() => setPopupOpen(true)}
+        onClick={() => setOpenAddEditPopup(true)}
       />
       {/* deactivate/activate  when click on one of these icon */}
       {!rowData?.deletedAt ? (
@@ -210,10 +233,10 @@ const GenericMedications = () => {
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
-          // onClick={() => {
-          //   setStateOfDeleteUserModal('deactivate');
-          //   setOpenConfirmDeleteUserModal(true);
-          // }}
+          onClick={() => {
+            setStateOfDeleteGenericMedicationModal('deactivate');
+            setOpenConfirmDeleteGenericMedicationModal(true);
+          }}
         />
       ) : (
         <FaUndo
@@ -221,10 +244,10 @@ const GenericMedications = () => {
           title="Activate"
           size={20}
           fill="var(--primary-gray)"
-          // onClick={() => {
-          //   setStateOfDeleteUserModal('reactivate');
-          //   setOpenConfirmDeleteUserModal(true);
-          // }}
+          onClick={() => {
+            setStateOfDeleteGenericMedicationModal('reactivate');
+            setOpenConfirmDeleteGenericMedicationModal(true);
+          }}
         />
       )}
     </div>
@@ -315,11 +338,22 @@ const GenericMedications = () => {
       activeIndex={carouselActiveIndex}
     >
       <Panel>
-        <ButtonToolbar>
-          <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
+        {/* <ButtonToolbar> */}
+          {/* <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
             Add New
-          </IconButton>
-          <IconButton
+          </IconButton> */}
+
+          <div className="container-of-add-new-button-resources">
+                  <MyButton
+                    prefixIcon={() => <AddOutlineIcon />}
+                    color="var(--deep-blue)"
+                    onClick={handleNew}
+                    width="109px"
+                  >
+                    Add New
+                  </MyButton>
+                </div>
+          {/* <IconButton
             disabled={!genericMedication.key || genericMedication.deletedAt !== null}
             appearance="primary"
             color="green"
@@ -336,9 +370,9 @@ const GenericMedications = () => {
             icon={<TrashIcon />}
           >
             Deactivate\Activate Selected
-          </IconButton>
-        </ButtonToolbar>
-        <hr />
+          </IconButton> */}
+        {/* </ButtonToolbar> */}
+        {/* <hr /> */}
         <MyTable
           height={450}
           data={genericMedicationListResponse?.object ?? []}
@@ -662,6 +696,13 @@ const GenericMedications = () => {
             </TabPanel>
           </Tabs>  */}
         {/* </Panel> */}
+        <AddEditBrandMedication
+         open={openAddEditPopup}
+         setOpen={setOpenAddEditPopup}
+         genericMedication={genericMedication}
+         setGenericMedication={setGenericMedication}
+         handleSave={handleSave}
+        />
       </Panel>
       <NewEditGenericMedication
         selectedGenericMedication={genericMedication}
@@ -669,6 +710,13 @@ const GenericMedications = () => {
           setCarouselActiveIndex(0);
         }}
       />
+       <DeletionConfirmationModal
+              open={openConfirmDeleteGenericMedicationModal}
+              setOpen={setOpenConfirmDeleteGenericMedicationModal}
+              itemToDelete="Resource"
+              actionButtonFunction={deactivateReactivateMedication}
+              actionType={stateOfDeleteGenericMedicationModal}
+            />
     </Carousel>
   );
 };

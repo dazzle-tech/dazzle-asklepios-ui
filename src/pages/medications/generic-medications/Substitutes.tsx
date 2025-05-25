@@ -81,7 +81,7 @@ const Substitutes = ({ genericMedication }) => {
         }
     }, [searchKeyword]);
   
-   
+
       
     useEffect(()=>{
         if(brand.key!==null){
