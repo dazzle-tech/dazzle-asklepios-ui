@@ -2740,6 +2740,7 @@ export interface ApUserAccessPrivatePatient {
 	updatedAt:number;
 	deletedAt:number;
 	reason:string;
+	patientKey:string;
 } 
 
 export interface ApUserFacilities { 

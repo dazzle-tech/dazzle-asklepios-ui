@@ -30,7 +30,8 @@ const EncounterPatientPrivateLogin = () => {
     try {
       const response = await saveUserAccessLoginPrivatePatient({
         user: localUser,
-        reason: reason
+        reason: reason,
+        patientKey:propsData?.patient?.key
       })
         .unwrap()
         if (response?.msg=== "success") {
