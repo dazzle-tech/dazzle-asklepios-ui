@@ -6,21 +6,18 @@ import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import {
   Checkbox,
   HStack,
-  Table,
-  Tooltip,
-  Whisper
+  Table
 } from 'rsuite';
 import './styles.less';
 const { Column, HeaderCell, Cell } = Table;
 
 import {
-  useFetchAttachmentByKeyQuery,
-  useFetchAttachmentQuery,
   useGetPatientAttachmentsListQuery
 } from '@/services/attachmentService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { notify } from '@/utils/uiReducerActions';
 
+import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import CancellationModal from '@/components/CancellationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
@@ -29,19 +26,13 @@ import {
   useGetProceduresQuery,
   useSaveProceduresMutation
 } from '@/services/encounterService';
-import {
-  useGetDepartmentsQuery
-} from '@/services/setupService';
 import { newApProcedure } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
+import { formatDateWithoutSeconds } from '@/utils';
 import BlockIcon from '@rsuite/icons/Block';
+import { useLocation } from 'react-router-dom';
 import Details from './Details';
 import Perform from './Perform';
-import { formatDateWithoutSeconds } from '@/utils';
-import AttachmentUploadModal from '@/components/AttachmentUploadModal';
-import { at } from 'lodash';
-import { useLocation } from 'react-router-dom';
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
   const byteNumbers = new Array(byteCharacters.length);
@@ -62,8 +53,8 @@ const handleDownload = attachment => {
   window.URL.revokeObjectURL(url);
 };
 const Referrals = () => {
-   const location = useLocation();
-   const { patient, encounter, edit } = location.state || {};
+  const location = useLocation();
+  const { patient, encounter, edit } = location.state || {};
   const dispatch = useAppDispatch();
   const [showCanceled, setShowCanceled] = useState(true);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -104,44 +95,54 @@ const Referrals = () => {
   });
   const { data: procedures, refetch: proRefetch, isLoading: procedureLoding } = useGetProceduresQuery(listRequest);
 
- 
-    const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
-      ...initialListRequest,
-      filters: [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        },
-        {
-          fieldName: 'reference_object_key',
-          operator: "match",
-          value: procedure?.key
-        }
-      ]
-    });
-  
-    const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest, { skip: !procedure?.key });
-    useEffect(() => {
+  const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    filters: [
+      {
+        fieldName: 'deleted_at',
+        operator: 'isNull',
+        value: undefined
+      }
+
+      ,
+      {
+        fieldName: 'attachment_type',
+        operator: "match",
+        value: "PROCEDURE"
+      }
+    ]
+  });
+
+  const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest);
+
+  useEffect(() => {
+
+    if (!attachmentsModalOpen) {
+
       const updatedFilters = [
         {
           fieldName: 'deleted_at',
           operator: 'isNull',
           value: undefined
-        },
+        }
+
+        ,
         {
-          fieldName: 'reference_object_key',
+          fieldName: 'attachment_type',
           operator: "match",
-          value: procedure?.key
+          value: "PROCEDURE"
         }
       ];
       setAttachmentsListRequest((prevRequest) => ({
         ...prevRequest,
         filters: updatedFilters,
       }));
-    }, [procedure])
+    }
+    attachmentRefetch()
 
-      useEffect(() => {
+  }, [attachmentsModalOpen])
+
+  useEffect(() => {
     const upateFilter = [
       {
         fieldName: 'encounter_key',
@@ -159,9 +160,9 @@ const Referrals = () => {
       filters: upateFilter,
     }));
   }, [showCanceled]);
-  useEffect(()=>{
-    if(!attachmentsModalOpen){
-        const updatedFilters = [
+  useEffect(() => {
+    if (!attachmentsModalOpen) {
+      const updatedFilters = [
         {
           fieldName: 'deleted_at',
           operator: 'isNull',
@@ -180,7 +181,7 @@ const Referrals = () => {
 
     }
 
-  },[attachmentsModalOpen])
+  }, [attachmentsModalOpen])
   const OpenPerformModel = () => {
     setOpenPerformModal(true);
   };
@@ -319,25 +320,36 @@ const Referrals = () => {
         return rowData.statusLvalue?.lovDisplayVale ?? null
       }
     },
-     {
+    {
       key: "",
       dataKey: "",
       title: <Translate>ATTACHED FILE</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
-        return <HStack>
-          <FaFileArrowDown
-            size={20}
-            fill="var(--primary-gray)"
-            onClick={() => handleDownload(fetchPatintAttachmentsResponce?.object[fetchPatintAttachmentsResponce?.object.length - 1])} />
+        const matchingAttachments = fetchPatintAttachmentsResponce?.object?.filter(
+          item => item.referenceObjectKey === rowData.key
+        );
+        const lastAttachment = matchingAttachments?.[matchingAttachments.length - 1];
 
-          <MdAttachFile
-            size={20}
-            fill="var(--primary-gray)"
-            onClick={() => setAttachmentsModalOpen(true)}
-          />
-        </HStack>
+        return (
+          <HStack spacing={2}>
+            {lastAttachment && (
+              <FaFileArrowDown
+                size={20}
+                fill="var(--primary-gray)"
+                onClick={() => handleDownload(lastAttachment)}
+                style={{ cursor: 'pointer' }}
+              />
+            )}
 
+            <MdAttachFile
+              size={20}
+              fill="var(--primary-gray)"
+              onClick={() => setAttachmentsModalOpen(true)}
+              style={{ cursor: 'pointer' }}
+            />
+          </HStack>
+        );
       }
     },
     {
@@ -346,7 +358,7 @@ const Referrals = () => {
       title: <Translate>PERFORM</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
-        return<FaBedPulse
+        return <FaBedPulse
           size={22}
           fill="var(--primary-gray)"
           onClick={OpenPerformModel}
@@ -360,11 +372,11 @@ const Referrals = () => {
       flexGrow: 1,
       render: (rowData: any) => {
         return <MdModeEdit
-            size={24}
-            fill="var(--primary-gray)"
-            onClick={() => setOpenDetailsModal(true)}
-          />
-       
+          size={24}
+          fill="var(--primary-gray)"
+          onClick={() => setOpenDetailsModal(true)}
+        />
+
       }
     },
     {
@@ -373,7 +385,7 @@ const Referrals = () => {
       title: <Translate>FACILITY</Translate>,
       flexGrow: 1,
       expandable: true,
-      render: (rowData: any) => { return rowData.facilityKey ? rowData.facility?.facilityName :""}
+      render: (rowData: any) => { return rowData.facilityKey ? rowData.facility?.facilityName : "" }
     },
     {
       key: "departmentTypeLkey",
@@ -382,7 +394,7 @@ const Referrals = () => {
       flexGrow: 1,
       expandable: true,
       render: (rowData: any) => {
-         return rowData.departmentKey ? rowData.department?.departmentTypeLvalue?.lovDisplayVale : ""
+        return rowData.departmentKey ? rowData.department?.departmentTypeLvalue?.lovDisplayVale : ""
       }
     },
     {
