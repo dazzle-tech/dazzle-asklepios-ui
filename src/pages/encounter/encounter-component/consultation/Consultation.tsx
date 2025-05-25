@@ -24,6 +24,7 @@ import './styles.less';
 import { formatDateWithoutSeconds } from '@/utils';
 import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import { useLocation } from 'react-router-dom';
+import { at } from 'lodash';
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
   const byteNumbers = new Array(byteCharacters.length);
@@ -89,20 +90,22 @@ const Consultation = () => {
   const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      },
-      {
-        fieldName: 'reference_object_key',
-        operator: "match",
-        value: consultationOrders?.key
-      }
-    ]
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
+            }
+        
+            ,
+            {
+                fieldName:'attachment_type',
+                operator: "match",
+                value:"CONSULTATION_ORDER"
+            }
+        ]
   });
 
-  const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest, { skip: !consultationOrders?.key });
+  const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest);
 
   const isSelected = rowData => {
     if (rowData && consultationOrders && rowData.key === consultationOrders.key) {
@@ -111,23 +114,30 @@ const Consultation = () => {
   };
 
   useEffect(() => {
-    const updatedFilters = [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      },
-      {
-        fieldName: 'reference_object_key',
-        operator: "match",
-        value: consultationOrders?.key
-      }
-    ];
+   
+  if(!attachmentsModalOpen ){
+    setConsultationOrder({...newApConsultationOrder});
+    const updatedFilters =  [
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
+            }
+        
+            ,
+            {
+                fieldName:'attachment_type',
+                operator: "match",
+                value:"CONSULTATION_ORDER"
+            }
+        ];
     setAttachmentsListRequest((prevRequest) => ({
       ...prevRequest,
       filters: updatedFilters,
-    }));
-  }, [consultationOrders])
+    }));}
+  attachmentRefetch()
+   
+  }, [attachmentsModalOpen])
   useEffect(() => {
     const upateFilter = [
       {
@@ -301,27 +311,38 @@ const Consultation = () => {
       flexGrow: 1,
       render: (rowData: any) => { return <IoIosMore size={22} fill="var(--primary-gray)" />; }
     },
-    {
-      key: "",
-      dataKey: "",
-      title: <Translate>ATTACHED FILE</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return <HStack>
-          <FaFileArrowDown
-            size={20}
-            fill="var(--primary-gray)"
-            onClick={() => handleDownload(fetchPatintAttachmentsResponce?.object[fetchPatintAttachmentsResponce?.object.length - 1])} />
+           {
+            key: "",
+            dataKey: "",
+            title: <Translate>ATTACHED FILE</Translate>,
+            flexGrow: 1,
+            render: (rowData: any) => {
+                const matchingAttachments = fetchPatintAttachmentsResponce?.object?.filter(
+                    item => item.referenceObjectKey === rowData.key
+                );
+                const lastAttachment = matchingAttachments?.[matchingAttachments.length - 1];
 
-          <MdAttachFile
-            size={20}
-            fill="var(--primary-gray)"
-            onClick={() => setAttachmentsModalOpen(true)}
-          />
-        </HStack>
+                return (
+                    <HStack spacing={2}>
+                        {lastAttachment && (
+                            <FaFileArrowDown
+                                size={20}
+                                fill="var(--primary-gray)"
+                                onClick={() => handleDownload(lastAttachment)}
+                                style={{ cursor: 'pointer' }}
+                            />
+                        )}
 
-      }
-    },
+                        <MdAttachFile
+                            size={20}
+                            fill="var(--primary-gray)"
+                            onClick={() => setAttachmentsModalOpen(true)}
+                            style={{ cursor: 'pointer' }}
+                        />
+                    </HStack>
+                );
+            }
+        },
     {
       key: "",
       dataKey: "",

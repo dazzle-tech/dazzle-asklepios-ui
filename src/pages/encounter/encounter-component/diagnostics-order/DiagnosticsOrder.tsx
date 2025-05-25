@@ -71,7 +71,7 @@ const DiagnosticsOrder = () => {
     const [openTestsModal, setOpenTestsModal] = useState(false);
     const [searchTerm, setSearchTerm] = React.useState('');
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
-    const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest ,pageSize: 1000 });
+    const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest, pageSize: 1000 });
     const { data: testsList } = useGetDiagnosticsTestListQuery(listTestRequest);
     const [leftItems, setLeftItems] = useState([]);
     const [selectedTestsList, setSelectedTestsList] = useState([]);
@@ -125,16 +125,19 @@ const DiagnosticsOrder = () => {
                 fieldName: 'deleted_at',
                 operator: 'isNull',
                 value: undefined
-            },
+            }
+        
+            ,
             {
-                fieldName: 'reference_object_key',
+                fieldName:'attachment_type',
                 operator: "match",
-                value: orderTest?.key
+                value:"ORDER_TEST"
             }
         ]
     });
-
-    const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest, { skip: !orderTest?.key });
+    
+    const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest);
+   
     const [selectedRows, setSelectedRows] = useState([]);
     const { data: ordersList, refetch: ordersRefetch } = useGetDiagnosticOrderQuery(listOrdersRequest);
     const { data: orderTestList, refetch: orderTestRefetch, isLoading: loadTests } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
@@ -154,12 +157,14 @@ const DiagnosticsOrder = () => {
     const filteredOrders = ordersList?.object?.filter(
         (item) => item.statusLkey === "1804482322306061"
     ) ?? [];
+
     // Effects
     useEffect(() => {
         if (testsList?.object) {
             setLeftItems(testsList.object);
         }
     }, [testsList]);
+
     useEffect(() => {
         if (searchTerm.trim() !== "") {
             setListRequest(
@@ -174,13 +179,14 @@ const DiagnosticsOrder = () => {
                     ]
                 }
             );
-        } 
+        }
         else {
             setListRequest({ ...initialListRequest, pageSize: 1000 });
         }
     }, [searchTerm]);
+
     useEffect(() => {
-        setLeftItems(testsList?.object??[]);
+        setLeftItems(testsList?.object ?? []);
         setSelectedTestsList([]);
     }, [openTestsModal]);
     useEffect(() => {
@@ -244,25 +250,31 @@ const DiagnosticsOrder = () => {
 
     }, [orders])
 
-    useEffect(() => {
-        const updatedFilters = [
+  useEffect(() => {
+   
+  if(!attachmentsModalOpen ){
+   
+    const updatedFilters =  [
             {
                 fieldName: 'deleted_at',
                 operator: 'isNull',
                 value: undefined
-            },
+            }
+        
+            ,
             {
-                fieldName: 'reference_object_key',
+                fieldName:'attachment_type',
                 operator: "match",
-                value: orderTest?.key
+                value:"ORDER_TEST"
             }
         ];
-        setAttachmentsListRequest((prevRequest) => ({
-            ...prevRequest,
-            filters: updatedFilters,
-        }));
-    }, [orderTest])
-
+    setAttachmentsListRequest((prevRequest) => ({
+      ...prevRequest,
+      filters: updatedFilters,
+    }));}
+  attachmentRefetch()
+   
+  }, [attachmentsModalOpen])
 
     const OpenDetailsModel = () => {
         setOpenDetailsModel(true);
@@ -328,7 +340,7 @@ const DiagnosticsOrder = () => {
     };
     const handleSaveTests = async () => {
         setOpenTestsModal(false);
-      
+
         try {
             await Promise.all(
                 selectedTestsList.map(item =>
@@ -563,19 +575,30 @@ const DiagnosticsOrder = () => {
             title: <Translate>ATTACHED FILE</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
-                return <HStack>
-                    <FaFileArrowDown
-                        size={20}
-                        fill="var(--primary-gray)"
-                        onClick={() => handleDownload(fetchPatintAttachmentsResponce?.object[fetchPatintAttachmentsResponce?.object.length - 1])} />
+                const matchingAttachments = fetchPatintAttachmentsResponce?.object?.filter(
+                    item => item.referenceObjectKey === rowData.key
+                );
+                const lastAttachment = matchingAttachments?.[matchingAttachments.length - 1];
 
-                    <MdAttachFile
-                        size={20}
-                        fill="var(--primary-gray)"
-                        onClick={() => setAttachmentsModalOpen(true)}
-                    />
-                </HStack>
+                return (
+                    <HStack spacing={2}>
+                        {lastAttachment && (
+                            <FaFileArrowDown
+                                size={20}
+                                fill="var(--primary-gray)"
+                                onClick={() => handleDownload(lastAttachment)}
+                                style={{ cursor: 'pointer' }}
+                            />
+                        )}
 
+                        <MdAttachFile
+                            size={20}
+                            fill="var(--primary-gray)"
+                            onClick={() => setAttachmentsModalOpen(true)}
+                            style={{ cursor: 'pointer' }}
+                        />
+                    </HStack>
+                );
             }
         },
         {
@@ -760,11 +783,11 @@ const DiagnosticsOrder = () => {
 
                     <div className='top-container'>
 
-                        <TestDropdown handleItemClick={handleItemClick} 
-                        disabled={orders.key ? orders?.statusLkey !== '164797574082125' : true} 
-                        flag={flag} setFlag={setFlag} 
-                        openTest={openTestsModal} setOpenTests={setOpenTestsModal}/>
-                      
+                        <TestDropdown handleItemClick={handleItemClick}
+                            disabled={orders.key ? orders?.statusLkey !== '164797574082125' : true}
+                            flag={flag} setFlag={setFlag}
+                            openTest={openTestsModal} setOpenTests={setOpenTestsModal} />
+
                         <div className='icon-style'>
                             <GrTestDesktop size={18} />
                         </div>
