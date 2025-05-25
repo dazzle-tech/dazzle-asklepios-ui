@@ -6,6 +6,8 @@ import { Form } from 'rsuite';
 import { faKey } from '@fortawesome/free-solid-svg-icons';
 import clsx from 'clsx';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
 const AddEditAccessRole = ({
   open,
   setOpen,
@@ -15,19 +17,27 @@ const AddEditAccessRole = ({
   setLoad,
   refetch
 }) => {
+  const dispatch = useAppDispatch();
   //save AccessRole
   const [saveAccessRole] = useSaveAccessRoleMutation();
 
   // Handle save Access Role
-  const handleSave = async () => {
+const handleSave = async () => {
+  try {
     setLoad(true);
     setOpen(false);
     await saveAccessRole(accessRole).unwrap();
     if (refetch != null) {
       refetch();
-      setLoad(false);
     }
-  };
+    dispatch( notify({  msg: 'Saved Successfully',  sev: 'success'  }) );
+  } catch (error) {
+    dispatch(  notify({  msg: 'Error while saving access role',  sev: 'error' }) );
+  } finally {
+    setLoad(false);
+  }
+};
+
 
   // Modal contant
   const conjureFormContent = (stepNumber = 0) => {

@@ -24,7 +24,7 @@ const PatientCard = ({ patient, onClick, actions, arrowDirection = 'left' }: Pat
       />
       <Text className="patient-name">{patient.fullName}</Text>
       <Text className="created-at">
-        {patient.createdAt ? new Date(patient?.createdAt).toLocaleString('en-GB') : ''}{' '}
+        {patient.createdAt ? new Date(patient.createdAt).toLocaleDateString('en-GB') : ''}
       </Text>
       <Text className="patient-mrn"># {patient.patientMrn}</Text>
     </div>

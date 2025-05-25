@@ -32,8 +32,10 @@ import {
 } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
-const DrugOrder = ({ edit, patient, encounter }) => {
-
+import { useLocation } from 'react-router-dom';
+const DrugOrder = () => {
+      const location = useLocation();
+  const { patient, encounter,edit } = location.state || {};
     const dispatch = useAppDispatch();
     const [drugKey, setDrugKey] = useState(null);
     const [searchKeyword, setSearchKeyword] = useState('');

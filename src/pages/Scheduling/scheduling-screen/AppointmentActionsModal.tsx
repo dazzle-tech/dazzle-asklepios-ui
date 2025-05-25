@@ -13,8 +13,11 @@ import CheckIcon from '@rsuite/icons/Check';
 import BlockIcon from '@rsuite/icons/Block';
 import { useCompleteEncounterRegistrationMutation } from "@/services/encounterService";
 import { newApEncounter } from "@/types/model-types-constructor";
-import { da } from "date-fns/locale";
+import { faCalendarCheck } from '@fortawesome/free-solid-svg-icons';
 import { calculateAgeFormat } from "@/utils";
+import MyModal from "@/components/MyModal/MyModal";
+import MyButton from "@/components/MyButton/MyButton";
+import { faClock } from '@fortawesome/free-solid-svg-icons';
 
 const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appointment, onStatusChange, editAppointment, viewAppointment }) => {
 
@@ -48,8 +51,8 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             patientFullName: data?.patient.fullName,
             encounterStatusLkey: "91084250213000",
             plannedStartDate: data?.appointmentStart,
-            resourceTypeLkey:data?.resourceTypeLkey,
-            visitTypeLkey:data?.visitTypeLkey
+            resourceTypeLkey: data?.resourceTypeLkey,
+            visitTypeLkey: data?.visitTypeLkey
         }
         saveEncounter(visit).unwrap();
         console.log(visit)
@@ -68,7 +71,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
 
     const handleConfirm = () => {
         const appointmentData = appointment?.appointmentData
-        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Confirmed",  reasonLkey: null, otherReason: null }).then(() => {
+        changeAppointmentStatus({ ...appointmentData, appointmentStatus: "Confirmed", reasonLkey: null, otherReason: null }).then(() => {
             dispatch(notify('Appointment Confirmed Successfully'));
             onStatusChange()
             onActionsModalClose()
@@ -123,120 +126,91 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
         console.log(appointment)
     }, [appointment])
 
+    // Appoinment Actions Modal Content
+    const  actionsModalContent =(
+    <Form fluid layout="inline">
+                    <MyButton width="250px" disabled={["Checked-In", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={handleCheckIn} color="cyan" appearance="primary">
+                        Check-In
+                    </MyButton>
+                    <MyButton width="250px" disabled={appointment?.appointmentData.appointmentStatus == "Confirmed"} onClick={handleConfirm} color="violet" appearance="primary">
+                        Confirm
+                    </MyButton>
+                    <MyButton width="250px" disabled={["No-Show", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => { setResonType('No-show'), setResonModal(true) }} color="blue" appearance="primary">
+                        No-show
+                    </MyButton>
+                    <MyButton width="250px" onClick={() => viewAppointment()} color="cyan" appearance="primary">
+                        View
+                    </MyButton>
+                    <MyButton width="250px" disabled={["Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => editAppointment()} color="violet" appearance="primary">
+                        Change
+                    </MyButton>
+                    <MyButton width="250px" disabled={["Canceled", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => { setResonType('Cancel') }} color="blue" appearance="primary">
+                        Cancel
+                    </MyButton>
+    </Form>
+    );
+     // Cancel/No-Show Modal Content
+     const cancelModalContent = (
+               <Form layout="inline">
+                    <MyInput
+                        width={400}
+                        column
+                        fieldLabel="Reason"
+                        fieldType="select"
+                        fieldName="reasonLkey"
+                        selectData={resonType === 'Cancel' ? cancelResonLovQueryResponse?.object : noShowResonLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={reasonKey}
+                        setRecord={setResonKey}
+                    />
+                    <MyInput
+                        width={400}
+                        column
+                        fieldLabel="Other Reason"
+                        fieldName="otherReason"
+                        record={otherReason}
+                        setRecord={setOtherReason}
+                    />
+                </Form>
+     );
     return (
         <div>
-            <Modal open={
-                isActionsModalOpen
-            } onClose={onActionsModalClose}>
-                <Modal.Header>
-                    <Modal.Title>{`${appointment?.title}  ${appointment?.fromTo}  ${appointment?.appointmentData.appointmentStatus}`}</Modal.Title>
-                </Modal.Header>
-
-                <Modal.Body>
-                    <ButtonToolbar>
-                        <Button disabled={["Checked-In", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={handleCheckIn} style={{ width: 120, height: 40 }} color="cyan" appearance="primary">
-                            Check-In
-                        </Button>
-                        <Button disabled={appointment?.appointmentData.appointmentStatus == "Confirmed"} onClick={handleConfirm} style={{ width: 120, height: 40 }} color="violet" appearance="primary">
-                            Confirm
-                        </Button>
-                        <Button   disabled={["No-Show", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => { setResonType('No-show'), setResonModal(true) }} style={{ width: 120, height: 40 }} color="blue" appearance="primary">
-                            No-show
-                        </Button>
-
-                    </ButtonToolbar>
-                    <br />
-
-                    <ButtonToolbar>
-                        <Button onClick={() => viewAppointment()} style={{ width: 120, height: 40 }} color="cyan" appearance="primary">
-                            View
-                        </Button>
-                        <Button  disabled={["Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => editAppointment()} style={{ width: 120, height: 40 }} color="violet" appearance="primary">
-                            Change
-                        </Button>
-                        <Button   disabled={["Canceled", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => { setResonType('Cancel') }} style={{ width: 120, height: 40 }} color="blue" appearance="primary">
-                            Cancel
-                        </Button>
-
-
-                    </ButtonToolbar>
-                    <br />
-                    <div style={{ display: "flex", gap: "20px" }}>
-                        <IconButton style={{ width: 180, height: 40 }} icon={<PageIcon />} color="cyan" appearance="ghost">
+            <MyModal
+                open={isActionsModalOpen}
+                setOpen={onActionsModalClose}
+                title={`${appointment?.title}  ${appointment?.fromTo}  ${appointment?.appointmentData.appointmentStatus}`}
+                size="38vw"
+                bodyheight="50vh"
+                position="right"
+                content={actionsModalContent}
+                hideBack={true}
+                hideActionBtn={true}
+                steps={[{
+                    title: "Appoinment Actions", icon: <FontAwesomeIcon icon={faCalendarCheck} />,
+                    footer: <>
+                        <MyButton appearance="ghost" prefixIcon={() => <PageIcon />}>
                             Print Certificate
-                        </IconButton>
-
-
-                        <Button style={{
-                            width: 180,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "flex-start",
-                            borderRadius: "5px",
-                            height: 40
-                        }}
-                            color="blue" appearance="ghost" >
-
-                            <FontAwesomeIcon icon={faSackDollar} style={{ marginRight: "25px", fontSize: "18px" }} />
-                            <span style={{ marginLeft: "13px" }}>Add Payment</span>
-                        </Button>
-                    </div>
-
-                </Modal.Body>
-
-            </Modal>
-
-
-
-            <Modal backdrop={"static"} open={resonType} onClose={() => setResonType(null)}>
-                <Modal.Header>
-                    <Modal.Title>{`Please add the appointment ${resonType} reason. `}</Modal.Title>
-                </Modal.Header>
-
-                <Modal.Body>
-                    <br />
-                    <br />
-
-                    <Form layout="inline">
-                        <MyInput
-                            width={350}
-                            column
-                            fieldLabel="Reason"
-                            fieldType="select"
-                            fieldName="reasonLkey"
-                            selectData={resonType === 'Cancel' ? cancelResonLovQueryResponse?.object : noShowResonLovQueryResponse?.object ?? []}
-                            selectDataLabel="lovDisplayVale"
-                            selectDataValue="key"
-                            record={reasonKey}
-                            setRecord={setResonKey}
-                        />
-                        <br />
-                        <MyInput
-                            width={350}
-                            column
-                            fieldLabel="Other Reason"
-                            fieldName="otherReason"
-                            record={otherReason}
-                            setRecord={setOtherReason}
-                        />
-                    </Form>
-
-                    <br />
-                    <br />
-                </Modal.Body>
-                <Modal.Footer>
-                    <IconButton
-                        disabled={!(otherReason || reasonKey)} onClick={() => { resonType === 'Cancel' ? handleCancel() : handleNonShow() }} color="violet" appearance="primary" icon={<CheckIcon />}>
-                        Save
-                    </IconButton>
-                    <Divider vertical />
-                    <IconButton onClick={() => { setResonType(null) }} color="blue" appearance="primary" icon={<BlockIcon />}>
-                        Cancel
-                    </IconButton>
-                </Modal.Footer>
-            </Modal>
+                        </MyButton>
+                        <MyButton appearance="ghost" prefixIcon={() => <FontAwesomeIcon icon={faSackDollar} />}>
+                            Add Payment
+                        </MyButton>
+                    </>
+                }]}
+            />
+            <MyModal
+                open={resonType}
+                setOpen={setResonType}
+                title={`${`Please add the Appointment ${resonType} Reason. `}`}
+                size="38vw"
+                bodyheight="50vh"
+                position="right"
+                content={cancelModalContent}
+                actionButtonFunction={() => { resonType === 'Cancel' ? handleCancel() : handleNonShow() }}
+                isDisabledActionBtn={!(otherReason || reasonKey)}
+                steps={[{ title: "Reason", icon: <FontAwesomeIcon icon={faClock} /> }]}
+            />
         </div>
     );
-
 }
 export default AppointmentActionsModal;

@@ -21,7 +21,9 @@ import CancellationModal from '@/components/CancellationModal';
 import { Checkbox, HStack } from 'rsuite';
 import Details from './Details';
 import './styles.less';
+import { formatDateWithoutSeconds } from '@/utils';
 import AttachmentUploadModal from '@/components/AttachmentUploadModal';
+import { useLocation } from 'react-router-dom';
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
   const byteNumbers = new Array(byteCharacters.length);
@@ -41,7 +43,9 @@ const handleDownload = attachment => {
   a.click();
   window.URL.revokeObjectURL(url);
 };
-const Consultation = ({ edit, patient, encounter }) => {
+const Consultation = () => {
+  const location = useLocation();
+  const { patient, encounter, edit } = location.state || {};
   const dispatch = useAppDispatch();
   const [selectedRows, setSelectedRows] = useState([]);
   const [showCanceled, setShowCanceled] = useState(true);
@@ -256,7 +260,7 @@ const Consultation = ({ edit, patient, encounter }) => {
       title: <Translate>CONSULTATION DATE</Translate>,
       flexGrow: 1,
       render: (rowData: any) => {
-        return rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : '';
+        return rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : '';
       }
 
     },
@@ -334,24 +338,20 @@ const Consultation = ({ edit, patient, encounter }) => {
 
     },
     {
-      key: '',
+      key: 'created',
       title: 'SUBMISSION AT/BY',
       expandable: true,
     },
     {
       key: '',
-      title: 'CREATED AT/BY',
-      expandable: true,
-    },
-    {
-      key: '',
       title: 'UPDATED AT/BY',
+      render: (row: any) => row?.updatedAt ? <>{"keyForCurrentUser"}  <br /><span className='date-table-style'>{row.updatedAt ? formatDateWithoutSeconds(row.updatedAt) :" "}</span></> : ' ',
       expandable: true,
     },
     {
       key: 'deletedAt',
       title: 'CANCELLED AT/BY',
-      render: (row: any) => row?.deletedAt ? <>{"keyForCurrentUser"}  <br /><span className='date-table-style'>{new Date(row.deletedAt).toLocaleString('en-GB')}</span></> : ' ',
+      render: (row: any) => row?.deletedAt ? <>{"keyForCurrentUser"}  <br /><span className='date-table-style'>{row.deletedAt ? formatDateWithoutSeconds(row.deletedAt) :" "}</span></> : ' ',
       expandable: true,
     },
     {

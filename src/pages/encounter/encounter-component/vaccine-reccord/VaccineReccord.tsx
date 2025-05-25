@@ -8,7 +8,11 @@ import './styles.less';
 import MyLabel from '@/components/MyLabel';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
-const VaccineReccord = ({ patient }) => {
+import { formatDateWithoutSeconds } from '@/utils';
+import { useLocation } from 'react-router-dom';
+const VaccineReccord = () => {
+   const location = useLocation();
+   const { patient, encounter, edit } = location.state || {};
     const [isCanelledValue, setIsCanelledValue] = useState("NULL");
     const [vaccine, setVaccine] = useState<any>();
     const [selectedVaccine, setSelectedVaccine] = useState(null);
@@ -41,25 +45,25 @@ const VaccineReccord = ({ patient }) => {
             key: 'createdAt',
             title: 'CREATED AT/BY',
             expandable: true,
-            render: (row: any) => row?.apEncounterVaccination?.createdAt ? <>{row?.apEncounterVaccination?.createByUser?.fullName}<br /><span className='date-table-style'>{new Date(row?.apEncounterVaccination?.createdAt).toLocaleString('en-GB')}</span> </> : ' '
+            render: (row: any) => row?.apEncounterVaccination?.createdAt ? <>{row?.apEncounterVaccination?.createByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row?.apEncounterVaccination?.createdAt)}</span> </> : ' '
         },
         {
             key: 'updatedAt',
             title: 'UPDATED AT/BY',
             expandable: true,
-            render: (row: any) => row?.apEncounterVaccination?.updatedAt ? <>{row?.apEncounterVaccination?.updateByUser?.fullName}<br /><span className='date-table-style'>{new Date(row?.apEncounterVaccination?.updatedAt).toLocaleString('en-GB')}</span> </> : ' '
+            render: (row: any) => row?.apEncounterVaccination?.updatedAt ? <>{row?.apEncounterVaccination?.updateByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row?.apEncounterVaccination?.updatedAt)}</span> </> : ' '
         },
         {
             key: 'reviewedAt',
             title: 'REVIEWED AT/BY',
             expandable: true,
-            render: (row: any) => row?.apEncounterVaccination?.reviewedAt ? <>{row?.apEncounterVaccination?.reviewedByUser?.fullName}<br /><span className='date-table-style'>{new Date(row?.apEncounterVaccination?.reviewedAt).toLocaleString('en-GB')}</span> </> : ' '
+            render: (row: any) => row?.apEncounterVaccination?.reviewedAt ? <>{row?.apEncounterVaccination?.reviewedByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row?.apEncounterVaccination?.reviewedAt)}</span> </> : ' '
         },
         {
             key: 'cancelledAt',
             title: 'CANCELLED AT/BY',
             expandable: true,
-            render: (row: any) => row?.apEncounterVaccination?.deletedAt ? <>{row?.apEncounterVaccination?.deleteByUser?.fullName}<br /><span className='date-table-style'>{new Date(row?.apEncounterVaccination?.deletedAt).toLocaleString('en-GB')}</span> </> : ' '
+            render: (row: any) => row?.apEncounterVaccination?.deletedAt ? <>{row?.apEncounterVaccination?.deleteByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row?.apEncounterVaccination?.deletedAt)}</span> </> : ' '
         },
         {
             key: 'cancellationReason',
@@ -82,8 +86,7 @@ const VaccineReccord = ({ patient }) => {
             key: 'dateAdministered',
             title: 'DATE OF ADMINISTRATION',
             render: (row) => {
-                const date = row?.apEncounterVaccination?.dateAdministered;
-                return date ? new Date(date).toLocaleString('en-GB') : '';
+                return row?.apEncounterVaccination?.dateAdministered ? formatDateWithoutSeconds(row?.apEncounterVaccination?.dateAdministered) : '';
             }
         },
         {

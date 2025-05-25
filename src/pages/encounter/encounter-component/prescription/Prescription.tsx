@@ -34,9 +34,11 @@ import {
 } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
+import { useLocation } from 'react-router-dom';
 const { Column, HeaderCell, Cell } = Table;
-const Prescription = ({ edit, patient, encounter }) => {
-
+const Prescription = () => {
+    const location = useLocation();
+        const { patient, encounter, edit } = location.state || {};
     const dispatch = useAppDispatch();
     const [searchKeyword, setSearchKeyword] = useState('');
     const [openToAdd, setOpenToAdd] = useState(true);
@@ -201,7 +203,7 @@ const Prescription = ({ edit, patient, encounter }) => {
 
         } catch (error) {
 
-            dispatch(notify('One or more deleted failed'));
+            dispatch(notify({msg:'One or more deleted failed',sev:'error'}));
 
         }
     };
@@ -261,7 +263,7 @@ const Prescription = ({ edit, patient, encounter }) => {
                 ),
                 saveDraft: true
             }).then(() => {
-                dispatch(notify('Saved Draft successfully'));
+                dispatch(notify({msg:'Saved Draft successfully',sev:'success'}));
                 setIsDraft(true);
             })
         } catch (error) { }

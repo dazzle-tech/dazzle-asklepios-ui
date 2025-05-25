@@ -41,7 +41,7 @@ const AddFamilyMember = ({ open, setOpen, localPatient, selectedPatientRelation,
         if (savePatientRelationMutation.status === 'fulfilled') {
             setSelectedPatientRelation(savePatientRelationMutation.data);
             setOpen(false);
-            dispatch(notify('Relation Saved Successfully'));
+            dispatch(notify({msg:'Relation Saved Successfully',sev: 'success'}));
         }
     }, [savePatientRelationMutation]);
     //MyModal Content

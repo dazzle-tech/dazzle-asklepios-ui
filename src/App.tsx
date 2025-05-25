@@ -72,6 +72,25 @@ import PatientProfileCopy from './pages/patient/patient-profile/PatientProfileCo
 import Lab from './pages/lab-module';
 import Rad from './pages/rad-module';
 import SystemLoader from './components/Loaders/SystemLoader';
+import DrugOrder from './pages/encounter/encounter-component/drug-order';
+import PatientSummary from './pages/encounter/encounter-component/patient-summary';
+import SOAP from './pages/encounter/encounter-component/s.o.a.p';
+import Observations from './pages/encounter/encounter-pre-observations/observations/Observations';
+import Allergies from './pages/encounter/encounter-pre-observations/AllergiesNurse';
+import Warning from './pages/encounter/encounter-pre-observations/warning';
+import Cardiology from './pages/encounter/encounter-component/cardiology';
+import OptometricExam from './pages/encounter/encounter-component/optometric-exam';
+import AddAudiometryPuretone from './pages/encounter/encounter-component/audiometry-puretone/AddAudiometryPuretone';
+import AudiometryPuretone from './pages/encounter/encounter-component/audiometry-puretone';
+import PsychologicalExam from './pages/encounter/encounter-component/psychological-exam';
+import Prescription from './pages/encounter/encounter-component/prescription';
+import DiagnosticsOrder from './pages/encounter/encounter-component/diagnostics-order';
+import Consultation from './pages/encounter/encounter-component/consultation';
+import Procedure from './pages/encounter/encounter-component/procedure';
+import PatientHistory from './pages/encounter/encounter-component/patient-history';
+import MedicationsRecord from './pages/encounter/encounter-component/medications-record';
+import VaccineReccord from './pages/encounter/encounter-component/vaccine-reccord';
+import DiagnosticsResult from './pages/encounter/encounter-component/diagnostics-result/DiagnosticsResult';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -198,7 +217,7 @@ const App = () => {
                       style={{
                         textAlign: 'center',
                         color: 'white',
-                      
+
                         top: '10%',
                         position: 'absolute'
                       }}
@@ -224,7 +243,28 @@ const App = () => {
               <Route path="patient-list" element={<PatientList />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="facility-patient-list" element={<FacilityPatientList />} />
-              <Route path="encounter" element={<Encounter />} />
+              <Route path="encounter" element={<Encounter />} >
+                <Route path="drug-order" element={<DrugOrder />} />
+                <Route index element={<PatientSummary />} />
+                <Route path='clinical-visit' element={<SOAP />} />
+                <Route path='observations' element={<Observations />} />
+                <Route path='allergies' element={<Allergies />} />
+                <Route path='medical-warnings' element={<Warning />} />
+                <Route path='cardiology' element={<Cardiology />} />
+                <Route path='dental-care' element={<Dental />} />
+                <Route path='optometric-exam' element={<OptometricExam />} />
+                <Route path='audiometry' element={<AudiometryPuretone />} />
+                <Route path='psychological-exam' element={<PsychologicalExam />} />
+                <Route path='vaccination' element={<VaccinationTab />} />
+                <Route path='prescription' element={<Prescription />} />
+                <Route path='diagnostics-order' element={<DiagnosticsOrder />} />
+                <Route path='consultation' element={<Consultation />} />
+                <Route path='procedures' element={<Procedure/>} />
+                <Route path='patient-history' element={<PatientHistory/>} />
+                <Route path='medications-record' element={<MedicationsRecord/>} />
+                <Route path='vaccine-record' element={<VaccineReccord/>} />
+                <Route path='diagnostics-result' element={<DiagnosticsResult/>} />
+              </Route>
               <Route path="encounter-list" element={<EncounterList />} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservations />} />
@@ -248,14 +288,14 @@ const App = () => {
               <Route path="catalog" element={<Catalog />} />
               <Route path="allergens" element={<Allergens />} />
               <Route path="active-ingredients" element={<ActiveIngredientsSetup />} />
-              <Route path="age-group" element={<AgeGroup/>} />
+              <Route path="age-group" element={<AgeGroup />} />
               <Route path="prescription-instructions" element={<PrescriptionInstructions />} />
               <Route path="brand-medications" element={<GenericMedications />} />
               <Route path="dental-actions" element={<DentalActions />} />
               <Route path="cdt-setup" element={<CDTSetup />} />
               <Route path="icd10-setup" element={<ICD10Setup />} />
-              <Route path="cpt-setup" element={<CPTSetup/>} />
-              <Route path="loinc-setup" element={<LOINCSetup/>} />
+              <Route path="cpt-setup" element={<CPTSetup />} />
+              <Route path="loinc-setup" element={<LOINCSetup />} />
               <Route path="services-setup" element={<ServiceSetup />} />
               <Route path="error-404" element={<Error404Page />} />
               <Route path="error-403" element={<Error403Page />} />
@@ -263,13 +303,13 @@ const App = () => {
               <Route path="error-503" element={<Error503Page />} />
               <Route path="playground" element={<Playground />} />
               <Route path='schedual-screen' element={<ScheduleScreen />} />
-              <Route path='patient-EMR' element={<PatientEMR/>}/>
-              <Route path='lab-module' element={<Lab/>}/>
-              <Route path='rad-module' element={<Rad/>}/>
+              <Route path='patient-EMR' element={<PatientEMR />} />
+              <Route path='lab-module' element={<Lab />} />
+              <Route path='rad-module' element={<Rad />} />
             </Route>
           </Route>
 
-          <Route path="login" element={<SignInPage/>} />
+          <Route path="login" element={<SignInPage />} />
           <Route path="*" element={<Error404Page />} />
         </Routes>
       </CustomProvider>

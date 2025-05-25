@@ -76,7 +76,7 @@ const PatientFamilyMembers = ({ localPatient }) => {
         }).then(
             () => (
                 patientRelationsRefetch(),
-                dispatch(notify('Relation Deleted')),
+                dispatch(notify({msg:'Relation Deleted Successfully',sev: 'success'})),
                 setSelectedPatientRelation(newApPatientRelation),
                 setDeleteRelativeModalOpen(false),
                 handleClearRelative()

@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Drawer, List, Pagination, Panel } from 'rsuite';
 import { useGetScreensQuery } from '@/services/setupService';
 import { useGetScreenMetadataQuery } from '@/services/dvmService';
-import { IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { ApScreen } from '@/types/model-types';
 import { MdDelete } from 'react-icons/md';
@@ -90,7 +89,17 @@ const Screens = ({ module, goBack }) => {
         )
       );
     } else {
-      setListRequest({ ...listRequest, filters: [] });
+      // setListRequest(addFilterToListRequest('module_key', 'match', module.key, listRequest));
+      setListRequest({
+              ...initialListRequest,
+              filters: [
+                {
+                  fieldName: 'module_key',
+                  operator: 'match',
+                  value: module.key
+                }
+              ]
+            });
     }
   };
   //icons column (edit, deactivate)

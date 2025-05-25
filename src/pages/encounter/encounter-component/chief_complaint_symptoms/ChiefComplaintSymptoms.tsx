@@ -14,6 +14,7 @@ import CancellationModal from '@/components/CancellationModal';
 import AddChiefComplaintSymptoms from './AddChiefComplaintSymptoms';
 import { MdModeEdit } from 'react-icons/md';
 import MyTable from '@/components/MyTable';
+import { formatDateWithoutSeconds } from '@/utils';
 const ChiefComplaintSymptoms = ({ patient, encounter,edit }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [complaintSymptoms, setComplaintSymptoms] = useState<ApComplaintSymptoms>({ ...newApComplaintSymptoms, duration: null });
@@ -84,7 +85,7 @@ const ChiefComplaintSymptoms = ({ patient, encounter,edit }) => {
     const handleCancle = () => {
         //TODO convert key to code
         saveComplaintSymptoms({ ...complaintSymptoms, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
-            dispatch(notify('Treadmill Complaint Symptoms Successfully'));
+            dispatch(notify({msg:'Complaint Symptoms Canceled Successfully',sev:'success'}));
             refetchComplaintSymptoms();
         });
         setPopupCancelOpen(false);
@@ -272,23 +273,23 @@ const ChiefComplaintSymptoms = ({ patient, encounter,edit }) => {
                 );
             }
         },
-        {
+         {
             key: 'createdAt',
             title: 'CREATED AT/BY',
             expandable: true,
-            render: (row: any) => row?.createdAt ? <>{row?.createByUser?.fullName}<br /><span className='date-table-style'>{new Date(row.createdAt).toLocaleString('en-GB')}</span> </> : ' '
+            render: (row: any) => row?.createdAt ? <>{row?.createByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.createdAt)}</span> </> : ' '
         },
         {
             key: 'updatedAt',
             title: 'UPDATED AT/BY',
             expandable: true,
-            render: (row: any) => row?.updatedAt ? <>{row?.updateByUser?.fullName}<br /><span className='date-table-style'>{new Date(row.updatedAt).toLocaleString('en-GB')}</span> </> : ' '
+            render: (row: any) => row?.updatedAt ? <>{row?.updateByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.updatedAt)}</span> </> : ' '
         },
         {
             key: 'deletedAt',
             title: 'CANCELLED AT/BY',
             expandable: true,
-            render: (row: any) => row?.deletedAt ? <>{row?.deleteByUser?.fullName}  <br /><span className='date-table-style'>{new Date(row.deletedAt).toLocaleString('en-GB')}</span></> : ' '
+            render: (row: any) => row?.deletedAt ? <>{row?.deleteByUser?.fullName}  <br /><span className='date-table-style'>{formatDateWithoutSeconds(row.deletedAt)}</span></> : ' '
         },
         {
             key: 'cancellationReason',

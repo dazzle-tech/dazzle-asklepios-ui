@@ -183,7 +183,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
                 selectDataValue="key"
                 record={facilityRecord}
                 setRecord={setFacilityRecord}
-                width={width > 600 ? 520 : 250}
+                width={350}
               />
               <MyInput
                 column
@@ -195,7 +195,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
                 selectDataValue="key"
                 record={selectedDepartment}
                 setRecord={setSelectedDepartment}
-                width={width > 600 ? 520 : 250}
+                width={350}
               />
             </Form>
           );
@@ -213,13 +213,11 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
           childTitle="New Department"
           mainContent={conjureFormContentOfMainModal}
           mainStep={[{ title: 'Departments', icon: <FaBuilding /> }]}
-          childStep={[{ title: 'User Info', icon: <FaBuilding /> }]}
+          childStep={[{ title: 'Department Info', icon: <FaBuilding /> }]}
           childContent={conjureFormContentOfChildModal}
           actionChildButtonLabel="Create"
           actionChildButtonFunction={handleFacilityDepartmentSave}
-          //   mainSize = {width > 600 ? '570px' : '300px'}
           mainSize="sm"
-          childSize="sm"
     />
   );
 };

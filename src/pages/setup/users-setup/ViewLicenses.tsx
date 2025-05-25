@@ -135,6 +135,11 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
               title="Edit"
               size={24}
               fill="var(--primary-gray)"
+              onClick={() =>{
+                setUserLicense(rowData);
+                 setOpenChildModal(true);
+                   }
+                }
             />
             {rowData?.deletedAt ? (
               <FaUndo
@@ -167,7 +172,7 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
-                onClick={() => setOpenChildModal(true)}
+                onClick={() => {setUserLicense({...newApUserMedicalLicense}); setOpenChildModal(true);}}
                 width="120px"
               >
                 New License
@@ -204,22 +209,23 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
                 required
                 record={userLicense}
                 setRecord={setUserLicense}
-                width={width > 600 ? 520 : 250}
+                width={350}
               />
               <MyInput
                 fieldName="licenseNumber"
                 required
                 record={userLicense}
                 setRecord={setUserLicense}
-                width={width > 600 ? 520 : 250}
+                width={350}
               />
               <MyInput
+                column
                 fieldType="date"
                 fieldLabel="Valid To"
                 fieldName="validTo"
                 record={userLicense}
                 setRecord={setUserLicense}
-                width={width > 600 ? 520 : 250}
+                width={350}
               />
             </Form>
           );
@@ -233,27 +239,15 @@ const ViewLicenses = ({ open, setOpen, user, width }) => {
               showChild={openChildModal}
               setShowChild={setOpenChildModal}
               title="Licenses & Certifications"
-              childTitle="New Department"
+              childTitle={userLicense?.key ? 'Edit License' : 'New License'}
               mainContent={conjureFormContentOfMainModal}
               mainStep={[{ title: 'License', icon: <FaAddressCard /> }]}
               childStep={[{ title: 'License Info', icon: <FaAddressCard /> }]}
               childContent={conjureFormContentOfChildModal}
-              actionChildButtonLabel="Create"
+              actionChildButtonLabel={userLicense?.key ? 'Save' : 'Create'}
               actionChildButtonFunction={handleSaveLicense}
-              //   mainSize = {width > 600 ? '570px' : '300px'}
               mainSize="sm"
-              childSize="sm"
         />
-    // <MyModal
-    //   open={open}
-    //   setOpen={setOpen}
-    //   title="Licenses & Certifications"
-    //   position="right"
-    //   content={conjureFormContent}
-    //   hideActionBtn
-    //   size={width > 600 ? '570px' : '300px'}
-    //   steps={[{ title: 'License', icon: <FaAddressCard /> }]}
-    // />
   );
 };
 export default ViewLicenses;

@@ -31,14 +31,14 @@ const AddElectrocardiogram = ({ open, setOpen, patient, encounter, electrocardio
             if (electrocardiogramEcg.key === undefined) {
                 //TODO convert key to code
                 await saveElectrocardiogramECG({ ...electrocardiogramEcg, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap();
-                dispatch(notify('Patient ECG Added Successfully'));
+                dispatch(notify({msg:'Patient ECG Added Successfully',sev:'success'}));
                 //TODO convert key to code
                 setElectrocardiogramEcg({ ...newApElectrocardiogramEcg, statusLkey: "9766169155908512" });
                 setOpen(false);
             } else {
                 await saveElectrocardiogramECG({ ...electrocardiogramEcg, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap();
                 setOpen(false);
-                dispatch(notify('Patient ECG Updated Successfully'));
+                dispatch(notify({msg:'Patient ECG Updated Successfully',sev:'success'}));
             }
 
             await refetch();
@@ -46,7 +46,7 @@ const AddElectrocardiogram = ({ open, setOpen, patient, encounter, electrocardio
 
         } catch (error) {
             console.error("Error saving Patient ECG:", error);
-            dispatch(notify('Failed to save Patient ECG'));
+            dispatch(notify({msg:'Failed to save Patient ECG',sev:'error'}));
         }
     };
 

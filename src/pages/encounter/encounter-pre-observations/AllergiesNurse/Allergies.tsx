@@ -27,9 +27,15 @@ import {
   Table
 } from 'rsuite';
 import DetailsModal from './DetailsModal';
+import { formatDateWithoutSeconds } from '@/utils';
 import './styles.less';
-const { Column, HeaderCell, Cell } = Table;
-const Allergies = ({ edit, patient, encounter }) => {
+import { useLocation } from 'react-router-dom';
+const Allergies = ({ patient: propPatient, encounter: propEncounter, edit: propEdit }) => {
+  const location = useLocation();
+  const state = location.state || {};
+  const patient = propPatient || state.patient;
+  const encounter = propEncounter || state.encounter;
+  const edit = propEdit ?? state.edit; 
   const [allerges, setAllerges] = useState<ApVisitAllergies>({ ...newApVisitAllergies });
   const [showCanceled, setShowCanceled] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -74,10 +80,7 @@ const Allergies = ({ edit, patient, encounter }) => {
       return 'selected-row';
     } else return '';
   };
-  //Effect when reactionDescription get new value and push it to prev 
 
-
-  //Effect when check Show Prev Allergy and update filter to get prev allergies
   useEffect(() => {
     if (showPrev) {
       const updatedFilters = [
@@ -243,7 +246,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         statusLkey: '9766179572884232',
         resolvedAt: Date.now()
       }).unwrap();
-      dispatch(notify({ msg: 'Resolved Successfully', sev: 'success' }));
+      dispatch(notify('Resolved Successfully'));
       setShowPrev(false);
       await fetchallerges()
         .then(() => {
@@ -268,7 +271,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         ...allerges,
         statusLkey: '9766169155908512'
       }).unwrap();
-      dispatch(notify({ msg: 'Undo Resolved Successfully', sev: 'success' }));
+      dispatch(notify('Undo Resolved Successfully'));
       setShowPrev(false);
       await fetchallerges()
         .then(() => {
@@ -424,7 +427,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         return (<>
           <span>{rowData.createdBy}</span>
           <br />
-          <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+          <span className='date-table-style'>{rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}</span>
         </>)
       }
 
@@ -437,7 +440,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         return (<>
           <span>{rowData.updatedBy}</span>
           <br />
-          <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+          <span className='date-table-style'>{rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}</span>
         </>)
       }
 
@@ -451,7 +454,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         return (<>
           <span>{rowData.deletedBy}</span>
           <br />
-          <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
+          <span className='date-table-style'>{rowData.deletedAt ? formatDateWithoutSeconds(rowData.deletedAt) : ''}</span>
         </>)
       }
 
@@ -466,7 +469,7 @@ const Allergies = ({ edit, patient, encounter }) => {
 
             <span>{rowData.resolvedBy}</span>
             <br />
-            <span className='date-table-style'>{rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : ''}</span>
+            <span className='date-table-style'>{rowData.resolvedAt ? formatDateWithoutSeconds(rowData.resolvedAt) : ''}</span>
           </>)
         }
         else {
@@ -595,8 +598,8 @@ const Allergies = ({ edit, patient, encounter }) => {
         actionButtonLabel='Yes'
         title="Resolve"
         bodyheight='30vh'
-       steps={[{ title: "Resolve", icon: <FontAwesomeIcon icon={faCheck }/>}]}
-        content={<>Is this allergy resolved?</>}
+       steps={[{ title: "Is this allergy resolved?", icon: <FontAwesomeIcon icon={faCheck }/>}]}
+        content={<></>}
 
       ></MyModal>
 
@@ -607,8 +610,8 @@ const Allergies = ({ edit, patient, encounter }) => {
         actionButtonLabel='Yes'
         title="Undo Resolve"
         bodyheight='30vh'
-        steps={[{ title: "Undo Resolve", icon: <FontAwesomeIcon icon={faArrowRotateRight }/>}]}
-        content={<>Is this allergy active?</>}
+        steps={[{ title: "Is this allergy active?", icon: <FontAwesomeIcon icon={faArrowRotateRight }/>}]}
+        content={<></>}
 
       ></MyModal>
 
@@ -617,7 +620,7 @@ const Allergies = ({ edit, patient, encounter }) => {
         open={openDetailsModal} setOpen={setOpenDetailsModal}
         allerges={allerges} setAllerges={setAllerges}
         handleClear={handleClear}
-        edit={edit} editing={editing}
+        edit={edit} 
         patient={patient}
         encounter={encounter}
         fetchallerges={fetchallerges}

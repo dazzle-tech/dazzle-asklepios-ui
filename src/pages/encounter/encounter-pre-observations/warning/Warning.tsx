@@ -5,42 +5,37 @@ import MyTable from '@/components/MyTable';
 import Translate from '@/components/Translate';
 import { useAppDispatch } from '@/hooks';
 import { useGetWarningsQuery, useSaveWarningsMutation } from '@/services/observationService';
-import {
-  useGetLovValuesByCodeQuery
-} from '@/services/setupService';
-import { ApVisitWarning } from '@/types/model-types';
 import { newApVisitWarning } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
+import { formatDateWithoutSeconds } from '@/utils';
 import { notify } from '@/utils/uiReducerActions';
 import { faArrowRotateRight, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
-import CollaspedOutlineIcon from '@rsuite/icons/CollaspedOutline';
-import ExpandOutlineIcon from '@rsuite/icons/ExpandOutline';
 import PlusIcon from '@rsuite/icons/Plus';
 import ReloadIcon from '@rsuite/icons/Reload';
 import React, { useEffect, useState } from 'react';
 import { MdModeEdit } from 'react-icons/md';
+import { useLocation } from 'react-router-dom';
 import {
-  Checkbox,
-  IconButton,
-  Table
+  Checkbox
 } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
-const { Column, HeaderCell, Cell } = Table;
-const Warning = ({ edit, patient, encounter }) => {
-  const { data: warningTypeLovQueryResponse } = useGetLovValuesByCodeQuery('MED_WARNING_TYPS');
-  const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
-  const { data: sourceofinformationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
-  const { data: statusLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGY_RES_STATUS');
+const Warning= ({ patient: propPatient, encounter: propEncounter, edit: propEdit }) => {
+  const location = useLocation();
+  const state = location.state || {};
+  
+  const patient = propPatient || state.patient;
+  const encounter = propEncounter || state.encounter;
+  const edit = propEdit ?? state.edit; 
+
   const [warning, setWarning] = useState<any>({ ...newApVisitWarning });
   const [saveWarning, saveWarningMutation] = useSaveWarningsMutation();
   const [openCancellationReasonModel, setOpenCancellationReasonModel] = useState(false);
   const [openConfirmResolvedModel, setOpenConfirmResolvedModel] = useState(false);
   const [openConfirmUndoResolvedModel, setOpenConfirmUndoResolvedModel] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
-  const [expandedRowKeys, setExpandedRowKeys] = React.useState([]);
   const [showCanceled, setShowCanceled] = useState(true);
   const [editing, setEditing] = useState(false);
   const [showPrev, setShowPrev] = useState(true);
@@ -287,7 +282,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
       flexGrow:1,
       render:(rowData:any)=>{
         return  rowData.firstTimeRecorded
-        ? new Date(rowData.firstTimeRecorded).toLocaleString()
+        ? formatDateWithoutSeconds(rowData.firstTimeRecorded)
         : 'Undefind'
 ;
       }
@@ -354,7 +349,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
         return (<>
           <span>{rowData.createdBy}</span>
           <br />
-          <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+          <span className='date-table-style'>{rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}</span>
         </>)
       }
 
@@ -367,7 +362,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
         return (<>
           <span>{rowData.updatedBy}</span>
           <br />
-          <span className='date-table-style'>{rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ''}</span>
+          <span className='date-table-style'>{rowData.createdAt ? formatDateWithoutSeconds(rowData.createdAt) : ''}</span>
         </>)
       }
 
@@ -381,7 +376,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
         return (<>
           <span>{rowData.deletedBy}</span>
           <br />
-          <span className='date-table-style'>{rowData.deletedAt ? new Date(rowData.deletedAt).toLocaleString() : ''}</span>
+          <span className='date-table-style'>{rowData.deletedAt ? formatDateWithoutSeconds(rowData.deletedAt) : ''}</span>
         </>)
       }
 
@@ -396,7 +391,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
 
             <span>{rowData.resolvedBy}</span>
             <br />
-            <span className='date-table-style'>{rowData.resolvedAt ? new Date(rowData.resolvedAt).toLocaleString() : ''}</span>
+            <span className='date-table-style'>{rowData.resolvedAt ? formatDateWithoutSeconds(rowData.resolvedAt) : ''}</span>
           </>)
         }
         else {

@@ -11,7 +11,7 @@ import { newApPractitioner, newApPatientPreferredHealthProfessional } from '@/ty
 import { ApPractitioner, ApPatientPreferredHealthProfessional } from '@/types/model-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserPen } from '@fortawesome/free-solid-svg-icons';
-import { useSavePatientPreferredHealthProfessionalMutation, useGetPatientPreferredHealthProfessionalQuery, useDeletePatientPreferredHealthProfessionalMutation } from '@/services/patientService';
+import { useGetPatientPreferredHealthProfessionalQuery, useDeletePatientPreferredHealthProfessionalMutation } from '@/services/patientService';
 import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import AddPrefferdHealthProfessionalModal from './AddPrefferdHealthProfessionalModal';
@@ -110,7 +110,7 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
     // Handle deleting a preferred health professional
     const handleDeletePH = () => {
         deletePatientPH({ ...patientHP }).unwrap().then(() => {
-            dispatch(notify('Preferred Health Professional Deleted Successfully'));
+            dispatch(notify({msg:'Preferred Health Professional Deleted Successfully',sev: 'success'}));
             patientPreferredHealthProfessionalRefetch();
         })
         handleClearDeletePH();

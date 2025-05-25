@@ -15,6 +15,7 @@ import { faFileArrowDown } from '@fortawesome/free-solid-svg-icons';
 import { PlusRound } from '@rsuite/icons';
 import { notify } from '@/utils/uiReducerActions';
 import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
+import { formatDateWithoutSeconds } from '@/utils';
 
 // Handle Download Attachment
 const handleDownload = attachment => {
@@ -58,7 +59,7 @@ const PatientAttachment = ({ localPatient }) => {
         ]
     });
     // Fetch patient attachment list responce
-    const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch ,isLoading:loadAttachment} = useGetPatientAttachmentsListQuery(attachmentsListRequest, { skip: !localPatient?.key });
+    const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest, { skip: !localPatient?.key });
     // Fetch patient attachment by key responce
     const { data: fetchAttachmentByKeyResponce, isSuccess } = useFetchAttachmentByKeyQuery({ key: requestedPatientAttacment }, { skip: !requestedPatientAttacment || !localPatient.key });
     const fetchPatientImageResponse = useFetchAttachmentQuery({ type: 'PATIENT_PROFILE_PICTURE', refKey: localPatient.key, }, { skip: !localPatient.key });
@@ -82,7 +83,7 @@ const PatientAttachment = ({ localPatient }) => {
             .then(() => {
                 attachmentRefetch();
                 fetchPatientImageResponse.refetch();
-                dispatch(notify('Attachment Deleted Successfully'));
+                dispatch(notify({ msg: 'Attachment Deleted Successfully', sev: 'success' }));
                 handleClearAttachmentDelete();
             })
     };
@@ -129,7 +130,7 @@ const PatientAttachment = ({ localPatient }) => {
         {
             key: 'extraDetails',
             title: <Translate>Details</Translate>,
-            flexGrow: 4,
+            flexGrow: 6,
             dataKey: 'extraDetails',
             fullText: true,
         },
@@ -158,34 +159,18 @@ const PatientAttachment = ({ localPatient }) => {
             fullText: true,
         },
         {
-            key: 'createdBy',
-            title: <Translate>Created By</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) => rowData?.createdByUser?.fullName || '',
-            fullText: true,
-        },
-        {
             key: 'createdAt',
-            title: <Translate>Created At</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) =>
-                rowData.createdAt ? new Date(rowData.createdAt).toLocaleString("en-GB") : '',
+            title: 'CREATED AT/BY',
             fullText: true,
-        },
-        {
-            key: 'updatedBy',
-            title: <Translate>Updated By</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) => rowData?.updatedByUser?.fullName || '',
-            fullText: true,
+             flexGrow: 3,
+            render: (row: any) => row?.createdAt ? <>{row?.createdByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.createdAt)}</span> </> : ' '
         },
         {
             key: 'updatedAt',
-            title: <Translate>Updated At</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) =>
-                rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : '',
+            title: 'UPDATED AT/BY',
+             flexGrow: 3,
             fullText: true,
+            render: (row: any) => row?.updatedAt ? <>{row?.updatedByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.updatedAt)}</span> </> : ' '
         },
     ];
 
@@ -251,7 +236,7 @@ const PatientAttachment = ({ localPatient }) => {
                     Delete
                 </MyButton>
             </div>
-            <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} actionType={actionType} setActionType={setActionType} refecthData={attachmentRefetch} attachmentSource={localPatient} selectedPatientAttacment={selectedAttachment} setSelectedPatientAttacment={setSelectedAttachment} requestedPatientAttacment={requestedPatientAttacment} setRequestedPatientAttacment={setRequestedPatientAttacment} attatchmentType="PATIENT_PROFILE_ATTACHMENT"/>
+            <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} actionType={actionType} setActionType={setActionType} refecthData={attachmentRefetch} attachmentSource={localPatient} selectedPatientAttacment={selectedAttachment} setSelectedPatientAttacment={setSelectedAttachment} requestedPatientAttacment={requestedPatientAttacment} setRequestedPatientAttacment={setRequestedPatientAttacment} attatchmentType="PATIENT_PROFILE_ATTACHMENT" />
             <MyTable
                 height={200}
                 loading={loadAttachment}

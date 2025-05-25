@@ -1,101 +1,183 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
-import {
-  useGetFacilitiesQuery,
-  useGetLovValuesByCodeQuery
-} from '@/services/setupService';
-import { Button, ButtonToolbar, IconButton } from 'rsuite';
+import { Panel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
+import { IoSettingsSharp } from 'react-icons/io5';
 import { ApResources } from '@/types/model-types';
-import {  newApResources } from '@/types/model-types-constructor';
-import { Form, Stack, Divider } from 'rsuite';
+import { newApResources } from '@/types/model-types-constructor';
+import { Form } from 'rsuite';
+import { MdModeEdit } from 'react-icons/md';
+import { FaUndo } from 'react-icons/fa';
 import MyInput from '@/components/MyInput';
-import { addFilterToListRequest, conjureValueBasedOnKeyFromList, fromCamelCaseToDBName } from '@/utils';
-import { useGetResourcesQuery, useGetResourceTypeQuery, useSaveResourcesMutation } from '@/services/appointmentService';
-import AvailabilityTime from './AvailabilityTime';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { MdDelete } from 'react-icons/md';
+import AddEditResources from './AddEditResources';
+import './styles.less';
+import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
+import {
+  useDeactiveActiveResourceMutation,
+  useGetResourcesQuery,
+  useSaveResourcesMutation
+} from '@/services/appointmentService';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+import MyTable from '@/components/MyTable';
+import MyButton from '@/components/MyButton/MyButton';
+import AvailabilityTimeModal from './AvailabilityTimeModal';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { notify } from '@/utils/uiReducerActions';
 const Resources = () => {
   const dispatch = useAppDispatch();
   const [resources, setResources] = useState<ApResources>({ ...newApResources });
-  const [popupOpen, setPopupOpen] = useState(false);
-  const [isPractitioner, setISPractitioner] = useState(false);
-  const [isDepartment, setISDepartment] = useState(false);
-  const [isMedicalTest, setIsMedicalTest] = useState(false);
+  const [width, setWidth] = useState<number>(window.innerWidth);
+  const [popupOpen, setPopupOpen] = useState(false); // to open add/edit resource pop up
+  const [openAvailabilityTimePopup, setOpenAvailabilityTimePopup] = useState<boolean>(false); // to open availability time pop up
+  const [openConfirmDeleteUserModal, setOpenConfirmDeleteUserModal] = useState<boolean>(false);
+  const [stateOfDeleteUserModal, setStateOfDeleteUserModal] = useState<string>('delete');
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  // save resource
   const [saveResources, saveResourcesMutation] = useSaveResourcesMutation();
-  const { data: resourcesListResponse } = useGetResourcesQuery(listRequest);
-  const {data: facilityListResponse } = useGetFacilitiesQuery(listRequest) ;
-  const { data: resourceTypeLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
-  const resourceTypeListResponse = useGetResourceTypeQuery(resources.resourceTypeLkey || "");
-  console.log(resourceTypeListResponse + "this is the list")
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  // Fetch resources list response
+  const {data: resourcesListResponse, refetch: refetchResources, isFetching} = useGetResourcesQuery(listRequest);
+  // Deactivate resource
+  const [deactiveResource] = useDeactiveActiveResourceMutation();
+   // Header page setUp
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className='title-resources'>
       <h5>Resources</h5>
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Resources'));
   dispatch(setDivContent(divContentHTML));
-  const handleNew = () => {
-    setResources({...newApResources})
-    setPopupOpen(true);
-  };
-
-  const handleSave = () => {
-    setPopupOpen(false);
-    saveResources(resources).unwrap();
-  };
-
-  const handleClose = () => {
-    setPopupOpen(false); 
-    setISDepartment(false); 
-    setISPractitioner(false);
-  };
-
-  useEffect(() => {
-    console.log(resources.resourceKey);
-    if (saveResourcesMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveResourcesMutation.data]);
-
-  useEffect(() => {
-    resourceTypeListResponse.refetch();
-    switch (resources.resourceTypeLkey) {
-      case '2039534205961578':
-       setISPractitioner(true);
-       setISDepartment(false);
-       setIsMedicalTest(false);
-       break;
-      case '2039516279378421':
-       setISDepartment(true);
-       setISPractitioner(false);
-       setIsMedicalTest(false);
-       break;
-       case '2039620472612029':
-        setISDepartment(false);
-        setISPractitioner(false);
-        setIsMedicalTest(true);
-        break;
-    }
-  }, [resources.resourceTypeLkey]);
-
+  // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = resourcesListResponse?.extraNumeric ?? 0;
+  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
+  // Available fields for filtering
+  const filterFields = [
+    { label: 'Resource Type', value: 'resourceTypeLkey' },
+    { label: 'Resource Name', value: 'resourceName' },
+    { label: 'Status', value: 'isValid' },
+    { label: 'Creation Date', value: 'createdAt' },
+    { label: 'createdBy', value: 'Created By' }
+  ];
+  // Class name of selected row
   const isSelected = rowData => {
     if (rowData && resources && rowData.key === resources.key) {
       return 'selected-row';
     } else return '';
   };
 
+  // Effects
+   useEffect(() => {
+        const handleResize = () => setWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+      }, []);
+
+  useEffect(() => {
+    if (saveResourcesMutation.data) {
+      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+    }
+  }, [saveResourcesMutation.data]);
+  // to handle filter change
+  useEffect(() => {
+    if (recordOfFilter['filter']) {
+      handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
+    } else {
+      setListRequest({
+        ...initialListRequest,
+        pageSize: listRequest.pageSize,
+        pageNumber: 1
+      });
+    }
+  }, [recordOfFilter]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent('  '));
+    };
+  }, [location.pathname, dispatch]);
+
+  // Handle page change in navigation
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+  // Handle change rows per page in navigation
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
+    });
+  };
+  // Handle click on Add New button
+  const handleNew = () => {
+    setResources({ ...newApResources });
+    setPopupOpen(true); // open Add/Edit pop up
+  };
+  // Handle save resource
+  const handleSave = () => {
+    setPopupOpen(false); // close pop up
+    saveResources(resources)
+      .unwrap()
+      .then(() => {
+        // display success message
+        dispatch(notify({ msg: 'The Resource has been saved successfully', sev: 'success' }));
+      })
+      .catch(() => {
+        // display error message
+        dispatch(notify({ msg: 'Failed to save this Resource', sev: 'error' }));
+      });
+  };
+
+  // Handle deactivate Resource
+  const handleDeactiveResource = () => {
+    setOpenConfirmDeleteUserModal(false); // close confirm delete modal
+    deactiveResource(resources)
+      .unwrap()
+      .then(() => {
+        refetchResources();
+        setResources(newApResources);
+        // display success message
+        dispatch(
+          notify({
+            msg: 'The Resource was successfully ' + stateOfDeleteUserModal,
+            sev: 'success'
+          })
+        );
+      })
+      .catch(() => {
+        // display error message
+        dispatch(
+          notify({
+            msg: 'Failed to ' + stateOfDeleteUserModal + ' this Resource',
+            sev: 'error'
+          })
+        );
+      });
+  };
+  //handle Reactivate
+  const handleReactiveResource = () => {
+    setOpenConfirmDeleteUserModal(false);
+    const updatedResource = {...resources, deletedAt: null};
+    saveResources(updatedResource)
+      .unwrap()
+      .then(() => {
+        // display success message
+        dispatch(notify({ msg: 'The Resource has been activated successfully', sev: 'success' }));
+      })
+      .catch(() => {
+        // display error message
+        dispatch(notify({ msg: 'Failed to activated  this Resource', sev: 'error' }));
+      });
+  };
+
+  // handle change filter
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -110,221 +192,179 @@ const Resources = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent("  "));
-    };
-  }, [location.pathname, dispatch])
-  return (
-    <Panel
-    >
-      <ButtonToolbar>
-        <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
-          Add New
-        </IconButton>
-        <IconButton
-          disabled={!resources.key}
-          appearance="primary"
-          onClick={() => setPopupOpen(true)}
-          color="green"
-          icon={<EditIcon />}
-        >
-          Edit Selected
-        </IconButton>
-        <IconButton
-          disabled={true || !resources.key}
-          appearance="primary"
-          color="red"
-          icon={<TrashIcon />}
-        >
-          Delete Selected
-        </IconButton>
-      </ButtonToolbar>
-      <hr />
-      <Table
-        height={400}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortColumn={(sortBy, sortType) => {
-          if (sortBy)
-            setListRequest({
-              ...listRequest,
-              sortBy,
-              sortType
-            });
+
+  //Table columns
+  const tableColumns = [
+    {
+      key: 'resourceTypeLkey',
+      title: <Translate>Resource Type</Translate>,
+      flexGrow: 4,
+      render: rowData =>
+        rowData.resourceTypeLvalue
+          ? rowData.resourceTypeLvalue.lovDisplayVale
+          : rowData.resourceTypeLkey
+    },
+    {
+      key: 'resourceName',
+      title: <Translate>Resource Name</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: 'status',
+      title: <Translate>Status</Translate>,
+      flexGrow: 4,
+      render: rowData => (!rowData.deletedAt ? 'Active' : 'InActive')
+    },
+    {
+      key: 'createdAt',
+      title: <Translate>Creation Date</Translate>,
+      flexGrow: 4,
+      render: rowData => (rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : '')
+    },
+    {
+      key: 'createdBy',
+      title: <Translate>Created By</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      flexGrow: 3,
+      render: rowData => iconsForActions(rowData)
+    }
+  ];
+  // Filter table
+  const filters = () => (
+    <Form layout="inline" fluid className="container-of-filter-fields-resources">
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={recordOfFilter}
+        setRecord={updatedRecord => {
+          setRecordOfFilter({
+            ...recordOfFilter,
+            filter: updatedRecord.filter,
+            value: ''
+          });
         }}
-        headerHeight={80}
-        rowHeight={60}
-        bordered
-        cellBordered
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+      />
+      <MyInput
+        fieldName="value"
+        fieldType="text"
+        record={recordOfFilter}
+        setRecord={setRecordOfFilter}
+        showLabel={false}
+        placeholder="Search"
+      />
+    </Form>
+  );
+  // Icons column (Edite, reactive/Deactivate)
+  const iconsForActions = (rowData: ApResources) => (
+    <div className="container-of-icons-resources">
+       {/* display availability time when click on this icon */}
+      <IoSettingsSharp
+        className="icons-resources"
+        title="Availability Time"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setOpenAvailabilityTimePopup(true);
+        }}
+      />
+      {/* open edit resource when click on this icon */}
+      <MdModeEdit
+        className="icons-resources"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => setPopupOpen(true)}
+      />
+      {/* deactivate/activate  when click on one of these icon */}
+      {!rowData?.deletedAt ? (
+        <MdDelete
+          className="icons-resources"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            setStateOfDeleteUserModal('deactivate');
+            setOpenConfirmDeleteUserModal(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-resources"
+          title="Activate"
+          size={20}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setStateOfDeleteUserModal('reactivate');
+            setOpenConfirmDeleteUserModal(true);
+          }}
+        />
+      )}
+    </div>
+  );
+  
+  return (
+    <Panel>
+      <div className="container-of-add-new-button-resources">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleNew}
+          width="109px"
+        >
+          Add New
+        </MyButton>
+      </div>
+      <MyTable
+        height={450}
         data={resourcesListResponse?.object ?? []}
+        loading={isFetching}
+        columns={tableColumns}
+        rowClassName={isSelected}
+        filters={filters()}
         onRowClick={rowData => {
           setResources(rowData);
         }}
-        rowClassName={isSelected}
-      >
-        {/* <Column sortable flexGrow={2}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('facilityKey', e)} />
-            <Translate>Facility</Translate>
-          </HeaderCell>
-          <Cell>
-                    {rowData => (
-                      <span>
-                        {conjureValueBasedOnKeyFromList(
-                          facilityListResponse?.object ?? [],
-                          rowData.facilityKey,
-                          'facilityName'
-                        )}
-                      </span>
-                    )}
-                  </Cell>
-        </Column> */}
-        <Column sortable flexGrow={2}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('resourceTypeLkey', e)} />
-            <Translate>Resource Type</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.resourceTypeLvalue ? rowData.resourceTypeLvalue.lovDisplayVale : rowData.resourceTypeLkey
-            }
-          </Cell>
-        </Column>
-        <Column sortable flexGrow={2}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('resourceName', e)} />
-            <Translate>Resource Name</Translate>
-          </HeaderCell>
-          <Cell dataKey="resourceName" />
-        </Column> 
-        <Column sortable flexGrow={3}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('isValid', e)} />
-            <Translate>Status</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.isValid ? 'Active' : 'InActive'
-            }
-          </Cell>
-        </Column>
-        <Column sortable flexGrow={3}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('createdAt', e)} />
-            <Translate>Creation Date</Translate>
-          </HeaderCell>
-          <Cell> 
-          {rowData => rowData.createdAt ? new Date(rowData.createdAt).toLocaleString() : ""}
-          </Cell>
-        </Column> 
-        <Column sortable flexGrow={3}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('createdBy', e)} />
-            <Translate> Created By</Translate>
-          </HeaderCell>
-          <Cell dataKey="createdBy" />
-        </Column> 
-       
-        
-      </Table>
-      <div style={{ padding: 20 }}>
-        <Pagination
-          prev
-          next
-          first
-          last
-          ellipsis
-          boundaryLinks
-          maxButtons={5}
-          size="xs"
-          layout={['limit', '|', 'pager']}
-          limitOptions={[5, 15, 30]}
-          limit={listRequest.pageSize}
-          activePage={listRequest.pageNumber}
-          onChangePage={pageNumber => {
-            setListRequest({ ...listRequest, pageNumber });
-          }}
-          onChangeLimit={pageSize => {
-            setListRequest({ ...listRequest, pageSize });
-          }}
-          total={resourcesListResponse?.extraNumeric ?? 0}
-        />
-      </div>
-
-<AvailabilityTime resource={resources} />
-      <Modal open={popupOpen} overflow>
-        <Modal.Title>
-          <Translate>New/Edit Resources</Translate>
-        </Modal.Title>
-        <Modal.Body>
-          <Form fluid>
-            {/* <MyInput
-              fieldName="facilityKey"
-              fieldType="select"
-              selectData={facilityListResponse?.object ?? []}
-              selectDataLabel="facilityName"
-              selectDataValue="key"
-              record={resources}
-              setRecord={setResources}
-            />  */}
-            <MyInput
-              fieldName="resourceTypeLkey"
-              fieldType="select"
-              selectData={resourceTypeLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={resources}
-              setRecord={setResources}
-            /> 
-            {isPractitioner && <MyInput
-              fieldLabel="Resource"
-              fieldName="resourceKey"
-              fieldType="select"
-              selectData={resourceTypeListResponse?.data?.object ?? []}
-              selectDataLabel="practitionerFullName"
-              selectDataValue="key"
-              record={resources}
-              setRecord={setResources}
-            />} 
-          
-            {isDepartment && <MyInput
-              fieldLabel="Resource"
-              fieldName="resourceKey"
-              fieldType="select"
-              selectData={resourceTypeListResponse?.data?.object ?? []}
-              selectDataLabel="name"
-              selectDataValue="key"
-              record={resources}
-              setRecord={setResources}
-            />} 
-
-             
-            {isMedicalTest && <MyInput
-              fieldLabel="Resource"
-              fieldName="resourceKey"
-              fieldType="select"
-              selectData={resourceTypeListResponse?.data?.object ?? []}
-              selectDataLabel="testName"
-              selectDataValue="key"
-              record={resources}
-              setRecord={setResources}
-            />} 
-            
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="primary" onClick={handleSave}>
-              Save
-            </Button>
-            <Button appearance="primary" color="red" onClick={handleClose}>
-              Cancel
-            </Button>
-          </Stack>
-        </Modal.Footer>
-      </Modal>
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortChange={(sortBy, sortType) => {
+          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+        }}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
+      <AvailabilityTimeModal
+        open={openAvailabilityTimePopup}
+        setOpen={setOpenAvailabilityTimePopup}
+        resource={resources}
+      />
+      <AddEditResources
+        open={popupOpen}
+        setOpen={setPopupOpen}
+        width={width}
+        resources={resources}
+        setResources={setResources}
+        handleSave={handleSave}
+      />
+      <DeletionConfirmationModal
+        open={openConfirmDeleteUserModal}
+        setOpen={setOpenConfirmDeleteUserModal}
+        itemToDelete="Resource"
+        actionButtonFunction={stateOfDeleteUserModal == 'deactivate' ? handleDeactiveResource : handleReactiveResource}
+        actionType={stateOfDeleteUserModal}
+      />
     </Panel>
   );
 };

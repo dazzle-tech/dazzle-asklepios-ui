@@ -39,7 +39,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
         savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false })
             .unwrap()
             .then(() => {
-                dispatch(notify('Patient Added Successfully'));
+                dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
             });
     };
     // Handle Go To Patient Profile 
@@ -55,7 +55,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
         savePatientInsurance({ ...patientInsurance, patientKey: localPatient.key })
             .unwrap()
             .then(() => {
-                dispatch(notify('Patient Insurance Added Successfully'));
+                dispatch(notify({msg:'Patient Insurance Added Successfully',sev: 'success'}));
                 const privatePatientPath = '/patient-profile';
                 navigate(privatePatientPath, { state: { patient: localPatient } });
                 setOpen(false);

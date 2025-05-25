@@ -9,7 +9,10 @@ import Attachment from '@/images/Attachment.png';
 import React, { useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyInput from "@/components/MyInput";
-import './styles.less'
+import './styles.less';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+
 interface AttachmentModalProps {
     attachmentSource: { key: string };
     isOpen: boolean;
@@ -38,7 +41,7 @@ const AttachmentModal = ({
     refecthData,
     attatchmentType,
 }: AttachmentModalProps) => {
-
+    const dispatch = useAppDispatch();
     const authSlice = useAppSelector(state => state.auth);
     const attachmentFileInputRef = useRef<HTMLInputElement>(null);
     const [newAttachmentSrc, setNewAttachmentSrc] = useState<string | null>(null);
@@ -88,17 +91,25 @@ const AttachmentModal = ({
         }
     };
     // Handle Update Attachment Details
-    const handleUpdateAttachmentDetails = () => {
-        Update({
-            key: selectedPatientAttacment.key,
-            attachmentDetails: newAttachmentDetails,
-            updatedBy: authSlice.user.key,
-            accessType: selectedAttachType.accessTypeLkey,
-            file: uploadedAttachmentOpject?.formData ?? undefined,
-        })
-            .unwrap()
-            .then(() => handleFinishUploading());
-    };
+   const handleUpdateAttachmentDetails = () => {
+    Update({
+        key: selectedPatientAttacment.key,
+        attachmentDetails: newAttachmentDetails,
+        updatedBy: authSlice.user.key,
+        accessType: selectedAttachType.accessTypeLkey,
+        file: uploadedAttachmentOpject?.formData ?? undefined,
+    })
+    .unwrap()
+    .then(() => {
+        handleFinishUploading();
+        dispatch(notify({ msg: 'Attachment Updated Successfully', sev: 'success' }));
+    })
+    .catch((error) => {
+        dispatch(notify({ msg: 'Failed to Update attachment', sev: 'error' }));
+        console.error(error);
+    });
+};
+
 
     // Handle Finish Uploading 
     const handleFinishUploading = () => {
@@ -130,6 +141,7 @@ const AttachmentModal = ({
                 .then(() => {
                     handleFinishUploading();
                     refecthData();
+                     dispatch(notify({ msg: 'Attachment Uploaded Successfully', sev: 'success' }));
                 });
         }
     };

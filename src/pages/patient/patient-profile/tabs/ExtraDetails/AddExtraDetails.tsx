@@ -97,7 +97,7 @@ const AddExtraDetails = ({ localPatient, open, setOpen, secondaryDocument, setSe
             })
                 .unwrap()
                 .then(() => {
-                    dispatch(notify('Document Added Successfully'));
+                    dispatch(notify({msg:'Document Added Successfully',sev: 'success'}));
                     refetch();
                     handleCleareSecondaryDocument();
                 });
@@ -114,7 +114,7 @@ const AddExtraDetails = ({ localPatient, open, setOpen, secondaryDocument, setSe
             })
                 .unwrap()
                 .then(() => {
-                    dispatch(notify('Document Updated Successfully'));
+                    dispatch(notify({msg:'Document Updated Successfully',sev: 'success'}));
                     refetch();
                     handleCleareSecondaryDocument();
                 });

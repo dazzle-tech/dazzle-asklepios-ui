@@ -15,6 +15,7 @@ import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import AddExtraDetails from './AddExtraDetails';
+import { formatDateWithoutSeconds } from '@/utils';
 const PatientExtraDetails = ({ localPatient }) => {
     const dispatch = useAppDispatch();
     const [secondaryDocumentModalOpen, setSecondaryDocumentModalOpen] = useState(false);
@@ -48,7 +49,7 @@ const PatientExtraDetails = ({ localPatient }) => {
         }).then(
             () => (
                 patientSecondaryDocuments(),
-                dispatch(notify('Secondary Document Deleted')),
+                dispatch(notify({ msg: 'Secondary Document Deleted', sev: 'success' })),
                 setDeleteDocModalOpen(false)
             )
         );
@@ -93,30 +94,16 @@ const PatientExtraDetails = ({ localPatient }) => {
             dataKey: 'documentNo',
         },
         {
-            key: 'createdBy',
-            title: <Translate>Created By</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) => rowData?.createdByUser?.fullName || '',
-        },
-        {
             key: 'createdAt',
-            title: <Translate>Created At</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) =>
-                rowData.createdAt ? new Date(rowData.createdAt).toLocaleString("en-GB") : '',
-        },
-        {
-            key: 'updatedBy',
-            title: <Translate>Updated By</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) => rowData?.updatedByUser?.fullName || '',
+            title: 'CREATED AT/BY',
+            fullText: true,
+            render: (row: any) => row?.createdAt ? <>{row?.createdByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.createdAt)}</span> </> : ' '
         },
         {
             key: 'updatedAt',
-            title: <Translate>Updated At</Translate>,
-            flexGrow: 4,
-            render: (rowData: any) =>
-                rowData.updatedAt ? new Date(rowData.updatedAt).toLocaleString("en-GB") : '',
+            title: 'UPDATED AT/BY',
+            fullText: true,
+            render: (row: any) => row?.updatedAt ? <>{row?.updatedByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.updatedAt)}</span> </> : ' '
         },
     ];
     // Handle adding a new Secondary Document Function

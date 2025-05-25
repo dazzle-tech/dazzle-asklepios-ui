@@ -47,7 +47,7 @@ const QuickPatient = ({ open, setOpen }) => {
   useEffect(() => {
     if (savePatientMutation && savePatientMutation.status === 'fulfilled') {
       handleClearModal();
-      dispatch(notify('Patient added successfully'));
+      dispatch(notify({msg:'Patient added successfully',sev: 'success'}));
       goToPatientProfile();
       setValidationResult(undefined);
     } else if (savePatientMutation && savePatientMutation.status === 'rejected') {

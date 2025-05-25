@@ -35,19 +35,19 @@ const AddTreadmillStress = ({ open, setOpen, treadmillStressObject, patient, enc
             if (treadmillStress.key === undefined) {
                 //TODO convert key to code
                 await saveTreadmillStress({ ...treadmillStress, patientKey: patient.key, encounterKey: encounter.key, statusLkey: "9766169155908512", createdBy: authSlice.user.key }).unwrap();
-                dispatch(notify('Patient Treadmill Stress Added Successfully'));
+                dispatch(notify({msg:'Patient Treadmill Stress Added Successfully',sev:'success'}));
                 //TODO convert key to code
                 setTreadmillStress({ ...newApTreadmillStress, statusLkey: "9766169155908512" })
             } else {
                 await saveTreadmillStress({ ...treadmillStress, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap();
-                dispatch(notify('Patient Treadmill Stress Updated Successfully'));
+                dispatch(notify({msg:'Patient Treadmill Stress Updated Successfully',sev:'success'}));
             }
             await refetch();
             handleClearField();
             setOpen(false);
         } catch (error) {
             console.error("Error saving Treadmill Stress:", error);
-            dispatch(notify('Failed to save Treadmill Stress'));
+            dispatch(notify({msg:'Failed to save Treadmill Stress',sev:'error'}));
         }
     };
 

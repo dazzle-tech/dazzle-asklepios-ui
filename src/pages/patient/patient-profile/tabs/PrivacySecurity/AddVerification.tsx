@@ -20,13 +20,13 @@ const AddVerification = ({ localPatient, setLocalPatient, validationResult, open
   // Effects for OTP verification
   React.useEffect(() => {
     if (sendOtpMutation.status === 'fulfilled') {
-      dispatch(notify('OTP sent'));
+      dispatch(notify({msg:'OTP sent',sev: 'success'}));
     }
   }, [sendOtpMutation]);
 
   React.useEffect(() => {
     if (verifyOtpMutation.status === 'fulfilled') {
-      dispatch(notify('Patient verified success'));
+      dispatch(notify({msg:'Patient verified success',sev: 'success'}));
       setLocalPatient(verifyOtpMutation.data);
       setOpen(false);
     }

@@ -13,7 +13,11 @@ import MyButton from '@/components/MyButton/MyButton';
 import AddPsychologicalExam from './AddPsychologicalExam';
 import CancellationModal from '@/components/CancellationModal';
 import MyTable from '@/components/MyTable';
-const PsychologicalExam = ({ patient, encounter,edit }) => {
+import { formatDateWithoutSeconds } from '@/utils';
+import { useLocation } from 'react-router-dom';
+const PsychologicalExam = () => {
+    const location = useLocation();
+     const { patient, encounter, edit } = location.state || {};
     const authSlice = useAppSelector(state => state.auth);
     const [openAddModal, setOpenAddModal] = useState(false);
     const [psychologicalExam, setPsychologicalExam] = useState<ApPsychologicalExam>({ ...newApPsychologicalExam });
@@ -72,7 +76,7 @@ const PsychologicalExam = ({ patient, encounter,edit }) => {
     const handleCancle = () => {
         //TODO convert key to code
         savePsychologicalExam({ ...psychologicalExam, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
-            dispatch(notify('Psychological Exam Canceled Successfully'));
+            dispatch(notify({msg:'Psychological Exam Canceled Successfully',sev:'success'}));
             refetchPsychologicalExam();
             setPopupCancelOpen(false);
         });
@@ -280,19 +284,19 @@ const PsychologicalExam = ({ patient, encounter,edit }) => {
             key: 'createdAt',
             title: 'CREATED AT/BY',
             expandable: true,
-            render: (row: any) => row?.createdAt ? <>{row?.createByUser?.fullName}<br /><span className='date-table-style'>{new Date(row.createdAt).toLocaleString('en-GB')}</span> </> : ' '
+            render: (row: any) => row?.createdAt ? <>{row?.createByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.createdAt)}</span> </> : ' '
         },
         {
             key: 'updatedAt',
             title: 'UPDATED AT/BY',
             expandable: true,
-            render: (row: any) => row?.updatedAt ? <>{row?.updateByUser?.fullName}<br /><span className='date-table-style'>{new Date(row.updatedAt).toLocaleString('en-GB')}</span> </> : ' '
+            render: (row: any) => row?.updatedAt ? <>{row?.updateByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.updatedAt)}</span> </> : ' '
         },
         {
             key: 'deletedAt',
             title: 'CANCELLED AT/BY',
             expandable: true,
-            render: (row: any) => row?.deletedAt ? <>{row?.deleteByUser?.fullName}  <br /><span className='date-table-style'>{new Date(row.deletedAt).toLocaleString('en-GB')}</span></> : ' '
+            render: (row: any) => row?.deletedAt ? <>{row?.deleteByUser?.fullName}  <br /><span className='date-table-style'>{formatDateWithoutSeconds(row.deletedAt)}</span></> : ' '
         },
         {
             key: 'cancellationReason',

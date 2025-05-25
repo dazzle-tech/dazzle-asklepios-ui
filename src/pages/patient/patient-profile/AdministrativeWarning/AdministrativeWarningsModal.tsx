@@ -152,7 +152,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         });
         setAdministrativeWarningDetails({ Details: '' });
         warningsRefetch();
-        dispatch(notify('Activated Successfully'));
+         dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
         setPatientAdministrativeWarnings({ ...newApPatientAdministrativeWarnings });
         setOpenChildModal(false);
       });
@@ -196,7 +196,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
       .unwrap()
       .then(() => {
         warningsRefetch();
-        dispatch(notify('Deleted Successfully'));
+        dispatch(notify({msg:'Deleted Successfully', sev: 'success'}));
       });
   };
   // Main Modal Content 

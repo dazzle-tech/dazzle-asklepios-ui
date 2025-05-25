@@ -234,11 +234,6 @@ const InsuranceModal = ({
   }, [relations]);
  
   useEffect(() => {
-    console.log(patientInsurance)
-    console.log(relations)
-  }, [patientInsurance])
-
-  useEffect(() => {
     if (open === false) {
       handleClearModal();
     }

@@ -15,8 +15,15 @@ import { MdModeEdit } from 'react-icons/md';
 import { useSaveEncounterVaccineMutation, useGetEncounterVaccineQuery } from '@/services/observationService'
 import { ApVaccine, ApVaccineBrands, ApEncounterVaccination } from '@/types/model-types';
 import { newApVaccine, newApVaccineBrands, newApVaccineDose, newApEncounterVaccination } from '@/types/model-types-constructor';
+import { formatDateWithoutSeconds } from '@/utils';
 import AddEncounterVaccine from './AddEncounterVaccine';
-const VaccinationTab = ({ disabled, patient, encounter ,edit }) => {
+import { useLocation } from 'react-router-dom';
+const VaccinationTab = ({ disabled, patient: propPatient, encounter: propEncounter, edit: propEdit }) => {
+    const location = useLocation();
+    const state = location.state || {};
+    const patient = propPatient || state.patient;
+    const encounter = propEncounter || state.encounter;
+    const edit = propEdit ?? state.edit;
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
     const [vaccine, setVaccine] = useState<ApVaccine>({ ...newApVaccine });
@@ -109,7 +116,7 @@ const VaccinationTab = ({ disabled, patient, encounter ,edit }) => {
     //handle Cancle Vaccine
     const handleCancle = () => {
         saveEncounterVaccine({ ...encounterVaccination, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
-            dispatch(notify('Encounter Vaccine Canceled Successfully'));
+            dispatch(notify({msg:'Encounter Vaccine Canceled Successfully',sev:'success'}));
             encounterVaccine();
         });
         setPopupCancelOpen(false);
@@ -117,7 +124,7 @@ const VaccinationTab = ({ disabled, patient, encounter ,edit }) => {
     //handle Reviewe Vaccine
     const handleReviewe = () => {
         saveEncounterVaccine({ ...encounterVaccination, statusLkey: "3721622082897301", reviewedAt: reviewedAt, reviewedBy: authSlice.user.key, updatedBy: authSlice.user.key }).unwrap().then(() => {
-            dispatch(notify('Encounter Vaccine Reviewed Successfully'));
+            dispatch(notify({msg:'Encounter Vaccine Reviewed Successfully',sev:'success'}));
             encounterVaccine();
         });
     }
@@ -236,9 +243,7 @@ const VaccinationTab = ({ disabled, patient, encounter ,edit }) => {
             key: 'dateAdministered',
             title: 'DATE OF ADMINISTRATION',
             render: (rowData: any) => {
-                if (!rowData.dateAdministered) return '';
-                const date = new Date(rowData.dateAdministered);
-                return date.toLocaleString('en-GB');
+                return !rowData.dateAdministered ? '' : formatDateWithoutSeconds(rowData.dateAdministered);
             }
         },
         {
@@ -307,19 +312,19 @@ const VaccinationTab = ({ disabled, patient, encounter ,edit }) => {
             key: 'createdAt',
             title: 'CREATED AT/BY',
             expandable: true,
-            render: (row: any) => row?.createdAt ? <>{row?.createByUser?.fullName}<br /><span className='date-table-style'>{new Date(row.createdAt).toLocaleString('en-GB')}</span> </> : ' '
+            render: (row: any) => row?.createdAt ? <>{row?.createByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.createdAt)}</span> </> : ' '
         },
         {
             key: 'updatedAt',
             title: 'UPDATED AT/BY',
             expandable: true,
-            render: (row: any) => row?.updatedAt ? <>{row?.updateByUser?.fullName}<br /><span className='date-table-style'>{new Date(row.updatedAt).toLocaleString('en-GB')}</span> </> : ' '
+            render: (row: any) => row?.updatedAt ? <>{row?.updateByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.updatedAt)}</span> </> : ' '
         },
         {
             key: 'deletedAt',
             title: 'CANCELLED AT/BY',
             expandable: true,
-            render: (row: any) => row?.deletedAt ? <>{row?.deleteByUser?.fullName}  <br /><span className='date-table-style'>{new Date(row.deletedAt).toLocaleString('en-GB')}</span></> : ' '
+            render: (row: any) => row?.deletedAt ? <>{row?.deleteByUser?.fullName}  <br /><span className='date-table-style'>{formatDateWithoutSeconds(row.deletedAt)}</span></> : ' '
         },
         {
             key: 'cancellationReason',
@@ -329,7 +334,7 @@ const VaccinationTab = ({ disabled, patient, encounter ,edit }) => {
         }
     ];
     return (<div>
-        <AddEncounterVaccine open={popupOpen} setOpen={setPopupOpen} patient={patient} encounter={encounter} encounterVaccination={encounterVaccination} setEncounterVaccination={setEncounterVaccination} vaccineObject={vaccine} vaccineDoseObjet={vaccineDose} vaccineBrandObject={vaccineBrand} isDisabled={disabled} refetch={encounterVaccine} edit={edit}/>
+        <AddEncounterVaccine open={popupOpen} setOpen={setPopupOpen} patient={patient} encounter={encounter} encounterVaccination={encounterVaccination} setEncounterVaccination={setEncounterVaccination} vaccineObject={vaccine} vaccineDoseObjet={vaccineDose} vaccineBrandObject={vaccineBrand} isDisabled={disabled} refetch={encounterVaccine} edit={edit} />
         <div className='bt-div'>
             <MyButton prefixIcon={() => <CloseOutlineIcon />} onClick={() => { setPopupCancelOpen(true) }} disabled={encounterVaccination.key === undefined || encounterVaccination.statusLkey === '3196709905099521' || isEncounterStatusClosed || disabled || encounterVaccination.key != undefined ? encounter.key != encounterVaccination.encounterKey : false} >
                 Cancel

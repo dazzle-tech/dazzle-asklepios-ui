@@ -26,7 +26,7 @@ import { initialListRequest, ListRequest } from "@/types/types";
 import AppointmentModal from "./AppoitmentModal";
 import { ApPatient, ApAppointment } from "@/types/model-types";
 import { faCross, faFileCsv, faPaperPlane, faPlus, faPrint, faUserPlus } from "@fortawesome/free-solid-svg-icons";
-import { notify } from "@/utils/uiReducerActions";
+import { hideSystemLoader, notify, showSystemLoader } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
 import AppointmentActionsModal from "./AppointmentActionsModal";
 import { useGetResourcesAvailabilityQuery, useGetResourcesQuery, useGetAppointmentsQuery } from '@/services/appointmentService';
@@ -67,6 +67,7 @@ const ScheduleScreen = () => {
     const [calendarDate, setCalendarDate] = useState<Date>(null);
 
 
+
     useEffect(() => {
         return () => {
             dispatch(setPageCode(''));
@@ -77,7 +78,8 @@ const ScheduleScreen = () => {
         data: appointments,
         refetch: refitchAppointments,
         error,
-        isLoading
+        isLoading:isLoadingAppointments,
+        isFetching:isFetchingAppointments
     } = useGetAppointmentsQuery({
         resource_type: selectedResourceType?.resourcesType || null,
         facility_id: selectedFacility?.facilityKey || null,
@@ -161,19 +163,9 @@ const ScheduleScreen = () => {
 
 
 
-
-    const convertDate = (appointmentEnd) => {
-        const endDate = new Date(appointmentEnd);
-        // Format to `new Date(year, month, day, hours, minutes)`
-        const formattedEnd = new Date(
-            endDate.getUTCFullYear(), // Year
-            endDate.getUTCMonth(),   // Month (0-based index)
-            endDate.getUTCDate(),    // Day
-            endDate.getUTCHours(),   // Hours
-            endDate.getUTCMinutes()  // Minutes
-        );
-        return (formattedEnd);
-    }
+    const convertDate = (appointmentTime) => {
+        return new Date(appointmentTime);
+    };
 
     const [open, setOpen] = React.useState(false);
     const [size, setSize] = React.useState();
@@ -391,6 +383,18 @@ const ScheduleScreen = () => {
         }, [visibleAppointments, currentView, label]);
 
 
+
+      useEffect(() => {
+          if (isFetchingAppointments||isLoadingAppointments) {
+           dispatch(showSystemLoader());
+         } else {
+           dispatch(hideSystemLoader());
+         }
+     
+       }, [isLoadingAppointments,isFetchingAppointments])
+
+       
+
         return (
             <div style={{ marginInline: "15px" }} className="rbc-toolbar">
                 <span className="rbc-btn-group">
@@ -414,7 +418,7 @@ const ScheduleScreen = () => {
                         onClick={handleClickCalinderSearch}
                         style={{ display: showDatePicker ? "none" : "inline-block", border: "none", height: "35px" }} // إخفاء الزر عند فتح التقويم
                     >
-                       <strong>{label}</strong> 
+                        <strong>{label}</strong>
                     </Button>
 
                     {showDatePicker && (
@@ -428,11 +432,11 @@ const ScheduleScreen = () => {
                             }}
                             placement="bottomStart"
                             defaultOpen
-                            format={currentView === "month" ? "yyyy-MM" : "yyyy-MM-dd"}  
+                            format={currentView === "month" ? "yyyy-MM" : "yyyy-MM-dd"}
                             onClose={() => {
-                                  console.log("DatePicker closed");
-                                  setShowDatePicker(false);  // إخفاء الـ DatePicker عند إغلاقه
-                                }}
+                                console.log("DatePicker closed");
+                                setShowDatePicker(false);  // إخفاء الـ DatePicker عند إغلاقه
+                            }}
                         />
                     )}
                     <button style={{ margin: "7px", height: "35px" }} onClick={() => onNavigate("NEXT")}><ArrowRightLineIcon /></button>
@@ -489,7 +493,11 @@ const ScheduleScreen = () => {
     const ResourceHeader = ({ resource }) => {
         return (
             <div style={{ marginLeft: "5px", display: "flex", alignItems: "center", gap: "8px", height: "65px" }}>
-                <Avatar size="md" circle src="https://i.pravatar.cc/150?u=1" />
+                <Avatar size="md" circle src={
+                    resource && resource.fileContent
+                        ? `data:${resource.contentType};base64,${resource.fileContent}`
+                        : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
+                } />
                 <div style={{ textAlign: "left" }}>
                     <div style={{ fontSize: "14px" }} className="font-semibold text-sm">
                         {resource?.resourceName}

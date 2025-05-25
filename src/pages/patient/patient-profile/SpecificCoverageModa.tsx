@@ -55,7 +55,7 @@ const SpecificCoverageModa = ({ open, setOpen, insurance }) => {
             patientInsuranceKey: insurance
         }).unwrap().then(() => {
             refetch(),
-                dispatch(notify('Coverage Saved Successfully')),
+                dispatch(notify({msg:'Coverage Saved Successfully',sev: 'success'})),
                 handleClearModalFields()
         });
         console.log(patientInsuranceCoverage)
@@ -67,9 +67,9 @@ const SpecificCoverageModa = ({ open, setOpen, insurance }) => {
             key: rowData.key
         }).then(() => {
             refetch();
-            dispatch(notify('Coverage Deleted Successfully'));
+            dispatch(notify({msg:'Coverage Deleted Successfully',sev: 'success'}));
         }).catch((error) => {
-            dispatch(notify('Failed to delete coverage'));
+            dispatch(notify({msg:'Failed to delete coverage',sev:'error'}));
         });
     };
     // Function handle Clear Modal Fields covgInsurance
@@ -168,7 +168,7 @@ const SpecificCoverageModa = ({ open, setOpen, insurance }) => {
             setOpen={setOpen}
             title="Coverage List"
             position="right"
-            size="sm"
+            size="40vw"
             hideActionBtn={true}
             content={CoverageContent}
             steps={[

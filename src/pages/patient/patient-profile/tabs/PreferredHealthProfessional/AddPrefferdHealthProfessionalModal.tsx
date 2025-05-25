@@ -75,9 +75,9 @@ const AddPrefferdHealthProfessionalModal = ({ open, setOpen, patient, patientHP,
         savePatientPH({ ...patientHP, patientKey: patient?.key }).unwrap()
         .then(() => {
             if (patientHP.key === undefined) {
-                dispatch(notify('Preferred Health Professional Added Successfully'));
+                dispatch(notify({msg:'Preferred Health Professional Added Successfully',sev: 'success'}));
             } else {
-                dispatch(notify('Preferred Health Professional Updated Successfully'));
+                dispatch(notify({msg:'Preferred Health Professional Updated Successfully',sev: 'success'}));
             }
             refetch(); 
             handleClearModal();

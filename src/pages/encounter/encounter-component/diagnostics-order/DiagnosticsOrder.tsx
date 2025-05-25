@@ -39,27 +39,29 @@ import CancellationModal from '@/components/CancellationModal';
 import { useGetPatientAttachmentsListQuery } from '@/services/attachmentService';
 import { FaFileArrowDown } from 'react-icons/fa6';
 import AttachmentUploadModal from '@/components/AttachmentUploadModal';
+import { useLocation } from 'react-router-dom';
 const handleDownload = attachment => {
-  const byteCharacters = atob(attachment.fileContent);
-  const byteNumbers = new Array(byteCharacters.length);
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
-  const byteArray = new Uint8Array(byteNumbers);
-  const blob = new Blob([byteArray], { type: attachment.contentType });
+    const byteCharacters = atob(attachment.fileContent);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: attachment.contentType });
 
-  // Create a temporary  element and trigger the download
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.style.display = 'none';
-  a.href = url;
-  a.download = attachment.fileName;
-  document.body.appendChild(a);
-  a.click();
-  window.URL.revokeObjectURL(url);
+    // Create a temporary  element and trigger the download
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = attachment.fileName;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
 };
-const DiagnosticsOrder = ({ edit, patient, encounter }) => {
-
+const DiagnosticsOrder = () => {
+    const location = useLocation();
+    const { patient, encounter, edit } = location.state || {};
     const dispatch = useAppDispatch();
     const [showCanceled, setShowCanceled] = useState(true);
     const [test, setTest] = useState<ApDiagnosticTest>({ ...newApDiagnosticTest });
@@ -124,23 +126,23 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             }
         ]
     });
-     const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
+    const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
-          {
-            fieldName: 'deleted_at',
-            operator: 'isNull',
-            value: undefined
-          },
-          {
-            fieldName: 'reference_object_key',
-            operator: "match",
-            value:orderTest?.key
-          }
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
+            },
+            {
+                fieldName: 'reference_object_key',
+                operator: "match",
+                value: orderTest?.key
+            }
         ]
-      });
-    
-      const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest, { skip: !orderTest?.key });
+    });
+
+    const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest, { skip: !orderTest?.key });
     const [selectedRows, setSelectedRows] = useState([]);
     const { data: ordersList, refetch: ordersRefetch } = useGetDiagnosticOrderQuery(listOrdersRequest);
     const { data: orderTestList, refetch: orderTestRefetch, isLoading: loadTests } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
@@ -163,7 +165,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
     // Effects
     useEffect(() => {
         const draftOrder = ordersList?.object?.find((order) => order.saveDraft === true);
-   
+
         if (draftOrder != null) {
             setIsDraft(true);
             setOrders({ ...draftOrder });
@@ -222,24 +224,24 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
     }, [orders])
 
-      useEffect(() => {
+    useEffect(() => {
         const updatedFilters = [
-          {
-            fieldName: 'deleted_at',
-            operator: 'isNull',
-            value: undefined
-          },
-          {
-            fieldName: 'reference_object_key',
-            operator: "match",
-            value: orderTest?.key
-          }
+            {
+                fieldName: 'deleted_at',
+                operator: 'isNull',
+                value: undefined
+            },
+            {
+                fieldName: 'reference_object_key',
+                operator: "match",
+                value: orderTest?.key
+            }
         ];
         setAttachmentsListRequest((prevRequest) => ({
-          ...prevRequest,
-          filters: updatedFilters,
+            ...prevRequest,
+            filters: updatedFilters,
         }));
-      }, [orderTest])
+    }, [orderTest])
 
 
     const OpenDetailsModel = () => {
@@ -256,7 +258,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         try {
             await saveOrderTests(orderTest).unwrap();
             setOpenDetailsModel(false);
-            dispatch(notify('saved  Successfully'));
+            dispatch(notify({msg:'saved  Successfully',sev:'success'}));
 
             orderTestRefetch().then(() => {
                 console.log("Refetch complete");
@@ -305,7 +307,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
         }
     };
     const handleItemClick = async (test) => {
-         setFlag(true);
+        setFlag(true);
         try {
 
             await saveOrderTests({
@@ -321,9 +323,9 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
             }).unwrap();
             dispatch(notify({ msg: 'Saved  Successfully', sev: "success" }));
-              
-           await orderTestRefetch();
-            
+
+            await orderTestRefetch();
+
         }
         catch (error) {
 
@@ -363,7 +365,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                 , saveDraft: false,
                 submittedAt: Date.now()
             }).unwrap();
-            dispatch(notify({msg:'Submetid  Successfully',sev:"success"}));
+            dispatch(notify({ msg: 'Submetid  Successfully', sev: "success" }));
             ordersRefetch();
             orderTestRefetch();
 
@@ -508,34 +510,34 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
             flexGrow: 1,
         }
         ,
-            {
-      key: "",
-      dataKey: "",
-      title: <Translate>ATTACHED FILE</Translate>,
-      flexGrow: 1,
-      render: (rowData: any) => {
-        return <HStack>
-          <FaFileArrowDown
-            size={20}
-            fill="var(--primary-gray)"
-            onClick={() => handleDownload(fetchPatintAttachmentsResponce?.object[fetchPatintAttachmentsResponce?.object.length - 1])} />
+        {
+            key: "",
+            dataKey: "",
+            title: <Translate>ATTACHED FILE</Translate>,
+            flexGrow: 1,
+            render: (rowData: any) => {
+                return <HStack>
+                    <FaFileArrowDown
+                        size={20}
+                        fill="var(--primary-gray)"
+                        onClick={() => handleDownload(fetchPatintAttachmentsResponce?.object[fetchPatintAttachmentsResponce?.object.length - 1])} />
 
-          <MdAttachFile
-            size={20}
-            fill="var(--primary-gray)"
-            onClick={() => setAttachmentsModalOpen(true)}
-          />
-        </HStack>
+                    <MdAttachFile
+                        size={20}
+                        fill="var(--primary-gray)"
+                        onClick={() => setAttachmentsModalOpen(true)}
+                    />
+                </HStack>
 
-      }
-    },
+            }
+        },
         {
             key: "submitDate",
             dataKey: "submitDate",
             title: <Translate>SUBMIT DATE</Translate>,
             flexGrow: 2,
             fullText: true,
-            render: rowData =>   <span className='date-table-style'>{formatDateWithoutSeconds(rowData.submitDate)}</span>
+            render: rowData => <span className='date-table-style'>{formatDateWithoutSeconds(rowData.submitDate)}</span>
 
         }
         ,
@@ -664,7 +666,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                                 setOrders({ ...orders, isUrgent: !orders.isUrgent })
                             }
                             backgroundColor={orders.isUrgent ? "var(--primary-orange)" : 'var(--primary-blue)'}
-                            disabled={edit ?true:orders.key?orders?.statusLkey!=='164797574082125':true}
+                            disabled={edit ? true : orders.key ? orders?.statusLkey !== '164797574082125' : true}
 
                         >
                             Urgent</MyButton>
@@ -711,7 +713,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
 
                     <div className='top-container'>
 
-                        <TestDropdown handleItemClick={handleItemClick} disabled={orders.key?orders?.statusLkey!=='164797574082125':true} flag={flag} setFlag={setFlag}/>
+                        <TestDropdown handleItemClick={handleItemClick} disabled={orders.key ? orders?.statusLkey !== '164797574082125' : true} flag={flag} setFlag={setFlag} />
                         <div className='icon-style'>
                             <GrTestDesktop size={18} />
                         </div>
@@ -774,7 +776,7 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                     totalCount={totalCount}
                     onPageChange={handlePageChange}
                     onRowsPerPageChange={handleRowsPerPageChange}
-                
+
                 />
             </Row>
 
@@ -799,13 +801,13 @@ const DiagnosticsOrder = ({ edit, patient, encounter }) => {
                 title={'Cancellation'}
             ></CancellationModal>
 
-             <AttachmentUploadModal
-                    isOpen={attachmentsModalOpen}
-                    setIsOpen={setAttachmentsModalOpen}
-                    actionType={'add'}
-                    refecthData={attachmentRefetch}
-                    attachmentSource={orderTest}
-                    attatchmentType="ORDER_TEST" />
+            <AttachmentUploadModal
+                isOpen={attachmentsModalOpen}
+                setIsOpen={setAttachmentsModalOpen}
+                actionType={'add'}
+                refecthData={attachmentRefetch}
+                attachmentSource={orderTest}
+                attatchmentType="ORDER_TEST" />
         </>
     );
 };
