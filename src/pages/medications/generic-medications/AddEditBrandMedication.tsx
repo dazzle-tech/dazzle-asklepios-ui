@@ -1,12 +1,9 @@
-import MyModal from '@/components/MyModal/MyModal';
 import React, { useEffect, useState } from 'react';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
-// import './styles.less';
-import { useGetResourceTypeQuery } from '@/services/appointmentService';
+import './styles.less';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import { GrScheduleNew } from 'react-icons/gr';
 import { MdOutlineMedicationLiquid } from 'react-icons/md';
 import { GiMedicines } from 'react-icons/gi';
 import { HiOutlineSwitchHorizontal } from 'react-icons/hi';
@@ -17,7 +14,7 @@ import {
   useGetGenericMedicationWithActiveIngredientQuery,
   useGetLinkedBrandQuery,
   useSaveGenericMedicationActiveIngredientMutation,
-  useSaveGenericMedicationMutation
+  useSaveLinkedBrandMedicationMutation
 } from '@/services/medicationsSetupService';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
@@ -27,93 +24,31 @@ import MyTable from '@/components/MyTable';
 import { initialListRequest, ListRequest } from '@/types/types';
 import ChildModal from '@/components/ChildModal';
 import {
+  newApBrandMedicationSubstitutes,
   newApGenericMedication,
   newApGenericMedicationActiveIngredient
 } from '@/types/model-types-constructor';
 import { ApGenericMedication, ApGenericMedicationActiveIngredient } from '@/types/model-types';
-import { MdModeEdit } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
-import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { isEmpty } from 'lodash';
 const AddEditBrandMedication = ({
   open,
   setOpen,
-  //   width,
   genericMedication,
   setGenericMedication,
   handleSave
 }) => {
   const dispatch = useAppDispatch();
-  const { data: GenericMedicationLovQueryResponse } =
-    useGetLovValuesByCodeQuery('GEN_MED_MANUFACTUR');
-  const { data: doseageFormLovQueryResponse } = useGetLovValuesByCodeQuery('DOSAGE_FORMS');
-  const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
-  const [activeIngredientsListRequest, setActiveIngredientsListRequest] = useState<ListRequest>({
+  const [activeIngredientsListRequest] = useState<ListRequest>({
     ...initialListRequest
   });
-  const [genericActive, setGenericActive] = useState<ApGenericMedicationActiveIngredient>({
-    ...newApGenericMedicationActiveIngredient
+  const [selectedGeneric, setSelectedGeneric] = useState({
+    key: ''
   });
+  const [modifiedMedicationList, setModifiedMedicationList] = useState();
   const [openAddEditActiveIngredientsPopup, setOpenAddEditActiveIngredientsPopup] =
     useState<boolean>(false);
-  const { data: genericMedicationListResponse } =
-    useGetGenericMedicationWithActiveIngredientQuery('');
-
-  const [modifiedMedicationList, setModifiedMedicationList] = useState(
-  (genericMedicationListResponse?.object ?? []).map(item => ({
-    ...item,
-    customLabel: [
-      item.genericName,
-      item.dosageFormLvalue?.lovDisplayVale,
-      item.manufacturerLvalue?.lovDisplayVale,
-      item.roaLvalue?.lovDisplayVale,
-      item.activeIngredients,
-    ]
-      .filter(Boolean) // يزيل العناصر الفارغة أو undefined/null
-      .join(', ')
-  }))
-  );
-
-  useEffect(() => {
-   setModifiedMedicationList(
-  (genericMedicationListResponse?.object ?? []).map(item => ({
-    ...item,
-    customLabel: [
-      item.genericName,
-      item.dosageFormLvalue?.lovDisplayVale,
-      item.manufacturerLvalue?.lovDisplayVale,
-      item.roaLvalue?.lovDisplayVale,
-      item.activeIngredients,
-    ]
-      .filter(Boolean) // يزيل العناصر الفارغة أو undefined/null
-      .join(', ')
-  }))
-);
-  }, [genericMedicationListResponse]);
-
-  const { data: UOMLovResponseData } = useGetLovValuesByCodeQuery('VALUE_UNIT');
-  const [saveGenericMedication, saveGenericMedicationMutation] = useSaveGenericMedicationMutation();
-  const {
-    data: lisOfLinkedBrand,
-    refetch: fetchB,
-    isFetching: isFetchingBrand
-  } = useGetLinkedBrandQuery(genericMedication.key);
-  const [saveGenericMedicationActiveIngredient, saveGenericMedicationActiveIngredientMutation] =
-    useSaveGenericMedicationActiveIngredientMutation();
-  const { data: activeIngredientListResponseData } = useGetActiveIngredientQuery(
-    activeIngredientsListRequest
-  );
-
-  const [brand, setBrand] = useState<ApGenericMedication>({ ...newApGenericMedication });
-
-  const isSelectedBrand = rowData => {
-    if (rowData && brand && rowData.key === brand.key) {
-      return 'selected-row';
-    } else return '';
-  };
-
-  const [openAddConfirm, setOpenAddConfirm] = useState<boolean>(false);
-
   const [listRequest, setListRequest] = useState({
     ...initialListRequest,
     pageSize: 100,
@@ -133,12 +68,65 @@ const AddEditBrandMedication = ({
       }
     ]
   });
-
+  const [brand, setBrand] = useState<ApGenericMedication>({ ...newApGenericMedication });
+  const [genericActive, setGenericActive] = useState<ApGenericMedicationActiveIngredient>({
+    ...newApGenericMedicationActiveIngredient
+  });
+  // Fetch generic Medication  list response
+  const { data: genericMedicationListResponse } =
+    useGetGenericMedicationWithActiveIngredientQuery('');
+  // Fetch Generic Medication Lov  list response
+  const { data: GenericMedicationLovQueryResponse } =
+    useGetLovValuesByCodeQuery('GEN_MED_MANUFACTUR');
+  // Fetch doseage Form Lov  list response
+  const { data: doseageFormLovQueryResponse } = useGetLovValuesByCodeQuery('DOSAGE_FORMS');
+  // Fetch med Rout Lov  list response
+  const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
+  // Fetch UOM Lov list response
+  const { data: UOMLovResponseData } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+  // Fetch Linked Brand  list response
+  const {
+    data: lisOfLinkedBrand,
+    refetch: fetchB,
+    isFetching: isFetchingBrand
+  } = useGetLinkedBrandQuery(genericMedication?.key, { skip: genericMedication?.key == null });
+  // Save Generic Medication
+  const [saveGenericMedicationActiveIngredient, saveGenericMedicationActiveIngredientMutation] =
+    useSaveGenericMedicationActiveIngredientMutation();
+  // Fetch active Ingredient  list response
+  const { data: activeIngredientListResponseData } = useGetActiveIngredientQuery(
+    activeIngredientsListRequest
+  );
+  // save Link Brand Medication
+  const [saveLinkBrandMedication] = useSaveLinkedBrandMedicationMutation();
+  // Fetch generic Medication Active Ingredien  list response
   const { data: genericMedicationActiveIngredientListResponseData } =
     useGetGenericMedicationActiveIngredientQuery(listRequest);
 
+  // Effects
+  // to display genericName, dosageForm, manufacturer, roaLvalue, activeIngredients on add substitutes
   useEffect(() => {
-    console.log("in effectt");
+    setModifiedMedicationList(
+      (genericMedicationListResponse?.object ?? []).map(item => ({
+        ...item,
+        customLabel: [
+          [
+            item.genericName,
+            item.dosageFormLvalue?.lovDisplayVale,
+            item.manufacturerLvalue?.lovDisplayVale,
+            item.roaLvalue?.lovDisplayVale
+          ]
+            .filter(Boolean)
+            .join(', '),
+          item.activeIngredients
+        ]
+          .filter(Boolean)
+          .join('   ')
+      }))
+    );
+  }, [genericMedicationListResponse]);
+  // update list when genericMedication is changed
+  useEffect(() => {
     setListRequest({
       ...initialListRequest,
       pageSize: 100,
@@ -159,6 +147,7 @@ const AddEditBrandMedication = ({
       ]
     });
   }, [genericMedication]);
+  // update list when save Generic Medication Active Ingredient
   useEffect(() => {
     if (saveGenericMedicationActiveIngredientMutation) {
       setListRequest({
@@ -173,67 +162,83 @@ const AddEditBrandMedication = ({
     }
   }, [saveGenericMedicationActiveIngredientMutation]);
 
+  // class name for selected row in substitutes table
+  const isSelectedBrand = rowData => {
+    if (rowData && brand && rowData.key === brand.key) {
+      return 'selected-row';
+    } else return '';
+  };
+  // class name for selected row in active ingredients table
+  const isSelectedGenericActive = rowData => {
+    if (rowData && rowData.key === genericActive.key) {
+      return 'selected-row';
+    } else return '';
+  };
+  // handle save Active Ingredient
   const saveActiveIngredient = () => {
     saveGenericMedicationActiveIngredient({
       ...genericActive,
       genericMedicationKey: genericMedication.key,
       createdBy: 'Administrator'
-    }).unwrap();
-    dispatch(notify('A.I Saved Successfully'));
+    })
+      .unwrap()
+      .then(() => {
+        dispatch(notify({ msg: 'The A.I has been saved successfully', sev: 'success' }));
+      })
+      .catch(() => {
+        dispatch(notify({ msg: 'Failed to save this A.I', sev: 'error' }));
+      });
   };
-
-  //    const handleSave = async () => {
-  //       try {
-  //     //   setEnableAddActive(true);
-  //     //   setEditing(true);
-  //       const response = await saveGenericMedication({ genericMedication}).unwrap();
-  //         dispatch(notify('Brand Medication Saved Successfully'));
-  //         setGenericMedication(response);
-  //         // setPreKey(response?.key);
-  //       } catch (error) {
-  //         console.error("Error saving Brand Medication:", error);
-  //     }
-  //     };
-
+  // handle save substitues
+  const handleSaveSubstitues = () => {
+    setBrand({ ...newApGenericMedication });
+    if (!isEmpty(selectedGeneric.key)) {
+      if (genericMedication?.key !== selectedGeneric?.key) {
+        saveLinkBrandMedication({
+          ...newApBrandMedicationSubstitutes,
+          brandKey: genericMedication.key,
+          alternativeBrandKey: selectedGeneric.key
+        })
+          .then(() => {
+            fetchB();
+            dispatch(
+              notify({ msg: 'The Substitutes has been saved successfully', sev: 'success' })
+            );
+          })
+          .catch(() => {
+            dispatch(notify({ msg: 'Failed to save this Substitutes', sev: 'error' }));
+          });
+      } else {
+        dispatch(notify('This medication is no different '));
+      }
+    } else {
+      dispatch(notify({ msg: 'You don`t select a medication', sev: 'error' }));
+    }
+    setSelectedGeneric(null);
+  };
   // Icons column (Edite, reactive/Deactivate)
+  console.log('modifiedMedicationList-->', modifiedMedicationList);
   const iconsForActions = (rowData: ApGenericMedicationActiveIngredient) => (
-    <div className="container-of-icons-resources">
-      {/* open edit brand when click on this icon */}
-      <MdModeEdit
-        className="icons-resources"
-        title="Edit"
-        size={24}
-        fill="var(--primary-gray)"
-        //   onClick={() => setOpenAddEditPopup(true)}
-      />
+    <div className="container-of-icons-generic-medication">
       {/* deactivate/activate  when click on one of these icon */}
       {!rowData?.deletedAt ? (
         <MdDelete
-          className="icons-resources"
+          className="icons-generic-medication"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
-          // onClick={() => {
-          //   setStateOfDeleteUserModal('deactivate');
-          //   setOpenConfirmDeleteUserModal(true);
-          // }}
         />
       ) : (
         <FaUndo
-          className="icons-resources"
+          className="icons-generic-medication"
           title="Activate"
           size={20}
           fill="var(--primary-gray)"
-          // onClick={() => {
-          //   setStateOfDeleteUserModal('reactivate');
-          //   setOpenConfirmDeleteUserModal(true);
-          // }}
         />
       )}
     </div>
   );
-
-  //Table columns
+  //Table Active Ingredient columns
   const tableActiveIngredientColumns = [
     {
       key: 'activeIngredientName',
@@ -282,7 +287,7 @@ const AddEditBrandMedication = ({
     }
   ];
 
-  //Table columns
+  //Table Substitutes columns
   const tableSubstitutesColumns = [
     {
       key: 'code',
@@ -319,20 +324,20 @@ const AddEditBrandMedication = ({
       key: 'roaList',
       title: <Translate>ROA</Translate>,
       flexGrow: 4,
-      // render: rowData =>
-      //   rowData.roaList?.map((item, index) => {
-      //     const value = conjureValueBasedOnKeyFromList(
-      //       medRoutLovQueryResponse?.object ?? [],
-      //       item,
-      //       'lovDisplayVale'
-      //     );
-      //     return (
-      //       <span key={index}>
-      //         {value}
-      //         {index < rowData.roaList.length - 1 && ', '}
-      //       </span>
-      //     );
-      //   })
+      render: rowData =>
+        rowData.roaList?.map((item, index) => {
+          const value = conjureValueBasedOnKeyFromList(
+            medRoutLovQueryResponse?.object ?? [],
+            item,
+            'lovDisplayVale'
+          );
+          return (
+            <span key={index}>
+              {value}
+              {index < rowData.roaList.length - 1 && ', '}
+            </span>
+          );
+        })
     },
     {
       key: 'expiresAfterOpening',
@@ -359,119 +364,103 @@ const AddEditBrandMedication = ({
       render: rowData => iconsForActions(rowData)
     }
   ];
-
-  // Modal content
+  // Main modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
         return (
           <Form fluid>
-            <div className="container-of-two-fields-lov">
-              <div className="container-of-my-input-lov">
-                <MyInput
-                  width="100%"
-                  fieldName="code"
-                  record={genericMedication}
-                  setRecord={setGenericMedication}
-                />
-              </div>
-              <div className="container-of-my-input-lov">
-                <MyInput
-                  width="100%"
-                  fieldLabel="Brand Name"
-                  fieldName="genericName"
-                  record={genericMedication}
-                  setRecord={setGenericMedication}
-                />
-              </div>
+            <div className="container-of-two-fields-generic-medication">
+              <MyInput
+                width={250}
+                fieldName="code"
+                record={genericMedication}
+                setRecord={setGenericMedication}
+              />
+              <MyInput
+                width={250}
+                fieldLabel="Brand Name"
+                fieldName="genericName"
+                record={genericMedication}
+                setRecord={setGenericMedication}
+              />
             </div>
             <br />
-            <div className="container-of-two-fields-lov">
-              <div className="container-of-my-input-lov">
-                <MyInput
-                  width="100%"
-                  fieldName="manufacturerLkey"
-                  fieldType="select"
-                  selectData={GenericMedicationLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  record={genericMedication}
-                  setRecord={setGenericMedication}
-                />
-              </div>
-              <div className="container-of-my-input-lov">
-                <MyInput
-                  width="100%"
-                  fieldName="dosageFormLkey"
-                  fieldType="select"
-                  selectData={doseageFormLovQueryResponse?.object ?? []}
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  record={genericMedication}
-                  setRecord={setGenericMedication}
-                />
-              </div>
+            <div className="container-of-two-fields-generic-medication">
+              <MyInput
+                width={250}
+                fieldName="manufacturerLkey"
+                fieldType="select"
+                selectData={GenericMedicationLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={genericMedication}
+                setRecord={setGenericMedication}
+                menuMaxHeight={250}
+              />
+              <MyInput
+                width={250}
+                fieldName="dosageFormLkey"
+                fieldType="select"
+                selectData={doseageFormLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={genericMedication}
+                setRecord={setGenericMedication}
+                menuMaxHeight={250}
+              />
             </div>
             <br />
-            <div className="container-of-two-fields-lov">
-              <div className="container-of-my-input-lov">
-                <MyInput
-                  width="100%"
-                  fieldLabel="Rout"
-                  selectData={medRoutLovQueryResponse?.object ?? []}
-                  fieldType="multyPicker"
-                  selectDataLabel="lovDisplayVale"
-                  selectDataValue="key"
-                  fieldName="roaList"
-                  record={genericMedication}
-                  setRecord={setGenericMedication}
-                />
-              </div>
-              <div className="container-of-my-input-lov">
-                <MyInput
-                  width="100%"
-                  fieldName="marketingAuthorizationHolder"
-                  record={genericMedication}
-                  setRecord={setGenericMedication}
-                />
-              </div>
+            <div className="container-of-two-fields-generic-medication">
+              <MyInput
+                width={250}
+                fieldLabel="Rout"
+                selectData={medRoutLovQueryResponse?.object ?? []}
+                fieldType="checkPicker"
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                fieldName="roaList"
+                record={genericMedication}
+                setRecord={setGenericMedication}
+              />
+              <MyInput
+                width={250}
+                fieldName="marketingAuthorizationHolder"
+                record={genericMedication}
+                setRecord={setGenericMedication}
+              />
             </div>
             <br />
             <MyInput
-              width="100%"
+              width={520}
               fieldName="usageInstructions"
               fieldType="textarea"
               record={genericMedication}
               setRecord={setGenericMedication}
             />
             <MyInput
-              width="100%"
+              width={520}
               fieldName="storageRequirements"
               fieldType="textarea"
               record={genericMedication}
               setRecord={setGenericMedication}
             />
-            <div className="container-of-two-fields-lov">
-              <div className="container-of-my-input-lov">
+            <div className="container-of-two-fields-generic-medication">
+              <MyInput
+                width={250}
+                fieldName="expiresAfterOpening"
+                fieldType="checkbox"
+                record={genericMedication}
+                setRecord={setGenericMedication}
+              />
+              {genericMedication?.expiresAfterOpening && (
                 <MyInput
-                  width="100%"
-                  fieldName="expiresAfterOpening"
-                  fieldType="checkbox"
+                  width={250}
+                  fieldName="expiresAfterOpeningValue"
+                  fieldType="text"
                   record={genericMedication}
                   setRecord={setGenericMedication}
                 />
-              </div>
-
-              {genericMedication?.expiresAfterOpening && (
-                <div className="container-of-my-input-lov">
-                  <MyInput
-                    width="100%"
-                    fieldName="expiresAfterOpeningValue"
-                    fieldType="text"
-                    record={genericMedication}
-                    setRecord={setGenericMedication}
-                  />
-                </div>
               )}
             </div>
             <br />
@@ -486,12 +475,15 @@ const AddEditBrandMedication = ({
       case 1:
         return (
           <Form>
-            <div className="container-of-add-new-button-resources">
+            <div className="container-of-add-new-button-generic-medication">
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
                 onClick={() => {
                   setOpenAddEditActiveIngredientsPopup(true);
+                  setGenericActive({
+                    ...newApGenericMedicationActiveIngredient
+                  });
                 }}
                 width="109px"
               >
@@ -501,66 +493,43 @@ const AddEditBrandMedication = ({
             <MyTable
               height={450}
               data={genericMedicationActiveIngredientListResponseData?.object}
-              //   loading={isFetching}
               columns={tableActiveIngredientColumns}
-              //   rowClassName={isSelected}
-              //   filters={filters()}
-              //   onRowClick={rowData => {
-              //     setGenericMedication(rowData);
-              //   }}
-              //   sortColumn={listRequest.sortBy}
-              //   sortType={listRequest.sortType}
-              //   onSortChange={(sortBy, sortType) => {
-              //     if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-              //   }}
-              //   page={pageIndex}
-              //   rowsPerPage={rowsPerPage}
-              //   totalCount={totalCount}
-              //   onPageChange={handlePageChange}
-              //   onRowsPerPageChange={handleRowsPerPageChange}
+              rowClassName={isSelectedGenericActive}
+              onRowClick={rowData => {
+                setGenericActive(rowData);
+              }}
             />
           </Form>
         );
       case 2:
         return (
-          <Form>
-            <MyButton
-              prefixIcon={() => <AddOutlineIcon />}
-              color="var(--deep-blue)"
-              onClick={() => {
-                setOpenAddConfirm(true);
-              }}
-              width="109px"
-            >
-              Add New
-            </MyButton>
-
-            <MyInput
-              width={350}
-              fieldLabel="Medication Name"
-              selectData={modifiedMedicationList}
-              fieldType="select"
-              selectDataLabel="customLabel"
-              selectDataValue="key"
-              fieldName="genericName"
-              record={genericMedication}
-              setRecord={setGenericMedication}
-              menuMaxHeight={250}
-            />
-
-            {/* <MyInput
-              //  width="100%"
-              width={250}
-              fieldLabel="Medication Name"
-              selectData={genericMedicationListResponse?.object ?? []}
-              fieldType="select"
-              selectDataLabel="genericName"
-              selectDataValue="key"
-              fieldName="genericName"
-              record={genericMedication}
-              setRecord={setGenericMedication}
-              menuMaxHeight={250}
-            /> */}
+          <div>
+            <div className="container-of-header-brand-medication">
+              <Form layout="inline" fluid>
+                <MyInput
+                  showLabel={false}
+                  width={250}
+                  fieldLabel="Medication Name"
+                  selectData={modifiedMedicationList}
+                  fieldType="select"
+                  selectDataLabel="customLabel"
+                  selectDataValue="key"
+                  fieldName="key"
+                  record={selectedGeneric}
+                  setRecord={setSelectedGeneric}
+                  menuMaxHeight={250}
+                  placeholder="select Medication Name"
+                />
+              </Form>
+              <MyButton
+                prefixIcon={() => <AddOutlineIcon />}
+                color="var(--deep-blue)"
+                onClick={handleSaveSubstitues}
+                width="100px"
+              >
+                Add New
+              </MyButton>
+            </div>
             <MyTable
               height={450}
               data={lisOfLinkedBrand?.object ?? []}
@@ -570,32 +539,12 @@ const AddEditBrandMedication = ({
                 setBrand(rowData);
               }}
               rowClassName={isSelectedBrand}
-              //   filters={filters()}
-
-              //   sortColumn={listRequest.sortBy}
-              //   sortType={listRequest.sortType}
-              //   onSortChange={(sortBy, sortType) => {
-              //     if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-              //   }}
-              //   page={pageIndex}
-              //   rowsPerPage={rowsPerPage}
-              //   totalCount={totalCount}
-              //   onPageChange={handlePageChange}
-              //   onRowsPerPageChange={handleRowsPerPageChange}
             />
-            <DeletionConfirmationModal
-              open={openAddConfirm}
-              setOpen={setOpenAddConfirm}
-              itemToDelete="Sub"
-              // actionButtonFunction={stateOfDeleteUserModal == 'deactivate' ? handleDeactiveResource : handleReactiveResource}
-              actionType={'Add'}
-            />
-          </Form>
+          </div>
         );
     }
   };
-
-  // Modal content
+  // child modal content
   const conjureFormChildContent = (stepNumber = 0) => {
     switch (stepNumber) {
       case 0:
@@ -608,12 +557,8 @@ const AddEditBrandMedication = ({
               selectData={activeIngredientListResponseData?.object ?? []}
               fieldName="activeIngredientKey"
               fieldType="select"
-              // labelKey="name"
-              // valueKey="key"
               record={genericActive}
               setRecord={setGenericActive}
-              //   showLabel={true}
-              //   placeholder="Select Filter"
               searchable={false}
               menuMaxHeight={200}
               width={350}
@@ -648,12 +593,11 @@ const AddEditBrandMedication = ({
       showChild={openAddEditActiveIngredientsPopup}
       setShowChild={setOpenAddEditActiveIngredientsPopup}
       title={genericMedication?.key ? 'Edit Brand Medication' : 'New Brand Medication'}
-      // back to add edit
       childTitle="New Active Ingredients"
-      //   position="right"
       mainContent={conjureFormContent}
       childContent={conjureFormChildContent}
       actionButtonLabel={genericMedication?.key ? 'Save' : 'Create'}
+      actionButtonFunction={() => setOpen(false)}
       actionChildButtonFunction={saveActiveIngredient}
       mainStep={[
         {
@@ -665,16 +609,12 @@ const AddEditBrandMedication = ({
         {
           title: 'Active Ingredient',
           icon: <GiMedicines />
-          //   disabledNext: !openNextDocument,
-          //   footer: <MyButton onClick={handleSave}>Save</MyButton>
         },
         {
           title: 'Substitute',
           icon: <HiOutlineSwitchHorizontal />
-          //   footer: <MyButton onClick={handleSave}>Save</MyButton>
         }
       ]}
-      //   size={width > 600 ? '36vw' : '70vw'}
       mainSize="sm"
     />
   );

@@ -1,7 +1,7 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Form, Panel} from 'rsuite';
+import { Form, Panel } from 'rsuite';
 import { MdModeEdit } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
@@ -10,49 +10,49 @@ import {
   useGetGenericMedicationQuery,
   useSaveGenericMedicationMutation
 } from '@/services/medicationsSetupService';
-import {Carousel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { ApGenericMedication } from '@/types/model-types';
 import { newApGenericMedication } from '@/types/model-types-constructor';
+import './styles.less';
 import {
   addFilterToListRequest,
   conjureValueBasedOnKeyFromList,
   fromCamelCaseToDBName
 } from '@/utils';
-import NewEditGenericMedication from './NewEditGenericMedication';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyTable from '@/components/MyTable';
 import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
-import AddEditBrandMedication from './AddEditBrandMEdication';
+import AddEditBrandMedication from './AddEditBrandMedication';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 const GenericMedications = () => {
   const dispatch = useAppDispatch();
-  const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
   const [genericMedication, setGenericMedication] = useState<ApGenericMedication>({
     ...newApGenericMedication
   });
-  const [openConfirmDeleteGenericMedicationModal, setOpenConfirmDeleteGenericMedicationModal] = useState<boolean>(false);
-    const [stateOfDeleteGenericMedicationModal, setStateOfDeleteGenericMedicationModal] = useState<string>('delete');
+  const [openConfirmDeleteGenericMedicationModal, setOpenConfirmDeleteGenericMedicationModal] =
+    useState<boolean>(false);
+  const [stateOfDeleteGenericMedicationModal, setStateOfDeleteGenericMedicationModal] =
+    useState<string>('delete');
   const [openAddEditPopup, setOpenAddEditPopup] = useState<boolean>(false);
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   // Fetch generic Medication list response
-  const {data: genericMedicationListResponse, refetch: genericMedicationRefetch, isFetching} = useGetGenericMedicationQuery(listRequest);
+  const { data: genericMedicationListResponse, isFetching } =
+    useGetGenericMedicationQuery(listRequest);
   // Remove Generic Medication
-  const [removeGenericMedication, removeGenericMedicationMutation] = useRemoveGenericMedicationMutation();
+  const [removeGenericMedication, removeGenericMedicationMutation] =
+    useRemoveGenericMedicationMutation();
   // Save Generic Medication
   const [saveGenericMedication, saveGenericMedicationMutation] = useSaveGenericMedicationMutation();
-   // Fetch medRoutLov  list response
+  // Fetch medRoutLov  list response
   const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
-   // Header page setUp
+  // Header page setUp
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className="title-generic-medication">
       <h5>Brand Medications List</h5>
     </div>
   );
@@ -89,7 +89,7 @@ const GenericMedications = () => {
       });
     }
   }, [recordOfFilter]);
-  // update list after remove 
+  // update list after remove
   useEffect(() => {
     if (removeGenericMedicationMutation.isSuccess) {
       setListRequest({
@@ -100,10 +100,6 @@ const GenericMedications = () => {
       setGenericMedication({ ...newApGenericMedication });
     }
   }, [removeGenericMedicationMutation]);
-  // baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaack
-  useEffect(() => {
-    genericMedicationRefetch();
-  }, [carouselActiveIndex]);
 
   useEffect(() => {
     return () => {
@@ -113,11 +109,10 @@ const GenericMedications = () => {
   }, [location.pathname, dispatch]);
   // update list after new/edit Generic Medication
   useEffect(() => {
-      if (saveGenericMedicationMutation.data) {
-        setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-      }
-    }, [saveGenericMedicationMutation.data]);
-
+    if (saveGenericMedicationMutation.data) {
+      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+    }
+  }, [saveGenericMedicationMutation.data]);
 
   // Handle page change in navigation
   const handlePageChange = (_: unknown, newPage: number) => {
@@ -131,38 +126,48 @@ const GenericMedications = () => {
       pageNumber: 1
     });
   };
-
+  // handle click on Add New button (open add/edit pop up)
   const handleNew = () => {
-    console.log("newnewnew22");
     setGenericMedication({ ...newApGenericMedication });
     setOpenAddEditPopup(true);
   };
-
- 
-
+  // deactivate/reactivate generic medication
   const deactivateReactivateMedication = () => {
     setOpenConfirmDeleteGenericMedicationModal(false);
     if (genericMedication.key) {
       removeGenericMedication({
         ...genericMedication
-      }).unwrap();
-      dispatch(notify('Brand Medication  DeactivateActivate Successfully'));
+      })
+        .unwrap()
+        .then(() => {
+          dispatch(
+            notify({
+              msg: 'The Brand Medication was successfully ' + stateOfDeleteGenericMedicationModal,
+              sev: 'success'
+            })
+          );
+        })
+        .catch(() => {
+          dispatch(
+            notify({
+              msg: 'Failed to ' + stateOfDeleteGenericMedicationModal + ' this Brand Medication',
+              sev: 'error'
+            })
+          );
+        });
     }
   };
-
+  // handle save generic medication
   const handleSave = async () => {
-        try {
-      //   setEnableAddActive(true);
-      //   setEditing(true);
-        const response = await saveGenericMedication({ genericMedication}).unwrap();
-          dispatch(notify('Brand Medication Saved Successfully'));
-          setGenericMedication(response);
-          // setPreKey(response?.key);
-        } catch (error) {
-          console.error("Error saving Brand Medication:", error);
-      }
-      };
-
+    try {
+      const response = await saveGenericMedication({ genericMedication }).unwrap();
+      dispatch(notify({ msg: 'The Brand Medication has been saved successfully', sev: 'success' }));
+      setGenericMedication(response);
+    } catch (error) {
+      dispatch(notify({ msg: 'Failed to save this Brand Medication', sev: 'error' }));
+    }
+  };
+  // handle filter
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -177,17 +182,15 @@ const GenericMedications = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-
+  // class name for selected row
   const isSelected = rowData => {
     if (rowData && genericMedication && rowData.key === genericMedication.key) {
       return 'selected-row';
     } else return '';
   };
-
-  
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-resources">
+    <Form layout="inline" fluid className="container-of-filter-fields-generic-medication">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -218,10 +221,10 @@ const GenericMedications = () => {
   );
   // Icons column (Edite, reactive/Deactivate)
   const iconsForActions = (rowData: ApGenericMedication) => (
-    <div className="container-of-icons-resources">
+    <div className="container-of-icons-generic-medication">
       {/* open edit brand when click on this icon */}
       <MdModeEdit
-        className="icons-resources"
+        className="icons-generic-medication"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -230,7 +233,7 @@ const GenericMedications = () => {
       {/* deactivate/activate  when click on one of these icon */}
       {!rowData?.deletedAt ? (
         <MdDelete
-          className="icons-resources"
+          className="icons-generic-medication"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -241,7 +244,7 @@ const GenericMedications = () => {
         />
       ) : (
         <FaUndo
-          className="icons-resources"
+          className="icons-generic-medication"
           title="Activate"
           size={20}
           fill="var(--primary-gray)"
@@ -253,8 +256,7 @@ const GenericMedications = () => {
       )}
     </div>
   );
-
-  //Table columns
+  // Table columns
   const tableColumns = [
     {
       key: 'code',
@@ -331,63 +333,54 @@ const GenericMedications = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
-
   return (
-    <Carousel
-      style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
-      autoplay={false}
-      activeIndex={carouselActiveIndex}
-    >
-      <Panel>
-
-          <div className="container-of-add-new-button-resources">
-                  <MyButton
-                    prefixIcon={() => <AddOutlineIcon />}
-                    color="var(--deep-blue)"
-                    onClick={handleNew}
-                    width="109px"
-                  >
-                    Add New
-                  </MyButton>
-                </div>
-        <MyTable
-          height={450}
-          data={genericMedicationListResponse?.object ?? []}
-          loading={isFetching}
-          columns={tableColumns}
-          rowClassName={isSelected}
-          filters={filters()}
-          onRowClick={rowData => {
-            setGenericMedication(rowData);
-          }}
-          sortColumn={listRequest.sortBy}
-          sortType={listRequest.sortType}
-          onSortChange={(sortBy, sortType) => {
-            if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
-          }}
-          page={pageIndex}
-          rowsPerPage={rowsPerPage}
-          totalCount={totalCount}
-          onPageChange={handlePageChange}
-          onRowsPerPageChange={handleRowsPerPageChange}
-        />
-              <AddEditBrandMedication
-         open={openAddEditPopup}
-         setOpen={setOpenAddEditPopup}
-         genericMedication={genericMedication}
-         setGenericMedication={setGenericMedication}
-         handleSave={handleSave}
-        />
-      </Panel>
-      
-       <DeletionConfirmationModal
-              open={openConfirmDeleteGenericMedicationModal}
-              setOpen={setOpenConfirmDeleteGenericMedicationModal}
-              itemToDelete="Resource"
-              actionButtonFunction={deactivateReactivateMedication}
-              actionType={stateOfDeleteGenericMedicationModal}
-            />
-    </Carousel>
+    <Panel>
+      <div className="container-of-add-new-button-generic-medication">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleNew}
+          width="109px"
+        >
+          Add New
+        </MyButton>
+      </div>
+      <MyTable
+        height={450}
+        data={genericMedicationListResponse?.object ?? []}
+        loading={isFetching}
+        columns={tableColumns}
+        rowClassName={isSelected}
+        filters={filters()}
+        onRowClick={rowData => {
+          setGenericMedication(rowData);
+        }}
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortChange={(sortBy, sortType) => {
+          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+        }}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
+      <AddEditBrandMedication
+        open={openAddEditPopup}
+        setOpen={setOpenAddEditPopup}
+        genericMedication={genericMedication}
+        setGenericMedication={setGenericMedication}
+        handleSave={handleSave}
+      />
+      <DeletionConfirmationModal
+        open={openConfirmDeleteGenericMedicationModal}
+        setOpen={setOpenConfirmDeleteGenericMedicationModal}
+        itemToDelete="Resource"
+        actionButtonFunction={deactivateReactivateMedication}
+        actionType={stateOfDeleteGenericMedicationModal}
+      />
+    </Panel>
   );
 };
 
