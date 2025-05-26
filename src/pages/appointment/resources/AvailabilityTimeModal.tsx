@@ -253,6 +253,7 @@ const AvailabilityTimeModal = ({
   // handle click on Add New button
   const handleNew = () => {
     setOpenChildModal(true);
+    setResourcesAvailabilityTime({...newApResourcesAvailabilityTime});
   };
   // handle save availability time
   const handleSave = () => {
