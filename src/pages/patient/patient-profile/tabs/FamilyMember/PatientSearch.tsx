@@ -11,7 +11,7 @@ import { fromCamelCaseToDBName } from '@/utils';
 import { Box, Skeleton } from '@mui/material';
 const PatientSearch = ({ selectedPatientRelation, setSelectedPatientRelation, searchResultVisible, setSearchResultVisible, patientSearchTarget, setPatientSearchTarget }) => {
     const [searchKeyword, setSearchKeyword] = useState('');
-    const [selectedCriterion, setSelectedCriterion] = useState('');
+    const [selectedCriterion, setSelectedCriterion] = useState('fullName');
     // Define the available search criteria options
     const searchCriteriaOptions = [
         { label: 'MRN', value: 'patientMrn' },

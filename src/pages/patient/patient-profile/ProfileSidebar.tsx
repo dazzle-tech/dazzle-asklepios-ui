@@ -35,8 +35,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   setLocalPatient
 }) => {
   const [open, setOpen] = useState(false);
-  const [labelTitle, setLabelTitle] = useState(' ');
-  const [selectedCriterion, setSelectedCriterion] = useState('');
+  const [labelTitle, setLabelTitle] = useState('Full Name');
+  const [selectedCriterion, setSelectedCriterion] = useState('fullName');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchResultVisible, setSearchResultVisible] = useState(false);
   const [patientSearchTarget, setPatientSearchTarget] = useState('primary');
