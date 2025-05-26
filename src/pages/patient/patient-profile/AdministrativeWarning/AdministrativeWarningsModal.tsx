@@ -23,18 +23,16 @@ import './styles.less'
 import ChildModal from '@/components/ChildModal';
 import MyButton from '@/components/MyButton/MyButton';
 interface AdministrativeWarningsModalProps {
-  open: boolean;
-  onClose: () => void;
   localPatient: ApPatient;
   validationResult: any;
 }
 const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = ({
-  open,
-  onClose,
   localPatient,
   validationResult
 }) => {
   const dispatch = useAppDispatch();
+  const [open, setOpen] = useState(false);
+
   const [administrativeWarningDetails, setAdministrativeWarningDetails] = useState({ Details: '' });
   const [patientAdministrativeWarnings, setPatientAdministrativeWarnings] = useState<ApPatientAdministrativeWarnings>({ ...newApPatientAdministrativeWarnings });
   const [openChildModal, setOpenChildModal] = useState(false);
@@ -152,7 +150,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         });
         setAdministrativeWarningDetails({ Details: '' });
         warningsRefetch();
-         dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+        dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
         setPatientAdministrativeWarnings({ ...newApPatientAdministrativeWarnings });
         setOpenChildModal(false);
       });
@@ -172,7 +170,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
         dispatch(notify('Resolved Successfully'));
       });
   };
-
+  console.log("warning-->", warnings);
   // Handle undo resolve Patient warning 
   const handleUpdateAdministrativeWarningsUnDoResolved = (warning) => {
     updatePatientAdministrativeWarnings({
@@ -196,7 +194,7 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
       .unwrap()
       .then(() => {
         warningsRefetch();
-        dispatch(notify({msg:'Deleted Successfully', sev: 'success'}));
+        dispatch(notify({ msg: 'Deleted Successfully', sev: 'success' }));
       });
   };
   // Main Modal Content 
@@ -344,21 +342,29 @@ const AdministrativeWarningsModal: React.FC<AdministrativeWarningsModalProps> = 
   }, [localPatient.key]);
 
   return (
-    <ChildModal
-      open={open}
-      setOpen={onClose}
-      showChild={openChildModal}
-      setShowChild={setOpenChildModal}
-      title="Administrative Warnings"
-      mainContent={mainContent}
-      childTitle="Add New"
-      childContent={childContent}
-      childStep={[{ title: "Administrative Warning", icon: <FontAwesomeIcon icon={faTriangleExclamation} /> }]}
-      mainSize="sm"
-      childSize="xs"
-      hideActionBtn={true}
-      actionChildButtonFunction={handleSavePatientAdministrativeWarnings}
-    />
+    <>
+      <MyButton
+        appearance="ghost"
+        disabled={!localPatient.key}
+        onClick={() => setOpen(true)}
+        color={warnings?.extraNumeric > 0 ? "orange" : "blue"}
+      >Administrative Warnings</MyButton>
+      <ChildModal
+        open={open}
+        setOpen={setOpen}
+        showChild={openChildModal}
+        setShowChild={setOpenChildModal}
+        title="Administrative Warnings"
+        mainContent={mainContent}
+        childTitle="Add New"
+        childContent={childContent}
+        childStep={[{ title: "Administrative Warning", icon: <FontAwesomeIcon icon={faTriangleExclamation} /> }]}
+        mainSize="sm"
+        childSize="xs"
+        hideActionBtn={true}
+        actionChildButtonFunction={handleSavePatientAdministrativeWarnings}
+      />
+    </>
   );
 };
 

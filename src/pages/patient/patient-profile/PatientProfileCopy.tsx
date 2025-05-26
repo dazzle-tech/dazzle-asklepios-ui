@@ -30,7 +30,6 @@ const PatientProfile = () => {
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [validationResult, setValidationResult] = useState({});
   const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
-  const [administrativeWarningsModalOpen, setAdministrativeWarningsModalOpen] = useState(false);
   const [visitHistoryModel, setVisitHistoryModel] = useState(false);
   const location = useLocation();
   const propsData = location.state;
@@ -50,7 +49,7 @@ const PatientProfile = () => {
     savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false })
       .unwrap()
       .then(() => {
-           dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
+        dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
       });
   };
 
@@ -127,7 +126,7 @@ const PatientProfile = () => {
             handleClear={handleClear}
             setVisitHistoryModel={setVisitHistoryModel}
             setQuickAppointmentModel={setQuickAppointmentModel}
-            setAdministrativeWarningsModalOpen={setAdministrativeWarningsModalOpen} // Will be implemented in child component
+            validationResult={validationResult}
           />
 
           <ProfileTabs
@@ -161,15 +160,6 @@ const PatientProfile = () => {
           localPatient={localPatient}
           setVisitHistoryModel={setVisitHistoryModel}
           setQuickAppointmentModel={setQuickAppointmentModel}
-        />
-      )}
-
-      {administrativeWarningsModalOpen && (
-        <AdministrativeWarningsModal
-          open={administrativeWarningsModalOpen}
-          onClose={() => setAdministrativeWarningsModalOpen(false)}
-          localPatient={localPatient}
-          validationResult={validationResult}
         />
       )}
     </>
