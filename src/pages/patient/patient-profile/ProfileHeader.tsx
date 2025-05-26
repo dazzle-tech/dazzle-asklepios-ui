@@ -5,17 +5,18 @@ import { faBroom, faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { calculateAgeFormat } from '@/utils';
 import { useFetchAttachmentQuery, useUploadMutation } from '@/services/attachmentService';
-import { AvatarGroup, Avatar, Whisper, Tooltip, Form, Stack,} from 'rsuite';
+import { AvatarGroup, Avatar, Whisper, Tooltip, Form, Stack, } from 'rsuite';
 import { Icon } from '@rsuite/icons';
 import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
 import MyButton from '@/components/MyButton/MyButton';
+import AdministrativeWarningsModal from './AdministrativeWarning';
 interface ProfileHeaderProps {
   localPatient: ApPatient;
   handleSave: () => void;
   handleClear: () => void;
   setVisitHistoryModel: (value: boolean) => void;
-  setAdministrativeWarningsModalOpen: (value: boolean) => void;
+  validationResult: any
   setQuickAppointmentModel: (value: boolean) => void;
 }
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -23,9 +24,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   handleSave,
   handleClear,
   setVisitHistoryModel,
-  setAdministrativeWarningsModalOpen,
-  setQuickAppointmentModel
-}) => {
+  setQuickAppointmentModel,
+  validationResult }) => {
   const authSlice = useAppSelector(state => state.auth);
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
@@ -205,11 +205,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               disabled={!localPatient.key}
               onClick={handleNewVisit}
             >Quick Appointment</MyButton>
-            <MyButton
-              appearance="ghost"
-              disabled={!localPatient.key}
-              onClick={() => setAdministrativeWarningsModalOpen(true)}
-            >Administrative Warnings</MyButton>
+            <AdministrativeWarningsModal
+              localPatient={localPatient}
+              validationResult={validationResult}
+            />
           </Form>
         </Form>
       </Stack.Item>
