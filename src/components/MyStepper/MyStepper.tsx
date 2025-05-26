@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect,useState } from "react";
 import Check from '@mui/icons-material/Check';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import {
@@ -28,7 +28,47 @@ const MyStepper: React.FC<MyStepperProps> = ({
   stepsList,
   orientation = 'horizontal',
 }) => {
-    
+    const [width, setWidth] = useState(40);
+    const [height, setHeight] = useState(40);
+    const [connectorLength, setConnectorLength] = useState(24); 
+      const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+      console.log("Window width on load in stepper:", windowWidth);
+useEffect(() => {
+  const handleResize = () => {
+    const w = window.innerWidth;
+    setWindowWidth(w);
+      if (w <= 400) {
+      setWidth(24);
+      setHeight(24);
+    }
+      if (w <= 500) {
+      setWidth(26);
+      setHeight(26);
+    }
+     if (w <= 550) {
+      setWidth(28);
+      setHeight(28);
+    }
+    if (w <= 620) {
+      setWidth(31);
+      setHeight(31);
+    }
+    if (w <= 700) {
+      setWidth(34);
+      setHeight(34);
+    } else if (w <= 800) {
+      setWidth(37);
+      setHeight(37);
+    } else {
+      setWidth(40);
+      setHeight(40);
+    }
+  };
+
+  handleResize(); 
+  window.addEventListener("resize", handleResize);
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
     function CustomStepIcon(props) {
         const { active, completed, icon, error, iconsMap } = props;
     
@@ -54,8 +94,8 @@ const MyStepper: React.FC<MyStepperProps> = ({
                 <Box
                 
                     sx={{
-                        width: 40,
-                        height: 40,
+                        width:width,
+                        height:height,
                         borderRadius: '50%',
                         backgroundColor,
                         color: iconColor,
@@ -87,17 +127,19 @@ const MyStepper: React.FC<MyStepperProps> = ({
           borderColor: '#D9D9D9',
         },
       }));
+
     const QontoConnector = styled(StepConnector)(({ theme }) => ({
         [`&.${stepConnectorClasses.alternativeLabel}`]: {
           top: 20,
-          left: 'calc(-50% + 30px)',
-          right: 'calc(50% + 30px)',
+          left: 'calc(-50% + 25px)',
+          right: 'calc(50% + 25px)',
         },
        
         [`& .${stepConnectorClasses.line}`]: {
           borderColor:'#D9D9D9',
           borderTopWidth:3,
           borderRadius: 1,
+          height: 10,
           ...theme.applyStyles('dark', {
             borderColor: '#D9D9D9',
           }),

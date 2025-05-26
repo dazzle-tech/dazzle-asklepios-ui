@@ -69,6 +69,7 @@ const Lab = () => {
   const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
   const [result, setResult] = useState({ ...newApDiagnosticOrderTestsResult, resultLkey: '' })
   const [listOrdersResponse, setListOrdersResponse] = useState<ListRequest>({
+    pageSize:1000,
     ...initialListRequest
 
   });
@@ -115,7 +116,20 @@ const Lab = () => {
   useEffect(() => {
     handleManualSearch();
   }, []);
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      console.log("Window width changed:", window.innerWidth);
+    };
 
+    window.addEventListener("resize", handleResize);
+
+   
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
   useEffect(() => {
     setResult({ ...newApDiagnosticOrderTestsResult })
     const updatedFilters = [
