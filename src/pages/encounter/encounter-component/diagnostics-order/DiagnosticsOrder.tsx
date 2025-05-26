@@ -349,10 +349,10 @@ const DiagnosticsOrder = () => {
                         patientKey: patient.key,
                         visitKey: encounter?.key,
                         orderKey: orders?.key,
-                        testKey: item.key,
+                        testKey: item?.key,
                         statusLkey: "164797574082125",
                         processingStatusLkey: '6055029972709625',
-                        orderTypeLkey: test.testTypeLkey
+                        orderTypeLkey: item?.testTypeLkey
                     }).unwrap()
                 )
             );

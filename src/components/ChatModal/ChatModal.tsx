@@ -11,16 +11,16 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
     const [newMessage, setNewMessage] = useState({ message: "" });
     const endOfMessagesRef = useRef(null);
     useEffect(() => {
-    
+
         const timeout = setTimeout(() => {
             if (endOfMessagesRef.current) {
                 endOfMessagesRef.current.scrollIntoView({ behavior: "smooth" });
             }
-        }, 100); 
-    
-        return () => clearTimeout(timeout); 
+        }, 100);
+
+        return () => clearTimeout(timeout);
     }, [list]);
-    
+
     return (
         <div >
             <MyModal
@@ -30,8 +30,8 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
                 open={open}
                 setOpen={setOpen}
                 size="xs"
-                bodyheight="65vh"
-                steps={[{ title: title, icon:<FontAwesomeIcon icon={ faComments }/>}]}
+                bodyheight="60vh"
+                steps={[{ title: title, icon: <FontAwesomeIcon icon={faComments} /> }]}
                 content={
                     <div className="basic-div">
                         <div className="chat-box">
@@ -39,12 +39,12 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
                                 list?.map((msg, index) => (
                                     <div key={index} className="message-box">
                                         <span
-                                           className="message-text"
+                                            className="message-text"
                                         >
                                             {msg[fieldShowName]}
                                         </span>
                                         <div className="message-date">
-                                            { formatDateWithoutSeconds(msg.createdAt)}
+                                            {formatDateWithoutSeconds(msg.createdAt)}
                                         </div>
                                     </div>
                                 ))
@@ -63,12 +63,14 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
                                     record={newMessage}
                                     setRecord={setNewMessage}
                                     width={"95%"}
+                                    enterClick={()=> handleSendMessage(newMessage.message)}
                                 ></MyInput></Form>
 
                             <MyButton appearance="primary" onClick={() => {
                                 handleSendMessage(newMessage.message);
                                 setNewMessage({ message: "" })
                             }
+
                             }>
                                 <FontAwesomeIcon icon={faPaperPlane} />
                             </MyButton>
