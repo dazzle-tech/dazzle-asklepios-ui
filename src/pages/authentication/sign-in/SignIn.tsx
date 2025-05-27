@@ -2,7 +2,7 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { useAppSelector } from '@/hooks';
 import { useLoginMutation } from '@/services/authService';
-import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery, useSaveUserMutation } from '@/services/setupService';
+import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery, useSaveUserMutation,useGetLovDefultByCodeQuery } from '@/services/setupService';
 import { ApUser } from '@/types/model-types';
 import { newApUser } from '@/types/model-types-constructor';
 import { initialListRequest } from '@/types/types';
@@ -32,7 +32,8 @@ const SignIn = () => {
   const [newPasswordConfirm, setNewPasswordConfirm] = useState();
   const [errText, setErrText] = useState(' ');
   const [resetPasswordView, setResetPasswordView] = useState(false);
-
+ const {data:langdefult} = useGetLovDefultByCodeQuery('SYSTEM_LANG');
+ console.log('langdefult', langdefult?.object);
   const [credentials, setCredentials] = useState({
     username: '',
     password: '',
@@ -168,7 +169,7 @@ const SignIn = () => {
                 selectData={langLovQueryResponse?.object ?? []}
                 selectDataLabel="lovDisplayVale"
                 selectDataValue="key"
-                defaultSelectValue={'2934434742906950'}
+                defaultSelectValue={langdefult?.object?.key.toString() ?? ''}
                 record={{}}
                 setRecord={() => { }}
                 placeholder="Select Language"
