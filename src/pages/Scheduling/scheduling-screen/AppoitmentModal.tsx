@@ -339,7 +339,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                         <MyInput
                             width={150}
                             height="40px"
-                            required
+                             
                             vr={validationResult}
                             column
                             fieldLabel="Search Criteria"
@@ -923,7 +923,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                     <MyInput
                                                         height={35}
                                                         disabled={showOnly}
-                                                        required
+                                                         
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -960,7 +960,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper" style={{ flex: 1 }}>
                                                     <MyInput
                                                         height={35}
-                                                        required
+                                                         
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -980,7 +980,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                         <div style={{ flex: 1 }}>
                                                             <MyInput
                                                                 height={35}
-                                                                required
+                                                                 
                                                                 width={"100%"}
                                                                 vr={validationResult}
                                                                 column
@@ -1147,7 +1147,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper" style={{ flex: 1 }}>
                                                     <MyInput
                                                         disabled={showOnly}
-                                                        required
+                                                         
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -1181,7 +1181,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper" style={{ flex: 1 }}>
                                                     <MyInput
                                                         disabled={showOnly}
-                                                        required
+                                                         
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -1210,7 +1210,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper" style={{ flex: 1 }}>
                                                     <MyInput
                                                         disabled={showOnly}
-                                                        required
+                                                         
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -1232,7 +1232,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper" style={{ flex: 9 }}>
                                                     <MyInput
                                                         disabled={showOnly}
-                                                        required
+                                                         
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -1296,7 +1296,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper"  >
                                                     <MyInput
                                                         disabled={!appointment?.isReminder}
-                                                        required
+                                                         
                                                         width={170}
                                                         vr={validationResult}
                                                         column
