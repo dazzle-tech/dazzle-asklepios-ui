@@ -63,7 +63,9 @@ const ChatModal = ({ title, open, setOpen, handleSendMessage, list, fieldShowNam
                                     record={newMessage}
                                     setRecord={setNewMessage}
                                     width={"95%"}
-                                    enterClick={()=> handleSendMessage(newMessage.message)}
+                                    enterClick={()=> {handleSendMessage(newMessage.message);
+                                        setNewMessage({ message: "" })
+                                    }}
                                 ></MyInput></Form>
 
                             <MyButton appearance="primary" onClick={() => {
