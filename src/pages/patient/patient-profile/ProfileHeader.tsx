@@ -11,6 +11,8 @@ import { FaUser } from 'react-icons/fa';
 import { VscUnverified, VscVerified } from 'react-icons/vsc';
 import MyButton from '@/components/MyButton/MyButton';
 import AdministrativeWarningsModal from './AdministrativeWarning';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
 interface ProfileHeaderProps {
   localPatient: ApPatient;
   handleSave: () => void;
@@ -30,6 +32,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [upload, uploadMutation] = useUploadMutation();
+   const dispatch = useAppDispatch();
   // Fetch patient profile image
   const fetchPatientImageResponse = useFetchAttachmentQuery(
     {
@@ -59,11 +62,13 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         refKey: localPatient.key,
         details: `Profile Picture for ${localPatient.fullName}`,
         accessType: '',
-        createdBy: authSlice.user.key
+        createdBy: authSlice.user.key,
+        patientKey:localPatient?.key
       })
         .unwrap()
         .then(response => {
           setPatientImage(response);
+          dispatch(notify({ msg: 'Profile Picture Uploaded Successfully', sev: 'success' }));
         });
     }
   };
