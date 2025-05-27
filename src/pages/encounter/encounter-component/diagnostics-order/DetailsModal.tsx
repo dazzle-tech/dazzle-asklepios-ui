@@ -1,18 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import Translate from '@/components/Translate';
 import './styles.less';
 import MyModal from '@/components/MyModal/MyModal';
-import MyButton from '@/components/MyButton/MyButton';
 import { Col, Form, Row } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
-import { faFile, faVials } from '@fortawesome/free-solid-svg-icons';
+import {  faVials } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     useGetLovValuesByCodeQuery,
 } from '@/services/setupService';
 import {
-    useGetDiagnosticsTestListQuery,
     useGetDepartmentListByTypeQuery
 } from '@/services/setupService';
 import {
@@ -186,7 +182,6 @@ const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveT
         />
 
 
-        <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} attachmentSource={order} attatchmentType={'ORDER_ATTACHMENT'} />
     </>)
 }
 export default DetailsModal

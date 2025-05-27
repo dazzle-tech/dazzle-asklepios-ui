@@ -483,7 +483,8 @@ const Consultation = () => {
         actionType={'add'}
         refecthData={attachmentRefetch}
         attachmentSource={consultationOrders}
-        attatchmentType="CONSULTATION_ORDER" />
+        attatchmentType="CONSULTATION_ORDER"
+        patientKey={patient?.key}/>
     </div>
 
   );

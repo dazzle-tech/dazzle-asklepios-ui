@@ -1260,6 +1260,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                     setIsOpen={setAttachmentsModalOpen}
                                                     attachmentSource={localPatient}
                                                     attatchmentType={'APPOINTMENT_ATTACHMENT'}
+                                                    patientKey={localPatient?.key}
                                                 />
                                             </div>
                                         </div>
