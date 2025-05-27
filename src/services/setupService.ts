@@ -1139,13 +1139,7 @@ export const setupService = createApi({
         body: P,
       }),
     }),
-    getLovDefultByCode: builder.query({
-      query: (code: String) => ({
-        url: `/utility/get-lov-value-default?code=${code}`
-      }),
-      onQueryStarted: onQueryStarted,
    
-    }),
 
 
   })
@@ -1266,5 +1260,5 @@ export const {
   useGetDiagnosticsCodingListQuery,
   useSaveDiagnosticsCodingMutation,
   useRemoveDiagnosticsCodingMutation,
-  useGetLovDefultByCodeQuery
+ 
 } = setupService;

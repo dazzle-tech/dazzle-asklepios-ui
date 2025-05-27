@@ -2,7 +2,7 @@ import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { useAppSelector } from '@/hooks';
 import { useLoginMutation } from '@/services/authService';
-import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery, useSaveUserMutation, useGetLovDefultByCodeQuery } from '@/services/setupService';
+import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery, useSaveUserMutation } from '@/services/setupService';
 import { ApUser } from '@/types/model-types';
 import { newApUser } from '@/types/model-types-constructor';
 import { initialListRequest } from '@/types/types';
@@ -47,8 +47,6 @@ const SignIn = () => {
     isFetching: isFetchingFacilities
   } = useGetFacilitiesQuery({ ...initialListRequest });
   const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
-  const {data:langDefult}= useGetLovDefultByCodeQuery('SYSTEM_LANG');
-  
   const handleLogin = () => {
     login(credentials).unwrap();
   };
@@ -111,22 +109,21 @@ const SignIn = () => {
     }
   };
 
-  // useEffect(() => {
-  //   document.body.style.backgroundImage = `url(${Background})`;
-  //   document.body.style.backgroundSize = 'cover';
-  //   document.body.style.backgroundPosition = 'center';
-  //   document.body.style.backgroundRepeat = 'no-repeat';
+  useEffect(() => {
+    document.body.style.backgroundImage = `url(${Background})`;
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    document.body.style.backgroundRepeat = 'no-repeat';
 
-  //   return () => {
-  //     document.body.style.backgroundImage = '';
-  //   };
-  // }, [Background]);
+    return () => {
+      document.body.style.backgroundImage = '';
+    };
+  }, [Background]);
   return (
-    <Panel className="panel" style={{ backgroundImage: `url(${Background})` }}>
-    <Panel bordered  style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' ,padding: '20px', borderRadius: '10px'}}>
+    <Panel bordered className="panel">
       <div className="bodySignInDiv">
         {/* Logo Panel */}
-     
+        <Text className="welcome-title">Welcome to</Text>
         <Panel className="logo-panel">
           <img
             src={
@@ -141,7 +138,7 @@ const SignIn = () => {
         {/* Sign In Panel */}
         {!resetPasswordView && (
           <Panel className="sign-in-panel ">
-          
+            <h3 className="title">Sign In</h3>
             {!authSlice.tenant && (
               <Message type="warning" showIcon>
                 <Translate>No Tenant Configured</Translate>
@@ -169,7 +166,6 @@ const SignIn = () => {
                 selectData={langLovQueryResponse?.object ?? []}
                 selectDataLabel="lovDisplayVale"
                 selectDataValue="key"
-                defaultSelectValue={langDefult?.data?.object?.key}
                 record={{}}
                 setRecord={() => { }}
                 placeholder="Select Language"
@@ -284,7 +280,7 @@ const SignIn = () => {
           <Button appearance="subtle">Cancel</Button>
         </Modal.Footer>
       </Modal>
-    </Panel></Panel>
+    </Panel>
   );
 };
 
