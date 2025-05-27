@@ -590,7 +590,8 @@ const Referrals = () => {
         actionType={'add'}
         refecthData={attachmentRefetch}
         attachmentSource={procedure}
-        attatchmentType="PROCEDURE" />
+        attatchmentType="PROCEDURE" 
+        patientKey={patient?.key}/>
 
     </>
   );

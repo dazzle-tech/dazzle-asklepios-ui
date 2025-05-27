@@ -337,6 +337,7 @@ export interface ApAttachment {
 	isValid:boolean;
 	details:string;
 	accessTypeLkey:string;
+	patientKey:string;
 } 
 
 export interface ApAudiometryPuretone { 

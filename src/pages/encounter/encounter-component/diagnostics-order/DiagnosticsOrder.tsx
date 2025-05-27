@@ -881,7 +881,8 @@ const DiagnosticsOrder = () => {
                 actionType={'add'}
                 refecthData={attachmentRefetch}
                 attachmentSource={orderTest}
-                attatchmentType="ORDER_TEST" />
+                attatchmentType="ORDER_TEST" 
+                patientKey={patient?.key}/>
 
             <MyModal
                 open={openTestsModal}

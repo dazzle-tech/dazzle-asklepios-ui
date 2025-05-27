@@ -338,6 +338,7 @@ export const newApAttachment:modelTypes.ApAttachment = {
 	isValid:undefined,
 	details:'',
 	accessTypeLkey:undefined,
+	patientKey:undefined,
 } 
 
 export const newApAudiometryPuretone:modelTypes.ApAudiometryPuretone = { 

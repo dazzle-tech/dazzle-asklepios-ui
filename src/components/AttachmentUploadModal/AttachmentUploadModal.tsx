@@ -25,6 +25,7 @@ interface AttachmentModalProps {
     setRequestedPatientAttacment?: React.Dispatch<React.SetStateAction<string | undefined>> | null;
     requestedPatientAttacment?: string | null;
     refecthData?: () => void | null;
+    patientKey:string;
 }
 
 
@@ -40,6 +41,7 @@ const AttachmentModal = ({
     requestedPatientAttacment,
     refecthData,
     attatchmentType,
+    patientKey,
 }: AttachmentModalProps) => {
     const dispatch = useAppDispatch();
     const authSlice = useAppSelector(state => state.auth);
@@ -135,7 +137,8 @@ const AttachmentModal = ({
                 ...uploadedAttachmentOpject,
                 details: newAttachmentDetails,
                 accessType: selectedAttachType.accessTypeLkey,
-                createdBy: authSlice.user.key
+                createdBy: authSlice.user.key,
+                patientKey:patientKey
             })
                 .unwrap()
                 .then(() => {

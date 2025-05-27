@@ -8,7 +8,7 @@ export const attachmentService = createApi({
   baseQuery: baseQuery,
   endpoints: builder => ({
     upload: builder.mutation({
-      query: (data: { formData: FormData; type: string; refKey: string, details:string ,accessType:string ,createdBy:string}) => ({
+      query: (data: { formData: FormData; type: string; refKey: string, details:string ,accessType:string ,createdBy:string ,patientKey:string}) => ({
         url: `/attachment/upload`,
         method: 'POST',
         body: data.formData,
@@ -17,7 +17,8 @@ export const attachmentService = createApi({
           ref_key: data.refKey,
           details:data.details,
           access_type:data.accessType,
-          created_by:data.createdBy
+          created_by:data.createdBy,
+          patient_key:data.patientKey
         }
       }),
       onQueryStarted: onQueryStarted,

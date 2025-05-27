@@ -187,7 +187,7 @@ const PatientAttachment = ({ localPatient }) => {
                 ...(localPatient?.key
                     ? [
                         {
-                            fieldName: 'reference_object_key',
+                            fieldName: 'patient_key',
                             operator: 'match',
                             value: localPatient.key,
                         },
@@ -236,7 +236,7 @@ const PatientAttachment = ({ localPatient }) => {
                     Delete
                 </MyButton>
             </div>
-            <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} actionType={actionType} setActionType={setActionType} refecthData={attachmentRefetch} attachmentSource={localPatient} selectedPatientAttacment={selectedAttachment} setSelectedPatientAttacment={setSelectedAttachment} requestedPatientAttacment={requestedPatientAttacment} setRequestedPatientAttacment={setRequestedPatientAttacment} attatchmentType="PATIENT_PROFILE_ATTACHMENT" />
+            <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} actionType={actionType} setActionType={setActionType} refecthData={attachmentRefetch} attachmentSource={localPatient} selectedPatientAttacment={selectedAttachment} setSelectedPatientAttacment={setSelectedAttachment} requestedPatientAttacment={requestedPatientAttacment} setRequestedPatientAttacment={setRequestedPatientAttacment} attatchmentType="PATIENT_PROFILE_ATTACHMENT" patientKey={localPatient?.key} />
             <MyTable
                 height={200}
                 loading={loadAttachment}
