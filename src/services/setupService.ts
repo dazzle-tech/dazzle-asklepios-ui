@@ -1,7 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest, ListRequestAllValues } from '@/types/types';
-import { fromListRequestToQueryParams,fromListRequestAllValueToQueryParams } from '@/utils';
+import { fromListRequestToQueryParams, fromListRequestAllValueToQueryParams } from '@/utils';
 import {
   ApAccessRole,
   ApAccessRoleScreen,
@@ -202,7 +202,7 @@ export const setupService = createApi({
       query: (data: { userId: string }) => ({
         url: `/setup/get-user-record`,
         headers: {
-          userId: data.userId, 
+          userId: data.userId,
         },
       }),
       onQueryStarted: onQueryStarted,
@@ -210,7 +210,7 @@ export const setupService = createApi({
         return response.object;
       }
     }),
-    
+
     saveUser: builder.mutation({
       query: (user: ApUser) => ({
         url: `/setup/save-user`,
@@ -526,37 +526,37 @@ export const setupService = createApi({
       keepUnusedDataFor: 3600
     }),
     getDiagnosticsTestNormalRangeList: builder.query({
-          query: (listRequest: ListRequest) => ({
-            url: `/setup/diagnostic-test-normal-range-list?${fromListRequestToQueryParams(listRequest)}`
-          }),
-          onQueryStarted: onQueryStarted,
-          keepUnusedDataFor: 5
-        }),
-        saveDiagnosticsTestNormalRange: builder.mutation({
-          query: (data: { diagnosticTestNormalRange: ApDiagnosticTestNormalRange; lov; }) => {
-            const param = data.lov;
-            return {
-              url: `/setup/save-diagnostic-test-normal-range?lov=${param}`,
-              method: 'POST',
-              body: data.diagnosticTestNormalRange,
-            }
-    
-          }, onQueryStarted: onQueryStarted,
-          transformResponse: (response: any) => {
-            return response.object;
-          }
-        }),
-        removeDiagnosticsTestNormalRange: builder.mutation({
-          query: (diagnosticTestNormalRange: ApDiagnosticTestNormalRange) => ({
-            url: `/setup/remove-diagnostic-test-normal-range`,
-            method: 'POST',
-            body: diagnosticTestNormalRange
-          }),
-          onQueryStarted: onQueryStarted,
-          transformResponse: (response: any) => {
-            return response.object;
-          }
-        }),
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/diagnostic-test-normal-range-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    saveDiagnosticsTestNormalRange: builder.mutation({
+      query: (data: { diagnosticTestNormalRange: ApDiagnosticTestNormalRange; lov; }) => {
+        const param = data.lov;
+        return {
+          url: `/setup/save-diagnostic-test-normal-range?lov=${param}`,
+          method: 'POST',
+          body: data.diagnosticTestNormalRange,
+        }
+
+      }, onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    removeDiagnosticsTestNormalRange: builder.mutation({
+      query: (diagnosticTestNormalRange: ApDiagnosticTestNormalRange) => ({
+        url: `/setup/remove-diagnostic-test-normal-range`,
+        method: 'POST',
+        body: diagnosticTestNormalRange
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
     getDiagnosticsTestList: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/diagnostic-test-list?${fromListRequestToQueryParams(listRequest)}`
@@ -801,7 +801,7 @@ export const setupService = createApi({
       query: (agegroup: ApAgeGroup) => ({
         url: `/setup/save-age-group`,
         method: 'POST',
-        body:agegroup,
+        body: agegroup,
       }),
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
@@ -810,7 +810,7 @@ export const setupService = createApi({
     }),
     getAgeGroup: builder.query({
       query: (listRequest: ListRequest) => ({
-         url: `/setup/age-group-list?${fromListRequestToQueryParams(listRequest)}`
+        url: `/setup/age-group-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
@@ -829,7 +829,7 @@ export const setupService = createApi({
     }),
     getVaccineList: builder.query({
       query: (listRequest: ListRequest) => ({
-         url: `/setup/vaccine-list?${fromListRequestToQueryParams(listRequest)}`
+        url: `/setup/vaccine-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
@@ -870,7 +870,7 @@ export const setupService = createApi({
     }),
     getVaccineBrandsList: builder.query({
       query: (listRequest: ListRequest) => ({
-         url: `/setup/vaccine-brands-list?${fromListRequestToQueryParams(listRequest)}`
+        url: `/setup/vaccine-brands-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
@@ -888,10 +888,10 @@ export const setupService = createApi({
     }),
 
     getDoseNumbersList: builder.query({
-      query: (data: {key: string }) => ({
+      query: (data: { key: string }) => ({
         url: `/setup/vaccine-doses-numbers-list`,
         headers: {
-        key: data.key
+          key: data.key
         }
       }),
       onQueryStarted: onQueryStarted,
@@ -904,13 +904,14 @@ export const setupService = createApi({
       query: (brand: ApVaccineDose) => ({
         url: `/setup/save-vaccine-dose`,
         method: 'POST',
-        body: brand  }),
-        onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
-  
+        body: brand
       }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+
+    }),
 
     saveProcedure: builder.mutation({
       query: (p: ApProcedureSetup) => ({
@@ -928,14 +929,14 @@ export const setupService = createApi({
 
     getVaccineDosesList: builder.query({
       query: (listRequest: ListRequest) => ({
-         url: `/setup/vaccine-doses-list?${fromListRequestToQueryParams(listRequest)}`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
-      })
-   , getProcedureList: builder.query({
+        url: `/setup/vaccine-doses-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    })
+    , getProcedureList: builder.query({
       query: (listRequest: ListRequest) => ({
-         url: `/setup/procedure-list?${fromListRequestToQueryParams(listRequest)}`
+        url: `/setup/procedure-list?${fromListRequestToQueryParams(listRequest)}`
 
       }),
       onQueryStarted: onQueryStarted,
@@ -958,13 +959,15 @@ export const setupService = createApi({
         url: `/setup/save-vaccine-doses-interval`,
         method: 'POST',
         body: interval
-      }),}),
+      }),
+    }),
     removeProcedure: builder.mutation({
       query: (P: ApProcedureSetup) => ({
         url: `/setup/remove-procedure`,
         method: 'POST',
         body: P,
-      }),}),
+      }),
+    }),
     saveProcedureCoding: builder.mutation({
       query: (p: ApProcedureCoding) => ({
         url: `/setup/save-procedure-coding`,
@@ -981,14 +984,14 @@ export const setupService = createApi({
 
     getVaccineDosesIntervalList: builder.query({
       query: (listRequest: ListRequest) => ({
-         url: `/setup/vaccine-doses-interval-list?${fromListRequestToQueryParams(listRequest)}`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
+        url: `/setup/vaccine-doses-interval-list?${fromListRequestToQueryParams(listRequest)}`
       }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
     getProcedureCodingList: builder.query({
       query: (listRequest: ListRequest) => ({
-         url: `/setup/procedure-coding-list?${fromListRequestToQueryParams(listRequest)}`
+        url: `/setup/procedure-coding-list?${fromListRequestToQueryParams(listRequest)}`
 
       }),
       onQueryStarted: onQueryStarted,
@@ -1000,13 +1003,15 @@ export const setupService = createApi({
         url: `/setup/remove-vaccine-doses-interval`,
         method: 'POST',
         body: interval,
-      }),}),
+      }),
+    }),
     removeProcedureCoding: builder.mutation({
       query: (P: ApProcedureCoding) => ({
         url: `/setup/remove-coding`,
         method: 'POST',
         body: P,
-      }),}),
+      }),
+    }),
     saveProcedurePriceList: builder.mutation({
       query: (p: ApProcedurePriceList) => ({
         url: `/setup/save-procedure-price-list`,
@@ -1023,7 +1028,7 @@ export const setupService = createApi({
 
     getProcedurePriceList: builder.query({
       query: (listRequest: ListRequest) => ({
-         url: `/setup/procedure-price-list-list?${fromListRequestToQueryParams(listRequest)}`
+        url: `/setup/procedure-price-list-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
@@ -1034,104 +1039,113 @@ export const setupService = createApi({
         url: `/setup/remove-price-list`,
         method: 'POST',
         body: P,
-      }),}),
-
-      saveDuplicationCandidateSetup: builder.mutation({
-        query: (p: ApDuplicationCandidateSetup) => ({
-          url: `/setup/save-duplication_candidate_setup`,
-          method: 'POST',
-          body: p
-  
-        }),
-        onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-  
-        },
       }),
-  
-      getDuplicationCandidateSetupList: builder.query({
-        query: (listRequest: ListRequest) => ({
-           url: `/setup/duplication_candidate_setup-list?${fromListRequestToQueryParams(listRequest)}`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
-      }),
-      getCptList: builder.query({
-        query: (listRequest: ListRequest) => ({
-          url: `/setup/cpt-list?${fromListRequestToQueryParams(listRequest)}`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 3600
-      }),
-      getLoincList: builder.query({
-        query: (listRequest: ListRequest) => ({
-          url: `/setup/loinc-list?${fromListRequestToQueryParams(listRequest)}`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 3600
-      }),
-      saveMedicalSheet: builder.mutation({
-        query: (records: ApMedicalSheets) => ({
-          url: `/setup/save-medical-sheet`,
-          method: 'POST',
-          body: records
-        }),
-        onQueryStarted: onQueryStarted,
-        transformResponse: (response: any) => {
-          return response.object;
-        }
-      }),
-      getMedicalSheetsByDepartmentId: builder.query({
-        query: (departmentid: string) => ({
-            headers: {
-              departmentid
-            },
-            url: `/setup/medical-sheets-by-department-id`
-        }),
-        onQueryStarted: onQueryStarted,
-        keepUnusedDataFor: 5
-
     }),
-    getDepartmentListByType: builder.query({
-      query: (departmentTypeKey: string) => ({
-          headers: {
-            departmentTypeKey
-          },
-          url: `/setup/department-list-by-type`
+
+    saveDuplicationCandidateSetup: builder.mutation({
+      query: (p: ApDuplicationCandidateSetup) => ({
+        url: `/setup/save-duplication_candidate_setup`,
+        method: 'POST',
+        body: p
+
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+
+      },
+    }),
+
+    getDuplicationCandidateSetupList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/duplication_candidate_setup-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    getCptList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/cpt-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 3600
+    }),
+    getLoincList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/loinc-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 3600
+    }),
+    saveMedicalSheet: builder.mutation({
+      query: (records: ApMedicalSheets) => ({
+        url: `/setup/save-medical-sheet`,
+        method: 'POST',
+        body: records
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getMedicalSheetsByDepartmentId: builder.query({
+      query: (departmentid: string) => ({
+        headers: {
+          departmentid
+        },
+        url: `/setup/medical-sheets-by-department-id`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
 
-  }),
-  saveDiagnosticsCoding: builder.mutation({
-    query: (p: ApDiagnosticCoding) => ({
-      url: `/setup/save-diagnostics-coding`,
-      method: 'POST',
-      body: p
+    }),
+    getDepartmentListByType: builder.query({
+      query: (departmentTypeKey: string) => ({
+        headers: {
+          departmentTypeKey
+        },
+        url: `/setup/department-list-by-type`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
 
     }),
-    onQueryStarted: onQueryStarted,
-    transformResponse: (response: any) => {
-      return response.object;
-    }
+    saveDiagnosticsCoding: builder.mutation({
+      query: (p: ApDiagnosticCoding) => ({
+        url: `/setup/save-diagnostics-coding`,
+        method: 'POST',
+        body: p
 
-  }),
-  getDiagnosticsCodingList: builder.query({
-    query: (listRequest: ListRequest) => ({
-       url: `/setup/diagnostics-coding-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
 
     }),
-    onQueryStarted: onQueryStarted,
-    keepUnusedDataFor: 5
-  }),
+    getDiagnosticsCodingList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/diagnostics-coding-list?${fromListRequestToQueryParams(listRequest)}`
 
-  removeDiagnosticsCoding: builder.mutation({
-    query: (P: ApDiagnosticCoding) => ({
-      url: `/setup/remove-diagnostics-coding`,
-      method: 'POST',
-      body: P,
-    }),}),
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+
+    removeDiagnosticsCoding: builder.mutation({
+      query: (P: ApDiagnosticCoding) => ({
+        url: `/setup/remove-diagnostics-coding`,
+        method: 'POST',
+        body: P,
+      }),
+    }),
+    getLovDefultByCode: builder.query({
+      query: (code: String) => ({
+        url: `/utility/get-lov-value-default?code=${code}`
+      }),
+      onQueryStarted: onQueryStarted,
+   
+    }),
 
 
   })
@@ -1251,5 +1265,6 @@ export const {
   useGetDepartmentListByTypeQuery,
   useGetDiagnosticsCodingListQuery,
   useSaveDiagnosticsCodingMutation,
-  useRemoveDiagnosticsCodingMutation
+  useRemoveDiagnosticsCodingMutation,
+  useGetLovDefultByCodeQuery
 } = setupService;
