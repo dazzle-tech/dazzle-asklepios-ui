@@ -22,12 +22,16 @@ interface ProfileTabsProps {
   localPatient: ApPatient;
   setLocalPatient: (patient: ApPatient) => void;
   validationResult: any;
+  setRefetchAttachmentList: (value: boolean) => void;
+  refetchAttachmentList:boolean;
 }
 
 const ProfileTabs: React.FC<ProfileTabsProps> = ({
   localPatient,
   setLocalPatient,
-  validationResult
+  validationResult,
+  refetchAttachmentList,
+  setRefetchAttachmentList,
 }) => {
   const [ageGroupValue, setAgeGroupValue] = useState({
     ageGroup: ''
@@ -148,7 +152,9 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
             <PatientExtraDetails localPatient={localPatient} />
           </Tabs.Tab>
           <Tabs.Tab eventKey="10" title="Attachments">
-            <PatientAttachment localPatient={localPatient} />
+            <PatientAttachment localPatient={localPatient}   
+            setRefetchAttachmentList={setRefetchAttachmentList}
+            refetchAttachmentList={refetchAttachmentList}/>
           </Tabs.Tab>
         </Tabs>
       </Panel>

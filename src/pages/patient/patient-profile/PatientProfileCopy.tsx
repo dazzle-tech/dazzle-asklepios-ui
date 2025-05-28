@@ -35,6 +35,7 @@ const PatientProfile = () => {
   const propsData = location.state;
   const [savePatient, savePatientMutation] = useSavePatientMutation();
   const [refetchData, setRefetchData] = useState(false);
+  const [refetchAttachmentList,setRefetchAttachmentList]=useState(false);
   // Page header setup
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
@@ -128,13 +129,16 @@ const PatientProfile = () => {
             setVisitHistoryModel={setVisitHistoryModel}
             setQuickAppointmentModel={setQuickAppointmentModel}
             validationResult={validationResult}
-           
+            setRefetchAttachmentList={setRefetchAttachmentList}
           />
 
           <ProfileTabs
             localPatient={localPatient}
             setLocalPatient={setLocalPatient}
             validationResult={validationResult}
+            setRefetchAttachmentList={setRefetchAttachmentList}
+            refetchAttachmentList={refetchAttachmentList}
+            
           />
         </Panel>
 

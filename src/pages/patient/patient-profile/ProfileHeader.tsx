@@ -21,6 +21,7 @@ interface ProfileHeaderProps {
   setVisitHistoryModel: (value: boolean) => void;
   validationResult: any
   setQuickAppointmentModel: (value: boolean) => void;
+  setRefetchAttachmentList: (value: boolean) => void;
 }
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   localPatient,
@@ -28,7 +29,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   handleClear,
   setVisitHistoryModel,
   setQuickAppointmentModel,
-
+  setRefetchAttachmentList,
   validationResult }) => {
   const authSlice = useAppSelector(state => state.auth);
   const profileImageFileInputRef = useRef(null);
@@ -71,6 +72,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         .unwrap()
         .then(response => {
           setPatientImage(response);
+          setRefetchAttachmentList(true);
           dispatch(notify({ msg: 'Profile Picture Uploaded Successfully', sev: 'success' }));
         });
     }
