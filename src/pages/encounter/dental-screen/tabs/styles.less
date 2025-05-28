@@ -1,21 +1,65 @@
 .dental-chart-tab-container {
+  display: flex;
+  gap: 16px;
+
+  .dental-visit-chart {
+    width: 600px;
+    padding: 16px;
+    min-height: calc(100vh - 200px);
+  }
+  .dental-actions-table {
+    width: 100%;
+    padding: 16px;
+    overflow: auto;
+    min-height: calc(100vh - 200px);
+    background: rgba(248, 250, 251, 0.7);
+    .rs-panel-body {
+      height: calc(100vh - 250px);
+      overflow: auto;
+    }
+  }
+
+  .selected-tooth-cleaner {
+    height: 40px;
+  }
+
+  .loading-dental-chart {
     display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
     gap: 16px;
+    height: 50vh;
 
-    .dental-visit-chart {
-        width: 600px;
-        padding: 16px;
-        max-height: calc(100vh - 200px);
+    svg {
+      width: 50px;
+      height: 50px;
+      opacity: 0.6;
     }
-    .dental-actions-table {
-        width: 100%;
-        padding: 16px;
-        overflow: auto;
-        max-height: calc(100vh - 200px);
-        background: rgba(248, 250, 251,0.7);
+    p {
+      font-weight: 600;
+      color: #0000;
+      background: linear-gradient(90deg, #415be7 calc(50% + 0.5ch), #666 0) right/calc(200% + 1ch)
+        100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: l7 2s infinite steps(11);
     }
+  }
+}
 
-    .selected-tooth-cleaner {
-        height: 40px;
-    }
+@keyframes l7 {
+  to {
+    background-position: left;
+  }
+}
+.empty-actions-status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  .empty-actions-label {
+    font-weight: 600;
+    opacity: 0.6;
+  }
 }

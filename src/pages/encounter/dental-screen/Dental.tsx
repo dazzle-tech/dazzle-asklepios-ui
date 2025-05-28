@@ -12,6 +12,7 @@ import ProgressNotesTab from './tabs/ProgressNotesTab';
 import TreatmentPlanTab from './tabs/TreatmentPlanTab';
 import XRayTab from './tabs/XRayTab';
 import { useLocation } from 'react-router-dom';
+import { Box } from '@mui/material';
 
 const Dental = () => {
    const location = useLocation();
@@ -24,7 +25,6 @@ const Dental = () => {
   const [selectedPreviousChartKey, setSelectedPreviousChartKey] = useState('');
   const [selectedTooth, setSelectedTooth] = useState({ ...newApDentalChartTooth });
   const [progressNotes, setProgressNotes] = useState([]);
-  const [manualChartLoading, setManualChartLoading] = useState(false);
   const [treatmentPlanTrigger, setTreatmentPlanTrigger] = useState(-1);
 
   // Fetch dental charts
@@ -47,15 +47,8 @@ const Dental = () => {
   };
 
   return (
-    <BlockUI
-      template={
-        <h3 style={{ textAlign: 'center', color: 'white', top: '10%', position: 'absolute' }}>
-          <Translate>Chart Loading</Translate>...
-        </h3>
-      }
-      blocked={dentalChartsResponse.isLoading || manualChartLoading}
+    <Box
     >
-      <br />
       <Tabs>
         <TabList>
           <Tab>
@@ -66,9 +59,6 @@ const Dental = () => {
           </Tab>
           <Tab>
             <Translate>Treatment Plan</Translate>
-          </Tab>
-          <Tab>
-            <Translate>X-Ray</Translate>
           </Tab>
         </TabList>
 
@@ -85,7 +75,7 @@ const Dental = () => {
             cancelPreviousChartView={cancelPreviousChartView}
             treatmentPlanTrigger={treatmentPlanTrigger}
             setTreatmentPlanTrigger={setTreatmentPlanTrigger}
-            encounter={encounter}
+            isLoading={dentalChartsResponse.isLoading}
           />
         </TabPanel>
 
@@ -108,12 +98,8 @@ const Dental = () => {
             dispatch={dispatch}
           />
         </TabPanel>
-
-        <TabPanel>
-          <XRayTab />
-        </TabPanel>
       </Tabs>
-    </BlockUI>
+    </Box>
   );
 };
 

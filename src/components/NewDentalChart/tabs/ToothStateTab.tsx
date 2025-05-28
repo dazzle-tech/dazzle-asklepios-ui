@@ -157,19 +157,23 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
 
       <Panel bordered className="applied-actions-container">
         <Box className="actions-chart">
-          <FullTooth
-            chartTooth={selectedTooth}
-            key={selectedTooth.key}
-          />
+          <FullTooth chartTooth={selectedTooth} key={selectedTooth.key} />
+          {selectedTooth.toothActions && selectedTooth.toothActions.length === 0 && (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="body2" color="text.secondary">
+                No actions applied to this tooth
+              </Typography>
+            </Box>
+          )}
         </Box>
 
-        <Box className="tooth-state-tab-content">
-          <Typography variant="h6">
-            <Translate>Applied Actions on Tooth</Translate> <b># {selectedTooth.toothNumber}</b>
-          </Typography>
-          <Box className="tooth-status-applied-actions-cards">
-            {selectedTooth.toothActions && selectedTooth.toothActions.length > 0 ? (
-              selectedTooth.toothActions.map((action: any) => (
+        {selectedTooth.toothActions && selectedTooth.toothActions.length > 0 && (
+          <Box className="tooth-state-tab-content">
+            <Typography variant="h6">
+              <Translate>Applied Actions on Tooth</Translate> <b># {selectedTooth.toothNumber}</b>
+            </Typography>
+            <Box className="tooth-status-applied-actions-cards">
+              {selectedTooth.toothActions.map((action: any) => (
                 <Box
                   key={action.key}
                   onClick={() => {
@@ -200,16 +204,10 @@ const ToothStateTab: React.FC<ToothStateTabProps> = ({
                     existing={action.existing}
                   />
                 </Box>
-              ))
-            ) : (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Typography variant="body2" color="text.secondary">
-                  No actions applied to this tooth
-                </Typography>
-              </Box>
-            )}
+              ))}
+            </Box>
           </Box>
-        </Box>
+        )}
       </Panel>
     </div>
   );
