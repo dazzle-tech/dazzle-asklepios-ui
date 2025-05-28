@@ -63,7 +63,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       upload({
         formData: formData,
         type: 'PATIENT_PROFILE_PICTURE',
-        refKey: localPatient.key,
+        refKey: localPatient?.key,
         details: "Profile Picture",
         accessType: '',
         createdBy: authSlice.user.key,

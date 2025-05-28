@@ -62,7 +62,7 @@ const PatientAttachment = ({ localPatient ,refetchAttachmentList,setRefetchAttac
     const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest, { skip: !localPatient?.key });
     // Fetch patient attachment by key responce
     const { data: fetchAttachmentByKeyResponce, isSuccess } = useFetchAttachmentByKeyQuery({ key: requestedPatientAttacment }, { skip: !requestedPatientAttacment || !localPatient.key });
-    const fetchPatientImageResponse = useFetchAttachmentQuery({ type: 'PATIENT_PROFILE_PICTURE', refKey: localPatient.key, }, { skip: !localPatient.key });
+    const fetchPatientImageResponse = useFetchAttachmentQuery({ type: 'PATIENT_PROFILE_PICTURE', refKey: localPatient?.key, }, { skip: !localPatient.key });
 
     // Function to check if the current row is the selected one
     const isSelected = rowData => {

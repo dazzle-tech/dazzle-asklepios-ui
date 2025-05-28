@@ -99,9 +99,9 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     const fetchPatientImageResponse = useFetchAttachmentQuery(
         {
             type: 'PATIENT_PROFILE_PICTURE',
-            refKey: localPatient.key,
+            refKey: localPatient?.key,
         },
-        { skip: !localPatient.key }
+        { skip: !localPatient?.key }
     );
 
     useEffect(() => {
