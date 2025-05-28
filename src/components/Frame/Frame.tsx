@@ -128,7 +128,7 @@ const Frame = (props: FrameProps) => {
               )}
                {expand && (
                     <Form className='search-field'>
-                      <MyInput fieldName='screen' width= '100%' record={recordOfSearchedScreenName} setRecord={setRecordOfSearchedScreenName} placeholder="Search by Sreen Name" showLabel={false}/>
+                      <MyInput fieldName='screen' width= '100%' record={recordOfSearchedScreenName} setRecord={setRecordOfSearchedScreenName} placeholder="Search by Screen Name" showLabel={false}/>
                     </Form>               
                )}
               {navs.map(item => {
