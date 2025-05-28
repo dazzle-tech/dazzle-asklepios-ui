@@ -676,7 +676,7 @@ const isSelectedRelation = rowData => {
           formData: formData,
           type: 'PATIENT_PROFILE_PICTURE',
           refKey: localPatient.key,
-          details: `Profile Picture for ${localPatient.fullName}`,
+          details: "Profile Picture",
           accessType: '',
           createdBy:authSlice.user.key
         })

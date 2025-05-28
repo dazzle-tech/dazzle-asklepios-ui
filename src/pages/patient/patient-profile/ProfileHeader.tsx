@@ -64,7 +64,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         formData: formData,
         type: 'PATIENT_PROFILE_PICTURE',
         refKey: localPatient.key,
-        details: `Profile Picture for ${localPatient.fullName}`,
+        details: "Profile Picture",
         accessType: '',
         createdBy: authSlice.user.key,
         patientKey: localPatient?.key
