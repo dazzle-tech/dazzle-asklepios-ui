@@ -12,6 +12,7 @@ import { VscUnverified, VscVerified } from 'react-icons/vsc';
 import MyButton from '@/components/MyButton/MyButton';
 import AdministrativeWarningsModal from './AdministrativeWarning';
 import { useAppDispatch } from '@/hooks';
+import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { notify } from '@/utils/uiReducerActions';
 interface ProfileHeaderProps {
   localPatient: ApPatient;
@@ -27,12 +28,14 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   handleClear,
   setVisitHistoryModel,
   setQuickAppointmentModel,
+
   validationResult }) => {
   const authSlice = useAppSelector(state => state.auth);
   const profileImageFileInputRef = useRef(null);
   const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
   const [upload, uploadMutation] = useUploadMutation();
-   const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch();
+  const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
   // Fetch patient profile image
   const fetchPatientImageResponse = useFetchAttachmentQuery(
     {
@@ -63,7 +66,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         details: `Profile Picture for ${localPatient.fullName}`,
         accessType: '',
         createdBy: authSlice.user.key,
-        patientKey:localPatient?.key
+        patientKey: localPatient?.key
       })
         .unwrap()
         .then(response => {
@@ -131,7 +134,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
               </span>
               <div className='patient-info'>
                 {localPatient.key != undefined && <FaUser />}
-                {localPatient?.genderLvalue?.lovDisplayVale}{localPatient.key != undefined && ","}{localPatient.dob ? calculateAgeFormat(localPatient.dob) + '' : ''}{localPatient.key != undefined && " old"}
+                {
+                  genderLovQueryResponse?.object?.find(
+                    (item) => item.key === localPatient.genderLkey
+                  )?.lovDisplayVale
+                }
+                {localPatient.key != undefined && ","}{localPatient.dob ? calculateAgeFormat(localPatient.dob) + '' : ''}{localPatient.key != undefined && " old"}
               </div>
               <span className='patient-mrn'>
                 {localPatient.key != undefined && `# `}

@@ -34,7 +34,7 @@ const PatientProfile = () => {
   const location = useLocation();
   const propsData = location.state;
   const [savePatient, savePatientMutation] = useSavePatientMutation();
-
+  const [refetchData, setRefetchData] = useState(false);
   // Page header setup
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
@@ -49,6 +49,7 @@ const PatientProfile = () => {
     savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false })
       .unwrap()
       .then(() => {
+        setRefetchData(true);  
         dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
       });
   };
@@ -127,6 +128,7 @@ const PatientProfile = () => {
             setVisitHistoryModel={setVisitHistoryModel}
             setQuickAppointmentModel={setQuickAppointmentModel}
             validationResult={validationResult}
+           
           />
 
           <ProfileTabs
@@ -141,6 +143,8 @@ const PatientProfile = () => {
           setExpand={setExpand}
           windowHeight={windowHeight}
           setLocalPatient={setLocalPatient}
+          refetchData={refetchData}
+          setRefetchData={setRefetchData}
         />
       </div>
 
