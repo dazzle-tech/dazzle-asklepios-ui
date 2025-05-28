@@ -50,7 +50,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   const patient = props.patient || state.patient;
   const encounter = props.encounter || state.encounter;
   const edit = props.edit ?? state.edit;
-  
+  const dispatch = useAppDispatch();
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...patient })
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
   const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...encounter })
@@ -173,7 +173,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
       },
       listRequest: patientObservationsListRequest
     }).unwrap().then(() => {
-      dispatch(notify('Saved Successfully'));
+      dispatch(notify({masg:'Saved Successfully' ,sev:'success'}));
     });;
   };
   useImperativeHandle(ref, () => ({
@@ -257,7 +257,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                       
                       fieldLabel='Pulse'
                       rightAddon="bpm"
-                      width={'100%'}
+                      width='100%'
                       rightAddonwidth={50}
                       fieldName='latestheartrate'
                       disabled={isEncounterStatusClosed || readOnly}
@@ -272,7 +272,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                       fieldLabel='R.R'
                       rightAddon="bpm"
                       rightAddonwidth={50}
-                      width={'100%'}
+                      width='100%'
                       fieldName='latestrespiratoryrate'
                       disabled={isEncounterStatusClosed || readOnly}
                       fieldType='number'
@@ -286,7 +286,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                     <MyInput
                       fieldLabel='SpO2'
                       rightAddon="%"
-                      width={'100%'}
+                      width='100%'
                       rightAddonwidth={40}
                       fieldName='latestoxygensaturation'
                       disabled={isEncounterStatusClosed || readOnly}
