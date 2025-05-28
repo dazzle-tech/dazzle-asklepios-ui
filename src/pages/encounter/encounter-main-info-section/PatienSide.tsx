@@ -1,21 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import Translate from '@/components/Translate';
 import {
-    faHandDots,
-    faTriangleExclamation
-    ,
     faIdCard,
     faUser,
     faFileWaveform
-
-
 } from '@fortawesome/free-solid-svg-icons';
-import { useGetEncountersQuery } from '@/services/encounterService';
-import {
-    useGetAllergiesQuery,
-    useSaveAllergiesMutation,
-    useGetWarningsQuery
-} from '@/services/observationService';
 import React from 'react';
 import {
     Button,
@@ -28,11 +16,10 @@ import {
 
 } from 'rsuite';
 import {
-    useUploadMutation,
     useFetchAttachmentQuery,
 } from '@/services/attachmentService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { FaWeight, FaRulerVertical, FaUserCircle, FaDumbbell, FaUserAlt, FaTint, FaMars, FaVenus, FaUserNinja, FaCalendar } from 'react-icons/fa';
+import { FaWeight } from 'react-icons/fa';
 import { calculateAgeFormat } from '@/utils';
 import { useGetObservationSummariesQuery } from '@/services/observationService';
 import { initialListRequest, ListRequest } from '@/types/types';

@@ -24,7 +24,7 @@ const PatientEMR = () => {
     const propsData = location.state;
     const [encounter, setLocalEncounter] = useState({ ...newApEncounter });
     const [localPatient, setLocalPatient] = useState<ApPatient>(propsData?.fromPage === "clinicalVisit" ? propsData?.localPatient : { ...newApPatient });
-
+     const [refetchData, setRefetchData] = useState(false);
 
     // Initialize Patient Encounters list request with default filters
     const [listEncounterRequest, setListEncounterRequest] = useState<ListRequest>({
@@ -173,6 +173,8 @@ const PatientEMR = () => {
                 setExpand={setExpand}
                 windowHeight={windowHeight}
                 setLocalPatient={setLocalPatient}
+                setRefetchData={setRefetchData}
+                refetchData={refetchData}
             />
         </div>);
 }
