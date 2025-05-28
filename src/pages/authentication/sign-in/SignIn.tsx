@@ -33,7 +33,7 @@ const SignIn = () => {
   const [errText, setErrText] = useState(' ');
   const [resetPasswordView, setResetPasswordView] = useState(false);
  const {data:langdefult} = useGetLovDefultByCodeQuery('SYSTEM_LANG');
- console.log('langdefult', langdefult?.object);
+
   const [credentials, setCredentials] = useState({
     username: '',
     password: '',
@@ -48,7 +48,7 @@ const SignIn = () => {
     isFetching: isFetchingFacilities
   } = useGetFacilitiesQuery({ ...initialListRequest });
   const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
-  console.log('langLovQueryResponse', langLovQueryResponse);
+
   const handleLogin = () => {
     login(credentials).unwrap();
   };
@@ -73,13 +73,13 @@ const SignIn = () => {
       localStorage.getItem('access_token') &&
       authSlice.user?.mustChangePassword
     ) {
-      console.log(authSlice.user?.mustChangePassword);
+
       setChangePasswordView(true);
     }
   }, [authSlice.user]);
 
   useEffect(() => {
-    console.log(changePasswordView);
+  
   }, [changePasswordView]);
 
   const [user, setUser] = useState<ApUser>({
@@ -100,7 +100,7 @@ const SignIn = () => {
         setErrText('Please ensure both fields are filled.');
       } else {
         if (newPassword === newPasswordConfirm) {
-          console.log('Passwords  Matched');
+       
           saveUser({ ...authSlice?.user, password: newPassword, mustChangePassword: false })
             .unwrap()
             .then(() => {
