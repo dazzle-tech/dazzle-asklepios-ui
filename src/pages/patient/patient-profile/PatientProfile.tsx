@@ -449,9 +449,9 @@ const PatientProfile = () => {
   const fetchPatientImageResponse = useFetchAttachmentQuery(
     {
       type: 'PATIENT_PROFILE_PICTURE',
-      refKey: localPatient.key,
+      refKey: localPatient?.key,
     },
-    { skip: !localPatient.key }
+    { skip: !localPatient?.key }
   );
 
   const handleSelectPatient = data => {
@@ -675,7 +675,7 @@ const isSelectedRelation = rowData => {
         upload({
           formData: formData,
           type: 'PATIENT_PROFILE_PICTURE',
-          refKey: localPatient.key,
+          refKey: localPatient?.key,
           details: "Profile Picture",
           accessType: '',
           createdBy:authSlice.user.key
