@@ -407,6 +407,7 @@ const DiagnosticsOrder = () => {
 
                 dispatch(notify('Start New Order whith ID:' + response?.data?.orderId));
                 setOrders(response?.data);
+                setOpenTestsModal(true);
 
             } catch (error) {
                 console.error("Error saving prescription:", error);
@@ -783,11 +784,11 @@ const DiagnosticsOrder = () => {
 
                     <div className='top-container'>
 
-                        <TestDropdown handleItemClick={handleItemClick}
+                        {/* <TestDropdown handleItemClick={handleItemClick}
                             disabled={orders.key ? orders?.statusLkey !== '164797574082125' : true}
                             flag={flag} setFlag={setFlag}
-                            openTest={openTestsModal} setOpenTests={setOpenTestsModal} />
-
+                            openTest={openTestsModal} setOpenTests={setOpenTestsModal} /> */}
+                        
                         <div className='icon-style'>
                             <GrTestDesktop size={18} />
                         </div>
@@ -809,6 +810,10 @@ const DiagnosticsOrder = () => {
                             >
                                 Show canceled test
                             </Checkbox>
+                            <MyButton 
+                            disabled={orders.key == null }
+                            onClick={()=>setOpenTestsModal(true)}
+                             >Add Test </MyButton>
                             <MyButton
                                 disabled={orders.key !== null ? selectedRows.length === 0 : true}
                                 prefixIcon={() => <CloseOutlineIcon />}
