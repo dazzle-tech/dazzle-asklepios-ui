@@ -210,6 +210,12 @@ const DentalChart = ({
             const y = 50 + 60 * Math.sin(angle - Math.PI);
             const rotationDeg = (idx - total / 2) * 11;
             const selected = _tooth.toothNumber === selectedTooth.toothNumber;
+            const hasCondition = (_tooth as any).toothActions?.some(
+              action => dentalActionsMap?.[action.actionKey]?.type === 'condition'
+            );
+            const hasTreatment = (_tooth as any).toothActions?.some(
+              action => dentalActionsMap?.[action.actionKey]?.type === 'treatment'
+            );
             return (
               <div
                 key={_tooth.key}
@@ -237,6 +243,8 @@ const DentalChart = ({
                       chartTooth={_tooth}
                       selected={selected}
                       type={dentalActionsMap?.[(_tooth as any)?.toothActions[0]?.actionKey]?.type}
+                      hasCondition={hasCondition}
+                      hasTreatment={hasTreatment}
                     />
                   </div>
                 </Button>
@@ -253,6 +261,12 @@ const DentalChart = ({
             const y = 50 + 65 * Math.sin(angle);
             const rotationDeg = (idx - total / 2) * 11;
             const selected = _tooth.toothNumber === selectedTooth.toothNumber;
+            const hasCondition = (_tooth as any).toothActions?.some(
+              action => dentalActionsMap?.[action.actionKey]?.type === 'condition'
+            );
+            const hasTreatment = (_tooth as any).toothActions?.some(
+              action => dentalActionsMap?.[action.actionKey]?.type === 'treatment'
+            );
             return (
               <div
                 key={_tooth.key}
@@ -279,6 +293,8 @@ const DentalChart = ({
                       chartTooth={_tooth}
                       selected={selected}
                       type={dentalActionsMap?.[(_tooth as any)?.toothActions[0]?.actionKey]?.type}
+                      hasCondition={hasCondition}
+                      hasTreatment={hasTreatment}
                     />
                   </div>
                 </Button>
