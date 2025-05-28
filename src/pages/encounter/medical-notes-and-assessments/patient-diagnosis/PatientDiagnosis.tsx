@@ -96,13 +96,12 @@ const PatientDiagnosis = ({ patient, encounter }) => {
 
   const [savePatientDiagnose, savePatientDiagnoseMutation] = useSavePatientDiagnoseMutation();
   const [diagnosisIcd, setDiagnosisIcd] = useState(null);
-  const [selectedDiagnose, setSelectedDiagnose] = useState<ApPatientDiagnose>({
+  const [selectedDiagnose, setSelectedDiagnose] = useState<any>({
     ...newApPatientDiagnose,
     visitKey: encounter.key,
     patientKey: patient.key,
     createdBy: 'Administrator'
   });
-
   useEffect(() => {
     if (patientDiagnoseListResponse.data?.object?.length > 0) {
       setSelectedDiagnose(patientDiagnoseListResponse.data.object[0]);
@@ -173,17 +172,11 @@ const PatientDiagnosis = ({ patient, encounter }) => {
               disabled={true}
              
               value={
-                icdListResponseData?.object.find(
-                  item => item.key === selectedDiagnose?.diagnoseCode
-                )
+              selectedDiagnose?.diagnosisObject
                   ? `${
-                      icdListResponseData.object.find(
-                        item => item.key === selectedDiagnose?.diagnoseCode
-                      )?.icdCode
+                      selectedDiagnose?.diagnosisObject?.icdCode
                     }, ${
-                      icdListResponseData.object.find(
-                        item => item.key === selectedDiagnose?.diagnoseCode
-                      )?.description
+                     selectedDiagnose?.diagnosisObject?.description
                     }`
                   : ''
               }
