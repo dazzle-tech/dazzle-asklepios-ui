@@ -37,7 +37,7 @@ const handleDownload = attachment => {
     a.click();
     window.URL.revokeObjectURL(url);
 };
-const PatientAttachment = ({ localPatient }) => {
+const PatientAttachment = ({ localPatient ,refetchAttachmentList,setRefetchAttachmentList }) => {
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
     const [selectedAttachment, setSelectedAttachment] = useState(null);
@@ -214,6 +214,12 @@ const PatientAttachment = ({ localPatient }) => {
             }
         }
     }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
+      useEffect(() => {
+        if (refetchAttachmentList) {
+          attachmentRefetch();
+        }
+        setRefetchAttachmentList(false)
+      }, [refetchAttachmentList]);
     return (
         <div className="tab-main-container">
             <div className="tab-content-btns">
