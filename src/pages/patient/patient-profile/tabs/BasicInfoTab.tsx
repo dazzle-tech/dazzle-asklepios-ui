@@ -129,7 +129,6 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
             />
           ) : null}
           <MyInput
-            width={180}
             vr={validationResult}
             column
             fieldLabel="Private Patient"

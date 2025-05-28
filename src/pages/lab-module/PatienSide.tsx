@@ -202,7 +202,7 @@ const PatientSide = ({ patient, encounter }) => {
                     >
                         <Text className='info-label'>BMI</Text>
                         <Text className='info-value'
-                        > {Math.sqrt((bodyMeasurements?.weight * bodyMeasurements?.height) / 3600).toFixed(2)}</Text>
+                        > {(bodyMeasurements?.weight / ((bodyMeasurements?.height / 100) ** 2)).toFixed(2)}</Text>
 
                     </div>
                 </div>

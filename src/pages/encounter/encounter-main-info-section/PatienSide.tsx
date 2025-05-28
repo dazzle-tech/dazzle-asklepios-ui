@@ -29,20 +29,7 @@ import './styles.less'
 const PatientSide = ({ patient, encounter }) => {
     const profileImageFileInputRef = useRef(null);
     const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
-    const [showCanceled, setShowCanceled] = useState(true);
 
-    const filters = [
-        {
-            fieldName: 'patient_key',
-            operator: 'match',
-            value: patient?.key || undefined
-        },
-        {
-            fieldName: "status_lkey",
-            operator: showCanceled ? "notMatch" : "match",
-            value: "3196709905099521",
-        }
-    ];
 
 
     const { data: patirntObservationlist } = useGetObservationSummariesQuery({
@@ -211,7 +198,7 @@ const PatientSide = ({ patient, encounter }) => {
                     >
                         <Text className='info-label'>BMI</Text>
                         <Text className='info-value'
-                        > {Math.sqrt((bodyMeasurements?.weight * bodyMeasurements?.height) / 3600).toFixed(2)}</Text>
+                        > {(bodyMeasurements?.weight / ((bodyMeasurements?.height / 100) ** 2)).toFixed(2)}</Text>
 
                     </div>
                 </div>
@@ -219,6 +206,7 @@ const PatientSide = ({ patient, encounter }) => {
                     <div className='info-column'>
                         <Text className='info-label'>BSA</Text>
                         <Text className='info-value'>
+                      
                             {Math.sqrt((bodyMeasurements?.weight * bodyMeasurements?.height) / 3600).toFixed(2)}
                         </Text>
 
