@@ -30,9 +30,8 @@ const MyStepper: React.FC<MyStepperProps> = ({
 }) => {
     const [width, setWidth] = useState(40);
     const [height, setHeight] = useState(40);
-    const [connectorLength, setConnectorLength] = useState(24); 
-      const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-      console.log("Window width on load in stepper:", windowWidth);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    
 useEffect(() => {
   const handleResize = () => {
     const w = window.innerWidth;
