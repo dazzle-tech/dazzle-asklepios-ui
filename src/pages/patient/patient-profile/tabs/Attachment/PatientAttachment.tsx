@@ -37,7 +37,7 @@ const handleDownload = attachment => {
     a.click();
     window.URL.revokeObjectURL(url);
 };
-const PatientAttachment = ({ localPatient }) => {
+const PatientAttachment = ({ localPatient ,refetchAttachmentList,setRefetchAttachmentList }) => {
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
     const [selectedAttachment, setSelectedAttachment] = useState(null);
@@ -187,7 +187,7 @@ const PatientAttachment = ({ localPatient }) => {
                 ...(localPatient?.key
                     ? [
                         {
-                            fieldName: 'reference_object_key',
+                            fieldName: 'patient_key',
                             operator: 'match',
                             value: localPatient.key,
                         },
@@ -214,6 +214,12 @@ const PatientAttachment = ({ localPatient }) => {
             }
         }
     }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
+      useEffect(() => {
+        if (refetchAttachmentList) {
+          attachmentRefetch();
+        }
+        setRefetchAttachmentList(false)
+      }, [refetchAttachmentList]);
     return (
         <div className="tab-main-container">
             <div className="tab-content-btns">
@@ -236,7 +242,7 @@ const PatientAttachment = ({ localPatient }) => {
                     Delete
                 </MyButton>
             </div>
-            <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} actionType={actionType} setActionType={setActionType} refecthData={attachmentRefetch} attachmentSource={localPatient} selectedPatientAttacment={selectedAttachment} setSelectedPatientAttacment={setSelectedAttachment} requestedPatientAttacment={requestedPatientAttacment} setRequestedPatientAttacment={setRequestedPatientAttacment} attatchmentType="PATIENT_PROFILE_ATTACHMENT" />
+            <AttachmentModal isOpen={attachmentsModalOpen} setIsOpen={setAttachmentsModalOpen} actionType={actionType} setActionType={setActionType} refecthData={attachmentRefetch} attachmentSource={localPatient} selectedPatientAttacment={selectedAttachment} setSelectedPatientAttacment={setSelectedAttachment} requestedPatientAttacment={requestedPatientAttacment} setRequestedPatientAttacment={setRequestedPatientAttacment} attatchmentType="PATIENT_PROFILE_ATTACHMENT" patientKey={localPatient?.key} />
             <MyTable
                 height={200}
                 loading={loadAttachment}

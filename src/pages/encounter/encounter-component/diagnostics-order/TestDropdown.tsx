@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Dropdown, Input, InputGroup, Text } from 'rsuite';
-import SearchIcon from '@rsuite/icons/Search';
+import ArrowDownIcon from '@rsuite/icons/ArrowDown';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetDiagnosticsTestListQuery } from '@/services/setupService';
 import './styles.less';
 import MyLabel from '@/components/MyLabel';
-const TestDropdown = ({  handleItemClick, disabled ,flag,setFlag }) => {
+const TestDropdown = ({  handleItemClick, disabled ,flag,setFlag,openTest,setOpenTests }) => {
     const [searchKeyword, setSearchKeyword] = useState('');
     const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
     const { data: testsList } = useGetDiagnosticsTestListQuery(listTestRequest);
@@ -42,15 +42,15 @@ const TestDropdown = ({  handleItemClick, disabled ,flag,setFlag }) => {
 
     return (<div>
        
-        <InputGroup inside className='input-search'>
+        <InputGroup inside className='input-search'  disabled={disabled}>
             <Input
-                disabled={disabled}
+               
                 placeholder={'Search Test '}
                 value={searchKeyword}
                 onChange={handleSearch}
             />
-            <InputGroup.Button>
-                <SearchIcon />
+            <InputGroup.Button onClick={()=>setOpenTests(true)}>
+                <ArrowDownIcon  onClick={()=>setOpenTests(true)}/>
             </InputGroup.Button>
         </InputGroup>
         {searchKeyword && (

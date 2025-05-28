@@ -337,6 +337,7 @@ export interface ApAttachment {
 	isValid:boolean;
 	details:string;
 	accessTypeLkey:string;
+	patientKey:string;
 } 
 
 export interface ApAudiometryPuretone { 
@@ -2740,6 +2741,7 @@ export interface ApUserAccessPrivatePatient {
 	updatedAt:number;
 	deletedAt:number;
 	reason:string;
+	patientKey:string;
 } 
 
 export interface ApUserFacilities { 

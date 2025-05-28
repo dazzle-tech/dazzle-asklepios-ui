@@ -1,21 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import Translate from '@/components/Translate';
 import {
-    faHandDots,
-    faTriangleExclamation
-    ,
     faIdCard,
     faUser,
     faFileWaveform
-
-
 } from '@fortawesome/free-solid-svg-icons';
-import { useGetEncountersQuery } from '@/services/encounterService';
-import {
-    useGetAllergiesQuery,
-    useSaveAllergiesMutation,
-    useGetWarningsQuery
-} from '@/services/observationService';
 import React from 'react';
 import {
     Button,
@@ -28,11 +16,10 @@ import {
 
 } from 'rsuite';
 import {
-    useUploadMutation,
     useFetchAttachmentQuery,
 } from '@/services/attachmentService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { FaWeight, FaRulerVertical, FaUserCircle, FaDumbbell, FaUserAlt, FaTint, FaMars, FaVenus, FaUserNinja, FaCalendar } from 'react-icons/fa';
+import { FaWeight } from 'react-icons/fa';
 import { calculateAgeFormat } from '@/utils';
 import { useGetObservationSummariesQuery } from '@/services/observationService';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -42,20 +29,7 @@ import './styles.less'
 const PatientSide = ({ patient, encounter }) => {
     const profileImageFileInputRef = useRef(null);
     const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
-    const [showCanceled, setShowCanceled] = useState(true);
 
-    const filters = [
-        {
-            fieldName: 'patient_key',
-            operator: 'match',
-            value: patient?.key || undefined
-        },
-        {
-            fieldName: "status_lkey",
-            operator: showCanceled ? "notMatch" : "match",
-            value: "3196709905099521",
-        }
-    ];
 
 
     const { data: patirntObservationlist } = useGetObservationSummariesQuery({
@@ -137,7 +111,7 @@ const PatientSide = ({ patient, encounter }) => {
 
             </div>
 
-            <Text className="patient-info">
+            <Text >
                 <FontAwesomeIcon icon={faIdCard} className='icon-color' /> <span className='section-title'>Document  Information</span>
             </Text>
             <br />
@@ -224,7 +198,7 @@ const PatientSide = ({ patient, encounter }) => {
                     >
                         <Text className='info-label'>BMI</Text>
                         <Text className='info-value'
-                        > {Math.sqrt((bodyMeasurements?.weight * bodyMeasurements?.height) / 3600).toFixed(2)}</Text>
+                        > {(bodyMeasurements?.weight / ((bodyMeasurements?.height / 100) ** 2)).toFixed(2)}</Text>
 
                     </div>
                 </div>
@@ -232,6 +206,7 @@ const PatientSide = ({ patient, encounter }) => {
                     <div className='info-column'>
                         <Text className='info-label'>BSA</Text>
                         <Text className='info-value'>
+                      
                             {Math.sqrt((bodyMeasurements?.weight * bodyMeasurements?.height) / 3600).toFixed(2)}
                         </Text>
 
@@ -241,7 +216,7 @@ const PatientSide = ({ patient, encounter }) => {
                     >
                         <Text className='info-label'>Blood Group</Text>
                         <Text className='info-value'
-                        >{encounter.bloodGroup ??"Nan"}</Text>
+                        >{encounter?.bloodGroup ??"Nan"}</Text>
 
                     </div>
                 </div>

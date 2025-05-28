@@ -202,7 +202,7 @@ const PatientSide = ({ patient, encounter }) => {
                     >
                         <Text className='info-label'>BMI</Text>
                         <Text className='info-value'
-                        > {Math.sqrt((bodyMeasurements?.weight * bodyMeasurements?.height) / 3600).toFixed(2)}</Text>
+                        > {(bodyMeasurements?.weight / ((bodyMeasurements?.height / 100) ** 2)).toFixed(2)}</Text>
 
                     </div>
                 </div>
@@ -219,7 +219,7 @@ const PatientSide = ({ patient, encounter }) => {
                     >
                         <Text className='info-label'>Blood Group</Text>
                         <Text className='info-value'
-                        > {encounter?.bloodGroup??"NaN"}</Text>
+                        >{encounter?.bloodGroup ??"Nan"}</Text>
 
                     </div>
                 </div>
@@ -228,13 +228,13 @@ const PatientSide = ({ patient, encounter }) => {
             <Divider style={{ margin: '4px 4px' }} />
             <div className='info-section'>
                 <MyButton
-                    
-                       onClick={OpenAllargyModal}
+                  onClick={OpenAllargyModal}
+                  disabled={patient?.hasAllergy ? false : true}
                     prefixIcon={() => <FontAwesomeIcon icon={faHandDots} />}
                     backgroundColor={patient?.hasAllergy ? "var(--primary-orange)" : "var(--deep-blue)"}
                 >Allergy</MyButton>
                 <MyButton
-                 
+                  disabled={patient?.hasWarning ? false : true}
                  backgroundColor={patient?.hasWarning ? "var(--primary-orange)" : "var(--deep-blue)"}
                     onClick={OpenWarningModal}
                     prefixIcon={() => <FontAwesomeIcon icon={faTriangleExclamation} />}

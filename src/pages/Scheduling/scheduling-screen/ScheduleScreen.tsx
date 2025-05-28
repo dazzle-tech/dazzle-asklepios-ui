@@ -38,6 +38,7 @@ import ArrowLeftLineIcon from '@rsuite/icons/ArrowLeftLine';
 import ArrowRightLineIcon from '@rsuite/icons/ArrowRightLine';
 import MyButton from "@/components/MyButton/MyButton";
 import Translate from "@/components/Translate";
+import { useFetchAttachmentsListQuery } from "@/services/attachmentService";
 
 const ScheduleScreen = () => {
     const localizer = momentLocalizer(moment);
@@ -65,7 +66,7 @@ const ScheduleScreen = () => {
     const [totalAppointmentsText, setTotalAppointmentsText] = useState<string>()
     // const [localVisibleAppointments, setLocalVisibleAppointments] = useState([]);
     const [calendarDate, setCalendarDate] = useState<Date>(null);
-
+    const [finalAppointments, setFinalAppointments] = useState();
 
 
     useEffect(() => {
@@ -78,14 +79,15 @@ const ScheduleScreen = () => {
         data: appointments,
         refetch: refitchAppointments,
         error,
-        isLoading:isLoadingAppointments,
-        isFetching:isFetchingAppointments
+        isLoading: isLoadingAppointments,
+        isFetching: isFetchingAppointments
     } = useGetAppointmentsQuery({
         resource_type: selectedResourceType?.resourcesType || null,
         facility_id: selectedFacility?.facilityKey || null,
         resources: selectedResources ? selectedResources.resourceKey : [],
 
     });
+
 
 
 
@@ -242,9 +244,38 @@ const ScheduleScreen = () => {
         ? appointmentsData
         : appointmentsData.filter((event) => !event.hidden);
 
+
+    const appointmn = visibleAppointments?.map(appt => appt.appointmentData?.patient?.key).filter(Boolean) || [];
+    const { data: attachments = [], isLoading } = useFetchAttachmentsListQuery(
+        {
+            type: 'PATIENT_PROFILE_PICTURE',
+            refKeys: appointmn,
+        },
+        { skip: appointmn.length === 0 }
+    );
+
     useEffect(() => {
-        console.log(visibleAppointments)
-    }, [visibleAppointments])
+        const attachmentMap = new Map();
+        attachments.forEach(att => {
+            attachmentMap.set(att.referenceObjectKey, att);
+        });
+
+        const updatedAppointments = visibleAppointments.map(appt => {
+            const appointmentData = appt.appointmentData || {};
+            return {
+                ...appt,
+                appointmentData: {
+                    ...appointmentData,
+                    profilePicture: attachmentMap.get(appointmentData.patientKey)?.fileContent || null,
+                }
+            };
+        });
+
+        const areEqual = JSON.stringify(updatedAppointments) === JSON.stringify(finalAppointments);
+        if (!areEqual) {
+            setFinalAppointments(updatedAppointments);
+        }
+    }, [visibleAppointments, attachments]);
 
 
     const handleChangeAppointment = () => {
@@ -275,10 +306,8 @@ const ScheduleScreen = () => {
         const [showDatePicker, setShowDatePicker] = useState(false);
 
         useEffect(() => {
-            console.log(calendarDate)
             if (calendarDate) {
-                console.log("Navigating to:", calendarDate.toDateString());
-                setCalendarDate(calendarDate); // لتحديث التاريخ المعروض
+                setCalendarDate(calendarDate);
             }
         }, [calendarDate])
 
@@ -290,8 +319,6 @@ const ScheduleScreen = () => {
         };
 
         useEffect(() => {
-            console.log("Triggered useEffect with: ", { label, currentView, visibleAppointments });
-
             switch (currentView) {
                 case "day": {
                     setTotalAppointmentsText("today appointments");
@@ -384,16 +411,16 @@ const ScheduleScreen = () => {
 
 
 
-      useEffect(() => {
-          if (isFetchingAppointments||isLoadingAppointments) {
-           dispatch(showSystemLoader());
-         } else {
-           dispatch(hideSystemLoader());
-         }
-     
-       }, [isLoadingAppointments,isFetchingAppointments])
+        useEffect(() => {
+            if (isFetchingAppointments || isLoadingAppointments) {
+                dispatch(showSystemLoader());
+            } else {
+                dispatch(hideSystemLoader());
+            }
 
-       
+        }, [isLoadingAppointments, isFetchingAppointments])
+
+
 
         return (
             <div style={{ marginInline: "15px" }} className="rbc-toolbar">
@@ -592,6 +619,8 @@ const ScheduleScreen = () => {
 
         const status = event?.appointmentData?.appointmentStatus;
         const backgroundColor = getBackgroundColor(status);
+        const image = event?.appointmentData?.profilePicture
+        const content_type = event?.appointmentData?.profilePicture
 
         return (
             <div style={{
@@ -600,8 +629,16 @@ const ScheduleScreen = () => {
                 gap: "9px",
                 backgroundColor,
                 borderRadius: "8px",
+
             }}>
-                <Avatar size="xs" circle src="https://i.pravatar.cc/150?u=1" />
+                <div style={{marginRight:"5px"}} >
+                    <Avatar size="xs" circle
+                        src={
+                            image ? `data:${content_type};base64,${image}`
+                                : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
+                        } />
+                </div>
+
                 <div>
                     <p style={{ fontSize: "12px", color: "black" }}>{event.title}</p>
                     <p style={{
@@ -840,7 +877,7 @@ const ScheduleScreen = () => {
                         })}
                         formats={formats}
                         localizer={localizer}
-                        events={visibleAppointments}
+                        events={finalAppointments}
                         step={60}
                         timeslots={1}
                         onSelectSlot={(slotInfo) => {

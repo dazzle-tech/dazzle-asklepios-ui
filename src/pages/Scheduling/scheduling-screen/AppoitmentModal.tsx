@@ -1,12 +1,12 @@
 import MyInput from "@/components/MyInput";
 import Translate from "@/components/Translate";
 import QuickPatient from "@/pages/patient/facility-patient-list/QuickPatient";
-import { ApAppointment, ApPatient } from "@/types/model-types";
+import { ApAppointment, ApAttachment, ApPatient } from "@/types/model-types";
 import { newApAppointment, newApPatient } from "@/types/model-types-constructor";
 import { faBan, faBolt, faBroom, faFile, faListCheck, faPlus, faUpload, faUser } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useState } from "react";
-import { Button, ButtonToolbar, Col, DatePicker, Divider, Drawer, FlexboxGrid, Form, Grid, IconButton, Input, InputGroup, Modal, Pagination, Panel, Placeholder, Row, SelectPicker, Stack, Table } from "rsuite";
+import { Avatar, Button, ButtonToolbar, Col, DatePicker, Divider, Drawer, FlexboxGrid, Form, Grid, IconButton, Input, InputGroup, Modal, Pagination, Panel, Placeholder, Row, SelectPicker, Stack, Table } from "rsuite";
 import InfoRoundIcon from '@rsuite/icons/InfoRound';
 import FileUploadIcon from '@rsuite/icons/FileUpload';
 import DocPassIcon from '@rsuite/icons/DocPass';
@@ -14,7 +14,7 @@ import BlockIcon from '@rsuite/icons/Block';
 import CheckIcon from '@rsuite/icons/Check';
 import SearchIcon from '@rsuite/icons/Search';
 import { initialListRequest, ListRequest } from "@/types/types";
-import { addFilterToListRequest, fromCamelCaseToDBName } from "@/utils";
+import { addFilterToListRequest, conjureValueBasedOnKeyFromList, fromCamelCaseToDBName } from "@/utils";
 import { useGetPatientsQuery } from "@/services/patientService";
 import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
 import TrashIcon from '@rsuite/icons/Trash';
@@ -30,6 +30,7 @@ import AdvancedModal from "@/components/AdvancedModal";
 import MyButton from "@/components/MyButton/MyButton";
 import { green } from "@mui/material/colors";
 import "./AppoitmentModal.less";
+import { useFetchAttachmentQuery } from "@/services/attachmentService";
 
 
 
@@ -92,7 +93,28 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     const [rowPeriods, setRowPeriods] = useState()
     const [filteredResourcesList, setFilteredResourcesList] = useState([])
     const [filteredDates, setFilteredDates] = useState([]);
+    const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
 
+
+    const fetchPatientImageResponse = useFetchAttachmentQuery(
+        {
+            type: 'PATIENT_PROFILE_PICTURE',
+            refKey: localPatient.key,
+        },
+        { skip: !localPatient.key }
+    );
+
+    useEffect(() => {
+        if (
+            fetchPatientImageResponse.isSuccess &&
+            fetchPatientImageResponse.data &&
+            fetchPatientImageResponse.data.key
+        ) {
+            setPatientImage(fetchPatientImageResponse.data);
+        } else {
+            setPatientImage(undefined);
+        }
+    }, [fetchPatientImageResponse]);
 
     const { data: resourcesAvailability } = useGetResourcesAvailabilityQuery({
         resource_key: appointment?.resourceKey,
@@ -317,7 +339,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                         <MyInput
                             width={150}
                             height="40px"
-                            required
+                             
                             vr={validationResult}
                             column
                             fieldLabel="Search Criteria"
@@ -692,9 +714,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
     }, [appointment?.durationLkey])
 
 
-    useEffect(() => {
-        console.log(availableDatesInMonth)
-    }, [availableDatesInMonth])
+
 
     useEffect(() => {
         const today = new Date();
@@ -718,7 +738,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
         <div>
             <AdvancedModal
                 leftWidth={"25%"}
-                rightWidth = {"75%"}
+                rightWidth={"75%"}
                 key={modalKey}
                 isLeftClosed={!isSideSearchOpen}
                 defaultClose={true}
@@ -739,7 +759,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                     </div>}
                 rightTitle='Add Appointment'
                 rightContent={
-                    <div  className="appointment-wrapper">
+                    <div className="appointment-wrapper">
                         <div className="appointment-content-wrapper">
                             <div className="left-input">
                                 {from === 'Schedule' &&
@@ -779,153 +799,78 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                         <p style={{ fontSize: '12px', color: '#A1A9B8', fontWeight: 600 }}>
                                             <Translate>Patient Information</Translate>
                                         </p>}>
-                                    <Form
-                                        layout="inline" fluid>
-                                        <div className="show-grid">
-                                            <div className="flex-container"  >
+                                    <Panel bordered>
+                                        <div className="flex-container"  >
 
-                                                <div className="input-wrapper" style={{ flex: 1 }}>
-                                                    <MyInput
-                                                        height={35}
-                                                        width={"100%"}
-                                                        vr={validationResult}
-                                                        column
-                                                        fieldLabel="MRN"
-                                                        fieldName="patientMrn"
-                                                        record={localPatient}
-                                                        setRecord={setLocalPatient}
-                                                        disabled
-                                                    />
+                                            <div className="input-wrapper" style={{ flex: 2, display: "flex", alignItems: "center" }}>
+                                                <div>
+                                                    <Avatar size="xl" circle src={
+                                                        patientImage && patientImage.fileContent
+                                                            ? `data:${patientImage.contentType};base64,${patientImage.fileContent}`
+                                                            : 'https://img.icons8.com/?size=150&id=ZeDjAHMOU7kw&format=png'
+                                                    } />
                                                 </div>
 
-                                                <div style={{ flex: 6, display: "flex", gap: "10px", padding: 2 }}>
-                                                    <div className="input-wrapper" style={{ flex: 2 }}>
-                                                        <MyInput
-                                                            height={35}
-                                                            width={"100%"}
-                                                            vr={validationResult}
-                                                            column
-                                                            fieldName="fullName"
-                                                            record={localPatient}
-                                                            setRecord={setLocalPatient}
-                                                            disabled
-                                                        />
-                                                    </div>
+                                                <div style={{ marginLeft: "8px" }}>
+                                                    <p style={{ fontSize: '15px' }}>
+                                                        {localPatient?.fullName}
+                                                    </p>
+                                                    <p style={{ fontSize: '12px', color: '#A1A9B8', fontWeight: 600 }}>
+                                                        {/* {localPatient?.genderLkey} */}
+                                                        <FontAwesomeIcon icon={faUser} />{`${localPatient?.genderLvalue?.lovDisplayVale || 'N/A'}${patientAge?.patientAge ? `, ${patientAge.patientAge}y old` : ''}`}
+
+
+                                                    </p>
+
+                                                    <p style={{ fontSize: '12px', color: '#A1A9B8' }}>
+                                                        {localPatient?.patientMrn ? `#${localPatient.patientMrn}` : ''}
+                                                    </p>
+                                                </div>
+
+                                            </div>
+
+
+                                            <div style={{ flex: 4, display: "flex", alignItems: "center", gap: "10px", padding: 2 }}>
+                                                <Divider style={{ height: "50px" }} vertical />
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <p style={{ fontSize: '10px', color: '#A1A9B8' }}>
+                                                        Document Type
+                                                    </p>
+                                                    {localPatient?.documentTypeLvalue?.lovDisplayVale || '-'}
+
+                                                </div>
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+
                                                     <div className="input-wrapper" style={{ flex: 1 }}>
-                                                        <MyInput
-                                                            height={35}
-                                                            required
-                                                            width={"100%"}
-                                                            vr={validationResult}
-                                                            column
-                                                            fieldName="documentNo"
-                                                            record={localPatient}
-                                                            setRecord={setLocalPatient}
-                                                            disabled
-                                                        />
+                                                        <p style={{ fontSize: '10px', color: '#A1A9B8' }}>
+                                                            Document No
+                                                        </p>
+                                                        {localPatient?.documentNo || "-"}
                                                     </div>
+
+                                                </div>
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
                                                     <div className="input-wrapper" style={{ flex: 1 }}>
-                                                        <MyInput
-                                                            height={35}
-                                                            width={"100%"}
-                                                            vr={validationResult}
-                                                            column
-                                                            fieldLabel="Document Type"
-                                                            fieldType="select"
-                                                            fieldName="documentTypeLkey"
-                                                            selectData={docTypeLovQueryResponse?.object ?? []}
-                                                            selectDataLabel="lovDisplayVale"
-                                                            selectDataValue="key"
-                                                            record={localPatient}
-                                                            setRecord={setLocalPatient}
-                                                            disabled
-                                                        />
+                                                        <p style={{ fontSize: '10px', color: '#A1A9B8' }}>
+                                                            Mobile Number
+                                                        </p>
+                                                        {localPatient?.mobileNumber || '-'}
                                                     </div>
+
+                                                </div>
+                                                <div className="input-wrapper" style={{ flex: 1 }}>
+                                                    <div className="input-wrapper" style={{ flex: 1 }}>
+                                                        <p style={{ fontSize: '10px', color: '#A1A9B8' }}>
+                                                            Email
+                                                        </p>
+                                                        {localPatient?.email || '-'}
+                                                    </div>
+
                                                 </div>
                                             </div>
                                         </div>
-                                    </Form>
-                                    <Form layout="inline" fluid>
-                                        <div className="show-grid">
-                                            <div className="flex-container">
-                                                <div className="input-wrapper" style={{ flex: 1 }}>
-                                                    <MyInput
-                                                        width={"100%"}
-                                                        height={35}
-                                                        fieldLabel="Patient Age"
-                                                        vr={validationResult}
-                                                        column
-                                                        fieldName="patientAge"
-                                                        record={patientAge}
-                                                        setRecord={setPatientAge}
-                                                        disabled
-                                                    />
-                                                </div>
-                                                <div className="input-wrapper" style={{ flex: 3 }}>
-                                                    <MyInput
-                                                        // vr={validationResult}
-                                                        width={"100%"}
-                                                        height={35}
-                                                        column
-                                                        fieldType="date"
-                                                        fieldLabel="Birth date"
-                                                        fieldName="dob"
-                                                        record={localPatient}
-                                                        setRecord={setLocalPatient}
-                                                        disabled
-                                                    />
-                                                </div>
-                                                <div className="input-wrapper" style={{ flex: 3 }}>
-                                                    <MyInput
-                                                        width={"100%"}
-                                                        height={35}
-                                                        required
-                                                        vr={validationResult}
-                                                        column
-                                                        fieldLabel="Sex At birth"
-                                                        fieldType="select"
-                                                        fieldName="genderLkey"
-                                                        selectData={genderLovQueryResponse?.object ?? []}
-                                                        selectDataLabel="lovDisplayVale"
-                                                        selectDataValue="key"
-                                                        record={localPatient}
-                                                        setRecord={setLocalPatient}
-                                                        disabled
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </Form>
-                                    <Form layout="inline" fluid>
-                                        <div className="show-grid">
-                                            <div className="flex-container">
-                                                <div className="input-wrapper" style={{ flex: 1 }}>
-                                                    <MyInput
-                                                        width={"100%"}
-                                                        height={35}
-                                                        vr={validationResult}
-                                                        column
-                                                        fieldName="mobileNumber"
-                                                        record={localPatient}
-                                                        setRecord={setLocalPatient}
-                                                        disabled
-                                                    />
-                                                </div>
-                                                <div className="input-wrapper" style={{ flex: 1 }}>
-                                                    <MyInput
-                                                        height={35}
-                                                        width={"100%"}
-                                                        vr={validationResult}
-                                                        column
-                                                        fieldName="email"
-                                                        record={localPatient}
-                                                        setRecord={setLocalPatient}
-                                                        disabled
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </Form>
+                                    </Panel>
+
                                 </Panel>
                                 <Panel
                                     header={
@@ -976,7 +921,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                     <MyInput
                                                         height={35}
                                                         disabled={showOnly}
-                                                        required
+                                                         
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -1013,7 +958,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper" style={{ flex: 1 }}>
                                                     <MyInput
                                                         height={35}
-                                                        required
+                                                         
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -1033,7 +978,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                         <div style={{ flex: 1 }}>
                                                             <MyInput
                                                                 height={35}
-                                                                required
+                                                                 
                                                                 width={"100%"}
                                                                 vr={validationResult}
                                                                 column
@@ -1200,7 +1145,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper" style={{ flex: 1 }}>
                                                     <MyInput
                                                         disabled={showOnly}
-                                                        required
+                                                         
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -1222,7 +1167,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                         disabled={showOnly}
                                                         onChange={setInstructions}
                                                         value={instructions}
-                                                        style={{ width: "100%",height:"50px" }}
+                                                        style={{ width: "100%", height: "50px" }}
                                                         rows={3}
                                                     />
                                                 </div>
@@ -1234,7 +1179,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper" style={{ flex: 1 }}>
                                                     <MyInput
                                                         disabled={showOnly}
-                                                        required
+                                                         
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -1263,7 +1208,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper" style={{ flex: 1 }}>
                                                     <MyInput
                                                         disabled={showOnly}
-                                                        required
+                                                         
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -1285,7 +1230,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper" style={{ flex: 9 }}>
                                                     <MyInput
                                                         disabled={showOnly}
-                                                        required
+                                                         
                                                         width={"100%"}
                                                         vr={validationResult}
                                                         column
@@ -1315,6 +1260,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                     setIsOpen={setAttachmentsModalOpen}
                                                     attachmentSource={localPatient}
                                                     attatchmentType={'APPOINTMENT_ATTACHMENT'}
+                                                    patientKey={localPatient?.key}
                                                 />
                                             </div>
                                         </div>
@@ -1349,7 +1295,7 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                                                 <div className="input-wrapper"  >
                                                     <MyInput
                                                         disabled={!appointment?.isReminder}
-                                                        required
+                                                         
                                                         width={170}
                                                         vr={validationResult}
                                                         column
@@ -1390,9 +1336,9 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                     </div>}
 
                 leftContent={
-                    <div className="appointment-wrapper-left"  style={{ marginBottom: "20px" }}>
-                        <div   className="show-grid" >
-                            <div className="flex-container" style={{ justifyContent: "space-between"  }}   >
+                    <div className="appointment-wrapper-left" style={{ marginBottom: "20px" }}>
+                        <div className="show-grid" >
+                            <div className="flex-container" style={{ justifyContent: "space-between" }}   >
                                 <p className="left-side-title" >Patients List</p>
                                 <IconButton
                                     onClick={() => setIsSideSearchOpen(false)}
@@ -1405,14 +1351,14 @@ const AppointmentModal = ({ isOpen, onClose, resourceType, facility, onSave, app
                             style={{
                                 display: 'flex',
                                 flexDirection: 'column',
-                                width:"100%",
+                                width: "100%",
                                 gap: '16px',
                                 padding: '16px',
                                 maxHeight: '700px',
                                 overflowY: 'auto',
                                 backgroundColor: '#F5F7FB',
                                 borderRadius: '12px',
-                             }}
+                            }}
                         >
                             {isFetchingPatients ? (
                                 Array.from({ length: 4 }).map((_, i) => (

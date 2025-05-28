@@ -24,23 +24,18 @@ import {
   Table
 } from "rsuite";
 import './styles.less';
-import {formatDateWithoutSeconds } from "@/utils";
+import { formatDateWithoutSeconds } from "@/utils";
 
-const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, saveTest ,fetchTest ,fecthSample}) => {
+const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, saveTest, fetchTest, fecthSample }) => {
   const dispatch = useAppDispatch();
   const [sample, setSample] = useState({ ...newApDiagnosticOrderTestsSamples });
-  const [selectedSampleDate, setSelectedSampleDate] = useState(null);
+  const [selectedSampleDate, setSelectedSampleDate] = useState({ dateTime: null });
   const { data: ValueUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
   const { data: SampleContainerLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_SAMPLE_CONTAINER');
   const { data: LabTubeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_TYPES');
   const { data: TubeColorLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_COLORS');
   const [saveSample] = useSaveDiagnosticOrderTestSamplesMutation();
-  const handleDateChange = (date) => {
-    if (date) {
 
-      setSelectedSampleDate(date);
-    }
-  };
   const handleSaveSample = async () => {
     try {
       const Response = await saveTest({ ...test, processingStatusLkey: "6055207372976955" }).unwrap();
@@ -48,16 +43,16 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
         ...sample,
         orderKey: test.orderKey,
         testKey: test.key,
-        sampleCollectedAt: selectedSampleDate ? selectedSampleDate.getTime() : null
+        sampleCollectedAt: selectedSampleDate?.dateTime != null ? selectedSampleDate?.dateTime.getTime() : 0
       }).unwrap();
       setTest({ ...newApDiagnosticOrderTests })
       dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
       setTest({ ...Response });
       await fetchTest();
-     await fecthSample();
+      await fecthSample();
       setOpen(false);
       setSample({ ...newApDiagnosticOrderTestsSamples });
-      setSelectedSampleDate(null);
+      setSelectedSampleDate({ dateTime: null });
     }
     catch (error) {
       dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
@@ -71,7 +66,7 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
       title: <Translate>COLLECTED AT</Translate>,
       fullText: true,
       flexGrow: 2,
-      render: (rowData) =>formatDateWithoutSeconds(rowData.sampleCollectedAt),
+      render: (rowData) => formatDateWithoutSeconds(rowData.sampleCollectedAt),
     },
     {
       key: "quantity",
@@ -94,16 +89,16 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
       <MyModal
         open={open}
         setOpen={setOpen}
-        size="md"
+        size="50vw"
         actionButtonFunction={handleSaveSample}
         title="Collect Sample"
-        steps={[{ title: "Sample", icon:<FontAwesomeIcon icon={ faVialCircleCheck }/>}]}
+        steps={[{ title: "Sample", icon: <FontAwesomeIcon icon={faVialCircleCheck} /> }]}
         position="right"
         content={<>
-        <Form fluid>
-          <Row>
-            <Col xs={8}>
-             
+          <Form fluid>
+            <Row>
+              <Col xs={8}>
+
                 <MyInput
                   width="100%"
                   disabled={true}
@@ -112,9 +107,9 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
                   setRecord={""}
 
                 />
-            </Col>
-            <Col xs={8}>
-            
+              </Col>
+              <Col xs={8}>
+
                 <MyInput
                   width="100%"
                   disabled={true}
@@ -127,9 +122,9 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
                   setRecord={""}
 
                 />
-            </Col>
-            <Col xs={8}>
-           
+              </Col>
+              <Col xs={8}>
+
                 <MyInput
                   width="100%"
                   disabled={true}
@@ -142,11 +137,11 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
                   setRecord={""}
 
                 />
-            </Col>
-          </Row>
-          <Row>
-            <Col xs={8}>
-             
+              </Col>
+            </Row>
+            <Row>
+              <Col xs={8}>
+
                 <MyInput
                   width="100%"
                   fieldName={"sampleContainerLkey"}
@@ -158,9 +153,9 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
                   record={labDetails}
                   setRecord={""}
                 />
-            </Col>
-            <Col xs={8}>
-              
+              </Col>
+              <Col xs={8}>
+
                 <MyInput
                   width="100%"
                   fieldName={"sampleVolume"}
@@ -169,11 +164,11 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
                   record={labDetails ?? ""}
                   setRecord={""}
                 />
-            
 
-            </Col>
-            <Col xs={8}>
-             
+
+              </Col>
+              <Col xs={8}>
+
                 <MyInput
                   width="100%"
                   fieldName={"sampleVolumeUnitLkey"}
@@ -185,12 +180,12 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
                   record={labDetails}
                   setRecord={""}
                 />
-             
-            </Col>
-          </Row>
-          <Row>
-            <Col xs={8}>
-              
+
+              </Col>
+            </Row>
+            <Row>
+              <Col xs={8}>
+
                 <MyInput
                   fieldLabel={"Actual Sample Quantity"}
                   fieldName={"quantity"}
@@ -199,10 +194,10 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
                   record={sample}
                   setRecord={setSample}
                 />
-             
-            </Col>
-            <Col xs={8}>
-            
+
+              </Col>
+              <Col xs={8}>
+
                 <MyInput
                   width="100%"
                   fieldName={"unitLkey"}
@@ -213,25 +208,19 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
                   record={sample}
                   setRecord={setSample}
                 />
-             </Col>
-            <Col xs={8}>
-              <div className='vaccine-input-wrapper'>
-                <div>  
-                  <MyLabel label="Sample Collected" /></div>
-                <Stack spacing={10} direction="column" alignItems="flex-start" className='date-time-picker'>
-                  <DatePicker
-                    style={{ width: '200px'}}
-                    format="dd MMM yyyy hh:mm:ss aa"
-                    showMeridiem
-                    caretAs={FaCalendar}
-                    value={selectedSampleDate}
-                    onChange={handleDateChange}
-                  />
-                </Stack>
-              </div>
-           </Col>
+              </Col>
+              <Col xs={8}>
+                <MyInput
+                  width="100%"
+                  fieldName="dateTime"
+                  fieldType='datetime'
+                  fieldLabel="Sample Collected"
+                  record={selectedSampleDate}
+                  setRecord={setSelectedSampleDate}
+                />
+              </Col>
 
-          </Row>
+            </Row>
           </Form>
           <Row>
             <Col xs={24}>
@@ -242,7 +231,7 @@ const SampleModal = ({ labDetails, open, setOpen, samplesList, test, setTest, sa
                 <MyTable
                   columns={tableColumns}
                   data={samplesList?.object ?? []}
-                  
+
                 ></MyTable>
 
 

@@ -186,7 +186,7 @@ const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patie
                                         disabled={editDate.editdate}
                                         width="100%"
                                         fieldName="firstTimeRecorded"
-                                        fieldType="datetime"
+                                        fieldType="date"
                                         record={warning}
                                         setRecord={setWarning}
                                     />

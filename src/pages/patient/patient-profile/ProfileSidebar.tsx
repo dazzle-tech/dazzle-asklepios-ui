@@ -8,7 +8,7 @@ import { fromCamelCaseToDBName } from '@/utils';
 import { Box, Skeleton } from '@mui/material';
 import SearchIcon from '@rsuite/icons/Search';
 import clsx from 'clsx';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaArrowRight, FaEllipsis } from 'react-icons/fa6';
 import {
   Button,
@@ -26,17 +26,21 @@ interface ProfileSidebarProps {
   setExpand: (value: boolean) => void;
   windowHeight: number;
   setLocalPatient: (patient: ApPatient) => void;
+  refetchData: boolean;
+  setRefetchData: (value: boolean) => void;
 }
 
 const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   expand,
   setExpand,
   windowHeight,
-  setLocalPatient
+  setLocalPatient,
+  refetchData,
+  setRefetchData
 }) => {
   const [open, setOpen] = useState(false);
-  const [labelTitle, setLabelTitle] = useState(' ');
-  const [selectedCriterion, setSelectedCriterion] = useState('');
+  const [labelTitle, setLabelTitle] = useState('Full Name');
+  const [selectedCriterion, setSelectedCriterion] = useState('fullName');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchResultVisible, setSearchResultVisible] = useState(false);
   const [patientSearchTarget, setPatientSearchTarget] = useState('primary');
@@ -49,7 +53,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   const {
     data: patientListResponse,
     isLoading: isGettingPatients,
-    isFetching: isFetchingPatients
+    isFetching: isFetchingPatients,
+    refetch
   } = useGetPatientsQuery({ ...listRequest, filterLogic: 'or' });
 
   const searchCriteriaOptions = [
@@ -149,7 +154,12 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   React.useEffect(() => {
     setSearchKeyword('');
   }, [selectedCriterion]);
-
+  useEffect(() => {
+    if (refetchData) {
+      refetch();
+    }
+    setRefetchData(false)
+  }, [refetchData]);
   return (
     <div
       className={clsx('profile-sidebar-container', {

@@ -61,7 +61,7 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure }) => {
 
                 });
 
-            dispatch(notify({msg:'Changed Status Successfully',sev:"succes"}));
+            dispatch(notify({msg:'Changed Status Successfully',sev:"success"}));
         } catch (error) {
             dispatch(notify('Changed Status Failed'));
         }

@@ -22,13 +22,13 @@ import {
 } from 'rsuite';
 import DetailsModal from './DetailsModal';
 import './styles.less';
-const Warning= ({ patient: propPatient, encounter: propEncounter, edit: propEdit }) => {
+const Warning = ({ patient: propPatient, encounter: propEncounter, edit: propEdit }) => {
   const location = useLocation();
   const state = location.state || {};
-  
+
   const patient = propPatient || state.patient;
   const encounter = propEncounter || state.encounter;
-  const edit = propEdit ?? state.edit; 
+  const edit = propEdit ?? state.edit;
 
   const [warning, setWarning] = useState<any>({ ...newApVisitWarning });
   const [saveWarning, saveWarningMutation] = useSaveWarningsMutation();
@@ -55,10 +55,10 @@ const Warning= ({ patient: propPatient, encounter: propEncounter, edit: propEdit
     ]
   });
 
-  const { data: warningsListResponse, refetch: fetchwarnings ,isLoading} = useGetWarningsQuery({
+  const { data: warningsListResponse, refetch: fetchwarnings, isLoading } = useGetWarningsQuery({
     ...listRequest
   });
-const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+  const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const dispatch = useAppDispatch();
 
   const isSelected = rowData => {
@@ -68,7 +68,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   };
 
 
- 
+
   useEffect(() => {
 
     if (showPrev) {
@@ -202,8 +202,8 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
         isValid: false,
         deletedAt: Date.now()
       }).unwrap();
-      dispatch(notify({msg:' Deleted successfully' ,sev:"success"}));
-     
+      dispatch(notify({ msg: ' Deleted successfully', sev: "success" }));
+
       await fetchwarnings()
         .then(() => {
           console.log('Refetch complete');
@@ -247,7 +247,7 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
       setShowPrev(!showPrev);
       await fetchwarnings()
         .then(() => {
-        
+
         })
         .catch(error => {
           console.error('Refetch failed:', error);
@@ -259,88 +259,96 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
     }
   }
 
-  const tableColumns=[
-    { key:"warningTypeLkey",
-      dataKey:"warningTypeLkey",
-      title:<Translate>Warning Type</Translate>,
-      flexGrow:1,
-      render:(rowData:any)=>{
-        return rowData.warningTypeLvalue?.lovDisplayVale ;
+  const tableColumns = [
+    {
+      key: "warningTypeLkey",
+      dataKey: "warningTypeLkey",
+      title: <Translate>Warning Type</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return rowData.warningTypeLvalue?.lovDisplayVale;
       }
     },
-    { key:"severityLkey",
-      dataKey:"severityLkey",
-      title:<Translate>Severity</Translate>,
-      flexGrow:1,
-      render:(rowData:any)=>{
+    {
+      key: "severityLkey",
+      dataKey: "severityLkey",
+      title: <Translate>Severity</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
         return rowData.severityLvalue?.lovDisplayVale;
       }
     },
-    { key:"firstTimeRecorded",
-      dataKey:"firstTimeRecorded",
-      title:<Translate>First Time Recorded</Translate>,
-      flexGrow:1,
-      render:(rowData:any)=>{
-        return  rowData.firstTimeRecorded
-        ? formatDateWithoutSeconds(rowData.firstTimeRecorded)
-        : 'Undefind'
-;
+    {
+      key: "firstTimeRecorded",
+      dataKey: "firstTimeRecorded",
+      title: <Translate>First Time Recorded</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
+        return rowData.firstTimeRecorded
+          ? new Date(rowData.firstTimeRecorded).toISOString().split('T')[0]
+          : 'Undefined';
       }
     },
-    {key:"sourceOfInformationLkey",
-      dataKey:"sourceOfInformationLkey",
-      title:<Translate>Source of information</Translate>,
-      flexGrow:1,
-      render:(rowData:any)=>{
+    {
+      key: "sourceOfInformationLkey",
+      dataKey: "sourceOfInformationLkey",
+      title: <Translate>Source of information</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
         return rowData.sourceOfInformationLvalue?.lovDisplayVale || 'BY Patient';
       }
     },
-    {key:"warning",
-      dataKey:"warning",
-      title:<Translate>Warning</Translate>,
-      flexGrow:1,
-      render:(rowData:any)=>{
+    {
+      key: "warning",
+      dataKey: "warning",
+      title: <Translate>Warning</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
         return rowData.warning;
       }
     },
-    {key:"actionTake",
-      dataKey:"actionTake",
-      title:<Translate>Action Taken</Translate>,
-      flexGrow:1,
-      render:(rowData:any)=>{
+    {
+      key: "actionTake",
+      dataKey: "actionTake",
+      title: <Translate>Action Taken</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
         return rowData.actionTake;
       }
     },
-    { key:"notes",
-      dataKey:"notes",
-      title:<Translate>Notes</Translate>,
-      flexGrow:1,
-      render:(rowData:any)=>{
+    {
+      key: "notes",
+      dataKey: "notes",
+      title: <Translate>Notes</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
         return rowData.notes;
       }
     },
-    {key:"statusLkey",
-      dataKey:"statusLkey",
-      title:<Translate>Status</Translate>,
-      flexGrow:1,
-      render:(rowData:any)=>{
+    {
+      key: "statusLkey",
+      dataKey: "statusLkey",
+      title: <Translate>Status</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
         return rowData.statusLvalue?.lovDisplayVale;
       }
     },
-    { key:"#",
-      dataKey:"",
-      title:<Translate>Edit</Translate>,
-      flexGrow:1,
-      render:(rowData:any)=>{
+    {
+      key: "#",
+      dataKey: "",
+      title: <Translate>Edit</Translate>,
+      flexGrow: 1,
+      render: (rowData: any) => {
         return <MdModeEdit
-        title="Edit"
-        size={24}
-        fill="var(--primary-gray)"
-        onClick={()=>setOpenDetailsModal(true)}
-      />
+          title="Edit"
+          size={24}
+          fill="var(--primary-gray)"
+          onClick={() => setOpenDetailsModal(true)}
+        />
       }
     },
-  
+
     {
       key: "",
       title: <Translate>Created At/By</Translate>,
@@ -400,57 +408,58 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
       }
 
     },
-    { key:"cancellationReason",
-      dataKey:"cancellationReason",
-      title:<Translate>Cancelliton Reason</Translate>,
-      flexGrow:1,
-      expandable:true
-    
+    {
+      key: "cancellationReason",
+      dataKey: "cancellationReason",
+      title: <Translate>Cancelliton Reason</Translate>,
+      flexGrow: 1,
+      expandable: true
+
     }
-  
+
   ]
-    const pageIndex = listRequest.pageNumber - 1;
-  
-    // how many rows per page:
-    const rowsPerPage = listRequest.pageSize;
-  
-    // total number of items in the backend:
-    const totalCount = warningsListResponse?.extraNumeric ?? 0;
-  
-    // handler when the user clicks a new page number:
-    const handlePageChange = (_: unknown, newPage: number) => {
-      // MUI gives you a zero-based page, so add 1 for your API
-      setManualSearchTriggered(true);
-      setListRequest({ ...listRequest, pageNumber: newPage + 1 });
-    };
-  
-    // handler when the user chooses a different rows-per-page:
-    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      setManualSearchTriggered(true);
-      setListRequest({
-        ...listRequest,
-        pageSize: parseInt(event.target.value, 10),
-        pageNumber: 1 // reset to first page
-      });
-    };
+  const pageIndex = listRequest.pageNumber - 1;
+
+  // how many rows per page:
+  const rowsPerPage = listRequest.pageSize;
+
+  // total number of items in the backend:
+  const totalCount = warningsListResponse?.extraNumeric ?? 0;
+
+  // handler when the user clicks a new page number:
+  const handlePageChange = (_: unknown, newPage: number) => {
+    // MUI gives you a zero-based page, so add 1 for your API
+    setManualSearchTriggered(true);
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+
+  // handler when the user chooses a different rows-per-page:
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setManualSearchTriggered(true);
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1 // reset to first page
+    });
+  };
   return (
     <div >
-       {/* buttons actions section */}
+      {/* buttons actions section */}
       <div className='bt-div'>
         <MyButton
-          disabled={!edit?warning.key ? warning?.statusLvalue.valueCode == 'ARS_CANCEL' ? true : false : true:true}
+          disabled={!edit ? warning.key ? warning?.statusLvalue.valueCode == 'ARS_CANCEL' ? true : false : true : true}
           prefixIcon={() => <CloseOutlineIcon />}
           onClick={OpenCancellationReasonModel}
         >Cancel</MyButton>
         <MyButton
-          disabled={!edit ? warning?.statusLkey != '9766169155908512' ? true : false:true}
+          disabled={!edit ? warning?.statusLkey != '9766169155908512' ? true : false : true}
           prefixIcon={() => <FontAwesomeIcon icon={faCheck} />}
           onClick={OpenConfirmResolvedModel}
         >
           Resolved</MyButton>
         <MyButton
           prefixIcon={() => <ReloadIcon />}
-          disabled={!edit ? warning?.statusLkey != '9766179572884232' ? true : false:true}
+          disabled={!edit ? warning?.statusLkey != '9766179572884232' ? true : false : true}
           onClick={OpenConfirmUndoResolvedModel}
         >Undo Resolved</MyButton>
 
@@ -475,35 +484,36 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
           <MyButton
             prefixIcon={() => <PlusIcon />}
             disabled={edit}
-            onClick={() =>{ setOpenDetailsModal(true);
+            onClick={() => {
+              setOpenDetailsModal(true);
               handleClear();
             }}
           >Add Warning</MyButton>
         </div>
       </div>
       <MyTable
-      columns={tableColumns}
-      data={warningsListResponse?.object || []}
-      onRowClick={rowData => {
-        setWarning(rowData);
-        setEditing(rowData.statusLvalue.valueCode == 'ARS_CANCEL' ? true : false);
-      }}
-      rowClassName={isSelected}
-      sortColumn={listRequest.sortBy}
-      sortType={listRequest.sortType}
-      onSortChange={(sortBy, sortType) => {
-        setListRequest({ ...listRequest, sortBy, sortType });
-      }}
-      page={pageIndex}
-      rowsPerPage={rowsPerPage}
-      totalCount={totalCount}
-      onPageChange={handlePageChange}
-      onRowsPerPageChange={handleRowsPerPageChange}
-      loading={isLoading}
+        columns={tableColumns}
+        data={warningsListResponse?.object || []}
+        onRowClick={rowData => {
+          setWarning(rowData);
+          setEditing(rowData.statusLvalue.valueCode == 'ARS_CANCEL' ? true : false);
+        }}
+        rowClassName={isSelected}
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortChange={(sortBy, sortType) => {
+          setListRequest({ ...listRequest, sortBy, sortType });
+        }}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        loading={isLoading}
       />
 
 
-  {/* modal for esolve warning */}
+      {/* modal for esolve warning */}
       <MyModal
         open={openConfirmResolvedModel}
         setOpen={setOpenConfirmResolvedModel}
@@ -511,23 +521,23 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
         actionButtonLabel='Yes'
         title="Resolve"
         bodyheight="30vh"
-        steps={[{ title: "Is this Warning resolved?", icon: <FontAwesomeIcon icon={faCheck}/>}]}
+        steps={[{ title: "Is this Warning resolved?", icon: <FontAwesomeIcon icon={faCheck} /> }]}
         content={<></>}
       ></MyModal>
-  {/* modal for undo resolve for warning */}
+      {/* modal for undo resolve for warning */}
       <MyModal
         open={openConfirmUndoResolvedModel}
         setOpen={setOpenConfirmUndoResolvedModel}
         actionButtonFunction={handleUndoResolved}
         actionButtonLabel='Yes'
         title="Undo Resolve"
-         bodyheight="30vh"
-        steps={[{ title: "Is this Warning active?", icon:<FontAwesomeIcon icon={ faArrowRotateRight}/> }]}
+        bodyheight="30vh"
+        steps={[{ title: "Is this Warning active?", icon: <FontAwesomeIcon icon={faArrowRotateRight} /> }]}
         content={<></>}
       ></MyModal>
 
       {/* moodal for cancel warning and write reason */}
-       <CancellationModal
+      <CancellationModal
         open={openCancellationReasonModel}
         setOpen={setOpenCancellationReasonModel}
         object={warning}
@@ -539,12 +549,12 @@ const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
       ></CancellationModal>
 
 
-    
-      <DetailsModal patient={patient} 
-      open={openDetailsModal} setOpen={setOpenDetailsModal}
-       warning={warning} setWarning={setWarning}
-       encounter={encounter} editing={editing}
-       fetchwarnings={fetchwarnings} edit={edit}/>
+
+      <DetailsModal patient={patient}
+        open={openDetailsModal} setOpen={setOpenDetailsModal}
+        warning={warning} setWarning={setWarning}
+        encounter={encounter} editing={editing}
+        fetchwarnings={fetchwarnings} edit={edit} />
     </div>
   );
 };

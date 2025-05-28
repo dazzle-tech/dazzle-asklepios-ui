@@ -70,7 +70,7 @@ const LogResult = ({open,setOpen,result}) => {
     open={open}
     setOpen={setOpen}
     title="Log Result"
-    size="md"
+    size="50vw"
     position="right"
     content={
     <MyTable

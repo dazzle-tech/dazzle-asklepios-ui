@@ -61,8 +61,6 @@ const MyModal = ({
       </Modal.Header>
       <Divider className="divider-line" />
       <Modal.Body style={{ height: bodyheight }}>
-        {activeStep !== 0 && (
-          <>
             <MyStepper
               activeStep={activeStep}
               stepsList={steps.map((step, index) => ({
@@ -74,8 +72,6 @@ const MyModal = ({
               }))}
             />
             <br />
-          </>
-        )}
         {typeof content === 'function' ? content(activeStep) : activeStep === 0 && content}
       </Modal.Body>
       {(footerButtons ||

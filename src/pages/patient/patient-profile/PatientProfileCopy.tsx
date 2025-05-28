@@ -30,12 +30,12 @@ const PatientProfile = () => {
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [validationResult, setValidationResult] = useState({});
   const [quickAppointmentModel, setQuickAppointmentModel] = useState(false);
-  const [administrativeWarningsModalOpen, setAdministrativeWarningsModalOpen] = useState(false);
   const [visitHistoryModel, setVisitHistoryModel] = useState(false);
   const location = useLocation();
   const propsData = location.state;
   const [savePatient, savePatientMutation] = useSavePatientMutation();
-
+  const [refetchData, setRefetchData] = useState(false);
+  const [refetchAttachmentList,setRefetchAttachmentList]=useState(false);
   // Page header setup
   const divElement = useSelector((state: RootState) => state.div?.divElement);
   const divContent = (
@@ -50,7 +50,8 @@ const PatientProfile = () => {
     savePatient({ ...localPatient, incompletePatient: false, unknownPatient: false })
       .unwrap()
       .then(() => {
-           dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
+        setRefetchData(true);  
+        dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
       });
   };
 
@@ -127,13 +128,17 @@ const PatientProfile = () => {
             handleClear={handleClear}
             setVisitHistoryModel={setVisitHistoryModel}
             setQuickAppointmentModel={setQuickAppointmentModel}
-            setAdministrativeWarningsModalOpen={setAdministrativeWarningsModalOpen} // Will be implemented in child component
+            validationResult={validationResult}
+            setRefetchAttachmentList={setRefetchAttachmentList}
           />
 
           <ProfileTabs
             localPatient={localPatient}
             setLocalPatient={setLocalPatient}
             validationResult={validationResult}
+            setRefetchAttachmentList={setRefetchAttachmentList}
+            refetchAttachmentList={refetchAttachmentList}
+            
           />
         </Panel>
 
@@ -142,6 +147,8 @@ const PatientProfile = () => {
           setExpand={setExpand}
           windowHeight={windowHeight}
           setLocalPatient={setLocalPatient}
+          refetchData={refetchData}
+          setRefetchData={setRefetchData}
         />
       </div>
 
@@ -161,15 +168,6 @@ const PatientProfile = () => {
           localPatient={localPatient}
           setVisitHistoryModel={setVisitHistoryModel}
           setQuickAppointmentModel={setQuickAppointmentModel}
-        />
-      )}
-
-      {administrativeWarningsModalOpen && (
-        <AdministrativeWarningsModal
-          open={administrativeWarningsModalOpen}
-          onClose={() => setAdministrativeWarningsModalOpen(false)}
-          localPatient={localPatient}
-          validationResult={validationResult}
         />
       )}
     </>

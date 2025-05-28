@@ -1,35 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Form,
-  Button,
-  Panel,
-  SelectPicker,
-  Stack,
-  Divider,
-  Message,
-  Modal,
-  ButtonToolbar,
-  Text
-} from 'rsuite';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import Logo from '../../../images/Logo_BLUE_New.svg';
-import Background from '../../../images/auth-bg.png';
-import UserLogo from '../../../images/PP-Person-Blue copy.svg';
-import './styles.less';
-import Translate from '@/components/Translate';
-import { useLoginMutation } from '@/services/authService';
-import { useNavigate } from 'react-router-dom';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetFacilitiesQuery } from '@/services/setupService';
-import PasswordChangeModal from './PasswordChangeModal';
-import RemindIcon from '@rsuite/icons/legacy/Remind';
 import MyInput from '@/components/MyInput';
+import Translate from '@/components/Translate';
+import { useAppSelector } from '@/hooks';
+import { useLoginMutation } from '@/services/authService';
+import { useGetFacilitiesQuery, useGetLovValuesByCodeQuery, useSaveUserMutation,useGetLovDefultByCodeQuery } from '@/services/setupService';
 import { ApUser } from '@/types/model-types';
 import { newApUser } from '@/types/model-types-constructor';
-import { useGetUsersQuery, useSaveUserMutation } from '@/services/setupService';
-import { Input, InputGroup } from 'rsuite';
-import EyeCloseIcon from '@rsuite/icons/EyeClose';
-import VisibleIcon from '@rsuite/icons/Visible';
+import { initialListRequest } from '@/types/types';
+import RemindIcon from '@rsuite/icons/legacy/Remind';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Button,
+  Form,
+  Message,
+  Modal,
+  Panel,
+  SelectPicker,
+  Text
+} from 'rsuite';
+import Background from '../../../images/auth-bg.png';
+import Logo from '../../../images/Logo_BLUE_New.svg';
+import './styles.less';
 
 const SignIn = () => {
   const [login, { isLoading: isLoggingIn, data: loginResult, error: loginError }] =
@@ -41,6 +32,7 @@ const SignIn = () => {
   const [newPasswordConfirm, setNewPasswordConfirm] = useState();
   const [errText, setErrText] = useState(' ');
   const [resetPasswordView, setResetPasswordView] = useState(false);
+ const {data:langdefult} = useGetLovDefultByCodeQuery('SYSTEM_LANG');
 
   const [credentials, setCredentials] = useState({
     username: '',
@@ -55,6 +47,7 @@ const SignIn = () => {
     isLoading: isGettingFacilities,
     isFetching: isFetchingFacilities
   } = useGetFacilitiesQuery({ ...initialListRequest });
+  const { data: langLovQueryResponse } = useGetLovValuesByCodeQuery('SYSTEM_LANG');
 
   const handleLogin = () => {
     login(credentials).unwrap();
@@ -80,13 +73,13 @@ const SignIn = () => {
       localStorage.getItem('access_token') &&
       authSlice.user?.mustChangePassword
     ) {
-      console.log(authSlice.user?.mustChangePassword);
+
       setChangePasswordView(true);
     }
   }, [authSlice.user]);
 
   useEffect(() => {
-    console.log(changePasswordView);
+  
   }, [changePasswordView]);
 
   const [user, setUser] = useState<ApUser>({
@@ -107,7 +100,7 @@ const SignIn = () => {
         setErrText('Please ensure both fields are filled.');
       } else {
         if (newPassword === newPasswordConfirm) {
-          console.log('Passwords  Matched');
+       
           saveUser({ ...authSlice?.user, password: newPassword, mustChangePassword: false })
             .unwrap()
             .then(() => {
@@ -118,21 +111,22 @@ const SignIn = () => {
     }
   };
 
-  useEffect(() => {
-    document.body.style.backgroundImage = `url(${Background})`;
-    document.body.style.backgroundSize = 'cover';
-    document.body.style.backgroundPosition = 'center';
-    document.body.style.backgroundRepeat = 'no-repeat';
+  // useEffect(() => {
+  //   document.body.style.backgroundImage = `url(${Background})`;
+  //   document.body.style.backgroundSize = 'cover';
+  //   document.body.style.backgroundPosition = 'center';
+  //   document.body.style.backgroundRepeat = 'no-repeat';
 
-    return () => {
-      document.body.style.backgroundImage = '';
-    };
-  }, [Background]);
+  //   return () => {
+  //     document.body.style.backgroundImage = '';
+  //   };
+  // }, [Background]);
   return (
-    <Panel bordered className="panel">
+    <Panel className="panel" style={{ backgroundImage: `url(${Background})` }}>
+    <Panel bordered  style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)' ,padding: '20px', borderRadius: '10px'}}>
       <div className="bodySignInDiv">
         {/* Logo Panel */}
-        <Text className="welcome-title">Welcome to</Text>
+     
         <Panel className="logo-panel">
           <img
             src={
@@ -147,7 +141,7 @@ const SignIn = () => {
         {/* Sign In Panel */}
         {!resetPasswordView && (
           <Panel className="sign-in-panel ">
-            <h3 className="title">Sign In</h3>
+          
             {!authSlice.tenant && (
               <Message type="warning" showIcon>
                 <Translate>No Tenant Configured</Translate>
@@ -155,37 +149,49 @@ const SignIn = () => {
             )}
 
             <Form fluid onKeyPress={handleKeyPress}>
-              <Form.Group>
-                <Form.ControlLabel>Organization</Form.ControlLabel>
-                <Form.Control
-                  block
-                  disabled={!authSlice.tenant}
-                  accepter={SelectPicker}
-                  name="organization"
-                  data={facilityListResponse?.object ?? []}
-                  labelKey="facilityName"
-                  valueKey="key"
-                  value={credentials.orgKey}
-                  onChange={e => setCredentials({ ...credentials, orgKey: e })}
-                  className="org-list"
-                />
-              </Form.Group>
+              <MyInput
+                disabled={!authSlice.tenant}
+                placeholder="Select Facility"
+                width="100%"
+                fieldType='select'
+                fieldLabel="Facility"
+                selectData={facilityListResponse?.object ?? []}
+                selectDataLabel="facilityName"
+                selectDataValue="key"
+                fieldName="orgKey"
+                record={credentials}
+                setRecord={setCredentials} 
+                 showLabel={false}/>
+              <MyInput
+                width="100%"
+                fieldName="lang"
+                fieldType="select"
+                selectData={langLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                defaultSelectValue={langdefult?.object?.key.toString() ?? ''}
+                record={{}}
+                setRecord={() => { }}
+                placeholder="Select Language"
+                showLabel={false}
+               
+              />
+              <MyInput
+                width="100%"
+                placeholder="Enter User Name"
+                disabled={!authSlice.tenant}
+                fieldLabel="User Name"
+                fieldName="username"
+                record={credentials}
+                setRecord={setCredentials}
+                 showLabel={false}
+              />
+
 
               <Form.Group>
-                <Form.ControlLabel>Username</Form.ControlLabel>
+              
                 <Form.Control
-                  disabled={!authSlice.tenant}
-                  name="username"
-                  value={credentials.username}
-                  onChange={e => setCredentials({ ...credentials, username: e })}
-                />
-              </Form.Group>
-
-              <Form.Group>
-                <Form.ControlLabel>
-                  <span>Password</span>
-                </Form.ControlLabel>
-                <Form.Control
+                placeholder='Enter Password'
                   disabled={!authSlice.tenant}
                   name="password"
                   type="password"
@@ -278,7 +284,7 @@ const SignIn = () => {
           <Button appearance="subtle">Cancel</Button>
         </Modal.Footer>
       </Modal>
-    </Panel>
+    </Panel></Panel>
   );
 };
 

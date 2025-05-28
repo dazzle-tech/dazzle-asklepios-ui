@@ -49,14 +49,13 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             patientAge: data?.patient.dob ? calculateAgeFormat(data.patient.dob) + '' : '',
             patientKey: data?.patient.key,
             patientFullName: data?.patient.fullName,
-            encounterStatusLkey: "91084250213000",
+            encounterStatusLkey: "91063195286200",
             plannedStartDate: data?.appointmentStart,
             resourceTypeLkey: data?.resourceTypeLkey,
-            visitTypeLkey: data?.visitTypeLkey
+            visitTypeLkey: data?.visitTypeLkey,
+            resourceKey: data.resourceKey
         }
         saveEncounter(visit).unwrap();
-        console.log(visit)
-
     };
 
     useEffect(() => {
@@ -81,13 +80,6 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             handleSaveVisit(appointment?.appointmentData)
         })
     }
-
-
-    useEffect(() => {
-        console.log(reasonKey)
-        console.log(otherReason)
-
-    }, [otherReason, reasonKey])
 
     const handleNonShow = () => {
         console.log(localAppointmentData)
@@ -127,53 +119,53 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     }, [appointment])
 
     // Appoinment Actions Modal Content
-    const  actionsModalContent =(
-    <Form fluid layout="inline">
-                    <MyButton width="250px" disabled={["Checked-In", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={handleCheckIn} color="cyan" appearance="primary">
-                        Check-In
-                    </MyButton>
-                    <MyButton width="250px" disabled={appointment?.appointmentData.appointmentStatus == "Confirmed"} onClick={handleConfirm} color="violet" appearance="primary">
-                        Confirm
-                    </MyButton>
-                    <MyButton width="250px" disabled={["No-Show", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => { setResonType('No-show'), setResonModal(true) }} color="blue" appearance="primary">
-                        No-show
-                    </MyButton>
-                    <MyButton width="250px" onClick={() => viewAppointment()} color="cyan" appearance="primary">
-                        View
-                    </MyButton>
-                    <MyButton width="250px" disabled={["Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => editAppointment()} color="violet" appearance="primary">
-                        Change
-                    </MyButton>
-                    <MyButton width="250px" disabled={["Canceled", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => { setResonType('Cancel') }} color="blue" appearance="primary">
-                        Cancel
-                    </MyButton>
-    </Form>
+    const actionsModalContent = (
+        <Form fluid layout="inline">
+            <MyButton width="250px" disabled={["Checked-In", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={handleCheckIn} color="cyan" appearance="primary">
+                Check-In
+            </MyButton>
+            <MyButton width="250px" disabled={appointment?.appointmentData.appointmentStatus == "Confirmed"} onClick={handleConfirm} color="violet" appearance="primary">
+                Confirm
+            </MyButton>
+            <MyButton width="250px" disabled={["No-Show", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => { setResonType('No-show'), setResonModal(true) }} color="blue" appearance="primary">
+                No-show
+            </MyButton>
+            <MyButton width="250px" onClick={() => viewAppointment()} color="cyan" appearance="primary">
+                View
+            </MyButton>
+            <MyButton width="250px" disabled={["Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => editAppointment()} color="violet" appearance="primary">
+                Change
+            </MyButton>
+            <MyButton width="250px" disabled={["Canceled", "Confirmed"].includes(appointment?.appointmentData.appointmentStatus)} onClick={() => { setResonType('Cancel') }} color="blue" appearance="primary">
+                Cancel
+            </MyButton>
+        </Form>
     );
-     // Cancel/No-Show Modal Content
-     const cancelModalContent = (
-               <Form layout="inline">
-                    <MyInput
-                        width={400}
-                        column
-                        fieldLabel="Reason"
-                        fieldType="select"
-                        fieldName="reasonLkey"
-                        selectData={resonType === 'Cancel' ? cancelResonLovQueryResponse?.object : noShowResonLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={reasonKey}
-                        setRecord={setResonKey}
-                    />
-                    <MyInput
-                        width={400}
-                        column
-                        fieldLabel="Other Reason"
-                        fieldName="otherReason"
-                        record={otherReason}
-                        setRecord={setOtherReason}
-                    />
-                </Form>
-     );
+    // Cancel/No-Show Modal Content
+    const cancelModalContent = (
+        <Form layout="inline">
+            <MyInput
+                width={400}
+                column
+                fieldLabel="Reason"
+                fieldType="select"
+                fieldName="reasonLkey"
+                selectData={resonType === 'Cancel' ? cancelResonLovQueryResponse?.object : noShowResonLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={reasonKey}
+                setRecord={setResonKey}
+            />
+            <MyInput
+                width={400}
+                column
+                fieldLabel="Other Reason"
+                fieldName="otherReason"
+                record={otherReason}
+                setRecord={setOtherReason}
+            />
+        </Form>
+    );
     return (
         <div>
             <MyModal

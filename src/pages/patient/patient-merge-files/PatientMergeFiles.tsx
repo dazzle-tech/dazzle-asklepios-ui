@@ -124,7 +124,7 @@ const PatientMergeFiles = () => {
                 formData: formData,
                 type: 'PATIENT_PROFILE_PICTURE',
                 refKey: firstPatient.key,
-                details: `Profile Picture for ${firstPatient.fullName}`
+                details: "Profile Picture"
             })
                 .unwrap()
                 .then(() => attachmentRefetch());
@@ -150,7 +150,7 @@ const PatientMergeFiles = () => {
                 formData: formData,
                 type: 'PATIENT_PROFILE_PICTURE',
                 refKey: secondPatient.key,
-                details: `Profile Picture for ${secondPatient.fullName}`
+                details:"Profile Picture"
             })
                 .unwrap()
                 .then(() => attachmentRefetch());
