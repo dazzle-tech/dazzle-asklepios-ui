@@ -45,6 +45,9 @@ type ObservationsProps = {
 };
 
 const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref) => {
+    useImperativeHandle(ref, () => ({
+    handleSave,handleClear
+  }));
   const location = useLocation();
   const state = location.state || {};
   const patient = props.patient || state.patient;
@@ -56,6 +59,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...encounter })
   const [bmi, setBmi] = useState('');
   const [bsa, setBsa] = useState('');
+  const [map,setMap]=useState('');
   const [saveObservationSummary, setSaveObservationSummary] = useSaveObservationSummaryMutation();
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
@@ -72,12 +76,6 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
         }
       ]
     });
-  // TODO update status to be a LOV value
-  useEffect(() => {
-    if (localEncounter?.encounterStatusLkey === '91109811181900') {
-      setIsEncounterStatusClosed(true);
-    }
-  }, [localEncounter?.encounterStatusLkey]);
 
   const [patientObservationsListRequest, setPatientObservationsListRequest] =
     useState<ListRequest>({
@@ -97,6 +95,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
         }
       ]
     });
+  
   const { data: getObservationSummaries } = useGetObservationSummariesQuery({
     ...patientLastVisitObservationsListRequest,
 
@@ -120,8 +119,12 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     latestheadcircumference: null,
     latestpainlevelLkey: null
   });
-
-
+   // TODO update status to be a LOV value
+  useEffect(() => {
+    if (localEncounter?.encounterStatusLkey === '91109811181900') {
+      setIsEncounterStatusClosed(true);
+    }
+  }, [localEncounter?.encounterStatusLkey]);
   useEffect(() => {
     setPatientObservationSummary((prevSummary) => ({
       ...prevSummary,
@@ -142,7 +145,18 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
 
     }));
   }, [currentObservationSummary]);
-
+    useEffect(() => {
+    const { latestweight, latestheight } = patientObservationSummary;
+    if (latestweight && latestheight) {
+      const calculatedBmi = (latestweight / ((latestheight / 100) ** 2)).toFixed(2);
+      const calculatedBsa = Math.sqrt((latestweight * latestheight) / 3600).toFixed(2);
+      setBmi(calculatedBmi);
+      setBsa(calculatedBsa);
+    } else {
+      setBmi('');
+      setBsa('');
+    }
+  }, [patientObservationSummary]);
   const handleSave = () => {
     saveObservationSummary({
       observation: {
@@ -173,28 +187,28 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
       },
       listRequest: patientObservationsListRequest
     }).unwrap().then(() => {
-      dispatch(notify({masg:'Saved Successfully' ,sev:'success'}));
+      dispatch(notify({msg:'Saved Successfully' ,sev:'success'}));
     });;
   };
-  useImperativeHandle(ref, () => ({
-    handleSave,handleClear
-  }));
 
-  useEffect(() => {
-    const { latestweight, latestheight } = patientObservationSummary;
-    if (latestweight && latestheight) {
-      const calculatedBmi = (latestweight / ((latestheight / 100) ** 2)).toFixed(2);
-      const calculatedBsa = Math.sqrt((latestweight * latestheight) / 3600).toFixed(2);
-      setBmi(calculatedBmi);
-      setBsa(calculatedBsa);
-    } else {
-      setBmi('');
-      setBsa('');
-    }
-  }, [patientObservationSummary]);
 
-  useEffect(() => {
-  }, [patientObservationSummary.latestbpSystolic])
+useEffect(() => {
+  console.log('Map value:', map);
+}, [map]);
+
+useEffect(() => {
+  const diastolic = Number(patientObservationSummary.latestbpDiastolic);
+  const systolic = Number(patientObservationSummary.latestbpSystolic);
+
+  // تأكد من أن القيم فعلاً أرقام وليست NaN
+  if (!isNaN(diastolic) && !isNaN(systolic)) {
+    const calculatedMap = ((2 * diastolic + systolic) / 3).toFixed(2);
+    setMap(calculatedMap);
+    console.log('MAP:', calculatedMap);
+  } else {
+    console.warn('Invalid BP values:', diastolic, systolic);
+  }
+}, [patientObservationSummary.latestbpDiastolic, patientObservationSummary.latestbpSystolic]);
  
   const handleClear = () => {
     setPatientObservationSummary({
@@ -244,9 +258,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   <div>
                     <FontAwesomeIcon icon={faHeartPulse} className='my-icon' />
                     <text>{
-                      patientObservationSummary.latestbpDiastolic != null && patientObservationSummary.latestbpSystolic != null
-                        ? ((2 * patientObservationSummary.latestbpDiastolic + patientObservationSummary.latestbpSystolic) / 3).toFixed(2)
-                        : ''
+                   map
                     }</text></div>
                 </div>
               </div>
