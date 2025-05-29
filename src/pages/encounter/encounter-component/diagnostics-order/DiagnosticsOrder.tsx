@@ -788,7 +788,7 @@ const DiagnosticsOrder = () => {
                             disabled={orders.key ? orders?.statusLkey !== '164797574082125' : true}
                             flag={flag} setFlag={setFlag}
                             openTest={openTestsModal} setOpenTests={setOpenTestsModal} /> */}
-                        
+                
                         <div className='icon-style'>
                             <GrTestDesktop size={18} />
                         </div>

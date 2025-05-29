@@ -44,7 +44,6 @@ const EncounterPreObservations = ({}) => {
   dispatch(setPageCode('Nurse_Station'));
   dispatch(setDivContent(divContentHTML));
 
-  // handle Complete Encounter Function
   const handleCompleteEncounter = () => {
     if (localEncounter) {
       completeEncounter(localEncounter).unwrap();
@@ -54,6 +53,7 @@ const EncounterPreObservations = ({}) => {
 
   // Effects
   useEffect(() => {
+   
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent('  '));
