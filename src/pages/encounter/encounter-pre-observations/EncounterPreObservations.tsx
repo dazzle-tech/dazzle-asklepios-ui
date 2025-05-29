@@ -76,7 +76,7 @@ const EncounterPreObservations = ({}) => {
   return (
     <>
       {propsData?.patient && propsData?.encounter && (
-        <div className="main-box ">
+        <div className="container">
           <div className="left-box">
             <Panel>
               <div className="left-buttons-container">
