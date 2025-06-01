@@ -4,22 +4,19 @@ import {
   useGetLovValuesByCodeQuery,
   useGetVaccineDosesIntervalListQuery,
   useGetVaccineDosesListQuery,
+  useRemoveVaccineDoseIntervalMutation,
   useSaveVaccineDoseMutation,
   useSaveVaccineDosesIntervalMutation,
   useSaveVaccineMutation
 } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
-import { Form, SelectPicker } from 'rsuite';
+import { Form } from 'rsuite';
 import './styles.less';
 import ChildModal from '@/components/ChildModal';
 import Translate from '@/components/Translate';
 import MyTable from '@/components/MyTable';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import clsx from 'clsx';
-import { MdVaccines } from 'react-icons/md';
-import { MdMedication } from 'react-icons/md';
-import { FaUndo } from 'react-icons/fa';
 import { MdModeEdit } from 'react-icons/md';
 import { MdDelete } from 'react-icons/md';
 import { initialListRequest, ListRequest } from '@/types/types';
@@ -28,26 +25,19 @@ import { ApVaccineDose, ApVaccineDosesInterval } from '@/types/model-types';
 import { newApVaccineDose, newApVaccineDosesInterval } from '@/types/model-types-constructor';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-import { render } from 'react-dom';
 import { FaSyringe } from 'react-icons/fa';
 import { MdOutlineAccessTime } from 'react-icons/md';
-import MyLabel from '@/components/MyLabel';
-const DoesSchedule = ({
-  open,
-  setOpen,
-  vaccine,
-  setVaccine,
-  refetch
-  // vaccineDose,
-  // setVaccineDose
-  //   width,
-  //   handleSave
-}) => {
+const DoesSchedule = ({ open, setOpen, vaccine, setVaccine, refetch }) => {
   const dispatch = useAppDispatch();
   const [vaccineDose, setVaccineDose] = useState<ApVaccineDose>({ ...newApVaccineDose });
+  const [openConfirmRemoveVaccineDosesInterval, setOpenConfirmRemoveVaccineDosesInterval] =
+    useState<boolean>(false);
+  const [openChildModal, setOpenChildModal] = useState<boolean>(false);
+  const [childStep, setChildStep] = useState<number>(-1);
   const [vaccineDoseInterval, setVaccineDoseInterval] = useState<ApVaccineDosesInterval>({
     ...newApVaccineDosesInterval
   });
+  const [numDisplayValue, setNumDisplayValue] = useState('');
   const [vaccineDosesIntevalListRequest, setVaccineDosesIntervalListRequest] =
     useState<ListRequest>({
       ...initialListRequest,
@@ -59,15 +49,6 @@ const DoesSchedule = ({
         }
       ]
     });
-    const [numDisplayValue, setNumDisplayValue] = useState('');
-    const {
-        data: fetchDoseNumbersListQueryResponce,
-        error,
-        isLoading,
-        isFetching,
-        isSuccess,
-        refetch: refetchNumberDoses
-      } = useGetDoseNumbersListQuery({ key: numDisplayValue }, { skip: !numDisplayValue });
   const [vaccineDosesListRequest, setVaccineDosesListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -78,45 +59,65 @@ const DoesSchedule = ({
       }
     ]
   });
-  const [openChildModal, setOpenChildModal] = useState<boolean>(false);
-  const [childStep, setChildStep] = useState<number>(-1);
+  // Fetch Dose Numbers  list response
+  const { data: fetchDoseNumbersListQueryResponce, isFetching } = useGetDoseNumbersListQuery(
+    { key: numDisplayValue },
+    { skip: !numDisplayValue }
+  );
+  // Fetch number of Doses Lov list response
   const { data: numofDossLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
+  // Fetch age UnitLov list response
   const { data: ageUnitLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_UNITS');
+  // Fetch vaccine Doses Interval list response
   const {
     data: vaccineDosesIntervalListResponseLoading,
     refetch: refetchVaccineDosesInterval,
     isFetching: isFetchingIntervalList
   } = useGetVaccineDosesIntervalListQuery(vaccineDosesIntevalListRequest);
+  // Fetch unitLov list response
   const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
-
+  // Fetch vaccine Doses list response
   const { data: vaccineDosesListResponseLoading, refetch: refetchVaccineDoses } =
     useGetVaccineDosesListQuery(vaccineDosesListRequest);
+  // remove Vaccine Doses Interval
+  const [removeVaccineDosesInterval] = useRemoveVaccineDoseIntervalMutation();
+  // save Vaccine Doses Interval
+  const [saveVaccineDosesInterval] = useSaveVaccineDosesIntervalMutation();
+  // save Vaccine Dose
+  const [saveVaccineDose] = useSaveVaccineDoseMutation();
+  // save vaccine
+  const [saveVaccine, saveVaccineMutation] = useSaveVaccineMutation();
 
+  // class name for selected row in Dose Interval table
   const isSelectedDoseInterval = rowData => {
     if (rowData && vaccineDoseInterval && vaccineDoseInterval.key === rowData.key) {
       return 'selected-row';
     } else return '';
   };
-
+  // class name for selected row in Doses table
+  const isSelectedDose = rowData => {
+    if (rowData && vaccineDose && vaccineDose.key === rowData.key) {
+      return 'selected-row';
+    } else return '';
+  };
+  // list of vaccine Doses that used in select dose
   const dosesList = (vaccineDosesListResponseLoading?.object ?? []).map(item => ({
     value: item.key,
     label: item.doseNameLvalue.lovDisplayVale
   }));
-
   const dosesNameList = (fetchDoseNumbersListQueryResponce?.apLovValues ?? []).map(item => ({
     value: item.key,
     label: item.lovDisplayVale
   }));
-
-    const selectedValue = numofDossLovQueryResponse?.object?.find(
+  const selectedValue = numofDossLovQueryResponse?.object?.find(
     item => item.key === vaccine.numberOfDosesLkey
   );
 
-    useEffect(() => {
-    // ارجع اشوف لايش هي بس هي السبب في انه يضل يعمل لودينج كل ما اختار سطر
+  // Effects
+  useEffect(() => {
     setNumDisplayValue(selectedValue?.lovDisplayVale || numDisplayValue);
   }, [selectedValue, vaccine]);
-
+  // update list of vaccine Doses and vaccine Doses Interval when vaccine is changed
   useEffect(() => {
     setVaccineDosesListRequest(prev => ({
       ...prev,
@@ -137,8 +138,7 @@ const DoesSchedule = ({
           : [])
       ]
     }));
-  }, [vaccine?.key]);
-  useEffect(() => {
+
     setVaccineDosesIntervalListRequest(prev => ({
       ...prev,
       filters: [
@@ -159,8 +159,70 @@ const DoesSchedule = ({
       ]
     }));
   }, [vaccine?.key]);
+   useEffect(() => {
+    if (saveVaccineMutation && saveVaccineMutation.status === 'fulfilled') {
+      setVaccine(saveVaccineMutation.data);
+      refetch();
+    }
+  }, [saveVaccineMutation]);
 
-  //Table columns
+  // handle delete vaccine Doses Interval
+  const handleDeleteVaccineDosesInterval = () => {
+    removeVaccineDosesInterval(vaccineDoseInterval)
+      .unwrap()
+      .then(() => {
+        setVaccineDoseInterval(newApVaccineDosesInterval);
+        setOpenConfirmRemoveVaccineDosesInterval(false);
+        dispatch(notify('Vaccine Doses Interval Deleted Successfully' + vaccineDoseInterval.key));
+        refetchVaccineDosesInterval();
+        setVaccineDoseInterval({
+          ...newApVaccineDosesInterval,
+          vaccineKey: vaccine.key,
+          intervalBetweenDoses: 0,
+          fromDoseKey: null,
+          toDoseKey: null,
+          unitLkey: null
+        });
+      });
+  };
+  // Icons column (Edite, delete)
+  const iconsForActionsInterval = () => (
+    <div className="container-of-icons-vaccine">
+      <MdModeEdit
+        className="icons-vaccine"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setChildStep(1);
+          setOpenChildModal(true);
+        }}
+      />
+      <MdDelete
+        className="icons-vaccine"
+        title="Deactivate"
+        size={24}
+        fill="var(--primary-pink)"
+        onClick={() => setOpenConfirmRemoveVaccineDosesInterval(true)}
+      />
+    </div>
+  );
+  // Icons column (Edite, reactive/Deactivate)
+  const iconsForDoses = () => (
+    <div className="container-of-icons-vaccine">
+      <MdModeEdit
+        className="icons-vaccine"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setChildStep(0);
+          setOpenChildModal(true);
+        }}
+      />
+    </div>
+  );
+  //TableIntervalBetweenDosesColumns
   const tableIntervalBetweenDosesColumns = [
     {
       key: 'intervalBetweenDoses',
@@ -177,7 +239,10 @@ const DoesSchedule = ({
       key: 'betweenDose',
       title: <Translate>Between Dose</Translate>,
       flexGrow: 3,
-      render: rowData => (rowData.unitLvalue ? rowData.unitLvalue.lovDisplayVale : rowData.unitLkey)
+      render: rowData =>
+        rowData.fromDose.doseNameLvalue
+          ? rowData.fromDose.doseNameLvalue.lovDisplayVale
+          : rowData.doseNameLkey
     },
     {
       key: 'andDose',
@@ -193,20 +258,19 @@ const DoesSchedule = ({
       title: <Translate>Status</Translate>,
       flexGrow: 3,
       render: rowData => (rowData.isValid ? 'Valid' : 'InValid')
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      flexGrow: 3,
+      render: () => iconsForActionsInterval()
     }
-    // {
-    //   key: 'icons',
-    //   title: <Translate></Translate>,
-    //   flexGrow: 3,
-    //   render: rowData => iconsForActions(rowData)
-    // }
   ];
-
-  //Table columns
+  //TableDosescolumns
   const tableDosesColumns = [
     {
       key: 'doseName',
-      title: <Translate>Dose Name</Translate>,
+      title: <Translate>Dose Number</Translate>,
       flexGrow: 3,
       render: rowData =>
         rowData?.doseNameLvalue ? rowData?.doseNameLvalue.lovDisplayVale : rowData.doseNameLkey
@@ -244,18 +308,15 @@ const DoesSchedule = ({
       title: <Translate>Is Boostert</Translate>,
       flexGrow: 3,
       render: rowData => (rowData.isBooster ? 'Yes' : 'No')
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      flexGrow: 3,
+      render: () => iconsForDoses()
     }
-    // {
-    //   key: 'icons',
-    //   title: <Translate></Translate>,
-    //   flexGrow: 3,
-    //   render: rowData => iconsForActions(rowData)
-    // }
   ];
-  const [saveVaccineDosesInterval, saveVaccineDosesIntervalMutation] =
-    useSaveVaccineDosesIntervalMutation();
-    const [saveVaccineDose, saveVaccineDoseMutation] = useSaveVaccineDoseMutation();
-
+  // handle Save Vaccine Doses Interval
   const handleSaveVaccineDosesInterval = async () => {
     await saveVaccineDosesInterval({ ...vaccineDoseInterval, vaccineKey: vaccine.key }).unwrap();
     dispatch(notify('Vaccine Doses Interval Added Successfully'));
@@ -269,95 +330,87 @@ const DoesSchedule = ({
       unitLkey: null
     });
   };
-const [saveVaccine, saveVaccineMutation] = useSaveVaccineMutation();
-   const handleSaveVaccineDoses = async () => {
-      await saveVaccineDose({ ...vaccineDose, vaccineKey: vaccine.key }).unwrap();
-      saveVaccine({ ...vaccine });
-      dispatch(notify('Vaccine Dose Added Successfully'));
-  
-      refetchVaccineDoses();
-      setVaccineDose({
-        ...newApVaccineDose,
-        vaccineKey: vaccine.key,
-        fromAge: 0,
-        toAge: 0,
-        doseNameLkey: null,
-        fromAgeUnitLkey: null,
-        toAgeUnitLkey: null
-      });
-    };
-useEffect(() => {
-    if (saveVaccineMutation && saveVaccineMutation.status === 'fulfilled') {
-      setVaccine(saveVaccineMutation.data);
-      refetch();
-    }
-  }, [saveVaccineMutation]);
+  // handle save Vaccine Doses
+  const handleSaveVaccineDoses = async () => {
+    await saveVaccineDose({ ...vaccineDose, vaccineKey: vaccine.key }).unwrap();
+    saveVaccine({ ...vaccine });
+    dispatch(notify('Vaccine Dose Added Successfully'));
+    refetchVaccineDoses();
+    setVaccineDose({
+      ...newApVaccineDose,
+      vaccineKey: vaccine.key,
+      fromAge: 0,
+      toAge: 0,
+      doseNameLkey: null,
+      fromAgeUnitLkey: null,
+      toAgeUnitLkey: null
+    });
+  };
   // Main modal content
   const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
       case 0:
         return (
-          <Form layout="inline" fluid>
-            <div className="container-of-add-new-button-practitioners">
+          <Form fluid layout="inline">
+            <div style={{ display: 'flex', gap: '5px', alignItems: 'flex-end' }}>
+              <MyInput
+                width={140}
+                fieldLabel="Vaccine Code"
+                fieldName="vaccineCode"
+                record={vaccine}
+                setRecord={setVaccine}
+                disabled
+              />
+              <MyInput
+                width={140}
+                fieldLabel="Vaccine Name"
+                fieldName="vaccineName"
+                record={vaccine}
+                setRecord={setVaccine}
+                plachplder={'Medical Component'}
+                disabled
+              />
+              <MyInput
+                width={140}
+                fieldType="select"
+                fieldLabel="Number of Doses"
+                selectData={numofDossLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                fieldName="numberOfDosesLkey"
+                record={vaccine}
+                disabled={
+                  vaccine.numberOfDosesLkey && vaccineDosesListResponseLoading?.object?.length > 0
+                }
+                setRecord={newRecord => {
+                  setVaccine(newRecord);
+                  const selectedValue = numofDossLovQueryResponse?.object?.find(
+                    item => item.key === newRecord.numberOfDosesLkey
+                  );
+                  setNumDisplayValue(selectedValue?.lovDisplayVale || '');
+                }}
+              />
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
                 onClick={() => {
+                  setVaccineDose({ ...newApVaccineDose });
                   setChildStep(0);
                   setOpenChildModal(true);
                 }}
-                width="109px"
+                width="90px"
               >
-                Add New
+                Add
               </MyButton>
             </div>
-            <MyInput
-              width={170}
-              column
-              fieldLabel="Vaccine Code"
-              fieldName="vaccineCode"
-              record={vaccine}
-              setRecord={setVaccine}
-              disabled
-            />
-            <MyInput
-              width={170}
-              column
-              fieldLabel="Vaccine Name"
-              fieldName="vaccineName"
-              record={vaccine}
-              setRecord={setVaccine}
-              plachplder={'Medical Component'}
-              disabled
-            />
-            <MyInput
-              width={170}
-              column
-              fieldType="select"
-              fieldLabel="Number of Doses"
-              selectData={numofDossLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName="numberOfDosesLkey"
-              record={vaccine}
-              disabled={vaccine.numberOfDosesLkey}
-              setRecord={newRecord => {
-                setVaccine(newRecord);
-                const selectedValue = numofDossLovQueryResponse?.object?.find(
-                  item => item.key === newRecord.numberOfDosesLkey
-                );
-                setNumDisplayValue(selectedValue?.lovDisplayVale || '');
-              }}
-            />
-
             <MyTable
               height={250}
               data={vaccine.key ? vaccineDosesListResponseLoading?.object ?? [] : []}
               loading={isFetching}
               columns={tableDosesColumns}
-              rowClassName={isSelectedDoseInterval}
+              rowClassName={isSelectedDose}
               onRowClick={rowData => {
-                setVaccineDoseInterval(rowData);
+                setVaccineDose(rowData);
               }}
               sortColumn={vaccineDosesIntevalListRequest.sortBy}
               sortType={vaccineDosesIntevalListRequest.sortType}
@@ -375,11 +428,14 @@ useEffect(() => {
       case 1:
         return (
           <Form>
-            <div className="container-of-add-new-button-practitioners">
+            <div className="container-of-add-new-button-vaccine">
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
                 onClick={() => {
+                  setVaccineDoseInterval({
+                    ...newApVaccineDosesInterval
+                  });
                   setChildStep(1);
                   setOpenChildModal(true);
                 }}
@@ -390,7 +446,6 @@ useEffect(() => {
             </div>
             <MyTable
               height={450}
-              // data={vaccine.key ? vaccineDosesIntervalListResponseLoading?.object ?? [] : []}
               data={vaccine.key ? vaccineDosesIntervalListResponseLoading?.object ?? [] : []}
               loading={isFetchingIntervalList}
               columns={tableIntervalBetweenDosesColumns}
@@ -409,22 +464,28 @@ useEffect(() => {
                   });
               }}
             />
+            <DeletionConfirmationModal
+              open={openConfirmRemoveVaccineDosesInterval}
+              setOpen={setOpenConfirmRemoveVaccineDosesInterval}
+              itemToDelete="Vaccine Doses Interval"
+              actionButtonFunction={handleDeleteVaccineDosesInterval}
+              actionType={'delete'}
+            />
           </Form>
         );
     }
   };
-
   // Child modal content
   const conjureFormContentOfChildModal = () => {
     switch (childStep) {
       case 0:
         return (
           <Form>
-              <MyInput
+            <MyInput
               required
               width={350}
               fieldType="select"
-              fieldLabel="Dose Name"
+              fieldLabel="Dose Number"
               fieldName="doseNameLkey"
               selectData={dosesNameList}
               selectDataLabel="label"
@@ -432,46 +493,50 @@ useEffect(() => {
               record={vaccineDose}
               setRecord={setVaccineDose}
             />
-            <MyInput
-              required
-              width={350}
-              fieldLabel="Age"
-              fieldType="number"
-              fieldName="fromAge"
-              record={vaccineDose}
-              setRecord={setVaccineDose}
-            />
-            <MyInput
-              required
-              width={350}
-              fieldType="select"
-              fieldLabel="Age Unit"
-              selectData={ageUnitLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName="fromAgeUnitLkey"
-              record={vaccineDose}
-              setRecord={setVaccineDose}
-            />
-            <MyInput
-              width={350}
-              fieldLabel="Age Until"
-              fieldType="number"
-              fieldName="toAge"
-              record={vaccineDose}
-              setRecord={setVaccineDose}
-            />
-            <MyInput
-              width={350}
-              fieldType="select"
-              fieldLabel="Age Unit"
-              selectData={ageUnitLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              fieldName="toAgeUnitLkey"
-              record={vaccineDose}
-              setRecord={setVaccineDose}
-            />
+            <div className="container-of-two-fields-vaccine">
+              <MyInput
+                required
+                width={170}
+                fieldLabel="Age"
+                fieldType="number"
+                fieldName="fromAge"
+                record={vaccineDose}
+                setRecord={setVaccineDose}
+              />
+              <MyInput
+                required
+                width={170}
+                fieldType="select"
+                fieldLabel="Age Unit"
+                selectData={ageUnitLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                fieldName="fromAgeUnitLkey"
+                record={vaccineDose}
+                setRecord={setVaccineDose}
+              />
+            </div>
+            <div className="container-of-two-fields-vaccine">
+              <MyInput
+                width={170}
+                fieldLabel="Age Until"
+                fieldType="number"
+                fieldName="toAge"
+                record={vaccineDose}
+                setRecord={setVaccineDose}
+              />
+              <MyInput
+                width={170}
+                fieldType="select"
+                fieldLabel="Age Unit"
+                selectData={ageUnitLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                fieldName="toAgeUnitLkey"
+                record={vaccineDose}
+                setRecord={setVaccineDose}
+              />
+            </div>
             <MyInput
               fieldType="checkbox"
               fieldName="isBooster"
@@ -484,52 +549,32 @@ useEffect(() => {
       case 1:
         return (
           <Form layout="inline" fluid>
-            <MyInput
-              width={350}
-              required
-              fieldType="number"
-              column
-              fieldLabel="Interval Between Doses"
-              fieldName="intervalBetweenDoses"
-              record={vaccineDoseInterval}
-              setRecord={setVaccineDoseInterval}
-            />
-            <MyInput
-              required
-              width={350}
-              column
-              fieldType="select"
-              fieldLabel="Unit"
-              fieldName="unitLkey"
-              selectData={unitLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={vaccineDoseInterval}
-              setRecord={setVaccineDoseInterval}
-            />
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                paddingTop: '6px'
-              }}
-            >
-              {/* <div>
-            <span style={{ color: 'red', marginLeft: 2 }}>*</span> <MyLabel label="Between Dose" />
-          </div> */}
-              {/* <SelectPicker
-            data={dosesList}
-            value={vaccineDoseInterval.fromDoseKey === null ? ' ' : dosesList.key}
-            onChange={value => {
-              // const selectedItem = dosesNameList.find(item => item.value === value);
-              setVaccineDoseInterval({ ...vaccineDoseInterval, fromDoseKey: value });
-            }}
-            style={{ width: 350 }}
-            placeholder="Select "
-            labelKey="label"
-            valueKey="value"
-          /> */}
+            <div className="container-of-two-fields-vaccine">
+              <MyInput
+                width={170}
+                required
+                fieldType="number"
+                column
+                fieldLabel="Interval Between Doses"
+                fieldName="intervalBetweenDoses"
+                record={vaccineDoseInterval}
+                setRecord={setVaccineDoseInterval}
+              />
+              <MyInput
+                required
+                width={170}
+                column
+                fieldType="select"
+                fieldLabel="Unit"
+                fieldName="unitLkey"
+                selectData={unitLovQueryResponse?.object ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={vaccineDoseInterval}
+                setRecord={setVaccineDoseInterval}
+              />
+            </div>
+            
               <MyInput
                 required
                 width={350}
@@ -542,34 +587,8 @@ useEffect(() => {
                 selectDataValue="value"
                 record={vaccineDoseInterval}
                 setRecord={setVaccineDoseInterval}
-                // disabled={!edit_new}
                 menuMaxHeight={200}
               />
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                paddingTop: '6px'
-              }}
-            >
-              {/* <div>
-                <span style={{ color: 'red', marginLeft: 2 }}>*</span> <MyLabel label="To Dose" />
-              </div> */}
-              {/* <SelectPicker
-                data={dosesList}
-                value={vaccineDoseInterval.toDoseKey === null ? ' ' : dosesList.key}
-                onChange={value => {
-                  // const selectedItem = dosesNameList.find(item => item.value === value);
-                  setVaccineDoseInterval({ ...vaccineDoseInterval, toDoseKey: value });
-                }}
-                style={{ width: 180 }}
-                placeholder="Select "
-                labelKey="label"
-                valueKey="value"
-              /> */}
-
               <MyInput
                 required
                 width={350}
@@ -582,10 +601,8 @@ useEffect(() => {
                 selectDataValue="value"
                 record={vaccineDoseInterval}
                 setRecord={setVaccineDoseInterval}
-                // disabled={!edit_new}
                 menuMaxHeight={200}
               />
-            </div>
           </Form>
         );
     }
@@ -594,35 +611,28 @@ useEffect(() => {
     <ChildModal
       actionButtonLabel={vaccine?.key ? 'Save' : 'Create'}
       actionButtonFunction={() => setOpen(false)}
-      actionChildButtonFunction={childStep == 1 ? handleSaveVaccineDosesInterval : handleSaveVaccineDoses}
+      actionChildButtonFunction={
+        childStep == 1 ? handleSaveVaccineDosesInterval : handleSaveVaccineDoses
+      }
       open={open}
       setOpen={setOpen}
       showChild={openChildModal}
       setShowChild={setOpenChildModal}
-      title='Dose Schedule'
+      title="Dose Schedule"
       mainContent={conjureFormContentOfMainModal}
-      //   mainStep={[{ title: 'Vaccine Details', icon: <FontAwesomeIcon icon={faUserNurse} /> }]}
       mainStep={[
         {
           title: 'Doses',
           icon: <FaSyringe />,
           disabledNext: !vaccine?.key,
-          footer: (
-            <MyButton
-            //   onClick={handleSave}
-            >
-              Save
-            </MyButton>
-          )
         },
         {
           title: 'Interval Between Doses',
           icon: <MdOutlineAccessTime />
         }
       ]}
-      childTitle={'xl.x,x.x...;.;.'}
+      childTitle="Add Dose"
       childContent={conjureFormContentOfChildModal}
-      //   mainSize = {width > 600 ? '570px' : '300px'}
       mainSize="sm"
     />
   );
