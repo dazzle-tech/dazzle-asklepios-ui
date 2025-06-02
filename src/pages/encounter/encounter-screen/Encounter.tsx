@@ -266,7 +266,7 @@ const Encounter = () => {
                   medicalSheet?.object?.[key] ? (
                     <List.Item key={key} className="drawer-item"
                       onClick={() => {
-
+                       setIsDrawerOpen(false)
                         navigate(path, { state: { patient: propsData.patient, encounter: propsData.encounter, edit } });
                       }}
                     >
