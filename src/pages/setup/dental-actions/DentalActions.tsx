@@ -1,66 +1,51 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Drawer, Input, Modal, Pagination, Panel, SelectPicker, Table } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
+import './styles.less';
+import { Panel } from 'rsuite';
 import {
   useGetDentalActionsQuery,
   useSaveDentalActionMutation,
-  useGetCdtsQuery,
-  useLinkCdtActionMutation,
-  useUnlinkCdtActionMutation
 } from '@/services/setupService';
-import { Button, ButtonToolbar, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
 import { ApDentalAction } from '@/types/model-types';
-import { newApCdtDentalAction, newApDentalAction } from '@/types/model-types-constructor';
-import { Form, Stack, Divider } from 'rsuite';
+import { newApDentalAction } from '@/types/model-types-constructor';
+import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import { Check, Trash } from '@rsuite/icons';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { IoSettingsSharp } from 'react-icons/io5';
 import { PiToothFill } from 'react-icons/pi';
 import { MdModeEdit } from 'react-icons/md';
 import { FaUndo } from 'react-icons/fa';
 import { MdDelete } from 'react-icons/md';
 import { useAppDispatch } from '@/hooks';
-import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
+import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
 import AddEditDentalAction from './AddEditDentalAction';
 import MyButton from '@/components/MyButton/MyButton';
 import TreatmentLinkedProcedures from './TreatmentLinkedProcedures';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 const DentalActions = () => {
   const dispatch = useAppDispatch();
   const [dentalAction, setDentalAction] = useState<ApDentalAction>({ ...newApDentalAction });
-  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupOpen, setPopupOpen] = useState(false); // open add/edit dental action pop up
   const [proceduresOpen, setProceduresOpen] = useState(false);
-  // const [cdtMap, setCdtMap] = useState({});
-  // const [selectedCdtKey, setSelectedCdtKey] = useState('');
+  const [openConfirmDeleteDentalAction, setOpenConfirmDeleteDentalAction] = useState<boolean>(false);
+  const [stateOfDeleteDentalAction, setStateOfDeleteDentalAction] = useState<string>('delete');
+  const [width, setWidth] = useState<number>(window.innerWidth);
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     pageSize: 15
   });
-  const [width, setWidth] = useState<number>(window.innerWidth);
+  // save dental actoion
   const [saveDentalAction, saveDentalActionMutation] = useSaveDentalActionMutation();
-  // const [linkCdtAction, linkCdtActionMutation] = useLinkCdtActionMutation();
-  const [unlinkCdtAction, unlinkCdtActionMutation] = useUnlinkCdtActionMutation();
+    // Fetch dental action list response
   const {
     data: dentalActionListResponse,
     isLoading: isDentalActionLoading,
     isFetching: isDentalActionFetching
   } = useGetDentalActionsQuery(listRequest);
-  // const { data: cdtListResponse } = useGetCdtsQuery({
-  //   ...initialListRequest,
-  //   pageSize: 1000,
-  //   skipDetails: true
-  // });
-
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
   const rowsPerPage = listRequest.pageSize;
@@ -72,24 +57,21 @@ const DentalActions = () => {
     { label: 'Type', value: 'type' },
     { label: 'imageName', value: 'imageName' }
   ];
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  // Header page setUp
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className='title-dental'>
       <h5>Dental Actions</h5>
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Dental_Actions'));
   dispatch(setDivContent(divContentHTML));
-  // useEffect(() => {
-  //   // fill cdt procedure objects in a map with key as item key
-  //   let map = {};
-  //   for (const cdt of cdtListResponse?.object ?? []) {
-  //     map[cdt.key] = cdt;
-  //   }
-  //   setCdtMap(map);
-  // }, [cdtListResponse]);
-
+  // class name for selected row
+  const isSelected = rowData => {
+    if (rowData && dentalAction && rowData.key === dentalAction.key) {
+      return 'selected-row';
+    } else return '';
+  };
   // Handle page change in navigation
   const handlePageChange = (_: unknown, newPage: number) => {
     setListRequest({ ...listRequest, pageNumber: newPage + 1 });
@@ -102,60 +84,25 @@ const DentalActions = () => {
       pageNumber: 1
     });
   };
-
+  // handle click on add new button (open the pop up of add/edit dental action)
   const handleNew = () => {
     setDentalAction({ ...newApDentalAction });
     setPopupOpen(true);
-  };
-
+  }; 
+  // handle save dental action and close the pop up
   const handleSave = () => {
     setPopupOpen(false);
-    saveDentalAction(dentalAction).unwrap();
+    saveDentalAction(dentalAction).unwrap().then(() =>{
+      dispatch(notify({ msg: 'The Dental Action has been saved successfully', sev: 'success' }));
+    }).catch(() => {
+      dispatch(notify({ msg: 'Failed to save this Dental Action', sev: 'error' }));
+    });
   };
-
-  useEffect(() => {
-    const handleResize = () => setWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    if (saveDentalActionMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveDentalActionMutation.data]);
-
-  // useEffect(() => {
-  //   if (linkCdtActionMutation.data) {
-  //     // add the new linked procedure to selected action procedure list
-  //     let currentProcedureList = [...dentalAction['linkedProcedures']];
-  //     currentProcedureList.push(linkCdtActionMutation.data);
-  //     let clone = { ...dentalAction };
-  //     clone['linkedProcedures'] = currentProcedureList;
-  //     setDentalAction({ ...clone });
-  //   }
-  // }, [linkCdtActionMutation.data]);
-
-  useEffect(() => {
-    if (unlinkCdtActionMutation.data) {
-      // remove the unlinked procedure from selected action procedure list
-      const cdtKeyToRemove = unlinkCdtActionMutation.data.cdtKey;
-      // Filter out the procedure with the matching cdtKey
-      const updatedProcedureList = dentalAction['linkedProcedures'].filter(
-        procedure => procedure.cdtKey !== cdtKeyToRemove
-      );
-      let clone = { ...dentalAction };
-      clone['linkedProcedures'] = updatedProcedureList;
-      setDentalAction({ ...clone });
-    }
-  }, [unlinkCdtActionMutation.data]);
-
-  const isSelected = rowData => {
-    if (rowData && dentalAction && rowData.key === dentalAction.key) {
-      return 'selected-row';
-    } else return '';
+  // handle deactivate/reactivate dental action (need to handle from the back)
+  const handleDeactiveReactivateDentalAction = () => {
+    setOpenConfirmDeleteDentalAction(false);
   };
-
+  // handle filter change (in table)
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -170,41 +117,12 @@ const DentalActions = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-  useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
-
-  useEffect(() => {
-    if (recordOfFilter['filter']) {
-      handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
-    } else {
-      setListRequest({
-        ...initialListRequest,
-        pageSize: listRequest.pageSize,
-        pageNumber: 1
-      });
-    }
-  }, [recordOfFilter]);
-
-  useEffect(() => {
-    if (isDentalActionLoading || isDentalActionFetching) {
-      dispatch(showSystemLoader());
-    } else {
-      dispatch(hideSystemLoader());
-    }
-    return () => {
-      dispatch(hideSystemLoader());
-    };
-  }, [isDentalActionLoading, isDentalActionFetching]);
-
+   // Icons column (Linked Procedures, Edit, reactive/Deactivate)
   const iconsForActions = (rowData: ApDentalAction) => (
-    <div className="container-of-icons-lov">
+    <div className="container-of-icons-dental">
       <PiToothFill
-        className="icons-lov"
-        title="Setup Lov Values"
+        className="icons-dental"
+        title="Linked Procedures"
         size={24}
         fill="var(--primary-gray)"
         style={{
@@ -214,24 +132,29 @@ const DentalActions = () => {
         onClick={() => {
           if (!(!rowData.key || rowData.type !== 'treatment')) setProceduresOpen(true);
         }}
-        // onClick={() => setCarouselActiveIndex(1)}
       />
-
       <MdModeEdit
-        className="icons-lov"
+        className="icons-dental"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
         onClick={() => setPopupOpen(true)}
       />
       {!rowData?.deletedAt ? (
-        <MdDelete className="icons-lov" title="Deactivate" size={24} fill="var(--primary-pink)" />
+        <MdDelete className="icons-dental" title="Deactivate" size={24} fill="var(--primary-pink)"
+        onClick={() => {
+            setStateOfDeleteDentalAction('deactivate');
+            setOpenConfirmDeleteDentalAction(true);
+          }} />
       ) : (
-        <FaUndo className="icons-lov" title="Activate" size={20} fill="var(--primary-gray)" />
+        <FaUndo className="icons-dental" title="Activate" size={20} fill="var(--primary-gray)"
+        onClick={() => {
+            setStateOfDeleteDentalAction('reactivate');
+            setOpenConfirmDeleteDentalAction(true);
+          }} />
       )}
     </div>
   );
-
   //Table columns
   const tableColumns = [
     {
@@ -261,10 +184,9 @@ const DentalActions = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
-
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-lov">
+    <Form layout="inline" fluid className="container-of-filter-fields-dental">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -294,13 +216,54 @@ const DentalActions = () => {
     </Form>
   );
 
+  // Effects
+  // change the width variable when the size of window is changed
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  // update list when save dental action
+  useEffect(() => {
+    if (saveDentalActionMutation.data) {
+      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+    }
+  }, [saveDentalActionMutation.data]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent('  '));
+    };
+  }, [location.pathname, dispatch]);
+  // update the list when the filter is changed
+  useEffect(() => {
+    if (recordOfFilter['filter']) {
+      handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
+    } else {
+      setListRequest({
+        ...initialListRequest,
+        pageSize: listRequest.pageSize,
+        pageNumber: 1
+      });
+    }
+  }, [recordOfFilter]);
+
+  useEffect(() => {
+    if (isDentalActionLoading || isDentalActionFetching) {
+      dispatch(showSystemLoader());
+    } else {
+      dispatch(hideSystemLoader());
+    }
+    return () => {
+      dispatch(hideSystemLoader());
+    };
+  }, [isDentalActionLoading, isDentalActionFetching]);
+
+
   return (
     <Panel>
-      {/* <ButtonToolbar> */}
-      {/* <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
-          Add New
-        </IconButton> */}
-      <div className="container-of-add-new-button-lov">
+      <div className="container-of-add-new-button-dental">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"
@@ -309,34 +272,7 @@ const DentalActions = () => {
         >
           Add New
         </MyButton>
-      </div>
-      {/* <IconButton
-          disabled={!dentalAction.key}
-          appearance="primary"
-          onClick={() => setPopupOpen(true)}
-          color="green"
-          icon={<EditIcon />}
-        >
-          Edit Selected
-        </IconButton> */}
-      {/* <IconButton
-          disabled={true || !dentalAction.key}
-          appearance="primary"
-          color="red"
-          icon={<TrashIcon />}
-        >
-          Delete Selected
-        </IconButton> */}
-      {/* <IconButton
-          disabled={!dentalAction.key || dentalAction.type !== 'treatment'}
-          appearance="primary"
-          onClick={() => setProceduresOpen(true)}
-          color="cyan"
-          icon={<EditIcon />}
-        >
-          Linked Procedures
-        </IconButton> */}
-      {/* </ButtonToolbar> */}
+      </div>     
       <MyTable
         height={450}
         data={dentalActionListResponse?.object ?? []}
@@ -358,58 +294,13 @@ const DentalActions = () => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
-      {/* <Table
-        height={550}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortColumn={(sortBy, sortType) => {
-          if (sortBy)
-            setListRequest({
-              ...listRequest,
-              sortBy,
-              sortType
-            });
-        }}
-        headerHeight={80}
-        rowHeight={60}
-        bordered
-        cellBordered
-        data={dentalActionListResponse?.object ?? []}
-        onRowClick={rowData => {
-          setDentalAction(rowData);
-        }}
-        rowClassName={isSelected}
-      >
-        <Column sortable flexGrow={1}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('key', e)} />
-            <Translate>Key</Translate>
-          </HeaderCell>
-          <Cell dataKey="key" />
-        </Column>
-        <Column sortable flexGrow={1}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('description', e)} />
-            <Translate>Description</Translate>
-          </HeaderCell>
-          <Cell dataKey="description" />
-        </Column>
-        <Column sortable flexGrow={1}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('type', e)} />
-            <Translate>Type</Translate>
-          </HeaderCell>
-          <Cell dataKey="type" />
-        </Column>
-        <Column sortable flexGrow={4}>
-          <HeaderCell>
-            <Input onChange={e => handleFilterChange('imageName', e)} />
-            <Translate>Image Name</Translate>
-          </HeaderCell>
-          <Cell dataKey="imageName" />
-        </Column>
-      </Table> */}
-
+       <DeletionConfirmationModal
+              open={openConfirmDeleteDentalAction}
+              setOpen={setOpenConfirmDeleteDentalAction}
+              itemToDelete="Dental Action"
+              actionButtonFunction={handleDeactiveReactivateDentalAction}
+              actionType={stateOfDeleteDentalAction}
+            />
       <AddEditDentalAction
         open={popupOpen}
         setOpen={setPopupOpen}
@@ -418,140 +309,16 @@ const DentalActions = () => {
         handleSave={handleSave}
         width={width}
       />
-
-      {/* <Modal open={popupOpen} overflow>
-        <Modal.Title>
-          <Translate>New/Edit DentalAction</Translate>
-        </Modal.Title>
-        <Modal.Body>
-          <Form fluid>
-            <MyInput fieldName="description" record={dentalAction} setRecord={setDentalAction} />
-            <MyInput
-              fieldName="type"
-              fieldType="select"
-              selectData={[
-                { label: 'Treatment', value: 'treatment' },
-                { label: 'Condition', value: 'condition' }
-              ]}
-              selectDataLabel="label"
-              selectDataValue="value"
-              record={dentalAction}
-              setRecord={setDentalAction}
-            />
-            <MyInput fieldName="imageName" record={dentalAction} setRecord={setDentalAction} />
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="primary" onClick={handleSave}>
-              Save
-            </Button>
-            <Button appearance="primary" color="red" onClick={() => setPopupOpen(false)}>
-              Cancel
-            </Button>
-          </Stack>
-        </Modal.Footer>
-      </Modal> */}
-
       <TreatmentLinkedProcedures 
        open={proceduresOpen}
        setOpen={setProceduresOpen}
        dentalAction={dentalAction}
        setDentalAction={setDentalAction}
+       width={width}
+      //  refetch={refetch}
+       listRequest={listRequest}
+       setListRequest={setListRequest}
       />
-      {/* <Drawer
-        size="lg"
-        onEsc={() => setProceduresOpen(false)}
-        onClose={() => setProceduresOpen(false)}
-        open={proceduresOpen}
-      > */}
-        {/* <Drawer.Header>
-          <Translate>Treatment Linked Procedures</Translate>
-        </Drawer.Header>
-        <Drawer.Body>
-          <Stack justifyContent={'space-between'} style={{ marginBottom: '10px' }}>
-            <Stack.Item> */}
-              {/* <SelectPicker
-                placeholder="Select Procedure"
-                data={cdtListResponse?.object ?? []}
-                renderMenuItem={(label, item) => {
-                  return (
-                    <div>
-                      {item.key} / {item.description}
-                    </div>
-                  );
-                }}
-                labelKey={'description'}
-                valueKey="key"
-                style={{ width: '300px' }}
-                value={selectedCdtKey}
-                onChange={e => {
-                  if (e) setSelectedCdtKey(e);
-                  else setSelectedCdtKey('');
-                }}
-              /> */}
-            {/* </Stack.Item>
-            <Stack.Item>
-              <IconButton
-                appearance="primary"
-                icon={<Check />}
-                onClick={() => {
-                  linkCdtAction({
-                    ...newApCdtDentalAction,
-                    dentalActionKey: dentalAction.key,
-                    cdtKey: selectedCdtKey
-                  }).unwrap();
-                }}
-              >
-                Link CDT Procedure to Treatment
-              </IconButton>
-            </Stack.Item>
-          </Stack> */}
-
-          {/* <Table
-            height={550}
-            headerHeight={80}
-            rowHeight={60}
-            bordered
-            cellBordered
-            data={dentalAction['linkedProcedures']}
-          >
-            <Column sortable flexGrow={5}>
-              <HeaderCell align="center">
-                <Translate>CDT Key</Translate>
-              </HeaderCell>
-              <Cell>{rowData => rowData.cdtKey}</Cell>
-            </Column>
-            <Column sortable flexGrow={5}>
-              <HeaderCell align="center">
-                <Translate>Description</Translate>
-              </HeaderCell>
-              <Cell>{rowData => cdtMap[rowData.cdtKey].description}</Cell>
-            </Column>
-            <Column sortable flexGrow={1}>
-              <HeaderCell align="center">
-                <Translate>Remove</Translate>
-              </HeaderCell>
-              <Cell>
-                {rowData => (
-                  <IconButton
-                    onClick={() => {
-                      unlinkCdtAction({
-                        ...newApCdtDentalAction,
-                        dentalActionKey: rowData.dentalActionKey,
-                        cdtKey: rowData.cdtKey
-                      }).unwrap();
-                    }}
-                    color="red"
-                    appearance="ghost"
-                    icon={<Trash />}
-                  />
-                )}
-              </Cell>
-            </Column>
-          </Table> */}
-        {/* </Drawer.Body>
-      </Drawer> */}
     </Panel>
   );
 };

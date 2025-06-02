@@ -5,6 +5,7 @@ import { Form } from 'rsuite';
 import './styles.less';
 import { FaTooth } from "react-icons/fa";
 const AddEditDentalAction = ({ open, setOpen, width, dentalAction, setDentalAction, handleSave }) => {
+  
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
     switch (stepNumber) {
