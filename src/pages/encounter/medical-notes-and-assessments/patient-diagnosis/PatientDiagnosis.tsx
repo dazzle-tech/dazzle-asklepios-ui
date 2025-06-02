@@ -95,7 +95,7 @@ const PatientDiagnosis = ({ patient, encounter }) => {
   const { data: sourceOfInfoLovResponseData } = useGetLovValuesByCodeQuery('DIAGNOSIS_TYPE');
 
   const [savePatientDiagnose, savePatientDiagnoseMutation] = useSavePatientDiagnoseMutation();
-  const [diagnosisIcd, setDiagnosisIcd] = useState(null);
+ 
   const [selectedDiagnose, setSelectedDiagnose] = useState<any>({
     ...newApPatientDiagnose,
     visitKey: encounter.key,
@@ -107,12 +107,12 @@ const PatientDiagnosis = ({ patient, encounter }) => {
       setSelectedDiagnose(patientDiagnoseListResponse.data.object[0]);
     }
   }, [patientDiagnoseListResponse.data]);
-
+  
   const save = () => {
     try {
       savePatientDiagnose({
-        ...selectedDiagnose,
-        diagnoseCode: diagnosisIcd.key
+        ...selectedDiagnose
+       
       }).unwrap();
       dispatch(notify({msg:'saved  Successfully',sev:'success'}));
     } catch (error) {
@@ -148,9 +148,10 @@ const PatientDiagnosis = ({ patient, encounter }) => {
                     onClick={() => {
                       setSelectedDiagnose({
                         ...selectedDiagnose,
-                        diagnoseCode: mod.key
+                        diagnoseCode: mod.key,
+                        diagnosisObject: mod,
                       });
-                      setDiagnosisIcd(mod);
+                     
                       setSearchKeyword('');
                     }}
                   >
