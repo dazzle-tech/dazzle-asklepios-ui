@@ -101,13 +101,11 @@ const TreatmentLinkedProcedures = ({ open, setOpen, dentalAction, setDentalActio
     switch (stepNumber) {
       case 0:
         return (
-          <Form fluid >
-             <div className='container-of-linked-procedures-dental'>
-            <div >
+          <Form fluid className='container-of-linked-procedures-dental'>
             <Col>
             <Row>
             <MyInput
-              width="100%"
+              width={width < 880 ? "100%" : "50%"}
               showLabel={false}
               fieldType="select"
               fieldName="selectedCdtKey"
@@ -136,13 +134,12 @@ const TreatmentLinkedProcedures = ({ open, setOpen, dentalAction, setDentalActio
                 });
                 setLoad(false);
               }}
-              width="100%"
+             width={width < 880 ? "100%" : "50%"}
             >
               Link CDT Procedure to Treatment
             </MyButton>
             </Row>
             </Col>
-            </div>
             <MyTable
               height={350}
               data={dentalAction['linkedProcedures']}
@@ -160,7 +157,6 @@ const TreatmentLinkedProcedures = ({ open, setOpen, dentalAction, setDentalActio
               actionButtonFunction={handleDeleteTreatmentLinkedProcedure}
               actionType="Delete"
             />
-            </div>
           </Form>
         );
     }
@@ -169,7 +165,7 @@ const TreatmentLinkedProcedures = ({ open, setOpen, dentalAction, setDentalActio
  // Effects
   useEffect(() => {
     // fill cdt procedure objects in a map with key as item key
-    let map = {};
+    const map = {};
     for (const cdt of cdtListResponse?.object ?? []) {
       map[cdt.key] = cdt;
     }
@@ -179,9 +175,9 @@ const TreatmentLinkedProcedures = ({ open, setOpen, dentalAction, setDentalActio
   useEffect(() => {
     if (linkCdtActionMutation.data) {
       // add the new linked procedure to selected action procedure list
-      let currentProcedureList = [...dentalAction['linkedProcedures']];
+      const currentProcedureList = [...dentalAction['linkedProcedures']];
       currentProcedureList.push(linkCdtActionMutation.data);
-      let clone = { ...dentalAction };
+      const clone = { ...dentalAction };
       clone['linkedProcedures'] = currentProcedureList;
       setDentalAction({ ...clone });
     }
@@ -202,7 +198,7 @@ const TreatmentLinkedProcedures = ({ open, setOpen, dentalAction, setDentalActio
       const updatedProcedureList = dentalAction['linkedProcedures'].filter(
         procedure => procedure.cdtKey !== cdtKeyToRemove
       );
-      let clone = { ...dentalAction };
+      const clone = { ...dentalAction };
       clone['linkedProcedures'] = updatedProcedureList;
       setDentalAction({ ...clone });
     }

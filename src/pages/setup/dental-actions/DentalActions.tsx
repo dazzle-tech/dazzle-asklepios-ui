@@ -3,10 +3,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
 import './styles.less';
 import { Panel } from 'rsuite';
-import {
-  useGetDentalActionsQuery,
-  useSaveDentalActionMutation,
-} from '@/services/setupService';
+import { useGetDentalActionsQuery, useSaveDentalActionMutation } from '@/services/setupService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { ApDentalAction } from '@/types/model-types';
 import { newApDentalAction } from '@/types/model-types-constructor';
@@ -31,16 +28,18 @@ const DentalActions = () => {
   const [dentalAction, setDentalAction] = useState<ApDentalAction>({ ...newApDentalAction });
   const [popupOpen, setPopupOpen] = useState(false); // open add/edit dental action pop up
   const [proceduresOpen, setProceduresOpen] = useState(false);
-  const [openConfirmDeleteDentalAction, setOpenConfirmDeleteDentalAction] = useState<boolean>(false);
+  const [openConfirmDeleteDentalAction, setOpenConfirmDeleteDentalAction] =
+    useState<boolean>(false);
   const [stateOfDeleteDentalAction, setStateOfDeleteDentalAction] = useState<string>('delete');
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     pageSize: 15
   });
+
   // save dental actoion
   const [saveDentalAction, saveDentalActionMutation] = useSaveDentalActionMutation();
-    // Fetch dental action list response
+  // Fetch dental action list response
   const {
     data: dentalActionListResponse,
     isLoading: isDentalActionLoading,
@@ -59,13 +58,14 @@ const DentalActions = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className='title-dental'>
+    <div className="title-dental">
       <h5>Dental Actions</h5>
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Dental_Actions'));
   dispatch(setDivContent(divContentHTML));
+  
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && dentalAction && rowData.key === dentalAction.key) {
@@ -88,15 +88,18 @@ const DentalActions = () => {
   const handleNew = () => {
     setDentalAction({ ...newApDentalAction });
     setPopupOpen(true);
-  }; 
+  };
   // handle save dental action and close the pop up
   const handleSave = () => {
     setPopupOpen(false);
-    saveDentalAction(dentalAction).unwrap().then(() =>{
-      dispatch(notify({ msg: 'The Dental Action has been saved successfully', sev: 'success' }));
-    }).catch(() => {
-      dispatch(notify({ msg: 'Failed to save this Dental Action', sev: 'error' }));
-    });
+    saveDentalAction(dentalAction)
+      .unwrap()
+      .then(() => {
+        dispatch(notify({ msg: 'The Dental Action has been saved successfully', sev: 'success' }));
+      })
+      .catch(() => {
+        dispatch(notify({ msg: 'Failed to save this Dental Action', sev: 'error' }));
+      });
   };
   // handle deactivate/reactivate dental action (need to handle from the back)
   const handleDeactiveReactivateDentalAction = () => {
@@ -117,7 +120,7 @@ const DentalActions = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-   // Icons column (Linked Procedures, Edit, reactive/Deactivate)
+  // Icons column (Linked Procedures, Edit, reactive/Deactivate)
   const iconsForActions = (rowData: ApDentalAction) => (
     <div className="container-of-icons-dental">
       <PiToothFill
@@ -141,17 +144,27 @@ const DentalActions = () => {
         onClick={() => setPopupOpen(true)}
       />
       {!rowData?.deletedAt ? (
-        <MdDelete className="icons-dental" title="Deactivate" size={24} fill="var(--primary-pink)"
-        onClick={() => {
+        <MdDelete
+          className="icons-dental"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
             setStateOfDeleteDentalAction('deactivate');
             setOpenConfirmDeleteDentalAction(true);
-          }} />
+          }}
+        />
       ) : (
-        <FaUndo className="icons-dental" title="Activate" size={20} fill="var(--primary-gray)"
-        onClick={() => {
+        <FaUndo
+          className="icons-dental"
+          title="Activate"
+          size={20}
+          fill="var(--primary-gray)"
+          onClick={() => {
             setStateOfDeleteDentalAction('reactivate');
             setOpenConfirmDeleteDentalAction(true);
-          }} />
+          }}
+        />
       )}
     </div>
   );
@@ -260,7 +273,6 @@ const DentalActions = () => {
     };
   }, [isDentalActionLoading, isDentalActionFetching]);
 
-
   return (
     <Panel>
       <div className="container-of-add-new-button-dental">
@@ -272,7 +284,7 @@ const DentalActions = () => {
         >
           Add New
         </MyButton>
-      </div>     
+      </div>
       <MyTable
         height={450}
         data={dentalActionListResponse?.object ?? []}
@@ -294,13 +306,13 @@ const DentalActions = () => {
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
-       <DeletionConfirmationModal
-              open={openConfirmDeleteDentalAction}
-              setOpen={setOpenConfirmDeleteDentalAction}
-              itemToDelete="Dental Action"
-              actionButtonFunction={handleDeactiveReactivateDentalAction}
-              actionType={stateOfDeleteDentalAction}
-            />
+      <DeletionConfirmationModal
+        open={openConfirmDeleteDentalAction}
+        setOpen={setOpenConfirmDeleteDentalAction}
+        itemToDelete="Dental Action"
+        actionButtonFunction={handleDeactiveReactivateDentalAction}
+        actionType={stateOfDeleteDentalAction}
+      />
       <AddEditDentalAction
         open={popupOpen}
         setOpen={setPopupOpen}
@@ -309,15 +321,15 @@ const DentalActions = () => {
         handleSave={handleSave}
         width={width}
       />
-      <TreatmentLinkedProcedures 
-       open={proceduresOpen}
-       setOpen={setProceduresOpen}
-       dentalAction={dentalAction}
-       setDentalAction={setDentalAction}
-       width={width}
-      //  refetch={refetch}
-       listRequest={listRequest}
-       setListRequest={setListRequest}
+      <TreatmentLinkedProcedures
+        open={proceduresOpen}
+        setOpen={setProceduresOpen}
+        dentalAction={dentalAction}
+        setDentalAction={setDentalAction}
+        width={width}
+        //  refetch={refetch}
+        listRequest={listRequest}
+        setListRequest={setListRequest}
       />
     </Panel>
   );
