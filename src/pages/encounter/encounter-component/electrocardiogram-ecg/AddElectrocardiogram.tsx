@@ -11,6 +11,7 @@ import { notify } from '@/utils/uiReducerActions';
 import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import clsx from 'clsx';
 const AddElectrocardiogram = ({ open, setOpen, patient, encounter, electrocardiogramEcgObject, refetch ,edit}) => {
     const authSlice = useAppSelector(state => state.auth);
     const [electrocardiogramEcg, setElectrocardiogramEcg] = useState<ApElectrocardiogramEcg>(electrocardiogramEcgObject);
@@ -87,7 +88,8 @@ const AddElectrocardiogram = ({ open, setOpen, patient, encounter, electrocardio
 
     // Modal Content
     const content = (
-         <div className={edit?"disabled-panel":""}>
+         <div  className={clsx('', {'disabled-panel': edit
+                                                  })}>
              <Form fluid layout='inline'>
             <MyInput
                 width={200}

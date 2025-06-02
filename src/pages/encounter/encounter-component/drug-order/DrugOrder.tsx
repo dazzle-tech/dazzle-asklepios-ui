@@ -33,6 +33,7 @@ import {
 import DetailsModal from './DetailsModal';
 import './styles.less';
 import { useLocation } from 'react-router-dom';
+import clsx from 'clsx';
 const DrugOrder = () => {
       const location = useLocation();
   const { patient, encounter,edit } = location.state || {};
@@ -466,7 +467,9 @@ const DrugOrder = () => {
                 />
             </div>
 
-            <div className={`bt-right ${edit ? "disabled-panel" : ""}`}>
+            <div className={clsx('bt-right', {
+                                            'disabled-panel': edit
+                                          })}>
 
                 <MyButton
                     prefixIcon={() => <PlusIcon />}

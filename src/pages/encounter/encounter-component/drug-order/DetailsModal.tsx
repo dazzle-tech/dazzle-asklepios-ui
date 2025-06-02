@@ -20,6 +20,7 @@ import ActiveIngrediantList from './ActiveIngredient';
 import './styles.less';
 import Substitues from "./Substitutes";
 import MyTagInput from "@/components/MyTagInput/MyTagInput";
+import clsx from "clsx";
 const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication, drugKey, editing, patient, encounter, medicRefetch, openToAdd }) => {
     const dispatch = useAppDispatch();
     const [searchKeyword, setSearchKeyword] = useState('');
@@ -37,7 +38,7 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
     const [editDuration, setEditDuration] = useState(false);
     const [slectInst, setSelectInt] = useState({ inst: null });
     const [instructionList, setInstructionList] = useState([]);
-    const [instr,setInstruc]=useState(null)
+    const [instr, setInstruc] = useState(null)
     const [indicationsDescription, setindicationsDescription] = useState<string>('');
     const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
@@ -86,10 +87,10 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
 
     }, [orderMedication]);
 
-      useEffect(()=>{
-            setInstruc(joinValuesFromArray(instructionList))
-        },[instructionList])
-    
+    useEffect(() => {
+        setInstruc(joinValuesFromArray(instructionList))
+    }, [instructionList])
+
     useEffect(() => {
         if (slectInst?.inst != null) {
             const foundItem = administrationInstructionsLovQueryResponse?.object?.find(
@@ -237,7 +238,7 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
                 statusLkey: "164797574082125",
                 startDateTime: orderMedication.startDateTime ? new Date(orderMedication?.startDateTime)?.getTime() : null,
                 indicationIcd: indicationsDescription,
-                administrationInstructions:instr
+                administrationInstructions: instr
             }).unwrap().then(() => {
                 dispatch(notify({ msg: "Added sucssesfily", sev: "success" }))
                 setOpen(false);
@@ -277,12 +278,12 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
     const handleButtonClick = () => {
         setTyping(true);
     };
-   
+
     const joinValuesFromArray = (values) => {
         return values?.filter(Boolean).join(', ');
     };
 
-   
+
     return (<>
         <AdvancedModal
             open={open}
@@ -298,7 +299,15 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
             </>}
             rightContent={
                 <Form fluid>
-                    <Row gutter={20} className={edit ? "disabled-panel" : orderMedication.key ? orderMedication?.statusLvalue?.valueCode !== " DIAG_ORDER_STAT_NEW" ? "disabled-panel" : "" : ""}>
+                    <Row gutter={20}
+                        className={clsx({
+                            'disabled-panel':
+                                edit ||
+                                (orderMedication?.key &&
+                                    orderMedication?.statusLvalue?.valueCode !== 'DIAG_ORDER_STAT_NEW'),
+                        })}
+
+                    >
                         <Col md={12}>
 
                             <Row className="rows-gap">

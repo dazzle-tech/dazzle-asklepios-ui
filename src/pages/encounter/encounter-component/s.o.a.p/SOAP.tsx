@@ -39,6 +39,7 @@ import {
 } from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
 import { useLocation } from 'react-router-dom';
+import clsx from 'clsx';
 
 
 const SOAP = () => {
@@ -154,7 +155,8 @@ const SOAP = () => {
       <Tabs defaultActiveKey="1" appearance="subtle">
         <Tabs.Tab eventKey="1" title="Chief Complain" >
 
-          <div className={`column-container ${edit ? "disabled-panel" : ""}`}>
+          <div  className={clsx('column-container', {'disabled-panel': edit
+                                                                   })}>
             <div className='top-section'>
               <div className='flex1' >
                 <div className='title-div'>
