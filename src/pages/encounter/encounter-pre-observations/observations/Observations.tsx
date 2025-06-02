@@ -34,6 +34,7 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import MyLabel from '@/components/MyLabel';
 import { useLocation } from 'react-router-dom';
 import MyButton from '@/components/MyButton/MyButton';
+import clsx from 'clsx';
 
 export type ObservationsRef = {
   handleSave: () => void;
@@ -220,7 +221,8 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
 
   return (
 
-    <div ref={ref} className={`basuc-div ${edit ? "disabled-panel" : ""}`}>
+    <div ref={ref}  className={clsx('basuc-div', {'disabled-panel': edit
+                                                                       })}>
       <Form fluid>
         {!(location.pathname == '/nurse-station') &&
           <Row>

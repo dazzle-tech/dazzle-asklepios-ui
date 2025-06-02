@@ -12,6 +12,7 @@ import { useSaveOptometricExamMutation } from '@/services/encounterService';
 import { newApOptometricExam } from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
 import AdvancedModal from '@/components/AdvancedModal';
+import clsx from 'clsx';
 const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject, refetch, secondSelectedicd10, setSecondSelectedicd10, selectedicd10, setSelectedIcd10, timeM,edit }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [optometricExam, setOptometricExam] = useState<any>(optometricObject);
@@ -213,7 +214,8 @@ const AddOptometricTest = ({ patient, encounter, open, setOpen, optometricObject
     );
     // Right Content Modal
     const rightContent = (
-        <div className={edit?"disabled-panel":""}>
+        <div className={clsx('', {'disabled-panel': edit
+                                                 })}>
         <Form fluid layout="inline">
             <MyInput
                 width={200}

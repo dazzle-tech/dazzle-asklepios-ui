@@ -12,6 +12,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { faPersonRunning } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import './styles.less';
+import clsx from 'clsx';
 const AddTreadmillStress = ({ open, setOpen, treadmillStressObject, patient, encounter, refetch,edit }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [treadmillStress, setTreadmillStress] = useState<ApTreadmillStress>(treadmillStressObject);
@@ -93,7 +94,7 @@ const AddTreadmillStress = ({ open, setOpen, treadmillStressObject, patient, enc
 
     // Modal Content
     const content = (
-         <div className={edit?"disabled-panel":""}>
+         <div  className={clsx('', {'disabled-panel': edit})}>
         <Form fluid layout='inline' >
             <MyInput
                 width={200}

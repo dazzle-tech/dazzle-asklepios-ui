@@ -10,6 +10,7 @@ import MyButton from '@/components/MyButton/MyButton';
 import { newApAudiometryPuretone } from '@/types/model-types-constructor';
 import { ApAudiometryPuretone } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
+import clsx from 'clsx';
 import MyModal from '@/components/MyModal/MyModal';
 const AddAudiometryPuretone = ({ open, setOpen, patient, encounter, audiometryPuretoneObject, refetch ,edit}) => {
     const authSlice = useAppSelector(state => state.auth);
@@ -84,7 +85,9 @@ const AddAudiometryPuretone = ({ open, setOpen, patient, encounter, audiometryPu
     }, [isEncounterStatusClosed, isEncounterAudiometryPuretonStatusClose]);
     // Modal Content 
     const content = (
-        <div className={edit?"disabled-panel":""} >
+        <div className={clsx('', {
+                        'disabled-panel': edit
+                      })}>
         <Form fluid layout='inline' className='fields-container'>
             <MyInput
                 width={200}
