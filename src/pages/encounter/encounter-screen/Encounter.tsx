@@ -33,7 +33,7 @@ const Encounter = () => {
   const location = useLocation();
   const propsData = location.state;
  const savedState = sessionStorage.getItem("encounterPageSource");
- console.log("Saved State:", savedState);
+ 
   const [localEncounter, setLocalEncounter] = useState<any>({ ...propsData?.encounter });
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -116,7 +116,7 @@ useEffect(() => {
   const handleGoBack = () => {
 
 
-    if (propsData.fromPage === 'PatientEMR') {
+    if (savedState=== 'PatientEMR') {
       navigate('/patient-EMR', {
         state: {
           localPatient: propsData.patient,
