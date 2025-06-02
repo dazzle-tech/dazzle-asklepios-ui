@@ -103,24 +103,27 @@ const PatientEMR = () => {
         } else return '';
     };
     // Hnadle Go to Visit Function
-    const goToVisit = async (rowData) => {
-        setLocalEncounter(rowData);
-        dispatch(setEncounter(rowData));
-        dispatch(setPatient(rowData['patientObject']));
+   const goToVisit = async (rowData) => {
+  setLocalEncounter(rowData);
+  dispatch(setEncounter(rowData));
+  dispatch(setPatient(rowData['patientObject']));
 
-        const privatePatientPath = '/user-access-patient-private';
-        const encounterPath = '/encounter';
-        const targetPath = rowData.patientObject?.privatePatient ? privatePatientPath : encounterPath;
+  const privatePatientPath = '/user-access-patient-private';
+  const encounterPath = '/encounter';
+  const targetPath = rowData.patientObject?.privatePatient ? privatePatientPath : encounterPath;
 
-        navigate(targetPath, {
-            state: {
-                info: "toEncounter",
-                fromPage: "PatientEMR",
-                patient: rowData.patientObject,
-                encounter: rowData
-            }
-        });
-    };
+  const stateData = {
+    info: "toEncounter",
+    fromPage: "PatientEMR",
+    patient: rowData.patientObject,
+    encounter: rowData
+  };
+
+  
+  sessionStorage.setItem("encounterPageSource", "PatientEMR");
+
+  navigate(targetPath, { state: stateData });
+};
 
     // Effects
     useEffect(() => {
