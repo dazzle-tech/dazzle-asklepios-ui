@@ -183,6 +183,22 @@ const ReviewOfSystems = ({edit, patient, encounter }) => {
         )
       }
     ];
+      const [pageIndex, setPageIndex] = useState(0);
+        const [rowsPerPage, setRowsPerPage] = useState(5);
+    
+        const handlePageChange = (_: unknown, newPage: number) => {
+            setPageIndex(newPage);
+        }
+        const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+            setRowsPerPage(parseInt(event.target.value, 10));
+            setPageIndex(0);
+    
+        };
+        const totalCount = bodySystemsDetailLovQueryResponse?.object?.length ?? 0;
+        const paginatedData = bodySystemsDetailLovQueryResponse?.object?.slice(
+            pageIndex * rowsPerPage,
+            pageIndex * rowsPerPage + rowsPerPage
+        );
   return (
     <>
       <Panel>
@@ -215,8 +231,12 @@ const ReviewOfSystems = ({edit, patient, encounter }) => {
            <div className='system-details'>
             <MyTable
             data={bodySystemsDetailLovQueryResponse?.object ?? []}
-            
             columns={tableColumns}
+              page={pageIndex}
+            rowsPerPage={rowsPerPage}
+            totalCount={totalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
             ></MyTable>
 
               </div>
