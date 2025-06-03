@@ -2,7 +2,7 @@ import React from 'react';
 import { useState } from 'react';
 import { type ApPatient, type ApPatientInsurance } from '@/types/model-types';
 import { newApPatientInsurance } from '@/types/model-types-constructor';
-import { PlusRound, Icon } from '@rsuite/icons';
+import { PlusRound } from '@rsuite/icons';
 import { faUserPen, faLock, faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { useGetPatientInsuranceQuery, useDeletePatientInsuranceMutation } from '@/services/patientService';
 import InsuranceModal from '../InsuranceModal';
@@ -10,7 +10,7 @@ import SpecificCoverageModa from '../SpecificCoverageModa';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Badge, Button, ButtonToolbar } from 'rsuite';
+import { Badge } from 'rsuite';
 import MyTable from '@/components/MyTable';
 import './styles.less'
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -27,7 +27,10 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
   const [insuranceBrowsing, setInsuranceBrowsing] = useState(false);
   const [deleteInsurance] = useDeletePatientInsuranceMutation();
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [hideSaveBtn,setHideSaveBtn] = useState(false);
+  const [hideSaveBtn, setHideSaveBtn] = useState(false);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
   // Define the table columns
   const columns = [
     {
@@ -127,12 +130,27 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
     }).then(
       () => (
         patientInsuranceResponse.refetch(),
-        dispatch(notify({ msg: 'Insurance Deleted Successfully', sev: "success" })),
+        dispatch(notify({ msg: 'Insurance Deleted Successfully', sev: "success" })),
         setSelectedInsurance(null),
         setOpenDeleteModal(false)
       )
     );
   };
+
+  // Pagination values
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setPageIndex(newPage);
+  }
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPageIndex(0);
+
+  };
+  const totalCount = patientInsuranceResponse?.data?.length ?? 0;
+  const paginatedData = patientInsuranceResponse?.data?.slice(
+    pageIndex * rowsPerPage,
+    pageIndex * rowsPerPage + rowsPerPage
+  );
 
   return (
     <div className="tab-main-container">
@@ -183,10 +201,15 @@ const InsuranceTab: React.FC<InsuranceTabProps> = ({ localPatient }) => {
         setOpen={setSpecificCoverageModalOpen}
       />
       <MyTable
-        data={patientInsuranceResponse?.data ?? []}
+        data={paginatedData ?? []}
         columns={columns}
         onRowClick={setSelectedInsurance}
         rowClassName={isSelected}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
       />
       <DeletionConfirmationModal
         open={openDeleteModal}
