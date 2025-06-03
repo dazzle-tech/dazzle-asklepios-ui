@@ -230,7 +230,7 @@ const ReviewOfSystems = ({edit, patient, encounter }) => {
                 ))}</div>
            <div className='system-details'>
             <MyTable
-            data={bodySystemsDetailLovQueryResponse?.object ?? []}
+            data={paginatedData ?? []}
             columns={tableColumns}
               page={pageIndex}
             rowsPerPage={rowsPerPage}

@@ -115,7 +115,7 @@ const Orders = ({ order, setOrder, listOrdersResponse, setListOrdersResponse }) 
     return (
         <Panel className="panel-border">
             <MyTable
-                data={filterdOrderList || []}
+                data={paginatedData || []}
                 columns={tableColomns}
                 height={200}
 

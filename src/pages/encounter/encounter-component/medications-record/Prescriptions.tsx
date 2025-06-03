@@ -3,21 +3,22 @@ import Translate from "@/components/Translate";
 import { useGetPrescriptionsQuery } from "@/services/encounterService";
 import { ApPrescription } from "@/types/model-types";
 import { newApPrescription } from "@/types/model-types-constructor";
-import { initialListRequest } from "@/types/types";
+import { initialListRequest, ListRequest } from "@/types/types";
 import React, { useState } from "react";
 import { formatDateWithoutSeconds } from "@/utils";
 import PrescriptionDetails from "./PrescriptionDetails";
-const Prescriptions = ({ patient,genericMedicationListResponse ,customeInstructions}) => {
+const Prescriptions = ({ patient, genericMedicationListResponse, customeInstructions }) => {
     const [prescription, setPrescription] = useState<ApPrescription>({ ...newApPrescription });
     //List of current patient prescriptions that have been submitted
-    const { data: prescriptions, isLoading: isLoadingPrescriptions, refetch: preRefetch } = useGetPrescriptionsQuery({
+    const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
             {
                 fieldName: "patient_key",
                 operator: "match",
-                value: patient.key,
+                value: patient?.key,
             },
+
             {
                 fieldName: "status_lkey",
                 operator: "match",
@@ -26,7 +27,8 @@ const Prescriptions = ({ patient,genericMedicationListResponse ,customeInstructi
 
         ],
     });
-   
+    const { data: prescriptions, isLoading: isLoadingPrescriptions, refetch: preRefetch } = useGetPrescriptionsQuery(listRequest);
+
 
 
     const isSelected = rowData => {
@@ -92,8 +94,33 @@ const Prescriptions = ({ patient,genericMedicationListResponse ,customeInstructi
             }
         },
 
-    ]
-  
+    ];
+    const pageIndex = listRequest.pageNumber - 1;
+
+    // how many rows per page:
+    const rowsPerPage = listRequest.pageSize;
+
+    // total number of items in the backend:
+    const totalCount = prescriptions?.extraNumeric ?? 0;
+
+    // handler when the user clicks a new page number:
+    const handlePageChange = (_: unknown, newPage: number) => {
+        // MUI gives you a zero-based page, so add 1 for your API
+
+        setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+    };
+
+    // handler when the user chooses a different rows-per-page:
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+
+        setListRequest({
+            ...listRequest,
+            pageSize: parseInt(event.target.value, 10),
+            pageNumber: 1 // reset to first page
+        });
+    };
+
+
     return (<>
         <MyTable
             columns={tableColumns}
@@ -102,11 +129,16 @@ const Prescriptions = ({ patient,genericMedicationListResponse ,customeInstructi
                 setPrescription(rowData);
             }}
             rowClassName={isSelected}
+            page={pageIndex}
+            rowsPerPage={rowsPerPage}
+            totalCount={totalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
         ></MyTable>
-        <br/>
+        <br />
         {/* when click row show table for medication details */}
         {prescription.key &&
-        <PrescriptionDetails customeInstructions={customeInstructions} genericMedicationListResponse={genericMedicationListResponse} prescription={prescription}/>}
+            <PrescriptionDetails customeInstructions={customeInstructions} genericMedicationListResponse={genericMedicationListResponse} prescription={prescription} />}
     </>)
 }
 export default Prescriptions
