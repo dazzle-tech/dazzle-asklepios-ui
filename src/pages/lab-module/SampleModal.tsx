@@ -1,5 +1,4 @@
 import MyInput from "@/components/MyInput";
-import MyLabel from "@/components/MyLabel";
 import MyModal from "@/components/MyModal/MyModal";
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
@@ -13,15 +12,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, {
   useState
 } from "react";
-import { FaCalendar } from "react-icons/fa6";
 import {
   Col,
-  DatePicker,
   Form,
   Panel,
   Row,
-  Stack,
-  Table
 } from "rsuite";
 import './styles.less';
 import { formatDateWithoutSeconds } from "@/utils";

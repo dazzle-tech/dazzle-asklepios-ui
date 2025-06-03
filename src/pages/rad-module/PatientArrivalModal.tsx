@@ -5,13 +5,35 @@ import { newApDiagnosticOrderTests } from '@/types/model-types-constructor';
 import { notify } from '@/utils/uiReducerActions';
 import { faHospitalUser } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Col, Form, Row } from 'rsuite';
 const PatientArrivalModal = ({ open, setOpen, saveTest, test, setTest, fetchTest }) => {
   const dispatch = useAppDispatch();
+      const [width, setWidth] = useState("30vw");
+   
+      
+useEffect(() => {
+  const handleResize = () => {
+    const w = window.innerWidth;
+ 
+      if (w <= 600) {
+      setWidth("40vw");
+   
+    }
+      if (w <= 600) {
+      setWidth("45vw");
+    
+    }
+    
+  };
+
+  handleResize(); 
+  window.addEventListener("resize", handleResize);
+  return () => window.removeEventListener("resize", handleResize);
+}, []);
   return (
     <>
-      {' '}
+     
       <MyModal
         open={open}
         setOpen={setOpen}
@@ -33,13 +55,14 @@ const PatientArrivalModal = ({ open, setOpen, saveTest, test, setTest, fetchTest
         }}
         title="Patient Arrived"
         steps={[{ title: 'Arrived', icon: <FontAwesomeIcon icon={faHospitalUser} /> }]}
-        size="450px"
+        size={width}
         bodyheight="60vh"
         content={
+           <Form fluid>
           <Col md={24}>
             <Row>
               <Col md={24}>
-                <Form fluid>
+               
                   <MyInput
                     width="100%"
                     fieldLabel="Patient Arrival Note"
@@ -48,12 +71,12 @@ const PatientArrivalModal = ({ open, setOpen, saveTest, test, setTest, fetchTest
                     record={test}
                     setRecord={setTest}
                   />
-                </Form>
+                
               </Col>
             </Row>
             <Row>
               <Col md={24}>
-                <Form fluid>
+              
                   <MyInput
                     width="100%"
                     fieldName="patientArrivedAt"
@@ -61,10 +84,11 @@ const PatientArrivalModal = ({ open, setOpen, saveTest, test, setTest, fetchTest
                     record={test}
                     setRecord={setTest}
                   />
-                </Form>
+               
               </Col>
             </Row>
           </Col>
+          </Form>
         }
       ></MyModal>
     </>
