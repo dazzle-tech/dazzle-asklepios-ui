@@ -219,6 +219,7 @@ useEffect(() => {
                 Medical Sheets
               </MyButton>
               <MyButton
+              disabled={edit}
                 prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
                 onClick={() => {
                   setModalOpen(true);
