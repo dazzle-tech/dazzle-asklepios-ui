@@ -110,12 +110,23 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
     // Handle deleting a preferred health professional
     const handleDeletePH = () => {
         deletePatientPH({ ...patientHP }).unwrap().then(() => {
-            dispatch(notify({msg:'Preferred Health Professional Deleted Successfully',sev: 'success'}));
+            dispatch(notify({ msg: 'Preferred Health Professional Deleted Successfully', sev: 'success' }));
             patientPreferredHealthProfessionalRefetch();
         })
         handleClearDeletePH();
     };
-
+    // Change page event handler
+    const handlePageChange = (_: unknown, newPage: number) => {
+        setPatientPreferredHealthProfessional({ ...patientPreferredHealthProfessional, pageNumber: newPage + 1 });
+    };
+    // Change number of rows per page
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setPatientPreferredHealthProfessional({
+            ...patientPreferredHealthProfessional,
+            pageSize: parseInt(event.target.value, 10),
+            pageNumber: 1 // Reset to first page
+        });
+    };
     // Effects
     useEffect(() => {
         setPatientPreferredHealthProfessional((prev) => ({
@@ -138,10 +149,14 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
             ],
         }));
     }, [patient]);
+    // Pagination values
+    const pageIndex = patientPreferredHealthProfessional.pageNumber - 1;
+    const rowsPerPage = patientPreferredHealthProfessional.pageSize;
+    const totalCount = patientPreferredHealthProfessionalResponse?.extraNumeric ?? 0;
     return (
         <div className="tab-main-container">
             <div className="tab-content-btns">
-                <AddPrefferdHealthProfessionalModal open={open} setOpen={setOpen} patient={patient} patientHP={patientHP} setPatientHP={setPatientHP} refetch={patientPreferredHealthProfessionalRefetch} practitioner={practitioner} setPractitioner={setPractitioner}/>
+                <AddPrefferdHealthProfessionalModal open={open} setOpen={setOpen} patient={patient} patientHP={patientHP} setPatientHP={setPatientHP} refetch={patientPreferredHealthProfessionalRefetch} practitioner={practitioner} setPractitioner={setPractitioner} />
                 <MyButton
                     onClick={handleNewPreferredHP}
                     disabled={isClick}
@@ -172,6 +187,11 @@ const PreferredHealthProfessional = ({ patient, isClick }) => {
                     setPractitioner(rowData?.practitioner);
                 }}
                 rowClassName={isSelected}
+                page={pageIndex}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
             />
             <DeletionConfirmationModal
                 open={deletePreferredHealthModalOpen}
