@@ -181,7 +181,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
     useEffect(()=>{
         if(openToAdd){
             handleCleare();
-            console.log(openToAdd)
+          
         }
     },[openToAdd]);
 
