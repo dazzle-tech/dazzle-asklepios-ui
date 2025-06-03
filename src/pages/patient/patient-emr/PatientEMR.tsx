@@ -24,10 +24,10 @@ const PatientEMR = () => {
     const propsData = location.state;
     const [encounter, setLocalEncounter] = useState({ ...newApEncounter });
     const [localPatient, setLocalPatient] = useState<ApPatient>(propsData?.fromPage === "clinicalVisit" ? propsData?.localPatient : { ...newApPatient });
-     const [refetchData, setRefetchData] = useState(false);
+    const [refetchData, setRefetchData] = useState(false);
 
     // Initialize Patient Encounters list request with default filters
-    const [listEncounterRequest, setListEncounterRequest] = useState<ListRequest>({
+    const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
             {
@@ -39,7 +39,7 @@ const PatientEMR = () => {
         ]
     });
     // Fetch patient Encounters List
-    const { data: encounterListResponse, isFetching } = useGetEncountersQuery(listEncounterRequest);
+    const { data: encounterListResponse, isFetching } = useGetEncountersQuery(listRequest);
     const [windowHeight, setWindowHeight] = useState(getHeight(window));
     // Page Header Setup
     const divContent = (
@@ -50,6 +50,7 @@ const PatientEMR = () => {
     const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Patients_EMR'));
     dispatch(setDivContent(divContentHTML));
+
     // Table Columns 
     const columns = [
         {
@@ -96,6 +97,32 @@ const PatientEMR = () => {
                     : rowData.encounterStatusLkey
         }
     ];
+    const pageIndex = listRequest.pageNumber - 1;
+
+    // how many rows per page:
+    const rowsPerPage = listRequest.pageSize;
+
+    // total number of items in the backend:
+    const totalCount = encounterListResponse?.extraNumeric ?? 0;
+
+    // handler when the user clicks a new page number:
+    const handlePageChange = (_: unknown, newPage: number) => {
+        // MUI gives you a zero-based page, so add 1 for your API
+      
+        setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+    };
+
+    // handler when the user chooses a different rows-per-page:
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+
+        setListRequest({
+            ...listRequest,
+            pageSize: parseInt(event.target.value, 10),
+            pageNumber: 1 // reset to first page
+        });
+    };
+
+
     // Function to check if the current row is the selected one
     const isSelected = rowData => {
         if (rowData && encounter && rowData.key === encounter.key) {
@@ -103,27 +130,27 @@ const PatientEMR = () => {
         } else return '';
     };
     // Hnadle Go to Visit Function
-   const goToVisit = async (rowData) => {
-  setLocalEncounter(rowData);
-  dispatch(setEncounter(rowData));
-  dispatch(setPatient(rowData['patientObject']));
+    const goToVisit = async (rowData) => {
+        setLocalEncounter(rowData);
+        dispatch(setEncounter(rowData));
+        dispatch(setPatient(rowData['patientObject']));
 
-  const privatePatientPath = '/user-access-patient-private';
-  const encounterPath = '/encounter';
-  const targetPath = rowData.patientObject?.privatePatient ? privatePatientPath : encounterPath;
+        const privatePatientPath = '/user-access-patient-private';
+        const encounterPath = '/encounter';
+        const targetPath = rowData.patientObject?.privatePatient ? privatePatientPath : encounterPath;
 
-  const stateData = {
-    info: "toEncounter",
-    fromPage: "PatientEMR",
-    patient: rowData.patientObject,
-    encounter: rowData
-  };
+        const stateData = {
+            info: "toEncounter",
+            fromPage: "PatientEMR",
+            patient: rowData.patientObject,
+            encounter: rowData
+        };
 
-  
-  sessionStorage.setItem("encounterPageSource", "PatientEMR");
 
-  navigate(targetPath, { state: stateData });
-};
+        sessionStorage.setItem("encounterPageSource", "PatientEMR");
+
+        navigate(targetPath, { state: stateData });
+    };
 
     // Effects
     useEffect(() => {
@@ -142,7 +169,7 @@ const PatientEMR = () => {
                     value: localPatient?.key || undefined
                 }
             ];
-            setListEncounterRequest((prevRequest) => ({
+            setListRequest((prevRequest) => ({
 
                 ...prevRequest,
                 filters: updatedFilters,
@@ -169,6 +196,11 @@ const PatientEMR = () => {
                         setLocalPatient(rowData.patientObject);
                     }}
                     rowClassName={isSelected}
+                    page={pageIndex}
+                    rowsPerPage={rowsPerPage}
+                    totalCount={totalCount}
+                    onPageChange={handlePageChange}
+                    onRowsPerPageChange={handleRowsPerPageChange}
                 />
             </div>
             <ProfileSidebar
