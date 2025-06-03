@@ -15,7 +15,7 @@ import {
 } from '@/services/medicationsSetupService';
 import { FaPills } from "react-icons/fa";
 import { newApDrugOrder, newApDrugOrderMedications } from '@/types/model-types-constructor';
-import { initialListRequest } from '@/types/types';
+import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
 import BlockIcon from '@rsuite/icons/Block';
 import CheckIcon from '@rsuite/icons/Check';
@@ -76,10 +76,8 @@ const DrugOrder = () => {
         });
     const [saveDrugorder, saveDrugorderMutation] = useSaveDrugOrderMutation();
     const [saveDrugorderMedication, saveDrugorderMedicationMutation] = useSaveDrugOrderMedicationMutation();
-
-    const { data: orderMedications, refetch: medicRefetch } = useGetDrugOrderMedicationQuery({
-        ...initialListRequest,
-
+  const [listRequest, setListRequest] = useState<ListRequest>({
+    ...initialListRequest,
         filters: [
             {
                 fieldName: "drug_order_key",
@@ -92,7 +90,8 @@ const DrugOrder = () => {
                 value: "1804447528780744",
             }
         ],
-    });
+  });
+    const { data: orderMedications, refetch: medicRefetch } = useGetDrugOrderMedicationQuery(listRequest);
     const filteredorders = orders?.object?.filter(
         (item) => item.statusLkey === "1804482322306061"
     ) ?? [];
@@ -104,7 +103,23 @@ const DrugOrder = () => {
             return 'selected-row';
         } else return '';
     };
-
+   useEffect(() => {
+           setListRequest(prev => ({
+               ...prev,
+             filters: [
+            {
+                fieldName: "drug_order_key",
+                operator: "",
+                value: drugKey,
+            },
+            {
+                fieldName: "status_lkey",
+                operator: showCanceled ? "notMatch" : "match",
+                value: "1804447528780744",
+            }
+        ],
+           }));
+       }, [drugKey, showCanceled]);
     useEffect(() => {
         if (orders?.object) {
             const foundOrder = orders.object.find(order => {
@@ -445,6 +460,30 @@ const DrugOrder = () => {
             }
         }
     ];
+      const pageIndex = listRequest.pageNumber - 1;
+    
+        // how many rows per page:
+        const rowsPerPage = listRequest.pageSize;
+    
+        // total number of items in the backend:
+        const totalCount = orderMedications?.extraNumeric ?? 0;
+    
+        // handler when the user clicks a new page number:
+        const handlePageChange = (_: unknown, newPage: number) => {
+            // MUI gives you a zero-based page, so add 1 for your API
+    
+            setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+        };
+    
+        // handler when the user chooses a different rows-per-page:
+        const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    
+            setListRequest({
+                ...listRequest,
+                pageSize: parseInt(event.target.value, 10),
+                pageNumber: 1 // reset to first page
+            });
+        };
     return (<>
 
         <div className='bt-div'
@@ -584,6 +623,11 @@ const DrugOrder = () => {
                     setSelectedGeneric(genericMedicationListResponse?.object?.find(item => item.key === rowData.genericMedicationsKey))
                 }}
                 rowClassName={isSelected}
+                page={pageIndex}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
 
             ></MyTable>
 
