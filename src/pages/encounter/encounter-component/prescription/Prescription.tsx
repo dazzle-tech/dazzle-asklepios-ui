@@ -111,8 +111,7 @@ const Prescription = () => {
             }
         ],
     });
-    console.log("listRequest", listRequest);
-    console.log("preKey", preKey);
+
     const { data: prescriptionMedications, isLoading: isLoadingPrescriptionMedications, refetch: medicRefetch } = useGetPrescriptionMedicationsQuery(listRequest);
     const [selectedRowoMedicationKey, setSelectedRowoMedicationKey] = useState("");
     const { data: customeInstructions, isLoading: isLoadingCustomeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
