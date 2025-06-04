@@ -221,8 +221,7 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
         setSelectedGeneric(null);
         setSelectedFirstDate(null);
         setindicationsDescription("");
-
-
+         setSearchKeyword("");
         setTags([])
     }
     const handleSaveMedication = () => {
@@ -256,7 +255,7 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
     };
     const handleItemClick = (Generic) => {
         setSelectedGeneric(Generic);
-        setSearchKeyword("")
+        setSearchKeyword("");
         const newList = roaLovQueryResponse.object.filter((item) =>
             (Generic.roaList)?.includes(item.key)
         );

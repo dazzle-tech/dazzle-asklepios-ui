@@ -174,14 +174,16 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
     }, [selectedOption])
 
     useEffect(()=>{
+        console.log(open);
+       setSearchKeyword("");
         if(open==false){
-            handleCleare()
+            handleCleare();
+            
         }
     },[open]);
-    useEffect(()=>{
+    useEffect(()=>{   
         if(openToAdd){
-            handleCleare();
-          
+            handleCleare();  
         }
     },[openToAdd]);
 
@@ -261,7 +263,9 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
         setSelectedOption(null);
         setInstruc(null);
         setCustomeinst({ dose: null, frequency: null, unit: null, roa: null })
-        setTags([])
+        setTags([]);
+        setSearchKeyword("");
+        
     }
     const handleItemClick = (Generic) => {
         setSelectedGeneric(Generic);
