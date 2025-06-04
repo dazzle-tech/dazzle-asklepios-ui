@@ -26,7 +26,7 @@ const Summary =({open ,setOpen,list ,encounter,setEncounter,saveEncounter})=>{
           
             {list?.map((item, index) => (
               <div key={index} className='summery-div-child'>
-                <p>{item.systemLkey}</p>
+                <p>{item.systemLvalue?.lovDisplayVale}</p>
                 <p>{item.systemDetailLvalue ? item.systemDetailLvalue.lovDisplayVale
                   : item.systemDetailLkey}</p>
                 <p> {item.notes}</p>
