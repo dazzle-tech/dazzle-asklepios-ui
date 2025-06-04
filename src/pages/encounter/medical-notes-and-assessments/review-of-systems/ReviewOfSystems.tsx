@@ -38,7 +38,7 @@ const ReviewOfSystems = ({edit, patient, encounter }) => {
     code: 'BODY_SYS_DETAIL',
     parentValueKey: selectedSystem.key
   });
-
+  console.log("salected system", selectedSystem);
   const encounterReviewOfSystemsResponse = useGetEncounterReviewOfSystemsQuery(
     encounter.key
   );
