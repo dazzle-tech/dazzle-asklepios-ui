@@ -139,9 +139,9 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
 
         dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
 
-        setTest({ ...newApDiagnosticOrderTests });
         await fetchTest();
         await reportFetch();
+        setTest({ ...Response });
       } catch (error) {
         dispatch(notify({ msg: 'Saved Failed', sev: 'error' }));
         console.error('Error saving test or report:', error);
