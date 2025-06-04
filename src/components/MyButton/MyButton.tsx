@@ -12,7 +12,7 @@ const MyButton = ({
    loading = false,
   ...props
 }) => {
-  console.log(loading, 'loading');
+
   return (
     <Button
       className={`bt ${size}`}

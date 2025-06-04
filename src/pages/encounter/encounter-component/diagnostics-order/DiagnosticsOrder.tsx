@@ -13,6 +13,7 @@ import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import {
     Checkbox, Divider,
     HStack,
+    Panel,
     Row,
     SelectPicker
 } from 'rsuite';
@@ -41,6 +42,7 @@ import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import { useLocation } from 'react-router-dom';
 import { useGetDiagnosticsTestListQuery } from '@/services/setupService';
 import MyModal from '@/components/MyModal/MyModal';
+import PatientPrevTests from './PatientPrevTests';
 
 const handleDownload = attachment => {
     const byteCharacters = atob(attachment.fileContent);
@@ -161,15 +163,13 @@ const DiagnosticsOrder = () => {
 
     // Effects
   useEffect(() => {
-    console.log("testList changed:", testsList);
+  
     if ( testsList?.object) {
         setLeftItems(testsList.object);
         setSelectedTestsList([]);
     }
 }, [openTestsModal, testsList]);
- useEffect(()=>{
-    console.log("leftItems changed:", leftItems);
- },[leftItems])
+
     useEffect(() => {
         if (searchTerm.trim() !== "") {
             setListRequest(
@@ -834,6 +834,8 @@ const DiagnosticsOrder = () => {
                     onRowsPerPageChange={handleRowsPerPageChange}
 
                 />
+                <Panel header="Patient Orders Test" collapsible expanded={true} className='panel-style'>
+                <PatientPrevTests patient={patient} /></Panel>
             </Row>
 
             <DetailsModal
