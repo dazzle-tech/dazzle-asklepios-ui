@@ -108,8 +108,6 @@ const ProcedureSetup = () => {
   // handle click on add new button
   const handleNew = () => {
     setProcedure({ ...newApProcedureSetup, categoryLkey: null });
-    // setProcedureCode({ ...newApProcedureCoding, codeTypeLkey: null });
-    // setProcedurePrice({ ...newApProcedurePriceList, currencyLkey: null });
     setPopupOpen(true);
   };
    // handle deactivate procedure
@@ -259,19 +257,7 @@ const ProcedureSetup = () => {
                 >
                   Add New
                 </MyButton>
-              </div>
-        {/* <IconButton disabled={!procedure.key} appearance="primary" color="blue" icon={<PageIcon />}>
-          Linked Serviece
-        </IconButton>
-        <IconButton
-          appearance="primary"
-          color="blue"
-          icon={<PageIcon />}
-        >
-          Surgical Kits
-        </IconButton> */}
-      {/* </ButtonToolbar> */}
-
+              </div>  
       <MyTable
         height={450}
         data={procedureQueryResponse?.object ?? []}
