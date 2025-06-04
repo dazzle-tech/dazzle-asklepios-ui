@@ -9,8 +9,10 @@ const MyButton = ({
   onClick = () => {},
   appearance = 'primary' as Appearance,
   size = 'small',
+   loading = false,
   ...props
 }) => {
+  console.log(loading, 'loading');
   return (
     <Button
       className={`bt ${size}`}
@@ -34,6 +36,7 @@ const MyButton = ({
       }}
       {...props}
       onClick={onClick}
+       loading={loading}
     >
       {Prefix && <Prefix style={{ marginRight: '8px' }} />}
 

@@ -73,7 +73,7 @@ const DiagnosticsOrder = () => {
     const [searchTerm, setSearchTerm] = React.useState('');
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest, pageSize: 1000 });
-    const { data: testsList } = useGetDiagnosticsTestListQuery(listTestRequest);
+    const { data: testsList,isFetching } = useGetDiagnosticsTestListQuery(listTestRequest);
     const [leftItems, setLeftItems] = useState([]);
     const [selectedTestsList, setSelectedTestsList] = useState([]);
     const [listOrdersRequest, setListOrdersRequest] = useState<ListRequest>({
@@ -160,12 +160,16 @@ const DiagnosticsOrder = () => {
     ) ?? [];
 
     // Effects
-    useEffect(() => {
-        if (testsList?.object) {
-            setLeftItems(testsList.object);
-        }
-    }, [testsList]);
-
+  useEffect(() => {
+    console.log("testList changed:", testsList);
+    if ( testsList?.object) {
+        setLeftItems(testsList.object);
+        setSelectedTestsList([]);
+    }
+}, [openTestsModal, testsList]);
+ useEffect(()=>{
+    console.log("leftItems changed:", leftItems);
+ },[leftItems])
     useEffect(() => {
         if (searchTerm.trim() !== "") {
             setListRequest(
@@ -186,11 +190,7 @@ const DiagnosticsOrder = () => {
         }
     }, [searchTerm]);
 
-    useEffect(() => {
-        console.log(testsList?.object ??[]);
-        setLeftItems(testsList?.object ?? []);
-        setSelectedTestsList([]);
-    }, [openTestsModal]);
+ 
     useEffect(() => {
         const draftOrder = ordersList?.object?.find((order) => order.saveDraft === true);
 
@@ -703,7 +703,7 @@ const DiagnosticsOrder = () => {
 
                     <div className='buttons-sect'>
                         <MyButton
-
+                            loading={isFetching}
                             onClick={handleSaveOrders}
                             disabled={!edit ? isdraft : true}
                             prefixIcon={() => <PlusIcon />}
