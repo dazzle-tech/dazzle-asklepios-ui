@@ -855,8 +855,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
             pageNumber: 1 // reset to first page
         });
     };
-    return (<Panel ref={ref} header="Test's Results Processing" collapsible defaultExpanded className="panel-border"  >
-        <div style={{ width: "1150px" }}>
+    return (<Panel ref={ref} header="Test's Results Processing" collapsible defaultExpanded className="panel-border"  >      
             <MyTable
                 columns={tableColomns}
                 data={resultsList?.object || []}
@@ -871,10 +870,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
                 totalCount={totalCount}
                 onPageChange={handlePageChange}
                 onRowsPerPageChange={handleRowsPerPageChange}
-
             ></MyTable>
-        </div>
-
         <ChatModal open={openNoteResultModal} setOpen={setOpenNoteResultModal} handleSendMessage={handleSendResultMessage} title={"Comments"} list={messagesResultList?.object} fieldShowName={'notes'} />
         <CancellationModal open={openRejectedResultModal}
             setOpen={setOpenRejectedResultModal}
