@@ -117,6 +117,7 @@ const EncounterList = () => {
         }
       });
     }
+    sessionStorage.setItem("encounterPageSource", "EncounterList");
   };
   const handleGoToPreVisitObservations = async (encounterData, patientData) => {
     const privatePatientPath = '/user-access-patient-private';

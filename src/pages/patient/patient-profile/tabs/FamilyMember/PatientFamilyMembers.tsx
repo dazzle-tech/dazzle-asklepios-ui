@@ -22,6 +22,8 @@ const PatientFamilyMembers = ({ localPatient }) => {
     const [deleteRelativeModalOpen, setDeleteRelativeModalOpen] = useState(false);
     const [selectedPatientRelation, setSelectedPatientRelation] = useState<any>({ ...newApPatientRelation });
     const [deleteRelation] = useDeletePatientRelationMutation();
+    const [pageIndex, setPageIndex] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
     //Table columns
     const columns = [
         {
@@ -37,7 +39,7 @@ const PatientFamilyMembers = ({ localPatient }) => {
             key: 'relativePatientName',
             title: <Translate>Relative Patient Name</Translate>,
             flexGrow: 4,
-            render: (row: any) =>row?.relativePatientObject?.fullName
+            render: (row: any) => row?.relativePatientObject?.fullName
         },
         {
             key: 'relationCategory',
@@ -76,7 +78,7 @@ const PatientFamilyMembers = ({ localPatient }) => {
         }).then(
             () => (
                 patientRelationsRefetch(),
-                dispatch(notify({msg:'Relation Deleted Successfully',sev: 'success'})),
+                dispatch(notify({ msg: 'Relation Deleted Successfully', sev: 'success' })),
                 setSelectedPatientRelation(newApPatientRelation),
                 setDeleteRelativeModalOpen(false),
                 handleClearRelative()
@@ -93,6 +95,21 @@ const PatientFamilyMembers = ({ localPatient }) => {
         setSelectedPatientRelation({ ...newApPatientRelation });
         setRelationModalOpen(true);
     };
+
+    // Pagination values
+    const handlePageChange = (_: unknown, newPage: number) => {
+        setPageIndex(newPage);
+    }
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPageIndex(0);
+
+    };
+    const totalCount = patientRelationsResponse?.object?.length ?? 0;
+    const paginatedData = patientRelationsResponse?.object?.slice(
+        pageIndex * rowsPerPage,
+        pageIndex * rowsPerPage + rowsPerPage
+    );
     return (
         <div className="tab-main-container">
             <div className="tab-content-btns">
@@ -124,7 +141,7 @@ const PatientFamilyMembers = ({ localPatient }) => {
                 refetch={patientRelationsRefetch}
             />
             <MyTable
-                data={patientRelationsResponse?.object ?? []}
+                data={paginatedData ?? []}
                 sortColumn={patientRelationListRequest.sortBy}
                 sortType={patientRelationListRequest.sortType}
                 onSortChange={(sortBy, sortType) => {
@@ -141,6 +158,11 @@ const PatientFamilyMembers = ({ localPatient }) => {
                 }}
                 rowClassName={isSelectedRelation}
                 columns={columns}
+                page={pageIndex}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
             />
             <DeletionConfirmationModal
                 open={deleteRelativeModalOpen}

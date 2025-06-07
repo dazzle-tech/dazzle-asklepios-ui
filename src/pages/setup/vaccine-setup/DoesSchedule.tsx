@@ -352,7 +352,7 @@ const DoesSchedule = ({ open, setOpen, vaccine, setVaccine, refetch }) => {
       case 0:
         return (
           <Form fluid layout="inline">
-            <div style={{ display: 'flex', gap: '5px', alignItems: 'flex-end' }}>
+            <div className='container-of-vaccine-info'>
               <MyInput
                 width={140}
                 fieldLabel="Vaccine Code"

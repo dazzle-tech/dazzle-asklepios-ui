@@ -32,9 +32,9 @@ const Encounter = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const propsData = location.state;
-
+ const savedState = sessionStorage.getItem("encounterPageSource");
+ 
   const [localEncounter, setLocalEncounter] = useState<any>({ ...propsData?.encounter });
-
 
   const [modalOpen, setModalOpen] = useState(false);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
@@ -45,6 +45,8 @@ const Encounter = () => {
   const [medicalSheetRowSourceKey, setMedicalSheetRowSourceKey] = useState<string | undefined>();
   const [selectedResources, setSelectedResources] = useState([]);
   const [edit, setEdit] = useState(false);
+   const [fromPage, setFromPage] = useState(savedState);
+
   const {
     data: appointments,
     refetch: refitchAppointments,
@@ -72,12 +74,18 @@ const Encounter = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
   const [openWarningModal, setOpenWarningModal] = useState(false);
+
+useEffect(() => {
+  if (location.state && location.state.fromPage) {
+    setFromPage(location.state.fromPage);
+  }
+}, [location.state]);
   // get Midical Sheets Data Steps
   useEffect(() => {
     if (!propsData?.encounter) {
       navigate('/encounter-list');
     } else {
-      setEdit(propsData.fromPage === 'PatientEMR' || localEncounter.encounterStatusLvalue.valueCode === "CLOSED");
+      setEdit(fromPage === 'PatientEMR' || localEncounter.encounterStatusLvalue.valueCode === "CLOSED");
       if (propsData?.encounter?.resourceTypeLkey === '2039516279378421') {
         // Clinic, then we need to get its resource details
         setMedicalSheetRowSourceKey(propsData?.encounter?.resourceKey);
@@ -108,7 +116,7 @@ const Encounter = () => {
   const handleGoBack = () => {
 
 
-    if (propsData.fromPage === 'PatientEMR') {
+    if (savedState=== 'PatientEMR') {
       navigate('/patient-EMR', {
         state: {
           localPatient: propsData.patient,
@@ -211,6 +219,7 @@ const Encounter = () => {
                 Medical Sheets
               </MyButton>
               <MyButton
+              disabled={edit}
                 prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
                 onClick={() => {
                   setModalOpen(true);
@@ -266,7 +275,7 @@ const Encounter = () => {
                   medicalSheet?.object?.[key] ? (
                     <List.Item key={key} className="drawer-item"
                       onClick={() => {
-
+                       setIsDrawerOpen(false)
                         navigate(path, { state: { patient: propsData.patient, encounter: propsData.encounter, edit } });
                       }}
                     >

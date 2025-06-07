@@ -11,11 +11,13 @@ import MyTable from '@/components/MyTable';
 import { formatDateWithoutSeconds } from '@/utils';
 import { useLocation } from 'react-router-dom';
 const VaccineReccord = () => {
-   const location = useLocation();
-   const { patient, encounter, edit } = location.state || {};
+    const location = useLocation();
+    const { patient, encounter, edit } = location.state || {};
     const [isCanelledValue, setIsCanelledValue] = useState("NULL");
     const [vaccine, setVaccine] = useState<any>();
     const [selectedVaccine, setSelectedVaccine] = useState(null);
+    const [pageIndex, setPageIndex] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
 
 
     // Fetch LOV data for various fields
@@ -116,6 +118,21 @@ const VaccineReccord = () => {
         }
     ];
 
+    // Pagination values
+    const handlePageChange = (_: unknown, newPage: number) => {
+        setPageIndex(newPage);
+    }
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPageIndex(0);
+
+    };
+    const totalCount = vaccine?.doseDetailsList.length ?? 0;
+    const paginatedData = vaccine?.doseDetailsList.slice(
+        pageIndex * rowsPerPage,
+        pageIndex * rowsPerPage + rowsPerPage
+    );
+
     // Form and table displaying the patient's vaccination details
     const formAndTable = (
         <>
@@ -184,10 +201,15 @@ const VaccineReccord = () => {
                 </div>
             </Form>
             <MyTable
-                data={vaccine?.doseDetailsList ?? []}
+                data={paginatedData ?? []}
                 columns={columns}
                 height={600}
                 loading={false}
+                page={pageIndex}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
             />
         </>
     );

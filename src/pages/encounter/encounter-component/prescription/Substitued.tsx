@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyTable
     from "@/components/MyTable";
@@ -30,7 +30,7 @@ const Substitues = ({ open, setOpen, selectedGeneric }) => {
             fillText: true,
             render: (rowData: any) => {
                 return rowData.genericName
-                ;
+                    ;
             },
         },
         {
@@ -71,7 +71,7 @@ const Substitues = ({ open, setOpen, selectedGeneric }) => {
             key: "rout",
             dataKey: "rout",
             title: <Translate>Rout</Translate>,
-            flexGrow:2,
+            flexGrow: 2,
             fillText: true,
             render: (rowData: any) => {
                 return rowData.roaList?.map((item, index) => {
@@ -120,26 +120,46 @@ const Substitues = ({ open, setOpen, selectedGeneric }) => {
             },
         },
     ];
+    const [pageIndex, setPageIndex] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+
+    const handlePageChange = (_: unknown, newPage: number) => {
+        setPageIndex(newPage);
+    }
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPageIndex(0);
+
+    };
+    const totalCount = lisOfLinkedBrand?.object?.length ?? 0;
+    const paginatedData = lisOfLinkedBrand?.object?.slice(
+        pageIndex * rowsPerPage,
+        pageIndex * rowsPerPage + rowsPerPage
+    );
     return (<>
-    <MyModal
-        open={open}
-        setOpen={setOpen}
-        size="md"
-        title={<Translate>Substitutes</Translate>}
-        steps={[{ title: "Substitutes", icon:<FontAwesomeIcon icon={faRightLeft} /> }]}
-        position="right"
-        hideActionBtn
-        hideCancel
-        content={<>
-        <MyTable
-        data={lisOfLinkedBrand?.object ?? []}
-        columns={tableColumns}
+        <MyModal
+            open={open}
+            setOpen={setOpen}
+            size="md"
+            title={<Translate>Substitutes</Translate>}
+            steps={[{ title: "Substitutes", icon: <FontAwesomeIcon icon={faRightLeft} /> }]}
+            position="right"
+            hideActionBtn
+            hideCancel
+            content={<>
+                <MyTable
+                    data={paginatedData ?? []}
+                    columns={tableColumns}
+                    page={pageIndex}
+                    rowsPerPage={rowsPerPage}
+                    totalCount={totalCount}
+                    onPageChange={handlePageChange}
+                    onRowsPerPageChange={handleRowsPerPageChange}
+                /></>}
 
-        /></>}
-
-    ></MyModal>
+        ></MyModal>
 
 
-        </>);
+    </>);
 }
 export default Substitues;

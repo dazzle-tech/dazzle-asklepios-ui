@@ -1,216 +1,84 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Drawer, Input, Modal, Pagination, Panel, SelectPicker, Table } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
-import { Button, ButtonToolbar, IconButton, Text } from 'rsuite';
+import { Panel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import PageIcon from '@rsuite/icons/Page';
-import TrashIcon from '@rsuite/icons/Trash';
-import CheckIcon from '@rsuite/icons/Check';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBroom } from '@fortawesome/free-solid-svg-icons';
-import { Form, Stack, Divider, Dropdown, InputGroup } from 'rsuite';
+import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { useAppDispatch, useAppSelector } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
+import { FaUndo } from 'react-icons/fa';
+import { MdModeEdit } from 'react-icons/md';
+import { MdDelete } from 'react-icons/md';
+import './styles.less';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import SearchIcon from '@rsuite/icons/Search';
-import { MdSave } from 'react-icons/md';
-import { Tabs, Placeholder } from 'rsuite';
-import ReloadIcon from '@rsuite/icons/Reload';
-import { useGetLovValuesByCodeQuery, useGetLovValuesQuery } from '@/services/setupService';
 import {
-  useGetIcdListQuery,
   useGetProcedureListQuery,
-  useSaveProcedureMutation,
-  useGetProcedureCodingListQuery,
-  useGetProcedurePriceListQuery,
-  useSaveProcedureCodingMutation,
-  useSaveProcedurePriceListMutation,
   useRemoveProcedureMutation,
-  useRemoveProcedurePriceListMutation,
-  useRemoveProcedureCodingMutation
+  useSaveProcedureMutation
 } from '@/services/setupService';
-import { ApProcedureCoding, ApProcedurePriceList, ApProcedureSetup } from '@/types/model-types';
+import { ApProcedureSetup } from '@/types/model-types';
 import {
-  newApProcedureCoding,
-  newApProcedurePriceList,
   newApProcedureSetup
 } from '@/types/model-types-constructor';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import MyTable from '@/components/MyTable';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyButton from '@/components/MyButton/MyButton';
+import AddEditProcedure from './AddEditProcedure';
+
 const ProcedureSetup = () => {
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const [popupOpen, setPopupOpen] = useState(false);
   const dispatch = useAppDispatch();
-  const [searchKeywordicd, setSearchKeywordicd] = useState('');
-  const [searchKeywordicd2, setSearchKeywordicd2] = useState('');
-  const [isactive, setIsactive] = useState(false);
-  const [contraindicationsDescription, setcontraindicationsDescription] = useState<string>('');
-  const [indicationsDescription, setindicationsDescription] = useState<string>('');
-  const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
-  const { data: codeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('INTERNATIONAL_CODES');
-  const { data: currencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
-  const { data: procedureQueryResponse, refetch: profetch } = useGetProcedureListQuery(listRequest);
-  const [saveProcedure, saveProcedureMutation] = useSaveProcedureMutation();
-  const [removeProcedure, removeProcedureMutation] = useRemoveProcedureMutation();
-  const [removeProcedurePriceList, removeProcedurePriceListMutation] =
-    useRemoveProcedurePriceListMutation();
-  const [removeProcedureCoding, removeProcedureCodingMutation] = useRemoveProcedureCodingMutation();
+  const [popupOpen, setPopupOpen] = useState(false); // open add/edit pop up
+  const [openConfirmDeleteProcedureModal, setOpenConfirmDeleteProcedureModal] =
+    useState<boolean>(false);
+  const [stateOfDeleteProcedureModal, setStateOfDeleteProcedureModal] = useState<string>('delete');
+  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
   const [procedure, setProcedure] = useState<ApProcedureSetup>({ ...newApProcedureSetup });
-  const [procedureCode, setProcedureCode] = useState<ApProcedureCoding>({
-    ...newApProcedureCoding,
-    procedureKey: procedure.key
-  });
-  const [procedureprice, setProcedurePrice] = useState<ApProcedurePriceList>({
-    ...newApProcedurePriceList
-  });
-  const { data: procedurecodingQueryResponse, refetch: procfetch } = useGetProcedureCodingListQuery(
-    {
-      ...initialListRequest,
-      filters: [
-        {
-          fieldName: 'procedure_key',
-          operator: '',
-          value: procedure.key
-        }
-      ],
-      ignore: procedure.key == undefined
-    }
-  );
-  const [saveProcedureCoding, saveProcedureCodingMutation] = useSaveProcedureCodingMutation();
-  const { data: procedurepriceQueryResponse, refetch: propfetch } = useGetProcedurePriceListQuery({
+  const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'procedure_key',
-        operator: '',
-        value: procedure.key
-      }
-    ],
-    ignore: procedure.key == undefined
+    pageSize: 15
   });
-  const [saveProcedurePrice, saveProcedurePriceMutation] = useSaveProcedurePriceListMutation();
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  // Fetch procedure list response
+  const { data: procedureQueryResponse, refetch: profetch, isFetching } = useGetProcedureListQuery(listRequest);
+  // remove procedure
+  const [removeProcedure] = useRemoveProcedureMutation();
+  // save procedure
+  const [saveProcedure] = useSaveProcedureMutation();
+  // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = procedureQueryResponse?.extraNumeric ?? 0;
+  // Available fields for filtering
+  const filterFields = [
+    { label: 'Procedure Name', value: 'name' },
+    { label: 'Category', value: 'category' }
+  ];
+  // Header page setUp
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className='title-procedure '>
       <h5>Procedure Setup</h5>
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Procedure_Setup'));
   dispatch(setDivContent(divContentHTML));
+  // class name for selected row
   const isSelected = rowData => {
     if (rowData && procedure && rowData.key === procedure.key) {
       return 'selected-row';
     } else return '';
   };
-  const isSelectedcode = rowData => {
-    if (rowData && procedureCode && rowData.key === procedureCode.key) {
-      return 'selected-row';
-    } else return '';
+  // handle Reactivate procedure
+  const handleReactivate = () => {
+    saveProcedure({ ...procedure, deletedAt: null })
+      .unwrap()
+      .then(() => {
+        profetch();
+      });
+      setOpenConfirmDeleteProcedureModal(false);
   };
-  const isSelectedprice = rowData => {
-    if (rowData && procedureprice && rowData.key === procedureprice.key) {
-      return 'selected-row';
-    } else return '';
-  };
-  const [icdListRequest, setIcdListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined
-      }
-    ]
-  });
-  const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
-  const modifiedData = (icdListResponseLoading?.object ?? []).map(item => ({
-    ...item,
-    combinedLabel: `${item.icdCode} - ${item.description}`
-  }));
-  useEffect(() => {
-    if (searchKeywordicd.trim() !== '') {
-      setIcdListRequest({
-        ...initialListRequest,
-        filterLogic: 'or',
-        filters: [
-          {
-            fieldName: 'icd_code',
-            operator: 'containsIgnoreCase',
-            value: searchKeywordicd
-          },
-          {
-            fieldName: 'description',
-            operator: 'containsIgnoreCase',
-            value: searchKeywordicd
-          }
-        ]
-      });
-    }
-  }, [searchKeywordicd]);
-  useEffect(() => {
-    if (searchKeywordicd2.trim() !== '') {
-      setIcdListRequest({
-        ...initialListRequest,
-        filterLogic: 'or',
-        filters: [
-          {
-            fieldName: 'icd_code',
-            operator: 'containsIgnoreCase',
-            value: searchKeywordicd2
-          },
-          {
-            fieldName: 'description',
-            operator: 'containsIgnoreCase',
-            value: searchKeywordicd2
-          }
-        ]
-      });
-    }
-  }, [searchKeywordicd2]);
-  useEffect(() => {
-    if (procedure.indications != null || procedure.indications != '') {
-      setindicationsDescription(prevadminInstructions => {
-        const currentIcd = icdListResponseLoading?.object?.find(
-          item => item.key === procedure.indications
-        );
-
-        if (!currentIcd) return prevadminInstructions;
-
-        const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
-
-        return prevadminInstructions ? `${prevadminInstructions}\n${newEntry}` : newEntry;
-      });
-    }
-  }, [procedure.indications]);
-  useEffect(() => {
-    if (procedure.contraindications != null || procedure.contraindications != '') {
-      setcontraindicationsDescription(prevadminInstructions => {
-        const currentIcd = icdListResponseLoading?.object?.find(
-          item => item.key === procedure.contraindications
-        );
-
-        if (!currentIcd) return prevadminInstructions;
-
-        const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
-
-        return prevadminInstructions ? `${prevadminInstructions}\n${newEntry}` : newEntry;
-      });
-    }
-  }, [procedure.contraindications]);
-  useEffect(() => {
-    if (procedure.deletedAt != null) {
-      setIsactive(true);
-    } else {
-      setIsactive(false);
-    }
-  }, [procedure]);
+  // handle filter change
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -225,597 +93,207 @@ const ProcedureSetup = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-  const handleNew = () => {
-    setProcedure({ ...newApProcedureSetup, categoryLkey: null });
-    setProcedureCode({ ...newApProcedureCoding, codeTypeLkey: null });
-    setProcedurePrice({ ...newApProcedurePriceList, currencyLkey: null });
-    setcontraindicationsDescription('');
-    setindicationsDescription('');
-    setPopupOpen(true);
+  // Handle page change in navigation
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
-  const handleSearchIcd = value => {
-    setSearchKeywordicd(value);
-  };
-  const handleSearchIcd2 = value => {
-    setSearchKeywordicd2(value);
-  };
-  const handleClear = () => {
-    setProcedure({ ...newApProcedureSetup, categoryLkey: null, isAppointable: false });
-    setProcedureCode({ ...newApProcedureCoding, codeTypeLkey: null });
-    setProcedurePrice({ ...newApProcedurePriceList, currencyLkey: null });
-    setcontraindicationsDescription('');
-    setindicationsDescription('');
-  };
-  const handleSave = async () => {
-    // setPopupOpen(false);
-    const response = await saveProcedure({
-      ...procedure,
-      indications: indicationsDescription,
-      contraindications: contraindicationsDescription
-    }).unwrap();
-    dispatch(notify('saved  Successfully'));
-    console.log(response);
-    setProcedure(response);
-    profetch().then(() => {
-      console.warn('refetch procedure');
+  // Handle change rows per page in navigation
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
     });
   };
-  const handleSaveCoding = () => {
-    saveProcedureCoding({ ...procedureCode, procedureKey: procedure.key })
+  // handle click on add new button
+  const handleNew = () => {
+    setProcedure({ ...newApProcedureSetup, categoryLkey: null });
+    setPopupOpen(true);
+  };
+   // handle deactivate procedure
+   const handleDeactivate = () => {
+    removeProcedure({ ...procedure })
       .unwrap()
       .then(() => {
-        dispatch(notify('saved  Successfully'));
-
-        procfetch().then(() => {
-          console.warn('refetch procedure');
-        });
+        profetch();
       });
+      setOpenConfirmDeleteProcedureModal(false);
   };
-  const handleSavePrice = () => {
-    saveProcedurePrice({ ...procedureprice, procedureKey: procedure.key })
-      .unwrap()
-      .then(() => {
-        dispatch(notify('saved  Successfully'));
+  // Filter table
+  const filters = () => (
+    <Form layout="inline" fluid className="container-of-filter-fields-procedure">
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={recordOfFilter}
+        setRecord={updatedRecord => {
+          setRecordOfFilter({
+            ...recordOfFilter,
+            filter: updatedRecord.filter,
+            value: ''
+          });
+        }}
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+      />
+      <MyInput
+        fieldName="value"
+        fieldType="text"
+        record={recordOfFilter}
+        setRecord={setRecordOfFilter}
+        showLabel={false}
+        placeholder="Search"
+      />
+    </Form>
+  );
 
-        propfetch().then(() => {
-          console.warn('refetch procedure');
-        });
+   // Icons column (Edit, reactive/Deactivate)
+  const iconsForActions = (rowData: ApProcedureSetup) => (
+    <div className="container-of-icons-procedure">
+      <MdModeEdit
+        className="icons-procedure"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => setPopupOpen(true)}
+      />
+      {!rowData?.deletedAt ? (
+        <MdDelete
+          className="icons-procedure"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            setStateOfDeleteProcedureModal('deactivate');
+            setOpenConfirmDeleteProcedureModal(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-procedure"
+          title="Activate"
+          size={24}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setStateOfDeleteProcedureModal('reactivate');
+            setOpenConfirmDeleteProcedureModal(true);
+          }}
+        />
+      )}
+    </div>
+  );
+  //Table columns
+  const tableColumns = [
+    {
+      key: 'name',
+      title: <Translate>Procedure Name</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: 'code',
+      title: <Translate>Procedure Code</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: 'category',
+      title: <Translate>Category</Translate>,
+      flexGrow: 4,
+      render: rowData =>
+        rowData.categoryLkey ? rowData.categoryLvalue.lovDisplayVale : rowData.categoryLkey
+    },
+    {
+      key: 'isAppointable',
+      title: <Translate>Appointable</Translate>,
+      flexGrow: 4,
+      render: rowData => (rowData?.isAppointable ? 'YES' : 'NO')
+    },
+    {
+      key: 'isValid',
+      title: <Translate>Status</Translate>,
+      flexGrow: 4,
+      render: rowData => (!rowData.deletedAt ? 'Valid' : 'InValid')
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      flexGrow: 3,
+      render: rowData => iconsForActions(rowData)
+    }
+  ];
+
+  // Effects
+  // update list when filter is changed
+  useEffect(() => {
+    if (recordOfFilter['filter']) {
+      handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
+    } else {
+      setListRequest({
+        ...initialListRequest,
+        pageSize: listRequest.pageSize,
+        pageNumber: 1
       });
-  };
-  const joinValuesFromArray = values => {
-    return values.filter(Boolean).join(', ');
-  };
+    }
+  }, [recordOfFilter]);
+  
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent('  '));
     };
   }, [location.pathname, dispatch]);
+
   return (
     <Panel>
-      <ButtonToolbar>
-        <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
-          Add New
-        </IconButton>
-        <IconButton
-          disabled={!procedure.key}
-          appearance="primary"
-          onClick={() => setPopupOpen(true)}
-          color="cyan"
-          icon={<EditIcon />}
-        >
-          Edit Selected
-        </IconButton>
-        {!isactive && (
-          <IconButton
-            disabled={!procedure.key}
-            onClick={() => {
-              removeProcedure({ ...procedure })
-                .unwrap()
-                .then(() => {
-                  profetch();
-                });
-              setIsactive(true);
-            }}
-            appearance="primary"
-            color="violet"
-            icon={<TrashIcon />}
-          >
-            Deactivate
-          </IconButton>
-        )}
-
-        {isactive && (
-          <IconButton
-            color="orange"
-            appearance="primary"
-            onClick={() => {
-              saveProcedure({ ...procedure, deletedAt: null })
-                .unwrap()
-                .then(() => {
-                  profetch();
-                });
-              setIsactive(false);
-            }}
-            icon={<ReloadIcon />}
-            disabled={!procedure.key}
-          >
-            <Translate> Activate</Translate>
-          </IconButton>
-        )}
-        <IconButton disabled={!procedure.key} appearance="primary" color="blue" icon={<PageIcon />}>
-          Linked Serviece
-        </IconButton>
-        <IconButton
-          // disabled={!agegroups.key}
-          appearance="primary"
-          color="blue"
-          icon={<PageIcon />}
-        >
-          Surgical Kits
-        </IconButton>
-      </ButtonToolbar>
-
-      <hr />
-      <Table
-        height={400}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortColumn={(sortBy, sortType) => {
-          if (sortBy)
-            setListRequest({
-              ...listRequest,
-              sortBy,
-              sortType
-            });
-        }}
-        headerHeight={80}
-        rowHeight={60}
-        bordered
-        cellBordered
+        <div className="container-of-add-new-button-procedure">
+                <MyButton
+                  prefixIcon={() => <AddOutlineIcon />}
+                  color="var(--deep-blue)"
+                  onClick={handleNew}
+                  width="109px"
+                >
+                  Add New
+                </MyButton>
+              </div>  
+      <MyTable
+        height={450}
         data={procedureQueryResponse?.object ?? []}
+        loading={isFetching}
+        columns={tableColumns}
+        rowClassName={isSelected}
+        filters={filters()}
         onRowClick={rowData => {
           setProcedure(rowData);
         }}
-        rowClassName={isSelected}
-      >
-        <Column sortable flexGrow={2}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('name', e)} />
-            <Translate>Procedure Name</Translate>
-          </HeaderCell>
-          <Cell align="center">{rowData => rowData.name}</Cell>
-        </Column>
-        <Column sortable flexGrow={2}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('name', e)} />
-            <Translate>Procedure Code</Translate>
-          </HeaderCell>
-          <Cell align="center">{rowData => rowData.code}</Cell>
-        </Column>
-        <Column sortable flexGrow={3}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('name', e)} />
-            <Translate> Category </Translate>
-          </HeaderCell>
-          <Cell align="center">
-            {rowData =>
-              rowData.categoryLkey ? rowData.categoryLvalue.lovDisplayVale : rowData.categoryLkey
-            }
-          </Cell>
-        </Column>
-        <Column sortable flexGrow={2}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('isAppointable', e)} />
-            <Translate>Appointable </Translate>
-          </HeaderCell>
-          <Cell align="center">{rowData => rowData?.isAppointable ? "YES" : "NO"}</Cell>
-        </Column>
-        <Column flexGrow={2}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('isValid', e)} />
-            <Translate>status</Translate>
-          </HeaderCell>
-          <Cell align="center">{rowData => (rowData.deletedAt ? 'invalid' : 'valid')}</Cell>
-        </Column>
-      </Table>
-      <div style={{ padding: 20 }}>
-        <Pagination
-          prev
-          next
-          first
-          last
-          ellipsis
-          boundaryLinks
-          maxButtons={5}
-          size="xs"
-          layout={['limit', '|', 'pager']}
-          limitOptions={[5, 15, 30]}
-          limit={listRequest.pageSize}
-          activePage={listRequest.pageNumber}
-          onChangePage={pageNumber => {
-            setListRequest({ ...listRequest, pageNumber });
-          }}
-          onChangeLimit={pageSize => {
-            setListRequest({ ...listRequest, pageSize });
-          }}
-          total={procedureQueryResponse?.extraNumeric ?? 0}
-        />
-      </div>
-      <Modal size="md" open={popupOpen} overflow>
-        <Modal.Title>
-          <Translate>New/Edit Procedure </Translate>
-        </Modal.Title>
-        <Modal.Body>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <Form layout="inline" fluid>
-              <MyInput
-                column
-                width={150}
-                fieldLabel="Procedure Name"
-                fieldName={'name'}
-                record={procedure}
-                setRecord={setProcedure}
-              />
-              <MyInput
-                column
-                width={150}
-                fieldLabel="Procedure Code"
-                fieldName={'code'}
-                record={procedure}
-                setRecord={setProcedure}
-              />
-              <MyInput
-                column
-                width={150}
-                fieldType="select"
-                fieldLabel="Category Type"
-                selectData={CategoryLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                fieldName={'categoryLkey'}
-                record={procedure}
-                setRecord={setProcedure}
-              />
-
-              <MyInput
-                column
-                width={150}
-                fieldLabel="Appointable"
-                fieldType="checkbox"
-                fieldName="isAppointable"
-                record={procedure}
-                setRecord={setProcedure}
-              />
-
-            </Form>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <div style={{ margin: '3px' }}>
-                <Text style={{ fontWeight: 'bold' }}>Indications</Text>
-                <InputGroup inside style={{ width: '300px', margin: '3px' }}>
-                  <Input
-                    placeholder="Search ICD-10"
-                    value={searchKeywordicd}
-                    onChange={handleSearchIcd}
-                  />
-                  <InputGroup.Button>
-                    <SearchIcon />
-                  </InputGroup.Button>
-                </InputGroup>
-                {searchKeywordicd && (
-                  <Dropdown.Menu className="dropdown-menuresult">
-                    {modifiedData?.map(mod => (
-                      <Dropdown.Item
-                        key={mod.key}
-                        eventKey={mod.key}
-                        onClick={() => {
-                          setProcedure({
-                            ...procedure,
-                            indications: mod.key
-                          });
-                          setSearchKeywordicd('');
-                        }}
-                      >
-                        <span style={{ marginRight: '19px' }}>{mod.icdCode}</span>
-                        <span>{mod.description}</span>
-                      </Dropdown.Item>
-                    ))}
-                  </Dropdown.Menu>
-                )}
-                <Input
-                  as="textarea"
-                  disabled={true}
-                  onChange={e => setindicationsDescription}
-                  value={indicationsDescription || procedure.indications}
-                  style={{ width: 300 }}
-                  rows={4}
-                />
-              </div>
-              <div style={{ margin: '3px' }}>
-                <Text style={{ fontWeight: 'bold' }}>Contraindications</Text>
-                <InputGroup inside style={{ width: '300px', margin: '3px' }}>
-                  <Input
-                    placeholder="Search ICD-10"
-                    value={searchKeywordicd2}
-                    onChange={handleSearchIcd2}
-                  />
-                  <InputGroup.Button>
-                    <SearchIcon />
-                  </InputGroup.Button>
-                </InputGroup>
-                {searchKeywordicd2 && (
-                  <Dropdown.Menu className="dropdown-menuresult">
-                    {modifiedData?.map(mod => (
-                      <Dropdown.Item
-                        key={mod.key}
-                        eventKey={mod.key}
-                        onClick={() => {
-                          setProcedure({
-                            ...procedure,
-                            contraindications: mod.key
-                          });
-                          setSearchKeywordicd2('');
-                        }}
-                      >
-                        <span style={{ marginRight: '19px' }}>{mod.icdCode}</span>
-                        <span>{mod.description}</span>
-                      </Dropdown.Item>
-                    ))}
-                  </Dropdown.Menu>
-                )}
-                <Input
-                  as="textarea"
-                  disabled={true}
-                  onChange={e => setcontraindicationsDescription}
-                  value={contraindicationsDescription || procedure.contraindications}
-                  style={{ width: 300 }}
-                  rows={4}
-                />
-              </div>
-            </div>
-            <Form layout="inline" fluid>
-              <MyInput
-                column
-                width={300}
-                fieldType="textarea"
-                fieldName={'preparationInstructions'}
-                record={procedure}
-                setRecord={setProcedure}
-              />
-              <MyInput
-                column
-                width={300}
-                fieldType="textarea"
-                fieldName={'recoveryNotes'}
-                record={procedure}
-                setRecord={setProcedure}
-              />
-            </Form>
-            <ButtonToolbar>
-              <IconButton
-                color="violet"
-                appearance="primary"
-                onClick={handleSave}
-                icon={<CheckIcon />}
-              >
-                <Translate>Save</Translate>
-              </IconButton>
-              <Button
-                color="cyan"
-                appearance="primary"
-                style={{ marginLeft: '5px' }}
-                onClick={handleClear}
-              >
-                <FontAwesomeIcon icon={faBroom} style={{ marginRight: '5px' }} />
-                <span>Clear</span>
-              </Button>
-            </ButtonToolbar>
-
-            <Tabs defaultActiveKey="1" appearance="subtle">
-              <Tabs.Tab eventKey="1" title="Coding">
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <Panel style={{ display: 'flex' }}>
-                    <Form layout="inline" fluid style={{ display: 'flex' }}>
-                      <MyInput
-                        column
-                        width={150}
-                        fieldType="select"
-                        fieldLabel="Code Type"
-                        selectData={codeTypeLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldName={'codeTypeLkey'}
-                        record={procedureCode}
-                        setRecord={setProcedureCode}
-                      />
-                      <MyInput
-                        column
-                        width={150}
-                        fieldType="select"
-                        fieldLabel="Code"
-                        selectData={[]}
-                        selectDataLabel="name"
-                        selectDataValue="key"
-                        fieldName={'internationalCodeKey'}
-                        record={procedureCode}
-                        setRecord={setProcedureCode}
-                      />
-                      <ButtonToolbar style={{ padding: '6px', display: 'flex', marginTop: '20px' }}>
-                        <IconButton
-                          size="xs"
-                          onClick={handleSaveCoding}
-                          appearance="primary"
-                          color="violet"
-                          icon={<MdSave />}
-                        ></IconButton>
-
-                        <IconButton
-                          size="xs"
-                          appearance="primary"
-                          color="blue"
-                          onClick={() => {
-                            console.log(procedureCode);
-                            removeProcedureCoding({ ...procedureCode })
-                              .unwrap()
-                              .then(() => {
-                                procfetch();
-                                dispatch(notify('deleted succsessfuly'));
-                              });
-                          }}
-                          icon={<TrashIcon />}
-                        ></IconButton>
-                      </ButtonToolbar>
-                    </Form>
-                  </Panel>
-                  <div>
-                    <Table
-                      height={200}
-                      onSortColumn={(sortBy, sortType) => {
-                        if (sortBy)
-                          setListRequest({
-                            ...listRequest,
-                            sortBy,
-                            sortType
-                          });
-                      }}
-                      headerHeight={33}
-                      rowHeight={40}
-                      data={procedurecodingQueryResponse?.object ?? []}
-                      onRowClick={rowData => {
-                        setProcedureCode(rowData);
-                      }}
-                      rowClassName={isSelectedcode}
-                    >
-                      <Column sortable flexGrow={1}>
-                        <HeaderCell align="center">
-                          <Translate>Code Type</Translate>
-                        </HeaderCell>
-                        <Cell align="center">
-                          {rowData =>
-                            rowData.codeTypeLkey
-                              ? rowData.codeTypeLvalue.lovDisplayVale
-                              : rowData.codeTypeLkey
-                          }
-                        </Cell>
-                      </Column>
-                      <Column sortable flexGrow={2}>
-                        <HeaderCell align="center">
-                          <Translate>international Code</Translate>
-                        </HeaderCell>
-                        <Cell align="center">{rowData => rowData.internationalCodeKey}</Cell>
-                      </Column>
-                    </Table>
-                  </div>
-                </div>
-              </Tabs.Tab>
-              <Tabs.Tab eventKey="2" title="Price list">
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <Panel style={{ display: 'flex' }}>
-                    <Form layout="inline" fluid style={{ display: 'flex' }}>
-                      <MyInput
-                        column
-                        width={150}
-                        fieldType="number"
-                        fieldName={'price'}
-                        record={procedureprice}
-                        setRecord={setProcedurePrice}
-                      />
-                      <MyInput
-                        column
-                        width={150}
-                        fieldType="select"
-                        fieldLabel="Currency"
-                        selectData={currencyLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldName={'currencyLkey'}
-                        record={procedureprice}
-                        setRecord={setProcedurePrice}
-                      />
-                      <MyInput
-                        column
-                        width={150}
-                        fieldType="select"
-                        fieldLabel=" Choose Price List"
-                        selectData={[]}
-                        selectDataLabel="name"
-                        selectDataValue="key"
-                        fieldName={'internationalCodeKey'}
-                        record={procedureprice}
-                        setRecord={setProcedurePrice}
-                      />
-                      <ButtonToolbar style={{ padding: '6px', display: 'flex', marginTop: '20px' }}>
-                        <IconButton
-                          size="xs"
-                          onClick={handleSavePrice}
-                          appearance="primary"
-                          color="violet"
-                          icon={<MdSave />}
-                        ></IconButton>
-
-                        <IconButton
-                          size="xs"
-                          appearance="primary"
-                          onClick={() => {
-                            removeProcedurePriceList({ ...procedureprice })
-                              .unwrap()
-                              .then(() => {
-                                propfetch();
-                                dispatch(notify('deleted succsessfuly'));
-                              });
-                          }}
-                          color="blue"
-                          icon={<TrashIcon />}
-                        ></IconButton>
-                      </ButtonToolbar>
-                    </Form>
-                  </Panel>
-                  <div>
-                    <Table
-                      height={200}
-                      headerHeight={33}
-                      rowHeight={40}
-                      data={procedurepriceQueryResponse?.object ?? []}
-                      onRowClick={rowData => {
-                        setProcedurePrice(rowData);
-                      }}
-                      rowClassName={isSelectedprice}
-                    >
-                      <Column sortable flexGrow={1}>
-                        <HeaderCell align="center">
-                          <Translate>Price,Currency</Translate>
-                        </HeaderCell>
-                        <Cell align="center">
-                          {rowData =>
-                            joinValuesFromArray([
-                              rowData.price,
-                              rowData.currencyLvalue?.lovDisplayVale
-                            ])
-                          }
-                        </Cell>
-                      </Column>
-                      <Column sortable flexGrow={2}>
-                        <HeaderCell align="center">
-                          <Translate>Price List Name</Translate>
-                        </HeaderCell>
-                        <Cell align="center">{rowData => rowData.priceListKey}</Cell>
-                      </Column>
-
-                    </Table>
-                  </div>
-                </div>
-              </Tabs.Tab>
-            </Tabs>
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="ghost" onClick={() => setPopupOpen(false)}>
-              Close
-            </Button>
-          </Stack>
-        </Modal.Footer>
-      </Modal>
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortChange={(sortBy, sortType) => {
+          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+        }}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
+      <DeletionConfirmationModal
+        open={openConfirmDeleteProcedureModal}
+        setOpen={setOpenConfirmDeleteProcedureModal}
+        itemToDelete="Procedure"
+        actionButtonFunction={!procedure?.deletedAt ? handleDeactivate : handleReactivate}
+        actionType={stateOfDeleteProcedureModal}
+      />
+      
+      <AddEditProcedure
+       open={popupOpen}
+       setOpen={setPopupOpen}
+       procedure={procedure}
+       setProcedure={setProcedure}
+       profetch={profetch}
+      />
     </Panel>
   );
 };

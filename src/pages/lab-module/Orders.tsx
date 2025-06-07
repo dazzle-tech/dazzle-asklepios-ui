@@ -5,8 +5,8 @@ import { faLandMineOn } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { formatDateWithoutSeconds } from "@/utils";
 import './styles.less';
-import React from "react";
-import { Divider, Pagination, Panel, Tooltip, Whisper } from "rsuite";
+import React, { useState } from "react";
+import { Panel, Tooltip, Whisper } from "rsuite";
 const Orders = ({ order, setOrder, listOrdersResponse, setListOrdersResponse }) => {
     const { data: ordersList, refetch: orderFetch, isFetching: isOrderFetcheng } = useGetDiagnosticOrderQuery({ ...listOrdersResponse });
     const filterdOrderList = ordersList?.object.filter((item) => item.hasLaboratory === true);
@@ -47,7 +47,7 @@ const Orders = ({ order, setOrder, listOrdersResponse, setListOrdersResponse }) 
             flexGrow: 1,
             fullText: true,
             render: (rowData: any) => {
-                return rowData.patient?.patientMrn; 
+                return rowData.patient?.patientMrn;
             }
         }
         ,
@@ -58,7 +58,7 @@ const Orders = ({ order, setOrder, listOrdersResponse, setListOrdersResponse }) 
             flexGrow: 3,
             fullText: true,
             render: (rowData: any) => {
-                return rowData.patient?.fullName; 
+                return rowData.patient?.fullName;
             }
 
         }
@@ -70,7 +70,7 @@ const Orders = ({ order, setOrder, listOrdersResponse, setListOrdersResponse }) 
             flexGrow: 2,
             fullText: true,
             render: (rowData: any) => {
-                return rowData.labStatusLvalue ? rowData.labStatusLvalue.lovDisplayVale : rowData.labStatusLkey; 
+                return rowData.labStatusLvalue ? rowData.labStatusLvalue.lovDisplayVale : rowData.labStatusLkey;
             }
 
         },
@@ -95,14 +95,30 @@ const Orders = ({ order, setOrder, listOrdersResponse, setListOrdersResponse }) 
 
             }
         }
-    ]
+    ];
+    const [pageIndex, setPageIndex] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+
+    const handlePageChange = (_: unknown, newPage: number) => {
+        setPageIndex(newPage);
+    }
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPageIndex(0);
+
+    };
+    const totalCount = filterdOrderList?.length ?? 0;
+    const paginatedData = filterdOrderList?.slice(
+        pageIndex * rowsPerPage,
+        pageIndex * rowsPerPage + rowsPerPage
+    );
     return (
         <Panel className="panel-border">
             <MyTable
-                data={filterdOrderList || []}
+                data={paginatedData || []}
                 columns={tableColomns}
                 height={200}
-               
+
                 sortColumn={listOrdersResponse.sortBy}
                 sortType={listOrdersResponse.sortType}
                 onSortChange={(sortBy, sortType) => {
@@ -121,8 +137,13 @@ const Orders = ({ order, setOrder, listOrdersResponse, setListOrdersResponse }) 
                 }}
                 rowClassName={isSelected}
                 loading={isOrderFetcheng}
+                page={pageIndex}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
             ></MyTable>
-          
+
         </Panel>
     );
 }

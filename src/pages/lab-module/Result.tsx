@@ -90,20 +90,20 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
         } else return '';
     };
 
-useEffect(() => {
-    const shouldShowLoader = saveResultMutation.isLoading || featchingTest;
-    if (shouldShowLoader) {
-        dispatch(showSystemLoader());
-    } else {
-        dispatch(hideSystemLoader());
-    }
+    useEffect(() => {
+        const shouldShowLoader = saveResultMutation.isLoading || featchingTest;
+        if (shouldShowLoader) {
+            dispatch(showSystemLoader());
+        } else {
+            dispatch(hideSystemLoader());
+        }
 
-    return () => {
-        dispatch(hideSystemLoader());
-    };
-}, [saveResultMutation.isLoading, featchingTest, dispatch]);
+        return () => {
+            dispatch(hideSystemLoader());
+        };
+    }, [saveResultMutation.isLoading, featchingTest, dispatch]);
 
- 
+
 
     useEffect(() => {
 
@@ -831,8 +831,31 @@ useEffect(() => {
             },
         },
     ];
-    return (<Panel ref={ref} header="Test's Results Processing" collapsible defaultExpanded className="panel-border"  >
-        <div style={{ width: "1150px" }}>
+    const pageIndex = listResultResponse.pageNumber - 1;
+
+    // how many rows per page:
+    const rowsPerPage = listResultResponse.pageSize;
+
+    // total number of items in the backend:
+    const totalCount = listResultResponse?.extraNumeric ?? 0;
+
+    // handler when the user clicks a new page number:
+    const handlePageChange = (_: unknown, newPage: number) => {
+        // MUI gives you a zero-based page, so add 1 for your API
+
+        setListResultResponse({ ...listResultResponse, pageNumber: newPage + 1 });
+    };
+
+    // handler when the user chooses a different rows-per-page:
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+
+        setListResultResponse({
+            ...listResultResponse,
+            pageSize: parseInt(event.target.value, 10),
+            pageNumber: 1 // reset to first page
+        });
+    };
+    return (<Panel ref={ref} header="Test's Results Processing" collapsible defaultExpanded className="panel-border"  >      
             <MyTable
                 columns={tableColomns}
                 data={resultsList?.object || []}
@@ -842,10 +865,12 @@ useEffect(() => {
                 }}
                 rowClassName={isResultSelected}
                 height={250}
-
+                page={pageIndex}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
             ></MyTable>
-        </div>
-
         <ChatModal open={openNoteResultModal} setOpen={setOpenNoteResultModal} handleSendMessage={handleSendResultMessage} title={"Comments"} list={messagesResultList?.object} fieldShowName={'notes'} />
         <CancellationModal open={openRejectedResultModal}
             setOpen={setOpenRejectedResultModal}

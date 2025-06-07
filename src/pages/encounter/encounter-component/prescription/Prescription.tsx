@@ -16,7 +16,7 @@ import {
 } from '@/services/medicationsSetupService';
 import { ApPrescriptionMedications } from '@/types/model-types';
 import { newApPrescription, newApPrescriptionMedications } from '@/types/model-types-constructor';
-import { initialListRequest } from '@/types/types';
+import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
 import BlockIcon from '@rsuite/icons/Block';
 import CheckIcon from '@rsuite/icons/Check';
@@ -39,11 +39,11 @@ import clsx from 'clsx';
 const { Column, HeaderCell, Cell } = Table;
 const Prescription = () => {
     const location = useLocation();
-        const { patient, encounter, edit } = location.state || {};
+    const { patient, encounter, edit } = location.state || {};
     const dispatch = useAppDispatch();
     const [searchKeyword, setSearchKeyword] = useState('');
     const [openToAdd, setOpenToAdd] = useState(true);
-    const [openCancellation,setOpenCancellation]=useState(false)
+    const [openCancellation, setOpenCancellation] = useState(false)
     const [showCanceled, setShowCanceled] = useState(true);
     const { data: predefinedInstructionsListResponse } = useGetPrescriptionInstructionQuery({ ...initialListRequest });
     const [customeinst, setCustomeinst] = useState({
@@ -56,6 +56,7 @@ const Prescription = () => {
     const [openDetailsModal, setOpenDetailsModal] = useState(false);
     const [selectedRows, setSelectedRows] = useState([]);
     const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
+
     const { data: prescriptions, isLoading: isLoadingPrescriptions, refetch: preRefetch } = useGetPrescriptionsQuery({
         ...initialListRequest,
         filters: [
@@ -95,10 +96,8 @@ const Prescription = () => {
     const [savePrescription, savePrescriptionMutation] = useSavePrescriptionMutation();
 
     const [savePrescriptionMedication, { isLoading: isSavingPrescriptionMedication }] = useSavePrescriptionMedicationMutation();
-
-    const { data: prescriptionMedications, isLoading: isLoadingPrescriptionMedications, refetch: medicRefetch } = useGetPrescriptionMedicationsQuery({
+    const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
-
         filters: [
             {
                 fieldName: "prescription_key",
@@ -112,6 +111,8 @@ const Prescription = () => {
             }
         ],
     });
+
+    const { data: prescriptionMedications, isLoading: isLoadingPrescriptionMedications, refetch: medicRefetch } = useGetPrescriptionMedicationsQuery(listRequest);
     const [selectedRowoMedicationKey, setSelectedRowoMedicationKey] = useState("");
     const { data: customeInstructions, isLoading: isLoadingCustomeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
         ...initialListRequest,
@@ -129,7 +130,23 @@ const Prescription = () => {
         }
 
     }, [prescriptions, preKey]);
-
+    useEffect(() => {
+        setListRequest(prev => ({
+            ...prev,
+            filters: [
+                {
+                    fieldName: "prescription_key",
+                    operator: "",
+                    value: preKey,
+                },
+                {
+                    fieldName: "status_lkey",
+                    operator: showCanceled ? "notMatch" : "match",
+                    value: "1804447528780744",
+                }
+            ],
+        }));
+    }, [preKey, showCanceled]);
     useEffect(() => {
         if (prescriptions?.object) {
             const foundPrescription = prescriptions.object.find(prescription => {
@@ -164,7 +181,7 @@ const Prescription = () => {
         }
 
     }, [preKey]);
-    
+
     useEffect(() => {
         if (showCanceled) {
             handleCleare();
@@ -187,7 +204,7 @@ const Prescription = () => {
                 selectedRows.map(item => savePrescriptionMedication({ ...item, isValid: false, statusLkey: "1804447528780744", deletedAt: Date.now() }).unwrap())
             );
 
-            dispatch(notify({msg:'All Medication Deleted Successfully',sev:"success"}));
+            dispatch(notify({ msg: 'All Medication Deleted Successfully', sev: "success" }));
             setOpenCancellation(false);
             medicRefetch().then(() => {
 
@@ -204,7 +221,7 @@ const Prescription = () => {
 
         } catch (error) {
 
-            dispatch(notify({msg:'One or more deleted failed',sev:'error'}));
+            dispatch(notify({ msg: 'One or more deleted failed', sev: 'error' }));
 
         }
     };
@@ -264,7 +281,7 @@ const Prescription = () => {
                 ),
                 saveDraft: true
             }).then(() => {
-                dispatch(notify({msg:'Saved Draft successfully',sev:'success'}));
+                dispatch(notify({ msg: 'Saved Draft successfully', sev: 'success' }));
                 setIsDraft(true);
             })
         } catch (error) { }
@@ -468,7 +485,7 @@ const Prescription = () => {
                 return (<>
                     <span>{rowData.updatedBy}</span>
                     <br />
-                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.updatedAt )}</span>
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.updatedAt)}</span>
                 </>)
             }
 
@@ -489,6 +506,30 @@ const Prescription = () => {
         },
 
     ];
+    const pageIndex = listRequest.pageNumber - 1;
+
+    // how many rows per page:
+    const rowsPerPage = listRequest.pageSize;
+
+    // total number of items in the backend:
+    const totalCount = prescriptionMedications?.extraNumeric ?? 0;
+
+    // handler when the user clicks a new page number:
+    const handlePageChange = (_: unknown, newPage: number) => {
+        // MUI gives you a zero-based page, so add 1 for your API
+
+        setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+    };
+
+    // handler when the user chooses a different rows-per-page:
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+
+        setListRequest({
+            ...listRequest,
+            pageSize: parseInt(event.target.value, 10),
+            pageNumber: 1 // reset to first page
+        });
+    };
     return (
         < >
             <div className="bt-div" >
@@ -510,8 +551,9 @@ const Prescription = () => {
                 </div>
 
 
-                <div  className={clsx('bt-right', {'disabled-panel': edit
-                                                         })}> 
+                <div className={clsx('bt-right', {
+                    'disabled-panel': edit
+                })}>
                     <MyButton
                         onClick={handleSavePrescription}
                         disabled={isdraft}
@@ -592,7 +634,7 @@ const Prescription = () => {
                     </MyButton>
                     <MyButton
                         prefixIcon={() => <BlockIcon />}
-                        onClick={()=>setOpenCancellation(true)}
+                        onClick={() => setOpenCancellation(true)}
                         disabled={selectedRows.length === 0}
                     >
                         Cancle
@@ -623,6 +665,11 @@ const Prescription = () => {
                 }}
                 loading={isLoadingPrescriptionMedications}
                 rowClassName={isSelected}
+                page={pageIndex}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
             ></MyTable>
 
 

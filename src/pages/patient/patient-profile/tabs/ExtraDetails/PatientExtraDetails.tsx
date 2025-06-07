@@ -68,6 +68,18 @@ const PatientExtraDetails = ({ localPatient }) => {
             setSecondaryDocumentModalOpen(true);
         }
     };
+    // Change page event handler
+    const handlePageChange = (_: unknown, newPage: number) => {
+        setDocumentsListRequest({ ...documenstListRequest, pageNumber: newPage + 1 });
+    };
+    // Change number of rows per page
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setDocumentsListRequest({
+            ...documenstListRequest,
+            pageSize: parseInt(event.target.value, 10),
+            pageNumber: 1 // Reset to first page
+        });
+    };
     const columns = [
         {
             key: 'documentCountry',
@@ -138,6 +150,10 @@ const PatientExtraDetails = ({ localPatient }) => {
             ],
         }));
     }, [localPatient.key]);
+    // Pagination values
+    const pageIndex = documenstListRequest.pageNumber - 1;
+    const rowsPerPage = documenstListRequest.pageSize;
+    const totalCount = patientSecondaryDocumentsResponse?.extraNumeric ?? 0;
     return (
         <div className="tab-main-container">
             <div className="tab-content-btns">
@@ -169,6 +185,11 @@ const PatientExtraDetails = ({ localPatient }) => {
                     setSelectedSecondaryDocument(rowData);
                 }}
                 rowClassName={isSelectedDocument}
+                page={pageIndex}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
             />
             <DeletionConfirmationModal
                 open={deleteDocModalOpen}

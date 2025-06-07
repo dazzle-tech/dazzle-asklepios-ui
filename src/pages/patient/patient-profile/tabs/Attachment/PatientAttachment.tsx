@@ -37,7 +37,7 @@ const handleDownload = attachment => {
     a.click();
     window.URL.revokeObjectURL(url);
 };
-const PatientAttachment = ({ localPatient ,refetchAttachmentList,setRefetchAttachmentList }) => {
+const PatientAttachment = ({ localPatient, refetchAttachmentList, setRefetchAttachmentList }) => {
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [requestedPatientAttacment, setRequestedPatientAttacment] = useState();
     const [selectedAttachment, setSelectedAttachment] = useState(null);
@@ -110,7 +110,18 @@ const PatientAttachment = ({ localPatient ,refetchAttachmentList,setRefetchAttac
         setRequestedPatientAttacment(attachmentKey);
         setActionType('download');
     };
-
+    // Change page event handler
+    const handlePageChange = (_: unknown, newPage: number) => {
+        setAttachmentsListRequest({ ...attachmentsListRequest, pageNumber: newPage + 1 });
+    };
+    // Change number of rows per page
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setAttachmentsListRequest({
+            ...attachmentsListRequest,
+            pageSize: parseInt(event.target.value, 10),
+            pageNumber: 1 // Reset to first page
+        });
+    };
     // Table Columns
     const columns = [
         {
@@ -162,18 +173,21 @@ const PatientAttachment = ({ localPatient ,refetchAttachmentList,setRefetchAttac
             key: 'createdAt',
             title: 'CREATED AT/BY',
             fullText: true,
-             flexGrow: 3,
+            flexGrow: 3,
             render: (row: any) => row?.createdAt ? <>{row?.createdByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.createdAt)}</span> </> : ' '
         },
         {
             key: 'updatedAt',
             title: 'UPDATED AT/BY',
-             flexGrow: 3,
+            flexGrow: 3,
             fullText: true,
             render: (row: any) => row?.updatedAt ? <>{row?.updatedByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.updatedAt)}</span> </> : ' '
         },
     ];
-
+    // Pagination values
+    const pageIndex = attachmentsListRequest.pageNumber - 1;
+    const rowsPerPage = attachmentsListRequest.pageSize;
+    const totalCount = fetchPatintAttachmentsResponce?.extraNumeric ?? 0;
     // Effects
     useEffect(() => {
         setAttachmentsListRequest((prev) => ({
@@ -214,12 +228,12 @@ const PatientAttachment = ({ localPatient ,refetchAttachmentList,setRefetchAttac
             }
         }
     }, [requestedPatientAttacment, fetchAttachmentByKeyResponce, actionType]);
-      useEffect(() => {
+    useEffect(() => {
         if (refetchAttachmentList) {
-          attachmentRefetch();
+            attachmentRefetch();
         }
         setRefetchAttachmentList(false)
-      }, [refetchAttachmentList]);
+    }, [refetchAttachmentList]);
     return (
         <div className="tab-main-container">
             <div className="tab-content-btns">
@@ -250,6 +264,11 @@ const PatientAttachment = ({ localPatient ,refetchAttachmentList,setRefetchAttac
                 columns={columns}
                 onRowClick={rowData => { setSelectedAttachment(rowData); }}
                 rowClassName={isSelected}
+                page={pageIndex}
+                rowsPerPage={rowsPerPage}
+                totalCount={totalCount}
+                onPageChange={handlePageChange}
+                onRowsPerPageChange={handleRowsPerPageChange}
             />
             <DeletionConfirmationModal
                 open={deleteModalOpen}

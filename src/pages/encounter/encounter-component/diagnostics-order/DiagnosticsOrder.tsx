@@ -13,6 +13,7 @@ import { MdAttachFile, MdModeEdit } from 'react-icons/md';
 import {
     Checkbox, Divider,
     HStack,
+    Panel,
     Row,
     SelectPicker
 } from 'rsuite';
@@ -41,6 +42,7 @@ import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import { useLocation } from 'react-router-dom';
 import { useGetDiagnosticsTestListQuery } from '@/services/setupService';
 import MyModal from '@/components/MyModal/MyModal';
+import PatientPrevTests from './PatientPrevTests';
 
 const handleDownload = attachment => {
     const byteCharacters = atob(attachment.fileContent);
@@ -73,7 +75,7 @@ const DiagnosticsOrder = () => {
     const [searchTerm, setSearchTerm] = React.useState('');
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest, pageSize: 1000 });
-    const { data: testsList } = useGetDiagnosticsTestListQuery(listTestRequest);
+    const { data: testsList,isFetching } = useGetDiagnosticsTestListQuery(listTestRequest);
     const [leftItems, setLeftItems] = useState([]);
     const [selectedTestsList, setSelectedTestsList] = useState([]);
     const [listOrdersRequest, setListOrdersRequest] = useState<ListRequest>({
@@ -160,11 +162,13 @@ const DiagnosticsOrder = () => {
     ) ?? [];
 
     // Effects
-    useEffect(() => {
-        if (testsList?.object) {
-            setLeftItems(testsList.object);
-        }
-    }, [testsList]);
+  useEffect(() => {
+  
+    if ( testsList?.object) {
+        setLeftItems(testsList.object);
+        setSelectedTestsList([]);
+    }
+}, [openTestsModal, testsList]);
 
     useEffect(() => {
         if (searchTerm.trim() !== "") {
@@ -186,11 +190,7 @@ const DiagnosticsOrder = () => {
         }
     }, [searchTerm]);
 
-    useEffect(() => {
-        console.log(testsList?.object ??[]);
-        setLeftItems(testsList?.object ?? []);
-        setSelectedTestsList([]);
-    }, [openTestsModal]);
+ 
     useEffect(() => {
         const draftOrder = ordersList?.object?.find((order) => order.saveDraft === true);
 
@@ -703,7 +703,7 @@ const DiagnosticsOrder = () => {
 
                     <div className='buttons-sect'>
                         <MyButton
-
+                            loading={isFetching}
                             onClick={handleSaveOrders}
                             disabled={!edit ? isdraft : true}
                             prefixIcon={() => <PlusIcon />}
@@ -834,6 +834,8 @@ const DiagnosticsOrder = () => {
                     onRowsPerPageChange={handleRowsPerPageChange}
 
                 />
+                <Panel header="Patient Orders Test" collapsible expanded={true} className='panel-style'>
+                <PatientPrevTests patient={patient} /></Panel>
             </Row>
 
             <DetailsModal

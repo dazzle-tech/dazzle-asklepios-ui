@@ -6,6 +6,7 @@ import { initialListRequest } from "@/types/types";
 import React from "react";
 import { FlexboxGrid } from "rsuite";
 const PrescriptionDetails=({genericMedicationListResponse,customeInstructions ,prescription})=>{
+    console.log("PrescriptionDetails", prescription);
      const { data: predefinedInstructionsListResponse } = useGetPrescriptionInstructionQuery({ ...initialListRequest });
      const { data: prescriptionMedications, isLoading: isLoadingPrescriptionMedications, refetch: medicRefetch } = useGetPrescriptionMedicationsQuery({
              ...initialListRequest,
