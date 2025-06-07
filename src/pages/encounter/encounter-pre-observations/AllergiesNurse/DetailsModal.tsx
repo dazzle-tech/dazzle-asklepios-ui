@@ -15,6 +15,7 @@ import MyLabel from '@/components/MyLabel';
 import { useSaveAllergiesMutation } from '@/services/observationService';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
+import clsx from 'clsx';
 const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit,  patient, encounter, handleClear, fetchallerges, openToAdd }) => {
     const dispatch = useAppDispatch();
     const { data: allergyTypeLovQueryResponse } = useGetLovValuesByCodeQuery('ALLERGEN_TYPES');
@@ -146,7 +147,7 @@ const DetailsModal = ({ open, setOpen, allerges, setAllerges, edit,  patient, en
             ]}
             content={
 
-                <div className={edit ?"disabled-panel": allerges.statusLvalue?.valueCode == "ARS_CANCEL" ? "disabled-panel" : "" }>
+                <div  className={clsx({ "disabled-panel": edit || allerges.statusLvalue?.valueCode === "ARS_CANCEL" })}>
                     <Form fluid>
                         <Row className='rows-gap' >
                             <Col md={8}>

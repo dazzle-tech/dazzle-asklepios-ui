@@ -36,10 +36,11 @@ import MyInput from '@/components/MyInput';
 import AdvancedModal from '@/components/AdvancedModal';
 import './styles.less'
 import Diagnosis from './Diagnosis';
+import clsx from 'clsx';
 const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetailsModal, setOpenDetailsModal, proRefetch }) => {
     const [openOrderModel, setOpenOrderModel] = useState(false);
     const [editing, setEditing] = useState(false);
-  
+
     const [saveProcedures, saveProcedureMutation] = useSaveProceduresMutation();
     const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
     const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
@@ -232,15 +233,21 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                     prefixIcon={() => <CheckIcon />}>
                     Order Related Tests
                 </MyButton>
-               </div>}
+            </div>}
             rightContent={<>
-                <Row gutter={20} className={edit?"disabled-panel":procedure.key?procedure?.statusLvalue?.valueCode!=="PROC_REQ"?"disabled-panel":"":""}>
-                  <Form fluid>
+                <Row gutter={20}
+                    className={clsx({
+                        'disabled-panel':
+                            edit ||
+                            (procedure?.key &&
+                                procedure?.statusLvalue?.valueCode !== 'PROC_REQ'),
+                    })}>
+                    <Form fluid>
 
-                    <Col md={12}>
-                        <Row className="rows-gap">
-                            <Col md={12}>
-                           
+                        <Col md={12}>
+                            <Row className="rows-gap">
+                                <Col md={12}>
+
                                     <MyInput
 
                                         disabled={editing}
@@ -254,10 +261,10 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
-                             
-                            </Col>
-                            <Col md={12}>
-                                
+
+                                </Col>
+                                <Col md={12}>
+
                                     <MyInput
 
                                         disabled={editing}
@@ -271,12 +278,12 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
-                               </Col>
-                        </Row>
-                        <Row className="rows-gap">
+                                </Col>
+                            </Row>
+                            <Row className="rows-gap">
 
 
-                        <Col md={12}>
+                                <Col md={12}>
 
                                     <MyInput
                                         disabled={editing ? editing : procedure.currentDepartment}
@@ -288,12 +295,12 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         selectDataValue="key"
                                         record={procedure}
                                         setRecord={setProcedure}
-                                       
+
                                     />
-                                
-                            </Col>
-                            <Col md={12}>
-                               
+
+                                </Col>
+                                <Col md={12}>
+
                                     <MyInput
                                         disabled={editing ? editing : procedure.currentDepartment || !procedure?.facilityKey}
                                         width="100%"
@@ -305,69 +312,69 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
-                           </Col>
-                        </Row>
-                        <Row className="rows-gap">
-                            <Text className="font-style">Indication</Text>
-                        </Row>
-                        <Row className="rows-gap">
-                            <Col md={24}>
+                                </Col>
+                            </Row>
+                            <Row className="rows-gap">
+                                <Text className="font-style">Indication</Text>
+                            </Row>
+                            <Row className="rows-gap">
+                                <Col md={24}>
 
-                                <Row>
-                                    <Col md={24}>
-                                        <InputGroup inside style={{ width: "100%" }}>
+                                    <Row>
+                                        <Col md={24}>
+                                            <InputGroup inside style={{ width: "100%" }}>
+                                                <Input
+                                                    placeholder="Search ICD-10"
+                                                    value={searchKeywordicd}
+                                                    onChange={handleSearchIcd}
+                                                />
+                                                <InputGroup.Button>
+                                                    <SearchIcon />
+                                                </InputGroup.Button>
+                                            </InputGroup>
+                                            {searchKeywordicd && (
+                                                <Dropdown.Menu className="dropdown-menuresult">
+                                                    {modifiedData?.map(mod => (
+                                                        <Dropdown.Item
+                                                            key={mod.key}
+                                                            eventKey={mod.key}
+                                                            onClick={() => {
+                                                                setProcedure({
+                                                                    ...procedure,
+                                                                    indications: mod.key
+                                                                });
+                                                                setSearchKeywordicd('');
+                                                            }}
+                                                        >
+                                                            <span style={{ marginRight: '19px' }}>{mod.icdCode}</span>
+                                                            <span>{mod.description}</span>
+                                                        </Dropdown.Item>
+                                                    ))}
+                                                </Dropdown.Menu>
+                                            )}</Col>
+
+                                    </Row>
+                                    <Row>
+                                        <Col md={24}>
                                             <Input
-                                                placeholder="Search ICD-10"
-                                                value={searchKeywordicd}
-                                                onChange={handleSearchIcd}
-                                            />
-                                            <InputGroup.Button>
-                                                <SearchIcon />
-                                            </InputGroup.Button>
-                                        </InputGroup>
-                                        {searchKeywordicd && (
-                                            <Dropdown.Menu className="dropdown-menuresult">
-                                                {modifiedData?.map(mod => (
-                                                    <Dropdown.Item
-                                                        key={mod.key}
-                                                        eventKey={mod.key}
-                                                        onClick={() => {
-                                                            setProcedure({
-                                                                ...procedure,
-                                                                indications: mod.key
-                                                            });
-                                                            setSearchKeywordicd('');
-                                                        }}
-                                                    >
-                                                        <span style={{ marginRight: '19px' }}>{mod.icdCode}</span>
-                                                        <span>{mod.description}</span>
-                                                    </Dropdown.Item>
-                                                ))}
-                                            </Dropdown.Menu>
-                                        )}</Col>
+                                                as="textarea"
+                                                disabled={true}
+                                                onChange={e => setindicationsDescription}
+                                                value={indicationsDescription || procedure.indications}
+                                                style={{ width: "100%" }}
+                                                rows={4}
+                                            /></Col>
+                                    </Row>
+                                </Col>
+                            </Row>
 
-                                </Row>
-                                <Row>
-                                    <Col md={24}>
-                                        <Input
-                                            as="textarea"
-                                            disabled={true}
-                                            onChange={e => setindicationsDescription}
-                                            value={indicationsDescription || procedure.indications}
-                                            style={{ width: "100%" }}
-                                            rows={4}
-                                        /></Col>
-                                </Row>
-                            </Col>
-                        </Row>
-
-                    </Col>
-                    <Col md={12}>
-                        <Row className="rows-gap">
-
-
+                        </Col>
                         <Col md={12}>
-                             
+                            <Row className="rows-gap">
+
+
+                                <Col md={12}>
+
 
                                     <MyInput
                                         disabled={editing}
@@ -382,10 +389,10 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         setRecord={setProcedure}
                                         searchable={false}
                                     />
-                          
-                            </Col>
-                            <Col md={12}>
-                               
+
+                                </Col>
+                                <Col md={12}>
+
                                     <MyInput
                                         disabled={editing}
                                         width="100%"
@@ -399,11 +406,11 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         setRecord={setProcedure}
                                         searchable={false}
                                     />
-                               </Col>
-                        </Row>
-                        <Row className="rows-gap">
-                            <Col md={12}>
-                              
+                                </Col>
+                            </Row>
+                            <Row className="rows-gap">
+                                <Col md={12}>
+
                                     <MyInput
                                         disabled={editing}
                                         width="100%"
@@ -413,11 +420,11 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         setRecord={setProcedure}
                                     />
 
-                               </Col>
+                                </Col>
 
-                             
+
                                 <Col md={12}>
-                             
+
 
                                     <MyInput
                                         width="100%"
@@ -427,11 +434,11 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
-                               </Col>
-                        </Row>
-                        <Row className="rows-gap">
-                        <Col md={12}>
-                           
+                                </Col>
+                            </Row>
+                            <Row className="rows-gap">
+                                <Col md={12}>
+
 
                                     <MyInput
 
@@ -445,10 +452,10 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
-                             
-                            </Col>
-                            <Col md={12}>
-                              
+
+                                </Col>
+                                <Col md={12}>
+
                                     <MyInput
 
                                         width="100%"
@@ -463,10 +470,10 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         searchable={false}
                                     />
                                 </Col>
-                        </Row>
-                        <Row className="rows-gap">
-                            <Col md={24}>
-                               
+                            </Row>
+                            <Row className="rows-gap">
+                                <Col md={24}>
+
                                     <MyInput
                                         width="100%"
                                         disabled={editing}
@@ -475,10 +482,10 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                                         record={procedure}
                                         setRecord={setProcedure}
                                     />
-                              
-                            </Col>
-                        </Row>
-                    </Col></Form>
+
+                                </Col>
+                            </Row>
+                        </Col></Form>
                 </Row>
             </>}
             rightTitle="Procedure"

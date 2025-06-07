@@ -25,6 +25,7 @@ import { formatDateWithoutSeconds } from '@/utils';
 import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import { useLocation } from 'react-router-dom';
 import { at } from 'lodash';
+import clsx from 'clsx';
 const handleDownload = attachment => {
   const byteCharacters = atob(attachment.fileContent);
   const byteNumbers = new Array(byteCharacters.length);
@@ -438,7 +439,9 @@ const Consultation = () => {
         >
           Show Previous Consultations
         </Checkbox>
-        <div className={`bt-right ${edit ? "disabled-panel" : ""}`}>
+        <div  className={clsx('bt-right', {
+                                'disabled-panel': edit
+                              })}>
 
           <MyButton
             onClick={handelAddNew}
@@ -476,7 +479,7 @@ const Consultation = () => {
         open={openDetailsMdal}
         setOpen={setOpenDetailsModal}
         refetchCon={refetchCon}
-        editable={edit} />
+        edit={edit} />
       <AttachmentUploadModal
         isOpen={attachmentsModalOpen}
         setIsOpen={setAttachmentsModalOpen}

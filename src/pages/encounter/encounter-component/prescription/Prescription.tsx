@@ -35,6 +35,7 @@ import {
 import DetailsModal from './DetailsModal';
 import './styles.less';
 import { useLocation } from 'react-router-dom';
+import clsx from 'clsx';
 const { Column, HeaderCell, Cell } = Table;
 const Prescription = () => {
     const location = useLocation();
@@ -509,7 +510,8 @@ const Prescription = () => {
                 </div>
 
 
-                <div className={`bt-right ${edit ? "disabled-panel" : ""}`}>
+                <div  className={clsx('bt-right', {'disabled-panel': edit
+                                                         })}> 
                     <MyButton
                         onClick={handleSavePrescription}
                         disabled={isdraft}

@@ -20,6 +20,7 @@ import { newApPrescriptionMedications } from "@/types/model-types-constructor";
 import { faRightLeft } from "@fortawesome/free-solid-svg-icons";
 import Instructions from "./Instructions";
 import Substitues from "./Substitued";
+import clsx from "clsx";
 
 const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescriptionMedications, preKey,patient, encounter, medicRefetch,openToAdd }) => {
     const dispatch = useAppDispatch();
@@ -287,7 +288,8 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
             rightTitle="Medication Order Details"
             leftContent={<> <ActiveIngrediantList selectedGeneric={selectedGeneric} /></>}
             rightContent={
-                <Row gutter={15} className={edit?"disabled-panel":""}>
+                <Row gutter={15}  className={clsx('', {'disabled-panel': edit
+                                                         })}>
                     <Col xs={24} md={12}>
                         <Row className="rows-gap">
                             <Col md={20}>

@@ -12,6 +12,7 @@ import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyModal from '@/components/MyModal/MyModal';
 import './styles.less'
+import clsx from 'clsx';
 const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complaintSymptom, refetch ,edit}) => {
     const authSlice = useAppSelector(state => state.auth);
     const [complaintSymptoms, setComplaintSymptoms] = useState<ApComplaintSymptoms>({ ...complaintSymptom });
@@ -117,7 +118,9 @@ const AddChiefComplaintSymptoms = ({ open, setOpen, patient, encounter, complain
     console.log(edit);
     // Modal Content 
     const content = (
-        <div className={edit?"disabled-panel":""}>
+        <div className={clsx('', {
+                                'disabled-panel': edit
+                              })}>
         <Form fluid layout='inline' disabled={edit} >
             <MyInput
                 column

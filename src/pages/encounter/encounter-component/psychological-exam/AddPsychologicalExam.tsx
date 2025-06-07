@@ -13,6 +13,7 @@ import { ApPsychologicalExam } from '@/types/model-types';
 import MyModal from '@/components/MyModal/MyModal';
 import { Form } from 'rsuite';
 import { useSavePsychologicalExamsMutation, useGetPsychologicalExamsQuery } from '@/services/encounterService';
+import clsx from 'clsx';
 const AddPsychologicalExam = ({
     open,
     setOpen,
@@ -161,7 +162,7 @@ const AddPsychologicalExam = ({
                 footer: <MyButton appearance='ghost' onClick={handleClearField} >Clear</MyButton>
             },]}
             content={
-           <div className={edit?"disabled-panel":""}>
+           <div  className={clsx('', {'disabled-panel': edit})}>
             <Form fluid layout='inline'>
                 <MyInput
                     width={200}

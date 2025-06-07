@@ -8,9 +8,10 @@ import { newApVisitWarning } from "@/types/model-types-constructor";
 import { notify } from "@/utils/uiReducerActions";
 import { faWarning } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import clsx from "clsx";
 import React, { useState, useEffect } from "react";
 import { Col, Form, Row, Text } from "rsuite";
-const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patient, encounter, editing ,edit}) => {
+const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patient, encounter, editing, edit }) => {
     const [editDate, setEditDate] = useState({ editdate: true });
     const [editSourceof, seteditSourceof] = useState({ editSource: true });
     const dispatch = useAppDispatch();
@@ -19,7 +20,7 @@ const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patie
     const { data: sourceofinformationLovQueryResponse } = useGetLovValuesByCodeQuery('RELATION');
     const [saveWarning, saveWarningMutation] = useSaveWarningsMutation();
     const handleSave = async () => {
-        
+
         try {
             const Response = await saveWarning({
                 ...warning,
@@ -59,13 +60,13 @@ const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patie
             setOpen={setOpen}
             title="Add Warning"
             actionButtonFunction={handleSave}
-            isDisabledActionBtn={!edit?warning.statusLvalue?.valueCode=="ARS_CANCEL"?true:false:true}
+            isDisabledActionBtn={!edit ? warning.statusLvalue?.valueCode == "ARS_CANCEL" ? true : false : true}
             size='40vw'
             position='right'
             steps={[
 
                 {
-                    title: 'Warning', icon: <FontAwesomeIcon icon={faWarning}/>
+                    title: 'Warning', icon: <FontAwesomeIcon icon={faWarning} />
                     , footer: <MyButton
 
                         onClick={handleClear}
@@ -73,7 +74,7 @@ const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patie
                 },
             ]}
             content={
-                <Row gutter={20} className={!edit?warning.statusLvalue?.valueCode=="ARS_CANCEL"?"disabled-panel":"":"disabled-panel"}>
+                <Row gutter={20} className={clsx({ "disabled-panel": edit || warning.statusLvalue?.valueCode === "ARS_CANCEL" })}>
                     <Col md={12}>
                         <Row>
                             <Col md={12}>
@@ -111,7 +112,7 @@ const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patie
                             <Col md={12}>
                                 <Form fluid>
                                     <MyInput
-                                 
+
                                         disabled={editing}
                                         width="100%"
                                         fieldType="select"
@@ -225,7 +226,7 @@ const DetailsModal = ({ open, setOpen, warning, setWarning, fetchwarnings, patie
                     </Col>
                 </Row>
 
-              
+
 
             }
 

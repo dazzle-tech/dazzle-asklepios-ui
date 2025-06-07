@@ -46,6 +46,7 @@ import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
 import DiagnosticsTest from './DiagnosticsTest';
 import BackButton from '@/components/BackButton/BackButton';
+import clsx from 'clsx';
 // import EyeExam from './EyeExam';
 
 const { Column, HeaderCell, Cell } = Table;
@@ -415,7 +416,8 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
               <br />
             </Form>
             <div
-              className={diagnosticsTest.key ? '' : 'disabled-panel'}
+             className={clsx('right-main-container', {'disabled-panel':diagnosticsTest.key
+                                                                                                 })} 
               style={{
                 display: 'flex',
                 flexDirection: 'column',

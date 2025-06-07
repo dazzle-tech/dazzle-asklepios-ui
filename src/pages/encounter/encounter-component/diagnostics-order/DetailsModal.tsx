@@ -14,6 +14,7 @@ import {
 import {
     useFetchAttachmentByKeyQuery,
 } from '@/services/attachmentService';
+import clsx from 'clsx';
 const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveTest, orderTest, setOrderTest, order, edit }) => {
   
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -121,7 +122,8 @@ const DetailsModal = ({ test, openDetailsModel, setOpenDetailsModel, handleSaveT
                 },
             ]}
             content={
-           <div className={edit?"disabled-panel":""}>
+           <div className={clsx('', {'disabled-panel': edit
+                                         })}>
             <Form fluid >
                 <Row>
 

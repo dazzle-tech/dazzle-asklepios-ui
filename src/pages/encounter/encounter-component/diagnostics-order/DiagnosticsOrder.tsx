@@ -41,6 +41,7 @@ import AttachmentUploadModal from '@/components/AttachmentUploadModal';
 import { useLocation } from 'react-router-dom';
 import { useGetDiagnosticsTestListQuery } from '@/services/setupService';
 import MyModal from '@/components/MyModal/MyModal';
+
 const handleDownload = attachment => {
     const byteCharacters = atob(attachment.fileContent);
     const byteNumbers = new Array(byteCharacters.length);
@@ -186,6 +187,7 @@ const DiagnosticsOrder = () => {
     }, [searchTerm]);
 
     useEffect(() => {
+        console.log(testsList?.object ??[]);
         setLeftItems(testsList?.object ?? []);
         setSelectedTestsList([]);
     }, [openTestsModal]);
@@ -365,35 +367,10 @@ const DiagnosticsOrder = () => {
             dispatch(notify({ msg: 'Save Failed', sev: "error" }));
         }
     };
-    const handleItemClick = async (test) => {
-        setFlag(true);
-        try {
-
-            await saveOrderTests({
-                ...ordersList,
-                patientKey: patient.key,
-                visitKey: encounter.key,
-                orderKey: orders.key,
-                testKey: test.key,
-                statusLkey: "164797574082125",
-                processingStatusLkey: '6055029972709625',
-                orderTypeLkey: test.testTypeLkey
-
-
-            }).unwrap();
-            dispatch(notify({ msg: 'Saved  Successfully', sev: "success" }));
-
-            await orderTestRefetch();
-
-        }
-        catch (error) {
-
-            console.error("Encounter save failed:", error);
-            dispatch(notify({ msg: 'Save Failed', sev: "error" }));
-        }
-    };
+  
     const handleSaveOrders = async () => {
         if (patient && encounter) {
+            
             try {
                 const response = await saveOrders({
                     ...newApDiagnosticOrders,
@@ -404,10 +381,10 @@ const DiagnosticsOrder = () => {
                     radStatusLkey: "6055029972709625",
                 });
 
-
+                 setOpenTestsModal(true);
                 dispatch(notify('Start New Order whith ID:' + response?.data?.orderId));
                 setOrders(response?.data);
-                setOpenTestsModal(true);
+               
 
             } catch (error) {
                 console.error("Error saving prescription:", error);
@@ -788,7 +765,7 @@ const DiagnosticsOrder = () => {
                             disabled={orders.key ? orders?.statusLkey !== '164797574082125' : true}
                             flag={flag} setFlag={setFlag}
                             openTest={openTestsModal} setOpenTests={setOpenTestsModal} /> */}
-                        
+                
                         <div className='icon-style'>
                             <GrTestDesktop size={18} />
                         </div>

@@ -14,6 +14,7 @@ import { notify } from '@/utils/uiReducerActions';
 import MyButton from '@/components/MyButton/MyButton';
 import './styles.less'
 import InfoCardList from '@/components/InfoCardList';
+import clsx from 'clsx';
 const AddEncounterVaccine = ({
     open,
     setOpen,
@@ -427,7 +428,8 @@ const AddEncounterVaccine = ({
                 <MyButton appearance='ghost' onClick={handleClearField}>Clear</MyButton>
             }
             rightContent={
-                <div className={`right-main-container ${edit?"disabled-panel":""}`}>
+                <div  className={clsx('right-main-container', {'disabled-panel': edit
+                                                                                   })}>
                     <div className='search-list'>
                         <MyLabel label="Vaccine Name" />
                         <InputGroup inside >
