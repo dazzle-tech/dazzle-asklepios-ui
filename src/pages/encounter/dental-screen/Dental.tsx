@@ -10,7 +10,6 @@ import { Tab, TabList, TabPanel, Tabs } from 'react-tabs';
 import ChartTab from './tabs/DentalChartTab';
 import ProgressNotesTab from './tabs/ProgressNotesTab';
 import TreatmentPlanTab from './tabs/TreatmentPlanTab';
-import XRayTab from './tabs/XRayTab';
 import { useLocation } from 'react-router-dom';
 import { Box } from '@mui/material';
 

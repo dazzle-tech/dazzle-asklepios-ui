@@ -1,19 +1,19 @@
-"use client"
-
-import type React from "react"
-import { Button, Panel, SelectPicker } from "rsuite"
-import Trash from "@rsuite/icons/Trash"
-import MyTable from "../../MyTable/MyTable"
-import Translate from "../../Translate"
+import React from 'react';
+import { Button, Panel, SelectPicker } from 'rsuite';
+import Trash from '@rsuite/icons/Trash';
+import MyTable from '../../MyTable/MyTable';
+import Translate from '../../Translate';
+import { Box, Typography } from '@mui/material';
+import MyButton from '@/components/MyButton/MyButton';
 
 interface ToothServicesTabProps {
-  selectedTooth: any
-  currentToothService: any
-  setCurrentToothService: (service: any) => void
-  dentalServicesList: any[]
-  dentalServicesMap: any
-  addService: () => void
-  servicesLoading: boolean
+  selectedTooth: any;
+  currentToothService: any;
+  setCurrentToothService: (service: any) => void;
+  dentalServicesList: any[];
+  dentalServicesMap: any;
+  addService: () => void;
+  servicesLoading: boolean;
 }
 
 const ToothServicesTab: React.FC<ToothServicesTabProps> = ({
@@ -23,77 +23,88 @@ const ToothServicesTab: React.FC<ToothServicesTabProps> = ({
   dentalServicesList,
   dentalServicesMap,
   addService,
-  servicesLoading,
+  servicesLoading
 }) => {
   const handleRemoveService = (rowIndex: number) => {
-    console.log("Remove service at index:", rowIndex)
+    console.log('Remove service at index:', rowIndex);
     // Implement remove service logic here
-  }
+  };
 
   const columns = [
     {
-      key: "service",
-      title: "Service",
-      align: "center" as const,
-      render: (rowData: any) => <Translate>{dentalServicesMap[rowData.serviceKey]?.name}</Translate>,
+      key: 'service',
+      title: 'Service',
+      align: 'center' as const,
+      render: (rowData: any) => <Translate>{dentalServicesMap[rowData.serviceKey]?.name}</Translate>
     },
     {
-      key: "source",
-      title: "Source",
-      align: "center" as const,
-      render: (rowData: any) => <Translate>{rowData.source}</Translate>,
+      key: 'source',
+      title: 'Source',
+      align: 'center' as const,
+      render: (rowData: any) => <Translate>{rowData.source}</Translate>
     },
     {
-      key: "price",
-      title: "Price",
-      align: "center" as const,
-      render: (rowData: any) => <Translate>{dentalServicesMap[rowData.serviceKey]?.price}</Translate>,
+      key: 'price',
+      title: 'Price',
+      align: 'center' as const,
+      render: (rowData: any) => (
+        <Translate>{dentalServicesMap[rowData.serviceKey]?.price}</Translate>
+      )
     },
     {
-      key: "remove",
-      title: "Remove",
-      align: "center" as const,
+      key: 'remove',
+      title: 'Remove',
+      align: 'center' as const,
       render: (rowData: any, rowIndex: number) => (
-        <Button appearance="primary" color="red" size="sm" onClick={() => handleRemoveService(rowIndex)}>
+        <Button
+          appearance="primary"
+          color="red"
+          size="sm"
+          onClick={() => handleRemoveService(rowIndex)}
+        >
           <Trash />
         </Button>
-      ),
-    },
-  ]
+      )
+    }
+  ];
 
   return (
     <div>
-      <SelectPicker
-        style={{ width: "30%", marginRight: "10px" }}
-        placeholder={<Translate>Select Service From List</Translate>}
-        value={currentToothService.serviceKey}
-        loading={servicesLoading}
-        onChange={(e) =>
-          setCurrentToothService({
-            ...currentToothService,
-            serviceKey: e,
-          })
-        }
-        data={dentalServicesList}
-        labelKey="name"
-        valueKey="key"
-      />
-      <Button style={{ marginRight: "10px" }} appearance="primary" color="green" onClick={addService}>
-        <Translate>Add Service</Translate>
-      </Button>
-      <hr />
       <Panel
         header={
-          <>
-            <Translate>Applied Services on Tooth</Translate> <b># {selectedTooth.toothNumber}</b>
-          </>
+          <Box display="flex" alignItems="center" justifyContent="space-between" className="dental-panel-header">
+            <Typography className="tab-header">
+              <Translate>Applied Services on Tooth</Translate> <b># {selectedTooth.toothNumber}</b>
+            </Typography>
+            <Box display="flex" alignItems="center">
+              <SelectPicker
+                style={{ width: '300px', marginRight: '10px' }}
+                placeholder={<Translate>Select Service From List</Translate>}
+                value={currentToothService.serviceKey}
+                loading={servicesLoading}
+                onChange={e =>
+                  setCurrentToothService({
+                    ...currentToothService,
+                    serviceKey: e
+                  })
+                }
+                data={dentalServicesList}
+                labelKey="name"
+                valueKey="key"
+              />
+              <MyButton
+                onClick={addService}
+              >
+                <Translate>Add Service</Translate>
+              </MyButton>
+            </Box>
+          </Box>
         }
-        bordered
       >
         <MyTable data={selectedTooth.toothServices || []} columns={columns} height={400} />
       </Panel>
     </div>
-  )
-}
+  );
+};
 
-export default ToothServicesTab
+export default ToothServicesTab;
