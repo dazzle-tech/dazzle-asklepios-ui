@@ -63,3 +63,51 @@
     opacity: 0.6;
   }
 }
+
+.treatment-plan-tab {
+  .tab-content {
+    // display: flex;
+    // flex-wrap: wrap;
+    // gap: 16px;
+    // .draft-plan {
+    //   width: 35%;
+    // }
+    // .active-plan {
+    //   width: calc(100% - 35% - 16px);
+    // }
+
+    .active-plan, .draft-plan {
+      width: 100%;
+      padding: 0 8px 16px;
+      border-radius: 8px;
+
+      .table-title {
+        font-weight: 600;
+        font-size: 15px;
+      }
+      
+    }
+    .rs-tabs {
+      .rs-nav {
+        width: 100%;
+      }
+      .rs-nav-item {
+        padding: 4px 44px;
+        width: 50%;
+        .tab-title {
+          font-weight: 500;
+          font-size: 14px;
+
+          .number-label {
+            background-color: var(--background-light);
+            border:1px solid var(--background-gray);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-left: 8px;
+          }
+        }
+      }
+    }
+  }
+}

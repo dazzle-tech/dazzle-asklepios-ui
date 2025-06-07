@@ -1,130 +1,151 @@
-import React from 'react';
-import { ButtonToolbar, IconButton, Divider, Table, Input } from 'rsuite';
-import * as icons from '@rsuite/icons';
+import React, { useEffect, useState } from 'react';
+import { Box, InputBase, IconButton } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
 import Translate from '@/components/Translate';
+import MyTable from '@/components/MyTable';
+
 import {
   useSaveProgressNotesMutation,
   useDeleteProgressNoteMutation
 } from '@/services/dentalService';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal/DeletionConfirmationModal';
+import MyButton from '@/components/MyButton/MyButton';
+import { FaCheck } from 'react-icons/fa6';
+import { Panel } from 'rsuite';
 
-const { Column, HeaderCell, Cell } = Table;
+interface ProgressNotesTabProps {
+  progressNotes: any[];
+  setProgressNotes: (notes: any[]) => void;
+  currentChart: any;
+  dispatch: (action: any) => void;
+}
 
-const ProgressNotesTab = ({ progressNotes, setProgressNotes, currentChart, dispatch }) => {
+const ProgressNotesTab: React.FC<ProgressNotesTabProps> = ({
+  progressNotes,
+  setProgressNotes,
+  currentChart,
+  dispatch
+}) => {
   const [saveProgressNotes, saveProgressNotesMutation] = useSaveProgressNotesMutation();
   const [deleteProgressNote, deleteProgressNotesMutation] = useDeleteProgressNoteMutation();
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState<any>(null);
 
-  // Handle save progress notes response
-  React.useEffect(() => {
+  // Save notes effect
+  useEffect(() => {
     if (saveProgressNotesMutation.status === 'fulfilled') {
       setProgressNotes(saveProgressNotesMutation.data);
     } else if (saveProgressNotesMutation.status === 'rejected') {
       dispatch({ type: 'NOTIFY', payload: { msg: 'Save Failed', sev: 'error' } });
     }
-  }, [saveProgressNotesMutation, setProgressNotes, dispatch]);
+  }, [saveProgressNotesMutation.status]);
 
-  // Handle delete progress note response
-  React.useEffect(() => {
+  // Delete note effect
+  useEffect(() => {
     if (deleteProgressNotesMutation.status === 'fulfilled') {
-      // Filter out the deleted note from the progressNotes array
-      const updatedProgressNotes = progressNotes.filter(
-        note => note.key !== deleteProgressNotesMutation.data.key
-      );
-      setProgressNotes(updatedProgressNotes);
+      setProgressNotes(prev => prev.filter(note => note.key !== noteToDelete?.key));
+      setNoteToDelete(null);
     } else if (deleteProgressNotesMutation.status === 'rejected') {
       dispatch({ type: 'NOTIFY', payload: { msg: 'Delete Failed', sev: 'error' } });
     }
-  }, [deleteProgressNotesMutation, progressNotes, setProgressNotes, dispatch]);
+  }, [deleteProgressNotesMutation.status]);
 
-  const handleProgressNoteChange = (value, index) => {
-    const notesClone = [...progressNotes];
-    const object = { ...notesClone[index] };
-    object.note = value;
-    notesClone[index] = object;
-    setProgressNotes(notesClone);
+  const handleNoteChange = (value: string, index: number) => {
+    const updatedNotes = [...progressNotes];
+    updatedNotes[index] = { ...updatedNotes[index], note: value };
+    setProgressNotes(updatedNotes);
   };
 
-  return (
-    <>
-      <ButtonToolbar>
+  const columns = [
+    {
+      key: 'note',
+      title: <Translate>Progress Note</Translate>,
+      render: (row: any, index: number) => (
+        <InputBase
+          multiline
+          fullWidth
+          placeholder="Insert new note..."
+          value={row.note}
+          onChange={e => handleNoteChange(e.target.value, index)}
+          sx={{ padding: 1, border: '1px solid #ccc', borderRadius: 1 }}
+        />
+      )
+    },
+    {
+      key: 'audit',
+      title: <Translate>Audit</Translate>,
+      render: (row: any) => (
+        <Box sx={{ color: '#444' }}>
+          {row.createAudit}
+          {row.updatedAudit && ` / ${row.updatedAudit}`}
+        </Box>
+      )
+    },
+    {
+      key: 'actions',
+      title: <Translate>Delete</Translate>,
+      align: 'center' as const,
+      render: (row: any) => (
         <IconButton
-          appearance="primary"
-          icon={<icons.Plus />}
+          size="small"
           onClick={() => {
-            setProgressNotes([
-              { key: null, chartKey: currentChart.key, note: '' },
-              ...progressNotes
-            ]);
+            setNoteToDelete(row);
+            setConfirmDeleteOpen(true);
           }}
         >
-          <Translate>Add New</Translate>
+          <DeleteIcon color="error" />
         </IconButton>
-        <Divider vertical />
-        <IconButton
-          style={{ margin: '5px' }}
-          appearance="primary"
-          color="green"
-          icon={<icons.Check />}
-          onClick={() => {
-            saveProgressNotes(progressNotes).unwrap();
-          }}
-        >
-          <Translate>Save Notes</Translate>
-        </IconButton>
-      </ButtonToolbar>
+      )
+    }
+  ];
 
-      <Table height={400} rowHeight={100} bordered data={progressNotes}>
-        <Column flexGrow={6} align="center" fixed>
-          <HeaderCell>
-            <Translate>Progress Note</Translate>
-          </HeaderCell>
-          <Cell>
-            {(rowData, rowIndex) => (
-              <Input
-                style={{ padding: '10px' }}
-                as="textarea"
-                rows={3}
-                placeholder="Insert new note... "
-                value={rowData.note}
-                onChange={e => handleProgressNoteChange(e, rowIndex)}
-              />
-            )}
-          </Cell>
-        </Column>
-        <Column flexGrow={3}>
-          <HeaderCell>
-            <Translate>Audit</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData => (
-              <small style={{ color: '#363636', fontSize: '75%' }}>
-                {rowData.createAudit}
-                <br />
-                {rowData.updatedAudit && ' / '.concat(rowData.updatedAudit)}
-              </small>
-            )}
-          </Cell>
-        </Column>
-        <Column flexGrow={1} align="center">
-          <HeaderCell>
-            <Translate>Delete</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData => (
-              <IconButton
-                style={{ margin: '3px', position: 'absolute', right: '5%' }}
-                size="xs"
-                onClick={() => {
-                  deleteProgressNote(rowData).unwrap();
-                }}
-                icon={<icons.Close />}
-                appearance="ghost"
-                color="red"
-              />
-            )}
-          </Cell>
-        </Column>
-      </Table>
-    </>
+  return (
+    <Panel
+      header={
+        <Box display={'flex'} justifyContent={'space-between'} gap={2} my={1}>
+          <Translate>Progress Notes</Translate>
+          <Box display="flex" gap={2} justifyContent={'flex-end'}>
+            <MyButton
+              onClick={() =>
+                setProgressNotes([
+                  { key: null, chartKey: currentChart.key, note: '' },
+                  ...progressNotes
+                ])
+              }
+            >
+              <AddIcon /> Add New
+            </MyButton>
+            <MyButton
+              onClick={() => saveProgressNotes(progressNotes).unwrap()}
+              disabled={saveProgressNotesMutation.isLoading}
+            >
+              <FaCheck /> Save Notes
+            </MyButton>
+          </Box>
+        </Box>
+      }
+    >
+      <MyTable
+        data={progressNotes}
+        columns={columns}
+        height={400}
+        loading={saveProgressNotesMutation.isLoading}
+      />
+
+      <DeletionConfirmationModal
+        open={confirmDeleteOpen}
+        setOpen={setConfirmDeleteOpen}
+        itemToDelete="note"
+        actionButtonFunction={() => {
+          if (noteToDelete) {
+            deleteProgressNote(noteToDelete).unwrap();
+          }
+          setConfirmDeleteOpen(false);
+        }}
+        actionType="delete"
+      />
+    </Panel>
   );
 };
 

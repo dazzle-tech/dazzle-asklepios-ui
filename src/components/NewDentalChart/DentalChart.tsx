@@ -316,6 +316,7 @@ const DentalChart = ({
         }}
         title={`Tooth Details - #${selectedTooth.toothNumber}`}
         actionButtonFunction={() => addAction()}
+        customClassName="dental-chart-modal"
         content={
           <Tabs>
             <TabList>
