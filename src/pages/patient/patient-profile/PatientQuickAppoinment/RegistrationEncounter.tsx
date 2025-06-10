@@ -17,15 +17,15 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly }
 
     // Initialize List Request Filters
     const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
-    const [filteredResourcesList, setFilteredResourcesList] = useState([])
-    const [resourcesListRequest, setResourcesListRequest] = useState<ListRequest>({ ...initialListRequest });
+    const [filteredResourcesList, setFilteredResourcesList] = useState([]);
+    const [resourcesListRequest, setResourcesListRequest] = useState<ListRequest>({ ...initialListRequest, pageSize: 100 });
     const [resourcesAvailabilityTimeListRequest, setResourcesAvailabilityTimeListRequest] = useState<ListRequest>({ ...initialListRequest });
-    
+
     // Fetches the list of resource availability times.
     const { data: resourceAvailabilityTimeListResponse, refetch: availabilityRefetch } = useGetResourcesAvailabilityTimeQuery({ ...resourcesAvailabilityTimeListRequest, pageSize: 10000 });
     // Fetches the list of resources based on the provided request parameters
     const { data: resourcesListResponse } = useGetResourcesQuery(resourcesListRequest);
-    
+    ;
     // Effects
     useEffect(() => {
         if (localEncounter?.resourceTypeLkey) {
@@ -87,7 +87,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly }
                 fieldLabel="Resources"
                 selectData={
                     localEncounter?.resourceTypeLkey
-                        ? (filteredResourcesList?.length > 0 ? filteredResourcesList : resourcesListResponse?.object ?? [])
+                        ? (filteredResourcesList?.length > 0 ? filteredResourcesList : [])
                         : []
                 }
                 fieldType="select"

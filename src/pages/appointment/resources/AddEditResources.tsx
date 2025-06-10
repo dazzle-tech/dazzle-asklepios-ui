@@ -14,50 +14,62 @@ const AddEditResources = ({
   setResources,
   handleSave
 }) => {
-  
+
   const [isPractitioner, setISPractitioner] = useState(false);
   const [isDepartment, setISDepartment] = useState(false);
   const [isMedicalTest, setIsMedicalTest] = useState(false);
   const [isProcedure, setIsProcedure] = useState(false);
+  const [isInpatient, setIsInpatient] = useState(false);
   // Fetch resourceType Lov list response
   const { data: resourceTypeLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
   // Fetch resourceType list response
   const resourceTypeListResponse = useGetResourceTypeQuery(resources.resourceTypeLkey || '');
-  
+
   // Effects
   useEffect(() => {
-      resourceTypeListResponse.refetch();
-      switch (resources.resourceTypeLkey) {
-        case '2039534205961578':
-          setISPractitioner(true);
-          setISDepartment(false);
-          setIsMedicalTest(false);
-           setIsProcedure(false);
-          break;
-        case '2039516279378421':
-          setISDepartment(true);
-          setISPractitioner(false);
-          setIsMedicalTest(false);
-           setIsProcedure(false);
-          break;
-        case '2039620472612029':
-          setISDepartment(false);
-          setISPractitioner(false);
-          setIsMedicalTest(true);
-          setIsProcedure(false);
-          break;
-           case '2039548173192779':
-          setISDepartment(false);
-          setISPractitioner(false);
-          setIsMedicalTest(false);
-          setIsProcedure(true);
-          break;
-      }
-    }, [resources.resourceTypeLkey]);
-     
-    useEffect(() => {
-      resourceTypeListResponse.refetch();
-    },[resources]);
+    resourceTypeListResponse.refetch();
+    switch (resources.resourceTypeLkey) {
+      case '2039534205961578':
+        setISPractitioner(true);
+        setISDepartment(false);
+        setIsMedicalTest(false);
+        setIsProcedure(false);
+        setIsInpatient(false);
+        break;
+      case '2039516279378421':
+        setISDepartment(true);
+        setISPractitioner(false);
+        setIsMedicalTest(false);
+        setIsProcedure(false);
+        setIsInpatient(false);
+        break;
+      case '2039620472612029':
+        setISDepartment(false);
+        setISPractitioner(false);
+        setIsMedicalTest(true);
+        setIsProcedure(false);
+        setIsInpatient(false);
+        break;
+      case '2039548173192779':
+        setISDepartment(false);
+        setISPractitioner(false);
+        setIsMedicalTest(false);
+        setIsProcedure(true);
+        setIsInpatient(false);
+        break;
+      case '4217389643435490':
+        setISDepartment(false);
+        setISPractitioner(false);
+        setIsMedicalTest(false);
+        setIsProcedure(false);
+        setIsInpatient(true);
+        break;
+    }
+  }, [resources.resourceTypeLkey]);
+
+  useEffect(() => {
+    resourceTypeListResponse.refetch();
+  }, [resources]);
 
   // Modal content
   const conjureFormContent = (stepNumber = 0) => {
@@ -65,7 +77,7 @@ const AddEditResources = ({
       case 0:
         return (
           <Form fluid>
-             <MyInput
+            <MyInput
               fieldName="resourceTypeLkey"
               fieldType="select"
               selectData={resourceTypeLovQueryResponse?.object ?? []}
@@ -74,21 +86,21 @@ const AddEditResources = ({
               record={resources}
               setRecord={setResources}
               menuMaxHeight={200}
-              width = {520}
+              width={520}
               searchable={false}
             />
-              <MyInput
-                fieldLabel="Resource"
-                fieldName="resourceKey"
-                fieldType="select"
-                selectData={resourceTypeListResponse?.data?.object ?? []}
-                selectDataLabel={isPractitioner ? "practitionerFullName" : isDepartment ? "name" : isMedicalTest ? "testName" :isProcedure? "name": ""}
-                selectDataValue="key"
-                record={resources}
-                setRecord={setResources}
-                menuMaxHeight={200}
-                width = {520}
-              />
+            <MyInput
+              fieldLabel="Resource"
+              fieldName="resourceKey"
+              fieldType="select"
+              selectData={resourceTypeListResponse?.data?.object ?? []}
+              selectDataLabel={isPractitioner ? "practitionerFullName" : isDepartment ? "name" : isMedicalTest ? "testName" : isProcedure ? "name" : isInpatient ? "name" : ""}
+              selectDataValue="key"
+              record={resources}
+              setRecord={setResources}
+              menuMaxHeight={200}
+              width={520}
+            />
           </Form>
         );
     }
@@ -102,7 +114,7 @@ const AddEditResources = ({
       content={conjureFormContent}
       actionButtonLabel={resources?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
-      steps={[{ title: 'Resource Info', icon:<GrScheduleNew />}]}
+      steps={[{ title: 'Resource Info', icon: <GrScheduleNew /> }]}
       size={width > 600 ? '36vw' : '70vw'}
     />
   );
