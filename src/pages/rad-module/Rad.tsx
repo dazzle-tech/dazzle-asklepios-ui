@@ -205,6 +205,7 @@ const Rad = () => {
                 style={{ border: '1px solid #e5e5ea' }}
               >
                 <Tests 
+                saveReportMutation={saveReportMutation}
                 test={test} setTest={setTest}  order={order}
                  patient={patient} encounter={encounter} 
                  saveTest={saveTest} saveReport={saveReport} reportFetch={refetchReport} />
@@ -226,6 +227,7 @@ const Rad = () => {
                 report={report} setReport={setReport} 
                test={test} setTest={setTest}
                saveReport={saveReport}  saveTest={saveTest}
+               saveReportMutation={saveReportMutation}
                listReportResponse={listReportResponse} setListReportResponse={setListReportResponse}
                patient={patient} order={order} />
               
