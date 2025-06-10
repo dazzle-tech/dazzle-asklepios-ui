@@ -26,9 +26,10 @@ type props = {
     listReportResponse: any,
     setListReportResponse: any
     patient: any,
-    order: any
+    order: any,
+    saveReportMutation: any
 }
-const Report = forwardRef<unknown, props>(({ report, setReport, saveReport, test, setTest, listReportResponse, setListReportResponse, saveTest, patient, order }, ref) => {
+const Report = forwardRef<unknown, props>(({ report, setReport, saveReport, test, setTest, listReportResponse, setListReportResponse, saveTest, patient, order,saveReportMutation }, ref) => {
     useImperativeHandle(ref, () => ({
         reportFetch
     }));
@@ -92,7 +93,7 @@ const Report = forwardRef<unknown, props>(({ report, setReport, saveReport, test
             filters: updatedFilters,
         }))
     }, [reportFetch])
-  console.log(test);
+
     useEffect(() => {
     
         const updatedFilters = [
@@ -106,7 +107,11 @@ const Report = forwardRef<unknown, props>(({ report, setReport, saveReport, test
             ...prevRequest,
             filters: updatedFilters,
         }))
-    }, [test])
+    }, [test]);
+     useEffect(() => {
+    
+            reportFetch();
+        }, [saveReportMutation.isSuccess]);
     // save note when write it in chatModal
     const handleSendResultMessage = async value => {
         try {

@@ -193,7 +193,7 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
     useEffect(() => {
         resultFetch();
     }
-        , [saveNewResultMutation.isSuccess])
+        , [saveNewResultMutation.isSuccess]);
     //When the test is accepted, a report is generated for it,but the sample must have collected
     const handleAcceptTest = async (rowData) => {
         if (samplesList?.object?.length > 0) {

@@ -24,7 +24,7 @@ import { HStack, Tooltip, Whisper } from 'rsuite';
 import ChatModal from '@/components/ChatModal';
 import { formatDateWithoutSeconds } from '@/utils';
 import PatientArrivalModal from './PatientArrivalModal';
-const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport, reportFetch }) => {
+const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,saveReportMutation,reportFetch }) => {
   const dispatch = useAppDispatch();
   const [openNoteModal, setOpenNoteModal] = useState(false);
   const [openArrivalModal, setOpenArrivalModal] = useState(false);
@@ -101,6 +101,23 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
       filters: updatedFilters
     }));
   }, [order]);
+     useEffect(() => {
+          const fetchData = async () => {
+              try {
+                  await reportFetch();
+              } catch (error) {
+                  console.error('Fetch error:', error);
+              }
+          };
+  
+          fetchData();
+      }, [test]);
+  
+  
+      useEffect(() => {
+          reportFetch();
+      }
+          , [saveReportMutation?.isSuccess]);
   const handleRejectedTest = async () => {
     try {
       const Response = await saveTest({
@@ -139,9 +156,9 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
 
         dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
 
-        setTest({ ...newApDiagnosticOrderTests });
         await fetchTest();
         await reportFetch();
+        setTest({ ...Response });
       } catch (error) {
         dispatch(notify({ msg: 'Saved Failed', sev: 'error' }));
         console.error('Error saving test or report:', error);
