@@ -11,6 +11,7 @@ import { newApPatient } from '@/types/model-types-constructor';
 import { faBoltLightning } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 const QuickPatient = ({ open, setOpen }) => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -24,38 +25,39 @@ const QuickPatient = ({ open, setOpen }) => {
 
   //handle Save Patient 
   const handleSave = async () => {
-    savePatient({
-      ...localPatient,
-      skipValidation: isUnknown,
-      incompletePatient: true,
-      unknownPatient: isUnknown
-    }).unwrap();
+    try {
+      const savedPatient = await savePatient({
+        ...localPatient, 
+        skipValidation: isUnknown,   
+        incompletePatient: true,  
+        unknownPatient: isUnknown
+      }).unwrap();
+
+      // Update local patient with saved data
+      setLocalPatient(savedPatient);
+      
+      // Navigate with the saved patient data
+      setOpen(false);
+      const privatePatientPath = '/patient-profile';
+      navigate(privatePatientPath, { state: { patient: savedPatient } });
+      
+      // Clear form and show success message
+      handleClearModal();
+      dispatch(notify({msg:'Patient added successfully',sev: 'success'}));
+      setValidationResult(undefined);
+    } catch (error) {
+      console.log('rejected');
+      if (error?.data?.validationResult) {
+        setValidationResult(error.data.validationResult);
+      }
+    }
   };
+
   // Handle Clear Modal Fields
   const handleClearModal = () => {
     setIsUnknown(undefined);
     setLocalPatient(newApPatient)
   };
-
-  const goToPatientProfile = () => {
-    setOpen(false);
-    const privatePatientPath = '/patient-profile';
-    navigate(privatePatientPath, { state: { patient: localPatient } });
-    setLocalPatient({ ...newApPatient });
-  };
-  // Effects
-  useEffect(() => {
-    if (savePatientMutation && savePatientMutation.status === 'fulfilled') {
-      handleClearModal();
-      dispatch(notify({msg:'Patient added successfully',sev: 'success'}));
-      goToPatientProfile();
-      setValidationResult(undefined);
-    } else if (savePatientMutation && savePatientMutation.status === 'rejected') {
-      console.log('rejected');
-      setValidationResult(savePatientMutation.error['data'].validationResult);
-    }
-  }, [savePatientMutation]);
-
 
   // Quick Patient Modal Content
   const quickPatientContent = (
@@ -110,7 +112,6 @@ const QuickPatient = ({ open, setOpen }) => {
       </div>
     </Form>
   );
-
 
   return (
     <MyModal
