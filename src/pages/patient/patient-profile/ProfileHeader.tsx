@@ -141,8 +141,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     (item) => item.key === localPatient.genderLkey
                   )?.lovDisplayVale
                 }
-                {localPatient.key != undefined && ","}{localPatient.dob ? calculateAgeFormat(localPatient.dob) + '' : ''}{localPatient.key != undefined && " old"}
-              </div>
+                {localPatient.key !== undefined && calculateAgeFormat(localPatient.dob) && ','}
+                {localPatient.dob && `${calculateAgeFormat(localPatient.dob)} old`}              </div>
               <span className='patient-mrn'>
                 {localPatient.key != undefined && `# `}
                 {localPatient?.patientMrn}
