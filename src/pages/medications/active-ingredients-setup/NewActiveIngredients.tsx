@@ -420,6 +420,60 @@ const NewActiveIngredients = ({ selectedactiveIngredient, goBack, ...props }) =>
                   </ul>
                 </>
               )}
+
+              <MyInput
+                width={400}
+                column
+                fieldName="AbortiveMedication"
+                fieldType="checkbox"
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={activeIngredient}
+                setRecord={setActiveIngredient}
+              />
+              
+              <MyInput
+                width={400}
+                column
+                fieldName="LaborInducingMed"
+                fieldType="checkbox"
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={activeIngredient}
+                setRecord={setActiveIngredient}
+              />
+                  <MyInput
+                width={400}
+                column
+                fieldName="HighRiskMed"
+                fieldType="checkbox"
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={activeIngredient}
+                setRecord={setActiveIngredient}
+              />
+                  <MyInput
+                width={400}
+                column
+                fieldName="otc"
+                fieldLabel="OTC"
+                fieldType="checkbox"
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={activeIngredient}
+                setRecord={setActiveIngredient}
+              />
+                  <MyInput
+                width={400}
+                column
+                fieldName="Antimicrobial"
+                fieldType="checkbox"
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={activeIngredient}
+                setRecord={setActiveIngredient}
+              />
+
               <br />
               {/* <IconButton
               appearance="primary"
