@@ -43,7 +43,14 @@ const EncounterList = () => {
   const [startEncounter] = useStartEncounterMutation();
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
-    ignore: true
+    ignore: true,
+    filters: [
+      {
+        fieldName: 'resource_type_lkey',
+        operator: 'notMatch',
+        value: '4217389643435490'
+      }
+    ]
   });
   const {
     data: encounterListResponse,
@@ -86,7 +93,15 @@ const EncounterList = () => {
         addFilterToListRequest('planned_start_date', 'lte', formattedToDate, listRequest)
       );
     } else {
-      setListRequest({ ...listRequest, filters: [] });
+      setListRequest({
+        ...listRequest, filters: [
+          {
+            fieldName: 'resource_type_lkey',
+            operator: 'notMatch',
+            value: '4217389643435490'
+          }
+        ]
+      });
     }
   };
   const handleGoToVisit = async (encounterData, patientData) => {
@@ -149,14 +164,14 @@ const EncounterList = () => {
 
 
   useEffect(() => {
-       if (isLoading || (manualSearchTriggered && isFetching) ) {
+    if (isLoading || (manualSearchTriggered && isFetching)) {
       dispatch(showSystemLoader());
-    } else if ((isFetching && isLoading) ) {
+    } else if ((isFetching && isLoading)) {
       dispatch(hideSystemLoader());
     }
 
     return () => {
-       dispatch(hideSystemLoader());
+      dispatch(hideSystemLoader());
     };
   }, [isLoading, isFetching, dispatch]);
 
