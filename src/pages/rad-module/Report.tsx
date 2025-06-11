@@ -340,29 +340,7 @@ const Report = forwardRef<unknown, props>(({ report, setReport, saveReport, test
                                 style={{ fontSize: '1em', marginRight: 10 }}
                             />
                         </Whisper>
-                        <Whisper
-                            placement="top"
-                            trigger="hover"
-                            speaker={<Tooltip>Review</Tooltip>}
-                        >
-                            <FontAwesomeIcon
-                                icon={faStar}
-                                style={{
-                                    fontSize: '1em',
-                                    marginRight: 10,
-                                    color: rowData.reviewAt ? '#e0a500' : '#343434'
-                                }}
-                                onClick={async () => {
-                                    try {
-                                        await saveReport({ ...report, reviewAt: Date.now() }).unwrap();
-                                        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                        reportFetch();
-                                    } catch (error) {
-                                        dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-                                    }
-                                }}
-                            />
-                        </Whisper>
+                    
                     </HStack>
                 )
 
