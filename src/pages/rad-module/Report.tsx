@@ -347,6 +347,38 @@ const Report = forwardRef<unknown, props>(({ report, setReport, saveReport, test
             }
 
         },
+          {
+              key: 'rejectedAt',
+              dataKey: 'rejectedAt',
+              title: <Translate>REJECTED AT/BY</Translate>,
+              flexGrow: 1,
+              expandable: true,
+              render: (rowData: any) => {
+                return <>
+                  <span>{rowData.rejectedBy}</span>
+                  <br />
+                  <span className='date-table-style'>{formatDateWithoutSeconds(rowData.rejectedAt)}</span>
+                </>
+              
+              }
+            },
+          
+          {
+              key: 'rejectedAt',
+              dataKey: 'rejectedAt',
+              title: <Translate>Approved AT/BY</Translate>,
+              flexGrow: 1,
+              expandable: true,
+              render: (rowData: any) => {
+                return <>
+                  <span>{rowData.approvedBy}</span>
+                  <br />
+                  <span className='date-table-style'>{formatDateWithoutSeconds(rowData.approvedAt)}</span>
+                </>
+              
+              }
+            },
+          
 
     ]
 
