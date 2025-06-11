@@ -10,20 +10,29 @@ import { initialListRequest, initialListRequestAllValues, ListRequest } from "@/
 import { notify } from "@/utils/uiReducerActions";
 import { faArrowDown, faArrowUp, faCircleExclamation, faComment, faStar, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
+import { addFilterToListRequest, formatDate } from '@/utils';
 import React, { useEffect, useState } from "react";
 import { Form, HStack, Tooltip, Whisper } from "rsuite";
 import ChatModal from "@/components/ChatModal";
 import MyModal from "@/components/MyModal/MyModal";
+import MyInput from "@/components/MyInput";
 const Results = ({ setEncounter, setPatient, user }) => {
     const dispatch = useAppDispatch();
     const [result, setResult] = useState<any>({ ...newApDiagnosticOrderTestsResult });
     const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
     const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
-   
+    const [dateFilter, setDateFilter] = useState({
+        fromDate:null,
+        toDate:null
+    });
+    const [dateOrderFilter, setDateOrderFilter] = useState({
+        fromDate: null,
+        toDate:null
+    });
     const { data: patientData, isLoading: isPatientLoading } = useGetPatientByIdQuery(test?.order?.patientKey, { skip: !test?.order?.patientKey });
     const { data: encounterData, isLoading: isEncounterLoading } = useGetEncounterByIdQuery(test?.order?.encounterKey, { skip: !test?.order?.encounterKey });
-    const { data: messagesResultList, refetch: fecthResultNotes } = useGetOrderTestResultNotesByResultIdQuery(result?.key || undefined, { skip: result.key == null });
+    const {
+        data: messagesResultList, refetch: fecthResultNotes } = useGetOrderTestResultNotesByResultIdQuery(result?.key || undefined, { skip: result.key == null });
     const [saveResult, saveResultMutation] = useSaveDiagnosticOrderTestResultMutation();
     const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
     const [labDetails, setLabDetails] = useState<any>({ ...newApDiagnosticTestLaboratory });
@@ -36,6 +45,7 @@ const Results = ({ setEncounter, setPatient, user }) => {
         ...initialListRequest,
         sortBy: "createdAt",
         sortType: 'desc',
+       
         filters: [
             {
                 fieldName: "status_lkey",
@@ -67,7 +77,66 @@ const Results = ({ setEncounter, setPatient, user }) => {
     }, [test]);
     useEffect(() => {
         setTest({ ...result?.test });
-    }, [result])
+    }, [result]);
+    useEffect(() => {
+
+        if (dateFilter.fromDate && dateFilter.toDate) {
+            const formattedFromDate = new Date(dateFilter.fromDate)?.getTime();
+            const formattedToDate = new Date(dateFilter.toDate)?.getTime();
+            setListResultResponse(
+                addFilterToListRequest(
+                    'approved_at',
+                    'between',
+                    formattedFromDate + '_' + formattedToDate,
+                    listResultResponse
+                )
+            );
+        } else if (dateFilter.fromDate) {
+            const formattedFromDate = new Date(dateFilter.fromDate)?.getTime();
+            setListResultResponse(
+                addFilterToListRequest('approved_at', 'gte', formattedFromDate, listResultResponse)
+            );
+        } else if (dateFilter.toDate) {
+            const formattedToDate = new Date(dateFilter.toDate)?.getTime();
+            setListResultResponse(
+                addFilterToListRequest('approved_at', 'lte', formattedToDate, listResultResponse)
+            );
+        }
+        else {
+            setListResultResponse({
+                ...listResultResponse, filters: [
+                    {
+                        fieldName: "status_lkey",
+                        operator: 'match',
+                        value: "265089168359400",
+                    }
+                ]
+            });
+        }
+    }, [dateFilter.fromDate, dateFilter.toDate]);
+  
+    useEffect(() => {
+    
+        if((dateOrderFilter.fromDate !==null )&& (dateOrderFilter.toDate !==null)){
+           
+        const filtered = resultsList?.object?.filter(
+            item => item.test?.order?.createdAt >= dateOrderFilter.fromDate && item.test?.order?.createdAt <= dateOrderFilter.toDate
+        );
+
+       
+        const value = filtered?.map(order => `(${order.key})`)
+            .join(" ");
+       
+        setListResultResponse(
+            addFilterToListRequest(
+                'key',
+                'in',
+                value,
+                listResultResponse
+            )
+        );}
+    }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
+   
     const joinValuesFromArray = (keys) => {
 
         return keys
@@ -321,9 +390,52 @@ const Results = ({ setEncounter, setPatient, user }) => {
             pageNumber: 1 // reset to first page
         });
     };
+    const filters = () => {
+        return (
+            <Form layout="inline" fluid className="date-filter-form">
+                <MyInput
+                    column
+                    width={180}
+                    fieldType="datetime"
+                    fieldLabel="Approval From Date"
+                    fieldName="fromDate"
+                    record={dateFilter}
+                    setRecord={setDateFilter}
+                />
+                <MyInput
+                    width={180}
+                    column
+                    fieldType="datetime"
+                    fieldLabel="Approval To Date"
+                    fieldName="toDate"
+                    record={dateFilter}
+                    setRecord={setDateFilter}
+                />
+                <MyInput
+                    column
+                    width={180}
+                    fieldType="datetime"
+                    fieldLabel="Order From Date"
+                    fieldName="fromDate"
+                    record={dateOrderFilter}
+                    setRecord={setDateOrderFilter}
+                />
+                <MyInput
+                    width={180}
+                    column
+                    fieldType="datetime"
+                    fieldLabel="Order To Date"
+                    fieldName="toDate"
+                    record={dateOrderFilter}
+                    setRecord={setDateOrderFilter}
+                />
+            </Form>
+        );
+    };
     return (
         <>
             <MyTable
+                filters={filters()}
                 columns={tableColomns}
                 data={resultsList?.object || []}
                 loading={featchingTest}
@@ -339,7 +451,7 @@ const Results = ({ setEncounter, setPatient, user }) => {
                 onRowsPerPageChange={handleRowsPerPageChange}
             ></MyTable>
             <ChatModal open={openNoteResultModal} setOpen={setOpenNoteResultModal} handleSendMessage={handleSendResultMessage} title={"Comments"} list={messagesResultList?.object} fieldShowName={'notes'} />
-           
+
         </>
     );
 }

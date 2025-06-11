@@ -5,7 +5,7 @@ import { useGetLovAllValuesQuery } from "@/services/setupService";
 import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsResult, newApDiagnosticOrderTestsResultNotes, newApLabResultLog } from "@/types/model-types-constructor";
 import { initialListRequest, initialListRequestAllValues, ListRequest } from "@/types/types";
 import React, { useState, useEffect } from "react";
-import { HStack, Input, Panel, SelectPicker, Tooltip, Whisper } from "rsuite";
+import { Form, HStack, Input, Panel, SelectPicker, Tooltip, Whisper } from "rsuite";
 import { hideSystemLoader, notify, showSystemLoader } from '@/utils/uiReducerActions';
 import { useAppSelector, useAppDispatch } from "@/hooks";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -30,6 +30,7 @@ import MyTable from "@/components/MyTable";
 import CancellationModal from "@/components/CancellationModal";
 import SampleModal from "./SampleModal";
 import LogResult from "./LogResult";
+import MyInput from "@/components/MyInput";
 type ResultProps = {
     test: any;
     setTest: any;
@@ -61,7 +62,10 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
     const [saveResult, saveResultMutation] = useSaveDiagnosticOrderTestResultMutation();
     const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
     const [saveResultLog, saveResultLogMutation] = useSaveLabResultLogMutation();
-
+      const [dateFilter, setDateFilter] = useState({
+        fromDate: new Date(),
+        toDate: new Date()
+      });
     const [listPrevResultResponse, setListPrevResultResponse] = useState<ListRequest>({
         ...initialListRequest,
         sortBy: "createdAt",
@@ -870,6 +874,33 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
             pageNumber: 1 // reset to first page
         });
     };
+    const filters = () => {
+        return (
+          <Form layout="inline" fluid className="date-filter-form">
+            <MyInput
+              column
+              width={180}
+              fieldType="date"
+              fieldLabel="From Date"
+              fieldName="fromDate"
+              record={dateFilter}
+              setRecord={setDateFilter}
+            />
+            <MyInput
+              width={180}
+              column
+              fieldType="date"
+              fieldLabel="To Date"
+              fieldName="toDate"
+              record={dateFilter}
+              setRecord={setDateFilter}
+            />
+            <div className="search-btn">
+             
+            </div>
+          </Form>
+        );
+      };
     return (<Panel ref={ref} header="Test's Results Processing" collapsible defaultExpanded className="panel-border"  >
         <MyTable
             columns={tableColomns}
