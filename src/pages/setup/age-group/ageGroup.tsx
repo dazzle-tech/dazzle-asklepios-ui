@@ -1,51 +1,159 @@
 import React, { useEffect, useState } from 'react';
 import Translate from '@/components/Translate';
+import { FaUndo } from 'react-icons/fa';
+import { MdModeEdit } from 'react-icons/md';
+import { MdDelete } from 'react-icons/md';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
-import { Button, ButtonToolbar, IconButton } from 'rsuite';
+import { Form, Panel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
-import { Form, Stack, Divider } from 'rsuite';
-import MyInput from '@/components/MyInput';
-import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-import {
-  useGetLovValuesByCodeQuery,
-  useSaveAgeGroupMutation,
-  useGetAgeGroupQuery
-} from '@/services/setupService';
+import { useSaveAgeGroupMutation, useGetAgeGroupQuery } from '@/services/setupService';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { ApAgeGroup } from '@/types/model-types';
 import { newApAgeGroup } from '@/types/model-types-constructor';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import MyTable from '@/components/MyTable';
+import MyButton from '@/components/MyButton/MyButton';
+import AddEditAgeGroup from './AddEditAgeGroup';
+import MyInput from '@/components/MyInput';
+import './styles.less';
 const AgeGroup = () => {
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const [popupOpen, setPopupOpen] = useState(false);
-  const [agegroups, setAgeGroups] = useState<ApAgeGroup>({ ...newApAgeGroup });
   const dispatch = useAppDispatch();
-  const { data: agegroupsLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_GROUPS');
-  const { data: ageunitsLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_UNITS');
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [width, setWidth] = useState<number>(window.innerWidth);
+  const [agegroups, setAgeGroups] = useState<ApAgeGroup>({ ...newApAgeGroup });
+  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
+  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  // Fetch age groups list response
+  const { data: ageGroupsListResponse, isFetching } = useGetAgeGroupQuery(listRequest);
+  // save age group
   const [saveAgeGroups, saveAgeGroupsMutation] = useSaveAgeGroupMutation();
-  const { data: ageGroupsListResponse } = useGetAgeGroupQuery(listRequest);
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  // Header page setUp
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className='title-age-groups'>
       <h5>Age Group</h5>
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Age_Group'));
   dispatch(setDivContent(divContentHTML));
+  // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = ageGroupsListResponse?.extraNumeric ?? 0;
+  // Available fields for filtering
+  const filterFields = [
+    { label: 'Age Group', value: 'ageGroupLkey' },
+    { label: 'From Age', value: 'fromAge' },
+    { label: 'To Age', value: 'toAge' }
+  ];
+  // class name for selected row
   const isSelected = rowData => {
     if (rowData && agegroups && rowData.key === agegroups.key) {
       return 'selected-row';
     } else return '';
   };
+
+  // Filter table
+  const filters = () => (
+    <Form layout="inline" fluid className="container-of-filter-fields-age-groups">
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={recordOfFilter}
+        setRecord={updatedRecord => {
+          setRecordOfFilter({
+            ...recordOfFilter,
+            filter: updatedRecord.filter,
+            value: ''
+          });
+        }}
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+      />
+      <MyInput
+        fieldName="value"
+        fieldType="text"
+        record={recordOfFilter}
+        setRecord={setRecordOfFilter}
+        showLabel={false}
+        placeholder="Search"
+      />
+    </Form>
+  );
+  // Icons column (Edit, reactive/Deactivate)
+  const iconsForActions = (rowData: ApAgeGroup) => (
+    <div className="container-of-icons-age-groups">
+      <MdModeEdit
+        className="icons-age-groups"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => setPopupOpen(true)}
+      />
+
+      {rowData?.isValid ? (
+        <MdDelete
+          className="icons-age-groups"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+        />
+      ) : (
+        <FaUndo className="icons-age-groups" title="Activate" size={24} fill="var(--primary-gray)" />
+      )}
+    </div>
+  );
+
+  //Table columns
+  const tableColumns = [
+    {
+      key: 'ageGroupLkey',
+      title: <Translate>Age Group</Translate>,
+      flexGrow: 4,
+      render: rowData =>
+        ` ${rowData.ageGroupLvalue ? rowData.ageGroupLvalue.lovDisplayVale : rowData.ageGroupLkey}`
+    },
+    {
+      key: 'fromAge',
+      title: <Translate>Age From Unit</Translate>,
+      flexGrow: 4,
+      render: rowData =>
+        `${rowData.fromAge} ${
+          rowData.fromAgeUnitLvalue
+            ? rowData.fromAgeUnitLvalue.lovDisplayVale
+            : rowData.fromAgeUnitLkey
+        }`
+    },
+    {
+      key: 'toAge',
+      title: <Translate>Age To Unit</Translate>,
+      flexGrow: 4,
+      render: rowData =>
+        `${rowData.toAge} ${
+          rowData.toAgeUnitLvalue ? rowData.toAgeUnitLvalue.lovDisplayVale : rowData.toAgeUnitLkey
+        }`
+    },
+    {
+      key: 'isValid',
+      title: <Translate>status</Translate>,
+      flexGrow: 4,
+      render: rowData => (rowData.isValid ? 'active' : 'deactive')
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      flexGrow: 3,
+      render: rowData => iconsForActions(rowData)
+    }
+  ];
+  // handle change filter in table
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -61,216 +169,116 @@ const AgeGroup = () => {
     }
   };
 
+  // Handle page change in navigation
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+  // Handle change rows per page in navigation
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
+    });
+  };
+  // handle click on add new button
   const handleNew = () => {
     setAgeGroups({ ...newApAgeGroup, fromAge: null, toAge: null });
     setPopupOpen(true);
   };
+  // handle save age group
   const handleSave = async () => {
     setPopupOpen(false);
-    //if you want to use response object write response.object 
+    //if you want to use response object write response.object
     try {
-      const response = await saveAgeGroups(agegroups).unwrap();
-
-      dispatch(notify({ msg: response.msg, sev: "success" }));
-
+      await saveAgeGroups(agegroups).unwrap();
+      dispatch(notify({ msg: 'The Age Group has been saved successfully', sev: 'success' }));
     } catch (error) {
       if (error.data && error.data.message) {
         // Display error message from server
         dispatch(notify(error.data.message));
       } else {
         // Generic error notification
-        dispatch(notify("An unexpected error occurred"));
+        dispatch(notify('An unexpected error occurred'));
       }
     }
   };
 
-
+  // Effects
+  // change the width variable when the size of window is changed
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  // update list when filter is changed
+  useEffect(() => {
+    if (recordOfFilter['filter']) {
+      handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
+    } else {
+      setListRequest({
+        ...initialListRequest,
+        pageSize: listRequest.pageSize,
+        pageNumber: 1
+      });
+    }
+  }, [recordOfFilter]);
+  // update list when  the age group
   useEffect(() => {
     if (saveAgeGroupsMutation.data) {
       setListRequest({ ...listRequest, timestamp: new Date().getTime() });
     }
   }, [saveAgeGroupsMutation.data]);
+
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent("  "));
+      dispatch(setDivContent('  '));
     };
-  }, [location.pathname, dispatch])
-  return (<>
+  }, [location.pathname, dispatch]);
+
+  return (
     <Panel>
-      <ButtonToolbar>
-        <IconButton appearance="primary"
-          icon={<AddOutlineIcon />}
+      <div className="container-of-add-new-button-age-group">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
           onClick={handleNew}
+          width="109px"
         >
           Add New
-        </IconButton>
-        <IconButton
-
-          disabled={!agegroups.key}
-          appearance="primary"
-          onClick={() => setPopupOpen(true)}
-          color="cyan"
-          icon={<EditIcon />}
-        >
-          Edit Selected
-        </IconButton>
-        <IconButton
-          disabled={!agegroups.key}
-          appearance="ghost"
-          style={{ border: '1px solid rgb(130, 95, 196)', color: 'rgb(130, 95, 196)' }}
-          icon={<TrashIcon />}
-        >
-          Deactivate
-        </IconButton>
-      </ButtonToolbar>
-      <hr />
-      <Table
-        height={400}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortColumn={(sortBy, sortType) => {
-          if (sortBy)
-            setListRequest({
-              ...listRequest,
-              sortBy,
-              sortType
-            });
-        }}
-
+        </MyButton>
+      </div>
+      <MyTable
+        height={450}
         data={ageGroupsListResponse?.object ?? []}
+        loading={isFetching}
+        columns={tableColumns}
+        rowClassName={isSelected}
+        filters={filters()}
         onRowClick={rowData => {
           setAgeGroups(rowData);
         }}
-        rowClassName={isSelected}
-      >
-        <Column sortable flexGrow={2}>
-          <HeaderCell >
-            {/* <Input onChange={e => handleFilterChange('ageGroupLkey', e)} /> */}
-            <Translate>Age Group</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData => ` ${rowData.ageGroupLvalue ? rowData.ageGroupLvalue.lovDisplayVale
-              : rowData.ageGroupLkey}`}
-          </Cell  >
-        </Column>
-        <Column sortable flexGrow={2}>
-          <HeaderCell >
-            {/* <Input onChange={e => handleFilterChange('fromAge', e)} /> */}
-
-            <Translate>Age From Unit</Translate>
-          </HeaderCell>
-          <Cell dataKey="fromAge" >
-            {rowData => `${rowData.fromAge} ${rowData.fromAgeUnitLvalue ? rowData.fromAgeUnitLvalue.lovDisplayVale
-              : rowData.fromAgeUnitLkey}`}
-            {/* {rowData => rowData.fromAge } */}
-          </Cell>
-        </Column>
-        <Column sortable flexGrow={2} >
-          <HeaderCell >
-            {/* <Input onChange={e => handleFilterChange('toAge', e)} /> */}
-            <Translate>Age To Unit</Translate>
-          </HeaderCell>
-          <Cell dataKey="toAge" >
-            {rowData => `${rowData.toAge} ${rowData.toAgeUnitLvalue ? rowData.toAgeUnitLvalue.lovDisplayVale
-              : rowData.toAgeUnitLkey}`}
-          </Cell>
-        </Column>
-        <Column flexGrow={3} >
-          <HeaderCell >
-            {/* <Input onChange={e => handleFilterChange('isValid', e)} /> */}
-            <Translate>status</Translate>
-          </HeaderCell>
-          <Cell >
-            {rowData => rowData.isValid ? 'active' : 'deactive'}
-          </Cell>
-        </Column>
-
-      </Table>
-      <div style={{ padding: 20 }}>
-        <Pagination
-          prev
-          next
-          first
-          last
-          ellipsis
-          boundaryLinks
-          maxButtons={5}
-          size="xs"
-          layout={['total', '-', 'limit', '|', 'pager', 'skip']}
-          limitOptions={[4, 15, 30]}
-          limit={listRequest.pageSize}
-          activePage={listRequest.pageNumber}
-          onChangePage={pageNumber => {
-            setListRequest({ ...listRequest, pageNumber });
-          }}
-          onChangeLimit={pageSize => {
-            setListRequest({ ...listRequest, pageSize });
-          }}
-          total={ageGroupsListResponse?.extraNumeric ?? 0}
-        />
-      </div>
-
-      <Modal open={popupOpen} overflow>
-        <Modal.Title>
-          <Translate>New/Edit Age Group</Translate>
-        </Modal.Title>
-        <Modal.Body>
-          <Form fluid>
-
-            <MyInput
-              disabled={agegroups.key ? true : false}
-              fieldName="ageGroupLkey"
-              fieldType="select"
-              selectData={agegroupsLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={agegroups}
-              setRecord={setAgeGroups}
-            />
-            <div style={{ display: "flex", gap: "20px" }}>
-
-              <MyInput width={150} fieldName="fromAge" record={agegroups} setRecord={setAgeGroups} />
-              <MyInput
-                width={100}
-                fieldName="fromAgeUnitLkey"
-                fieldType="select"
-                selectData={ageunitsLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={agegroups}
-                setRecord={setAgeGroups}
-              />
-            </div>
-
-            <div style={{ display: "flex", gap: "20px" }}>
-              <MyInput width={150} fieldName="toAge" record={agegroups} setRecord={setAgeGroups} />
-              <MyInput
-                width={100}
-                fieldName="toAgeUnitLkey"
-                fieldType="select"
-                selectData={ageunitsLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={agegroups}
-                setRecord={setAgeGroups}
-              />
-            </div>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="primary"
-              onClick={handleSave}
-            >
-              Save
-            </Button>
-            <Button appearance="ghost" onClick={() => setPopupOpen(false)}>
-              Cancel
-            </Button>
-          </Stack>
-        </Modal.Footer>
-      </Modal>
-    </Panel></>);
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortChange={(sortBy, sortType) => {
+          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+        }}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
+      <AddEditAgeGroup
+        open={popupOpen}
+        setOpen={setPopupOpen}
+        agegroups={agegroups}
+        setAgeGroups={setAgeGroups}
+        handleSave={handleSave}
+        width={width}
+      />
+    </Panel>
+  );
 };
 export default AgeGroup;
