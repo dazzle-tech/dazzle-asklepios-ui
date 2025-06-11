@@ -6,6 +6,7 @@ import {
   ApAccessRole,
   ApAccessRoleScreen,
   ApAllergens,
+  ApBed,
   ApCatalogDiagnosticTest,
   ApCdt,
   ApCdtDentalAction,
@@ -29,6 +30,7 @@ import {
   ApProcedureCoding,
   ApProcedurePriceList,
   ApProcedureSetup,
+  ApRoom,
   ApScreen,
   ApService,
   ApServiceCdt,
@@ -1149,9 +1151,67 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
 
+    }),   
+     saveRoom: builder.mutation({
+      query: (records: ApRoom) => ({
+        url: `/setup/save-room`,
+        method: 'POST',
+        body: records
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
     }),
+    getRoomList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/room-list?${fromListRequestToQueryParams(listRequest)}`
 
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    deactiveActivRoom: builder.mutation({
+      query: (room: ApRoom) => ({
+        url: `/setup/deactive-active-room`,
+        method: 'POST',
+        body: room,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+    }),
+    saveBed: builder.mutation({
+      query: (records: ApBed) => ({
+        url: `/setup/save-bed`,
+        method: 'POST',
+        body: records
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getBedList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/bed-list?${fromListRequestToQueryParams(listRequest)}`
 
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    deactiveActivBed: builder.mutation({
+      query: (room: ApBed) => ({
+        url: `/setup/deactive-active-bed`,
+        method: 'POST',
+        body: room,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+    }),
   })
 
 });
@@ -1270,5 +1330,11 @@ export const {
   useGetDiagnosticsCodingListQuery,
   useSaveDiagnosticsCodingMutation,
   useRemoveDiagnosticsCodingMutation,
-  useGetLovDefultByCodeQuery
+  useGetLovDefultByCodeQuery,
+  useSaveRoomMutation,
+  useGetRoomListQuery,
+  useDeactiveActivRoomMutation,
+  useGetBedListQuery,
+  useSaveBedMutation,
+  useDeactiveActivBedMutation
 } = setupService;

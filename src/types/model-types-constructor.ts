@@ -371,6 +371,21 @@ export const newApAudiometryPuretone:modelTypes.ApAudiometryPuretone = {
 	statusLkey:undefined,
 } 
 
+export const newApBed:modelTypes.ApBed = { 
+	key:undefined,
+	roomKey:undefined,
+	name:'',
+	bedTypeLkey:undefined,
+	locationDetails:'',
+	isValid:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
 export const newApBrandMedicationSubstitutes:modelTypes.ApBrandMedicationSubstitutes = { 
 	key:undefined,
 	brandKey:undefined,
@@ -2466,6 +2481,24 @@ export const newApReviewOfSystem:modelTypes.ApReviewOfSystem = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+} 
+
+export const newApRoom:modelTypes.ApRoom = { 
+	key:undefined,
+	facilityKey:undefined,
+	departmentKey:undefined,
+	name:'',
+	floor:'',
+	locationDetails:'',
+	typeLkey:undefined,
+	genderLkey:undefined,
+	isValid:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
 } 
 
 export const newApScreen:modelTypes.ApScreen = { 
