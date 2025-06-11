@@ -32,8 +32,8 @@ const Encounter = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const propsData = location.state;
- const savedState = sessionStorage.getItem("encounterPageSource");
- 
+  const savedState = sessionStorage.getItem("encounterPageSource");
+
   const [localEncounter, setLocalEncounter] = useState<any>({ ...propsData?.encounter });
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -45,7 +45,7 @@ const Encounter = () => {
   const [medicalSheetRowSourceKey, setMedicalSheetRowSourceKey] = useState<string | undefined>();
   const [selectedResources, setSelectedResources] = useState([]);
   const [edit, setEdit] = useState(false);
-   const [fromPage, setFromPage] = useState(savedState);
+  const [fromPage, setFromPage] = useState(savedState);
 
   const {
     data: appointments,
@@ -75,18 +75,19 @@ const Encounter = () => {
   const [openAllargyModal, setOpenAllargyModal] = useState(false);
   const [openWarningModal, setOpenWarningModal] = useState(false);
 
-useEffect(() => {
-  if (location.state && location.state.fromPage) {
-    setFromPage(location.state.fromPage);
-  }
-}, [location.state]);
+  useEffect(() => {
+    if (location.state && location.state.fromPage) {
+      setFromPage(location.state.fromPage);
+    }
+  }, [location.state]);
   // get Midical Sheets Data Steps
   useEffect(() => {
     if (!propsData?.encounter) {
       navigate('/encounter-list');
     } else {
       setEdit(fromPage === 'PatientEMR' || localEncounter.encounterStatusLvalue.valueCode === "CLOSED");
-      if (propsData?.encounter?.resourceTypeLkey === '2039516279378421') {
+       //TODO convert key to code
+      if (propsData?.encounter?.resourceTypeLkey === '2039516279378421' || "4217389643435490") {
         // Clinic, then we need to get its resource details
         setMedicalSheetRowSourceKey(propsData?.encounter?.resourceKey);
         setMedicalSheetSourceKey(undefined);
@@ -97,7 +98,6 @@ useEffect(() => {
       }
     }
   }, [propsData]);
-
   // Step 3: Set departmentKey from resource "IF Clinic"
   useEffect(() => {
     if (resourcesResponse?.object?.resourceKey) {
@@ -116,7 +116,7 @@ useEffect(() => {
   const handleGoBack = () => {
 
 
-    if (savedState=== 'PatientEMR') {
+    if (savedState === 'PatientEMR') {
       navigate('/patient-EMR', {
         state: {
           localPatient: propsData.patient,
@@ -183,7 +183,7 @@ useEffect(() => {
     { key: 'patientHistory', label: 'Patient History', icon: faClockRotateLeft, path: 'patient-history' },
     { key: 'medicationsRecord', label: 'Medications Record', icon: faPills, path: 'medications-record' },
     { key: 'vaccineReccord', label: 'Vaccine Record', icon: faSyringe, path: 'vaccine-record' },
-    
+
   ];
   const [currentHeader, setCurrentHeader] = useState();
   const divContent = (
@@ -200,6 +200,7 @@ useEffect(() => {
 
     setCurrentHeader(headersMap[location.pathname] || 'Patient Dashboard')
   }, [location.pathname, dispatch]);
+
   return (
     <div className="container">
       <div className="left-box">
@@ -219,7 +220,7 @@ useEffect(() => {
                 Medical Sheets
               </MyButton>
               <MyButton
-              disabled={edit}
+                disabled={edit}
                 prefixIcon={() => <FontAwesomeIcon icon={faUserPlus} />}
                 onClick={() => {
                   setModalOpen(true);
@@ -275,7 +276,7 @@ useEffect(() => {
                   medicalSheet?.object?.[key] ? (
                     <List.Item key={key} className="drawer-item"
                       onClick={() => {
-                       setIsDrawerOpen(false)
+                        setIsDrawerOpen(false)
                         navigate(path, { state: { patient: propsData.patient, encounter: propsData.encounter, edit } });
                       }}
                     >
