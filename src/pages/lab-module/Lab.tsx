@@ -120,7 +120,7 @@ const Lab = () => {
 useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
-      console.log("Window width changed:", window.innerWidth);
+    
     };
 
     window.addEventListener("resize", handleResize);

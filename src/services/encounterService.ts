@@ -25,6 +25,18 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    getEncounterById: builder.query({
+      query: (patientId: string) => ({
+        url: `/encounter/get-encounter-by-id`,
+        params: {
+          key: patientId, // هذا يذهب كـ ?key=xxx في الرابط
+        }
+
+      }),
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
     getEncounterAppliedServices: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/encounter/encounter-service-list?${fromListRequestToQueryParams(listRequest)}`
@@ -535,6 +547,7 @@ export const encounterService = createApi({
 
 export const {
   useGetEncountersQuery,
+  useGetEncounterByIdQuery,
   useCompleteEncounterRegistrationMutation,
   useStartEncounterMutation,
   useCompleteEncounterMutation,

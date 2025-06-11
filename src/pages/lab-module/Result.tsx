@@ -798,23 +798,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
                         >
                             <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: '5px' }} />
                         </Whisper>
-                        <Whisper
-                            placement="top"
-                            trigger="hover"
-                            speaker={<Tooltip>Review</Tooltip>}
-                        >
-                            <FontAwesomeIcon icon={faStar} style={{ fontSize: '1em', marginRight: '5px', color: rowData.reviewAt ? '#e0a500' : "#343434" }}
-                                onClick={async () => {
-                                    try {
-                                        await saveResult({ ...result, reviewAt: Date.now() }).unwrap();
-                                        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                        resultFetch();
-                                    }
-                                    catch (error) {
-                                        dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-                                    }
-                                }} />
-                        </Whisper>
+            
                         <Whisper
                             placement="top"
                             trigger="hover"

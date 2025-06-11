@@ -27,6 +27,18 @@ export const patientService = createApi({
         return response.object;
       }
     }),
+ getPatientById: builder.query({
+  query: (patientId: string) => ({
+    url: `/pas/get-patient-by-id`,
+    params: {
+      key: patientId, // هذا يذهب كـ ?key=xxx في الرابط
+    }
+ 
+  }),
+  transformResponse: (response: any) => {
+    return response.object;
+  }
+}),
     getPatientAllergies: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/pas/patient-allergy-list?${fromListRequestToQueryParams(listRequest)}`
@@ -346,6 +358,7 @@ export const patientService = createApi({
 export const {
   useGetPatientsQuery,
   useSavePatientMutation,
+  useGetPatientByIdQuery,
   useGetPatientAllergiesQuery,
   useSavePatientAllergyMutation,
   useRemovePatientAllergyMutation,
