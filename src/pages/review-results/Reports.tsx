@@ -16,16 +16,24 @@ import { faComment, faFileLines, faStar } from "@fortawesome/free-solid-svg-icon
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useRef, useState } from "react";
 import { Col, Form, HStack, Row, Tooltip, Whisper } from "rsuite";
-const ReviewReport = ({  setEncounter, setPatient, user }) => {
+import { addFilterToListRequest, formatDate } from '@/utils';
+const ReviewReport = ({ setEncounter, setPatient, user }) => {
     const [openReportModal, setOpenReportModal] = useState(false);
     const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
-    
+    const [dateFilter, setDateFilter] = useState({
+           fromDate:null,
+           toDate:null
+       });
+       const [dateOrderFilter, setDateOrderFilter] = useState({
+           fromDate: null,
+           toDate:null
+       });
     const [saveReportNote] = useSaveDiagnosticOrderTestReportNotesMutation();
     const [report, setReport] = useState<any>({ ...newApDiagnosticOrderTestsRadReport });
     const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
     const { data: patientData, isLoading: isPatientLoading } = useGetPatientByIdQuery(test?.order?.patientKey, { skip: !test?.order?.patientKey });
-     const { data: encounterData, isLoading: isEncounterLoading } = useGetEncounterByIdQuery(test?.order?.encounterKey,{skip: !test?.order?.encounterKey});
-         const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
+    const { data: encounterData, isLoading: isEncounterLoading } = useGetEncounterByIdQuery(test?.order?.encounterKey, { skip: !test?.order?.encounterKey });
+    const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
     const dispatch = useAppDispatch();
     const [listReportResponse, setListReportResponse] = useState<ListRequest>({
         ...initialListRequest,
@@ -60,15 +68,72 @@ const ReviewReport = ({  setEncounter, setPatient, user }) => {
         }
     }, [messagesResultList]);
     useEffect(() => {
-     
+
         setPatient(patientData);
     }, [patientData]);
-    useEffect(()=>{
+    useEffect(() => {
         setEncounter()
-    },[encounterData]);
-      useEffect(()=>{
-            setTest({...report?.test});
-        },[report])
+    }, [encounterData]);
+    useEffect(() => {
+        setTest({ ...report?.test });
+    }, [report]);
+       useEffect(() => {
+        
+            if((dateOrderFilter.fromDate !==null )&& (dateOrderFilter.toDate !==null)){
+               
+            const filtered = reportList?.object?.filter(
+                item => item.test?.order?.createdAt >= dateOrderFilter.fromDate && item.test?.order?.createdAt <= dateOrderFilter.toDate
+            );
+    
+           
+            const value = filtered?.map(order => `(${order.key})`)
+                .join(" ");
+           
+           setListReportResponse(
+                addFilterToListRequest(
+                    'key',
+                    'in',
+                    value,
+                   listReportResponse
+                )
+            );}
+        }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
+    useEffect(() => {
+
+        if (dateFilter.fromDate && dateFilter.toDate) {
+            const formattedFromDate = new Date(dateFilter.fromDate)?.getTime();
+            const formattedToDate = new Date(dateFilter.toDate)?.getTime();
+            setListReportResponse(
+                addFilterToListRequest(
+                    'approved_at',
+                    'between',
+                    formattedFromDate + '_' + formattedToDate,
+                    listReportResponse
+                )
+            );
+        } else if (dateFilter.fromDate) {
+            const formattedFromDate = new Date(dateFilter.fromDate)?.getTime();
+            setListReportResponse(
+                addFilterToListRequest('approved_at', 'gte', formattedFromDate, listReportResponse)
+            );
+        } else if (dateFilter.toDate) {
+            const formattedToDate = new Date(dateFilter.toDate)?.getTime();
+            setListReportResponse(
+                addFilterToListRequest('approved_at', 'lte', formattedToDate, listReportResponse)
+            );
+        } else {
+            setListReportResponse({
+                ...listReportResponse, filters: [
+                    {
+                        fieldName: "status_lkey",
+                        operator: 'match',
+                        value: "265089168359400",
+                    }
+                ]
+            });
+        }
+    }, [dateFilter.fromDate, dateFilter.toDate]);
+
     const handleSendResultMessage = async value => {
         try {
             await saveReportNote({
@@ -131,21 +196,7 @@ const ReviewReport = ({  setEncounter, setPatient, user }) => {
             )
 
         },
-        // {
-        //     key: "previousResult",
-        //     title: <Translate>PREVIOUS RESULT</Translate>,
-        //     flexGrow: 1,
-        //     render: (rowData: any) => {
-        //         const prev = prevResultsList?.object?.[1];
 
-        //         if (!prev) return prev?.reportValue;
-
-        //         return null;
-
-
-        //     }
-
-        // },
 
 
         {
@@ -271,9 +322,51 @@ const ReviewReport = ({  setEncounter, setPatient, user }) => {
             pageNumber: 1 // reset to first page
         });
     };
-
+    const filters = () => {
+        return (
+            <Form layout="inline" fluid className="date-filter-form">
+                <MyInput
+                    column
+                    width={180}
+                    fieldType="datetime"
+                    fieldLabel="Approval From Date"
+                    fieldName="fromDate"
+                    record={dateFilter}
+                    setRecord={setDateFilter}
+                />
+                <MyInput
+                    width={180}
+                    column
+                    fieldType="datetime"
+                    fieldLabel="Approval To Date"
+                    fieldName="toDate"
+                    record={dateFilter}
+                    setRecord={setDateFilter}
+                />
+                <MyInput
+                    column
+                    width={180}
+                    fieldType="datetime"
+                    fieldLabel="Order From Date"
+                    fieldName="fromDate"
+                    record={dateOrderFilter}
+                    setRecord={setDateOrderFilter}
+                />
+                <MyInput
+                    width={180}
+                    column
+                    fieldType="datetime"
+                    fieldLabel="Order To Date"
+                    fieldName="toDate"
+                    record={dateOrderFilter}
+                    setRecord={setDateOrderFilter}
+                />
+            </Form>
+        );
+    };
     return (<>
         <MyTable
+            filters={filters()}
             columns={reportColumns}
             data={reportList?.object ?? []}
             onRowClick={rowData => {
@@ -293,51 +386,51 @@ const ReviewReport = ({  setEncounter, setPatient, user }) => {
             }}
         />
         <ChatModal open={openNoteResultModal} setOpen={setOpenNoteResultModal} handleSendMessage={handleSendResultMessage} title={"Comments"} list={messagesResultList?.object} fieldShowName={'notes'} />
-         <MyModal
-                open={openReportModal}
-                setOpen={setOpenReportModal}
-                title={"Report"}
-                size="sm"
-               bodyheight="30vh"
-                content={
-                    <>
+        <MyModal
+            open={openReportModal}
+            setOpen={setOpenReportModal}
+            title={"Report"}
+            size="sm"
+            bodyheight="30vh"
+            content={
+                <>
                     <Form fluid>
-                          <Row>
-                    <Col md={24}>
-                       
-                            <MyInput
-                                width="100%"
-                                disabled={ true}
-                                fieldName={'severityLkey'}
-                                fieldType="select"
-                                selectData={severityLovQueryResponse?.object ?? []}
-                                selectDataLabel="lovDisplayVale"
-                                selectDataValue="key"
-                                record={report}
-                                setRecord={setReport}
-                            />
-                       
-                    </Col>
-                </Row>
-                <Row >
-                    <Col md={24}>
-                      
-                            <MyInput
-                                disabled={ true }
-                                width="100%"
-                                hight={200}
-                                fieldLabel={''}
-                                fieldName={'reportValue'}
-                                fieldType="textarea"
-                                record={report}
-                                setRecord={setReport}
-                            />
-                       </Col>
+                        <Row>
+                            <Col md={24}>
 
-                </Row>
-                        </Form></>
-                }
-            />
+                                <MyInput
+                                    width="100%"
+                                    disabled={true}
+                                    fieldName={'severityLkey'}
+                                    fieldType="select"
+                                    selectData={severityLovQueryResponse?.object ?? []}
+                                    selectDataLabel="lovDisplayVale"
+                                    selectDataValue="key"
+                                    record={report}
+                                    setRecord={setReport}
+                                />
+
+                            </Col>
+                        </Row>
+                        <Row >
+                            <Col md={24}>
+
+                                <MyInput
+                                    disabled={true}
+                                    width="100%"
+                                    hight={200}
+                                    fieldLabel={''}
+                                    fieldName={'reportValue'}
+                                    fieldType="textarea"
+                                    record={report}
+                                    setRecord={setReport}
+                                />
+                            </Col>
+
+                        </Row>
+                    </Form></>
+            }
+        />
     </>);
 }
 export default ReviewReport;
