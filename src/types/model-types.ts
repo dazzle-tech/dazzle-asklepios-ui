@@ -370,6 +370,21 @@ export interface ApAudiometryPuretone {
 	statusLkey:string;
 } 
 
+export interface ApBed { 
+	key:string;
+	roomKey:string;
+	name:string;
+	bedTypeLkey:string;
+	locationDetails:string;
+	isValid:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
 export interface ApBrandMedicationSubstitutes { 
 	key:string;
 	brandKey:string;
@@ -2465,6 +2480,24 @@ export interface ApReviewOfSystem {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+} 
+
+export interface ApRoom { 
+	key:string;
+	facilityKey:string;
+	departmentKey:string;
+	name:string;
+	floor:string;
+	locationDetails:string;
+	typeLkey:string;
+	genderLkey:string;
+	isValid:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
 } 
 
 export interface ApScreen { 

@@ -25,7 +25,7 @@ const InpatientList = () => {
     const dispatch = useDispatch();
     const divContent = (
         <div style={{ display: 'flex' }}>
-            <h5>InPatient Visit List</h5>
+            <h5>Inpatient Visit List</h5>
         </div>
     );
     const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);

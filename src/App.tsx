@@ -93,6 +93,7 @@ import VaccineReccord from './pages/encounter/encounter-component/vaccine-reccor
 import DiagnosticsResult from './pages/encounter/encounter-component/diagnostics-result/DiagnosticsResult';
 import InpatientList from './pages/Inpatient/inpatientList';
 import ReviewResults from "./pages/review-results/ReviewResults"
+import Room from './pages/setup/bed-room-setup';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -269,6 +270,7 @@ const App = () => {
               </Route>
               <Route path="encounter-list" element={<EncounterList />} />
               <Route path='inpatient-encounters-list' element={<InpatientList/>} />
+              <Route path='room' element={<Room/>} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservations />} />
               <Route path="review-results" element={<ReviewResults />} />
