@@ -798,7 +798,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
                         >
                             <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: '5px' }} />
                         </Whisper>
-            
+
                         <Whisper
                             placement="top"
                             trigger="hover"
@@ -813,6 +813,37 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
 
                 );
             },
+        },
+        {
+            key: 'rejectedAt',
+            dataKey: 'rejectedAt',
+            title: <Translate>REJECTED AT/BY</Translate>,
+            flexGrow: 1,
+            expandable: true,
+            render: (rowData: any) => {
+                return <>
+                    <span>{rowData.rejectedBy}</span>
+                    <br />
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.rejectedAt)}</span>
+                </>
+
+            }
+        },
+
+        {
+            key: 'approvedAt',
+            dataKey: 'approvedAt',
+            title: <Translate>Approved AT/BY</Translate>,
+            flexGrow: 1,
+            expandable: true,
+            render: (rowData: any) => {
+                return <>
+                    <span>{rowData.approvedBy}</span>
+                    <br />
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.approvedAt)}</span>
+                </>
+
+            }
         },
     ];
     const pageIndex = listResultResponse.pageNumber - 1;
@@ -839,22 +870,22 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
             pageNumber: 1 // reset to first page
         });
     };
-    return (<Panel ref={ref} header="Test's Results Processing" collapsible defaultExpanded className="panel-border"  >      
-            <MyTable
-                columns={tableColomns}
-                data={resultsList?.object || []}
-                loading={featchingTest}
-                onRowClick={rowData => {
-                    setResult(rowData);
-                }}
-                rowClassName={isResultSelected}
-                height={250}
-                page={pageIndex}
-                rowsPerPage={rowsPerPage}
-                totalCount={totalCount}
-                onPageChange={handlePageChange}
-                onRowsPerPageChange={handleRowsPerPageChange}
-            ></MyTable>
+    return (<Panel ref={ref} header="Test's Results Processing" collapsible defaultExpanded className="panel-border"  >
+        <MyTable
+            columns={tableColomns}
+            data={resultsList?.object || []}
+            loading={featchingTest}
+            onRowClick={rowData => {
+                setResult(rowData);
+            }}
+            rowClassName={isResultSelected}
+            height={250}
+            page={pageIndex}
+            rowsPerPage={rowsPerPage}
+            totalCount={totalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+        ></MyTable>
         <ChatModal open={openNoteResultModal} setOpen={setOpenNoteResultModal} handleSendMessage={handleSendResultMessage} title={"Comments"} list={messagesResultList?.object} fieldShowName={'notes'} />
         <CancellationModal open={openRejectedResultModal}
             setOpen={setOpenRejectedResultModal}

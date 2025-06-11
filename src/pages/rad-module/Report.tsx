@@ -364,8 +364,8 @@ const Report = forwardRef<unknown, props>(({ report, setReport, saveReport, test
             },
           
           {
-              key: 'rejectedAt',
-              dataKey: 'rejectedAt',
+              key: 'approvedAt',
+              dataKey: 'approvedAt',
               title: <Translate>Approved AT/BY</Translate>,
               flexGrow: 1,
               expandable: true,
