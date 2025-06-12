@@ -28,6 +28,7 @@ interface ProfileSidebarProps {
   setLocalPatient: (patient: ApPatient) => void;
   refetchData: boolean;
   setRefetchData: (value: boolean) => void;
+  title?: string
 }
 
 const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
@@ -36,7 +37,8 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   windowHeight,
   setLocalPatient,
   refetchData,
-  setRefetchData
+  setRefetchData,
+  title :title= 'Search Patient'
 }) => {
   const [open, setOpen] = useState(false);
   const [labelTitle, setLabelTitle] = useState('Full Name');
@@ -177,7 +179,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
           <Sidenav.Body>
             <Nav>
               {expand ? (
-                <Panel header="Search Patient" className="sidebar-panel">
+                <Panel header={title} className="sidebar-panel">
                   <Button onClick={() => setExpand(false)} className="expand-sidebar">
                     <FaArrowRight />
                   </Button>
