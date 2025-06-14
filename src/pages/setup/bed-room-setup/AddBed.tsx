@@ -169,7 +169,7 @@ const AddBed = ({ open, setOpen, room, setRoom }) => {
       case 0:
         return (
           <Form fluid layout="inline">
-            <div className='container-of-bad-info'>
+            <div className='container-of-room-info'>
               <MyInput
                 width={140}
                 fieldLabel="Room Name"
