@@ -2500,6 +2500,23 @@ export interface ApRoom {
 	deletedAt:number;
 } 
 
+export interface ApRoomServices { 
+	key:string;
+	roomKey:string;
+	price:number;
+	bedKey:string;
+	rule:string;
+	isValid:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	currencyLkey:string;
+	serviceKey:string;
+} 
+
 export interface ApScreen { 
 	key:string;
 	name:string;

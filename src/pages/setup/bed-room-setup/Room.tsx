@@ -20,8 +20,10 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import AddEditRoom from './AddEditRoom';
 import { FaBed } from "react-icons/fa";
+import { FaConciergeBell } from 'react-icons/fa';
 import './styles.less';
 import AddBed from './AddBed';
+import AddService from './AddService';
 const Room = () => {
     const dispatch = useAppDispatch();
     const [room, setRoom] = useState<ApRoom>({ ...newApRoom });
@@ -29,6 +31,7 @@ const Room = () => {
     const [openConfirmDeleteRoomModal, setOpenConfirmDeleteRoomModal] = useState<boolean>(false);
     const [stateOfDeleteRoomModal, setStateOfDeleteRoomModal] = useState<string>('delete');
     const [openAddEditPopup, setOpenAddEditPopup] = useState(false);
+      const [openAddServicePopup, setOpenAddServicePopup] = useState(false);
     const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -154,6 +157,14 @@ const Room = () => {
     // Icons column (Edit,Add Bed, reactive/Deactivate)
     const iconsForActions = (rowData: ApRoom) => (
         <div className="container-of-icons-room">
+            <FaConciergeBell 
+               className="icons-room"
+                title="Add Service"
+                size={24}
+                fill="var(--primary-gray)"
+                onClick={() => {
+                    setOpenAddServicePopup(true);
+                }}  />
             <FaBed
                 className="icons-room"
                 title="Add Bed"
@@ -326,6 +337,11 @@ const Room = () => {
                 room={room}
                 setRoom={setRoom}
             />
+            <AddService
+                open={openAddServicePopup}
+                setOpen={setOpenAddServicePopup}
+                roomObj={room}
+                setRoomObj={setRoom}/>
         </Panel>
     );
 };

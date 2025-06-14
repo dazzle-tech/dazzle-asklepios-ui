@@ -31,6 +31,7 @@ import {
   ApProcedurePriceList,
   ApProcedureSetup,
   ApRoom,
+  ApRoomServices,
   ApScreen,
   ApService,
   ApServiceCdt,
@@ -1212,6 +1213,36 @@ export const setupService = createApi({
         return response.object;
       },
     }),
+      saveRoomServices: builder.mutation({
+      query: (records: ApRoomServices) => ({
+        url: `/setup/save-room-service`,
+        method: 'POST',
+        body: records
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getRoomServicesList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/room-services-list?${fromListRequestToQueryParams(listRequest)}`
+
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    deactiveActivRoomServices: builder.mutation({
+      query: (room: ApRoomServices) => ({
+        url: `/setup/deactive-active-room-services`,
+        method: 'POST',
+        body: room,
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+    }),
   })
 
 });
@@ -1336,5 +1367,8 @@ export const {
   useDeactiveActivRoomMutation,
   useGetBedListQuery,
   useSaveBedMutation,
-  useDeactiveActivBedMutation
+  useDeactiveActivBedMutation,
+  useSaveRoomServicesMutation,
+  useGetRoomServicesListQuery,
+  useDeactiveActivRoomServicesMutation
 } = setupService;

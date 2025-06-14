@@ -2501,6 +2501,23 @@ export const newApRoom:modelTypes.ApRoom = {
 	deletedAt:undefined,
 } 
 
+export const newApRoomServices:modelTypes.ApRoomServices = { 
+	key:undefined,
+	roomKey:undefined,
+	price:0,
+	bedKey:undefined,
+	rule:'',
+	isValid:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	currencyLkey:undefined,
+	serviceKey:undefined,
+} 
+
 export const newApScreen:modelTypes.ApScreen = { 
 	key:undefined,
 	name:'',
