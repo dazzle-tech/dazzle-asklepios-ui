@@ -696,6 +696,7 @@ const AddEncounterVaccine = ({
                         <div className="inputs-group">
                             <MyInput
                                 column
+                                width={200}
                                 fieldLabel="Administration Reactions"
                                 fieldType="select"
                                 fieldName="administrationReactionsLkey"
