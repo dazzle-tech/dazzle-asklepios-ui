@@ -69,7 +69,7 @@ const PreObservation=({patient})=>{
                 <div className='medical-dashboard-container-div'>
                     <div className='medical-dashboard-header-div'>
                         <div className='medical-dashboard-title-div'>
-                            Patient Chronic Medication
+                            Patient Observation 
                         </div>
                         <div className='bt-right'>
                             <Text onClick={() => setOpen(true)} className="clickable-link">Full view</Text>
