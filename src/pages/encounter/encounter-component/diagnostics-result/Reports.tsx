@@ -1,95 +1,95 @@
 import ChatModal from "@/components/ChatModal";
-import MyButton from "@/components/MyButton/MyButton";
 import MyInput from "@/components/MyInput";
 import MyModal from "@/components/MyModal/MyModal";
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import { useAppDispatch } from "@/hooks";
-import { useGetEncounterByIdQuery } from "@/services/encounterService";
-import { useGetPatientByIdQuery } from "@/services/patientService";
 import { useGetDiagnosticOrderTestRadReportListQuery, useGetDiagnosticOrderTestReportNotesByReportIdQuery, useSaveDiagnosticOrderTestRadReportMutation, useSaveDiagnosticOrderTestReportNotesMutation } from "@/services/radService";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsRadReport, newApDiagnosticOrderTestsReportNotes } from "@/types/model-types-constructor";
 import { initialListRequest, ListRequest } from "@/types/types";
+import { addFilterToListRequest } from "@/utils";
 import { notify } from "@/utils/uiReducerActions";
-import { faComment, faFileLines, faStar } from "@fortawesome/free-solid-svg-icons";
+import { faComment, faFileLines, faPrint, faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Col, Form, HStack, Row, Tooltip, Whisper } from "rsuite";
-import { addFilterToListRequest, formatDate } from '@/utils';
-const ReviewReport = ({ setEncounter, setPatient, user }) => {
+const Reports = ({ patient, user }) => {
+    const dispatch = useAppDispatch();
     const [openReportModal, setOpenReportModal] = useState(false);
     const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
-    const [dateFilter, setDateFilter] = useState({
-           fromDate:null,
-           toDate:null
-       });
-       const [dateOrderFilter, setDateOrderFilter] = useState({
-           fromDate: null,
-           toDate:null
-       });
-    const [saveReportNote] = useSaveDiagnosticOrderTestReportNotesMutation();
     const [report, setReport] = useState<any>({ ...newApDiagnosticOrderTestsRadReport });
     const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
-    const { data: patientData, isLoading: isPatientLoading } = useGetPatientByIdQuery(test?.order?.patientKey, { skip: !test?.order?.patientKey });
-    const { data: encounterData, isLoading: isEncounterLoading } = useGetEncounterByIdQuery(test?.order?.encounterKey, { skip: !test?.order?.encounterKey });
-    const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
-    const dispatch = useAppDispatch();
+     const [dateOrderFilter, setDateOrderFilter] = useState({
+            fromDate: new Date(),
+            toDate: new Date()
+        });
     const [listReportResponse, setListReportResponse] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
             {
-                fieldName: "status_lkey",
+                fieldName: "patient_key",
                 operator: 'match',
-                value: "265089168359400",
+                value: patient?.key,
+            },
+            {
+                fieldName: "review_at",
+                operator: 'notMatch',
+                value: "0",
             }
         ]
     });
+    console.log("list requestt ",listReportResponse)
     const isSelected = rowData => {
         if (rowData && report && rowData.key === report.key) {
             return 'selected-row';
         } else return '';
     };
-    const [saveReport, saveReportMutation] = useSaveDiagnosticOrderTestRadReportMutation();
+
     const { data: reportList, refetch: reportFetch, isLoading } = useGetDiagnosticOrderTestRadReportListQuery({
         ...listReportResponse
     });
-
     const { data: messagesResultList, refetch: fecthResultNotes } =
         useGetDiagnosticOrderTestReportNotesByReportIdQuery(report?.key || undefined, {
             skip: report.key == null
         });
-
-    //to set notes modal scroll in tha last massage
-    const endOfMessagesRef = useRef(null);
-    useEffect(() => {
-        if (endOfMessagesRef.current) {
-            endOfMessagesRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [messagesResultList]);
-    useEffect(() => {
-
-        setPatient(patientData);
-    }, [patientData]);
-    useEffect(() => {
-        setEncounter()
-    }, [encounterData]);
+    const { data: severityLovQueryResponse } = useGetLovValuesByCodeQuery('SEVERITY');
+    const [saveReportNote] = useSaveDiagnosticOrderTestReportNotesMutation();
     useEffect(() => {
         setTest({ ...report?.test });
     }, [report]);
-       useEffect(() => {
+    useEffect(()=>{
+        reportFetch();
+    },[dateOrderFilter?.fromDate, dateOrderFilter?.toDate])
+
+    useEffect(() => {
+       
+        const isDateRangeValid = dateOrderFilter.fromDate !== null && dateOrderFilter.toDate !== null;
         
-            if((dateOrderFilter.fromDate !==null )&& (dateOrderFilter.toDate !==null)){
-               
-            const filtered = reportList?.object?.filter(
-                item => item.test?.order?.createdAt >= dateOrderFilter.fromDate && item.test?.order?.createdAt <= dateOrderFilter.toDate
-            );
+        const isResultsLoaded = Array.isArray(reportList?.object) && reportList.object.length > 0;
     
+        if (isDateRangeValid && isResultsLoaded) {
            
-            const value = filtered?.map(order => `(${order.key})`)
-                .join(" ");
-           
-           setListReportResponse(
+    
+            const fromDate = new Date(dateOrderFilter.fromDate);
+            fromDate.setHours(0, 0, 0, 0);
+            console.log("report from date ",fromDate)
+            const toDate = new Date(dateOrderFilter.toDate);
+            toDate.setHours(23, 59, 59, 999);
+           console.log("report to date ",toDate)
+    
+            const filtered = reportList.object.filter(item => {
+                const createdAt = new Date(item.test?.order?.createdAt);
+    
+                return createdAt >= fromDate && createdAt <= toDate;
+            });
+    
+            console.log("filtered ", filtered);
+    
+            const value = filtered.map(order => `(${order.key})`).join(" ");
+           console.log("value",value)
+           if(value){
+            setListReportResponse(
                 addFilterToListRequest(
                     'key',
                     'in',
@@ -97,42 +97,21 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
                    listReportResponse
                 )
             );}
-        }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
-    useEffect(() => {
-
-        if (dateFilter.fromDate && dateFilter.toDate) {
-            const formattedFromDate = new Date(dateFilter.fromDate)?.getTime();
-            const formattedToDate = new Date(dateFilter.toDate)?.getTime();
-            setListReportResponse(
+            else{
+               
+                   setListReportResponse(
                 addFilterToListRequest(
-                    'approved_at',
-                    'between',
-                    formattedFromDate + '_' + formattedToDate,
-                    listReportResponse
+                    'key',
+                    'in',
+                     '("")',
+                   listReportResponse
                 )
             );
-        } else if (dateFilter.fromDate) {
-            const formattedFromDate = new Date(dateFilter.fromDate)?.getTime();
-            setListReportResponse(
-                addFilterToListRequest('approved_at', 'gte', formattedFromDate, listReportResponse)
-            );
-        } else if (dateFilter.toDate) {
-            const formattedToDate = new Date(dateFilter.toDate)?.getTime();
-            setListReportResponse(
-                addFilterToListRequest('approved_at', 'lte', formattedToDate, listReportResponse)
-            );
+            }
         } else {
-            setListReportResponse({
-                ...listReportResponse, filters: [
-                    {
-                        fieldName: "status_lkey",
-                        operator: 'match',
-                        value: "265089168359400",
-                    }
-                ]
-            });
+    
         }
-    }, [dateFilter.fromDate, dateFilter.toDate]);
+    }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate, reportList?.object]);
 
     const handleSendResultMessage = async value => {
         try {
@@ -150,6 +129,9 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
         }
         fecthResultNotes();
     };
+
+
+    //Table
     const reportColumns = [
         {
             key: "testName",
@@ -246,7 +228,7 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
         {
             key: "",
             dataKey: "",
-            title: <Translate>ACTION</Translate>,
+            title: <Translate>Print</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
 
@@ -256,26 +238,11 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
                         <Whisper
                             placement="top"
                             trigger="hover"
-                            speaker={<Tooltip>Review</Tooltip>}
+                            speaker={<Tooltip>Print</Tooltip>}
                         >
-                            <FontAwesomeIcon
-                                icon={faStar}
-                                style={{
-                                    fontSize: '1em',
-                                    marginRight: 10,
-                                    color: rowData.reviewAt ? '#e0a500' : '#343434'
-                                }}
-                                onClick={async () => {
-                                    try {
-                                        await saveReport({ ...report, reviewAt: Date.now(), reviewBy:user }).unwrap();
-                                        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
-                                        reportFetch();
-                                    } catch (error) {
-                                        dispatch(notify({ msg: 'Saved Faild', sev: 'error' }));
-                                    }
-                                }}
-                            />
+                            <FontAwesomeIcon icon={faPrint} style={{ fontSize: '1em', marginRight: '5px' }} />
                         </Whisper>
+
                     </HStack>
                 )
 
@@ -322,48 +289,32 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
             pageNumber: 1 // reset to first page
         });
     };
+
     const filters = () => {
-        return (
-            <Form layout="inline" fluid className="date-filter-form">
-                <MyInput
-                    column
-                    width={180}
-                    fieldType="datetime"
-                    fieldLabel="Approval From Date"
-                    fieldName="fromDate"
-                    record={dateFilter}
-                    setRecord={setDateFilter}
-                />
-                <MyInput
-                    width={180}
-                    column
-                    fieldType="datetime"
-                    fieldLabel="Approval To Date"
-                    fieldName="toDate"
-                    record={dateFilter}
-                    setRecord={setDateFilter}
-                />
-                <MyInput
-                    column
-                    width={180}
-                    fieldType="datetime"
-                    fieldLabel="Order From Date"
-                    fieldName="fromDate"
-                    record={dateOrderFilter}
-                    setRecord={setDateOrderFilter}
-                />
-                <MyInput
-                    width={180}
-                    column
-                    fieldType="datetime"
-                    fieldLabel="Order To Date"
-                    fieldName="toDate"
-                    record={dateOrderFilter}
-                    setRecord={setDateOrderFilter}
-                />
-            </Form>
-        );
-    };
+            return (
+                <Form layout="inline" fluid className="date-filter-form">
+    
+                    <MyInput
+                        column
+                        width={180}
+                        fieldType="date"
+                        fieldLabel="Order From Date"
+                        fieldName="fromDate"
+                        record={dateOrderFilter}
+                        setRecord={setDateOrderFilter}
+                    />
+                    <MyInput
+                        width={180}
+                        column
+                        fieldType="date"
+                        fieldLabel="Order To Date"
+                        fieldName="toDate"
+                        record={dateOrderFilter}
+                        setRecord={setDateOrderFilter}
+                    />
+                </Form>
+            );
+        };
     return (<>
         <MyTable
             filters={filters()}
@@ -431,7 +382,6 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
                         </Row>
                     </Form></>
             }
-        />
-    </>);
+        /></>)
 }
-export default ReviewReport;
+export default Reports;
