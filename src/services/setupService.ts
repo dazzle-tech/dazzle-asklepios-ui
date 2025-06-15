@@ -319,21 +319,21 @@ export const setupService = createApi({
     }),
     getLovAllValues: builder.query({
       query: (listRequest: ListRequestAllValues) => ({
-        url: `/utility/get-lov-all-values?${fromListRequestAllValueToQueryParams(listRequest)}`
+        url: `/reference-data/get-lov-all-values?${fromListRequestAllValueToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
     getLovValuesByCode: builder.query({
       query: (code: String) => ({
-        url: `/utility/get-lov-values-by-code?code=${code}`
+        url: `/reference-data/get-lov-values-by-code?code=${code}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 900 // 15 minutes
     }),
     getLovValuesByCodeAndParent: builder.query({
       query: input => ({
-        url: `/utility/get-lov-values-by-code?code=${input.code}&parentValueKey=${input.parentValueKey}`
+        url: `/reference-data/get-lov-values-by-code?code=${input.code}&parentValueKey=${input.parentValueKey}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 900 // 15 minutes
@@ -1147,7 +1147,7 @@ export const setupService = createApi({
         headers: {
           code
         },
-        url: `/utility/get-lov-defult-value`
+        url: `/reference-data/get-lov-defult-value`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
