@@ -4,10 +4,7 @@ import MyTable from "@/components/MyTable";
 import { Divider, Text } from "rsuite";
 import { initialListRequest, ListRequest } from "@/types/types";
 import { useGetObservationSummariesQuery } from "@/services/observationService";
-import Transition from "rsuite/esm/Animation/Transition";
 import Translate from "@/components/Translate";
-import { time } from "console";
-import { title } from "process";
 const PreObservation=({patient})=>{
     const [open, setOpen] = useState(false);
     const [listRequest,setListRequest]=useState<ListRequest>({
