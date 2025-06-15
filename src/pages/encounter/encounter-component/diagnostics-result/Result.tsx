@@ -91,10 +91,10 @@ const Result = ({ patient, user }) => {
     if (isDateRangeValid && isResultsLoaded) {
         const fromDate = new Date(dateOrderFilter.fromDate);
         fromDate.setHours(0, 0, 0, 0);
-        console.log("from date",fromDate);
+   
         const toDate = new Date(dateOrderFilter.toDate);
         toDate.setHours(23, 59, 59, 999);
-        console.log("to date ",toDate)
+     
         const filtered = resultsList.object.filter(item => {
             const createdAt = new Date(item.test?.order?.createdAt);
             return createdAt >= fromDate && createdAt <= toDate;

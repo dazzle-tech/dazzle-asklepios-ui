@@ -133,6 +133,15 @@ export const labService = createApi({
                 return response.object;
             }
         }),
+        getGroupTests:builder.query({
+            query:(listRequest: ListRequest) => ({
+                url: `/lab/get-test-group-by?${fromListRequestToQueryParams(listRequest)}`
+            }),
+            onQueryStarted: onQueryStarted,
+            keepUnusedDataFor: 5
+        })
+
+      
     })
 });
 export const {
@@ -147,5 +156,6 @@ export const {
     useGetResultNormalRangeQuery,
     useSaveDiagnosticTestResultMutation,
     useGetLabResultLogListQuery,
-    useSaveLabResultLogMutation
+    useSaveLabResultLogMutation,
+    useGetGroupTestsQuery
 } = labService;
