@@ -7,7 +7,7 @@ export const uiService = createApi({
   endpoints: builder => ({
     changeLang: builder.mutation({
       query: (lang: string) => ({
-        url: `/utility/load-ui-translations`,
+        url: `/reference-data/load-ui-translations`,
         method: 'POST',
         headers: {
           lang
