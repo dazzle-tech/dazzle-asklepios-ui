@@ -10,7 +10,7 @@ const ReviewResults=()=>{
     const [patient, setPatient] = React.useState({...newApPatient});
     const [encounter, setEncounter] = React.useState<any>({...newApEncounter});
      const authSlice = useAppSelector(state => state.auth);
- console.log("patient", patient);
+
     return (
         <div className="container">
             <div className="left-box">
