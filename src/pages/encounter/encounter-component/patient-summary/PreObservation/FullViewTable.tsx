@@ -2,6 +2,10 @@ import MyModal from "@/components/MyModal/MyModal";
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import React,{useState} from "react";
+import {
+  faBedPulse
+} from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 const FullViewTable =({open ,setOpen,list})=>{
      const columns=[
         {
@@ -73,6 +77,7 @@ const FullViewTable =({open ,setOpen,list})=>{
     hideBack
     hideActionBtn
     title="Observation"
+    steps={[{title:"Observation",icon:<FontAwesomeIcon icon={faBedPulse}/>}]}
     content={<>
     <MyTable
     data={list??[]  }
