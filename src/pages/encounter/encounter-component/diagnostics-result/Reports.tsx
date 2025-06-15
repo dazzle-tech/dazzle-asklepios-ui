@@ -39,7 +39,7 @@ const Reports = ({ patient, user }) => {
             }
         ]
     });
-    console.log("list requestt ",listReportResponse)
+    
     const isSelected = rowData => {
         if (rowData && report && rowData.key === report.key) {
             return 'selected-row';
@@ -73,10 +73,10 @@ const Reports = ({ patient, user }) => {
     
             const fromDate = new Date(dateOrderFilter.fromDate);
             fromDate.setHours(0, 0, 0, 0);
-            console.log("report from date ",fromDate)
+            fromDate.getTime();
             const toDate = new Date(dateOrderFilter.toDate);
             toDate.setHours(23, 59, 59, 999);
-           console.log("report to date ",toDate)
+            toDate.getTime()
     
             const filtered = reportList.object.filter(item => {
                 const createdAt = new Date(item.test?.order?.createdAt);
@@ -84,10 +84,9 @@ const Reports = ({ patient, user }) => {
                 return createdAt >= fromDate && createdAt <= toDate;
             });
     
-            console.log("filtered ", filtered);
     
             const value = filtered.map(order => `(${order.key})`).join(" ");
-           console.log("value",value)
+
            if(value){
             setListReportResponse(
                 addFilterToListRequest(
