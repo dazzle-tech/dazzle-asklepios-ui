@@ -75,7 +75,7 @@ const ServiceSetup = () => {
 
   // Icons column (Edit,Linked Items, reactive/Deactivate)
   const iconsForActions = (rowData: ApService) => (
-    <div className="container-of-icons-service">
+    <>
       <MdMedicalServices
         className="icons-service"
         title="Linked Items"
@@ -113,7 +113,7 @@ const ServiceSetup = () => {
           }}
         />
       )}
-    </div>
+      </>
   );
   //Table columns
   const tableColumns = [
