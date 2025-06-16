@@ -20,7 +20,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import clsx from 'clsx';
 import './styles.less';
 
-interface ColumnConfig {
+export interface ColumnConfig {
   key: string;
   title: ReactNode;
   width?: number;
@@ -77,7 +77,7 @@ const MyTable: React.FC<MyTableProps> = ({
   const emptyTable = () => {
     return (
       <TableRow>
-        <TableCell
+        <TableCell       
           colSpan={visibleColumns.length + (expandableColumns.length > 0 ? 1 : 0)}
           align="center"
         >
@@ -100,7 +100,7 @@ const MyTable: React.FC<MyTableProps> = ({
         <Table stickyHeader size="small">
           <TableHead className="my-table-header">
             <TableRow>
-              {expandableColumns.length > 0 && <TableCell  />}
+              {expandableColumns.length > 0 && <TableCell />}
               {visibleColumns.map(col => {
                 const isSortable = !!onSortChange;
                 const isActive = sortColumn === col.key;
@@ -118,13 +118,23 @@ const MyTable: React.FC<MyTableProps> = ({
                 }
 
                 return (
-                  <TableCell
+                  <TableCell                   
                     key={col.key}
                     align={col.align || 'left'}
                     sx={{ whiteSpace: 'nowrap', cursor: isSortable ? 'pointer' : 'default' }}
                     onClick={isSortable ? () => onSortChange!(col.key, nextDirection) : undefined}
                   >
-                    <Box display="flex" alignItems="center">
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      justifyContent={
+                        col.align === 'center'
+                          ? 'center'
+                          : col.align === 'right'
+                          ? 'flex-end'
+                          : 'flex-start'
+                      }
+                    >
                       {col.title}
                       {sortIcon}
                     </Box>
@@ -137,6 +147,7 @@ const MyTable: React.FC<MyTableProps> = ({
             {loading ? (
               <TableRow>
                 <TableCell
+                  
                   colSpan={visibleColumns.length + (expandableColumns.length > 0 ? 1 : 0)}
                   align="center"
                 >
@@ -160,7 +171,10 @@ const MyTable: React.FC<MyTableProps> = ({
                       key={index}
                     >
                       {expandableColumns.length > 0 && (
-                        <TableCell padding="checkbox">
+                        <TableCell
+                          
+                          padding="checkbox"
+                        >
                           <IconButton size="small" onClick={() => handleExpandClick(index)}>
                             {expandedRow === index ? (
                               <KeyboardArrowUpIcon />
@@ -171,20 +185,30 @@ const MyTable: React.FC<MyTableProps> = ({
                         </TableCell>
                       )}
                       {visibleColumns.map(col => (
-                        <TableCell key={col.key} align={col.align || 'left'} className="even">
+                        <TableCell
+                          
+                          key={col.key}
+                          align={col.align || 'left'}
+                          className="even"
+                        >
                           {col.render ? col.render(row, index) : row[col.dataKey || col.key]}
                         </TableCell>
                       ))}
                     </TableRow>
                     {expandableColumns.length > 0 && expandedRow === index && (
                       <TableRow className="expanded-row">
-                        <TableCell colSpan={visibleColumns.length + 1} className="expanded-table">
+                        <TableCell
+                          
+                          colSpan={visibleColumns.length + 1}
+                          className="expanded-table"
+                        >
                           <Box>
                             <Table size="small">
                               <TableHead className="my-table-header">
                                 <TableRow>
                                   {expandableColumns.map(col => (
                                     <TableCell
+                                      
                                       key={col.key}
                                       align={col.align || 'left'}
                                       sx={{ fontWeight: 600, backgroundColor: '#f9f9f9' }}
@@ -197,7 +221,11 @@ const MyTable: React.FC<MyTableProps> = ({
                               <TableBody>
                                 <TableRow>
                                   {expandableColumns.map(col => (
-                                    <TableCell key={col.key} align={col.align || 'left'}>
+                                    <TableCell
+                                      
+                                      key={col.key}
+                                      align={col.align || 'left'}
+                                    >
                                       {col.render
                                         ? col.render(row, index)
                                         : row[col.dataKey || col.key]}
