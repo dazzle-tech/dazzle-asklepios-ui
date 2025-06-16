@@ -7,7 +7,12 @@ import { formatDateWithoutSeconds, addFilterToListRequest } from '@/utils';
 import { Col, Form, Row } from "rsuite";
 import { newApDiagnosticTest } from "@/types/model-types-constructor";
 import MyInput from "@/components/MyInput";
-const LaboratoryResultComparison = ({ patient }) => {
+const LaboratoryResultComparison = (
+    {
+        patient,
+        testKey: testKey = null
+
+    }) => {
     const [selectedTest, setSelectedTest] = useState({ ...newApDiagnosticTest })
     const [dateFilter, setDateFilter] = useState({
         fromDate: null,
@@ -20,10 +25,16 @@ const LaboratoryResultComparison = ({ patient }) => {
                 fieldName: "patient_key",
                 operator: 'match',
                 value: patient?.key,
+            },
+            {
+                fieldName: "approved_at",
+                operator: "notMatch",
+                value: 0,
             }
+
         ]
     });
-    
+
     const { data: testGroup } = useGetGroupTestsQuery(listRequest);
     const [testList, setTestList] = useState([]);
     const [resultList, setResultList] = useState([]);
@@ -44,54 +55,77 @@ const LaboratoryResultComparison = ({ patient }) => {
             setResultList([]);
         }
     }, [selectedTest, testGroup]);
-   useEffect(() => {
-    if (dateFilter.fromDate && dateFilter.toDate) {
-        const fromDate = new Date(dateFilter.fromDate);
-        fromDate.setHours(0, 0, 0, 0);
-        const fromTimestamp = fromDate.getTime(); 
 
-        const toDate = new Date(dateFilter.toDate);
-        toDate.setHours(23, 59, 59, 999);
-        const toTimestamp = toDate.getTime();
-      
-        setListRequest(
-            addFilterToListRequest(
-                'created_at',
-                'between',
-                `${fromTimestamp}_${toTimestamp}`,
-                listRequest
-            )
-        );
-    } else if (dateFilter.fromDate) {
-        const fromDate = new Date(dateFilter.fromDate);
-        fromDate.setHours(0, 0, 0, 0);
-        const fromTimestamp = fromDate.getTime();
+    useEffect(() => {
+        if (dateFilter.fromDate && dateFilter.toDate) {
+            const fromDate = new Date(dateFilter.fromDate);
+            fromDate.setHours(0, 0, 0, 0);
+            const fromTimestamp = fromDate.getTime();
 
-        setListRequest(
-            addFilterToListRequest('created_at', 'gte', fromTimestamp, listRequest)
-        );
-    } else if (dateFilter.toDate) {
-        const toDate = new Date(dateFilter.toDate);
-        toDate.setHours(23, 59, 59, 999);
-        const toTimestamp = toDate.getTime();
+            const toDate = new Date(dateFilter.toDate);
+            toDate.setHours(23, 59, 59, 999);
+            const toTimestamp = toDate.getTime();
 
-        setListRequest(
-            addFilterToListRequest('created_at', 'lte', toTimestamp, listRequest)
-        );
-    } else {
-        setListRequest({
-            ...listRequest,
-            filters: [
-                {
-                    fieldName: "patient_key",
-                    operator: 'match',
-                    value: patient?.key,
-                }
-            ]
-        });
-    }
-}, [dateFilter?.fromDate, dateFilter?.toDate]);
+            setListRequest(
+                addFilterToListRequest(
+                    'created_at',
+                    'between',
+                    `${fromTimestamp}_${toTimestamp}`,
+                    listRequest
+                )
+            );
+        } else if (dateFilter.fromDate) {
+            const fromDate = new Date(dateFilter.fromDate);
+            fromDate.setHours(0, 0, 0, 0);
+            const fromTimestamp = fromDate.getTime();
 
+            setListRequest(
+                addFilterToListRequest('created_at', 'gte', fromTimestamp, listRequest)
+            );
+        } else if (dateFilter.toDate) {
+            const toDate = new Date(dateFilter.toDate);
+            toDate.setHours(23, 59, 59, 999);
+            const toTimestamp = toDate.getTime();
+
+            setListRequest(
+                addFilterToListRequest('created_at', 'lte', toTimestamp, listRequest)
+            );
+        } else {
+            setListRequest({
+                ...listRequest,
+                filters: [
+                    {
+                        fieldName: "patient_key",
+                        operator: 'match',
+                        value: patient?.key,
+                    },
+                      {
+                fieldName: "approved_at",
+                operator: "notMatch",
+                value: 0,
+            }
+
+                ]
+            });
+        }
+    }, [dateFilter?.fromDate, dateFilter?.toDate]);
+
+    //in lab page add testkey in filter
+    useEffect(() => {
+        if (testKey) {
+            setListRequest(prev => ({
+                ...prev,
+                filters: [
+                    ...prev.filters,
+                    {
+                        fieldName: "medical_test_key",
+                        operator: 'match',
+                        value: testKey,
+                    }
+                ]
+            }));
+        }
+    }, [testKey]);
 
     const testColumns = [
         {
@@ -156,10 +190,10 @@ const LaboratoryResultComparison = ({ patient }) => {
             <Row>
 
                 <Form fluid>
-                   
+
                     <Col md={5}>
                         <MyInput
-                      
+
                             width="100%"
                             fieldType="date"
                             fieldLabel="From Date"
@@ -171,7 +205,7 @@ const LaboratoryResultComparison = ({ patient }) => {
                     <Col md={5}>
                         <MyInput
                             width="100%"
-                          
+
                             fieldType="date"
                             fieldLabel=" To Date"
                             fieldName="toDate"
