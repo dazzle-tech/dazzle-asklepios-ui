@@ -35,7 +35,7 @@ const Reports = ({ patient, user }) => {
             {
                 fieldName: "review_at",
                 operator: 'notMatch',
-                value: "0",
+                value: 0,
             }
         ]
     });
@@ -58,59 +58,48 @@ const Reports = ({ patient, user }) => {
     useEffect(() => {
         setTest({ ...report?.test });
     }, [report]);
-    useEffect(()=>{
-        reportFetch();
-    },[dateOrderFilter?.fromDate, dateOrderFilter?.toDate])
 
-    useEffect(() => {
-       
-        const isDateRangeValid = dateOrderFilter.fromDate !== null && dateOrderFilter.toDate !== null;
-        
-        const isResultsLoaded = Array.isArray(reportList?.object) && reportList.object.length > 0;
-    
-        if (isDateRangeValid && isResultsLoaded) {
-           
-    
-            const fromDate = new Date(dateOrderFilter.fromDate);
-            fromDate.setHours(0, 0, 0, 0);
-            fromDate.getTime();
-            const toDate = new Date(dateOrderFilter.toDate);
-            toDate.setHours(23, 59, 59, 999);
-            toDate.getTime()
-    
-            const filtered = reportList.object.filter(item => {
-                const createdAt = new Date(item.test?.order?.createdAt);
-    
-                return createdAt >= fromDate && createdAt <= toDate;
-            });
-    
-    
-            const value = filtered.map(order => `(${order.key})`).join(" ");
 
-           if(value){
-            setListReportResponse(
-                addFilterToListRequest(
-                    'key',
-                    'in',
-                    value,
-                   listReportResponse
-                )
-            );}
-            else{
-               
-                   setListReportResponse(
-                addFilterToListRequest(
-                    'key',
-                    'in',
-                     '("")',
-                   listReportResponse
-                )
-            );
-            }
-        } else {
-    
-        }
-    }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate, reportList?.object]);
+  useEffect(() => {
+  setListReportResponse(prev => ({
+    ...prev,
+    filters: [
+      {
+        fieldName: "patient_key",
+        operator: "match",
+        value: patient?.key, // حسب السياق
+      },
+      {
+        fieldName: "review_at",
+        operator: "notMatch",
+        value: 0,
+      },
+    ],
+  }));
+}, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
+useEffect(() => {
+  const isDateRangeValid = dateOrderFilter.fromDate !== null && dateOrderFilter.toDate !== null;
+  const isResultsLoaded = Array.isArray(reportList?.object) && reportList.object.length > 0;
+
+  if (isDateRangeValid && isResultsLoaded) {
+    const fromDate = new Date(dateOrderFilter.fromDate);
+    fromDate.setHours(0, 0, 0, 0);
+
+    const toDate = new Date(dateOrderFilter.toDate);
+    toDate.setHours(23, 59, 59, 999);
+
+    const filtered = reportList.object.filter(item => {
+      const createdAt = new Date(item.test?.order?.createdAt);
+      return createdAt >= fromDate && createdAt <= toDate;
+    });
+
+    const value = filtered.map(order => `(${order.key})`).join(" ") || '("")';
+
+    setListReportResponse(prev =>
+      addFilterToListRequest("key", "in", value, prev)
+    );
+  }
+}, [dateOrderFilter, reportList]);
 
     const handleSendResultMessage = async value => {
         try {
@@ -193,7 +182,7 @@ const Reports = ({ patient, user }) => {
 
         },
         {
-            key: "",
+            key: "lab",
             title: <Translate>EXTERNEL LAB NAME</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
@@ -212,7 +201,7 @@ const Reports = ({ patient, user }) => {
         },
         ,
         {
-            key: " ",
+            key: "file",
 
             title: <Translate>ATTACHED BY/DATE</Translate>,
             flexGrow: 1,
@@ -222,11 +211,11 @@ const Reports = ({ patient, user }) => {
 
             }
         }
-        ,
+        
         ,
         {
-            key: "",
-            dataKey: "",
+            key: "print",
+          
             title: <Translate>Print</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
