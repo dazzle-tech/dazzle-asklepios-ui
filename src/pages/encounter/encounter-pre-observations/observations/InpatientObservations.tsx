@@ -1,35 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
 import PlusIcon from '@rsuite/icons/Plus';
-import { useAppSelector, useAppDispatch } from '@/hooks';
+import { useAppDispatch } from '@/hooks';
 import { Checkbox, } from 'rsuite';
-import { useSavePsychologicalExamsMutation, useGetPsychologicalExamsQuery } from '@/services/encounterService';
 import { MdModeEdit } from 'react-icons/md'; import Translate from '@/components/Translate';
 import AddEditInpatientObservations from './AddEditInpatientObservations';
 import { ApEncounter, ApPatient, ApPsychologicalExam } from '@/types/model-types';
-import { notify } from '@/utils/uiReducerActions';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import MyButton from '@/components/MyButton/MyButton';
-import CancellationModal from '@/components/CancellationModal';
 import MyTable from '@/components/MyTable';
-import { formatDateWithoutSeconds } from '@/utils';
-import { useLocation } from 'react-router-dom'
 import { ApPatientObservationSummary } from '@/types/model-types';
 import { newApPatientObservationSummary } from '@/types/model-types-constructor';
-import {
-    useGetObservationSummariesQuery,
-    useSaveObservationSummaryMutation
-} from '@/services/observationService';
+import { useGetObservationSummariesQuery } from '@/services/observationService';
 type Props = {
-  localEncounter: any;
-  localPatient: any;
-  editable: any;
+    localEncounter: any;
+    localPatient: any;
+    editable: any;
 };
-const InpatientObservations = ({localEncounter, localPatient, editable}) => {
+const InpatientObservations = ({ localEncounter, localPatient, editable }) => {
     const [patient, setPatient] = useState<ApPatient>({ ...localPatient });
     const [encounter, setEncounter] = useState<ApEncounter>({ ...localEncounter });
     const [edit, setEdit] = useState(editable);
     const [openAddModal, setOpenAddModal] = useState(false);
+    const dispatch = useAppDispatch()
     const [patientObservationSummary, setPatientObservationSummary] = useState<ApPatientObservationSummary>({
         ...newApPatientObservationSummary,
         latesttemperature: null,
@@ -43,8 +36,9 @@ const InpatientObservations = ({localEncounter, localPatient, editable}) => {
         latestheight: null,
         latestheadcircumference: null,
         latestpainlevelLkey: null
-    });
-    const dispatch = useAppDispatch()
+    }); 
+
+    // Define state for the request used to fetch the list of patient observations
     const [observationsListRequest, setObservationsListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -141,50 +135,51 @@ const InpatientObservations = ({localEncounter, localPatient, editable}) => {
     // Table Columns
     const columns = [
         {
-            key: 'testType',
-            title: <Translate>TEST TYPE</Translate>,
-            render: (rowData: any) => rowData?.testTypeLvalue ? rowData?.testTypeLvalue.lovDisplayVale : rowData?.testTypeLkey
+            key: 'latestbpSystolic',
+            title: <Translate>BP</Translate>,
         },
         {
-            key: 'reason',
-            title: <Translate>REASON</Translate>,
-            render: (rowData: any) => rowData?.reason
+            key: 'latestbpDiastolic',
+            title: <Translate>mmHg</Translate>,
         },
         {
-            key: 'testDuration',
-            title: <Translate>TEST DURATION</Translate>,
-            render: (rowData: any) => rowData?.testDuration ? `${rowData?.testDuration} ${rowData?.unitLvalue ? rowData?.unitLvalue.lovDisplayVale : rowData?.unitLkey}` : ' '
+            key: 'latestheartrate',
+            title: <Translate>Pulse</Translate>,
+            render: (rowData: any) => rowData?.latestheartrate ? `${rowData?.latestheartrate} bpm` : ' '
         },
         {
-            key: 'score',
-            title: <Translate>SCORE</Translate>,
-            render: (rowData: any) => rowData?.scoreLvalue ? rowData?.scoreLvalue.lovDisplayVale : rowData?.scoreLkey
+            key: 'latestrespiratoryrate',
+            title: <Translate>R.R</Translate>,
+            render: (rowData: any) => rowData?.latestrespiratoryrate ? `${rowData?.latestrespiratoryrate} bpm` : ' '
         },
         {
-            key: 'resultInterpretation',
-            title: <Translate>RESULT INTERPRETATION</Translate>,
-            render: (rowData: any) => rowData?.resultInterpretationLvalue ? rowData?.resultInterpretationLvalue.lovDisplayVale : rowData?.resultInterpretationLkey
+            key: 'latestoxygensaturation',
+            title: <Translate>SpO2</Translate>,
+            render: (rowData: any) => rowData?.latestoxygensaturation ? `${rowData?.latestoxygensaturation} %` : ' '
         },
         {
-            key: 'clinicalObservations',
-            title: <Translate>CLINICAL OBSERVATIONS</Translate>,
-            render: (rowData: any) => rowData?.clinicalObservations
+            key: 'latesttemperature',
+            title: <Translate>Temp</Translate>,
+            render: (rowData: any) => rowData?.latesttemperature ? `${rowData?.latesttemperature} °C` : ' '
         },
         {
-            key: 'treatmentPlan',
-            title: <Translate>TREATMENT PLAN</Translate>,
-            render: (rowData: any) => rowData?.treatmentPlan,
-            expandable: true,
+            key: 'latestweight',
+            title: <Translate>WEIGHT</Translate>,
+            render: (rowData: any) => rowData?.latestweight ? `${rowData?.latestweight} Kg` : ' '
         },
         {
-            key: 'additionalNotes',
-            title: <Translate>ADDITIONAL NOTES</Translate>,
-            render: (rowData: any) => rowData?.additionalNotes,
-            expandable: true,
+            key: 'latestheight',
+            title: <Translate>HEIGHT</Translate>,
+            render: (rowData: any) => rowData?.latestheight ? `${rowData?.latestheight} Kg` : ' '
         },
         {
-            key: 'followUpDate',
-            title: <Translate>FOLLOW-UP DATE</Translate>,
+            key: 'latestheadcircumference',
+            title: <Translate>HEAD CIRCUMFERENCE</Translate>,
+            render: (rowData: any) => rowData?.latestheadcircumference ? `${rowData?.latestheadcircumference} cm` : ' '
+        },
+        {
+            key: 'Pain Degree',
+            title: <Translate>Pain Degree</Translate>,
             render: (rowData: any) => rowData?.followUpDate
                 ? new Date(rowData.followUpDate).toLocaleDateString("en-GB")
                 : ""
@@ -208,35 +203,11 @@ const InpatientObservations = ({localEncounter, localPatient, editable}) => {
                 );
             }
         },
-        {
-            key: 'createdAt',
-            title: 'CREATED AT/BY',
-            expandable: true,
-            render: (row: any) => row?.createdAt ? <>{row?.createByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.createdAt)}</span> </> : ' '
-        },
-        {
-            key: 'updatedAt',
-            title: 'UPDATED AT/BY',
-            expandable: true,
-            render: (row: any) => row?.updatedAt ? <>{row?.updateByUser?.fullName}<br /><span className='date-table-style'>{formatDateWithoutSeconds(row.updatedAt)}</span> </> : ' '
-        },
-        {
-            key: 'deletedAt',
-            title: 'CANCELLED AT/BY',
-            expandable: true,
-            render: (row: any) => row?.deletedAt ? <>{row?.deleteByUser?.fullName}  <br /><span className='date-table-style'>{formatDateWithoutSeconds(row.deletedAt)}</span></> : ' '
-        },
-        {
-            key: 'cancellationReason',
-            title: 'CANCELLATION REASON',
-            dataKey: 'cancellationReason',
-            expandable: true,
-        }
     ];
 
     return (
         <div>
-            <AddEditInpatientObservations open={openAddModal} setOpen={setOpenAddModal} patient={patient} encounter={encounter}  observationsObject={patientObservationSummary} refetch={refetchObservations}   edit={edit}/>
+            <AddEditInpatientObservations open={openAddModal} setOpen={setOpenAddModal} patient={patient} encounter={encounter} observationsObject={patientObservationSummary} refetch={refetchObservations} edit={edit} />
             <div className='bt-div'>
                 <MyButton prefixIcon={() => <CloseOutlineIcon />} onClick={() => { }} disabled={edit}>
                     Cancel

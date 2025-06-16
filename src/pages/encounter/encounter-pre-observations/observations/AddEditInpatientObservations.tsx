@@ -1,33 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { useAppSelector, useAppDispatch } from '@/hooks';
+import { useAppDispatch } from '@/hooks';
 import { Form } from 'rsuite';
-import {
-    faChildReaching,
-    faHeartPulse,
-    faPerson
-} from '@fortawesome/free-solid-svg-icons';
+import { faChildReaching, faHeartPulse, faPerson } from '@fortawesome/free-solid-svg-icons';
 import MyLabel from '@/components/MyLabel';
 import MyInput from '@/components/MyInput';
-import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
-import { newApElectrocardiogramEcg, newApPatientObservationSummary } from '@/types/model-types-constructor';
-import { useGetObservationSummariesQuery, useSaveObservationSummaryMutation } from '@/services/observationService'; import { notify } from '@/utils/uiReducerActions';
+import { faFaceTired } from '@fortawesome/free-solid-svg-icons';
+import { newApPatientObservationSummary } from '@/types/model-types-constructor';
+import { useGetObservationSummariesQuery, useSaveObservationSummaryMutation } from '@/services/observationService';
+import { notify } from '@/utils/uiReducerActions';
 import MyModal from '@/components/MyModal/MyModal';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Col, Divider, Row } from 'rsuite';
 import { ApPatientObservationSummary } from '@/types/model-types';
 import { initialListRequest, ListRequest } from '@/types/types';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, observationsObject, refetch, edit }) => {
-    const authSlice = useAppSelector(state => state.auth);
     const [patientObservationSummary, setPatientObservationSummary] = useState<ApPatientObservationSummary>(observationsObject);
-    const [saveObservationSummary] = useSaveObservationSummaryMutation();
+    const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSummaryMutation();
     const [isDisabledField, setIsDisabledField] = useState(false);
     const [isEncounterObservationsStatusClose, setIsEncounterObservationsStatusClose] = useState(false);
     const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
     const [bmi, setBmi] = useState('');
     const [bsa, setBsa] = useState('');
     const [map, setMap] = useState('');
-    const dispatch = useAppDispatch()
+    const dispatch = useAppDispatch();
+    // Define state for the request used to fetch the patient's last visit observations list
     const [patientLastVisitObservationsListRequest, setPatientLastVisitObservationsListRequest] = useState<ListRequest>({
         ...initialListRequest,
         sortBy: 'createdAt',
@@ -37,87 +34,64 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
                 fieldName: 'patient_key',
                 operator: 'match',
                 value: patient?.key
+            },
+            {
+                fieldName: 'visit_key',
+                operator: 'match',
+                value: encounter?.key
             }
         ]
     });
     // Fetch LOV data for various fields
-    const { data: getObservationSummaries } = useGetObservationSummariesQuery({
-        ...patientLastVisitObservationsListRequest,
-    });
-    const firstObservationSummary = getObservationSummaries?.object?.length > 0 ? getObservationSummaries.object[0] : null;
+    const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
+    // Fetch observation summaries using the useGetObservationSummariesQuery hook
+    const { data: getObservationSummaries } = useGetObservationSummariesQuery({ ...patientLastVisitObservationsListRequest, });
+    // Get the last observation summary if available, otherwise set it to null
+    const lastObservationSummary = getObservationSummaries?.object?.length > 0 ? getObservationSummaries.object[0] : null;
 
-    // Handle Save Electrocardiogram ECG Function
+    // Handle Save Observations Function
     const handleSave = async () => {
-        //TODO convert key to code
-        // try {
-        //     if (patientObservationSummary.key === undefined) {
-        //         //TODO convert key to code
-        //         await saveObservationSummary({
-        //             observation: {
-        //                 ...patientObservationSummary,
-        //                 visitKey: encounter.key,
-        //                 patientKey: patient.key,
-        //                 createdBy: 'Administrator',
-        //                 lastDate: new Date(),
-        //                 latestbmi: bmi,
-        //                 age: firstObservationSummary?.age,
-        //                 prevRecordKey: firstObservationSummary?.key || null,
-        //                 plastDate: firstObservationSummary?.lastDate || null,
-        //                 platesttemperature: firstObservationSummary?.latesttemperature || null,
-        //                 platestbpSystolic: firstObservationSummary?.latestbpSystolic || null,
-        //                 platestbpDiastolic: firstObservationSummary?.latestbpDiastolic || null,
-        //                 platestheartrate: firstObservationSummary?.latestheartrate || null,
-        //                 platestrespiratoryrate: firstObservationSummary?.latestrespiratoryrate || null,
-        //                 platestoxygensaturation: firstObservationSummary?.latestoxygensaturation || null,
-        //                 platestweight: firstObservationSummary?.latestweight || firstObservationSummary?.platestweight,
-        //                 platestheight: firstObservationSummary?.latestheight || firstObservationSummary?.platestheight,
-        //                 platestheadcircumference: firstObservationSummary?.latestheadcircumference || firstObservationSummary?.platestheadcircumference,
-        //                 platestnotes: firstObservationSummary?.latestnotes || '',
-        //                 platestpaindescription: firstObservationSummary?.latestpaindescription || '',
-        //                 platestpainlevelLkey: firstObservationSummary?.latestpainlevelLkey || '',
-        //                 platestbmi: firstObservationSummary?.latestbmi,
-        //                 page: firstObservationSummary?.age,
-        //             },
-        //             listRequest: patientObservationsListRequest
-        //         }).unwrap();
-        //         dispatch(notify({ msg: 'Patient ECG Added Successfully', sev: 'success' }));
-        //         //TODO convert key to code
-        //         setElectrocardiogramEcg({ ...newApElectrocardiogramEcg, statusLkey: "9766169155908512" });
-        //         setOpen(false);
-        //     } else {
-        //         await saveElectrocardiogramECG({ ...electrocardiogramEcg, patientKey: patient.key, encounterKey: encounter.key, updatedBy: authSlice.user.key }).unwrap();
-        //         setOpen(false);
-        //         dispatch(notify({ msg: 'Patient ECG Updated Successfully', sev: 'success' }));
-        //     }
-
-        //     await refetch();
-        //     handleClearField();
-
-        // } catch (error) {
-        //     console.error("Error saving Patient ECG:", error);
-        //     dispatch(notify({ msg: 'Failed to save Patient ECG', sev: 'error' }));
-        // }
-    };
-
-    // Effects 
-    useEffect(() => {
-        const diastolic = Number(patientObservationSummary.latestbpDiastolic);
-        const systolic = Number(patientObservationSummary.latestbpSystolic);
-
-
-        if (!isNaN(diastolic) && !isNaN(systolic)) {
-            const calculatedMap = ((2 * diastolic + systolic) / 3).toFixed(2);
-            setMap(calculatedMap);
+        try {
+            await saveObservationSummary({
+                ...patientObservationSummary,
+                visitKey: encounter.key,
+                patientKey: patient.key,
+                createdBy: 'Administrator',
+                lastDate: new Date(),
+                latestbmi: bmi,
+                age: lastObservationSummary?.age,
+                prevRecordKey: lastObservationSummary?.key || null,
+                plastDate: lastObservationSummary?.lastDate || null,
+                platesttemperature: lastObservationSummary?.latesttemperature || null,
+                platestbpSystolic: lastObservationSummary?.latestbpSystolic || null,
+                platestbpDiastolic: lastObservationSummary?.latestbpDiastolic || null,
+                platestheartrate: lastObservationSummary?.latestheartrate || null,
+                platestrespiratoryrate: lastObservationSummary?.latestrespiratoryrate || null,
+                platestoxygensaturation: lastObservationSummary?.latestoxygensaturation || null,
+                platestweight: lastObservationSummary?.latestweight || lastObservationSummary?.platestweight,
+                platestheight: lastObservationSummary?.latestheight || lastObservationSummary?.platestheight,
+                platestheadcircumference: lastObservationSummary?.latestheadcircumference || lastObservationSummary?.platestheadcircumference,
+                platestnotes: lastObservationSummary?.latestnotes || '',
+                platestpaindescription: lastObservationSummary?.latestpaindescription || '',
+                platestpainlevelLkey: lastObservationSummary?.latestpainlevelLkey || '',
+                platestbmi: lastObservationSummary?.latestbmi,
+                page: lastObservationSummary?.age,
+            }).unwrap();
+            refetch();
+            dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+        } catch (error) {
+            console.error('Error while saving observation summary:', error);
+            dispatch(notify({ msg: 'Error occurred while saving', sev: 'error' }));
         }
-    }, [patientObservationSummary.latestbpDiastolic, patientObservationSummary.latestbpSystolic]);
-
+    };
+    // Handle Clear Fields 
     const handleClear = () => {
         setPatientObservationSummary({
             ...newApPatientObservationSummary,
             latestpainlevelLkey: null
         });
     }
-
+    //Effects
     useEffect(() => {
         // TODO update status to be a LOV value
         if (encounter?.encounterStatusLkey === '91109811181900') {
@@ -140,6 +114,35 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
             setMap(calculatedMap);
         }
     }, [patientObservationSummary.latestbpDiastolic, patientObservationSummary.latestbpSystolic]);
+    useEffect(() => {
+        const { latestweight, latestheight } = patientObservationSummary;
+        if (latestweight && latestheight) {
+            const calculatedBmi = (latestweight / ((latestheight / 100) ** 2)).toFixed(2);
+            const calculatedBsa = Math.sqrt((latestweight * latestheight) / 3600).toFixed(2);
+            setBmi(calculatedBmi);
+            setBsa(calculatedBsa);
+        } else {
+            setBmi('');
+            setBsa('');
+        }
+    }, [patientObservationSummary]);
+    useEffect(() => {
+        setPatientObservationSummary(observationsObject);
+    }, [observationsObject]);
+    useEffect(() => {
+        const diastolic = Number(patientObservationSummary.latestbpDiastolic);
+        const systolic = Number(patientObservationSummary.latestbpSystolic);
+
+        if (!isNaN(diastolic) && !isNaN(systolic)) {
+            const calculatedMap = ((2 * diastolic + systolic) / 3).toFixed(2);
+            setMap(calculatedMap);
+        }
+    }, [patientObservationSummary.latestbpDiastolic, patientObservationSummary.latestbpSystolic]);
+    useEffect(() => {
+        if (saveObservationsMutation && saveObservationsMutation.status === 'fulfilled') {
+            setPatientObservationSummary(saveObservationsMutation.data);
+        }
+    }, [saveObservationsMutation]);
     // Modal Content 
     const content = stepNumber => {
         switch (stepNumber) {
@@ -266,7 +269,7 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
                                 width={250}
                                 fieldLabel='Height'
                                 fieldName='latestheight'
-                                rightAddon="Cm"
+                                rightAddon="cm"
                                 disabled={isEncounterStatusClosed}
                                 fieldType='number'
                                 record={patientObservationSummary}
@@ -283,7 +286,7 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
                         <MyInput
                             width={250}
                             fieldLabel='Head circumference'
-                            rightAddon="Cm"
+                            rightAddon="cm"
                             fieldName='latestheadcircumference'
                             disabled={isEncounterStatusClosed}
                             fieldType='number'
@@ -293,7 +296,30 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
                 );
             case 2:
                 return (
-                    <></>
+                    <Form fluid layout="inline">
+                        <MyInput
+                            column
+                            disabled={isEncounterStatusClosed}
+                            width={300}
+                            fieldLabel="Pain Degree"
+                            fieldType="select"
+                            fieldName="latestpainlevelLkey"
+                            selectData={painDegreesLovQueryResponse?.object ?? []}
+                            selectDataLabel="lovDisplayVale"
+                            selectDataValue="key"
+                            record={patientObservationSummary}
+                            setRecord={setPatientObservationSummary}
+                        />
+                        <MyInput
+                            column
+                            fieldType='textarea'
+                            width={300}
+                            height='150px'
+                            fieldLabel="Pain Description"
+                            fieldName='latestpaindescription'
+                            record={patientObservationSummary}
+                            setRecord={setPatientObservationSummary} />
+                    </Form>
                 );
         };
     }
@@ -306,14 +332,20 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
             position='right'
             isDisabledActionBtn={!edit ? isDisabledField : true}
             size='32vw'
+            footerButtons={<>
+                <MyButton appearance='ghost' onClick={handleClear}>Clear</MyButton>
+                <MyButton onClick={handleSave}>Save</MyButton>
+            </>
+            }
             steps={[{
                 title: "Vital Signs",
                 icon: <FontAwesomeIcon icon={faHeartPulse} />,
-                footer: <MyButton appearance='ghost' onClick={handleClear} >Clear</MyButton>
             }, {
                 title: "Body Measurements",
                 icon: <FontAwesomeIcon icon={faChildReaching} />,
-                footer: <MyButton appearance='ghost' onClick={handleClear} >Clear</MyButton>
+            }, {
+                title: "Pain Level",
+                icon: <FontAwesomeIcon icon={faFaceTired} />
             }]}
             content={content}
         ></MyModal>
