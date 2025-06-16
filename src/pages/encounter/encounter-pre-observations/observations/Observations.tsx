@@ -35,6 +35,7 @@ import MyLabel from '@/components/MyLabel';
 import { useLocation } from 'react-router-dom';
 import MyButton from '@/components/MyButton/MyButton';
 import clsx from 'clsx';
+import InpatientObservations from './InpatientObservations';
 
 export type ObservationsRef = {
   handleSave: () => void;
@@ -58,7 +59,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   const dispatch = useAppDispatch();
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...patient })
   const { data: painDegreesLovQueryResponse } = useGetLovValuesByCodeQuery('PAIN_DEGREE');
-  const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...encounter })
+  const [localEncounter, setLocalEncounter] = useState<any>({ ...encounter })
   const [bmi, setBmi] = useState('');
   const [bsa, setBsa] = useState('');
   const [map, setMap] = useState('');
@@ -163,7 +164,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     console.log('location.pathname', location.pathname);
 
   }, [location.pathname, dispatch]);
-
+  console.log("local Encounter---->", localEncounter);
   const handleSave = () => {
     saveObservationSummary({
       observation: {
@@ -221,211 +222,204 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
 
   return (
 
-    <div ref={ref}  className={clsx('basuc-div', {'disabled-panel': edit
-                                                                       })}>
-      <Form fluid>
-        {!(location.pathname == '/nurse-station') &&
+    <div ref={ref} className={clsx('basuc-div', { 'disabled-panel': edit })}>
+      {localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT" ?
+        <InpatientObservations localPatient={localPatient} localEncounter={localEncounter} editable={edit} /> : <Form fluid>
+          {!(location.pathname == '/nurse-station') &&
+            <Row>
+              <Col md={23}></Col>
+              <Col md={1}>
+                <MyButton onClick={handleSave}>Save</MyButton>
+              </Col>
+            </Row>}
           <Row>
-            <Col md={23}></Col>
-            <Col md={1}>
-
-              <MyButton onClick={handleSave}>Save</MyButton>
-
-            </Col>
-          </Row>}
-        <Row>
-          <Col md={12}>
-            <div className='container-form'>
-              <div className='title-div'>
-                <Text>Vital Signs</Text>
-
-              </div>
-              <Divider />
-
-              <Row className="rows-gap">
-                <Col md={7}>
-                  <MyInput
-                    width='100%'
-                    fieldLabel='BP'
-                    fieldName='latestbpSystolic'
-                    disabled={isEncounterStatusClosed || readOnly}
-                    fieldType='number'
-                    record={patientObservationSummary}
-                    setRecord={setPatientObservationSummary}
-                  >
-
-                  </MyInput>
-                </Col>
-                <Col md={2} >
-                  <div style={{padding:'20px' ,paddingTop:'30px'}}>/</div>
-                </Col>
-                <Col md={7}>   <MyInput
-                  width='100%'
-                  fieldLabel='mmHg'
-                  fieldName='latestbpDiastolic'
-                  disabled={isEncounterStatusClosed || readOnly}
-                  fieldType='number'
-                  record={patientObservationSummary}
-                  setRecord={setPatientObservationSummary}
-                ></MyInput></Col>
-                <Col md={8}>   <div className='container-Column'>
-                  <MyLabel label="MAP" />
-                  <div>
-                    <FontAwesomeIcon icon={faHeartPulse} className='my-icon' />
-                    <text>{
-                      map
-                    }</text></div>
-                </div></Col>
-              </Row>
-
-              <Row className="rows-gap">
-                <Col md={12}>
-                  <MyInput
-
-                    fieldLabel='Pulse'
-                    rightAddon="bpm"
-                    width='100%'
-                    rightAddonwidth={50}
-                    fieldName='latestheartrate'
-                    disabled={isEncounterStatusClosed || readOnly}
-                    fieldType='number'
-                    record={patientObservationSummary}
-                    setRecord={setPatientObservationSummary}
-                  ></MyInput></Col>
-                <Col md={12}>
-                  <MyInput
-
-                    fieldLabel='R.R'
-                    rightAddon="bpm"
-                    rightAddonwidth={50}
-                    width='100%'
-                    fieldName='latestrespiratoryrate'
-                    disabled={isEncounterStatusClosed || readOnly}
-                    fieldType='number'
-                    record={patientObservationSummary}
-                    setRecord={setPatientObservationSummary}
-                  ></MyInput></Col>
-              </Row>
-              <Row className="rows-gap">
-                <Col md={12}>
-                  <MyInput
-                    fieldLabel='SpO2'
-                    rightAddon="%"
-                    width='100%'
-                    rightAddonwidth={40}
-                    fieldName='latestoxygensaturation'
-                    disabled={isEncounterStatusClosed || readOnly}
-                    fieldType='number'
-                    record={patientObservationSummary}
-                    setRecord={setPatientObservationSummary}
-                  ></MyInput></Col>
-                <Col md={12}>
-                  <MyInput
-                    fieldLabel='Temp'
-                    rightAddon="°C"
-                    rightAddonwidth={40}
-                    width='100%'
-                    fieldName='latesttemperature'
-                    disabled={isEncounterStatusClosed || readOnly}
-                    fieldType='number'
-                    record={patientObservationSummary}
-                    setRecord={setPatientObservationSummary}
-                  ></MyInput></Col>
-              </Row>
-              <Row className="rows-gap">
-                <Col md={24}>
-                  <MyInput
-                    fieldLabel='Note'
-                    height='100px'
-                    width='100%'
-                    fieldName='latestnotes'
-                    disabled={isEncounterStatusClosed || readOnly}
-                    fieldType='textarea'
-                    record={patientObservationSummary}
-                    setRecord={setPatientObservationSummary}
-                  ></MyInput></Col>
-              </Row>
-            </div>
-          </Col>
-          <Col md={12}>
-            <Row>
+            <Col md={12}>
               <div className='container-form'>
                 <div className='title-div'>
-                  <Text>Body Measurements</Text>
+                  <Text>Vital Signs</Text>
 
                 </div>
                 <Divider />
+                <Row className="rows-gap">
+                  <Col md={7}>
+                    <MyInput
+                      width='100%'
+                      fieldLabel='BP'
+                      fieldName='latestbpSystolic'
+                      disabled={isEncounterStatusClosed || readOnly}
+                      fieldType='number'
+                      record={patientObservationSummary}
+                      setRecord={setPatientObservationSummary}
+                    >
+                    </MyInput>
+                  </Col>
+                  <Col md={2} >
+                    <div style={{ padding: '20px', paddingTop: '30px' }}>/</div>
+                  </Col>
+                  <Col md={7}>   <MyInput
+                    width='100%'
+                    fieldLabel='mmHg'
+                    fieldName='latestbpDiastolic'
+                    disabled={isEncounterStatusClosed || readOnly}
+                    fieldType='number'
+                    record={patientObservationSummary}
+                    setRecord={setPatientObservationSummary}
+                  ></MyInput></Col>
+                  <Col md={8}>   <div className='container-Column'>
+                    <MyLabel label="MAP" />
+                    <div>
+                      <FontAwesomeIcon icon={faHeartPulse} className='my-icon' />
+                      <text>{
+                        map
+                      }</text></div>
+                  </div></Col>
+                </Row>
 
                 <Row className="rows-gap">
                   <Col md={12}>
                     <MyInput
+
+                      fieldLabel='Pulse'
+                      rightAddon="bpm"
                       width='100%'
-                      fieldLabel='Weight'
-                      fieldName='latestweight'
-                      rightAddon="Kg"
+                      rightAddonwidth={50}
+                      fieldName='latestheartrate'
                       disabled={isEncounterStatusClosed || readOnly}
                       fieldType='number'
                       record={patientObservationSummary}
                       setRecord={setPatientObservationSummary}
                     ></MyInput></Col>
                   <Col md={12}>
-                    <div className='container-Column'>
-                      <MyLabel label="BMI" />
-                      <div>
-                        <FontAwesomeIcon icon={faPerson} className='my-icon' />
-                        <text>{bmi}</text>
-                      </div>
-                    </div>
-                  </Col>
+                    <MyInput
+
+                      fieldLabel='R.R'
+                      rightAddon="bpm"
+                      rightAddonwidth={50}
+                      width='100%'
+                      fieldName='latestrespiratoryrate'
+                      disabled={isEncounterStatusClosed || readOnly}
+                      fieldType='number'
+                      record={patientObservationSummary}
+                      setRecord={setPatientObservationSummary}
+                    ></MyInput></Col>
                 </Row>
                 <Row className="rows-gap">
                   <Col md={12}>
                     <MyInput
+                      fieldLabel='SpO2'
+                      rightAddon="%"
                       width='100%'
-                      fieldLabel='Height'
-                      fieldName='latestheight'
-                      rightAddon="Cm"
-                      disabled={isEncounterStatusClosed || readOnly}
-                      fieldType='number'
-                      record={patientObservationSummary}
-                      setRecord={setPatientObservationSummary}
-                    ></MyInput></Col>
-                  <Col md={12}>
-                    <div className='container-Column'>
-                      <MyLabel label="BSA" />
-                      <div>
-                        <FontAwesomeIcon icon={faChildReaching} className='my-icon' />
-                        <text>{bsa}</text>
-                      </div>
-                    </div>
-                  </Col>
-                </Row>
-                <Row className='rows-gap'>
-                  <Col md={12}>
-                    <MyInput
-                      width='100%'
-                      fieldLabel='Head circumference'
-                      rightAddon="Cm"
                       rightAddonwidth={40}
-                      fieldName='latestheadcircumference'
+                      fieldName='latestoxygensaturation'
                       disabled={isEncounterStatusClosed || readOnly}
                       fieldType='number'
                       record={patientObservationSummary}
-                      setRecord={setPatientObservationSummary} />
-                  </Col>
-                  <Col md={12}></Col>
+                      setRecord={setPatientObservationSummary}
+                    ></MyInput></Col>
+                  <Col md={12}>
+                    <MyInput
+                      fieldLabel='Temp'
+                      rightAddon="°C"
+                      rightAddonwidth={40}
+                      width='100%'
+                      fieldName='latesttemperature'
+                      disabled={isEncounterStatusClosed || readOnly}
+                      fieldType='number'
+                      record={patientObservationSummary}
+                      setRecord={setPatientObservationSummary}
+                    ></MyInput></Col>
                 </Row>
+                <Row className="rows-gap">
+                  <Col md={24}>
+                    <MyInput
+                      fieldLabel='Note'
+                      height='100px'
+                      width='100%'
+                      fieldName='latestnotes'
+                      disabled={isEncounterStatusClosed || readOnly}
+                      fieldType='textarea'
+                      record={patientObservationSummary}
+                      setRecord={setPatientObservationSummary}
+                    ></MyInput></Col>
+                </Row>
+              </div>
+            </Col>
+            <Col md={12}>
+              <Row>
+                <div className='container-form'>
+                  <div className='title-div'>
+                    <Text>Body Measurements</Text>
 
+                  </div>
+                  <Divider />
 
-              </div></Row>
-            <Row>
-              <div className='container-form'>
-                <div className='title-div'>
-                  <Text>Pain Level</Text>
+                  <Row className="rows-gap">
+                    <Col md={12}>
+                      <MyInput
+                        width='100%'
+                        fieldLabel='Weight'
+                        fieldName='latestweight'
+                        rightAddon="Kg"
+                        disabled={isEncounterStatusClosed || readOnly}
+                        fieldType='number'
+                        record={patientObservationSummary}
+                        setRecord={setPatientObservationSummary}
+                      ></MyInput></Col>
+                    <Col md={12}>
+                      <div className='container-Column'>
+                        <MyLabel label="BMI" />
+                        <div>
+                          <FontAwesomeIcon icon={faPerson} className='my-icon' />
+                          <text>{bmi}</text>
+                        </div>
+                      </div>
+                    </Col>
+                  </Row>
+                  <Row className="rows-gap">
+                    <Col md={12}>
+                      <MyInput
+                        width='100%'
+                        fieldLabel='Height'
+                        fieldName='latestheight'
+                        rightAddon="Cm"
+                        disabled={isEncounterStatusClosed || readOnly}
+                        fieldType='number'
+                        record={patientObservationSummary}
+                        setRecord={setPatientObservationSummary}
+                      ></MyInput></Col>
+                    <Col md={12}>
+                      <div className='container-Column'>
+                        <MyLabel label="BSA" />
+                        <div>
+                          <FontAwesomeIcon icon={faChildReaching} className='my-icon' />
+                          <text>{bsa}</text>
+                        </div>
+                      </div>
+                    </Col>
+                  </Row>
+                  <Row className='rows-gap'>
+                    <Col md={12}>
+                      <MyInput
+                        width='100%'
+                        fieldLabel='Head circumference'
+                        rightAddon="Cm"
+                        rightAddonwidth={40}
+                        fieldName='latestheadcircumference'
+                        disabled={isEncounterStatusClosed || readOnly}
+                        fieldType='number'
+                        record={patientObservationSummary}
+                        setRecord={setPatientObservationSummary} />
+                    </Col>
+                    <Col md={12}></Col>
+                  </Row>
+                </div></Row>
+              <Row>
+                <div className='container-form'>
+                  <div className='title-div'>
+                    <Text>Pain Level</Text>
+                  </div>
+                  <Divider />
 
-                </div>
-                <Divider />
-               
                   <Row>
                     <Col md={24}>
                       <MyInput
@@ -453,16 +447,13 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                         setRecord={setPatientObservationSummary} />
                     </Col>
                   </Row>
-
-              </div>
-            </Row>
-          </Col>
-        </Row>
-      </Form>
+                </div>
+              </Row>
+            </Col>
+          </Row>
+        </Form>}
 
     </div>
-
-
   );
 });
 
