@@ -10,6 +10,7 @@ interface BasicInfoTabProps {
   genderLovQueryResponse: any;
   docTypeLovQueryResponse: any;
   countryLovQueryResponse: any;
+  bloodGroupLovQueryResponse:any;
   patientClassLovQueryResponse: any;
   ageFormatType: { ageFormat: string };
   ageGroupValue: { ageGroup: string };
@@ -23,6 +24,7 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
   docTypeLovQueryResponse,
   countryLovQueryResponse,
   patientClassLovQueryResponse,
+  bloodGroupLovQueryResponse,
   ageFormatType,
   ageGroupValue
 }) => {
@@ -173,6 +175,20 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({
             record={localPatient}
             setRecord={setLocalPatient}
             disabled={localPatient.documentTypeLkey === 'NO_DOC'}
+          />
+              <MyInput
+        
+            vr={validationResult}
+            column
+            fieldLabel="Blood Group"
+            fieldType="select"
+            fieldName="bloodGroupLkey"
+            selectData={bloodGroupLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={localPatient}
+            setRecord={setLocalPatient}
+          
           />
         </Form>
       </Stack.Item>
