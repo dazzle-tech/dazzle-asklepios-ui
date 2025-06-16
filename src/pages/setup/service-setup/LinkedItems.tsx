@@ -9,40 +9,42 @@ import MyTable from '@/components/MyTable';
 import MyButton from '@/components/MyButton/MyButton';
 import ChildModal from '@/components/ChildModal';
 import { MdMedicalServices } from 'react-icons/md';
+import { ColumnConfig } from '@/components/MyTable/MyTable';
 const LinkedItems = ({ open, setOpen }) => {
   const [openChildModal, setOpenChildModal] = useState<boolean>(false);
 
   // Icons column (remove)
   const iconsForActions = () => (
-    <div className="container-of-icons-service">
       <MdDelete
         className="icons-service"
         title="Deactivate"
         size={24}
         fill="var(--primary-pink)"
       />
-    </div>
   );
 
-  //Table columns
-  const tableColumns = [
-    {
-      key: 'type',
-      title: <Translate>Type</Translate>,
-      flexGrow: 5
-    },
-    {
-      key: 'name',
-      title: <Translate>Name</Translate>,
-      flexGrow: 5
-    },
-    {
-      key: 'icons',
-      title: <Translate>Remove</Translate>,
-      flexGrow: 1,
-      render: () => iconsForActions(),
-    }
-  ];
+
+
+const tableColumns: ColumnConfig[] = [
+  {
+    key: 'type',
+    title: <Translate>Type</Translate>,
+  //  align: 'right'
+  },
+  {
+    key: 'name',
+    title: <Translate>Name</Translate>,
+    align: 'center'
+  },
+  {
+    key: 'icons',
+    title: <Translate>Remove</Translate>,
+    width: 20,
+    render: () => iconsForActions(),
+    align: 'right'
+  }
+];
+
 
   // Main modal content
   const conjureFormMainContent = (stepNumber = 0) => {
