@@ -53,7 +53,7 @@ const InpatientObservations = ({ localEncounter, localPatient, editable }) => {
                 value: patient?.key
             },
             {
-                fieldName: 'encounter_key',
+                fieldName: 'visit_key',
                 operator: 'match',
                 value: encounter?.key
             }
