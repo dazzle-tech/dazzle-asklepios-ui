@@ -86,7 +86,7 @@ const Encounter = () => {
       navigate('/encounter-list');
     } else {
       setEdit(fromPage === 'PatientEMR' || localEncounter.encounterStatusLvalue.valueCode === "CLOSED");
-       //TODO convert key to code
+      //TODO convert key to code
       if (propsData?.encounter?.resourceTypeLkey === '2039516279378421' || "4217389643435490") {
         // Clinic, then we need to get its resource details
         setMedicalSheetRowSourceKey(propsData?.encounter?.resourceKey);
@@ -169,20 +169,23 @@ const Encounter = () => {
     { key: 'allergies', label: 'Allergies', icon: faPersonDotsFromLine, path: 'allergies' },
     { key: 'medicalWarnings', label: 'Medical Warnings', icon: faTriangleExclamation, path: 'medical-warnings' },
     { key: 'diagnosticsResult', label: 'Diagnostics Test Result', icon: faFileWaveform, path: 'diagnostics-result' },
-    { key: 'cardiology', label: 'Cardiology', icon: faHeartPulse, path: 'cardiology' },
-    { key: 'dentalCare', label: 'Dental Care', icon: faTooth, path: 'dental-care' },
-    { key: 'optometricExam', label: 'Optometric Exam', icon: faEye, path: 'optometric-exam' },
-    { key: 'audiometryPuretone', label: 'Audiometry Puretone', icon: faEarListen, path: 'audiometry' },
-    { key: 'psychologicalExam', label: 'Psychological Exam', icon: faBrain, path: 'psychological-exam' },
+
     { key: 'vaccination', label: 'Vaccination', icon: faSyringe, path: 'vaccination' },
     { key: 'prescription', label: 'Prescription', icon: faFilePrescription, path: 'prescription' },
+    { key: 'drugOrder', label: 'Drug Order', icon: faPills, path: 'drug-order' },
     { key: 'diagnosticsOrder', label: 'Diagnostics Order', icon: faVials, path: 'diagnostics-order' },
     { key: 'consultation', label: 'Consultation', icon: faStethoscope, path: 'consultation' },
-    { key: 'drugOrder', label: 'Drug Order', icon: faPills, path: 'drug-order' },
+
     { key: 'procedures', label: 'Procedures', icon: faNotesMedical, path: 'procedures' },
     { key: 'patientHistory', label: 'Patient History', icon: faClockRotateLeft, path: 'patient-history' },
     { key: 'medicationsRecord', label: 'Medications Record', icon: faPills, path: 'medications-record' },
     { key: 'vaccineReccord', label: 'Vaccine Record', icon: faSyringe, path: 'vaccine-record' },
+
+    { key: 'cardiology', label: 'Cardiology', icon: faHeartPulse, path: 'cardiology' },
+    { key: 'dentalCare', label: 'Dental Care', icon: faTooth, path: 'dental-care' },
+    { key: 'optometricExam', label: 'Optometric Exam', icon: faEye, path: 'optometric-exam' },
+    { key: 'audiometryPuretone', label: 'ENT', icon: faEarListen, path: 'audiometry' },
+    { key: 'psychologicalExam', label: 'Psychological Exam', icon: faBrain, path: 'psychological-exam' },
 
   ];
   const [currentHeader, setCurrentHeader] = useState();
