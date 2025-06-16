@@ -156,9 +156,10 @@ const LaboratoryResultComparison = ({ patient }) => {
             <Row>
 
                 <Form fluid>
-                    <Col md={7}>
+                   
+                    <Col md={5}>
                         <MyInput
-                            column
+                      
                             width="100%"
                             fieldType="date"
                             fieldLabel="From Date"
@@ -167,10 +168,10 @@ const LaboratoryResultComparison = ({ patient }) => {
                             setRecord={setDateFilter}
                         />
                     </Col>
-                    <Col md={7}>
+                    <Col md={5}>
                         <MyInput
                             width="100%"
-                            column
+                          
                             fieldType="date"
                             fieldLabel=" To Date"
                             fieldName="toDate"

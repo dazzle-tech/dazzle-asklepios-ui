@@ -1,33 +1,34 @@
+import ChatModal from "@/components/ChatModal";
+import MyInput from "@/components/MyInput";
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import { useAppDispatch } from "@/hooks";
+import { useGetEncounterByIdQuery } from "@/services/encounterService";
 import { useGetDiagnosticOrderTestResultQuery, useGetOrderTestResultNotesByResultIdQuery, useSaveDiagnosticOrderTestResultMutation, useSaveDiagnosticOrderTestResultsNotesMutation } from "@/services/labService";
 import { useGetPatientByIdQuery } from "@/services/patientService";
-import { useGetEncounterByIdQuery } from "@/services/encounterService";
 import { useGetDiagnosticsTestLaboratoryListQuery, useGetLovAllValuesQuery } from "@/services/setupService";
 import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsResult, newApDiagnosticOrderTestsResultNotes, newApDiagnosticTestLaboratory } from "@/types/model-types-constructor";
 import { initialListRequest, initialListRequestAllValues, ListRequest } from "@/types/types";
+import { addFilterToListRequest, formatDateWithoutSeconds } from '@/utils';
 import { notify } from "@/utils/uiReducerActions";
 import { faArrowDown, faArrowUp, faCircleExclamation, faComment, faStar, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { addFilterToListRequest, formatDate } from '@/utils';
+import { update } from "lodash";
 import React, { useEffect, useState } from "react";
-import { Form, HStack, Tooltip, Whisper } from "rsuite";
-import ChatModal from "@/components/ChatModal";
-import MyModal from "@/components/MyModal/MyModal";
-import MyInput from "@/components/MyInput";
+import { Checkbox, Form, HStack, Tooltip, Whisper } from "rsuite";
 const Results = ({ setEncounter, setPatient, user }) => {
     const dispatch = useAppDispatch();
     const [result, setResult] = useState<any>({ ...newApDiagnosticOrderTestsResult });
     const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
+    const [showReview, setShowReview] = useState(true);
     const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
     const [dateFilter, setDateFilter] = useState({
-        fromDate:null,
-        toDate:null
+        fromDate: null,
+        toDate: null
     });
     const [dateOrderFilter, setDateOrderFilter] = useState({
         fromDate: null,
-        toDate:null
+        toDate: null
     });
     const { data: patientData, isLoading: isPatientLoading } = useGetPatientByIdQuery(test?.order?.patientKey, { skip: !test?.order?.patientKey });
     const { data: encounterData, isLoading: isEncounterLoading } = useGetEncounterByIdQuery(test?.order?.encounterKey, { skip: !test?.order?.encounterKey });
@@ -45,18 +46,24 @@ const Results = ({ setEncounter, setPatient, user }) => {
         ...initialListRequest,
         sortBy: "createdAt",
         sortType: 'desc',
-       
+
         filters: [
             {
                 fieldName: "status_lkey",
                 operator: 'match',
                 value: "265089168359400",
+            },
+            {
+                fieldName: "review_at",
+                operator: showReview ? "match" : "notMatch",
+                value: "0"
+
             }
 
 
         ],
     });
-
+console.log("list req",listResultResponse?.filters)
     const { data: resultsList, refetch: resultFetch, isLoading: resultLoding, isFetching: featchingTest } = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
     const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
     const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
@@ -109,34 +116,54 @@ const Results = ({ setEncounter, setPatient, user }) => {
                         fieldName: "status_lkey",
                         operator: 'match',
                         value: "265089168359400",
+                    },
+                    {
+                        fieldName: "review_at",
+                        operator: showReview ? "match" : "notMatch",
+                        value: "0"
+
                     }
                 ]
             });
         }
     }, [dateFilter.fromDate, dateFilter.toDate]);
-  
-    useEffect(() => {
-    
-        if((dateOrderFilter.fromDate !==null )&& (dateOrderFilter.toDate !==null)){
-           
-        const filtered = resultsList?.object?.filter(
-            item => item.test?.order?.createdAt >= dateOrderFilter.fromDate && item.test?.order?.createdAt <= dateOrderFilter.toDate
-        );
 
-       
-        const value = filtered?.map(order => `(${order.key})`)
-            .join(" ");
-       
-        setListResultResponse(
-            addFilterToListRequest(
-                'key',
-                'in',
-                value,
-                listResultResponse
-            )
-        );}
+    useEffect(() => {
+
+        if ((dateOrderFilter.fromDate !== null) && (dateOrderFilter.toDate !== null)) {
+
+            const filtered = resultsList?.object?.filter(
+                item => item.test?.order?.createdAt >= dateOrderFilter.fromDate && item.test?.order?.createdAt <= dateOrderFilter.toDate
+            );
+
+
+            const value = filtered?.map(order => `(${order.key})`)
+                .join(" ");
+
+            setListResultResponse(
+                addFilterToListRequest(
+                    'key',
+                    'in',
+                    value,
+                    listResultResponse
+                )
+            );
+        }
     }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
-   
+ useEffect(() => {
+    console.log("show", showReview);
+
+    setListResultResponse(prev => ({
+        ...prev,
+        filters: prev.filters.map(filter =>
+            filter.fieldName === "review_at"
+                ? { ...filter, operator: showReview ? "match" : "notMatch" }
+                : filter
+        ),
+    }));
+
+    resultFetch();
+}, [showReview]);
     const joinValuesFromArray = (keys) => {
 
         return keys
@@ -159,6 +186,13 @@ const Results = ({ setEncounter, setPatient, user }) => {
     };
     const tableColomns = [
         {
+            key: "patientName",
+            title: <Translate>Patient Name</Translate>,
+            render: (rowData: any) => {
+                return rowData.test?.order?.patient?.fullName
+            }
+        },
+        {
             key: "orderId",
             title: <Translate>ORDER ID</Translate>,
             flexGrow: 1,
@@ -167,6 +201,14 @@ const Results = ({ setEncounter, setPatient, user }) => {
                 return rowData.test?.orderId;
             }
         },
+        {
+            key: "approvedAt",
+            title: <Translate>Result Date</Translate>,
+            render: (rowData: any) => {
+                return formatDateWithoutSeconds(rowData.approvedAt)
+            }
+        },
+
         {
             key: "testName",
             title: <Translate>TEST NAME</Translate>,
@@ -429,6 +471,15 @@ const Results = ({ setEncounter, setPatient, user }) => {
                     record={dateOrderFilter}
                     setRecord={setDateOrderFilter}
                 />
+               
+                <Checkbox
+                style={{marginTop:"20px"}}
+                    checked={!showReview}
+                    onChange={() => {
+                        setShowReview(!showReview);
+                    }}>
+                    Show Review Result
+                </Checkbox>
             </Form>
         );
     };
