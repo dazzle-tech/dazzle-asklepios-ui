@@ -20,7 +20,7 @@ const PreObservation=({patient})=>{
  const { data: getObservationSummaries } = useGetObservationSummariesQuery({
     ...listRequest,
   });
-  console.log("pre",getObservationSummaries)
+
   const columns=[
     {
         key:"visitKey",
