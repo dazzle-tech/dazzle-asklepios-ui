@@ -184,7 +184,7 @@ const Encounter = () => {
     { key: 'cardiology', label: 'Cardiology', icon: faHeartPulse, path: 'cardiology' },
     { key: 'dentalCare', label: 'Dental Care', icon: faTooth, path: 'dental-care' },
     { key: 'optometricExam', label: 'Optometric Exam', icon: faEye, path: 'optometric-exam' },
-    { key: 'audiometryPuretone', label: 'Audiometry Puretone', icon: faEarListen, path: 'audiometry' },
+    { key: 'audiometryPuretone', label: 'ENT', icon: faEarListen, path: 'audiometry' },
     { key: 'psychologicalExam', label: 'Psychological Exam', icon: faBrain, path: 'psychological-exam' },
 
   ];
