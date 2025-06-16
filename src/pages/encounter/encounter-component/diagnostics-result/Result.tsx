@@ -19,8 +19,8 @@ const Result = ({ patient, user }) => {
     const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
     const [labDetails, setLabDetails] = useState<any>({ ...newApDiagnosticTestLaboratory });
     const [dateOrderFilter, setDateOrderFilter] = useState({
-        fromDate: null,
-        toDate: null
+        fromDate: new Date(),
+        toDate: new Date()
     });
     const [listResultResponse, setListResultResponse] = useState<ListRequest>({
         ...initialListRequest,
@@ -35,7 +35,7 @@ const Result = ({ patient, user }) => {
             {
                 fieldName: "review_at",
                 operator: 'notMatch',
-                value: "0",
+                value: 0,
             }
         ],
     });
@@ -43,6 +43,7 @@ const Result = ({ patient, user }) => {
     const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
     const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
     const { data: resultsList, refetch: resultFetch, isLoading: resultLoding, isFetching: featchingTest } = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
+    console.log("result loading",resultLoding,"fetch",featchingTest)
     const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
     const { data: messagesResultList, refetch: fecthResultNotes } = useGetOrderTestResultNotesByResultIdQuery(result?.key || undefined, { skip: result.key == null });
     const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
@@ -62,135 +63,52 @@ const Result = ({ patient, user }) => {
         setTest({ ...result?.test });
     }, [result]);
 
-    useEffect(() => {
-        console.log("list request:", listResultResponse)
-    }, [listResultResponse])
 
-    useEffect(() => {
-        console.log("in effect")
-        if (dateOrderFilter.fromDate && dateOrderFilter.toDate) {
-            console.log("in range")
-            const fromDate = new Date(dateOrderFilter.fromDate);
-            fromDate.setHours(0, 0, 0, 0);
-           
+ useEffect(() => {
+  setListResultResponse(prev => ({
+    ...prev,
+    filters: [
+      {
+        fieldName: "patient_key",
+        operator: "match",
+        value: patient?.key,
+      },
+      {
+        fieldName: "review_at",
+        operator: "notMatch",
+        value: 0,
+      },
+    ],
+  }));
+}, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
+useEffect(() => {
+  if (!resultLoding && resultsList?.object?.length) {
+    const fromDate = dateOrderFilter.fromDate
+      ? new Date(dateOrderFilter.fromDate)
+      : null;
+    const toDate = dateOrderFilter.toDate
+      ? new Date(dateOrderFilter.toDate)
+      : null;
 
-            const toDate = new Date(dateOrderFilter.toDate);
-            toDate.setHours(23, 59, 59, 999);
-            
-            const filtered = resultsList.object.filter(item => {
-                const createdAt = new Date(item.test?.order?.createdAt);
-                console.log(item.test?.order?.createdAt, ">=", fromDate)
-                console.log(item.test?.order?.createdAt, "<=", toDate)
-                return item.test?.order?.createdAt>= fromDate.getTime() && item.test?.order?.createdAt <= toDate.getTime();
-            });
-            const value = filtered.map(order => `(${order.key})`).join(" ");
-            if (value) {
-                setListResultResponse(
-                    addFilterToListRequest(
-                        'key',
-                        'in',
-                        value,
-                        listResultResponse
-                    )
-                );
-            }
-            else {
-                setListResultResponse(
-                    addFilterToListRequest(
-                        'key',
-                        'in',
-                        '("")',
-                        listResultResponse
-                    )
-                );
-            }
+    if (fromDate) fromDate.setHours(0, 0, 0, 0);
+    if (toDate) toDate.setHours(23, 59, 59, 999);
 
-        }
-        else if (dateOrderFilter.fromDate) {
-             console.log("in from")
-            const fromDate = new Date(dateOrderFilter.fromDate);
-            fromDate.setHours(0, 0, 0, 0);
-            fromDate.getTime();
-            const filtered = resultsList.object.filter(item => {
-                const createdAt = new Date(item.test?.order?.createdAt);
-                 console.log(createdAt ,">=",fromDate)
-                return item.test?.order?.createdAt>= fromDate.getTime() ;
-            });
-            const value = filtered.map(order => `(${order.key})`).join(" ");
-            if (value) {
-                setListResultResponse(
-                    addFilterToListRequest(
-                        'key',
-                        'in',
-                        value,
-                        listResultResponse
-                    )
-                );
-            }
-            else {
-                setListResultResponse(
-                    addFilterToListRequest(
-                        'key',
-                        'in',
-                        '("")',
-                        listResultResponse
-                    )
-                );
-            }
+    const filtered = resultsList.object.filter(item => {
+      const createdAt = new Date(item.test?.order?.createdAt);
+      return (
+        (!fromDate || createdAt >= fromDate) &&
+        (!toDate || createdAt <= toDate)
+      );
+    });
 
+    const value = filtered.map(order => `(${order.key})`).join(" ") || '("")';
 
-        }
-        else if (dateOrderFilter.toDate) {
-             console.log("in to")
-            const toDate = new Date(dateOrderFilter.toDate);
-            toDate.setHours(23, 59, 59, 999);
-            toDate.getTime();
-            const filtered = resultsList.object.filter(item => {
-                const createdAt = new Date(item.test?.order?.createdAt);
-                 console.log(createdAt, "<=", toDate)
-                return item.test?.order?.createdAt <= toDate.getTime();
-            });
-            const value = filtered.map(order => `(${order.key})`).join(" ");
-            if (value) {
-                setListResultResponse(
-                    addFilterToListRequest(
-                        'key',
-                        'in',
-                        value,
-                        listResultResponse
-                    )
-                );
-            }
-            else {
-                setListResultResponse(
-                    addFilterToListRequest(
-                        'key',
-                        'in',
-                        '("")',
-                        listResultResponse
-                    )
-                );
-            }
+    setListResultResponse(prev =>
+      addFilterToListRequest("key", "in", value, prev)
+    );
+  }
+}, [dateOrderFilter, resultLoding, resultsList]);
 
-        }
-        else {
-             console.log("in else")
-            setListResultResponse({
-                ...listResultResponse,
-                filters: [{
-                    fieldName: "patient_key",
-                    operator: 'match',
-                    value: patient?.key,
-                },
-                {
-                    fieldName: "review_at",
-                    operator: 'notMatch',
-                    value: "0",
-                }]
-            })
-
-        }
-    }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate, resultsList?.object]);
     const joinValuesFromArray = (keys) => {
 
         return keys
@@ -398,7 +316,7 @@ const Result = ({ patient, user }) => {
             },
         },
         {
-            key: "",
+            key: "reviewAt",
             title: <Translate>Review At/By</Translate>,
             expandable: true,
             render: (rowData: any) => {

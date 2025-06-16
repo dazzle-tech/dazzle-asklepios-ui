@@ -63,7 +63,6 @@ const Results = ({ setEncounter, setPatient, user }) => {
 
         ],
     });
-console.log("list req",listResultResponse?.filters)
     const { data: resultsList, refetch: resultFetch, isLoading: resultLoding, isFetching: featchingTest } = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
     const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
     const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
@@ -151,7 +150,7 @@ console.log("list req",listResultResponse?.filters)
         }
     }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
  useEffect(() => {
-    console.log("show", showReview);
+
 
     setListResultResponse(prev => ({
         ...prev,

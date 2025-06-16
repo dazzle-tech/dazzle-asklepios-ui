@@ -185,37 +185,36 @@ const LaboratoryResultComparison = (
             }
         }
     ]
-    return (<>
-        <Row>
-            <Row>
-
-                <Form fluid>
-
-                    <Col md={5}>
+    const filters=()=>{
+         return (
+        <Form layout="inline" fluid className="date-filter-form">             
                         <MyInput
-
-                            width="100%"
+                            column
+                            width={150}
                             fieldType="date"
                             fieldLabel="From Date"
                             fieldName="fromDate"
                             record={dateFilter}
                             setRecord={setDateFilter}
                         />
-                    </Col>
-                    <Col md={5}>
+                  
                         <MyInput
-                            width="100%"
-
+                            width={150}
+                            column
                             fieldType="date"
                             fieldLabel=" To Date"
                             fieldName="toDate"
                             record={dateFilter}
                             setRecord={setDateFilter}
-                        /></Col>
-                </Form>
-            </Row>
+                        />
+                </Form>);
+    }
+    return (<>
+        <Row>
+            
             <Col md={10}>
                 <MyTable
+               filters={filters()}
                     columns={testColumns}
                     data={testList || []}
                     onRowClick={rowData => {
