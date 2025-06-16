@@ -15,19 +15,20 @@ import { notify } from "@/utils/uiReducerActions";
 import { faComment, faFileLines, faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useRef, useState } from "react";
-import { Col, Form, HStack, Row, Tooltip, Whisper } from "rsuite";
+import { Checkbox, Col, Form, HStack, Row, Tooltip, Whisper } from "rsuite";
 import { addFilterToListRequest, formatDate } from '@/utils';
 const ReviewReport = ({ setEncounter, setPatient, user }) => {
     const [openReportModal, setOpenReportModal] = useState(false);
     const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
+    const [showReview, setShowReview] = useState(true);
     const [dateFilter, setDateFilter] = useState({
-           fromDate:null,
-           toDate:null
-       });
-       const [dateOrderFilter, setDateOrderFilter] = useState({
-           fromDate: null,
-           toDate:null
-       });
+        fromDate: null,
+        toDate: null
+    });
+    const [dateOrderFilter, setDateOrderFilter] = useState({
+        fromDate: null,
+        toDate: null
+    });
     const [saveReportNote] = useSaveDiagnosticOrderTestReportNotesMutation();
     const [report, setReport] = useState<any>({ ...newApDiagnosticOrderTestsRadReport });
     const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
@@ -42,7 +43,14 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
                 fieldName: "status_lkey",
                 operator: 'match',
                 value: "265089168359400",
+            },
+            {
+                fieldName: "review_at",
+                operator: showReview ? "match" : "notMatch",
+                value: "0"
+
             }
+
         ]
     });
     const isSelected = rowData => {
@@ -77,27 +85,29 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
     useEffect(() => {
         setTest({ ...report?.test });
     }, [report]);
-       useEffect(() => {
-        
-            if((dateOrderFilter.fromDate !==null )&& (dateOrderFilter.toDate !==null)){
-               
+    useEffect(() => {
+
+        if ((dateOrderFilter.fromDate !== null) && (dateOrderFilter.toDate !== null)) {
+
             const filtered = reportList?.object?.filter(
                 item => item.test?.order?.createdAt >= dateOrderFilter.fromDate && item.test?.order?.createdAt <= dateOrderFilter.toDate
             );
-    
-           
+
+
             const value = filtered?.map(order => `(${order.key})`)
                 .join(" ");
-           
-           setListReportResponse(
+
+            setListReportResponse(
                 addFilterToListRequest(
                     'key',
                     'in',
                     value,
-                   listReportResponse
+                    listReportResponse
                 )
-            );}
-        }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
+            );
+        }
+    }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
+
     useEffect(() => {
 
         if (dateFilter.fromDate && dateFilter.toDate) {
@@ -129,11 +139,31 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
                         operator: 'match',
                         value: "265089168359400",
                     }
+                    ,
+                    {
+                        fieldName: "review_at",
+                        operator: showReview ? "match" : "notMatch",
+                        value: "0"
+
+                    }
+
                 ]
             });
         }
     }, [dateFilter.fromDate, dateFilter.toDate]);
 
+     useEffect(() => {
+       setListReportResponse(prev => ({
+            ...prev,
+            filters: prev.filters.map(filter =>
+                filter.fieldName === "review_at"
+                    ? { ...filter, operator: showReview ? "match" : "notMatch" }
+                    : filter
+            ),
+        }));
+    
+        reportFetch();
+    }, [showReview]);
     const handleSendResultMessage = async value => {
         try {
             await saveReportNote({
@@ -244,8 +274,8 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
         ,
         ,
         {
-            key: "",
-            dataKey: "",
+            key: "action",
+            
             title: <Translate>ACTION</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
@@ -267,7 +297,7 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
                                 }}
                                 onClick={async () => {
                                     try {
-                                        await saveReport({ ...report, reviewAt: Date.now(), reviewBy:user }).unwrap();
+                                        await saveReport({ ...report, reviewAt: Date.now(), reviewBy: user }).unwrap();
                                         dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
                                         reportFetch();
                                     } catch (error) {
@@ -361,6 +391,14 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
                     record={dateOrderFilter}
                     setRecord={setDateOrderFilter}
                 />
+                  <Checkbox
+                style={{marginTop:"20px"}}
+                    checked={!showReview}
+                    onChange={() => {
+                        setShowReview(!showReview);
+                    }}>
+                    Show Review Result
+                </Checkbox>
             </Form>
         );
     };
