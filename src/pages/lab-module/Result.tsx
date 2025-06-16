@@ -31,6 +31,8 @@ import CancellationModal from "@/components/CancellationModal";
 import SampleModal from "./SampleModal";
 import LogResult from "./LogResult";
 import MyInput from "@/components/MyInput";
+import LaboratoryResultComparison from "../encounter/encounter-component/diagnostics-result/LaboratoryResultComparison";
+import MyModal from "@/components/MyModal/MyModal";
 type ResultProps = {
     test: any;
     setTest: any;
@@ -56,6 +58,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
     const [activeRowKey, setActiveRowKey] = useState(null);
     const [openSampleModal, setOpenSampleModal] = useState(false);
     const [openLogModal, setOpenLogModal] = useState(false);
+    const[openCopmarisonModal,setOpenComparisonModal]=useState(false)
     const [openRejectedResultModal, setOpenRejectedResultModal] = useState(false);
     const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
     const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
@@ -665,7 +668,7 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
             render: (rowData: any) => {
                 return <HStack spacing={10}>
 
-                    <FontAwesomeIcon icon={faDiagramPredecessor} style={{ fontSize: '1em' }} />
+                    <FontAwesomeIcon icon={faDiagramPredecessor} style={{ fontSize: '1em' }}  onClick={()=>setOpenComparisonModal(true)}/>
 
                 </HStack>;
 
@@ -940,6 +943,15 @@ const Result = forwardRef<unknown, ResultProps>(({ test, setTest, saveTest, resu
             } object={test} setObject={setTest} fieldLabel={"Reject Reason"} title="Reject" />
         <SampleModal open={openSampleModal} setOpen={setOpenSampleModal} samplesList={samplesList} labDetails={labDetails} saveTest={saveTest} test={test} setTest={setTest} fetchTest={fetchTest} fecthSample={fecthSample} />
         <LogResult open={openLogModal} setOpen={setOpenLogModal} result={result} />
+        <MyModal 
+        open={openCopmarisonModal}
+        setOpen={setOpenComparisonModal}
+        size="60vw"
+        bodyheight="50vh"
+        title="Patient Prev Results"
+        steps={[{title:"Comparison",icon:<FontAwesomeIcon icon={faDiagramPredecessor}/>}]}
+        content={<LaboratoryResultComparison patient={patient} testKey={result?.medicalTestKey}/>}/>
+        
     </Panel>
 
     );
