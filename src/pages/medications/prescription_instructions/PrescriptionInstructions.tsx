@@ -1,82 +1,268 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
+import { Panel } from 'rsuite';
+import { FaUndo } from 'react-icons/fa';
+import { MdModeEdit } from 'react-icons/md';
+import { MdDelete } from 'react-icons/md';
 import {
   useGetPrescriptionInstructionQuery,
   useSavePrescriptionInstructionMutation,
-  useRemovePrescriptionInstructionMutation
 } from '@/services/medicationsSetupService';
-import{
-  useGetLovValuesByCodeQuery
-}from '@/services/setupService';
-import { Button, ButtonToolbar, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
 import { ApPrescriptionInstruction } from '@/types/model-types';
 import { newApPrescriptionInstruction } from '@/types/model-types-constructor';
-import { Form, Stack, Divider } from 'rsuite';
+import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+import MyTable from '@/components/MyTable';
+import MyButton from '@/components/MyButton/MyButton';
+import AddEditPrescriptionInstructions from './AddEditPrescriptionInstructions';
+import { notify } from '@/utils/uiReducerActions';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import './styles.less';
 const PrescriptionInstructions = () => {
   const dispatch = useAppDispatch();
-  const [prescriptionInstructions, setPrescriptionInstructions] = useState<ApPrescriptionInstruction>({ ...newApPrescriptionInstruction });
+  const [prescriptionInstructions, setPrescriptionInstructions] =
+    useState<ApPrescriptionInstruction>({ ...newApPrescriptionInstruction });
   const [popupOpen, setPopupOpen] = useState(false);
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const [savePrescriptionInstruction, savePrescriptionInstructionMutation] = useSavePrescriptionInstructionMutation();
-  const [removePrescriptionInstruction, removePrescriptionInstructionMutation] = useRemovePrescriptionInstructionMutation();
-  const { data: prescriptionInstructionListResponse } = useGetPrescriptionInstructionQuery(listRequest);
-  const { data: ageGroupLovQueryResponse} = useGetLovValuesByCodeQuery('AGE_GROUPS'); 
-  const { data: uomLovQueryResponse} = useGetLovValuesByCodeQuery('UOM');  
-  const { data: medRoutLovQueryResponse} = useGetLovValuesByCodeQuery('MED_ROA');  
-  const { data: medFreqLovQueryResponse} = useGetLovValuesByCodeQuery('MED_FREQUENCY');  
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const [openConfirmDeletePrescriptionInstruction, setOpenConfirmDeletePrescriptionInstruction] =
+    useState<boolean>(false);
+  const [stateOfDeletePrescriptionInstruction, setStateOfDeletePrescriptionInstruction] =
+    useState<string>('delete');
+  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
+  const [width, setWidth] = useState<number>(window.innerWidth);
+  // Fetch  prescription instruction list response
+  const { data: prescriptionInstructionListResponse, isFetching } =
+    useGetPrescriptionInstructionQuery(listRequest);
+  // save prescription instruction
+  const [savePrescriptionInstruction, savePrescriptionInstructionMutation] =
+    useSavePrescriptionInstructionMutation();
+
+  // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = prescriptionInstructionListResponse?.extraNumeric ?? 0;
+  // Available fields for filtering
+  const filterFields = [
+    { label: 'Category', value: 'categoryLkey' },
+    { label: 'Dose', value: 'dose' },
+    { label: 'Unit', value: 'unitLkey' },
+    { label: 'Rout', value: 'routLkey' },
+    { label: 'Frequency', value: 'frequencyLkey' },
+    { label: 'Status', value: 'deleted_at' }
+  ];
+ // Header page setUp
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className='title-prescription'>
       <h5>Prescription Instructions</h5>
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Prescription_Instructions'));
   dispatch(setDivContent(divContentHTML));
-  const handleNew = () => {
-    setPrescriptionInstructions({...newApPrescriptionInstruction})
-    setPopupOpen(true);
-  };
-
-  const handleSave = () => {
-    setPopupOpen(false);
-    savePrescriptionInstruction(prescriptionInstructions).unwrap();
-  };
-
-  const handleDelete = () => {
-    if (prescriptionInstructions.key) {
-      removePrescriptionInstruction({
-        ...prescriptionInstructions,
-      }).unwrap();
-    }
-  };
-
-
-  useEffect(() => {
-    if (savePrescriptionInstructionMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [savePrescriptionInstructionMutation.data]);
-
-  const isSelected = rowData => {
+   // class name for selected row
+   const isSelected = rowData => {
     if (rowData && prescriptionInstructions && rowData.key === prescriptionInstructions.key) {
       return 'selected-row';
     } else return '';
   };
 
+  // Filter table
+  const filters = () => (
+    <Form layout="inline" fluid className="container-of-filter-fields-prescription">
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={recordOfFilter}
+        setRecord={updatedRecord => {
+          setRecordOfFilter({
+            ...recordOfFilter,
+            filter: updatedRecord.filter,
+            value: ''
+          });
+        }}
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+      />
+      <MyInput
+        fieldName="value"
+        fieldType="text"
+        record={recordOfFilter}
+        setRecord={setRecordOfFilter}
+        showLabel={false}
+        placeholder="Search"
+      />
+    </Form>
+  );
+
+  // Icons column (Edit, reactive/Deactivate)
+  const iconsForActions = (rowData: ApPrescriptionInstruction) => (
+    <div className="container-of-icons-prescription">
+      <MdModeEdit
+        className="icons-prescription"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => setPopupOpen(true)}
+      />
+      {rowData?.isValid ? (
+        <MdDelete
+          className="icons-prescription"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            setStateOfDeletePrescriptionInstruction('deactivate');
+            setOpenConfirmDeletePrescriptionInstruction(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-prescription"
+          title="Activate"
+          size={24}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setStateOfDeletePrescriptionInstruction('reactivate');
+            setOpenConfirmDeletePrescriptionInstruction(true);
+          }}
+        />
+      )}
+    </div>
+  );
+
+  //Table columns
+  const tableColumns = [
+    {
+      key: 'categoryLkey',
+      title: <Translate>Category</Translate>,
+      render: rowData =>
+        rowData.categoryLvalue ? rowData.categoryLvalue.lovDisplayVale : rowData.categoryLkey
+    },
+    {
+      key: 'dose',
+      title: <Translate>Dose</Translate>
+    },
+    {
+      key: 'unitLkey',
+      title: <Translate>Unit</Translate>,
+      render: rowData => (rowData.unitLvalue ? rowData.unitLvalue.lovDisplayVale : rowData.unitLkey)
+    },
+    {
+      key: 'routLkey',
+      title: <Translate>Rout</Translate>,
+      render: rowData => (rowData.routLvalue ? rowData.routLvalue.lovDisplayVale : rowData.routLkey)
+    },
+    {
+      key: 'frequencyLkey',
+      title: <Translate>Frequency</Translate>,
+      flexGrow: 4,
+      render: rowData =>
+        rowData.frequencyLvalue ? rowData.frequencyLvalue.lovDisplayVale : rowData.frequencyLkey
+    },
+    {
+      key: 'deleted_at',
+      title: <Translate>Status</Translate>,
+      render: rowData => (rowData.deletedAt === null ? 'Active' : 'InActive')
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      flexGrow: 3,
+      render: rowData => iconsForActions(rowData)
+    }
+  ];
+  
+  // handle click on add new button
+  const handleNew = () => {
+    setPrescriptionInstructions({ ...newApPrescriptionInstruction });
+    setPopupOpen(true);
+  };
+
+  // handle save prescription instruction
+  const handleSave = () => {
+    setPopupOpen(false);
+    savePrescriptionInstruction(prescriptionInstructions)
+      .unwrap()
+      .then(() => {
+        dispatch(
+          notify({
+            msg: 'The Prescription Instruction has been saved successfully',
+            sev: 'success'
+          })
+        );
+      })
+      .catch(() => {
+        dispatch(notify({ msg: 'Failed to save this Prescription Instruction', sev: 'error' }));
+      });
+  };
+
+  // handle deactivate prescription instruction
+  const handleDeactivate = () => {
+    setOpenConfirmDeletePrescriptionInstruction(false);
+    savePrescriptionInstruction({ ...prescriptionInstructions, isValid: false })
+      .unwrap()
+      .then(() => {
+        dispatch(
+          notify({
+            msg: 'The Prescription Instruction was successfully Deactivated',
+            sev: 'success'
+          })
+        );
+      })
+      .catch(() => {
+        dispatch(
+          notify({
+            msg: 'Faild to Deactivate this Prescription Instruction',
+            sev: 'error'
+          })
+        );
+      });
+  };
+  // handle reactivate prescription instruction
+  const handleReactivate = () => {
+    setOpenConfirmDeletePrescriptionInstruction(false);
+    savePrescriptionInstruction({ ...prescriptionInstructions, isValid: true })
+      .unwrap()
+      .then(() => {
+        dispatch(
+          notify({
+            msg: 'The Prescription Instruction was successfully Reactivated',
+            sev: 'success'
+          })
+        );
+      })
+      .catch(() => {
+        dispatch(
+          notify({
+            msg: 'Faild to Reactivate this Prescription Instruction',
+            sev: 'error'
+          })
+        );
+      });
+  };
+  // Handle page change in navigation
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+  // Handle change rows per page in navigation
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
+    });
+  };
+  // handle filter change
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -91,201 +277,91 @@ const PrescriptionInstructions = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
+  // Effects
+  // change the width variable when the size of window is changed
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // update list when the filter is changed
+  useEffect(() => {
+    if (recordOfFilter['filter']) {
+      handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
+    } else {
+      setListRequest({
+        ...initialListRequest,
+        pageSize: listRequest.pageSize,
+        pageNumber: 1
+      });
+    }
+  }, [recordOfFilter]);
+  
+  // update list when save prescription instruction
+  useEffect(() => {
+    if (savePrescriptionInstructionMutation.data) {
+      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+    }
+  }, [savePrescriptionInstructionMutation.data]);
+  
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent("  "));
+      dispatch(setDivContent('  '));
     };
-  }, [location.pathname, dispatch])
+  }, [location.pathname, dispatch]);
+
   return (
     <Panel>
-      <ButtonToolbar>
-        <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
-          Add New
-        </IconButton>
-        <IconButton
-          disabled={!prescriptionInstructions.key || prescriptionInstructions.deletedAt !== null}
-          appearance="primary"
-          onClick={() => setPopupOpen(true)}
-          color="green"
-          icon={<EditIcon />}
+      <div className="container-of-add-new-button-prescription">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleNew}
+          width="109px"
         >
-          Edit Selected
-        </IconButton>
-        <IconButton
-            disabled={!prescriptionInstructions.key || prescriptionInstructions.deletedAt !== null}
-            appearance="primary"
-            color="red"
-            onClick={handleDelete}
-            icon={<TrashIcon />}
-          >
-            Deactivate
-          </IconButton>
-      </ButtonToolbar>
-      <hr />
-      <Table
-        height={400}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortColumn={(sortBy, sortType) => {
-          if (sortBy)
-            setListRequest({
-              ...listRequest,
-              sortBy,
-              sortType
-            });
-        }}
-        headerHeight={80}
-        rowHeight={60}
-        bordered
-        cellBordered
+          Add New
+        </MyButton>
+      </div>
+      <MyTable
+        height={450}
         data={prescriptionInstructionListResponse?.object ?? []}
+        loading={isFetching}
+        columns={tableColumns}
+        rowClassName={isSelected}
+        filters={filters()}
         onRowClick={rowData => {
           setPrescriptionInstructions(rowData);
         }}
-         rowClassName={isSelected}
-      >
-        <Column sortable flexGrow={2}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('categoryLkey', e)} />
-            <Translate>Category</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData => 
-              rowData.categoryLvalue ? rowData.categoryLvalue.lovDisplayVale : rowData.categoryLkey
-            }
-          </Cell>
-        </Column>
-        <Column sortable flexGrow={2}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('dose', e)} />
-            <Translate>Dose</Translate>
-          </HeaderCell>
-          <Cell dataKey="dose" />
-        </Column> 
-        <Column sortable flexGrow={2}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('unitLkey', e)} />
-            <Translate>Unit</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.unitLvalue ? rowData.unitLvalue.lovDisplayVale : rowData.unitLkey
-            }
-          </Cell>
-        </Column>
-        <Column sortable flexGrow={3}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('routLkey', e)} />
-            <Translate>Rout</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.routLvalue ? rowData.routLvalue.lovDisplayVale : rowData.routLkey
-            }
-          </Cell>
-        </Column> 
-        <Column sortable flexGrow={3}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('frequencyLkey', e)} />
-            <Translate>Frequency</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.frequencyLvalue ? rowData.frequencyLvalue.lovDisplayVale : rowData.frequencyLkey
-            }
-          </Cell>
-        </Column> 
-        <Column sortable flexGrow={3}>
-            <HeaderCell  align="center">
-              <Input onChange={e => handleFilterChange('deleted_at', e)} />
-              <Translate>Status</Translate>
-            </HeaderCell>
-            <Cell>
-            {rowData =>
-              rowData.deletedAt === null  ? 'Active' : 'InActive' 
-            }
-            </Cell>
-            </Column> 
-
-      </Table>
-      <div style={{ padding: 20 }}>
-        <Pagination
-          prev
-          next
-          first
-          last
-          ellipsis
-          boundaryLinks
-          maxButtons={5}
-          size="xs"
-          layout={['limit', '|', 'pager']}
-          limitOptions={[5, 15, 30]}
-          limit={listRequest.pageSize}
-          activePage={listRequest.pageNumber}
-          onChangePage={pageNumber => {
-            setListRequest({ ...listRequest, pageNumber });
-          }}
-          onChangeLimit={pageSize => {
-            setListRequest({ ...listRequest, pageSize });
-          }}
-          total={prescriptionInstructionListResponse?.extraNumeric ?? 0}
-        />
-      </div>
-
-      <Modal open={popupOpen} overflow>
-        <Modal.Title>
-          <Translate>New/Edit Prescription Instructions</Translate>
-        </Modal.Title>
-        <Modal.Body>
-          <Form fluid>
-            <MyInput fieldName="categoryLkey" 
-            fieldType="select"
-            selectData={ageGroupLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={prescriptionInstructions}
-            setRecord={setPrescriptionInstructions}
-            />
-            <MyInput fieldName="dose" fieldType="number" record={prescriptionInstructions} setRecord={setPrescriptionInstructions} />
-            <MyInput
-              fieldName="unitLkey"
-              fieldType="select"
-              selectData={uomLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={prescriptionInstructions}
-              setRecord={setPrescriptionInstructions}
-            />
-             <MyInput fieldName="routLkey"
-              fieldType="select"
-              selectData={medRoutLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={prescriptionInstructions}
-              setRecord={setPrescriptionInstructions}
-              />
-             <MyInput fieldName="frequencyLkey" 
-             fieldType="select"
-              selectData={medFreqLovQueryResponse?.object ?? []}
-              selectDataLabel="lovDisplayVale"
-              selectDataValue="key"
-              record={prescriptionInstructions}
-              setRecord={setPrescriptionInstructions} 
-              />
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="primary" onClick={handleSave}>
-              Save
-            </Button>
-            <Button appearance="primary" color="red" onClick={() => setPopupOpen(false)}>
-              Cancel
-            </Button>
-          </Stack>
-        </Modal.Footer>
-      </Modal>
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortChange={(sortBy, sortType) => {
+          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+        }}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
+      <AddEditPrescriptionInstructions
+        open={popupOpen}
+        setOpen={setPopupOpen}
+        width={width}
+        prescriptionInstructions={prescriptionInstructions}
+        setPrescriptionInstructions={setPrescriptionInstructions}
+        handleSave={handleSave}
+      />
+      <DeletionConfirmationModal
+        open={openConfirmDeletePrescriptionInstruction}
+        setOpen={setOpenConfirmDeletePrescriptionInstruction}
+        itemToDelete="Vaccine"
+        actionButtonFunction={
+          stateOfDeletePrescriptionInstruction == 'deactivate' ? handleDeactivate : handleReactivate
+        }
+        actionType={stateOfDeletePrescriptionInstruction}
+      />
     </Panel>
   );
 };
