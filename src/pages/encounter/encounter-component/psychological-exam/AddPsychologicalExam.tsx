@@ -20,6 +20,7 @@ const AddPsychologicalExam = ({
     patient,
     encounter,
     encounterPsychologicalExam,
+    refetchPsychologicalExam,
     edit
 }) => {
     const authSlice = useAppSelector(state => state.auth);
@@ -56,10 +57,6 @@ const AddPsychologicalExam = ({
             }
         ],
     });
-
-    //List Responses
-    // ReFetch the list of psychological exams 
-    const { refetch: refetchPsychologicalExam } = useGetPsychologicalExamsQuery(psychologicalExamListRequest);
 
     //handle Clear Fields
     const handleClearField = () => {

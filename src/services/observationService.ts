@@ -16,17 +16,16 @@ export const observationService = createApi({
       keepUnusedDataFor: 0
     }),
     saveObservationSummary: builder.mutation({
-      query: ({ observation, listRequest }) => ({
-        url: `/observation/save-observation-summary?${fromListRequestToQueryParams(listRequest)}`,
+      query: (observation :ApPatientObservationSummary ) => ({
+        url: `/observation/save-observation-summary`,
         method: 'POST',
         body: observation,
       }),
       onQueryStarted: onQueryStarted,
-      transformResponse: (response) => {
-        return response;
+      transformResponse: (response : any) => {
+        return response.object;
       },
     }),
-
     removeObservationSummary: builder.mutation({
       query: (observation: ApPatientObservationSummary) => ({
         url: `/observation/remove-observation-summary`,

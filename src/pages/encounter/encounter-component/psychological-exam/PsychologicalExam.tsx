@@ -307,7 +307,7 @@ const PsychologicalExam = () => {
     ];
     return (
         <div>
-            <AddPsychologicalExam open={openAddModal} setOpen={setOpenAddModal} patient={patient} encounter={encounter} encounterPsychologicalExam={psychologicalExam} edit={edit}/>
+            <AddPsychologicalExam open={openAddModal} setOpen={setOpenAddModal} refetchPsychologicalExam={refetchPsychologicalExam} patient={patient} encounter={encounter} encounterPsychologicalExam={psychologicalExam} edit={edit}/>
             <div className='bt-div'>
                 <MyButton prefixIcon={() => <CloseOutlineIcon />} onClick={() => { setPopupCancelOpen(true) }} disabled={edit}>
                     Cancel
