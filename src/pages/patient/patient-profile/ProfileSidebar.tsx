@@ -28,7 +28,9 @@ interface ProfileSidebarProps {
   setLocalPatient: (patient: ApPatient) => void;
   refetchData: boolean;
   setRefetchData: (value: boolean) => void;
-  title?: string
+  title?: string;
+  direction? : string;
+  showButton?: boolean;
 }
 
 const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
@@ -38,7 +40,9 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   setLocalPatient,
   refetchData,
   setRefetchData,
-  title :title= 'Search Patient'
+  title :title= 'Search Patient',
+  direction : direction = 'left' ,
+  showButton : showButton = true,
 }) => {
   const [open, setOpen] = useState(false);
   const [labelTitle, setLabelTitle] = useState('Full Name');
@@ -180,9 +184,9 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
             <Nav>
               {expand ? (
                 <Panel header={title} className="sidebar-panel">
-                  <Button onClick={() => setExpand(false)} className="expand-sidebar">
+                 {showButton && <Button onClick={() => setExpand(false)} className="expand-sidebar"> 
                     <FaArrowRight />
-                  </Button>
+                  </Button>}
                   {conjurePatientSearchBar(patientSearchTarget)}
                   <Box className="patient-list">
                     {isFetchingPatients ? (
@@ -208,6 +212,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
                               <FaEllipsis />
                             </Button>
                           }
+                          arrowDirection= {direction as "left" | "right"}
                         />
                       ))
                     )}
