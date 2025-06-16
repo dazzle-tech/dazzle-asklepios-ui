@@ -54,6 +54,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
   const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
   const { data: patientClassLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_CLASS');
+  const { data: bloodGroupLovQueryResponse } = useGetLovValuesByCodeQuery('BLOOD_GROUPS');
 
   // Update age format when DOB changes
   useEffect(() => {
@@ -97,6 +98,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           docTypeLovQueryResponse={docTypeLovQueryResponse}
           countryLovQueryResponse={countryLovQueryResponse}
           patientClassLovQueryResponse={patientClassLovQueryResponse}
+          bloodGroupLovQueryResponse={bloodGroupLovQueryResponse}
           ageFormatType={ageFormatType}
           ageGroupValue={ageGroupValue}
         />

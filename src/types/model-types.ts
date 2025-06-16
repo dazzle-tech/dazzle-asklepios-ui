@@ -1843,6 +1843,7 @@ export interface ApPatient {
 	roleLkey:string;
 	districtLkey:string;
 	countryId:string;
+	bloodGroupLkey:string;
 } 
 
 export interface ApPatientAddresses { 

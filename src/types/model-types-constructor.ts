@@ -1844,6 +1844,7 @@ export const newApPatient:modelTypes.ApPatient = {
 	roleLkey:undefined,
 	districtLkey:undefined,
 	countryId:'',
+	bloodGroupLkey:undefined,
 } 
 
 export const newApPatientAddresses:modelTypes.ApPatientAddresses = { 
