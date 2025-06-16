@@ -22,8 +22,9 @@ import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import BackButton from '@/components/BackButton/BackButton';
 import PreviousMeasurements from './previous-measurements';
+import PatientHistory from '../encounter-component/patient-history';
 
-const EncounterPreObservations = ({}) => {
+const EncounterPreObservations = ({ }) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const propsData = location.state;
@@ -53,7 +54,7 @@ const EncounterPreObservations = ({}) => {
 
   // Effects
   useEffect(() => {
-   
+
     return () => {
       dispatch(setPageCode(''));
       dispatch(setDivContent('  '));
@@ -113,7 +114,7 @@ const EncounterPreObservations = ({}) => {
               <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
                 <Tabs.Tab eventKey="1" title="Observations">
                   <Observations
-                  edit={propsData.edit}
+                    edit={propsData.edit}
                     ref={obsRef}
                     patient={propsData.patient}
                     encounter={propsData.encounter}
@@ -141,7 +142,10 @@ const EncounterPreObservations = ({}) => {
                     encounter={propsData.encounter}
                   />
                 </Tabs.Tab>
-                <Tabs.Tab eventKey="5" title="Previous Measurements">
+                <Tabs.Tab eventKey="5" title="Patient History">
+                  <PatientHistory />
+                </Tabs.Tab>
+                <Tabs.Tab eventKey="6" title="Previous Measurements">
                   <PreviousMeasurements
                     patient={propsData.patient}
                   />
