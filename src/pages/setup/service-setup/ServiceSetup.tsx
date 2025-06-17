@@ -366,7 +366,7 @@ const ServiceSetup = () => {
       <DeletionConfirmationModal
         open={openConfirmDeleteService}
         setOpen={setOpenConfirmDeleteService}
-        itemToDelete="Vaccine"
+        itemToDelete="Service"
         actionButtonFunction={
           stateOfDeleteService == 'deactivate' ? handleDeactivate : handleReactivate
         }

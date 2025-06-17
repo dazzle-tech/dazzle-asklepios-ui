@@ -1,331 +1,308 @@
 import React, { useEffect, useState } from 'react';
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { Input, Modal, Pagination, Panel, Table } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
-import { Button, ButtonToolbar, IconButton } from 'rsuite';
+import {Panel} from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
-import { Form, Stack, Divider } from 'rsuite';
-import MyInput from '@/components/MyInput';
-import { useAppDispatch, useAppSelector } from '@/hooks';
+import { useAppDispatch } from '@/hooks';
+import { HiDocumentDuplicate } from 'react-icons/hi2';
 import { notify } from '@/utils/uiReducerActions';
-import SearchIcon from '@rsuite/icons/Search';
-import { MdSave } from 'react-icons/md';
-import { Tabs, Placeholder } from 'rsuite';
-import ReloadIcon from '@rsuite/icons/Reload';
-import GlobalIcon from '@rsuite/icons/Global';
-import LinkFacility from './LinkFacility';
-import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
+import { FaUndo } from 'react-icons/fa';
+import { MdModeEdit } from 'react-icons/md';
+import { MdDelete } from 'react-icons/md';
+import './styles.less';
 import {
-    useGetDuplicationCandidateSetupListQuery,
-    useSaveDuplicationCandidateSetupMutation
+  useGetDuplicationCandidateSetupListQuery,
+  useSaveDuplicationCandidateSetupMutation
 } from '@/services/setupService';
 import { ApDuplicationCandidateSetup } from '@/types/model-types';
 import { newApDuplicationCandidateSetup } from '@/types/model-types-constructor';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
+import MyTable from '@/components/MyTable';
+import MyButton from '@/components/MyButton/MyButton';
+import AddEditRule from './AddEditRule';
+import LinkedFacility from './LinkedFacilities';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+
 const PotintialDuplicate = () => {
-    const [isactive, setIsactive] = useState(false);
-    const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-    const [popupOpen, setPopupOpen] = useState(false);
-    const [OpenFacilityModal, setOpenFacilityModal] = useState(false);
-    const dispatch = useAppDispatch();
-    const [candidate, setCandidate] = useState<ApDuplicationCandidateSetup>({ ...newApDuplicationCandidateSetup })
-    const [saveCandidate, saveCandidateMutation] = useSaveDuplicationCandidateSetupMutation();
-    const { data: CandidateListResponse, refetch: candfetch } = useGetDuplicationCandidateSetupListQuery(listRequest);
-    const isSelected = rowData => {
-        if (rowData && candidate && rowData.key === candidate.key) {
-            return 'selected-row';
-        } else return '';
+  const dispatch = useAppDispatch();
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [OpenFacilityModal, setOpenFacilityModal] = useState(false);
+  const [width, setWidth] = useState<number>(window.innerWidth);
+  const [candidate, setCandidate] = useState<ApDuplicationCandidateSetup>({
+    ...newApDuplicationCandidateSetup
+  });
+  const [openConfirmDeleteRole, setOpenConfirmDeleteRole] = useState<boolean>(false);
+  const [stateOfDeleteRole, setStateOfDeleteRole] = useState<string>('delete');
+   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  // save Candidate
+  const [saveCandidate] = useSaveDuplicationCandidateSetupMutation();
+  // Fetch Candidate list response
+  const { data: CandidateListResponse, refetch: candfetch, isFetching } =
+    useGetDuplicationCandidateSetupListQuery(listRequest);
+     // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = CandidateListResponse?.extraNumeric ?? 0;
+   // Header page setUp
+  const divContent = (
+    <div className='title-potintial'>
+      <h5>Potintial Duplicate</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Potintial_Duplicate'));
+  dispatch(setDivContent(divContentHTML));
+  // class name for selected row
+  const isSelected = rowData => {
+    if (rowData && candidate && rowData.key === candidate.key) {
+      return 'selected-row';
+    } else return '';
+  };
+  
+  // Icons column (Edit,Linked facilities, reactive/Deactivate)
+  const iconsForActions = (rowData: ApDuplicationCandidateSetup) => (
+    <div className="container-of-icons-potintial">
+      <MdModeEdit
+        className="icons-potintial"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => setPopupOpen(true)}
+      />
+      {!rowData?.deletedAt ? (
+        <MdDelete
+          className="icons-potintial"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            setStateOfDeleteRole('deactivate');
+            setOpenConfirmDeleteRole(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-potintial"
+          title="Activate"
+          size={24}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setStateOfDeleteRole('reactivate');
+            setOpenConfirmDeleteRole(true);
+          }}
+        />
+      )}
+      <HiDocumentDuplicate
+        className="icons-potintial"
+        title="Linked Facilities"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => setOpenFacilityModal(true)}
+      />
+    </div>
+  );
+
+  //Table columns
+  const tableColumns = [
+    {
+      key: 'role',
+      title: <Translate>Role</Translate>,
+      render: rowData => rowData.role
+    },
+    {
+      key: 'dob',
+      title: <Translate>Date Of Barith</Translate>,
+      render: rowData => (rowData.dob ? 'True' : 'False')
+    },
+    {
+      key: 'lastName',
+      title: <Translate>Last Name</Translate>,
+      render: rowData => (rowData.lastName ? 'True' : 'False')
+    },
+    {
+      key: 'mobileNumber',
+      title: <Translate>Mobile Number</Translate>,
+      render: rowData => (rowData.mobileNumber ? 'True' : 'False')
+    },
+    {
+      key: 'sexAtBarith',
+      title: <Translate>Sex At Barith</Translate>,
+      render: rowData => (rowData.gender ? 'True' : 'False')
+    },
+    {
+      key: 'status',
+      title: <Translate>Status</Translate>,
+      render: rowData => (rowData.deletedAt ? 'invalid' : 'valid')
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      flexGrow: 3,
+      render: rowData => iconsForActions(rowData)
+    }
+  ];
+
+   // Handle page change in navigation
+    const handlePageChange = (_: unknown, newPage: number) => {
+      setListRequest({ ...listRequest, pageNumber: newPage + 1 });
     };
-    const divElement = useSelector((state: RootState) => state.div?.divElement);
-    const divContent = (
-      <div style={{ display: 'flex' }}>
-        <h5>Potintial Duplicate</h5>
-      </div>
-    );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-    dispatch(setPageCode('Potintial_Duplicate'));
-    dispatch(setDivContent(divContentHTML));
-    const handleFilterChange = (fieldName, value) => {
-        if (value) {
-            setListRequest(
-                addFilterToListRequest(
-                    fromCamelCaseToDBName(fieldName),
-                    'containsIgnoreCase',
-                    value,
-                    listRequest
-                )
-            );
-        } else {
-            setListRequest({ ...listRequest, filters: [] });
-        }
+    // Handle change rows per page in navigation
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      setListRequest({
+        ...listRequest,
+        pageSize: parseInt(event.target.value, 10),
+        pageNumber: 1
+      });
     };
-    const handleNew = () => {
-        setCandidate({ ...newApDuplicationCandidateSetup });
-        setPopupOpen(true);
-    };
-    const handleSave = async () => {
-        setPopupOpen(false);
-        //if you want to use response object write response.object 
-        try {
-            const response = await saveCandidate(candidate).unwrap().then(() => {
-                candfetch();
+
+  // handle click on add new button
+  const handleNew = () => {
+    setCandidate({ ...newApDuplicationCandidateSetup });
+    setPopupOpen(true);
+  };
+
+  // handle save role
+  const handleSave = async () => {
+    setPopupOpen(false);
+    //if you want to use response object write response.object
+    try {
+       await saveCandidate(candidate)
+        .unwrap()
+        .then(() => {
+          candfetch();
+        });
+       dispatch(notify({ msg: 'The Role has been saved successfully', sev: 'success' }));
+    } catch (error) {
+      if (error.data && error.data.message) {
+        // Display error message from server
+        dispatch(notify(error.data.message));
+      } else {
+        // Generic error notification
+        dispatch(notify('An unexpected error occurred'));
+      }
+    }
+  };
+
+   // handle Deactivate
+  const handleDeactivate = () => {
+    setOpenConfirmDeleteRole(false);
+    saveCandidate({ ...candidate, deletedAt: Date.now() })
+      .unwrap()
+      .then(() => {
+         candfetch();
+              dispatch(
+                notify({
+                  msg: 'The Role was successfully Deactivated',
+                  sev: 'success'
+                })
+              );
+            })
+            .catch(() => {
+              dispatch(
+                notify({
+                  msg: 'Faild to Deactivate this Role',
+                  sev: 'error'
+                })
+              );
             });
+  };
 
+  // handle Reactivate
+  const handleReactivate = () => {
+    setOpenConfirmDeleteRole(false);
+    saveCandidate({ ...candidate, deletedAt: null })
+      .unwrap()
+       .then(() => {
+         candfetch();
+              dispatch(
+                notify({
+                  msg: 'The Role was successfully Reactivated',
+                  sev: 'success'
+                })
+              );
+            })
+            .catch(() => {
+              dispatch(
+                notify({
+                  msg: 'Faild to Reactivate this Role',
+                  sev: 'error'
+                })
+              );
+            });
+  };
 
-            dispatch(notify("saved sucssecfly"));
-
-
-        } catch (error) {
-            if (error.data && error.data.message) {
-                // Display error message from server
-                dispatch(notify(error.data.message));
-            } else {
-                // Generic error notification
-                dispatch(notify("An unexpected error occurred"));
-            }
-        }
+  // Effects
+  useEffect(() => {
+    return () => {
+      dispatch(setPageCode(''));
+      dispatch(setDivContent('  '));
     };
-    useEffect(() => {
-        return () => {
-          dispatch(setPageCode(''));
-          dispatch(setDivContent("  "));
-        };
-      }, [location.pathname, dispatch]);
-    return (<>
-        <Panel>
-            <ButtonToolbar>
-                <IconButton appearance="primary"
-                    icon={<AddOutlineIcon />}
-                    onClick={handleNew}
-                >
-                    Add New
-                </IconButton>
-                <IconButton
+  }, [location.pathname, dispatch]);
 
-                    disabled={!candidate.key}
-                    appearance="primary"
-                    onClick={() => setPopupOpen(true)}
-                    color="cyan"
-                    icon={<EditIcon />}
-                >
-                    Edit Selected
-                </IconButton>
+  // change the width variable when the size of window is changed
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-                {!isactive &&
-                    <IconButton
-                        disabled={!candidate.key}
-                        onClick={() => {
-                            saveCandidate({ ...candidate, deletedAt: Date.now() }).unwrap().then(() => {
-                                candfetch();
-                            });
-                            setIsactive(true);
-                        }}
-                        appearance="primary"
-                        color="violet"
-                        icon={<TrashIcon />
-
-                        }
-                    >
-                        Deactivate
-                    </IconButton>}
-
-                {
-                    isactive &&
-                    <IconButton
-                        color="orange"
-                        appearance="primary"
-                        onClick={() => {
-                            saveCandidate({ ...candidate, deletedAt: null }).unwrap().then(() => {
-                                candfetch();
-                            });
-                            setIsactive(false);
-                        }}
-                        icon={<ReloadIcon />}
-                        disabled={!candidate.key}
-                    >
-                        <Translate> Activate</Translate>
-                    </IconButton>
-
-                }
-                <IconButton
-
-                    disabled={!candidate.key}
-                    appearance="ghost"
-                    onClick={() => setOpenFacilityModal(true)}
-                    color="cyan"
-                    icon={< GlobalIcon />}
-                >
-                    Linked Facilities
-                </IconButton>
-            </ButtonToolbar>
-            <hr />
-
-            <Table
-                height={400}
-                sortColumn={listRequest.sortBy}
-                sortType={listRequest.sortType}
-                onSortColumn={(sortBy, sortType) => {
-                    if (sortBy)
-                        setListRequest({
-                            ...listRequest,
-                            sortBy,
-                            sortType
-                        });
-                }}
-                headerHeight={80}
-                rowHeight={60}
-                bordered
-                cellBordered
-                data={CandidateListResponse?.object ?? []}
-                onRowClick={rowData => {
-                    setCandidate(rowData);
-                }}
-                rowClassName={isSelected}
-            >
-                <Column sortable flexGrow={1}>
-                    <HeaderCell align="center">
-
-                        <Translate>Role</Translate>
-                    </HeaderCell>
-                    <Cell align="center">
-                        {rowData => rowData.role}
-                    </Cell  >
-                </Column>
-                <Column sortable flexGrow={2}>
-                    <HeaderCell align="center">
-
-                        <Translate>Date Of Barith</Translate>
-                    </HeaderCell>
-                    <Cell align="center">
-                        {rowData => rowData.dob ? "True" : "False"}
-                    </Cell  >
-                </Column>
-                <Column sortable flexGrow={2}>
-                    <HeaderCell align="center">
-
-                        <Translate>Last Name</Translate>
-                    </HeaderCell>
-                    <Cell align="center">
-                        {rowData => rowData.lastName ? "True" : "False"}
-                    </Cell  >
-                </Column>
-                <Column sortable flexGrow={3}>
-                    <HeaderCell align="center">
-
-                        <Translate>Mobile Number </Translate>
-                    </HeaderCell>
-                    <Cell align="center">
-                        {rowData => rowData.mobileNumber ? "True" : "False"}
-                    </Cell  >
-                </Column>
-                <Column sortable flexGrow={2}>
-                    <HeaderCell align="center">
-
-                        <Translate>Document Number </Translate>
-                    </HeaderCell>
-                    <Cell align="center">
-                        {rowData => rowData.documentNo ? "True" : "False"}
-                    </Cell  >
-                </Column>
-                <Column sortable flexGrow={3}>
-                    <HeaderCell align="center">
-
-                        <Translate>Sex At Barith</Translate>
-                    </HeaderCell>
-                    <Cell align="center">
-                        {rowData => rowData.gender ? "True" : "False"}
-                    </Cell  >
-                </Column>
-                <Column flexGrow={2}>
-                    <HeaderCell align="center">
-
-                        <Translate>status</Translate>
-                    </HeaderCell>
-                    <Cell align="center">
-                        {rowData => rowData.deletedAt ? 'invalid' : 'valid'}
-                    </Cell>
-                </Column>
-
-            </Table>
-            <Modal open={popupOpen} overflow>
-                <Modal.Title>
-                    <Translate>New </Translate>
-                </Modal.Title>
-                <Modal.Body>
-                    <Form >
-
-                        <MyInput
-                            fieldName="lastName"
-                            fieldType="checkbox"
-                            record={candidate}
-                            setRecord={setCandidate}
-                        />
-                        <MyInput
-                            fieldLable="Date Of birthd"
-                            fieldName="dob"
-                            fieldType="checkbox"
-                            record={candidate}
-                            setRecord={setCandidate}
-                        />
-                        <MyInput
-                            fieldName="documentNo"
-                            fieldType="checkbox"
-                            record={candidate}
-                            setRecord={setCandidate}
-                        />
-                        <MyInput
-                            fieldLable="Six At birthd"
-                            fieldName="gender"
-                            fieldType="checkbox"
-                            record={candidate}
-                            setRecord={setCandidate}
-                        />
-                        <MyInput
-                            fieldLable="Mobile Number"
-                            fieldName="mobileNumber"
-                            fieldType="checkbox"
-                            record={candidate}
-                            setRecord={setCandidate}
-                        />
-
-                    </Form>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Stack spacing={2} divider={<Divider vertical />}>
-                        <Button appearance="primary"
-                            onClick={handleSave}
-                        >
-                            Save
-                        </Button>
-                        <Button appearance="ghost" onClick={() => setPopupOpen(false)}>
-                            Cancel
-                        </Button>
-                    </Stack>
-                </Modal.Footer>
-            </Modal>
-            <Modal open={OpenFacilityModal} overflow>
-                <Modal.Title>
-                    <Translate>Linked Facilities </Translate>
-                </Modal.Title>
-                <Modal.Body>
-                  <LinkFacility Candidate={candidate} />
-                </Modal.Body>
-                <Modal.Footer>
-                    <Stack spacing={2} divider={<Divider vertical />}>
-                     
-                        <Button appearance="ghost" onClick={() => setOpenFacilityModal(false)}>
-                            Close
-                        </Button>
-                    </Stack>
-                </Modal.Footer>
-            </Modal>
-        </Panel>
-    </>)
-}
+  return (
+    <Panel>
+      <div className="container-of-add-new-button-potintial">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleNew}
+          width="109px"
+        >
+          Add New
+        </MyButton>
+      </div>
+      <MyTable
+        height={450}
+        data={CandidateListResponse?.object ?? []}
+        loading={isFetching}
+        columns={tableColumns}
+        rowClassName={isSelected}
+        onRowClick={rowData => {
+          setCandidate(rowData);
+        }}
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortChange={(sortBy, sortType) => {
+          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+        }}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
+      <AddEditRule
+        open={popupOpen}
+        setOpen={setPopupOpen}
+        width={width}
+        candidate={candidate}
+        setCandidate={setCandidate}
+        handleSave={handleSave}
+      />
+      <LinkedFacility
+        open={OpenFacilityModal}
+        setOpen={setOpenFacilityModal}
+        width={width}
+        Candidate={candidate}
+      />
+      <DeletionConfirmationModal
+        open={openConfirmDeleteRole}
+        setOpen={setOpenConfirmDeleteRole}
+        itemToDelete="Role"
+        actionButtonFunction={
+          stateOfDeleteRole == 'deactivate' ? handleDeactivate : handleReactivate
+        }
+        actionType={stateOfDeleteRole}
+      />
+    </Panel>
+  );
+};
 export default PotintialDuplicate;
