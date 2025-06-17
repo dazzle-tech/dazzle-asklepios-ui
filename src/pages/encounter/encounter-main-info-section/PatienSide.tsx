@@ -61,9 +61,9 @@ const PatientSide = ({ patient, encounter }) => {
 
     useEffect(() => {
         setBodyMeasurements({
-            height: patirntObservationlist?.object?.find((item) => item.latestheight != null)?.latestheight,
-            weight: patirntObservationlist?.object?.find((item) => item.latestweight != null)?.latestweight,
-            headcircumference: patirntObservationlist?.object?.find((item) => item.latestheadcircumference != null)?.latestheadcircumference
+            height: patirntObservationlist?.object?.find((item) => item.latestheight != null && item.latestheight != 0)?.latestheight,
+            weight: patirntObservationlist?.object?.find((item) => item.latestweight != null && item.latestheight != 0)?.latestweight,
+            headcircumference: patirntObservationlist?.object?.find((item) => item.latestheadcircumference != null && item.latestheight !=0 )?.latestheadcircumference
         })
     }, [patirntObservationlist]);
 

@@ -74,9 +74,7 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
                 page: lastObservationSummary?.age,
             }).unwrap();
             refetch();
-            dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
-            setTimeout(() => {
-            window.location.reload()}, 500); 
+            dispatch(notify({ msg: 'Saved Successfully', sev: 'success' })); 
         } catch (error) {
             console.error('Error while saving observation summary:', error);
             dispatch(notify({ msg: 'Error occurred while saving', sev: 'error' }));
@@ -88,6 +86,11 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
             ...newApPatientObservationSummary,
             latestpainlevelLkey: null
         });
+    }
+     const handleCancel = () => {
+           setOpen(false);
+           setTimeout(() => {
+           window.location.reload()}, 500);
     }
     //Effects
     useEffect(() => {
@@ -321,6 +324,7 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
                 );
         };
     }
+
     return (
         <MyModal
             open={open}
@@ -331,20 +335,25 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
             isDisabledActionBtn={!edit ? isDisabledField : true}
             size='32vw'
             hideActionBtn={true}
-            footerButtons={<>
-                <MyButton appearance='ghost' onClick={handleClear}>Clear</MyButton>
-                <MyButton onClick={handleSave}>Save</MyButton>
-            </>
-            }
+            handleCancelFunction={handleCancel}
             steps={[{
                 title: "Vital Signs",
                 icon: <FontAwesomeIcon icon={faHeartPulse} />,
+                footer:<>
+                <MyButton appearance='ghost' onClick={handleClear}>Clear</MyButton> 
+                <MyButton onClick={handleSave}>Save</MyButton></>
             }, {
                 title: "Body Measurements",
                 icon: <FontAwesomeIcon icon={faChildReaching} />,
+                 footer:<>
+                <MyButton appearance='ghost' onClick={handleClear}>Clear</MyButton> 
+                <MyButton onClick={handleSave}>Save</MyButton>  </>
             }, {
                 title: "Pain Level",
-                icon: <FontAwesomeIcon icon={faFaceTired} />
+                icon: <FontAwesomeIcon icon={faFaceTired} />,
+                 footer:<>
+                <MyButton appearance='ghost' onClick={handleClear}>Clear</MyButton> 
+                <MyButton onClick={()=>{handleSave();handleCancel();}}>Save</MyButton></>
             }]}
             content={content}
         ></MyModal>
