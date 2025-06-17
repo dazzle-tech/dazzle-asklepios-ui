@@ -249,7 +249,7 @@ const PotintialDuplicate = () => {
 
   return (
     <Panel>
-      <div className="container-of-icons-potintial">
+      <div className="container-of-add-new-button-potintial">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"
