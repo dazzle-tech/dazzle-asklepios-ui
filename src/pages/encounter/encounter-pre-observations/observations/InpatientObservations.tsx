@@ -137,10 +137,7 @@ const InpatientObservations = ({ localEncounter, localPatient, editable }) => {
         {
             key: 'latestbpSystolic',
             title: <Translate>BP</Translate>,
-        },
-        {
-            key: 'latestbpDiastolic',
-            title: <Translate>mmHg</Translate>,
+              render: (rowData: any) =>`${rowData?.latestheartrate}/${rowData?.latestbpDiastolic} mmHg`
         },
         {
             key: 'latestheartrate',

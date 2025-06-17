@@ -153,7 +153,7 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
                             <MyInput
                                 column
                                 width={150}
-                                fieldLabel='BP'
+                                fieldLabel='BP Systolic'
                                 fieldName='latestbpSystolic'
                                 disabled={isEncounterStatusClosed}
                                 fieldType='number'
@@ -165,7 +165,7 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
                             <MyInput
                                 column
                                 width={150}
-                                fieldLabel='mmHg'
+                                fieldLabel='BP Diastolic'
                                 fieldName='latestbpDiastolic'
                                 disabled={isEncounterStatusClosed}
                                 fieldType='number'
