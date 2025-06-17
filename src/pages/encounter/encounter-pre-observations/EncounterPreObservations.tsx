@@ -29,7 +29,7 @@ const EncounterPreObservations = ({ }) => {
   const location = useLocation();
   const propsData = location.state;
   const navigate = useNavigate();
-  const [localEncounter] = useState<ApEncounter>({ ...propsData.encounter });
+  const [localEncounter] = useState<any>({ ...propsData.encounter });
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
   const [activeKey, setActiveKey] = useState<string | number>('1');
@@ -83,7 +83,11 @@ const EncounterPreObservations = ({ }) => {
               <div className="left-buttons-container">
                 <BackButton
                   onClick={() => {
-                    navigate('/encounter-list');
+                    if (localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT") {
+                      navigate('/inpatient-encounters-list')
+                    } else {
+                      navigate('/encounter-list');
+                    }
                   }}
                 />
                 <div className="left-buttons-contant">
