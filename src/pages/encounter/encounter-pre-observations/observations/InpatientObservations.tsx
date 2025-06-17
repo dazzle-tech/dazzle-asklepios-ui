@@ -36,7 +36,7 @@ const InpatientObservations = ({ localEncounter, localPatient, editable }) => {
         latestheight: null,
         latestheadcircumference: null,
         latestpainlevelLkey: null
-    }); 
+    });
 
     // Define state for the request used to fetch the list of patient observations
     const [observationsListRequest, setObservationsListRequest] = useState<ListRequest>({
@@ -137,7 +137,7 @@ const InpatientObservations = ({ localEncounter, localPatient, editable }) => {
         {
             key: 'latestbpSystolic',
             title: <Translate>BP</Translate>,
-              render: (rowData: any) =>`${rowData?.latestheartrate}/${rowData?.latestbpDiastolic} mmHg`
+            render: (rowData: any) => `${rowData?.latestheartrate}/${rowData?.latestbpDiastolic} mmHg`
         },
         {
             key: 'latestheartrate',
@@ -167,7 +167,7 @@ const InpatientObservations = ({ localEncounter, localPatient, editable }) => {
         {
             key: 'latestheight',
             title: <Translate>HEIGHT</Translate>,
-            render: (rowData: any) => rowData?.latestheight ? `${rowData?.latestheight} Kg` : ' '
+            render: (rowData: any) => rowData?.latestheight ? `${rowData?.latestheight} cm` : ' '
         },
         {
             key: 'latestheadcircumference',
@@ -177,9 +177,9 @@ const InpatientObservations = ({ localEncounter, localPatient, editable }) => {
         {
             key: 'Pain Degree',
             title: <Translate>Pain Degree</Translate>,
-            render: (rowData: any) => rowData?.followUpDate
-                ? new Date(rowData.followUpDate).toLocaleDateString("en-GB")
-                : ""
+            render: (rowData: any) =>
+                rowData.latestpainlevelLvalue?.lovDisplayVale ||
+                rowData.latestpainlevelLkey
         },
         {
             key: "details",
