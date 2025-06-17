@@ -8,7 +8,7 @@ import { useGetPatientDiagnosisQuery } from '@/services/encounterService';
 import { useGetEncountersQuery } from '@/services/encounterService';
 import { initialListRequest, ListRequest } from '@/types/types';
 const PreviuosVisitData = ({ patient, encounter }) => {
-    const [prevencounter, setPrevencounter] = useState<ApEncounter>({ ...newApEncounter });
+    const [prevencounter, setPrevencounter] = useState<ApEncounter>({ ...newApEncounter ,discharge:false});
 
     const { data: encounterTypeLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
     const { data: encounterReasonLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_REASON');

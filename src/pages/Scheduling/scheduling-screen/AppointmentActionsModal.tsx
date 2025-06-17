@@ -31,7 +31,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
     const [reasonKey, setResonKey] = useState()
     const [otherReason, setOtherReason] = useState()
     const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
-    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter });
+    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter,discharge:false });
 
     const handleCheckIn = () => {
         const appointmentData = appointment?.appointmentData
@@ -39,7 +39,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             dispatch(notify('Appointment Checked-In Successfully'));
             onStatusChange()
             onActionsModalClose()
-            setLocalEncounter({ ...newApEncounter })
+            setLocalEncounter({ ...newApEncounter,discharge:false })
 
         })
     }
@@ -74,7 +74,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             dispatch(notify('Appointment Confirmed Successfully'));
             onStatusChange()
             onActionsModalClose()
-            setLocalEncounter({ ...newApEncounter })
+            setLocalEncounter({ ...newApEncounter,discharge:false })
 
         }).then(() => {
             handleSaveVisit(appointment?.appointmentData)
@@ -91,7 +91,7 @@ const AppointmentActionsModal = ({ isActionsModalOpen, onActionsModalClose, appo
             setResonType(null)
             setOtherReason(null)
             setResonKey(null)
-            setLocalEncounter({ ...newApEncounter })
+            setLocalEncounter({ ...newApEncounter,discharge:false })
 
 
         })

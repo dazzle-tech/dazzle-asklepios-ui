@@ -63,7 +63,7 @@ const Lab = () => {
   }, [refetchResult]);
   const [localUser, setLocalUser] = useState(uiSlice?.user);
   const [currentStep, setCurrentStep] = useState("6055029972709625");
-  const [encounter, setEncounter] = useState({ ...newApEncounter });
+  const [encounter, setEncounter] = useState({ ...newApEncounter,discharge:false });
   const [patient, setPatient] = useState({ ...newApPatient });
   const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders })
   const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });

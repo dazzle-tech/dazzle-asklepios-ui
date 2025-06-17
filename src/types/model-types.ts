@@ -1304,6 +1304,7 @@ export interface ApEncounter {
 	resourceTypeLkey:string;
 	resourceKey:string;
 	planInstructionsNote:string;
+	discharge:boolean;
 } 
 
 export interface ApEncounterAppliedService { 
@@ -1644,6 +1645,43 @@ export interface ApMedicalSheets {
 	isValid:boolean;
 	observation:boolean;
 	vaccination:boolean;
+} 
+
+export interface ApMedicationCategories { 
+	key:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApMedicationCategoriesActiveIngredient { 
+	key:string;
+	therapeuticCategoryKey:string;
+	medicationClassKey:string;
+	activeIngredientKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApMedicationCategoriesClass { 
+	key:string;
+	therapeuticCategoryKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
 } 
 
 export interface ApMessages { 
@@ -2375,6 +2413,23 @@ export interface ApProcedurePriceList {
 	deletedAt:number;
 } 
 
+export interface ApProcedureRegistration { 
+	key:string;
+	procedureKey:string;
+	consentFormLkey:string;
+	dateTime:number;
+	practitionersKey:string;
+	departmentKey:string;
+	requestedBy:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	encounterKey:string;
+} 
+
 export interface ApProcedureSetup { 
 	key:string;
 	name:string;
@@ -2391,6 +2446,20 @@ export interface ApProcedureSetup {
 	updatedAt:number;
 	deletedAt:number;
 	isAppointable:boolean;
+} 
+
+export interface ApProcedureStaff { 
+	key:string;
+	procedureKey:string;
+	userKey:string;
+	responsibility:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	encounterKey:string;
 } 
 
 export interface ApPsychologicalExam { 

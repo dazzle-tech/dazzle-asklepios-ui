@@ -1305,6 +1305,7 @@ export const newApEncounter:modelTypes.ApEncounter = {
 	resourceTypeLkey:undefined,
 	resourceKey:undefined,
 	planInstructionsNote:'',
+	discharge:undefined,
 } 
 
 export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService = { 
@@ -1645,6 +1646,43 @@ export const newApMedicalSheets:modelTypes.ApMedicalSheets = {
 	isValid:undefined,
 	observation:undefined,
 	vaccination:undefined,
+} 
+
+export const newApMedicationCategories:modelTypes.ApMedicationCategories = { 
+	key:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApMedicationCategoriesActiveIngredient:modelTypes.ApMedicationCategoriesActiveIngredient = { 
+	key:undefined,
+	therapeuticCategoryKey:undefined,
+	medicationClassKey:undefined,
+	activeIngredientKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApMedicationCategoriesClass:modelTypes.ApMedicationCategoriesClass = { 
+	key:undefined,
+	therapeuticCategoryKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
 } 
 
 export const newApMessages:modelTypes.ApMessages = { 
@@ -2376,6 +2414,23 @@ export const newApProcedurePriceList:modelTypes.ApProcedurePriceList = {
 	deletedAt:undefined,
 } 
 
+export const newApProcedureRegistration:modelTypes.ApProcedureRegistration = { 
+	key:undefined,
+	procedureKey:undefined,
+	consentFormLkey:undefined,
+	dateTime:0,
+	practitionersKey:undefined,
+	departmentKey:undefined,
+	requestedBy:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	encounterKey:undefined,
+} 
+
 export const newApProcedureSetup:modelTypes.ApProcedureSetup = { 
 	key:undefined,
 	name:'',
@@ -2392,6 +2447,20 @@ export const newApProcedureSetup:modelTypes.ApProcedureSetup = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isAppointable:undefined,
+} 
+
+export const newApProcedureStaff:modelTypes.ApProcedureStaff = { 
+	key:undefined,
+	procedureKey:undefined,
+	userKey:undefined,
+	responsibility:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	encounterKey:undefined,
 } 
 
 export const newApPsychologicalExam:modelTypes.ApPsychologicalExam = { 

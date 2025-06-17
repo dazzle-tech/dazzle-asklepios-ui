@@ -36,8 +36,7 @@ const EncounterList = () => {
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('P_Encounters'));
   dispatch(setDivContent(divContentHTML));
-  const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
-  const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
+  const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
 
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
   const [startEncounter] = useStartEncounterMutation();
@@ -137,8 +136,8 @@ const EncounterList = () => {
   const handleGoToPreVisitObservations = async (encounterData, patientData) => {
     const privatePatientPath = '/user-access-patient-private';
     const preObservationsPath = '/nurse-station';
-    const targetPath = localPatient.privatePatient ? privatePatientPath : preObservationsPath;
-    if (localPatient.privatePatient) {
+    const targetPath = patientData.privatePatient ? privatePatientPath : preObservationsPath;
+    if (patientData.privatePatient) {
       navigate(targetPath, {
         state: { info: 'toNurse', patient: patientData, encounter: encounterData }
       });
@@ -304,9 +303,8 @@ const EncounterList = () => {
                 <MyButton
                   size="small"
                   onClick={() => {
-                    const patientData = rowData.patientObject;
+                    const patientData = rowData?.patientObject;
                     setLocalEncounter(rowData);
-                    setLocalPatient(patientData);
                     handleGoToVisit(rowData, patientData);
                   }}
                 >
@@ -322,7 +320,6 @@ const EncounterList = () => {
                   onClick={() => {
                     const patientData = rowData.patientObject;
                     setLocalEncounter(rowData);
-                    setLocalPatient(patientData);
                     handleGoToPreVisitObservations(rowData, patientData);
                   }}
                 >
@@ -402,7 +399,6 @@ const EncounterList = () => {
         loading={isLoading || (manualSearchTriggered && isFetching)}
         onRowClick={rowData => {
           setLocalEncounter(rowData);
-          setLocalPatient(rowData.patientObject);
         }}
         sortColumn={listRequest.sortBy}
         sortType={listRequest.sortType}

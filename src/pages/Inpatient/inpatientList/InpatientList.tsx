@@ -43,6 +43,10 @@ const InpatientList = () => {
                 fieldName: 'resource_type_lkey',
                 operator: 'match',
                 value: '4217389643435490'
+            }, {
+                fieldName: 'discharge',
+                operator: 'match',
+                value: "false"
             }
         ]
     });
@@ -52,7 +56,7 @@ const InpatientList = () => {
         refetch: refetchEncounter,
         isLoading
     } = useGetEncountersQuery(listRequest);
-
+ 
     //Functions
     const isSelected = rowData => {
         if (rowData && encounter && rowData.key === encounter.key) {
@@ -108,9 +112,9 @@ const InpatientList = () => {
     useEffect(() => {
         dispatch(setPageCode(''));
         dispatch(setDivContent(' '));
-    }, [location.pathname, dispatch , isLoading]);
-     useEffect(() => {
-      refetchEncounter();
+    }, [location.pathname, dispatch, isLoading]);
+    useEffect(() => {
+        refetchEncounter();
     }, []);
     useEffect(() => {
         if (!isFetching && manualSearchTriggered) {
@@ -225,10 +229,19 @@ const InpatientList = () => {
         {
             key: 'status',
             title: <Translate>STATUS</Translate>,
-            render: rowData => <MyBadgeStatus color={rowData?.encounterStatusLvalue?.valueColor} contant={rowData.encounterStatusLvalue
-                ? rowData.encounterStatusLvalue.lovDisplayVale
-                : rowData.encounterStatusLkey} />
-        },
+            render: rowData =>
+                !rowData.discharge && rowData.encounterStatusLkey !== "91109811181900" ? (
+                    <MyBadgeStatus
+                        color={rowData?.encounterStatusLvalue?.valueColor}
+                        contant={
+                            rowData.encounterStatusLvalue
+                                ? rowData.encounterStatusLvalue.lovDisplayVale
+                                : rowData.encounterStatusLkey
+                        }
+                    />
+                ) : null
+        }
+        ,
         {
             key: 'hasObservation',
             title: <Translate>IS OBSERVED</Translate>,

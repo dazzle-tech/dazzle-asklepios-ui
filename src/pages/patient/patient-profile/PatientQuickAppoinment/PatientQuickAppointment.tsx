@@ -20,7 +20,7 @@ import PatientPaymentInfo from './PatientPaymentInfo';
 import AddPayment from './AddPayment';
 const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuickAppointmentModel, localVisit, isDisabeld = false }) => {
     const dispatch = useAppDispatch();
-    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter, visitTypeLkey: '2041082245699228', patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob) });
+    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter, visitTypeLkey: '2041082245699228', patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob),discharge:false });
     const [validationResult, setValidationResult] = useState({});
     const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
     const [isReadOnly, setIsReadOnly] = useState(isDisabeld);
@@ -71,8 +71,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
             physicianKey: null,
             departmentKey: null,
             reasonLkey: null,
-
-
+            discharge:false
         })
     };
     // Effects
