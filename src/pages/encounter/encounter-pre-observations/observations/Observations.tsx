@@ -111,8 +111,8 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
         platestbmi: lastObservationSummary?.latestbmi,
         page: lastObservationSummary?.age,
       }).unwrap();
-
-      refetch();
+      setTimeout(() => {
+            window.location.reload()}, 500);
       dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     } catch (error) {
       console.error('Error while saving observation summary:', error);
