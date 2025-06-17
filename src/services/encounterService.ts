@@ -29,7 +29,7 @@ export const encounterService = createApi({
       query: (patientId: string) => ({
         url: `/encounter/get-encounter-by-id`,
         params: {
-          key: patientId, // هذا يذهب كـ ?key=xxx في الرابط
+          key: patientId, 
         }
 
       }),

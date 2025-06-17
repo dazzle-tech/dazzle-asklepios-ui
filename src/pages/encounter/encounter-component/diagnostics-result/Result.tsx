@@ -2,16 +2,16 @@ import ChatModal from "@/components/ChatModal";
 import MyInput from "@/components/MyInput";
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
-import { useAppDispatch, useAppSelector } from "@/hooks";
-import { addFilterToListRequest, formatDate } from '@/utils';
+import { useAppDispatch } from "@/hooks";
 import { useGetDiagnosticOrderTestResultQuery, useGetOrderTestResultNotesByResultIdQuery, useSaveDiagnosticOrderTestResultsNotesMutation } from "@/services/labService";
 import { useGetDiagnosticsTestLaboratoryListQuery, useGetLovAllValuesQuery } from "@/services/setupService";
 import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsResult, newApDiagnosticOrderTestsResultNotes, newApDiagnosticTestLaboratory } from "@/types/model-types-constructor";
 import { initialListRequest, initialListRequestAllValues, ListRequest } from "@/types/types";
+import { addFilterToListRequest,formatDateWithoutSeconds } from '@/utils';
 import { notify } from "@/utils/uiReducerActions";
-import { faArrowDown, faCircleExclamation, faComment, faArrowUp, faTriangleExclamation, faPrint, faFileLines } from "@fortawesome/free-solid-svg-icons";
+import { faArrowDown, faArrowUp, faCircleExclamation, faComment, faPrint, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Form, HStack, Tooltip, Whisper } from "rsuite";
 const Result = ({ patient, user }) => {
     const dispatch = useAppDispatch();
@@ -43,7 +43,6 @@ const Result = ({ patient, user }) => {
     const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
     const [saveResultNote] = useSaveDiagnosticOrderTestResultsNotesMutation();
     const { data: resultsList, refetch: resultFetch, isLoading: resultLoding, isFetching: featchingTest } = useGetDiagnosticOrderTestResultQuery({ ...listResultResponse });
-    console.log("result loading",resultLoding,"fetch",featchingTest)
     const { data: lovValues } = useGetLovAllValuesQuery({ ...initialListRequestAllValues });
     const { data: messagesResultList, refetch: fecthResultNotes } = useGetOrderTestResultNotesByResultIdQuery(result?.key || undefined, { skip: result.key == null });
     const { data: laboratoryList } = useGetDiagnosticsTestLaboratoryListQuery({
@@ -138,6 +137,15 @@ useEffect(() => {
 
             render: (rowData: any) => {
                 return rowData.test?.orderId;
+            }
+        },
+        {
+            key: "approvedAt",
+            title: <Translate>Result Date</Translate>,
+            flexGrow: 1,
+
+            render: (rowData: any) => {
+                return formatDateWithoutSeconds(rowData.approvedAt);
             }
         },
         {

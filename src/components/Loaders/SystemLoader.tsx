@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
  import Loader_1 from "../../images/ASK_LOADER_1.svg";
  import Loader_2 from "../../images/ASK_LOADER_2.svg";
- import "./Loaders.css"; // استيراد ملف CSS
+ import "./Loaders.css";
  import { useSelector } from "react-redux";
  import { RootState } from "@/store";
  
