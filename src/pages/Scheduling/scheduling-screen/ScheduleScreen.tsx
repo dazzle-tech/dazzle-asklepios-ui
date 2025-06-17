@@ -443,7 +443,7 @@ const ScheduleScreen = () => {
                     <button style={{ margin: "7px", height: "35px" }} onClick={() => onNavigate("PREV")}><ArrowLeftLineIcon /></button>
                     <Button
                         onClick={handleClickCalinderSearch}
-                        style={{ display: showDatePicker ? "none" : "inline-block", border: "none", height: "35px" }} // إخفاء الزر عند فتح التقويم
+                        style={{ display: showDatePicker ? "none" : "inline-block", border: "none", height: "35px" }} 
                     >
                         <strong>{label}</strong>
                     </Button>

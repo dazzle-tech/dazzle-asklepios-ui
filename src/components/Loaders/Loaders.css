@@ -27,7 +27,8 @@
     opacity: 0;
   }
   
-  /* حركة تأرجح (روتيت يمين ويسار) */
+ 
+  
   @keyframes swing {
     0% {
       transform: rotate(0deg);

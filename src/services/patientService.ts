@@ -31,7 +31,7 @@ export const patientService = createApi({
   query: (patientId: string) => ({
     url: `/pas/get-patient-by-id`,
     params: {
-      key: patientId, // هذا يذهب كـ ?key=xxx في الرابط
+      key: patientId,
     }
  
   }),

@@ -8,7 +8,7 @@ import { useGetDiagnosticOrderTestRadReportListQuery, useGetDiagnosticOrderTestR
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsRadReport, newApDiagnosticOrderTestsReportNotes } from "@/types/model-types-constructor";
 import { initialListRequest, ListRequest } from "@/types/types";
-import { addFilterToListRequest } from "@/utils";
+import { addFilterToListRequest, formatDateWithoutSeconds } from "@/utils";
 import { notify } from "@/utils/uiReducerActions";
 import { faComment, faFileLines, faPrint, faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -20,10 +20,10 @@ const Reports = ({ patient, user }) => {
     const [openNoteResultModal, setOpenNoteResultModal] = useState(false);
     const [report, setReport] = useState<any>({ ...newApDiagnosticOrderTestsRadReport });
     const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
-     const [dateOrderFilter, setDateOrderFilter] = useState({
-            fromDate: new Date(),
-            toDate: new Date()
-        });
+    const [dateOrderFilter, setDateOrderFilter] = useState({
+        fromDate: new Date(),
+        toDate: new Date()
+    });
     const [listReportResponse, setListReportResponse] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -39,7 +39,7 @@ const Reports = ({ patient, user }) => {
             }
         ]
     });
-    
+
     const isSelected = rowData => {
         if (rowData && report && rowData.key === report.key) {
             return 'selected-row';
@@ -60,46 +60,46 @@ const Reports = ({ patient, user }) => {
     }, [report]);
 
 
-  useEffect(() => {
-  setListReportResponse(prev => ({
-    ...prev,
-    filters: [
-      {
-        fieldName: "patient_key",
-        operator: "match",
-        value: patient?.key, // حسب السياق
-      },
-      {
-        fieldName: "review_at",
-        operator: "notMatch",
-        value: 0,
-      },
-    ],
-  }));
-}, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
-useEffect(() => {
-  const isDateRangeValid = dateOrderFilter.fromDate !== null && dateOrderFilter.toDate !== null;
-  const isResultsLoaded = Array.isArray(reportList?.object) && reportList.object.length > 0;
+    useEffect(() => {
+        setListReportResponse(prev => ({
+            ...prev,
+            filters: [
+                {
+                    fieldName: "patient_key",
+                    operator: "match",
+                    value: patient?.key,
+                },
+                {
+                    fieldName: "review_at",
+                    operator: "notMatch",
+                    value: 0,
+                },
+            ],
+        }));
+    }, [dateOrderFilter?.fromDate, dateOrderFilter?.toDate]);
+    useEffect(() => {
+        const isDateRangeValid = dateOrderFilter.fromDate !== null && dateOrderFilter.toDate !== null;
+        const isResultsLoaded = Array.isArray(reportList?.object) && reportList.object.length > 0;
 
-  if (isDateRangeValid && isResultsLoaded) {
-    const fromDate = new Date(dateOrderFilter.fromDate);
-    fromDate.setHours(0, 0, 0, 0);
+        if (isDateRangeValid && isResultsLoaded) {
+            const fromDate = new Date(dateOrderFilter.fromDate);
+            fromDate.setHours(0, 0, 0, 0);
 
-    const toDate = new Date(dateOrderFilter.toDate);
-    toDate.setHours(23, 59, 59, 999);
+            const toDate = new Date(dateOrderFilter.toDate);
+            toDate.setHours(23, 59, 59, 999);
 
-    const filtered = reportList.object.filter(item => {
-      const createdAt = new Date(item.test?.order?.createdAt);
-      return createdAt >= fromDate && createdAt <= toDate;
-    });
+            const filtered = reportList.object.filter(item => {
+                const createdAt = new Date(item.test?.order?.createdAt);
+                return createdAt >= fromDate && createdAt <= toDate;
+            });
 
-    const value = filtered.map(order => `(${order.key})`).join(" ") || '("")';
+            const value = filtered.map(order => `(${order.key})`).join(" ") || '("")';
 
-    setListReportResponse(prev =>
-      addFilterToListRequest("key", "in", value, prev)
-    );
-  }
-}, [dateOrderFilter, reportList]);
+            setListReportResponse(prev =>
+                addFilterToListRequest("key", "in", value, prev)
+            );
+        }
+    }, [dateOrderFilter, reportList]);
 
     const handleSendResultMessage = async value => {
         try {
@@ -121,6 +121,7 @@ useEffect(() => {
 
     //Table
     const reportColumns = [
+       
         {
             key: "testName",
             dataKey: "testName",
@@ -131,6 +132,15 @@ useEffect(() => {
             }
         }
         ,
+        {
+            key: "approvedAt",
+            title: <Translate>Report Date</Translate>,
+            flexGrow: 1,
+
+            render: (rowData: any) => {
+                return formatDateWithoutSeconds(rowData.approvedAt);
+            }
+        },
         {
             key: "report",
             dataKey: "report",
@@ -211,11 +221,11 @@ useEffect(() => {
 
             }
         }
-        
+
         ,
         {
             key: "print",
-          
+
             title: <Translate>Print</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
@@ -279,30 +289,30 @@ useEffect(() => {
     };
 
     const filters = () => {
-            return (
-                <Form layout="inline" fluid className="date-filter-form">
-    
-                    <MyInput
-                        column
-                        width={180}
-                        fieldType="date"
-                        fieldLabel="Order From Date"
-                        fieldName="fromDate"
-                        record={dateOrderFilter}
-                        setRecord={setDateOrderFilter}
-                    />
-                    <MyInput
-                        width={180}
-                        column
-                        fieldType="date"
-                        fieldLabel="Order To Date"
-                        fieldName="toDate"
-                        record={dateOrderFilter}
-                        setRecord={setDateOrderFilter}
-                    />
-                </Form>
-            );
-        };
+        return (
+            <Form layout="inline" fluid className="date-filter-form">
+
+                <MyInput
+                    column
+                    width={180}
+                    fieldType="date"
+                    fieldLabel="Order From Date"
+                    fieldName="fromDate"
+                    record={dateOrderFilter}
+                    setRecord={setDateOrderFilter}
+                />
+                <MyInput
+                    width={180}
+                    column
+                    fieldType="date"
+                    fieldLabel="Order To Date"
+                    fieldName="toDate"
+                    record={dateOrderFilter}
+                    setRecord={setDateOrderFilter}
+                />
+            </Form>
+        );
+    };
     return (<>
         <MyTable
             filters={filters()}
