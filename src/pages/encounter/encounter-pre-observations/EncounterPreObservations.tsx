@@ -11,7 +11,6 @@ import BlockIcon from '@rsuite/icons/Block';
 import Warning from './warning';
 import './styles.less';
 import MyButton from '@/components/MyButton/MyButton';
-import { ApEncounter } from '@/types/model-types';
 import { useCompleteEncounterMutation } from '@/services/encounterService';
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';

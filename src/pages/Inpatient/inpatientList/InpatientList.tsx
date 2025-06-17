@@ -108,20 +108,21 @@ const InpatientList = () => {
     useEffect(() => {
         dispatch(setPageCode(''));
         dispatch(setDivContent(' '));
-    }, [location.pathname, dispatch, isLoading]);
+    }, [location.pathname, dispatch , isLoading]);
+     useEffect(() => {
+      refetchEncounter();
+    }, []);
     useEffect(() => {
         if (!isFetching && manualSearchTriggered) {
             setManualSearchTriggered(false);
         }
     }, [isFetching, manualSearchTriggered]);
-
     useEffect(() => {
         if (isLoading || (manualSearchTriggered && isFetching)) {
             dispatch(showSystemLoader());
         } else if ((isFetching && isLoading)) {
             dispatch(hideSystemLoader());
         }
-
         return () => {
             dispatch(hideSystemLoader());
         };

@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
 import PlusIcon from '@rsuite/icons/Plus';
-import { useAppDispatch } from '@/hooks';
 import { Checkbox, } from 'rsuite';
 import { MdModeEdit } from 'react-icons/md'; import Translate from '@/components/Translate';
 import AddEditInpatientObservations from './AddEditInpatientObservations';
-import { ApEncounter, ApPatient, ApPsychologicalExam } from '@/types/model-types';
+import { ApEncounter, ApPatient } from '@/types/model-types';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import MyButton from '@/components/MyButton/MyButton';
 import MyTable from '@/components/MyTable';
