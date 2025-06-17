@@ -121,7 +121,17 @@ const Reports = ({ patient, user }) => {
 
     //Table
     const reportColumns = [
-       
+
+        {
+            key: "orderId",
+            title: <Translate>ORDER ID</Translate>,
+            flexGrow: 1,
+
+            render: (rowData: any) => {
+                return rowData.test?.order?.orderId;
+            }
+        },
+
         {
             key: "testName",
             dataKey: "testName",

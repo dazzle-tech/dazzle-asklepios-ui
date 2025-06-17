@@ -152,8 +152,8 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
         }
     }, [dateFilter.fromDate, dateFilter.toDate]);
 
-     useEffect(() => {
-       setListReportResponse(prev => ({
+    useEffect(() => {
+        setListReportResponse(prev => ({
             ...prev,
             filters: prev.filters.map(filter =>
                 filter.fieldName === "review_at"
@@ -161,7 +161,7 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
                     : filter
             ),
         }));
-    
+
         reportFetch();
     }, [showReview]);
     const handleSendResultMessage = async value => {
@@ -181,6 +181,22 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
         fecthResultNotes();
     };
     const reportColumns = [
+        {
+            key: "patientName",
+            title: <Translate>Patient Name</Translate>,
+            render: (rowData: any) => {
+                return rowData.test?.order?.patient?.fullName
+            }
+        },
+        {
+            key: "orderId",
+            title: <Translate>ORDER ID</Translate>,
+            flexGrow: 1,
+
+            render: (rowData: any) => {
+                return rowData.test?.order?.orderId;
+            }
+        },
         {
             key: "testName",
             dataKey: "testName",
@@ -275,7 +291,7 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
         ,
         {
             key: "action",
-            
+
             title: <Translate>ACTION</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
@@ -391,8 +407,8 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
                     record={dateOrderFilter}
                     setRecord={setDateOrderFilter}
                 />
-                  <Checkbox
-                style={{marginTop:"20px"}}
+                <Checkbox
+                    style={{ marginTop: "20px" }}
                     checked={!showReview}
                     onChange={() => {
                         setShowReview(!showReview);
