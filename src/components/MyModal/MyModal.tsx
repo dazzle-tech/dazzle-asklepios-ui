@@ -23,7 +23,8 @@ const MyModal = ({
   actionButtonLabel = 'Save',
   actionButtonFunction = null,
   customClassName = '',
-  cancelButtonLabel = 'Cancel'
+  cancelButtonLabel = 'Cancel',
+  handleCancelFunction=null
 }) => {
   const [internalStep, setInternalStep] = useState(0);
   const activeStep = internalStep;
@@ -85,7 +86,7 @@ const MyModal = ({
       <Modal.Footer className="footer-modal">
         <Form className="footer-modal-content">
           {!hideCancel && (
-            <MyButton appearance={'subtle'} onClick={handleCancel}>
+            <MyButton appearance={'subtle'} onClick={()=>{handleCancel();handleCancelFunction();}}>
               {cancelButtonLabel}
             </MyButton>
           )}
