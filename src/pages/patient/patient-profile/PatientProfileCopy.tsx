@@ -23,7 +23,7 @@ const { getHeight } = DOMHelper;
 const PatientProfile = () => {
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
-  const [localVisit, setLocalVisit] = useState({ ...newApEncounter });
+  const [localVisit, setLocalVisit] = useState({ ...newApEncounter ,discharge:false});
   const [windowHeight, setWindowHeight] = useState(getHeight(window));
   const [expand, setExpand] = useState(false);
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });

@@ -77,7 +77,7 @@ const EncounterRegistration = () => {
   const [openModelPayment, setOpenModelPayment] = React.useState(false);
   const [openModelCompanionCard, setOpenModelCompanionCard] = React.useState(false);
   const [openModelAppointmentView, setOpenModelAppointmentView] = React.useState(false);
-  const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter });
+  const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter ,discharge:false});
    const [administrativeWarningsModalOpen, setAdministrativeWarningsModalOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [validationResult, setValidationResult] = useState({});
@@ -175,7 +175,8 @@ const EncounterRegistration = () => {
         patientFullName: patientSlice.patient.fullName,
         patientAge: patientSlice.patient.dob ? calculateAgeFormat(patientSlice.patient.dob) + '' : '',
         encounterStatusLkey: '91063195286200',//change this to be loaded from cache lov values by code
-        plannedStartDate: new Date()
+        plannedStartDate: new Date(),
+        discharge:false
       });
     } else {
       console.warn('No patient found in state');
@@ -187,7 +188,7 @@ const EncounterRegistration = () => {
     if (!patientSlice.patient && !localEncounter.patientKey) {
       console.log("case1-no patient");
       dispatch(setPatient({ ...newApPatient }));
-      dispatch(setEncounter({ ...newApEncounter }));
+      dispatch(setEncounter({ ...newApEncounter ,discharge:false}));
       // navigate('/patient-profile');
     } else {
       console.log("case2 patient");
@@ -215,7 +216,7 @@ const EncounterRegistration = () => {
   const handleCancel = () => {
     dispatch(setPatient(null));
     dispatch(setEncounter(null));
-    setLocalEncounter({ ...newApEncounter });
+    setLocalEncounter({ ...newApEncounter ,discharge:false});
     // navigate('/patient-profile');
   };
   const handleGoToPatientAppointment = () => {
@@ -271,7 +272,7 @@ const EncounterRegistration = () => {
     setEditing(true);
     dispatch(setPatient(null));
     dispatch(setEncounter(null));
-    setLocalEncounter({ ...newApEncounter });
+    setLocalEncounter({ ...newApEncounter ,discharge:false });
     navigate('/patient-profile');
   };
   const searchCriteriaOptions = [
@@ -298,7 +299,8 @@ const EncounterRegistration = () => {
           patientFullName: patientSlice.patient.fullName,
           patientAge: patientSlice.patient.dob ? calculateAgeFormat(patientSlice.patient.dob) + '' : '',
           encounterStatusLkey: '91063195286200',//change this to be loaded from cache lov values by code
-          plannedStartDate: new Date()
+          plannedStartDate: new Date(),
+          discharge:false
         }
       )
       

@@ -11,7 +11,7 @@ import BlockIcon from '@rsuite/icons/Block';
 import Warning from './warning';
 import './styles.less';
 import MyButton from '@/components/MyButton/MyButton';
-import { useCompleteEncounterMutation } from '@/services/encounterService';
+import { useCompleteEncounterMutation, useDischargeInpatientEncounterMutation } from '@/services/encounterService';
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Tabs } from 'rsuite';
@@ -22,7 +22,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import BackButton from '@/components/BackButton/BackButton';
 import PreviousMeasurements from './previous-measurements';
 import PatientHistory from '../encounter-component/patient-history';
-
+import { notify } from '@/utils/uiReducerActions';
 const EncounterPreObservations = ({ }) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
@@ -33,7 +33,7 @@ const EncounterPreObservations = ({ }) => {
   const [readOnly, setReadOnly] = useState(false);
   const [activeKey, setActiveKey] = useState<string | number>('1');
   const [completeEncounter] = useCompleteEncounterMutation();
-
+  const [dischargeInpatientEncounter] = useDischargeInpatientEncounterMutation();
   // Page header setup
   const divContent = (
     <div style={{ display: 'flex' }}>
@@ -44,12 +44,22 @@ const EncounterPreObservations = ({ }) => {
   dispatch(setPageCode('Nurse_Station'));
   dispatch(setDivContent(divContentHTML));
 
-  const handleCompleteEncounter = () => {
-    if (localEncounter) {
-      completeEncounter(localEncounter).unwrap();
+  const handleCompleteEncounter = async () => {
+    try {
+      if (localEncounter?.resourceTypeLvalue?.valueCode === "BRT_INPATIENT") {
+        await dischargeInpatientEncounter(localEncounter).unwrap();
+        dispatch(notify({ msg: 'Inpatient Encounter Discharge Successfully', sev: 'success' }));
+      } else if (localEncounter) {
+        await completeEncounter(localEncounter).unwrap();
+        dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
+      }
       setReadOnly(true);
+    } catch (error) {
+      console.error("Encounter completion error:", error);
+      dispatch(notify({ msg: 'An error occurred while completing the encounter', sev: 'error' }));
     }
   };
+
 
   // Effects
   useEffect(() => {
@@ -90,13 +100,14 @@ const EncounterPreObservations = ({ }) => {
                   }}
                 />
                 <div className="left-buttons-contant">
-                  <MyButton
+                  {/* TODO update status to be a LOV value */}
+                  {!localEncounter.discharge && localEncounter.encounterStatusLkey !== "91109811181900" && (<MyButton
                     prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                     onClick={handleCompleteEncounter}
                     appearance="ghost"
                   >
-                    <Translate>Complete Visit</Translate>
-                  </MyButton>
+                    <Translate>{localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT" ? "Discharge" : "Complete Visit"}</Translate>
+                  </MyButton>)}
                   {activeKey == '1' && <Divider vertical />}
                   {activeKey == '1' && (
                     <MyButton

@@ -22,7 +22,7 @@ const PatientEMR = () => {
     const dispatch = useAppDispatch();
     const location = useLocation();
     const propsData = location.state;
-    const [encounter, setLocalEncounter] = useState({ ...newApEncounter });
+    const [encounter, setLocalEncounter] = useState({ ...newApEncounter ,discharge:false});
     const [localPatient, setLocalPatient] = useState<ApPatient>(propsData?.fromPage === "clinicalVisit" ? propsData?.localPatient : { ...newApPatient });
     const [refetchData, setRefetchData] = useState(false);
 

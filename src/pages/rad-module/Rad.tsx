@@ -33,7 +33,7 @@ import Tests from './Tests';
 const Rad = () => {
   const dispatch = useAppDispatch();
   const [currentStep, setCurrentStep] = useState('6055029972709625');
-  const [encounter, setEncounter] = useState({ ...newApEncounter });
+  const [encounter, setEncounter] = useState({ ...newApEncounter ,discharge:false});
   const [showFilterInput, setShowFilterInput] = useState(false);
   const [patient, setPatient] = useState({ ...newApPatient });
   const [order, setOrder] = useState<any>({ ...newApDiagnosticOrders });

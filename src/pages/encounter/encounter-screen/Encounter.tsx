@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
-import { useCompleteEncounterMutation } from '@/services/encounterService';
+import { useCompleteEncounterMutation, useDischargeInpatientEncounterMutation } from '@/services/encounterService';
 import {
   faBedPulse, faCheckDouble, faClockRotateLeft, faFilePrescription, faFileWaveform,
   faHandDots, faNotesMedical, faPersonDotsFromLine, faPills, faStethoscope, faSyringe, faTooth, faTriangleExclamation, faUserDoctor, faVials
@@ -25,7 +25,7 @@ import { faBrain, faEarListen, faEye, faHeartPulse, faUserPlus } from '@fortawes
 import { useLocation } from 'react-router-dom';
 import AllergiesModal from './AllergiesModal';
 import WarningiesModal from './WarningiesModal';
-
+import { notify } from '@/utils/uiReducerActions';
 const Encounter = () => {
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
@@ -44,6 +44,7 @@ const Encounter = () => {
   const [medicalSheetSourceKey, setMedicalSheetSourceKey] = useState<string | undefined>();
   const [medicalSheetRowSourceKey, setMedicalSheetRowSourceKey] = useState<string | undefined>();
   const [selectedResources, setSelectedResources] = useState([]);
+  const [dischargeInpatientEncounter] = useDischargeInpatientEncounterMutation();
   const [edit, setEdit] = useState(false);
   const [fromPage, setFromPage] = useState(savedState);
 
@@ -106,9 +107,9 @@ const Encounter = () => {
   }, [resourcesResponse]);
 
   useEffect(() => {
-   if (localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT" && completeEncounterMutation.status === 'fulfilled') {
-     navigate('/inpatient-encounters-list');
-   } else if(completeEncounterMutation.status === 'fulfilled') {
+    if (localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT" && completeEncounterMutation.status === 'fulfilled') {
+      navigate('/inpatient-encounters-list');
+    } else if (completeEncounterMutation.status === 'fulfilled') {
       navigate('/encounter-list');
     }
   }, [completeEncounterMutation]);
@@ -123,10 +124,10 @@ const Encounter = () => {
           fromPage: 'clinicalVisit'
         }
       });
-    }else if(localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT"){
-         navigate('/inpatient-encounters-list')
+    } else if (localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT") {
+      navigate('/inpatient-encounters-list')
     }
-     else {
+    else {
       navigate('/encounter-list');
     }
   };
@@ -138,9 +139,18 @@ const Encounter = () => {
     setOpenWarningModal(true);
   };
 
-  const handleCompleteEncounter = () => {
-    if (propsData.encounter) {
-      completeEncounter(propsData.encounter).unwrap();
+  const handleCompleteEncounter = async () => {
+    try {
+      if (propsData.encounter?.resourceTypeLvalue?.valueCode === "BRT_INPATIENT") {
+        await dischargeInpatientEncounter(propsData.encounter).unwrap();
+        dispatch(notify({ msg: 'Inpatient Encounter Discharge Successfully', sev: 'success' }));
+      } else if (propsData.encounter) {
+        await completeEncounter(propsData.encounter).unwrap();
+        dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
+      }
+    } catch (error) {
+      console.error("Encounter completion error:", error);
+      dispatch(notify({ msg: 'An error occurred while completing the encounter', sev: 'error' }));
     }
   };
 
@@ -254,15 +264,20 @@ const Encounter = () => {
               >
                 Warning
               </MyButton>
-              {propsData?.encounter?.editable && (
+              {propsData?.encounter?.editable && !propsData?.encounter?.discharge && (
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                   onClick={handleCompleteEncounter}
                   appearance="ghost"
                 >
-                  <Translate>Complete Visit</Translate>
+                  <Translate>
+                    {propsData?.encounter?.resourceTypeLvalue?.valueCode === "BRT_INPATIENT"
+                      ? "Discharge"
+                      : "Complete Visit"}
+                  </Translate>
                 </MyButton>
               )}
+
             </div>
           </div>
           <Divider />

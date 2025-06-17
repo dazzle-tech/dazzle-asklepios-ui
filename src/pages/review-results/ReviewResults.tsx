@@ -8,7 +8,7 @@ import { useAppSelector } from "@/hooks";
 
 const ReviewResults=()=>{
     const [patient, setPatient] = React.useState({...newApPatient});
-    const [encounter, setEncounter] = React.useState<any>({...newApEncounter});
+    const [encounter, setEncounter] = React.useState<any>({...newApEncounter,discharge:false});
      const authSlice = useAppSelector(state => state.auth);
 
     return (

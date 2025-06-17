@@ -29,7 +29,7 @@ export const encounterService = createApi({
       query: (patientId: string) => ({
         url: `/encounter/get-encounter-by-id`,
         params: {
-          key: patientId, 
+          key: patientId,
         }
 
       }),
@@ -542,6 +542,17 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    dischargeInpatientEncounter: builder.mutation({
+      query: (encounter: ApEncounter) => ({
+        url: `/encounter/discharge-inpatient-encounter`,
+        method: 'POST',
+        body: encounter
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
   })
 });
 
@@ -600,7 +611,7 @@ export const {
   useSaveComplaintSymptomsMutation,
   useGetComplaintSymptomsQuery,
   useSaveElectrocardiogramECGMutation,
-  useGetElectrocardiogramECGsQuery
-
+  useGetElectrocardiogramECGsQuery,
+  useDischargeInpatientEncounterMutation
 } = encounterService;
 
