@@ -106,7 +106,9 @@ const Encounter = () => {
   }, [resourcesResponse]);
 
   useEffect(() => {
-    if (completeEncounterMutation.status === 'fulfilled') {
+   if (localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT" && completeEncounterMutation.status === 'fulfilled') {
+     navigate('/inpatient-encounters-list');
+   } else if(completeEncounterMutation.status === 'fulfilled') {
       navigate('/encounter-list');
     }
   }, [completeEncounterMutation]);
@@ -114,8 +116,6 @@ const Encounter = () => {
 
 
   const handleGoBack = () => {
-
-
     if (savedState === 'PatientEMR') {
       navigate('/patient-EMR', {
         state: {
@@ -123,7 +123,10 @@ const Encounter = () => {
           fromPage: 'clinicalVisit'
         }
       });
-    } else {
+    }else if(localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT"){
+         navigate('/inpatient-encounters-list')
+    }
+     else {
       navigate('/encounter-list');
     }
   };
