@@ -24,6 +24,7 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
     const [bsa, setBsa] = useState('');
     const [map, setMap] = useState('');
     const dispatch = useAppDispatch();
+
     // Define state for the request used to fetch the patient's last visit observations list
     const [patientLastVisitObservationsListRequest, setPatientLastVisitObservationsListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -74,6 +75,8 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
             }).unwrap();
             refetch();
             dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+            setTimeout(() => {
+            window.location.reload()}, 500); 
         } catch (error) {
             console.error('Error while saving observation summary:', error);
             dispatch(notify({ msg: 'Error occurred while saving', sev: 'error' }));
@@ -327,6 +330,7 @@ const AddEditInpatientObservations = ({ open, setOpen, patient, encounter, obser
             position='right'
             isDisabledActionBtn={!edit ? isDisabledField : true}
             size='32vw'
+            hideActionBtn={true}
             footerButtons={<>
                 <MyButton appearance='ghost' onClick={handleClear}>Clear</MyButton>
                 <MyButton onClick={handleSave}>Save</MyButton>

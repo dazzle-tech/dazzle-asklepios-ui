@@ -22,7 +22,6 @@ const InpatientObservations = ({ localEncounter, localPatient, editable }) => {
     const [encounter, setEncounter] = useState<ApEncounter>({ ...localEncounter });
     const [edit, setEdit] = useState(editable);
     const [openAddModal, setOpenAddModal] = useState(false);
-    const dispatch = useAppDispatch()
     const [patientObservationSummary, setPatientObservationSummary] = useState<ApPatientObservationSummary>({
         ...newApPatientObservationSummary,
         latesttemperature: null,
