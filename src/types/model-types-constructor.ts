@@ -2461,6 +2461,7 @@ export const newApProcedureStaff:modelTypes.ApProcedureStaff = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	encounterKey:undefined,
+	isPresent:undefined,
 } 
 
 export const newApPsychologicalExam:modelTypes.ApPsychologicalExam = { 

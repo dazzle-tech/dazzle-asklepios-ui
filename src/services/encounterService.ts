@@ -1,4 +1,4 @@
-import { ApAudiometryPuretone, ApElectrocardiogramEcg, ApOptometricExam, ApTreadmillStress } from './../types/model-types';
+import { ApAudiometryPuretone, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -336,24 +336,7 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
-    getProcedures: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/encounter/procedures-list?${fromListRequestToQueryParams(listRequest)}`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-    saveProcedures: builder.mutation({
-      query: (order: ApProcedure) => ({
-        url: `/encounter/save-procedures`,
-        method: 'POST',
-        body: order
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
+
     getDiagnosticOrder: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/encounter/diagnostic-order-list?${fromListRequestToQueryParams(listRequest)}`
@@ -542,6 +525,7 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+
     dischargeInpatientEncounter: builder.mutation({
       query: (encounter: ApEncounter) => ({
         url: `/encounter/discharge-inpatient-encounter`,
@@ -553,6 +537,7 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
+
   })
 });
 
@@ -590,8 +575,6 @@ export const {
   useSaveDrugOrderMutation,
   useGetDrugOrderMedicationQuery,
   useSaveDrugOrderMedicationMutation,
-  useGetProceduresQuery,
-  useSaveProceduresMutation,
   useGetDiagnosticOrderQuery,
   useGetDiagnosticOrderTestQuery,
   useSaveDiagnosticOrderMutation,
@@ -613,5 +596,6 @@ export const {
   useSaveElectrocardiogramECGMutation,
   useGetElectrocardiogramECGsQuery,
   useDischargeInpatientEncounterMutation
+
 } = encounterService;
 

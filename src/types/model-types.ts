@@ -2460,6 +2460,7 @@ export interface ApProcedureStaff {
 	updatedAt:number;
 	deletedAt:number;
 	encounterKey:string;
+	isPresent:boolean;
 } 
 
 export interface ApPsychologicalExam { 
