@@ -28,7 +28,7 @@ import {
 } from '@/services/setupService';
 import {
     useSaveProceduresMutation
-} from '@/services/encounterService';
+} from '@/services/procedureService';
 import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
@@ -37,10 +37,10 @@ import AdvancedModal from '@/components/AdvancedModal';
 import './styles.less'
 import Diagnosis from './Diagnosis';
 import clsx from 'clsx';
-const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetailsModal, setOpenDetailsModal, proRefetch }) => {
+const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetailsModal, setOpenDetailsModal, proRefetch}) => {
     const [openOrderModel, setOpenOrderModel] = useState(false);
     const [editing, setEditing] = useState(false);
-
+     const dispatch = useAppDispatch();
     const [saveProcedures, saveProcedureMutation] = useSaveProceduresMutation();
     const { data: bodypartLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_PARTS');
     const { data: sideLovQueryResponse } = useGetLovValuesByCodeQuery('SIDES');
@@ -168,7 +168,7 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
         }
     }, [procedure.currentDepartment]);
 
-    const dispatch = useAppDispatch();
+    
     const handleClear = () => {
         setProcedure({
             ...newApProcedure,
@@ -193,6 +193,7 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                 indications: indicationsDescription,
                 encounterKey: encounter.key,
                 scheduledDateTime: procedure.scheduledDateTime ? new Date(procedure?.scheduledDateTime)?.getTime() : null,
+            
             })
                 .unwrap()
                 .then(() => {

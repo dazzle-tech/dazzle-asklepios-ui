@@ -23,9 +23,11 @@ import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 import MyTable from '@/components/MyTable';
 import {
-  useGetProceduresQuery,
+ 
   useSaveProceduresMutation
-} from '@/services/encounterService';
+} from '@/services/procedureService';
+  import{useGetProceduresQuery} from '@/services/procedureService';
+
 import { newApProcedure } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { formatDateWithoutSeconds } from '@/utils';
@@ -94,7 +96,7 @@ const Referrals = () => {
     ]
   });
   const { data: procedures, refetch: proRefetch, isLoading: procedureLoding } = useGetProceduresQuery(listRequest);
-
+console.log("procedures==>",procedures?.object);
   const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [

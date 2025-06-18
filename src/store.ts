@@ -16,6 +16,7 @@ import { appointmentService } from './services/appointmentService';
 import divSlice from './reducers/divSlice';
 import { labService } from './services/labService';
 import {radService}from '@/services/radService';
+import { procedureService } from './services/procedureService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -58,7 +59,9 @@ export const store = configureStore({
 
     [radService.reducerPath]:radService.reducer,
     // div slice 
-    [divSlice.name]:divSlice.reducer 
+    [divSlice.name]:divSlice.reducer,
+    //procedure 
+    [procedureService.reducerPath]:procedureService.reducer
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>
@@ -75,7 +78,8 @@ export const store = configureStore({
       observationService.middleware,
       attachmentService.middleware,
       labService.middleware,
-      radService.middleware
+      radService.middleware,
+      procedureService.middleware
   
     ])
 });
