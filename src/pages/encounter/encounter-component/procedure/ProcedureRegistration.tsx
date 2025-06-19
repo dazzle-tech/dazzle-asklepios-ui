@@ -17,8 +17,6 @@ const ProcedureRegistration = ({ procedure, user,setActiveTab }) => {
     const dispatch = useAppDispatch();
 
     const { data: proUser } = useGetUserRecordQuery(procedure?.createdBy, { skip: !procedure?.createdBy });
-    const { data: userList } = useGetUsersQuery({ ...initialListRequest });
-
     const [proReg, setProReg] = useState({ ...newApProcedureRegistration });
     const { data: consentLovQueryResponse } = useGetLovValuesByCodeQuery('CONSENT_FORM');
     const [departmentListRequest, setDepartmentListRequest] = useState<ListRequest>({
@@ -111,10 +109,12 @@ const ProcedureRegistration = ({ procedure, user,setActiveTab }) => {
         </Panel>
         <StaffMember procedure={procedure} />
         <Panel>
-            <Row >
-            <Col md={21} ></Col>
-            <Col md={3}><MyButton onClick={()=>setActiveTab("2")}>Complate and Next</MyButton></Col>
-        </Row>
+            <div className='bt-div'>
+                
+                <div className="bt-right">
+                    <MyButton onClick={() => setActiveTab("2")}>Complate and Next</MyButton>
+                </div>
+            </div>
         </Panel>
         
 

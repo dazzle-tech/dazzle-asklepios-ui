@@ -19,6 +19,10 @@ import {
 import PatientSide from '../../encounter-main-info-section/PatienSide';
 import ProcedureRegistration from './ProcedureRegistration';
 import './styles.less';
+import PreProcedureAssessment from './Pre-ProcedureAssessment/PreProcedureAssessment';
+import ProcedurePerforming from './ProcedurePerforming/ProcedurePerforming';
+import PostProcedureCare from './Post-ProcedureCare/PostProcedureCare';
+import EquipmentAndLogistics from './EquipmentAndLogistics/EquipmentAndLogistics';
 const Perform = ({ edit, patient, encounter, procedure, setProcedure, }) => {
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
@@ -187,13 +191,25 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure, }) => {
             <MyStepper stepsList={stepsData} activeStep={1} />
             <Divider />
             <Tabs activeKey={activeTab} onSelect={(key) => {
-                if (key) setActiveTab(key.toString()); 
+                if (key) setActiveTab(key.toString());
             }} appearance="subtle">
-                <Tabs.Tab eventKey="1" title="Procedure Registration" ><ProcedureRegistration procedure={procedure} user={authSlice.user} setActiveTab={setActiveTab}/></Tabs.Tab>
-                <Tabs.Tab eventKey="2" title="Pre-Procedure Assessment" ></Tabs.Tab>
-                <Tabs.Tab eventKey="3" title="Procedure Performing" ></Tabs.Tab>
-                <Tabs.Tab eventKey="4" title="Post-Procedure Care and Follow-up" ></Tabs.Tab>
-                <Tabs.Tab eventKey="5" title="Equipment and Logistics" ></Tabs.Tab>
+                <Tabs.Tab eventKey="1" title="Procedure Registration" >
+                    <ProcedureRegistration procedure={procedure} user={authSlice.user} setActiveTab={setActiveTab} />
+                </Tabs.Tab>
+
+                <Tabs.Tab eventKey="2" title="Pre-Procedure Assessment" >
+                    <PreProcedureAssessment procedure={procedure} setActiveTab={setActiveTab} user={authSlice.user} patient={patient}/>
+                </Tabs.Tab>
+
+                <Tabs.Tab eventKey="3" title="Procedure Performing" >
+                    <ProcedurePerforming procedure={procedure} setActiveTab={setActiveTab} user={authSlice.user} />
+                </Tabs.Tab>
+                <Tabs.Tab eventKey="4" title="Post-Procedure Care and Follow-up" >
+                    <PostProcedureCare procedure={procedure} setActiveTab={setActiveTab} user={authSlice.user}/>
+                </Tabs.Tab>
+                <Tabs.Tab eventKey="5" title="Equipment and Logistics" >
+                    <EquipmentAndLogistics procedure={procedure} setActiveTab={setActiveTab} user={authSlice.user}/>
+                </Tabs.Tab>
 
             </Tabs>
         </div>

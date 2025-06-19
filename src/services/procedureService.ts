@@ -71,6 +71,77 @@ export const procedureService = createApi({
       }),
       onQueryStarted: onQueryStarted
     })
+    ,
+    getPostProcedureVitals: builder.query({
+  query: (listRequest: ListRequest) => ({
+    url: `/procedures/post-procedure-vitals-list?${fromListRequestToQueryParams(listRequest)}`
+  }),
+  onQueryStarted,
+  keepUnusedDataFor: 5
+}),
+savePostProcedureVitals: builder.mutation({
+  query: (data) => ({
+    url: `/procedures/save-post-procedure-vitals`,
+    method: 'POST',
+    body: data
+  }),
+  onQueryStarted,
+  transformResponse: (response: any) => response.object
+}),
+
+// PRE PROCEDURE ASSESSMENT
+getPreProcedureAssessment: builder.query({
+  query: (listRequest: ListRequest) => ({
+    url: `/procedures/pre-procedure-assessment-list?${fromListRequestToQueryParams(listRequest)}`
+  }),
+  onQueryStarted,
+  keepUnusedDataFor: 5
+}),
+savePreProcedureAssessment: builder.mutation({
+  query: (data) => ({
+    url: `/procedures/save-pre-procedure-assessment`,
+    method: 'POST',
+    body: data
+  }),
+  onQueryStarted,
+  transformResponse: (response: any) => response.object
+}),
+
+// PROCEDURE PERFORMANCE
+getProcedurePerformance: builder.query({
+  query: (listRequest: ListRequest) => ({
+    url: `/procedures/procedure-performance-list?${fromListRequestToQueryParams(listRequest)}`
+  }),
+  onQueryStarted,
+  keepUnusedDataFor: 5
+}),
+saveProcedurePerformance: builder.mutation({
+  query: (data) => ({
+    url: `/procedures/save-procedure-performance`,
+    method: 'POST',
+    body: data
+  }),
+  onQueryStarted,
+  transformResponse: (response: any) => response.object
+}),
+
+// PROCEDURE ADMINISTERED MEDICATIONS
+getProcedureAdministeredMedications: builder.query({
+  query: (listRequest: ListRequest) => ({
+    url: `/procedures/procedure-administered-medications-list?${fromListRequestToQueryParams(listRequest)}`
+  }),
+  onQueryStarted,
+  keepUnusedDataFor: 5
+}),
+saveProcedureAdministeredMedications: builder.mutation({
+  query: (data) => ({
+    url: `/procedures/save-procedure-administered-medications`,
+    method: 'POST',
+    body: data
+  }),
+  onQueryStarted,
+  transformResponse: (response: any) => response.object
+}),
 
   })
 });
@@ -82,7 +153,15 @@ export const {
   useSaveProceduresRegistrationMutation,
   useGetProceduresStaffQuery,
   useSaveProceduresStaffMutation,
-  useDeleteProceduresStaffMutation
+  useDeleteProceduresStaffMutation,
+   useGetPostProcedureVitalsQuery,
+  useSavePostProcedureVitalsMutation,
+  useGetPreProcedureAssessmentQuery,
+  useSavePreProcedureAssessmentMutation,
+  useGetProcedurePerformanceQuery,
+  useSaveProcedurePerformanceMutation,
+  useGetProcedureAdministeredMedicationsQuery,
+  useSaveProcedureAdministeredMedicationsMutation,
 
 } = procedureService;
 

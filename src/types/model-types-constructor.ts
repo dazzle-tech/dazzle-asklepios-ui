@@ -1657,6 +1657,7 @@ export const newApMedicationCategories:modelTypes.ApMedicationCategories = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	medCategoriesName:'',
 } 
 
 export const newApMedicationCategoriesActiveIngredient:modelTypes.ApMedicationCategoriesActiveIngredient = { 
@@ -2262,6 +2263,29 @@ export const newApPhysicalExamArea:modelTypes.ApPhysicalExamArea = {
 	isValid:undefined,
 } 
 
+export const newApPostProcedureVitals:modelTypes.ApPostProcedureVitals = { 
+	key:undefined,
+	procedureKey:undefined,
+	bloodPressureSystolic:0,
+	bloodPressureDiastolic:0,
+	heartRate:0,
+	temperature:0,
+	oxygenSaturation:0,
+	painScoreLkey:undefined,
+	painDescription:'',
+	recoveryNotes:'',
+	additionalObservations:'',
+	equipmentCountDone:undefined,
+	countStatusLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isvalid:undefined,
+} 
+
 export const newApPractitioner:modelTypes.ApPractitioner = { 
 	key:undefined,
 	primaryFacilityKey:undefined,
@@ -2291,6 +2315,32 @@ export const newApPractitioner:modelTypes.ApPractitioner = {
 	defaultLicenseValidUntil:null,
 	secondaryLicenseValidUntil:null,
 	dob:null,
+} 
+
+export const newApPreProcedureAssessment:modelTypes.ApPreProcedureAssessment = { 
+	key:undefined,
+	procedureKey:undefined,
+	fastingRequired:undefined,
+	patientPrepared:undefined,
+	specialInstructions:'',
+	bloodPressureSystolic:0,
+	bloodPressureDiastolic:0,
+	heartRate:0,
+	temperature:0,
+	oxygenSaturation:0,
+	patientIdentityVerified:undefined,
+	consentConfirmed:undefined,
+	procedureSiteMarked:undefined,
+	allergiesConfirmed:undefined,
+	patientPremedicated:undefined,
+	equipmentCountingDone:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isvalid:undefined,
 } 
 
 export const newApPrescription:modelTypes.ApPrescription = { 
@@ -2387,6 +2437,21 @@ export const newApProcedure:modelTypes.ApProcedure = {
 	currentDepartment:undefined,
 } 
 
+export const newApProcedureAdministeredMedications:modelTypes.ApProcedureAdministeredMedications = { 
+	key:undefined,
+	procedureKey:undefined,
+	activeIngredientKey:undefined,
+	dose:0,
+	unitLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isvalid:undefined,
+} 
+
 export const newApProcedureCoding:modelTypes.ApProcedureCoding = { 
 	key:undefined,
 	procedureKey:undefined,
@@ -2398,6 +2463,33 @@ export const newApProcedureCoding:modelTypes.ApProcedureCoding = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
+} 
+
+export const newApProcedurePerformance:modelTypes.ApProcedurePerformance = { 
+	key:undefined,
+	actualStartTime:0,
+	anesthesiaUsed:undefined,
+	anesthesiaTypeLkey:undefined,
+	anesthesiaStartTime:0,
+	anesthesiaEndTime:0,
+	anesthesiaAdministeredBy:'',
+	timeOut:undefined,
+	procedureOutcomeLkey:undefined,
+	observations:'',
+	complicationTypeLkey:undefined,
+	complicationSeverityLkey:undefined,
+	actionsTaken:'',
+	actualEndTime:0,
+	additionalNotes:'',
+	homeInstructionLkey:undefined,
+	homeInstructionNotes:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isvalid:undefined,
 } 
 
 export const newApProcedurePriceList:modelTypes.ApProcedurePriceList = { 
@@ -2462,6 +2554,7 @@ export const newApProcedureStaff:modelTypes.ApProcedureStaff = {
 	deletedAt:undefined,
 	encounterKey:undefined,
 	isPresent:undefined,
+	patientKey:undefined,
 } 
 
 export const newApPsychologicalExam:modelTypes.ApPsychologicalExam = { 
