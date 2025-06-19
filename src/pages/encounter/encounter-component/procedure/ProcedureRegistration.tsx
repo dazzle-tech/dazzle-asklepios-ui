@@ -43,6 +43,9 @@ const ProcedureRegistration = ({ procedure, user,setActiveTab }) => {
             dispatch(notify({ msg: 'Saved  Faild', sev: "error" }));
         }
     }
+    const handleClear=()=>{
+        
+     }
     return (<>
         <Panel>
             <Form fluid >

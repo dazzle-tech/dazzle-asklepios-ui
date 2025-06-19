@@ -2471,7 +2471,7 @@ export interface ApProcedurePerformance {
 	anesthesiaTypeLkey:string;
 	anesthesiaStartTime:number;
 	anesthesiaEndTime:number;
-	anesthesiaAdministeredBy:string;
+	anesthesiaAdministeredKey:string;
 	timeOut:boolean;
 	procedureOutcomeLkey:string;
 	observations:string;
@@ -2489,6 +2489,7 @@ export interface ApProcedurePerformance {
 	updatedAt:number;
 	deletedAt:number;
 	isvalid:boolean;
+	procedureKey:string;
 } 
 
 export interface ApProcedurePriceList { 

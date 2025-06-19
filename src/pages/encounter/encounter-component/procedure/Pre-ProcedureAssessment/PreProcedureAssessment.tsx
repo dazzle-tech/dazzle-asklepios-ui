@@ -35,6 +35,8 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
     const [procedureAssessment, setProocedureAssessment] = useState({ ...newApPreProcedureAssessment });
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [saveAssessment] = useSavePreProcedureAssessmentMutation();
+
+
     const handleSave = async () => {
         try {
             saveAssessment({ ...procedureAssessment,procedureKey:procedure?.key }).unwrap();
@@ -45,6 +47,10 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
             dispatch(notify({ msg: 'Saved failed', sev: 'error' }));
         }
     }
+    const handleClear=()=>{
+         setProocedureAssessment({...newApPreProcedureAssessment})
+     }
+     
     return (<>
         <Row gutter={15} className="d">
             <Form fluid>
@@ -236,6 +242,7 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
         <div className='bt-div'>
 
             <div className="bt-right">
+                 <MyButton onClick={handleClear}>Clear</MyButton>
                 <MyButton onClick={handleSave} >Save</MyButton>
                 <MyButton onClick={() => setActiveTab("3")}>Complate and Next</MyButton>
             </div>
