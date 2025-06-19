@@ -1656,6 +1656,7 @@ export interface ApMedicationCategories {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	medCategoriesName:string;
 } 
 
 export interface ApMedicationCategoriesActiveIngredient { 
@@ -2261,6 +2262,29 @@ export interface ApPhysicalExamArea {
 	isValid:boolean;
 } 
 
+export interface ApPostProcedureVitals { 
+	key:string;
+	procedureKey:string;
+	bloodPressureSystolic:number;
+	bloodPressureDiastolic:number;
+	heartRate:number;
+	temperature:number;
+	oxygenSaturation:number;
+	painScoreLkey:string;
+	painDescription:string;
+	recoveryNotes:string;
+	additionalObservations:string;
+	equipmentCountDone:boolean;
+	countStatusLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
 export interface ApPractitioner { 
 	key:string;
 	primaryFacilityKey:string;
@@ -2290,6 +2314,32 @@ export interface ApPractitioner {
 	defaultLicenseValidUntil:Date;
 	secondaryLicenseValidUntil:Date;
 	dob:Date;
+} 
+
+export interface ApPreProcedureAssessment { 
+	key:string;
+	procedureKey:string;
+	fastingRequired:boolean;
+	patientPrepared:boolean;
+	specialInstructions:string;
+	bloodPressureSystolic:number;
+	bloodPressureDiastolic:number;
+	heartRate:number;
+	temperature:number;
+	oxygenSaturation:number;
+	patientIdentityVerified:boolean;
+	consentConfirmed:boolean;
+	procedureSiteMarked:boolean;
+	allergiesConfirmed:boolean;
+	patientPremedicated:boolean;
+	equipmentCountingDone:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
 } 
 
 export interface ApPrescription { 
@@ -2386,6 +2436,21 @@ export interface ApProcedure {
 	currentDepartment:boolean;
 } 
 
+export interface ApProcedureAdministeredMedications { 
+	key:string;
+	procedureKey:string;
+	activeIngredientKey:string;
+	dose:number;
+	unitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
 export interface ApProcedureCoding { 
 	key:string;
 	procedureKey:string;
@@ -2397,6 +2462,33 @@ export interface ApProcedureCoding {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
+} 
+
+export interface ApProcedurePerformance { 
+	key:string;
+	actualStartTime:number;
+	anesthesiaUsed:boolean;
+	anesthesiaTypeLkey:string;
+	anesthesiaStartTime:number;
+	anesthesiaEndTime:number;
+	anesthesiaAdministeredBy:string;
+	timeOut:boolean;
+	procedureOutcomeLkey:string;
+	observations:string;
+	complicationTypeLkey:string;
+	complicationSeverityLkey:string;
+	actionsTaken:string;
+	actualEndTime:number;
+	additionalNotes:string;
+	homeInstructionLkey:string;
+	homeInstructionNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
 } 
 
 export interface ApProcedurePriceList { 
@@ -2461,6 +2553,7 @@ export interface ApProcedureStaff {
 	deletedAt:number;
 	encounterKey:string;
 	isPresent:boolean;
+	patientKey:string;
 } 
 
 export interface ApPsychologicalExam { 
