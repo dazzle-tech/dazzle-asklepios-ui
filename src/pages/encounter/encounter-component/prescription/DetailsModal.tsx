@@ -47,9 +47,9 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
     const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
     const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
     const [instructionList,setInstructionList]=useState([]);
-    const [instr,setInstruc]=useState(null)
+    const [instr,setInstruc]=useState(null);
     const [editDuration, setEditDuration] = useState(false);
-    const [slectInst,setSelectInt]=useState({inst:null})
+    const [slectInst,setSelectInt]=useState({inst:null});
      const { data: customeInstructions, isLoading: isLoadingCustomeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
             ...initialListRequest,
         }); 
@@ -190,6 +190,7 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
     const joinValuesFromArray = (values) => {
         return values?.filter(Boolean)?.join(', ');
     };
+
     const handleSaveMedication = async () => {
 
         if (preKey === null) {

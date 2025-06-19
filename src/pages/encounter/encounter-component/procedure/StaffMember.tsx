@@ -26,16 +26,11 @@ const StaffMember = ({ procedure }) => {
         procedureKey: procedure?.key,
         encounterKey: procedure?.encounterKey,
     })
-    console.log("staff",staff)
     const { data: userList } = useGetUsersQuery({ ...initialListRequest });
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
-            {
-                fieldName: "encounter_key",
-                operator: "match",
-                value: procedure?.encounterKey
-            },
+          
             {
                 fieldName: "procedure_key",
                 operator: "match",
@@ -43,7 +38,7 @@ const StaffMember = ({ procedure }) => {
             }
         ]
     })
-    const { data: staffList, refetch } = useGetProceduresStaffQuery(listRequest, { skip: !procedure?.encounterKey });
+    const { data: staffList, refetch } = useGetProceduresStaffQuery(listRequest, { skip: !procedure?.key });
     const [saveStaff, saveStaffMutation] = useSaveProceduresStaffMutation();
     const [deleteProceduresStaff] = useDeleteProceduresStaffMutation();
     const [selectedUserList, setSelectedUserList] = useState<any>([]);

@@ -2472,7 +2472,7 @@ export const newApProcedurePerformance:modelTypes.ApProcedurePerformance = {
 	anesthesiaTypeLkey:undefined,
 	anesthesiaStartTime:0,
 	anesthesiaEndTime:0,
-	anesthesiaAdministeredBy:'',
+	anesthesiaAdministeredKey:undefined,
 	timeOut:undefined,
 	procedureOutcomeLkey:undefined,
 	observations:'',
@@ -2490,6 +2490,7 @@ export const newApProcedurePerformance:modelTypes.ApProcedurePerformance = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isvalid:undefined,
+	procedureKey:undefined,
 } 
 
 export const newApProcedurePriceList:modelTypes.ApProcedurePriceList = { 
