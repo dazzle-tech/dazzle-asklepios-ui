@@ -183,7 +183,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   <Col md={7}>
                     <MyInput
                       width='100%'
-                      fieldLabel='BP'
+                      fieldLabel='Systolic BP'
                       fieldName='latestbpSystolic'
                       disabled={isEncounterStatusClosed || readOnly}
                       fieldType='number'
@@ -197,7 +197,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                   </Col>
                   <Col md={7}>   <MyInput
                     width='100%'
-                    fieldLabel='mmHg'
+                    fieldLabel='Diastolic  BP'
                     fieldName='latestbpDiastolic'
                     disabled={isEncounterStatusClosed || readOnly}
                     fieldType='number'

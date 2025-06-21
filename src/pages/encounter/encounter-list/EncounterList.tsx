@@ -1,14 +1,13 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
 import { setEncounter, setPatient } from '@/reducers/patientSlice';
-import { ApPatient } from '@/types/model-types';
-import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
+import { newApEncounter } from '@/types/model-types-constructor';
 import React, { useEffect, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUserNurse, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Table, Pagination, Tooltip, Whisper } from 'rsuite';
-
+import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
 // import PeoplesTimeIcon from '@rsuite/icons/PeoplesTime';
@@ -296,6 +295,7 @@ const EncounterList = () => {
       render: rowData => {
         const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
         const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
+        const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
             <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
@@ -324,6 +324,16 @@ const EncounterList = () => {
                   }}
                 >
                   <FontAwesomeIcon icon={faUserNurse} />
+                </MyButton>
+              </div>
+            </Whisper>
+            <Whisper trigger="hover" placement="top" speaker={tooltipEMR}>
+              <div>
+                <MyButton
+                  size="small"
+                  backgroundColor="violet"
+                >
+                  <FontAwesomeIcon icon={faFileWaveform} />
                 </MyButton>
               </div>
             </Whisper>
