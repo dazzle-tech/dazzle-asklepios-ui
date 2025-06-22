@@ -10,7 +10,7 @@ import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
-import StimulsoftReportViewer from '@/components/Report/StimulsoftReportViewer';
+import StimulsoftReportViewer from '@/StimulsoftReportViewer';
 const Dashboard = () => {
   const dispatch = useAppDispatch();
   const divElement = useSelector((state: RootState) => state.div?.divElement);
