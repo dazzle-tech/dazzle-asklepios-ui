@@ -19,7 +19,7 @@ import React, { useEffect, useState } from 'react';
 import { MdSave } from 'react-icons/md';
 import { Button, ButtonToolbar, Divider, Dropdown, Form, IconButton, Input, InputGroup, Modal, Stack, Table, Text } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
-const NormalRangeSetup = ({ popUpOpen, setPopUpOpen, diagnosticsTest }) => {
+const NormalRangeSetupModal = ({ popUpOpen, setPopUpOpen, diagnosticsTest }) => {
   const [diagnosticTestNormalRange, setDiagnosticTestNormalRange] =
     useState<ApDiagnosticTestNormalRange>({
       ...newApDiagnosticTestNormalRange
@@ -549,4 +549,4 @@ const NormalRangeSetup = ({ popUpOpen, setPopUpOpen, diagnosticsTest }) => {
   );
 };
 
-export default NormalRangeSetup;
+export default NormalRangeSetupModal;

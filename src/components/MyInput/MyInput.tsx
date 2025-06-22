@@ -167,8 +167,8 @@ const MyInput = ({
             placeholder={props.placeholder ?? 'Select...'}
             creatable={props.creatable ?? false} // Optional: Allow users to create new tags
             groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
-            searchBy={props.searchBy} 
-            menuMaxHeight={props?.menuMaxHeight ?? ''}// Optional: Search function for TagPicker
+            searchBy={props.searchBy} // Optional: Search function for TagPicker
+             menuMaxHeight={props?.menuMaxHeight ?? ''}
           />
         );
           case 'checkPicker':
@@ -187,6 +187,7 @@ const MyInput = ({
             placeholder={props.placeholder ?? 'Select...'}
             groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
             searchBy={props.searchBy} // Optional: Search function for checkPicker
+            menuMaxHeight={props?.menuMaxHeight ?? ''}
           />
         );
       case 'date':

@@ -1,9 +1,19 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Drawer, Input, List, Modal, Pagination, Panel, SelectPicker, Table, Carousel } from 'rsuite';
+import {
+  Drawer,
+  Input,
+  List,
+  Modal,
+  Pagination,
+  Panel,
+  SelectPicker,
+  Table,
+  Carousel
+} from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { Accordion,  Checkbox, TagGroup, Tag, CheckboxGroup, InputGroup  } from 'rsuite';
+import { Accordion, Checkbox, TagGroup, Tag, CheckboxGroup, InputGroup } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 import {
   useGetCatalogDiagnosticsTestListQuery,
@@ -11,7 +21,7 @@ import {
   useGetDiagnosticsTestLaboratoryListQuery,
   useGetLovValuesByCodeQuery,
   useGetServicesQuery,
-  useSaveDiagnosticsTestLaboratoryMutation,
+  useSaveDiagnosticsTestLaboratoryMutation
 } from '@/services/setupService';
 import { useAppDispatch } from '@/hooks';
 import { Button, ButtonToolbar, IconButton } from 'rsuite';
@@ -19,23 +29,27 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import EditIcon from '@rsuite/icons/Edit';
 import TrashIcon from '@rsuite/icons/Trash';
 import { ApCdt, ApDiagnosticTestLaboratory } from '@/types/model-types';
-import { newApCdt, newApDiagnosticTestLaboratory, newApServiceCdt } from '@/types/model-types-constructor';
+import {
+  newApCdt,
+  newApDiagnosticTestLaboratory,
+  newApServiceCdt
+} from '@/types/model-types-constructor';
 import { Form, Stack, Divider } from 'rsuite';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 
-import { ApActiveIngredient} from '@/types/model-types';
+import { ApActiveIngredient } from '@/types/model-types';
 import { newApActiveIngredient } from '@/types/model-types-constructor';
 import { BlockUI } from 'primereact/blockui';
 import { Check, Trash } from '@rsuite/icons';
 import { Console } from 'console';
 import { notify } from '@/utils/uiReducerActions';
 
-const Laboratory = ({diagnosticsTest}) => {
-   
+const Laboratory = ({ diagnosticsTest, diagnosticTestLaboratory,setDiagnosticTestLaboratory }) => {
   const dispatch = useAppDispatch();
   const [popupOpen, setPopupOpen] = useState(false);
-  const [diagnosticTestLaboratory, setDiagnosticTestLaboratory] = useState<ApDiagnosticTestLaboratory>({ ...newApDiagnosticTestLaboratory });
- console.log("test",diagnosticsTest)
+  // const [diagnosticTestLaboratory, setDiagnosticTestLaboratory] =
+  //   useState<ApDiagnosticTestLaboratory>({ ...newApDiagnosticTestLaboratory });
+  console.log('test', diagnosticsTest);
   const [catalogListRequest, setCatalogListRequest] = useState({
     ...initialListRequest,
     pageSize: 100,
@@ -52,7 +66,6 @@ const Laboratory = ({diagnosticsTest}) => {
         fieldName: 'type_lkey',
         operator: 'match',
         value: '862810597620632' //TODO Add the LOV 'Labkey'
-
       }
     ]
   });
@@ -72,28 +85,29 @@ const Laboratory = ({diagnosticsTest}) => {
       {
         fieldName: 'test_key',
         operator: 'match',
-        value: diagnosticsTest.key  || undefined
-
+        value: diagnosticsTest.key || undefined
       }
     ]
   });
 
-  const { data: CatalogListResponseData } = useGetDiagnosticsTestCatalogHeaderListQuery(catalogListRequest);
+  const { data: CatalogListResponseData } =
+    useGetDiagnosticsTestCatalogHeaderListQuery(catalogListRequest);
   const { data: LabReagentsLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_REAGENTS');
   const { data: InterCodeLovQueryResponse } = useGetLovValuesByCodeQuery('INTERNATIONAL_CODES');
   const { data: CategoriesLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_CATEGORIES');
   const { data: TimeUnitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
   const { data: ValueUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
-  const { data: SampleContainerLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_SAMPLE_CONTAINER');
+  const { data: SampleContainerLovQueryResponse } =
+    useGetLovValuesByCodeQuery('LAB_SAMPLE_CONTAINER');
   const { data: LabTubeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_TYPES');
   const { data: TubeColorLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_TUBE_COLORS');
-  const [saveDiagnosticsTestLaboratory, saveDiagnosticsTestLaboratoryMutation] = useSaveDiagnosticsTestLaboratoryMutation();
-  const { data: labrotoryDetailsQueryResponse } = useGetDiagnosticsTestLaboratoryListQuery(labListRequest);
-
-
+  const [saveDiagnosticsTestLaboratory, saveDiagnosticsTestLaboratoryMutation] =
+    useSaveDiagnosticsTestLaboratoryMutation();
+  const { data: labrotoryDetailsQueryResponse } =
+    useGetDiagnosticsTestLaboratoryListQuery(labListRequest);
 
   useEffect(() => {
-    if (diagnosticTestLaboratory.isProfile === true && diagnosticTestLaboratory.key === null ) {
+    if (diagnosticTestLaboratory.isProfile === true && diagnosticTestLaboratory.key === null) {
       setPopupOpen(!popupOpen);
     }
   }, [diagnosticTestLaboratory?.isProfile]);
@@ -109,15 +123,13 @@ const Laboratory = ({diagnosticsTest}) => {
         fieldName: 'test_key',
         operator: 'match',
         value: diagnosticsTest.key || undefined
-
       }
     ];
-    setLabListRequest((prevRequest) => ({
+    setLabListRequest(prevRequest => ({
       ...prevRequest,
-      filters: updatedFilters,
+      filters: updatedFilters
     }));
   }, [diagnosticsTest.key]);
-
 
   useEffect(() => {
     if (diagnosticsTest) {
@@ -128,102 +140,177 @@ const Laboratory = ({diagnosticsTest}) => {
     }
   }, [diagnosticsTest]);
 
-
   useEffect(() => {
-     if(labrotoryDetailsQueryResponse?.object?.length > 0){
+    if (labrotoryDetailsQueryResponse?.object?.length > 0) {
       setDiagnosticTestLaboratory(labrotoryDetailsQueryResponse?.object[0]);
-     }else{
-      setDiagnosticTestLaboratory({...newApDiagnosticTestLaboratory})
-     }
+    } else {
+      setDiagnosticTestLaboratory({ ...newApDiagnosticTestLaboratory });
+    }
   }, [labrotoryDetailsQueryResponse]);
 
-  const handleSaveLab = async() => {
-    
- 
-   await saveDiagnosticsTestLaboratory({...diagnosticTestLaboratory, 
-      createdBy: 'Administrator',
-      testKey:diagnosticsTest?.key}).unwrap();
-     dispatch(notify('Laboratory Details Saved Successfully'));
-                };   
-  
-    return (
-      
-      <Panel
-        header={
-          <h3 className="title">
-            <Translate>Laboratory</Translate>
-          </h3>
-        }
-        
-      >
-        <hr />
-        <Form layout="inline" fluid style={{display:'flex', flexWrap: 'wrap', gap: '4px'  }}>
+  // const handleSaveLab = async () => {
+  //   await saveDiagnosticsTestLaboratory({
+  //     ...diagnosticTestLaboratory,
+  //     createdBy: 'Administrator',
+  //     testKey: diagnosticsTest?.key
+  //   }).unwrap();
+  //   dispatch(notify('Laboratory Details Saved Successfully'));
+  // };
+
+  return (
+    // <Panel
+    // header={
+    //   <h3 className="title">
+    //     <Translate>Laboratory</Translate>
+    //   </h3>
+    // }
+    // >
+      <Form fluid>
+         <div className="container-of-two-fields-service">
+          <div className="container-of-field-service">
         <MyInput
-           width={250}
-           column
-            fieldName="categoryLkey"
-            fieldType="select"
-            selectData={CategoriesLovQueryResponse?.object ?? []}
-             selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={diagnosticTestLaboratory} 
-            setRecord={setDiagnosticTestLaboratory}
-          />
-          <MyInput
-           width={250}
-           column
-            fieldName="labCatalogKey"
-            fieldType="select"
-            selectData={CatalogListResponseData?.object ?? []}
-            selectDataLabel="description"
-            selectDataValue="key"
-            record={diagnosticTestLaboratory} 
-            setRecord={setDiagnosticTestLaboratory}
-          />
-          <MyInput  width={250} column fieldName="propertyLkey"record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-          <MyInput  width={250} column fieldName="timing" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-          <MyInput  width={250} column fieldName="systemLkey" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-          <MyInput  width={250} column fieldName="scaleLkey" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-          <MyInput  width={250} column fieldName="methodLkey" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-        </Form>
-        <Form layout="inline" fluid style={{display:'flex', flexWrap: 'wrap', gap: '4px'  }}>
+          width='100%'
+          menuMaxHeight={200}
+          fieldName="categoryLkey"
+          fieldType="select"
+          selectData={CategoriesLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        <div className="container-of-field-service">
+        <MyInput
+          width="100%"
+          menuMaxHeight={200}
+          fieldName="labCatalogKey"
+          fieldType="select"
+          selectData={CatalogListResponseData?.object ?? []}
+          selectDataLabel="description"
+          selectDataValue="key"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        </div>
+        <br/>
+        <div className="container-of-two-fields-service">
+          <div className="container-of-field-service">
+        <MyInput
+          width='100%'
+          fieldName="propertyLkey"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        <div className="container-of-field-service">
+        <MyInput
+            width='100%'
+          fieldName="timing"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        </div>
+        <br/>
+        <div className="container-of-two-fields-service">
+          <div className="container-of-field-service">
+        <MyInput
+           width='100%'
+          fieldName="systemLkey"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        <div className="container-of-field-service">
+        <MyInput
+           width='100%'           
+          fieldName="scaleLkey"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        </div>
+        <br/>
+        <div className="container-of-two-fields-service">
+          <div className="container-of-field-service">
+        <MyInput
+            width='100%'           
+          fieldName="methodLkey"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        <div className="container-of-field-service">
+        <MyInput
+           width='100%'
+          menuMaxHeight={200}         
+          fieldName="reagentsLkey"
+          fieldType="select"
+          selectData={LabReagentsLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        </div>
+        <br/>
+        <div className="container-of-two-fields-service">
+          <div className="container-of-field-service">
+        <MyInput
+            width='100%'         
+          fieldType="number"
+          fieldName="testDurationTime"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        <div className="container-of-field-service">
+        <MyInput
+            width='100%'
+          menuMaxHeight={200}        
+          fieldName="timeUnitLkey"
+          fieldType="select"
+          selectData={TimeUnitLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        </div>
+        <br/>
+        <div className="container-of-two-fields-service">
+          <div className="container-of-field-service">
+        <MyInput
+            width='100%'           
+          fieldName="resultType"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        <div className="container-of-field-service">
+        <MyInput
+            width='100%'
+          menuMaxHeight={200}
            
-        <MyInput
+          fieldName="resultUnitLkey"
+          fieldType="select"
+          selectData={ValueUnitLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        </div>
+        <br/>
+        {/* <MyInput
             width={250}
-            column
-            fieldName="reagentsLkey"
-            fieldType="select"
-            selectData={LabReagentsLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}
-          />
-          <MyInput  width={250} column fieldType='number' fieldName="testDurationTime" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory} />
-           <MyInput
-            width={250}
-            column
-            fieldName="timeUnitLkey"
-            fieldType="select"
-            selectData={TimeUnitLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}
-          />
-           <MyInput  width={250} column fieldName="resultType" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory} />
-            <MyInput
-            width={250}
-            column
-            fieldName="resultUnitLkey"
-            fieldType="select"
-            selectData={ValueUnitLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={diagnosticTestLaboratory} 
-            setRecord={setDiagnosticTestLaboratory}
-          />
-          <MyInput
-            width={250}
-            column
+            menuMaxHeight={200}
+             
             fieldName="sampleContainerLkey"
             fieldType="select"
             selectData={SampleContainerLovQueryResponse?.object ?? []}
@@ -232,112 +319,216 @@ const Laboratory = ({diagnosticsTest}) => {
             record={diagnosticTestLaboratory} 
             setRecord={setDiagnosticTestLaboratory}
           />
-           <MyInput  width={250} column fieldType="number" fieldName="sampleVolume" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-        </Form>
-          <Form layout="inline" fluid style={{display:'flex', flexWrap: 'wrap', gap: '4px'  }}>
-         
-          <MyInput
-            width={250}
-            column
-            fieldName="sampleVolumeUnitLkey"
-            fieldType="select"
-            selectData={ValueUnitLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={diagnosticTestLaboratory} 
-            setRecord={setDiagnosticTestLaboratory}
-          />
-           <MyInput
-            width={250}
-            column
-            fieldName="tubeColorLkey"
-            fieldType="select"
-            selectData={TubeColorLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={diagnosticTestLaboratory} 
-            setRecord={setDiagnosticTestLaboratory}
-          />
-            <MyInput
-            width={250}
-            column
-            fieldName="tubeTypeLkey"
-            fieldType="select"
-            selectData={LabTubeTypeLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={diagnosticTestLaboratory} 
-            setRecord={setDiagnosticTestLaboratory}
-          />
-          <MyInput  width={250} column fieldName="testDescription" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-          <MyInput  width={250} column fieldName="sampleHandling" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-          <MyInput  width={250} column fieldType="number" fieldName="	turnaroundTime" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-          <MyInput
-            width={250}
-            column
-            fieldName="turnaroundTimeUnitLkey"
-            fieldType="select"
-            selectData={TimeUnitLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={diagnosticTestLaboratory} 
-            setRecord={setDiagnosticTestLaboratory}
-          />
+           <MyInput width={250}   fieldType="number" fieldName="sampleVolume" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/> */}
+        <div style={{width: "100%", display: "flex", gap: "10px"}}>
+          <div style={{width: "33%"}}>
+        <MyInput
+          width='100%'
+          menuMaxHeight={200}     
+          fieldName="sampleContainerLkey"
+          fieldType="select"
+          selectData={SampleContainerLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        <div style={{width: "33%"}}>
+        <MyInput
+          width='100%'          
+          fieldType="number"
+          fieldName="sampleVolume"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        <div style={{width: "33%"}}>
+        <MyInput
+          width='100%'
+          menuMaxHeight={200}          
+          fieldName="sampleVolumeUnitLkey"
+          fieldType="select"
+          selectData={ValueUnitLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        </div>
+        <br/>
+        <div className="container-of-two-fields-service">
+          <div className="container-of-field-service">
+        <MyInput
+          width="100%"
+          menuMaxHeight={200}           
+          fieldName="tubeColorLkey"
+          fieldType="select"
+          selectData={TubeColorLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        <div className="container-of-field-service">
+        <MyInput
+           width="100%"
+          menuMaxHeight={200}          
+          fieldName="tubeTypeLkey"
+          fieldType="select"
+          selectData={LabTubeTypeLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        </div>
+        <br/>
+        <div className="container-of-two-fields-service">
+          <div className="container-of-field-service">
+        <MyInput
+           width="100%"         
+          fieldName="testDescription"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        <div className="container-of-field-service">
+        <MyInput
+           width="100%"   
+          fieldName="sampleHandling"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        </div>
+        <br/>
+        <div className="container-of-two-fields-service">
+          <div className="container-of-field-service">
+        <MyInput
+           width="100%"          
+          fieldType="number"
+          fieldName="	turnaroundTime"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+        <div className="container-of-field-service">
+        <MyInput
+          width="100%"
+          menuMaxHeight={200}     
+          fieldName="turnaroundTimeUnitLkey"
+          fieldType="select"
+          selectData={TimeUnitLovQueryResponse?.object ?? []}
+          selectDataLabel="lovDisplayVale"
+          selectDataValue="key"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        </div>
+      </div>
+      <br/>
+        <MyInput
+          width="100%"
+          fieldType="checkbox"
+          fieldName="isProfile"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
 
-          </Form>
-          <Form layout="inline" fluid style={{display:'flex', flexWrap: 'wrap', gap: '4px'  }}>
-          <MyInput width={250} column fieldType="checkbox" fieldName="isProfile" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-         
-          <MyInput  width={400} column fieldType="textarea" fieldName="preparationRequirements" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-          <MyInput  width={400} column fieldType="textarea" fieldName="medicalIndications" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-          <MyInput  width={400} column fieldType="textarea" fieldName="associatedRisks" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-          <MyInput  width={400} column fieldType="textarea" fieldName="testInstructions" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-         
-          </Form>
-          <IconButton
-                onClick={handleSaveLab}
-                appearance="primary"
-                color="green"
-                icon={<Check />}
-              >
-                <Translate> {"Save"} </Translate>
-              </IconButton>
+        <MyInput
+           width="100%"
+           
+          fieldType="textarea"
+          fieldName="preparationRequirements"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        <MyInput
+           width="100%"
+           
+          fieldType="textarea"
+          fieldName="medicalIndications"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        <MyInput
+           width="100%"
+           
+          fieldType="textarea"
+          fieldName="associatedRisks"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+        <MyInput
+           width="100%"
+           
+          fieldType="textarea"
+          fieldName="testInstructions"
+          record={diagnosticTestLaboratory}
+          setRecord={setDiagnosticTestLaboratory}
+        />
+      </Form>
 
-
-          <Modal open={popupOpen} overflow>
+     
+  );
+};
+ {/* <Modal open={popupOpen} overflow>
         <Modal.Title>
           <Translate>New/Edit Profile</Translate>
         </Modal.Title>
         <Modal.Body>
           <Form layout="inline" fluid>
-          <MyInput
-            width={300}
-            column
-            fieldName="category"
-            fieldType="select"
-            selectData={LabReagentsLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={diagnosticTestLaboratory}
-            setRecord={setDiagnosticTestLaboratory}
-          />
-            <MyInput  width={300} column fieldName="name" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
+            <MyInput
+              width={300}
+              menuMaxHeight={200}
+               
+              fieldName="category"
+              fieldType="select"
+              selectData={LabReagentsLovQueryResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              record={diagnosticTestLaboratory}
+              setRecord={setDiagnosticTestLaboratory}
+            />
+            <MyInput
+              width={300}
+               
+              fieldName="name"
+              record={diagnosticTestLaboratory}
+              setRecord={setDiagnosticTestLaboratory}
+            />
 
-          <MyInput
-           width={300}
-           column
-            fieldName="status"
-            fieldType="select"
-            selectData={LabReagentsLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={diagnosticTestLaboratory}
-            setRecord={setDiagnosticTestLaboratory}
-          />
-         
-          <MyInput  width={300} column fieldName="label" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-          <MyInput  width={300} column fieldName="note" record={diagnosticTestLaboratory} setRecord={setDiagnosticTestLaboratory}/>
-         
+            <MyInput
+              width={300}
+              menuMaxHeight={200}
+               
+              fieldName="status"
+              fieldType="select"
+              selectData={LabReagentsLovQueryResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              record={diagnosticTestLaboratory}
+              setRecord={setDiagnosticTestLaboratory}
+            />
+
+            <MyInput
+              width={300}
+               
+              fieldName="label"
+              record={diagnosticTestLaboratory}
+              setRecord={setDiagnosticTestLaboratory}
+            />
+            <MyInput
+              width={300}
+               
+              fieldName="note"
+              record={diagnosticTestLaboratory}
+              setRecord={setDiagnosticTestLaboratory}
+            />
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -350,10 +541,6 @@ const Laboratory = ({diagnosticsTest}) => {
             </Button>
           </Stack>
         </Modal.Footer>
-      </Modal>
-      </Panel>
-      
-    );
-  };
-  
-  export default Laboratory;
+      </Modal> */}
+    {/* </Panel> */}
+export default Laboratory;
