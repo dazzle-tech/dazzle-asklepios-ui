@@ -1661,7 +1661,6 @@ export interface ApMedicationCategories {
 
 export interface ApMedicationCategoriesActiveIngredient { 
 	key:string;
-	therapeuticCategoryKey:string;
 	medicationClassKey:string;
 	activeIngredientKey:string;
 	createdBy:string;
@@ -1683,6 +1682,7 @@ export interface ApMedicationCategoriesClass {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	className:string;
 } 
 
 export interface ApMessages { 
@@ -2535,6 +2535,19 @@ export interface ApProcedureRegistration {
 	updatedAt:number;
 	deletedAt:number;
 	encounterKey:string;
+} 
+
+export interface ApProcedureServiceEquipment { 
+	key:string;
+	procedureKey:string;
+	serviceKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
 } 
 
 export interface ApProcedureSetup { 

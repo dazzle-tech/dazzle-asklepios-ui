@@ -49,9 +49,9 @@ const Diagnosis = ({ procedure, user }) => {
                 <Col md={12}>
                     <Row>
                         <Col md={24}>
-                            <Text>search ICD-10</Text>
+                            <Text>Diagnosis</Text>
 
-                            {/* حاوية لجعل القائمة تطفو داخلها */}
+                      
                             <div style={{ position: 'relative' }}>
                                 <InputGroup inside>
                                     <Input
@@ -63,8 +63,7 @@ const Diagnosis = ({ procedure, user }) => {
                                         <SearchIcon />
                                     </InputGroup.Button>
                                 </InputGroup>
-
-                                {/* القائمة العائمة */}
+                
                                 {searchKeyword && (
                                     <div
                                         style={{
@@ -109,7 +108,7 @@ const Diagnosis = ({ procedure, user }) => {
                     </Row>
                     <Row>
                         <Col md={24}>
-                            <Text>Diagnosis</Text>
+                         
                             <InputGroup>
                                 <Input
                                     disabled={true}

@@ -75,7 +75,7 @@ const AdministeredMedications = ({ procedure, user }) => {
                 return activeRowKey === rowData.key ? (
                     <Input
                         type="number"
-
+                          style={{ width: 100 }}
                         onChange={(value) => {
                             setMedication({ ...medication, dose: Number(value) });
                         }}

@@ -1662,7 +1662,6 @@ export const newApMedicationCategories:modelTypes.ApMedicationCategories = {
 
 export const newApMedicationCategoriesActiveIngredient:modelTypes.ApMedicationCategoriesActiveIngredient = { 
 	key:undefined,
-	therapeuticCategoryKey:undefined,
 	medicationClassKey:undefined,
 	activeIngredientKey:undefined,
 	createdBy:'',
@@ -1684,6 +1683,7 @@ export const newApMedicationCategoriesClass:modelTypes.ApMedicationCategoriesCla
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	className:'',
 } 
 
 export const newApMessages:modelTypes.ApMessages = { 
@@ -2536,6 +2536,19 @@ export const newApProcedureRegistration:modelTypes.ApProcedureRegistration = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	encounterKey:undefined,
+} 
+
+export const newApProcedureServiceEquipment:modelTypes.ApProcedureServiceEquipment = { 
+	key:undefined,
+	procedureKey:undefined,
+	serviceKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
 } 
 
 export const newApProcedureSetup:modelTypes.ApProcedureSetup = { 

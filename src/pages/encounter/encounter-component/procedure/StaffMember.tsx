@@ -24,7 +24,7 @@ const StaffMember = ({ procedure }) => {
     const [staff, setStaff] = useState({
         ...newApProcedureStaff,
         procedureKey: procedure?.key,
-        encounterKey: procedure?.encounterKey,
+      
     })
     const { data: userList } = useGetUsersQuery({ ...initialListRequest });
     const [listRequest, setListRequest] = useState<ListRequest>({
@@ -63,7 +63,7 @@ const StaffMember = ({ procedure }) => {
                     return saveStaff({
                         ...newApProcedureStaff,
                         procedureKey: procedure?.key,
-                        encounterKey: procedure?.encounterKey,
+                      
                         userKey: user?.key
                     });
                 }
