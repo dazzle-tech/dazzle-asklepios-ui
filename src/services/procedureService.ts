@@ -143,6 +143,23 @@ saveProcedureAdministeredMedications: builder.mutation({
   transformResponse: (response: any) => response.object
 }),
 
+getPostProcedureCareList: builder.query({
+  query: (listRequest: ListRequest) => ({
+    url: `/procedures/post-procedure-care-list?${fromListRequestToQueryParams(listRequest)}`
+  }),
+  onQueryStarted,
+  keepUnusedDataFor: 5
+}),
+savePostProcedureCare: builder.mutation({
+  query: (data) => ({
+    url: `/procedures/save-post-procedure-care`,
+    method: 'POST',
+    body: data
+  }),
+  onQueryStarted,
+  transformResponse: (response: any) => response.object
+}),
+
   })
 });
 
@@ -162,6 +179,8 @@ export const {
   useSaveProcedurePerformanceMutation,
   useGetProcedureAdministeredMedicationsQuery,
   useSaveProcedureAdministeredMedicationsMutation,
+  useGetPostProcedureCareListQuery,
+  useSavePostProcedureCareMutation
 
 } = procedureService;
 

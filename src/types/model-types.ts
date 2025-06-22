@@ -2262,6 +2262,20 @@ export interface ApPhysicalExamArea {
 	isValid:boolean;
 } 
 
+export interface ApPostProcedureCare { 
+	key:string;
+	procedureKey:string;
+	diagnoseKey:string;
+	patientCondition:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
 export interface ApPostProcedureVitals { 
 	key:string;
 	procedureKey:string;

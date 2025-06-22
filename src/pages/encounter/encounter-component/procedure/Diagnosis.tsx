@@ -54,7 +54,7 @@ const Diagnosis = ({ encounter, patient }) => {
     <Row>
     <Col  md={24}>
     <MyCard
-            title={"Diagnosis"}
+            title="Diagnosis"
             contant={
                 selectedDiagnose && selectedDiagnose.icdCode && selectedDiagnose.description
                     ? `${selectedDiagnose.icdCode}, ${selectedDiagnose.description}`
