@@ -23,7 +23,6 @@ const PatientVisitHistory = ({ visitHistoryModel, localPatient, setVisitHistoryM
       }]
   });
   const { data: visiterHistoryResponse, isLoading } = useGetEncountersQuery(visitHistoryListRequest);
-  console.log("visiterHistoryResponse==>",visiterHistoryResponse);
   const tableColumns = [
     {
       key: 'visitId',
@@ -52,7 +51,7 @@ const PatientVisitHistory = ({ visitHistoryModel, localPatient, setVisitHistoryM
       title: <Translate>Department</Translate>,
       flexGrow: 4,
       dataKey: 'departmentName',
-      render: (rowData: any) =>rowData?.resourceTypeLkey ==="2039534205961578" ?rowData?.resourceTypeLvalue?.lovDisplayVale : rowData.resourceObject?.name 
+      render: (rowData: any) =>rowData?.resourceTypeLkey ==="2039534205961578" ? rowData?.departmentName : rowData.resourceObject?.name 
     },
      {
       key: 'encountertype',
