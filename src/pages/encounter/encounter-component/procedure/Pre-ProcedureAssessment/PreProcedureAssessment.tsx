@@ -10,6 +10,7 @@ import AttachmentUploadModal from "@/components/AttachmentUploadModal";
 import { useSavePreProcedureAssessmentMutation } from "@/services/procedureService";
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
+import VitalSigns from "@/pages/vital-signs/VitalSigns";
 const handleDownload = attachment => {
     const byteCharacters = atob(attachment.fileContent);
     const byteNumbers = new Array(byteCharacters.length);
@@ -162,7 +163,8 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
 
                             </div>
                             <Divider /> 
-                            <Row>
+                            <VitalSigns object={procedureAssessment} setObject={setProocedureAssessment}/>
+                            {/* <Row>
                                 <Col md={11}>
                                     <MyInput
                                         width="100%"
@@ -211,7 +213,7 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
                                         record={procedureAssessment}
                                         setRecord={setProocedureAssessment} />
                                 </Col>
-                            </Row>
+                            </Row> */}
                             </div>
                     </Row>
                     <Row>

@@ -1,12 +1,11 @@
 import MyButton from "@/components/MyButton/MyButton";
 import MyInput from "@/components/MyInput";
 import { useAppDispatch } from "@/hooks";
+import VitalSigns from "@/pages/vital-signs/VitalSigns";
 import { useSavePostProcedureVitalsMutation } from "@/services/procedureService";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
-import {  newApPostProcedureVitals } from "@/types/model-types-constructor";
+import { newApPostProcedureVitals } from "@/types/model-types-constructor";
 import { notify } from "@/utils/uiReducerActions";
-import { tr } from "date-fns/locale";
-import { create } from "lodash";
 import React, { useState } from "react";
 import { Col, Divider, Form, Row, Text } from "rsuite";
 const ProcedureVitals = ({ procedure, user }) => {
@@ -27,53 +26,19 @@ const ProcedureVitals = ({ procedure, user }) => {
             <Text>Post-Procedure Vitals</Text>
         </div>
         <Divider />
+        <VitalSigns setObject={setVitals} object={vitals} />
         <Form fluid >
+          
+          
             <Row>
                 <Col md={11}>
-                    <MyInput
+                   <MyInput
                         width="100%"
-                        fieldType="number"
-                        fieldName="bloodPressureSystolic"
-                        record={vitals}
-                        setRecord={setVitals} />
-                </Col>
-                <Col md={2}><div style={{ padding: '20px', paddingTop: '30px' }}>/</div></Col>
-                <Col md={11}>
-                    <MyInput
-                        width="100%"
-                        fieldType="number"
-                        fieldName="bloodPressureDiastolic"
-                        record={vitals}
-                        setRecord={setVitals} />
-                </Col>
-            </Row>
-            <Row>
-                <Col md={11}>
-                    <MyInput
-                        width="100%"
-                        fieldType="number"
-                        fieldName="heartRate"
-                        rightAddon="bpm"
-                        rightAddonwidth={45}
-                        record={vitals}
-                        setRecord={setVitals} /></Col>
-                <Col md={2}></Col>
-                <Col md={11}>
-                    <MyInput
-                        width="100%"
-                        fieldType="number"
-                        rightAddon="C"
-                        fieldName="temperature"
-                        record={vitals}
-                        setRecord={setVitals} /></Col>
-            </Row>
-            <Row>
-                <Col md={11}>
-                    <MyInput
-                        width="100%"
-                        fieldType="number"
-                        rightAddon=" % "
-                        fieldName="oxygenSaturation"
+                        fieldType="select"
+                        selectData={correctLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        fieldName="countStatusLkey"
                         record={vitals}
                         setRecord={setVitals} />
                 </Col>
@@ -101,13 +66,10 @@ const ProcedureVitals = ({ procedure, user }) => {
                 </Col>
                 <Col md={2}></Col>
                 <Col md={11}>
-                    <MyInput
+                      <MyInput
                         width="100%"
-                        fieldType="select"
-                        selectData={correctLovQueryResponse?.object ?? []}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        fieldName="countStatusLkey"
+                        fieldType="textarea"
+                        fieldName="additionalObservations"
                         record={vitals}
                         setRecord={setVitals} />
                 </Col>
@@ -131,20 +93,7 @@ const ProcedureVitals = ({ procedure, user }) => {
                         setRecord={setVitals} />
                 </Col>
             </Row>
-            <Row>
-                <Col md={11}>
-                    <MyInput
-                        width="100%"
-                        fieldType="textarea"
-                        fieldName="additionalObservations"
-                        record={vitals}
-                        setRecord={setVitals} />
-                </Col>
-                <Col md={2}></Col>
-                <Col md={11}>
-                 
-                </Col>
-            </Row>
+          
         </Form>
           <div className='bt-div'>
                     <div className="bt-right">

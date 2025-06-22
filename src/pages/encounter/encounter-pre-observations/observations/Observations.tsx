@@ -19,6 +19,7 @@ import { useLocation } from 'react-router-dom';
 import MyButton from '@/components/MyButton/MyButton';
 import clsx from 'clsx';
 import InpatientObservations from './InpatientObservations';
+import VitalSigns from '@/pages/vital-signs/VitalSigns';
 export type ObservationsRef = {
   handleSave: () => void;
 };
@@ -43,6 +44,13 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   const [bmi, setBmi] = useState('');
   const [bsa, setBsa] = useState('');
   const [map, setMap] = useState('');
+  const [vital, setVital] = useState({
+    bloodPressureSystolic: 0,
+    bloodPressureDiastolic: 0,
+    heartRate: 0,
+    temperature: 0,
+    oxygenSaturation: 0,
+  });
   const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSummaryMutation();
   const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
   const [readOnly, setReadOnly] = useState(false);
@@ -94,6 +102,11 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
         lastDate: new Date(),
         latestbmi: bmi,
         age: lastObservationSummary?.age,
+        latestbpSystolic:vital?.bloodPressureSystolic,
+        latestbpDiastolic: vital?.bloodPressureDiastolic,
+        latestheartrate: vital?.heartRate,
+        latestoxygensaturation:vital?.oxygenSaturation,
+        latesttemperature:vital?.temperature,
         prevRecordKey: lastObservationSummary?.key || null,
         plastDate: lastObservationSummary?.lastDate || null,
         platesttemperature: lastObservationSummary?.latesttemperature || null,
@@ -112,7 +125,8 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
         page: lastObservationSummary?.age,
       }).unwrap();
       setTimeout(() => {
-            window.location.reload()}, 500);
+        window.location.reload()
+      }, 500);
       dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
     } catch (error) {
       console.error('Error while saving observation summary:', error);
@@ -127,15 +141,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     });
   }
 
-  //Effects 
-  useEffect(() => {
-    const diastolic = Number(patientObservationSummary.latestbpDiastolic);
-    const systolic = Number(patientObservationSummary.latestbpSystolic);
-    if (!isNaN(diastolic) && !isNaN(systolic)) {
-      const calculatedMap = ((2 * diastolic + systolic) / 3).toFixed(2);
-      setMap(calculatedMap);
-    }
-  }, [patientObservationSummary.latestbpDiastolic, patientObservationSummary.latestbpSystolic]);
+
   useEffect(() => {
     if (saveObservationsMutation && saveObservationsMutation.status === 'fulfilled') {
       setPatientObservationSummary(saveObservationsMutation.data);
@@ -179,92 +185,8 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
 
                 </div>
                 <Divider />
-                <Row className="rows-gap">
-                  <Col md={7}>
-                    <MyInput
-                      width='100%'
-                      fieldLabel='Systolic BP'
-                      fieldName='latestbpSystolic'
-                      disabled={isEncounterStatusClosed || readOnly}
-                      fieldType='number'
-                      record={patientObservationSummary}
-                      setRecord={setPatientObservationSummary}
-                    >
-                    </MyInput>
-                  </Col>
-                  <Col md={2} >
-                    <div style={{ padding: '20px', paddingTop: '30px' }}>/</div>
-                  </Col>
-                  <Col md={7}>   <MyInput
-                    width='100%'
-                    fieldLabel='Diastolic  BP'
-                    fieldName='latestbpDiastolic'
-                    disabled={isEncounterStatusClosed || readOnly}
-                    fieldType='number'
-                    record={patientObservationSummary}
-                    setRecord={setPatientObservationSummary}
-                  ></MyInput></Col>
-                  <Col md={8}>   <div className='container-Column'>
-                    <MyLabel label="MAP" />
-                    <div>
-                      <FontAwesomeIcon icon={faHeartPulse} className='my-icon' />
-                      <text>{
-                        map
-                      }</text></div>
-                  </div></Col>
-                </Row>
-                <Row className="rows-gap">
-                  <Col md={12}>
-                    <MyInput
-                      fieldLabel='Pulse'
-                      rightAddon="bpm"
-                      width='100%'
-                      rightAddonwidth={50}
-                      fieldName='latestheartrate'
-                      disabled={isEncounterStatusClosed || readOnly}
-                      fieldType='number'
-                      record={patientObservationSummary}
-                      setRecord={setPatientObservationSummary}
-                    ></MyInput></Col>
-                  <Col md={12}>
-                    <MyInput
-                      fieldLabel='R.R'
-                      rightAddon="bpm"
-                      rightAddonwidth={50}
-                      width='100%'
-                      fieldName='latestrespiratoryrate'
-                      disabled={isEncounterStatusClosed || readOnly}
-                      fieldType='number'
-                      record={patientObservationSummary}
-                      setRecord={setPatientObservationSummary}
-                    ></MyInput></Col>
-                </Row>
-                <Row className="rows-gap">
-                  <Col md={12}>
-                    <MyInput
-                      fieldLabel='SpO2'
-                      rightAddon="%"
-                      width='100%'
-                      rightAddonwidth={40}
-                      fieldName='latestoxygensaturation'
-                      disabled={isEncounterStatusClosed || readOnly}
-                      fieldType='number'
-                      record={patientObservationSummary}
-                      setRecord={setPatientObservationSummary}
-                    ></MyInput></Col>
-                  <Col md={12}>
-                    <MyInput
-                      fieldLabel='Temp'
-                      rightAddon="°C"
-                      rightAddonwidth={40}
-                      width='100%'
-                      fieldName='latesttemperature'
-                      disabled={isEncounterStatusClosed || readOnly}
-                      fieldType='number'
-                      record={patientObservationSummary}
-                      setRecord={setPatientObservationSummary}
-                    ></MyInput></Col>
-                </Row>
+                <VitalSigns object={vital} setObject={setVital} />
+              
                 <Row className="rows-gap">
                   <Col md={24}>
                     <MyInput
