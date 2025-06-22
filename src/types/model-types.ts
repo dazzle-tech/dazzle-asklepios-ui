@@ -252,6 +252,21 @@ export interface ApAddresses {
 	isValid:boolean;
 } 
 
+export interface ApAdmitOutpatientInpatient { 
+	key:string;
+	toEncounterKey:string;
+	fromEncounterKey:string;
+	inpatientDepartmentKey:string;
+	physicianKey:string;
+	admissionNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
 export interface ApAgeGroup { 
 	key:string;
 	ageGroupLkey:string;
@@ -2536,6 +2551,7 @@ export interface ApProcedureRegistration {
 	deletedAt:number;
 	encounterKey:string;
 } 
+
 export interface ApProcedureServiceEquipment { 
 	key:string;
 	procedureKey:string;
@@ -2548,6 +2564,7 @@ export interface ApProcedureServiceEquipment {
 	deletedAt:number;
 	isValid:boolean;
 } 
+
 export interface ApProcedureSetup { 
 	key:string;
 	name:string;

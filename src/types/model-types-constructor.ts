@@ -253,6 +253,21 @@ export const newApAddresses:modelTypes.ApAddresses = {
 	isValid:undefined,
 } 
 
+export const newApAdmitOutpatientInpatient:modelTypes.ApAdmitOutpatientInpatient = { 
+	key:undefined,
+	toEncounterKey:undefined,
+	fromEncounterKey:undefined,
+	inpatientDepartmentKey:undefined,
+	physicianKey:undefined,
+	admissionNotes:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
 export const newApAgeGroup:modelTypes.ApAgeGroup = { 
 	key:undefined,
 	ageGroupLkey:undefined,
@@ -2519,6 +2534,36 @@ export const newApProcedurePriceList:modelTypes.ApProcedurePriceList = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
+} 
+
+export const newApProcedureRegistration:modelTypes.ApProcedureRegistration = { 
+	key:undefined,
+	procedureKey:undefined,
+	consentFormLkey:undefined,
+	dateTime:0,
+	practitionersKey:undefined,
+	departmentKey:undefined,
+	requestedBy:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	encounterKey:undefined,
+} 
+
+export const newApProcedureServiceEquipment:modelTypes.ApProcedureServiceEquipment = { 
+	key:undefined,
+	procedureKey:undefined,
+	serviceKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
 } 
 
 export const newApProcedureSetup:modelTypes.ApProcedureSetup = { 
