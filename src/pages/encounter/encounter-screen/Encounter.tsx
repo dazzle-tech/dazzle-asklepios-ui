@@ -9,6 +9,7 @@ import {
   faBedPulse, faCheckDouble, faClockRotateLeft, faFilePrescription, faFileWaveform,
   faHandDots, faNotesMedical, faPersonDotsFromLine, faPills, faStethoscope, faSyringe, faTooth, faTriangleExclamation, faUserDoctor, faVials
 } from '@fortawesome/free-solid-svg-icons';
+import { faBed } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BarChartHorizontalIcon from '@rsuite/icons/BarChartHorizontal';
 import React, { useEffect, useState } from 'react';
@@ -264,6 +265,13 @@ const Encounter = () => {
               >
                 Warning
               </MyButton>
+                 {!(propsData?.encounter?.resourceTypeLkey === "4217389643435490" ) && <MyButton
+                  prefixIcon={() => <FontAwesomeIcon icon={faBed} />}
+                 // onClick={}
+                  appearance="ghost"
+                >
+                  <Translate>Admit to Inpatient</Translate>
+                </MyButton>}
               {propsData?.encounter?.editable && !propsData?.encounter?.discharge && (
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
