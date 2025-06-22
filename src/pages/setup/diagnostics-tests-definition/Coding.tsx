@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import {
   useGetDiagnosticsCodingListQuery,
   useGetLovValuesByCodeQuery,
-  useSaveDiagnosticsCodingMutation,
+  useRemoveDiagnosticsCodingMutation,
+  useSaveDiagnosticsCodingMutation
 } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
@@ -16,12 +17,17 @@ import { notify } from '@/utils/uiReducerActions';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { FaNewspaper } from 'react-icons/fa6';
 import MyButton from '@/components/MyButton/MyButton';
+import { MdDelete } from 'react-icons/md';
+import { MdModeEdit } from 'react-icons/md';
 import { newApDiagnosticCoding } from '@/types/model-types-constructor';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 const Coding = ({ open, setOpen, diagnosticsTest }) => {
   const dispatch = useAppDispatch();
   const [openChild, setOpenChild] = useState<boolean>(false);
   const [diagnosticCoding, setDiagnosticCoding] = useState({ ...newApDiagnosticCoding });
-   const [listCodingRequest, setListCosingRequest] = useState<ListRequest>({
+  const [openConfirmDeleteCode, setOpenConfirmDeleteCode] = useState<boolean>(false);
+   const [removeDiagnosticCoding] = useRemoveDiagnosticsCodingMutation();
+  const [listCodingRequest, setListCosingRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
       {
@@ -33,12 +39,45 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
   });
   // Fetch code type Lov response
   const { data: codeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('INTERNATIONAL_CODES');
-   // Fetch Coding list response
-  const { data: CodingList, refetch: fetchCoding, isFetching } = useGetDiagnosticsCodingListQuery({
+  // Fetch Coding list response
+  const {
+    data: CodingList,
+    refetch: fetchCoding,
+    isFetching
+  } = useGetDiagnosticsCodingListQuery({
     ...listCodingRequest
   });
   // save coding
   const [saveCoding] = useSaveDiagnosticsCodingMutation();
+ // class name for selected row
+  const isSelectedcode = rowData => {
+    if (rowData && diagnosticCoding && rowData.key === diagnosticCoding.key) {
+      return 'selected-row';
+    } else return '';
+  };
+  // Icons column (Edit, remove)
+  const iconsForActions = () => (
+    <div className="container-of-icons-diagnostic">
+      <MdModeEdit
+        className="icons-diagnostic"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setOpenChild(true);
+        }}
+      />
+      <MdDelete
+        className="icons-diagnostic"
+        title="Remove"
+        size={24}
+        fill="var(--primary-pink)"
+        onClick={() => {
+          setOpenConfirmDeleteCode(true);
+        }}
+      />
+    </div>
+  );
 
   //Table columns
   const tableColumns = [
@@ -52,23 +91,38 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
       key: 'internationalCode',
       title: <Translate>international Code</Translate>,
       render: rowData => rowData.internationalCodeKey
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      flexGrow: 3,
+      render: () => iconsForActions()
     }
   ];
-  // class name for selected row 
-  const isSelectedcode = rowData => {
-    if (rowData && diagnosticCoding && rowData.key === diagnosticCoding.key) {
-      return 'selected-row';
-    } else return '';
-  };
-  
+ 
   // handle save code
   const handleSaveCoding = async () => {
-      try {
-        await saveCoding({ ...diagnosticCoding, diagnosticsKey: diagnosticsTest.key }).unwrap();
-        dispatch(notify({ msg: 'Saved Successfully', sev: 'Success' }));
+    try {
+      await saveCoding({ ...diagnosticCoding, diagnosticsKey: diagnosticsTest.key }).unwrap();
+      dispatch(notify('The Code Saved Successfully'));
+      fetchCoding();
+      setDiagnosticCoding({
+        ...newApDiagnosticCoding,
+        codeTypeLkey: null
+      });
+    } catch {}
+  };
+
+  // handle remove code
+  const handleRemove = () => {
+    setOpenConfirmDeleteCode(false);
+    removeDiagnosticCoding({ ...diagnosticCoding })
+      .unwrap()
+      .then(() => {
         fetchCoding();
-      } catch {}
-    };
+        dispatch(notify('The Code was deleted succsessfuly'));
+      });
+  };
 
   // Main modal content
   const conjureFormContentOfMainModal = stepNumber => {
@@ -76,7 +130,7 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
       case 0:
         return (
           <Form layout="inline" fluid>
-            <div className="container-of-add-new-button-practitioners">
+            <div className="container-of-add-new-button-diagnostic">
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
@@ -89,7 +143,7 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
               </MyButton>
             </div>
             <MyTable
-              height={450}
+              height={400}
               data={CodingList?.object ?? []}
               loading={isFetching}
               columns={tableColumns}
@@ -102,7 +156,14 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
               onSortChange={(sortBy, sortType) => {
                 if (sortBy) setListCosingRequest({ ...listCodingRequest, sortBy, sortType });
               }}
-            />          
+            />
+            <DeletionConfirmationModal
+              open={openConfirmDeleteCode}
+              setOpen={setOpenConfirmDeleteCode}
+              itemToDelete="Code"
+              actionButtonFunction={handleRemove}
+              actionType="delete"
+            />
           </Form>
         );
     }
@@ -124,7 +185,6 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
           setRecord={setDiagnosticCoding}
         />
         <MyInput
-          column
           width="100%"
           fieldType="select"
           fieldLabel="Code"
@@ -138,19 +198,20 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
       </Form>
     );
   };
-   
-   useEffect(() => {
+
+  // Effects
+  useEffect(() => {
     fetchCoding();
-           setListCosingRequest({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'diagnostics_key',
-        operator: 'match',
-        value: diagnosticsTest?.key
-      }
-    ]
-  });
+    setListCosingRequest({
+      ...initialListRequest,
+      filters: [
+        {
+          fieldName: 'diagnostics_key',
+          operator: 'match',
+          value: diagnosticsTest?.key
+        }
+      ]
+    });
   }, [diagnosticsTest]);
 
   return (
@@ -160,9 +221,10 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
       setOpen={setOpen}
       showChild={openChild}
       setShowChild={setOpenChild}
-      title='Code'
+      title="Code"
       mainContent={conjureFormContentOfMainModal}
-      mainStep={[{ title: 'Code', icon: <FaNewspaper /> }]} // اغير الايقونة
+      mainStep={[{ title: 'Code', icon: <FaNewspaper /> }]} 
+      childStep={[{ title: 'Code Info', icon: <FaNewspaper /> }]}
       childTitle="Add Code"
       childContent={conjureFormContentOfChildModal}
       mainSize="sm"

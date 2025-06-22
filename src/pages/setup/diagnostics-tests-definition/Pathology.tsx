@@ -48,16 +48,20 @@ const Pathology = ({ diagnosticsTest, diagnosticTestPathology, setDiagnosticTest
       }
     ]
   });
-
-  const { data: catalogListResponseData } =
-    useGetDiagnosticsTestCatalogHeaderListQuery(catalogListRequest);
+  // Fetch catalog List response
+  const { data: catalogListResponseData } = useGetDiagnosticsTestCatalogHeaderListQuery(catalogListRequest);
+  // Fetch time Unit Lov response
   const { data: timeUnitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
+  // Fetch reagent Lov response
   const { data: reagentLovQueryResponse } = useGetLovValuesByCodeQuery('PATH_REAGENTS');
+  // Fetch specimens Lov response
   const { data: specimensLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_SPECIMENS');
+  // Fetch category Lov response
   const { data: categoryLovQueryResponse } = useGetLovValuesByCodeQuery('MED_CATEGORY');
+   // Fetch procedurw Lov response
   const { data: procedurwLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
-  const { data: pathologyDetailsQueryResponse } =
-    useGetDiagnosticsTestPathologyListQuery(listRequest);
+  // Fetch pathology Details list response
+  const { data: pathologyDetailsQueryResponse } = useGetDiagnosticsTestPathologyListQuery(listRequest);
 
   // Effects
   useEffect(() => {
@@ -98,8 +102,8 @@ const Pathology = ({ diagnosticsTest, diagnosticTestPathology, setDiagnosticTest
 
   return (
     <Form fluid>
-      <div className="container-of-two-fields-service">
-        <div className="container-of-field-service">
+      <div className="container-of-two-fields-diagnostic">
+        <div className="container-of-field-diagnostic">
           <MyInput
             width="100%"
             menuMaxHeight={200}
@@ -113,7 +117,7 @@ const Pathology = ({ diagnosticsTest, diagnosticTestPathology, setDiagnosticTest
             setRecord={setDiagnosticTestPathology}
           />
         </div>
-        <div className="container-of-field-service">
+        <div className="container-of-field-diagnostic">
           <MyInput
             width="100%"
             menuMaxHeight={200}
@@ -128,8 +132,8 @@ const Pathology = ({ diagnosticsTest, diagnosticTestPathology, setDiagnosticTest
         </div>
       </div>
       <br />
-      <div className="container-of-two-fields-service">
-        <div className="container-of-field-service">
+      <div className="container-of-two-fields-diagnostic">
+        <div className="container-of-field-diagnostic">
           <MyInput
             width="100%"
             menuMaxHeight={200}
@@ -142,7 +146,7 @@ const Pathology = ({ diagnosticsTest, diagnosticTestPathology, setDiagnosticTest
             setRecord={setDiagnosticTestPathology}
           />
         </div>
-        <div className="container-of-field-service">
+        <div className="container-of-field-diagnostic">
           <MyInput
             width="100%"
             menuMaxHeight={200}
@@ -157,8 +161,8 @@ const Pathology = ({ diagnosticsTest, diagnosticTestPathology, setDiagnosticTest
         </div>
       </div>
       <br />
-      <div className="container-of-two-fields-service">
-        <div className="container-of-field-service">
+      <div className="container-of-two-fields-diagnostic">
+        <div className="container-of-field-diagnostic">
           <MyInput
             width="100%"
             menuMaxHeight={200}
@@ -171,7 +175,7 @@ const Pathology = ({ diagnosticsTest, diagnosticTestPathology, setDiagnosticTest
             setRecord={setDiagnosticTestPathology}
           />
         </div>
-        <div className="container-of-field-service">
+        <div className="container-of-field-diagnostic">
           <MyInput
             width="100%"
             fieldName="turnaroundTime"
