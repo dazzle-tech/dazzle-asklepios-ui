@@ -188,15 +188,7 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
                 return rowData.test?.order?.patient?.fullName
             }
         },
-        {
-            key: "orderId",
-            title: <Translate>ORDER ID</Translate>,
-            flexGrow: 1,
-
-            render: (rowData: any) => {
-                return rowData.test?.order?.orderId;
-            }
-        },
+    
         {
             key: "testName",
             dataKey: "testName",
@@ -243,20 +235,6 @@ const ReviewReport = ({ setEncounter, setPatient, user }) => {
 
         },
 
-
-
-        {
-            key: "statusLkey",
-            dataKey: "statusLkey",
-            title: <Translate>REPORT SATUTS</Translate>,
-            flexGrow: 1,
-            render: (rowData: any) => {
-                return rowData.statusLvalue
-                    ? rowData.statusLvalue.lovDisplayVale
-                    : rowData.statusLkey
-            }
-
-        },
         {
             key: "",
             title: <Translate>EXTERNEL LAB NAME</Translate>,
