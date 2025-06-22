@@ -13,10 +13,10 @@ import {
   useGetDiagnosticsTestListQuery
 } from '@/services/setupService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import './styles.less';
 import { ApDiagnosticTest } from '@/types/model-types';
 import { newApDiagnosticTest } from '@/types/model-types-constructor';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import ProfileSetup from './ProfileSetup';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
@@ -34,23 +34,23 @@ const DiagnosticsTest = () => {
   const [diagnosticsTest, setDiagnosticsTest] = useState<ApDiagnosticTest>({
     ...newApDiagnosticTest
   });
-  // const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
   const [normalRangePopupOpen, setNormalRangePopupOpen] = useState(false);
   const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
   const [openConfirmDiagnosticTest, setOpenConfirmDeleteDiagnosticTest] = useState<boolean>(false);
   const [stateOfDeleteDiagnosticTest, setStateOfDeleteDiagnosticTest] = useState<string>('delete');
   const [openCodingModal, setOpenCodingModal] = useState<boolean>(false);
   const [openProfileModal, setOpenProfileModal] = useState<boolean>(false);
-  const [profilePopupOpen, setProfilePopupOpen] = useState(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [openAddEditDiagnosticTestPopup, setOpenAddEditDiagnosticTestPopup] =
     useState<boolean>(false);
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  // Fetch diagnostics test list response
   const {
     data: diagnosticsListResponse,
     refetch: refetchDiagnostics,
     isFetching
   } = useGetDiagnosticsTestListQuery(listRequest);
+  // save Diagnostics Test
   const [saveDiagnosticsTest] = useSaveDiagnosticsTestMutation();
   // Pagination values
   const pageIndex = listRequest.pageNumber - 1;
@@ -67,7 +67,7 @@ const DiagnosticsTest = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className='title-diagnostic'>
       <h5>Diagnostics Tests Definition</h5>
     </div>
   );
@@ -83,9 +83,9 @@ const DiagnosticsTest = () => {
   
   // Icons column (Edit, normalRange/profile, coding ,reactive/Deactivate)
   const iconsForActions = (rowData: any) => (
-    <div className="container-of-icons-practitioners">
+    <div className="container-of-icons-diagnostic">
       <MdModeEdit
-        className="icons-practitioners"
+        className="icons-diagnostic"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -95,7 +95,7 @@ const DiagnosticsTest = () => {
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-practitioners"
+          className="icons-diagnostic"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -106,7 +106,7 @@ const DiagnosticsTest = () => {
         />
       ) : (
         <FaUndo
-          className="icons-practitioners"
+          className="icons-diagnostic"
           title="Activate"
           size={21}
           fill="var(--primary-gray)"
@@ -118,7 +118,7 @@ const DiagnosticsTest = () => {
       )}
       {rowData?.profile ? (
         <RiFileList2Fill
-          className="icons-practitioners"
+          className="icons-diagnostic"
           title="Profile Setup"
           size={21}
           fill="var(--primary-gray)"
@@ -128,7 +128,7 @@ const DiagnosticsTest = () => {
         />
       ) : (
         <FaChartLine
-          className="icons-practitioners"
+          className="icons-diagnostic"
           title="Normal Range Setup"
           size={21}
           fill="var(--primary-gray)"
@@ -138,7 +138,7 @@ const DiagnosticsTest = () => {
         />
       )}
       <FaNewspaper
-        className="icons-practitioners"
+        className="icons-diagnostic"
         title="Code"
         size={22}
         fill="var(--primary-gray)"
@@ -189,7 +189,7 @@ const DiagnosticsTest = () => {
 
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-practitioners">
+    <Form layout="inline" fluid className="container-of-filter-fields-diagnostic">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -338,7 +338,7 @@ const DiagnosticsTest = () => {
 
   return (
     <Panel>
-      <div className="container-of-add-new-button-practitioners">
+      <div className="container-of-add-new-button-diagnostic">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"
@@ -376,16 +376,10 @@ const DiagnosticsTest = () => {
         setDiagnosticsTest={setDiagnosticsTest}
         width={width}
       />
-      <ProfileSetup
-        popUpOpen={profilePopupOpen}
-        setPopUpOpen={setProfilePopupOpen}
-        diagnosticsTest={diagnosticsTest}
-      />
       <NormalRangeSetupModal
         open={normalRangePopupOpen}
         setOpen={setNormalRangePopupOpen}
         diagnosticsTest={diagnosticsTest}
-        setDiagnosticsTest={setDiagnosticsTest}
       />
       <DeletionConfirmationModal
         open={openConfirmDiagnosticTest}
@@ -405,7 +399,6 @@ const DiagnosticsTest = () => {
         open={openProfileModal}
         setOpen={setOpenProfileModal}
         diagnosticsTest={diagnosticsTest}
-        setDiagnosticsTest={setDiagnosticsTest}
       />
     </Panel>
   );

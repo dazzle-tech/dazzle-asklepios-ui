@@ -40,26 +40,29 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
   const [diagnosticTestPathology, setDiagnosticTestPathology] = useState<ApDiagnosticTestPathology>(
     { ...newApDiagnosticTestPathology }
   );
-  const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] =
-    useState<ApDiagnosticTestSpecialPopulation>({ ...newApDiagnosticTestSpecialPopulation });
-  const [diagnosticTestLaboratory, setDiagnosticTestLaboratory] =
-    useState<ApDiagnosticTestLaboratory>({ ...newApDiagnosticTestLaboratory });
+  const [diagnosticTestSpecialPopulation, setDiagnosticTestSpecialPopulation] = useState<ApDiagnosticTestSpecialPopulation>({ ...newApDiagnosticTestSpecialPopulation });
+  const [diagnosticTestLaboratory, setDiagnosticTestLaboratory] = useState<ApDiagnosticTestLaboratory>({ ...newApDiagnosticTestLaboratory });
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const { data: DiagnosticsTestTypeLovQueryResponse } =
-    useGetLovValuesByCodeQuery('DIAG_TEST-TYPES');
+  // Fetch diagnostics test type Lov response
+  const { data: DiagnosticsTestTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_TEST-TYPES');
+     // Fetch Currency Lov response
   const { data: CurrencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
+  // Fetch Gender Lov response
   const { data: GenderLovQueryResponse } = useGetLovValuesByCodeQuery('MEDICAL_GNDR');
+  // Fetch Special Population Lov response
   const { data: SpecialPopulationLovQueryResponse } = useGetLovValuesByCodeQuery(
     'SPECIAL_POPULATION_GROUPS'
   );
+   // Fetch Age Group Lov response
   const { data: AgeGroupLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_GROUPS');
+  // save diagnostic test
   const [saveDiagnosticsTest, saveDiagnosticsTestMutation] = useSaveDiagnosticsTestMutation();
-  const [saveDiagnosticsTestLaboratory] =
-    useSaveDiagnosticsTestLaboratoryMutation();
-  const [saveDiagnosticsTestRadiology] =
-    useSaveDiagnosticsRadiologyTestMutation();
-  const [saveDiagnosticsTestPathology] =
-    useSaveDiagnosticsTestPathologyMutation();
+  // save Diagnostics Test Laboratory
+  const [saveDiagnosticsTestLaboratory] = useSaveDiagnosticsTestLaboratoryMutation();
+   // save Diagnostics Test Radiology
+  const [saveDiagnosticsTestRadiology] = useSaveDiagnosticsRadiologyTestMutation();
+  // save Diagnostics Test Pathology
+  const [saveDiagnosticsTestPathology] = useSaveDiagnosticsTestPathologyMutation();
   const matchingItem = useGetDiagnosticsTestTypeQuery(diagnosticsTest.testTypeLkey || '');
   
   // show details component according to Test type of diagnostic test
@@ -151,8 +154,8 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
       case 0:
         return (
           <Form fluid>
-            <div className="container-of-two-fields-service">
-              <div className="container-of-field-service">
+            <div className="container-of-two-fields-diagnostic">
+              <div className="container-of-field-diagnostic">
                 <MyInput
                   width="100%"
                   fieldName="testTypeLkey"
@@ -164,7 +167,7 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
                   setRecord={setDiagnosticsTest}
                 />
               </div>
-              <div className="container-of-field-service">
+              <div className="container-of-field-diagnostic">
                 <MyInput
                   width="100%"
                   fieldName="testName"
@@ -180,8 +183,8 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
               record={diagnosticsTest}
               setRecord={setDiagnosticsTest}
             />
-            <div className="container-of-two-fields-service">
-              <div className="container-of-field-service">
+            <div className="container-of-two-fields-diagnostic">
+              <div className="container-of-field-diagnostic">
                 <MyInput
                   width="100%"
                   fieldName="price"
@@ -189,7 +192,7 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
                   setRecord={setDiagnosticsTest}
                 />
               </div>
-              <div className="container-of-field-service">
+              <div className="container-of-field-diagnostic">
                 <MyInput
                   width="100%"
                   fieldName="currencyLkey"
@@ -212,8 +215,8 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
               record={diagnosticsTest}
               setRecord={setDiagnosticsTest}
             />
-            <div className="container-of-two-fields-service">
-              <div className="container-of-field-service">
+            <div className="container-of-two-fields-diagnostic">
+              <div className="container-of-field-diagnostic">
                 <MyInput
                   width="100%"
                   fieldName="genderSpecific"
@@ -225,7 +228,7 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
                 />
               </div>
               {diagnosticsTest.genderSpecific && (
-                <div className="container-of-field-service">
+                <div className="container-of-field-diagnostic">
                   <MyInput
                     width="100%"
                     fieldName="genderLkey"
@@ -240,8 +243,8 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
               )}
             </div>
             <br />
-            <div className="container-of-two-fields-service">
-              <div className="container-of-field-service">
+            <div className="container-of-two-fields-diagnostic">
+              <div className="container-of-field-diagnostic">
                 <MyInput
                   width="100%"
                   fieldName="specialPopulation"
@@ -253,7 +256,7 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
                 />
               </div>
               {diagnosticsTest.specialPopulation && (
-                <div className="container-of-field-service">
+                <div className="container-of-field-diagnostic">
                   <MyInput
                     width="100%"
                     fieldLabel="Special Pouplation"
@@ -270,8 +273,8 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
               )}
             </div>
             <br />
-            <div className="container-of-two-fields-service">
-              <div className="container-of-field-service">
+            <div className="container-of-two-fields-diagnostic">
+              <div className="container-of-field-diagnostic">
                 <MyInput
                   width="100%"
                   fieldName="ageSpecific"
@@ -283,7 +286,7 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
                 />
               </div>
               {diagnosticsTest.ageSpecific && (
-                <div className="container-of-field-service">
+                <div className="container-of-field-diagnostic">
                   <MyInput
                     width="100%"
                     fieldLabel="Age Group"
@@ -315,7 +318,7 @@ const AddEditDiagnosticTest = ({ open, setOpen, diagnosticsTest, setDiagnosticsT
         );
     }
   };
-    
+   // Effects
    useEffect(() => {
     if (saveDiagnosticsTestMutation.data) {
       setListRequest({ ...listRequest, timestamp: new Date().getTime() });
