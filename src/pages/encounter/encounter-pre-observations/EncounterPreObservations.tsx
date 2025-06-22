@@ -23,6 +23,7 @@ import BackButton from '@/components/BackButton/BackButton';
 import PreviousMeasurements from './previous-measurements';
 import PatientHistory from '../encounter-component/patient-history';
 import { notify } from '@/utils/uiReducerActions';
+import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment';
 const EncounterPreObservations = ({ }) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
@@ -34,6 +35,7 @@ const EncounterPreObservations = ({ }) => {
   const [activeKey, setActiveKey] = useState<string | number>('1');
   const [completeEncounter] = useCompleteEncounterMutation();
   const [dischargeInpatientEncounter] = useDischargeInpatientEncounterMutation();
+  const [refetchAttachmentList, setRefetchAttachmentList] = useState(false);
   // Page header setup
   const divContent = (
     <div style={{ display: 'flex' }}>
@@ -163,6 +165,12 @@ const EncounterPreObservations = ({ }) => {
                   <PreviousMeasurements
                     patient={propsData.patient}
                   />
+                </Tabs.Tab>
+                <Tabs.Tab eventKey="7" title="Attachments">
+                  <PatientAttachment
+                    localPatient={propsData?.patient}
+                    setRefetchAttachmentList={setRefetchAttachmentList}
+                    refetchAttachmentList={refetchAttachmentList} />
                 </Tabs.Tab>
               </Tabs>
             </Panel>

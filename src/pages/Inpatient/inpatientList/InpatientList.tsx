@@ -18,6 +18,7 @@ import './styles.less';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
 
 const InpatientList = () => {
     const location = useLocation();
@@ -259,6 +260,7 @@ const InpatientList = () => {
             render: rowData => {
                 const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
                 const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
+                const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
                 return (
                     <Form layout="inline" fluid className="nurse-doctor-form">
                         <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
@@ -289,6 +291,16 @@ const InpatientList = () => {
                                     }}
                                 >
                                     <FontAwesomeIcon icon={faUserNurse} />
+                                </MyButton>
+                            </div>
+                        </Whisper>
+                         <Whisper trigger="hover" placement="top" speaker={tooltipEMR}>
+                            <div>
+                                <MyButton
+                                    size="small"
+                                    backgroundColor="violet"
+                                >
+                                    <FontAwesomeIcon icon={faFileWaveform} />
                                 </MyButton>
                             </div>
                         </Whisper>
