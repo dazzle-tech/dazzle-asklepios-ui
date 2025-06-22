@@ -2263,6 +2263,20 @@ export const newApPhysicalExamArea:modelTypes.ApPhysicalExamArea = {
 	isValid:undefined,
 } 
 
+export const newApPostProcedureCare:modelTypes.ApPostProcedureCare = { 
+	key:undefined,
+	procedureKey:undefined,
+	diagnoseKey:undefined,
+	patientCondition:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isvalid:undefined,
+} 
+
 export const newApPostProcedureVitals:modelTypes.ApPostProcedureVitals = { 
 	key:undefined,
 	procedureKey:undefined,

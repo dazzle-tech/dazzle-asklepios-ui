@@ -161,7 +161,8 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
                                 <Text>Pre-Procedure Vitals</Text>
 
                             </div>
-                            <Divider /> <Row>
+                            <Divider /> 
+                            <Row>
                                 <Col md={11}>
                                     <MyInput
                                         width="100%"
@@ -210,7 +211,8 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
                                         record={procedureAssessment}
                                         setRecord={setProocedureAssessment} />
                                 </Col>
-                            </Row></div>
+                            </Row>
+                            </div>
                     </Row>
                     <Row>
                         <div className='container-form'>
