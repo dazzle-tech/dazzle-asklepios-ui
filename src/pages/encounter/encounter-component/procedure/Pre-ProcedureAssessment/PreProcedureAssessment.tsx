@@ -231,7 +231,7 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
                                 </MyButton>
                                 <MyButton
                                     prefixIcon={() => <FontAwesomeIcon icon={faFileWaveform} />}
-                                >open results screen</MyButton>
+                                >Open Results Screen</MyButton>
                             </div>
 
                         </div>
