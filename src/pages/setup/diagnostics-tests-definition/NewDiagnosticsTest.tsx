@@ -91,23 +91,13 @@ const NewDiagnosticsTest = ({ selectedDiagnosticsTest, goBack, ...props }) => {
     'SPECIAL_POPULATION_GROUPS'
   );
   const { data: AgeGroupLovQueryResponse } = useGetLovValuesByCodeQuery('AGE_GROUPS');
-  const { data: LabReagentsLovQueryResponse } = useGetLovValuesByCodeQuery('LAB_REAGENTS');
   const { data: codeTypeLovQueryResponse } = useGetLovValuesByCodeQuery('INTERNATIONAL_CODES');
-  const [tags, setTags] = useState([]);
   const [typing, setTyping] = React.useState(false);
   const [inputValue, setInputValue] = React.useState('');
   const [editing, setEditing] = useState(false);
-  const [ageDetails, setAgeDetails] = useState(false);
-  const [genderDetails, setGenderDetails] = useState(false);
-  const [specialPopulationDetails, setSpecialPopulationDetails] = useState(false);
-  const [ageGroupSpecificDetails, setAgeGroupSpecificDetailsDetails] = useState(false);
+ 
   const [diagnosticCoding, setDiagnosticCoding] = useState({ ...newApDiagnosticCoding });
-  const [popupOpen, setPopupOpen] = useState(false);
-  const [componentToDisplay, setComponentToDisplay] = useState('');
-  const removeTag = tag => {
-    const nextTags = tags.filter(item => item !== tag);
-    setTags(nextTags);
-  };
+ 
 
   const matchingItem = useGetDiagnosticsTestTypeQuery(diagnosticsTest.testTypeLkey || '');
   const isSelectedcode = rowData => {

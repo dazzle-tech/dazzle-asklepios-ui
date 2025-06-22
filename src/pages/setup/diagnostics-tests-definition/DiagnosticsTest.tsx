@@ -1,70 +1,292 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Input, Pagination, Panel, Table, Carousel } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
+import { Panel, Form } from 'rsuite';
+import { FaUndo } from 'react-icons/fa';
+import { MdModeEdit } from 'react-icons/md';
+import { MdDelete } from 'react-icons/md';
+import { RiFileList2Fill } from 'react-icons/ri';
+import { FaChartLine } from 'react-icons/fa';
+import { FaNewspaper } from 'react-icons/fa6';
 import {
-  useGetLovValuesByCodeQuery,
-  useGetServicesQuery,
   useSaveDiagnosticsTestMutation,
-  useGetDiagnosticsTestListQuery,
-  useGetDiagnosticsTestTypeQuery
+  useGetDiagnosticsTestListQuery
 } from '@/services/setupService';
-import { ButtonToolbar, IconButton } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
 import { ApDiagnosticTest } from '@/types/model-types';
 import { newApDiagnosticTest } from '@/types/model-types-constructor';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import NewDiagnosticsTest from './NewDiagnosticsTest';
-import FunnelTimeIcon from '@rsuite/icons/FunnelTime';
-import ListIcon from '@rsuite/icons/List';
-import Genetics from './Genetics';
-import Pathology from './Pathology';
-import Radiology from './Radiology';
-import Laboratory from './Laboratory';
-import NormalRangeSetup from './NormalRangeSetup';
 import ProfileSetup from './ProfileSetup';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+import MyInput from '@/components/MyInput';
+import NormalRangeSetupModal from './NormalRangeSetUpModal';
+import MyTable from '@/components/MyTable';
+import MyButton from '@/components/MyButton/MyButton';
+import AddEditDiagnosticTest from './AddEditDiagnosticTest';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { notify } from '@/utils/uiReducerActions';
+import Coding from './Coding';
+import Profile from './Profile';
 const DiagnosticsTest = () => {
   const dispatch = useAppDispatch();
- const [diagnosticsTest, setDiagnosticsTest] = useState<ApDiagnosticTest>({...newApDiagnosticTest});
- const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
- const { data: diagnosticsListResponse,  refetch: refetchDiagnostics  } = useGetDiagnosticsTestListQuery(listRequest);
- const [saveDiagnosticsTest, saveDiagnosticsTestMutation] = useSaveDiagnosticsTestMutation();
- const [carouselActiveIndex, setCarouselActiveIndex] = useState(0); 
- const [normalRangePopupOpen, setNormalRangePopupOpen] = useState(false);
- const [profilePopupOpen, setProfilePopupOpen] = useState(false);
- const divElement = useSelector((state: RootState) => state.div?.divElement);
- const divContent = (
-   <div style={{ display: 'flex' }}>
-     <h5>Diagnostics Tests Definition</h5>
-   </div>
- );
- const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
- dispatch(setPageCode('Diagnostics_Tests'));
- dispatch(setDivContent(divContentHTML));
-  const handleNew = () => {
-    setDiagnosticsTest({ ...newApDiagnosticTest});
-  };
-  
+  const [diagnosticsTest, setDiagnosticsTest] = useState<ApDiagnosticTest>({
+    ...newApDiagnosticTest
+  });
+  // const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
+  const [normalRangePopupOpen, setNormalRangePopupOpen] = useState(false);
+  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
+  const [openConfirmDiagnosticTest, setOpenConfirmDeleteDiagnosticTest] = useState<boolean>(false);
+  const [stateOfDeleteDiagnosticTest, setStateOfDeleteDiagnosticTest] = useState<string>('delete');
+  const [openCodingModal, setOpenCodingModal] = useState<boolean>(false);
+  const [openProfileModal, setOpenProfileModal] = useState<boolean>(false);
+  const [profilePopupOpen, setProfilePopupOpen] = useState(false);
+  const [width, setWidth] = useState<number>(window.innerWidth);
+  const [openAddEditDiagnosticTestPopup, setOpenAddEditDiagnosticTestPopup] =
+    useState<boolean>(false);
+  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  const {
+    data: diagnosticsListResponse,
+    refetch: refetchDiagnostics,
+    isFetching
+  } = useGetDiagnosticsTestListQuery(listRequest);
+  const [saveDiagnosticsTest] = useSaveDiagnosticsTestMutation();
+  // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = diagnosticsListResponse?.extraNumeric ?? 0;
+  // Available fields for filtering
+  const filterFields = [
+    { label: 'Type', value: 'testTypeLkey' },
+    { label: 'Name', value: 'testName' },
+    { label: 'Internal Code', value: 'internalCode' },
+    { label: 'Standard Code', value: 'internationalCodeOne' },
+    { label: 'Is Profile', value: 'internationalCodeOne' },
+    { label: 'Status', value: 'deleted_at' }
+  ];
+  // Header page setUp
+  const divContent = (
+    <div style={{ display: 'flex' }}>
+      <h5>Diagnostics Tests Definition</h5>
+    </div>
+  );
+  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  dispatch(setPageCode('Diagnostics_Tests'));
+  dispatch(setDivContent(divContentHTML));
+  // class name for selected row
   const isSelected = rowData => {
     if (rowData && diagnosticsTest && rowData.key === diagnosticsTest.key) {
       return 'selected-row';
     } else return '';
   };
+  
+  // Icons column (Edit, normalRange/profile, coding ,reactive/Deactivate)
+  const iconsForActions = (rowData: any) => (
+    <div className="container-of-icons-practitioners">
+      <MdModeEdit
+        className="icons-practitioners"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setOpenAddEditDiagnosticTestPopup(true);
+        }}
+      />
+      {rowData?.isValid ? (
+        <MdDelete
+          className="icons-practitioners"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            setStateOfDeleteDiagnosticTest('deactivate');
+            setOpenConfirmDeleteDiagnosticTest(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-practitioners"
+          title="Activate"
+          size={21}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setStateOfDeleteDiagnosticTest('reactivate');
+            setOpenConfirmDeleteDiagnosticTest(true);
+          }}
+        />
+      )}
+      {rowData?.profile ? (
+        <RiFileList2Fill
+          className="icons-practitioners"
+          title="Profile Setup"
+          size={21}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setOpenProfileModal(true);
+          }}
+        />
+      ) : (
+        <FaChartLine
+          className="icons-practitioners"
+          title="Normal Range Setup"
+          size={21}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setNormalRangePopupOpen(true);
+          }}
+        />
+      )}
+      <FaNewspaper
+        className="icons-practitioners"
+        title="Code"
+        size={22}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setOpenCodingModal(true);
+        }}
+      />
+    </div>
+  );
 
-    useEffect(() => {
-      refetchDiagnostics();
-    }, [carouselActiveIndex]);
+  //Table columns
+  const tableColumns = [
+    {
+      key: 'testTypeLkey',
+      title: <Translate>Type</Translate>,
+      render: rowData =>
+        rowData.testTypeLvalue ? rowData.testTypeLvalue.lovDisplayVale : rowData.testTypeLkey
+    },
+    {
+      key: 'testName',
+      title: <Translate>Name</Translate>
+    },
+    {
+      key: 'internalCode',
+      title: <Translate>Internal Code</Translate>
+    },
+    {
+      key: 'internationalCodeOne',
+      title: <Translate>Standard Code</Translate>
+    },
+    {
+      key: 'profile',
+      title: <Translate>Is Profile</Translate>,
+      render: rowData => (rowData.profile ? 'Yes' : 'No')
+    },
+    {
+      key: 'deleted_at',
+      title: <Translate>Status</Translate>,
+      render: rowData => (rowData.deletedAt === null ? 'Active' : 'InActive')
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      flexGrow: 3,
+      render: rowData => iconsForActions(rowData)
+    }
+  ];
 
+  // Filter table
+  const filters = () => (
+    <Form layout="inline" fluid className="container-of-filter-fields-practitioners">
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={recordOfFilter}
+        setRecord={updatedRecord => {
+          setRecordOfFilter({
+            ...recordOfFilter,
+            filter: updatedRecord.filter,
+            value: ''
+          });
+        }}
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+      />
 
+      <MyInput
+        fieldName="value"
+        fieldType="text"
+        record={recordOfFilter}
+        setRecord={setRecordOfFilter}
+        showLabel={false}
+        placeholder="Search"
+      />
+    </Form>
+  );
+  
+  // handle click on add new button
+  const handleNew = () => {
+    setOpenAddEditDiagnosticTestPopup(true);
+    setDiagnosticsTest({ ...newApDiagnosticTest });
+  };
 
+  // handle deactivate diagnostic test
+  const handleDeactivate = () => {
+    setOpenConfirmDeleteDiagnosticTest(false);
+    saveDiagnosticsTest({ ...diagnosticsTest, isValid: false })
+      .unwrap()
+      .then(() => {
+        refetchDiagnostics();
+        dispatch(
+          notify({
+            msg: 'The Diagnostic Test was successfully Deactivated',
+            sev: 'success'
+          })
+        );
+      })
+      .catch(() => {
+        dispatch(
+          notify({
+            msg: 'Faild to Deactivate this Diagnostic Test',
+            sev: 'error'
+          })
+        );
+      });
+  };
+  // handle reactivate diagnostic test
+  const handleReactivate = () => {
+    setOpenConfirmDeleteDiagnosticTest(false);
+    saveDiagnosticsTest({ ...diagnosticsTest, isValid: true })
+      .unwrap()
+      .then(() => {
+        refetchDiagnostics();
+        dispatch(
+          notify({
+            msg: 'The Diagnostic Test was successfully Reactivated',
+            sev: 'success'
+          })
+        );
+      })
+      .catch(() => {
+        dispatch(
+          notify({
+            msg: 'Faild to Reactivate this Diagnostic Test',
+            sev: 'error'
+          })
+        );
+      });
+  };
+
+  // Handle page change in navigation
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+  // Handle change rows per page in navigation
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
+    });
+  };
+
+  // handle change filter
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -79,186 +301,113 @@ const DiagnosticsTest = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
+
+  // Effects
+  // change the width variable when the size of window is changed
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent("  "));
+      dispatch(setDivContent('  '));
     };
   }, [location.pathname, dispatch]);
+  // update list when filter is changed
+  useEffect(() => {
+    if (recordOfFilter['filter']) {
+      handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
+    } else {
+      setListRequest({
+        ...initialListRequest,
+        filters: [
+          {
+            fieldName: 'deleted_at',
+            operator: 'isNull',
+            value: undefined
+          }
+        ],
+        pageSize: listRequest.pageSize,
+        pageNumber: 1
+      });
+    }
+  }, [recordOfFilter]);
+
   return (
-    <Carousel
-    style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
-    autoplay={false}
-    activeIndex={carouselActiveIndex}
-  >
     <Panel>
-      <ButtonToolbar>
-        <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={() => {setCarouselActiveIndex(1); setDiagnosticsTest({...newApDiagnosticTest})}}>
+      <div className="container-of-add-new-button-practitioners">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleNew}
+          width="109px"
+        >
           Add New
-        </IconButton>
-        <IconButton
-          disabled={!diagnosticsTest.key}
-          appearance="primary"
-          onClick={() => setCarouselActiveIndex(1)}
-          color="green"
-          icon={<EditIcon />}
-        >
-          Edit Selected
-        </IconButton>
-        <IconButton
-          disabled={true || !diagnosticsTest.key}
-          appearance="primary"
-          color="red"
-          icon={<TrashIcon />}
-        >
-          Delete Selected
-        </IconButton>
-        <IconButton
-          disabled={!diagnosticsTest.key}
-          appearance="primary"
-          color="cyan"
-          icon={<EditIcon />}
-        >
-          Linked Services
-        </IconButton>
-        <IconButton
-          disabled={diagnosticsTest?.testTypeLkey !== '862810597620632' || diagnosticsTest?.profile}
-          appearance="primary"
-          color="violet"
-          onClick={() => setNormalRangePopupOpen(true)}
-          icon={<FunnelTimeIcon />}
-        >
-           Normal Range Setup
-        </IconButton>
-        <IconButton
-          disabled={!diagnosticsTest?.profile}
-           appearance="ghost"
-           onClick={() => setProfilePopupOpen(true)}
-           color="blue"
-          icon={<ListIcon  />}
-        >
-          Profile Setup
-        </IconButton>
-      </ButtonToolbar>
-      <hr />
-        <Table
-          height={400}
-          sortColumn={listRequest.sortBy}
-          sortType={listRequest.sortType}
-          onSortColumn={(sortBy, sortType) => {
-            if (sortBy)
-              setListRequest({
-                ...listRequest,
-                sortBy,
-                sortType
-              });
-          }}
-          headerHeight={80}
-          rowHeight={60}
-          bordered
-          cellBordered
-          data={diagnosticsListResponse?.object ?? []}
-          onRowClick={rowData => {
-            setDiagnosticsTest(rowData);
-          }}
-          rowClassName={isSelected}
-        >
-          <Column sortable flexGrow={1}>
-            <HeaderCell align="center">
-              <Input onChange={e => handleFilterChange('testTypeLkey', e)} />
-              <Translate>Type</Translate>
-            </HeaderCell>
-            <Cell>
-              {rowData =>
-                rowData.testTypeLvalue ? rowData.testTypeLvalue.lovDisplayVale : rowData.testTypeLkey
-              }
-            </Cell>
-          </Column>
-          <Column sortable flexGrow={1}>
-            <HeaderCell align="center">
-              <Input onChange={e => handleFilterChange('testName', e)} />
-              <Translate>Name</Translate>
-            </HeaderCell>
-            <Cell dataKey="testName" />
-          </Column>
-          <Column sortable flexGrow={1}>
-            <HeaderCell align="center">
-              <Input onChange={e => handleFilterChange('internalCode', e)} />
-              <Translate>Internal Code</Translate>
-            </HeaderCell>
-            <Cell dataKey="internalCode" />
-          </Column>
-          <Column sortable flexGrow={1}>
-            <HeaderCell align="center">
-              <Input onChange={e => handleFilterChange('internationalCodeOne', e)} />
-              <Translate>Standard Code</Translate>
-            </HeaderCell>
-            <Cell dataKey="internationalCodeOne"/>
-          </Column>
-          <Column sortable flexGrow={1}>
-            <HeaderCell align="center">
-              <Input onChange={e => handleFilterChange('internationalCodeOne', e)} />
-              <Translate>Is Profile</Translate>
-            </HeaderCell>
-            <Cell > 
-            {rowData =>
-              rowData.profile ? 'Yes' : 'No' 
-            }
-            </Cell>
-          </Column>
-          <Column sortable flexGrow={2}>
-            <HeaderCell  align="center">
-              <Input onChange={e => handleFilterChange('deleted_at', e)} />
-              <Translate>Status</Translate>
-            </HeaderCell>
-            <Cell>
-            {rowData =>
-              rowData.deletedAt === null  ? 'Active' : 'InActive' 
-            }
-            </Cell>
-            </Column> 
-        </Table>
-      <div style={{ padding: 20 }}>
-        <Pagination
-          prev
-          next
-          first
-          last
-          ellipsis
-          boundaryLinks
-          maxButtons={5}
-          size="xs"
-          layout={['limit', '|', 'pager']}
-          limitOptions={[5, 15, 30]}
-          limit={listRequest.pageSize}
-          activePage={listRequest.pageNumber}
-          onChangePage={pageNumber => {
-            setListRequest({ ...listRequest, pageNumber });
-          }}
-          onChangeLimit={pageSize => {
-            setListRequest({ ...listRequest, pageSize });
-          }}
-          total={diagnosticsListResponse?.extraNumeric ?? 0}
-        />
+        </MyButton>
       </div>
-
-    
-    </Panel>
-
-    <NewDiagnosticsTest 
-    selectedDiagnosticsTest={diagnosticsTest}
-        goBack={() => {
-          setCarouselActiveIndex(0);
+      <MyTable
+        height={450}
+        data={diagnosticsListResponse?.object ?? []}
+        loading={isFetching}
+        columns={tableColumns}
+        rowClassName={isSelected}
+        filters={filters()}
+        onRowClick={rowData => {
+          setDiagnosticsTest(rowData);
         }}
-        
-       
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortChange={(sortBy, sortType) => {
+          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+        }}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
       />
-       <NormalRangeSetup popUpOpen={normalRangePopupOpen} setPopUpOpen={setNormalRangePopupOpen} diagnosticsTest={diagnosticsTest} />
-       <ProfileSetup popUpOpen={profilePopupOpen} setPopUpOpen={setProfilePopupOpen} diagnosticsTest={diagnosticsTest} />
-      
-    </Carousel>
-    
-   
+      <AddEditDiagnosticTest
+        open={openAddEditDiagnosticTestPopup}
+        setOpen={setOpenAddEditDiagnosticTestPopup}
+        diagnosticsTest={diagnosticsTest}
+        setDiagnosticsTest={setDiagnosticsTest}
+        width={width}
+      />
+      <ProfileSetup
+        popUpOpen={profilePopupOpen}
+        setPopUpOpen={setProfilePopupOpen}
+        diagnosticsTest={diagnosticsTest}
+      />
+      <NormalRangeSetupModal
+        open={normalRangePopupOpen}
+        setOpen={setNormalRangePopupOpen}
+        diagnosticsTest={diagnosticsTest}
+        setDiagnosticsTest={setDiagnosticsTest}
+      />
+      <DeletionConfirmationModal
+        open={openConfirmDiagnosticTest}
+        setOpen={setOpenConfirmDeleteDiagnosticTest}
+        itemToDelete="Diagnostic Test"
+        actionButtonFunction={
+          stateOfDeleteDiagnosticTest == 'deactivate' ? handleDeactivate : handleReactivate
+        }
+        actionType={stateOfDeleteDiagnosticTest}
+      />
+      <Coding
+        open={openCodingModal}
+        setOpen={setOpenCodingModal}
+        diagnosticsTest={diagnosticsTest}
+      />
+      <Profile
+        open={openProfileModal}
+        setOpen={setOpenProfileModal}
+        diagnosticsTest={diagnosticsTest}
+        setDiagnosticsTest={setDiagnosticsTest}
+      />
+    </Panel>
   );
 };
 

@@ -1,27 +1,18 @@
-import Translate from '@/components/Translate';
 import React, { useEffect, useState } from 'react';
 import MyInput from '@/components/MyInput';
 import {
-  useSaveDiagnosticsRadiologyTestMutation,
   useGetLovValuesByCodeQuery,
-  useGetDiagnosticsTestPathologyListQuery,
   useGetDiagnosticsTestRadiologyListQuery,
   useGetDiagnosticsTestCatalogHeaderListQuery
 } from '@/services/setupService';
-import { Form, IconButton, Panel } from 'rsuite';
-import { useAppDispatch } from '@/hooks';
-import { ApDiagnosticTestRadiology } from '@/types/model-types';
+import { Form } from 'rsuite';
 import { newApDiagnosticTestRadiology } from '@/types/model-types-constructor';
-import { Check } from '@rsuite/icons';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { notify } from '@/utils/uiReducerActions';
 
-const Radiology = ({ diagnosticsTest }) => {
+const Radiology = ({ diagnosticsTest, diagnosticTestRadiology, setDiagnosticTestRadiology}) => {
 
-  const dispatch = useAppDispatch();
-  const [diagnosticTestRadiology, setDiagnosticTestRadiology] = useState<ApDiagnosticTestRadiology>({ ...newApDiagnosticTestRadiology });
   const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const [catalogListRequest, setCatalogListRequest] = useState({
+  const [catalogListRequest] = useState({
     ...initialListRequest,
     pageSize: 100,
     timestamp: new Date().getMilliseconds(),
@@ -41,14 +32,13 @@ const Radiology = ({ diagnosticsTest }) => {
       }
     ]
   });
-  const { data: internationalCodesLovQueryResponse } = useGetLovValuesByCodeQuery('INTERNATIONAL_CODES');
   const { data: radCategoriesLovQueryResponse } = useGetLovValuesByCodeQuery('RAD_CATEGORIES');
   const { data: timeUnitLovQueryResponse } = useGetLovValuesByCodeQuery('TIME_UNITS');
   const { data: reagentLovQueryResponse } = useGetLovValuesByCodeQuery('RAD_REAGENTS');
-  const [saveDiagnosticsTestRadiology, saveDiagnosticsTestRadiologyMutation] = useSaveDiagnosticsRadiologyTestMutation();
   const { data: radiologyDetailsQueryResponse } = useGetDiagnosticsTestRadiologyListQuery(listRequest);
   const { data: CatalogListResponseData } = useGetDiagnosticsTestCatalogHeaderListQuery(catalogListRequest);
-
+  
+  // Effects
   useEffect(() => {
     const updatedFilters = [
       {
@@ -86,30 +76,13 @@ const Radiology = ({ diagnosticsTest }) => {
     }
   }, [radiologyDetailsQueryResponse]);
 
-
-  const handleSaveRad = async () => {
-
-   await saveDiagnosticsTestRadiology({...diagnosticTestRadiology,
-      createdBy: 'Administrator',
-      testKey: diagnosticsTest.key
-    }).unwrap();
-    dispatch(notify('Radiology Details Saved Successfully'));
-  };
-
   return (
-
-    <Panel
-      header={
-        <h3 className="title">
-          <Translate>Radiology</Translate>
-        </h3>
-      }
-    >
-      <hr />
-      <Form layout="inline" fluid>
+      <Form fluid>
+         <div className="container-of-two-fields-service">
+          <div className="container-of-field-service">
         <MyInput
-          width={250}
-          column
+          width="100%"
+          menuMaxHeight={200}          
           fieldLabel="Category"
           fieldName="radCategoryLkey"
           fieldType="select"
@@ -119,9 +92,11 @@ const Radiology = ({ diagnosticsTest }) => {
           record={diagnosticTestRadiology}
           setRecord={setDiagnosticTestRadiology}
         />
+        </div>
+        <div className="container-of-field-service">
         <MyInput
-          width={250}
-          column
+           width="100%"
+          menuMaxHeight={200}          
           fieldName="radCatalogKey"
           fieldType="select"
           selectData={CatalogListResponseData?.object ?? []}
@@ -130,9 +105,14 @@ const Radiology = ({ diagnosticsTest }) => {
           record={diagnosticTestRadiology}
           setRecord={setDiagnosticTestRadiology}
         />
+        </div>
+        </div>
+        <br/>
+         <div className="container-of-two-fields-service">
+          <div className="container-of-field-service">
         <MyInput
-          width={250}
-          column
+           width="100%"
+          menuMaxHeight={200}          
           fieldName="reagents"
           fieldType="select"
           selectData={reagentLovQueryResponse?.object ?? []}
@@ -141,10 +121,20 @@ const Radiology = ({ diagnosticsTest }) => {
           record={diagnosticTestRadiology}
           setRecord={setDiagnosticTestRadiology}
         />
-        <MyInput width={250} column fieldName="imageDuration" record={diagnosticTestRadiology} setRecord={setDiagnosticTestRadiology} />
-        <MyInput width={250} column fieldType="number" fieldName="	turnaroundTime" record={diagnosticTestRadiology} setRecord={setDiagnosticTestRadiology} />
-        <MyInput width={250}
-          column
+        </div>
+        <div className="container-of-field-service">
+        <MyInput width="100%" fieldName="imageDuration" record={diagnosticTestRadiology} setRecord={setDiagnosticTestRadiology} />
+       </div>
+       </div>
+       <br/>
+         <div className="container-of-two-fields-service">
+          <div className="container-of-field-service">
+        <MyInput width="100%" fieldType="number" fieldName="turnaroundTime" record={diagnosticTestRadiology} setRecord={setDiagnosticTestRadiology} />
+        </div>
+        <div className="container-of-field-service">
+        <MyInput
+          width="100%"
+         menuMaxHeight={200}          
           fieldName="turnaroundTimeUnitLkey"
           selectData={timeUnitLovQueryResponse?.object ?? []}
           fieldType="select"
@@ -153,22 +143,13 @@ const Radiology = ({ diagnosticsTest }) => {
           record={diagnosticTestRadiology}
           setRecord={setDiagnosticTestRadiology}
         />
-        <MyInput width={400} column fieldType="textarea" fieldName="medicalIndications" record={diagnosticTestRadiology} setRecord={setDiagnosticTestRadiology} />
-        <MyInput width={400} column fieldType="textarea" fieldName="associatedRisks" record={diagnosticTestRadiology} setRecord={setDiagnosticTestRadiology} />
-        <MyInput width={400} column fieldType="textarea" fieldName="testInstructions" record={diagnosticTestRadiology} setRecord={setDiagnosticTestRadiology} />
-
+      </div>
+        </div>
+        <br/>
+        <MyInput width="100%" fieldType="textarea" fieldName="medicalIndications" record={diagnosticTestRadiology} setRecord={setDiagnosticTestRadiology} />
+        <MyInput width="100%" fieldType="textarea" fieldName="associatedRisks" record={diagnosticTestRadiology} setRecord={setDiagnosticTestRadiology} />
+        <MyInput width="100%" fieldType="textarea" fieldName="testInstructions" record={diagnosticTestRadiology} setRecord={setDiagnosticTestRadiology} />
       </Form>
-      <IconButton
-        onClick={handleSaveRad}
-        appearance="primary"
-        color="green"
-        icon={<Check />}
-      >
-        <Translate> {"Save"} </Translate>
-      </IconButton>
-    </Panel>
-
   );
 };
-
 export default Radiology;
