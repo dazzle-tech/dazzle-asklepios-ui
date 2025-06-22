@@ -191,15 +191,7 @@ const Results = ({ setEncounter, setPatient, user }) => {
                 return rowData.test?.order?.patient?.fullName
             }
         },
-        {
-            key: "orderId",
-            title: <Translate>ORDER ID</Translate>,
-            flexGrow: 1,
-
-            render: (rowData: any) => {
-                return rowData.test?.orderId;
-            }
-        },
+       
         {
             key: "approvedAt",
             title: <Translate>Result Date</Translate>,
@@ -344,19 +336,6 @@ const Results = ({ setEncounter, setPatient, user }) => {
                         />
                     </HStack>
                 );
-            },
-        },
-
-
-
-        {
-            key: "resultStatus",
-            title: <Translate>RESULT SATUTS</Translate>,
-            flexGrow: 1,
-            fullText: true,
-            render: (rowData: any) => {
-                return rowData.statusLvalue ? rowData.statusLvalue.lovDisplayVale : rowData.statusLkey
-
             },
         },
         {
