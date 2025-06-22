@@ -2536,7 +2536,6 @@ export interface ApProcedureRegistration {
 	deletedAt:number;
 	encounterKey:string;
 } 
-
 export interface ApProcedureServiceEquipment { 
 	key:string;
 	procedureKey:string;
@@ -2549,7 +2548,6 @@ export interface ApProcedureServiceEquipment {
 	deletedAt:number;
 	isValid:boolean;
 } 
-
 export interface ApProcedureSetup { 
 	key:string;
 	name:string;
