@@ -1,4 +1,4 @@
-import { ApAudiometryPuretone, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress } from './../types/model-types';
+import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -537,6 +537,17 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
+    admitToInpatientEncounter: builder.mutation({
+      query: (admit: ApAdmitOutpatientInpatient) => ({
+        url: `/encounter/admit-outpatient-inpatient`,
+        method: 'POST',
+        body: admit
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
 
   })
 });
@@ -595,7 +606,7 @@ export const {
   useGetComplaintSymptomsQuery,
   useSaveElectrocardiogramECGMutation,
   useGetElectrocardiogramECGsQuery,
-  useDischargeInpatientEncounterMutation
-
+  useDischargeInpatientEncounterMutation,
+  useAdmitToInpatientEncounterMutation
 } = encounterService;
 

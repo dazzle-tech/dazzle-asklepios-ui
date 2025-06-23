@@ -253,6 +253,21 @@ export const newApAddresses:modelTypes.ApAddresses = {
 	isValid:undefined,
 } 
 
+export const newApAdmitOutpatientInpatient:modelTypes.ApAdmitOutpatientInpatient = { 
+	key:undefined,
+	toEncounterKey:undefined,
+	fromEncounterKey:undefined,
+	inpatientDepartmentKey:undefined,
+	physicianKey:undefined,
+	admissionNotes:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
 export const newApAgeGroup:modelTypes.ApAgeGroup = { 
 	key:undefined,
 	ageGroupLkey:undefined,
@@ -2317,7 +2332,6 @@ export const newApPractitioner:modelTypes.ApPractitioner = {
 	practitionerLastName:'',
 	practitionerEmail:'',
 	practitionerPhoneNumber:'',
-	jobRole:'',
 	specialtyLkey:undefined,
 	subSpecialtyLkey:undefined,
 	defaultMedicalLicense:'',
@@ -2329,6 +2343,7 @@ export const newApPractitioner:modelTypes.ApPractitioner = {
 	defaultLicenseValidUntil:null,
 	secondaryLicenseValidUntil:null,
 	dob:null,
+	jobRoleLkey:undefined,
 } 
 
 export const newApPreProcedureAssessment:modelTypes.ApPreProcedureAssessment = { 

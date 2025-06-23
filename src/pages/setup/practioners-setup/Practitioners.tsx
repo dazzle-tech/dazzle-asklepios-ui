@@ -208,9 +208,10 @@ const Practitioners = () => {
       flexGrow: 3
     },
     {
-      key: 'jobRole',
+      key: 'jobRoleLkey',
       title: <Translate>Job Role</Translate>,
-      flexGrow: 3
+      flexGrow: 3,
+       render: rowData => rowData.jobRoleLkey ? rowData?.jobRoleLvalue?.lovDisplayVale : rowData?.categoryLkey
     },
     {
       key: 'isValid',

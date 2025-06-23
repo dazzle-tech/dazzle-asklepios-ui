@@ -252,6 +252,21 @@ export interface ApAddresses {
 	isValid:boolean;
 } 
 
+export interface ApAdmitOutpatientInpatient { 
+	key:string;
+	toEncounterKey:string;
+	fromEncounterKey:string;
+	inpatientDepartmentKey:string;
+	physicianKey:string;
+	admissionNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
 export interface ApAgeGroup { 
 	key:string;
 	ageGroupLkey:string;
@@ -2316,7 +2331,6 @@ export interface ApPractitioner {
 	practitionerLastName:string;
 	practitionerEmail:string;
 	practitionerPhoneNumber:string;
-	jobRole:string;
 	specialtyLkey:string;
 	subSpecialtyLkey:string;
 	defaultMedicalLicense:string;
@@ -2328,6 +2342,7 @@ export interface ApPractitioner {
 	defaultLicenseValidUntil:Date;
 	secondaryLicenseValidUntil:Date;
 	dob:Date;
+	jobRoleLkey:string;
 } 
 
 export interface ApPreProcedureAssessment { 

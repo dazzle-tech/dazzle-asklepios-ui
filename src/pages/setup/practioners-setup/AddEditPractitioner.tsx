@@ -334,7 +334,6 @@ const AddEditPractitioner = ({
               practitionerEmail: rowData?.email,
               linkedUser: rowData?.key,
               genderLkey: rowData.sexAtBirthLkey,
-              jobRole: rowData.jobRoleKey,
               dob: rowData.dob
             });
           }}
