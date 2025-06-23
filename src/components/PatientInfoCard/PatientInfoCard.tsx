@@ -13,7 +13,7 @@ const PatientInfoCard = ({ patient}: PatientInfoCard) => (
   <Panel bordered>
   {/* Header (MRN) */}
   <div className="mrn">
-    <MemberIcon style={{ marginRight: 10 , marginLeft: 20, marginBottom : 20 , marginTop: 20  }} />
+    <MemberIcon style={{ marginRight: 6 }} />
     MRN
   </div>
 
@@ -38,7 +38,7 @@ const PatientInfoCard = ({ patient}: PatientInfoCard) => (
     <div className="patient-info">{(patient?.firstName || '') + "  "+ (patient?.lastName || '')}</div>
      </div>
       <div>
-        <div className="div-data"> Gender & Age</div>
+        <div className="div-data"> Sex & Age</div>
         <div className="patient-info">  { (patient?.genderLvalue?.lovDisplayValue || '') + (patient?.dob ? calculateAgeFormat(patient.dob) + '' : '')}</div>
       </div>
       <div>
