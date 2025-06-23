@@ -67,7 +67,7 @@ const handleSave = async () => {
             key: "Type",
             title: <Translate>Type</Translate>,
             render: (rowData: any) => {
-                return rowData?.service?.typeLkey?.lovDisplayVale || "";
+                return rowData?.service?.typeLvalue?.lovDisplayVale || "";
             }
 
         },
@@ -83,7 +83,7 @@ const handleSave = async () => {
             key: "Category",
             title: <Translate>Category</Translate>,
             render: (rowData: any) => {
-                return rowData?.service?.categoryLkey?.lovDisplayVale || "";
+                return rowData?.service?.categoryLvalue?.lovDisplayVale || "";
             }
 
         },
