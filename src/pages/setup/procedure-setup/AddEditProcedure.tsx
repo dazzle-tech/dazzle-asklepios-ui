@@ -130,28 +130,23 @@ const AddEditProcedure = ({ open, setOpen, procedure, setProcedure, profetch }) 
     } else return '';
   };
   // handle save procedure
-  const handleSave = () => {
-   saveProcedure({
+  const handleSave = async () => {
+  try {
+    const response = await saveProcedure({
       ...procedure,
       indications: indicationsDescription,
       contraindications: contraindicationsDescription,
       isValid: true
-    })
-      .unwrap()
-      .then(() => {
-        dispatch(notify({ msg: 'The Procedure has been saved successfully', sev: 'success' }));
-        setProcedure({
-          ...procedure,
-          indications: indicationsDescription,
-          contraindications: contraindicationsDescription,
-          isValid: true
-        });
-        profetch();
-      })
-      .catch(() => {
-        dispatch(notify({ msg: 'Failed to save this Procedure', sev: 'error' }));
-      });
-  };
+    }).unwrap();
+    dispatch(notify({ msg: 'The Procedure has been saved successfully', sev: 'success' }));
+    profetch();
+    setProcedure(response);
+
+  } catch (error) {
+    dispatch(notify({ msg: 'Failed to save this Procedure', sev: 'error' }));
+  }
+};
+
   // handle save procedure codeing
   const handleSaveCoding = () => {
     setProcedureCode({
