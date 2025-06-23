@@ -75,6 +75,7 @@
     "redux": "^4.2.1",
     "rsuite": "^5.78.0",
     "schema-types": "^2.3.0",
+    "stimulsoft-reports-js": "^2023.4.3",
     "styled-components": "^5.3.11",
     "yup": "^1.6.1"
   },
