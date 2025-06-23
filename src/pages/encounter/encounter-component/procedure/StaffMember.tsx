@@ -48,8 +48,11 @@ const StaffMember = ({ procedure }) => {
             return 'selected-row';
         } else return '';
     };
-
+      useEffect(()=>{
+        console.log("selectedUserList", selectedUserList??"");
+      },[selectedUserList])
     const handleSave = async () => {
+        
         try {
             const selectedKeys = selectedUserList?.key;
             if (!Array.isArray(selectedKeys)) {
@@ -74,6 +77,8 @@ const StaffMember = ({ procedure }) => {
             refetch();
 
             dispatch(notify({ msg: 'All user saved  successfully', sev: "success" }));
+            const newselect=[]
+            setSelectedUserList(newselect);
         } catch (error) {
 
             dispatch(notify({ msg: ' Faild to save one or more user', sev: "error" }));
@@ -184,7 +189,7 @@ const StaffMember = ({ procedure }) => {
             actionButtonFunction={async () => {
                 try {
                     const Response=await deleteProceduresStaff(staff.key).unwrap();
-                    console.log("response ",Response)
+                   
                    dispatch(notify({ msg: 'Deleted  successfully', sev: "success" }));
                    refetch();
                 } catch (error) {

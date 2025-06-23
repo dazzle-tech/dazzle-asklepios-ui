@@ -248,7 +248,7 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
             <div className="bt-right">
                  <MyButton onClick={handleClear}>Clear</MyButton>
                 <MyButton onClick={handleSave} >Save</MyButton>
-                <MyButton onClick={() => setActiveTab("3")}>Complate and Next</MyButton>
+                <MyButton onClick={() => setActiveTab("3")}>Complete and Next</MyButton>
             </div>
         </div>
 

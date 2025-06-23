@@ -20,8 +20,8 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
     const [performing, setPerforming] = useState({ ...newApProcedurePerformance });
     const [Duration, setDuration] = useState({ duration: null });
     const [instructionList, setInstructionList] = useState([]);
-    const [instr,setInstruc]=useState(null);
-    const [slectInst,setSelectInt]=useState({inst:null});
+    const [instr, setInstruc] = useState(null);
+    const [slectInst, setSelectInt] = useState({ inst: null });
     //lovs
     const { data: TypeofAnesthesiaLovQueryResponse } = useGetLovValuesByCodeQuery('ANESTH_TYPES');
     const { data: ProcedureOutcomeLovQueryResponse } = useGetLovValuesByCodeQuery('PROC_OUTCOMES');
@@ -56,7 +56,7 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
     });
     const { data: staffList, refetch } = useGetProceduresStaffQuery(listSRequest, { skip: !procedure?.key })
     useEffect(() => {
-        
+
         if (performing.actualStartTime && performing.actualEndTime) {
             const start = new Date(performing.actualStartTime);
             const end = new Date(performing.actualEndTime);
@@ -95,40 +95,41 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
             }
         }
     }, [slectInst?.inst]);
-   
+
     const joinValuesFromArray = (values) => {
         return values?.filter(Boolean)?.join(', ');
     };
 
- const mergeDateAndTimeToMillis = (
-  dateSource: string | Date,
-  timeSource: string | Date
-): number => {
-  const date = new Date(dateSource);
-  const time = new Date(timeSource);
+    const mergeDateAndTimeToMillis = (
+        dateSource: string | Date,
+        timeSource: string | Date
+    ): number => {
+        const date = new Date(dateSource);
+        const time = new Date(timeSource);
 
-  const year = date.getFullYear();
-  const month = date.getMonth(); 
-  const day = date.getDate();
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const day = date.getDate();
 
-  const hours = time.getHours();
-  const minutes = time.getMinutes();
-  const seconds = time.getSeconds();
+        const hours = time.getHours();
+        const minutes = time.getMinutes();
+        const seconds = time.getSeconds();
 
-  const merged = new Date(year, month, day, hours, minutes, seconds);
+        const merged = new Date(year, month, day, hours, minutes, seconds);
 
-  return merged.getTime();
-};
+        return merged.getTime();
+    };
 
     const handleSave = async () => {
         try {
-            await savePerforming({ ...performing,
-                homeInstructionNotes:instr,
-                 actualStartTime: mergeDateAndTimeToMillis(procedure.scheduledDateTime, new Date(performing.actualStartTime)),
-                 actualEndTime:mergeDateAndTimeToMillis(procedure.scheduledDateTime,new Date(performing.actualEndTime)),
-                 anesthesiaStartTime: mergeDateAndTimeToMillis(procedure.scheduledDateTime, new Date(performing.anesthesiaStartTime)),
-                 anesthesiaEndTime:mergeDateAndTimeToMillis(procedure.scheduledDateTime,new Date(performing.anesthesiaEndTime))
-                }).unwrap();
+            await savePerforming({
+                ...performing,
+                homeInstructionNotes: instr,
+                actualStartTime: mergeDateAndTimeToMillis(procedure.scheduledDateTime, new Date(performing.actualStartTime)),
+                actualEndTime: mergeDateAndTimeToMillis(procedure.scheduledDateTime, new Date(performing.actualEndTime)),
+                anesthesiaStartTime: mergeDateAndTimeToMillis(procedure.scheduledDateTime, new Date(performing.anesthesiaStartTime)),
+                anesthesiaEndTime: mergeDateAndTimeToMillis(procedure.scheduledDateTime, new Date(performing.anesthesiaEndTime))
+            }).unwrap();
             dispatch(notify({ msg: ' Saved successfully', sev: "success" }));
         }
         catch (error) {
@@ -178,6 +179,7 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                                     <MyInput
                                         width="100%"
                                         fieldType="number"
+                                        rightAddon={"Min"}
                                         fieldName='duration'
                                         record={Duration}
                                         setRecord={setDuration}
@@ -315,6 +317,7 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                                 <MyInput
                                     width="100%"
                                     fieldType="select"
+                                    fieldLabel="Administered By"
                                     selectData={userList?.object ?? []}
                                     selectDataLabel="username"
                                     selectDataValue="key"
@@ -369,16 +372,17 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                         </div>
                         <Divider />
                         <Row>
-                            <Col md={12}>
+                            <Col md={24}>
                                 <Row>
                                     <Col md={24}>
                                         <MyInput
                                             width="100%"
                                             fieldType="select"
+                                            fieldLabel="Home Instructions"
                                             selectData={HomeinstructionsLovQueryResponse?.object ?? []}
                                             selectDataLabel="lovDisplayVale"
                                             selectDataValue="key"
-                                           fieldName='inst'
+                                            fieldName='inst'
                                             record={slectInst}
                                             setRecord={setSelectInt}
                                         />
@@ -387,15 +391,17 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                                 </Row>
                                 <Row>
                                     <Col md={24}>
-                                      <Input as="textarea" onChange={(e) =>setInstruc(e.target.value)}
-                                                                            value={instr}
-                                                                            style={{ width: '100%' }}
-                                                                            rows={3} />
-                                        
+                                        <Input as="textarea" onChange={(e) => setInstruc(e.target.value)}
+                                            value={instr}
+                                            style={{ width: '100%' }}
+                                            rows={3} />
+
                                     </Col>
                                 </Row>
                             </Col>
-                            <Col md={12}>
+                        </Row>
+                        <Row>
+                            <Col md={24}>
                                 <MyInput
                                     height='15vh'
                                     width="100%"
@@ -414,7 +420,7 @@ const ProcedurePerforming = ({ procedure, setActiveTab, user }) => {
                 <MyButton onClick={handleClear}>Clear</MyButton>
                 <MyButton onClick={handleSave} >Save</MyButton>
                 <MyButton disabled={!performing?.key} >Print</MyButton>
-                <MyButton onClick={() => setActiveTab("4")}>Complate and Next</MyButton>
+                <MyButton onClick={() => setActiveTab("4")}>Complete and Next</MyButton>
             </div>
         </div>
     </>)

@@ -108,7 +108,7 @@ export const labService = createApi({
             }
         }),
         getResultNormalRange: builder.query({
-            query: ({ patientKey, testKey ,testProfileKey }) => ({
+            query: ({ patientKey, testKey, testProfileKey }) => ({
                 url: `/lab/get-result-normal-range?patientKey=${encodeURIComponent(patientKey)}&testKey=${encodeURIComponent(testKey)}testProfileKey=${encodeURIComponent(testProfileKey)}`
             }),
             onQueryStarted: onQueryStarted,
@@ -133,15 +133,23 @@ export const labService = createApi({
                 return response.object;
             }
         }),
-        getGroupTests:builder.query({
-            query:(listRequest: ListRequest) => ({
+        getGroupTests: builder.query({
+            query: (listRequest: ListRequest) => ({
                 url: `/lab/get-test-group-by?${fromListRequestToQueryParams(listRequest)}`
             }),
             onQueryStarted: onQueryStarted,
             keepUnusedDataFor: 5
+        }),
+        deleteTestResults: builder.mutation({
+            query: (key: string) => ({
+                url: `/lab/delete-test-results?testKey=${key}`,
+                method: 'DELETE'
+            }),
+            onQueryStarted: onQueryStarted
         })
+        ,
 
-      
+
     })
 });
 export const {
@@ -157,5 +165,6 @@ export const {
     useSaveDiagnosticTestResultMutation,
     useGetLabResultLogListQuery,
     useSaveLabResultLogMutation,
-    useGetGroupTestsQuery
+    useGetGroupTestsQuery,
+    useDeleteTestResultsMutation
 } = labService;
