@@ -2,7 +2,7 @@ import AdvancedModal from "@/components/AdvancedModal";
 import MyButton from "@/components/MyButton/MyButton";
 import MyInput from "@/components/MyInput";
 import MyLabel from "@/components/MyLabel";
-import Translate from "@/components/Translate";
+import CheckIcon from '@rsuite/icons/Check';
 import { useAppDispatch } from '@/hooks';
 import { useSaveDrugOrderMedicationMutation } from "@/services/encounterService";
 import { useGetGenericMedicationWithActiveIngredientQuery } from "@/services/medicationsSetupService";
@@ -21,11 +21,13 @@ import './styles.less';
 import Substitues from "./Substitutes";
 import MyTagInput from "@/components/MyTagInput/MyTagInput";
 import clsx from "clsx";
+import DiagnosticsOrder from "../diagnostics-order";
+import MyModal from "@/components/MyModal/MyModal";
 const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication, drugKey, editing, patient, encounter, medicRefetch, openToAdd }) => {
     const dispatch = useAppDispatch();
     const [searchKeyword, setSearchKeyword] = useState('');
     const [searchKeywordicd, setSearchKeywordicd] = useState('');
-
+    const [openOrderModel, setOpenOrderModel] = useState(false);
     const [typing, setTyping] = React.useState(false);
     const [inputValue, setInputValue] = React.useState('');
     const [tags, setTags] = React.useState([]);
@@ -221,7 +223,7 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
         setSelectedGeneric(null);
         setSelectedFirstDate(null);
         setindicationsDescription("");
-         setSearchKeyword("");
+        setSearchKeyword("");
         setTags([])
     }
     const handleSaveMedication = () => {
@@ -292,6 +294,20 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
             isDisabledActionBtn={edit ? true : orderMedication.key ? orderMedication?.statusLvalue?.valueCode !== " DIAG_ORDER_STAT_NEW" : false}
             leftTitle={selectedGeneric ? selectedGeneric.genericName : "Select Generic"}
             rightTitle="Medication Order Details"
+            leftContent={<> <ActiveIngrediantList selectedGeneric={selectedGeneric} /></>}
+            footerButtons={<div className='footer-buttons'>
+
+                <MyButton
+                    appearance='ghost'
+
+                    onClick={() => {
+                        setOpenOrderModel(true);
+                    }}
+
+                    prefixIcon={() => <CheckIcon />}>
+                    Order Related Tests
+                </MyButton>
+            </div>}
             leftContent={<>
 
                 <ActiveIngrediantList selectedGeneric={selectedGeneric} />
@@ -697,6 +713,14 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
                 </Form>
             }
         ></AdvancedModal>
-        <Substitues open={openSubstitutesModel} setOpen={setOpenSubstitutesModel} selectedGeneric={selectedGeneric}></Substitues></>);
+        <Substitues open={openSubstitutesModel} setOpen={setOpenSubstitutesModel} selectedGeneric={selectedGeneric}></Substitues>
+       <MyModal
+                    open={openOrderModel}
+                    setOpen={setOpenOrderModel}
+                    size={'full'}
+                    title="Add Order"
+                    content={<DiagnosticsOrder edit={edit} patient={patient} encounter={encounter}/>}>
+        </MyModal>
+        </>);
 }
 export default DetailsModal;

@@ -1,42 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import { useAppDispatch } from '@/hooks';
-import {
-    InputGroup,
-    Form,
-    Input,
-    Panel,
-    Text,
-    Dropdown,
-    DatePicker,
-    Row,
-    Col,
-} from 'rsuite';
-import PatientOrder from '../diagnostics-order';
-import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUploadModal';
-import CheckIcon from '@rsuite/icons/Check';
-import { faBroom, faFile } from '@fortawesome/free-solid-svg-icons';
-import MyModal from '@/components/MyModal/MyModal';
+import AdvancedModal from '@/components/AdvancedModal';
 import MyButton from '@/components/MyButton/MyButton';
-import { newApPatientDiagnose, newApProcedure } from '@/types/model-types-constructor';
-import { useGetIcdListQuery } from '@/services/setupService';
-import SearchIcon from '@rsuite/icons/Search';
-import { initialListRequest, ListRequest } from '@/types/types';
-import {
-    useGetFacilitiesQuery,
-    useGetDepartmentsQuery,
-    useGetProcedureListQuery,
-} from '@/services/setupService';
+import MyInput from '@/components/MyInput';
+import MyModal from '@/components/MyModal/MyModal';
+import { useAppDispatch } from '@/hooks';
 import {
     useSaveProceduresMutation
 } from '@/services/procedureService';
+import { useGetDepartmentsQuery, useGetFacilitiesQuery, useGetIcdListQuery, useGetLovValuesByCodeQuery, useGetProcedureListQuery } from '@/services/setupService';
+import { newApProcedure } from '@/types/model-types-constructor';
+import { initialListRequest, ListRequest } from '@/types/types';
 import { notify } from '@/utils/uiReducerActions';
+import { faBroom } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-import MyInput from '@/components/MyInput';
-import AdvancedModal from '@/components/AdvancedModal';
-import './styles.less'
-import Diagnosis from './Diagnosis';
+import CheckIcon from '@rsuite/icons/Check';
+import SearchIcon from '@rsuite/icons/Search';
 import clsx from 'clsx';
+import React, { useEffect, useState } from 'react';
+import {
+    Col,
+    Dropdown,
+    Form,
+    Input,
+    InputGroup,
+    Row,
+    Text
+} from 'rsuite';
+import PatientOrder from '../diagnostics-order';
+import Diagnosis from './Diagnosis';
+import './styles.less';
 const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetailsModal, setOpenDetailsModal, proRefetch}) => {
     const [openOrderModel, setOpenOrderModel] = useState(false);
     const [editing, setEditing] = useState(false);
