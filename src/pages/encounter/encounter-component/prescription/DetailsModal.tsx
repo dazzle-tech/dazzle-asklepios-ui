@@ -21,9 +21,12 @@ import { faRightLeft } from "@fortawesome/free-solid-svg-icons";
 import Instructions from "./Instructions";
 import Substitues from "./Substitued";
 import clsx from "clsx";
-
+import DiagnosticsOrder from '../diagnostics-order';
+import CheckIcon from '@rsuite/icons/Check';
+import MyModal from "@/components/MyModal/MyModal";
 const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescriptionMedications, preKey,patient, encounter, medicRefetch,openToAdd }) => {
     const dispatch = useAppDispatch();
+    const [openOrderModel, setOpenOrderModel] = useState(false);
     const [selectedGeneric, setSelectedGeneric] = useState(null);
     const [tags, setTags] = React.useState(null);
     const [searchKeyword, setSearchKeyword] = useState('');
@@ -292,6 +295,19 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
             leftTitle={selectedGeneric ? selectedGeneric.genericName : "Select Generic"}
             rightTitle="Medication Order Details"
             leftContent={<> <ActiveIngrediantList selectedGeneric={selectedGeneric} /></>}
+            footerButtons={<div className='footer-buttons'>
+                           
+                            <MyButton
+                                appearance='ghost'
+            
+                                onClick={() => {
+                                    setOpenOrderModel(true);
+                                }}
+                               
+                                prefixIcon={() => <CheckIcon />}>
+                                Order Related Tests
+                            </MyButton>
+                        </div>}
             rightContent={
                 <Row gutter={15}  className={clsx('', {'disabled-panel': edit
                                                          })}>
@@ -686,6 +702,13 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                 </Row>}
         />
         <Substitues open={openSubstitutesModel} setOpen={setOpenSubstitutesModel} selectedGeneric={selectedGeneric} />
+         <MyModal
+                    open={openOrderModel}
+                    setOpen={setOpenOrderModel}
+                    size={'full'}
+                    title="Add Order"
+                    content={<DiagnosticsOrder edit={edit} patient={patient} encounter={encounter}/>}>
+        </MyModal>
     </>)
 }
 export default DetailsModal;
