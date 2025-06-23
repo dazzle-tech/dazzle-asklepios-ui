@@ -29,7 +29,7 @@ const PostProcedureCare = ({ procedure, setActiveTab, user }) => {
 
             <div className="bt-right">
 
-                <MyButton onClick={() => setActiveTab("5")}>Complate and Next</MyButton>
+                <MyButton onClick={() => setActiveTab("5")}>Complete and Next</MyButton>
             </div>
         </div></>)
 }

@@ -115,7 +115,7 @@ const ProcedureRegistration = ({ procedure, user,setActiveTab }) => {
             <div className='bt-div'>
                 
                 <div className="bt-right">
-                    <MyButton onClick={() => setActiveTab("2")}>Complate and Next</MyButton>
+                    <MyButton onClick={() => setActiveTab("2")}>Complete and Next</MyButton>
                 </div>
             </div>
         </Panel>

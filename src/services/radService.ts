@@ -10,7 +10,7 @@ export const radService = createApi({
     reducerPath: 'radApi',
     baseQuery: baseQuery,
     endpoints: builder => ({
-   
+
         saveDiagnosticOrderTestRadReport: builder.mutation({
             query: (note: ApDiagnosticOrderTestsRadReport) => ({
                 url: `/rad/save-diagnostic-order-tests-rad-report`,
@@ -31,34 +31,44 @@ export const radService = createApi({
         }),
 
         getDiagnosticOrderTestReportNotesByReportId: builder.query({
-                 query: (reportid: string) => ({
-                     headers: {
-                         reportid
-                     },
-                     url: `/rad/diagnostic-order-tests-report-notes-list`
-                 }),
-                 onQueryStarted: onQueryStarted,
-                 keepUnusedDataFor: 5
-     
-             }),
-             saveDiagnosticOrderTestReportNotes: builder.mutation({
-                 query: (note:ApDiagnosticOrderTestsReportNotes) => ({
-                     url: `/rad/save-diagnostic-order-tests-report-notes`,
-                     method: 'POST',
-                     body: note
-                 }),
-                 onQueryStarted: onQueryStarted,
-                 transformResponse: (response: any) => {
-                     return response.object;
-                 }
-             }),
+            query: (reportid: string) => ({
+                headers: {
+                    reportid
+                },
+                url: `/rad/diagnostic-order-tests-report-notes-list`
+            }),
+            onQueryStarted: onQueryStarted,
+            keepUnusedDataFor: 5
+
+        }),
+        saveDiagnosticOrderTestReportNotes: builder.mutation({
+            query: (note: ApDiagnosticOrderTestsReportNotes) => ({
+                url: `/rad/save-diagnostic-order-tests-report-notes`,
+                method: 'POST',
+                body: note
+            }),
+            onQueryStarted: onQueryStarted,
+            transformResponse: (response: any) => {
+                return response.object;
+            }
+        }),
+
+        
+        deleteTestReports: builder.mutation({
+            query: (key: string) => ({
+                url: `/rad/delete-test-reports?testKey=${key}`,
+                method: 'DELETE'
+            }),
+            onQueryStarted: onQueryStarted
+        })
     })
 });
 export const {
 
-   useSaveDiagnosticOrderTestRadReportMutation,
+    useSaveDiagnosticOrderTestRadReportMutation,
     useGetDiagnosticOrderTestRadReportListQuery,
     useGetDiagnosticOrderTestReportNotesByReportIdQuery,
-    useSaveDiagnosticOrderTestReportNotesMutation
- 
-} = radService ;
+    useSaveDiagnosticOrderTestReportNotesMutation,
+    useDeleteTestReportsMutation
+
+} = radService;

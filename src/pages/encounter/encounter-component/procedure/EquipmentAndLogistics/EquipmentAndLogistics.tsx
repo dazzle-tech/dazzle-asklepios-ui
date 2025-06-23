@@ -139,7 +139,7 @@ const handleSave = async () => {
         <div className='bt-div'>
             <div className="bt-right">
 
-                <MyButton onClick={() => setActiveTab("1")}>Complate and Next</MyButton>
+                <MyButton onClick={() => setActiveTab("1")}>Complete and Next</MyButton>
             </div>
         </div>
     </>)
