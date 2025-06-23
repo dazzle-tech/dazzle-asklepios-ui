@@ -287,6 +287,13 @@ const Departments = () => {
       flexGrow: 1
     },
     {
+      key: 'appointable',
+      title: <Translate>Appointable</Translate>,
+       render: (rowData: ApDepartment) => {
+        return <p>{rowData?.appointable ? 'Yes' : 'No'}</p>;
+      }
+    },
+    {
       key: 'deletedAt',
       title: <Translate>Status</Translate>,
       flexGrow: 4,
