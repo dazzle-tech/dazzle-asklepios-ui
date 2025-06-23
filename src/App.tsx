@@ -94,7 +94,6 @@ import DiagnosticsResult from './pages/encounter/encounter-component/diagnostics
 import InpatientList from './pages/Inpatient/inpatientList';
 import ReviewResults from "./pages/review-results/ReviewResults"
 import Room from './pages/setup/bed-room-setup';
-import MedicationMatrix from './pages/medications/med-matrix-setup/MedicationMatrix';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -313,7 +312,6 @@ const App = () => {
               <Route path='patient-EMR' element={<PatientEMR />} />
               <Route path='lab-module' element={<Lab />} />
               <Route path='rad-module' element={<Rad />} />
-              <Route path='med-matrix-setup' element={<MedicationMatrix />} />
             </Route>
           </Route>
 

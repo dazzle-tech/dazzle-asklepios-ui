@@ -15,10 +15,7 @@ import {
   ApPrescriptionInstruction,
   ApGenericMedication,
   ApGenericMedicationActiveIngredient,
-  ApBrandMedicationSubstitutes,
-  ApMedicationCategories,
-  ApMedicationCategoriesClass,
-  ApMedicationCategoriesActiveIngredient
+  ApBrandMedicationSubstitutes
 } from '@/types/model-types';
 
 export const medicationsSetupService = createApi({
@@ -407,87 +404,7 @@ export const medicationsSetupService = createApi({
       transformResponse: (response: any) => {
         return response;
       }
-    }),
-    getMedicationCategories: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/medications/medication-categories-list?${fromListRequestToQueryParams(listRequest)}`
-
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-    removeMedicationCategories: builder.mutation({
-      query: (medicationCategories: ApMedicationCategories) => ({
-        url: `/medications/remove-medication-categories`,
-        method: 'POST',
-        body: medicationCategories
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
-    saveMedicationCategories: builder.mutation({
-      query: (medicationCategories: ApMedicationCategories) => ({
-        url: `/medications/save-medication-categories`,
-        method: 'POST',
-        body: medicationCategories
-      }), onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
-    getMedicationCategoriesClass: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/medications/medication-categories-class-list?${fromListRequestToQueryParams(listRequest)}`
-
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-    removeMedicationCategoriesClass: builder.mutation({
-      query: (medicationCategoriesClass: ApMedicationCategoriesClass) => ({
-        url: `/medications/remove-medication-categories-class`,
-        method: 'POST',
-        body: medicationCategoriesClass
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
-    saveMedicationCategoriesClass: builder.mutation({
-      query: (medicationCategoriesClass: ApMedicationCategoriesClass) => ({
-        url: `/medications/save-medication-categories-class`,
-        method: 'POST',
-        body: medicationCategoriesClass
-      }), onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
-    getMedicationCategoriesActiveIngredient: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/medications/medication-categories-active-ingredient-list?${fromListRequestToQueryParams(listRequest)}`
-
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-     saveMedicationCategoriesActiveIngredient: builder.mutation({
-          query: (data: { medicationCategoriesActiveIngredient: ApMedicationCategoriesActiveIngredient; ai; }) => {
-            const param = data.ai;
-            return {
-              url: `/medications/save-medication-categories-active-ingredient?ai=${param}`,
-              method: 'POST',
-              body: data.medicationCategoriesActiveIngredient,
-            }
-    
-          }, onQueryStarted: onQueryStarted,
-          transformResponse: (response: any) => {
-            return response.object;
-          }
-        }),
+    })
   })
 });
 
@@ -532,14 +449,6 @@ export const {
   useSaveLinkedBrandMedicationMutation,
   useGetLinkedBrandQuery,
   useGetActiveIngredientDrugInteractionByKeyQuery,
-  useRemoveLinkedBrandMedicationMutation,
-  useGetMedicationCategoriesQuery,
-  useRemoveMedicationCategoriesMutation,
-  useSaveMedicationCategoriesMutation,
-  useGetMedicationCategoriesClassQuery,
-  useRemoveMedicationCategoriesClassMutation,
-  useSaveMedicationCategoriesClassMutation,
-  useGetMedicationCategoriesActiveIngredientQuery,
-  useSaveMedicationCategoriesActiveIngredientMutation
+  useRemoveLinkedBrandMedicationMutation
 
 } = medicationsSetupService;
