@@ -2332,7 +2332,6 @@ export const newApPractitioner:modelTypes.ApPractitioner = {
 	practitionerLastName:'',
 	practitionerEmail:'',
 	practitionerPhoneNumber:'',
-	jobRole:'',
 	specialtyLkey:undefined,
 	subSpecialtyLkey:undefined,
 	defaultMedicalLicense:'',
@@ -2344,6 +2343,7 @@ export const newApPractitioner:modelTypes.ApPractitioner = {
 	defaultLicenseValidUntil:null,
 	secondaryLicenseValidUntil:null,
 	dob:null,
+	jobRoleLkey:undefined,
 } 
 
 export const newApPreProcedureAssessment:modelTypes.ApPreProcedureAssessment = { 

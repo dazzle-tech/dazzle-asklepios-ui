@@ -27,6 +27,7 @@ import { useLocation } from 'react-router-dom';
 import AllergiesModal from './AllergiesModal';
 import WarningiesModal from './WarningiesModal';
 import { notify } from '@/utils/uiReducerActions';
+import AdmitToInpatientModal from './AdmitToInpatientModal';
 const Encounter = () => {
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
@@ -36,7 +37,7 @@ const Encounter = () => {
   const savedState = sessionStorage.getItem("encounterPageSource");
 
   const [localEncounter, setLocalEncounter] = useState<any>({ ...propsData?.encounter });
-
+  const [openAdmitModal, setOpenAdmitModal] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [showAppointmentOnly, setShowAppointmentOnly] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -265,13 +266,13 @@ const Encounter = () => {
               >
                 Warning
               </MyButton>
-                 {!(propsData?.encounter?.resourceTypeLkey === "4217389643435490" ) && <MyButton
-                  prefixIcon={() => <FontAwesomeIcon icon={faBed} />}
-                 // onClick={}
-                  appearance="ghost"
-                >
-                  <Translate>Admit to Inpatient</Translate>
-                </MyButton>}
+              {!(propsData?.encounter?.resourceTypeLkey === "4217389643435490") && (propsData?.encounter?.resourceTypeLkey === "91109811181900") && <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faBed} />}
+                onClick={() => { setOpenAdmitModal(true) }}
+                appearance="ghost"
+              >
+                <Translate>Admit to Inpatient</Translate>
+              </MyButton>}
               {propsData?.encounter?.editable && !propsData?.encounter?.discharge && (
                 <MyButton
                   prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
@@ -328,7 +329,11 @@ const Encounter = () => {
           <Outlet />
           {/* {activeContent} Render the selected content */}
         </Panel>
-
+        <AdmitToInpatientModal
+          open={openAdmitModal}
+          setOpen={setOpenAdmitModal}
+          encounter={propsData?.encounter}
+        />
         <AppointmentModal
           from={'Encounter'}
           isOpen={modalOpen}

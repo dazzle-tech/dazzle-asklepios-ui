@@ -2331,7 +2331,6 @@ export interface ApPractitioner {
 	practitionerLastName:string;
 	practitionerEmail:string;
 	practitionerPhoneNumber:string;
-	jobRole:string;
 	specialtyLkey:string;
 	subSpecialtyLkey:string;
 	defaultMedicalLicense:string;
@@ -2343,6 +2342,7 @@ export interface ApPractitioner {
 	defaultLicenseValidUntil:Date;
 	secondaryLicenseValidUntil:Date;
 	dob:Date;
+	jobRoleLkey:string;
 } 
 
 export interface ApPreProcedureAssessment { 
