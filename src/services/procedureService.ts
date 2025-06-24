@@ -175,6 +175,13 @@ saveProcedureEquipmentService: builder.mutation({
   onQueryStarted,
   transformResponse: (response: any) => response.object
 }),
+ deleteProcedureserviceEquipment: builder.mutation({
+      query: (key: string) => ({
+        url: `/procedures/delete-procedure-service-equipment?key=${key}`,
+        method: 'DELETE'
+      }),
+      onQueryStarted: onQueryStarted
+    })
 
   })
 });
@@ -198,7 +205,8 @@ export const {
   useGetPostProcedureCareListQuery,
   useSavePostProcedureCareMutation,
   useGetProcedurServiceEquipmentListQuery,
-  useSaveProcedureEquipmentServiceMutation
+  useSaveProcedureEquipmentServiceMutation,
+  useDeleteProcedureserviceEquipmentMutation
 
 } = procedureService;
 

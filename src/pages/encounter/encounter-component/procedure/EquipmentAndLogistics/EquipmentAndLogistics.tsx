@@ -5,19 +5,23 @@ import { useGetLovValuesByCodeQuery, useGetServicesQuery } from "@/services/setu
 import React, { useState } from "react";
 import { Col, Form, Row } from "rsuite";
 
-import { useGetProcedurServiceEquipmentListQuery, useSaveProcedureEquipmentServiceMutation } from "@/services/procedureService";
+import { useDeleteProcedureserviceEquipmentMutation, useGetProcedurServiceEquipmentListQuery, useSaveProcedureEquipmentServiceMutation } from "@/services/procedureService";
 import { initialListRequest } from "@/types/types";
 import MyIconInput from "@/components/MyInput/MyIconInput";
 import MyInput from "@/components/MyInput";
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
 import { newApProcedureServiceEquipment } from "@/types/model-types-constructor";
+import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
+import { IoPersonRemove } from "react-icons/io5";
 
 const EquipmentAndLogistics = ({ procedure, setActiveTab, user }) => {
     const dispatch = useAppDispatch();
+     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
     const [selectedUserList, setSelectedUserList] = useState<any>([]);
     const {data:serviceList}=useGetServicesQuery({...initialListRequest});
     const [saveEquipment]=useSaveProcedureEquipmentServiceMutation();
+    const[deleteEquipment]=useDeleteProcedureserviceEquipmentMutation();;
     const { data: equipmentList, refetch } = useGetProcedurServiceEquipmentListQuery({
         ...initialListRequest,
         filters: [
@@ -28,7 +32,10 @@ const EquipmentAndLogistics = ({ procedure, setActiveTab, user }) => {
             }
         ]
     }, { skip: !procedure?.key });
-
+    const [ProcedureServiceEquipment, setProcedureServiceEquipment] = useState({
+        ...newApProcedureServiceEquipment,
+       
+    });
 
 const handleSave = async () => {
         try {
@@ -104,6 +111,20 @@ const handleSave = async () => {
             }
 
         }
+        ,
+        {
+            key: "delete",
+            title: <Translate>Delete</Translate>,
+            render: (rowData: any) => {
+                return <IoPersonRemove fill="var(--primary-gray)" size={22} 
+                onClick={() => {
+                    setConfirmDeleteOpen(true) ;
+                     setProcedureServiceEquipment(rowData)
+                }} />
+
+            }
+
+        }
     ]
     return (<>
 
@@ -133,9 +154,28 @@ const handleSave = async () => {
             <Col md={24}>
                 <MyTable
                     data={equipmentList?.object ?? []}
-                    columns={columns} /></Col>
+                    columns={columns} 
+                    onRowClick={(rowData)=>{
+                        setProcedureServiceEquipment
+                    }}/></Col>
         </Row>
-
+       <DeletionConfirmationModal
+                  open={confirmDeleteOpen}
+                  setOpen={setConfirmDeleteOpen}
+                  itemToDelete="user"
+                  actionButtonFunction={async () => {
+                      try {
+                          const Response=await deleteEquipment(ProcedureServiceEquipment.key).unwrap();
+                          console.log("Response",Response);
+                         dispatch(notify({ msg:Response.msg, sev: "success" }));
+                         refetch();
+                         setConfirmDeleteOpen(false);
+                      } catch (error) {
+                         dispatch(notify({ msg: 'Deleted  faild', sev: "error" }));
+                      }
+                  }}
+                  actionType="delete"
+              />
         <div className='bt-div'>
             <div className="bt-right">
 
