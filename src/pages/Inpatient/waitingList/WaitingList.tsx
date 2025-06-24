@@ -24,7 +24,7 @@ const WaitingList = () => {
     const location = useLocation();
     const dispatch = useDispatch();
     const divContent = (
-        <div style={{ display: 'flex' }}>http://localhost:3100/#
+        <div style={{ display: 'flex' }}>
             <h5>Inpatient Waiting List</h5>
         </div>
     );
