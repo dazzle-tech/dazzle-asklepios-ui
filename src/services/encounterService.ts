@@ -548,7 +548,13 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
-
+    getWaitingListEncounter: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/waiting_encounter-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 });
 
@@ -607,6 +613,7 @@ export const {
   useSaveElectrocardiogramECGMutation,
   useGetElectrocardiogramECGsQuery,
   useDischargeInpatientEncounterMutation,
-  useAdmitToInpatientEncounterMutation
+  useAdmitToInpatientEncounterMutation,
+  useGetWaitingListEncounterQuery
 } = encounterService;
 
