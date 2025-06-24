@@ -99,10 +99,6 @@ const UOMGroup = () => {
       pageNumber: 1
     });
   };
-  // const handleUomGroupSave = () => {
-  //   setUomGroupOpen(false);
-  //   saveUomGroup(uomGroup).unwrap();
-  // };
   // handle deactivate uom group
   const handleDeactivateUomGroup = async data => {
     setOpenConfirmDeleteUOMGroupModal(false);
@@ -200,18 +196,18 @@ const UOMGroup = () => {
   //Table columns
   const tableColumns = [
     {
+      key: 'name',
+      title: <Translate>Group Name</Translate>,
+      flexGrow: 4
+    },
+    {
+      key: 'code',
+      title: <Translate>Group code</Translate>,
+      flexGrow: 4
+    },
+    {
       key: 'description',
       title: <Translate>Description</Translate>,
-      flexGrow: 4
-    },
-    {
-      key: 'baseUom',
-      title: <Translate>Base Uom</Translate>,
-      flexGrow: 4
-    },
-    {
-      key: 'uomEntries',
-      title: <Translate>Uom Entries</Translate>,
       flexGrow: 4
     },
     {
@@ -255,7 +251,7 @@ const UOMGroup = () => {
         onRowsPerPageChange={handleRowsPerPageChange}
       />
 
-      <AddEditUom open={uomGrpupOpen} setOpen={setUomGroupOpen} uom={uomGroup} width={width} />
+      <AddEditUom open={uomGrpupOpen} setOpen={setUomGroupOpen} uom={uomGroup} setUom={setUomGroup} width={width} />
       <DeletionConfirmationModal
         open={openConfirmDeleteUOMGroupModal}
         setOpen={setOpenConfirmDeleteUOMGroupModal}

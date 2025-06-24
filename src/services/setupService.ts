@@ -35,6 +35,9 @@ import {
   ApScreen,
   ApService,
   ApServiceCdt,
+  ApUomGroups,
+  ApUomGroupsRelation,
+  ApUomGroupsUnits,
   ApUser,
   ApUserFacilitiyDepartments,
   ApUserMedicalLicense,
@@ -244,6 +247,56 @@ export const setupService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    getUomGroupsRelation: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/uom-groups-relation-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    saveUomGroupRelation: builder.mutation({
+      query: (uomGroupsRelation: ApUomGroupsRelation) => ({
+        url: `/setup/save-uom-groups-relation`,
+        method: 'POST',
+        body: uomGroupsRelation
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    removeUomGroupRelation: builder.mutation({
+      query: (uomGroupRelation: ApUomGroupsRelation) => ({
+        url: `/setup/remove-uom-groups`,
+        method: 'POST',
+        body: uomGroupRelation,
+      }),
+    }),
+    getUomGroupsUnits: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/uom-groups-units-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    saveUomGroupUnits: builder.mutation({
+      query: (uomGroupsunits: ApUomGroupsUnits) => ({
+        url: `/setup/save-uom-groups-units`,
+        method: 'POST',
+        body: uomGroupsunits
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    removeUomGroupUnits: builder.mutation({
+      query: (uomGroupUnits: ApUomGroupsUnits) => ({
+        url: `/setup/remove-uom-groups`,
+        method: 'POST',
+        body: uomGroupUnits,
+      }),
+    }),
     getUomGroups: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/setup/uom-groups-list?${fromListRequestToQueryParams(listRequest)}`
@@ -252,12 +305,11 @@ export const setupService = createApi({
       keepUnusedDataFor: 5
     }),
     removeUomGroup: builder.mutation({
-      query: ({ uomGroup, facilityId, accessToken, accessLevel, lang }) => ({
+      query: (uomGroup: ApUomGroups) => ({
         url: `/setup/remove-uom-groups`,
         method: 'POST',
         body: uomGroup,
       }),
-      onQueryStarted: onQueryStarted,
     }),
     saveModule: builder.mutation({
       query: (module: ApModule) => ({
@@ -1384,5 +1436,11 @@ export const {
   useSaveRoomServicesMutation,
   useGetRoomServicesListQuery,
   useDeactiveActivRoomServicesMutation,
-  useFetchBedsRelatedToDepartmentQuery
+  useFetchBedsRelatedToDepartmentQuery,
+  useGetUomGroupsRelationQuery,
+  useSaveUomGroupRelationMutation,
+  useRemoveUomGroupRelationMutation,
+  useGetUomGroupsUnitsQuery,
+  useSaveUomGroupUnitsMutation,
+  useRemoveUomGroupUnitsMutation
 } = setupService;
