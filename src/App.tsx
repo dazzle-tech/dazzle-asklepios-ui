@@ -94,6 +94,7 @@ import DiagnosticsResult from './pages/encounter/encounter-component/diagnostics
 import InpatientList from './pages/Inpatient/inpatientList';
 import ReviewResults from "./pages/review-results/ReviewResults"
 import Room from './pages/setup/bed-room-setup';
+import Report from './pages/reportDash';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -246,6 +247,7 @@ const App = () => {
               <Route path="patient-list" element={<PatientList />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="facility-patient-list" element={<FacilityPatientList />} />
+                <Route path="report" element={<Report />} />
               <Route path="encounter" element={<Encounter />} >
                 <Route path="drug-order" element={<DrugOrder />} />
                 <Route index element={<PatientSummary />} />

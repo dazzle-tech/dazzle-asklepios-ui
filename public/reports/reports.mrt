@@ -6,15 +6,16 @@
     <Databases isList="true" count="2">
       <CSV Ref="2" type="Stimulsoft.Report.Dictionary.StiCsvDatabase" isKey="true">
         <Alias>CSV</Alias>
+        <Key />
         <Name>CSV</Name>
-        <PathData>C:\Users\PAL WEB\ap_active_ingredient.csv</PathData>
+        <PathData>public/data/ap_active_ingredient.csv</PathData>
         <Separator />
       </CSV>
       <CSV2 Ref="3" type="Stimulsoft.Report.Dictionary.StiCsvDatabase" isKey="true">
         <Alias>CSV2</Alias>
         <Key />
         <Name>CSV2</Name>
-        <PathData>C:\Users\PAL WEB\Book1.csv</PathData>
+        <PathData>public/data/Book1.csv</PathData>
         <Separator />
       </CSV2>
     </Databases>
@@ -136,6 +137,7 @@
         </Chart1>
         <Table1 Ref="18" type="Stimulsoft.Report.Components.Table.StiTable" isKey="true">
           <Brush>Transparent</Brush>
+          <BusinessObjectGuid isNull="true" />
           <ClientRectangle>0,0.2,7.72,1.5</ClientRectangle>
           <Components isList="true" count="25">
             <Table1_Cell1 Ref="19" type="TableCell" isKey="true">
