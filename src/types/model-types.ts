@@ -266,6 +266,12 @@ export interface ApAdmitOutpatientInpatient {
 	updatedAt:number;
 	deletedAt:number;
 	admitSourceLkey:string;
+	reasonOfAdmission :string;
+	admissionDepartmentKey:string;
+	roomKey:string;
+	bedKey:string;
+	handoffInformation:string;
+	icd10:string;
 } 
 
 export interface ApAgeGroup { 
@@ -1629,6 +1635,7 @@ export interface ApLovValues {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	score:number;
 } 
 
 export interface ApMedicalSheets { 
