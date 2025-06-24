@@ -40,7 +40,8 @@ const Rad = () => {
   const [test, setTest] = useState<any>({ ...newApDiagnosticOrderTests });
   const [report, setReport] = useState({ ...newApDiagnosticOrderTestsRadReport });
   const [listOrdersResponse, setListOrdersResponse] = useState<ListRequest>({
-    ...initialListRequest
+    ...initialListRequest,
+    sortBy:'isUrgent' ,sortType:'desc'
   });
   const ReportRef = useRef(null);
     const refetchReport = () => {
@@ -49,6 +50,7 @@ const Rad = () => {
 
   const [listOrdersTestResponse, setListOrdersTestResponse] = useState<ListRequest>({
     ...initialListRequest,
+ 
     filters: [
       {
         fieldName: 'order_key',
