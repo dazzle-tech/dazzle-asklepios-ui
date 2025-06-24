@@ -267,6 +267,12 @@ export const newApAdmitOutpatientInpatient:modelTypes.ApAdmitOutpatientInpatient
 	updatedAt:undefined,
 	deletedAt:undefined,
 	admitSourceLkey:undefined,
+	reasonOfAdmission :'',
+	admissionDepartmentKey:undefined,
+	roomKey:undefined,
+	bedKey:undefined,
+	handoffInformation:'',
+	icd10:'',
 } 
 
 export const newApAgeGroup:modelTypes.ApAgeGroup = { 
@@ -1630,6 +1636,7 @@ export const newApLovValues:modelTypes.ApLovValues = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	score:0,
 } 
 
 export const newApMedicalSheets:modelTypes.ApMedicalSheets = { 

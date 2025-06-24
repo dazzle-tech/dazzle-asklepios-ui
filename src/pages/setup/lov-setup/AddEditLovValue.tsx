@@ -1,5 +1,5 @@
 import MyModal from '@/components/MyModal/MyModal';
-import React, {useState } from 'react';
+import React, { useState } from 'react';
 import MyInput from '@/components/MyInput';
 import { Form, Input } from 'rsuite';
 import './styles.less';
@@ -30,22 +30,22 @@ const AddEditLovValue = ({
         return (
           <Form fluid >
             <div className='container-of-two-fields-lov'>
-                <div className='container-of-my-input-lov'>
-              <MyInput
-                fieldName="valueCode"
-                record={lovValue}
-                setRecord={setLovValue}
-                width="100%"
-              />
+              <div className='container-of-my-input-lov'>
+                <MyInput
+                  fieldName="valueCode"
+                  record={lovValue}
+                  setRecord={setLovValue}
+                  width="100%"
+                />
               </div>
               <div className='container-of-my-input-lov'>
-              <MyInput
-                fieldLabel="Lov Display Value"
-                fieldName="lovDisplayVale"
-                record={lovValue}
-                setRecord={setLovValue}
-                width="100%"
-              />
+                <MyInput
+                  fieldLabel="Lov Display Value"
+                  fieldName="lovDisplayVale"
+                  record={lovValue}
+                  setRecord={setLovValue}
+                  width="100%"
+                />
               </div>
             </div>
             <br />
@@ -56,33 +56,33 @@ const AddEditLovValue = ({
               setRecord={setLovValue}
               width="100%"
             />
-            <div className= 'container-of-two-fields-lov' >
-                <div className='container-of-my-input-lov'>
-              <MyInput
-                fieldName="valueOrder"
-                fieldType="number"
-                record={lovValue}
-                setRecord={setLovValue}
-                width="100%"
-              />
+            <div className='container-of-two-fields-lov' >
+              <div className='container-of-my-input-lov'>
+                <MyInput
+                  fieldName="valueOrder"
+                  fieldType="number"
+                  record={lovValue}
+                  setRecord={setLovValue}
+                  width="100%"
+                />
               </div>
               <div className='container-of-my-input-lov'>
-              <MyInput
-                disabled={!lov.parentLov}
-                fieldName="parentValueId"
-                fieldType="select"
-                selectData={parentLovValueListResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={lovValue}
-                setRecord={setLovValue}
-                width="100%"
-              />
+                <MyInput
+                  disabled={!lov.parentLov}
+                  fieldName="parentValueId"
+                  fieldType="select"
+                  selectData={parentLovValueListResponse?.object ?? []}
+                  selectDataLabel="lovDisplayVale"
+                  selectDataValue="key"
+                  record={lovValue}
+                  setRecord={setLovValue}
+                  width="100%"
+                />
               </div>
             </div>
             <br />
             <Form.ControlLabel >
-            <MyLabel label="Select Color" />
+              <MyLabel label="Select Color" />
             </Form.ControlLabel>
             <Input
               type="color"
@@ -90,14 +90,30 @@ const AddEditLovValue = ({
               onChange={value => setLovValue({ ...lovValue, valueColor: value })}
             />
             <br />
-            <MyInput
-              disabled={isdefault == true ? (lovValue.isdefault == true ? false : true) : false}
-              fieldLabel="Is Default"
-              fieldName="isdefault"
-              fieldType="checkbox"
-              record={lovValue}
-              setRecord={setLovValue}
-            />
+            <div className='container-of-two-fields-lov' >
+              <div className='container-of-my-input-lov'>
+                <MyInput
+                  disabled={isdefault == true ? (lovValue.isdefault == true ? false : true) : false}
+                  fieldLabel="Is Default"
+                  fieldName="isdefault"
+                  fieldType="checkbox"
+                  record={lovValue}
+                  setRecord={setLovValue}
+                />
+              </div>
+              <div className='container-of-my-input-lov'>
+
+                <MyInput
+                  width="100%"
+                  fieldType='number'
+                  fieldName="score"
+                  record={lovValue}
+                  setRecord={setLovValue} />
+              </div>
+            </div>
+
+
+
           </Form>
         );
     }
