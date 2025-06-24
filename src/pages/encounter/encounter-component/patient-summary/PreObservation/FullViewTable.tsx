@@ -17,30 +17,30 @@ const FullViewTable = ({ open, setOpen, list }) => {
         },
         {
             key: "platestbpSystolic",
-            title: <Translate>mmgh</Translate>,
+            title: <Translate>Bp Systolic </Translate>,
             render: (rowData: any) => {
-                return rowData?.platestbpSystolic
+                return rowData?.platestbpSystolic + "mmHg"
             }
         },
         {
             key: "latestheartrate",
             title: <Translate>Pulse</Translate>,
             render: (rowData: any) => {
-                return rowData?.latestheartrate
+                return rowData?.latestheartrate+ "bpm"
             }
         },
         {
             key: "latestrespiratoryrate",
             title: <Translate>R.R</Translate>,
             render: (rowData: any) => {
-                return rowData?.latestrespiratoryrate
+                return rowData?.latestrespiratoryrate +"bpm"
             }
         },
         {
             key: "latestoxygensaturation",
             title: <Translate>SpO2</Translate>,
             render: (rowData: any) => {
-                return rowData?.latestoxygensaturation
+                return rowData?.latestoxygensaturation+ "%"
             }
         }
         ,
@@ -55,7 +55,7 @@ const FullViewTable = ({ open, setOpen, list }) => {
             key: "latestheadcircumference",
             title: <Translate>Head circumference</Translate>,
             render: (rowData: any) => {
-                return rowData?.latestheadcircumference
+                return rowData?.latestheadcircumference+ "cm"
             }
         }
         ,
