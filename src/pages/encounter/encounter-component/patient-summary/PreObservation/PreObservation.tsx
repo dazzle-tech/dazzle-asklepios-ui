@@ -34,28 +34,28 @@ const PreObservation=({patient})=>{
         key:"latestheight",
         title:<Translate>Height</Translate>,
         render:(rowData:any)=>{
-            return rowData?.latestheight
+            return rowData?.latestheight +"cm"
         }
     },
      {
         key:"latestweight",
         title:<Translate>Weight</Translate>,
         render:(rowData:any)=>{
-            return rowData?.latestweight
+            return rowData?.latestweight+"kg"
         }
     },
        {
         key:"latestbpSystolic",
         title:<Translate>BP</Translate>,
         render:(rowData:any)=>{
-            return rowData?.latestbpSystolic
+            return rowData?.latestbpSystolic +"mmHg"
         }
     },
     {
         key:"latesttemperature",
         title:<Translate>Temp</Translate>,
         render:(rowData:any)=>{
-            return rowData?.latesttemperature
+            return rowData?.latesttemperature +"°C"
         }
     }
     
