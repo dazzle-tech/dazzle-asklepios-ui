@@ -15,6 +15,7 @@ import { useAdmitToInpatientEncounterMutation } from '@/services/encounterServic
 const AdmitToInpatientModal = ({ open, setOpen, encounter }) => {
     const [admitToInpatient, setAdmitToInpatient] = useState({ ...newApAdmitOutpatientInpatient });
     const inpatientDepartmentListResponse = useGetResourceTypeQuery("4217389643435490");
+   
     const dispatch = useAppDispatch();
     const [saveAdmitToInpatient, saveAdmitToInpatientMutation] = useAdmitToInpatientEncounterMutation();
 

@@ -94,6 +94,7 @@ import DiagnosticsResult from './pages/encounter/encounter-component/diagnostics
 import InpatientList from './pages/Inpatient/inpatientList';
 import ReviewResults from "./pages/review-results/ReviewResults"
 import Room from './pages/setup/bed-room-setup';
+import WaitingList from './pages/Inpatient/waitingList';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -270,6 +271,7 @@ const App = () => {
               </Route>
               <Route path="encounter-list" element={<EncounterList />} />
               <Route path='inpatient-encounters-list' element={<InpatientList/>} />
+               <Route path='waiting-encounters-list' element={<WaitingList/>} />
               <Route path='room' element={<Room/>} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservations />} />

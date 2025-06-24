@@ -399,6 +399,7 @@ export const newApBed:modelTypes.ApBed = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
+	statusLkey:undefined,
 } 
 
 export const newApBrandMedicationSubstitutes:modelTypes.ApBrandMedicationSubstitutes = { 
@@ -2946,8 +2947,8 @@ export const newApTreadmillStress:modelTypes.ApTreadmillStress = {
 export const newApUomGroups:modelTypes.ApUomGroups = { 
 	key:undefined,
 	description:'',
-	baseUom:'',
-	uomEntries:0,
+	name:'',
+	code:'',
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',
@@ -2955,6 +2956,34 @@ export const newApUomGroups:modelTypes.ApUomGroups = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+} 
+
+export const newApUomGroupsRelation:modelTypes.ApUomGroupsRelation = { 
+	key:undefined,
+	uomUnitFromKey:undefined,
+	uomUnitToKey:undefined,
+	relation:0,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApUomGroupsUnits:modelTypes.ApUomGroupsUnits = { 
+	key:undefined,
+	uomLkey:undefined,
+	uomOrder:0,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+	uomGroupKey:undefined,
 } 
 
 export const newApUser:modelTypes.ApUser = { 

@@ -398,6 +398,7 @@ export interface ApBed {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
+	statusLkey:string;
 } 
 
 export interface ApBrandMedicationSubstitutes { 
@@ -2945,8 +2946,8 @@ export interface ApTreadmillStress {
 export interface ApUomGroups { 
 	key:string;
 	description:string;
-	baseUom:string;
-	uomEntries:number;
+	name:string;
+	code:string;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
@@ -2954,6 +2955,34 @@ export interface ApUomGroups {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+} 
+
+export interface ApUomGroupsRelation { 
+	key:string;
+	uomUnitFromKey:string;
+	uomUnitToKey:string;
+	relation:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApUomGroupsUnits { 
+	key:string;
+	uomLkey:string;
+	uomOrder:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	uomGroupKey:string;
 } 
 
 export interface ApUser { 
