@@ -2464,6 +2464,7 @@ export interface ApProcedure {
 	bodyPartLkey:string;
 	sideLkey:string;
 	currentDepartment:boolean;
+	patientKey:string;
 } 
 
 export interface ApProcedureAdministeredMedications { 
@@ -2969,6 +2970,7 @@ export interface ApUomGroupsRelation {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	uomGroupKey:string;
 } 
 
 export interface ApUomGroupsUnits { 

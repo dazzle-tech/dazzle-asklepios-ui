@@ -57,6 +57,7 @@ const handleDownload = attachment => {
 const Referrals = () => {
   const location = useLocation();
   const { patient, encounter, edit } = location.state || {};
+
   const dispatch = useAppDispatch();
   const [showCanceled, setShowCanceled] = useState(true);
   const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
@@ -70,8 +71,10 @@ const Referrals = () => {
   const [procedure, setProcedure] = useState<any>({
     ...newApProcedure,
     encounterKey: encounter.key,
+     patientKey: patient.key,
     currentDepartment: true
   });
+
   const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
   const isSelected = rowData => {
     if (rowData && procedure && rowData.key === procedure.key) {
@@ -96,7 +99,6 @@ const Referrals = () => {
     ]
   });
   const { data: procedures, refetch: proRefetch, isLoading: procedureLoding } = useGetProceduresQuery(listRequest);
-console.log("procedures==>",procedures?.object);
   const [attachmentsListRequest, setAttachmentsListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -195,7 +197,8 @@ console.log("procedures==>",procedures?.object);
         ...procedure,
         statusLkey: '3621653475992516',
         indications: indicationsDescription,
-        encounterKey: encounter.key
+        encounterKey: encounter.key,
+        patientKey: patient.key,
       })
         .unwrap()
         .then(() => {

@@ -9,6 +9,7 @@ import PreviuosVisitData from './PreviuosVisitData';
 import BodyDiagram from './BodyDiagram/BodyDiagram';
 import { useLocation } from 'react-router-dom';
 import PreObservation from './PreObservation/PreObservation';
+import Procedures from './Procedures/Procedures';
 
 const PatientSummary = () => {
     const location = useLocation();
@@ -27,6 +28,7 @@ const PatientSummary = () => {
             <div className='patient-summary-Column'>
                 <ActiveAllergies patient={patient} />
                 <MedicalWarnings patient={patient} />
+                <Procedures patient={patient}/>
                 <RecentTestResults patient={patient} />
             </div>
         </div >

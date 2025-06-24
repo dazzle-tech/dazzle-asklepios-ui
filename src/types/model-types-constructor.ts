@@ -2465,6 +2465,7 @@ export const newApProcedure:modelTypes.ApProcedure = {
 	bodyPartLkey:undefined,
 	sideLkey:undefined,
 	currentDepartment:undefined,
+	patientKey:undefined,
 } 
 
 export const newApProcedureAdministeredMedications:modelTypes.ApProcedureAdministeredMedications = { 
@@ -2970,6 +2971,7 @@ export const newApUomGroupsRelation:modelTypes.ApUomGroupsRelation = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	uomGroupKey:undefined,
 } 
 
 export const newApUomGroupsUnits:modelTypes.ApUomGroupsUnits = { 
