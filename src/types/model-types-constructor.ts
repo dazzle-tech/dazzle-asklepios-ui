@@ -266,6 +266,7 @@ export const newApAdmitOutpatientInpatient:modelTypes.ApAdmitOutpatientInpatient
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
+	admitSourceLkey:undefined,
 } 
 
 export const newApAgeGroup:modelTypes.ApAgeGroup = { 

@@ -15,7 +15,7 @@ import { useAdmitToInpatientEncounterMutation } from '@/services/encounterServic
 const AdmitToInpatientModal = ({ open, setOpen, encounter }) => {
     const [admitToInpatient, setAdmitToInpatient] = useState({ ...newApAdmitOutpatientInpatient });
     const inpatientDepartmentListResponse = useGetResourceTypeQuery("4217389643435490");
-   
+
     const dispatch = useAppDispatch();
     const [saveAdmitToInpatient, saveAdmitToInpatientMutation] = useAdmitToInpatientEncounterMutation();
 
@@ -41,7 +41,8 @@ const AdmitToInpatientModal = ({ open, setOpen, encounter }) => {
         try {
             const saveAdmit = await saveAdmitToInpatient({
                 ...admitToInpatient,
-                fromEncounterKey: encounter?.key
+                fromEncounterKey: encounter?.key,
+                admitSourceLkey:encounter?.resourceObject?.departmentTypeLkey
             }).unwrap();
             dispatch(notify({ msg: 'Billing Approval Sent', sev: 'success' }));
             setOpen(false);

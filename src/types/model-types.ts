@@ -265,6 +265,7 @@ export interface ApAdmitOutpatientInpatient {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
+	admitSourceLkey:string;
 } 
 
 export interface ApAgeGroup { 

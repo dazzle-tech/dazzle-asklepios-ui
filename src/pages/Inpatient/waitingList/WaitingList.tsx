@@ -4,10 +4,10 @@ import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import React, { useEffect, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
+import { Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetEncountersQuery } from '@/services/encounterService';
+import { useGetWaitingListEncounterQuery } from '@/services/encounterService';
 import { useLocation } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
@@ -15,7 +15,7 @@ import ReactDOMServer from 'react-dom/server';
 import './styles.less';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { formatDateWithoutSeconds } from "@/utils";
 import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
 import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
@@ -24,8 +24,8 @@ const WaitingList = () => {
     const location = useLocation();
     const dispatch = useDispatch();
     const divContent = (
-        <div style={{ display: 'flex' }}>
-            <h5>Waiting Visit List</h5>
+        <div style={{ display: 'flex' }}>http://localhost:3100/#
+            <h5>Inpatient Waiting List</h5>
         </div>
     );
     const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
@@ -53,7 +53,7 @@ const WaitingList = () => {
         isFetching,
         refetch: refetchEncounter,
         isLoading
-    } = useGetEncountersQuery(listRequest);
+    } = useGetWaitingListEncounterQuery(listRequest);
 
     //Functions
     const isSelected = rowData => {
@@ -89,48 +89,10 @@ const WaitingList = () => {
     // table columns 
     const tableColumns = [
         {
-            key: 'queueNumber',
-            title: <Translate>#</Translate>,
-            dataKey: 'queueNumber',
-            render: rowData => rowData?.patientObject.patientMrn
-        },
-        {
             key: 'patientFullName',
             title: <Translate>PATIENT NAME</Translate>,
             fullText: true,
-            render: rowData => {
-                const tooltipSpeaker = (
-                    <Tooltip>
-                        <div>MRN : {rowData?.patientObject?.patientMrn}</div>
-                        <div>Age : {rowData?.patientAge}</div>
-                        <div>
-                            Gender :{' '}
-                            {rowData?.patientObject?.genderLvalue
-                                ? rowData?.patientObject?.genderLvalue?.lovDisplayVale
-                                : rowData?.patientObject?.genderLkey}
-                        </div>
-                        <div>Visit ID : {rowData?.visitId}</div>
-                    </Tooltip>
-                );
-
-                return (
-                    <Whisper trigger="hover" placement="top" speaker={tooltipSpeaker}>
-                        <div style={{ display: 'inline-block' }}>
-                            {rowData?.patientObject?.privatePatient ? (
-                                <Badge color='blue' content="Private">
-                                    <p style={{ marginTop: '5px', cursor: 'pointer' }}>
-                                        {rowData?.patientObject?.fullName}
-                                    </p>
-                                </Badge>
-                            ) : (
-                                <>
-                                    <p style={{ cursor: 'pointer' }}>{rowData?.patientObject?.fullName}</p>
-                                </>
-                            )}
-                        </div>
-                    </Whisper>
-                );
-            }
+            render: rowData => rowData?.patientObject?.fullName
         },
         {
             key: 'patientMRN',
@@ -150,70 +112,37 @@ const WaitingList = () => {
                 : rowData?.patientObject?.genderLkey
         },
         {
-            key: 'hasPrescription',
-            title: <Translate>PRESCRIPTION</Translate>,
-            render: rowData =>
-                rowData.hasPrescription ? (
-                    <MyBadgeStatus contant="YES" color="#45b887" />
-                ) : (
-                    <MyBadgeStatus contant="NO" color="#969fb0" />
-                )
+            key: 'registeredDepartment',
+            title: <Translate>Registered Department</Translate>,
+            render: rowData => rowData?.resourceObject?.name
         },
         {
-            key: 'hasOrder',
-            title: <Translate>HAS ORDER</Translate>,
-            render: rowData =>
-                rowData.hasOrder ? (
-                    <MyBadgeStatus contant="YES" color="#45b887" />
-                ) : (
-                    <MyBadgeStatus contant="NO" color="#969fb0" />
-                )
+            key: 'admitSource',
+            title: <Translate>Admit Source</Translate>,
+            render: rowData => rowData?.admitRecord?.admitSourceLvalue ?
+                rowData?.admitRecord?.admitSourceLvalue?.lovDisplayVale : rowData?.admitRecord?.admitSourceLkey
         },
         {
-            key: 'encounterPriority',
-            title: <Translate>PRIORITY</Translate>,
-            render: rowData =>
-                rowData.encounterPriorityLvalue
-                    ? rowData.encounterPriorityLvalue.lovDisplayVale
-                    : rowData.encounterPriorityLkey
+            key: 'admissionNotes',
+            title: <Translate>Admission Notes</Translate>,
+            render: rowData => rowData?.admitRecord?.admissionNotes
         },
         {
-            key: 'plannedStartDate',
-            title: <Translate>ADMISSION DATE</Translate>,
-            dataKey: 'plannedStartDate'
-        },
-        {
-            key: 'status',
-            title: <Translate>STATUS</Translate>,
-            render: rowData =>
-                !rowData.discharge && rowData.encounterStatusLkey !== "91109811181900" ? (
-                    <MyBadgeStatus
-                        color={rowData?.encounterStatusLvalue?.valueColor}
-                        contant={
-                            rowData.encounterStatusLvalue
-                                ? rowData.encounterStatusLvalue.lovDisplayVale
-                                : rowData.encounterStatusLkey
-                        }
-                    />
-                ) : null
-        }
-        ,
-        {
-            key: 'hasObservation',
-            title: <Translate>IS OBSERVED</Translate>,
-            render: rowData =>
-                rowData.hasObservation ? (
-                    <MyBadgeStatus contant="YES" color="#45b887" />
-
-                ) : (
-                    <MyBadgeStatus contant="NO" color="#969fb0" />
-                )
+            key: "",
+            title: <Translate>Admission Request By\At</Translate>,
+            render: (rowData: any) => {
+                return (<>
+                    <span>{rowData.createdBy}</span>
+                    <br />
+                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.createdAt)}</span>
+                </>)
+            }
         },
         {
             key: 'actions',
             title: <Translate> </Translate>,
             render: rowData => {
-                const tooltipCancel = <Tooltip>Vancel Visit</Tooltip>;
+                const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
                 const tooltipAdmit = <Tooltip>Admit</Tooltip>;
                 const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
                 return (
