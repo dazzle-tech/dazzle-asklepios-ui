@@ -6,6 +6,7 @@ import { initialListRequest, ListRequest } from "@/types/types";
 import React, { useState } from "react";
 import { Divider, Text } from "rsuite";
 import FullViewTable from "./FullViewTable";
+import { formatDateWithoutSeconds } from "@/utils";
 const Procedures=({patient})=>{
     const [open, setOpen] =useState(false);
     

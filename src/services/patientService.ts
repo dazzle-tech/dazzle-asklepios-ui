@@ -359,6 +359,7 @@ export const {
   useGetPatientsQuery,
   useSavePatientMutation,
   useGetPatientByIdQuery,
+  useLazyGetPatientByIdQuery,
   useGetPatientAllergiesQuery,
   useSavePatientAllergyMutation,
   useRemovePatientAllergyMutation,

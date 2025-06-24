@@ -95,6 +95,7 @@ import InpatientList from './pages/Inpatient/inpatientList';
 import ReviewResults from "./pages/review-results/ReviewResults"
 import Room from './pages/setup/bed-room-setup';
 import WaitingList from './pages/Inpatient/waitingList';
+import ProcedureModule from './pages/procedure-module/ProcedureModule';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -269,6 +270,7 @@ const App = () => {
                 <Route path='vaccine-record' element={<VaccineReccord/>} />
                 <Route path='diagnostics-result' element={<DiagnosticsResult/>} />
               </Route>
+              <Route path= "procedure-module" element={<ProcedureModule />} />
               <Route path="encounter-list" element={<EncounterList />} />
               <Route path='inpatient-encounters-list' element={<InpatientList/>} />
                <Route path='waiting-encounters-list' element={<WaitingList/>} />
