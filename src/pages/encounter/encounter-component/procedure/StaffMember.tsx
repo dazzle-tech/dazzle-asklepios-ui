@@ -48,15 +48,13 @@ const StaffMember = ({ procedure }) => {
             return 'selected-row';
         } else return '';
     };
-      useEffect(()=>{
-        console.log("selectedUserList", selectedUserList??"");
-      },[selectedUserList])
+    
     const handleSave = async () => {
         
         try {
             const selectedKeys = selectedUserList?.key;
             if (!Array.isArray(selectedKeys)) {
-                console.error("selectedUserList.key is not an array:", selectedKeys);
+          
                 return;
             }
 

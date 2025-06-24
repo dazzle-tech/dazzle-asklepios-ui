@@ -182,7 +182,8 @@ const Details = ({ patient, encounter, edit, procedure, setProcedure, openDetail
                 ...procedure,
                 statusLkey: '3621653475992516',
                 indications: indicationsDescription,
-                encounterKey: encounter.key,
+                encounterKey: encounter?.key,
+                patientKey: patient?.key,
                 scheduledDateTime: procedure.scheduledDateTime ? new Date(procedure?.scheduledDateTime)?.getTime() : null,
             
             })
