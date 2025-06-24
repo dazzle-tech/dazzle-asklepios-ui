@@ -15,6 +15,7 @@ import {
 } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import CheckRoundIcon from '@rsuite/icons/CheckRound';
+import ReloadIcon from '@rsuite/icons/Reload';
 import WarningRoundIcon from '@rsuite/icons/WarningRound';
 import { notify } from '@/utils/uiReducerActions';
 import { faComment, faHospitalUser, faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
@@ -24,7 +25,9 @@ import { HStack, Tooltip, Whisper } from 'rsuite';
 import ChatModal from '@/components/ChatModal';
 import { formatDateWithoutSeconds } from '@/utils';
 import PatientArrivalModal from './PatientArrivalModal';
-const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,saveReportMutation,reportFetch }) => {
+import { useDeleteTestReportsMutation } from '@/services/radService';
+import { set } from 'lodash';
+const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport, saveReportMutation, reportFetch }) => {
   const dispatch = useAppDispatch();
   const [openNoteModal, setOpenNoteModal] = useState(false);
   const [openArrivalModal, setOpenArrivalModal] = useState(false);
@@ -51,12 +54,9 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
       }
     ]
   });
-  const isSelected = rowData => {
-    if (rowData && test && rowData.key === test.key) {
-      return 'selected-row';
-    } else return '';
-  };
+
   const [savenotes] = useSaveDiagnosticOrderTestNotesMutation();
+  const [deleteReports]=useDeleteTestReportsMutation();
   const { data: messagesList, refetch: fecthNotes } = useGetOrderTestNotesByTestIdQuery(
     test?.key || undefined,
     { skip: test.key == null }
@@ -70,7 +70,13 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
     refetch: fetchTest,
     isFetching: isTestFetching
   } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestResponse });
-  console.log('tests', testsList);
+
+
+  const isSelected = rowData => {
+    if (rowData && test && rowData.key === test.key) {
+      return 'selected-row';
+    } else return '';
+  };
   //to set notes modal scroll in tha last massage
   const endOfMessagesRef = useRef(null);
   useEffect(() => {
@@ -101,23 +107,23 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
       filters: updatedFilters
     }));
   }, [order]);
-     useEffect(() => {
-          const fetchData = async () => {
-              try {
-                  await reportFetch();
-              } catch (error) {
-                  console.error('Fetch error:', error);
-              }
-          };
-  
-          fetchData();
-      }, [test]);
-  
-  
-      useEffect(() => {
-          reportFetch();
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await reportFetch();
+      } catch (error) {
+        console.error('Fetch error:', error);
       }
-          , [saveReportMutation?.isSuccess]);
+    };
+
+    fetchData();
+  }, [test]);
+
+
+  useEffect(() => {
+    reportFetch();
+  }
+    , [saveReportMutation?.isSuccess]);
   const handleRejectedTest = async () => {
     try {
       const Response = await saveTest({
@@ -167,7 +173,21 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
       dispatch(notify({ msg: 'Wait for the patient to arrive', sev: 'warning' }));
     }
   };
+  const handleUndoAcceptTest= async rowData => {
+  
 
+    try {
+        const Response=await saveTest({...rowData, processingStatusLkey: '6055029972709625', acceptedAt: null ,patientArrivedAt:null}).unwrap();
+      await deleteReports(rowData.key).unwrap();
+     
+      dispatch(notify({ msg: 'Undo Successfully', sev: 'success' }));
+      setTest({ ...newApDiagnosticOrderTests });
+     fetchTest();
+     reportFetch();
+      // setTest({ ...Response });
+    } catch (error) {
+      dispatch(notify({ msg: 'Undo Faild', sev: 'error' }))
+      ;}}
   const handleSendMessage = async value => {
     try {
       await savenotes({
@@ -336,6 +356,27 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
                 }}
               />
             </Whisper>
+            <Whisper placement="top" trigger="hover" speaker={<Tooltip>Undo Accepted</Tooltip>}>
+              <ReloadIcon
+                onClick={() =>
+                  (rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED') &&
+                  handleUndoAcceptTest(rowData)
+                }
+                style={{
+                  fontSize: '1em',
+                  marginRight: 10,
+                  color:
+                    (rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED')
+                      ? 'inherit'
+                      : 'gray',
+                  cursor:
+                    (rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED')
+                      ? 'pointer'
+                      : 'not-allowed'
+                }}
+              />
+            </Whisper>
+
             <Whisper placement="top" trigger="hover" speaker={<Tooltip>Rejected</Tooltip>}>
               <WarningRoundIcon
                 onClick={() =>
@@ -402,10 +443,10 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
           <br />
           <span className='date-table-style'>{formatDateWithoutSeconds(rowData.rejectedAt)}</span>
         </>
-      
+
       }
     },
-  
+
     {
       key: 'rejectedReason',
       dataKey: 'rejectedReason',

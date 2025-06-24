@@ -4,7 +4,7 @@ import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
 import { useAppDispatch } from "@/hooks";
 import { useGetDiagnosticOrderTestQuery, useGetOrderTestNotesByTestIdQuery, useSaveDiagnosticOrderTestMutation } from "@/services/encounterService";
-import { useSaveDiagnosticOrderTestNotesMutation, useSaveDiagnosticTestResultMutation } from "@/services/labService";
+import { useDeleteTestResultsMutation, useSaveDiagnosticOrderTestNotesMutation, useSaveDiagnosticTestResultMutation } from "@/services/labService";
 import { useGetDiagnosticsTestLaboratoryListQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { newApDiagnosticOrderTests, newApDiagnosticOrderTestsNotes, newApDiagnosticOrderTestsResult } from "@/types/model-types-constructor";
 import { initialListRequest, ListRequest } from "@/types/types";
@@ -18,6 +18,7 @@ import React, { forwardRef, useEffect, useImperativeHandle, useState } from "rea
 import { HStack, Panel, SelectPicker, Table, Tooltip, Whisper } from "rsuite";
 import SampleModal from "./SampleModal";
 import './styles.less';
+import ReloadIcon from '@rsuite/icons/Reload';
 import { formatDateWithoutSeconds } from "@/utils";
 type Props = {
     order: any;
@@ -67,6 +68,7 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
     const [savenotes] = useSaveDiagnosticOrderTestNotesMutation();
     const [saveNewResult, saveNewResultMutation] = useSaveDiagnosticTestResultMutation();
     const [saveTest, saveTestMutation] = useSaveDiagnosticOrderTestMutation();
+    const [deleteResults] = useDeleteTestResultsMutation();
     const isTestSelected = rowData => {
         if (rowData && test && rowData.key === test.key) {
             return 'selected-row';
@@ -77,7 +79,7 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
         ...initialListRequest
 
     });
-    
+
     const { data: laboratoryListToFilter } = useGetDiagnosticsTestLaboratoryListQuery({
         ...initialListRequest,
         filters: [
@@ -238,6 +240,23 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
 
 
     }
+    const handleUndoAcceptTest = async rowData => {
+
+        try {
+            const Response = await saveTest({ ...rowData, processingStatusLkey: '6055029972709625', acceptedAt: null }).unwrap();
+            await deleteResults(rowData.key).unwrap();
+
+            dispatch(notify({ msg: 'Undo Successfully', sev: 'success' }));
+            // setTest({ ...newApDiagnosticOrderTests });
+           await fetchTest();
+           await resultFetch();
+            setTest({ ...Response });
+        } catch (error) {
+            dispatch(notify({ msg: 'Undo Faild', sev: 'error' }))
+                ;
+        }
+    }
+
 
     const handleSendMessage = async (value) => {
 
@@ -431,6 +450,26 @@ const Tests = forwardRef<unknown, Props>(({ order, test, setTest, samplesList, r
                                     marginRight: 10,
                                     color: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'gray' : 'inherit',
                                     cursor: (rowData.processingStatusLkey !== "6055029972709625" && rowData.processingStatusLkey !== "6055207372976955") ? 'not-allowed' : 'pointer',
+                                }}
+                            />
+                        </Whisper>
+                        <Whisper placement="top" trigger="hover" speaker={<Tooltip>Undo Accepted</Tooltip>}>
+                            <ReloadIcon
+                                onClick={() =>
+                                    (rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED') &&
+                                    handleUndoAcceptTest(rowData)
+                                }
+                                style={{
+                                    fontSize: '1em',
+                                    marginRight: 10,
+                                    color:
+                                        (rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED')
+                                            ? 'inherit'
+                                            : 'gray',
+                                    cursor:
+                                        (rowData.processingStatusLvalue?.valueCode === 'LAB_TEST_ACCEPTED')
+                                            ? 'pointer'
+                                            : 'not-allowed'
                                 }}
                             />
                         </Whisper>
