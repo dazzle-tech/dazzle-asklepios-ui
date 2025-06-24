@@ -1243,6 +1243,19 @@ export const setupService = createApi({
         return response.object;
       },
     }),
+    fetchBedsRelatedToDepartment: builder.query({
+      query: (data: { resourceKey: string}) => ({
+        url: `/setup/room-beds-list`,
+        headers: {
+          resourceKey: data.resourceKey,
+        }
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      },
+      keepUnusedDataFor: 0
+    }),
   })
 
 });
@@ -1370,5 +1383,6 @@ export const {
   useDeactiveActivBedMutation,
   useSaveRoomServicesMutation,
   useGetRoomServicesListQuery,
-  useDeactiveActivRoomServicesMutation
+  useDeactiveActivRoomServicesMutation,
+  useFetchBedsRelatedToDepartmentQuery
 } = setupService;

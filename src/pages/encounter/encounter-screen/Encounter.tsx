@@ -266,7 +266,7 @@ const Encounter = () => {
               >
                 Warning
               </MyButton>
-              {!(propsData?.encounter?.resourceTypeLkey === "4217389643435490") && (propsData?.encounter?.resourceTypeLkey === "91109811181900") && <MyButton
+              {!(propsData?.encounter?.resourceTypeLkey === "4217389643435490") && !(propsData?.encounter?.resourceTypeLkey === "91084250213000") && <MyButton
                 prefixIcon={() => <FontAwesomeIcon icon={faBed} />}
                 onClick={() => { setOpenAdmitModal(true) }}
                 appearance="ghost"

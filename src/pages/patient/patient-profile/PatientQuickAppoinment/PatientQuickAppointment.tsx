@@ -33,7 +33,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                 ...localEncounter,
                 patientKey: localPatient.key,
                 plannedStartDate: new Date(),
-                encounterStatusLkey: encounterStatusNew,
+                encounterStatusLkey:localEncounter?.resourceTypeLkey ==="4217389643435490" ? "5256965920133084": encounterStatusNew,
                 patientAge: calculateAgeFormat(localPatient.dob),
                 visitTypeLkey: ['2039534205961578', '2039516279378421'].includes(localEncounter.resourceTypeLkey) ? '2041082245699228' : null
             }).unwrap().then(() => {

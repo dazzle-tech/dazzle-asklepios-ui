@@ -121,6 +121,14 @@ const AddBed = ({ open, setOpen, room, setRoom }) => {
         : rowData.bedTypeLkey
     },
     {
+      key: 'statusLkey',
+      title: <Translate>Status</Translate>,
+      flexGrow: 3,
+      render: rowData => rowData.statusLvalue
+        ? rowData.statusLvalue.lovDisplayVale
+        : rowData.statusLkey
+    },
+    {
       key: 'icons',
       title: <Translate></Translate>,
       flexGrow: 3,
@@ -147,6 +155,7 @@ const AddBed = ({ open, setOpen, room, setRoom }) => {
     saveBed({
       ...bed,
       roomKey: room?.key,
+      statusLkey:"5258243122289092",
       isValid: true
     })
       .unwrap()
