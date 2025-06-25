@@ -43,7 +43,6 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
   const [localEncounter, setLocalEncounter] = useState<any>({ ...encounter })
   const [bmi, setBmi] = useState('');
   const [bsa, setBsa] = useState('');
-  const [map, setMap] = useState('');
   const [vital, setVital] = useState({
     bloodPressureSystolic: 0,
     bloodPressureDiastolic: 0,
@@ -75,6 +74,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
 
   // Get the last observation summary if available, otherwise set it to null
   const lastObservationSummary = getObservationSummaries?.object?.length > 0 ? getObservationSummaries.object[0] : null;
+  const lastencounterop = getObservationSummaries?.object?.length > 0 ? getObservationSummaries?.object?.findLast(item => item.visitKey === encounter?.key) : null;
 
   const [patientObservationSummary, setPatientObservationSummary] = useState<ApPatientObservationSummary>({
     ...newApPatientObservationSummary,
@@ -90,7 +90,28 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
     latestheadcircumference: null,
     latestpainlevelLkey: null
   });
+  useEffect(() => {
+    console.log(`lastencounterop`, lastencounterop);
+    if (lastencounterop) {
+      setPatientObservationSummary({
+        ...lastencounterop
+      });
+      console.log(patientObservationSummary.latestbpSystolic)
+      
 
+    }
+  }, [lastencounterop])
+  useEffect(()=>{
+    setVital({
+        ...vital,
+        bloodPressureSystolic: patientObservationSummary.latestbpSystolic || 0,
+        bloodPressureDiastolic: patientObservationSummary.latestbpDiastolic || 0,
+        heartRate: patientObservationSummary.latestheartrate || 0,
+        temperature: patientObservationSummary.latesttemperature || 0,
+        oxygenSaturation: patientObservationSummary.latestoxygensaturation || 0,
+
+      })
+  },[patientObservationSummary])
   // Handle Save Observations Function
   const handleSave = async () => {
     try {
@@ -102,11 +123,11 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
         lastDate: new Date(),
         latestbmi: bmi,
         age: lastObservationSummary?.age,
-        latestbpSystolic:vital?.bloodPressureSystolic,
+        latestbpSystolic: vital?.bloodPressureSystolic,
         latestbpDiastolic: vital?.bloodPressureDiastolic,
         latestheartrate: vital?.heartRate,
-        latestoxygensaturation:vital?.oxygenSaturation,
-        latesttemperature:vital?.temperature,
+        latestoxygensaturation: vital?.oxygenSaturation,
+        latesttemperature: vital?.temperature,
         prevRecordKey: lastObservationSummary?.key || null,
         plastDate: lastObservationSummary?.lastDate || null,
         platesttemperature: lastObservationSummary?.latesttemperature || null,
@@ -186,7 +207,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
                 </div>
                 <Divider />
                 <VitalSigns object={vital} setObject={setVital} />
-              
+
                 <Row className="rows-gap">
                   <Col md={24}>
                     <MyInput
