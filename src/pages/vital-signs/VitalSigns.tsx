@@ -7,8 +7,7 @@ import React, { useEffect, useState } from "react";
 import { Col, Form, Row } from "rsuite";
 const VitalSigns = ({ object, setObject }) => {
     const [map, setMap] = useState(null);
-    const { data: numbersLovQueryResponse } = useGetLovValuesByCodeQuery('NUMBERS');
-    const { data: correctLovQueryResponse } = useGetLovValuesByCodeQuery('CORRECT_INCORRECT');
+   console.log("object", object);
     useEffect(() => {
         const diastolic = Number(object?.bloodPressureDiastolic);
         const systolic = Number(object?.bloodPressureSystolic);
