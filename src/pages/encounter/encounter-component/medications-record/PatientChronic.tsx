@@ -10,8 +10,6 @@ const PatientChronic = ({ genericMedicationListResponse, customeInstructions, pa
     const [listGinricRequest, setListGinricRequest] = useState({
         ...initialListRequest,
         sortType: 'desc'
-
-
     });
 
     //if can type of instruction in prescription pre defined -get pre defined instruction list and search of instruction for prescription brand

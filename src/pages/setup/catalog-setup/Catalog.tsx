@@ -1,204 +1,285 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Input, Modal, Pagination, Panel, Table, Checkbox  } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
+import { Panel } from 'rsuite';
+import { FaUndo } from 'react-icons/fa';
+import { MdModeEdit } from 'react-icons/md';
+import { MdDelete } from 'react-icons/md';
+import './styles.less';
 import {
   useSaveDiagnosticsTestCatalogHeaderMutation,
   useGetDiagnosticsTestCatalogHeaderListQuery,
-  useGetDepartmentsQuery,
-  useSaveCatalogDiagnosticsTestMutation,
-  useGetCatalogDiagnosticsTestListQuery,
-  useGetLovValuesByCodeQuery,
-  useGetDiagnosticsTestListQuery,
-  useGetDiagnosticsTestNotSelectedListQuery,
-  useRemoveCatalogDiagnosticTestMutation
+  useGetDepartmentsQuery
 } from '@/services/setupService';
-import { Button, ButtonToolbar, IconButton, Text } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
-import CheckIcon from '@rsuite/icons/Check';
-import { ApCatalogDiagnosticTest, ApDiagnosticTest, ApDiagnosticTestCatalogHeader } from '@/types/model-types';
-import { newApCatalogDiagnosticTest, newApDiagnosticTest, newApDiagnosticTestCatalogHeader } from '@/types/model-types-constructor';
-import { Form, Stack, Divider, InlineEdit, TagPicker } from 'rsuite';
+import { FaListAlt } from 'react-icons/fa';
+import { ApDiagnosticTestCatalogHeader } from '@/types/model-types';
+import { newApDiagnosticTestCatalogHeader } from '@/types/model-types-constructor';
+import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import {
   conjureValueBasedOnKeyFromList,
   addFilterToListRequest,
   fromCamelCaseToDBName
 } from '@/utils';
-import { Console } from 'console';
-import NewDiagnosticsTest from '../diagnostics-tests-definition/NewDiagnosticsTest';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+import MyTable from '@/components/MyTable';
+import MyButton from '@/components/MyButton/MyButton';
+import Tests from './Tests';
+import AddEditCatalog from './AddEditCatalog';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { notify } from '@/utils/uiReducerActions';
 const Catalog = () => {
   const dispatch = useAppDispatch();
-  const [diagnosticsTestCatalogHeader, setDiagnosticsTestCatalogHeader] = useState<ApDiagnosticTestCatalogHeader>({ ...newApDiagnosticTestCatalogHeader });
-  const [catalogDiagnosticsTest, setCatalogDiagnosticsTest] = useState<ApCatalogDiagnosticTest>({
-    ...newApCatalogDiagnosticTest
+  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [openTestsPopup, setOpenTestsPopup] = useState<boolean>(false);
+  const [openConfirmDeleteCatalog, setOpenConfirmDeleteCatalog] = useState<boolean>(false);
+  const [stateOfDeleteCatalog, setStateOfDeleteCatalog] = useState<string>('delete');
+  const [width, setWidth] = useState<number>(window.innerWidth);
+  const [diagnosticsTestCatalogHeader, setDiagnosticsTestCatalogHeader] =
+    useState<ApDiagnosticTestCatalogHeader>({ ...newApDiagnosticTestCatalogHeader });
+  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  const [departmentListRequest] = useState<ListRequest>({
+    ...initialListRequest
   });
-  const [diagnosticsTestSelected, setDiagnosticsTestSelected] = useState<ApDiagnosticTest>({
-    ...newApDiagnosticTest
-  })
-  const  [popupOpen, setPopupOpen] = useState(false);
-  const [popupOpentest, setPopupOpentest] = useState(false);
-  
-  const { data: testTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_TEST-TYPES');
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
+
+  // Fetch diagnostics test catalog header list Response
+  const {
+    data: diagnosticsTestCatalogHeaderListResponse,
+    refetch,
+    isFetching
+  } = useGetDiagnosticsTestCatalogHeaderListQuery(listRequest);
+  // Fetch department list Response
+  const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
+  // save diagnostics test catalog header
+  const [saveDiagnosticsTestCatalogHeader, saveDiagnosticTestCatalogHeaderMutation] =
+    useSaveDiagnosticsTestCatalogHeaderMutation();
+  // Header page setUp
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className="title-catalog">
       <h5>Catalog</h5>
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Catalog'));
   dispatch(setDivContent(divContentHTML));
-  useEffect(() => {
-    const updatedFilters = [
-      {
-        fieldName: 'test_type_lkey',
-        operator: 'match',
-        value: diagnosticsTestCatalogHeader.typeLkey || undefined, 
-      },
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined,
-      },
-    ];
-    setDiagnosticsTestRequest((prevRequest) => ({
-      ...prevRequest,
-      filters: updatedFilters,
-    }));
-  }, [diagnosticsTestCatalogHeader.typeLkey]);
-
-  useEffect(() => {
-    const updatedFilters = [
-      {
-        fieldName: 'test_type_lkey',
-        operator: 'match',
-        value: diagnosticsTestCatalogHeader.typeLkey || undefined, 
-      },
-    ];
-    setDiagnosticsTestRequest((prevRequest) => ({
-      ...prevRequest,
-      filters: updatedFilters,
-    }));
-  }, [diagnosticsTestCatalogHeader.typeLkey]);
-
-  
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const [departmentListRequest, setDepartmentListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const [diagnosticsTestRequest, setDiagnosticsTestRequest ] = useState<ListRequest>(
-    {
-      ...initialListRequest,
-      pageSize: 100,
-      sortBy: 'createdAt',
-      sortType: 'desc',
-      filters: [
-        {
-          fieldName: 'test_type_lkey',
-          operator: 'match',
-          value:  undefined
-        },
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        }
-      ]
-    }
-  )
-
- 
-  
-  const [saveDiagnosticsTestCatalogHeader, saveDiagnosticTestCatalogHeaderMutation] = useSaveDiagnosticsTestCatalogHeaderMutation();
-  const [saveCatalogDiagnosticsTest, saveCatalogDiagnosticsTestMutation] = useSaveCatalogDiagnosticsTestMutation();
-  const [removeCatalogDiagnosticTest, removeCatalogDiagnosticTestMutation] = useRemoveCatalogDiagnosticTestMutation();
-  const { data: diagnosticsTest } = useGetDiagnosticsTestListQuery(diagnosticsTestRequest);
-  const { data: diagnosticsTestCatalogHeaderListResponse } = useGetDiagnosticsTestCatalogHeaderListQuery(listRequest);
-  const diagnosticsTestNotSelectedListResponse = useGetDiagnosticsTestNotSelectedListQuery({
-    catalogKey: diagnosticsTestCatalogHeader.key  || undefined, 
-    type: diagnosticsTestCatalogHeader.typeLkey || undefined
-  });
-  const catalogDiagnosticsTestListResponse = useGetCatalogDiagnosticsTestListQuery(  diagnosticsTestCatalogHeader.key);
-  
-  const { data: departmentListResponse } = useGetDepartmentsQuery(departmentListRequest);
-
-  const [catalogDiagnosticsTests, setCatalogDiagnosticsTests] = useState<ApCatalogDiagnosticTest[]>([]);
-
-  const handleDeleteTestFromDialog = (diagnosticsTest) => {
-    removeCatalogDiagnosticTest({
-      diagnosticTest: diagnosticsTest , 
-      catalogKey: diagnosticsTestCatalogHeader.key
-    });
-    catalogDiagnosticsTestListResponse.refetch() ;
-  }
-
-  const handleNew = () => {
-    setDiagnosticsTestCatalogHeader({...newApDiagnosticTestCatalogHeader})
-    setPopupOpen(true);
-  };
-
-  const handleSave = () => {
-    setPopupOpen(false);
-    saveDiagnosticsTestCatalogHeader(diagnosticsTestCatalogHeader).unwrap();
-  };
-
-  const handleSaveTest = () => {
-    setPopupOpentest(false);
-    let testsClone = [...catalogDiagnosticsTests];
-    const objectsToSave = selectedRows.map(key => ({
-      ...newApCatalogDiagnosticTest,
-      testKey: key,
-      catalogKey: diagnosticsTestCatalogHeader.key,
-    }),
-    catalogDiagnosticsTestListResponse.refetch()
-  );
-    testsClone.push(...objectsToSave);
-  
-    saveCatalogDiagnosticsTest(objectsToSave)
-      .unwrap();
-    setCatalogDiagnosticsTests(testsClone);
-  };
-  
-
-
-  useEffect(() => {
-    if (saveDiagnosticTestCatalogHeaderMutation.data) {
-      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
-    }
-  }, [saveDiagnosticTestCatalogHeaderMutation.data]);
-
-  useEffect(() => {
-    if (catalogDiagnosticsTestListResponse) {
-        setCatalogDiagnosticsTest(catalogDiagnosticsTestListResponse.data || []);
-    }
-}, [catalogDiagnosticsTestListResponse]);
-
+  // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = diagnosticsTestCatalogHeaderListResponse?.extraNumeric ?? 0;
+  // Available fields for filtering
+  const filterFields = [
+    { label: 'Catalog Name', value: 'description' },
+    { label: 'Type', value: 'typeLkey' },
+    { label: 'Department', value: 'departmentKey' },
+    { label: 'Status', value: 'deleted_at' }
+  ];
+  // class name for selected row
   const isSelected = rowData => {
-    if (rowData && diagnosticsTestCatalogHeader && rowData.key === diagnosticsTestCatalogHeader.key) {
+    if (
+      rowData &&
+      diagnosticsTestCatalogHeader &&
+      rowData.key === diagnosticsTestCatalogHeader.key
+    ) {
       return 'selected-row';
     } else return '';
   };
 
-  const [selectedRows, setSelectedRows] = useState([]);
+  // Icons column (Edit ,reactive/Deactivate, Tests)
+  const iconsForActions = (rowData: any) => (
+    <div className="container-of-icons-catalog">
+      <MdModeEdit
+        className="icons-catalog"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setPopupOpen(true);
+        }}
+      />
+      {rowData?.isValid ? (
+        <MdDelete
+          className="icons-catalog"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            setStateOfDeleteCatalog('deactivate');
+            setOpenConfirmDeleteCatalog(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-catalog"
+          title="Activate"
+          size={21}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setStateOfDeleteCatalog('reactivate');
+            setOpenConfirmDeleteCatalog(true);
+          }}
+        />
+      )}
+      <FaListAlt
+        className="icons-catalog"
+        title="Tests"
+        size={21}
+        fill="var(--primary-gray)"
+        onClick={() => {
+          setOpenTestsPopup(true);
+        }}
+      />
+    </div>
+  );
 
-  const handleCheckboxChange = (key) => {
-    setSelectedRows((prev) => {
-      if (prev.includes(key)) {
-        return prev.filter(item => item !== key);
-      } else {
-        return [...prev, key];
-      }
+  //Table columns
+  const tableColumns = [
+    {
+      key: 'description',
+      title: <Translate>Catalog Name</Translate>
+    },
+    {
+      key: 'typeLkey',
+      title: <Translate>Type</Translate>,
+      render: rowData => (rowData.typeLvalue ? rowData.typeLvalue.lovDisplayVale : rowData.typeLkey)
+    },
+    {
+      key: 'departmentKey',
+      title: <Translate>Department</Translate>,
+      render: rowData => (
+        <span>
+          {conjureValueBasedOnKeyFromList(
+            departmentListResponse?.object ?? [],
+            rowData.departmentKey,
+            'name'
+          )}
+        </span>
+      )
+    },
+    {
+      key: 'deleted_at',
+      title: <Translate>Status</Translate>,
+      render: rowData => (rowData.deletedAt === null ? 'Active' : 'InActive')
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      flexGrow: 3,
+      render: rowData => iconsForActions(rowData)
+    }
+  ];
+
+  // Filter table
+  const filters = () => (
+    <Form layout="inline" fluid className="container-of-filter-fields-catalog ">
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={recordOfFilter}
+        setRecord={updatedRecord => {
+          setRecordOfFilter({
+            ...recordOfFilter,
+            filter: updatedRecord.filter,
+            value: ''
+          });
+        }}
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+      />
+      <MyInput
+        fieldName="value"
+        fieldType="text"
+        record={recordOfFilter}
+        setRecord={setRecordOfFilter}
+        showLabel={false}
+        placeholder="Search"
+      />
+    </Form>
+  );
+  // handle click on add new button (open the pop up of add/edit catalog)
+  const handleNew = () => {
+    setDiagnosticsTestCatalogHeader({ ...newApDiagnosticTestCatalogHeader });
+    setPopupOpen(true);
+  };
+  // handle Save catalog
+  const handleSave = () => {
+    setPopupOpen(false);
+    saveDiagnosticsTestCatalogHeader(diagnosticsTestCatalogHeader)
+      .unwrap()
+      .then(() => {
+        dispatch(notify({ msg: 'The Catalog has been saved successfully', sev: 'success' }));
+      })
+      .catch(() => {
+        dispatch(notify({ msg: 'Failed to save this Catalog', sev: 'error' }));
+      });
+  };
+  // Handle page change in navigation
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+  // Handle change rows per page in navigation
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
     });
   };
 
-
+  // handle deactivate catalog
+  const handleDeactivate = () => {
+    setOpenConfirmDeleteCatalog(false);
+    saveDiagnosticsTestCatalogHeader({ ...diagnosticsTestCatalogHeader, isValid: false })
+      .unwrap()
+      .then(() => {
+        refetch();
+        dispatch(
+          notify({
+            msg: 'The Catalog was successfully Deactivated',
+            sev: 'success'
+          })
+        );
+      })
+      .catch(() => {
+        dispatch(
+          notify({
+            msg: 'Faild to Deactivate this Catalog',
+            sev: 'error'
+          })
+        );
+      });
+  };
+  // handle reactivate catalog
+  const handleReactivate = () => {
+    setOpenConfirmDeleteCatalog(false);
+    saveDiagnosticsTestCatalogHeader({ ...diagnosticsTestCatalogHeader, isValid: true })
+      .unwrap()
+      .then(() => {
+        refetch();
+        dispatch(
+          notify({
+            msg: 'The Catalog was successfully Reactivated',
+            sev: 'success'
+          })
+        );
+      })
+      .catch(() => {
+        dispatch(
+          notify({
+            msg: 'Faild to Reactivate this Catalog',
+            sev: 'error'
+          })
+        );
+      });
+  };
+  // update list when filter is changed
   const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
@@ -213,334 +294,103 @@ const Catalog = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
+  // Effects
+  // change the width variable when the size of window is changed
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // update list when filter is changed
+  useEffect(() => {
+    if (recordOfFilter['filter']) {
+      handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
+    } else {
+      setListRequest({
+        ...initialListRequest,
+        filters: [
+          {
+            fieldName: 'deleted_at',
+            operator: 'isNull',
+            value: undefined
+          }
+        ],
+        pageSize: listRequest.pageSize,
+        pageNumber: 1
+      });
+    }
+  }, [recordOfFilter]);
+
+  useEffect(() => {
+    if (saveDiagnosticTestCatalogHeaderMutation.data) {
+      setListRequest({ ...listRequest, timestamp: new Date().getTime() });
+    }
+  }, [saveDiagnosticTestCatalogHeaderMutation.data]);
+
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent("  "));
+      dispatch(setDivContent('  '));
     };
-  }, [location.pathname, dispatch])
+  }, [location.pathname, dispatch]);
+
   return (
     <Panel>
-      <ButtonToolbar>
-        <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
+      <div className="container-of-add-new-button-catalog">
+        <MyButton
+          prefixIcon={() => <AddOutlineIcon />}
+          color="var(--deep-blue)"
+          onClick={handleNew}
+          width="109px"
+        >
           Add New
-        </IconButton>
-        <IconButton
-          disabled={!diagnosticsTestCatalogHeader.key}
-          appearance="primary"
-          onClick={() => setPopupOpen(true)}
-          color="green"
-          icon={<EditIcon />}
-        >
-          Edit Selected
-        </IconButton>
-        <IconButton
-           disabled={true || !diagnosticsTestCatalogHeader.key}
-          appearance="primary"
-          color="red"
-          icon={<TrashIcon />}
-        >
-          Active/Deactivate
-        </IconButton>
-        <IconButton
-          disabled={!diagnosticsTestCatalogHeader.key}
-          appearance="primary"
-          onClick={() => setPopupOpentest(true)}
-          color="orange"
-          icon={<AddOutlineIcon />}
-        >
-          Add test
-        </IconButton>
-      </ButtonToolbar>
-      <hr />
-      <Table
-        height={400}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortColumn={(sortBy, sortType) => {
-          if (sortBy)
-            setListRequest({
-              ...listRequest,
-              sortBy,
-              sortType
-            });
-        }}
-        headerHeight={80}
-        rowHeight={60}
-        bordered
-        cellBordered
+        </MyButton>
+      </div>
+      <MyTable
+        height={450}
         data={diagnosticsTestCatalogHeaderListResponse?.object ?? []}
+        loading={isFetching}
+        columns={tableColumns}
+        rowClassName={isSelected}
+        filters={filters()}
         onRowClick={rowData => {
           setDiagnosticsTestCatalogHeader(rowData);
         }}
-        rowClassName={isSelected}
-      >
-        <Column sortable flexGrow={2}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('description', e)} />
-            <Translate>Catalog Name</Translate>
-          </HeaderCell>
-          <Cell dataKey="description" />
-        </Column>
-        <Column sortable flexGrow={2}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('typeLkey', e)} />
-            <Translate>Type</Translate>
-          </HeaderCell>
-          <Cell>
-              {rowData =>
-                rowData.typeLvalue ? rowData.typeLvalue.lovDisplayVale : rowData.typeLkey
-              }
-            </Cell>
-        </Column> 
-        <Column sortable flexGrow={2}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('departmentKey', e)} />
-            <Translate>Department</Translate>
-          </HeaderCell>
-          <Cell>
-               {rowData => (
-              <span>
-                {conjureValueBasedOnKeyFromList(
-                  departmentListResponse?.object ?? [],
-                  rowData.departmentKey,
-                  'name'
-
-                )}
-              </span>
-            )}
-          </Cell>
-        </Column>
-        <Column sortable flexGrow={3}>
-            <HeaderCell  align="center">
-              <Input onChange={e => handleFilterChange('deleted_at', e)} />
-              <Translate>Status</Translate>
-            </HeaderCell>
-            <Cell>
-            {rowData =>
-              rowData.deletedAt === null  ? 'Active' : 'InActive' 
-            }
-            </Cell>
-            </Column> 
-        
-      </Table>
-      <div style={{ padding: 20 }}>
-        <Pagination
-          prev
-          next
-          first
-          last
-          ellipsis
-          boundaryLinks
-          maxButtons={5}
-          size="xs"
-          layout={['limit', '|', 'pager']}
-          limitOptions={[5, 15, 30]}
-          limit={listRequest.pageSize}
-          activePage={listRequest.pageNumber}
-          onChangePage={pageNumber => {
-            setListRequest({ ...listRequest, pageNumber });
-          }}
-          onChangeLimit={pageSize => {
-            setListRequest({ ...listRequest, pageSize });
-          }}
-          total={diagnosticsTestCatalogHeaderListResponse?.extraNumeric ?? 0}
-        />
-      </div>
-      <br />
-      {diagnosticsTestCatalogHeader.key && (
-        <Panel
-          bordered
-          header={
-            <h5 className="title">
-              <Translate>Test</Translate>
-            </h5>
-          }
-        >
-          <Table
-              bordered
-              rowClassName={isSelected}
-              data={catalogDiagnosticsTestListResponse.data?.object ?? []}
-            >
-              <Table.Column flexGrow={1}>
-                <Table.HeaderCell>Test Code</Table.HeaderCell>
-                <Table.Cell dataKey="internalCode"></Table.Cell>
-              </Table.Column>
-              <Table.Column flexGrow={1}>
-                <Table.HeaderCell >Test Name</Table.HeaderCell>
-                <Table.Cell dataKey="testName"></Table.Cell>
-              </Table.Column>
-              <Table.Column flexGrow={1}>
-                <Table.HeaderCell>International Code</Table.HeaderCell>
-                <Table.Cell dataKey="internationalCodeOne"> 
-             </Table.Cell>
-              </Table.Column>
-              <Table.Column flexGrow={1}>
-                <Table.HeaderCell>Delete</Table.HeaderCell>
-                <Table.Cell> 
-                {rowData => ( 
-                   <IconButton
-                     onClick={() => handleDeleteTestFromDialog(rowData)}
-                     icon={<TrashIcon />}
-                   />
-                  )}
-             </Table.Cell>
-              </Table.Column>
-            </Table>
-        </Panel>
-      )}
-
-      <Modal open={popupOpen} overflow>
-        <Modal.Title>
-          <Translate>New/Edit Catalog</Translate>
-        </Modal.Title>
-        <Modal.Body>
-          <Form fluid>
-            <MyInput fieldName="typeLkey" 
-             fieldType="select"
-             selectData={testTypeLovQueryResponse?.object ?? []}
-             selectDataLabel="lovDisplayVale"
-             selectDataValue="key"
-             record={diagnosticsTestCatalogHeader}
-             setRecord={setDiagnosticsTestCatalogHeader} />
-            <MyInput fieldName="departmentKey"  
-              fieldType="select"
-              selectData={departmentListResponse?.object ?? []}
-              selectDataLabel="name"
-              selectDataValue="key"
-              record={diagnosticsTestCatalogHeader}
-              setRecord={setDiagnosticsTestCatalogHeader}/>
-            <MyInput fieldName="description" fieldLabel="Catalog Name" record={diagnosticsTestCatalogHeader} setRecord={setDiagnosticsTestCatalogHeader} />
-           
-            {/* <InlineEdit placeholder="Click to Add Test ..." showControls={false}>
-          <InputPicker 
-             style={{ width: 200 }}
-             placeholder="per"
-             data={diagnosticsTest?.object ?? []}
-             value={catalogDiagnosticsTest.testKey}
-             onChange={e =>
-               setCatalogDiagnosticsTest({
-                 ...catalogDiagnosticsTest,
-                 testKey: String(e)
-               })
-             }
-             labelKey="testName"
-             valueKey="key"
-          />
-        </InlineEdit> */}
-
-
-        {/* If we want to add test from New/Edit Dialog */}
-
-         {/*<InlineEdit
-    placeholder="Click to add test"
-    style={{ width: 300 }}
-  >
-    <TagPicker
-      block 
-      style={{ width: 200 }} 
-      placeholder="per" 
-      data={diagnosticsTestNotSelectedListResponse.data?.object ?? []} 
-      value={selectedRows} 
-      onChange={selected => setSelectedRows(selected)} 
-      labelKey="testName" 
-      valueKey="key"
-    />
-  </InlineEdit>
-  <Button appearance="primary" color="green" onClick={handleSaveTest}>
-              Add
-            </Button> */}
-            {/* <Table
-            
-              bordered
-              rowClassName={isSelected}
-              onRowClick={rowData => {
-                setDiagnosticsTestSelected(rowData);
-                console.log(diagnosticsTestSelected)
-              }}
-              data={catalogDiagnosticsTestListResponse.data?.object ?? []}
-            >
-              <Table.Column flexGrow={1}>
-                <Table.HeaderCell>Test Code</Table.HeaderCell>
-                <Table.Cell dataKey="internalCode"></Table.Cell>
-              </Table.Column>
-              <Table.Column flexGrow={1}>
-                <Table.HeaderCell >Test Name</Table.HeaderCell>
-                <Table.Cell dataKey="testName"></Table.Cell>
-              </Table.Column>
-              <Table.Column flexGrow={1}>
-                <Table.HeaderCell>international Code</Table.HeaderCell>
-                <Table.Cell dataKey="internationalCodeOne"> 
-             </Table.Cell>
-              </Table.Column>
-              <Table.Column flexGrow={1}>
-                <Table.HeaderCell>Delete</Table.HeaderCell>
-                <Table.Cell> 
-                {rowData => ( 
-                   <IconButton
-                     onClick={() => handleDeleteTestFromDialog(rowData)}
-                     icon={<TrashIcon />}
-                   />
-                  )}
-             </Table.Cell>
-              </Table.Column>
-            </Table> */}
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="primary" onClick={handleSave}>
-              Save
-            </Button>
-            <Button appearance="primary" color="red" onClick={() => setPopupOpen(false)}>
-              Cancel
-            </Button>
-          </Stack>
-        </Modal.Footer>
-      </Modal>
-      <Modal open={popupOpentest} overflow>
-        <Modal.Title>
-          <Translate>Add Test</Translate>
-        </Modal.Title>
-        <Modal.Body>
-          <Form fluid>
-          <Table
-              bordered
-              rowClassName={isSelected}
-              data={diagnosticsTestNotSelectedListResponse.data?.object ?? []}
-            >
-              
-              <Table.Column flexGrow={1}>
-                <Table.HeaderCell>Test</Table.HeaderCell>
-                <Table.Cell>
-                {rowData => ( <Checkbox
-                    checked={selectedRows.includes(rowData.key)}
-                    onChange={() => handleCheckboxChange(rowData.key)}
-                      />   )}
-                </Table.Cell>
-              </Table.Column>
-              <Table.Column flexGrow={1}>
-                <Table.HeaderCell>Test Code</Table.HeaderCell>
-                <Table.Cell>{rowData => rowData.internalCode}</Table.Cell>
-              </Table.Column>
-              <Table.Column flexGrow={1}>
-                <Table.HeaderCell>Test Name</Table.HeaderCell>
-                <Table.Cell>{rowData => rowData.testName}</Table.Cell>
-              </Table.Column>
-            </Table>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Stack spacing={2} divider={<Divider vertical />}>
-            <Button appearance="primary" onClick={handleSaveTest}>
-              Save
-            </Button>
-            <Button appearance="primary" color="red" onClick={() => setPopupOpentest(false)}>
-              Cancel
-            </Button>
-          </Stack>
-        </Modal.Footer>
-      </Modal>
+        sortColumn={listRequest.sortBy}
+        sortType={listRequest.sortType}
+        onSortChange={(sortBy, sortType) => {
+          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+        }}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
+      <Tests
+        open={openTestsPopup}
+        setOpen={setOpenTestsPopup}
+        diagnosticsTestCatalogHeader={diagnosticsTestCatalogHeader}
+      />
+      <AddEditCatalog
+        open={popupOpen}
+        setOpen={setPopupOpen}
+        diagnosticsTestCatalogHeader={diagnosticsTestCatalogHeader}
+        setDiagnosticsTestCatalogHeader={setDiagnosticsTestCatalogHeader}
+        departmentListResponse={departmentListResponse}
+        width={width}
+        handleSave={handleSave}
+      />
+      <DeletionConfirmationModal
+        open={openConfirmDeleteCatalog}
+        setOpen={setOpenConfirmDeleteCatalog}
+        itemToDelete="Catalog"
+        actionButtonFunction={
+          stateOfDeleteCatalog == 'deactivate' ? handleDeactivate : handleReactivate
+        }
+        actionType={stateOfDeleteCatalog}
+      />
     </Panel>
   );
 };
