@@ -1,9 +1,11 @@
 import MyModal from "@/components/MyModal/MyModal";
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
+import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { formatDateWithoutSeconds } from "@/utils";
 import React from "react";
 const FullViewTable = ({open,setOpen,procedures}) => {
+   const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
      const columns=[
               {
       key: "procedureId",
