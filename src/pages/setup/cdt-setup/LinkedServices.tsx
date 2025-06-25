@@ -121,7 +121,6 @@ const LinkedServices = ({ open, setOpen, cdt, setCdt }) => {
                                         cdtKey: cdt.key
                                     }).unwrap().then(() => {
                                       dispatch(notify({ msg: 'Linked Successfully', sev: 'success' }));
-                                       setCdt(cdt);
                                       });
                                 }}
                             >
