@@ -301,7 +301,17 @@ const Encounter = () => {
             </Drawer.Header>
             <Drawer.Body className="drawer-body">
               <List hover className="drawer-list-style">
-
+                <List.Item
+                  className="drawer-item return-button"
+                  onClick={() => {
+                    const basePath = location.pathname.split('/').slice(0, -1).join('/');
+                    navigate(basePath, { state: location.state });
+                    setIsDrawerOpen(false);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
+                  <Translate>Dashboard</Translate>
+                </List.Item>
                 {menuItems.map(({ key, label, icon, path }) =>
                   medicalSheet?.object?.[key] ? (
                     <List.Item key={key} className="drawer-item"
