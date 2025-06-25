@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyModal from '@/components/MyModal/MyModal';
 import { initialListRequest, ListRequest } from '@/types/types';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
 import { notify } from '@/utils/uiReducerActions';
 import { faBed } from '@fortawesome/free-solid-svg-icons';
 import { useGetResourceTypeQuery } from '@/services/appointmentService';
@@ -13,11 +12,18 @@ import { newApAdmitOutpatientInpatient } from '@/types/model-types-constructor';
 import { useGetPractitionersQuery } from '@/services/setupService';
 import { useAdmitToInpatientEncounterMutation } from '@/services/encounterService';
 import { useGetRoomListQuery, useDeactiveActivRoomMutation } from '@/services/setupService';
+import { InputGroup, Form, Input } from 'rsuite';
 import { ApAdmitOutpatientInpatient } from '@/types/model-types';
+import { useGetIcdListQuery } from '@/services/setupService';
+import {
+    useGetBedListQuery,
+} from '@/services/setupService';
+import SearchIcon from '@rsuite/icons/Search';
 const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
     const [admitToInpatient, setAdmitToInpatient] = useState<ApAdmitOutpatientInpatient>({ ...newApAdmitOutpatientInpatient });
     const inpatientDepartmentListResponse = useGetResourceTypeQuery("4217389643435490");
-
+    const [searchKeyword, setSearchKeyword] = useState('');
+    const [selectedicd10, setSelectedIcd10] = useState({ text: ' ' });
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
 
@@ -27,10 +33,18 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
                 operator: 'match',
                 value: admitToInpatient?.admissionDepartmentKey
             }],
-                    pageSize: 100,
+        pageSize: 100,
     });
 
-    console.log("listRequest==>",listRequest);
+    // Initialize the state for ICD list request with default values
+    const [listIcdRequest, setListIcdRequest] = useState({ ...initialListRequest });
+    // Fetch ICD list data based on the current request parameters
+    const { data: icdListResponseData } = useGetIcdListQuery(listIcdRequest);
+    // Transform the ICD list data by adding a combined label with code and description
+    const modifiedData = (icdListResponseData?.object ?? []).map(item => ({
+        ...item,
+        combinedLabel: `${item.icdCode} - ${item.description}`
+    }));
     const [bedListRequest, setBedListRequest] = useState<ListRequest>({
         ...initialListRequest,
         pageSize: 100,
@@ -50,6 +64,8 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
     const dispatch = useAppDispatch();
     const [saveAdmitToInpatient, saveAdmitToInpatientMutation] = useAdmitToInpatientEncounterMutation();
     console.log("roomListResponseLoading==>", roomListResponseLoading);
+    const { data: fetchBedsListQueryResponce } = useGetBedListQuery(bedListRequest, { skip: !admitToInpatient?.roomKey });
+
     const [physicanListRequest, setPhysicanListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -67,6 +83,11 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
         pageSize: 1000
     });
     const { data: practitionerListResponse } = useGetPractitionersQuery(physicanListRequest);
+    // Handle the search input for the first search field
+    const handleSearch = value => {
+        setSearchKeyword(value);
+    };
+
     // handle save To admit outpatient to inpatient function
     const handleSave = async () => {
         try {
@@ -80,38 +101,92 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
         } catch (error) {
         }
     };
+    // use Effect
     useEffect(() => {
         setAdmitToInpatient({ ...admitToInpatientObject, admissionDepartmentKey: admitToInpatientObject?.inpatientDepartmentKey });
     }, [admitToInpatientObject]);
     useEffect(() => {
-  setPhysicanListRequest((prev) => {
-    const baseFilters = [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined,
-      },
-    ];
+        setListRequest((prev) => {
+            let updatedFilters = [...(prev.filters || [])];
+            updatedFilters = updatedFilters.filter(f => f.fieldName !== 'department_key');
+            if (admitToInpatient) {
+                updatedFilters.push({
+                    fieldName: 'department_key',
+                    operator: 'match',
+                    value: admitToInpatient?.admissionDepartmentKey
+                });
+            }
 
-    // إذا كانت admitToInpatient true نضيف الفلتر الجديد
-    if (admitToInpatient) {
-      baseFilters.push({
-        fieldName: 'job_role_lkey',
-        operator: 'match',
-        value: '157153854130600',
-      });
-    }
+            return {
+                ...prev,
+                filters: updatedFilters,
+            };
+        });
+    }, [admitToInpatient]);
 
-    return {
-      ...prev,
-      filters: baseFilters,
-    };
-  });
-}, [admitToInpatient]);
+    useEffect(() => {
+        setBedListRequest((prev) => {
+            let updatedFilters = [...(prev.filters || [])];
+            updatedFilters = updatedFilters.filter(f => f.fieldName !== 'room_key');
+            if (admitToInpatient) {
+                updatedFilters.push({
+                    fieldName: 'room_key',
+                    operator: 'match',
+                    value: admitToInpatient?.roomKey
+                });
+            }
+
+            return {
+                ...prev,
+                filters: updatedFilters,
+            };
+        });
+    }, [admitToInpatient]);
+
     // modal content
-    console.log("admitToInpatientObject==>", admitToInpatient)
     const modalContent = (
-      <>  <Form fluid layout="inline" className='fields-container'>
+        <>  <Form fluid layout="inline" className='fields-container'>
+            {<>
+                <Form fluid layout="inline" className='container-search-field'>
+                    <div className='content-div-search-field'>
+                        <InputGroup className='content-input-search-field' inside>
+                            <Input placeholder={'Search ICD-10'} value={searchKeyword} onChange={handleSearch} />
+                            <InputGroup.Button>
+                                <SearchIcon />
+                            </InputGroup.Button>
+                        </InputGroup>
+
+                        {searchKeyword && (
+                            <div className="dropdown-menu-icd">
+                                {modifiedData?.map(mod => (
+                                    <div
+                                        key={mod.key}
+                                        onClick={() => {
+                                            setAdmitToInpatient({
+                                                ...admitToInpatient,
+                                                icd10: mod.key
+                                            });
+                                            setSelectedIcd10({ text: mod.combinedLabel });
+                                            setSearchKeyword('');
+                                        }}
+                                        className='dropdown-menu-icd-item' >
+                                        <span>{mod.icdCode}</span>
+                                        <span>{mod.description}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </Form>
+            </>}
+            <MyInput
+                width={200}
+                column
+                fieldLabel="Medical Diagnosis"
+                fieldName="text"
+                record={selectedicd10}
+                disabled={true}
+            />
             <MyInput
                 require
                 column
@@ -125,30 +200,32 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
                 setRecord={setAdmitToInpatient}
                 width={190}
             />
-              <MyInput
+            <MyInput
                 require
                 column
                 fieldLabel="Select Room"
                 fieldType="select"
-                fieldName="admissionDepartmentKey"
-                selectData={ []}
+                fieldName="roomKey"
+                selectData={roomListResponseLoading?.object ?? []}
                 selectDataLabel="name"
                 selectDataValue="key"
                 record={admitToInpatient}
                 setRecord={setAdmitToInpatient}
                 width={190}
+                searchable={false}
             />
-               <MyInput
+            <MyInput
                 require
                 column
                 fieldLabel="Select Bed"
                 fieldType="select"
-                fieldName="admissionDepartmentKey"
-                selectData={ []}
+                fieldName="bedKey"
+                selectData={fetchBedsListQueryResponce?.object ?? []}
                 selectDataLabel="name"
                 selectDataValue="key"
                 record={admitToInpatient}
                 setRecord={setAdmitToInpatient}
+                searchable={false}
                 width={190}
             />
             <MyInput
@@ -179,28 +256,28 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
                 width={190}
                 disabled
             />
-            <br/>
-         
+            <br />
+
         </Form>
-              <Form fluid layout="inline" className='fields-container'>
-                   <MyInput
-                column
-                fieldType='textarea'
-                fieldLabel="Handoff Information"
-                fieldName='handoffInformation'
-                record={admitToInpatient}
-                setRecord={setAdmitToInpatient}
-                width={390}
-            />
-            <MyInput
-                column
-                fieldType='textarea'
-                fieldLabel="Reason of Admission"
-                fieldName='reasonOfAdmission'
-                record={admitToInpatient}
-                setRecord={setAdmitToInpatient}
-                width={390}
-            /></Form></>);
+            <Form fluid layout="inline" className='fields-container'>
+                <MyInput
+                    column
+                    fieldType='textarea'
+                    fieldLabel="Handoff Information"
+                    fieldName='handoffInformation'
+                    record={admitToInpatient}
+                    setRecord={setAdmitToInpatient}
+                    width={390}
+                />
+                <MyInput
+                    column
+                    fieldType='textarea'
+                    fieldLabel="Reason of Admission"
+                    fieldName='reasonOfAdmission'
+                    record={admitToInpatient}
+                    setRecord={setAdmitToInpatient}
+                    width={390}
+                /></Form></>);
     return (<MyModal
         open={open}
         setOpen={setOpen}
