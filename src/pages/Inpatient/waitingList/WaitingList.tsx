@@ -1,6 +1,6 @@
 import Translate from '@/components/Translate';
 import { ApPatient } from '@/types/model-types';
-import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
+import { newApAdmitOutpatientInpatient, newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import React, { useEffect, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -19,21 +19,24 @@ import { formatDateWithoutSeconds } from "@/utils";
 import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
 import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
+import PatientAdmission from './PatientAdmission';
 
 const WaitingList = () => {
     const location = useLocation();
     const dispatch = useDispatch();
     const divContent = (
-        <div style={{ display: 'flex' }}>http://localhost:3100/#
+        <div style={{ display: 'flex' }}>
             <h5>Inpatient Waiting List</h5>
         </div>
     );
     const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Waiting_Patient_Encounters'));
     dispatch(setDivContent(divContentHTML));
+    const[patientAdmissionModal,setPatientAdmissionModal] = useState(false);
     const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
     const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
     const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+    const [admitInPatient,setAdmitInPatient]=useState<any>({...newApAdmitOutpatientInpatient});
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -159,6 +162,7 @@ const WaitingList = () => {
                                 <MyButton
                                     size="small"
                                     backgroundColor="black"
+                                    onClick={()=>{setPatientAdmissionModal(true);setAdmitInPatient({...rowData?.admitRecord })}}
                                 >
                                     <FontAwesomeIcon icon={faBedPulse} />
                                 </MyButton>
@@ -229,6 +233,10 @@ const WaitingList = () => {
                 onPageChange={handlePageChange}
                 onRowsPerPageChange={handleRowsPerPageChange}
             />
+            <PatientAdmission
+             open={patientAdmissionModal}
+             setOpen={setPatientAdmissionModal}
+             admitToInpatientObject={admitInPatient}/>
         </Panel>
     );
 };

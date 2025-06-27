@@ -266,12 +266,12 @@ export interface ApAdmitOutpatientInpatient {
 	updatedAt:number;
 	deletedAt:number;
 	admitSourceLkey:string;
-	reasonOfAdmission :string;
 	admissionDepartmentKey:string;
 	roomKey:string;
 	bedKey:string;
 	handoffInformation:string;
 	icd10:string;
+	reasonOfAdmission:string;
 } 
 
 export interface ApAgeGroup { 
