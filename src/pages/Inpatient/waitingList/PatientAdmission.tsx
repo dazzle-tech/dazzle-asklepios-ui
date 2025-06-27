@@ -10,23 +10,22 @@ import { faBed } from '@fortawesome/free-solid-svg-icons';
 import { useGetResourceTypeQuery } from '@/services/appointmentService';
 import { newApAdmitOutpatientInpatient } from '@/types/model-types-constructor';
 import { useGetPractitionersQuery } from '@/services/setupService';
-import { useAdmitToInpatientEncounterMutation } from '@/services/encounterService';
-import { useGetRoomListQuery, useDeactiveActivRoomMutation } from '@/services/setupService';
+import { useSavePatientAdmissionMutation } from '@/services/encounterService';
+import { useGetRoomListQuery } from '@/services/setupService';
 import { InputGroup, Form, Input } from 'rsuite';
 import { ApAdmitOutpatientInpatient } from '@/types/model-types';
 import { useGetIcdListQuery } from '@/services/setupService';
-import {
-    useGetBedListQuery,
-} from '@/services/setupService';
+import { useGetBedListQuery } from '@/services/setupService';
+import { useNavigate } from 'react-router-dom';
 import SearchIcon from '@rsuite/icons/Search';
 const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
     const [admitToInpatient, setAdmitToInpatient] = useState<ApAdmitOutpatientInpatient>({ ...newApAdmitOutpatientInpatient });
     const inpatientDepartmentListResponse = useGetResourceTypeQuery("4217389643435490");
     const [searchKeyword, setSearchKeyword] = useState('');
     const [selectedicd10, setSelectedIcd10] = useState({ text: ' ' });
+    const navigate = useNavigate();
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
-
         filters: [
             {
                 fieldName: 'department_key',
@@ -53,7 +52,13 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
                 fieldName: 'room_key',
                 operator: 'match',
                 value: admitToInpatient?.roomKey
-            }]
+            },
+            {
+                fieldName: 'status_lkey',
+                operator: 'match',
+                value: "5258243122289092"
+            }
+        ]
     });
     // Fetch Room list response
     const {
@@ -62,8 +67,7 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
         isFetching
     } = useGetRoomListQuery(listRequest);
     const dispatch = useAppDispatch();
-    const [saveAdmitToInpatient, saveAdmitToInpatientMutation] = useAdmitToInpatientEncounterMutation();
-    console.log("roomListResponseLoading==>", roomListResponseLoading);
+    const [saveAdmitToInpatient, saveAdmitToInpatientMutation] = useSavePatientAdmissionMutation();
     const { data: fetchBedsListQueryResponce } = useGetBedListQuery(bedListRequest, { skip: !admitToInpatient?.roomKey });
 
     const [physicanListRequest, setPhysicanListRequest] = useState<ListRequest>({
@@ -94,10 +98,10 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
             const saveAdmit = await saveAdmitToInpatient({
                 ...admitToInpatient,
             }).unwrap();
-            dispatch(notify({ msg: 'Billing Approval Sent', sev: 'success' }));
+            navigate("/inpatient-encounters-list")
+            dispatch(notify({ msg: 'Admit Successfully', sev: 'success' }));
             setOpen(false);
             setAdmitToInpatient({ ...newApAdmitOutpatientInpatient });
-
         } catch (error) {
         }
     };
@@ -123,7 +127,6 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
             };
         });
     }, [admitToInpatient]);
-
     useEffect(() => {
         setBedListRequest((prev) => {
             let updatedFilters = [...(prev.filters || [])];
@@ -257,7 +260,6 @@ const PatientAdmission = ({ open, setOpen, admitToInpatientObject }) => {
                 disabled
             />
             <br />
-
         </Form>
             <Form fluid layout="inline" className='fields-container'>
                 <MyInput

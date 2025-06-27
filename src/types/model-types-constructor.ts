@@ -267,12 +267,12 @@ export const newApAdmitOutpatientInpatient:modelTypes.ApAdmitOutpatientInpatient
 	updatedAt:undefined,
 	deletedAt:undefined,
 	admitSourceLkey:undefined,
-	reasonOfAdmission :'',
 	admissionDepartmentKey:undefined,
 	roomKey:undefined,
 	bedKey:undefined,
 	handoffInformation:'',
 	icd10:'',
+	reasonOfAdmission:'',
 } 
 
 export const newApAgeGroup:modelTypes.ApAgeGroup = { 

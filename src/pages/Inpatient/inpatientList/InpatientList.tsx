@@ -9,7 +9,7 @@ import { faUserNurse, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
+import { useGetInpatientEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
@@ -62,7 +62,7 @@ const InpatientList = () => {
         isFetching,
         refetch: refetchEncounter,
         isLoading
-    } = useGetEncountersQuery(listRequest);
+    } = useGetInpatientEncountersQuery(listRequest);
 
     //Functions
     const isSelected = rowData => {
@@ -70,6 +70,7 @@ const InpatientList = () => {
             return 'selected-row';
         } else return '';
     };
+
     // handle go to visit (medical sheets) function
     const handleGoToVisit = async (encounterData, patientData) => {
         await startEncounter(encounterData).unwrap();
@@ -188,7 +189,8 @@ const InpatientList = () => {
         },
         {
             key: 'location',
-            title: <Translate>LOCATION</Translate>
+            title: <Translate>LOCATION</Translate>,
+            render: (row: any) => <span className='location-table-style '>{row?.apRoom?.name}<br />{row?.apBed?.name}</span>
         },
         {
             key: 'chiefComplaint',

@@ -555,6 +555,24 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    savePatientAdmission: builder.mutation({
+      query: (admit: ApAdmitOutpatientInpatient) => ({
+        url: `/encounter/patient_admission_from_waiting_list`,
+        method: 'POST',
+        body: admit
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getInpatientEncounters: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/inpatient-encounter-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 });
 
@@ -614,6 +632,8 @@ export const {
   useGetElectrocardiogramECGsQuery,
   useDischargeInpatientEncounterMutation,
   useAdmitToInpatientEncounterMutation,
-  useGetWaitingListEncounterQuery
+  useGetWaitingListEncounterQuery,
+  useSavePatientAdmissionMutation,
+  useGetInpatientEncountersQuery
 } = encounterService;
 
