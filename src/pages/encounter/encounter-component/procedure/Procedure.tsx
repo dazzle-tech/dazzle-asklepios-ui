@@ -363,7 +363,7 @@ const Referrals = () => {
       title: <Translate>PERFORM</Translate>,
       flexGrow: 1,
        render: (rowData: any) => {
-                     const isDisabled = rowData.currentDepartment;
+                     const isDisabled =! rowData.currentDepartment;
      
                      return (
                          <FaBedPulse
@@ -571,7 +571,7 @@ const Referrals = () => {
         title='Perform Details'
         actionButtonFunction={handleSave}
         size='full'
-        content={<Perform encounter={encounter} patient={patient} procedure={procedure} setProcedure={setProcedure} edit={edit} />}
+        content={<Perform proRefetch={proRefetch} encounter={encounter} patient={patient} procedure={procedure} setProcedure={setProcedure} edit={edit} />}
       ></MyModal>
 
 

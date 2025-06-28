@@ -2310,7 +2310,7 @@ export interface ApPostProcedureAnesthesia {
 	respirationLkey:string;
 	circulationLkey:string;
 	consciousnessLkey:string;
-	oxygenSaturation:string;
+	oxygenSaturationLkey:string;
 	aldreteScore:number;
 	createdBy:string;
 	updatedBy:string;

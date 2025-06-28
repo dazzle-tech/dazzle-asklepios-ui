@@ -157,6 +157,7 @@ const AddEditUom = ({
                 color="var(--deep-blue)"
                 onClick={() => {
                   setOpenAddEditPopup(true);
+                  setChildStep(0);
                 }}
                 width="109px"
               >
@@ -285,14 +286,14 @@ const AddEditUom = ({
 
 
   // child modal content
-  const conjureFormChildContent = (stepNumber) => {
-    switch (stepNumber) {
+  const conjureFormChildContent = () => {
+    switch (childStep) {
       case 0:
         return (
           <Form>
             <MyInput
               fieldType="select"
-              fieldName="unitLkey"
+              fieldName="uomLkey"
               record={uomUnit}
               setRecord={setUomUnit}
               selectDataValue="key"
@@ -312,6 +313,7 @@ const AddEditUom = ({
           </Form>
         );
       case 1:
+        
         return (
           <Form>
             <MyInput
@@ -320,7 +322,7 @@ const AddEditUom = ({
               record={uomRelation}
               setRecord={setUomRelation}
               selectDataValue="key"
-              selectDataLabel="lovDisplayVale"
+              selectDataLabel="uomorder"
               placeholder="Unit"
               selectData={UOMGroupUnitListResponse?.object ?? []}
               menuMaxHeight={200}
@@ -332,7 +334,7 @@ const AddEditUom = ({
               record={uomRelation}
               setRecord={setUomRelation}
               selectDataValue="key"
-              selectDataLabel="lovDisplayVale"
+              selectDataLabel="uomorder"
               placeholder="Unit"
               selectData={UOMGroupUnitListResponse?.object ?? []}
               menuMaxHeight={200}
@@ -384,6 +386,9 @@ const AddEditUom = ({
         uomGroupKey: uom?.key
       }).unwrap().then(() => {
         uomUnitRefetch();
+        setUomUnit({
+          ...newApUomGroupsUnits
+        });
         dispatch(
           notify({
             msg: 'The UOM group unit was successfully ',
@@ -410,6 +415,9 @@ const AddEditUom = ({
         uomGroupKey: uom?.key
       }).unwrap().then(() => {
         uomRelationRefetch();
+        setUomRelation({
+          ...newApUomGroupsRelation
+        });
         dispatch(
           notify({
             msg: 'The UOM group Relation was successfully ',
@@ -456,7 +464,7 @@ const AddEditUom = ({
       filters: updatedFilters,
 
     }));
-  }, [uomUnit]);
+  }, [uom?.key]);
 
   
   useEffect(() => {

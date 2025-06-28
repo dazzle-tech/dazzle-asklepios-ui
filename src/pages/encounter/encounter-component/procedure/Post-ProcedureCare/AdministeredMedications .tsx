@@ -19,7 +19,6 @@ const AdministeredMedications = ({ procedure, user }) => {
     const [selectedIngredientList, setSelectedIngredientList] = useState<any>([]);
     const [saveProcedureAdministeredMedications] = useSaveProcedureAdministeredMedicationsMutation();
     const { data: unitLovQueryResponse } = useGetLovValuesByCodeQuery('UOM');
-    console.log("unitLovQueryResponse", unitLovQueryResponse?.object);
     const [medication, setMedication] = useState({ ...newApProcedureAdministeredMedications, procedureKey: procedure?.key });
     const { data: activeIngredients, isLoading: loadingActiveIngredients } = useGetActiveIngredientQuery({ ...initialListRequest });
     const [listRequest, setListRequest] = useState<ListRequest>({

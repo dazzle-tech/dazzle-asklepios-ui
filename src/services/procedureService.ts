@@ -73,116 +73,148 @@ export const procedureService = createApi({
     })
     ,
     getPostProcedureVitals: builder.query({
-  query: (listRequest: ListRequest) => ({
-    url: `/procedures/post-procedure-vitals-list?${fromListRequestToQueryParams(listRequest)}`
-  }),
-  onQueryStarted,
-  keepUnusedDataFor: 5
-}),
-savePostProcedureVitals: builder.mutation({
-  query: (data) => ({
-    url: `/procedures/save-post-procedure-vitals`,
-    method: 'POST',
-    body: data
-  }),
-  onQueryStarted,
-  transformResponse: (response: any) => response.object
-}),
+      query: (listRequest: ListRequest) => ({
+        url: `/procedures/post-procedure-vitals-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    savePostProcedureVitals: builder.mutation({
+      query: (data) => ({
+        url: `/procedures/save-post-procedure-vitals`,
+        method: 'POST',
+        body: data
+      }),
+      onQueryStarted,
+      transformResponse: (response: any) => response.object
+    }),
 
-// PRE PROCEDURE ASSESSMENT
-getPreProcedureAssessment: builder.query({
-  query: (listRequest: ListRequest) => ({
-    url: `/procedures/pre-procedure-assessment-list?${fromListRequestToQueryParams(listRequest)}`
-  }),
-  onQueryStarted,
-  keepUnusedDataFor: 5
-}),
-savePreProcedureAssessment: builder.mutation({
-  query: (data) => ({
-    url: `/procedures/save-pre-procedure-assessment`,
-    method: 'POST',
-    body: data
-  }),
-  onQueryStarted,
-  transformResponse: (response: any) => response.object
-}),
+    // PRE PROCEDURE ASSESSMENT
+    getPreProcedureAssessment: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/procedures/pre-procedure-assessment-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    savePreProcedureAssessment: builder.mutation({
+      query: (data) => ({
+        url: `/procedures/save-pre-procedure-assessment`,
+        method: 'POST',
+        body: data
+      }),
+      onQueryStarted,
+      transformResponse: (response: any) => response.object
+    }),
 
-// PROCEDURE PERFORMANCE
-getProcedurePerformance: builder.query({
-  query: (listRequest: ListRequest) => ({
-    url: `/procedures/procedure-performance-list?${fromListRequestToQueryParams(listRequest)}`
-  }),
-  onQueryStarted,
-  keepUnusedDataFor: 5
-}),
-saveProcedurePerformance: builder.mutation({
-  query: (data) => ({
-    url: `/procedures/save-procedure-performance`,
-    method: 'POST',
-    body: data
-  }),
-  onQueryStarted,
-  transformResponse: (response: any) => response.object
-}),
+    // PROCEDURE PERFORMANCE
+    getProcedurePerformance: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/procedures/procedure-performance-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    saveProcedurePerformance: builder.mutation({
+      query: (data) => ({
+        url: `/procedures/save-procedure-performance`,
+        method: 'POST',
+        body: data
+      }),
+      onQueryStarted,
+      transformResponse: (response: any) => response.object
+    }),
 
-// PROCEDURE ADMINISTERED MEDICATIONS
-getProcedureAdministeredMedications: builder.query({
-  query: (listRequest: ListRequest) => ({
-    url: `/procedures/procedure-administered-medications-list?${fromListRequestToQueryParams(listRequest)}`
-  }),
-  onQueryStarted,
-  keepUnusedDataFor: 5
-}),
-saveProcedureAdministeredMedications: builder.mutation({
-  query: (data) => ({
-    url: `/procedures/save-procedure-administered-medications`,
-    method: 'POST',
-    body: data
-  }),
-  onQueryStarted,
-  transformResponse: (response: any) => response.object
-}),
+    // PROCEDURE ADMINISTERED MEDICATIONS
+    getProcedureAdministeredMedications: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/procedures/procedure-administered-medications-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    saveProcedureAdministeredMedications: builder.mutation({
+      query: (data) => ({
+        url: `/procedures/save-procedure-administered-medications`,
+        method: 'POST',
+        body: data
+      }),
+      onQueryStarted,
+      transformResponse: (response: any) => response.object
+    }),
 
-getPostProcedureCareList: builder.query({
-  query: (listRequest: ListRequest) => ({
-    url: `/procedures/post-procedure-care-list?${fromListRequestToQueryParams(listRequest)}`
-  }),
-  onQueryStarted,
-  keepUnusedDataFor: 5
-}),
-savePostProcedureCare: builder.mutation({
-  query: (data) => ({
-    url: `/procedures/save-post-procedure-care`,
-    method: 'POST',
-    body: data
-  }),
-  onQueryStarted,
-  transformResponse: (response: any) => response.object
-}),
-getProcedurServiceEquipmentList: builder.query({
-  query: (listRequest: ListRequest) => ({
-    url: `/procedures/procedure-service-equipment-list?${fromListRequestToQueryParams(listRequest)}`
-  }),
-  onQueryStarted,
-  keepUnusedDataFor: 5
-}),
-saveProcedureEquipmentService: builder.mutation({
-  query: (data) => ({
-    url: `/procedures/save-procedure-service-equipment`,
-    method: 'POST',
-    body: data
-  }),
-  onQueryStarted,
-  transformResponse: (response: any) => response.object
-}),
- deleteProcedureserviceEquipment: builder.mutation({
+    getPostProcedureCareList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/procedures/post-procedure-care-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    savePostProcedureCare: builder.mutation({
+      query: (data) => ({
+        url: `/procedures/save-post-procedure-care`,
+        method: 'POST',
+        body: data
+      }),
+      onQueryStarted,
+      transformResponse: (response: any) => response.object
+    }),
+    getProcedurServiceEquipmentList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/procedures/procedure-service-equipment-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    saveProcedureEquipmentService: builder.mutation({
+      query: (data) => ({
+        url: `/procedures/save-procedure-service-equipment`,
+        method: 'POST',
+        body: data
+      }),
+      onQueryStarted,
+      transformResponse: (response: any) => response.object
+    }),
+    deleteProcedureserviceEquipment: builder.mutation({
       query: (key: string) => ({
         url: `/procedures/delete-procedure-service-equipment?key=${key}`,
         method: 'DELETE'
       }),
       onQueryStarted: onQueryStarted
-    })
-
+    }),
+    getPostProcedureCheckListList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/procedures/post-procedure-checklist-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    savePostProcedureCheckList: builder.mutation({
+      query: (data) => ({
+        url: `/procedures/save-post-procedure-checklist`,
+        method: 'POST',
+        body: data
+      }),
+      onQueryStarted,
+      transformResponse: (response: any) => response.object
+    }),
+     getPostProcedurAnesthesiaList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/procedures/post-procedure-anesthesia-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    savePostProcedurAnesthesia: builder.mutation({
+      query: (data) => ({
+        url: `/procedures/save-post-procedure-anesthesia`,
+        method: 'POST',
+        body: data
+      }),
+      onQueryStarted,
+      transformResponse: (response: any) => response.object
+    }),
+  
   })
 });
 
@@ -194,7 +226,7 @@ export const {
   useGetProceduresStaffQuery,
   useSaveProceduresStaffMutation,
   useDeleteProceduresStaffMutation,
-   useGetPostProcedureVitalsQuery,
+  useGetPostProcedureVitalsQuery,
   useSavePostProcedureVitalsMutation,
   useGetPreProcedureAssessmentQuery,
   useSavePreProcedureAssessmentMutation,
@@ -206,7 +238,12 @@ export const {
   useSavePostProcedureCareMutation,
   useGetProcedurServiceEquipmentListQuery,
   useSaveProcedureEquipmentServiceMutation,
-  useDeleteProcedureserviceEquipmentMutation
+  useDeleteProcedureserviceEquipmentMutation,
+  useGetPostProcedurAnesthesiaListQuery,
+  useSavePostProcedurAnesthesiaMutation,
+  useGetPostProcedureCheckListListQuery,
+  useSavePostProcedureCheckListMutation,
+
 
 } = procedureService;
 
