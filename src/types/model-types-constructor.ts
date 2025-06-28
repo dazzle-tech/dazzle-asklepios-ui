@@ -409,6 +409,22 @@ export const newApBed:modelTypes.ApBed = {
 	statusLkey:undefined,
 } 
 
+export const newApBedTransactions:modelTypes.ApBedTransactions = { 
+	key:undefined,
+	encounterKey:undefined,
+	patientKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	fromRoomKey:undefined,
+	fromBedKey:undefined,
+	toRoomKey:undefined,
+	toBedKey:undefined,
+} 
+
 export const newApBrandMedicationSubstitutes:modelTypes.ApBrandMedicationSubstitutes = { 
 	key:undefined,
 	brandKey:undefined,
@@ -2287,11 +2303,48 @@ export const newApPhysicalExamArea:modelTypes.ApPhysicalExamArea = {
 	isValid:undefined,
 } 
 
+export const newApPostProcedureAnesthesia:modelTypes.ApPostProcedureAnesthesia = { 
+	key:undefined,
+	procedureKey:undefined,
+	activityLkey:undefined,
+	respirationLkey:undefined,
+	circulationLkey:undefined,
+	consciousnessLkey:undefined,
+	oxygenSaturation:'',
+	aldreteScore:0,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isvalid:undefined,
+} 
+
 export const newApPostProcedureCare:modelTypes.ApPostProcedureCare = { 
 	key:undefined,
 	procedureKey:undefined,
 	diagnoseKey:undefined,
 	patientCondition:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isvalid:undefined,
+} 
+
+export const newApPostProcedureChecklist:modelTypes.ApPostProcedureChecklist = { 
+	key:undefined,
+	procedureKey:undefined,
+	nauseaVomiting:undefined,
+	awakeAndOriented:undefined,
+	toleratingOralFluids:undefined,
+	ambulatingIndependently:undefined,
+	voidedUrine:undefined,
+	noActiveBleeding:undefined,
+	painScore4:undefined,
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',
@@ -2379,6 +2432,8 @@ export const newApPreProcedureAssessment:modelTypes.ApPreProcedureAssessment = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isvalid:undefined,
+	asaScoreLkey:undefined,
+	airwayGradeLkey:undefined,
 } 
 
 export const newApPrescription:modelTypes.ApPrescription = { 

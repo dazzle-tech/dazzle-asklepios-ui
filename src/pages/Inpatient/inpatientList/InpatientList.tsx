@@ -21,6 +21,9 @@ import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import BedManagementModal from './bedBedManagementModal/BedManagementModal';
+import { faBed } from '@fortawesome/free-solid-svg-icons';
+import ChangeBedModal from './changeBedModal/ChangeBedModal';
+
 const InpatientList = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -37,6 +40,7 @@ const InpatientList = () => {
     const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
     const [openBedManagementModal, setOpenBedManagementModal] = useState(false);
     const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+    const [openChangeBedModal, setOpenChangeBedModal] = useState(false);
     const [startEncounter] = useStartEncounterMutation();
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -63,7 +67,7 @@ const InpatientList = () => {
         refetch: refetchEncounter,
         isLoading
     } = useGetInpatientEncountersQuery(listRequest);
-
+    
     //Functions
     const isSelected = rowData => {
         if (rowData && encounter && rowData.key === encounter.key) {
@@ -268,6 +272,7 @@ const InpatientList = () => {
                 const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
                 const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
                 const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
+                const tooltipChangeBed = <Tooltip>Change Bed</Tooltip>;
                 return (
                     <Form layout="inline" fluid className="nurse-doctor-form">
                         <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
@@ -298,6 +303,17 @@ const InpatientList = () => {
                                     }}
                                 >
                                     <FontAwesomeIcon icon={faUserNurse} />
+                                </MyButton>
+                            </div>
+                        </Whisper>
+                        <Whisper trigger="hover" placement="top" speaker={tooltipChangeBed}>
+                            <div>
+                                <MyButton
+                                    size="small"
+                                    backgroundColor="gray"
+                                    onClick={() => { setOpenChangeBedModal(true) }}
+                                >
+                                    <FontAwesomeIcon icon={faBed} />
                                 </MyButton>
                             </div>
                         </Whisper>
@@ -378,6 +394,12 @@ const InpatientList = () => {
                 open={openBedManagementModal}
                 setOpen={setOpenBedManagementModal}
                 encounter={encounter} />
+            <ChangeBedModal
+                open={openChangeBedModal}
+                setOpen={setOpenChangeBedModal}
+                localEncounter={encounter}
+                refetchInpatientList={refetchEncounter} />
+
         </Panel>
     );
 };

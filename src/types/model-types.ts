@@ -408,6 +408,22 @@ export interface ApBed {
 	statusLkey:string;
 } 
 
+export interface ApBedTransactions { 
+	key:string;
+	encounterKey:string;
+	patientKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	fromRoomKey:string;
+	fromBedKey:string;
+	toRoomKey:string;
+	toBedKey:string;
+} 
+
 export interface ApBrandMedicationSubstitutes { 
 	key:string;
 	brandKey:string;
@@ -2286,11 +2302,48 @@ export interface ApPhysicalExamArea {
 	isValid:boolean;
 } 
 
+export interface ApPostProcedureAnesthesia { 
+	key:string;
+	procedureKey:string;
+	activityLkey:string;
+	respirationLkey:string;
+	circulationLkey:string;
+	consciousnessLkey:string;
+	oxygenSaturation:string;
+	aldreteScore:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
 export interface ApPostProcedureCare { 
 	key:string;
 	procedureKey:string;
 	diagnoseKey:string;
 	patientCondition:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApPostProcedureChecklist { 
+	key:string;
+	procedureKey:string;
+	nauseaVomiting:boolean;
+	awakeAndOriented:boolean;
+	toleratingOralFluids:boolean;
+	ambulatingIndependently:boolean;
+	voidedUrine:boolean;
+	noActiveBleeding:boolean;
+	painScore4:boolean;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
@@ -2378,6 +2431,8 @@ export interface ApPreProcedureAssessment {
 	updatedAt:number;
 	deletedAt:number;
 	isvalid:boolean;
+	asaScoreLkey:string;
+	airwayGradeLkey:string;
 } 
 
 export interface ApPrescription { 

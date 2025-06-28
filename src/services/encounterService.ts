@@ -1,4 +1,4 @@
-import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress } from './../types/model-types';
+import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -573,6 +573,17 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    saveBedTransaction: builder.mutation({
+      query: (bedTransaction: ApBedTransactions) => ({
+        url: `/encounter/save-bed-transaction`,
+        method: 'POST',
+        body: bedTransaction
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
   })
 });
 
@@ -634,6 +645,7 @@ export const {
   useAdmitToInpatientEncounterMutation,
   useGetWaitingListEncounterQuery,
   useSavePatientAdmissionMutation,
-  useGetInpatientEncountersQuery
+  useGetInpatientEncountersQuery,
+  useSaveBedTransactionMutation
 } = encounterService;
 
