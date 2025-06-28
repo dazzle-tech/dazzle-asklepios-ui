@@ -422,6 +422,7 @@ export interface ApBedTransactions {
 	fromBedKey:string;
 	toRoomKey:string;
 	toBedKey:string;
+	departmentKey:string;
 } 
 
 export interface ApBrandMedicationSubstitutes { 

@@ -423,6 +423,7 @@ export const newApBedTransactions:modelTypes.ApBedTransactions = {
 	fromBedKey:undefined,
 	toRoomKey:undefined,
 	toBedKey:undefined,
+	departmentKey:undefined,
 } 
 
 export const newApBrandMedicationSubstitutes:modelTypes.ApBrandMedicationSubstitutes = { 

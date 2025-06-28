@@ -584,6 +584,13 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
+       getBedTransactionsList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/bed-transactions-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 });
 
@@ -646,6 +653,7 @@ export const {
   useGetWaitingListEncounterQuery,
   useSavePatientAdmissionMutation,
   useGetInpatientEncountersQuery,
-  useSaveBedTransactionMutation
+  useSaveBedTransactionMutation,
+  useGetBedTransactionsListQuery
 } = encounterService;
 
