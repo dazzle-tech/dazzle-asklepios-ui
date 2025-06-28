@@ -23,7 +23,7 @@ import PreProcedureAssessment from './Pre-ProcedureAssessment/PreProcedureAssess
 import ProcedurePerforming from './ProcedurePerforming/ProcedurePerforming';
 import PostProcedureCare from './Post-ProcedureCare/PostProcedureCare';
 import EquipmentAndLogistics from './EquipmentAndLogistics/EquipmentAndLogistics';
-const Perform = ({ edit, patient, encounter, procedure, setProcedure, }) => {
+const Perform = ({ edit, patient, encounter, procedure, setProcedure,proRefetch }) => {
     const authSlice = useAppSelector(state => state.auth);
     const dispatch = useAppDispatch();
     const { data: CategoryLovQueryResponse } = useGetLovValuesByCodeQuery('PROCEDURE_CAT');
@@ -55,7 +55,8 @@ const Perform = ({ edit, patient, encounter, procedure, setProcedure, }) => {
             })
                 .unwrap()
                 .then(() => {
-
+                    proRefetch();
+             
                 });
 
             dispatch(notify({ msg: 'Changed Status Successfully', sev: "success" }));

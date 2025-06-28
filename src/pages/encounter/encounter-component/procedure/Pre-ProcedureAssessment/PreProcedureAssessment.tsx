@@ -11,47 +11,29 @@ import { useSavePreProcedureAssessmentMutation } from "@/services/procedureServi
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
 import VitalSigns from "@/pages/vital-signs/VitalSigns";
-const handleDownload = attachment => {
-    const byteCharacters = atob(attachment.fileContent);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: attachment.contentType });
+import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 
-    // Create a temporary  element and trigger the download
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = attachment.fileName;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-};
 
 const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
     const dispatch = useAppDispatch();
     const [procedureAssessment, setProocedureAssessment] = useState({ ...newApPreProcedureAssessment });
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [saveAssessment] = useSavePreProcedureAssessmentMutation();
-
-
+    const { data: airwayLovQueryResponse } = useGetLovValuesByCodeQuery('AIRWAY_GRADES');
+    const { data: asaLovQueryResponse } = useGetLovValuesByCodeQuery('ASA_SCORE');
     const handleSave = async () => {
         try {
-            saveAssessment({ ...procedureAssessment,procedureKey:procedure?.key }).unwrap();
+            saveAssessment({ ...procedureAssessment, procedureKey: procedure?.key }).unwrap();
             dispatch(notify({ msg: ' Saved successfully', sev: "success" }));
-
         }
         catch (error) {
             dispatch(notify({ msg: 'Saved failed', sev: 'error' }));
         }
     }
-    const handleClear=()=>{
-         setProocedureAssessment({...newApPreProcedureAssessment})
-     }
-     
+    const handleClear = () => {
+        setProocedureAssessment({ ...newApPreProcedureAssessment })
+    }
+
     return (<>
         <Row gutter={15} className="d">
             <Form fluid>
@@ -162,59 +144,49 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
                                 <Text>Pre-Procedure Vitals</Text>
 
                             </div>
-                            <Divider /> 
-                            <VitalSigns object={procedureAssessment} setObject={setProocedureAssessment}/>
-                            {/* <Row>
-                                <Col md={11}>
-                                    <MyInput
-                                        width="100%"
-                                        fieldType="number"
-                                        fieldName="bloodPressureSystolic"
-                                        record={procedureAssessment}
-                                        setRecord={setProocedureAssessment} />
-                                </Col>
-                                <Col md={2}><div style={{ padding: '20px', paddingTop: '30px' }}>/</div></Col>
-                                <Col md={11}>
-                                    <MyInput
-                                        width="100%"
-                                        fieldType="number"
-                                        fieldName="bloodPressureDiastolic"
-                                        record={procedureAssessment}
-                                        setRecord={setProocedureAssessment} />
-                                </Col>
-                            </Row>
-                            <Row>
-                                <Col md={11}>
-                                    <MyInput
-                                        width="100%"
-                                        fieldType="number"
-                                        fieldName="heartRate"
-                                        rightAddon={"bpm"}
-                                        rightAddonwidth={45}
-                                        record={procedureAssessment}
-                                        setRecord={setProocedureAssessment} /></Col>
-                                <Col md={2}></Col>
-                                <Col md={11}>
-                                    <MyInput
-                                        width="100%"
-                                        fieldType="number"
-                                        rightAddon={"C"}
-                                        fieldName="temperature"
-                                        record={procedureAssessment}
-                                        setRecord={setProocedureAssessment} /></Col>
-                            </Row>
-                            <Row>
-                                <Col md={11}>
-                                    <MyInput
-                                        width="100%"
-                                        fieldType="number"
-                                        rightAddon={" % "}
-                                        fieldName="oxygenSaturation"
-                                        record={procedureAssessment}
-                                        setRecord={setProocedureAssessment} />
-                                </Col>
-                            </Row> */}
+                            <Divider />
+                            <VitalSigns object={procedureAssessment} setObject={setProocedureAssessment} />
+
+                        </div>
+                    </Row>
+                    <Row>
+                        <div className='container-form'>
+                            <div className='title-div'>
+                                <Text>Pre Anesthesia</Text>
+
                             </div>
+                            <Divider />
+                         
+                                <Row>
+                                    <Col md={12}>
+                                        <MyInput
+                                            width="100%"
+                                            selectData={asaLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            fieldType="select"
+                                            fieldName='asaScoreLkey'
+                                            record={procedureAssessment}
+                                            setRecord={setProocedureAssessment}
+                                        />
+                                    </Col>
+                                    <Col md={12}>
+                                        <MyInput
+                                            width="100%"
+                                            selectData={airwayLovQueryResponse?.object ?? []}
+                                            selectDataLabel="lovDisplayVale"
+                                            selectDataValue="key"
+                                            fieldType="select"
+                                            fieldName='airwayGradeLkey'
+                                            record={procedureAssessment}
+                                            setRecord={setProocedureAssessment}
+                                        />
+
+                                    </Col>
+                                </Row>
+                   
+
+                        </div>
                     </Row>
                     <Row>
                         <div className='container-form'>
@@ -246,7 +218,7 @@ const PreProcedureAssessment = ({ procedure, setActiveTab, user, patient }) => {
         <div className='bt-div'>
 
             <div className="bt-right">
-                 <MyButton onClick={handleClear}>Clear</MyButton>
+                <MyButton onClick={handleClear}>Clear</MyButton>
                 <MyButton onClick={handleSave} >Save</MyButton>
                 <MyButton onClick={() => setActiveTab("3")}>Complete and Next</MyButton>
             </div>

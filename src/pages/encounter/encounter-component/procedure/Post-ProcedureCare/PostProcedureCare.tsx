@@ -5,6 +5,8 @@ import '../styles.less'
 import Diagnosis from "./Diagnosis";
 import ProcedureVitals from "./ProcedureVitals";
 import AdministeredMedications from "./AdministeredMedications ";
+import PostProcedureAnesthesia from "./PostProcedureAnesthesia";
+import PostProcedureChecklist from "./PostProcedureChecklist";
 const PostProcedureCare = ({ procedure, setActiveTab, user }) => {
 
 
@@ -12,16 +14,35 @@ const PostProcedureCare = ({ procedure, setActiveTab, user }) => {
         <Row gutter={15} className="r">
             <Col md={12}>
                 {/* Procedure Care */}
-                <Diagnosis procedure={procedure} user={user} />
-                <br />
+                <Row>
+                      <Col md={24}>
+                    <Diagnosis procedure={procedure} user={user} /></Col>
+                </Row>
+                
+              
                 <Row>
                     <Col md={24}>
                     <AdministeredMedications procedure={procedure} user={user} />
                   </Col>
                 </Row>
+                <Row>
+                    <Col md={24}>
+                    <PostProcedureAnesthesia procedure={procedure} user={user} /></Col>
+                </Row>
+                
             </Col>
             <Col md={12}>
+            <Row>
+                  <Col md={24}>
                 <ProcedureVitals procedure={procedure} user={user} /></Col>
+            </Row>
+                
+              <Row>
+                  <Col md={24}>
+                 <PostProcedureChecklist procedure={procedure} user={user} /></Col>        
+              </Row>
+               
+                </Col>
 
         </Row>
 

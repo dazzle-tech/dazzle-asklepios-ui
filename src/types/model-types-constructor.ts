@@ -2311,7 +2311,8 @@ export const newApPostProcedureAnesthesia:modelTypes.ApPostProcedureAnesthesia =
 	respirationLkey:undefined,
 	circulationLkey:undefined,
 	consciousnessLkey:undefined,
-	oxygenSaturation:'',
+	oxygenSaturationLkey:undefined,
+
 	aldreteScore:0,
 	createdBy:'',
 	updatedBy:'',

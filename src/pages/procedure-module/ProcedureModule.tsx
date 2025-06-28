@@ -463,7 +463,7 @@ const ProcedureModule = () => {
                 title='Perform Details'
                 hideActionBtn
                 size='full'
-                content={<Perform encounter={encounter} patient={patient} procedure={procedure} setProcedure={setProcedure} edit={false} />}
+                content={<Perform proRefetch={proRefetch} encounter={encounter} patient={patient} procedure={procedure} setProcedure={setProcedure} edit={false} />}
             ></MyModal>
 
 
