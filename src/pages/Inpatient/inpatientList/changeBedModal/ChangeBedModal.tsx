@@ -50,7 +50,6 @@ const ChangeBedModal = ({ open, setOpen, localEncounter, refetchInpatientList })
     const { data: fetchBedsListQueryResponce } = useGetBedListQuery(bedListRequest, { skip: !newLocation?.toRoomKey });
     // Fetch Room list response
     const { data: roomListResponseLoading } = useGetRoomListQuery(listRequest);
-
     // handle Save To Change Bed Function
     const handleSave = async () => {
         try {
@@ -59,7 +58,8 @@ const ChangeBedModal = ({ open, setOpen, localEncounter, refetchInpatientList })
                 encounterKey: encounter.key,
                 patientKey: encounter?.patientKey,
                 fromRoomKey: encounter?.apRoom?.key,
-                fromBedKey: encounter?.apBed?.key
+                fromBedKey: encounter?.apBed?.key,
+                departmentKey:encounter?.resourceObject?.key
             }).unwrap();
             dispatch(notify({ msg: 'Change Bed Successfully', sev: 'success' }));
             setOpen(false);
