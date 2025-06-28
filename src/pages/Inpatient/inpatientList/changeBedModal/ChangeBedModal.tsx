@@ -58,8 +58,8 @@ const ChangeBedModal = ({ open, setOpen, localEncounter, refetchInpatientList })
                 ...newLocation,
                 encounterKey: encounter.key,
                 patientKey: encounter?.patientKey,
-                fromRoomKey: encounter?.ApRoom?.key,
-                fromBedKey: encounter?.ApBed?.key
+                fromRoomKey: encounter?.apRoom?.key,
+                fromBedKey: encounter?.apBed?.key
             }).unwrap();
             dispatch(notify({ msg: 'Change Bed Successfully', sev: 'success' }));
             setOpen(false);
