@@ -567,8 +567,11 @@ export const encounterService = createApi({
       }
     }),
     getInpatientEncounters: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/encounter/inpatient-encounter-list?${fromListRequestToQueryParams(listRequest)}`
+      query: ({ listRequest, department_key }) => ({
+        url: `/encounter/inpatient-encounter-list?${fromListRequestToQueryParams(listRequest)}`,
+        headers: {
+         department_key:department_key
+        }
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
@@ -584,7 +587,7 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
-       getBedTransactionsList: builder.query({
+    getBedTransactionsList: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/encounter/bed-transactions-list?${fromListRequestToQueryParams(listRequest)}`
       }),
