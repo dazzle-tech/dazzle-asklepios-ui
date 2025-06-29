@@ -5,9 +5,16 @@ import { useSavePostProcedureCheckListMutation } from "@/services/procedureServi
 import { newApPostProcedureChecklist } from "@/types/model-types-constructor";
 import { notify } from "@/utils/uiReducerActions";
 import { ms } from "date-fns/locale";
-import React, { useState } from "react";
+import React, { forwardRef, useImperativeHandle, useState } from "react";
 import { Col, Divider, Form, Row, Text } from "rsuite";
-const PostProcedureChecklist = ({ procedure, user }) => {
+export type checklistRef = {
+    handleSave: () => void;
+};
+type ChickListProps = {
+    procedure: any,
+    user: any
+};
+const PostProcedureChecklist = forwardRef<checklistRef, ChickListProps>(({ procedure, user }, ref) => {
     const dispatch = useAppDispatch();
     const [checklist, setChecklist] = useState({ ...newApPostProcedureChecklist });
     const [saveChecklist, saveChecklistMutation] = useSavePostProcedureCheckListMutation();
@@ -27,8 +34,10 @@ const PostProcedureChecklist = ({ procedure, user }) => {
             console.error("Error saving checklist:", error);
         }
     }
-
-    return (<div className='container-form'>
+  useImperativeHandle(ref, () => ({
+         handleSave
+      }));
+    return (<div className='container-form' ref={ref}>
         <div className='title-div'>
             <Text>Post-Procedure Checklist</Text>
         </div>
@@ -108,10 +117,7 @@ const PostProcedureChecklist = ({ procedure, user }) => {
                     />
                 </Col>
             </Row></Form>
-            <MyButton
-                className="save-button"
-                onClick={handleSave}
-                loading={saveChecklistMutation.isLoading}> Save</MyButton>
+      
     </div>);
-}
+});
 export default PostProcedureChecklist;

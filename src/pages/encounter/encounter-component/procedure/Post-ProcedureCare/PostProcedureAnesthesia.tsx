@@ -6,9 +6,16 @@ import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { newApPostProcedureAnesthesia } from "@/types/model-types-constructor";
 import { notify } from "@/utils/uiReducerActions";
 import { set } from "lodash";
-import React, { useEffect, useState } from "react";
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { Col, Divider, Form, Row, Text } from "rsuite";
-const PostProcedureAnesthesia = ({procedure,user}) => {
+export type anesthsiaRef = {
+    handleSave: () => void;
+};
+type AnesthesiaProps = {
+    procedure: any,
+    user: any
+};
+const PostProcedureAnesthesia= forwardRef<anesthsiaRef, AnesthesiaProps>(({ procedure, user }, ref) => {
     const dispatch = useAppDispatch();
     // Fetching the LOV values for Aldrete score components
     const { data: oxsatQueryResponse } = useGetLovValuesByCodeQuery('ALDRETE_OXSAT');
@@ -58,12 +65,16 @@ const PostProcedureAnesthesia = ({procedure,user}) => {
                 procedureKey: procedure?.key,
                 createdBy: user?.key,
             }).unwrap();
-            dispatch(notify({ msg: 'Saved Successfully', sev: "success" }));
+            dispatch(notify({ msg: 'Saved Anesthesia Successfully', sev: "success" }));
         } catch (error) {
             dispatch(notify({ msg: 'Error saving anesthesia', sev: "error" }));
         }
     }
-    return (  <div className='container-form'>
+    // use to
+    useImperativeHandle(ref, () => ({
+             handleSave
+          }));
+    return (  <div className='container-form' ref={ref}>
             <div className='title-div'>
                 <Text>Post-Procedure Anesthesia</Text>
             </div>
@@ -131,12 +142,8 @@ const PostProcedureAnesthesia = ({procedure,user}) => {
                         setRecord={setAnesthesia}/>
 
                 </Col></Form>
-                <Row>
-                    <MyButton 
-                    onClick={handleSave}
-                    >Save</MyButton>
-                </Row>
+              
         </Row>
     </div>);
-}
+});
 export default PostProcedureAnesthesia;
