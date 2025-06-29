@@ -4,8 +4,7 @@ import { useSaveAccessRoleMutation } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
 import { faKey } from '@fortawesome/free-solid-svg-icons';
-import clsx from 'clsx';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
 const AddEditAccessRole = ({
@@ -22,22 +21,21 @@ const AddEditAccessRole = ({
   const [saveAccessRole] = useSaveAccessRoleMutation();
 
   // Handle save Access Role
-const handleSave = async () => {
-  try {
-    setLoad(true);
-    setOpen(false);
-    await saveAccessRole(accessRole).unwrap();
-    if (refetch != null) {
-      refetch();
+  const handleSave = async () => {
+    try {
+      setLoad(true);
+      setOpen(false);
+      await saveAccessRole(accessRole).unwrap();
+      if (refetch != null) {
+        refetch();
+      }
+      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
+    } catch (error) {
+      dispatch(notify({ msg: 'Error while saving access role', sev: 'error' }));
+    } finally {
+      setLoad(false);
     }
-    dispatch( notify({  msg: 'Saved Successfully',  sev: 'success'  }) );
-  } catch (error) {
-    dispatch(  notify({  msg: 'Error while saving access role',  sev: 'error' }) );
-  } finally {
-    setLoad(false);
-  }
-};
-
+  };
 
   // Modal contant
   const conjureFormContent = (stepNumber = 0) => {
@@ -49,52 +47,56 @@ const handleSave = async () => {
               fieldName="name"
               record={accessRole}
               setRecord={setAccessRole}
-              width={width > 600 ? 520 : 250}
+              width="100%"
             />
             <MyInput
               fieldName="description"
               record={accessRole}
               setRecord={setAccessRole}
-              width={width > 600 ? 520 : 250}
+              width="100%"
             />
             <div
-              className={clsx('', {
-                'container-of-two-fields-access-roles': width > 600
-              })}
+              className="container-of-two-fields-access-role"
             >
+              <div className='container-of-field-access-role'>
               <MyInput
                 fieldName="accessLevel"
                 record={accessRole}
                 setRecord={setAccessRole}
-                width={250}
+                width="100%"
               />
+              </div>
+              <div className='container-of-field-access-role'>
               <MyInput
                 fieldName="passwordErrorRetries"
                 record={accessRole}
                 setRecord={setAccessRole}
-                width={250}
+                width="100%"
               />
+              </div>
             </div>
+            <br/>
             <div
-              className={clsx('', {
-                'container-of-passwordExpires': width > 600
-              })}
+              className="container-of-two-fields-access-role"
             >
-              <Form className='form' >
+              <div className='container-of-field-access-role'>
                 <MyInput
                   fieldName="passwordExpires"
                   fieldType="checkbox"
                   record={accessRole}
                   setRecord={setAccessRole}
+                  width="100%"
                 />
-              </Form>
+                </div>
+                <div className='container-of-field-access-role'>
               <MyInput
                 fieldName="passwordExpiresAfterDays"
                 record={accessRole}
                 disabled={!accessRole.passwordExpires}
                 setRecord={setAccessRole}
-                width={250}
+                width="100%"
               />
+              </div>
             </div>
           </Form>
         );
@@ -109,8 +111,8 @@ const handleSave = async () => {
       content={conjureFormContent}
       actionButtonLabel={accessRole?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
-      steps={[{ title: 'Access Rule Rule info', icon: <FontAwesomeIcon icon={faKey }/>}]}
-      size={width > 600 ? '36vw' : '25vw'}
+      steps={[{ title: 'Access Rule Rule info', icon: <FontAwesomeIcon icon={faKey} /> }]}
+      size={width > 600 ? '36vw' : '70vw'}
     />
   );
 };

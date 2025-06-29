@@ -105,7 +105,7 @@ const AddEditDVMRule = ({
               fieldName="ruleDescription"
               record={dvmRule}
               setRecord={setDvmRule}
-              width={520}
+              width="100%"
             />
             <MyInput
               fieldLabel="Validation Type"
@@ -120,9 +120,10 @@ const AddEditDVMRule = ({
               selectDataValue="v"
               record={dvmRule}
               setRecord={setDvmRule}
-              width={520}
+              width="100%"
             />
             <div className="container-of-two-fields-dvm">
+              <div className='container-of-field-dvm '>
               <MyInput
                 fieldLabel="Field"
                 fieldType="select"
@@ -132,8 +133,11 @@ const AddEditDVMRule = ({
                 selectDataValue="key"
                 record={dvmRule}
                 setRecord={setDvmRule}
-                width={250}
+               width="100%"
+                menuMaxHeight={200}
               />
+              </div>
+              <div className='container-of-field-dvm '>
               <MyInput
                 fieldLabel="Rule Type"
                 fieldType="select"
@@ -143,11 +147,15 @@ const AddEditDVMRule = ({
                 selectDataValue="value"
                 record={dvmRule}
                 setRecord={setDvmRule}
-                width={250}
+                width="100%"
+                menuMaxHeight={200}
               />
+              </div>
             </div>
-            <div className="container-of-rule-values">
+            <br/>
+            <div className="container-of-two-fields-dvm">
               <div
+              className='container-of-field-dvm '
                 //This inline style cannot be removed because it uses dynamic variables
                 style={{
                   visibility:
@@ -162,6 +170,7 @@ const AddEditDVMRule = ({
                 />
               </div>
               <div
+              className='container-of-field-dvm '
                 //This inline style cannot be removed because it uses dynamic variables
                 style={{
                   visibility: hasSecondRuleValue() ? 'visible' : 'hidden'
@@ -183,6 +192,7 @@ const AddEditDVMRule = ({
               setRecord={setDvmRule}
             />
             <div
+               className='container-of-two-fields-dvm'
               //This inline style cannot be removed because it uses dynamic variables
               style={{
                 visibility: dvmRule.isDependant ? 'visible' : 'hidden',
@@ -190,6 +200,7 @@ const AddEditDVMRule = ({
                 gap: '20px'
               }}
             >
+              <div className='container-of-field-dvm '>
               <MyInput
                 fieldLabel="Dependant Rule"
                 fieldType="select"
@@ -201,6 +212,8 @@ const AddEditDVMRule = ({
                 setRecord={setDvmRule}
                 width={250}
               />
+              </div>
+              <div className='container-of-field-dvm '>
               <MyInput
                 fieldLabel="Dependant Rule Check"
                 fieldType="select"
@@ -215,6 +228,7 @@ const AddEditDVMRule = ({
                 setRecord={setDvmRule}
                 width={250}
               />
+              </div>
             </div>
           </Form>
         );
@@ -230,7 +244,7 @@ const AddEditDVMRule = ({
       actionButtonLabel={dvmRule?.key ? 'Save' : 'Create'}
       actionButtonFunction={handleSave}
       steps={[{ title: 'DVM Rule info', icon: <FontAwesomeIcon icon={faClipboardCheck} /> }]}
-      size={width > 600 ? '570px' : '300px'}
+      size={width > 600 ? '36vw' : '70vw'}
     />
   );
 };

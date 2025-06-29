@@ -1,10 +1,11 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Pagination, Panel } from 'rsuite';
+import { Panel } from 'rsuite';
 import { MdDelete } from 'react-icons/md';
 import { IoSettingsSharp } from 'react-icons/io5';
 import { MdModeEdit } from 'react-icons/md';
+import { FaUndo } from 'react-icons/fa';
 import { useGetAccessRolesQuery, useSaveAccessRoleMutation } from '@/services/setupService';
 import { Carousel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
@@ -22,23 +23,35 @@ import MyButton from '@/components/MyButton/MyButton';
 import './styles.less';
 import MyTable from '@/components/MyTable';
 import AddEditAccessRole from './AddEditAccessRole';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { notify } from '@/utils/uiReducerActions';
 
 const AccessRoles = () => {
   const [accessRole, setAccessRole] = useState<ApAccessRole>({ ...newApAccessRole });
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  const [listRequest, setListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    pageSize: 15
+  });
   const [popupOpen, setPopupOpen] = useState(false);
   const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
   const [subView, setSubView] = useState('');
   const [recordOfSearch, setRecordOfSearch] = useState({ screen: '' });
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [load, setLoad] = useState<boolean>(false);
+  const [openConfirmDeleteAccessRole, setOpenConfirmDeleteAccessRole] = useState<boolean>(false);
+  const [stateOfDeleteAccessRole, setStateOfDeleteAccessRole] = useState<string>('delete');
   const dispatch = useAppDispatch();
 
   // Fetch accessRole list response
   const { data: accessRoleListResponse, refetch, isFetching } = useGetAccessRolesQuery(listRequest);
   // save AccessRole
-  const [, saveAccessRoleMutation] = useSaveAccessRoleMutation();
+  const [saveAccessRole, saveAccessRoleMutation] = useSaveAccessRoleMutation();
 
+
+  // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = accessRoleListResponse?.extraNumeric ?? 0;
   // Page header setup
   const divContent = (
     <div title="title">
@@ -127,6 +140,21 @@ const AccessRoles = () => {
         );
     }
   };
+
+  // Handle page change in navigation
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+
+  // Handle change rows per page in navigation
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
+    });
+  };
+
   // Icons column for
   const iconsForActions = (rowData: ApAccessRole) => (
     <div className="container-of-icons-access-roles">
@@ -135,6 +163,7 @@ const AccessRoles = () => {
         size={24}
         fill="var(--primary-gray)"
         onClick={() => toSubView('screen-matrix')}
+        className="icons-access-role"
       />
       <MdModeEdit
         title="Edit"
@@ -144,47 +173,107 @@ const AccessRoles = () => {
           setAccessRole(rowData);
           setPopupOpen(true);
         }}
+        className="icons-access-role"
       />
-      <MdDelete title="Deactivate" size={24} fill="var(--primary-pink)" />
+      {rowData?.isValid ? (
+        <MdDelete
+          className="icons-access-role"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            setStateOfDeleteAccessRole('deactivate');
+            setOpenConfirmDeleteAccessRole(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-access-role"
+          title="Activate"
+          size={21}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setStateOfDeleteAccessRole('reactivate');
+            setOpenConfirmDeleteAccessRole(true);
+          }}
+        />
+      )}
     </div>
   );
+
+   // handle deactivate AccessRole
+    const handleDeactivate = () => {
+      setOpenConfirmDeleteAccessRole(false);
+      saveAccessRole({ ...accessRole, isValid: false })
+        .unwrap()
+        .then(() => {
+          refetch();
+          dispatch(
+            notify({
+              msg: 'The Access Role was successfully Deactivated',
+              sev: 'success'
+            })
+          );
+        })
+        .catch(() => {
+          dispatch(
+            notify({
+              msg: 'Faild to Deactivate this Access Role',
+              sev: 'error'
+            })
+          );
+        });
+    };
+    // handle reactivate AccessRole
+    const handleReactivate = () => {
+      setOpenConfirmDeleteAccessRole(false);
+      saveAccessRole({ ...accessRole, isValid: true })
+        .unwrap()
+        .then(() => {
+          refetch();
+          dispatch(
+            notify({
+              msg: 'The Access Role was successfully Reactivated',
+              sev: 'success'
+            })
+          );
+        })
+        .catch(() => {
+          dispatch(
+            notify({
+              msg: 'Faild to Reactivate this Access Role',
+              sev: 'error'
+            })
+          );
+        });
+    };
+    
   //table columns
   const tableColumns = [
     {
       key: 'name',
-      title: <Translate>Name</Translate>,
-      flexGrow: 4,
-      dataKey: 'name'
+      title: <Translate>Name</Translate>
     },
     {
       key: 'description',
-      title: <Translate>Description</Translate>,
-      flexGrow: 4,
-      dataKey: 'description'
+      title: <Translate>Description</Translate>
     },
     {
       key: 'accessLevel',
-      title: <Translate>Access Level</Translate>,
-      flexGrow: 4,
-      dataKey: 'accessLevel'
+      title: <Translate>Access Level</Translate>
     },
     {
       key: 'passwordErrorRetires',
-      title: <Translate>Password Error Retires</Translate>,
-      flexGrow: 4,
-      dataKey: 'passwordErrorRetires'
+      title: <Translate>Password Error Retires</Translate>
     },
     {
       key: 'passwordExpires',
       title: <Translate>Password Expires</Translate>,
-      flexGrow: 3,
       render: rowData => <span>{rowData.passwordExpires ? 'Yes' : 'No'}</span>
     },
     {
       key: 'passwordExpiresAfterDays',
-      title: <Translate>Password Expires After</Translate>,
-      flexGrow: 3,
-      dataKey: 'passwordExpiresAfterDays'
+      title: <Translate>Password Expires After</Translate>
     },
     {
       key: 'icons',
@@ -232,30 +321,12 @@ const AccessRoles = () => {
           onSortChange={(sortBy, sortType) => {
             if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
           }}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
         />
-        <div className="container-of-pagination-access-roles">
-          <Pagination
-            prev
-            next
-            first={width > 500}
-            last={width > 500}
-            ellipsis={width > 500}
-            boundaryLinks={width > 500}
-            maxButtons={width < 500 ? 1 : 2}
-            size="xs"
-            layout={['limit', '|', 'pager']}
-            limitOptions={[5, 15, 30]}
-            limit={listRequest.pageSize}
-            activePage={listRequest.pageNumber}
-            onChangePage={pageNumber => {
-              setListRequest({ ...listRequest, pageNumber });
-            }}
-            onChangeLimit={pageSize => {
-              setListRequest({ ...listRequest, pageSize });
-            }}
-            total={accessRoleListResponse?.extraNumeric ?? 0}
-          />
-        </div>
         <AddEditAccessRole
           open={popupOpen}
           setOpen={setPopupOpen}
@@ -264,6 +335,15 @@ const AccessRoles = () => {
           setAccessRole={setAccessRole}
           setLoad={setLoad}
           refetch={refetch}
+        />
+        <DeletionConfirmationModal
+          open={openConfirmDeleteAccessRole}
+          setOpen={setOpenConfirmDeleteAccessRole}
+          itemToDelete="Access Role"
+          actionButtonFunction={
+            stateOfDeleteAccessRole == 'deactivate' ? handleDeactivate : handleReactivate
+          }
+          actionType={stateOfDeleteAccessRole}
         />
       </Panel>
       {conjureSubViews()}

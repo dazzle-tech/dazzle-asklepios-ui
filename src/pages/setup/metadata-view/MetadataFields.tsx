@@ -1,7 +1,7 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Pagination, Panel, Form } from 'rsuite';
+import { Panel, Form } from 'rsuite';
 import { useGetMetadataFieldsQuery } from '@/services/setupService';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import MyInput from '@/components/MyInput';
@@ -11,13 +11,17 @@ import { ApMetadataField } from '@/types/model-types';
 import { newApMetadataField } from '@/types/model-types-constructor';
 import BackButton from '@/components/BackButton/BackButton';
 const MetadataFields = ({ metadata, goBack }) => {
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest, pageSize: 15 });
   const [recordOFSearch, setRecordOFSearch] = useState({ fieldName: '' });
   const [metadataField, setMetadataField] = useState<ApMetadataField>({ ...newApMetadataField });
-  const [width, setWidth] = useState<number>(window.innerWidth);
 
   // Fetch metaDataFields list response
-  const { data: metadataFieldListResponse, isLoading } = useGetMetadataFieldsQuery(listRequest);
+  const { data: metadataFieldListResponse, isFetching } = useGetMetadataFieldsQuery(listRequest);
+
+    // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = metadataFieldListResponse?.extraNumeric ?? 0;
 
   // className for selected row
   const isSelected = rowData => {
@@ -28,12 +32,6 @@ const MetadataFields = ({ metadata, goBack }) => {
 
   // Effects
   useEffect(() => {
-    const handleResize = () => setWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
     if (metadata && metadata.key) {
       setListRequest(addFilterToListRequest('metadata_key', 'match', metadata.key, listRequest));
     }
@@ -42,6 +40,19 @@ const MetadataFields = ({ metadata, goBack }) => {
   useEffect(() => {
     handleFilterChange('fieldName', recordOFSearch['fieldName']);
   }, [recordOFSearch]);
+
+   // Handle page change in navigation
+      const handlePageChange = (_: unknown, newPage: number) => {
+        setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+      };
+      // Handle change rows per page in navigation
+      const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setListRequest({
+          ...listRequest,
+          pageSize: parseInt(event.target.value, 10),
+          pageNumber: 1
+        });
+      };
 
   // filter table
   const handleFilterChange = (fieldName, value) => {
@@ -110,7 +121,7 @@ const MetadataFields = ({ metadata, goBack }) => {
             data={metadataFieldListResponse?.object ?? []}
             columns={tableColumns}
             rowClassName={isSelected}
-            loading={isLoading}
+            loading={isFetching}
             onRowClick={rowData => {
               setMetadataField(rowData);
             }}
@@ -119,39 +130,14 @@ const MetadataFields = ({ metadata, goBack }) => {
             onSortChange={(sortBy, sortType) => {
               if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
             }}
+        page={pageIndex}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
           />
-          <div className="container-of-pagination-metadata">
-            <Pagination
-              prev
-              next
-              first={width > 500}
-              last={width > 500}
-              ellipsis={width > 500}
-              boundaryLinks={width > 500}
-              maxButtons={width < 500 ? 1 : 2}
-              size="xs"
-              layout={['limit', '|', 'pager']}
-              limitOptions={[5, 15, 30]}
-              limit={listRequest.pageSize}
-              activePage={listRequest.pageNumber}
-              onChangePage={pageNumber => {
-                setListRequest({ ...listRequest, pageNumber });
-              }}
-              onChangeLimit={pageSize => {
-                setListRequest({ ...listRequest, pageSize });
-              }}
-              total={metadataFieldListResponse?.extraNumeric ?? 0}
-            />
-          </div>
         </Panel>
       )}
-      {/* {(!metadata || !metadata.key) && (
-        // <IconButton appearance="ghost" color="cyan" icon={<ArowBackIcon />} onClick={goBack}>
-        //   No Valid Metadata Selected, Go Back
-        // </IconButton>
-
-        <MyButton appearance="ghost" prefixIcon={() => <ArowBackIcon />} onClick={goBack}>No Valid Metadata Selected, Go Back</MyButton>
-      )} */}
     </>
   );
 };

@@ -1,8 +1,9 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Drawer, List, Pagination, Panel } from 'rsuite';
-import { useGetScreensQuery } from '@/services/setupService';
+import { Drawer, List, Panel } from 'rsuite';
+import { useGetScreensQuery, useSaveScreenMutation } from '@/services/setupService';
+import { FaUndo } from 'react-icons/fa';
 import { useGetScreenMetadataQuery } from '@/services/dvmService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { ApScreen } from '@/types/model-types';
@@ -19,30 +20,46 @@ import './styles.less';
 import MyTable from '@/components/MyTable';
 import AddEditScreen from './AddEditScreen';
 import BackButton from '@/components/BackButton/BackButton';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
 const Screens = ({ module, goBack }) => {
+  const dispatch = useAppDispatch();
   const [screen, setScreen] = useState<ApScreen>({ ...newApScreen });
   const [screenPopupOpen, setScreenPopupOpen] = useState(false);
   const [screenMetadataPopupOpen, setScreenMetadataPopupOpen] = useState(false);
+  const [openConfirmDeleteModule, setOpenConfirmDeleteScreen] = useState<boolean>(false);
+  const [stateOfDeleteScreen, setStateOfDeleteScreen] = useState<string>('delete');
+  const [record, setRecord] = useState({ value: '' });
+  const [width, setWidth] = useState<number>(window.innerWidth);
+  const [load, setLoad] = useState<boolean>(false);
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
-    sortBy: 'viewOrder'
+    sortBy: 'viewOrder',
+    pageSize: 15
   });
   const [listRequestForMetadata, setListRequestForMetadata] = useState<ListRequest>({
     ...initialListRequest,
-    ignore: true
+    ignore: true,
+    pageSize: 15
   });
-  const [operationState, setOperationState] = useState<string>('New');
-  const [record, setRecord] = useState({ value: '' });
-  const [width, setWidth] = useState<number>(window.innerWidth);
   //fetch data
-  const { data: screenListResponse, refetch } = useGetScreensQuery(listRequest);
+  const { data: screenListResponse, refetch, isFetching } = useGetScreensQuery(listRequest);
   const { data: screenMetadataListResponse } = useGetScreenMetadataQuery(listRequestForMetadata);
-  //useEffects
+  //Save screen
+  const [saveScreen] = useSaveScreenMutation();
+  // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = screenListResponse?.extraNumeric ?? 0;
+
+  // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
   useEffect(() => {
     if (module && module.key) {
       setListRequest(addFilterToListRequest('module_key', 'match', module.key, listRequest));
@@ -50,6 +67,7 @@ const Screens = ({ module, goBack }) => {
     setScreenPopupOpen(false);
     setScreen({ ...newApScreen });
   }, [module]);
+
   useEffect(() => {
     if (screen && screen.key) {
       setListRequestForMetadata(
@@ -57,26 +75,30 @@ const Screens = ({ module, goBack }) => {
       );
     }
   }, [screen]);
+
   useEffect(() => {
     if (screenMetadataListResponse) {
       console.log(screenMetadataListResponse);
     }
   }, [screenMetadataListResponse]);
+
   useEffect(() => {
     handleFilterChange('name', record['value']);
   }, [record]);
+
   //handle click on Add New Button
   const handleScreenNew = () => {
-    setOperationState('New');
     setScreenPopupOpen(true);
     setScreen({ ...newApScreen, moduleKey: module.key });
   };
+
   //className for selected row
   const isSelected = rowData => {
     if (rowData && screen && rowData.key === screen.key) {
       return 'selected-row';
     } else return '';
   };
+
   //filter table
   const handleFilterChange = (fieldName, value) => {
     if (value) {
@@ -91,17 +113,80 @@ const Screens = ({ module, goBack }) => {
     } else {
       // setListRequest(addFilterToListRequest('module_key', 'match', module.key, listRequest));
       setListRequest({
-              ...initialListRequest,
-              filters: [
-                {
-                  fieldName: 'module_key',
-                  operator: 'match',
-                  value: module.key
-                }
-              ]
-            });
+        ...initialListRequest,
+        filters: [
+          {
+            fieldName: 'module_key',
+            operator: 'match',
+            value: module.key
+          }
+        ]
+      });
     }
   };
+
+  // Handle page change in navigation
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+  // Handle change rows per page in navigation
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
+    });
+  };
+
+  // handle deactivate module
+  const handleDeactivate = async () => {
+    setOpenConfirmDeleteScreen(false);
+    try {
+      setLoad(true);
+      await saveScreen({ ...screen, isValid: false }).unwrap();
+      refetch();
+      dispatch(
+        notify({
+          msg: 'The Screen was successfully Deactivated',
+          sev: 'success'
+        })
+      );
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: 'Faild to Deactivate this Screen',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setLoad(false);
+    }
+  };
+  // handle reactivate screen
+  const handleReactivate = async () => {
+    setOpenConfirmDeleteScreen(false);
+    try {
+      setLoad(true);
+      await saveScreen({ ...screen, isValid: true }).unwrap();
+      refetch();
+      dispatch(
+        notify({
+          msg: 'The Screen was successfully Reactivated',
+          sev: 'success'
+        })
+      );
+    } catch (error) {
+      dispatch(
+        notify({
+          msg: 'Faild to Reactivate this Screen',
+          sev: 'error'
+        })
+      );
+    } finally {
+      setLoad(false);
+    }
+  };
+
   //icons column (edit, deactivate)
   const iconsForActions = (rowData: ApScreen) => (
     <div className="container-of-icons">
@@ -109,13 +194,34 @@ const Screens = ({ module, goBack }) => {
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
+        className="icons-modules"
         onClick={() => {
-          setScreen(rowData);
-          setOperationState('Edit');
           setScreenPopupOpen(true);
         }}
       />
-      <MdDelete title="Deactivate" fill="var(--primary-pink)" size={24} />
+      {rowData?.isValid ? (
+        <MdDelete
+          className="icons-modules"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            setStateOfDeleteScreen('deactivate');
+            setOpenConfirmDeleteScreen(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-modules"
+          title="Activate"
+          size={21}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setStateOfDeleteScreen('reactivate');
+            setOpenConfirmDeleteScreen(true);
+          }}
+        />
+      )}
     </div>
   );
   //table columns
@@ -123,7 +229,6 @@ const Screens = ({ module, goBack }) => {
     {
       key: 'icon',
       title: <Translate>Icon</Translate>,
-      flexGrow: 3,
       render: rowData => (
         <Icon fill="var(--primary-gray)" size="1.5em" as={icons[rowData.iconImagePath]} />
       )
@@ -131,31 +236,26 @@ const Screens = ({ module, goBack }) => {
     {
       key: 'name',
       title: <Translate>Name</Translate>,
-      flexGrow: 4,
       dataKey: 'name'
     },
     {
       key: 'description',
       title: <Translate>Description</Translate>,
-      flexGrow: 5,
       dataKey: 'description'
     },
     {
       key: 'viewOrder',
       title: <Translate>View Order</Translate>,
-      flexGrow: 4,
       dataKey: 'viewOrder'
     },
     {
       key: 'navPath',
       title: <Translate>Navigation Path</Translate>,
-      flexGrow: 4,
       dataKey: 'viewOrder'
     },
     {
       key: 'icons',
       title: <Translate></Translate>,
-      flexGrow: 3,
       render: rowData => iconsForActions(rowData)
     }
   ];
@@ -204,6 +304,7 @@ const Screens = ({ module, goBack }) => {
           <MyTable
             height={450}
             data={screenListResponse?.object ?? []}
+            loading={load || isFetching}
             columns={tableColumns}
             rowClassName={isSelected}
             onRowClick={rowData => {
@@ -214,38 +315,29 @@ const Screens = ({ module, goBack }) => {
             onSortChange={(sortBy, sortType) => {
               if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
             }}
+            page={pageIndex}
+            rowsPerPage={rowsPerPage}
+            totalCount={totalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
           />
-          <div className="container-of-pagination-module">
-            <Pagination
-              prev
-              next
-              first={width > 500}
-              last={width > 500}
-              ellipsis={width > 500}
-              boundaryLinks={width > 500}
-              maxButtons={width < 500 ? 1 : 2}
-              size="xs"
-              layout={['limit', '|', 'pager']}
-              limitOptions={[5, 15, 30]}
-              limit={listRequest.pageSize}
-              activePage={listRequest.pageNumber}
-              onChangePage={pageNumber => {
-                setListRequest({ ...listRequest, pageNumber });
-              }}
-              onChangeLimit={pageSize => {
-                setListRequest({ ...listRequest, pageSize });
-              }}
-              total={screenListResponse?.extraNumeric ?? 0}
-            />
-          </div>
           <AddEditScreen
             open={screenPopupOpen}
             setOpen={setScreenPopupOpen}
-            operationState={operationState}
             width={width}
+            setLoad={setLoad}
             screen={screen}
             setScreen={setScreen}
             refetch={refetch}
+          />
+          <DeletionConfirmationModal
+            open={openConfirmDeleteModule}
+            setOpen={setOpenConfirmDeleteScreen}
+            itemToDelete="Screen"
+            actionButtonFunction={
+              stateOfDeleteScreen == 'deactivate' ? handleDeactivate : handleReactivate
+            }
+            actionType={stateOfDeleteScreen}
           />
         </Panel>
       )}

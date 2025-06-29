@@ -6,29 +6,34 @@ import { useGetScreensQuery } from '@/services/setupService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdDelete } from 'react-icons/md';
 import { MdModeEdit } from 'react-icons/md';
+import { FaUndo } from 'react-icons/fa';
 import MyButton from '@/components/MyButton/MyButton';
 import { newApDvmRule } from '@/types/model-types-constructor';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
-import { useGetDvmRulesQuery, useGetScreenMetadataQuery } from '@/services/dvmService';
-import { Tabs, Tab } from 'rsuite';
+import { useGetDvmRulesQuery, useGetScreenMetadataQuery, useSaveDvmRuleMutation } from '@/services/dvmService';
+import { Tabs } from 'rsuite';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
 import './styles.less';
 import MyTable from '@/components/MyTable';
 import AddEditDVMRule from './AddEditDVMRule';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { notify } from '@/utils/uiReducerActions';
 const DVM = () => {
   const dispatch = useAppDispatch();
   const [dvmRule, setDvmRule] = useState({ ...newApDvmRule });
   const [popupOpen, setPopupOpen] = useState(false);
-  const [record, setRecord] = useState({ filter: '', value: '' });
   const [recordOfScreen, setRecordOfScreen] = useState({ screenKey: '' });
   const [recordOfScreenMetaData, setRecordOfScreenMetaData] = useState({ screenMetadataKey: '' });
+  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
   const [width, setWidth] = useState<number>(window.innerWidth);
+  const [openConfirmDeleteDvm, setOpenConfirmDeleteDvm] = useState<boolean>(false);
+  const [stateOfDeleteDvm, setStateOfDeleteDvm] = useState<string>('delete');
 
-// Initialize list request with default filters
+  // Initialize list request with default filters
   const [screensListRequest] = useState<ListRequest>({
     ...initialListRequest
   });
@@ -38,14 +43,14 @@ const DVM = () => {
   });
   const [metaDataFieldsListRequest, setMetaDataFieldsListRequest] = useState<ListRequest>({
     ...initialListRequest,
-    pageSize: 1000,
+    pageSize: 15,
     ignore: true
   });
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
-    ignore: true
+    ignore: true,
+    pageSize: 15
   });
-  
 
   // Fetch screens list response
   const { data: screenListResponse } = useGetScreensQuery(screensListRequest);
@@ -54,8 +59,9 @@ const DVM = () => {
     screensMetadataListRequest
   );
   // Fetch dvmRules list response
-  const { data: dvmRulesListResponse, refetch, isLoading } = useGetDvmRulesQuery(listRequest);
-
+  const { data: dvmRulesListResponse, refetch, isFetching } = useGetDvmRulesQuery(listRequest);
+  //save dvm
+  const [saveDvm] = useSaveDvmRuleMutation();
   // Page header
   const divContent = (
     <div className="title-dvm">
@@ -65,6 +71,10 @@ const DVM = () => {
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Data_Validation'));
   dispatch(setDivContent(divContentHTML));
+  // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = dvmRulesListResponse?.extraNumeric ?? 0;
   // Fields that can be used for filtering
   const filterFields = [
     { label: 'Type', value: 'validationType' },
@@ -78,6 +88,19 @@ const DVM = () => {
   ];
 
   // Effects
+  // update list when filter is changed
+  useEffect(() => {
+    if (recordOfFilter['filter']) {
+      handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
+    } else {
+      setListRequest({
+        ...initialListRequest,
+        pageSize: listRequest.pageSize,
+        pageNumber: 1
+      });
+    }
+  }, [recordOfFilter]);
+
   useEffect(() => {
     if (recordOfScreen['screenKey']) {
       setScreensMetadataListRequest(
@@ -124,10 +147,6 @@ const DVM = () => {
     };
   }, [location.pathname, dispatch]);
 
-  useEffect(() => {
-    handleFilterChange(record['filter'], record['value']);
-  }, [record]);
-
   // Handle click on Add New button
   const handleNew = () => {
     setPopupOpen(true);
@@ -159,77 +178,181 @@ const DVM = () => {
     }
   };
   //icons column (edit, deactivate)
-  const iconsForActions = () => (
+  const iconsForActions = rowData => (
     <div className="container-of-icons-dvm">
       <MdModeEdit
         title="Edit"
+        className="icons-dvm"
         size={24}
         fill="var(--primary-gray)"
         onClick={() => {
           setPopupOpen(true);
         }}
       />
-      <MdDelete title="Deactivate" size={24} fill="var(--primary-pink)" />
+      {rowData?.isValid ? (
+        <MdDelete
+          className="icons-dvm"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            setStateOfDeleteDvm('deactivate');
+            setOpenConfirmDeleteDvm(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-modules"
+          title="Activate"
+          size={21}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setStateOfDeleteDvm('reactivate');
+            setOpenConfirmDeleteDvm(true);
+          }}
+        />
+      )}
     </div>
   );
+
+  // Handle page change in navigation
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+  // Handle change rows per page in navigation
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
+    });
+  };
 
   //table columns
   const tableColumns = [
     {
       key: 'validationType',
-      title: <Translate>Type</Translate>,
-      flexGrow: 2,
-      dataKey: 'validationType'
+      title: <Translate>Type</Translate>
     },
     {
       key: 'ruleDescription',
-      title: <Translate>Description</Translate>,
-      flexGrow: 4,
-      dataKey: 'ruleDescription'
+      title: <Translate>Description</Translate>
     },
     {
       key: 'fieldName',
-      title: <Translate>Field Name</Translate>,
-      flexGrow: 3,
-      dataKey: 'fieldName'
+      title: <Translate>Field Name</Translate>
     },
     {
       key: 'fieldDataType',
-      title: <Translate>Data Type</Translate>,
-      flexGrow: 3,
-      dataKey: 'fieldDataType'
+      title: <Translate>Data Type</Translate>
     },
     {
       key: 'ruleType',
-      title: <Translate>Rule Type</Translate>,
-      flexGrow: 3,
-      dataKey: 'ruleType'
+      title: <Translate>Rule Type</Translate>
     },
     {
       key: 'ruleValue',
-      title: <Translate>Rule Value</Translate>,
-      flexGrow: 3,
-      dataKey: 'ruleValue'
+      title: <Translate>Rule Value</Translate>
     },
     {
       key: 'ruleValueTwo',
-      title: <Translate>Secondary Rule Value</Translate>,
-      flexGrow: 3,
-      dataKey: 'ruleValueTwo'
+      title: <Translate>Secondary Rule Value</Translate>
     },
     {
       key: 'isDependant',
       title: <Translate>Is Dependant</Translate>,
-      flexGrow: 3,
-      dataKey: 'isDependant'
+      render: rowData => {
+        return <p>{rowData?.isDependant ? 'Yes' : 'No'}</p>;
+      }
     },
     {
       key: 'icons',
       title: <Translate>Rule Value</Translate>,
-      flexGrow: 3,
-      render: () => iconsForActions()
+      render: rowData => iconsForActions(rowData)
     }
   ];
+
+  // handle deactivate DVM rule
+  const handleDeactivate = () => {
+    setOpenConfirmDeleteDvm(false);
+     saveDvm({ ...dvmRule, isValid: false })
+      .unwrap()
+      .then(() => {
+        refetch();
+        dispatch(
+          notify({
+            msg: 'The DVM rule was successfully Deactivated',
+            sev: 'success'
+          })
+        );
+      })
+      .catch(() => {
+        dispatch(
+          notify({
+            msg: 'Faild to Deactivate this DVM rule',
+            sev: 'error'
+          })
+        );
+      });
+  };
+  // handle reactivate DVM rule
+  const handleReactivate = () => {
+    setOpenConfirmDeleteDvm(false);
+    saveDvm({ ...dvmRule, isValid: true })
+      .unwrap()
+      .then(() => {
+        refetch();
+        dispatch(
+          notify({
+            msg: 'The DVM rule was successfully Reactivated',
+            sev: 'success'
+          })
+        );
+      })
+      .catch(() => {
+        dispatch(
+          notify({
+            msg: 'Faild to Reactivate this DVM rule',
+            sev: 'error'
+          })
+        );
+      });
+  };
+
+  // Filter table
+  const filters = () => (
+    <Form layout="inline" fluid className="container-of-filter-fields-diagnostic">
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={recordOfFilter}
+        setRecord={updatedRecord => {
+          setRecordOfFilter({
+            ...recordOfFilter,
+            filter: updatedRecord.filter,
+            value: ''
+          });
+        }}
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+        menuMaxHeight={300}
+      />
+
+      <MyInput
+        fieldName="value"
+        fieldType="text"
+        record={recordOfFilter}
+        setRecord={setRecordOfFilter}
+        showLabel={false}
+        placeholder="Search"
+        menuMaxHeight={300}
+      />
+    </Form>
+  );
 
   return (
     <Panel>
@@ -248,6 +371,7 @@ const DVM = () => {
             record={recordOfScreen}
             setRecord={setRecordOfScreen}
             showLabel={false}
+            menuMaxHeight={300}
           />
         </Form>
         <Form>
@@ -261,40 +385,14 @@ const DVM = () => {
             record={recordOfScreenMetaData}
             setRecord={setRecordOfScreenMetaData}
             showLabel={false}
+            menuMaxHeight={300}
           />
         </Form>
       </div>
       <hr />
       <Tabs defaultActiveKey="1" appearance="subtle" className="tabs">
-        <Tab active eventKey="1" title="Validation Rules">
-          <div className="container-of-header-actions-dvm">
-            <div className="container-of-search-dvm">
-              <Form layout='inline'>
-                <MyInput
-                  selectDataValue="value"
-                  selectDataLabel="label"
-                  selectData={filterFields}
-                  fieldName={'filter'}
-                  fieldType="select"
-                  record={record}
-                  setRecord={setRecord}
-                  showLabel={false}
-                  placeholder="Select Filter"
-                  width="150px"
-                />
-              </Form>
-              <Form layout='inline'>
-                <MyInput
-                  fieldName="value"
-                  fieldType="text"
-                  record={record}
-                  setRecord={setRecord}
-                  showLabel={false}
-                  placeholder="Search"
-                  width={'220px'}
-                />
-              </Form>
-            </div>
+        <Tabs.Tab active eventKey="1" title="Validation Rules">
+          <div className="container-of-add-new-button-dvm">
             <MyButton
               disabled={!recordOfScreenMetaData['screenMetadataKey']}
               prefixIcon={() => <AddOutlineIcon />}
@@ -310,7 +408,8 @@ const DVM = () => {
             data={dvmRulesListResponse?.object ?? []}
             columns={tableColumns}
             rowClassName={isSelected}
-            loading={isLoading}
+            loading={isFetching}
+            filters={filters()}
             onRowClick={rowData => {
               setDvmRule(rowData);
             }}
@@ -319,6 +418,11 @@ const DVM = () => {
             onSortChange={(sortBy, sortType) => {
               if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
             }}
+            page={pageIndex}
+            rowsPerPage={rowsPerPage}
+            totalCount={totalCount}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
           />
           <AddEditDVMRule
             open={popupOpen}
@@ -333,8 +437,17 @@ const DVM = () => {
             listRequest={listRequest}
             setListRequest={setListRequest}
           />
-        </Tab>
-        <Tab eventKey="2" title="Rule Combinations"></Tab>
+          <DeletionConfirmationModal
+            open={openConfirmDeleteDvm}
+            setOpen={setOpenConfirmDeleteDvm}
+            itemToDelete="DVM rule"
+            actionButtonFunction={
+              stateOfDeleteDvm == 'deactivate' ? handleDeactivate : handleReactivate
+            }
+            actionType={stateOfDeleteDvm}
+          />
+        </Tabs.Tab>
+        <Tabs.Tab eventKey="2" title="Rule Combinations"></Tabs.Tab>
       </Tabs>
     </Panel>
   );

@@ -1,10 +1,11 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Pagination, Panel } from 'rsuite';
-import { useGetModulesQuery } from '@/services/setupService';
+import { Panel } from 'rsuite';
+import { useGetModulesQuery, useSaveModuleMutation } from '@/services/setupService';
 import { Carousel } from 'rsuite';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
+import { FaUndo } from 'react-icons/fa';
 import { ApModule } from '@/types/model-types';
 import { newApModule } from '@/types/model-types-constructor';
 import { Form } from 'rsuite';
@@ -23,17 +24,31 @@ import { useAppDispatch } from '@/hooks';
 import MyTable from '@/components/MyTable';
 import AddEditModule from './AddEditModule';
 import './styles.less';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import { notify } from '@/utils/uiReducerActions';
 const Modules = () => {
   const dispatch = useAppDispatch();
   const [module, setModule] = useState<ApModule>({ ...newApModule });
   const [modulePopupOpen, setModulePopupOpen] = useState(false);
   const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
   const [subView, setSubView] = useState('');
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
   const [recordOfSearch, setRecordOfSearch] = useState({ name: '' });
   const [operationState, setOperationState] = useState<string>('New');
   const [width, setWidth] = useState<number>(window.innerWidth);
-  const { data: moduleListResponse, refetch, isLoading } = useGetModulesQuery(listRequest);
+  const [openConfirmDeleteModule, setOpenConfirmDeleteModule] = useState<boolean>(false);
+  const [stateOfDeleteModule, setStateOfDeleteModule] = useState<string>('delete');
+  const [listRequest, setListRequest] = useState<ListRequest>({
+    ...initialListRequest,
+    pageSize: 15
+  });
+  // Fetch modules list response
+  const { data: moduleListResponse, refetch, isFetching } = useGetModulesQuery(listRequest);
+  //save module
+  const [saveModule] = useSaveModuleMutation();
+  // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = moduleListResponse?.extraNumeric ?? 0;
   const divContent = (
     <div className="title">
       <h5>Modules</h5>
@@ -42,15 +57,18 @@ const Modules = () => {
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Modules'));
   dispatch(setDivContent(divContentHTML));
+
   // Effects
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
   useEffect(() => {
     handleFilterChange('name', recordOfSearch['name']);
   }, [recordOfSearch]);
+
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
@@ -70,7 +88,7 @@ const Modules = () => {
       return 'selected-row';
     } else return '';
   };
-  
+
   //filter table
   const handleFilterChange = (fieldName, value) => {
     if (value) {
@@ -86,6 +104,20 @@ const Modules = () => {
       setListRequest({ ...listRequest, filters: [] });
     }
   };
+
+  // Handle page change in navigation
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+  };
+  // Handle change rows per page in navigation
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
+    });
+  };
+
   const conjureSubViews = () => {
     if (carouselActiveIndex === 0) {
       return null;
@@ -102,11 +134,60 @@ const Modules = () => {
         );
     }
   };
+
+  // handle deactivate module
+  const handleDeactivate = () => {
+    setOpenConfirmDeleteModule(false);
+    saveModule({ ...module, isValid: false })
+      .unwrap()
+      .then(() => {
+        refetch();
+        dispatch(
+          notify({
+            msg: 'The Module was successfully Deactivated',
+            sev: 'success'
+          })
+        );
+      })
+      .catch(() => {
+        dispatch(
+          notify({
+            msg: 'Faild to Deactivate this Module',
+            sev: 'error'
+          })
+        );
+      });
+  };
+  // handle reactivate module
+  const handleReactivate = () => {
+    setOpenConfirmDeleteModule(false);
+    saveModule({ ...module, isValid: true })
+      .unwrap()
+      .then(() => {
+        refetch();
+        dispatch(
+          notify({
+            msg: 'The Module was successfully Reactivated',
+            sev: 'success'
+          })
+        );
+      })
+      .catch(() => {
+        dispatch(
+          notify({
+            msg: 'Faild to Reactivate this Module',
+            sev: 'error'
+          })
+        );
+      });
+  };
+
   const toSubView = (subview: string, rowData) => {
     setModule(rowData);
     setCarouselActiveIndex(1);
     setSubView(subview);
   };
+
   //icons column for(edit, deactivate and setup module screens)
   const iconsForActions = (rowData: ApModule) => (
     <div className="container-of-icons">
@@ -114,6 +195,7 @@ const Modules = () => {
         title="Setup Module Screens"
         size={24}
         fill="var(--primary-gray)"
+        className="icons-modules"
         onClick={() => {
           toSubView('screens', rowData);
         }}
@@ -122,45 +204,63 @@ const Modules = () => {
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
+        className="icons-modules"
         onClick={() => {
-          setModule(rowData);
           setOperationState('Edit');
           setModulePopupOpen(true);
         }}
       />
-      <MdDelete title="Deactivate" size={24} fill="var(--primary-pink)" />
+      {rowData?.isValid ? (
+        <MdDelete
+          className="icons-modules"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            setStateOfDeleteModule('deactivate');
+            setOpenConfirmDeleteModule(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-modules"
+          title="Activate"
+          size={21}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setStateOfDeleteModule('reactivate');
+            setOpenConfirmDeleteModule(true);
+          }}
+        />
+      )}
     </div>
   );
+
   //table columns
   const tableColumns = [
     {
       key: 'icon',
       title: <Translate>Icon</Translate>,
-      flexGrow: 3,
       render: rowData => <Icon fill="#969FB0" size="1.5em" as={icons[rowData.iconImagePath]} />
     },
     {
       key: 'name',
       title: <Translate>Name</Translate>,
-      flexGrow: 5,
       dataKey: 'name'
     },
     {
       key: 'description',
       title: <Translate>Description</Translate>,
-      flexGrow: 5,
       dataKey: 'description'
     },
     {
       key: 'viewOrder',
       title: <Translate>View Order</Translate>,
-      flexGrow: 3,
       dataKey: 'viewOrder'
     },
     {
       key: 'icons',
       title: <Translate></Translate>,
-      flexGrow: 3,
       render: rowData => iconsForActions(rowData)
     }
   ];
@@ -193,7 +293,7 @@ const Modules = () => {
           data={moduleListResponse?.object ?? []}
           columns={tableColumns}
           rowClassName={isSelected}
-          loading={isLoading}
+          loading={isFetching}
           onRowClick={rowData => {
             setModule(rowData);
           }}
@@ -202,30 +302,13 @@ const Modules = () => {
           onSortChange={(sortBy, sortType) => {
             if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
           }}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
         />
-        <div className="container-of-pagination-module">
-          <Pagination
-            prev
-            next
-            first={width > 500}
-            last={width > 500}
-            ellipsis={width > 500}
-            boundaryLinks={width > 500}
-            maxButtons={width < 500 ? 1 : 2}
-            size="xs"
-            layout={['limit', '|', 'pager']}
-            limitOptions={[5, 15, 30]}
-            limit={listRequest.pageSize}
-            activePage={listRequest.pageNumber}
-            onChangePage={pageNumber => {
-              setListRequest({ ...listRequest, pageNumber });
-            }}
-            onChangeLimit={pageSize => {
-              setListRequest({ ...listRequest, pageSize });
-            }}
-            total={moduleListResponse?.extraNumeric ?? 0}
-          />
-        </div>
+
         <AddEditModule
           open={modulePopupOpen}
           setOpen={setModulePopupOpen}
@@ -234,6 +317,15 @@ const Modules = () => {
           module={module}
           setModule={setModule}
           refetch={refetch}
+        />
+        <DeletionConfirmationModal
+          open={openConfirmDeleteModule}
+          setOpen={setOpenConfirmDeleteModule}
+          itemToDelete="Module"
+          actionButtonFunction={
+            stateOfDeleteModule == 'deactivate' ? handleDeactivate : handleReactivate
+          }
+          actionType={stateOfDeleteModule}
         />
       </Panel>
       {conjureSubViews()}
