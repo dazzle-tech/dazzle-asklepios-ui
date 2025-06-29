@@ -7,10 +7,10 @@ import React, { useEffect, useState } from "react";
 import Perform from "../encounter/encounter-component/procedure/Perform";
 import MyModal from "@/components/MyModal/MyModal";
 import MyTable from "@/components/MyTable";
-import { Checkbox, HStack, Tooltip, Whisper } from "rsuite";
+import { Checkbox, Form, HStack, Tooltip, Whisper } from "rsuite";
 import Translate from "@/components/Translate";
-import { formatDateWithoutSeconds } from "@/utils";
-import { FaBedPulse, FaFileArrowDown } from "react-icons/fa6";
+import { addFilterToListRequest, formatDateWithoutSeconds, fromCamelCaseToDBName } from "@/utils";
+import { FaBedPulse, FaFileArrowDown, FaPrint } from "react-icons/fa6";
 import { MdAttachFile } from "react-icons/md";
 import { notify } from "@/utils/uiReducerActions";
 import { useGetPatientAttachmentsListQuery } from "@/services/attachmentService";
@@ -18,6 +18,10 @@ import { useGetPatientByIdQuery, useLazyGetPatientByIdQuery } from "@/services/p
 import { useGetEncounterByIdQuery } from "@/services/encounterService";
 import { title } from "process";
 import { render } from "react-dom";
+import MyInput from "@/components/MyInput";
+import { add } from "lodash";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBarcode, faFileWaveform } from "@fortawesome/free-solid-svg-icons";
 const handleDownload = attachment => {
     const byteCharacters = atob(attachment.fileContent);
     const byteNumbers = new Array(byteCharacters.length);
@@ -45,7 +49,11 @@ const ProcedureModule = () => {
     const [procedure, setProcedure] = useState<any>({
         ...newApProcedure,
     });
-
+     const [dateFilter, setDateFilter] = useState({
+            fromDate: new Date(),
+            toDate: null
+        });
+    const [record, setRecord] = useState({ filter: '', value: '' });
     const { data: patient } = useGetPatientByIdQuery(procedure?.patientKey, { skip: !procedure?.patientKey });
     const { data: encounter } = useGetEncounterByIdQuery(procedure?.encounterKey, { skip: !procedure?.encounterKey });
     const [openPerformModal, setOpenPerformModal] = useState(false);
@@ -94,6 +102,13 @@ const ProcedureModule = () => {
 
     const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest);
     const [trigger] = useLazyGetPatientByIdQuery();
+
+    const filterFields = [
+        { label: 'PROCEDURE ID', value: 'procedureId' },
+        { label: 'Procedure Name', value: 'procedureName' },
+        { label: 'INDICATIONS', value: 'indications' },
+
+    ];
     useEffect(() => {
 
         if (!attachmentsModalOpen) {
@@ -120,7 +135,7 @@ const ProcedureModule = () => {
         attachmentRefetch()
 
     }, [attachmentsModalOpen])
-
+// Update the listRequest filters when showCanceled changes
     useEffect(() => {
         const upateFilter = [
             {
@@ -141,6 +156,7 @@ const ProcedureModule = () => {
         }));
     }, [showCanceled]);
     const [patients, setPatients] = useState({});
+// Fetch patients for each procedure
 
     useEffect(() => {
 
@@ -157,6 +173,95 @@ const ProcedureModule = () => {
 
         fetchPatients();
     }, [procedures]);
+   // Update the listRequest filters when record changes
+const addOrUpdateFilter = (filters, newFilter) => {
+    const index = filters.findIndex(f => f.fieldName === newFilter.fieldName);
+    if (index > -1) {
+        filters[index] = newFilter;
+    } else {
+        filters.push(newFilter);
+    }
+    return filters;
+};
+
+useEffect(() => {
+    if (record['filter']) {
+        handleFilterChange(record['filter'], record['value']);
+    } else {
+        setListRequest(prev => ({
+            ...prev,
+            filters: addOrUpdateFilter([...prev.filters], {
+                fieldName: 'current_department',
+                operator: 'match',
+                value: "false"
+            })
+        }));
+
+        setListRequest(prev => ({
+            ...prev,
+            filters: addOrUpdateFilter([...prev.filters], {
+                fieldName: 'status_lkey',
+                operator: showCanceled ? 'notMatch' : 'match',
+                value: '3621690096636149'
+            })
+        }));
+    }
+}, [record]);
+
+useEffect(() => {
+    let updatedFilters = [...listRequest.filters];
+
+    if (dateFilter.fromDate && dateFilter.toDate) {
+        dateFilter.fromDate.setHours(0, 0, 0, 0);
+        dateFilter.toDate.setHours(23, 59, 59, 999);
+
+        updatedFilters = addOrUpdateFilter(updatedFilters, {
+            fieldName: 'scheduled_date_time',
+            operator: 'between',
+            value: dateFilter.fromDate.getTime() + '-' + dateFilter.toDate.getTime()
+        });
+    } else if (dateFilter.fromDate) {
+        dateFilter.fromDate.setHours(0, 0, 0, 0);
+
+        updatedFilters = addOrUpdateFilter(updatedFilters, {
+            fieldName: 'scheduled_date_time',
+            operator: 'gte',
+            value: dateFilter.fromDate.getTime()
+        });
+    } else if (dateFilter.toDate) {
+        dateFilter.toDate.setHours(23, 59, 59, 999);
+
+        updatedFilters = addOrUpdateFilter(updatedFilters, {
+            fieldName: 'scheduled_date_time',
+            operator: 'lte',
+            value: dateFilter.toDate.getTime()
+        });
+    }
+
+    setListRequest(prev => ({
+        ...prev,
+        filters: updatedFilters
+    }));
+}, [dateFilter]);
+
+const handleFilterChange = (fieldName, value) => {
+    if (value) {
+        const newFilter = {
+            fieldName: fromCamelCaseToDBName(fieldName),
+            operator: 'containsIgnoreCase',
+            value
+        };
+
+        setListRequest(prev => ({
+            ...prev,
+            filters: addOrUpdateFilter([...prev.filters], newFilter)
+        }));
+    }
+};
+
+useEffect(() => {
+    console.log("List req", listRequest?.filters);
+}, [listRequest]);
     const OpenPerformModel = () => {
         setOpenPerformModal(true);
     };
@@ -184,7 +289,7 @@ const ProcedureModule = () => {
             }
         },
         {
-            key: "procedureName",
+            key: "Procedure Name",
             dataKey: "procedureName",
             title: <Translate>Procedure Name</Translate>,
             flexGrow: 1,
@@ -281,8 +386,8 @@ const ProcedureModule = () => {
             }
         },
         {
-            key: "",
-            dataKey: "",
+            key: "perform",
+           
             title: <Translate>PERFORM</Translate>,
             flexGrow: 1,
             render: (rowData: any) => {
@@ -298,7 +403,37 @@ const ProcedureModule = () => {
                 );
             }
         },
+        {
+            key:"print",
+            title:<Translate>Print</Translate>,
+            render: (rowData: any) => {
+                const isDisabled = rowData.currentDepartment;
 
+                return (
+                    <FaPrint
+                        size={22}
+                        fill="var(--primary-gray)"
+                        style={{ cursor:  "pointer" }}
+              
+                    />
+                );
+            }
+
+        }
+,
+{
+  key:"action",
+  title:<Translate>Action</Translate>,
+  render:(rowData:any)=>{
+    return     <HStack spacing={10}>
+                <Whisper placement="top" trigger="hover" speaker={<Tooltip>Wristband</Tooltip>}>
+                  <FontAwesomeIcon icon={faBarcode} style={{color:"var(--primary-gray)"}}/>
+                </Whisper>
+                <Whisper placement="top" trigger="hover" speaker={<Tooltip>Report</Tooltip>}>
+                 <FontAwesomeIcon icon={faFileWaveform}  style={{color:"var(--primary-gray)"}}/>
+                </Whisper></HStack>
+  }
+},
         {
             key: "facilityKey",
             dataKey: "facilityKey",
@@ -419,6 +554,55 @@ const ProcedureModule = () => {
             pageNumber: 1 // reset to first page
         });
     };
+
+    const filters = () => (
+        <Form layout="inline" fluid className="container-of-filter-fields-department">
+            <MyInput
+               
+                fieldType="date"
+                fieldLabel="From Date"
+                fieldName="fromDate"
+                record={dateFilter}
+                setRecord={setDateFilter}
+                showLabel={false}
+            />
+            <MyInput
+                
+                fieldType="date"
+                fieldLabel="To Date"
+                fieldName="toDate"
+                record={dateFilter}
+                setRecord={setDateFilter}
+                showLabel={false}
+            />
+            <MyInput
+                selectDataValue="value"
+                selectDataLabel="label"
+                selectData={filterFields}
+                fieldName="filter"
+                fieldType="select"
+                record={record}
+                setRecord={updatedRecord => {
+                    setRecord({
+                        ...record,
+                        filter: updatedRecord.filter,
+                        value: ''
+                    });
+                }}
+                showLabel={false}
+                placeholder="Select Filter"
+                searchable={false}
+            />
+            <MyInput
+                fieldName="value"
+                fieldType="text"
+                record={record}
+                setRecord={setRecord}
+                showLabel={false}
+                placeholder="Search"
+            />
+        </Form>
+    );
     return (
         <>
 
@@ -437,6 +621,7 @@ const ProcedureModule = () => {
             </div>
 
             <MyTable
+                filters={filters()}
                 columns={tableColumns}
                 data={procedures?.object ?? []}
                 onRowClick={rowData => {
