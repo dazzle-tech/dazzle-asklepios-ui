@@ -7,8 +7,9 @@ import {
   useSaveVaccineBrandMutation,
   useSaveVaccineMutation
 } from '@/services/setupService';
+import SearchIcon from '@rsuite/icons/Search';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import { Dropdown, Form } from 'rsuite';
 import './styles.less';
 import ChildModal from '@/components/ChildModal';
 import Translate from '@/components/Translate';
@@ -26,15 +27,7 @@ import { ApVaccineBrands } from '@/types/model-types';
 import { newApVaccineBrands } from '@/types/model-types-constructor';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-const AddEditVaccine = ({
-  open,
-  setOpen,
-  vaccine,
-  setVaccine,
-  edit_new,
-  setEdit_new,
-  refetch
-}) => {
+const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_new, refetch }) => {
   const dispatch = useAppDispatch();
 
   const [indicationsIcd, setIndicationsIcd] = useState({ indications: null });
@@ -42,6 +35,8 @@ const AddEditVaccine = ({
   const [openChildModal, setOpenChildModal] = useState<boolean>(false);
   const [indicationsDescription, setindicationsDescription] = useState<string>('');
   const [possibleDescription, setPossibleDescription] = useState('');
+  // const [searchKeyword, setSearchKeyword] = useState('');
+  const [recordOfSearch, setRecordOfSearch] = useState({ searchKeyword: '' });
   const [recordOfPossibleDescription, setRecordOfPossibleDescription] = useState({
     possibleDescription: ''
   });
@@ -51,7 +46,7 @@ const AddEditVaccine = ({
   const [editBrand, setEditBrand] = useState(false);
   const [openConfirmDeleteBrandModal, setOpenConfirmDeleteBrandModal] = useState<boolean>(false);
   const [stateOfDeleteBrandModal, setStateOfDeleteBrandModal] = useState<string>('delete');
-const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListRequest>({
+  const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
       {
@@ -61,7 +56,7 @@ const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListReq
       }
     ]
   });
-   const [icdListRequest] = useState<ListRequest>({
+  const [icdListRequest, setIcdListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
       {
@@ -72,14 +67,14 @@ const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListReq
     ]
   });
   // Fetch vaccine Brands list response
- const {
+  const {
     data: vaccineBrandsListResponseLoading,
     refetch: refetchVaccineBrand,
     isFetching
   } = useGetVaccineBrandsListQuery(vaccineBrandsListRequest);
   // Fetch icd list response
-   const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
-   // Fetch type Lov list response
+  const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
+  // Fetch type Lov list response
   const { data: typeLovQueryResponse } = useGetLovValuesByCodeQuery('VACCIN_TYP');
   // Fetch ROA Lov list response
   const { data: rOALovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
@@ -110,18 +105,18 @@ const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListReq
   };
 
   // Effects
-  // clear possibleReactions and indications when close the pop up 
+  // clear possibleReactions and indications when close the pop up
   useEffect(() => {
-   if(!open){
-    setRecordOfIndicationsDescription({
-      indicationsDescription: ""
-    });
-    setRecordOfPossibleDescription({
-      possibleDescription: ""
-    });
-  setIndicationsIcd({ indications: null });
-}
-  },[open]);
+    if (!open) {
+      setRecordOfIndicationsDescription({
+        indicationsDescription: ''
+      });
+      setRecordOfPossibleDescription({
+        possibleDescription: ''
+      });
+      setIndicationsIcd({ indications: null });
+    }
+  }, [open]);
   // update record Of Indications Description when indications Description is updated
   useEffect(() => {
     setRecordOfIndicationsDescription({
@@ -161,7 +156,7 @@ const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListReq
       });
     }
   }, [indicationsIcd.indications]);
-  // when the vaccine is changed update the list request 
+  // when the vaccine is changed update the list request
   useEffect(() => {
     setVaccineBrandsListRequest(prev => ({
       ...prev,
@@ -182,18 +177,38 @@ const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListReq
           : [])
       ]
     }));
-      //claer
-      setindicationsDescription(vaccine?.key ? vaccine.indications : "");
-      setPossibleDescription(vaccine?.key ? vaccine.possibleReactions : "");  
+    //claer
+    setindicationsDescription(vaccine?.key ? vaccine.indications : '');
+    setPossibleDescription(vaccine?.key ? vaccine.possibleReactions : '');
   }, [vaccine?.key]);
 
-   useEffect(() => {
+  useEffect(() => {
     if (saveVaccineMutation && saveVaccineMutation.status === 'fulfilled') {
       setVaccine(saveVaccineMutation.data);
       refetch();
     }
   }, [saveVaccineMutation]);
 
+  useEffect(() => {
+    if (recordOfSearch['searchKeyword'].trim() !== '') {
+      setIcdListRequest({
+        ...initialListRequest,
+        filterLogic: 'or',
+        filters: [
+          {
+            fieldName: 'icd_code',
+            operator: 'containsIgnoreCase',
+            value: recordOfSearch['searchKeyword']
+          },
+          {
+            fieldName: 'description',
+            operator: 'containsIgnoreCase',
+            value: recordOfSearch['searchKeyword']
+          }
+        ]
+      });
+    }
+  }, [recordOfSearch['searchKeyword']]);
 
   // Icons column (Edite, reactive/Deactivate)
   const iconsForActions = (rowData: ApVaccineBrands) => (
@@ -296,8 +311,9 @@ const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListReq
         refetch();
         setEdit_new(false);
         setEditBrand(true);
-      }).catch(() => {
-         dispatch(notify('Failed to Save Vaccine'));
+      })
+      .catch(() => {
+        dispatch(notify('Failed to Save Vaccine'));
       });
   };
   //handle save vaccine brand
@@ -318,10 +334,12 @@ const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListReq
           marketingAuthorizationHolder: ''
         });
         setEdit_new(false);
-      }).catch(() => {
+      })
+      .catch(() => {
         dispatch(notify('Failed to Save Vaccine Brand'));
       });
   };
+  
   // handle Deactive/Reactivate Brand
   const handleDeactiveReactivateBrand = () => {
     deactiveVaccineBrand(vaccineBrand)
@@ -352,20 +370,21 @@ const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListReq
     switch (stepNumber) {
       case 0:
         return (
-          <Form layout="inline" fluid>
+          <Form fluid>
             <div className="container-of-two-fields-vaccine">
+              <div className='container-of-field-vaccine'>
               <MyInput
-                width={250}
-                column
+                width="100%"
                 fieldLabel="Vaccine Code"
                 fieldName="vaccineCode"
                 record={vaccine}
                 setRecord={setVaccine}
                 disabled={!edit_new}
               />
+              </div>
+              <div className='container-of-field-vaccine'>
               <MyInput
-                width={250}
-                column
+                width="100%"
                 fieldLabel="Vaccine Name"
                 fieldName="vaccineName"
                 record={vaccine}
@@ -373,20 +392,23 @@ const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListReq
                 plachplder={'Medical Component'}
                 disabled={!edit_new}
               />
+              </div>
             </div>
+            <br/>
             <div className="container-of-two-fields-vaccine">
+              <div className='container-of-field-vaccine'>
               <MyInput
-                width={250}
-                column
+                width="100%"
                 fieldLabel="ATC Code"
                 fieldName="atcCode"
                 record={vaccine}
                 setRecord={setVaccine}
                 disabled={!edit_new}
               />
+            </div>
+            <div className='container-of-field-vaccine'>
               <MyInput
-                width={250}
-                column
+                width="100%"
                 fieldLabel="Type"
                 fieldType="select"
                 fieldName="typeLkey"
@@ -398,11 +420,13 @@ const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListReq
                 disabled={!edit_new}
                 menuMaxHeight={200}
               />
+              </div>
             </div>
+            <br/>
             <div className="container-of-two-fields-vaccine">
+               <div className='container-of-field-vaccine'>
               <MyInput
-                width={250}
-                column
+                width="100%"
                 fieldLabel="ROA"
                 fieldType="select"
                 fieldName="roaLkey"
@@ -414,29 +438,33 @@ const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListReq
                 disabled={!edit_new}
                 menuMaxHeight={200}
               />
+              </div>
+               <div className='container-of-field-vaccine'>
               <MyInput
-                width={250}
-                column
+                width="100%"
                 fieldLabel="Site of Administration"
                 fieldName="siteOfAdministration"
                 record={vaccine}
                 setRecord={setVaccine}
                 disabled={!edit_new}
               />
+              </div>
             </div>
+            <br/>
             <div className="container-of-two-fields-vaccine">
+               <div className='container-of-field-vaccine'>
               <MyInput
-                width={250}
-                column
+                width="100%"
                 fieldLabel="Post Opening Duration"
                 fieldName="postOpeningDuration"
                 record={vaccine}
                 setRecord={setVaccine}
                 disabled={!edit_new}
               />
+              </div>
+               <div className='container-of-field-vaccine'>
               <MyInput
-                width={250}
-                column
+                width="100%"
                 fieldLabel="Duration Unit"
                 fieldType="select"
                 fieldName="durationUnitLkey"
@@ -448,72 +476,92 @@ const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListReq
                 disabled={!edit_new}
                 menuMaxHeight={200}
               />
+              </div>
             </div>
+            <br/>
               <MyInput
-                width={520}
-                column
+                width="100%"
                 fieldLabel="Indications"
-                fieldType="select"
-                fieldName="indications"
-                selectData={modifiedData}
-                selectDataLabel="combinedLabel"
-                selectDataValue="key"
-                record={indicationsIcd}
-                setRecord={setIndicationsIcd}
-                disabled={!edit_new}
-                menuMaxHeight={200}
+                fieldName="searchKeyword"
+                record={recordOfSearch}
+                setRecord={setRecordOfSearch}
+               rightAddon={<SearchIcon />}
               />
-               <MyInput
-                disabled={true}
-                fieldType="textarea"
-                record={recordOfIndicationsDescription}
-                setRecord={''}
-                showLabel={false}
-                fieldName="indicationsDescription"
-                width={520}
-              />
-              <MyInput
-                width={520}
-                column
-                fieldLabel="Possible Reactions"
-                fieldType="select"
-                fieldName='possibleReactions'
-                selectData={medAdversLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={vaccine}
-                setRecord={setVaccine}
-                disabled={!edit_new}
-                menuMaxHeight={200}
-              />
-              <MyInput
-                disabled={true}
-                fieldType="textarea"
-                record={recordOfPossibleDescription}
-                setRecord={''}
-                showLabel={false}
-                fieldName="possibleDescription"
-                width={520}
-              />
+
+            <div className="container-of-menu-diagnostic">
+              {recordOfSearch['searchKeyword'] && (
+                <Dropdown.Menu disabled={!edit_new} className="menu-diagnostic">
+                  {modifiedData?.map(mod => (
+                    <Dropdown.Item
+                      key={mod.key}
+                      eventKey={mod.key}
+                      onClick={() => {
+                        setIndicationsIcd({
+                          ...indicationsIcd,
+                          indications: mod.key
+                        });
+                        setRecordOfSearch({ searchKeyword: '' });
+                      }}
+                    >
+                      <span>{mod.icdCode} </span>
+                      <span>{mod.description}</span>
+                    </Dropdown.Item>
+                  ))}
+                </Dropdown.Menu>
+              )}
+            </div>
+            <MyInput
+              disabled={true}
+              fieldType="textarea"
+              record={recordOfIndicationsDescription}
+              setRecord={''}
+              showLabel={false}
+              fieldName="indicationsDescription"
+              width="100%"
+            />
+            <MyInput
+              width="100%"
+              fieldLabel="Possible Reactions"
+              fieldType="select"
+              fieldName="possibleReactions"
+              selectData={medAdversLovQueryResponse?.object ?? []}
+              selectDataLabel="lovDisplayVale"
+              selectDataValue="key"
+              record={vaccine}
+              setRecord={setVaccine}
+              disabled={!edit_new}
+              menuMaxHeight={200}
+            />
+            <MyInput
+              disabled={true}
+              fieldType="textarea"
+              record={recordOfPossibleDescription}
+              setRecord={''}
+              showLabel={false}
+              fieldName="possibleDescription"
+              width="100%"
+            />
             <div className="container-of-two-fields-vaccine">
+               <div className='container-of-field-vaccine'>
               <MyInput
-                width={250}
-                column
+                width="100%"
                 fieldType="textarea"
                 disabled={!edit_new}
                 fieldName="contraindicationsAndPrecautions"
                 record={vaccine}
                 setRecord={setVaccine}
               />
+              </div>
+               <div className='container-of-field-vaccine'>
               <MyInput
-                width={250}
-                column
+                width="100%"
                 fieldType="textarea"
                 disabled={!edit_new}
                 fieldName="storageAndHandling"
                 record={vaccine}
                 setRecord={setVaccine}
               />
+              </div>
             </div>
           </Form>
         );
@@ -645,8 +693,7 @@ const [vaccineBrandsListRequest, setVaccineBrandsListRequest] = useState<ListReq
         },
         {
           title: 'Brand Products',
-          icon: <MdMedication />,
-          // footer: <MyButton onClick={() => setOpen(false)}>Save</MyButton>
+          icon: <MdMedication />
         }
       ]}
       childTitle={
