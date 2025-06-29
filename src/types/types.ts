@@ -28,7 +28,7 @@ export interface ListRequestAllValues  {
 export const initialListRequest: ListRequest = {
   filters: [],
   pageNumber: 1,
-  pageSize: 10,
+  pageSize: 15,
   sortBy: 'key',
   sortType: 'asc',
   timestamp: 0,

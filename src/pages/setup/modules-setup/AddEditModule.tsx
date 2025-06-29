@@ -5,19 +5,10 @@ import { useSaveModuleMutation } from '@/services/setupService';
 import MyIconInput from '@/components/MyInput/MyIconInput';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { notify } from '@/utils/uiReducerActions';
 import { useAppDispatch } from '@/hooks';
-import clsx from 'clsx';
-const AddEditModule = ({
-  open,
-  setOpen,
-  operationState,
-  width,
-  module,
-  setModule,
-  refetch,
-}) => {
+const AddEditModule = ({ open, setOpen, operationState, width, module, setModule, refetch }) => {
   const dispatch = useAppDispatch();
   //save module
   const [saveModule] = useSaveModuleMutation();
@@ -30,11 +21,9 @@ const AddEditModule = ({
       if (refetch != null) {
         refetch();
       }
-      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' })
-      );
+      dispatch(notify({ msg: 'The module has been Saved Successfully', sev: 'success' }));
     } catch (error) {
-      dispatch(notify({ msg: 'Error while saving module', sev: 'error' }));
-
+      dispatch(notify({ msg: 'Failed to save the module', sev: 'error' }));
     }
   };
 
@@ -47,35 +36,35 @@ const AddEditModule = ({
               fieldName="name"
               record={module}
               setRecord={setModule}
-              width={width > 600 ? 520 : 250}
+              width="100%"
             />
             <MyInput
               fieldType="textarea"
               fieldName="description"
               record={module}
               setRecord={setModule}
-              width={width > 600 ? 520 : 250}
               height={150}
+              width="100%"
             />
-            <div
-              className={clsx('', {
-                'container-of-two-fields-module': width > 600
-              })}
-            >
+            <div className='container-of-two-fields-module'>
+              <div className='container-of-field-module'>
               <MyInput
                 fieldName="viewOrder"
                 fieldType="number"
                 record={module}
                 setRecord={setModule}
-                width={250}
+                width="100%"
               />
+              </div>
+              <div className='container-of-field-module'>
               <MyIconInput
                 fieldName="iconImagePath"
                 fieldLabel="Icon"
                 record={module}
                 setRecord={setModule}
-                width={250}
+                width="100%"
               />
+              </div>
             </div>
           </Form>
         );
@@ -91,7 +80,7 @@ const AddEditModule = ({
       actionButtonLabel={operationState === 'New' ? 'Create' : 'Save'}
       actionButtonFunction={handleModuleSave}
       steps={[{ title: 'Module Info', icon: <FontAwesomeIcon icon={faLaptop} /> }]}
-      size={width > 600 ? '36vw' : '25vw'}
+       size={width > 600 ? '36vw' : '70vw'}
     />
   );
 };
