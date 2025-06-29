@@ -72,9 +72,8 @@ const InpatientList = () => {
         isLoading
     } = useGetInpatientEncountersQuery({
         listRequest,
-        department_key: switchDepartment ? departmentFilter?.key : ''
+        department_key: switchDepartment ? departmentFilter?.key !=null ?  departmentFilter?.key : '':''
     });
-
 
     // Fetch department list response
     const departmentListResponse = useGetResourceTypeQuery("4217389643435490");
