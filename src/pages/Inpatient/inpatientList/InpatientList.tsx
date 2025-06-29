@@ -5,6 +5,7 @@ import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import React, { useEffect, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faRepeat } from '@fortawesome/free-solid-svg-icons';
 import { faUserNurse, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
@@ -14,7 +15,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
-import './styles.less';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
@@ -23,7 +23,9 @@ import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
 import BedManagementModal from './bedBedManagementModal/BedManagementModal';
 import { faBed } from '@fortawesome/free-solid-svg-icons';
 import ChangeBedModal from './changeBedModal/ChangeBedModal';
-
+import { useGetResourceTypeQuery } from '@/services/appointmentService';
+import './styles.less'
+import MyInput from "@/components/MyInput";
 const InpatientList = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -42,6 +44,8 @@ const InpatientList = () => {
     const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
     const [openChangeBedModal, setOpenChangeBedModal] = useState(false);
     const [startEncounter] = useStartEncounterMutation();
+    const [departmentFilter, setDepartmentFilter] = useState({ key: '' });
+    const [switchDepartment, setSwitchDepartment] = useState(false);
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -66,8 +70,15 @@ const InpatientList = () => {
         isFetching,
         refetch: refetchEncounter,
         isLoading
-    } = useGetInpatientEncountersQuery(listRequest);
-    
+    } = useGetInpatientEncountersQuery({
+        listRequest,
+        department_key: switchDepartment ? departmentFilter?.key : ''
+    });
+
+
+    // Fetch department list response
+    const departmentListResponse = useGetResourceTypeQuery("4217389643435490");
+
     //Functions
     const isSelected = rowData => {
         if (rowData && encounter && rowData.key === encounter.key) {
@@ -119,6 +130,33 @@ const InpatientList = () => {
             navigate(targetPath, { state: { patient: patientData, encounter: encounterData, edit: encounterData.encounterStatusLvalue.valueCode == "CLOSED" } });
         }
     };
+    const filters = () => (
+        <Form layout="inline" fluid>
+            <div className="switch-dep-dev "> <MyInput
+                require
+                column
+                fieldLabel="Select Department"
+                fieldType="select"
+                fieldName="key"
+                selectData={departmentListResponse?.data?.object ?? []}
+                selectDataLabel="name"
+                selectDataValue="key"
+                record={departmentFilter}
+                setRecord={setDepartmentFilter}
+                searchable={false}
+                width={200}
+            />
+                <MyButton
+                    size="small"
+                    backgroundColor="gray"
+                    onClick={() => { setSwitchDepartment(true); }}
+                    prefixIcon={() => <FontAwesomeIcon icon={faRepeat} />
+                    }
+                >
+                    Switch Department
+                </MyButton></div>
+        </Form>
+    );
 
     //useEffect
     useEffect(() => {
@@ -143,7 +181,12 @@ const InpatientList = () => {
             dispatch(hideSystemLoader());
         };
     }, [isLoading, isFetching, dispatch]);
-
+    useEffect(() => {
+        if (isFetching) {
+            refetchEncounter();
+            setSwitchDepartment(false);
+        }
+    }, [departmentFilter, isFetching])
 
     // table columns 
     const tableColumns = [
@@ -371,10 +414,11 @@ const InpatientList = () => {
             </div>
             <MyTable
                 height={600}
+                filters={filters()}
                 data={encounterListResponse?.object ?? []}
                 columns={tableColumns}
                 rowClassName={isSelected}
-                loading={isLoading || (manualSearchTriggered && isFetching)}
+                loading={isLoading || (manualSearchTriggered && isFetching) || isFetching}
                 onRowClick={rowData => {
                     setLocalEncounter(rowData);
                     setLocalPatient(rowData.patientObject);
@@ -399,7 +443,6 @@ const InpatientList = () => {
                 setOpen={setOpenChangeBedModal}
                 localEncounter={encounter}
                 refetchInpatientList={refetchEncounter} />
-
         </Panel>
     );
 };
