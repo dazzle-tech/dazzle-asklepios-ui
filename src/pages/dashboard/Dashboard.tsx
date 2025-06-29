@@ -39,7 +39,12 @@ const Dashboard = () => {
     >
       View Report
     </MyButton>
-   
+         <MyButton
+      backgroundColor={'var(--primary-gray)'}
+      onClick={()=>{navigate("/designer");}}
+    >
+      Design Report
+    </MyButton>
       <FlexboxGrid>
         <FlexboxGrid.Item as={Col} colspan={24} lg={8} md={12} sm={24}>
           <Panel bordered header={<Translate>Number of No-Shows per Day</Translate>}>

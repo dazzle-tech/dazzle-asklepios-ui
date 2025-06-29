@@ -161,30 +161,27 @@
 import React, { useEffect } from 'react';
 import { Viewer, Stimulsoft } from 'stimulsoft-reports-js-react/viewer';
 
-// للتأكد أن TypeScript يتعرف على الكائنات الديناميكية
-declare global {
-  interface Window {
-    Stimulsoft: any;
-  }
-}
-
 const StimulsoftReportViewer = () => {
   useEffect(() => {
     const report = new Stimulsoft.Report.StiReport();
 
     try {
-      // ✅ تحميل التقرير (المسار الصحيح بدون "public/")
-      report.loadFile('public/reports/patient.mrt');
+      const savedReportJson = localStorage.getItem("edited_report");
 
-      // ✅ ربط قاعدة بيانات CSV باستخدام طريقة آمنة مع TypeScript
+      if (savedReportJson) {
+        report.load(savedReportJson); // تحميل التعديل المحفوظ
+      } else {
+        report.loadFile('public/reports/patient.mrt'); // النسخة الأصلية
+      }
+
+      // ربط CSV إن وجد
       const csvDb = new (Stimulsoft as any).System.Data.StiCsvDatabase(
         'CSV',
-        'public/data/patient.csv', // يجب أن يكون داخل public/data
-        true,   // First row as column names
-        true,   // Use delimiters
-        ','     // Separator
+        '/data/patient.csv',
+        true,
+        true,
+        ','
       );
-
       report.dictionary.databases.clear();
       report.dictionary.databases.add(csvDb);
 
@@ -192,7 +189,6 @@ const StimulsoftReportViewer = () => {
       console.error('Error loading .mrt or .csv file:', e);
     }
 
-    // ✅ إعدادات العرض
     const viewerOptions = new Stimulsoft.Viewer.StiViewerOptions();
     viewerOptions.appearance.rightToLeft = true;
 
@@ -201,8 +197,7 @@ const StimulsoftReportViewer = () => {
     viewer.renderHtml('viewerContent');
   }, []);
 
-  return <div id="viewerContent" style={{ width: '100%', height: '100vh' }}></div>;
+  return <div id="viewerContent" style={{ width: '100%', height: '100vh' }} />;
 };
 
 export default StimulsoftReportViewer;
-
