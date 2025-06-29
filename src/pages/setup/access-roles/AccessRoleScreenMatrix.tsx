@@ -14,8 +14,11 @@ import MyTable from '@/components/MyTable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import BackButton from '@/components/BackButton/BackButton';
+import { notify } from '@/utils/uiReducerActions';
+import { useAppDispatch } from '@/hooks';
 
 const AccessRoleScreenMatrix = ({ accessRole, goBack }) => {
+  const dispatch = useAppDispatch();
   const [searchTerm, setSearchTerm] = useState<string>();
   const [matrixData, setMatrixData] = useState([]);
   const [recordOfSearch, setRecordOfSearch] = useState({ screenName: '' });
@@ -96,6 +99,7 @@ const AccessRoleScreenMatrix = ({ accessRole, goBack }) => {
     if (matrixData) {
       setLoad(true);
       await saveMatrix(matrixData).unwrap();
+      dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
       setLoad(false);
     }
   };
