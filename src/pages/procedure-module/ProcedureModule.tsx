@@ -135,26 +135,7 @@ const ProcedureModule = () => {
         attachmentRefetch()
 
     }, [attachmentsModalOpen])
-// Update the listRequest filters when showCanceled changes
-    useEffect(() => {
-        const upateFilter = [
-            {
-                fieldName: 'current_department',
-                operator: 'match',
-                value: "false"
-            },
 
-            {
-                fieldName: 'status_lkey',
-                operator: showCanceled ? 'notMatch' : 'match',
-                value: '3621690096636149'
-            }
-        ]
-        setListRequest((prevRequest) => ({
-            ...prevRequest,
-            filters: upateFilter,
-        }));
-    }, [showCanceled]);
     const [patients, setPatients] = useState({});
 // Fetch patients for each procedure
 
@@ -183,6 +164,29 @@ const addOrUpdateFilter = (filters, newFilter) => {
     }
     return filters;
 };
+// Update the listRequest filters when showCanceled changes
+useEffect(() => {
+    setListRequest(prev => {
+        let updatedFilters = [...prev.filters];
+
+        updatedFilters = addOrUpdateFilter(updatedFilters, {
+            fieldName: 'current_department',
+            operator: 'match',
+            value: "false"
+        });
+
+        updatedFilters = addOrUpdateFilter(updatedFilters, {
+            fieldName: 'status_lkey',
+            operator: showCanceled ? 'notMatch' : 'match',
+            value: '3621690096636149'
+        });
+
+        return {
+            ...prev,
+            filters: updatedFilters
+        };
+    });
+}, [showCanceled]);
 
 useEffect(() => {
     if (record['filter']) {
@@ -259,9 +263,7 @@ const handleFilterChange = (fieldName, value) => {
     }
 };
 
-useEffect(() => {
-    console.log("List req", listRequest?.filters);
-}, [listRequest]);
+
     const OpenPerformModel = () => {
         setOpenPerformModal(true);
     };

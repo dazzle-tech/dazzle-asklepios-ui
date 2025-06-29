@@ -1,234 +1,143 @@
-import MyTable from "@/components/MyTable";
-import Translate from "@/components/Translate";
-import { initialListRequest, ListRequest } from "@/types/types";
 import React, { useState, useEffect } from "react";
 import { useGetGroupTestsQuery } from '@/services/labService';
+import { initialListRequest, ListRequest } from "@/types/types";
 import { formatDateWithoutSeconds, addFilterToListRequest } from '@/utils';
 import { Col, Form, Row } from "rsuite";
-import { newApDiagnosticTest } from "@/types/model-types-constructor";
+import Translate from "@/components/Translate";
 import MyInput from "@/components/MyInput";
-const LaboratoryResultComparison = (
-    {
-        patient,
-        testKey: testKey = null
+import MyTable from "@/components/MyTable";
 
-    }) => {
-    const [selectedTest, setSelectedTest] = useState({ ...newApDiagnosticTest })
-    const [dateFilter, setDateFilter] = useState({
-        fromDate: null,
-        toDate: null
-    });
+const LaboratoryResultComparison = ({ patient, testKey = null }) => {
+    const [dateFilter, setDateFilter] = useState({ fromDate: null, toDate: null });
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
-            {
-                fieldName: "patient_key",
-                operator: 'match',
-                value: patient?.key,
-            },
-            {
-                fieldName: "approved_at",
-                operator: "notMatch",
-                value: 0,
-            }
-
+            { fieldName: "patient_key", operator: 'match', value: patient?.key },
+            { fieldName: "approved_at", operator: "notMatch", value: 0 }
         ]
     });
 
     const { data: testGroup } = useGetGroupTestsQuery(listRequest);
-    const [testList, setTestList] = useState([]);
-    const [resultList, setResultList] = useState([]);
-    const isSelected = rowData => {
-        if (rowData && selectedTest && rowData.key === selectedTest.key) {
-            return 'selected-row';
-        } else return '';
-    };
-    useEffect(() => {
-        const list = testGroup?.object?.map(item => { return item.test })
-        setTestList(list)
-    }, [testGroup])
-    useEffect(() => {
-        if (selectedTest?.key && testGroup?.object?.length > 0) {
-            const selected = testGroup.object.find(item => item.test?.key === selectedTest.key);
-            setResultList(selected?.results || []);
-        } else {
-            setResultList([]);
-        }
-    }, [selectedTest, testGroup]);
+    const [pivotData, setPivotData] = useState({ dates: [], tests: [] });
 
     useEffect(() => {
         if (dateFilter.fromDate && dateFilter.toDate) {
-            const fromDate = new Date(dateFilter.fromDate);
-            fromDate.setHours(0, 0, 0, 0);
-            const fromTimestamp = fromDate.getTime();
-
-            const toDate = new Date(dateFilter.toDate);
-            toDate.setHours(23, 59, 59, 999);
-            const toTimestamp = toDate.getTime();
-
+            const fromTimestamp = new Date(dateFilter.fromDate).setHours(0, 0, 0, 0);
+            const toTimestamp = new Date(dateFilter.toDate).setHours(23, 59, 59, 999);
             setListRequest(
-                addFilterToListRequest(
-                    'created_at',
-                    'between',
-                    `${fromTimestamp}_${toTimestamp}`,
-                    listRequest
-                )
-            );
-        } else if (dateFilter.fromDate) {
-            const fromDate = new Date(dateFilter.fromDate);
-            fromDate.setHours(0, 0, 0, 0);
-            const fromTimestamp = fromDate.getTime();
-
-            setListRequest(
-                addFilterToListRequest('created_at', 'gte', fromTimestamp, listRequest)
-            );
-        } else if (dateFilter.toDate) {
-            const toDate = new Date(dateFilter.toDate);
-            toDate.setHours(23, 59, 59, 999);
-            const toTimestamp = toDate.getTime();
-
-            setListRequest(
-                addFilterToListRequest('created_at', 'lte', toTimestamp, listRequest)
+                addFilterToListRequest('created_at', 'between', `${fromTimestamp}_${toTimestamp}`, listRequest)
             );
         } else {
             setListRequest({
-                ...listRequest,
+                ...initialListRequest,
                 filters: [
-                    {
-                        fieldName: "patient_key",
-                        operator: 'match',
-                        value: patient?.key,
-                    },
-                      {
-                fieldName: "approved_at",
-                operator: "notMatch",
-                value: 0,
-            }
-
+                    { fieldName: "patient_key", operator: 'match', value: patient?.key },
+                    { fieldName: "approved_at", operator: "notMatch", value: 0 }
                 ]
             });
         }
-    }, [dateFilter?.fromDate, dateFilter?.toDate]);
+    }, [dateFilter]);
 
-    //in lab page add testkey in filter
     useEffect(() => {
         if (testKey) {
             setListRequest(prev => ({
                 ...prev,
-                filters: [
-                    ...prev.filters,
-                    {
-                        fieldName: "medical_test_key",
-                        operator: 'match',
-                        value: testKey,
-                    }
-                ]
+                filters: [...prev.filters, { fieldName: "medical_test_key", operator: 'match', value: testKey }]
             }));
         }
     }, [testKey]);
 
-    const testColumns = [
+    useEffect(() => {
+        if (testGroup?.object) {
+            const testsMap = new Map();
+            const datesSet = new Set();
+
+            testGroup.object.forEach(group => {
+                group.results.forEach(result => {
+                    const date = formatDateWithoutSeconds(result.createdAt);
+                    datesSet.add(date);
+
+                    const testName = group.test.testName;
+                    if (!testsMap.has(testName)) {
+                        testsMap.set(testName, {});
+                    }
+                    testsMap.get(testName)[date] = result;
+                });
+            });
+
+            setPivotData({
+                dates: Array.from(datesSet).sort(),
+                tests: Array.from(testsMap.entries())
+            });
+        }
+    }, [testGroup]);
+
+    const columns = [
         {
-            key: "",
+            key: 'testName',
             title: <Translate>Test name</Translate>,
-            render: (rowData: any) => {
-                return rowData.testName
-            }
-        }]
-    const resultColumns = [
-
-        {
-            key: "",
-            title: <Translate>Normal Range</Translate>,
-            render: (rowData: any) => {
-                return rowData.normalRangeValue
-            }
-
+            render: (row) => row.testName
         },
-        {
-            key: "",
-            title: <Translate>Result</Translate>,
-            render: rowData => {
-                if (rowData.normalRangeKey) {
+        ...pivotData.dates.map(date => ({
+            key: date,
+            title: date,
+            render: (row) => {
+                const result = row.results[date];
+                if (!result) return '-';
 
-                    if (rowData.normalRange?.resultTypeLkey === "6209578532136054") {
-
-                        return (
-                            <span>
-                                {rowData.resultLvalue ? rowData.resultLvalue.lovDisplayVale : rowData?.resultLkey}
-                            </span>
-                        );
+                if (result.normalRangeKey) {
+                    if (result.normalRange?.resultTypeLkey === "6209578532136054") {
+                        return result.resultLvalue ? result.resultLvalue.lovDisplayVale : result?.resultLkey;
+                    } else if (result.normalRange?.resultTypeLkey === "6209569237704618") {
+                        return result.resultValueNumber;
                     }
-                    else if (rowData.normalRange?.resultTypeLkey == "6209569237704618") {
-
-                        return rowData.resultValueNumber;
-
-                    }
-                }
-                else {
-
-                    return rowData.resultText;
-
+                } else {
+                    return result.resultText;
                 }
             }
-        }
-        ,
-        {
-            key: "",
-            title: <Translate>date</Translate>,
-            render: (rowData: any) => {
-                return (<>
-                    <span>{rowData.createdBy}</span>
-                    <br />
-                    <span className='date-table-style'>{formatDateWithoutSeconds(rowData.createdAt)}</span>
-                </>)
-            }
-        }
-    ]
-    const filters=()=>{
-         return (
-        <Form layout="inline" fluid className="date-filter-form">             
-                        <MyInput
-                            column
-                            width={150}
-                            fieldType="date"
-                            fieldLabel="From Date"
-                            fieldName="fromDate"
-                            record={dateFilter}
-                            setRecord={setDateFilter}
-                        />
-                  
-                        <MyInput
-                            width={150}
-                            column
-                            fieldType="date"
-                            fieldLabel=" To Date"
-                            fieldName="toDate"
-                            record={dateFilter}
-                            setRecord={setDateFilter}
-                        />
-                </Form>);
-    }
-    return (<>
+        }))
+    ];
+
+    const data = pivotData.tests.map(([testName, results]) => ({
+        testName,
+        results
+    }));
+
+    const filters = () => (
+        <Form layout="inline" fluid className="date-filter-form">
+            <MyInput
+                column
+                width={150}
+                fieldType="date"
+                fieldLabel="From Date"
+                fieldName="fromDate"
+                record={dateFilter}
+                setRecord={setDateFilter}
+            />
+
+            <MyInput
+                width={150}
+                column
+                fieldType="date"
+                fieldLabel="To Date"
+                fieldName="toDate"
+                record={dateFilter}
+                setRecord={setDateFilter}
+            />
+        </Form>
+    );
+
+    return (
         <Row>
-            
-            <Col md={10}>
+            <Col md={24}>
                 <MyTable
-               filters={filters()}
-                    columns={testColumns}
-                    data={testList || []}
-                    onRowClick={rowData => {
-                        setSelectedTest(rowData)
-                    }}
-                    rowClassName={isSelected} />
+                    filters={filters()}
+                    columns={columns}
+                    data={data}
+                />
             </Col>
-            <Col md={14}>
-                <MyTable
-                    columns={resultColumns}
-                    data={resultList || []} />
-            </Col>
-
         </Row>
-    </>)
+    );
 }
-export default LaboratoryResultComparison
+
+export default LaboratoryResultComparison;
