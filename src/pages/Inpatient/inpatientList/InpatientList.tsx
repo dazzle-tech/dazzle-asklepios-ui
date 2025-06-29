@@ -142,10 +142,14 @@ const InpatientList = () => {
                 selectDataLabel="name"
                 selectDataValue="key"
                 record={departmentFilter}
-                setRecord={setDepartmentFilter}
+                setRecord={(value) => {
+                    setDepartmentFilter(value);
+                    setSwitchDepartment(false);
+                }}
                 searchable={false}
                 width={200}
             />
+
                 <MyButton
                     size="small"
                     backgroundColor="gray"
@@ -184,7 +188,7 @@ const InpatientList = () => {
     useEffect(() => {
         if (isFetching) {
             refetchEncounter();
-            setSwitchDepartment(false);
+
         }
     }, [departmentFilter, isFetching])
 
