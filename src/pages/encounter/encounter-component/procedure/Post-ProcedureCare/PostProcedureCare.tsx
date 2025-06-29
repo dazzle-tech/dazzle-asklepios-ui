@@ -1,5 +1,5 @@
 import MyButton from "@/components/MyButton/MyButton";
-import React from "react";
+import React, { useRef } from "react";
 import { Col, Divider, Row, Text } from "rsuite";
 import '../styles.less'
 import Diagnosis from "./Diagnosis";
@@ -8,7 +8,20 @@ import AdministeredMedications from "./AdministeredMedications ";
 import PostProcedureAnesthesia from "./PostProcedureAnesthesia";
 import PostProcedureChecklist from "./PostProcedureChecklist";
 const PostProcedureCare = ({ procedure, setActiveTab, user }) => {
-
+  
+    const diagRef = useRef(null);
+    const vitalRef = useRef(null);
+    const checklistRef=useRef(null);
+    const anesthesiaRef=useRef(null);
+    // get all save function from all component use ref
+    const handleSaveDiagnosisClick = () => {    
+      diagRef.current?.handleSave();
+      vitalRef.current?.handleSave();
+      checklistRef.current?.handleSave();
+      anesthesiaRef.current?.handleSave();
+    };
+   
+   
 
     return (<>
         <Row gutter={15} className="r">
@@ -16,7 +29,7 @@ const PostProcedureCare = ({ procedure, setActiveTab, user }) => {
                 {/* Procedure Care */}
                 <Row>
                       <Col md={24}>
-                    <Diagnosis procedure={procedure} user={user} /></Col>
+                    <Diagnosis ref={diagRef} procedure={procedure} user={user} /></Col>
                 </Row>
                 
               
@@ -27,19 +40,19 @@ const PostProcedureCare = ({ procedure, setActiveTab, user }) => {
                 </Row>
                 <Row>
                     <Col md={24}>
-                    <PostProcedureAnesthesia procedure={procedure} user={user} /></Col>
+                    <PostProcedureAnesthesia ref={anesthesiaRef} procedure={procedure} user={user} /></Col>
                 </Row>
                 
             </Col>
             <Col md={12}>
             <Row>
                   <Col md={24}>
-                <ProcedureVitals procedure={procedure} user={user} /></Col>
+                <ProcedureVitals ref={vitalRef} procedure={procedure} user={user} /></Col>
             </Row>
                 
               <Row>
                   <Col md={24}>
-                 <PostProcedureChecklist procedure={procedure} user={user} /></Col>        
+                 <PostProcedureChecklist ref={checklistRef} procedure={procedure} user={user} /></Col>        
               </Row>
                
                 </Col>
@@ -47,9 +60,11 @@ const PostProcedureCare = ({ procedure, setActiveTab, user }) => {
         </Row>
 
         <div className='bt-div'>
+          
 
             <div className="bt-right">
-
+                 <MyButton onClick={handleSaveDiagnosisClick}>Save</MyButton>
+                  <MyButton>Create Follow-up</MyButton>
                 <MyButton onClick={() => setActiveTab("5")}>Complete and Next</MyButton>
             </div>
         </div></>)

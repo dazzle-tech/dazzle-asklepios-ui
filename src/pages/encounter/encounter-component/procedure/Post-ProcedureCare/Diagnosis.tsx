@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { forwardRef, useImperativeHandle, useState } from "react";
 import { Col, Divider, Dropdown, Form, Input, InputGroup, Row, Text } from "rsuite";
 import SearchIcon from '@rsuite/icons/Search';
 import { useGetIcdListQuery } from "@/services/setupService";
@@ -9,8 +9,16 @@ import { useSavePostProcedureCareMutation } from "@/services/procedureService";
 import MyButton from "@/components/MyButton/MyButton";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
-import '../styles.less'
-const Diagnosis = ({ procedure, user }) => {
+import '../styles.less';
+export type DiagRef = {
+    handleSave: () => void;
+};
+type DiagnosisProps = {
+    procedure: any,
+    user: any
+};
+const Diagnosis = forwardRef<DiagRef, DiagnosisProps>(({ procedure, user }, ref) => {
+
     const dispatch = useAppDispatch();
     const [diagno, setDiagno] = useState({ ...newApPostProcedureCare });
     const [saveProcedureCare] = useSavePostProcedureCareMutation();
@@ -22,6 +30,7 @@ const Diagnosis = ({ procedure, user }) => {
         combinedLabel: `${item.icdCode} - ${item.description}`
     }));
     const handleSave = async () => {
+    
         try {
             const response = await saveProcedureCare({
                 ...diagno,
@@ -34,11 +43,14 @@ const Diagnosis = ({ procedure, user }) => {
             dispatch(notify({ msg: 'Error saving procedure care', sev: "error" }));
         }
     };
+    useImperativeHandle(ref, () => ({
+       handleSave
+    }));
     const handleSearch = value => {
         setSearchKeyword(value);
     };
     return (
-        <div className='container-form'>
+        <div className='container-form' ref={ref}>
             <div className='title-div'>
                 <Text>Procedure Care</Text>
             </div>
@@ -51,7 +63,7 @@ const Diagnosis = ({ procedure, user }) => {
                         <Col md={24}>
                             <Text>Diagnosis</Text>
 
-                      
+
                             <div style={{ position: 'relative' }}>
                                 <InputGroup inside>
                                     <Input
@@ -63,7 +75,7 @@ const Diagnosis = ({ procedure, user }) => {
                                         <SearchIcon />
                                     </InputGroup.Button>
                                 </InputGroup>
-                
+
                                 {searchKeyword && (
                                     <div
                                         style={{
@@ -108,7 +120,7 @@ const Diagnosis = ({ procedure, user }) => {
                     </Row>
                     <Row>
                         <Col md={24}>
-                         
+
                             <InputGroup>
                                 <Input
                                     disabled={true}
@@ -136,15 +148,8 @@ const Diagnosis = ({ procedure, user }) => {
                 </Col>
 
             </Row>
-            <Row>
-                <div className='bt-div'>
-                    <div className="bt-right">
-                        <MyButton>Create Follow-up</MyButton>
-                        <MyButton onClick={handleSave}>Save </MyButton>
-                    </div>
-                </div>
-            </Row>
+          
         </div>
     )
-}
+});
 export default Diagnosis;
