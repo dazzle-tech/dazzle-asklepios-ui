@@ -1,16 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import classNames from 'classnames';
-import {
-  Container,
-  Sidebar,
-  Sidenav,
-  Content,
-  Nav,
-  DOMHelper,
-  Stack,
-  Divider,
-  Form
-} from 'rsuite';
+import { Container, Sidebar, Sidenav, Content, Nav, DOMHelper, Stack, Divider, Form } from 'rsuite';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHospital } from '@fortawesome/free-solid-svg-icons';
 import { Outlet, useNavigate } from 'react-router-dom';
@@ -47,17 +37,17 @@ const Frame = (props: FrameProps) => {
   const { navs } = props;
   const [expand, setExpand] = useState(false);
   const [windowHeight, setWindowHeight] = useState(getHeight(window));
-  const[recordOfSearchedScreenName, setRecordOfSearchedScreenName] = useState({screen: ""});
+  const [recordOfSearchedScreenName, setRecordOfSearchedScreenName] = useState({ screen: '' });
   const [width, setWidth] = useState<number>(window.innerWidth);
   const authSlice = useAppSelector(state => state.auth);
   const patientSlice = useAppSelector(state => state.patient);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const navBodyStyle: React.CSSProperties = expand
-  ? { height: windowHeight - 112, overflow: 'auto' }
-  : {};
+    ? { height: windowHeight - 112, overflow: 'auto' }
+    : {};
 
- // Effects
+  // Effects
   useEffect(() => {
     setWindowHeight(getHeight(window));
     const resizeListenner = on(window, 'resize', () => setWindowHeight(getHeight(window)));
@@ -68,29 +58,35 @@ const Frame = (props: FrameProps) => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
-  useEffect(()=> {
-      if(width < 950){
-        setExpand(false);
-      }
-  },[width]);
-  
+  useEffect(() => {
+    if (width < 950) {
+      setExpand(false);
+    }
+  }, [width]);
+
   //className for container
   const containerClasses = classNames('page-container', {
     'container-full': !expand
   });
   //function to check if specific module contains the searched screen
-   const screenExist: (module: NavItemData) => boolean = (module: NavItemData) => {
-      for(const screen of module?.children ){
-          if((screen.title.toLocaleLowerCase()).includes(recordOfSearchedScreenName['screen'].toLocaleLowerCase())){
-            return true;
-          }
+  const screenExist: (module: NavItemData) => boolean = (module: NavItemData) => {
+    for (const screen of module?.children) {
+      if (
+        screen.title
+          .toLocaleLowerCase()
+          .includes(recordOfSearchedScreenName['screen'].toLocaleLowerCase())
+      ) {
+        return true;
       }
-      return false;
-   };
+    }
+    return false;
+  };
   return (
     <Container className="frame">
       <Sidebar
-        className={`sidebar ${expand === true ? "sidebar-expanded" : "sidebar-unexpanded"}`} collapsible>
+        className={`sidebar ${expand === true ? 'sidebar-expanded' : 'sidebar-unexpanded'}`}
+        collapsible
+      >
         <Sidenav.Header></Sidenav.Header>
         <Sidenav expanded={expand} appearance="subtle" defaultOpenKeys={['2', '3']}>
           <Sidenav.Body style={navBodyStyle}>
@@ -100,7 +96,7 @@ const Frame = (props: FrameProps) => {
                   onClick={() => {
                     navigate('/');
                   }}
-                  className='logo'
+                  className="logo"
                   src={
                     authSlice.tenant && authSlice.tenant.tenantLogoPath
                       ? authSlice.tenant.tenantLogoPath
@@ -109,48 +105,62 @@ const Frame = (props: FrameProps) => {
                 />
               )}
               {expand && (
-                <div
-                className='container-of-organization-info'
-                >
-                  <FontAwesomeIcon
-                  className='organization-img'
-                    icon={faHospital}
-                    size="lg"
-                  />
+                <div className="container-of-organization-info">
+                  <FontAwesomeIcon className="organization-img" icon={faHospital} size="lg" />
                   <div>
-                    <div className='name'>
-                      Health Organization1
-                    </div>
-                    <div className='location'>845 Euclid Avenue, CA</div>
+                    <div className="name">Health Organization1</div>
+                    <div className="location">845 Euclid Avenue, CA</div>
                   </div>
-                  
                 </div>
               )}
-               {expand && (
-                    <Form className='search-field'>
-                      <MyInput fieldName='screen' width= '100%' record={recordOfSearchedScreenName} setRecord={setRecordOfSearchedScreenName} placeholder="Search by Screen Name" showLabel={false}/>
-                    </Form>               
-               )}
+              {expand && (
+                <Form className="search-field">
+                  <MyInput
+                    fieldName="screen"
+                    width="100%"
+                    record={recordOfSearchedScreenName}
+                    setRecord={setRecordOfSearchedScreenName}
+                    placeholder="Search by Screen Name"
+                    showLabel={false}
+                  />
+                </Form>
+              )}
               {navs.map(item => {
                 const { children, ...rest } = item;
                 if (children && screenExist(item)) {
                   return (
-                    <Nav.Menu className='nav-menu' expanded key={item.eventKey} placement="rightStart" trigger="hover" {...rest}>
+                    <Nav.Menu
+                      className={`nav-menu ${expand ? 'expanded' : ''}`}
+                      expanded
+                      key={item.eventKey}
+                      placement="rightStart"
+                      trigger="hover"
+                      {...rest}
+                    >
                       {/* This inline style cannot be removed because it uses dynamic variables */}
-                       <div style={{ maxHeight: !expand ? '600px' : undefined, overflowY: !expand ? 'auto' : undefined }}>
-                      {children.map(child => {
-                        if(child.title.toLocaleLowerCase().includes(recordOfSearchedScreenName['screen'].toLocaleLowerCase())){
-                        return (
-                          <NavItem
-                            onClick={() => {
-                              dispatch(setScreenKey(child.eventKey));
-                            }}
-                            key={child.eventKey}
-                            {...child}
-                          />
-                        );
-                      }
-                      })}
+                      <div
+                        style={{
+                          maxHeight: !expand ? '600px' : undefined,
+                          overflowY: !expand ? 'auto' : undefined
+                        }}
+                      >
+                        {children.map(child => {
+                          if (
+                            child.title
+                              .toLocaleLowerCase()
+                              .includes(recordOfSearchedScreenName['screen'].toLocaleLowerCase())
+                          ) {
+                            return (
+                              <NavItem
+                                onClick={() => {
+                                  dispatch(setScreenKey(child.eventKey));
+                                }}
+                                key={child.eventKey}
+                                {...child}
+                              />
+                            );
+                          }
+                        })}
                       </div>
                     </Nav.Menu>
                   );
@@ -162,29 +172,31 @@ const Frame = (props: FrameProps) => {
                     </Nav.Item>
                   );
                 }
-                if(recordOfSearchedScreenName['screen'].length === 0)
-                  return <NavItem className='nav-menu' key={rest.eventKey} {...rest} />;
+                if (recordOfSearchedScreenName['screen'].length === 0)
+                  return <NavItem className="nav-menu" key={rest.eventKey} {...rest} />;
               })}
             </Nav>
           </Sidenav.Body>
         </Sidenav>
-        <NavToggle expand={expand} onChange={() =>{ width <= 950 ? setExpand(false) : setExpand(!expand); }} />
+        <NavToggle
+          expand={expand}
+          onChange={() => {
+            width <= 950 ? setExpand(false) : setExpand(!expand);
+          }}
+        />
       </Sidebar>
-      <Container className={containerClasses} >
+      <Container className={containerClasses}>
         <Header expand={expand} setExpand={setExpand} />
-        <Content>        
-         <Stack
+        <Content>
+          <Stack
             id="fixedInfoBar"
             //This inline style cannot be removed because it uses dynamic variables
             style={{
-              opacity: patientSlice.patient ? '1' : '0.85',
+              opacity: patientSlice.patient ? '1' : '0.85'
             }}
             divider={<Divider vertical />}
-          > 
-          </Stack>
-          <div
-          className='content'
-          >
+          ></Stack>
+          <div className="content">
             <Outlet />
           </div>
         </Content>
