@@ -96,7 +96,6 @@ import ReviewResults from "./pages/review-results/ReviewResults"
 import Room from './pages/setup/bed-room-setup';
 import WaitingList from './pages/Inpatient/waitingList';
 import ProcedureModule from './pages/procedure-module/ProcedureModule';
-import ProductSetup from './pages/setup/product-setup';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -270,7 +269,6 @@ const App = () => {
                 <Route path='medications-record' element={<MedicationsRecord/>} />
                 <Route path='vaccine-record' element={<VaccineReccord/>} />
                 <Route path='diagnostics-result' element={<DiagnosticsResult/>} />
-                
               </Route>
               <Route path= "procedure-module" element={<ProcedureModule />} />
               <Route path="encounter-list" element={<EncounterList />} />
@@ -298,7 +296,6 @@ const App = () => {
               <Route path="resources" element={<Resources />} />
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
-              <Route path='inventory-product-setup' element={<ProductSetup/>} />
               <Route path="allergens" element={<Allergens />} />
               <Route path="active-ingredients" element={<ActiveIngredientsSetup />} />
               <Route path="age-group" element={<AgeGroup />} />

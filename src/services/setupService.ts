@@ -30,7 +30,6 @@ import {
   ApProcedureCoding,
   ApProcedurePriceList,
   ApProcedureSetup,
-  ApProducts,
   ApRoom,
   ApRoomServices,
   ApScreen,
@@ -1309,31 +1308,6 @@ export const setupService = createApi({
       },
       keepUnusedDataFor: 0
     }),
-    getProduct: builder.query({
-      query: (listRequest: ListRequest) => ({
-        url: `/setup/products-list?${fromListRequestToQueryParams(listRequest)}`
-      }),
-      onQueryStarted: onQueryStarted,
-      keepUnusedDataFor: 5
-    }),
-    removeProduct: builder.mutation({
-      query: (product: ApProducts) => ({
-        url: `/setup/remove-product`,
-        method: 'POST',
-        body: product,
-      }),
-    }),
-    saveProduct: builder.mutation({
-      query: (product: ApProducts) => ({
-        url: `/setup/save-product`,
-        method: 'POST',
-        body: product
-      }),
-      onQueryStarted: onQueryStarted,
-      transformResponse: (response: any) => {
-        return response.object;
-      }
-    }),
   })
 
 });
@@ -1468,8 +1442,5 @@ export const {
   useRemoveUomGroupRelationMutation,
   useGetUomGroupsUnitsQuery,
   useSaveUomGroupUnitsMutation,
-  useRemoveUomGroupUnitsMutation,
-  useGetProductQuery,
-  useSaveProductMutation,
-  useRemoveProductMutation
+  useRemoveUomGroupUnitsMutation
 } = setupService;

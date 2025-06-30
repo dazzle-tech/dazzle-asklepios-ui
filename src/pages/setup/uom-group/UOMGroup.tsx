@@ -104,7 +104,7 @@ const UOMGroup = () => {
     setOpenConfirmDeleteUOMGroupModal(false);
     try {
       await removeUomGroup({
-        ...uomGroup
+        uomGroup: data
       })
         .unwrap()
         .then(() => {
