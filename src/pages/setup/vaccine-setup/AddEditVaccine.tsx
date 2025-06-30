@@ -35,7 +35,6 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
   const [openChildModal, setOpenChildModal] = useState<boolean>(false);
   const [indicationsDescription, setindicationsDescription] = useState<string>('');
   const [possibleDescription, setPossibleDescription] = useState('');
-  // const [searchKeyword, setSearchKeyword] = useState('');
   const [recordOfSearch, setRecordOfSearch] = useState({ searchKeyword: '' });
   const [recordOfPossibleDescription, setRecordOfPossibleDescription] = useState({
     possibleDescription: ''
@@ -115,6 +114,7 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
         possibleDescription: ''
       });
       setIndicationsIcd({ indications: null });
+      setindicationsDescription('');
     }
   }, [open]);
   // update record Of Indications Description when indications Description is updated
