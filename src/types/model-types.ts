@@ -2739,6 +2739,46 @@ export interface ApResourcesAvailabilityTime {
 	isValid:boolean;
 } 
 
+export interface ApProducts { 
+	key:string;
+	typeLkey:string;
+	name:string;
+	medicationKey:string;
+	code:string;
+	barecode:string;
+	uomGroupKey:string;
+	baseUomKey:string;
+	dispenseUomKey:string;
+	isBatchManaged:boolean;
+	isExpiryDateMandatory:boolean;
+	isSerialized:boolean;
+	isReusable:boolean;
+	inventoryTypeLkey:string;
+	atcCode:string;
+	shelfLife:number;
+	leadTime:number;
+	erpIntegId:string;
+	startDate:Date;
+	endDate:Date;
+	maintenanceScheduleTime:number;
+	maintenanceScheduleLkey:string;
+	isCritical:boolean;
+	isCalibration:boolean;
+	isTraining:boolean;
+	avgCost:number;
+	priceBaseUom:string;
+	isControlledSubstance:boolean;
+	isAllergyRisk:boolean;
+	hazardousTag:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApReviewOfSystem { 
 	key:string;
 	patientKey:string;
