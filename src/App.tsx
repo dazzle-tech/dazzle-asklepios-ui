@@ -96,7 +96,6 @@ import ReviewResults from "./pages/review-results/ReviewResults"
 import Room from './pages/setup/bed-room-setup';
 import WaitingList from './pages/Inpatient/waitingList';
 import ProcedureModule from './pages/procedure-module/ProcedureModule';
-import ProductSetup from './pages/setup/product-setup';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -276,6 +275,7 @@ const App = () => {
               <Route path='inpatient-encounters-list' element={<InpatientList/>} />
                <Route path='waiting-encounters-list' element={<WaitingList/>} />
               <Route path='room' element={<Room/>} />
+              <Route path='inventory-product-setup' element={<ProductSetup/>} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservations />} />
               <Route path="review-results" element={<ReviewResults />} />
@@ -298,7 +298,6 @@ const App = () => {
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="allergens" element={<Allergens />} />
-              <Route path='inventory-product-setup' element={<ProductSetup/>} />
               <Route path="active-ingredients" element={<ActiveIngredientsSetup />} />
               <Route path="age-group" element={<AgeGroup />} />
               <Route path="prescription-instructions" element={<PrescriptionInstructions />} />
