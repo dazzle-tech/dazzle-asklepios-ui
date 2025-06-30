@@ -3,11 +3,11 @@ import { Stimulsoft } from 'stimulsoft-reports-js-react/designer';
 
 const ReportDesigner = () => {
   const designerRef = useRef(null);
-  const reportRef = useRef<any>(null); // لتخزين التقرير
+  const reportRef = useRef<any>(null); 
 
   useEffect(() => {
     const options = new Stimulsoft.Designer.StiDesignerOptions();
-    options.appearance.fullScreenMode = true; // وضع ملء الشاشة
+    options.appearance.fullScreenMode = true; 
 
     const designer = new Stimulsoft.Designer.StiDesigner(options, "StiDesigner", false);
     const report = new Stimulsoft.Report.StiReport();
@@ -28,7 +28,7 @@ const ReportDesigner = () => {
   const handleSave = () => {
     const json = reportRef.current.saveToJsonString();
     localStorage.setItem("edited_report", json);
-    alert("✅ تم حفظ التعديل");
+   alert("✅ Report saved successfully!");
   };
 
   return (
@@ -52,9 +52,7 @@ const ReportDesigner = () => {
       </button>
 
     <div style={{ position: "relative", width: "100%", height: "90vh" }}>
-      {/* زر حفظ فوق المصمم */}
-      
-      {/* واجهة المصمم */}
+     
       <div ref={designerRef} style={{ width: "100%", height: "100%" }} />
     </div></>
   );
