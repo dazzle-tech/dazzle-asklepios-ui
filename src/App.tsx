@@ -98,6 +98,8 @@ import WaitingList from './pages/Inpatient/waitingList';
 import ProcedureModule from './pages/procedure-module/ProcedureModule';
 import ProductSetup from './pages/setup/product-setup';
 import Checklist from './pages/setup/operations/checklist';
+import InpatientNurseStation from './pages/encounter/encounter-pre-observations/InpatientNurseStation';
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -294,6 +296,7 @@ const App = () => {
               <Route path='room' element={<Room/>} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservations />} />
+               <Route path="inpatient-nurse-station" element={<InpatientNurseStation />} />
               <Route path="review-results" element={<ReviewResults />} />
               <Route path="facilities" element={<Facilities />} />
               <Route path="access-roles" element={<AccessRoles />} />
