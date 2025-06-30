@@ -23,7 +23,6 @@ import { notify } from '@/utils/uiReducerActions';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import './styles.less';
-import AddEditProcedure from '../procedure-setup/AddEditProcedure';
 import AddEditProduct from './AddEditProduct';
 import { conjureValueBasedOnKeyFromList, formatDateWithoutSeconds } from '@/utils';
 
