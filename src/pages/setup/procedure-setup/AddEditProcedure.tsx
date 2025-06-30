@@ -11,7 +11,8 @@ import {
   useSaveProcedurePriceListMutation
 } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import SearchIcon from '@rsuite/icons/Search';
+import { Dropdown, Form } from 'rsuite';
 import './styles.less';
 import ChildModal from '@/components/ChildModal';
 import Translate from '@/components/Translate';
@@ -45,6 +46,9 @@ const AddEditProcedure = ({ open, setOpen, procedure, setProcedure, profetch }) 
   const [openChildModal, setOpenChildModal] = useState<boolean>(false);
   const [indicationsDescription, setindicationsDescription] = useState<string>('');
   const [contraindicationsDescription, setContraindicationsDescription] = useState<string>('');
+   const [indicationsIcd, setIndicationsIcd] = useState({ indications: null });
+  const [recordOfSearch, setRecordOfSearch] = useState({ searchKeyword: '' });
+  const [recordOfSearch2, setRecordOfSearch2] = useState({ searchKeyword: '' });
   const [recordOfIndicationsDescription, setRecordOfIndicationsDescription] = useState({
     indicationsDescription: ''
   });
@@ -52,7 +56,7 @@ const AddEditProcedure = ({ open, setOpen, procedure, setProcedure, profetch }) 
     contraindicationsDescription: ''
   });
   const [openConfirmDeleteModal, setOpenConfirmDeleteModal] = useState<boolean>(false);
-  const [icdListRequest] = useState<ListRequest>({
+  const [icdListRequest,setIcdListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
       {
@@ -62,6 +66,7 @@ const AddEditProcedure = ({ open, setOpen, procedure, setProcedure, profetch }) 
       }
     ]
   });
+  
   // Fetch icd list response
   const { data: icdListResponseLoading } = useGetIcdListQuery(icdListRequest);
   // customise item appears on the selected cdt list
@@ -272,29 +277,32 @@ const AddEditProcedure = ({ open, setOpen, procedure, setProcedure, profetch }) 
     switch (stepNumber) {
       case 0:
         return (
-          <Form layout="inline" fluid>
+          <Form fluid>
             <div className="container-of-two-fields-procedure">
+              <div className='container-of-field-procedure'>
               <MyInput
-                column
-                width={250}
+                width="100%"
                 fieldLabel="Procedure Name"
                 fieldName={'name'}
                 record={procedure}
                 setRecord={setProcedure}
               />
+              </div>
+               <div className='container-of-field-procedure'>
               <MyInput
-                column
-                width={250}
+                width="100%"
                 fieldLabel="Procedure Code"
                 fieldName={'code'}
                 record={procedure}
                 setRecord={setProcedure}
               />
+              </div>
             </div>
+            <br/>
             <div className="container-of-two-fields-vaccine">
+               <div className='container-of-field-procedure'>
               <MyInput
-                column
-                width={250}
+                width="100%"
                 fieldType="select"
                 fieldLabel="Category Type"
                 selectData={CategoryLovQueryResponse?.object ?? []}
@@ -304,79 +312,116 @@ const AddEditProcedure = ({ open, setOpen, procedure, setProcedure, profetch }) 
                 record={procedure}
                 setRecord={setProcedure}
               />
+              </div>
+               <div className='container-of-field-procedure'>
               <MyInput
-                column
-                width={250}
+                width="100%"
                 fieldLabel="Appointable"
                 fieldType="checkbox"
                 fieldName="isAppointable"
                 record={procedure}
                 setRecord={setProcedure}
               />
+              </div>
             </div>
+            <br/>
             <MyInput
-              width={520}
-              column
-              fieldLabel="Indications"
-              fieldType="select"
-              fieldName="indications"
-              selectData={modifiedData}
-              selectDataLabel="combinedLabel"
-              selectDataValue="key"
-              record={procedure}
-              setRecord={setProcedure}
-              menuMaxHeight={200}
-              placeholder="Search ICD-10"
-            />
-            <MyInput
+                width="100%"
+                fieldLabel="Indications"
+                fieldName="searchKeyword"
+                record={recordOfSearch}
+                setRecord={setRecordOfSearch}
+               rightAddon={<SearchIcon />}
+              />
+            <div className="container-of-menu-diagnostic">
+              {recordOfSearch['searchKeyword'] && (
+                <Dropdown.Menu className="menu-diagnostic">
+                  {modifiedData?.map(mod => (
+                    <Dropdown.Item
+                      key={mod.key}
+                      eventKey={mod.key}
+                      onClick={() => {
+                        setIndicationsIcd({
+                          ...indicationsIcd,
+                          indications: mod.key
+                        });
+                        setRecordOfSearch({ searchKeyword: '' });
+                      }}
+                    >
+                      <span>{mod.icdCode} </span>
+                      <span>{mod.description}</span>
+                    </Dropdown.Item>
+                  ))}
+                </Dropdown.Menu>
+              )}
+            </div>
+             <MyInput
               disabled={true}
               fieldType="textarea"
               record={recordOfIndicationsDescription}
               setRecord={''}
               showLabel={false}
               fieldName="indicationsDescription"
-              width={520}
+              width="100%"
             />
-            <MyInput
-              width={520}
-              column
-              fieldLabel="Contraindications"
-              fieldType="select"
-              fieldName="contraindications"
-              selectData={modifiedData}
-              selectDataLabel="combinedLabel"
-              selectDataValue="key"
-              record={procedure}
-              setRecord={setProcedure}
-              menuMaxHeight={200}
-              placeholder="Search ICD-10"
-            />
-            <MyInput
+                <MyInput
+                width="100%"
+                fieldLabel="Contraindications"
+                fieldName="searchKeyword"
+                record={recordOfSearch2}
+                setRecord={setRecordOfSearch2}
+               rightAddon={<SearchIcon />}
+              />
+               <div className="container-of-menu-diagnostic">
+                {recordOfSearch2['searchKeyword'] && (
+                  <Dropdown.Menu className="menu-diagnostic">
+                    {modifiedData?.map(mod => (
+                      <Dropdown.Item
+                        key={mod.key}
+                        eventKey={mod.key}
+                        onClick={() => {
+                          setProcedure({
+                            ...procedure,
+                            contraindications: mod.key
+                          });
+                          setRecordOfSearch2({searchKeyword: ""});
+                        }}
+                      >
+                        <span>{mod.icdCode}</span>
+                        <span>{mod.description}</span>
+                      </Dropdown.Item>
+                    ))}
+                  </Dropdown.Menu>
+                )}
+                </div>
+                <MyInput
               disabled={true}
               fieldType="textarea"
               record={recordOfContraindicationsDescription}
               setRecord={''}
               showLabel={false}
               fieldName="contraindicationsDescription"
-              width={520}
+              width="100%"
             />
             <div className="container-of-two-fields-vaccine">
+               <div className='container-of-field-procedure'>
               <MyInput
-                column
-                width={250}
+                width="100%"
                 fieldType="textarea"
                 fieldName={'preparationInstructions'}
                 record={procedure}
                 setRecord={setProcedure}
               />
+              </div>
+               <div className='container-of-field-procedure'>
               <MyInput
-                column
-                width={250}
+                width="100%"
                 fieldType="textarea"
                 fieldName={'recoveryNotes'}
                 record={procedure}
                 setRecord={setProcedure}
               />
+              </div>
             </div>
           </Form>
         );
@@ -522,6 +567,48 @@ const AddEditProcedure = ({ open, setOpen, procedure, setProcedure, profetch }) 
 
   // Effects
   useEffect(() => {
+      if (recordOfSearch['searchKeyword'].trim() !== '') {
+        setIcdListRequest({
+          ...initialListRequest,
+          filterLogic: 'or',
+          filters: [
+            {
+              fieldName: 'icd_code',
+              operator: 'containsIgnoreCase',
+              value: recordOfSearch['searchKeyword']
+            },
+            {
+              fieldName: 'description',
+              operator: 'containsIgnoreCase',
+              value: recordOfSearch['searchKeyword']
+            }
+          ]
+        });
+      }
+    }, [recordOfSearch['searchKeyword']]);
+
+    useEffect(() => {
+    if (recordOfSearch2['searchKeyword'].trim() !== '') {
+      setIcdListRequest({
+        ...initialListRequest,
+        filterLogic: 'or',
+        filters: [
+          {
+            fieldName: 'icd_code',
+            operator: 'containsIgnoreCase',
+            value: recordOfSearch2['searchKeyword']
+          },
+          {
+            fieldName: 'description',
+            operator: 'containsIgnoreCase',
+            value: recordOfSearch2['searchKeyword']
+          }
+        ]
+      });
+    }
+  }, [recordOfSearch2['searchKeyword']]);
+
+  useEffect(() => {
     if (!open) {
       setProcedure({ ...newApProcedure });
       setRecordOfIndicationsDescription({
@@ -530,21 +617,24 @@ const AddEditProcedure = ({ open, setOpen, procedure, setProcedure, profetch }) 
       setRecordOfContraindicationsDescription({
         contraindicationsDescription: ''
       });
+      setIndicationsIcd({ indications: null });
+      setindicationsDescription('');
+      setContraindicationsDescription('');
     }
   }, [open]);
 
   useEffect(() => {
-    if (procedure?.indications != null) {
-      setindicationsDescription(prevadminInstructions => {
-        const currentIcd = icdListResponseLoading?.object?.find(
-          item => item?.key === procedure?.indications
-        );
-        if (!currentIcd) return prevadminInstructions;
-        const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
-        return prevadminInstructions ? `${prevadminInstructions}\n${newEntry}` : newEntry;
-      });
-    }
-  }, [procedure?.indications]);
+      if (indicationsIcd.indications != null) {
+        setindicationsDescription(prevadminInstructions => {
+          const currentIcd = icdListResponseLoading?.object?.find(
+            item => item.key === indicationsIcd.indications
+          );
+          if (!currentIcd) return prevadminInstructions;
+          const newEntry = `${currentIcd.icdCode}, ${currentIcd.description}.`;
+          return prevadminInstructions ? `${prevadminInstructions}\n${newEntry}` : newEntry;
+        });
+      }
+    }, [indicationsIcd.indications]);
 
   useEffect(() => {
     if (procedure?.contraindications != null) {
