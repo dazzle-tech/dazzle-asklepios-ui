@@ -275,6 +275,7 @@ const App = () => {
               <Route path='inpatient-encounters-list' element={<InpatientList/>} />
                <Route path='waiting-encounters-list' element={<WaitingList/>} />
               <Route path='room' element={<Room/>} />
+              <Route path='inventory-product-setup' element={<ProductSetup/>} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservations />} />
               <Route path="review-results" element={<ReviewResults />} />
