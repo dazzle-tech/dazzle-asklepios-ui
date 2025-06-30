@@ -38,7 +38,7 @@ const ReportDesigner = () => {
         style={{
           position: "absolute",
           top: 10,
-          left: 30,
+          left: 70,
           zIndex: 1000,
           padding: "10px 15px",
           backgroundColor: "#007bff",
@@ -48,7 +48,7 @@ const ReportDesigner = () => {
           cursor: "pointer"
         }}
       >
-        💾 حفظ التعديل
+        💾 Save
       </button>
 
     <div style={{ position: "relative", width: "100%", height: "90vh" }}>
