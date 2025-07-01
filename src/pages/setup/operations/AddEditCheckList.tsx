@@ -1,15 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import MyInput from '@/components/MyInput';
 import { Form } from 'rsuite';
-import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
 import { GrTestDesktop } from 'react-icons/gr';
-import { LuTestTubes } from 'react-icons/lu';
-import MyButton from '@/components/MyButton/MyButton';
 import MyModal from '@/components/MyModal/MyModal';
 const AddEditCheckList = ({ open, setOpen, checklist, setChecklist, width }) => {
-  const dispatch = useAppDispatch();
-
   // Main modal content
   const conjureFormContentOfMainModal = stepNumber => {
     switch (stepNumber) {
@@ -33,12 +27,6 @@ const AddEditCheckList = ({ open, setOpen, checklist, setChecklist, width }) => 
               fieldName="checkListName"
               record={checklist}
               setRecord={setChecklist}
-            />
-            <MyInput
-              width="100%"
-              fieldName=""
-              record=""
-              setRecord=""
             />
           </Form>
         );
