@@ -1791,6 +1791,33 @@ export const newApModule:modelTypes.ApModule = {
 	isValid:undefined,
 } 
 
+export const newApOperationCoding:modelTypes.ApOperationCoding = { 
+	key:undefined,
+	operationKey:undefined,
+	codeTypeLkey:undefined,
+	internationalCodeKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
+export const newApOperationPriceList:modelTypes.ApOperationPriceList = { 
+	key:undefined,
+	operationKey:undefined,
+	price:0,
+	currencyLkey:undefined,
+	priceListKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
 export const newApOperationRequests:modelTypes.ApOperationRequests = { 
 	key:undefined,
 	facilityKey:undefined,
@@ -1817,6 +1844,27 @@ export const newApOperationRequests:modelTypes.ApOperationRequests = {
 	deletedAt:undefined,
 	isValid:undefined,
 	operationDateTime:0,
+	statusLkey:undefined,
+	encounterKey:undefined,
+	patientKey:undefined,
+} 
+
+export const newApOperationSetup:modelTypes.ApOperationSetup = { 
+	key:undefined,
+	name:'',
+	code:'',
+	categoryLkey:undefined,
+	indications:'',
+	contraindications:'',
+	preparationInstructions:'',
+	recoveryNotes:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isAppointable:undefined,
 } 
 
 export const newApOptometricExam:modelTypes.ApOptometricExam = { 
@@ -1889,6 +1937,8 @@ export const newApPainAssessment:modelTypes.ApPainAssessment = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
+	statusLkey:undefined,
+	cancellationReason:'',
 } 
 
 export const newApPatient:modelTypes.ApPatient = { 
@@ -2775,16 +2825,14 @@ export const newApProducts:modelTypes.ApProducts = {
 	isSerialized:undefined,
 	isReusable:undefined,
 	inventoryTypeLkey:undefined,
-	dateDiagnosed:null,
-	problemStatusLkey:undefined,
-	severityLkey:undefined,
+	atcCode:'',
 	shelfLife:0,
 	leadTime:0,
 	erpIntegId:'',
 	startDate:null,
 	endDate:null,
 	maintenanceScheduleTime:0,
-	maintenanceScheduleLkey:0,
+	maintenanceScheduleLkey:undefined,
 	isCritical:undefined,
 	isCalibration:undefined,
 	isTraining:undefined,

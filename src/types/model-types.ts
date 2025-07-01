@@ -1790,6 +1790,33 @@ export interface ApModule {
 	isValid:boolean;
 } 
 
+export interface ApOperationCoding { 
+	key:string;
+	operationKey:string;
+	codeTypeLkey:string;
+	internationalCodeKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApOperationPriceList { 
+	key:string;
+	operationKey:string;
+	price:number;
+	currencyLkey:string;
+	priceListKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
 export interface ApOperationRequests { 
 	key:string;
 	facilityKey:string;
@@ -1816,6 +1843,27 @@ export interface ApOperationRequests {
 	deletedAt:number;
 	isValid:boolean;
 	operationDateTime:number;
+	statusLkey:string;
+	encounterKey:string;
+	patientKey:string;
+} 
+
+export interface ApOperationSetup { 
+	key:string;
+	name:string;
+	code:string;
+	categoryLkey:string;
+	indications:string;
+	contraindications:string;
+	preparationInstructions:string;
+	recoveryNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isAppointable:boolean;
 } 
 
 export interface ApOptometricExam { 
@@ -1888,6 +1936,8 @@ export interface ApPainAssessment {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
+	statusLkey:string;
+	cancellationReason:string;
 } 
 
 export interface ApPatient { 
@@ -2734,16 +2784,14 @@ export interface ApProducts {
 	isSerialized:boolean;
 	isReusable:boolean;
 	inventoryTypeLkey:string;
-	dateDiagnosed:Date;
-	problemStatusLkey:string;
-	severityLkey:string;
+	atcCode:string;
 	shelfLife:number;
 	leadTime:number;
 	erpIntegId:string;
 	startDate:Date;
 	endDate:Date;
 	maintenanceScheduleTime:number;
-	maintenanceScheduleLkey:number;
+	maintenanceScheduleLkey:string;
 	isCritical:boolean;
 	isCalibration:boolean;
 	isTraining:boolean;

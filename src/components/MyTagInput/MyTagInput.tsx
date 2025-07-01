@@ -12,7 +12,7 @@ const handleDelete = (tagToDelete) => {
 };
 
  return (
-  <>
+  <div style={{display:'flex',flexDirection:'column',gap:'5px'}}>
   <MyLabel label={labelText} />
     <Autocomplete
       multiple
@@ -71,7 +71,7 @@ const handleDelete = (tagToDelete) => {
           }}
         />
       )}
-    /></>
+    /></div>
   );
 }
 export default MyTagInput

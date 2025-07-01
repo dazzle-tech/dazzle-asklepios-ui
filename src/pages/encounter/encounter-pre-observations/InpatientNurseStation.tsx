@@ -24,6 +24,7 @@ import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment';
 import InpatientObservations from './observations/InpatientObservations';
 import ChiefComplaintSymptoms from '../encounter-component/chief_complaint_symptoms';
 import PsychologicalExam from '../encounter-component/psychological-exam';
+import PainAssessment from '../encounter-component/pain-assessment/PainAssessment';
 const InpatientNurseStation = ({ }) => {
     const dispatch = useAppDispatch();
     const location = useLocation();
@@ -169,6 +170,12 @@ const InpatientNurseStation = ({ }) => {
                                         editable={propsData.edit}
                                         localPatient={propsData.patient}
                                         localEncounter={propsData.encounter} />
+                                </Tabs.Tab>
+                                 <Tabs.Tab eventKey="8" title="Pain Assessment">
+                                    <PainAssessment
+                                        edit={propsData.edit}
+                                        patient={propsData.patient}
+                                        encounter={propsData.encounter} />
                                 </Tabs.Tab>
                             </Tabs>
                         </Panel>
