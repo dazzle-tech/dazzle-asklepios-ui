@@ -1840,6 +1840,7 @@ export const newApOperationPriceList:modelTypes.ApOperationPriceList = {
 	deletedAt:undefined,
 } 
 
+
 export const newApOperationRequests:modelTypes.ApOperationRequests = { 
 	key:undefined,
 	facilityKey:undefined,
@@ -1887,6 +1888,7 @@ export const newApOperationSetup:modelTypes.ApOperationSetup = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isAppointable:undefined,
+
 } 
 
 export const newApOptometricExam:modelTypes.ApOptometricExam = { 
@@ -1961,6 +1963,8 @@ export const newApPainAssessment:modelTypes.ApPainAssessment = {
 	deletedAt:undefined,
 	statusLkey:undefined,
 	cancellationReason:'',
+
+
 } 
 
 export const newApPatient:modelTypes.ApPatient = { 

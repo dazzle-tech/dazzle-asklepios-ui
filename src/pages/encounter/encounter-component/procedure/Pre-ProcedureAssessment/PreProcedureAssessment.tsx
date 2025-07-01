@@ -10,7 +10,7 @@ import AttachmentUploadModal from "@/components/AttachmentUploadModal";
 import { useSavePreProcedureAssessmentMutation } from "@/services/procedureService";
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
-import VitalSigns from "@/pages/vital-signs/VitalSigns";
+import VitalSigns from "@/pages/medical-component/vital-signs/VitalSigns";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 
 

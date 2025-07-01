@@ -175,7 +175,8 @@ const Encounter = () => {
     '/encounter/patient-history': 'Patient History',
     '/encounter/medications-record': 'medications Record ',
     '/encounter/vaccine-record': 'Vaccine Record',
-    '/encounter/diagnostics-result': 'Diagnostics Result '
+    '/encounter/diagnostics-result': 'Diagnostics Result ',
+    '/encounter/operation-request':'Operation Requests'
   };
 
   const menuItems = [
@@ -184,7 +185,7 @@ const Encounter = () => {
     { key: 'allergies', label: 'Allergies', icon: faPersonDotsFromLine, path: 'allergies' },
     { key: 'medicalWarnings', label: 'Medical Warnings', icon: faTriangleExclamation, path: 'medical-warnings' },
     { key: 'diagnosticsResult', label: 'Diagnostics Test Result', icon: faFileWaveform, path: 'diagnostics-result' },
-
+    
     { key: 'vaccination', label: 'Vaccination', icon: faSyringe, path: 'vaccination' },
     { key: 'prescription', label: 'Prescription', icon: faFilePrescription, path: 'prescription' },
     { key: 'drugOrder', label: 'Drug Order', icon: faPills, path: 'drug-order' },
@@ -195,6 +196,7 @@ const Encounter = () => {
     { key: 'patientHistory', label: 'Patient History', icon: faClockRotateLeft, path: 'patient-history' },
     { key: 'medicationsRecord', label: 'Medications Record', icon: faPills, path: 'medications-record' },
     { key: 'vaccineReccord', label: 'Vaccine Record', icon: faSyringe, path: 'vaccine-record' },
+    {key:'operationRequests',label:'Operation Requests',icon:faBedPulse,path:'operation-request'},
 
     { key: 'cardiology', label: 'Cardiology', icon: faHeartPulse, path: 'cardiology' },
     { key: 'dentalCare', label: 'Dental Care', icon: faTooth, path: 'dental-care' },
@@ -312,6 +314,7 @@ const Encounter = () => {
                   <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
                   <Translate>Dashboard</Translate>
                 </List.Item>
+               
                 {menuItems.map(({ key, label, icon, path }) =>
                   medicalSheet?.object?.[key] ? (
                     <List.Item key={key} className="drawer-item"

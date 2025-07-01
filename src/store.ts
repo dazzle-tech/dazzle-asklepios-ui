@@ -16,6 +16,7 @@ import { appointmentService } from './services/appointmentService';
 import divSlice from './reducers/divSlice';
 import { labService } from './services/labService';
 import {radService}from '@/services/radService';
+import {operationService} from '@/services/operationService';
 import { procedureService } from './services/procedureService';
 import {operationService} from './services/operationService';
 export const store = configureStore({
@@ -55,9 +56,10 @@ export const store = configureStore({
 
     //attachment
     [attachmentService.reducerPath]: attachmentService.reducer,
-
+    //;ab module
     [labService.reducerPath]:labService.reducer,
-
+    //operation
+    [operationService.reducerPath]:operationService.reducer,
     [radService.reducerPath]:radService.reducer,
     // div slice 
     [divSlice.name]:divSlice.reducer,

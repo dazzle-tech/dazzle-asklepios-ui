@@ -149,6 +149,13 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
+                    <MyInput
+                    fieldType="check"
+                      fieldName={'operationRequests'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}/>
+
                 </div>
               </div>
               <div className="container-of-specific-sheets">
