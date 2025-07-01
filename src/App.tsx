@@ -60,7 +60,7 @@ import Diagnostics from './pages/setup/diagnostics-tests-definition';
 import Resources from './pages/appointment/resources';
 import EncounterPreObservations from './pages/encounter/encounter-pre-observations/EncounterPreObservations';
 import AgeGroup from './pages/setup/age-group';
-import FacilityPatientList from './pages/patient/facility-patient-list/FacilityPatientList'
+import FacilityPatientList from './pages/patient/facility-patient-list/FacilityPatientList';
 import ScheduleScreen from './pages/Scheduling/scheduling-screen/ScheduleScreen';
 import EncounterPatientPrivateLogin from './pages/encounter/encounter-patient-private';
 import VaccinationTab from './pages/encounter/encounter-pre-observations/vaccination-tab';
@@ -92,7 +92,7 @@ import MedicationsRecord from './pages/encounter/encounter-component/medications
 import VaccineReccord from './pages/encounter/encounter-component/vaccine-reccord';
 import DiagnosticsResult from './pages/encounter/encounter-component/diagnostics-result/DiagnosticsResult';
 import InpatientList from './pages/Inpatient/inpatientList';
-import ReviewResults from "./pages/review-results/ReviewResults"
+import ReviewResults from './pages/review-results/ReviewResults';
 import Room from './pages/setup/bed-room-setup';
 import WaitingList from './pages/Inpatient/waitingList';
 import ProcedureModule from './pages/procedure-module/ProcedureModule';
@@ -112,7 +112,6 @@ const App = () => {
   const location = useLocation();
 
   useEffect(() => {
-
     console.log(config.backendBaseURL);
     console.log(config.tenantId);
   }, []);
@@ -145,7 +144,12 @@ const App = () => {
     navigationMapRawData.screens.map(screenWithoutModule => {
       navs.push({
         eventKey: screenWithoutModule.key,
-        icon: <Icon fill="var(--gray-dark)" as={icons[screenWithoutModule?.iconImagePath ?? 'FaCircle']} />,
+        icon: (
+          <Icon
+            fill="var(--gray-dark)"
+            as={icons[screenWithoutModule?.iconImagePath ?? 'FaCircle']}
+          />
+        ),
         title: screenWithoutModule.name,
         to: '/'.concat(screenWithoutModule.navPath)
       });
@@ -161,7 +165,12 @@ const App = () => {
       childrenScreens.map(screen => {
         chidlrenNavs.push({
           eventKey: screen.key,
-          icon: <Icon fill="var(--gray-dark)" as={icons[screen?.iconImagePath ?? 'FaCircle']} />,
+          icon: (
+            <Icon
+               fill="var(--gray-dark)"
+              as={icons[screen?.iconImagePath ?? 'FaCircle']}
+            />
+          ),
           title: screen.name,
           to: '/'.concat(screen.navPath)
         });
@@ -171,7 +180,12 @@ const App = () => {
 
       navs.push({
         eventKey: module.key,
-        icon: <Icon fill="var(--gray-dark)" as={icons[module?.iconImagePath ?? 'FaBox']} />,
+        icon: (
+          <Icon
+            fill="var(--gray-dark)"
+            as={icons[module?.iconImagePath ?? 'FaBox']}
+          />
+        ),
         title: module.name,
         children: chidlrenNavs
       });
@@ -249,29 +263,30 @@ const App = () => {
               <Route path="patient-list" element={<PatientList />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="facility-patient-list" element={<FacilityPatientList />} />
-              <Route path="encounter" element={<Encounter />} >
+              <Route path="encounter" element={<Encounter />}>
                 <Route path="drug-order" element={<DrugOrder />} />
                 <Route index element={<PatientSummary />} />
-                <Route path='clinical-visit' element={<SOAP />} />
-                <Route path='observations' element={<Observations />} />
-                <Route path='allergies' element={<Allergies />} />
-                <Route path='medical-warnings' element={<Warning />} />
-                <Route path='cardiology' element={<Cardiology />} />
-                <Route path='dental-care' element={<Dental />} />
-                <Route path='optometric-exam' element={<OptometricExam />} />
-                <Route path='audiometry' element={<AudiometryPuretone />} />
-                <Route path='psychological-exam' element={<PsychologicalExam />} />
-                <Route path='vaccination' element={<VaccinationTab />} />
-                <Route path='prescription' element={<Prescription />} />
-                <Route path='diagnostics-order' element={<DiagnosticsOrder />} />
-                <Route path='consultation' element={<Consultation />} />
-                <Route path='procedures' element={<Procedure/>} />
-                <Route path='patient-history' element={<PatientHistory/>} />
-                <Route path='medications-record' element={<MedicationsRecord/>} />
-                <Route path='vaccine-record' element={<VaccineReccord/>} />
-                <Route path='diagnostics-result' element={<DiagnosticsResult/>} />
+
+                <Route path="clinical-visit" element={<SOAP />} />
+                <Route path="observations" element={<Observations />} />
+                <Route path="allergies" element={<Allergies />} />
+                <Route path="medical-warnings" element={<Warning />} />
+                <Route path="cardiology" element={<Cardiology />} />
+                <Route path="dental-care" element={<Dental />} />
+                <Route path="optometric-exam" element={<OptometricExam />} />
+                <Route path="audiometry" element={<AudiometryPuretone />} />
+                <Route path="psychological-exam" element={<PsychologicalExam />} />
+                <Route path="vaccination" element={<VaccinationTab />} />
+                <Route path="prescription" element={<Prescription />} />
+                <Route path="diagnostics-order" element={<DiagnosticsOrder />} />
+                <Route path="consultation" element={<Consultation />} />
+                <Route path="procedures" element={<Procedure />} />
+                <Route path="patient-history" element={<PatientHistory />} />
+                <Route path="medications-record" element={<MedicationsRecord />} />
+                <Route path="vaccine-record" element={<VaccineReccord />} />
+                <Route path="diagnostics-result" element={<DiagnosticsResult />} />
               </Route>
-              <Route path= "procedure-module" element={<ProcedureModule />} />
+              <Route path="procedure-module" element={<ProcedureModule />} />
               <Route path="encounter-list" element={<EncounterList />} />
               <Route path='inpatient-encounters-list' element={<InpatientList/>} />
                <Route path='waiting-encounters-list' element={<WaitingList/>} />
@@ -283,7 +298,10 @@ const App = () => {
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />
               <Route path="modules-setup" element={<Modules />} />
-              <Route path="user-access-patient-private" element={<EncounterPatientPrivateLogin />} />
+              <Route
+                path="user-access-patient-private"
+                element={<EncounterPatientPrivateLogin />}
+              />
               <Route path="vaccine-setup" element={<Vaccine />} />
               <Route path="procedure-setup" element={<ProcedureSetup />} />
               <Route path="potintial-duplicate" element={<PotintialDuplicate />} />
@@ -314,10 +332,10 @@ const App = () => {
               <Route path="error-500" element={<Error500Page />} />
               <Route path="error-503" element={<Error503Page />} />
               <Route path="playground" element={<Playground />} />
-              <Route path='schedual-screen' element={<ScheduleScreen />} />
-              <Route path='patient-EMR' element={<PatientEMR />} />
-              <Route path='lab-module' element={<Lab />} />
-              <Route path='rad-module' element={<Rad />} />
+              <Route path="schedual-screen" element={<ScheduleScreen />} />
+              <Route path="patient-EMR" element={<PatientEMR />} />
+              <Route path="lab-module" element={<Lab />} />
+              <Route path="rad-module" element={<Rad />} />
             </Route>
           </Route>
 
