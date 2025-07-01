@@ -60,7 +60,7 @@ import Diagnostics from './pages/setup/diagnostics-tests-definition';
 import Resources from './pages/appointment/resources';
 import EncounterPreObservations from './pages/encounter/encounter-pre-observations/EncounterPreObservations';
 import AgeGroup from './pages/setup/age-group';
-import FacilityPatientList from './pages/patient/facility-patient-list/FacilityPatientList';
+import FacilityPatientList from './pages/patient/facility-patient-list';
 import ScheduleScreen from './pages/Scheduling/scheduling-screen/ScheduleScreen';
 import EncounterPatientPrivateLogin from './pages/encounter/encounter-patient-private';
 import VaccinationTab from './pages/encounter/encounter-pre-observations/vaccination-tab';
