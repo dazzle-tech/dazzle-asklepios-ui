@@ -27,7 +27,7 @@ type ObservationsProps = {
   patient?: any;
   encounter?: any;
   edit?: boolean;
-};
+};//edit
 const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref) => {
   useImperativeHandle(ref, () => ({
     handleSave, handleClear
