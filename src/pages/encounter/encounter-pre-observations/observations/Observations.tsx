@@ -189,7 +189,8 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
 
   return (
     <div ref={ref} className={clsx('basuc-div', { 'disabled-panel': edit })}>
-        <Form fluid>
+      {localEncounter?.resourceTypeLvalue?.valueCode == "BRT_INPATIENT" ?
+        <InpatientObservations localPatient={localPatient} localEncounter={localEncounter} editable={edit} /> : <Form fluid>
           {!(location.pathname == '/nurse-station') &&
             <Row>
               <Col md={23}></Col>
@@ -326,7 +327,7 @@ const Observations = forwardRef<ObservationsRef, ObservationsProps>((props, ref)
               </Row>
             </Col>
           </Row>
-        </Form>
+        </Form>}
     </div>
   );
 });

@@ -119,7 +119,7 @@ const InpatientList = () => {
     // handle go to preVisitObservations (nurse station) function
     const handleGoToPreVisitObservations = async (encounterData, patientData) => {
         const privatePatientPath = '/user-access-patient-private';
-        const preObservationsPath = '/inpatient-nurse-station';
+        const preObservationsPath = '/nurse-station';
         const targetPath = localPatient.privatePatient ? privatePatientPath : preObservationsPath;
         if (localPatient.privatePatient) {
             navigate(targetPath, {
@@ -315,7 +315,7 @@ const InpatientList = () => {
             key: 'actions',
             title: <Translate> </Translate>,
             render: rowData => {
-                const tooltipNurse = <Tooltip>Nurse Anamnesis</Tooltip>;
+                const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
                 const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
                 const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
                 const tooltipChangeBed = <Tooltip>Change Bed</Tooltip>;
