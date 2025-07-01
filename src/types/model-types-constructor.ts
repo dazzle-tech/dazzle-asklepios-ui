@@ -1687,7 +1687,6 @@ export const newApMedicalSheets:modelTypes.ApMedicalSheets = {
 	isValid:undefined,
 	observation:undefined,
 	vaccination:undefined,
-	operationRequests:undefined,
 } 
 
 export const newApMedicationCategories:modelTypes.ApMedicationCategories = { 
@@ -1791,82 +1790,6 @@ export const newApModule:modelTypes.ApModule = {
 	isValid:undefined,
 } 
 
-export const newApOperationCoding:modelTypes.ApOperationCoding = { 
-	key:undefined,
-	operationKey:undefined,
-	codeTypeLkey:undefined,
-	internationalCodeKey:undefined,
-	createdBy:'',
-	updatedBy:'',
-	deletedBy:'',
-	createdAt:undefined,
-	updatedAt:undefined,
-	deletedAt:undefined,
-} 
-
-export const newApOperationPriceList:modelTypes.ApOperationPriceList = { 
-	key:undefined,
-	operationKey:undefined,
-	price:0,
-	currencyLkey:undefined,
-	priceListKey:undefined,
-	createdBy:'',
-	updatedBy:'',
-	deletedBy:'',
-	createdAt:undefined,
-	updatedAt:undefined,
-	deletedAt:undefined,
-} 
-
-export const newApOperationRequests:modelTypes.ApOperationRequests = { 
-	key:undefined,
-	facilityKey:undefined,
-	departmentKey:undefined,
-	operationKey:undefined,
-	operationTypeLkey:undefined,
-	operationLevelLkey:undefined,
-	priorityLkey:undefined,
-	diagnosisKey:undefined,
-	requestStatus:'',
-	bodyPartLkey:undefined,
-	sideOfProcedureLkey:undefined,
-	plannedAnesthesiaTypeLkey:undefined,
-	needBloodProducts:undefined,
-	implantOrDeviceExpected:undefined,
-	notes:'',
-	createdBy:'',
-	createdAt:undefined,
-	updatedBy:'',
-	updatedAt:undefined,
-	cancelledBy:'',
-	cancelledAt:0,
-	deletedBy:'',
-	deletedAt:undefined,
-	isValid:undefined,
-	operationDateTime:0,
-	statusLkey:undefined,
-	encounterKey:undefined,
-	patientKey:undefined,
-} 
-
-export const newApOperationSetup:modelTypes.ApOperationSetup = { 
-	key:undefined,
-	name:'',
-	code:'',
-	categoryLkey:undefined,
-	indications:'',
-	contraindications:'',
-	preparationInstructions:'',
-	recoveryNotes:'',
-	createdBy:'',
-	updatedBy:'',
-	deletedBy:'',
-	createdAt:undefined,
-	updatedAt:undefined,
-	deletedAt:undefined,
-	isAppointable:undefined,
-} 
-
 export const newApOptometricExam:modelTypes.ApOptometricExam = { 
 	key:undefined,
 	patientKey:undefined,
@@ -1912,33 +1835,6 @@ export const newApOptometricExam:modelTypes.ApOptometricExam = {
 	deletedAt:undefined,
 	cancellationReason:'',
 	statusLkey:undefined,
-} 
-
-export const newApPainAssessment:modelTypes.ApPainAssessment = { 
-	key:undefined,
-	patientKey:undefined,
-	encounterKey:undefined,
-	painDegreeLkey:undefined,
-	painLocationLkey:undefined,
-	painPatternLkey:undefined,
-	onsetLkey:undefined,
-	painScoreLkey:undefined,
-	duration:0,
-	durationUnitLkey:undefined,
-	aggravatingFactors:'',
-	relievingFactors:'',
-	associatedSymptoms:'',
-	painManagementGiven:'',
-	impactOnFunction:undefined,
-	painReassessmentRequired:undefined,
-	createdBy:'',
-	updatedBy:'',
-	deletedBy:'',
-	createdAt:undefined,
-	updatedAt:undefined,
-	deletedAt:undefined,
-	statusLkey:undefined,
-	cancellationReason:'',
 } 
 
 export const newApPatient:modelTypes.ApPatient = { 
@@ -2416,6 +2312,7 @@ export const newApPostProcedureAnesthesia:modelTypes.ApPostProcedureAnesthesia =
 	circulationLkey:undefined,
 	consciousnessLkey:undefined,
 	oxygenSaturationLkey:undefined,
+
 	aldreteScore:0,
 	createdBy:'',
 	updatedBy:'',
@@ -2808,46 +2705,6 @@ export const newApProcedureStaff:modelTypes.ApProcedureStaff = {
 	encounterKey:undefined,
 	isPresent:undefined,
 	patientKey:undefined,
-} 
-
-export const newApProducts:modelTypes.ApProducts = { 
-	key:undefined,
-	typeLkey:undefined,
-	name:'',
-	medicationKey:undefined,
-	code:'',
-	barecode:'',
-	uomGroupKey:undefined,
-	baseUomKey:undefined,
-	dispenseUomKey:undefined,
-	isBatchManaged:undefined,
-	isExpiryDateMandatory:undefined,
-	isSerialized:undefined,
-	isReusable:undefined,
-	inventoryTypeLkey:undefined,
-	atcCode:'',
-	shelfLife:0,
-	leadTime:0,
-	erpIntegId:'',
-	startDate:null,
-	endDate:null,
-	maintenanceScheduleTime:0,
-	maintenanceScheduleLkey:undefined,
-	isCritical:undefined,
-	isCalibration:undefined,
-	isTraining:undefined,
-	avgCost:0,
-	priceBaseUom:'',
-	isControlledSubstance:undefined,
-	isAllergyRisk:undefined,
-	hazardousTag:'',
-	createdBy:'',
-	updatedBy:'',
-	deletedBy:'',
-	createdAt:undefined,
-	updatedAt:undefined,
-	deletedAt:undefined,
-	isValid:undefined,
 } 
 
 export const newApPsychologicalExam:modelTypes.ApPsychologicalExam = { 

@@ -4,16 +4,13 @@ import Autocomplete from '@mui/material/Autocomplete';
 import Chip from '@mui/material/Chip';
 import { useEffect } from 'react';
 import { red } from '@mui/material/colors';
-import MyLabel from '../MyLabel';
-const MyTagInput=({tags=[] ,setTags,labelText=""})=>{
+const MyTagInput=({tags=[] ,setTags})=>{
  
 const handleDelete = (tagToDelete) => {
   setTags((prevTags) => prevTags.filter((tag) => tag !== tagToDelete));
 };
 
  return (
-  <div style={{display:'flex',flexDirection:'column',gap:'5px'}}>
-  <MyLabel label={labelText} />
     <Autocomplete
       multiple
       freeSolo
@@ -41,7 +38,7 @@ const handleDelete = (tagToDelete) => {
           />
         ))
       }
-      renderInput={(params) => (  
+      renderInput={(params) => (
         <TextField
           {...params}
           sx={{
@@ -71,7 +68,7 @@ const handleDelete = (tagToDelete) => {
           }}
         />
       )}
-    /></div>
+    />
   );
 }
 export default MyTagInput

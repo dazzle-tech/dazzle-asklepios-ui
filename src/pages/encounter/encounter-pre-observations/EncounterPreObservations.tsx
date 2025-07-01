@@ -150,27 +150,27 @@ const EncounterPreObservations = ({ }) => {
                     encounter={propsData.encounter}
                   />
                 </Tabs.Tab>
-                <Tabs.Tab eventKey="4" title="Patient History">
-                  <PatientHistory />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="5" title="Previous Measurements">
-                  <PreviousMeasurements
-                    patient={propsData.patient}
-                  />
-                </Tabs.Tab>
-                <Tabs.Tab eventKey="6" title="Attachments">
-                  <PatientAttachment
-                    localPatient={propsData?.patient}
-                    setRefetchAttachmentList={setRefetchAttachmentList}
-                    refetchAttachmentList={refetchAttachmentList} />
-                </Tabs.Tab>
-                    <Tabs.Tab eventKey="7" title="Vaccination">
+                <Tabs.Tab eventKey="4" title="Vaccination">
                   <VaccinationTab
                     edit={propsData.edit}
                     disabled={isEncounterStatusClosed || readOnly}
                     patient={propsData.patient}
                     encounter={propsData.encounter}
                   />
+                </Tabs.Tab>
+                <Tabs.Tab eventKey="5" title="Patient History">
+                  <PatientHistory />
+                </Tabs.Tab>
+                <Tabs.Tab eventKey="6" title="Previous Measurements">
+                  <PreviousMeasurements
+                    patient={propsData.patient}
+                  />
+                </Tabs.Tab>
+                <Tabs.Tab eventKey="7" title="Attachments">
+                  <PatientAttachment
+                    localPatient={propsData?.patient}
+                    setRefetchAttachmentList={setRefetchAttachmentList}
+                    refetchAttachmentList={refetchAttachmentList} />
                 </Tabs.Tab>
               </Tabs>
             </Panel>

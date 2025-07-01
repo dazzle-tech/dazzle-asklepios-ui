@@ -15,12 +15,9 @@ import CancellationModal from '@/components/CancellationModal';
 import MyTable from '@/components/MyTable';
 import { formatDateWithoutSeconds } from '@/utils';
 import { useLocation } from 'react-router-dom';
-
-const PsychologicalExam = ({ localPatient, localEncounter, editable }) => {
+const PsychologicalExam = () => {
     const location = useLocation();
-    const [patient, setPatient] = useState(null);
-    const [encounter, setEncounter] = useState(null);
-    const [edit, setEdit] = useState(false);
+     const { patient, encounter, edit } = location.state || {};
     const authSlice = useAppSelector(state => state.auth);
     const [openAddModal, setOpenAddModal] = useState(false);
     const [psychologicalExam, setPsychologicalExam] = useState<ApPsychologicalExam>({ ...newApPsychologicalExam });
@@ -79,7 +76,7 @@ const PsychologicalExam = ({ localPatient, localEncounter, editable }) => {
     const handleCancle = () => {
         //TODO convert key to code
         savePsychologicalExam({ ...psychologicalExam, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime(), deletedBy: authSlice.user.key }).unwrap().then(() => {
-            dispatch(notify({ msg: 'Psychological Exam Canceled Successfully', sev: 'success' }));
+            dispatch(notify({msg:'Psychological Exam Canceled Successfully',sev:'success'}));
             refetchPsychologicalExam();
             setPopupCancelOpen(false);
         });
@@ -206,17 +203,7 @@ const PsychologicalExam = ({ localPatient, localEncounter, editable }) => {
             };
         });
     }, [allData, psychologicalExamStatus]);
-    useEffect(() => {
-        if (location.state) {
-            setPatient(location.state.patient ?? localPatient);
-            setEncounter(location.state.encounter ?? localEncounter);
-            setEdit(location.state.edit ?? editable);
-        } else {
-            setPatient(localPatient);
-            setEncounter(localEncounter);
-            setEdit(editable);
-        }
-    }, [location.state, localPatient, localEncounter, editable]);
+
     // Pagination values
     const pageIndex = psychologicalExamListRequest.pageNumber - 1;
     const rowsPerPage = psychologicalExamListRequest.pageSize;
@@ -270,10 +257,10 @@ const PsychologicalExam = ({ localPatient, localEncounter, editable }) => {
         {
             key: 'followUpDate',
             title: <Translate>FOLLOW-UP DATE</Translate>,
-            render: (rowData: any) => rowData?.followUpDate
-                ? new Date(rowData.followUpDate).toLocaleDateString("en-GB")
+            render: (rowData: any) => rowData?.followUpDate 
+                ? new Date(rowData.followUpDate).toLocaleDateString("en-GB") 
                 : ""
-        },
+        },        
         {
             key: "details",
             title: <Translate>EDIT</Translate>,
@@ -320,7 +307,7 @@ const PsychologicalExam = ({ localPatient, localEncounter, editable }) => {
     ];
     return (
         <div>
-            <AddPsychologicalExam open={openAddModal} setOpen={setOpenAddModal} refetchPsychologicalExam={refetchPsychologicalExam} patient={patient} encounter={encounter} encounterPsychologicalExam={psychologicalExam} edit={edit} />
+            <AddPsychologicalExam open={openAddModal} setOpen={setOpenAddModal} refetchPsychologicalExam={refetchPsychologicalExam} patient={patient} encounter={encounter} encounterPsychologicalExam={psychologicalExam} edit={edit}/>
             <div className='bt-div'>
                 <MyButton prefixIcon={() => <CloseOutlineIcon />} onClick={() => { setPopupCancelOpen(true) }} disabled={edit}>
                     Cancel
