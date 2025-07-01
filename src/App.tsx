@@ -25,7 +25,7 @@ import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import SessionExpiredBackdrop from './components/SessionExpiredBackdrop/SessionExpiredBackdrop';
 import { useLoadNavigationMapQuery } from './services/uiService';
 import Facilities from './pages/setup/facilities-setup';
-import PatientMergeFiles from './pages/patient/patient-merge-files/PatientMergeFiles';
+import PatientMergeFiles from './pages/patient/patient-merge-files';
 import AccessRoles from './pages/setup/access-roles';
 import Lov from './pages/setup/lov-setup';
 import Users from './pages/setup/users-setup';
