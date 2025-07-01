@@ -15,12 +15,14 @@ const LinkedItems = ({ open, setOpen }) => {
 
   // Icons column (remove)
   const iconsForActions = () => (
+    <div className='container-of-icons-service'>
       <MdDelete
         className="icons-service"
         title="Deactivate"
         size={24}
         fill="var(--primary-pink)"
       />
+      </div>
   );
 
 
