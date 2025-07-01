@@ -1,4 +1,4 @@
-import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress } from './../types/model-types';
+import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -594,6 +594,24 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    savePainAssessment: builder.mutation({
+      query: (painAssessment: ApPainAssessment) => ({
+        url: `/encounter/save-pain-assessment`,
+        method: 'POST',
+        body: painAssessment
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getPainAssessment: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/pain-assessment-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 });
 
@@ -657,6 +675,7 @@ export const {
   useSavePatientAdmissionMutation,
   useGetInpatientEncountersQuery,
   useSaveBedTransactionMutation,
-  useGetBedTransactionsListQuery
+  useGetBedTransactionsListQuery,
+  useSavePainAssessmentMutation,
+  useGetPainAssessmentQuery
 } = encounterService;
-

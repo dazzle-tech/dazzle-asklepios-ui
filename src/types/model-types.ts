@@ -1686,6 +1686,7 @@ export interface ApMedicalSheets {
 	isValid:boolean;
 	observation:boolean;
 	vaccination:boolean;
+	operationRequests:boolean;
 } 
 
 export interface ApMedicationCategories { 
@@ -1789,6 +1790,82 @@ export interface ApModule {
 	isValid:boolean;
 } 
 
+export interface ApOperationCoding { 
+	key:string;
+	operationKey:string;
+	codeTypeLkey:string;
+	internationalCodeKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApOperationPriceList { 
+	key:string;
+	operationKey:string;
+	price:number;
+	currencyLkey:string;
+	priceListKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApOperationRequests { 
+	key:string;
+	facilityKey:string;
+	departmentKey:string;
+	operationKey:string;
+	operationTypeLkey:string;
+	operationLevelLkey:string;
+	priorityLkey:string;
+	diagnosisKey:string;
+	requestStatus:string;
+	bodyPartLkey:string;
+	sideOfProcedureLkey:string;
+	plannedAnesthesiaTypeLkey:string;
+	needBloodProducts:boolean;
+	implantOrDeviceExpected:boolean;
+	notes:string;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	cancelledBy:string;
+	cancelledAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isValid:boolean;
+	operationDateTime:number;
+	statusLkey:string;
+	encounterKey:string;
+	patientKey:string;
+} 
+
+export interface ApOperationSetup { 
+	key:string;
+	name:string;
+	code:string;
+	categoryLkey:string;
+	indications:string;
+	contraindications:string;
+	preparationInstructions:string;
+	recoveryNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isAppointable:boolean;
+} 
+
 export interface ApOptometricExam { 
 	key:string;
 	patientKey:string;
@@ -1834,6 +1911,33 @@ export interface ApOptometricExam {
 	deletedAt:number;
 	cancellationReason:string;
 	statusLkey:string;
+} 
+
+export interface ApPainAssessment { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	painDegreeLkey:string;
+	painLocationLkey:string;
+	painPatternLkey:string;
+	onsetLkey:string;
+	painScoreLkey:string;
+	duration:number;
+	durationUnitLkey:string;
+	aggravatingFactors:string;
+	relievingFactors:string;
+	associatedSymptoms:string;
+	painManagementGiven:string;
+	impactOnFunction:boolean;
+	painReassessmentRequired:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	statusLkey:string;
+	cancellationReason:string;
 } 
 
 export interface ApPatient { 
@@ -2665,6 +2769,46 @@ export interface ApProcedureStaff {
 	patientKey:string;
 } 
 
+export interface ApProducts { 
+	key:string;
+	typeLkey:string;
+	name:string;
+	medicationKey:string;
+	code:string;
+	barecode:string;
+	uomGroupKey:string;
+	baseUomKey:string;
+	dispenseUomKey:string;
+	isBatchManaged:boolean;
+	isExpiryDateMandatory:boolean;
+	isSerialized:boolean;
+	isReusable:boolean;
+	inventoryTypeLkey:string;
+	atcCode:string;
+	shelfLife:number;
+	leadTime:number;
+	erpIntegId:string;
+	startDate:Date;
+	endDate:Date;
+	maintenanceScheduleTime:number;
+	maintenanceScheduleLkey:string;
+	isCritical:boolean;
+	isCalibration:boolean;
+	isTraining:boolean;
+	avgCost:number;
+	priceBaseUom:string;
+	isControlledSubstance:boolean;
+	isAllergyRisk:boolean;
+	hazardousTag:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApPsychologicalExam { 
 	key:string;
 	patientKey:string;
@@ -2730,46 +2874,6 @@ export interface ApResourcesAvailabilityTime {
 	isHasBreak:boolean;
 	breakFrom:number;
 	breakTo:number;
-	createdBy:string;
-	updatedBy:string;
-	deletedBy:string;
-	createdAt:number;
-	updatedAt:number;
-	deletedAt:number;
-	isValid:boolean;
-} 
-
-export interface ApProducts { 
-	key:string;
-	typeLkey:string;
-	name:string;
-	medicationKey:string;
-	code:string;
-	barecode:string;
-	uomGroupKey:string;
-	baseUomKey:string;
-	dispenseUomKey:string;
-	isBatchManaged:boolean;
-	isExpiryDateMandatory:boolean;
-	isSerialized:boolean;
-	isReusable:boolean;
-	inventoryTypeLkey:string;
-	atcCode:string;
-	shelfLife:number;
-	leadTime:number;
-	erpIntegId:string;
-	startDate:Date;
-	endDate:Date;
-	maintenanceScheduleTime:number;
-	maintenanceScheduleLkey:string;
-	isCritical:boolean;
-	isCalibration:boolean;
-	isTraining:boolean;
-	avgCost:number;
-	priceBaseUom:string;
-	isControlledSubstance:boolean;
-	isAllergyRisk:boolean;
-	hazardousTag:string;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
@@ -3305,5 +3409,57 @@ export interface ApVisitWarning {
 	deletedAt:number;
 	severityLkey:string;
 	warning:string;
+} 
+
+export interface ApWarehouse { 
+	key:string;
+	departmentKey:string;
+	warehouseName:string;
+	warehouseId:string;
+	isdefault:boolean;
+	closeWarehouse:boolean;
+	locationKey:string;
+	capacity:string;
+	workingHoursFromTime:number;
+	workingHoursToTime:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApWarehouseProduct { 
+	key:string;
+	warehouseKey:string;
+	productKey:string;
+	quantity:number;
+	reOrderQuantity:number;
+	miniOrder:number;
+	maxOrder:number;
+	workingHoursFromTime:number;
+	workingHoursToTime:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApWarehouseUser { 
+	key:string;
+	warehouseKey:string;
+	userKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
 } 
 
