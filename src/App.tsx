@@ -99,6 +99,8 @@ import ProcedureModule from './pages/procedure-module/ProcedureModule';
 import ProductSetup from './pages/setup/product-setup';
 import Checklist from './pages/setup/operations/checklist';
 import InpatientNurseStation from './pages/encounter/encounter-pre-observations/InpatientNurseStation';
+import OperationSetup from './pages/setup/operation-setup';
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -340,6 +342,7 @@ const App = () => {
               <Route path="patient-EMR" element={<PatientEMR />} />
               <Route path="lab-module" element={<Lab />} />
               <Route path="rad-module" element={<Rad />} />
+              <Route path='operation-setup' element={<OperationSetup />}/>
             </Route>
           </Route>
 

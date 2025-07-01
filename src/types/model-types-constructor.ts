@@ -1941,6 +1941,7 @@ export const newApPainAssessment:modelTypes.ApPainAssessment = {
 	cancellationReason:'',
 } 
 
+
 export const newApPatient:modelTypes.ApPatient = { 
 	key:undefined,
 	patientMrn:'',
