@@ -304,9 +304,7 @@ const App = () => {
                 element={<EncounterPatientPrivateLogin />}
               />
               <Route path="vaccine-setup" element={<Vaccine />} />
-              {/* test */}
               <Route path="checklists" element={<Checklist />} />
-              {/* test */}
               <Route path="procedure-setup" element={<ProcedureSetup />} />
               <Route path="potintial-duplicate" element={<PotintialDuplicate />} />
               <Route path="users" element={<Users />} />
