@@ -97,6 +97,7 @@ import Room from './pages/setup/bed-room-setup';
 import WaitingList from './pages/Inpatient/waitingList';
 import ProcedureModule from './pages/procedure-module/ProcedureModule';
 import ProductSetup from './pages/setup/product-setup';
+import Checklist from './pages/setup/operations/checklist';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -303,6 +304,9 @@ const App = () => {
                 element={<EncounterPatientPrivateLogin />}
               />
               <Route path="vaccine-setup" element={<Vaccine />} />
+              {/* test */}
+              <Route path="checklists" element={<Checklist />} />
+              {/* test */}
               <Route path="procedure-setup" element={<ProcedureSetup />} />
               <Route path="potintial-duplicate" element={<PotintialDuplicate />} />
               <Route path="users" element={<Users />} />
