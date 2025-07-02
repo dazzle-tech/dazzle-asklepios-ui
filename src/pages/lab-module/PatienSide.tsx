@@ -26,6 +26,7 @@ import { ApAttachment } from '@/types/model-types';
 import AllergiesModal from '../encounter/encounter-screen/AllergiesModal';
 import WarningiesModal from '../encounter/encounter-screen/WarningiesModal';
 import './styles.less';
+import { GiMedicalThermometer } from 'react-icons/gi';
 const PatientSide = ({ patient, encounter }) => {
     const [openAllargyModal, setOpenAllargyModal] = useState(false);
     const [openWarningModal, setOpenWarningModal] = useState(false);
@@ -105,11 +106,11 @@ const PatientSide = ({ patient, encounter }) => {
                 />
                 <div>
                     <div className="patient-info">
-                        <Text style={{ fontSize: '12px', fontFamily: 'Manrope Medium' }}>{patient?.fullName ?? "Patient Name"}</Text>
+                        <Text className='info-label'>{patient?.fullName ?? "Patient Name"}</Text>
 
 
                     </div>
-                    <div style={{ fontSize: '12px', fontFamily: 'Manrope Medium' }}>
+                    <div className='info-label'>
                         #  {patient?.patientMrn ?? "MRN"}
 
                     </div>
@@ -118,7 +119,7 @@ const PatientSide = ({ patient, encounter }) => {
             </div>
 
             <Text style={{ marginTop: '5px' }}>
-                <FontAwesomeIcon icon={faIdCard} style={{ color: 'var(--icon-gray)' }} /> <span style={{ fontWeight: 'bold' }}>Document  Information</span>
+                <FontAwesomeIcon icon={faIdCard} className='icon-title'/> <span className='patient-section-title'>Document  Information</span>
             </Text>
             <br />
 
@@ -139,10 +140,10 @@ const PatientSide = ({ patient, encounter }) => {
 
                 </div>
             </div>
-            <Divider style={{ margin: '4px 4px' }} />
+            <Divider className="divider-thin" />
 
             <Text >
-                <FontAwesomeIcon icon={faUser} style={{ color: 'var(--icon-gray)' }} /> <span style={{ fontWeight: 'bold' }}>Patient  Information</span>
+                <FontAwesomeIcon icon={faUser} className='icon-title' /> <span className='patient-section-title'>Patient  Information</span>
             </Text>
             <br />
 
@@ -165,9 +166,9 @@ const PatientSide = ({ patient, encounter }) => {
 
 
             </div>
-            <Divider style={{ margin: '4px 4px' }} />
+            <Divider className="divider-thin" />
             <Text >
-                <FaWeight style={{ color: 'var(--icon-gray)' }} /> <span style={{ fontWeight: 'bold' }}>Physical Measurements</span>
+                <FaWeight className='icon-title' /> <span className='patient-section-title'>Physical Measurements</span>
             </Text>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <br />
@@ -223,15 +224,15 @@ const PatientSide = ({ patient, encounter }) => {
                     </div>
                 </div>
             </div>
-             <Divider style={{ margin: '4px 4px' }} />
+             <Divider className="divider-thin" />
             <Text >
-                <FaWeight style={{ color: 'var(--icon-gray)' }} /> <span style={{ fontWeight: 'bold' }}>Diagnosis</span>
+                <GiMedicalThermometer className='icon-title' /> <span className='patient-section-title'>Diagnosis</span>
             </Text>
             <div>
                   <br />
                 <Text>{encounter?.diagnosis}</Text>
                 </div>
-            <Divider style={{ margin: '4px 4px' }} />
+            <Divider className="divider-thin" />
             <div className='info-section'>
                 <MyButton
                   onClick={OpenAllargyModal}
