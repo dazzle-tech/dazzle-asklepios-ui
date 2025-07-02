@@ -100,7 +100,7 @@ import ProductSetup from './pages/setup/product-setup';
 import Checklist from './pages/setup/operations/checklist';
 import InpatientNurseStation from './pages/encounter/encounter-pre-observations/InpatientNurseStation';
 import OperationSetup from './pages/setup/operation-setup';
-
+import OperationRequest from './pages/encounter/encounter-component/operation-request/OperationRequest';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -270,25 +270,25 @@ const App = () => {
               <Route path="encounter" element={<Encounter />}>
                 <Route path="drug-order" element={<DrugOrder />} />
                 <Route index element={<PatientSummary />} />
-
-                <Route path="clinical-visit" element={<SOAP />} />
-                <Route path="observations" element={<Observations />} />
-                <Route path="allergies" element={<Allergies />} />
-                <Route path="medical-warnings" element={<Warning />} />
-                <Route path="cardiology" element={<Cardiology />} />
-                <Route path="dental-care" element={<Dental />} />
-                <Route path="optometric-exam" element={<OptometricExam />} />
-                <Route path="audiometry" element={<AudiometryPuretone />} />
-                <Route path="psychological-exam" element={<PsychologicalExam />} />
-                <Route path="vaccination" element={<VaccinationTab />} />
-                <Route path="prescription" element={<Prescription />} />
-                <Route path="diagnostics-order" element={<DiagnosticsOrder />} />
-                <Route path="consultation" element={<Consultation />} />
-                <Route path="procedures" element={<Procedure />} />
-                <Route path="patient-history" element={<PatientHistory />} />
-                <Route path="medications-record" element={<MedicationsRecord />} />
-                <Route path="vaccine-record" element={<VaccineReccord />} />
-                <Route path="diagnostics-result" element={<DiagnosticsResult />} />
+                <Route path='clinical-visit' element={<SOAP />} />
+                <Route path='observations' element={<Observations />} />
+                <Route path='allergies' element={<Allergies />} />
+                <Route path='medical-warnings' element={<Warning />} />
+                <Route path='cardiology' element={<Cardiology />} />
+                <Route path='dental-care' element={<Dental />} />
+                <Route path='optometric-exam' element={<OptometricExam />} />
+                <Route path='audiometry' element={<AudiometryPuretone />} />
+                <Route path='psychological-exam' element={<PsychologicalExam />} />
+                <Route path='vaccination' element={<VaccinationTab />} />
+                <Route path='prescription' element={<Prescription />} />
+                <Route path='diagnostics-order' element={<DiagnosticsOrder />} />
+                <Route path='consultation' element={<Consultation />} />
+                <Route path='procedures' element={<Procedure/>} />
+                <Route path='patient-history' element={<PatientHistory/>} />
+                <Route path='medications-record' element={<MedicationsRecord/>} />
+                <Route path='vaccine-record' element={<VaccineReccord/>} />
+                <Route path='diagnostics-result' element={<DiagnosticsResult/>} />
+                <Route path='operation-request' element={<OperationRequest/>}/>
               </Route>
               <Route path="procedure-module" element={<ProcedureModule />} />
               <Route path="encounter-list" element={<EncounterList />} />

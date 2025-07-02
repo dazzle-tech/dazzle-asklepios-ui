@@ -1839,6 +1839,7 @@ export interface ApOperationPriceList {
 	deletedAt:number;
 } 
 
+
 export interface ApOperationRequests { 
 	key:string;
 	facilityKey:string;
@@ -1866,6 +1867,7 @@ export interface ApOperationRequests {
 	isValid:boolean;
 	operationDateTime:number;
 	statusLkey:string;
+
 	encounterKey:string;
 	patientKey:string;
 } 
@@ -1960,6 +1962,7 @@ export interface ApPainAssessment {
 	deletedAt:number;
 	statusLkey:string;
 	cancellationReason:string;
+
 } 
 
 export interface ApPatient { 

@@ -55,15 +55,16 @@ export const store = configureStore({
 
     //attachment
     [attachmentService.reducerPath]: attachmentService.reducer,
-
+    //;ab module
     [labService.reducerPath]:labService.reducer,
-
+    //operation
+    [operationService.reducerPath]:operationService.reducer,
     [radService.reducerPath]:radService.reducer,
     // div slice 
     [divSlice.name]:divSlice.reducer,
     //procedure 
     [procedureService.reducerPath]:procedureService.reducer,
-    [operationService.reducerPath]:operationService.reducer
+  
   },
   // @ts-ignore
   middleware: getDefaultMiddleware =>

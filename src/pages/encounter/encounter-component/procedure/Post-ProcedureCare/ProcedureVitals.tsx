@@ -1,7 +1,7 @@
 import MyButton from "@/components/MyButton/MyButton";
 import MyInput from "@/components/MyInput";
 import { useAppDispatch } from "@/hooks";
-import VitalSigns from "@/pages/vital-signs/VitalSigns";
+import VitalSigns from "@/pages/medical-component/vital-signs/VitalSigns";
 import { useSavePostProcedureVitalsMutation } from "@/services/procedureService";
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { newApPostProcedureVitals } from "@/types/model-types-constructor";

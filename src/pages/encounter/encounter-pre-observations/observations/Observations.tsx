@@ -19,7 +19,7 @@ import { useLocation } from 'react-router-dom';
 import MyButton from '@/components/MyButton/MyButton';
 import clsx from 'clsx';
 import InpatientObservations from './InpatientObservations';
-import VitalSigns from '@/pages/vital-signs/VitalSigns';
+import VitalSigns from '@/pages/medical-component/vital-signs/VitalSigns';
 export type ObservationsRef = {
   handleSave: () => void;
 };
