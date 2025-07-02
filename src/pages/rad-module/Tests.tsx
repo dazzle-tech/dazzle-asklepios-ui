@@ -152,11 +152,11 @@ const Tests = ({ test, setTest, order, patient, encounter, saveTest, saveReport,
         }).unwrap();
         await saveReport({
           ...newApDiagnosticOrderTestsRadReport,
-          orderKey: order.key,
-          orderTestKey: test.key,
-          medicalTestKey: test.testKey,
-          patientKey: patient.key,
-          visitKey: encounter.key,
+          orderKey: order?.key,
+          orderTestKey: test?.key,
+          medicalTestKey: test?.testKey,
+          patientKey: patient?.key,
+          visitKey: encounter?.key,
           statusLkey: '6055029972709625'
         }).unwrap();
 
