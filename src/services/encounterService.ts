@@ -1,4 +1,4 @@
-import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment } from './../types/model-types';
+import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -570,7 +570,7 @@ export const encounterService = createApi({
       query: ({ listRequest, department_key }) => ({
         url: `/encounter/inpatient-encounter-list?${fromListRequestToQueryParams(listRequest)}`,
         headers: {
-         department_key:department_key
+          department_key: department_key
         }
       }),
       onQueryStarted: onQueryStarted,
@@ -611,6 +611,24 @@ export const encounterService = createApi({
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
+    }),
+    getChiefComplain: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/inpatient-chief-complain-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    saveChiefComplain: builder.mutation({
+      query: (chiefComplain: ApInpatientChiefComplain) => ({
+        url: `/encounter/save-inpatient-chief-complain`,
+        method: 'POST',
+        body: chiefComplain
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
     }),
   })
 });
@@ -677,5 +695,7 @@ export const {
   useSaveBedTransactionMutation,
   useGetBedTransactionsListQuery,
   useSavePainAssessmentMutation,
-  useGetPainAssessmentQuery
+  useGetPainAssessmentQuery,
+  useSaveChiefComplainMutation,
+  useGetChiefComplainQuery
 } = encounterService;

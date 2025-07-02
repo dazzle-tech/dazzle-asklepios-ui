@@ -1530,6 +1530,28 @@ export const newApIcdCode:modelTypes.ApIcdCode = {
 	isValid:undefined,
 } 
 
+export const newApInpatientChiefComplain:modelTypes.ApInpatientChiefComplain = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	chiefComplaint:'',
+	provocation:'',
+	palliation:'',
+	qualityLkey:undefined,
+	regionLkey:undefined,
+	onsetDateTime:0,
+	understanding:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	cancellationReason:'',
+	statusLkey:undefined,
+	severityLkey:undefined,
+} 
+
 export const newApLabResultLog:modelTypes.ApLabResultLog = { 
 	key:undefined,
 	resultKey:undefined,
@@ -1940,7 +1962,6 @@ export const newApPainAssessment:modelTypes.ApPainAssessment = {
 	statusLkey:undefined,
 	cancellationReason:'',
 } 
-
 
 export const newApPatient:modelTypes.ApPatient = { 
 	key:undefined,

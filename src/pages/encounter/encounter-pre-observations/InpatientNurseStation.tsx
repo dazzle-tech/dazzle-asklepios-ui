@@ -25,6 +25,8 @@ import InpatientObservations from './observations/InpatientObservations';
 import ChiefComplaintSymptoms from '../encounter-component/chief_complaint_symptoms';
 import PsychologicalExam from '../encounter-component/psychological-exam';
 import PainAssessment from '../encounter-component/pain-assessment/PainAssessment';
+import ReviewOfSystems from '../medical-notes-and-assessments/review-of-systems';
+import ChiefComplain from '../encounter-component/chief-complain/ChiefComplain';
 const InpatientNurseStation = ({ }) => {
     const dispatch = useAppDispatch();
     const location = useLocation();
@@ -160,16 +162,16 @@ const InpatientNurseStation = ({ }) => {
                                         refetchAttachmentList={refetchAttachmentList} />
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="6" title="Chief Complain">
-                                    <ChiefComplaintSymptoms
+                                    <ChiefComplain
                                         edit={propsData.edit}
                                         patient={propsData.patient}
                                         encounter={propsData.encounter} />
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="7" title="Physical Examination">
-                                    <PsychologicalExam
-                                        editable={propsData.edit}
-                                        localPatient={propsData.patient}
-                                        localEncounter={propsData.encounter} />
+                                     <ReviewOfSystems 
+                                       edit={propsData.edit}
+                                        patient={propsData.patient}
+                                        encounter={propsData.encounter} />
                                 </Tabs.Tab>
                                  <Tabs.Tab eventKey="8" title="Pain Assessment">
                                     <PainAssessment
