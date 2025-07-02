@@ -35,6 +35,29 @@ const CustomDateTimePicker = React.forwardRef(
     />
   )
 );
+const handleEnterFocusNext = (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const form = e.target.form;
+    const index = Array.prototype.indexOf.call(form, e.target);
+    const next = form?.elements[index + 1];
+    if (next && typeof next.focus === 'function') {
+      next.focus();
+    }
+  }
+};
+
+const focusNextField = (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const form = e.target.form;
+    const index = Array.prototype.indexOf.call(form, e.target);
+    const next = form?.elements[index + 1];
+    if (next && typeof next.focus === 'function') {
+      next.focus();
+    }
+  }
+};
 
 const MyInput = ({
   fieldName,
@@ -84,7 +107,7 @@ const MyInput = ({
             value={record[fieldName] ? record[fieldName] : ''}
             accepter={Textarea}
             onChange={handleValueChange}
-
+            onKeyDown={focusNextField}
           />
         );
       case 'checkbox':
@@ -97,6 +120,7 @@ const MyInput = ({
             checked={record[fieldName]}
             onChange={handleValueChange}
             defaultChecked={props.defaultChecked}
+            onKeyDown={focusNextField}
           />
         );
       case 'datetime':
@@ -110,6 +134,7 @@ const MyInput = ({
             accepter={CustomDateTimePicker}
             onChange={handleValueChange}
             placeholder={props.placeholder}
+            onKeyDown={focusNextField}
           />
         );
       case 'time':
@@ -126,6 +151,7 @@ const MyInput = ({
             placeholder={props.placeholder}
             format="HH:mm"
             cleanable
+            onKeyDown={focusNextField}
           />
         );
       case 'select':
@@ -148,6 +174,7 @@ const MyInput = ({
             className="my-input"
             searchable={props.searchable}
             menuMaxHeight={props?.menuMaxHeight ?? ''}
+            onKeyDown={focusNextField}
           />
         );
       //<TagPicker data={data} style={{ width: 300 }} />
@@ -168,10 +195,11 @@ const MyInput = ({
             creatable={props.creatable ?? false} // Optional: Allow users to create new tags
             groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
             searchBy={props.searchBy} // Optional: Search function for TagPicker
-             menuMaxHeight={props?.menuMaxHeight ?? ''}
+            menuMaxHeight={props?.menuMaxHeight ?? ''}
+            onKeyDown={focusNextField}
           />
         );
-          case 'checkPicker':
+      case 'checkPicker':
         return (
           <Form.Control
             style={{ width: props?.width ?? 145, height: props?.height ?? 30 }}
@@ -188,6 +216,7 @@ const MyInput = ({
             groupBy={props.groupBy ?? null} // Optional: Grouping feature if required
             searchBy={props.searchBy} // Optional: Search function for checkPicker
             menuMaxHeight={props?.menuMaxHeight ?? ''}
+            onKeyDown={focusNextField}
           />
         );
       case 'date':
@@ -206,6 +235,7 @@ const MyInput = ({
             accepter={CustomDatePicker}
             onChange={handleValueChange}
             placeholder={props.placeholder}
+            onKeyDown={focusNextField}
           />
         );
       case 'number': {
@@ -227,6 +257,7 @@ const MyInput = ({
             accepter={InputNumber}
             onChange={handleValueChange}
             placeholder={props.placeholder}
+            onKeyDown={focusNextField}
           />
         );
 
@@ -278,11 +309,7 @@ const MyInput = ({
             value={record ? record[fieldName] : ''}
             onChange={handleValueChange}
             placeholder={props.placeholder}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                props.enterClick();
-              }
-            }}
+            onKeyDown={handleEnterFocusNext}
           />
         );
 

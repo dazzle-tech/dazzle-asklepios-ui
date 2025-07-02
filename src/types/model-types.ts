@@ -1529,6 +1529,28 @@ export interface ApIcdCode {
 	isValid:boolean;
 } 
 
+export interface ApInpatientChiefComplain { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	chiefComplaint:string;
+	provocation:string;
+	palliation:string;
+	qualityLkey:string;
+	regionLkey:string;
+	onsetDateTime:number;
+	understanding:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	statusLkey:string;
+	severityLkey:string;
+} 
+
 export interface ApLabResultLog { 
 	key:string;
 	resultKey:string;
@@ -1939,7 +1961,6 @@ export interface ApPainAssessment {
 	statusLkey:string;
 	cancellationReason:string;
 } 
-
 
 export interface ApPatient { 
 	key:string;
