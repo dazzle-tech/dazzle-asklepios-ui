@@ -2,16 +2,17 @@ import MyInput from "@/components/MyInput";
 import MyModal from "@/components/MyModal/MyModal";
 import { useAppDispatch } from "@/hooks";
 import Icd10Search from "@/pages/medical-component/Icd10Search";
-import { useSaveOperationRequestsMutation } from "@/services/operationService";
+import { useGetOperationListQuery, useSaveOperationRequestsMutation } from "@/services/operationService";
 import { useGetDepartmentsQuery, useGetFacilitiesQuery, useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { newApOperationRequests } from "@/types/model-types-constructor";
 import { initialListRequest } from "@/types/types";
 import { notify } from "@/utils/uiReducerActions";
 import React, { useState } from "react";
 import { Col, Form, Row } from "rsuite";
-const Details = ({ open, setOpen,user ,request, setRequest}) => {
+const Details = ({ open, setOpen,user ,request, setRequest,refetch ,encounter,patient}) => {
+   
      const dispatch = useAppDispatch();
-
+ 
     const { data: FacilityList } = useGetFacilitiesQuery({ ...initialListRequest });
     const { data: departmentList } = useGetDepartmentsQuery({
         ...initialListRequest,
@@ -25,11 +26,13 @@ const Details = ({ open, setOpen,user ,request, setRequest}) => {
 
         ]
     });
+    const {data:operationList}=useGetOperationListQuery({...initialListRequest})
     //get lovs 
     const { data: procedureLevelLov } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
     const { data: bodyPartsLov } = useGetLovValuesByCodeQuery('BODY_PARTS');
     const { data: sidesLov } = useGetLovValuesByCodeQuery('SIDES');
-    const { data: orderPriorityLov } = useGetLovValuesByCodeQuery('ORDER_PRIORIT');
+    const { data: orderPriorityLov } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
+
     const { data: anesthTypesLov } = useGetLovValuesByCodeQuery('ANESTH_TYPES');
     const { data: operationOrderTypeLov } = useGetLovValuesByCodeQuery('OPERATION_ORDER_TYPE');
 
@@ -39,8 +42,16 @@ const Details = ({ open, setOpen,user ,request, setRequest}) => {
 
     const handleSave = async () => {
         try {
-            const Response = await save({ ...request ,createdBy:user?.key}).unwrap();
+     
+            
+            const Response = await save({ ...request,
+                createdBy:user?.key,operationDateTime:new Date(request?.operationDateTime).getTime(),
+            encounterKey:encounter?.key,patientKey:patient?.key,statusLkey:'3621653475992516'}).unwrap();
+
              dispatch(notify({ msg: 'Saved Successfully', sev: "success" }));
+             refetch()
+             setOpen(false);
+             setRequest({...newApOperationRequests,encounterKey:encounter?.key,patientKey:patient?.key})
 
         }
         catch (error) {
@@ -204,6 +215,16 @@ const Details = ({ open, setOpen,user ,request, setRequest}) => {
                             </Col>
                             <Col md={12}>
                                 {/* for oparation name */}
+                                  <MyInput
+                                    fieldType="select"
+                                    selectData={operationList?.object ?? []}
+                                    selectDataLabel="name"
+                                    selectDataValue="key"
+                                    width="100%"
+                                    fieldName="operationKey"
+                                    record={request}
+                                    setRecord={setRequest}
+                                />
                             </Col>
                         </Row>
                         <Row className="rows-gap">

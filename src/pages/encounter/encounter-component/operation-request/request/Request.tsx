@@ -1,5 +1,5 @@
 import MyButton from "@/components/MyButton/MyButton";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Checkbox, Row } from "rsuite";
 import Details from "./Details";
 import Translate from "@/components/Translate";
@@ -7,10 +7,39 @@ import { render } from "react-dom";
 import { formatDateWithoutSeconds } from "@/utils";
 import { MdModeEdit } from "react-icons/md";
 import { newApOperationRequests } from "@/types/model-types-constructor";
+import { initialListRequest, ListRequest } from "@/types/types";
+import { useGetOperationRequestsListQuery } from "@/services/operationService";
+import MyTable from "@/components/MyTable";
 const Request = ({patient ,encounter,user}) => {
     const [showCanceled, setShowCanceled] = useState(true);
     const [open,setOpen]=useState(false);
-     const [request, setRequest] = useState({ ...newApOperationRequests });
+     const [request, setRequest] = useState({ ...newApOperationRequests,encounterKey:encounter?.key,patientKey:patient?.key });
+     const [listRequest,setListRequest]=useState<ListRequest>({...initialListRequest,
+        filters: [
+            {
+                fieldName: "patient_key",
+                operator: "match",
+                value: patient.key,
+            },
+            {
+                fieldName: "encounter_key",
+                operator: "match",
+                value: encounter.key,
+            }
+
+        ],
+     });
+  
+     const{data:operationrequestList,refetch,isLoading}=useGetOperationRequestsListQuery(listRequest);
+     useEffect(()=>{
+      setRequest({...newApOperationRequests,encounterKey:encounter?.key,patientKey:patient?.key});
+      let updatedFilters = [...listRequest.filters];
+        setListRequest(prev => ({
+        ...prev,
+        filters: updatedFilters
+    }));
+     },[encounter,patient]);
+
     const columns=[
         { key:"facilityKey",
           title:<Translate>facility</Translate>,
@@ -21,7 +50,7 @@ const Request = ({patient ,encounter,user}) => {
         { key:"departmentKey",
           title:<Translate>department</Translate>,
           render:(rowData:any)=>{
-            return null;
+            return rowData?.departmentKey;
           }         
         },
         { key:"oparetionKey",
@@ -123,14 +152,7 @@ const Request = ({patient ,encounter,user}) => {
             return null;
           }         
         },
-        { key:"",
-          title:<Translate></Translate>,
-          expandable: true,
-          render:(rowData:any)=>{
-            return null;
-          }         
-        }
-        ,
+      
  ,
         {
             key: "",
@@ -188,8 +210,16 @@ const Request = ({patient ,encounter,user}) => {
     </div>
     
 </div>
-<Row></Row>
-<Details open={open} setOpen={setOpen} user={user} request={request}  setRequest={setRequest}/>
+<Row>
+  <MyTable 
+  columns={columns}
+  data={operationrequestList?.object||[]}
+  loading={isLoading}
+  />
+
+</Row>
+<Details open={open} setOpen={setOpen} user={user} request={request}  setRequest={setRequest} refetch={refetch}  
+encounter={encounter} patient={patient}/>
     </>)
 }
 export default Request;
