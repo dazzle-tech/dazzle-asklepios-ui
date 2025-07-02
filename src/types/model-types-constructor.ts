@@ -1420,6 +1420,32 @@ export const newApFacility:modelTypes.ApFacility = {
 	defaultCurrencyLkey:undefined,
 } 
 
+export const newApGeneralAssessment:modelTypes.ApGeneralAssessment = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	positionStatusLkey:undefined,
+	bodyMovementsLkey:undefined,
+	levelOfConsciousnessLkey:undefined,
+	facialExpressionLkey:undefined,
+	speechLkey:undefined,
+	moodBehaviorLkey:undefined,
+	memoryRecent:undefined,
+	memoryRemote:undefined,
+	signsOfAgitation:undefined,
+	signsOfDepression:undefined,
+	signsOfSuicidalIdeation:undefined,
+	signsOfSubstanceUse:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	cancellationReason:'',
+	statusLkey:undefined,
+} 
+
 export const newApGenericMedication:modelTypes.ApGenericMedication = { 
 	key:undefined,
 	genericName:'',
@@ -1840,7 +1866,6 @@ export const newApOperationPriceList:modelTypes.ApOperationPriceList = {
 	deletedAt:undefined,
 } 
 
-
 export const newApOperationRequests:modelTypes.ApOperationRequests = { 
 	key:undefined,
 	facilityKey:undefined,
@@ -1870,6 +1895,8 @@ export const newApOperationRequests:modelTypes.ApOperationRequests = {
 	statusLkey:undefined,
 	encounterKey:undefined,
 	patientKey:undefined,
+	submitedAt:0,
+	submitedBy:'',
 } 
 
 export const newApOperationSetup:modelTypes.ApOperationSetup = { 
@@ -1888,7 +1915,6 @@ export const newApOperationSetup:modelTypes.ApOperationSetup = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isAppointable:undefined,
-
 } 
 
 export const newApOptometricExam:modelTypes.ApOptometricExam = { 
@@ -1963,8 +1989,6 @@ export const newApPainAssessment:modelTypes.ApPainAssessment = {
 	deletedAt:undefined,
 	statusLkey:undefined,
 	cancellationReason:'',
-
-
 } 
 
 export const newApPatient:modelTypes.ApPatient = { 

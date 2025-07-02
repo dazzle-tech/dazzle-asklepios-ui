@@ -22,7 +22,7 @@ export const operationService = createApi({
                 body: data
             }),
             onQueryStarted,
-            transformResponse: (response: any) => response.object
+            transformResponse: (response: any) => response
         }),
 
 
