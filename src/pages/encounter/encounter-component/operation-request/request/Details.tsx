@@ -7,12 +7,12 @@ import { useGetDepartmentsQuery, useGetFacilitiesQuery, useGetLovValuesByCodeQue
 import { newApOperationRequests } from "@/types/model-types-constructor";
 import { initialListRequest } from "@/types/types";
 import { notify } from "@/utils/uiReducerActions";
+import { faHeadSideMask } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState } from "react";
 import { Col, Form, Row } from "rsuite";
-const Details = ({ open, setOpen,user ,request, setRequest,refetch ,encounter,patient}) => {
-   
-     const dispatch = useAppDispatch();
- 
+const Details = ({ open, setOpen, user, request, setRequest, refetch, encounter, patient }) => {
+    const dispatch = useAppDispatch();
     const { data: FacilityList } = useGetFacilitiesQuery({ ...initialListRequest });
     const { data: departmentList } = useGetDepartmentsQuery({
         ...initialListRequest,
@@ -26,7 +26,7 @@ const Details = ({ open, setOpen,user ,request, setRequest,refetch ,encounter,pa
 
         ]
     });
-    const {data:operationList}=useGetOperationListQuery({...initialListRequest})
+    const { data: operationList } = useGetOperationListQuery({ ...initialListRequest })
     //get lovs 
     const { data: procedureLevelLov } = useGetLovValuesByCodeQuery('PROCEDURE_LEVEL');
     const { data: bodyPartsLov } = useGetLovValuesByCodeQuery('BODY_PARTS');
@@ -42,24 +42,26 @@ const Details = ({ open, setOpen,user ,request, setRequest,refetch ,encounter,pa
 
     const handleSave = async () => {
         try {
-     
-            
-            const Response = await save({ ...request,
-                createdBy:user?.key,operationDateTime:new Date(request?.operationDateTime).getTime(),
-            encounterKey:encounter?.key,patientKey:patient?.key,statusLkey:'3621653475992516'}).unwrap();
 
-             dispatch(notify({ msg: 'Saved Successfully', sev: "success" }));
-             refetch()
-             setOpen(false);
-             setRequest({...newApOperationRequests,encounterKey:encounter?.key,patientKey:patient?.key})
+
+            const Response = await save({
+                ...request,
+                createdBy: user?.key, operationDateTime: new Date(request?.operationDateTime).getTime(),
+                encounterKey: encounter?.key, patientKey: patient?.key, statusLkey: '3621653475992516'
+            }).unwrap();
+             
+            dispatch(notify({ msg:Response.msg, sev: "success" }));
+            refetch()
+            setOpen(false);
+            setRequest({ ...newApOperationRequests, encounterKey: encounter?.key, patientKey: patient?.key })
 
         }
         catch (error) {
-           dispatch(notify({ msg: 'Error saving procedure care', sev: "error" }));
+            dispatch(notify({ msg: 'Error saving procedure care', sev: "error" }));
         }
     }
 
- 
+
 
     return (<>
         <MyModal
@@ -67,10 +69,24 @@ const Details = ({ open, setOpen,user ,request, setRequest,refetch ,encounter,pa
             setOpen={setOpen}
             title="Details"
             actionButtonFunction={handleSave}
-            
+            steps={[{title:"Request",icon:<FontAwesomeIcon icon={faHeadSideMask} />}]}
             content={<Form fluid>
                 <Row gutter={20}>
                     <Col md={12}>
+                        <Row className="rows-gap">
+                            <Col md={24}>
+                                <MyInput
+                                    fieldType="select"
+                                    selectData={operationList?.object ?? []}
+                                    selectDataLabel="name"
+                                    selectDataValue="key"
+                                    width="100%"
+                                    fieldName="operationKey"
+                                    record={request}
+                                    setRecord={setRequest}
+                                />
+                            </Col>
+                        </Row>
                         <Row className="rows-gap">
                             <Col md={12}>
                                 <MyInput
@@ -122,7 +138,13 @@ const Details = ({ open, setOpen,user ,request, setRequest,refetch ,encounter,pa
                                 />
                             </Col>
                         </Row>
+                     
                         <Row className="rows-gap">
+
+                            <Icd10Search object={request} setOpject={setRequest} fieldName="diagnosisKey" />
+
+                        </Row>
+                           <Row className="rows-gap">
                             <Col md={12}>
                                 <MyInput
                                     width="100%"
@@ -140,21 +162,36 @@ const Details = ({ open, setOpen,user ,request, setRequest,refetch ,encounter,pa
                                     setRecord={setRequest} />
                             </Col>
                         </Row>
-                        <Row className="rows-gap">
-                            <Col md={24}>
-                                <MyInput
-                                    width="100%"
-                                    fieldType="textarea"
-                                    fieldName="notes"
-                                    record={request}
-                                    setRecord={setRequest} />
-                            </Col>
-
-                        </Row>
+                      
                     </Col>
 
 
                     <Col md={12}>
+
+                           <Row className="rows-gap">
+                            <Col md={12}>
+                                <MyInput
+                                    fieldType="select"
+                                    selectData={FacilityList?.object ?? []}
+                                    selectDataLabel="facilityName"
+                                    selectDataValue="key"
+                                    width="100%"
+                                    fieldName="facilityKey"
+                                    record={request}
+                                    setRecord={setRequest}
+                                /></Col>
+                            <Col md={12}>
+                                <MyInput
+                                    fieldType="select"
+                                    selectData={departmentList?.object ?? []}
+                                    selectDataLabel="name"
+                                    selectDataValue="key"
+                                    width="100%"
+                                    fieldName="departmentKey"
+                                    record={request}
+                                    setRecord={setRequest}
+                                /></Col>
+                        </Row>
                         <Row className="rows-gap">
                             <Col md={12}> <MyInput
                                 fieldType="select"
@@ -179,30 +216,7 @@ const Details = ({ open, setOpen,user ,request, setRequest,refetch ,encounter,pa
                                 />
                             </Col>
                         </Row>
-                        <Row className="rows-gap">
-                            <Col md={12}>
-                                <MyInput
-                                    fieldType="select"
-                                    selectData={FacilityList?.object ?? []}
-                                    selectDataLabel="facilityName"
-                                    selectDataValue="key"
-                                    width="100%"
-                                    fieldName="facilityKey"
-                                    record={request}
-                                    setRecord={setRequest}
-                                /></Col>
-                            <Col md={12}>
-                                <MyInput
-                                    fieldType="select"
-                                    selectData={departmentList?.object ?? []}
-                                    selectDataLabel="name"
-                                    selectDataValue="key"
-                                    width="100%"
-                                    fieldName="departmentKey"
-                                    record={request}
-                                    setRecord={setRequest}
-                                /></Col>
-                        </Row>
+                 
                         <Row className="rows-gap" >
                             <Col md={12}>
                                 <MyInput
@@ -215,22 +229,20 @@ const Details = ({ open, setOpen,user ,request, setRequest,refetch ,encounter,pa
                             </Col>
                             <Col md={12}>
                                 {/* for oparation name */}
-                                  <MyInput
-                                    fieldType="select"
-                                    selectData={operationList?.object ?? []}
-                                    selectDataLabel="name"
-                                    selectDataValue="key"
-                                    width="100%"
-                                    fieldName="operationKey"
-                                    record={request}
-                                    setRecord={setRequest}
-                                />
+                             
                             </Col>
                         </Row>
-                        <Row className="rows-gap">
-                            
-                            <Icd10Search object={request} setOpject={setRequest} fieldName="diagnosisKey" />
-                           
+                        
+                          <Row className="rows-gap">
+                            <Col md={24}>
+                                <MyInput
+                                    width="100%"
+                                    fieldType="textarea"
+                                    fieldName="notes"
+                                    record={request}
+                                    setRecord={setRequest} />
+                            </Col>
+
                         </Row>
                     </Col>
                 </Row>

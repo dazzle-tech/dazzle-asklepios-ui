@@ -1419,6 +1419,32 @@ export interface ApFacility {
 	defaultCurrencyLkey:string;
 } 
 
+export interface ApGeneralAssessment { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	positionStatusLkey:string;
+	bodyMovementsLkey:string;
+	levelOfConsciousnessLkey:string;
+	facialExpressionLkey:string;
+	speechLkey:string;
+	moodBehaviorLkey:string;
+	memoryRecent:boolean;
+	memoryRemote:boolean;
+	signsOfAgitation:boolean;
+	signsOfDepression:boolean;
+	signsOfSuicidalIdeation:boolean;
+	signsOfSubstanceUse:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	statusLkey:string;
+} 
+
 export interface ApGenericMedication { 
 	key:string;
 	genericName:string;
@@ -1839,7 +1865,6 @@ export interface ApOperationPriceList {
 	deletedAt:number;
 } 
 
-
 export interface ApOperationRequests { 
 	key:string;
 	facilityKey:string;
@@ -1867,9 +1892,10 @@ export interface ApOperationRequests {
 	isValid:boolean;
 	operationDateTime:number;
 	statusLkey:string;
-
 	encounterKey:string;
 	patientKey:string;
+	submitedAt:number;
+	submitedBy:string;
 } 
 
 export interface ApOperationSetup { 
@@ -1962,7 +1988,6 @@ export interface ApPainAssessment {
 	deletedAt:number;
 	statusLkey:string;
 	cancellationReason:string;
-
 } 
 
 export interface ApPatient { 
