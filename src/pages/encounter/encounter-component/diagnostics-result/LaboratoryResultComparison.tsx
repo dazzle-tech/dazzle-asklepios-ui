@@ -18,7 +18,7 @@ const LaboratoryResultComparison = ({ patient, testKey = null }) => {
     });
 
     const { data: testGroup } = useGetGroupTestsQuery(listRequest);
-    const [pivotData, setPivotData] = useState({ dates: [], tests: [] });
+    const [pivotData, setPivotData] = useState({ tests: [] });
 
     useEffect(() => {
         if (dateFilter.fromDate && dateFilter.toDate) {
@@ -50,58 +50,25 @@ const LaboratoryResultComparison = ({ patient, testKey = null }) => {
     useEffect(() => {
         if (testGroup?.object) {
             const testsMap = new Map();
-            const datesSet = new Set();
 
             testGroup.object.forEach(group => {
                 group.results.forEach(result => {
                     const date = formatDateWithoutSeconds(result.createdAt);
-                    datesSet.add(date);
-
                     const testName = group.test.testName;
+
                     if (!testsMap.has(testName)) {
                         testsMap.set(testName, {});
                     }
+
                     testsMap.get(testName)[date] = result;
                 });
             });
 
             setPivotData({
-                dates: Array.from(datesSet).sort(),
                 tests: Array.from(testsMap.entries())
             });
         }
     }, [testGroup]);
-
-    const columns = [
-        {
-            key: 'testName',
-            title: <Translate>Test name</Translate>,
-            render: (row) => row.testName
-        },
-        ...pivotData.dates.map(date => ({
-            key: date,
-            title: date,
-            render: (row) => {
-                const result = row.results[date];
-                if (!result) return '-';
-
-                if (result.normalRangeKey) {
-                    if (result.normalRange?.resultTypeLkey === "6209578532136054") {
-                        return result.resultLvalue ? result.resultLvalue.lovDisplayVale : result?.resultLkey;
-                    } else if (result.normalRange?.resultTypeLkey === "6209569237704618") {
-                        return result.resultValueNumber;
-                    }
-                } else {
-                    return result.resultText;
-                }
-            }
-        }))
-    ];
-
-    const data = pivotData.tests.map(([testName, results]) => ({
-        testName,
-        results
-    }));
 
     const filters = () => (
         <Form layout="inline" fluid className="date-filter-form">
@@ -114,10 +81,9 @@ const LaboratoryResultComparison = ({ patient, testKey = null }) => {
                 record={dateFilter}
                 setRecord={setDateFilter}
             />
-
             <MyInput
-                width={150}
                 column
+                width={150}
                 fieldType="date"
                 fieldLabel="To Date"
                 fieldName="toDate"
@@ -130,11 +96,45 @@ const LaboratoryResultComparison = ({ patient, testKey = null }) => {
     return (
         <Row>
             <Col md={24}>
-                <MyTable
-                    filters={filters()}
-                    columns={columns}
-                    data={data}
-                />
+                {filters()}
+
+                {pivotData.tests.map(([testName, results], index) => {
+                    const dates = Object.keys(results).sort();
+                    const columns = [
+                        {
+                            key: 'testName',
+                            title: <Translate>Test name</Translate>,
+                            render: () => testName
+                        },
+                        ...dates.map(date => ({
+                            key: date,
+                            title: date,
+                            render: () => {
+                                const result = results[date];
+                                if (!result) return '-';
+                                
+                                if (result.normalRangeKey) {
+                                    if (result.normalRange?.resultTypeLkey === "6209578532136054") {
+                                        return result.resultLvalue?.lovDisplayVale || result?.resultLkey;
+
+                                    } else if (result.normalRange?.resultTypeLkey === "6209569237704618") {
+                                        return result.resultValueNumber;
+                                    }
+                                }
+                                return result.resultText || '-';
+                            }
+                        }))
+                    ];
+
+                    const data = [{ testName, results }];
+
+                    return (
+                        <div key={index} style={{ marginBottom: 30 ,overflowX: 'auto'}}>
+                           
+                            <MyTable columns={columns} data={data} />
+                        </div>
+                    );
+                })}
             </Col>
         </Row>
     );
