@@ -20,7 +20,6 @@ import {
     Table,
     Text
 } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
 
 import MyButton from '@/components/MyButton/MyButton';
 import { ApAttachment } from '@/types/model-types';
@@ -224,7 +223,14 @@ const PatientSide = ({ patient, encounter }) => {
                     </div>
                 </div>
             </div>
-
+             <Divider style={{ margin: '4px 4px' }} />
+            <Text >
+                <FaWeight style={{ color: 'var(--icon-gray)' }} /> <span style={{ fontWeight: 'bold' }}>Diagnosis</span>
+            </Text>
+            <div>
+                  <br />
+                <Text>{encounter?.diagnosis}</Text>
+                </div>
             <Divider style={{ margin: '4px 4px' }} />
             <div className='info-section'>
                 <MyButton
