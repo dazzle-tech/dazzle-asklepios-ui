@@ -109,6 +109,14 @@ export const operationService = createApi({
             }),
             onQueryStarted: onQueryStarted,
         }),
+        //get operation was requested
+        getRequestedOperation: builder.query({
+            query: ({ encounterKey, patientKey }) => ({
+                url: `/operation/operation-request-by-status?encounterKey=${encounterKey}&patientKey=${patientKey}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
     })
 });
 
@@ -128,5 +136,6 @@ export const {
     useRemoveOperationCodingMutation,
 
     useSaveOperationPriceListMutation,
-    useRemoveOperationPriceListMutation
+    useRemoveOperationPriceListMutation,
+    useGetRequestedOperationQuery
 } = operationService;
