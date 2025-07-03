@@ -1,4 +1,4 @@
-import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain } from './../types/model-types';
+import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -630,6 +630,24 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
+     getGeneralAssessments: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/general-assessment-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    saveGeneralAssessment: builder.mutation({
+      query: (generalAssessment: ApGeneralAssessment) => ({
+        url: `/encounter/save-general-assessment`,
+        method: 'POST',
+        body: generalAssessment
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
   })
 });
 
@@ -697,5 +715,7 @@ export const {
   useSavePainAssessmentMutation,
   useGetPainAssessmentQuery,
   useSaveChiefComplainMutation,
-  useGetChiefComplainQuery
+  useGetChiefComplainQuery,
+  useGetGeneralAssessmentsQuery,
+  useSaveGeneralAssessmentMutation
 } = encounterService;
