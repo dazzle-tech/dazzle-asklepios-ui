@@ -103,7 +103,7 @@ const AddChiefComplain = ({ open, setOpen, patient, encounter, chiefComplainObj,
             setIsDisabledField(false);
         }
     }, [isEncounterStatusClosed, isEncounterChiefComplainStatusClose]);
-    console.log(edit);
+
     // Modal Content 
     const content = (
         <div className={clsx('', { 'disabled-panel': edit })}>

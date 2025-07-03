@@ -22,11 +22,10 @@ import PatientHistory from '../encounter-component/patient-history';
 import { notify } from '@/utils/uiReducerActions';
 import PatientAttachment from '@/pages/patient/patient-profile/tabs/Attachment';
 import InpatientObservations from './observations/InpatientObservations';
-import ChiefComplaintSymptoms from '../encounter-component/chief_complaint_symptoms';
-import PsychologicalExam from '../encounter-component/psychological-exam';
 import PainAssessment from '../encounter-component/pain-assessment/PainAssessment';
 import ReviewOfSystems from '../medical-notes-and-assessments/review-of-systems';
 import ChiefComplain from '../encounter-component/chief-complain/ChiefComplain';
+import GeneralAssessment from '../encounter-component/general-assessment';
 const InpatientNurseStation = ({ }) => {
     const dispatch = useAppDispatch();
     const location = useLocation();
@@ -130,7 +129,7 @@ const InpatientNurseStation = ({ }) => {
                                     )}
                                 </div>
                             </div>
-                            <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
+                            <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle" className="nurse-tabs">
                                 <Tabs.Tab eventKey="1" title="Observations">
                                     <InpatientObservations
                                         editable={propsData.edit}
@@ -168,17 +167,33 @@ const InpatientNurseStation = ({ }) => {
                                         encounter={propsData.encounter} />
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="7" title="Physical Examination">
-                                     <ReviewOfSystems 
-                                       edit={propsData.edit}
+                                    <ReviewOfSystems
+                                        edit={propsData.edit}
                                         patient={propsData.patient}
                                         encounter={propsData.encounter} />
                                 </Tabs.Tab>
-                                 <Tabs.Tab eventKey="8" title="Pain Assessment">
+                                <Tabs.Tab eventKey="8" title="Pain Assessment">
                                     <PainAssessment
                                         edit={propsData.edit}
                                         patient={propsData.patient}
                                         encounter={propsData.encounter} />
                                 </Tabs.Tab>
+                                <Tabs.Tab eventKey="9" title="General Assessment">
+                                    <GeneralAssessment
+                                        edit={propsData.edit}
+                                        patient={propsData.patient}
+                                        encounter={propsData.encounter} />
+                                </Tabs.Tab>
+                                <Tabs.Tab eventKey="10" title="Functional Assessment">
+
+                                </Tabs.Tab>
+                                <Tabs.Tab eventKey="11" title="Medication Reconciliation">
+
+                                </Tabs.Tab>
+                                <Tabs.Tab eventKey="12" title="Physician Order Summary">
+
+                                </Tabs.Tab>
+
                             </Tabs>
                         </Panel>
                     </div>
