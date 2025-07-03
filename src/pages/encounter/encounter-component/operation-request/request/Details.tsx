@@ -11,7 +11,7 @@ import { faHeadSideMask } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useState } from "react";
 import { Col, Form, Row } from "rsuite";
-const Details = ({ open, setOpen, user, request, setRequest, refetch, encounter, patient }) => {
+const Details = ({ open, setOpen, user, request, setRequest, refetch, encounter, patient,refetchrequest }) => {
     const dispatch = useAppDispatch();
     const { data: FacilityList } = useGetFacilitiesQuery({ ...initialListRequest });
     const { data: departmentList } = useGetDepartmentsQuery({
@@ -51,7 +51,8 @@ const Details = ({ open, setOpen, user, request, setRequest, refetch, encounter,
             }).unwrap();
              
             dispatch(notify({ msg:Response.msg, sev: "success" }));
-            refetch()
+            refetch();
+            refetchrequest();
             setOpen(false);
             setRequest({ ...newApOperationRequests, encounterKey: encounter?.key, patientKey: patient?.key })
 

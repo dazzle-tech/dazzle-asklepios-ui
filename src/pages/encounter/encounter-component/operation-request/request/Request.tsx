@@ -13,8 +13,8 @@ import MyTable from "@/components/MyTable";
 import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
-const Request = ({ patient, encounter, user }) => {
-   const dispatch = useAppDispatch();
+const Request = ({ patient, encounter, user, refetchrequest }) => {
+  const dispatch = useAppDispatch();
   const [showCanceled, setShowCanceled] = useState(false);
   const [open, setOpen] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -34,19 +34,24 @@ const Request = ({ patient, encounter, user }) => {
       },
       {
         fieldName: "status_lkey",
-        operator:showCanceled ? "notMatch":"match",
-        value:'3621690096636149',
+        operator: showCanceled ? "notMatch" : "match",
+        value: '3621690096636149',
       }
 
     ],
   });
-const isSelected = rowData => {
+  const isSelected = rowData => {
     if (rowData && request && rowData.key === request.key) {
       return 'selected-row';
     } else return '';
   };
+
+  //operation Api's
   const { data: operationrequestList, refetch, isLoading } = useGetOperationRequestsListQuery(listRequest);
-      const [save, saveMutation] = useSaveOperationRequestsMutation();
+  const [save, saveMutation] = useSaveOperationRequestsMutation();
+
+
+  //use Effect
   useEffect(() => {
     setRequest({ ...newApOperationRequests, encounterKey: encounter?.key, patientKey: patient?.key });
     let updatedFilters = [...listRequest.filters];
@@ -56,21 +61,23 @@ const isSelected = rowData => {
     }));
   }, [encounter, patient]);
 
-   useEffect(() => {
-  
-  
-      setListRequest(prev => ({
-          ...prev,
-          filters: prev.filters.map(filter =>
-              filter.fieldName === "status_lkey"
-                  ? { ...filter, operator: showCanceled ? "match" : "notMatch" }
-                  : filter
-          ),
-      }));
-  
-      refetch();
+  useEffect(() => {
+
+
+    setListRequest(prev => ({
+      ...prev,
+      filters: prev.filters.map(filter =>
+        filter.fieldName === "status_lkey"
+          ? { ...filter, operator: showCanceled ? "match" : "notMatch" }
+          : filter
+      ),
+    }));
+
+    refetch();
   }, [showCanceled]);
 
+
+  //handle functions
   const handleClear = () => {
     setRequest({
       ...newApOperationRequests,
@@ -81,30 +88,41 @@ const isSelected = rowData => {
       plannedAnesthesiaTypeLkey: null,
     })
   }
-  const handleCancel=async()=>{
-    try{
-    await save({...request,statusLkey:'3621690096636149',cancelledBy:user?.key,
-	cancelledAt:Date.now(),});
-  dispatch(notify({ msg: 'Cancelled Successfully', sev: "success" }));
-  setConfirmDeleteOpen(false);
-  refetch();
-}
-  catch(error){
-   dispatch(notify({ msg: 'Cancelled Faild', sev: "error" }));
-  }
-  
+
+  const handleCancel = async () => {
+    try {
+      const Response=await save({
+        ...request, statusLkey: '3621690096636149', cancelledBy: user?.key,
+        cancelledAt: Date.now(),
+      });
+
+      dispatch(notify({ msg: 'Cancelled Successfully', sev: "success" }));
+      setConfirmDeleteOpen(false);
+      refetch();
+      refetchrequest();
+    }
+    catch (error) {
+      dispatch(notify({ msg: 'Cancelled Faild', sev: "error" }));
+    }
+
   }
 
-    const handleSubmit=async()=>{
-    try{
-    await save({...request,statusLkey:'6134761379970516'});
-  dispatch(notify({ msg: 'Cancelled Successfully', sev: "success" }));
-  setConfirmDeleteOpen(false);
-  refetch();
-}
-  catch(error){
-   dispatch(notify({ msg: 'Cancelled Faild', sev: "error" }));
-  }}
+  const handleSubmit = async () => {
+    try {
+      await save({ ...request, statusLkey: '6134761379970516' ,submitedBy: user?.key,
+        submitedAt: Date.now(),});
+      dispatch(notify({ msg: 'Submited Successfully', sev: "success" }));
+      setConfirmDeleteOpen(false);
+      refetch();
+      refetchrequest();
+    }
+    catch (error) {
+      dispatch(notify({ msg: 'Submited Faild', sev: "error" }));
+    }
+  }
+
+
+//table 
   const columns = [
     {
       key: "facilityKey",
@@ -187,52 +205,7 @@ const isSelected = rowData => {
         />)
       }
     }
-    ,
-    {
-      key: "",
-      title: <Translate></Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return null;
-      }
-    }
-    ,
-    {
-      key: "",
-      title: <Translate></Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return null;
-      }
-    }
-    ,
-    {
-      key: "",
-      title: <Translate></Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return null;
-      }
-    }
-    ,
-    {
-      key: "",
-      title: <Translate></Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return null;
-      }
-    },
-
-    {
-      key: "",
-      title: <Translate></Translate>,
-      expandable: true,
-      render: (rowData: any) => {
-        return null;
-      }
-    },
-
+ 
     ,
     {
       key: "",
@@ -249,13 +222,13 @@ const isSelected = rowData => {
     },
     {
       key: "",
-      title: <Translate>Updated At/By</Translate>,
+      title: <Translate>Submited At/By</Translate>,
       expandable: true,
       render: (rowData: any) => {
         return (<>
-          <span>{rowData.updatedBy}</span>
+          <span>{rowData.submitedBy}</span>
           <br />
-          <span className='date-table-style'>{formatDateWithoutSeconds(rowData.updatedAt)}</span>
+          <span className='date-table-style'>{formatDateWithoutSeconds(rowData.submitedAt)}</span>
         </>)
       }
 
@@ -286,10 +259,11 @@ const isSelected = rowData => {
       <div className='bt-right'>
         <MyButton onClick={() => {
           handleClear();
-          setOpen(true);}}>Add Request</MyButton>
+          setOpen(true);
+        }}>Add Request</MyButton>
         <MyButton onClick={handleSubmit} >Submit</MyButton>
-        <MyButton disabled={request?.statusLvalue?.valueCode!='PROC_REQ'}
-         onClick={()=>{setConfirmDeleteOpen(true)}} >Cancel</MyButton>
+        <MyButton disabled={request?.statusLvalue?.valueCode != 'PROC_REQ'}
+          onClick={() => { setConfirmDeleteOpen(true) }} >Cancel</MyButton>
       </div>
 
     </div>
@@ -297,24 +271,27 @@ const isSelected = rowData => {
       <MyTable
         columns={columns}
         data={operationrequestList?.object || []}
-         rowClassName={isSelected}
+        rowClassName={isSelected}
         loading={isLoading}
-        onRowClick={rowData=>{
+        onRowClick={rowData => {
           setRequest(rowData)
 
         }}
       />
 
     </Row>
-    <Details open={open} setOpen={setOpen} user={user} request={request} setRequest={setRequest} refetch={refetch}
+    <Details open={open} setOpen={setOpen} 
+    user={user} 
+    request={request} setRequest={setRequest}
+     refetch={refetch} refetchrequest={refetchrequest}
       encounter={encounter} patient={patient} />
-       <DeletionConfirmationModal
-              open={confirmDeleteOpen}
-              setOpen={setConfirmDeleteOpen}
-              itemToDelete="note"
-              actionButtonFunction={handleCancel}
-              actionType="delete"
-            />
+    <DeletionConfirmationModal
+      open={confirmDeleteOpen}
+      setOpen={setConfirmDeleteOpen}
+      itemToDelete="note"
+      actionButtonFunction={handleCancel}
+      actionType="delete"
+    />
   </>)
 }
 export default Request;
