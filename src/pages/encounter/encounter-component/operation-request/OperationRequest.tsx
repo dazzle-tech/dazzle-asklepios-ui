@@ -4,6 +4,7 @@ import Request from "./request/Request";
 import { useLocation } from "react-router-dom";
 import { useAppSelector } from "@/hooks";
 import { useGetRequestedOperationQuery } from "@/services/operationService";
+import AnesthesiaCarePlan from "./AnesthesiaCarePlan";
 
 const OperationRequest = () => {
    const location = useLocation();
@@ -23,7 +24,7 @@ const OperationRequest = () => {
          skip: !encounter?.key || !patient?.key 
       }
    );
-   console.log("opp",requestedOperation )
+   
    return (
       <Tabs defaultActiveKey="1" appearance="subtle">
          <Tabs.Tab eventKey="1" title=" Request">
@@ -32,7 +33,7 @@ const OperationRequest = () => {
          <Tabs.Tab eventKey="2" title="Anesthesia Care Plan"
          disabled={!requestedOperation?.object}
          >
-            2
+            <AnesthesiaCarePlan operation={requestedOperation} patient={patient} encounter={encounter} user={authSlice.user}/>
          </Tabs.Tab>
          <Tabs.Tab eventKey="3" title=" Pre-Op Checklist"
          disabled={!requestedOperation?.object}>

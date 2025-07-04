@@ -34,9 +34,12 @@ import DetailsModal from './DetailsModal';
 import './styles.less';
 import { useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-const DrugOrder = () => {
-      const location = useLocation();
-  const { patient, encounter,edit } = location.state || {};
+const DrugOrder = (props) => {
+  const location = useLocation();
+
+  const patient = props.patient || location.state?.patient;
+  const encounter = props.encounter || location.state?.encounter;
+  const edit = props.edit ?? location.state?.edit ?? false;
     const dispatch = useAppDispatch();
     const [drugKey, setDrugKey] = useState(null);
     const [searchKeyword, setSearchKeyword] = useState('');
