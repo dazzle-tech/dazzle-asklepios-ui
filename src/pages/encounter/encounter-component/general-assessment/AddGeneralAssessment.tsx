@@ -43,7 +43,7 @@ const AddGeneralAssessment = ({ open, setOpen, patient, encounter, generalAssess
 
                 }).unwrap();
 
-                dispatch(notify({ msg: 'Chief General Assessment Successfully', sev: 'success' }));
+                dispatch(notify({ msg: 'General Assessment Successfully', sev: 'success' }));
                 //TODO convert key to code
                 setGeneralAssessment({ ...generalAssessment, statusLkey: "9766169155908512" });
                 setOpen(false);
@@ -69,7 +69,7 @@ const AddGeneralAssessment = ({ open, setOpen, patient, encounter, generalAssess
     // Handle Clear Fields
     const handleClearField = () => {
         setGeneralAssessment({
-            ...generalAssessment,
+            ...newApGeneralAssessment,
             positionStatusLkey: null,
             bodyMovementsLkey: null,
             levelOfConsciousnessLkey: null,

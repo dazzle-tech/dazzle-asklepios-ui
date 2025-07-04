@@ -26,6 +26,7 @@ import PainAssessment from '../encounter-component/pain-assessment/PainAssessmen
 import ReviewOfSystems from '../medical-notes-and-assessments/review-of-systems';
 import ChiefComplain from '../encounter-component/chief-complain/ChiefComplain';
 import GeneralAssessment from '../encounter-component/general-assessment';
+import FunctionalAssessment from '../encounter-component/functional-assessment';
 const InpatientNurseStation = ({ }) => {
     const dispatch = useAppDispatch();
     const location = useLocation();
@@ -185,7 +186,10 @@ const InpatientNurseStation = ({ }) => {
                                         encounter={propsData.encounter} />
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="10" title="Functional Assessment">
-
+                                  <FunctionalAssessment
+                                        edit={propsData.edit}
+                                        patient={propsData.patient}
+                                        encounter={propsData.encounter} />  
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="11" title="Medication Reconciliation">
 
