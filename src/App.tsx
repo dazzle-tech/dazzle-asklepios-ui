@@ -101,6 +101,8 @@ import Checklist from './pages/setup/operations/checklist';
 import InpatientNurseStation from './pages/encounter/encounter-pre-observations/InpatientNurseStation';
 import OperationSetup from './pages/setup/operation-setup';
 import OperationRequest from './pages/encounter/encounter-component/operation-request/OperationRequest';
+import Questionnaire from './pages/questionnaire-setup/Questionnaire';
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -309,6 +311,7 @@ const App = () => {
               />
               <Route path="vaccine-setup" element={<Vaccine />} />
               <Route path="checklists" element={<Checklist />} />
+              <Route path="questionnaire-setup" element={<Questionnaire />} />
               <Route path="procedure-setup" element={<ProcedureSetup />} />
               <Route path="potintial-duplicate" element={<PotintialDuplicate />} />
               <Route path="users" element={<Users />} />
