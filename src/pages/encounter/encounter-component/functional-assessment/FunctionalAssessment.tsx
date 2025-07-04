@@ -2,30 +2,35 @@ import React, { useEffect, useState } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppDispatch } from '@/hooks';
 import { Checkbox } from 'rsuite';
-import { useSaveGeneralAssessmentMutation, useGetGeneralAssessmentsQuery } from '@/services/encounterService';
+import { useSaveFunctionalAssessmentMutation, useGetFunctionalAssessmentsQuery } from '@/services/encounterService';
 import PlusIcon from '@rsuite/icons/Plus';
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';
-import { newApGeneralAssessment } from '@/types/model-types-constructor';
-import { ApGeneralAssessment } from '@/types/model-types';
+import { newApFunctionalAssessment } from '@/types/model-types-constructor';
+import { ApFunctionalAssessment } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import CloseOutlineIcon from '@rsuite/icons/CloseOutline';
 import CancellationModal from '@/components/CancellationModal';
 import { MdModeEdit } from 'react-icons/md';
 import MyTable from '@/components/MyTable';
 import { formatDateWithoutSeconds } from '@/utils';
-import AddGeneralAssessment from './AddGeneralAssessment';
-const GeneralAssessment = ({ patient, encounter, edit }) => {
+import AddFunctionalAssessment from './AddFunctionalAssessment';
+import { FaEye } from 'react-icons/fa';
+import ViewFunctionalAssessment from './ViewFunctionalAssessment';
+
+
+const FunctionalAssessment = ({ patient, encounter, edit }) => {
     const [openAddModal, setOpenAddModal] = useState(false);
-    const [generalAssessment, setGeneralAssessment] = useState<ApGeneralAssessment>({ ...newApGeneralAssessment });
-    const [saveGeneralAssessment] = useSaveGeneralAssessmentMutation();
+    const [functionalAssessment, setFunctionalAssessment] = useState<ApFunctionalAssessment>({ ...newApFunctionalAssessment });
+    const [saveFunctionalAssessment] = useSaveFunctionalAssessmentMutation();
     const [popupCancelOpen, setPopupCancelOpen] = useState(false);
-    const [generalAssessmentStatus, setGeneralAssessmentStatus] = useState('');
+    const [functionalAssessmentStatus, setFunctionalAssessmentStatus] = useState('');
     const [allData, setAllData] = useState(false);
+    const [openViewModal, setOpenViewModal] = useState(false);
     const dispatch = useAppDispatch();
 
     // Initialize list request with default filters
-    const [generalAssessmentListRequest, setGeneralAssessmentListRequest] = useState<ListRequest>({
+    const [functionalAssessmentListRequest, setFunctionalAssessmentListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
             {
@@ -46,50 +51,42 @@ const GeneralAssessment = ({ patient, encounter, edit }) => {
         ],
     });
 
-    // Fetch the list of General Assessment based on the provided request, and provide a refetch function
-    const { data: generalAssessmentResponse, refetch, isLoading } = useGetGeneralAssessmentsQuery(generalAssessmentListRequest);
+    // Fetch the list of Functional Assessment based on the provided request, and provide a refetch function
+    const { data: functionalAssessmentResponse, refetch, isLoading } = useGetFunctionalAssessmentsQuery(functionalAssessmentListRequest);
 
     // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
     const isSelected = rowData => {
-        if (rowData && generalAssessment && generalAssessment.key === rowData.key) {
+        if (rowData && functionalAssessment && functionalAssessment.key === rowData.key) {
             return 'selected-row';
         } else return '';
     };
     // Handle Clear Fields
     const handleClearField = () => {
-        setGeneralAssessment({
-            ...newApGeneralAssessment,
-            positionStatusLkey: null,
-            bodyMovementsLkey: null,
-            levelOfConsciousnessLkey: null,
-            facialExpressionLkey: null,
-            speechLkey: null,
-            moodBehaviorLkey: null,
-        });
+        setFunctionalAssessment({ ...newApFunctionalAssessment });
     };
 
-    // Handle Add New General Assessment Puretone Record
-    const handleAddNewGeneralAssessment = () => {
+    // Handle Add New Functional Assessment Puretone Record
+    const handleAddNewFunctionalAssessment = () => {
         handleClearField();
         setOpenAddModal(true);
     }
     // Change page event handler
     const handlePageChange = (_: unknown, newPage: number) => {
-        setGeneralAssessmentListRequest({ ...generalAssessmentListRequest, pageNumber: newPage + 1 });
+        setFunctionalAssessmentListRequest({ ...functionalAssessmentListRequest, pageNumber: newPage + 1 });
     };
     // Change number of rows per page
     const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setGeneralAssessmentListRequest({
-            ...generalAssessmentListRequest,
+        setFunctionalAssessmentListRequest({
+            ...functionalAssessmentListRequest,
             pageSize: parseInt(event.target.value, 10),
             pageNumber: 1 // Reset to first page
         });
     };
-    // Handle Cancel General Assessment Record
+    // Handle Cancel Functional Assessment Record
     const handleCancle = () => {
         //TODO convert key to code
-        saveGeneralAssessment({ ...generalAssessment, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime() }).unwrap().then(() => {
-            dispatch(notify({ msg: 'General Assessment Canceled Successfully', sev: 'success' }));
+        saveFunctionalAssessment({ ...functionalAssessment, statusLkey: "3196709905099521", deletedAt: (new Date()).getTime() }).unwrap().then(() => {
+            dispatch(notify({ msg: 'Functional Assessment Canceled Successfully', sev: 'success' }));
             refetch();
         });
         setPopupCancelOpen(false);
@@ -97,7 +94,7 @@ const GeneralAssessment = ({ patient, encounter, edit }) => {
 
     // Effects
     useEffect(() => {
-        setGeneralAssessmentListRequest((prev) => ({
+        setFunctionalAssessmentListRequest((prev) => ({
             ...prev,
             filters: [
                 {
@@ -123,15 +120,15 @@ const GeneralAssessment = ({ patient, encounter, edit }) => {
         }));
     }, [patient?.key, encounter?.key]);
     useEffect(() => {
-        setGeneralAssessmentListRequest((prev) => ({
+        setFunctionalAssessmentListRequest((prev) => ({
             ...prev,
             filters: [
-                ...(generalAssessmentStatus !== ''
+                ...(functionalAssessmentStatus !== ''
                     ? [
                         {
                             fieldName: 'status_lkey',
                             operator: 'match',
-                            value: generalAssessmentStatus,
+                            value: functionalAssessmentStatus,
                         },
                         {
                             fieldName: 'patient_key',
@@ -171,11 +168,11 @@ const GeneralAssessment = ({ patient, encounter, edit }) => {
                     ]),
             ],
         }));
-    }, [generalAssessmentStatus, allData]);
+    }, [functionalAssessmentStatus, allData]);
     useEffect(() => {
-        setGeneralAssessmentListRequest((prev) => {
+        setFunctionalAssessmentListRequest((prev) => {
             const filters =
-                generalAssessmentStatus != '' && allData
+                functionalAssessmentStatus != '' && allData
                     ? [
 
                         {
@@ -184,7 +181,7 @@ const GeneralAssessment = ({ patient, encounter, edit }) => {
                             value: patient?.key
                         },
                     ]
-                    : generalAssessmentStatus === '' && allData
+                    : functionalAssessmentStatus === '' && allData
                         ? [
                             {
                                 fieldName: 'deleted_at',
@@ -204,122 +201,18 @@ const GeneralAssessment = ({ patient, encounter, edit }) => {
                 filters,
             };
         });
-    }, [allData, generalAssessmentStatus]);
+    }, [allData, functionalAssessmentStatus]);
 
     // Pagination values
-    const pageIndex = generalAssessmentListRequest.pageNumber - 1;
-    const rowsPerPage = generalAssessmentListRequest.pageSize;
-    const totalCount = generalAssessmentResponse?.extraNumeric ?? 0;
+    const pageIndex = functionalAssessmentListRequest.pageNumber - 1;
+    const rowsPerPage = functionalAssessmentListRequest.pageSize;
+    const totalCount = functionalAssessmentResponse?.extraNumeric ?? 0;
 
     // Table Column 
     const columns = [
         {
-            key: 'positionStatusLkey',
-            title: 'Position Status',
-            render: (rowData: any) =>
-                rowData?.positionStatusLvalue
-                    ? rowData.positionStatusLvalue.lovDisplayVale
-                    : rowData.positionStatusLkey,
-
-        },
-        {
-            key: 'bodyMovementsLkey',
-            title: 'Body Movements',
-            render: (rowData: any) =>
-                rowData?.bodyMovementsLvalue
-                    ? rowData.bodyMovementsLvalue.lovDisplayVale
-                    : rowData.bodyMovementsLkey,
-        },
-
-        {
-            key: 'levelOfConsciousnessLkey',
-            title: 'Level of Consciousness',
-            render: (rowData: any) =>
-                rowData?.levelOfConsciousnessLvalue
-                    ? rowData.levelOfConsciousnessLvalue.lovDisplayVale
-                    : rowData.levelOfConsciousnessLkey,
-        },
-        {
-            key: 'facialExpressionLkey',
-            title: 'Facial Expression',
-            render: (rowData: any) =>
-                rowData?.facialExpressionLvalue
-                    ? rowData.facialExpressionLvalue.lovDisplayVale
-                    : rowData.facialExpressionLkey,
-        },
-        {
-            key: 'speechLkey',
-            title: 'Speech',
-            render: (rowData: any) =>
-                rowData?.speechLvalue
-                    ? rowData.speechLvalue.lovDisplayVale
-                    : rowData.speechLkey,
-        },
-        {
-            key: 'moodBehaviorLkey',
-            title: 'Mood/Behavior',
-            render: (rowData: any) =>
-                rowData?.moodBehaviorLvalue
-                    ? rowData.moodBehaviorLvalue.lovDisplayVale
-                    : rowData.moodBehaviorLkey,
-        },
-        {
-            key: 'memoryRecent',
-            title: 'Memory – Recent',
-            render: (rowData: any) => rowData?.memoryRecent ? "YES" : "NO",
-            expandable: true,
-        },
-        {
-            key: 'memoryRemote',
-            title: 'Memory – Remote',
-            render: (rowData: any) => rowData?.memoryRemote ? "YES" : "NO",
-            expandable: true,
-        },
-        {
-            key: 'signsOfAgitation',
-            title: 'Signs of Agitation',
-            render: (rowData: any) => rowData?.signsOfAgitation ? "YES" : "NO",
-            expandable: true,
-        },
-        {
-            key: 'signsOfDepression',
-            title: 'Signs of Depression',
-            render: (rowData: any) => rowData?.signsOfDepression ? "YES" : "NO",
-            expandable: true,
-        },
-        {
-            key: 'signsOfSuicidalIdeation',
-            title: 'Signs of Suicidal Ideation',
-            render: (rowData: any) => rowData?.signsOfSuicidalIdeation ? "YES" : "NO",
-            expandable: true,
-        },
-        {
-            key: 'signsOfSubstanceUse',
-            title: 'Signs of Substance Use',
-            render: (rowData: any) => rowData?.signsOfSubstanceUse ? "YES" : "NO",
-            expandable: true,
-        },
-
-        {
-            key: 'details',
-            title: <Translate>EDIT</Translate>,
-            flexGrow: 2,
-            render: (rowData: any) => (
-                <MdModeEdit
-                    title="Edit"
-                    size={24}
-                    fill="var(--primary-gray)"
-                    onClick={() => {
-                        setGeneralAssessment(rowData);
-                        setOpenAddModal(true);
-                    }}
-                />
-            ),
-        },
-        {
             key: 'createdAt',
             title: 'CREATED AT/BY',
-            expandable: true,
             render: (row: any) =>
                 row?.createdAt ? (
                     <>
@@ -333,7 +226,6 @@ const GeneralAssessment = ({ patient, encounter, edit }) => {
         {
             key: 'deletedAt',
             title: 'CANCELLED AT/BY',
-            expandable: true,
             render: (row: any) =>
                 row?.deletedAt ? (
                     <>
@@ -348,32 +240,62 @@ const GeneralAssessment = ({ patient, encounter, edit }) => {
             key: 'cancellationReason',
             title: 'CANCELLATION REASON',
             dataKey: 'cancellationReason',
-            expandable: true,
+        },
+        {
+            key: 'details',
+            title: <Translate>VIEW</Translate>,
+            flexGrow: 2,
+            render: (rowData: any) => (
+                <FaEye
+                    title="View"
+                    size={24}
+                    fill="var(--primary-gray)"
+                    onClick={() => {
+                        setOpenViewModal(true);
+                        setFunctionalAssessment(rowData);
+                    }} />
+            ),
+        },
+        {
+            key: 'details',
+            title: <Translate>EDIT</Translate>,
+            flexGrow: 2,
+            render: (rowData: any) => (
+                <MdModeEdit
+                    title="Edit"
+                    size={24}
+                    fill="var(--primary-gray)"
+                    onClick={() => {
+                        setFunctionalAssessment(rowData);
+                        setOpenAddModal(true);
+                    }}
+                />
+            ),
         },
     ];
 
 
     return (
         <div>
-            <AddGeneralAssessment
+            <AddFunctionalAssessment
                 encounter={encounter}
                 patient={patient}
                 open={openAddModal}
                 setOpen={setOpenAddModal}
-                generalAssessmentObj={generalAssessment}
+                functionalAssessmentObj={functionalAssessment}
                 refetch={refetch}
                 edit={edit} />
             <div className='bt-div'>
-                <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!edit ? !generalAssessment?.key : true}>
+                <MyButton onClick={() => { setPopupCancelOpen(true) }} prefixIcon={() => <CloseOutlineIcon />} disabled={!edit ? !functionalAssessment?.key : true}>
                     <Translate>Cancel</Translate>
                 </MyButton>
                 <Checkbox onChange={(value, checked) => {
                     if (checked) {
                         //TODO convert key to code
-                        setGeneralAssessmentStatus('3196709905099521');
+                        setFunctionalAssessmentStatus('3196709905099521');
                     }
                     else {
-                        setGeneralAssessmentStatus('');
+                        setFunctionalAssessmentStatus('');
                     }
                 }}>
                     Show Cancelled
@@ -391,17 +313,17 @@ const GeneralAssessment = ({ patient, encounter, edit }) => {
                 <div className='bt-right'>
                     <MyButton
                         disabled={edit}
-                        onClick={handleAddNewGeneralAssessment}
+                        onClick={handleAddNewFunctionalAssessment}
                         prefixIcon={() => <PlusIcon />} >Add </MyButton>
                 </div>
             </div>
             <MyTable
-                data={generalAssessmentResponse?.object ?? []}
+                data={functionalAssessmentResponse?.object ?? []}
                 columns={columns}
                 height={600}
                 loading={isLoading}
                 onRowClick={rowData => {
-                    setGeneralAssessment({ ...rowData });
+                    setFunctionalAssessment({ ...rowData });
                 }}
                 rowClassName={isSelected}
                 page={pageIndex}
@@ -410,8 +332,16 @@ const GeneralAssessment = ({ patient, encounter, edit }) => {
                 onPageChange={handlePageChange}
                 onRowsPerPageChange={handleRowsPerPageChange}
             />
-            <CancellationModal title="Cancel General Assessment" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={generalAssessment} setObject={setGeneralAssessment} handleCancle={handleCancle} fieldName="cancellationReason" />
+            {/* View Functional Assessment Modal */}
+            <ViewFunctionalAssessment
+                open={openViewModal}
+                setOpen={setOpenViewModal}
+                functionalAssessmentObj={functionalAssessment}/>
+            {/* Cancellation Modal */}
+            <CancellationModal title="Cancel Functional Assessment" fieldLabel="Cancellation Reason" open={popupCancelOpen} setOpen={setPopupCancelOpen} object={functionalAssessment} setObject={setFunctionalAssessment} handleCancle={handleCancle} fieldName="cancellationReason" />
         </div>
     );
 };
-export default GeneralAssessment;
+export default FunctionalAssessment;
+
+

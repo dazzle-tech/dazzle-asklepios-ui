@@ -1419,6 +1419,37 @@ export interface ApFacility {
 	defaultCurrencyLkey:string;
 } 
 
+export interface ApFunctionalAssessment { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	mobilityAmbulation:boolean;
+	transferringBedChair:boolean;
+	stairClimbingAbility:boolean;
+	feeding:boolean;
+	toiletingAbility:boolean;
+	bathingAbility:boolean;
+	dressingAbility:boolean;
+	groomingAbility:boolean;
+	walkingDistance:boolean;
+	balance:boolean;
+	urinaryContinence:boolean;
+	bowelContinence:boolean;
+	useOfAssistiveDevices:boolean;
+	needForAssistance:boolean;
+	fallHistory:boolean;
+	painDuringMovement:boolean;
+	needForRehab:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	cancellationReason:string;
+	statusLkey:string;
+} 
+
 export interface ApGeneralAssessment { 
 	key:string;
 	patientKey:string;
@@ -1834,6 +1865,36 @@ export interface ApModule {
 	deletedBy:string;
 	createdAt:number;
 	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApOperationAnesthesiaCarePlan { 
+	key:string;
+	encounterKey:string;
+	patientKey:string;
+	anesthesiaConsentSigned:boolean;
+	understandsRisks:boolean;
+	previousAnesthesia:boolean;
+	anesthesiaHistory:string;
+	operationKey:string;
+	mallampatiClassificationLkey:string;
+	airwayGradesLkey:string;
+	plannedAirwayApproachLkey:string;
+	nasalPatencyLkey:string;
+	thyromentalDistance:number;
+	mouthOpening:number;
+	neckMobility:string;
+	facialOrNeckAbnormalities:string;
+	beardOrFacialHair:boolean;
+	anticipatedDifficultAirway:boolean;
+	previousDifficultIntubation:boolean;
+	difficultIntubationNotes:string;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
 	deletedAt:number;
 	isValid:boolean;
 } 
