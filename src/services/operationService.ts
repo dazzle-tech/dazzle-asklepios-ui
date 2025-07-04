@@ -50,6 +50,25 @@ export const operationService = createApi({
             })
         }),
 
+         // 🟢 GET operation care plan list
+        getOperationCarePlan: builder.query({
+            query: (listRequest: ListRequest) => ({
+                url: `/operation/operation-care-plan-list?${fromListRequestToQueryParams(listRequest)}`,
+                method: 'GET'
+            })
+        }),
+
+
+ // 🟡 POST save operation care plan
+      saveOperationCarePlan: builder.mutation({
+            query: (data) => ({
+                url: `/operation/save-operation-care-plan`,
+                method: 'POST',
+                body: data
+            }),
+            onQueryStarted,
+            transformResponse: (response: any) => response
+        }),
         // 🟡 POST save operation
         saveOperation: builder.mutation({
             query: (body) => ({
@@ -117,6 +136,12 @@ export const operationService = createApi({
             }),
             onQueryStarted
         }),
+
+       
+
+
+       
+
     })
 });
 
@@ -128,9 +153,11 @@ export const {
     useGetOperationListQuery,
     useGetOperationCodingListQuery,
     useGetOperationPriceListListQuery,
+    useGetOperationCarePlanQuery,
 
     useSaveOperationMutation,
     useRemoveOperationMutation,
+    useSaveOperationCarePlanMutation,
 
     useSaveOperationCodingMutation,
     useRemoveOperationCodingMutation,
