@@ -1806,6 +1806,32 @@ export interface ApMedicationCategoriesClass {
 	className:string;
 } 
 
+export interface ApMedicationReconciliation { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	activeIngredientKey:string;
+	dosage:number;
+	dosageLkey:string;
+	routeLkey:string;
+	frequencyLkey:string;
+	startDate:number;
+	lastDoseTaken:number;
+	indication:string;
+	sourceOfInfo:string;
+	medicationAvailableWithPatient:boolean;
+	continueInHospital:boolean;
+	discrepancyIdentified:boolean;
+	actionTaken:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	statusLkey:string;
+} 
+
 export interface ApMessages { 
 	key:string;
 	messageId:string;

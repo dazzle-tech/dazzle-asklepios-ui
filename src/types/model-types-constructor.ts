@@ -1807,6 +1807,32 @@ export const newApMedicationCategoriesClass:modelTypes.ApMedicationCategoriesCla
 	className:'',
 } 
 
+export const newApMedicationReconciliation:modelTypes.ApMedicationReconciliation = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	activeIngredientKey:undefined,
+	dosage:0,
+	dosageLkey:undefined,
+	routeLkey:undefined,
+	frequencyLkey:undefined,
+	startDate:0,
+	lastDoseTaken:0,
+	indication:'',
+	sourceOfInfo:'',
+	medicationAvailableWithPatient:undefined,
+	continueInHospital:undefined,
+	discrepancyIdentified:undefined,
+	actionTaken:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	statusLkey:undefined,
+} 
+
 export const newApMessages:modelTypes.ApMessages = { 
 	key:undefined,
 	messageId:'',
