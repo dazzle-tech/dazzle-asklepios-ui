@@ -45,7 +45,7 @@ const Room = () => {
     } = useGetRoomListQuery(listRequest);
     // deactivate/reactivate Room
     const [deactiveActiveRoom] = useDeactiveActivRoomMutation();
-
+ 
     // Pagination values
     const pageIndex = listRequest.pageNumber - 1;
     const rowsPerPage = listRequest.pageSize;
@@ -257,6 +257,15 @@ const Room = () => {
             title: <Translate>Status</Translate>,
             flexGrow: 4,
             render: rowData => (rowData.isValid ? 'Valid' : 'InValid')
+        },
+         {
+            key: 'bedCount',
+            title: <Translate>Bed Count</Translate>,
+            flexGrow: 4,
+            render: rowData =>
+                rowData?.bedCount
+                    ? rowData.bedCount
+                    : '0'
         },
         {
             key: 'icons',
