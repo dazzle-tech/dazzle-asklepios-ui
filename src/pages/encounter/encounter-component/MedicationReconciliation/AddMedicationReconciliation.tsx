@@ -27,8 +27,7 @@ const AddMedicationReconciliation = ({ open, setOpen, patient, encounter, medica
     const { data: dosageLovQueryResponse } = useGetLovValuesByCodeQuery('DOSAGE_FORMS');
     const { data: roaLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
     const { data: durationLovQueryResponse } = useGetLovValuesByCodeQuery('MED_DURATION');
-  const { data: orsLovQueryResponse } = useGetLovValuesByCodeQuery('DIAG_ORD_STATUS');
-  console.log("orsLovQueryResponse", orsLovQueryResponse);
+
     // Handle Save Medication Reconciliation
     const handleSave = async () => {
         //  TODO convert key to code
