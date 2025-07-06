@@ -2649,6 +2649,48 @@ export interface ApPractitioner {
 	jobRoleLkey:string;
 } 
 
+export interface ApPreOperationChecklist { 
+	key:string;
+	encounterKey:string;
+	patientKey:string;
+	operationKey:string;
+	patientIdentityVerified:boolean;
+	consentSurgerySigned:boolean;
+	consentAnesthesiaSigned:boolean;
+	surgicalProcedureConfirmed:boolean;
+	siteOfSurgeryMarked:boolean;
+	npoStatusConfirmed:boolean;
+	preOpVitalsRecorded:boolean;
+	patientBathed:boolean;
+	jewelryRemoved:boolean;
+	denturesRemovedOrNoted:boolean;
+	prosthesisNotedOrRemoved:boolean;
+	clothingReplaced:boolean;
+	allergiesReviewed:boolean;
+	preOpMedsGiven:boolean;
+	chronicMedsManaged:boolean;
+	anticoagulantsManaged:boolean;
+	ivAccessSecured:boolean;
+	ivFluidsStarted:boolean;
+	bloodProductsPrepared:boolean;
+	emrUpdated:boolean;
+	labsImagingReviewed:boolean;
+	consentFormsAvailable:boolean;
+	personalBelongingsSecured:boolean;
+	interpreterArranged:boolean;
+	voidedOrCatheterPresent:boolean;
+	bedInLowestPosition:boolean;
+	transferModeArranged:boolean;
+	handoffToOrNursePrepared:boolean;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApPreProcedureAssessment { 
 	key:string;
 	procedureKey:string;
