@@ -1,18 +1,17 @@
+import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
 import MyButton from "@/components/MyButton/MyButton";
-import React, { useEffect, useState } from "react";
-import { Checkbox, Row } from "rsuite";
-import Details from "./Details";
+import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
-import { render } from "react-dom";
-import { formatDateWithoutSeconds } from "@/utils";
-import { MdModeEdit } from "react-icons/md";
+import { useAppDispatch } from "@/hooks";
+import { useGetOperationRequestsListQuery, useSaveOperationRequestsMutation } from "@/services/operationService";
 import { newApOperationRequests } from "@/types/model-types-constructor";
 import { initialListRequest, ListRequest } from "@/types/types";
-import { useGetOperationRequestsListQuery, useSaveOperationRequestsMutation } from "@/services/operationService";
-import MyTable from "@/components/MyTable";
-import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
+import { formatDateWithoutSeconds } from "@/utils";
 import { notify } from "@/utils/uiReducerActions";
-import { useAppDispatch } from "@/hooks";
+import React, { useEffect, useState } from "react";
+import { MdModeEdit } from "react-icons/md";
+import { Checkbox, Row } from "rsuite";
+import Details from "./Details";
 const Request = ({ patient, encounter, user, refetchrequest }) => {
   const dispatch = useAppDispatch();
   const [showCanceled, setShowCanceled] = useState(false);
@@ -247,7 +246,7 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
         </>)
       }
     },
-  ]
+  ];
   return (<>
     <div className='bt-div'>
       <Checkbox
