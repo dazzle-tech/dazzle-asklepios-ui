@@ -109,9 +109,10 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
 
   const handleSubmit = async () => {
     try {
-      await save({ ...request, statusLkey: '6134761379970516' ,submitedBy: user?.key,
-        submitedAt: Date.now(),});
+     const Response= await save({ ...request, statusLkey: '6134761379970516' ,submitedBy: user?.key,
+        submitedAt: Date.now(),operationStatusLkey:'3621653475992516'});
       dispatch(notify({ msg: 'Submited Successfully', sev: "success" }));
+      
       setConfirmDeleteOpen(false);
       refetch();
       refetchrequest();
@@ -261,7 +262,7 @@ const Request = ({ patient, encounter, user, refetchrequest }) => {
           handleClear();
           setOpen(true);
         }}>Add Request</MyButton>
-        <MyButton onClick={handleSubmit} >Submit</MyButton>
+        <MyButton disabled={request?.statusLvalue?.valueCode != 'PROC_REQ'} onClick={handleSubmit} >Submit</MyButton>
         <MyButton disabled={request?.statusLvalue?.valueCode != 'PROC_REQ'}
           onClick={() => { setConfirmDeleteOpen(true) }} >Cancel</MyButton>
       </div>
