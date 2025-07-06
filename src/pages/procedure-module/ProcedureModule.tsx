@@ -554,7 +554,7 @@ const handleFilterChange = (fieldName, value) => {
     };
 
     const filters = () => (
-        <Form layout="inline" fluid className="container-of-filter-fields-department">
+        <Form layout="inline" fluid>
             <MyInput
                
                 fieldType="date"

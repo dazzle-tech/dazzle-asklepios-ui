@@ -89,7 +89,7 @@ const Users = () => {
   ];
   // Page header setup
   const divContent = (
-    <div className='title-users'>
+    <div className='page-title'>
       <h5>Users</h5>
     </div>
   );
@@ -235,9 +235,9 @@ const Users = () => {
   };
   //icons column (Edit, Privilege, Licenses & Certifications, Reset Password, Departments Active/Deactivate)
   const iconsForActions = (rowData: ApUser) => (
-    <div className="container-of-icons-users">
+    <div className="container-of-icons">
       <MdModeEdit
-        className='icons-users'
+        className='icons-style'
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -248,27 +248,27 @@ const Users = () => {
         }}
       />
       <FaMedal
-        className='icons-users'
+        className='icons-style'
         title="Privilege"
         fill="var(--primary-gray)"
         size={24}
       />
       <FaAddressCard
-        className='icons-users'
+        className='icons-style'
         title="Licenses & Certifications"
         fill="var(--primary-gray)"
         size={24}
         onClick={() => setLicensePopupOpen(true)}
       />
       <RiLockPasswordFill
-        className='icons-users'
+        className='icons-style'
         title="Reset Password"
         size={24}
         fill="var(--primary-gray)"
         onClick={() => setResetPasswordPopupOpen(true)}
       />
       <FaBuilding
-        className='icons-users'
+        className='icons-style'
         title="Departments"
         size={24}
         fill="var(--primary-gray)"
@@ -278,7 +278,7 @@ const Users = () => {
       />
       {rowData?.isValid ? (
         <MdDelete
-          className='icons-users'
+          className='icons-style'
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -286,7 +286,7 @@ const Users = () => {
         />
       ) : (
         <FaUndo
-          className='icons-users'
+          className='icons-style'
           title="Activate"
           size={24}
           fill="var(--primary-gray)"
@@ -390,7 +390,7 @@ const Users = () => {
   ];
   // Filter form rendered above the table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-department">
+    <Form layout="inline" fluid>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -423,7 +423,7 @@ const Users = () => {
     <div>
       <div>
         <Panel>
-          <div className="container-of-add-new-button-departments">
+          <div className="container-of-add-new-button">
             <MyButton
               prefixIcon={() => <AddOutlineIcon />}
               color="var(--deep-blue)"

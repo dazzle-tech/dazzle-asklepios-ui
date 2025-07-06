@@ -45,7 +45,7 @@ const ServiceSetup = () => {
   const [saveService, saveServiceMutation] = useSaveServiceMutation();
    // Header page setUp
   const divContent = (
-    <div className='title-service'>
+    <div className='page-title'>
       <h5>Services</h5>
     </div>
   );
@@ -75,16 +75,16 @@ const ServiceSetup = () => {
 
   // Icons column (Edit,Linked Items, reactive/Deactivate)
   const iconsForActions = (rowData: ApService) => (
-    <div className='container-of-icons-service'>
+    <div className='container-of-icons'>
       <MdMedicalServices
-        className="icons-service"
+        className="icons-style"
         title="Linked Items"
         size={24}
         fill="var(--primary-gray)"
         onClick={() => setProceduresOpen(true)}
       />
       <MdModeEdit
-        className="icons-service"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -92,7 +92,7 @@ const ServiceSetup = () => {
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-service"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -103,7 +103,7 @@ const ServiceSetup = () => {
         />
       ) : (
         <FaUndo
-          className="icons-service"
+          className="icons-style"
           title="Activate"
           size={24}
           fill="var(--primary-gray)"
@@ -167,7 +167,7 @@ const ServiceSetup = () => {
 
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-service ">
+    <Form layout="inline" fluid>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -324,7 +324,7 @@ const ServiceSetup = () => {
 
   return (
     <Panel>
-      <div className="container-of-add-new-button-service">
+      <div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"

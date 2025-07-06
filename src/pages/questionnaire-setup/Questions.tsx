@@ -31,9 +31,9 @@ const Questions = ({ open, setOpen, questionnaire }) => {
 
   // Icons column (Edit, Remove)
   const iconsForActions = () => (
-    <div className="container-of-icons-questionnaire">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-questionnaire"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -42,7 +42,7 @@ const Questions = ({ open, setOpen, questionnaire }) => {
         }}
       />
       <MdDelete
-        className="icons-questionnaire"
+        className="icons-style"
         title="Remove"
         size={24}
         fill="var(--primary-pink)"
@@ -83,7 +83,7 @@ const Questions = ({ open, setOpen, questionnaire }) => {
       case 0:
         return (
           <Form layout="inline" fluid>
-            <div className="container-of-add-new-button-questionnaire">
+            <div className="container-of-add-new-button">
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"

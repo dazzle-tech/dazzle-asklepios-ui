@@ -15,9 +15,9 @@ const LinkedItems = ({ open, setOpen }) => {
 
   // Icons column (remove)
   const iconsForActions = () => (
-    <div className='container-of-icons-service'>
+    <div className='container-of-icons'>
       <MdDelete
-        className="icons-service"
+        className="icons-style"
         title="Deactivate"
         size={24}
         fill="var(--primary-pink)"
@@ -54,7 +54,7 @@ const tableColumns: ColumnConfig[] = [
       case 0:
         return (
           <div>
-            <div className="container-of-add-new-button-allergens">
+            <div className="container-of-add-new-button">
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"

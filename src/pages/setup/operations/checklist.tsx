@@ -33,7 +33,7 @@ const Checklist = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className="title-checklist">
+    <div className="page-title">
       <h5>Checklists</h5>
     </div>
   );
@@ -79,24 +79,24 @@ const Checklist = () => {
 
   //icons column for(edit, deactivate)
   const iconsForActions = (rowData: ApModule) => (
-    <div className="container-of-icons-checklist">
+    <div className="container-of-icons">
       <MdOutlineChecklistRtl
         title="Link cheklist"
         size={24}
         fill="var(--primary-gray)"
-        className="icons-checklist"
+        className="icons-style"
         onClick={() => setOpenLinkCheckListPopup(true)}
       />
       <MdModeEdit
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
-        className="icons-checklist"
+        className="icons-style"
         onClick={() => setOpenAddEditPopup(true)}
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-checklist"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -107,7 +107,7 @@ const Checklist = () => {
         />
       ) : (
         <FaUndo
-          className="icons-checklist"
+          className="icons-style"
           title="Activate"
           size={21}
           fill="var(--primary-gray)"
@@ -138,7 +138,7 @@ const Checklist = () => {
   ];
   return (
     <Panel>
-      <div className="container-of-add-new-button-checklist">
+      <div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"

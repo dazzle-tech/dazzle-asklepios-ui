@@ -56,9 +56,9 @@ const OperationSetup = () => {
     };
     // Icons column (Edit, reactive/Deactivate)
     const iconsForActions = (rowData: ApOperationSetup) => (
-        <div className="container-of-icons-procedure">
+        <div className="container-of-icons">
             <MdModeEdit
-                className="icons-procedure"
+                className="icons-style"
                 title="Edit"
                 size={24}
                 fill="var(--primary-gray)"
@@ -66,7 +66,7 @@ const OperationSetup = () => {
             />
             {!rowData?.deletedAt ? (
                 <MdDelete
-                    className="icons-procedure"
+                    className="icons-style"
                     title="Deactivate"
                     size={24}
                     fill="var(--primary-pink)"
@@ -77,7 +77,7 @@ const OperationSetup = () => {
                 />
             ) : (
                 <FaUndo
-                    className="icons-procedure"
+                    className="icons-style"
                     title="Activate"
                     size={24}
                     fill="var(--primary-gray)"
@@ -154,7 +154,7 @@ const OperationSetup = () => {
         }
     };
     const filters = () => (
-        <Form layout="inline" fluid className="container-of-filter-fields-procedure">
+        <Form layout="inline" fluid>
             <MyInput
                 selectDataValue="value"
                 selectDataLabel="label"
@@ -205,7 +205,7 @@ const OperationSetup = () => {
         };
     }, [location.pathname, dispatch]);
     return (<Panel>
-        <div className="container-of-add-new-button-procedure">
+        <div className="container-of-add-new-button">
             <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"

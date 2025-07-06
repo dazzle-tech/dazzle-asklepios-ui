@@ -179,9 +179,9 @@ const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) =
     };
     // Icons column (delete)
     const iconsForActions = () => (
-        <div className="container-of-icons-procedure">
+        <div className="container-of-icons">
             <MdDelete
-                className="icons-procedure"
+                className="icons-style"
                 title="Deactivate"
                 size={24}
                 fill="var(--primary-pink)"
@@ -421,7 +421,7 @@ const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) =
             case 1:
                 return (
                     <Form>
-                        <div className="container-of-add-new-button-procedure">
+                        <div className="container-of-add-new-button">
                             <MyButton
                                 prefixIcon={() => <AddOutlineIcon />}
                                 color="var(--deep-blue)"
@@ -456,7 +456,7 @@ const AddEditOperation = ({ open, setOpen, operation, setOperation, refetch }) =
             case 2:
                 return (
                     <Form>
-                        <div className="container-of-add-new-button-procedure">
+                        <div className="container-of-add-new-button">
                             <MyButton
                                 prefixIcon={() => <AddOutlineIcon />}
                                 color="var(--deep-blue)"

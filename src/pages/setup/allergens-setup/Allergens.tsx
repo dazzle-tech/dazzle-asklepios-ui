@@ -47,7 +47,7 @@ const Allergens = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className="title-allergens">
+    <div className="page-title">
       <h5>Allergens</h5>
     </div>
   );
@@ -64,7 +64,7 @@ const Allergens = () => {
 
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-allergens">
+    <Form layout="inline" fluid>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -96,9 +96,9 @@ const Allergens = () => {
 
   // Icons column ( Edit, reactive/Deactivate)
   const iconsForActions = (rowData: ApAllergens) => (
-    <div className="container-of-icons-allergens">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-allergens"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -106,7 +106,7 @@ const Allergens = () => {
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-allergens"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -117,7 +117,7 @@ const Allergens = () => {
         />
       ) : (
         <FaUndo
-          className="icons-allergens"
+          className="icons-style"
           title="Activate"
           size={20}
           fill="var(--primary-gray)"
@@ -292,7 +292,7 @@ const Allergens = () => {
 
   return (
     <Panel>
-      <div className="container-of-add-new-button-allergens">
+      <div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"

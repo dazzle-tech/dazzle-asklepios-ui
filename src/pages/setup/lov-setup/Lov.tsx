@@ -53,7 +53,7 @@ const Lov = () => {
     { label: 'Description', value: 'lovDescription' }
   ];
   const divContent = (
-    <div className='title-lov'>
+    <div className='page-title'>
       <h5>LOVs</h5>
     </div>
   );
@@ -144,7 +144,7 @@ const Lov = () => {
   };
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-lov">
+    <Form layout="inline" fluid>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -175,10 +175,10 @@ const Lov = () => {
   );
   // Icons column (Setup Lov Values ,Edite, reactive/Deactivate)
   const iconsForActions = (rowData: ApLov) => (
-    <div className="container-of-icons-lov">
+    <div className="container-of-icons">
       {/* display lov values when click on this icon */}
       <IoSettingsSharp
-        className="icons-lov"
+        className="icons-style"
         title="Setup Lov Values"
         size={24}
         fill="var(--primary-gray)"
@@ -186,7 +186,7 @@ const Lov = () => {
       />
       {/* open edit lov when click on this icon */}
       <MdModeEdit
-        className="icons-lov"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -195,14 +195,14 @@ const Lov = () => {
       {/* deactivate/activate  when click on one of these icon */}
       {!rowData?.deletedAt ? (
         <MdDelete
-          className="icons-lov"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
         />
       ) : (
         <FaUndo
-          className="icons-lov"
+          className="icons-style"
           title="Activate"
           size={20}
           fill="var(--primary-gray)"
@@ -267,7 +267,7 @@ const Lov = () => {
       activeIndex={carouselActiveIndex}
     >
       <Panel>
-        <div className="container-of-add-new-button-lov">
+        <div className="container-of-add-new-button">
           <MyButton
             prefixIcon={() => <AddOutlineIcon />}
             color="var(--deep-blue)"

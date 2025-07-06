@@ -44,7 +44,7 @@ const Resources = () => {
   const [deactiveResource] = useDeactiveActiveResourceMutation();
    // Header page setUp
   const divContent = (
-    <div className='title-resources'>
+    <div className='page-title'>
       <h5>Resources</h5>
     </div>
   );
@@ -235,7 +235,7 @@ const Resources = () => {
   ];
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-resources">
+    <Form layout="inline" fluid>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -266,10 +266,10 @@ const Resources = () => {
   );
   // Icons column (Edite, reactive/Deactivate)
   const iconsForActions = (rowData: ApResources) => (
-    <div className="container-of-icons-resources">
+    <div className="container-of-icons">
        {/* display availability time when click on this icon */}
       <IoSettingsSharp
-        className="icons-resources"
+        className="icons-style"
         title="Availability Time"
         size={24}
         fill="var(--primary-gray)"
@@ -279,7 +279,7 @@ const Resources = () => {
       />
       {/* open edit resource when click on this icon */}
       <MdModeEdit
-        className="icons-resources"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -288,7 +288,7 @@ const Resources = () => {
       {/* deactivate/activate  when click on one of these icon */}
       {!rowData?.deletedAt ? (
         <MdDelete
-          className="icons-resources"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -299,7 +299,7 @@ const Resources = () => {
         />
       ) : (
         <FaUndo
-          className="icons-resources"
+          className="icons-style"
           title="Activate"
           size={20}
           fill="var(--primary-gray)"
@@ -314,7 +314,7 @@ const Resources = () => {
   
   return (
     <Panel>
-      <div className="container-of-add-new-button-resources">
+      <div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"

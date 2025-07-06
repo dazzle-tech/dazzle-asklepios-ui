@@ -173,7 +173,7 @@ const LovValues = ({ lov, goBack, width }) => {
   };
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-lov">
+    <Form layout="inline" fluid>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -205,10 +205,10 @@ const LovValues = ({ lov, goBack, width }) => {
 
   // Icons column (Edite, reactive/Deactivate)
   const iconsForActions = (rowData: ApLovValues) => (
-    <div className="container-of-icons-lov">
+    <div className="container-of-icons">
       {/* open edit lov value when click on this icon */}
       <MdModeEdit
-        className="icons-lov"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -216,9 +216,9 @@ const LovValues = ({ lov, goBack, width }) => {
       />
       {/* deactivate/activate  when click on one of these icon */}
       {!rowData?.deletedAt ? (
-        <MdDelete className="icons-lov" title="Deactivate" size={24} fill="var(--primary-pink)" />
+        <MdDelete className="icons-style" title="Deactivate" size={24} fill="var(--primary-pink)" />
       ) : (
-        <FaUndo className="icons-lov" title="Activate" size={20} fill="var(--primary-gray)" />
+        <FaUndo className="icons-style" title="Activate" size={20} fill="var(--primary-gray)" />
       )}
     </div>
   );

@@ -64,9 +64,9 @@ const AddBed = ({ open, setOpen, room, setRoom }) => {
 
   // Icons column (Edit, reactive/Deactivate)
   const iconsForBeds = (rowData: ApBed) => (
-    <div className="container-of-icons-bed">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-vaccine"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -76,7 +76,7 @@ const AddBed = ({ open, setOpen, room, setRoom }) => {
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-room"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -87,7 +87,7 @@ const AddBed = ({ open, setOpen, room, setRoom }) => {
         />
       ) : (
         <FaUndo
-          className="icons-room"
+          className="icons-style"
           title="Activate"
           size={24}
           fill="var(--primary-gray)"

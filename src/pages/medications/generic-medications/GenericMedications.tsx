@@ -52,7 +52,7 @@ const GenericMedications = () => {
   const { data: medRoutLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ROA');
   // Header page setUp
   const divContent = (
-    <div className="title-generic-medication">
+    <div className="page-title">
       <h5>Brand Medications List</h5>
     </div>
   );
@@ -190,7 +190,7 @@ const GenericMedications = () => {
   };
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-generic-medication">
+    <Form layout="inline" fluid>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -221,10 +221,10 @@ const GenericMedications = () => {
   );
   // Icons column (Edite, reactive/Deactivate)
   const iconsForActions = (rowData: ApGenericMedication) => (
-    <div className="container-of-icons-generic-medication">
+    <div className="container-of-icons">
       {/* open edit brand when click on this icon */}
       <MdModeEdit
-        className="icons-generic-medication"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -233,7 +233,7 @@ const GenericMedications = () => {
       {/* deactivate/activate  when click on one of these icon */}
       {!rowData?.deletedAt ? (
         <MdDelete
-          className="icons-generic-medication"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -244,7 +244,7 @@ const GenericMedications = () => {
         />
       ) : (
         <FaUndo
-          className="icons-generic-medication"
+          className="icons-style"
           title="Activate"
           size={20}
           fill="var(--primary-gray)"
@@ -335,7 +335,7 @@ const GenericMedications = () => {
   ];
   return (
     <Panel>
-      <div className="container-of-add-new-button-generic-medication">
+      <div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"

@@ -145,9 +145,9 @@ const AddEditUom = ({
       });
   };
   const iconsForActions = (rowData) => (
-    <div className="container-of-icons-generic-medication">
+    <div className="container-of-icons">
          <MdModeEdit
-        className="icons-uom"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"

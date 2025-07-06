@@ -46,7 +46,7 @@ const PotintialDuplicate = () => {
   const totalCount = CandidateListResponse?.extraNumeric ?? 0;
    // Header page setUp
   const divContent = (
-    <div className='title-potintial'>
+    <div className='page-title'>
       <h5>Potintial Duplicate</h5>
     </div>
   );
@@ -62,9 +62,9 @@ const PotintialDuplicate = () => {
   
   // Icons column (Edit,Linked facilities, reactive/Deactivate)
   const iconsForActions = (rowData: ApDuplicationCandidateSetup) => (
-    <div className="container-of-icons-potintial">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-potintial"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -72,7 +72,7 @@ const PotintialDuplicate = () => {
       />
       {!rowData?.deletedAt ? (
         <MdDelete
-          className="icons-potintial"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -83,7 +83,7 @@ const PotintialDuplicate = () => {
         />
       ) : (
         <FaUndo
-          className="icons-potintial"
+          className="icons-style"
           title="Activate"
           size={24}
           fill="var(--primary-gray)"
@@ -94,7 +94,7 @@ const PotintialDuplicate = () => {
         />
       )}
       <HiDocumentDuplicate
-        className="icons-potintial"
+        className="icons-style"
         title="Linked Facilities"
         size={24}
         fill="var(--primary-gray)"
@@ -249,7 +249,7 @@ const PotintialDuplicate = () => {
 
   return (
     <Panel>
-      <div className="container-of-add-new-button-potintial">
+      <div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"

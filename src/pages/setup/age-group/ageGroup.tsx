@@ -32,7 +32,7 @@ const AgeGroup = () => {
   const [saveAgeGroups, saveAgeGroupsMutation] = useSaveAgeGroupMutation();
   // Header page setUp
   const divContent = (
-    <div className='title-age-groups'>
+    <div className='page-title'>
       <h5>Age Group</h5>
     </div>
   );
@@ -58,7 +58,7 @@ const AgeGroup = () => {
 
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-age-groups">
+    <Form layout="inline" fluid>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -89,9 +89,9 @@ const AgeGroup = () => {
   );
   // Icons column (Edit, reactive/Deactivate)
   const iconsForActions = (rowData: ApAgeGroup) => (
-    <div className="container-of-icons-age-groups">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-age-groups"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -100,13 +100,13 @@ const AgeGroup = () => {
 
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-age-groups"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
         />
       ) : (
-        <FaUndo className="icons-age-groups" title="Activate" size={24} fill="var(--primary-gray)" />
+        <FaUndo className="icons-style" title="Activate" size={24} fill="var(--primary-gray)" />
       )}
     </div>
   );
@@ -239,7 +239,7 @@ const AgeGroup = () => {
 
   return (
     <Panel>
-      <div className="container-of-add-new-button-age-group">
+      <div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"

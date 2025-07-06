@@ -58,7 +58,7 @@ const DentalActions = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className="title-dental">
+    <div className="page-title">
       <h5>Dental Actions</h5>
     </div>
   );
@@ -122,9 +122,9 @@ const DentalActions = () => {
   };
   // Icons column (Linked Procedures, Edit, reactive/Deactivate)
   const iconsForActions = (rowData: ApDentalAction) => (
-    <div className="container-of-icons-dental">
+    <div className="container-of-icons">
       <PiToothFill
-        className="icons-dental"
+        className="icons-style"
         title="Linked Procedures"
         size={24}
         fill="var(--primary-gray)"
@@ -137,7 +137,7 @@ const DentalActions = () => {
         }}
       />
       <MdModeEdit
-        className="icons-dental"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -145,7 +145,7 @@ const DentalActions = () => {
       />
       {!rowData?.deletedAt ? (
         <MdDelete
-          className="icons-dental"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -156,7 +156,7 @@ const DentalActions = () => {
         />
       ) : (
         <FaUndo
-          className="icons-dental"
+          className="icons-style"
           title="Activate"
           size={20}
           fill="var(--primary-gray)"
@@ -199,7 +199,7 @@ const DentalActions = () => {
   ];
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-dental">
+    <Form layout="inline" fluid>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -275,7 +275,7 @@ const DentalActions = () => {
 
   return (
     <Panel>
-      <div className="container-of-add-new-button-dental">
+      <div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"

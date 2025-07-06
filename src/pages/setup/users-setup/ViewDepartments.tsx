@@ -137,7 +137,7 @@ const ViewDepartments = ({ open, setOpen, user, width }) => {
       case 0:
         return (
           <div>
-            <div className='container-of-add-button-user' >
+            <div className='container-of-add-new-button' >
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"

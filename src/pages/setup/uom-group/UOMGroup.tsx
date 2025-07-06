@@ -44,7 +44,7 @@ const UOMGroup = () => {
   } = useGetUomGroupsQuery(listRequest);
   // Header page setUp
   const divContent = (
-    <div className='title-uom'>
+    <div className='page-title'>
       <h5>UOM Groups</h5>
     </div>
   );
@@ -157,10 +157,10 @@ const UOMGroup = () => {
 
   // Icons column (Edite, reactive/Deactivate)
   const iconsForActions = (rowData: ApUomGroups) => (
-    <div className="container-of-icons-uom">
+    <div className="container-of-icons">
       {/* open edit resource when click on this icon */}
       <MdModeEdit
-        className="icons-uom"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -170,7 +170,7 @@ const UOMGroup = () => {
       {/* deactivate/activate  when click on one of these icon */}
       {!rowData?.deletedAt ? (
         <MdDelete
-          className="icons-uom"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -181,7 +181,7 @@ const UOMGroup = () => {
         />
       ) : (
         <FaUndo
-          className="icons-uom"
+          className="icons-style"
           title="Activate"
           size={20}
           fill="var(--primary-gray)"
@@ -219,7 +219,7 @@ const UOMGroup = () => {
   ];
   return (
     <Panel>
-      <div className="container-of-add-new-button-uom">
+      <div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"

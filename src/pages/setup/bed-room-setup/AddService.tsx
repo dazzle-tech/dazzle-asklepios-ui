@@ -101,9 +101,9 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
 
   // Icons column (Edit, reactive/Deactivate)
   const iconsForServices = (rowData: ApBed) => (
-    <div className="container-of-icons-bed">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-vaccine"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -113,7 +113,7 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-room"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -124,7 +124,7 @@ const AddService = ({ open, setOpen, roomObj, setRoomObj }) => {
         />
       ) : (
         <FaUndo
-          className="icons-room"
+          className="icons-style"
           title="Activate"
           size={24}
           fill="var(--primary-gray)"

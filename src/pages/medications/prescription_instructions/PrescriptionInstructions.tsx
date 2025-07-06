@@ -58,7 +58,7 @@ const PrescriptionInstructions = () => {
   ];
  // Header page setUp
   const divContent = (
-    <div className='title-prescription'>
+    <div className='page-title'>
       <h5>Prescription Instructions</h5>
     </div>
   );
@@ -74,7 +74,7 @@ const PrescriptionInstructions = () => {
 
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-prescription">
+    <Form layout="inline" fluid>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -106,9 +106,9 @@ const PrescriptionInstructions = () => {
 
   // Icons column (Edit, reactive/Deactivate)
   const iconsForActions = (rowData: ApPrescriptionInstruction) => (
-    <div className="container-of-icons-prescription">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-prescription"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -116,7 +116,7 @@ const PrescriptionInstructions = () => {
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-prescription"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -127,7 +127,7 @@ const PrescriptionInstructions = () => {
         />
       ) : (
         <FaUndo
-          className="icons-prescription"
+          className="icons-style"
           title="Activate"
           size={24}
           fill="var(--primary-gray)"
@@ -314,7 +314,7 @@ const PrescriptionInstructions = () => {
 
   return (
     <Panel>
-      <div className="container-of-add-new-button-prescription">
+      <div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"
