@@ -58,6 +58,15 @@ export const operationService = createApi({
             })
         }),
 
+        //Get operation checkList
+          getPreOperationChecklistList: builder.query({
+            query: (listRequest: ListRequest) => ({
+                url: `/operation/pre-operation-checklist-list?${fromListRequestToQueryParams(listRequest)}`,
+                method: 'GET'
+            })
+        }),
+
+
 
  // 🟡 POST save operation care plan
       saveOperationCarePlan: builder.mutation({
@@ -93,6 +102,16 @@ export const operationService = createApi({
         saveOperationCoding: builder.mutation({
             query: (body) => ({
                 url: `/operation/save-operation-coding`,
+                method: 'POST',
+                body
+            }),
+            onQueryStarted: onQueryStarted,
+        }),
+
+        //Post save operation checkList
+          savePreOperationChecklist: builder.mutation({
+            query: (body) => ({
+                url: `/operation/save-pre-operation-checklist`,
                 method: 'POST',
                 body
             }),
@@ -154,8 +173,10 @@ export const {
     useGetOperationCodingListQuery,
     useGetOperationPriceListListQuery,
     useGetOperationCarePlanQuery,
+    useGetPreOperationChecklistListQuery,
 
     useSaveOperationMutation,
+    useSavePreOperationChecklistMutation,
     useRemoveOperationMutation,
     useSaveOperationCarePlanMutation,
 

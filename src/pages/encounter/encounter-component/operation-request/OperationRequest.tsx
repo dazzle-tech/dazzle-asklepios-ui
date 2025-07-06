@@ -5,6 +5,7 @@ import { useLocation } from "react-router-dom";
 import { useAppSelector } from "@/hooks";
 import { useGetRequestedOperationQuery } from "@/services/operationService";
 import AnesthesiaCarePlan from "./AnesthesiaCarePlan";
+import PreCheckList from "./PreCheckList";
 
 const OperationRequest = () => {
    const location = useLocation();
@@ -37,7 +38,7 @@ const OperationRequest = () => {
          </Tabs.Tab>
          <Tabs.Tab eventKey="3" title=" Pre-Op Checklist"
          disabled={!requestedOperation?.object}>
-            3
+           <PreCheckList  operation={requestedOperation} patient={patient} encounter={encounter} user={authSlice.user}/>
          </Tabs.Tab>
          <Tabs.Tab eventKey="4" title="  Devices\ Implants"
          disabled={!requestedOperation?.object}>
