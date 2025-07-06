@@ -26,6 +26,9 @@ import ChangeBedModal from './changeBedModal/ChangeBedModal';
 import { useGetResourceTypeQuery } from '@/services/appointmentService';
 import './styles.less'
 import MyInput from "@/components/MyInput";
+import { faArrowRightArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import TransferPatientModal from './transferPatient/TransferPatientModal';
+
 const InpatientList = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -46,6 +49,7 @@ const InpatientList = () => {
     const [startEncounter] = useStartEncounterMutation();
     const [departmentFilter, setDepartmentFilter] = useState({ key: '' });
     const [switchDepartment, setSwitchDepartment] = useState(false);
+    const [openTransferPatientModal, setOpenTransferPatientModal] = useState(false);
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -319,6 +323,7 @@ const InpatientList = () => {
                 const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
                 const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
                 const tooltipChangeBed = <Tooltip>Change Bed</Tooltip>;
+                const toolTransferPatient = <Tooltip>Transfer Patient</Tooltip>;
                 return (
                     <Form layout="inline" fluid className="nurse-doctor-form">
                         <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
@@ -363,6 +368,20 @@ const InpatientList = () => {
                                 </MyButton>
                             </div>
                         </Whisper>
+                         <Whisper trigger="hover" placement="top" speaker={toolTransferPatient}>
+                            <div>
+                                <MyButton
+                                    size="small"
+                                    backgroundColor="var(--deep-blue)"
+                                    onClick={() => {
+                                        setOpenTransferPatientModal(true);
+                                        setLocalEncounter(rowData);
+                                    }}
+                                >
+                                    <FontAwesomeIcon icon={faArrowRightArrowLeft} />
+                                </MyButton>
+                            </div>
+                        </Whisper>
                         <Whisper trigger="hover" placement="top" speaker={tooltipEMR}>
                             <div>
                                 <MyButton
@@ -372,7 +391,7 @@ const InpatientList = () => {
                                     <FontAwesomeIcon icon={faFileWaveform} />
                                 </MyButton>
                             </div>
-                        </Whisper>
+                        </Whisper>  
                     </Form>
                 );
             },
@@ -446,6 +465,12 @@ const InpatientList = () => {
                 setOpen={setOpenChangeBedModal}
                 localEncounter={encounter}
                 refetchInpatientList={refetchEncounter} />
+            <TransferPatientModal
+                open={openTransferPatientModal}
+                setOpen={setOpenTransferPatientModal}
+                localEncounter={encounter}
+                refetchInpatientList={refetchEncounter}
+            />
         </Panel>
     );
 };

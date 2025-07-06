@@ -1386,6 +1386,19 @@ export const setupService = createApi({
         return response.object;
       }
     }),
+       fetchBedCountByDepartmentKey: builder.query({
+          query: (data: { department_key: string }) => ({
+            url: `/setup/get-bed-count-by-department`,
+            headers: {
+             department_key: data.department_key
+            }
+          }),
+          onQueryStarted: onQueryStarted,
+          transformResponse: (response: any) => {
+            return response.object;
+          },
+          keepUnusedDataFor: 0
+        }),
   })
 
 });
@@ -1529,5 +1542,6 @@ export const {
   useRemoveWarehouseMutation,
   useGetWarehouseUserQuery,
   useSaveWarehouseUserMutation,
-  useRemoveWarehouseUserMutation
+  useRemoveWarehouseUserMutation,
+  useFetchBedCountByDepartmentKeyQuery
 } = setupService;

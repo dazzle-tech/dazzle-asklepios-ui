@@ -181,7 +181,7 @@ const ViewFunctionalAssessment = ({ open, setOpen, functionalAssessmentObj }) =>
         <MyModal
             open={open}
             setOpen={setOpen}
-            title="Add/Edit Functional Assessment"
+            title="View Functional Assessment"
             position='center'
             size='60vw'
             steps={[{

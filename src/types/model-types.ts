@@ -3286,6 +3286,29 @@ export interface ApToothService {
 	isValid:boolean;
 } 
 
+export interface ApTransferPatient { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	fromInpatientDepartmentKey:string;
+	toInpatientDepartmentKey:string;
+	reasonForTransfer:string;
+	urgentTransfer:boolean;
+	plannedTransfer:boolean;
+	transferNotes:string;
+	finalVitalsBeforeTransfer:boolean;
+	ivLinesDripsChecked:boolean;
+	medicationAdministeredPreTransfer:boolean;
+	belongingsSentWithPatient:boolean;
+	clinicalHandoverDone:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
 export interface ApTranslation { 
 	key:string;
 	languageKey:string;
