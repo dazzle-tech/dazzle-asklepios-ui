@@ -27,7 +27,7 @@ import { ApFacility } from '@/types/model-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons'
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-const AddBed = ({ open, setOpen, room, setRoom }) => {
+const AddBed = ({ open, setOpen, room, setRoom ,refetchRoom}) => {
   const dispatch = useAppDispatch();
   const [facility, setFacility] = useState<ApFacility>({ ...newApFacility });
   const [departments, setDepartments] = useState<ApDepartment>({ ...newApDepartment });
@@ -165,6 +165,7 @@ const AddBed = ({ open, setOpen, room, setRoom }) => {
         } else {
           dispatch(notify('Bed Added Successfully'));
         }
+        refetchRoom()
         refetch();
         setBed({ ...newApBed, bedTypeLkey: null });
       }).catch(() => {

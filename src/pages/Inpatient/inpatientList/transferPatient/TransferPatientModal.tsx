@@ -285,11 +285,6 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
     // Function to clear the fields
     const handleClearField = () => {
         setTransferPatient({ ...newApTransferPatient });
-        setLocalPatient({ ...newApPatient });
-        setEncounter({ ...newApEncounter });
-        setApBed({ ...newApBed });
-        setApRoom({ ...newApRoom });
-        setAdmitToInpatient({ ...newApAdmitOutpatientInpatient });
         setBedCount({ count: 0 });
     }
     // Effects

@@ -345,6 +345,7 @@ const Room = () => {
                 setOpen={setAddBedModal}
                 room={room}
                 setRoom={setRoom}
+                refetchRoom={refetch}
             />
             <AddService
                 open={openAddServicePopup}
