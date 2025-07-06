@@ -1984,6 +1984,7 @@ export const newApOperationRequests:modelTypes.ApOperationRequests = {
 	patientKey:undefined,
 	submitedAt:0,
 	submitedBy:'',
+	operationStatusLkey:undefined,
 } 
 
 export const newApOperationSetup:modelTypes.ApOperationSetup = { 

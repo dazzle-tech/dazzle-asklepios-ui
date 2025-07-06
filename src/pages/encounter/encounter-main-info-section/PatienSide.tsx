@@ -30,8 +30,6 @@ import { GiMedicalThermometer } from 'react-icons/gi';
 const PatientSide = ({ patient, encounter }) => {
     const profileImageFileInputRef = useRef(null);
     const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
-    console.log("EEE", encounter?.resourceTypeLvalue?.valueCode)
-
 
     const { data: patirntObservationlist } = useGetObservationSummariesQuery({
         ...initialListRequest,

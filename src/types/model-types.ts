@@ -1983,6 +1983,7 @@ export interface ApOperationRequests {
 	patientKey:string;
 	submitedAt:number;
 	submitedBy:string;
+	operationStatusLkey:string;
 } 
 
 export interface ApOperationSetup { 

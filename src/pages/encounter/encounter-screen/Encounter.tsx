@@ -35,7 +35,6 @@ const Encounter = () => {
   const location = useLocation();
   const propsData = location.state;
   const savedState = sessionStorage.getItem("encounterPageSource");
-console.log("Encounter ",propsData?.encounter)
   const [localEncounter, setLocalEncounter] = useState<any>({ ...propsData?.encounter });
   const [openAdmitModal, setOpenAdmitModal] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);

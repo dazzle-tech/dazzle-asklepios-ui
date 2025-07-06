@@ -10,7 +10,7 @@ import MyButton from "@/components/MyButton/MyButton";
 const PreCheckList = ({ operation, patient, encounter, user }) => {
     const dispatch = useAppDispatch();
     const [checkList, setCheckList] = useState({ ...newApPreOperationChecklist });
-      console.log("OPER",operation)
+    
     const [save] = useSavePreOperationChecklistMutation();
     const handelSave = async () => {
         try {
