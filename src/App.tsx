@@ -347,6 +347,7 @@ const App = () => {
               <Route path="rad-module" element={<Rad />} />
               <Route path='operation-setup' element={<OperationSetup />}/>
                <Route path="pharmacy-internal-orders" element={<InternalDrugOrder />} />
+
             </Route>
           </Route>
 
