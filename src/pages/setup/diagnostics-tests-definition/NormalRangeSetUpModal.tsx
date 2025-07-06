@@ -83,9 +83,9 @@ const NormalRangeSetupModal = ({ open, setOpen, diagnosticsTest }) => {
 
   // Icons column (Edit, Remove)
   const iconsForActions = () => (
-    <div className="container-of-icons-practitioners">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-practitioners"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -94,7 +94,7 @@ const NormalRangeSetupModal = ({ open, setOpen, diagnosticsTest }) => {
         }}
       />
       <MdDelete
-        className="icons-practitioners"
+        className="icons-style"
         title="Remove"
         size={24}
         fill="var(--primary-pink)"
@@ -207,7 +207,7 @@ const NormalRangeSetupModal = ({ open, setOpen, diagnosticsTest }) => {
       case 0:
         return (
           <Form layout="inline" fluid>
-            <div className="container-of-add-new-button-practitioners">
+            <div className="container-of-add-new-button">
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"

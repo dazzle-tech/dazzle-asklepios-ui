@@ -41,7 +41,7 @@ const CDTSetup = () => {
 
   // Header page setUp
   const divContent = (
-    <div style={{ display: 'flex' }}>
+    <div className='page-title'>
       <h5>CDT Codes</h5>
     </div>
   );

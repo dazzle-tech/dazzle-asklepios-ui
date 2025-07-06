@@ -56,7 +56,7 @@ const Practitioners = () => {
 
   // Header page setUp
   const divContent = (
-    <div className='title-practitioners'>
+    <div className='page-title'>
       <h5>Practitioners</h5>
     </div>
   );
@@ -228,9 +228,9 @@ const Practitioners = () => {
   ];
   // Icons column (Edite, reactive/Deactivate)
   const iconsForActions = (rowData: ApPractitioner) => (
-    <div className="container-of-icons-practitioners">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-practitioners"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -240,7 +240,7 @@ const Practitioners = () => {
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-practitioners"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -251,7 +251,7 @@ const Practitioners = () => {
         />
       ) : (
         <FaUndo
-          className="icons-practitioners"
+          className="icons-style"
           title="Activate"
           size={24}
           fill="var(--primary-gray)"
@@ -265,7 +265,7 @@ const Practitioners = () => {
   );
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-practitioners">
+    <Form layout="inline" fluid>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -298,7 +298,7 @@ const Practitioners = () => {
   return (
     <div>
       <Panel>
-        <div className="container-of-add-new-button-practitioners">
+        <div className="container-of-add-new-button">
           <MyButton
             prefixIcon={() => <AddOutlineIcon />}
             color="var(--deep-blue)"

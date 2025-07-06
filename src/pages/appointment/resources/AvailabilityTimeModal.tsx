@@ -197,9 +197,9 @@ const AvailabilityTimeModal = ({
   };
   // Icons column (Edit, reactive/Deactivate)
   const iconsForActions = rowData => (
-    <div className="container-of-icons-resources">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-resources"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -216,14 +216,14 @@ const AvailabilityTimeModal = ({
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-resources"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
         />
       ) : (
         <FaUndo
-          className="icons-resources"
+          className="icons-style"
           title="Activate"
           size={24}
           fill="var(--primary-gray)"

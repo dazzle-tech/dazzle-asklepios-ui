@@ -33,7 +33,7 @@ const CPTSetup = () => {
 
     // Header page setUp
     const divContent = (
-        <div style={{ display: 'flex' }}>
+        <div className='page-title'>
             <h5>CPT Diagnosis List</h5>
         </div>
     );

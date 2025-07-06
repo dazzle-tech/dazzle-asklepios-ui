@@ -33,7 +33,7 @@ const ICD10Setup = () => {
 
     // Header page setUp
     const divContent = (
-        <div style={{ display: 'flex' }}>
+        <div className='page-title'>
             <h5>ICD-10 Diagnosis List</h5>
         </div>
     );

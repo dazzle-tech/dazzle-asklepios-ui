@@ -56,7 +56,7 @@ const ProcedureSetup = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className='title-procedure '>
+    <div className='page-title '>
       <h5>Procedure Setup</h5>
     </div>
   );
@@ -121,7 +121,7 @@ const ProcedureSetup = () => {
   };
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-procedure">
+    <Form layout="inline" fluid>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -153,9 +153,9 @@ const ProcedureSetup = () => {
 
    // Icons column (Edit, reactive/Deactivate)
   const iconsForActions = (rowData: ApProcedureSetup) => (
-    <div className="container-of-icons-procedure">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-procedure"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -163,7 +163,7 @@ const ProcedureSetup = () => {
       />
       {!rowData?.deletedAt ? (
         <MdDelete
-          className="icons-procedure"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -174,7 +174,7 @@ const ProcedureSetup = () => {
         />
       ) : (
         <FaUndo
-          className="icons-procedure"
+          className="icons-style"
           title="Activate"
           size={24}
           fill="var(--primary-gray)"
@@ -248,7 +248,7 @@ const ProcedureSetup = () => {
 
   return (
     <Panel>
-        <div className="container-of-add-new-button-procedure">
+        <div className="container-of-add-new-button">
                 <MyButton
                   prefixIcon={() => <AddOutlineIcon />}
                   color="var(--deep-blue)"

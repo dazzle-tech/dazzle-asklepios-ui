@@ -86,7 +86,7 @@ const Departments = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className='title-departments'>
+    <div className='page-title'>
       <h5>Departments</h5>
     </div>
   );
@@ -222,13 +222,13 @@ const Departments = () => {
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
-        className='icons-department'
+        className='icons-style'
         onClick={() => { setPopupOpen(true); }}
       />
       {rowData?.deletedAt ? (
-        <FontAwesomeIcon title="Active" icon={faRotateRight} fill="var(--primary-gray)" className='icons-department' />
+        <FontAwesomeIcon title="Active" icon={faRotateRight} fill="var(--primary-gray)" className='icons-style' />
       ) : (
-        <MdDelete title="Deactivate" size={24} fill="var(--primary-pink)" className='icons-department'/>
+        <MdDelete title="Deactivate" size={24} fill="var(--primary-pink)" className='icons-style'/>
       )}
       <FontAwesomeIcon
         icon={faSheetPlastic}
@@ -311,7 +311,7 @@ const Departments = () => {
 
   // Filter form rendered above the table
   const filters = () => (
-    <Form layout="inline" fluid className='container-of-filter-fields-department'>
+    <Form layout="inline" fluid>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -355,7 +355,7 @@ const Departments = () => {
 
   return (
     <Panel>
-      <div className='container-of-add-new-button-departments'>
+      <div className='container-of-add-new-button'>
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"

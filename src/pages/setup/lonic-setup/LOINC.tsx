@@ -33,7 +33,7 @@ const LOINCSetup = () => {
 
     // Header setup
     const divContent = (
-        <div style={{ display: 'flex' }}>
+        <div className='page-title'>
             <h5>LOINC List</h5>
         </div>
     );

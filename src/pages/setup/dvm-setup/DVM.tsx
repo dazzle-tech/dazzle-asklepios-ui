@@ -64,7 +64,7 @@ const DVM = () => {
   const [saveDvm] = useSaveDvmRuleMutation();
   // Page header
   const divContent = (
-    <div className="title-dvm">
+    <div className="page-title">
       <h5>Data Validation Manager</h5>
     </div>
   );
@@ -179,10 +179,10 @@ const DVM = () => {
   };
   //icons column (edit, deactivate)
   const iconsForActions = rowData => (
-    <div className="container-of-icons-dvm">
+    <div className="container-of-icons">
       <MdModeEdit
         title="Edit"
-        className="icons-dvm"
+        className="icons-style"
         size={24}
         fill="var(--primary-gray)"
         onClick={() => {
@@ -191,7 +191,7 @@ const DVM = () => {
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-dvm"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -202,7 +202,7 @@ const DVM = () => {
         />
       ) : (
         <FaUndo
-          className="icons-modules"
+          className="icons-style"
           title="Activate"
           size={21}
           fill="var(--primary-gray)"
@@ -321,7 +321,7 @@ const DVM = () => {
 
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-diagnostic">
+    <Form layout="inline" fluid >
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -392,7 +392,7 @@ const DVM = () => {
       <hr />
       <Tabs defaultActiveKey="1" appearance="subtle" className="tabs">
         <Tabs.Tab active eventKey="1" title="Validation Rules">
-          <div className="container-of-add-new-button-dvm">
+          <div className="container-of-add-new-button">
             <MyButton
               disabled={!recordOfScreenMetaData['screenMetadataKey']}
               prefixIcon={() => <AddOutlineIcon />}

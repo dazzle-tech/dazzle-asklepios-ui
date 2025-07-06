@@ -323,7 +323,7 @@ const InternalDrugOrder = () => {
         icon={faCapsules}
       />
       <FontAwesomeIcon
-        className="icons-vaccine"
+        className="icons-style"
         title="Reject"
         color="var(--primary-gray)"
         icon={faCircleXmark}
@@ -480,7 +480,7 @@ const InternalDrugOrder = () => {
   useEffect(() => {
     // Header page setUp
     const divContent = (
-      <div className="title-vaccine">
+      <div className="page-title">
         <h5>Internal Drug Order</h5>
       </div>
     );

@@ -28,9 +28,9 @@ const LinkCheckList = ({ open, setOpen, width }) => {
 
   // Icons column (Remove)
   const iconsForActions = () => (
-    <div className="container-of-icons-checklist">
+    <div className="container-of-icons">
       <MdDelete
-        className="icons-checklist"
+        className="icons-style"
         title="Remove"
         size={24}
         fill="var(--primary-pink)"

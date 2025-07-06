@@ -219,18 +219,18 @@ const AddEditBrandMedication = ({
   // Icons column (Edite, reactive/Deactivate)
   console.log('modifiedMedicationList-->', modifiedMedicationList);
   const iconsForActions = (rowData: ApGenericMedicationActiveIngredient) => (
-    <div className="container-of-icons-generic-medication">
+    <div className="container-of-icons">
       {/* deactivate/activate  when click on one of these icon */}
       {!rowData?.deletedAt ? (
         <MdDelete
-          className="icons-generic-medication"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
         />
       ) : (
         <FaUndo
-          className="icons-generic-medication"
+          className="icons-style"
           title="Activate"
           size={20}
           fill="var(--primary-gray)"
@@ -475,7 +475,7 @@ const AddEditBrandMedication = ({
       case 1:
         return (
           <Form>
-            <div className="container-of-add-new-button-generic-medication">
+            <div className="container-of-add-new-button">
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"

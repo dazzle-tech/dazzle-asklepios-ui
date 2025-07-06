@@ -67,7 +67,7 @@ const DiagnosticsTest = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className='title-diagnostic'>
+    <div className='page-title'>
       <h5>Diagnostics Tests Definition</h5>
     </div>
   );
@@ -83,9 +83,9 @@ const DiagnosticsTest = () => {
   
   // Icons column (Edit, normalRange/profile, coding ,reactive/Deactivate)
   const iconsForActions = (rowData: any) => (
-    <div className="container-of-icons-diagnostic">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-diagnostic"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -95,7 +95,7 @@ const DiagnosticsTest = () => {
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-diagnostic"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -106,7 +106,7 @@ const DiagnosticsTest = () => {
         />
       ) : (
         <FaUndo
-          className="icons-diagnostic"
+          className="icons-style"
           title="Activate"
           size={21}
           fill="var(--primary-gray)"
@@ -118,7 +118,7 @@ const DiagnosticsTest = () => {
       )}
       {rowData?.profile ? (
         <RiFileList2Fill
-          className="icons-diagnostic"
+          className="icons-style"
           title="Profile Setup"
           size={21}
           fill="var(--primary-gray)"
@@ -128,7 +128,7 @@ const DiagnosticsTest = () => {
         />
       ) : (
         <FaChartLine
-          className="icons-diagnostic"
+          className="icons-style"
           title="Normal Range Setup"
           size={21}
           fill="var(--primary-gray)"
@@ -138,7 +138,7 @@ const DiagnosticsTest = () => {
         />
       )}
       <FaNewspaper
-        className="icons-diagnostic"
+        className="icons-style"
         title="Code"
         size={22}
         fill="var(--primary-gray)"
@@ -189,7 +189,7 @@ const DiagnosticsTest = () => {
 
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-diagnostic">
+    <Form layout="inline" fluid>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -338,7 +338,7 @@ const DiagnosticsTest = () => {
 
   return (
     <Panel>
-      <div className="container-of-add-new-button-diagnostic">
+      <div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"

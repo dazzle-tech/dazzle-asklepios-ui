@@ -54,7 +54,7 @@ const AccessRoles = () => {
   const totalCount = accessRoleListResponse?.extraNumeric ?? 0;
   // Page header setup
   const divContent = (
-    <div title="title">
+    <div title="page-title">
       <h5>Access Roles</h5>
     </div>
   );
@@ -157,13 +157,13 @@ const AccessRoles = () => {
 
   // Icons column for
   const iconsForActions = (rowData: ApAccessRole) => (
-    <div className="container-of-icons-access-roles">
+    <div className="container-of-icons">
       <IoSettingsSharp
         title="Screen Access Matrix"
         size={24}
         fill="var(--primary-gray)"
         onClick={() => toSubView('screen-matrix')}
-        className="icons-access-role"
+        className="icons-style"
       />
       <MdModeEdit
         title="Edit"
@@ -173,11 +173,11 @@ const AccessRoles = () => {
           setAccessRole(rowData);
           setPopupOpen(true);
         }}
-        className="icons-access-role"
+        className="icons-style"
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-access-role"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -188,7 +188,7 @@ const AccessRoles = () => {
         />
       ) : (
         <FaUndo
-          className="icons-access-role"
+          className="icons-style"
           title="Activate"
           size={21}
           fill="var(--primary-gray)"

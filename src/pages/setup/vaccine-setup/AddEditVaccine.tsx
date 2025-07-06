@@ -212,9 +212,9 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
 
   // Icons column (Edite, reactive/Deactivate)
   const iconsForActions = (rowData: ApVaccineBrands) => (
-    <div className="container-of-icons-vaccine">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-vaccine"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -224,7 +224,7 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-vaccine"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -235,7 +235,7 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
         />
       ) : (
         <FaUndo
-          className="icons-vaccine"
+          className="icons-style"
           title="Activate"
           size={24}
           fill="var(--primary-gray)"
@@ -568,7 +568,7 @@ const AddEditVaccine = ({ open, setOpen, vaccine, setVaccine, edit_new, setEdit_
       case 1:
         return (
           <Form>
-            <div className="container-of-add-new-button-vaccine">
+            <div className="container-of-add-new-button">
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"

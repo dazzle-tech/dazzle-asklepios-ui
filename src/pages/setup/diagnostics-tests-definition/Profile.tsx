@@ -137,9 +137,9 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
 
   // Icons column (Remove, Test Normal Ranges)
   const iconsForActions = () => (
-    <div className="container-of-icons-diagnostic">
+    <div className="container-of-icons">
       <MdDelete
-        className="icons-diagnostic"
+        className="icons-style"
         title="Remove"
         size={24}
         fill="var(--primary-pink)"
@@ -148,7 +148,7 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
         }}
       />
       <FaChartLine
-        className="icons-diagnostic"
+        className="icons-style"
         title="Test Normal Ranges"
         size={21}
         fill="var(--primary-gray)"
@@ -334,7 +334,7 @@ const Profile = ({ open, setOpen, diagnosticsTest }) => {
   const conjureFormContentOfChildModal = () => {
     return (
       <Form fluid>
-        <div className="container-of-add-new-button-diagnostic">
+        <div className="container-of-add-new-button">
           <MyButton
             prefixIcon={() => <AddOutlineIcon />}
             color="var(--deep-blue)"

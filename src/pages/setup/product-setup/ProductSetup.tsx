@@ -53,7 +53,7 @@ const ProductSetup = () => {
   } = useGetProductQuery(listRequest);
   // Header page setUp
   const divContent = (
-    <div className='title'>
+    <div className='page-title'>
       <h5>Inventory Products Setup</h5>
     </div>
   );
@@ -155,7 +155,7 @@ const ProductSetup = () => {
     <div className="container-of-icons">
       {/* open edit resource when click on this icon */}
       <MdModeEdit
-        className="icons"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"

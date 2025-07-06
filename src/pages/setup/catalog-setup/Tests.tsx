@@ -82,9 +82,9 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
   };
    // Icons column (delete)
   const iconsForActions = () => (
-    <div className="container-of-icons-catalog">
+    <div className="container-of-icons">
       <MdDelete
-        className="icons-catalog"
+        className="icons-style"
         title="Deactivate"
         size={24}
         fill="var(--primary-pink)"
@@ -225,7 +225,7 @@ const Tests = ({ open, setOpen, diagnosticsTestCatalogHeader }) => {
       case 0:
         return (
           <Form fluid>
-            <div className="container-of-add-new-button-catalog">
+            <div className="container-of-add-new-button">
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"

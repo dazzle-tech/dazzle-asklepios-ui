@@ -58,7 +58,7 @@ const Room = () => {
     ];
     // Header page setUp
     const divContent = (
-        <div>
+        <div className='page-title'>
             <h5>Rooms</h5>
         </div>
     );
@@ -125,7 +125,7 @@ const Room = () => {
     };
     // Filter table
     const filters = () => (
-        <Form layout="inline" fluid className="container-of-filter-fields-room">
+        <Form layout="inline" fluid>
             <MyInput
                 selectDataValue="value"
                 selectDataLabel="label"
@@ -156,9 +156,9 @@ const Room = () => {
     );
     // Icons column (Edit,Add Bed, reactive/Deactivate)
     const iconsForActions = (rowData: ApRoom) => (
-        <div className="container-of-icons-room">
+        <div className="container-of-icons">
             <FaConciergeBell 
-               className="icons-room"
+               className="icons-style"
                 title="Add Service"
                 size={24}
                 fill="var(--primary-gray)"
@@ -166,7 +166,7 @@ const Room = () => {
                     setOpenAddServicePopup(true);
                 }}  />
             <FaBed
-                className="icons-room"
+                className="icons-style"
                 title="Add Bed"
                 size={24}
                 fill="var(--primary-gray)"
@@ -174,7 +174,7 @@ const Room = () => {
                     setAddBedModal(true);
                 }} />
             <MdModeEdit
-                className="icons-room"
+                className="icons-style"
                 title="Edit"
                 size={24}
                 fill="var(--primary-gray)"
@@ -182,7 +182,7 @@ const Room = () => {
             />
             {rowData?.isValid ? (
                 <MdDelete
-                    className="icons-room"
+                    className="icons-style"
                     title="Deactivate"
                     size={24}
                     fill="var(--primary-pink)"
@@ -193,7 +193,7 @@ const Room = () => {
                 />
             ) : (
                 <FaUndo
-                    className="icons-room"
+                    className="icons-style"
                     title="Activate"
                     size={24}
                     fill="var(--primary-gray)"
@@ -296,7 +296,7 @@ const Room = () => {
 
     return (
         <Panel>
-            <div className="container-of-add-new-button-vaccine">
+            <div className="container-of-add-new-button">
                 <MyButton
                     prefixIcon={() => <AddOutlineIcon />}
                     color="var(--deep-blue)"

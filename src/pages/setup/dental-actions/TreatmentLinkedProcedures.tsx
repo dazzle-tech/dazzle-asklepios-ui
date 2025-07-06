@@ -64,9 +64,9 @@ const TreatmentLinkedProcedures = ({ open, setOpen, dentalAction, setDentalActio
   };
   // Icons column (remove)
   const iconsForActions = () => (
-    <div className="container-of-icons-dental">
+    <div className="container-of-icons">
       <MdDelete
-        className="icons-dental"
+        className="icons-style"
         title="Deactivate"
         size={24}
         fill="var(--primary-pink)"

@@ -58,7 +58,7 @@ const Questionnaire = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className="title-questionnaire">
+    <div className="page-title">
       <h5>Questionnaire</h5>
     </div>
   );
@@ -74,16 +74,16 @@ const Questionnaire = () => {
 
   // Icons column (Edit,Does Schedule, reactive/Deactivate)
   const iconsForActions = (rowData: ApVaccine) => (
-    <div className="container-of-icons-questionnaire">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-questionnaire"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
         onClick={() => setOpenAddEditQuestionnairePopup(true)}
       />
       <BiQuestionMark
-        className="icons-questionnaire"
+        className="icons-style"
         title="Questions"
         size={24}
         fill="var(--primary-gray)"
@@ -91,7 +91,7 @@ const Questionnaire = () => {
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-questionnaire"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -102,7 +102,7 @@ const Questionnaire = () => {
         />
       ) : (
         <FaUndo
-          className="icons-questionnaire"
+          className="icons-style"
           title="Activate"
           size={22}
           fill="var(--primary-gray)"
@@ -145,7 +145,7 @@ const Questionnaire = () => {
 
   return (
     <Panel>
-      <div className="container-of-add-new-button-questionnaire">
+      <div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"

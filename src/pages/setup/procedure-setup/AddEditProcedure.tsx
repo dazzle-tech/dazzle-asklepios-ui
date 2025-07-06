@@ -215,9 +215,9 @@ const AddEditProcedure = ({ open, setOpen, procedure, setProcedure, profetch }) 
 
   // Icons column (delete)
   const iconsForActions = () => (
-    <div className="container-of-icons-procedure">
+    <div className="container-of-icons">
       <MdDelete
-        className="icons-procedure"
+        className="icons-style"
         title="Deactivate"
         size={24}
         fill="var(--primary-pink)"
@@ -428,7 +428,7 @@ const AddEditProcedure = ({ open, setOpen, procedure, setProcedure, profetch }) 
       case 1:
         return (
           <Form>
-            <div className="container-of-add-new-button-procedure">
+            <div className="container-of-add-new-button">
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
@@ -463,7 +463,7 @@ const AddEditProcedure = ({ open, setOpen, procedure, setProcedure, profetch }) 
       case 2:
         return (
           <Form>
-            <div className="container-of-add-new-button-procedure">
+            <div className="container-of-add-new-button">
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"

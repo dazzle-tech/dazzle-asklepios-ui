@@ -59,7 +59,7 @@ const Catalog = () => {
     useSaveDiagnosticsTestCatalogHeaderMutation();
   // Header page setUp
   const divContent = (
-    <div className="title-catalog">
+    <div className="page-title">
       <h5>Catalog</h5>
     </div>
   );
@@ -90,9 +90,9 @@ const Catalog = () => {
 
   // Icons column (Edit ,reactive/Deactivate, Tests)
   const iconsForActions = (rowData: any) => (
-    <div className="container-of-icons-catalog">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-catalog"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -102,7 +102,7 @@ const Catalog = () => {
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-catalog"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -113,7 +113,7 @@ const Catalog = () => {
         />
       ) : (
         <FaUndo
-          className="icons-catalog"
+          className="icons-style"
           title="Activate"
           size={21}
           fill="var(--primary-gray)"
@@ -124,7 +124,7 @@ const Catalog = () => {
         />
       )}
       <FaListAlt
-        className="icons-catalog"
+        className="icons-style"
         title="Tests"
         size={21}
         fill="var(--primary-gray)"
@@ -174,7 +174,7 @@ const Catalog = () => {
 
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-catalog ">
+    <Form layout="inline" fluid>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -337,7 +337,7 @@ const Catalog = () => {
 
   return (
     <Panel>
-      <div className="container-of-add-new-button-catalog">
+      <div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"

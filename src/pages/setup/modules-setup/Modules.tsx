@@ -50,7 +50,7 @@ const Modules = () => {
   const rowsPerPage = listRequest.pageSize;
   const totalCount = moduleListResponse?.extraNumeric ?? 0;
   const divContent = (
-    <div className="title">
+    <div className="page-title">
       <h5>Modules</h5>
     </div>
   );
@@ -195,7 +195,7 @@ const Modules = () => {
         title="Setup Module Screens"
         size={24}
         fill="var(--primary-gray)"
-        className="icons-modules"
+        className="icons-style"
         onClick={() => {
           toSubView('screens', rowData);
         }}
@@ -204,7 +204,7 @@ const Modules = () => {
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
-        className="icons-modules"
+        className="icons-style"
         onClick={() => {
           setOperationState('Edit');
           setModulePopupOpen(true);
@@ -212,7 +212,7 @@ const Modules = () => {
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-modules"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -223,7 +223,7 @@ const Modules = () => {
         />
       ) : (
         <FaUndo
-          className="icons-modules"
+          className="icons-style"
           title="Activate"
           size={21}
           fill="var(--primary-gray)"

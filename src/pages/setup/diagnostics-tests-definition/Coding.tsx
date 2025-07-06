@@ -57,9 +57,9 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
   };
   // Icons column (Edit, remove)
   const iconsForActions = () => (
-    <div className="container-of-icons-diagnostic">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-diagnostic"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -68,7 +68,7 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
         }}
       />
       <MdDelete
-        className="icons-diagnostic"
+        className="icons-style"
         title="Remove"
         size={24}
         fill="var(--primary-pink)"
@@ -130,7 +130,7 @@ const Coding = ({ open, setOpen, diagnosticsTest }) => {
       case 0:
         return (
           <Form layout="inline" fluid>
-            <div className="container-of-add-new-button-diagnostic">
+            <div className="container-of-add-new-button">
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"

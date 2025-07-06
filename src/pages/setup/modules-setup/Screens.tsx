@@ -194,14 +194,14 @@ const Screens = ({ module, goBack }) => {
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
-        className="icons-modules"
+        className="icons-style"
         onClick={() => {
           setScreenPopupOpen(true);
         }}
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-modules"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -212,7 +212,7 @@ const Screens = ({ module, goBack }) => {
         />
       ) : (
         <FaUndo
-          className="icons-modules"
+          className="icons-style"
           title="Activate"
           size={21}
           fill="var(--primary-gray)"

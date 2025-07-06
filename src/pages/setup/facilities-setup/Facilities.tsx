@@ -78,7 +78,7 @@ const Facilities = () => {
   
   // Page header setup
   const divContent = (
-    <div className="title-facilities">
+    <div className="page-title">
       <h5>Facilities</h5>
     </div>
   );
@@ -95,7 +95,7 @@ const Facilities = () => {
   };
   //icons column (View Departments, Add Details, Edite, Active/Deactivate)
   const iconsForActions = (rowData: ApFacility) => (
-    <div className='container-of-icons-facilities'>
+    <div className='container-of-icons'>
       <FaBuilding
         title="View Departments"
         fill="var(--primary-gray)"
@@ -104,6 +104,7 @@ const Facilities = () => {
           setFacility(rowData);
           setFacilityDepartmentPopupOpen(true);
         }}
+        className='icons-style'
       />
       <RiInformationFill
         title="Add Details"
@@ -112,6 +113,7 @@ const Facilities = () => {
         onClick={() => {
           setFacility(rowData);
         }}
+        className='icons-style'
       />
       <MdModeEdit
         title="Edit"
@@ -121,16 +123,18 @@ const Facilities = () => {
           setFacility(facility);
           setPopupOpen(true);
         }}
+        className='icons-style'
       />
       {rowData?.deletedAt ?
       // back to this function when update the filter(status) in back end 
-      <FontAwesomeIcon title="Active" icon={faRotateRight} fill="var(--primary-gray)" onClick={handleActive}/>
+      <FontAwesomeIcon title="Active" icon={faRotateRight} fill="var(--primary-gray)" onClick={handleActive} className='icons-style'/>
       :
       <MdDelete
        title="Deactivate"
        size={24}
        fill="var(--primary-pink)"
        onClick={() => setOpenConfirmDeleteModel(true)}
+       className='icons-style'
        />
       }
     </div>

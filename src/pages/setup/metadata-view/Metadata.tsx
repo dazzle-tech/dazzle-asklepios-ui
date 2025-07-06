@@ -31,7 +31,7 @@ const Metadata = () => {
   const totalCount = metadataListResponse?.extraNumeric ?? 0;
   // Page header setup
   const divContent = (
-    <div className="title-metadata">
+    <div className="page-title">
       <h5>Metadata</h5>
     </div>
   );
@@ -119,7 +119,7 @@ const Metadata = () => {
           size={24}
           fill="var(--primary-gray)"
           onClick={() => setCarouselActiveIndex(1)}
-          className="icons-screen"
+          className="icons-style"
         />
       )
     }

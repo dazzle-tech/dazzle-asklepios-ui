@@ -62,7 +62,7 @@ const Vaccine = () => {
   ];
   // Header page setUp
   const divContent = (
-    <div className='title-vaccine'>
+    <div className='page-title'>
       <h5>Vaccine</h5>
     </div>
   );
@@ -145,7 +145,7 @@ const Vaccine = () => {
   };
   // Filter table
   const filters = () => (
-    <Form layout="inline" fluid className="container-of-filter-fields-vaccine">
+    <Form layout="inline" fluid>
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -176,16 +176,16 @@ const Vaccine = () => {
   );
   // Icons column (Edit,Does Schedule, reactive/Deactivate)
   const iconsForActions = (rowData: ApVaccine) => (
-    <div className="container-of-icons-vaccine">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-vaccine"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
         onClick={() => handleEdit()}
       />
       <FaSyringe
-        className="icons-vaccine"
+        className="icons-style"
         title="Does Schedule"
         size={22}
         fill="var(--primary-gray)"
@@ -195,7 +195,7 @@ const Vaccine = () => {
       />
       {rowData?.isValid ? (
         <MdDelete
-          className="icons-vaccine"
+          className="icons-style"
           title="Deactivate"
           size={24}
           fill="var(--primary-pink)"
@@ -206,7 +206,7 @@ const Vaccine = () => {
         />
       ) : (
         <FaUndo
-          className="icons-vaccine"
+          className="icons-style"
           title="Activate"
           size={24}
           fill="var(--primary-gray)"
@@ -265,7 +265,7 @@ const Vaccine = () => {
   ];
   return (
     <Panel>
-      <div className="container-of-add-new-button-vaccine">
+      <div className="container-of-add-new-button">
         <MyButton
           prefixIcon={() => <AddOutlineIcon />}
           color="var(--deep-blue)"

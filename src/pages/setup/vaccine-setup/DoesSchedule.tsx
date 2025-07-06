@@ -187,9 +187,9 @@ const DoesSchedule = ({ open, setOpen, vaccine, setVaccine, refetch }) => {
   };
   // Icons column (Edite, delete)
   const iconsForActionsInterval = () => (
-    <div className="container-of-icons-vaccine">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-vaccine"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -199,7 +199,7 @@ const DoesSchedule = ({ open, setOpen, vaccine, setVaccine, refetch }) => {
         }}
       />
       <MdDelete
-        className="icons-vaccine"
+        className="icons-style"
         title="Deactivate"
         size={24}
         fill="var(--primary-pink)"
@@ -209,9 +209,9 @@ const DoesSchedule = ({ open, setOpen, vaccine, setVaccine, refetch }) => {
   );
   // Icons column (Edite, reactive/Deactivate)
   const iconsForDoses = () => (
-    <div className="container-of-icons-vaccine">
+    <div className="container-of-icons">
       <MdModeEdit
-        className="icons-vaccine"
+        className="icons-style"
         title="Edit"
         size={24}
         fill="var(--primary-gray)"
@@ -428,7 +428,7 @@ const DoesSchedule = ({ open, setOpen, vaccine, setVaccine, refetch }) => {
       case 1:
         return (
           <Form>
-            <div className="container-of-add-new-button-vaccine">
+            <div className="container-of-add-new-button">
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
