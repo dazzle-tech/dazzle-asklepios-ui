@@ -1,7 +1,7 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import {Pagination, Panel, Form } from 'rsuite';
+import {Panel, Form } from 'rsuite';
 import { notify } from '@/utils/uiReducerActions';
 import {
 } from '@fortawesome/free-solid-svg-icons';
@@ -51,6 +51,10 @@ const Facilities = () => {
   const [saveFacility, saveFacilityMutation] = useSaveFacilityMutation();
   // Remove Facility
   const [removeFacility] = useRemoveFacilityMutation();
+   // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = facilityListResponse?.extraNumeric ?? 0;
 
   // Effects
   useEffect(() => {
@@ -170,6 +174,18 @@ const Facilities = () => {
   const handleActive = async () => { 
     await saveFacility({ ...facility, deletedAt: null }).unwrap();
   };
+  // Handle page change in navigation
+    const handlePageChange = (_: unknown, newPage: number) => {
+      setListRequest({ ...listRequest, pageNumber: newPage + 1 });
+    };
+    // Handle change rows per page in navigation
+    const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      setListRequest({
+        ...listRequest,
+        pageSize: parseInt(event.target.value, 10),
+        pageNumber: 1
+      });
+    };
   // ClassName for selected row
   const isSelected = rowData => {
     if (rowData && facility && rowData.key === facility.key) {
@@ -221,7 +237,7 @@ const Facilities = () => {
       key: 'deletedAt',
       title: <Translate>Status</Translate>,
       flexGrow: 4,
-      render: (rowData: ApFacility) => {return(<p>{rowData?.deletedAt ? "Inactive" : "Active"}</p>)} 
+      render: (rowData: ApFacility) => {return(<p>{rowData?.deletedAt ? "Inactive" : "Active"}</p>);} 
     },
     {
       key: 'facilityBriefDesc',
@@ -273,30 +289,12 @@ const Facilities = () => {
               onSortChange={(sortBy, sortType) => {
                 if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
               }}
+              page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
             />
-            <div className='container-of-pagination-facilities'>
-              <Pagination
-                prev
-                next
-                first={width > 500}
-                last={width > 500}
-                ellipsis={width > 500}
-                boundaryLinks={width > 500}
-                maxButtons={width < 500 ? 1 : 2}
-                size="xs"
-                layout={['limit', '|', 'pager']}
-                limitOptions={[5, 15, 30]}
-                limit={listRequest.pageSize}
-                activePage={listRequest.pageNumber}
-                onChangePage={pageNumber => {
-                  setListRequest({ ...listRequest, pageNumber });
-                }}
-                onChangeLimit={pageSize => {
-                  setListRequest({ ...listRequest, pageSize });
-                }}
-                total={facilityListResponse?.extraNumeric ?? 0}
-              />
-            </div> 
             <AddEditFacility 
               open={popupOpen}
               setOpen={setPopupOpen}
