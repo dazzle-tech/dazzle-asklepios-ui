@@ -45,7 +45,9 @@ import {
   ApVaccine,
   ApVaccineBrands,
   ApVaccineDose,
-  ApVaccineDosesInterval
+  ApVaccineDosesInterval,
+  ApWarehouse,
+  ApWarehouseUser
 
 } from '@/types/model-types';
 
@@ -1334,6 +1336,56 @@ export const setupService = createApi({
         return response.object;
       }
     }),
+        getWarehouse: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/warehouses-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeWarehouse: builder.mutation({
+      query: (warehouse: ApWarehouse) => ({
+        url: `/setup/remove-warehouse`,
+        method: 'POST',
+        body: warehouse,
+      }),
+    }),
+    saveWarehouse: builder.mutation({
+      query: (warehouse: ApWarehouse) => ({
+        url: `/setup/save-warehouse`,
+        method: 'POST',
+        body: warehouse
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+     getWarehouseUser: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/warehouses-user-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeWarehouseUser: builder.mutation({
+      query: (warehouse: ApWarehouseUser) => ({
+        url: `/setup/remove-warehouse-user`,
+        method: 'POST',
+        body: warehouse,
+      }),
+    }),
+    saveWarehouseUser: builder.mutation({
+      query: (warehouse: ApWarehouseUser) => ({
+        url: `/setup/save-warehouse-user`,
+        method: 'POST',
+        body: warehouse
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
   })
 
 });
@@ -1471,5 +1523,11 @@ export const {
   useRemoveUomGroupUnitsMutation,
   useGetProductQuery,
   useSaveProductMutation,
-  useRemoveProductMutation
+  useRemoveProductMutation,
+  useGetWarehouseQuery,
+  useSaveWarehouseMutation,
+  useRemoveWarehouseMutation,
+  useGetWarehouseUserQuery,
+  useSaveWarehouseUserMutation,
+  useRemoveWarehouseUserMutation
 } = setupService;

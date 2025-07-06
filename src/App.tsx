@@ -104,6 +104,8 @@ import OperationRequest from './pages/encounter/encounter-component/operation-re
 import Questionnaire from './pages/questionnaire-setup/Questionnaire';
 import InternalDrugOrder from './pages/pharmacy/internal-drug-order';
 import Operation from './pages/operation-module'
+import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -327,6 +329,7 @@ const App = () => {
               <Route path="catalog" element={<Catalog />} />
               <Route path="allergens" element={<Allergens />} />
               <Route path='inventory-product-setup' element={<ProductSetup/>} />
+              <Route path="warehouse-setup" element={<WarehouseSetup/>} />
               <Route path="active-ingredients" element={<ActiveIngredientsSetup />} />
               <Route path="age-group" element={<AgeGroup />} />
               <Route path="prescription-instructions" element={<PrescriptionInstructions />} />
