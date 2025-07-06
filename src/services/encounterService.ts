@@ -1,4 +1,4 @@
-import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation } from './../types/model-types';
+import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -684,6 +684,17 @@ export const encounterService = createApi({
         return response.object;
       }
     }), 
+     saveTransferPatient: builder.mutation({
+      query: (transferPatient: ApTransferPatient) => ({
+        url: `/encounter/save-transfer-patient`,
+        method: 'POST',
+        body: transferPatient
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }), 
   })
 });
 
@@ -757,5 +768,6 @@ export const {
   useGetFunctionalAssessmentsQuery,
   useSaveFunctionalAssessmentMutation,
   useGetMedicationReconciliationQuery,
-  useSaveMedicationReconciliationMutation
+  useSaveMedicationReconciliationMutation,
+  useSaveTransferPatientMutation
 } = encounterService;

@@ -35,13 +35,7 @@ const BedTransactionsSecondTab = ({ encounter }) => {
   // State to manage the list request used for filtering and pagination
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'department_key',
-        operator: 'match',
-        value: encounter?.resourceObject?.key
-      }
-    ]
+    filters: []
   });
   // State to store the selected date range for filtering (fromDate and toDate default to today)
   const [dateFilter, setDateFilter] = useState({

@@ -37,7 +37,7 @@ const AddFunctionalAssessment = ({ open, setOpen, patient, encounter, functional
 
                 dispatch(notify({ msg: 'Functional Assessment Successfully', sev: 'success' }));
                 //TODO convert key to code
-                setFunctionalAssessment({ ...functionalAssessment, statusLkey: "9766169155908512" });
+                setFunctionalAssessment({ ...newApFunctionalAssessment, statusLkey: "9766169155908512" });
                 setOpen(false);
             } else {
                 await saveFunctionalAssessment({

@@ -3287,6 +3287,29 @@ export const newApToothService:modelTypes.ApToothService = {
 	isValid:undefined,
 } 
 
+export const newApTransferPatient:modelTypes.ApTransferPatient = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	fromInpatientDepartmentKey:undefined,
+	toInpatientDepartmentKey:undefined,
+	reasonForTransfer:'',
+	urgentTransfer:undefined,
+	plannedTransfer:undefined,
+	transferNotes:'',
+	finalVitalsBeforeTransfer:undefined,
+	ivLinesDripsChecked:undefined,
+	medicationAdministeredPreTransfer:undefined,
+	belongingsSentWithPatient:undefined,
+	clinicalHandoverDone:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
 export const newApTranslation:modelTypes.ApTranslation = { 
 	key:undefined,
 	languageKey:undefined,
