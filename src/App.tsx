@@ -102,7 +102,7 @@ import InpatientNurseStation from './pages/encounter/encounter-pre-observations/
 import OperationSetup from './pages/setup/operation-setup';
 import OperationRequest from './pages/encounter/encounter-component/operation-request/OperationRequest';
 import Questionnaire from './pages/questionnaire-setup/Questionnaire';
-
+import InternalDrugOrder from './pages/pharmacy/internal-drug-order';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -346,6 +346,8 @@ const App = () => {
               <Route path="lab-module" element={<Lab />} />
               <Route path="rad-module" element={<Rad />} />
               <Route path='operation-setup' element={<OperationSetup />}/>
+               <Route path="pharmacy-internal-orders" element={<InternalDrugOrder />} />
+
             </Route>
           </Route>
 
