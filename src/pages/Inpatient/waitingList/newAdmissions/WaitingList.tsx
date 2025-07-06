@@ -12,7 +12,7 @@ import { useLocation } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
-import './styles.less';
+import '../styles.less';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
 import { formatDateWithoutSeconds } from "@/utils";

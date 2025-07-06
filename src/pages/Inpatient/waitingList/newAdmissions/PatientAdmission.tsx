@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './styles.less';
+import '../styles.less';
 import { useAppDispatch } from '@/hooks';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyModal from '@/components/MyModal/MyModal';
