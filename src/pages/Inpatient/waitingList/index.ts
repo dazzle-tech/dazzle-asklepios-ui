@@ -1,4 +1,4 @@
 
-import WaitingList from "./WaitingList";
+import InpatientWaitingLists from "./InpatientWaitingLists";
 
-export default WaitingList;
+export default InpatientWaitingLists;

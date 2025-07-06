@@ -94,7 +94,7 @@ import DiagnosticsResult from './pages/encounter/encounter-component/diagnostics
 import InpatientList from './pages/Inpatient/inpatientList';
 import ReviewResults from './pages/review-results/ReviewResults';
 import Room from './pages/setup/bed-room-setup';
-import WaitingList from './pages/Inpatient/waitingList';
+import InpatientWaitingLists from './pages/Inpatient/waitingList/InpatientWaitingLists';
 import ProcedureModule from './pages/procedure-module/ProcedureModule';
 import ProductSetup from './pages/setup/product-setup';
 import Checklist from './pages/setup/operations/checklist';
@@ -298,7 +298,7 @@ const App = () => {
               <Route path="procedure-module" element={<ProcedureModule />} />
               <Route path="encounter-list" element={<EncounterList />} />
               <Route path='inpatient-encounters-list' element={<InpatientList/>} />
-               <Route path='waiting-encounters-list' element={<WaitingList/>} />
+               <Route path='waiting-encounters-list' element={<InpatientWaitingLists/>}/>
               <Route path='room' element={<Room/>} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservations />} />
