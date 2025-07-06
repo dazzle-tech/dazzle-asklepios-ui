@@ -225,7 +225,7 @@ const PatientSide = ({ patient, encounter }) => {
             <Divider className='divider-style' />
 
             <Text >
-                <FontAwesomeIcon icon={faFileWaveform} className='icon-color' /> <span className='section-title'>Visit Details</span>
+                <FontAwesomeIcon icon={faFileWaveform} className='icon-color' /> <span className='section-title'>{encounter?.resourceTypeLvalue?.valueCode !== "BRT_INPATIENT"?"Visit Details":"Admission Details"}</span>
             </Text>
             {encounter?.resourceTypeLvalue?.valueCode !== "BRT_INPATIENT" &&
                 <div className='details-section'>

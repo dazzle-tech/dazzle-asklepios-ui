@@ -23,6 +23,11 @@ const Details = ({ open, setOpen, user, request, setRequest, refetch, encounter,
                 operator: 'match',
                 value: request?.facilityKey
             },
+            {
+              fieldName: 'department_type_lkey',
+                operator: 'match',
+                value:'5673990729647006'
+            }
 
         ]
     });
