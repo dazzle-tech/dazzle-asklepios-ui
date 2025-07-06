@@ -26,10 +26,11 @@ import { initialListRequest, ListRequest } from '@/types/types';
 import { newApEncounter } from '@/types/model-types-constructor';
 import { ApAttachment } from '@/types/model-types';
 import './styles.less'
+import { GiMedicalThermometer } from 'react-icons/gi';
 const PatientSide = ({ patient, encounter }) => {
     const profileImageFileInputRef = useRef(null);
     const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
-
+    console.log("EEE", encounter?.resourceTypeLvalue?.valueCode)
 
 
     const { data: patirntObservationlist } = useGetObservationSummariesQuery({
@@ -63,7 +64,7 @@ const PatientSide = ({ patient, encounter }) => {
         setBodyMeasurements({
             height: patirntObservationlist?.object?.find((item) => item.latestheight != null && item.latestheight != 0)?.latestheight,
             weight: patirntObservationlist?.object?.find((item) => item.latestweight != null && item.latestheight != 0)?.latestweight,
-            headcircumference: patirntObservationlist?.object?.find((item) => item.latestheadcircumference != null && item.latestheight !=0 )?.latestheadcircumference
+            headcircumference: patirntObservationlist?.object?.find((item) => item.latestheadcircumference != null && item.latestheight != 0)?.latestheadcircumference
         })
     }, [patirntObservationlist]);
 
@@ -206,7 +207,7 @@ const PatientSide = ({ patient, encounter }) => {
                     <div className='info-column'>
                         <Text className='info-label'>BSA</Text>
                         <Text className='info-value'>
-                      
+
                             {Math.sqrt((bodyMeasurements?.weight * bodyMeasurements?.height) / 3600).toFixed(2)}
                         </Text>
 
@@ -216,77 +217,121 @@ const PatientSide = ({ patient, encounter }) => {
                     >
                         <Text className='info-label'>Blood Group</Text>
                         <Text className='info-value'
-                        >{patient?.bloodGroupLvalue?.lovDisplayVale ??"Nan"}</Text>
+                        >{patient?.bloodGroupLvalue?.lovDisplayVale ?? "Nan"}</Text>
 
                     </div>
                 </div>
             </div>
             <Divider className='divider-style' />
-            
+
             <Text >
-            <FontAwesomeIcon icon={faFileWaveform}  className='icon-color' /> <span className='section-title'>Visit Details</span>
+                <FontAwesomeIcon icon={faFileWaveform} className='icon-color' /> <span className='section-title'>Visit Details</span>
             </Text>
-            <div className='details-section'>
-                <br />
+            {encounter?.resourceTypeLvalue?.valueCode !== "BRT_INPATIENT" &&
+                <div className='details-section'>
+                    <br />
 
-                <div className='info-section'>
-                    <div className='info-column'>
-                        <Text className='info-label'>Visit Date</Text>
-                        <Text className='info-value'>
+                    <div className='info-section'>
+                        <div className='info-column'>
+                            <Text className='info-label'>Visit Date</Text>
+                            <Text className='info-value'>
 
-                            {encounter?.plannedStartDate}
-                        </Text>
+                                {encounter?.plannedStartDate}
+                            </Text>
 
+                        </div>
+
+                        <div className='info-column'
+                        >
+                            <Text className='info-label'>Visit ID</Text>
+                            <Text className='info-value'
+                            > {encounter?.visitId}</Text>
+
+                        </div>
                     </div>
 
-                    <div className='info-column'
-                    >
-                        <Text className='info-label'>Visit ID</Text>
-                        <Text className='info-value'
-                        > {encounter?.visitId}</Text>
+                    <div className='info-section'>
+                        <div className='info-column'>
+                            <Text className='info-label'>Visit Type</Text>
+                            <Text className='info-value'>
 
-                    </div>
-                </div>
+                                {encounter?.visitTypeLvalue?.lovDisplayVale}
+                            </Text>
 
-                <div className='info-section'>
-                    <div className='info-column'>
-                        <Text className='info-label'>Visit Type</Text>
-                        <Text className='info-value'>
+                        </div>
 
-                            {encounter?.visitTypeLvalue?.lovDisplayVale}
-                        </Text>
+                        <div className='info-column'
+                        >
+                            <Text className='info-label'>Priority</Text>
+                            <Text className='info-value'
+                            > {encounter?.encounterPriorityLvalue?.lovDisplayVale}</Text>
 
-                    </div>
-
-                    <div className='info-column'
-                    >
-                        <Text className='info-label'>Priority</Text>
-                        <Text className='info-value'
-                        > {encounter?.encounterPriorityLvalue?.lovDisplayVale}</Text>
-
-                    </div>
-                </div>
-
-                <div className='info-section'>
-                    <div className='info-column'>
-                        <Text className='info-label'>Reason</Text>
-                        <Text className='info-value'>
-
-                            {encounter?.reasonLvalue?.lovDisplayVale}
-                        </Text>
-
+                        </div>
                     </div>
 
-                    <div className='info-column'
-                    >
-                        <Text className='info-label'>Origin</Text>
-                        <Text className='info-value'
-                        > {encounter?.originLvalue?.lovDisplayVale}</Text>
+                    <div className='info-section'>
+                        <div className='info-column'>
+                            <Text className='info-label'>Reason</Text>
+                            <Text className='info-value'>
 
+                                {encounter?.reasonLvalue?.lovDisplayVale}
+                            </Text>
+
+                        </div>
+
+                        <div className='info-column'
+                        >
+                            <Text className='info-label'>Origin</Text>
+                            <Text className='info-value'
+                            > {encounter?.originLvalue?.lovDisplayVale}</Text>
+
+                        </div>
                     </div>
-                </div>
-            </div>
-      
+
+
+
+                </div>}
+
+            {encounter?.resourceTypeLvalue?.valueCode === "BRT_INPATIENT" && (
+                <>
+                    <div className="details-section">
+                        <div className="info-section">
+                            <div className="info-column">
+                                <Text className="info-label">Room</Text>
+                                <Text className="info-value">{encounter?.apRoom?.name}</Text>
+                            </div>
+
+                            <div className="info-column">
+                                <Text className="info-label">Bed</Text>
+                                <Text className="info-value">{encounter?.apBed?.name}</Text>
+                            </div>
+                        </div>
+
+                        <div className="info-section">
+                            <div className="info-column">
+                                <Text className="info-label">Ward</Text>
+                                <Text className="info-value">{encounter?.departmentName}</Text>
+                            </div>
+
+                            <div className="info-column">
+                                <Text className="info-label">Date of Admission</Text>
+                                <Text className="info-value">{encounter?.actualStartDate}</Text>
+                            </div>
+                        </div>
+                    </div>
+
+                    <Divider className="divider-thin" />
+
+                    <Text>
+                        <GiMedicalThermometer className="icon-title" />
+                        <span className="patient-section-title">Diagnosis</span>
+                    </Text>
+
+                    <div style={{ marginTop: 8 }}>
+                        <Text>{encounter?.diagnosis}</Text>
+                    </div>
+                </>
+            )}
 
         </Panel>
     )
