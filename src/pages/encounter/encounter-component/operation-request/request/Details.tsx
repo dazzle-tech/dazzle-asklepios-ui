@@ -26,6 +26,7 @@ const Details = ({ open, setOpen, user, request, setRequest, refetch, encounter,
             {
               fieldName: 'department_type_lkey',
                 operator: 'match',
+                //Operation Theater
                 value:'5673990729647006'
             }
 
