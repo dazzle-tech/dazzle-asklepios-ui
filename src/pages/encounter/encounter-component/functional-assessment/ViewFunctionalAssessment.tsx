@@ -29,7 +29,9 @@ const ViewFunctionalAssessment = ({ open, setOpen, functionalAssessmentObj }) =>
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={true} />
+                    disabled={true}
+                    unCheckedLabel="Independent"
+                    checkedLabel=" Needs assistance" />
                 <MyInput
                     column
                     width={200}
@@ -38,7 +40,9 @@ const ViewFunctionalAssessment = ({ open, setOpen, functionalAssessmentObj }) =>
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={true} />
+                    disabled={true}
+                    unCheckedLabel="Independent"
+                    checkedLabel=" Needs assistance" />
                 <MyInput
                     column
                     width={200}
@@ -47,7 +51,9 @@ const ViewFunctionalAssessment = ({ open, setOpen, functionalAssessmentObj }) =>
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={true} />
+                    disabled={true}
+                    unCheckedLabel="Independent"
+                    checkedLabel=" Needs assistance" />
                 <MyInput
                     column
                     width={200}
@@ -56,7 +62,9 @@ const ViewFunctionalAssessment = ({ open, setOpen, functionalAssessmentObj }) =>
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={true} />
+                    disabled={true}
+                    unCheckedLabel="Independent"
+                    checkedLabel=" Needs assistance" />
                 <MyInput
                     column
                     width={200}
@@ -65,7 +73,9 @@ const ViewFunctionalAssessment = ({ open, setOpen, functionalAssessmentObj }) =>
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={true} />
+                    disabled={true}
+                    unCheckedLabel="Independent"
+                    checkedLabel=" Needs assistance" />
                 <MyInput
                     column
                     width={200}
@@ -74,7 +84,9 @@ const ViewFunctionalAssessment = ({ open, setOpen, functionalAssessmentObj }) =>
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={true} />
+                    disabled={true}
+                    unCheckedLabel="Independent"
+                    checkedLabel=" Needs assistance" />
                 <MyInput
                     column
                     width={200}
@@ -83,7 +95,9 @@ const ViewFunctionalAssessment = ({ open, setOpen, functionalAssessmentObj }) =>
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={true} />
+                    disabled={true}
+                    unCheckedLabel="Independent"
+                    checkedLabel=" Needs assistance" />
                 <MyInput
                     column
                     width={200}
@@ -92,7 +106,9 @@ const ViewFunctionalAssessment = ({ open, setOpen, functionalAssessmentObj }) =>
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={true} />
+                    disabled={true}
+                    unCheckedLabel="Independent"
+                    checkedLabel=" Needs assistance" />
                 <MyInput
                     column
                     width={200}
@@ -101,7 +117,9 @@ const ViewFunctionalAssessment = ({ open, setOpen, functionalAssessmentObj }) =>
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={true} />
+                    disabled={true}
+                    unCheckedLabel="Unlimited"
+                    checkedLabel="Limited" />
                 <MyInput
                     column
                     width={200}
@@ -110,7 +128,9 @@ const ViewFunctionalAssessment = ({ open, setOpen, functionalAssessmentObj }) =>
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={true} />
+                    disabled={true}
+                    unCheckedLabel="Stable"
+                    checkedLabel="Unable" />
                 <MyInput
                     column
                     width={200}
