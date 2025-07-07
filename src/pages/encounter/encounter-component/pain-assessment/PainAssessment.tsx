@@ -65,7 +65,10 @@ const PainAssessment = ({ patient, encounter, edit }) => {
             onsetLkey: null,
             painScoreLkey: null,
             durationUnitLkey: null,
-            statusLkey: null
+            statusLkey: null,
+            aggravatingFactors: "",
+            relievingFactors: "",
+            impactOnFunction: false,
         });
     };
     // Handle Add New Pain Assessment Puretone Record
