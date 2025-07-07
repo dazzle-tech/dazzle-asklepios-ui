@@ -1831,6 +1831,7 @@ export const newApMedicationReconciliation:modelTypes.ApMedicationReconciliation
 	updatedAt:undefined,
 	deletedAt:undefined,
 	statusLkey:undefined,
+	frequencyValue:0,
 } 
 
 export const newApMessages:modelTypes.ApMessages = { 
@@ -3310,6 +3311,7 @@ export const newApTransferPatient:modelTypes.ApTransferPatient = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
+	statusLkey:undefined,
 } 
 
 export const newApTranslation:modelTypes.ApTranslation = { 

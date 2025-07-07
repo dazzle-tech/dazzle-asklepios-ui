@@ -1830,6 +1830,7 @@ export interface ApMedicationReconciliation {
 	updatedAt:number;
 	deletedAt:number;
 	statusLkey:string;
+	frequencyValue:number;
 } 
 
 export interface ApMessages { 
@@ -3309,6 +3310,7 @@ export interface ApTransferPatient {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
+	statusLkey:string;
 } 
 
 export interface ApTranslation { 

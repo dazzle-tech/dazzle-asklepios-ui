@@ -101,7 +101,9 @@ const AddFunctionalAssessment = ({ open, setOpen, patient, encounter, functional
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={isDisabledField} />
+                    disabled={isDisabledField}
+                    unCheckedLabel="Independent"
+                    checkedLabel=" Needs assistance" />
                 <MyInput
                     column
                     width={200}
@@ -110,7 +112,9 @@ const AddFunctionalAssessment = ({ open, setOpen, patient, encounter, functional
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={isDisabledField} />
+                    disabled={isDisabledField}
+                    unCheckedLabel="Independent"
+                    checkedLabel=" Needs assistance" />
                 <MyInput
                     column
                     width={200}
@@ -119,7 +123,9 @@ const AddFunctionalAssessment = ({ open, setOpen, patient, encounter, functional
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={isDisabledField} />
+                    disabled={isDisabledField}
+                    unCheckedLabel="Independent"
+                    checkedLabel=" Needs assistance" />
                 <MyInput
                     column
                     width={200}
@@ -128,7 +134,9 @@ const AddFunctionalAssessment = ({ open, setOpen, patient, encounter, functional
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={isDisabledField} />
+                    disabled={isDisabledField}
+                    unCheckedLabel="Independent"
+                    checkedLabel=" Needs assistance" />
                 <MyInput
                     column
                     width={200}
@@ -137,7 +145,9 @@ const AddFunctionalAssessment = ({ open, setOpen, patient, encounter, functional
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={isDisabledField} />
+                    disabled={isDisabledField}
+                    unCheckedLabel="Independent"
+                    checkedLabel=" Needs assistance" />
                 <MyInput
                     column
                     width={200}
@@ -146,7 +156,9 @@ const AddFunctionalAssessment = ({ open, setOpen, patient, encounter, functional
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={isDisabledField} />
+                    disabled={isDisabledField}
+                    unCheckedLabel="Independent"
+                    checkedLabel=" Needs assistance" />
                 <MyInput
                     column
                     width={200}
@@ -155,7 +167,9 @@ const AddFunctionalAssessment = ({ open, setOpen, patient, encounter, functional
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={isDisabledField} />
+                    disabled={isDisabledField}
+                    unCheckedLabel="Independent"
+                    checkedLabel=" Needs assistance" />
                 <MyInput
                     column
                     width={200}
@@ -164,7 +178,9 @@ const AddFunctionalAssessment = ({ open, setOpen, patient, encounter, functional
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={isDisabledField} />
+                    disabled={isDisabledField}
+                    unCheckedLabel="Independent"
+                    checkedLabel=" Needs assistance" />
                 <MyInput
                     column
                     width={200}
@@ -173,7 +189,9 @@ const AddFunctionalAssessment = ({ open, setOpen, patient, encounter, functional
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={isDisabledField} />
+                    disabled={isDisabledField}
+                    unCheckedLabel="Unlimited"
+                    checkedLabel="Limited" />
                 <MyInput
                     column
                     width={200}
@@ -182,7 +200,9 @@ const AddFunctionalAssessment = ({ open, setOpen, patient, encounter, functional
                     fieldType="checkbox"
                     record={functionalAssessment}
                     setRecord={setFunctionalAssessment}
-                    disabled={isDisabledField} />
+                    disabled={isDisabledField}
+                    unCheckedLabel="Stable"
+                    checkedLabel="Unable" />
                 <MyInput
                     column
                     width={200}

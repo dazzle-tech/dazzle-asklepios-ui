@@ -13,6 +13,7 @@ import MyModal from '@/components/MyModal/MyModal';
 import { initialListRequest } from '@/types/types';
 import { faClipboardCheck } from '@fortawesome/free-solid-svg-icons';
 import clsx from 'clsx';
+import './styless.less';
 import { useGetActiveIngredientQuery } from '@/services/medicationsSetupService';
 const AddMedicationReconciliation = ({ open, setOpen, patient, encounter, medicationReconciliationObj, refetch, edit }) => {
     const authSlice = useAppSelector(state => state.auth);
@@ -100,7 +101,7 @@ const AddMedicationReconciliation = ({ open, setOpen, patient, encounter, medica
     // Modal Content 
     const content = (
         <div className={clsx('', { 'disabled-panel': edit })}>
-            <Form fluid layout='inline' disabled={edit} >
+            <Form fluid layout='inline' disabled={edit} className='fields-container'>
                 <MyInput
                     column
                     width={400}
@@ -152,10 +153,22 @@ const AddMedicationReconciliation = ({ open, setOpen, patient, encounter, medica
                     disabled={isDisabledField}
                     searchable={false}
                 />
+               
+                <Form fluid layout='inline' className='fields-container-flex-end'>
                 <MyInput
                     column
-                    width={200}
-                    fieldLabel="Frequency"
+                    width={90}
+                    fieldLabel="Every"
+                    fieldType="number"
+                    fieldName="frequencyValue"        
+                    record={medicationReconciliation}
+                    setRecord={setMedicationReconciliation}
+                    disabled={isDisabledField}
+                />
+                <MyInput
+                    column
+                    width={100}
+                    fieldLabel=" "
                     fieldType="select"
                     fieldName="frequencyLkey"
                     selectData={durationLovQueryResponse?.object ?? []}
@@ -165,7 +178,7 @@ const AddMedicationReconciliation = ({ open, setOpen, patient, encounter, medica
                     setRecord={setMedicationReconciliation}
                     disabled={isDisabledField}
                     searchable={false}
-                />
+                /></Form>
                 <MyInput
                     column
                     width={200}
@@ -247,7 +260,7 @@ const AddMedicationReconciliation = ({ open, setOpen, patient, encounter, medica
             actionButtonFunction={handleSave}
             position='right'
             isDisabledActionBtn={!edit ? isDisabledField : true}
-            size='32vw'
+            size='34vw'
             steps={[{
                 title: "medication Reconciliation",
                 icon: <FontAwesomeIcon icon={faClipboardCheck} />,
