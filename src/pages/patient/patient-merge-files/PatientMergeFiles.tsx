@@ -89,7 +89,10 @@ const PatientMergeFiles = () => {
     dispatch(setDivContent(divContentHTML));
 
 
-
+    const handleClear = () =>  {
+     setToPatient(newApPatient);
+     setFromPatient(newApPatient)
+    }
     useEffect(() => {
         if (fromPatient.key) {
             setFromPatientList([fromPatient])
@@ -106,119 +109,9 @@ const PatientMergeFiles = () => {
 
     return (
         <>
-            {/* <div style={{ padding: 20 }}>
-          <Container style={{ width: '100%', padding: 0 }}>
-      <Row style={{ width: '100%', margin: 0 }}>
-        <Col xs={24} sm={5}>
-        <ProfileSidebar
-          expand={true}
-          setExpand={setExpand}
-          windowHeight={windowHeight}
-          setLocalPatient={setFromPatient}
-          refetchData={refetchData}
-          setRefetchData={setRefetchData}
-          title='From Patient'
-        /> 
-        </Col>
-        <Col  xs={24} sm={2}>
-        </Col>
-        <Col xs={24} sm={12}>
-        <InfoCardList
-            list={fromPatientList || []}
-            fields={[
-                'patientName',
-                'sexAndAge',
-                'dateOfRegister',
-                'documentType',
-                'documentCountry',
-                'documentNumber',
-            ]}
-            titleField="fromPatient"
-            fieldLabels={{
-                patientName: 'Patient Name',
-                sexAndAge: 'Sex & Age',
-                dateOfRegister: 'Date of Register',
-                documentType: 'Document Type',
-                documentCountry: 'Document Country',
-                documentNumber: 'Document Number',
-            }}
-            computedFields={{
-                patientName: (item) =>
-                    (item?.firstName || '') + (item?.lastName || ''),
-                sexAndAge: (item) =>   
-                    (item?.genderLvalue?.lovDisplayValue|| '') + (item?.dob ? calculateAgeFormat(item.dob) + ''  : ''),
-                dateOfRegister: (item) =>
-                    (item?.strength || '') + (item?.unitLvalue?.lovDisplayVale || ''),
-                documentType: (item) => 
-                    (item?.documentTypeLvalue?.lovDisplayVale  || '') ,
-                documentCountry: (item) =>
-                    item?.documentCountryLvalue?.lovDisplayVale || " ",
-                documentNumber: (item) => 
-                    (item?.documentNo || '') ,
-                
-            }}
-         
-        />
-         <div className="merge-controls" style={{ textAlign: "center", margin: "20px 0" }}>
-                          <FontAwesomeIcon icon={faRepeat} style={{ fontSize: 100, transform: 'rotate(90deg)' }} />
-                        </div>
-          <InfoCardList
-            list={toPatientList || []}
-            fields={[
-                'patientName',
-                'sexAndAge',
-                'dateOfRegister',
-                'documentType',
-                'documentCountry',
-                'documentNumber',
-            ]}
-            titleField="toPatient"
-            fieldLabels={{
-                patientName: 'Patient Name',
-                sexAndAge: 'Sex & Age',
-                dateOfRegister: 'Date of Register',
-                documentType: 'Document Type',
-                documentCountry: 'Document Country',
-                documentNumber: 'Document Number',
-            }}
-            computedFields={{
-                patientName: (item) =>
-                    (item?.firstName || '') + (item?.lastName || ''),
-                sexAndAge: (item) =>   
-                    (item?.genderLvalue?.lovDisplayValue|| '') + (item?.dob ? calculateAgeFormat(item.dob) + ''  : ''),
-                dateOfRegister: (item) =>
-                    (item?.strength || '') + (item?.unitLvalue?.lovDisplayVale || ''),
-                documentType: (item) => 
-                    (item?.documentTypeLvalue?.lovDisplayVale  || '') ,
-                documentCountry: (item) =>
-                    item?.documentCountryLvalue?.lovDisplayVale || " ",
-                documentNumber: (item) => 
-                    (item?.documentNo || '') ,
-                
-            }}
-         
-        />
-        </Col>
-        <Col xs={24} sm={2}>
-        </Col>
-        <Col xs={24} sm={4}>
-        <ProfileSidebar
-          expand={true}
-          setExpand={setExpand}
-          windowHeight={windowHeight}
-          setLocalPatient={setToPatient}
-          refetchData={refetchData}
-          setRefetchData={setRefetchData}
-          title='Merge To'
-        /> 
-        </Col>
-      </Row>
-    </Container>
-    </div> */}
-            <Grid fluid>
-                <Row>
+        <Grid fluid>
                     {/* Main Content */}
-                    <Col xs={24}>
+                   
                         <Row>
                             <Col xs={5}>
                                 <ProfileSidebar
@@ -238,27 +131,19 @@ const PatientMergeFiles = () => {
                             {/* Merge Panel */}
                             <Col xs={14}>
                                 <Panel bordered>
-                                    <Panel bordered>
                                         <h6>From Patient</h6>
-                                        <Panel bordered>
                                             <PatientInfoCard 
                                              patient={fromPatient}
                                             /> 
-                                        </Panel>
-
-                                    </Panel>
+                                     
 
                                     <div className="merge-controls" style={{ textAlign: "center", margin: "20px 0" }}>
                                         <FontAwesomeIcon icon={faRepeat} style={{ fontSize: 100, transform: 'rotate(90deg)' }} />
                                     </div>
-                                    <Panel bordered>
                                         <h6>Merge To</h6>
-                                        <Panel bordered >
                                         <PatientInfoCard 
                                              patient={toPatient}
                                             /> 
-                                        </Panel>
-                                    </Panel>
                                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
                                     <MyButton
                                         size="small"
@@ -270,9 +155,17 @@ const PatientMergeFiles = () => {
                                     <MyButton
                                         size="small"
                                         prefixIcon={() => <icons.Reload />}
-                                        appearance="subtle"
+                                        appearance="ghost"
                                     >
                                         Undo
+                                    </MyButton>
+                                    <MyButton
+                                        size="small"
+                                        prefixIcon={() => <icons.Close />}
+                                        appearance="subtle"
+                                        onClick={handleClear}
+                                    >
+                                        Clear
                                     </MyButton>
                                     </div>
                                 </Panel>
@@ -292,8 +185,7 @@ const PatientMergeFiles = () => {
                                 />
                             </Col>
                         </Row>
-                    </Col>
-                </Row>
+                    
             </Grid>
 
         </>
