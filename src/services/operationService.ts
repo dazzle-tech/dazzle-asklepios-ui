@@ -50,7 +50,7 @@ export const operationService = createApi({
             })
         }),
 
-         // 🟢 GET operation care plan list
+        // 🟢 GET operation care plan list
         getOperationCarePlan: builder.query({
             query: (listRequest: ListRequest) => ({
                 url: `/operation/operation-care-plan-list?${fromListRequestToQueryParams(listRequest)}`,
@@ -59,7 +59,7 @@ export const operationService = createApi({
         }),
 
         //Get operation checkList
-          getPreOperationChecklistList: builder.query({
+        getPreOperationChecklistList: builder.query({
             query: (listRequest: ListRequest) => ({
                 url: `/operation/pre-operation-checklist-list?${fromListRequestToQueryParams(listRequest)}`,
                 method: 'GET'
@@ -68,8 +68,8 @@ export const operationService = createApi({
 
 
 
- // 🟡 POST save operation care plan
-      saveOperationCarePlan: builder.mutation({
+        // 🟡 POST save operation care plan
+        saveOperationCarePlan: builder.mutation({
             query: (data) => ({
                 url: `/operation/save-operation-care-plan`,
                 method: 'POST',
@@ -109,7 +109,7 @@ export const operationService = createApi({
         }),
 
         //Post save operation checkList
-          savePreOperationChecklist: builder.mutation({
+        savePreOperationChecklist: builder.mutation({
             query: (body) => ({
                 url: `/operation/save-pre-operation-checklist`,
                 method: 'POST',
@@ -155,11 +155,129 @@ export const operationService = createApi({
             }),
             onQueryStarted
         }),
+        // 🟢 GET operation staff list
+        getOperationStaffList: builder.query({
+            query: (listRequest: ListRequest) => ({
+                url: `/operation/operation-staff-list?${fromListRequestToQueryParams(listRequest)}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
 
-       
+        // 🟡 POST save operation staff
+        saveOperationStaff: builder.mutation({
+            query: (body) => ({
+                url: `/operation/save-operation-staff`,
+                method: 'POST',
+                body
+            }),
+            onQueryStarted
+        }),
 
+        // 🔴 DELETE operation staff
+        deleteOperationStaff: builder.mutation({
+            query: (key: string) => ({
+                url: `/operation/delete-operation-staff?key=${key}`,
+                method: 'DELETE'
+            }),
+            onQueryStarted
+        }),
 
-       
+        // 🟢 GET operation name log
+        getOperationNameLogList: builder.query({
+            query: (listRequest: ListRequest) => ({
+                url: `/operation/operation-name-log-list?${fromListRequestToQueryParams(listRequest)}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
+
+        // 🟡 POST save operation name log
+        saveOperationNameLog: builder.mutation({
+            query: (body) => ({
+                url: `/operation/save-operation-name-log`,
+                method: 'POST',
+                body
+            }),
+            onQueryStarted
+        }),
+
+        // 🟡 POST save operation induction
+        saveOperationInduction: builder.mutation({
+            query: (body) => ({
+                url: `/operation/save-operation-induction`,
+                method: 'POST',
+                body
+            }),
+            onQueryStarted
+        }),
+
+        // 🟢 GET operation induction list
+        getOperationInductionList: builder.query({
+            query: (listRequest: ListRequest) => ({
+                url: `/operation/operation-induction-list?${fromListRequestToQueryParams(listRequest)}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
+
+        // 🟡 POST save patient arrival
+        saveOperationPatientArrival: builder.mutation({
+            query: (body) => ({
+                url: `/operation/save-operation-patient-arrival`,
+                method: 'POST',
+                body
+            }),
+            onQueryStarted
+        }),
+
+        // 🟢 GET patient arrival list
+        getOperationPatientArrivalList: builder.query({
+            query: (listRequest: ListRequest) => ({
+                url: `/operation/operation-patient-arrival-list?${fromListRequestToQueryParams(listRequest)}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
+
+        // 🟡 POST save pre-medication
+        saveOperationPreMedication: builder.mutation({
+            query: (body) => ({
+                url: `/operation/save-operation-pre-medication`,
+                method: 'POST',
+                body
+            }),
+            onQueryStarted
+        }),
+
+        // 🟢 GET pre-medication list
+        getOperationPreMedicationList: builder.query({
+            query: (listRequest: ListRequest) => ({
+                url: `/operation/operation-pre-medication-list?${fromListRequestToQueryParams(listRequest)}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
+
+        // 🟡 POST save intraoperative monitoring
+        saveIntraoperativeMonitoring: builder.mutation({
+            query: (body) => ({
+                url: `/operation/save-intraoperative-monitoring`,
+                method: 'POST',
+                body
+            }),
+            onQueryStarted
+        }),
+
+        // 🟢 GET intraoperative monitoring list
+        getIntraoperativeMonitoringList: builder.query({
+            query: (listRequest: ListRequest) => ({
+                url: `/operation/intraoperative-monitoring-list?${fromListRequestToQueryParams(listRequest)}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
+
 
     })
 });
@@ -185,5 +303,25 @@ export const {
 
     useSaveOperationPriceListMutation,
     useRemoveOperationPriceListMutation,
-    useGetRequestedOperationQuery
+    useGetRequestedOperationQuery,
+    useGetOperationStaffListQuery,
+    
+    useSaveOperationStaffMutation,
+    useDeleteOperationStaffMutation,
+
+    useGetOperationNameLogListQuery,
+    useSaveOperationNameLogMutation,
+
+    useSaveOperationInductionMutation,
+    useGetOperationInductionListQuery,
+
+    useSaveOperationPatientArrivalMutation,
+    useGetOperationPatientArrivalListQuery,
+
+    useSaveOperationPreMedicationMutation,
+    useGetOperationPreMedicationListQuery,
+
+    useSaveIntraoperativeMonitoringMutation,
+    useGetIntraoperativeMonitoringListQuery,
 } = operationService;
+
