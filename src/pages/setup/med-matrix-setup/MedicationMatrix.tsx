@@ -19,7 +19,6 @@ import { FaUndo } from "react-icons/fa";
 import DeletionConfirmationModal from "@/components/DeletionConfirmationModal";
 import { notify } from "@/utils/uiReducerActions";
 import { useAppDispatch } from "@/hooks";
-import { console } from "inspector";
 
 const MedicationMatrix = () => {
     const dispatch = useAppDispatch();
