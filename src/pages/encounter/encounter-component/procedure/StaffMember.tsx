@@ -146,7 +146,7 @@ const StaffMember = ({ procedure }) => {
                             <MyInput
                                 width="100%"
                                 menuMaxHeight='15vh'
-                                placeholder="Select Staff"
+                                placeholder="Staff"
                                 showLabel={false}
                                 selectData={userList?.object ?? []}
                                 fieldType="multyPicker"
@@ -183,7 +183,7 @@ const StaffMember = ({ procedure }) => {
         <DeletionConfirmationModal
             open={confirmDeleteOpen}
             setOpen={setConfirmDeleteOpen}
-            itemToDelete="user"
+            itemToDelete="Staff"
             actionButtonFunction={async () => {
                 try {
                     const Response=await deleteProceduresStaff(staff.key).unwrap();

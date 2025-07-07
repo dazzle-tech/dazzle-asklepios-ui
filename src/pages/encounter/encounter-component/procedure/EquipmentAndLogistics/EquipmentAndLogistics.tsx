@@ -134,7 +134,7 @@ const handleSave = async () => {
                     <MyInput
                         width="100%"
                         menuMaxHeight='15vh'
-                        placeholder="Select Staff"
+                        placeholder="Service"
                         showLabel={false}
                         selectData={serviceList?.object ?? []}
                         fieldType="multyPicker"
@@ -162,7 +162,7 @@ const handleSave = async () => {
        <DeletionConfirmationModal
                   open={confirmDeleteOpen}
                   setOpen={setConfirmDeleteOpen}
-                  itemToDelete="user"
+                  itemToDelete="Service"
                   actionButtonFunction={async () => {
                       try {
                           const Response=await deleteEquipment(ProcedureServiceEquipment.key).unwrap();
