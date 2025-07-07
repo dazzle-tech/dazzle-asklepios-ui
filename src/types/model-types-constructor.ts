@@ -1927,6 +1927,32 @@ export const newApOperationAnesthesiaCarePlan:modelTypes.ApOperationAnesthesiaCa
 	isValid:undefined,
 } 
 
+export const newApOperationAnesthesiaInductionMonitoring:modelTypes.ApOperationAnesthesiaInductionMonitoring = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	weight:0,
+	fastingDuration:0,
+	ivLineEstablished:undefined,
+	monitorsConnected:'',
+	inductionStartTime:null,
+	intubationDone:undefined,
+	tubeSize:'',
+	tubeType:'',
+	securedBy:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	encounterKey:undefined,
+	patientKey:undefined,
+	adverseEventsLkey:undefined,
+	adverseEventsNote:'',
+	actionsTaken:'',
+	surgeonNotified:undefined,
+} 
+
 export const newApOperationCoding:modelTypes.ApOperationCoding = { 
 	key:undefined,
 	operationKey:undefined,
@@ -1938,6 +1964,87 @@ export const newApOperationCoding:modelTypes.ApOperationCoding = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
+} 
+
+export const newApOperationInduction:modelTypes.ApOperationInduction = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	diagnoseKey:undefined,
+	patientCondition:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isvalid:undefined,
+} 
+
+export const newApOperationIntraoperativeMonitoring:modelTypes.ApOperationIntraoperativeMonitoring = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	period:0,
+	spo2:0,
+	bpSystolic:0,
+	bpDiastolic:0,
+	respiratoryRate:0,
+	temperature:0,
+	etco2:0,
+	fluidsGiven:0,
+	bloodGiven:0,
+	urineOutput:0,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	encounterKey:undefined,
+	patientKey:undefined,
+} 
+
+export const newApOperationNameLog:modelTypes.ApOperationNameLog = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	operationKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApOperationPatientArrival:modelTypes.ApOperationPatientArrival = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	consentLkey:undefined,
+	roomKey:undefined,
+	departmentKey:undefined,
+	surgeonKey:undefined,
+	dateTime:0,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApOperationPreMedication:modelTypes.ApOperationPreMedication = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	diagnoseKey:undefined,
+	patientCondition:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isvalid:undefined,
 } 
 
 export const newApOperationPriceList:modelTypes.ApOperationPriceList = { 
@@ -1988,6 +2095,7 @@ export const newApOperationRequests:modelTypes.ApOperationRequests = {
 	operationStatusLkey:undefined,
 	startedAt:0,
 	startedBy:'',
+	increaseByMinutes:0,
 } 
 
 export const newApOperationSetup:modelTypes.ApOperationSetup = { 
@@ -2006,6 +2114,22 @@ export const newApOperationSetup:modelTypes.ApOperationSetup = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isAppointable:undefined,
+} 
+
+export const newApOperationStaff:modelTypes.ApOperationStaff = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	userKey:undefined,
+	responsibility:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	encounterKey:undefined,
+	isPresent:undefined,
+	patientKey:undefined,
 } 
 
 export const newApOptometricExam:modelTypes.ApOptometricExam = { 
@@ -2694,6 +2818,40 @@ export const newApPreOperationChecklist:modelTypes.ApPreOperationChecklist = {
 	deletedBy:'',
 	deletedAt:undefined,
 	isValid:undefined,
+	isConfirm:undefined,
+	userKey:undefined,
+	confirmTime:0,
+} 
+
+export const newApPreOperativeTimeout:modelTypes.ApPreOperativeTimeout = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	timeoutStartTime:null,
+	initiatedBy:'',
+	patientIdentityConfirmed:undefined,
+	surgicalSiteConfirmed:undefined,
+	procedureConfirmed:undefined,
+	consentFormPresent:undefined,
+	anesthesiaMachineChecked:undefined,
+	medicationPrepared:undefined,
+	allergyRiskReviewed:undefined,
+	difficultAirwayRisk:undefined,
+	asaClassification:undefined,
+	bloodLossExpected:undefined,
+	bloodUnitsAvailable:undefined,
+	equipmentAvailable:undefined,
+	imagingDisplayed:undefined,
+	instrumentCountPrepared:undefined,
+	teamIntroductionComplete:undefined,
+	specialConcerns:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	encounterKey:undefined,
+	patientKey:undefined,
 } 
 
 export const newApPreProcedureAssessment:modelTypes.ApPreProcedureAssessment = { 
@@ -3312,6 +3470,7 @@ export const newApTransferPatient:modelTypes.ApTransferPatient = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	statusLkey:undefined,
+	cancellationReason:'',
 } 
 
 export const newApTranslation:modelTypes.ApTranslation = { 
