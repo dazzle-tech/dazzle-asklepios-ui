@@ -21,46 +21,47 @@ const PreObservation=({patient})=>{
     ...listRequest,
   });
 
-  const columns=[
-    {
-        key:"visitKey",
-        title:<Translate>Visit Date</Translate>,
-        render:(rowData:any)=>{
-            return rowData?.encounter?.plannedStartDate
-        }
-    },
-
-    {
-        key:"latestheight",
-        title:<Translate>Height</Translate>,
-        render:(rowData:any)=>{
-            return rowData?.latestheight +"cm"
-        }
-    },
-     {
-        key:"latestweight",
-        title:<Translate>Weight</Translate>,
-        render:(rowData:any)=>{
-            return rowData?.latestweight+"kg"
-        }
-    },
-       {
-        key:"latestbpSystolic",
-        title:<Translate>BP</Translate>,
-        render:(rowData:any)=>{
-            return rowData?.latestbpSystolic +"mmHg"
-        }
-    },
-    {
-        key:"latesttemperature",
-        title:<Translate>Temp</Translate>,
-        render:(rowData:any)=>{
-            return rowData?.latesttemperature +"°C"
-        }
+  const columns = [
+  {
+    key: "visitKey",
+    title: <Translate>Visit Date</Translate>,
+    render: (rowData: any) => {
+      return rowData?.encounter?.plannedStartDate || "";
     }
-    
+  },
+  {
+    key: "latestheight",
+    title: <Translate>Height</Translate>,
+    render: (rowData: any) => {
+      return rowData?.latestheight ? `${rowData.latestheight}cm` : "";
+    }
+  },
+  {
+    key: "latestweight",
+    title: <Translate>Weight</Translate>,
+    render: (rowData: any) => {
+      return rowData?.latestweight ? `${rowData.latestweight}kg` : "";
+    }
+  },
+{
+  key: "latestbp",
+  title: <Translate>BP</Translate>,
+  render: (rowData: any) => {
+    const systolic = rowData?.latestbpSystolic;
+    const diastolic = rowData?.latestbpDiastolic;
 
-  ]
+    return systolic && diastolic ? `${systolic}/${diastolic} mmHg` : "";
+  }
+},
+  {
+    key: "latesttemperature",
+    title: <Translate>Temp</Translate>,
+    render: (rowData: any) => {
+      return rowData?.latesttemperature ? `${rowData.latesttemperature}°C` : "";
+    }
+  }
+];
+
     return(<>
       <div className='medical-dashboard-main-container'>
                 <div className='medical-dashboard-container-div'>
