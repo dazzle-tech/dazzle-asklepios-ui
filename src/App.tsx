@@ -105,6 +105,7 @@ import Questionnaire from './pages/questionnaire-setup/Questionnaire';
 import InternalDrugOrder from './pages/pharmacy/internal-drug-order';
 import Operation from './pages/operation-module'
 import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
+import MedicationMatrix from './pages/setup/med-matrix-setup';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -319,6 +320,7 @@ const App = () => {
               <Route path="potintial-duplicate" element={<PotintialDuplicate />} />
               <Route path="users" element={<Users />} />
               <Route path="uom-group" element={<UOMGroup />} />
+              <Route path='med-matrix-setup' element={<MedicationMatrix />} />
               <Route path="nurse-station" element={<EncounterPreObservations />} />
               <Route path="metadata" element={<Metadata />} />
               <Route path="dvm" element={<DVM />} />
