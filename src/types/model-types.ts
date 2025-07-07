@@ -1984,6 +1984,8 @@ export interface ApOperationRequests {
 	submitedAt:number;
 	submitedBy:string;
 	operationStatusLkey:string;
+	startedAt:number;
+	startedBy:string;
 } 
 
 export interface ApOperationSetup { 

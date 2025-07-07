@@ -8,17 +8,19 @@ import { formatDateWithoutSeconds } from "@/utils";
 import { Col, Row, Tabs } from "rsuite";
 import MyTable from "@/components/MyTable";
 import RequestList from "./RequestsList";
+import OngoingOperations from "./OngoingOperations";
 
 const Operation = () => {
- 
-  return (<>
+ const [patient, setPatient] = useState({ ...newApPatient });
+     const [encounter, setEncounter] = useState({ ...newApEncounter });
+  return (<div className='container'>
+        <div className='left-box' >
       <Tabs defaultActiveKey="1" appearance="subtle">
          <Tabs.Tab eventKey="1" title="Request List">
-            <RequestList />
+            <RequestList patient={patient}  encounter={encounter} setPatient={setPatient} setEncounter={setEncounter}/>
          </Tabs.Tab>
-         <Tabs.Tab eventKey="2" title="Ongoing Operations"
-       
-         >
+         <Tabs.Tab eventKey="2" title="Ongoing Operations" >
+            <OngoingOperations patient={patient}  encounter={encounter} setPatient={setPatient} setEncounter={setEncounter}/>
           
          </Tabs.Tab>
          <Tabs.Tab eventKey="3" title="Completed Operations"
@@ -26,7 +28,11 @@ const Operation = () => {
           
          </Tabs.Tab>
 
-      </Tabs>
-  </>);
+      </Tabs></div>
+  
+    <div className='right-box' >
+              <PatientSide patient={patient} encounter={encounter} />
+          </div>
+      </div>);
 }
 export default Operation;

@@ -1985,6 +1985,8 @@ export const newApOperationRequests:modelTypes.ApOperationRequests = {
 	submitedAt:0,
 	submitedBy:'',
 	operationStatusLkey:undefined,
+	startedAt:0,
+	startedBy:'',
 } 
 
 export const newApOperationSetup:modelTypes.ApOperationSetup = { 

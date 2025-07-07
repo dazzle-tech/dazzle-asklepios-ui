@@ -1,43 +1,39 @@
-import { newApEncounter, newApOperationRequests, newApPatient } from "@/types/model-types-constructor";
-import React, { useState, useEffect } from "react";
-import PatientSide from "../encounter/encounter-main-info-section/PatienSide";
-import { useGetOperationRequestsListQuery, useSaveOperationRequestsMutation } from "@/services/operationService";
-import { initialListRequest, ListRequest } from "@/types/types";
-import Translate from "@/components/Translate";
-import { formatDateWithoutSeconds } from "@/utils";
-import { Badge, Checkbox, Col, Form, HStack, Row, Tooltip, Whisper } from "rsuite";
-import MyTable from "@/components/MyTable";
 import MyInput from "@/components/MyInput";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlay, faSquareXmark } from "@fortawesome/free-solid-svg-icons";
-import { notify } from "@/utils/uiReducerActions";
+import MyTable from "@/components/MyTable";
+import Translate from "@/components/Translate";
 import { useAppDispatch } from "@/hooks";
-
-const RequestList = ({patient ,setPatient,encounter,setEncounter}) => {
+import { useGetOperationRequestsListQuery, useSaveOperationRequestsMutation } from "@/services/operationService";
+import { newApOperationRequests } from "@/types/model-types-constructor";
+import { initialListRequest, ListRequest } from "@/types/types";
+import { formatDateWithoutSeconds } from "@/utils";
+import { notify } from "@/utils/uiReducerActions";
+import { faPlay } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import React, { useEffect, useState } from "react";
+import { Badge, Checkbox, Form, HStack, Tooltip, Whisper } from "rsuite";
+const OngoingOperations = ({patient ,setPatient,encounter,setEncounter}) => {
     const dispatch = useAppDispatch();
-    const [showCancelled, setShowCancelled] = useState(true);
-    
     const [request, setRequest] = useState<any>({ ...newApOperationRequests });
-    const [dateFilter, setDateFilter] = useState({
-        fromDate: new Date(),
-        toDate: null
-    });
-
+     const [dateFilter, setDateFilter] = useState({
+            fromDate: new Date(),
+            toDate: null
+        });
     const [save, saveMutation] = useSaveOperationRequestsMutation();
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
-      
+
         filters: [
 
-            {
+             {
                 fieldName: "operation_status_lkey",
-                operator: "match",
-                value:showCancelled?"3621653475992516": "3621690096636149"
+                operator:  "match",
+                value:"3621681578985655"
             }
 
 
         ],
     });
+
     const isSelected = rowData => {
         if (rowData && request && rowData.key === request.key) {
             return 'selected-row';
@@ -47,81 +43,49 @@ const RequestList = ({patient ,setPatient,encounter,setEncounter}) => {
     //operation Api's
     const { data: operationrequestList, refetch, isLoading } = useGetOperationRequestsListQuery(listRequest);
 
-    useEffect(() => {
+   useEffect(() => {
 
         setPatient(request?.patient);
         setEncounter(request?.encounter)
 
     }, [request]);
 
-
-    useEffect(() => {
-        let updatedFilters = [...listRequest.filters];
-
-        if (dateFilter.fromDate && dateFilter.toDate) {
-            dateFilter.fromDate.setHours(0, 0, 0, 0);
-            dateFilter.toDate.setHours(23, 59, 59, 999);
-
-            updatedFilters = addOrUpdateFilter(updatedFilters, {
-                fieldName: 'submited_at',
-                operator: 'between',
-                value: dateFilter.fromDate.getTime() + '-' + dateFilter.toDate.getTime()
-            });
-        } else if (dateFilter.fromDate) {
-            dateFilter.fromDate.setHours(0, 0, 0, 0);
-
-            updatedFilters = addOrUpdateFilter(updatedFilters, {
-                fieldName: 'submited_at',
-                operator: 'gte',
-                value: dateFilter.fromDate.getTime()
-            });
-        } else if (dateFilter.toDate) {
-            dateFilter.toDate.setHours(23, 59, 59, 999);
-
-            updatedFilters = addOrUpdateFilter(updatedFilters, {
-                fieldName: 'submited_at',
-                operator: 'lte',
-                value: dateFilter.toDate.getTime()
-            });
-        }
-
-        setListRequest(prev => ({
-            ...prev,
-            filters: updatedFilters
-        }));
-    }, [dateFilter]);
-
-    useEffect(() => {
-        setListRequest(prev => {
-            let updatedFilters = [...prev.filters];
-
-            updatedFilters = addOrUpdateFilter(updatedFilters,
-                {
-                fieldName: "operation_status_lkey",
-                operator:  "match",
-                value:showCancelled?"3621653475992516": "3621690096636149"
-            });
-
-            return {
-                ...prev,
-                filters: updatedFilters
-            };
-        });
-    }, [showCancelled]);
-
-    // Update the listRequest filters when record changes
-const addOrUpdateFilter = (filters, newFilter) => {
-    const index = filters.findIndex(f => f.fieldName === newFilter.fieldName);
-    if (index > -1) {
-        // Replace the existing filter
-        return filters.map((f, i) => i === index ? newFilter : f);
-    } else {
-        // Add new filter
-        return [...filters, newFilter];
-    }
-};
-
-    //table 
+       useEffect(() => {
+           let updatedFilters = [...listRequest.filters];
+   
+           if (dateFilter.fromDate && dateFilter.toDate) {
+               dateFilter.fromDate.setHours(0, 0, 0, 0);
+               dateFilter.toDate.setHours(23, 59, 59, 999);
+   
+               updatedFilters = addOrUpdateFilter(updatedFilters, {
+                   fieldName: 'started_at',
+                   operator: 'between',
+                   value: dateFilter.fromDate.getTime() + '-' + dateFilter.toDate.getTime()
+               });
+           } else if (dateFilter.fromDate) {
+               dateFilter.fromDate.setHours(0, 0, 0, 0);
+   
+               updatedFilters = addOrUpdateFilter(updatedFilters, {
+                   fieldName: 'started_at',
+                   operator: 'gte',
+                   value: dateFilter.fromDate.getTime()
+               });
+           } else if (dateFilter.toDate) {
+               dateFilter.toDate.setHours(23, 59, 59, 999);
+   
+               updatedFilters = addOrUpdateFilter(updatedFilters, {
+                   fieldName: 'started_at',
+                   operator: 'lte',
+                   value: dateFilter.toDate.getTime()
+               });
+           }
+   
+           setListRequest(prev => ({
+               ...prev,
+               filters: updatedFilters
+           }));
+       }, [dateFilter]);
+     //table 
     const columns = [
         {
             key: "patientname",
@@ -216,11 +180,11 @@ const addOrUpdateFilter = (filters, newFilter) => {
         },
         {
             key: "actions",
-            title: <Translate >Actions</Translate>,
+            title: <Translate >Stage</Translate>,
             render: (rowData: any) => {
                 const isDisabled =request?.key!==rowData.key;
                 return <HStack spacing={10}>
-                    <Whisper
+                    {/* <Whisper
                         placement="top"
                         trigger="hover"
                         speaker={<Tooltip>Start</Tooltip>}
@@ -230,7 +194,7 @@ const addOrUpdateFilter = (filters, newFilter) => {
                          onClick={isDisabled?undefined:async () => {
                             try {
                                 setRequest(rowData);
-                                await save({ ...request, operationStatusLkey: '3621681578985655',startedAt:Date.now() });
+                                await save({ ...request, operationStatusLkey: '3621681578985655' });
                                 dispatch(notify({ msg: 'Started Successfully', sev: "success" }));
                                 refetch();
                             }
@@ -238,30 +202,8 @@ const addOrUpdateFilter = (filters, newFilter) => {
                                 dispatch(notify({ msg: 'Faild', sev: "error" }));
                             }
                         }} />
-                    </Whisper>
+                    </Whisper> */}
 
-                    <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>Cancel</Tooltip>}
-                    >
-                        <FontAwesomeIcon
-                            style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
-                            icon={faSquareXmark} onClick={
-                                isDisabled
-                                    ? undefined
-                                    : async () => {
-                                        try {
-                                            setRequest(rowData);
-                                            await save({ ...request, operationStatusLkey: '3621690096636149' });
-                                            dispatch(notify({ msg: 'Cancelled Successfully', sev: "success" }));
-                                            refetch();
-                                        } catch (error) {
-                                            dispatch(notify({ msg: 'Failed', sev: "error" }));
-                                        }
-                                    }
-                            } />
-                    </Whisper>
 
                 </HStack>;
             }
@@ -307,59 +249,51 @@ const addOrUpdateFilter = (filters, newFilter) => {
             }
         },
     ];
-
+  const addOrUpdateFilter = (filters, newFilter) => {
+    const index = filters.findIndex(f => f.fieldName === newFilter.fieldName);
+    if (index > -1) {
+        // Replace the existing filter
+        return filters.map((f, i) => i === index ? newFilter : f);
+    } else {
+        // Add new filter
+        return [...filters, newFilter];
+    }
+};
     const filters = () => (
-        <Form layout="inline" fluid className="container-of-filter-fields-department">
-            <MyInput
-
-                fieldType="date"
-                fieldLabel="From Date"
-                fieldName="fromDate"
-                record={dateFilter}
-                setRecord={setDateFilter}
-                showLabel={false}
-            />
-            <MyInput
-
-                fieldType="date"
-                fieldLabel="To Date"
-                fieldName="toDate"
-                record={dateFilter}
-                setRecord={setDateFilter}
-                showLabel={false}
-            />
-            <div className='bt-div'>
-
-                <Checkbox
-                    checked={!showCancelled}
-                    onChange={() => {
-                        setShowCancelled(!showCancelled);
-
-                    }}
-                >
-                    Show Cancelled
-                </Checkbox>
-
-            </div>
-        </Form>
-    );
-    return (
-
-            <Row>
-                <Col md={24}>
-                    <MyTable
-                        filters={filters()}
-                        columns={columns}
-                        data={operationrequestList?.object || []}
-                        rowClassName={isSelected}
-                        loading={isLoading}
-                        onRowClick={rowData => {
-                            setRequest(rowData)
-
-                        }}
-                    />
-                </Col>
-            </Row>
-      );
+            <Form layout="inline" fluid className="container-of-filter-fields-department">
+                <MyInput
+    
+                    fieldType="date"
+                    fieldLabel="From Date"
+                    fieldName="fromDate"
+                    record={dateFilter}
+                    setRecord={setDateFilter}
+                    showLabel={false}
+                />
+                <MyInput
+    
+                    fieldType="date"
+                    fieldLabel="To Date"
+                    fieldName="toDate"
+                    record={dateFilter}
+                    setRecord={setDateFilter}
+                    showLabel={false}
+                />
+               
+            </Form>
+        );
+    return (<>
+     <MyTable
+                            filters={filters()}
+                            columns={columns}
+                            data={operationrequestList?.object || []}
+                            rowClassName={isSelected}
+                            loading={isLoading}
+                            onRowClick={rowData => {
+                                setRequest(rowData)
+    
+                            }}
+                        />
+    </>);
 }
-export default RequestList;
+export default OngoingOperations;
