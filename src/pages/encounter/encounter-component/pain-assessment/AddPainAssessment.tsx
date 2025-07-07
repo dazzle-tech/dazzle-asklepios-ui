@@ -36,10 +36,10 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
     const { data: adversLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ADVERS_EFFECTS');
     // Handle Save Pain Assessment
     const handleSave = async () => {
-        const tagAggravating = joinValuesFromArray(tags);
-        const tagRelieving = joinValuesFromArray(relievingFactorsTag);
-        //  TODO convert key to code
         try {
+            const tagAggravating = joinValuesFromArray(tags);
+            const tagRelieving = joinValuesFromArray(relievingFactorsTag);
+            //  TODO convert key to code
             if (painAssessment.key === undefined) {
                 await savePainAssessment({
                     ...painAssessment,
@@ -52,6 +52,8 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
                 }).unwrap();
 
                 dispatch(notify({ msg: 'Pain Assessment Added Successfully', sev: 'success' }));
+                setTags([]);
+                setRelievingFactorsTag([]);
                 //TODO convert key to code
                 setPainAssessment({ ...painAssessment, statusLkey: "9766169155908512" });
                 setOpen(false);
@@ -60,10 +62,15 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
                     ...painAssessment,
                     patientKey: patient.key,
                     encounterKey: encounter.key,
+                    aggravatingFactors: tagAggravating,
+                    relievingFactors: tagRelieving,
                     updatedBy: authSlice.user.key
                 }).unwrap();
                 dispatch(notify({ msg: 'Pain Assessment Updated Successfully', sev: 'success' }));
                 setOpen(false);
+                handleClearField();
+                setTags([]);
+                setRelievingFactorsTag([]);
             }
             await refetch();
             handleClearField();
@@ -83,13 +90,18 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
             onsetLkey: null,
             painScoreLkey: null,
             durationUnitLkey: null,
-            statusLkey: null
+            statusLkey: null,
+            aggravatingFactors: "",
+            relievingFactors: "",
+            impactOnFunction: false,
         });
+        setAssociatedSymptoms({ associatedSymptomsLkey: null });
+        setTags([]);
+        setRelievingFactorsTag([]);
     };
     const joinValuesFromArray = (values) => {
         return values?.filter(Boolean).join(', ');
     };
-
     // Effects
     useEffect(() => {
         if (associatedSymptoms.associatedSymptomsLkey != null) {
@@ -154,7 +166,11 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
             setIsDisabledField(false);
         }
     }, [isEncounterStatusClosed, isEncounterPainAssessmentStatusClose]);
-    console.log(edit);
+    useEffect(() => {
+        if (!open) {
+            handleClearField();
+        }
+    }, [open]);
     // Modal Content 
     const content = (
         <div className={clsx('', { 'disabled-panel': edit })}>
@@ -217,44 +233,44 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
                     searchable={false}
                 />
                 <Form fluid layout='inline' disabled={edit}>
-                     <MyInput
-                    column
-                    width={130}
-                    fieldLabel="Pain Score"
-                    fieldType="select"
-                    fieldName="painScoreLkey"
-                    selectData={painScoreLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={painAssessment}
-                    setRecord={setPainAssessment}
-                    disabled={isDisabledField}
-                    searchable={false}
-                />
-                <MyInput
-                    column
-                    width={130}
-                    fieldType="number"
-                    fieldLabel="Duration"
-                    fieldName="duration"
-                    record={painAssessment}
-                    setRecord={setPainAssessment}
-                    disabled={isDisabledField}
-                />
-                <MyInput
-                    column
-                    width={130}
-                    fieldLabel="Unit"
-                    fieldType="select"
-                    fieldName="durationUnitLkey"
-                    selectData={unitLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record={painAssessment}
-                    setRecord={setPainAssessment}
-                    disabled={isDisabledField}
-                    searchable={false}
-                />
+                    <MyInput
+                        column
+                        width={130}
+                        fieldLabel="Pain Score"
+                        fieldType="select"
+                        fieldName="painScoreLkey"
+                        selectData={painScoreLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={painAssessment}
+                        setRecord={setPainAssessment}
+                        disabled={isDisabledField}
+                        searchable={false}
+                    />
+                    <MyInput
+                        column
+                        width={130}
+                        fieldType="number"
+                        fieldLabel="Duration"
+                        fieldName="duration"
+                        record={painAssessment}
+                        setRecord={setPainAssessment}
+                        disabled={isDisabledField}
+                    />
+                    <MyInput
+                        column
+                        width={130}
+                        fieldLabel="Unit"
+                        fieldType="select"
+                        fieldName="durationUnitLkey"
+                        selectData={unitLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record={painAssessment}
+                        setRecord={setPainAssessment}
+                        disabled={isDisabledField}
+                        searchable={false}
+                    />
                 </Form>
                 <MyTagInput tags={tags} setTags={setTags} labelText="Aggravating Factors" />
                 <MyTagInput tags={relievingFactorsTag} setTags={setRelievingFactorsTag} labelText="Relieving Factors" />
