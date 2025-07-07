@@ -160,7 +160,7 @@ const addOrUpdateFilter = (filters, newFilter) => {
         },
         {
             key: "diagnosisKey",
-            title: <Translate>Diagnosis</Translate>,
+            title: <Translate>Pre-op Diagnosis</Translate>,
             render: (rowData: any) => {
                 return rowData?.diagnosis?.icdCode;
             }
@@ -200,13 +200,7 @@ const addOrUpdateFilter = (filters, newFilter) => {
                 return rowData.priorityLvalue ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey;;
             }
         },
-        {
-            key: "diagnosisKey",
-            title: <Translate>Pre-op Diagnosis</Translate>,
-            render: (rowData: any) => {
-                return null;
-            }
-        },
+      
         {
             key: "operationStatusLkey",
             title: <Translate>Status</Translate>,

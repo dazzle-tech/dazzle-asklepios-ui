@@ -124,7 +124,7 @@ const OngoingOperations = ({patient ,setPatient,encounter,setEncounter}) => {
         },
         {
             key: "diagnosisKey",
-            title: <Translate>Diagnosis</Translate>,
+            title: <Translate>Pre-op Diagnosis</Translate>,
             render: (rowData: any) => {
                 return rowData?.diagnosis?.icdCode;
             }
@@ -164,20 +164,8 @@ const OngoingOperations = ({patient ,setPatient,encounter,setEncounter}) => {
                 return rowData.priorityLvalue ? rowData.priorityLvalue?.lovDisplayVale : rowData.priorityLkey;;
             }
         },
-        {
-            key: "diagnosisKey",
-            title: <Translate>Pre-op Diagnosis</Translate>,
-            render: (rowData: any) => {
-                return null;
-            }
-        },
-        {
-            key: "operationStatusLkey",
-            title: <Translate>Status</Translate>,
-            render: (rowData: any) => {
-                return rowData.operationStatusLvalue ? rowData.operationStatusLvalue?.lovDisplayVale : rowData.operationStatusLkey;
-            }
-        },
+       
+       
         {
             key: "actions",
             title: <Translate >Stage</Translate>,
@@ -208,7 +196,13 @@ const OngoingOperations = ({patient ,setPatient,encounter,setEncounter}) => {
                 </HStack>;
             }
         },
-
+ {
+            key: "operationStatusLkey",
+            title: <Translate>Status</Translate>,
+            render: (rowData: any) => {
+                return rowData.operationStatusLvalue ? rowData.operationStatusLvalue?.lovDisplayVale : rowData.operationStatusLkey;
+            }
+        },
         {
             key: "",
             title: <Translate>Created At/By</Translate>,
