@@ -216,9 +216,10 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
                     disabled={isDisabledField}
                     searchable={false}
                 />
-                <MyInput
+                <Form fluid layout='inline' disabled={edit}>
+                     <MyInput
                     column
-                    width={200}
+                    width={130}
                     fieldLabel="Pain Score"
                     fieldType="select"
                     fieldName="painScoreLkey"
@@ -232,7 +233,7 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
                 />
                 <MyInput
                     column
-                    width={200}
+                    width={130}
                     fieldType="number"
                     fieldLabel="Duration"
                     fieldName="duration"
@@ -242,7 +243,7 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
                 />
                 <MyInput
                     column
-                    width={200}
+                    width={130}
                     fieldLabel="Unit"
                     fieldType="select"
                     fieldName="durationUnitLkey"
@@ -254,6 +255,7 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
                     disabled={isDisabledField}
                     searchable={false}
                 />
+                </Form>
                 <MyTagInput tags={tags} setTags={setTags} labelText="Aggravating Factors" />
                 <MyTagInput tags={relievingFactorsTag} setTags={setRelievingFactorsTag} labelText="Relieving Factors" />
                 <MyInput
