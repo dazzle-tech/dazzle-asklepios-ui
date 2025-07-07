@@ -7,75 +7,72 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 const FullViewTable = ({ open, setOpen, list }) => {
-    const columns = [
-        {
-            key: "visitKey",
-            title: <Translate>Visit Date</Translate>,
-            render: (rowData: any) => {
-                return rowData?.encounter?.plannedStartDate
-            }
-        },
-        {
-            key: "platestbpSystolic",
-            title: <Translate>Bp Systolic </Translate>,
-            render: (rowData: any) => {
-                return rowData?.platestbpSystolic + "mmHg"
-            }
-        },
-        {
-            key: "latestheartrate",
-            title: <Translate>Pulse</Translate>,
-            render: (rowData: any) => {
-                return rowData?.latestheartrate+ "bpm"
-            }
-        },
-        {
-            key: "latestrespiratoryrate",
-            title: <Translate>R.R</Translate>,
-            render: (rowData: any) => {
-                return rowData?.latestrespiratoryrate +"bpm"
-            }
-        },
-        {
-            key: "latestoxygensaturation",
-            title: <Translate>SpO2</Translate>,
-            render: (rowData: any) => {
-                return rowData?.latestoxygensaturation+ "%"
-            }
-        }
-        ,
-        {
-            key: "latestnotes",
-            title: <Translate>Note</Translate>,
-            render: (rowData: any) => {
-                return rowData?.latestnotes
-            }
-        },
-        {
-            key: "latestheadcircumference",
-            title: <Translate>Head circumference</Translate>,
-            render: (rowData: any) => {
-                return rowData?.latestheadcircumference+ "cm"
-            }
-        }
-        ,
-        {
-            key: "latestpainlevelLkey",
-            title: <Translate>Pain Degree</Translate>,
-            render: (rowData: any) => {
-                return rowData?.latestpainlevelLvalue?.lovDisplayVale
-            }
-        },
-        {
-            key: "latestpaindescription",
-            title: <Translate>Pain Description</Translate>,
-            render: (rowData: any) => {
-                return rowData?.latestpaindescription
-            }
-        }
+  const columns = [
+  {
+    key: "visitKey",
+    title: <Translate>Visit Date</Translate>,
+    render: (rowData: any) => {
+      return rowData?.encounter?.plannedStartDate || "";
+    }
+  },
+  {
+    key: "platestbpSystolic",
+    title: <Translate>Bp Systolic</Translate>,
+    render: (rowData: any) => {
+      return rowData?.platestbpSystolic ? `${rowData.platestbpSystolic} mmHg` : "";
+    }
+  },
+  {
+    key: "latestheartrate",
+    title: <Translate>Pulse</Translate>,
+    render: (rowData: any) => {
+      return rowData?.latestheartrate ? `${rowData.latestheartrate} bpm` : "";
+    }
+  },
+  {
+    key: "latestrespiratoryrate",
+    title: <Translate>R.R</Translate>,
+    render: (rowData: any) => {
+      return rowData?.latestrespiratoryrate ? `${rowData.latestrespiratoryrate} bpm` : "";
+    }
+  },
+  {
+    key: "latestoxygensaturation",
+    title: <Translate>SpO2</Translate>,
+    render: (rowData: any) => {
+      return rowData?.latestoxygensaturation ? `${rowData.latestoxygensaturation}%` : "";
+    }
+  },
+  {
+    key: "latestnotes",
+    title: <Translate>Note</Translate>,
+    render: (rowData: any) => {
+      return rowData?.latestnotes || "";
+    }
+  },
+  {
+    key: "latestheadcircumference",
+    title: <Translate>Head circumference</Translate>,
+    render: (rowData: any) => {
+      return rowData?.latestheadcircumference ? `${rowData.latestheadcircumference} cm` : "";
+    }
+  },
+  {
+    key: "latestpainlevelLkey",
+    title: <Translate>Pain Degree</Translate>,
+    render: (rowData: any) => {
+      return rowData?.latestpainlevelLvalue?.lovDisplayVale || "";
+    }
+  },
+  {
+    key: "latestpaindescription",
+    title: <Translate>Pain Description</Translate>,
+    render: (rowData: any) => {
+      return rowData?.latestpaindescription || "";
+    }
+  }
+];
 
-
-    ]
     return (
         <MyModal
             open={open}
