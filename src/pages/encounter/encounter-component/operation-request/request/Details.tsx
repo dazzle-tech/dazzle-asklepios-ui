@@ -197,10 +197,12 @@ const Details = ({ open, setOpen, user, request, setRequest, refetch, encounter,
                                     fieldName="departmentKey"
                                     record={request}
                                     setRecord={setRequest}
-                                /></Col>
+                                />
+                                </Col>
                         </Row>
                         <Row className="rows-gap">
-                            <Col md={12}> <MyInput
+                            <Col md={12}>
+                             <MyInput
                                 fieldType="select"
                                 selectData={bodyPartsLov?.object ?? []}
                                 selectDataLabel="lovDisplayVale"
@@ -209,7 +211,8 @@ const Details = ({ open, setOpen, user, request, setRequest, refetch, encounter,
                                 fieldName="bodyPartLkey"
                                 record={request}
                                 setRecord={setRequest}
-                            /></Col>
+                            />
+                            </Col>
                             <Col md={12}>
                                 <MyInput
                                     fieldType="select"

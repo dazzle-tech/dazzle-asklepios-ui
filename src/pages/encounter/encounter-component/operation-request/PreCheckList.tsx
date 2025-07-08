@@ -1,17 +1,28 @@
 import { useAppDispatch } from "@/hooks";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Col, Divider, Form, Row, Text } from "rsuite";
 import MyInput from "@/components/MyInput";
 import { newApPreOperationChecklist } from "@/types/model-types-constructor";
-import { useSavePreOperationChecklistMutation } from "@/services/operationService";
+import { useGetLatestChecklistByOperationKeyQuery, useSavePreOperationChecklistMutation } from "@/services/operationService";
 import { notify } from "@/utils/uiReducerActions";
 import MyButton from "@/components/MyButton/MyButton";
 
 const PreCheckList = ({ operation, patient, encounter, user }) => {
     const dispatch = useAppDispatch();
     const [checkList, setCheckList] = useState({ ...newApPreOperationChecklist });
-    
+    const{data:checklists}=useGetLatestChecklistByOperationKeyQuery(operation?.key);
+   
     const [save] = useSavePreOperationChecklistMutation();
+
+
+    useEffect(()=>{
+     if(checklists?.object?.key !==null){
+        setCheckList(checklists?.object);
+     }
+     else{
+        setCheckList({ ...newApPreOperationChecklist })
+     }
+    },[checklists])
     const handelSave = async () => {
         try {
             await save({ ...checkList, operationKey: operation?.object?.key, encounterKey: encounter?.key, patientKey: patient?.key, createdBy: user.key });
@@ -21,13 +32,14 @@ const PreCheckList = ({ operation, patient, encounter, user }) => {
             dispatch(notify({ msg: "Saved Faild", sev: "error" }));
 
         }
-    }
+    } 
     const renderCheckboxes = (fields: string[]) => (
         <Row gutter={10}>
             {fields.map((field) => (
                 <Col xs={24} sm={12} key={field} className="rows-gap">
                     <MyInput
-                        fieldType="checkbox"
+                        showLabel={false}
+                        fieldType="check"
                         fieldName={field}
                         width="100%"
                         record={checkList}

@@ -66,6 +66,14 @@ export const operationService = createApi({
             })
         }),
 
+        // 🟢 GET latest checklist by operation key
+        getLatestChecklistByOperationKey: builder.query({
+            query: (operationKey: string) => ({
+                url: `/operation/get-checklist-list-by-operation-id?operation_key=${operationKey}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
 
 
         // 🟡 POST save operation care plan
@@ -292,6 +300,7 @@ export const {
     useGetOperationPriceListListQuery,
     useGetOperationCarePlanQuery,
     useGetPreOperationChecklistListQuery,
+    useGetLatestChecklistByOperationKeyQuery,
 
     useSaveOperationMutation,
     useSavePreOperationChecklistMutation,
@@ -305,7 +314,7 @@ export const {
     useRemoveOperationPriceListMutation,
     useGetRequestedOperationQuery,
     useGetOperationStaffListQuery,
-    
+
     useSaveOperationStaffMutation,
     useDeleteOperationStaffMutation,
 

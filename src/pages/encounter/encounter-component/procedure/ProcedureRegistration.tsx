@@ -4,16 +4,19 @@ import MyTagInput from "@/components/MyTagInput/MyTagInput";
 import Translate from "@/components/Translate";
 import { useAppDispatch } from "@/hooks";
 import {
-    useSaveProceduresRegistrationMutation
+    useDeleteProceduresStaffMutation,
+    useGetProceduresStaffQuery,
+    useSaveProceduresRegistrationMutation,
+    useSaveProceduresStaffMutation
 } from '@/services/procedureService';
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetPractitionersQuery, useGetUserRecordQuery, useGetUsersQuery } from "@/services/setupService";
-import { newApProcedureRegistration } from "@/types/model-types-constructor";
+import { newApProcedureRegistration, newApProcedureStaff } from "@/types/model-types-constructor";
 import { initialListRequest, ListRequest } from "@/types/types";
 import { notify } from "@/utils/uiReducerActions";
 import React, { useEffect, useState } from "react";
 import { Col, Form, Panel, Row } from "rsuite";
 import StaffMember from "./StaffMember";
-const ProcedureRegistration = ({ procedure, user,setActiveTab }) => {
+const ProcedureRegistration = ({ procedure, user, setActiveTab }) => {
     const dispatch = useAppDispatch();
 
     const { data: proUser } = useGetUserRecordQuery(procedure?.createdBy, { skip: !procedure?.createdBy });
@@ -43,9 +46,9 @@ const ProcedureRegistration = ({ procedure, user,setActiveTab }) => {
             dispatch(notify({ msg: 'Saved  Faild', sev: "error" }));
         }
     }
-    const handleClear=()=>{
-        
-     }
+    const handleClear = () => {
+
+    }
     return (<>
         <Panel>
             <Form fluid >
@@ -110,16 +113,23 @@ const ProcedureRegistration = ({ procedure, user,setActiveTab }) => {
 
             </Form>
         </Panel>
-        <StaffMember procedure={procedure} />
+        <StaffMember
+            parentKey={procedure?.key}
+            label="Procedure Staff"
+            getQuery={useGetProceduresStaffQuery}
+            saveMutation={useSaveProceduresStaffMutation}
+            deleteMutation={useDeleteProceduresStaffMutation}
+            newStaffObj={newApProcedureStaff}
+            filterFieldName="procedureKey" />
         <Panel>
             <div className='bt-div'>
-                
+
                 <div className="bt-right">
                     <MyButton onClick={() => setActiveTab("2")}>Complete and Next</MyButton>
                 </div>
             </div>
         </Panel>
-        
+
 
     </>);
 }
