@@ -38,6 +38,7 @@ const LovValues = ({ lov, goBack, width }) => {
   });
   // Fetch lov values list response
   const { data: lovValueListResponse, isFetching } = useGetLovValuesQuery(listRequest);
+  console.log("Lov v",lovValueListResponse?.object)
   // Save lov value
   const [saveLovValue, saveLovValueMutation] = useSaveLovValueMutation();
   // Pagination values

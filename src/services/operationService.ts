@@ -286,6 +286,25 @@ export const operationService = createApi({
             onQueryStarted
         }),
 
+             // 🟡 POST save Pre Operative Timeout
+        savePreOperativeTimeout: builder.mutation({
+            query: (body) => ({
+                url: `/operation/save-pre-operative-timeout`,
+                method: 'POST',
+                body
+            }),
+            onQueryStarted
+        }),
+
+        // 🟢 GET Pre Operative Timeout
+        getPreOperativeTimeout: builder.query({
+            query: (listRequest: ListRequest) => ({
+                url: `/operation/pre-operative-timeout-list?${fromListRequestToQueryParams(listRequest)}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
+
 
     })
 });
@@ -332,5 +351,8 @@ export const {
 
     useSaveIntraoperativeMonitoringMutation,
     useGetIntraoperativeMonitoringListQuery,
+
+    useGetPreOperativeTimeoutQuery,
+    useSavePreOperativeTimeoutMutation
 } = operationService;
 
