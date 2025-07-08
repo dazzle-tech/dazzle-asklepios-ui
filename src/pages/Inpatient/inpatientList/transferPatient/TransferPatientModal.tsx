@@ -268,11 +268,12 @@ const TransferPatientModal = ({ open, setOpen, localEncounter, refetchInpatientL
                     patientKey: localPatient.key,
                     encounterKey: encounter.key,
                     fromInpatientDepartmentKey: encounter.resourceObject?.key,
+                     statusLkey: "91063195286200" 
                 }).unwrap();
 
                 dispatch(notify({ msg: 'Transfer Patient Successfully', sev: 'success' }));
                 //TODO convert key to code
-                setTransferPatient({ ...newApTransferPatient });
+                setTransferPatient({ ...newApTransferPatient, statusLkey: "91063195286200"  });
                 setOpen(false);
             }
             await refetchInpatientList();

@@ -3470,6 +3470,12 @@ export interface ApTransferPatient {
 	deletedAt:number;
 	statusLkey:string;
 	cancellationReason:string;
+	fromRoom:string;
+	toRoom:string;
+	fromBed:string;
+	toBed:string;
+	confirmedBy:string;
+	confirmedAt:string;
 } 
 
 export interface ApTranslation { 
