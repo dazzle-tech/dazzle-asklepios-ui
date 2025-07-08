@@ -15,7 +15,7 @@ jobs:
 
       - name: Log in to DigitalOcean Container Registry
         env:
-          DOCKER_USERNAME: "alaa.banifadel@curamet.se"
+          DOCKER_USERNAME: "doctoken"
           DOCKER_PASSWORD: ${{ secrets.DOCR_ACCESS_TOKEN }}
         run: |
           echo "$DOCKER_PASSWORD" | docker login ${{ secrets.DOCR_REGISTRY_URL }} -u "$DOCKER_USERNAME" --password-stdin
