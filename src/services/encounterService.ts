@@ -695,6 +695,31 @@ export const encounterService = createApi({
         return response.object;
       }
     }), 
+  getTransferPatientsList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/transfer-requests-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+      saveApprovalTransfer: builder.mutation({
+      query: (transferPatient: ApTransferPatient) => ({
+        url: `/encounter/approval-transfer-patient`,
+        method: 'POST',
+        body: transferPatient
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }), 
+      getTransferTransactions: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/transfer-transactions-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 });
 
@@ -769,5 +794,8 @@ export const {
   useSaveFunctionalAssessmentMutation,
   useGetMedicationReconciliationQuery,
   useSaveMedicationReconciliationMutation,
-  useSaveTransferPatientMutation
+  useSaveTransferPatientMutation,
+  useGetTransferPatientsListQuery,
+  useSaveApprovalTransferMutation,
+  useGetTransferTransactionsQuery
 } = encounterService;

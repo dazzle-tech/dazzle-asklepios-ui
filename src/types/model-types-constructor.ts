@@ -3471,6 +3471,13 @@ export const newApTransferPatient:modelTypes.ApTransferPatient = {
 	deletedAt:undefined,
 	statusLkey:undefined,
 	cancellationReason:'',
+	fromRoom:'',
+	toRoom:'',
+	fromBed:'',
+	toBed:'',
+	confirmedBy:'',
+	confirmedAt:'',
+
 } 
 
 export const newApTranslation:modelTypes.ApTranslation = { 
