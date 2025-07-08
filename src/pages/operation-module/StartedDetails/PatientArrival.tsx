@@ -23,7 +23,7 @@ const PatientArrival = ({ operation, patient, encounter, user }) => {
     const { data: checklists, refetch } = useGetLatestChecklistByOperationKeyQuery(operation?.key);
     const { data: ConsentFormLovQueryResponse } = useGetLovValuesByCodeQuery('CONSENT_FORM');
     const { data: practtionerList } = useGetPractitionersQuery({ ...initialListRequest });
-    console.log("Pra",practtionerList?.object)
+  
     const { data: roomsList } = useGetRoomListQuery({ ...initialListRequest });
     const { data: userList } = useGetUsersQuery({
         ...initialListRequest,
@@ -196,7 +196,8 @@ const PatientArrival = ({ operation, patient, encounter, user }) => {
                                     setRecord={setArrival}
                                 /></Col>
                         </Row>
-                    </div></Col>
+                    </div>
+                    </Col>
 
             </Row>
             <Row>

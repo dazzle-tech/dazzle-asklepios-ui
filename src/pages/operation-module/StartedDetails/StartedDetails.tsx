@@ -10,6 +10,7 @@ import React, { useState } from "react";
 import { Col, Divider, Form, Row, Tabs } from "rsuite";
 import PatientArrival from "./PatientArrival";
 import { useAppSelector } from "@/hooks";
+import OperativeTimeOut from "./OperativeTimeOut";
 const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOperation }) => {
        const authSlice = useAppSelector(state => state.auth);
     const [save, saveMutation] = useSaveOperationRequestsMutation();
@@ -107,7 +108,7 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                         </Tabs.Tab>
 
                         <Tabs.Tab eventKey="2" title="Pre-operation Assessment" >
-                            2
+                            <OperativeTimeOut/>
                         </Tabs.Tab>
 
                         <Tabs.Tab eventKey="3" title="operation Performing" >
