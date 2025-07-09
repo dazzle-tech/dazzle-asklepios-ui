@@ -2011,6 +2011,7 @@ export const newApOperationAntimicrobialProphylaxisGiven:modelTypes.ApOperationA
 	dose:0,
 	activeIngredientKey:undefined,
 	unitLkey:undefined,
+
 } 
 
 export const newApOperationCoding:modelTypes.ApOperationCoding = { 
@@ -2039,6 +2040,7 @@ export const newApOperationInduction:modelTypes.ApOperationInduction = {
 	dose:0,
 	unitLkey:undefined,
 	activeIngredientKey:0,
+
 } 
 
 export const newApOperationIntraoperativeEvents:modelTypes.ApOperationIntraoperativeEvents = { 

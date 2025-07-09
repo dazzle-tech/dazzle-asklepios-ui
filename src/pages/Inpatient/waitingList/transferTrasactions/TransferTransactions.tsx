@@ -115,14 +115,13 @@ const TransferTransactions = () => {
             render: rowData => rowData?.toBedObject?.name
         },
         {
-            key: 'confirmededAt',
+            key: 'confirmedAt',
             title: 'Confirmed By/At',
             expandable: true,
-            render: (row: any) =>
-                row?.confirmedAt ? (
+            render: rowData=> rowData?.confirmedAt ? (
                     <>
                         <br />
-                        <span className="date-table-style">{formatDateWithoutSeconds(row?.confirmedAt)}</span>
+                        <span className="date-table-style">{formatDateWithoutSeconds(rowData.confirmedAt)}</span>
                     </>
                 ) : ' '
         },
@@ -139,7 +138,6 @@ const TransferTransactions = () => {
                 ) : ' '
         },
     ];
-
     // Pagination and sorting setup
     const pageIndex = listRequest.pageNumber - 1;
     const rowsPerPage = listRequest.pageSize;
@@ -278,7 +276,6 @@ const TransferTransactions = () => {
             dispatch(hideSystemLoader());
         };
     }, [isLoading, isFetching, dispatch]);
-
     return (
         <Panel>
             <MyTable

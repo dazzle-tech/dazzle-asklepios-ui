@@ -1,4 +1,4 @@
-import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient } from './../types/model-types';
+import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -630,7 +630,7 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
-     getGeneralAssessments: builder.query({
+    getGeneralAssessments: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/encounter/general-assessment-list?${fromListRequestToQueryParams(listRequest)}`
       }),
@@ -648,7 +648,7 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
-     getFunctionalAssessments: builder.query({
+    getFunctionalAssessments: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/encounter/functional-assessment-list?${fromListRequestToQueryParams(listRequest)}`
       }),
@@ -683,8 +683,8 @@ export const encounterService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       }
-    }), 
-     saveTransferPatient: builder.mutation({
+    }),
+    saveTransferPatient: builder.mutation({
       query: (transferPatient: ApTransferPatient) => ({
         url: `/encounter/save-transfer-patient`,
         method: 'POST',
@@ -694,15 +694,15 @@ export const encounterService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       }
-    }), 
-  getTransferPatientsList: builder.query({
+    }),
+    getTransferPatientsList: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/encounter/transfer-requests-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-      saveApprovalTransfer: builder.mutation({
+    saveApprovalTransfer: builder.mutation({
       query: (transferPatient: ApTransferPatient) => ({
         url: `/encounter/approval-transfer-patient`,
         method: 'POST',
@@ -712,10 +712,50 @@ export const encounterService = createApi({
       transformResponse: (response: any) => {
         return response.object;
       }
-    }), 
-      getTransferTransactions: builder.query({
+    }),
+    getTransferTransactions: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/encounter/transfer-transactions-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    getDoctorRoundStaffList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/doctor-round-staff-list?${fromListRequestToQueryParams(listRequest)}`,
+        method: 'GET'
+      }),
+      onQueryStarted
+    }),
+    saveDoctorRoundStaff: builder.mutation({
+      query: (body) => ({
+        url: `/encounter/save-doctor-round-staff`,
+        method: 'POST',
+        body
+      }),
+      onQueryStarted
+    }),
+    deleteDoctorRoundStaff: builder.mutation({
+      query: (key: string) => ({
+        url: `/encounter/delete-doctor-round-staff?key=${key}`,
+        method: 'DELETE'
+      }),
+      onQueryStarted
+    }),
+    saveDoctorRound: builder.mutation({
+      query: (doctorRound: ApDoctorRound) => ({
+        url: `/encounter/save-new-round`,
+        method: 'POST',
+        body: doctorRound
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getDoctorRoundsList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/doctor-round-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
@@ -797,5 +837,10 @@ export const {
   useSaveTransferPatientMutation,
   useGetTransferPatientsListQuery,
   useSaveApprovalTransferMutation,
-  useGetTransferTransactionsQuery
+  useGetTransferTransactionsQuery,
+  useGetDoctorRoundStaffListQuery,
+  useSaveDoctorRoundStaffMutation,
+  useDeleteDoctorRoundStaffMutation,
+  useGetDoctorRoundsListQuery,
+  useSaveDoctorRoundMutation
 } = encounterService;

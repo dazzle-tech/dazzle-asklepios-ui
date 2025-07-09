@@ -106,7 +106,7 @@ import InternalDrugOrder from './pages/pharmacy/internal-drug-order';
 import Operation from './pages/operation-module'
 import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
 import MedicationMatrix from './pages/setup/med-matrix-setup';
-
+import DoctorRound from './pages/encounter/encounter-component/doctor-round/DoctorRound';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -295,6 +295,7 @@ const App = () => {
                 <Route path='vaccine-record' element={<VaccineReccord/>} />
                 <Route path='diagnostics-result' element={<DiagnosticsResult/>} />
                 <Route path='operation-request' element={<OperationRequest/>}/>
+                 <Route path='doctor-round' element={<DoctorRound/>}/>
               </Route>
               <Route path="procedure-module" element={<ProcedureModule />} />
               <Route path="encounter-list" element={<EncounterList />} />

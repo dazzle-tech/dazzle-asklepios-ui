@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Divider , Text} from 'rsuite';
+import { Divider, Text } from 'rsuite';
 import '../styles.less'
 import MyTable from '@/components/MyTable';
 import { useGetPrescriptionInstructionQuery } from '@/services/medicationsSetupService';
@@ -10,7 +10,7 @@ import { useGetPrescriptionMedicationsQuery, useGetCustomeInstructionsQuery } fr
 import FullViewTable from './FullViewTable';
 import { useGetGenericMedicationActiveIngredientQuery } from '@/services/medicationsSetupService';
 
-const PatientChronicMedication = ({ patient }) => {
+const PatientChronicMedication = ({ patient, title = null }) => {
     const [open, setOpen] = useState(false);
     // Initialize the state for generic medication list request with default settings and descending sort order
     const [listGinricRequest, setListGinricRequest] = useState({ ...initialListRequest, sortType: 'desc' });
@@ -200,7 +200,7 @@ const PatientChronicMedication = ({ patient }) => {
             <div className='medical-dashboard-container-div'>
                 <div className='medical-dashboard-header-div'>
                     <div className='medical-dashboard-title-div'>
-                        Patient Chronic Medication
+                        {title ? title : " Patient Chronic Medication"}
                     </div>
                     <div className='bt-right'>
                         <Text onClick={() => setOpen(true)} className="clickable-link">Full view</Text>

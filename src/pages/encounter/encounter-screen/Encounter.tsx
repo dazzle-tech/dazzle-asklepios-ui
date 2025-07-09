@@ -156,6 +156,7 @@ const Encounter = () => {
   };
 
   const headersMap = {
+    '/encounter/doctor-round':'Doctor Round',
     '/encounter/clinical-visit': 'Clinical Visit',
     '/encounter/observations': 'Observation',
     '/encounter/allergies': 'Allergies',
@@ -175,10 +176,12 @@ const Encounter = () => {
     '/encounter/medications-record': 'medications Record ',
     '/encounter/vaccine-record': 'Vaccine Record',
     '/encounter/diagnostics-result': 'Diagnostics Result ',
-    '/encounter/operation-request':'Operation Requests'
+    '/encounter/operation-request':'Operation Requests',
+   
   };
 
   const menuItems = [
+    { key: 'doctorRound', label: 'Doctor Round', icon: faUserDoctor, path: 'doctor-round' },
     { key: 'clinicalVisit', label: 'Clinical Visit', icon: faUserDoctor, path: 'clinical-visit' },
     { key: 'observation', label: 'Observation', icon: faBedPulse, path: 'observations' },
     { key: 'allergies', label: 'Allergies', icon: faPersonDotsFromLine, path: 'allergies' },
@@ -195,13 +198,14 @@ const Encounter = () => {
     { key: 'patientHistory', label: 'Patient History', icon: faClockRotateLeft, path: 'patient-history' },
     { key: 'medicationsRecord', label: 'Medications Record', icon: faPills, path: 'medications-record' },
     { key: 'vaccineReccord', label: 'Vaccine Record', icon: faSyringe, path: 'vaccine-record' },
-    {key:'operationRequests',label:'Operation Requests',icon:faBedPulse,path:'operation-request'},
+    { key:'operationRequests',label:'Operation Requests',icon:faBedPulse,path:'operation-request'},
 
     { key: 'cardiology', label: 'Cardiology', icon: faHeartPulse, path: 'cardiology' },
     { key: 'dentalCare', label: 'Dental Care', icon: faTooth, path: 'dental-care' },
     { key: 'optometricExam', label: 'Optometric Exam', icon: faEye, path: 'optometric-exam' },
     { key: 'audiometryPuretone', label: 'ENT', icon: faEarListen, path: 'audiometry' },
     { key: 'psychologicalExam', label: 'Psychological Exam', icon: faBrain, path: 'psychological-exam' },
+
 
   ];
   const [currentHeader, setCurrentHeader] = useState();
