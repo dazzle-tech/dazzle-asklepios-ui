@@ -304,6 +304,24 @@ export const operationService = createApi({
             }),
             onQueryStarted
         }),
+         
+        saveOperationAnesthesiaInductionMonitoring: builder.mutation({
+            query: (body) => ({
+                url: `/operation/save-operation-anesthesia-induction-monitoring`,
+                method: 'POST',
+                body
+            }),
+            onQueryStarted
+        }),
+
+        // 🟢 GET Pre Operative Timeout
+        getOperationAnesthesiaInductionMonitoringList: builder.query({
+            query: (listRequest: ListRequest) => ({
+                url: `/operation/operation-anesthesia-induction-monitoring-list?${fromListRequestToQueryParams(listRequest)}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
 
 
     })
@@ -353,6 +371,9 @@ export const {
     useGetIntraoperativeMonitoringListQuery,
 
     useGetPreOperativeTimeoutQuery,
-    useSavePreOperativeTimeoutMutation
+    useSavePreOperativeTimeoutMutation,
+
+    useGetOperationAnesthesiaInductionMonitoringListQuery,
+    useSaveOperationAnesthesiaInductionMonitoringMutation
 } = operationService;
 

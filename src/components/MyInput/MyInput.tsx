@@ -309,7 +309,17 @@ const MyInput = ({
             value={record ? record[fieldName] : ''}
             onChange={handleValueChange}
             placeholder={props.placeholder}
-            onKeyDown={handleEnterFocusNext}
+      
+            onKeyDown={async (e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault(); 
+
+                const result = await props.enterClick?.(); 
+                if (result !== false) {
+                  handleEnterFocusNext(e);
+                }
+              }
+            }}
           />
         );
 
