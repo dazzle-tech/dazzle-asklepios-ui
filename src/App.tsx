@@ -107,6 +107,8 @@ import Operation from './pages/operation-module'
 import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
 import MedicationMatrix from './pages/setup/med-matrix-setup';
 import DoctorRound from './pages/encounter/encounter-component/doctor-round/DoctorRound';
+import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -333,6 +335,7 @@ const App = () => {
               <Route path="allergens" element={<Allergens />} />
               <Route path='inventory-product-setup' element={<ProductSetup/>} />
               <Route path="warehouse-setup" element={<WarehouseSetup/>} />
+              <Route path="warehouse-items-setup" element={<WarehouseItemsSetup/>} />
               <Route path="active-ingredients" element={<ActiveIngredientsSetup />} />
               <Route path="age-group" element={<AgeGroup />} />
               <Route path="prescription-instructions" element={<PrescriptionInstructions />} />

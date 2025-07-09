@@ -47,6 +47,7 @@ import {
   ApVaccineDose,
   ApVaccineDosesInterval,
   ApWarehouse,
+  ApWarehouseProduct,
   ApWarehouseUser
 
 } from '@/types/model-types';
@@ -1399,6 +1400,38 @@ export const setupService = createApi({
           },
           keepUnusedDataFor: 0
         }),
+           getWarehouseProducts: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/warehouses-products-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+    removeWarehouseProducts: builder.mutation({
+      query: (warehouse: ApWarehouseProduct) => ({
+        url: `/setup/remove-warehouse-products`,
+        method: 'POST',
+        body: warehouse,
+      }),
+    }),
+    saveWarehouseProducts: builder.mutation({
+      query: (warehouse: ApWarehouseProduct) => ({
+        url: `/setup/save-warehouse-products`,
+        method: 'POST',
+        body: warehouse
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+      getWarehouseContainProducts: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/setup/warehouses-contain-products-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 
 });
@@ -1543,5 +1576,9 @@ export const {
   useGetWarehouseUserQuery,
   useSaveWarehouseUserMutation,
   useRemoveWarehouseUserMutation,
-  useFetchBedCountByDepartmentKeyQuery
+  useFetchBedCountByDepartmentKeyQuery,
+  useGetWarehouseProductsQuery,
+  useSaveWarehouseProductsMutation,
+  useRemoveWarehouseProductsMutation,
+  useGetWarehouseContainProductsQuery
 } = setupService;
