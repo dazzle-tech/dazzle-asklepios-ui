@@ -40,24 +40,34 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
 
   const { data: userList } = useGetUsersQuery({ ...initialListRequest });
   const toSnakeCase = (str: string) =>
-  str.replace(/([A-Z])/g, '_$1').toLowerCase();
+    str.replace(/([A-Z])/g, '_$1').toLowerCase();
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
       {
-        fieldName:toSnakeCase(filterFieldName),
+        fieldName: toSnakeCase(filterFieldName),
         operator: "match",
         value: parentKey
       }
     ]
   });
-
   const { data: staffList, refetch } = getQuery(listRequest, { skip: !parentKey });
   const [saveStaff] = saveMutation();
   const [deleteStaff] = deleteMutation();
 
   const isSelected = (rowData) => (rowData?.key === staff?.key ? "selected-row" : "");
-
+  useEffect(() => {
+    setListRequest(prev => ({
+      ...prev,
+      filters: [
+        {
+          fieldName: toSnakeCase(filterFieldName),
+          operator: "match",
+          value: parentKey
+        }
+      ]
+    }));
+  }, [filterFieldName, parentKey]);
   const handleSave = async () => {
     const selectedKeys = selectedUserList?.key;
     if (!Array.isArray(selectedKeys)) return;
@@ -154,7 +164,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
           </Form>
         </Col>
         <Col md={2}>
-          <MyButton onClick={handleSave}>Save</MyButton>
+          <MyButton onClick={handleSave} disabled={!parentKey}>Save</MyButton>
         </Col>
       </Row>
       <Row>

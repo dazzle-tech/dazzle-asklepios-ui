@@ -155,7 +155,13 @@ const ChooseDepartment = ({
                       showLabel={false}
                       record={showScreen}
                       setRecord={setShowScreen}/>
-
+                    <MyInput
+                      fieldType="check"
+                      fieldName={'doctorRound'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
                 </div>
               </div>
               <div className="container-of-specific-sheets">

@@ -3,7 +3,7 @@ import { Divider, Text } from 'rsuite';
 import '../styles.less'
 import MyTable from '@/components/MyTable';
 
-const RecentTestResults = ({ patient }) => {
+const IntakeOutputs = ({ patient }) => {
 
     // Table Columns
     const orderColumns = [
@@ -18,13 +18,13 @@ const RecentTestResults = ({ patient }) => {
             render: (rowData: any) => <Text>h</Text>
         },
         {
-            key: 'orderTime',
-            title: 'ORDER TIME',
+            key: 'amount',
+            title: 'Amount',
             render: (rowData: any) => <Text>h</Text>
         },
         {
-            key: 'resultTime',
-            title: 'RESULT TIME',
+            key: 'dateTime',
+            title: 'Date Time',
             render: (rowData: any) => <Text>h</Text>
         }
     ];
@@ -33,7 +33,7 @@ const RecentTestResults = ({ patient }) => {
             <div className='medical-dashboard-container-div'>
                 <div className='medical-dashboard-header-div'>
                     <div className='medical-dashboard-title-div'>
-                        Recent Test Results
+                        Intake Outputs
                     </div>
                     <div className='bt-right'>
                        <Text  className="clickable-link">Full view</Text>
@@ -52,4 +52,4 @@ const RecentTestResults = ({ patient }) => {
         </div>
     );
 };
-export default RecentTestResults;
+export default IntakeOutputs;
