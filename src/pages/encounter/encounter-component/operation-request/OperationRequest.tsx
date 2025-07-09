@@ -38,7 +38,7 @@ const OperationRequest = () => {
          </Tabs.Tab>
          <Tabs.Tab eventKey="3" title=" Pre-Op Checklist"
          disabled={!requestedOperation?.object}>
-           <PreCheckList  operation={requestedOperation} patient={patient} encounter={encounter} user={authSlice.user}/>
+           {/* <PreCheckList  operation={requestedOperation} patient={patient} encounter={encounter} user={authSlice.user}/> */}
          </Tabs.Tab>
          <Tabs.Tab eventKey="4" title="  Devices\ Implants"
          disabled={!requestedOperation?.object}>

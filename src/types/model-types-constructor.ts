@@ -1161,6 +1161,7 @@ export const newApDoctorRound:modelTypes.ApDoctorRound = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
+	statusLkey:undefined,
 } 
 
 export const newApDoctorRoundStaff:modelTypes.ApDoctorRoundStaff = { 
@@ -1997,6 +1998,21 @@ export const newApOperationAnesthesiaInductionMonitoring:modelTypes.ApOperationA
 	intubationDoneNote:'',
 } 
 
+export const newApOperationAntimicrobialProphylaxisGiven:modelTypes.ApOperationAntimicrobialProphylaxisGiven = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isvalid:undefined,
+	dose:0,
+	activeIngredientKey:undefined,
+	unitLkey:undefined,
+} 
+
 export const newApOperationCoding:modelTypes.ApOperationCoding = { 
 	key:undefined,
 	operationKey:undefined,
@@ -2023,6 +2039,44 @@ export const newApOperationInduction:modelTypes.ApOperationInduction = {
 	dose:0,
 	unitLkey:undefined,
 	activeIngredientKey:0,
+} 
+
+export const newApOperationIntraoperativeEvents:modelTypes.ApOperationIntraoperativeEvents = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	operationNotes:'',
+	conversionOccurred:undefined,
+	conversionType:undefined,
+	conversionTypeNote:'',
+	incisionType:'',
+	estimatedBloodLossMl:0,
+	surgicalComplicationLkey:undefined,
+	surgicalComplicationNotes:'',
+	specimensTaken:'',
+	safetyPauseTaken:undefined,
+	firstCountTime:0,
+	firstCountByKey:undefined,
+	secondCountTime:0,
+	secondCountByKey:undefined,
+	finalCountVerified:undefined,
+	countDiscrepancy:undefined,
+	countDiscrepancyAction:'',
+	unexpectedEventOccurred:undefined,
+	eventDescription:'',
+	teamResponse:'',
+	eventOutcome:'',
+	complicationSeverityLkey:undefined,
+	skinClosureTime:0,
+	surgeryEndTime:0,
+	createdBy:'',
+	createdAt:undefined,
+	updatedBy:'',
+	updatedAt:undefined,
+	deletedBy:'',
+	deletedAt:undefined,
+	isvalid:undefined,
+	urineOutput:0,
+	actualOperationPerformed:'',
 } 
 
 export const newApOperationIntraoperativeMonitoring:modelTypes.ApOperationIntraoperativeMonitoring = { 
@@ -2077,6 +2131,32 @@ export const newApOperationPatientArrival:modelTypes.ApOperationPatientArrival =
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+} 
+
+export const newApOperationPostOpNotesHandover:modelTypes.ApOperationPostOpNotesHandover = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	indications:'',
+	operativeFindings:'',
+	operationPerformedSummary:'',
+	variationsFromPlan:'',
+	postOpDestination:'',
+	oxygenRequired:undefined,
+	oxygenFlowRate:0,
+	specialInstructions:'',
+	handoverTime:0,
+	verbalSummaryGiven:undefined,
+	handoverNotes:'',
+	completedAt:0,
+	recoveryConditionLkey:undefined,
+	surgeryStatusLkey:undefined,
+	createdBy:'',
+	createdAt:undefined,
+	updatedBy:'',
+	updatedAt:undefined,
+	deletedBy:'',
+	deletedAt:undefined,
+	isvalid:undefined,
 } 
 
 export const newApOperationPreMedication:modelTypes.ApOperationPreMedication = { 
@@ -2178,6 +2258,33 @@ export const newApOperationStaff:modelTypes.ApOperationStaff = {
 	encounterKey:undefined,
 	isPresent:undefined,
 	patientKey:undefined,
+} 
+
+export const newApOperationSurgicalPreparationIncision:modelTypes.ApOperationSurgicalPreparationIncision = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	surgicalSitePreppedWith:'',
+	sitePrepCompletedKey:undefined,
+	siteDriedTime:0,
+	positionLkey:undefined,
+	paddingSafetyApplied:undefined,
+	instrumentCountStarted:undefined,
+	firstInstrumentCountKey:undefined,
+	implantsReady:undefined,
+	implantsBarcodeScanned:undefined,
+	sterilityConfirmed:undefined,
+	disposableDevicesReady:undefined,
+	timeOfIncision:0,
+	surgicalStartMarkedKey:undefined,
+	skinOpenedTime:0,
+	estimatedSurgeryDuration:'',
+	createdBy:'',
+	createdAt:undefined,
+	updatedBy:'',
+	updatedAt:undefined,
+	deletedBy:'',
+	deletedAt:undefined,
+	isvalid:undefined,
 } 
 
 export const newApOptometricExam:modelTypes.ApOptometricExam = { 
@@ -3525,7 +3632,6 @@ export const newApTransferPatient:modelTypes.ApTransferPatient = {
 	toBed:'',
 	confirmedBy:'',
 	confirmedAt:0,
-
 } 
 
 export const newApTranslation:modelTypes.ApTranslation = { 

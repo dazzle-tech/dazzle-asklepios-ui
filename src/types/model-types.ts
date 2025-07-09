@@ -1160,6 +1160,7 @@ export interface ApDoctorRound {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
+	statusLkey:string;
 } 
 
 export interface ApDoctorRoundStaff { 
@@ -1996,6 +1997,21 @@ export interface ApOperationAnesthesiaInductionMonitoring {
 	intubationDoneNote:string;
 } 
 
+export interface ApOperationAntimicrobialProphylaxisGiven { 
+	key:string;
+	operationRequestKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+	dose:number;
+	activeIngredientKey:string;
+	unitLkey:string;
+} 
+
 export interface ApOperationCoding { 
 	key:string;
 	operationKey:string;
@@ -2022,6 +2038,44 @@ export interface ApOperationInduction {
 	dose:number;
 	unitLkey:string;
 	activeIngredientKey:number;
+} 
+
+export interface ApOperationIntraoperativeEvents { 
+	key:string;
+	operationRequestKey:string;
+	operationNotes:string;
+	conversionOccurred:boolean;
+	conversionType:boolean;
+	conversionTypeNote:string;
+	incisionType:string;
+	estimatedBloodLossMl:number;
+	surgicalComplicationLkey:string;
+	surgicalComplicationNotes:string;
+	specimensTaken:string;
+	safetyPauseTaken:boolean;
+	firstCountTime:number;
+	firstCountByKey:string;
+	secondCountTime:number;
+	secondCountByKey:string;
+	finalCountVerified:boolean;
+	countDiscrepancy:boolean;
+	countDiscrepancyAction:string;
+	unexpectedEventOccurred:boolean;
+	eventDescription:string;
+	teamResponse:string;
+	eventOutcome:string;
+	complicationSeverityLkey:string;
+	skinClosureTime:number;
+	surgeryEndTime:number;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
+	urineOutput:number;
+	actualOperationPerformed:string;
 } 
 
 export interface ApOperationIntraoperativeMonitoring { 
@@ -2076,6 +2130,32 @@ export interface ApOperationPatientArrival {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+} 
+
+export interface ApOperationPostOpNotesHandover { 
+	key:string;
+	operationRequestKey:string;
+	indications:string;
+	operativeFindings:string;
+	operationPerformedSummary:string;
+	variationsFromPlan:string;
+	postOpDestination:string;
+	oxygenRequired:boolean;
+	oxygenFlowRate:number;
+	specialInstructions:string;
+	handoverTime:number;
+	verbalSummaryGiven:boolean;
+	handoverNotes:string;
+	completedAt:number;
+	recoveryConditionLkey:string;
+	surgeryStatusLkey:string;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
 } 
 
 export interface ApOperationPreMedication { 
@@ -2177,6 +2257,33 @@ export interface ApOperationStaff {
 	encounterKey:string;
 	isPresent:boolean;
 	patientKey:string;
+} 
+
+export interface ApOperationSurgicalPreparationIncision { 
+	key:string;
+	operationRequestKey:string;
+	surgicalSitePreppedWith:string;
+	sitePrepCompletedKey:string;
+	siteDriedTime:number;
+	positionLkey:string;
+	paddingSafetyApplied:boolean;
+	instrumentCountStarted:boolean;
+	firstInstrumentCountKey:string;
+	implantsReady:boolean;
+	implantsBarcodeScanned:boolean;
+	sterilityConfirmed:boolean;
+	disposableDevicesReady:boolean;
+	timeOfIncision:number;
+	surgicalStartMarkedKey:string;
+	skinOpenedTime:number;
+	estimatedSurgeryDuration:string;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
 } 
 
 export interface ApOptometricExam { 
@@ -3524,7 +3631,6 @@ export interface ApTransferPatient {
 	toBed:string;
 	confirmedBy:string;
 	confirmedAt:number;
-
 } 
 
 export interface ApTranslation { 
