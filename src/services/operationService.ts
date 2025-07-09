@@ -286,7 +286,7 @@ export const operationService = createApi({
             onQueryStarted
         }),
 
-             // 🟡 POST save Pre Operative Timeout
+        // 🟡 POST save Pre Operative Timeout
         savePreOperativeTimeout: builder.mutation({
             query: (body) => ({
                 url: `/operation/save-pre-operative-timeout`,
@@ -304,7 +304,7 @@ export const operationService = createApi({
             }),
             onQueryStarted
         }),
-         
+
         saveOperationAnesthesiaInductionMonitoring: builder.mutation({
             query: (body) => ({
                 url: `/operation/save-operation-anesthesia-induction-monitoring`,
@@ -323,6 +323,81 @@ export const operationService = createApi({
             onQueryStarted
         }),
 
+        // 🟡 POST save surgical preparation & incision
+        saveSurgicalPreparationIncision: builder.mutation({
+            query: (body) => ({
+                url: `/operation/save-surgical-preparation-incision`,
+                method: 'POST',
+                body
+            }),
+            onQueryStarted
+        }),
+
+        // 🟢 GET surgical preparation & incision list
+        getSurgicalPreparationIncisionList: builder.query({
+            query: (listRequest: ListRequest) => ({
+                url: `/operation/surgical-preparation-incision-list?${fromListRequestToQueryParams(listRequest)}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
+
+        // 🟡 POST save intraoperative events
+        saveIntraoperativeEvents: builder.mutation({
+            query: (body) => ({
+                url: `/operation/save-intraoperative-events`,
+                method: 'POST',
+                body
+            }),
+            onQueryStarted
+        }),
+
+        // 🟢 GET intraoperative events list
+        getIntraoperativeEventsList: builder.query({
+            query: (listRequest: ListRequest) => ({
+                url: `/operation/intraoperative-events-list?${fromListRequestToQueryParams(listRequest)}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
+
+        // 🟡 POST save antimicrobial prophylaxis given
+        saveAntimicrobialProphylaxisGiven: builder.mutation({
+            query: (body) => ({
+                url: `/operation/save-antimicrobial-prophylaxis-given`,
+                method: 'POST',
+                body
+            }),
+            onQueryStarted
+        }),
+
+        // 🟢 GET antimicrobial prophylaxis list
+        getAntimicrobialProphylaxisGivenList: builder.query({
+            query: (listRequest: ListRequest) => ({
+                url: `/operation/antimicrobial-prophylaxis-given-list?${fromListRequestToQueryParams(listRequest)}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
+
+        // 🟡 POST save post op notes & handover
+        savePostOpNotesHandover: builder.mutation({
+            query: (body) => ({
+                url: `/operation/save-post-op-notes-handover`,
+                method: 'POST',
+                body
+            }),
+            onQueryStarted
+        }),
+
+        // 🟢 GET post op notes & handover list
+        getPostOpNotesHandoverList: builder.query({
+            query: (listRequest: ListRequest) => ({
+                url: `/operation/post-op-handover-list?${fromListRequestToQueryParams(listRequest)}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
 
     })
 });
@@ -374,6 +449,18 @@ export const {
     useSavePreOperativeTimeoutMutation,
 
     useGetOperationAnesthesiaInductionMonitoringListQuery,
-    useSaveOperationAnesthesiaInductionMonitoringMutation
+    useSaveOperationAnesthesiaInductionMonitoringMutation,
+    useSaveSurgicalPreparationIncisionMutation,
+    useGetSurgicalPreparationIncisionListQuery,
+
+    useSaveIntraoperativeEventsMutation,
+    useGetIntraoperativeEventsListQuery,
+
+    useSaveAntimicrobialProphylaxisGivenMutation,
+    useGetAntimicrobialProphylaxisGivenListQuery,
+
+    useSavePostOpNotesHandoverMutation,
+    useGetPostOpNotesHandoverListQuery,
+
 } = operationService;
 

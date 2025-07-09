@@ -9,20 +9,23 @@ import MyButton from "@/components/MyButton/MyButton";
 
 const PreCheckList = ({ operation, patient, encounter, user }) => {
     const dispatch = useAppDispatch();
-    const [checkList, setCheckList] = useState({ ...newApPreOperationChecklist });
-    const{data:checklists}=useGetLatestChecklistByOperationKeyQuery(operation?.key);
-   
+    const [checkList, setCheckList] = useState({
+        ...newApPreOperationChecklist,
+  
+    });
+    const { data: checklists } = useGetLatestChecklistByOperationKeyQuery(operation?.key);
+
     const [save] = useSavePreOperationChecklistMutation();
 
 
-    useEffect(()=>{
-     if(checklists?.object?.key !==null){
-        setCheckList(checklists?.object);
-     }
-     else{
-        setCheckList({ ...newApPreOperationChecklist })
-     }
-    },[checklists])
+    useEffect(() => {
+        if (checklists?.object?.key !== null) {
+            setCheckList(checklists?.object);
+        }
+        else {
+            setCheckList({ ...newApPreOperationChecklist })
+        }
+    }, [checklists])
     const handelSave = async () => {
         try {
             await save({ ...checkList, operationKey: operation?.object?.key, encounterKey: encounter?.key, patientKey: patient?.key, createdBy: user.key });
@@ -32,7 +35,7 @@ const PreCheckList = ({ operation, patient, encounter, user }) => {
             dispatch(notify({ msg: "Saved Faild", sev: "error" }));
 
         }
-    } 
+    }
     const renderCheckboxes = (fields: string[]) => (
         <Row gutter={10}>
             {fields.map((field) => (
