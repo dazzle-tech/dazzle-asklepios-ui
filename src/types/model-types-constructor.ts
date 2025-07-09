@@ -1137,6 +1137,48 @@ export const newApDiagnosticTestSpecialPopulation:modelTypes.ApDiagnosticTestSpe
 	isValid:undefined,
 } 
 
+export const newApDoctorRound:modelTypes.ApDoctorRound = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	roundStartTime:0,
+	practitionerKey:undefined,
+	shiftLkey:undefined,
+	initialNote:'',
+	progressNote:'',
+	specialEventNote:'',
+	primaryDiagnosis:'',
+	major:undefined,
+	suspected:undefined,
+	clinicalImpression:'',
+	secondaryDiagnoses:'',
+	patientStatusLkey:undefined,
+	complicationsNoted:'',
+	summaryStatement:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
+export const newApDoctorRoundStaff:modelTypes.ApDoctorRoundStaff = { 
+	key:undefined,
+	doctorRoundKey:undefined,
+	userKey:undefined,
+	responsibility:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	encounterKey:undefined,
+	isPresent:undefined,
+	patientKey:undefined,
+} 
+
 export const newApDrugOrder:modelTypes.ApDrugOrder = { 
 	key:undefined,
 	patientKey:undefined,
@@ -1767,6 +1809,7 @@ export const newApMedicalSheets:modelTypes.ApMedicalSheets = {
 	observation:undefined,
 	vaccination:undefined,
 	operationRequests:undefined,
+	doctorRound:undefined,
 } 
 
 export const newApMedicationCategories:modelTypes.ApMedicationCategories = { 
@@ -1934,7 +1977,6 @@ export const newApOperationAnesthesiaInductionMonitoring:modelTypes.ApOperationA
 	fastingDuration:0,
 	ivLineEstablished:undefined,
 	monitorsConnected:'',
-	inductionStartTime:null,
 	intubationDone:undefined,
 	tubeSize:'',
 	tubeType:'',
@@ -1951,6 +1993,8 @@ export const newApOperationAnesthesiaInductionMonitoring:modelTypes.ApOperationA
 	adverseEventsNote:'',
 	actionsTaken:'',
 	surgeonNotified:undefined,
+	inductionStartTime:0,
+	intubationDoneNote:'',
 } 
 
 export const newApOperationCoding:modelTypes.ApOperationCoding = { 
@@ -1969,8 +2013,6 @@ export const newApOperationCoding:modelTypes.ApOperationCoding = {
 export const newApOperationInduction:modelTypes.ApOperationInduction = { 
 	key:undefined,
 	operationRequestKey:undefined,
-	diagnoseKey:undefined,
-	patientCondition:'',
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',
@@ -1978,6 +2020,9 @@ export const newApOperationInduction:modelTypes.ApOperationInduction = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isvalid:undefined,
+	dose:0,
+	unitLkey:undefined,
+	activeIngredientKey:0,
 } 
 
 export const newApOperationIntraoperativeMonitoring:modelTypes.ApOperationIntraoperativeMonitoring = { 
@@ -2001,6 +2046,7 @@ export const newApOperationIntraoperativeMonitoring:modelTypes.ApOperationIntrao
 	deletedAt:undefined,
 	encounterKey:undefined,
 	patientKey:undefined,
+	heartRate:0,
 } 
 
 export const newApOperationNameLog:modelTypes.ApOperationNameLog = { 
@@ -2036,8 +2082,6 @@ export const newApOperationPatientArrival:modelTypes.ApOperationPatientArrival =
 export const newApOperationPreMedication:modelTypes.ApOperationPreMedication = { 
 	key:undefined,
 	operationRequestKey:undefined,
-	diagnoseKey:undefined,
-	patientCondition:'',
 	createdBy:'',
 	updatedBy:'',
 	deletedBy:'',
@@ -2045,6 +2089,9 @@ export const newApOperationPreMedication:modelTypes.ApOperationPreMedication = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isvalid:undefined,
+	dose:0,
+	activeIngredientKey:undefined,
+	unitLkey:undefined,
 } 
 
 export const newApOperationPriceList:modelTypes.ApOperationPriceList = { 
@@ -2096,6 +2143,7 @@ export const newApOperationRequests:modelTypes.ApOperationRequests = {
 	startedAt:0,
 	startedBy:'',
 	increaseByMinutes:0,
+	monitorSlot:0,
 } 
 
 export const newApOperationSetup:modelTypes.ApOperationSetup = { 
@@ -3476,7 +3524,7 @@ export const newApTransferPatient:modelTypes.ApTransferPatient = {
 	fromBed:'',
 	toBed:'',
 	confirmedBy:'',
-	confirmedAt:'',
+	confirmedAt:0,
 
 } 
 
@@ -3822,6 +3870,7 @@ export const newApWarehouseProduct:modelTypes.ApWarehouseProduct = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isvalid:undefined,
+	departmentKey:undefined,
 } 
 
 export const newApWarehouseUser:modelTypes.ApWarehouseUser = { 

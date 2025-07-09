@@ -269,16 +269,6 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
 
     };
 
-    const addTag = () => {
-        const nextTags = inputValue ? [...tags, inputValue] : tags;
-        setTags(nextTags);
-        setTyping(false);
-        setInputValue('');
-    };
-
-    const handleButtonClick = () => {
-        setTyping(true);
-    };
 
     const joinValuesFromArray = (values) => {
         return values?.filter(Boolean).join(', ');

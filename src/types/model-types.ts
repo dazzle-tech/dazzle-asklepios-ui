@@ -1136,6 +1136,48 @@ export interface ApDiagnosticTestSpecialPopulation {
 	isValid:boolean;
 } 
 
+export interface ApDoctorRound { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	roundStartTime:number;
+	practitionerKey:string;
+	shiftLkey:string;
+	initialNote:string;
+	progressNote:string;
+	specialEventNote:string;
+	primaryDiagnosis:string;
+	major:boolean;
+	suspected:boolean;
+	clinicalImpression:string;
+	secondaryDiagnoses:string;
+	patientStatusLkey:string;
+	complicationsNoted:string;
+	summaryStatement:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+} 
+
+export interface ApDoctorRoundStaff { 
+	key:string;
+	doctorRoundKey:string;
+	userKey:string;
+	responsibility:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	encounterKey:string;
+	isPresent:boolean;
+	patientKey:string;
+} 
+
 export interface ApDrugOrder { 
 	key:string;
 	patientKey:string;
@@ -1766,6 +1808,7 @@ export interface ApMedicalSheets {
 	observation:boolean;
 	vaccination:boolean;
 	operationRequests:boolean;
+	doctorRound:boolean;
 } 
 
 export interface ApMedicationCategories { 
@@ -1933,7 +1976,6 @@ export interface ApOperationAnesthesiaInductionMonitoring {
 	fastingDuration:number;
 	ivLineEstablished:boolean;
 	monitorsConnected:string;
-	inductionStartTime:Date;
 	intubationDone:boolean;
 	tubeSize:string;
 	tubeType:string;
@@ -1950,6 +1992,8 @@ export interface ApOperationAnesthesiaInductionMonitoring {
 	adverseEventsNote:string;
 	actionsTaken:string;
 	surgeonNotified:boolean;
+	inductionStartTime:number;
+	intubationDoneNote:string;
 } 
 
 export interface ApOperationCoding { 
@@ -1968,8 +2012,6 @@ export interface ApOperationCoding {
 export interface ApOperationInduction { 
 	key:string;
 	operationRequestKey:string;
-	diagnoseKey:string;
-	patientCondition:string;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
@@ -1977,6 +2019,9 @@ export interface ApOperationInduction {
 	updatedAt:number;
 	deletedAt:number;
 	isvalid:boolean;
+	dose:number;
+	unitLkey:string;
+	activeIngredientKey:number;
 } 
 
 export interface ApOperationIntraoperativeMonitoring { 
@@ -2000,6 +2045,7 @@ export interface ApOperationIntraoperativeMonitoring {
 	deletedAt:number;
 	encounterKey:string;
 	patientKey:string;
+	heartRate:number;
 } 
 
 export interface ApOperationNameLog { 
@@ -2035,8 +2081,6 @@ export interface ApOperationPatientArrival {
 export interface ApOperationPreMedication { 
 	key:string;
 	operationRequestKey:string;
-	diagnoseKey:string;
-	patientCondition:string;
 	createdBy:string;
 	updatedBy:string;
 	deletedBy:string;
@@ -2044,6 +2088,9 @@ export interface ApOperationPreMedication {
 	updatedAt:number;
 	deletedAt:number;
 	isvalid:boolean;
+	dose:number;
+	activeIngredientKey:string;
+	unitLkey:string;
 } 
 
 export interface ApOperationPriceList { 
@@ -2095,6 +2142,7 @@ export interface ApOperationRequests {
 	startedAt:number;
 	startedBy:string;
 	increaseByMinutes:number;
+	monitorSlot:number;
 } 
 
 export interface ApOperationSetup { 
@@ -3475,7 +3523,8 @@ export interface ApTransferPatient {
 	fromBed:string;
 	toBed:string;
 	confirmedBy:string;
-	confirmedAt:string;
+	confirmedAt:number;
+
 } 
 
 export interface ApTranslation { 
@@ -3820,6 +3869,7 @@ export interface ApWarehouseProduct {
 	updatedAt:number;
 	deletedAt:number;
 	isvalid:boolean;
+	departmentKey:string;
 } 
 
 export interface ApWarehouseUser { 
