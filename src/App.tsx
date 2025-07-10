@@ -109,6 +109,7 @@ import MedicationMatrix from './pages/setup/med-matrix-setup';
 import DoctorRound from './pages/encounter/encounter-component/doctor-round/DoctorRound';
 import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
 import Shifts from './pages/setup/shift-setup';
+import EPrepscriptions from './pages/pharmacy/ePrescriptions';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -359,6 +360,7 @@ const App = () => {
               <Route path='operation-module' element={<Operation />}/>
               <Route path='operation-setup' element={<OperationSetup />}/>
                <Route path="pharmacy-internal-orders" element={<InternalDrugOrder />} />
+               <Route path="pharmacy-ePrescriptions" element={<EPrepscriptions />} />
 
             </Route>
           </Route>
