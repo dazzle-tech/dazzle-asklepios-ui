@@ -23,13 +23,13 @@ import MyTagInput from "@/components/MyTagInput/MyTagInput";
 import clsx from "clsx";
 import DiagnosticsOrder from "../diagnostics-order";
 import MyModal from "@/components/MyModal/MyModal";
+import MultiSelectAppender from "@/pages/medical-component/multi-select-appender/MultiSelectAppender";
 const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication, drugKey, editing, patient, encounter, medicRefetch, openToAdd }) => {
     const dispatch = useAppDispatch();
     const [searchKeyword, setSearchKeyword] = useState('');
     const [searchKeywordicd, setSearchKeywordicd] = useState('');
     const [openOrderModel, setOpenOrderModel] = useState(false);
-    const [typing, setTyping] = React.useState(false);
-    const [inputValue, setInputValue] = React.useState('');
+
     const [tags, setTags] = React.useState([]);
     const [indicationsIcd, setIndicationsIcd] = useState({ indicationIcd: null });
     const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
@@ -298,10 +298,7 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
                     Order Related Tests
                 </MyButton>
             </div>}
-            leftContent={<>
-
-                <ActiveIngrediantList selectedGeneric={selectedGeneric} />
-            </>}
+          
             rightContent={
                 <Form fluid>
                     <Row gutter={20}
@@ -601,6 +598,7 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
                                     /></Col>
                             </Row>
                             <Row className="rows-gap">
+                             
                                 <Col md={24}>
                                     <Input as="textarea" onChange={(e) => setInstruc(e.target.value)}
                                         value={instr}
@@ -704,13 +702,13 @@ const DetailsModal = ({ edit, open, setOpen, orderMedication, setOrderMedication
             }
         ></AdvancedModal>
         <Substitues open={openSubstitutesModel} setOpen={setOpenSubstitutesModel} selectedGeneric={selectedGeneric}></Substitues>
-       <MyModal
-                    open={openOrderModel}
-                    setOpen={setOpenOrderModel}
-                    size={'full'}
-                    title="Add Order"
-                    content={<DiagnosticsOrder edit={edit} patient={patient} encounter={encounter}/>}>
+        <MyModal
+            open={openOrderModel}
+            setOpen={setOpenOrderModel}
+            size={'full'}
+            title="Add Order"
+            content={<DiagnosticsOrder edit={edit} patient={patient} encounter={encounter} />}>
         </MyModal>
-        </>);
+    </>);
 }
 export default DetailsModal;
