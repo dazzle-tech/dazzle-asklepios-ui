@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
+  useGetFacilitiesQuery,
   useGetLovValuesByCodeQuery,
 } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
@@ -8,10 +9,13 @@ import './styles.less';
 import MyModal from '@/components/MyModal/MyModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
+import { initialListRequest, ListRequest } from '@/types/types';
 
 const AddEditShift = ({ open, setOpen, shift, setShift, width }) => {
+  const [listRequest] = useState<ListRequest>({ ...initialListRequest });
   // Fetch shifts Type Lov Response
   const { data: shiftsTypeLovQueryResponse } = useGetLovValuesByCodeQuery('SHIFTS');
+   const { data: facilityListResponse } = useGetFacilitiesQuery(listRequest);
   
   // Main modal content
   const conjureFormContentOfMainModal = stepNumber => {
@@ -19,6 +23,16 @@ const AddEditShift = ({ open, setOpen, shift, setShift, width }) => {
       case 0:
         return (
           <Form fluid>
+             <MyInput
+              fieldName="facilityKey"
+              fieldType="select"
+              selectData={facilityListResponse?.object ?? []}
+              selectDataLabel="facilityName"
+              selectDataValue="key"
+              record=""
+              setRecord=""
+              width="100%"
+            />
            <MyInput
               width="100%"
               fieldName="shiftType"
