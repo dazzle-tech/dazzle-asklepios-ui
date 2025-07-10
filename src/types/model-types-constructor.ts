@@ -1518,6 +1518,10 @@ export const newApGeneralAssessment:modelTypes.ApGeneralAssessment = {
 	deletedAt:undefined,
 	cancellationReason:'',
 	statusLkey:undefined,
+	livingCondition:'',
+	patientNeedHelp:undefined,
+	supportingMembers:'',
+	familyLocationLkey:undefined,
 } 
 
 export const newApGenericMedication:modelTypes.ApGenericMedication = { 

@@ -1517,6 +1517,10 @@ export interface ApGeneralAssessment {
 	deletedAt:number;
 	cancellationReason:string;
 	statusLkey:string;
+	livingCondition:string;
+	patientNeedHelp:boolean;
+	supportingMembers:string;
+	familyLocationLkey:string;
 } 
 
 export interface ApGenericMedication { 
