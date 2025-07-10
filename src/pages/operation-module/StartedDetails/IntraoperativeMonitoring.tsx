@@ -166,6 +166,7 @@ const IntraoperativeMonitoring = ({ operation }) => {
                         <MyInput
                             width="100%"
                             fieldType="number"
+                               rightAddonwidth={50}
                             rightAddon="bpm"
                             fieldName="heartRate"
                             record={monitor}
@@ -198,6 +199,7 @@ const IntraoperativeMonitoring = ({ operation }) => {
                     <Col md={8}>
                         <MyInput
                             width="100%"
+                            rightAddonwidth={50}
                             fieldType="number"
                             rightAddon="bpm"
                             fieldName="respiratoryRate"
@@ -228,7 +230,7 @@ const IntraoperativeMonitoring = ({ operation }) => {
                         <MyInput
                             width="100%"
                             fieldType="number"
-                            rightAddonwidth={50}
+                            rightAddonwidth={60}
                             rightAddon="mmHg"
                             fieldName="etco2"
                             record={monitor}

@@ -26,7 +26,7 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
         <MyModal
             open={open}
             setOpen={setOpen}
-            title="Operation Trak"
+            title="Operation Progress"
             size='full'
             hideActionBtn
             content={<div className='container'>
