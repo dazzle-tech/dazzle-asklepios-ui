@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '@/hooks';
 import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentModal';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
+import { faComment } from '@fortawesome/free-solid-svg-icons';
 import { useCompleteEncounterMutation, useDischargeInpatientEncounterMutation } from '@/services/encounterService';
 import {
   faBedPulse, faCheckDouble, faClockRotateLeft, faFilePrescription, faFileWaveform,
@@ -194,6 +195,7 @@ const Encounter = () => {
     { key: 'drugOrder', label: 'Drug Order', icon: faPills, path: 'drug-order' },
     { key: 'diagnosticsOrder', label: 'Diagnostics Order', icon: faVials, path: 'diagnostics-order' },
     { key: 'consultation', label: 'Consultation', icon: faStethoscope, path: 'consultation' },
+    { key: 'multidisciplinaryTeamNotes', label: 'Multidisciplinary Team Notes', icon: faComment, path: 'multidisciplinary-team-notes' },
 
     { key: 'procedures', label: 'Procedures', icon: faNotesMedical, path: 'procedures' },
     { key: 'patientHistory', label: 'Patient History', icon: faClockRotateLeft, path: 'patient-history' },

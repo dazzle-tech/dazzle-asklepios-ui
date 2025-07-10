@@ -110,6 +110,7 @@ import DoctorRound from './pages/encounter/encounter-component/doctor-round/Doct
 import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
 import Shifts from './pages/setup/shift-setup';
 import EPrepscriptions from './pages/pharmacy/ePrescriptions';
+import MultidisciplinaryTeamNotes from './pages/encounter/encounter-component/multidisciplinary-team-notes';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -299,6 +300,7 @@ const App = () => {
                 <Route path='diagnostics-result' element={<DiagnosticsResult/>} />
                 <Route path='operation-request' element={<OperationRequest/>}/>
                  <Route path='doctor-round' element={<DoctorRound/>}/>
+                 <Route path='multidisciplinary-team-notes' element={<MultidisciplinaryTeamNotes/>}/>
               </Route>
               <Route path="procedure-module" element={<ProcedureModule />} />
               <Route path="encounter-list" element={<EncounterList />} />
