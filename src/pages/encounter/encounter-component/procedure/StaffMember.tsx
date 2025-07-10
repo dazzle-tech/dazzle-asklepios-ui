@@ -21,6 +21,7 @@ type StaffAssignmentProps = {
   deleteMutation: any;
   newStaffObj: any;
   filterFieldName: string;
+  disabled?: boolean
 };
 
 const StaffAssignment: React.FC<StaffAssignmentProps> = ({
@@ -30,7 +31,8 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
   saveMutation,
   deleteMutation,
   newStaffObj,
-  filterFieldName
+  filterFieldName,
+  disabled=false,
 }) => {
   const dispatch = useAppDispatch();
   const [activeRowKey, setActiveRowKey] = useState(null);
@@ -160,11 +162,12 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
               fieldName="key"
               record={selectedUserList}
               setRecord={setSelectedUserList}
+              disabled={!parentKey || disabled}
             />
           </Form>
         </Col>
         <Col md={2}>
-          <MyButton onClick={handleSave} disabled={!parentKey}>Save</MyButton>
+          <MyButton onClick={handleSave} disabled={!parentKey || disabled}>Save</MyButton>
         </Col>
       </Row>
       <Row>

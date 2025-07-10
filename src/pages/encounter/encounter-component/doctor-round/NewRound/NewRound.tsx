@@ -29,7 +29,7 @@ import { faFileAlt } from '@fortawesome/free-solid-svg-icons';
 import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 
-const NewRound = ({ patient, encounter, edit }) => {
+const NewRound = ({ patient, encounter, edit,setIsConfirmedRound }) => {
     const [searchKeyword, setSearchKeyword] = useState('');
     const [selectedicd10, setSelectedIcd10] = useState({ text: '' });
     const [recordOfSearch, setRecordOfSearch] = useState({ searchKeyword: '' });
@@ -170,7 +170,7 @@ const NewRound = ({ patient, encounter, edit }) => {
                 patientStatusLkey: null,
                 statusLkey: "91063195286200",
             });
-
+            setIsConfirmedRound(true);
             setSelectedIcd10({ text: '' });
             setRecordOfIndicationsDescription({ indicationsDescription: '' });
 

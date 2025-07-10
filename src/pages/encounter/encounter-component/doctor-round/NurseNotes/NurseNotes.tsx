@@ -41,7 +41,7 @@ const NurseNotes = ({ patient, encounter, edit }) => {
 
     // Check if the current row is selected by comparing keys, and return the 'selected-row' class if matched
     const isSelected = rowData => {
-        if (rowData && newApNurseNotes && nurseNotes.key === rowData.key) {
+        if (rowData && nurseNotes && nurseNotes.key === rowData.key) {
             return 'selected-row';
         } else return '';
     };
