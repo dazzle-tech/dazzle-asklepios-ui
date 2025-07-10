@@ -1,4 +1,4 @@
-import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound } from './../types/model-types';
+import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound, ApNurseNotes } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -760,6 +760,24 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    saveNurseNotes: builder.mutation({
+      query: (nurseNotes: ApNurseNotes) => ({
+        url: `/encounter/save-nurse-notes`,
+        method: 'POST',
+        body: nurseNotes
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getNurseNotesList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/nurse-notes-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 });
 
@@ -842,5 +860,7 @@ export const {
   useSaveDoctorRoundStaffMutation,
   useDeleteDoctorRoundStaffMutation,
   useGetDoctorRoundsListQuery,
-  useSaveDoctorRoundMutation
+  useSaveDoctorRoundMutation,
+  useGetNurseNotesListQuery,
+  useSaveNurseNotesMutation
 } = encounterService;

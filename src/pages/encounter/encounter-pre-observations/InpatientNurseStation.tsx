@@ -25,9 +25,6 @@ import InpatientObservations from './observations/InpatientObservations';
 import PainAssessment from '../encounter-component/pain-assessment/PainAssessment';
 import ReviewOfSystems from '../medical-notes-and-assessments/review-of-systems';
 import ChiefComplain from '../encounter-component/chief-complain/ChiefComplain';
-import GeneralAssessment from '../encounter-component/general-assessment';
-import MedicationReconciliation from '../encounter-component/MedicationReconciliation/MedicationReconciliation';
-import FunctionalAssessment from '../encounter-component/functional-assessment';
 const InpatientNurseStation = ({ }) => {
     const dispatch = useAppDispatch();
     const location = useLocation();
@@ -131,7 +128,7 @@ const InpatientNurseStation = ({ }) => {
                                     )}
                                 </div>
                             </div>
-                            <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle" className="nurse-tabs">
+                            <Tabs activeKey={activeKey} onSelect={setActiveKey} appearance="subtle">
                                 <Tabs.Tab eventKey="1" title="Observations">
                                     <InpatientObservations
                                         editable={propsData.edit}
@@ -169,39 +166,30 @@ const InpatientNurseStation = ({ }) => {
                                         encounter={propsData.encounter} />
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="7" title="Physical Examination">
-                                    <ReviewOfSystems
-                                        edit={propsData.edit}
+                                     <ReviewOfSystems 
+                                       edit={propsData.edit}
                                         patient={propsData.patient}
                                         encounter={propsData.encounter} />
                                 </Tabs.Tab>
-                                <Tabs.Tab eventKey="8" title="Pain Assessment">
+                                 <Tabs.Tab eventKey="8" title="Pain Assessment">
                                     <PainAssessment
                                         edit={propsData.edit}
                                         patient={propsData.patient}
                                         encounter={propsData.encounter} />
                                 </Tabs.Tab>
-                                <Tabs.Tab eventKey="9" title="General Assessment">
-                                    <GeneralAssessment
-                                        edit={propsData.edit}
-                                        patient={propsData.patient}
-                                        encounter={propsData.encounter} />
+                                  <Tabs.Tab eventKey="9" title="General Assessment">
+                                   
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="10" title="Functional Assessment">
-                                  <FunctionalAssessment
-                                        edit={propsData.edit}
-                                        patient={propsData.patient}
-                                        encounter={propsData.encounter} />  
+                                   
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="11" title="Medication Reconciliation">
-                                     <MedicationReconciliation
-                                        edit={propsData.edit}
-                                        patient={propsData.patient}
-                                        encounter={propsData.encounter} />
+                                   
                                 </Tabs.Tab>
                                 <Tabs.Tab eventKey="12" title="Physician Order Summary">
-
+                                   
                                 </Tabs.Tab>
-
+                        
                             </Tabs>
                         </Panel>
                     </div>
