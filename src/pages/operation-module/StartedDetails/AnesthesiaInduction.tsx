@@ -75,6 +75,7 @@ const AnesthesiaInduction = ({ operation }) => {
                                                 width="100%"
                                                 unCheckedLabel="Not Established"
                                                 checkedLabel="Established"
+                                                fieldLabel="IV Line Established"
                                                 fieldType="checkbox"
                                                 fieldName="ivLineEstablished"
                                                 record={anesthesiaInduction}
