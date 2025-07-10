@@ -13,19 +13,19 @@ const PreCheckList = ({ operation, patient, encounter, user }) => {
         ...newApPreOperationChecklist,
   
     });
+    
     const { data: checklists } = useGetLatestChecklistByOperationKeyQuery(operation?.key);
-
+ 
     const [save] = useSavePreOperationChecklistMutation();
 
 
-    useEffect(() => {
-        if (checklists?.object?.key !== null) {
-            setCheckList(checklists?.object);
-        }
-        else {
-            setCheckList({ ...newApPreOperationChecklist })
-        }
-    }, [checklists])
+  useEffect(() => {
+    if (checklists?.object) {
+        setCheckList(checklists.object);
+    } else {
+        setCheckList({ ...newApPreOperationChecklist });
+    }
+}, [checklists]);
     const handelSave = async () => {
         try {
             await save({ ...checkList, operationKey: operation?.object?.key, encounterKey: encounter?.key, patientKey: patient?.key, createdBy: user.key });
@@ -45,7 +45,7 @@ const PreCheckList = ({ operation, patient, encounter, user }) => {
                         fieldType="check"
                         fieldName={field}
                         width="100%"
-                        record={checkList}
+                        record={checkList }
                         setRecord={setCheckList}
                     />
                 </Col>

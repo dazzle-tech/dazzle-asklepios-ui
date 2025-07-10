@@ -27,6 +27,7 @@ const PatientArrival = ({ operation, patient, encounter, user }) => {
     const { data: roomsList } = useGetRoomListQuery({ ...initialListRequest });
     const { data: userList } = useGetUsersQuery({
         ...initialListRequest,
+         //to do Nurse code
         filters: [
             {
                 fieldName: 'job_role_lkey',
