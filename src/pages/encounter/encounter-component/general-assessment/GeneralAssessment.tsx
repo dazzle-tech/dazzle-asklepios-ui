@@ -316,6 +316,31 @@ const GeneralAssessment = ({ patient, encounter, edit }) => {
                 />
             ),
         },
+       {
+            key: 'livingCondition',
+            title: 'Living Condition',
+            expandable: true,
+        },
+        {
+            key: 'patientNeedHelp',
+            title: 'Need Help',
+            render: (rowData: any) => rowData?.patientNeedHelp ? "YES" : "NO",
+            expandable: true,
+        },
+         {
+            key: 'supportingMembers',
+            title: 'Supporting Members',
+            expandable: true,
+        },
+         {
+            key: 'familyLocationLkey',
+            title: 'Family Location',
+            render: (rowData: any) =>
+                rowData?.familyLocationLvalue
+                    ? rowData.familyLocationLvalue.lovDisplayVale
+                    : rowData.familyLocationLkey,
+            expandable: true,
+        },
         {
             key: 'createdAt',
             title: 'CREATED AT/BY',
