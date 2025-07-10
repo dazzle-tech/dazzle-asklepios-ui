@@ -24,6 +24,7 @@ import clsx from "clsx";
 import DiagnosticsOrder from '../diagnostics-order';
 import CheckIcon from '@rsuite/icons/Check';
 import MyModal from "@/components/MyModal/MyModal";
+import MultiSelectAppender from "@/pages/medical-component/multi-select-appender/MultiSelectAppender";
 const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescriptionMedications, preKey,patient, encounter, medicRefetch,openToAdd }) => {
     const dispatch = useAppDispatch();
     const [openOrderModel, setOpenOrderModel] = useState(false);
@@ -49,10 +50,10 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
     const { data: indicationLovQueryResponse } = useGetLovValuesByCodeQuery('MED_INDICATION_USE');
     const [openSubstitutesModel, setOpenSubstitutesModel] = useState(false);
     const { data: genericMedicationListResponse } = useGetGenericMedicationWithActiveIngredientQuery(searchKeyword);
-    const [instructionList,setInstructionList]=useState([]);
+   
     const [instr,setInstruc]=useState(null);
     const [editDuration, setEditDuration] = useState(false);
-    const [slectInst,setSelectInt]=useState({inst:null});
+  
      const { data: customeInstructions, isLoading: isLoadingCustomeInstructions, refetch: refetchCo } = useGetCustomeInstructionsQuery({
             ...initialListRequest,
         }); 
@@ -74,14 +75,13 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
 
     const [savePrescriptionMedication, { isLoading: isSavingPrescriptionMedication }] = useSavePrescriptionMedicationMutation();
     useEffect(()=>{
-        setSelectInt(null)
+ 
         if(prescriptionMedication.key!=null)           
         {
             setSelectedGeneric(genericMedicationListResponse?.object?.find(item => item.key ===prescriptionMedication.genericMedicationsKey))
             setSelectedOption(prescriptionMedication?.instructionsTypeLkey);
-            const prevadmin=prescriptionMedication.administrationInstructions?.split(",")
-            setInstructionList(prevadmin)
-            
+          
+             setInstruc(prescriptionMedication.administrationInstructions);
             setTags(prescriptionMedication?.parametersToMonitor.split(","))
             if(prescriptionMedication?.instructionsTypeLkey==="3010606785535008"){
                
@@ -123,28 +123,10 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
     }, [searchKeywordicd]);
   
     
-    useEffect(()=>{
-        setInstruc(joinValuesFromArray(instructionList))
-    },[instructionList])
+ 
 
 
-    useEffect(() => {
-        if (slectInst?.inst != null) {
-          const foundItem = administrationInstructionsLovQueryResponse?.object?.find(
-            item => item.key === slectInst?.inst
-          );
-      
-          const value = foundItem?.lovDisplayVale;
-      
-          if (value) {
-
-           
-            setInstructionList(prev => [...prev, foundItem?.lovDisplayVale]);
-          } else {
-            console.warn("⚠️ Could not find display value for key:", slectInst.inst);
-          }
-        }
-      }, [slectInst?.inst]);
+  
 
 
     useEffect(() => {
@@ -657,29 +639,17 @@ const DetailsModal = ({edit, open, setOpen, prescriptionMedication, setPrescript
                         </Row>
                         <Row>
                             <Col md={24}>
-                                <Row>
-                                    <Form fluid>
-
-                                        <MyInput
-
-                                            width="100%"
-                                            disabled={preKey != null ? false : true}
-                                            fieldType="select"
-                                            fieldLabel="Administration Instructions"
-                                            selectData={administrationInstructionsLovQueryResponse?.object ?? []}
-                                            selectDataLabel="lovDisplayVale"
-                                            selectDataValue="key"
-                                            fieldName={'inst'}
-                                            record={slectInst}
-                                            setRecord={setSelectInt}
-                                        /></Form>
-                                </Row>
-                                <Row>
-                                    <Input as="textarea" onChange={(e) =>setInstruc(e.target.value)}
-                                        value={instr}
-                                        style={{ width: '100%' }}
-                                        rows={3} />
-                                </Row>
+                             
+                                <Row className="rows-gap">
+                                   <MultiSelectAppender
+                                    label="Administration Instructions"
+                                    options={administrationInstructionsLovQueryResponse?.object ?? []}
+                                    optionLabel="lovDisplayVale"
+                                    optionValue="key"
+                                  
+                                    setObject={setInstruc}
+                                    object={instr}
+                                /></Row>
                             </Col>
                         </Row>
                         <Row className="rows-gap">
