@@ -1810,6 +1810,19 @@ export interface ApMedicalSheets {
 	vaccination:boolean;
 	operationRequests:boolean;
 	doctorRound:boolean;
+	dayCase:boolean;
+	bedsideProceduresRequest:boolean;
+	referralRequest:boolean;
+	bloodOrder:boolean;
+	ivFluidOrder:boolean;
+	intakeOutputBalance:boolean;
+	riskAssessments:boolean;
+	multidisciplinaryTeamNotes:boolean;
+	nutritionStateAssessment:boolean;
+	physicianOrderSummary:boolean;
+	carePlanAndGoals:boolean;
+	dischargePlanning:boolean;
+	pregnancyFollowUp:boolean;
 } 
 
 export interface ApMedicationCategories { 
@@ -1938,6 +1951,21 @@ export interface ApModule {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+} 
+
+export interface ApNurseNotes { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	shiftLkey:string;
+	noteTypeLkey:string;
+	nurseNote:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
 } 
 
 export interface ApOperationAnesthesiaCarePlan { 

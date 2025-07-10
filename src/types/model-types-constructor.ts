@@ -1811,6 +1811,19 @@ export const newApMedicalSheets:modelTypes.ApMedicalSheets = {
 	vaccination:undefined,
 	operationRequests:undefined,
 	doctorRound:undefined,
+	dayCase:undefined,
+	bedsideProceduresRequest:undefined,
+	referralRequest:undefined,
+	bloodOrder:undefined,
+	ivFluidOrder:undefined,
+	intakeOutputBalance:undefined,
+	riskAssessments:undefined,
+	multidisciplinaryTeamNotes:undefined,
+	nutritionStateAssessment:undefined,
+	physicianOrderSummary:undefined,
+	carePlanAndGoals:undefined,
+	dischargePlanning:undefined,
+	pregnancyFollowUp:undefined,
 } 
 
 export const newApMedicationCategories:modelTypes.ApMedicationCategories = { 
@@ -1941,6 +1954,21 @@ export const newApModule:modelTypes.ApModule = {
 	isValid:undefined,
 } 
 
+export const newApNurseNotes:modelTypes.ApNurseNotes = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	shiftLkey:undefined,
+	noteTypeLkey:undefined,
+	nurseNote:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+} 
+
 export const newApOperationAnesthesiaCarePlan:modelTypes.ApOperationAnesthesiaCarePlan = { 
 	key:undefined,
 	encounterKey:undefined,
@@ -2011,7 +2039,6 @@ export const newApOperationAntimicrobialProphylaxisGiven:modelTypes.ApOperationA
 	dose:0,
 	activeIngredientKey:undefined,
 	unitLkey:undefined,
-
 } 
 
 export const newApOperationCoding:modelTypes.ApOperationCoding = { 
@@ -2040,7 +2067,6 @@ export const newApOperationInduction:modelTypes.ApOperationInduction = {
 	dose:0,
 	unitLkey:undefined,
 	activeIngredientKey:0,
-
 } 
 
 export const newApOperationIntraoperativeEvents:modelTypes.ApOperationIntraoperativeEvents = { 
