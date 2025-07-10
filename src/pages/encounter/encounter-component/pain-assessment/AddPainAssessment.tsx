@@ -55,7 +55,7 @@ const AddPainAssessment = ({ open, setOpen, patient, encounter, painAssessmentOb
                 setTags([]);
                 setRelievingFactorsTag([]);
                 //TODO convert key to code
-                setPainAssessment({ ...painAssessment, statusLkey: "9766169155908512" });
+                setPainAssessment({ ...newApPainAssessment, statusLkey: "9766169155908512" });
                 setOpen(false);
             } else {
                 await savePainAssessment({

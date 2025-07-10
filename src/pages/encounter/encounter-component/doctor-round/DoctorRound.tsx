@@ -1,7 +1,8 @@
 import React from 'react';
 import { Tabs } from 'rsuite';
-import NewRound from './NewRound';
+import NewRound from './NewRound/NewRound';
 import { useLocation } from 'react-router-dom';
+import NurseNotes from './NurseNotes/NurseNotes';
 
 const DoctorRound = () => {
     const location = useLocation();
@@ -19,7 +20,10 @@ const DoctorRound = () => {
 
             </Tabs.Tab>
             <Tabs.Tab eventKey="3" title="Nurse Notes">
-
+                <NurseNotes
+                    patient={patient}
+                    encounter={encounter}
+                    edit={edit} />
             </Tabs.Tab>
             <Tabs.Tab eventKey="4" title="Previous Rounds History">
 
