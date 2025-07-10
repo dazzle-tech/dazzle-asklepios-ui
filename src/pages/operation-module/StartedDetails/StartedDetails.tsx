@@ -12,6 +12,8 @@ import PatientArrival from "./PatientArrival";
 import { useAppSelector } from "@/hooks";
 import OperativeTimeOut from "./OperativeTimeOut";
 import AnesthesiaInduction from "./AnesthesiaInduction";
+import SurgicalHistory from "@/pages/encounter/encounter-component/patient-history/SurgicalHistory";
+import SurgicalPreparation from "./SurgicalPreparation";
 const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOperation }) => {
        const authSlice = useAppSelector(state => state.auth);
     const [save, saveMutation] = useSaveOperationRequestsMutation();
@@ -24,8 +26,9 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
         <MyModal
             open={open}
             setOpen={setOpen}
-            title="g"
+            title="Operation Trak"
             size='full'
+            hideActionBtn
             content={<div className='container'>
                 <div className='left-box'>
                     <Form fluid >
@@ -115,8 +118,8 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                         <Tabs.Tab eventKey="3" title="Anesthesia Induction" >
                             <AnesthesiaInduction  operation={operation}/>
                         </Tabs.Tab>
-                        <Tabs.Tab eventKey="4" title="Post-operation Care and Follow-up" >
-                            4
+                        <Tabs.Tab eventKey="4" title="Surgical Preparation & Incision" >
+                          <SurgicalPreparation operation={operation}/>
                         </Tabs.Tab>
                         <Tabs.Tab eventKey="5" title="Equipment and Logistics" >
                             5

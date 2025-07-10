@@ -326,7 +326,7 @@ export const operationService = createApi({
         // 🟡 POST save surgical preparation & incision
         saveSurgicalPreparationIncision: builder.mutation({
             query: (body) => ({
-                url: `/operation/save-surgical-preparation-incision`,
+                url: `/operation/save-surgical-preparation`,
                 method: 'POST',
                 body
             }),
@@ -336,7 +336,7 @@ export const operationService = createApi({
         // 🟢 GET surgical preparation & incision list
         getSurgicalPreparationIncisionList: builder.query({
             query: (listRequest: ListRequest) => ({
-                url: `/operation/surgical-preparation-incision-list?${fromListRequestToQueryParams(listRequest)}`,
+                url: `/operation/surgical-preparation-list?${fromListRequestToQueryParams(listRequest)}`,
                 method: 'GET'
             }),
             onQueryStarted
@@ -364,7 +364,7 @@ export const operationService = createApi({
         // 🟡 POST save antimicrobial prophylaxis given
         saveAntimicrobialProphylaxisGiven: builder.mutation({
             query: (body) => ({
-                url: `/operation/save-antimicrobial-prophylaxis-given`,
+                url: `/operation/save-antimicrobial-prophylaxis`,
                 method: 'POST',
                 body
             }),
@@ -374,7 +374,7 @@ export const operationService = createApi({
         // 🟢 GET antimicrobial prophylaxis list
         getAntimicrobialProphylaxisGivenList: builder.query({
             query: (listRequest: ListRequest) => ({
-                url: `/operation/antimicrobial-prophylaxis-given-list?${fromListRequestToQueryParams(listRequest)}`,
+                url: `/operation/antimicrobial-prophylaxis-list?${fromListRequestToQueryParams(listRequest)}`,
                 method: 'GET'
             }),
             onQueryStarted
@@ -383,7 +383,7 @@ export const operationService = createApi({
         // 🟡 POST save post op notes & handover
         savePostOpNotesHandover: builder.mutation({
             query: (body) => ({
-                url: `/operation/save-post-op-notes-handover`,
+                url: `/operation/save-post-op-handover`,
                 method: 'POST',
                 body
             }),
