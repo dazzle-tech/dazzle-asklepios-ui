@@ -108,7 +108,7 @@ import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
 import MedicationMatrix from './pages/setup/med-matrix-setup';
 import DoctorRound from './pages/encounter/encounter-component/doctor-round/DoctorRound';
 import WarehouseItemsSetup from './pages/setup/warehouse-Items-setup';
-
+import Shifts from './pages/setup/shift-setup';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -312,6 +312,7 @@ const App = () => {
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />
               <Route path="modules-setup" element={<Modules />} />
+               <Route path="shift-setup" element={<Shifts />} />
               <Route
                 path="user-access-patient-private"
                 element={<EncounterPatientPrivateLogin />}
