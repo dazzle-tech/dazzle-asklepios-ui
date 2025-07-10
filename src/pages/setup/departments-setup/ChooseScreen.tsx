@@ -162,6 +162,91 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
+                       <MyInput
+                      fieldType="check"
+                      fieldName={'dayCase'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
+                       <MyInput
+                      fieldType="check"
+                      fieldName={'bedsideProceduresRequest'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
+                       <MyInput
+                      fieldType="check"
+                      fieldName={'referralRequest'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
+                       <MyInput
+                      fieldType="check"
+                      fieldName={'bloodOrder'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
+                       <MyInput
+                      fieldType="check"
+                      fieldName={'ivFluidOrder'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
+                       <MyInput
+                      fieldType="check"
+                      fieldName={'intakeOutputBalance'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
+                       <MyInput
+                      fieldType="check"
+                      fieldName={'riskAssessments'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
+                       <MyInput
+                      fieldType="check"
+                      fieldName={'multidisciplinaryTeamNotes'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
+                     <MyInput
+                      fieldType="check"
+                      fieldName={'nutritionStateAssessment'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
+                     <MyInput
+                      fieldType="check"
+                      fieldName={'physicianOrderSummary'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
+                     <MyInput
+                      fieldType="check"
+                      fieldName={'carePlanAndGoals'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
+                     <MyInput
+                      fieldType="check"
+                      fieldName={'dischargePlanning'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
+
                 </div>
               </div>
               <div className="container-of-specific-sheets">
@@ -213,6 +298,13 @@ const ChooseDepartment = ({
                     <MyInput
                       fieldType="check"
                       fieldName={'vaccination'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
+                       <MyInput
+                      fieldType="check"
+                      fieldName={'pregnancyFollowUp'}
                       showLabel={false}
                       record={showScreen}
                       setRecord={setShowScreen}
