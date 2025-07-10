@@ -13,6 +13,7 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyTable from '@/components/MyTable';
 import './styles.less';
 import PatientSide from '@/pages/lab-module/PatienSide';
+import MyButton from '@/components/MyButton/MyButton';
 const InternalDrugOrder = () => {
   const dispatch = useAppDispatch();
   const [order, serOrder] = useState({});
@@ -43,6 +44,7 @@ const InternalDrugOrder = () => {
           route: 'route11',
           frequency: 11,
           dose: 'dose11',
+          unit: 'u11',
           duration: 'dur11',
           qtyToDispense: 'q11',
           totalDoses: 11,
@@ -57,6 +59,7 @@ const InternalDrugOrder = () => {
           route: 'route12',
           frequency: 12,
           dose: 'dose12',
+          unit: 'u12',
           duration: 'dur12',
           qtyToDispense: 'q12',
           totalDoses: 12,
@@ -71,6 +74,7 @@ const InternalDrugOrder = () => {
           route: 'route13',
           frequency: 13,
           dose: 'dose13',
+          unit: 'u12',
           duration: 'dur13',
           qtyToDispense: 'q13',
           totalDoses: 13,
@@ -85,6 +89,7 @@ const InternalDrugOrder = () => {
           route: 'route14',
           frequency: 14,
           dose: 'dose14',
+          unit: 'u14',
           duration: 'dur14',
           qtyToDispense: 'q14',
           totalDoses: 14,
@@ -111,6 +116,7 @@ const InternalDrugOrder = () => {
           route: 'route21',
           frequency: 21,
           dose: 'dose21',
+          unit: 'u21',
           duration: 'dur21',
           qtyToDispense: 'q21',
           totalDoses: 21,
@@ -125,6 +131,7 @@ const InternalDrugOrder = () => {
           route: 'route22',
           frequency: 22,
           dose: 'dose22',
+          unit: 'u22',
           duration: 'dur22',
           qtyToDispense: 'q22',
           totalDoses: 22,
@@ -139,6 +146,7 @@ const InternalDrugOrder = () => {
           route: 'route23',
           frequency: 23,
           dose: 'dose23',
+          unit: 'u23',
           duration: 'dur23',
           qtyToDispense: 'q23',
           totalDoses: 23,
@@ -153,6 +161,7 @@ const InternalDrugOrder = () => {
           route: 'route24',
           frequency: 24,
           dose: 'dose24',
+          unit: 'u24',
           duration: 'dur24',
           qtyToDispense: 'q24',
           totalDoses: 24,
@@ -179,6 +188,7 @@ const InternalDrugOrder = () => {
           route: 'route31',
           frequency: 31,
           dose: 'dose31',
+          unit: 'u31',
           duration: 'dur31',
           qtyToDispense: 'q31',
           totalDoses: 31,
@@ -193,6 +203,7 @@ const InternalDrugOrder = () => {
           route: 'route32',
           frequency: 32,
           dose: 'dose32',
+          unit: 'u32',
           duration: 'dur32',
           qtyToDispense: 'q32',
           totalDoses: 32,
@@ -207,6 +218,7 @@ const InternalDrugOrder = () => {
           route: 'route33',
           frequency: 33,
           dose: 'dose33',
+          unit: 'u33',
           duration: 'dur33',
           qtyToDispense: 'q33',
           totalDoses: 33,
@@ -221,6 +233,7 @@ const InternalDrugOrder = () => {
           route: 'route34',
           frequency: 34,
           dose: 'dose34',
+          unit: 'u34',
           duration: 'dur34',
           qtyToDispense: 'q34',
           totalDoses: 34,
@@ -247,6 +260,7 @@ const InternalDrugOrder = () => {
           route: 'route41',
           frequency: 41,
           dose: 'dose41',
+          unit: 'u41',
           duration: 'dur41',
           qtyToDispense: 'q41',
           totalDoses: 41,
@@ -261,6 +275,7 @@ const InternalDrugOrder = () => {
           route: 'route42',
           frequency: 42,
           dose: 'dose42',
+          unit: 'u42',
           duration: 'dur42',
           qtyToDispense: 'q42',
           totalDoses: 42,
@@ -275,6 +290,7 @@ const InternalDrugOrder = () => {
           route: 'route43',
           frequency: 43,
           dose: 'dose43',
+          unit: 'u42',
           duration: 'dur43',
           qtyToDispense: 'q43',
           totalDoses: 43,
@@ -289,6 +305,7 @@ const InternalDrugOrder = () => {
           route: 'route44',
           frequency: 44,
           dose: 'dose44',
+          unit: 'u44',
           duration: 'dur44',
           qtyToDispense: 'q44',
           totalDoses: 44,
@@ -333,7 +350,7 @@ const InternalDrugOrder = () => {
 
   // Filter orders table
   const filters = () => (
-    <Form layout="inline" fluid>
+    <Form layout="inline" fluid className='filter-fields-pharmacey'>
       <MyInput
         column
         fieldName=""
@@ -381,6 +398,12 @@ const InternalDrugOrder = () => {
         record={{}}
         setRecord={{}}
       />
+      <MyButton
+        color="var(--deep-blue)"
+        width="109px"
+      >
+        Search
+      </MyButton>
     </Form>
   );
 
@@ -439,6 +462,10 @@ const InternalDrugOrder = () => {
     {
       key: 'dose',
       title: <Translate>Dose</Translate>
+    },
+    {
+      key: 'unit',
+      title: <Translate>Unit</Translate>
     },
     {
       key: 'duration',

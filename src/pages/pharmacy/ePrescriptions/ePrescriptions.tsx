@@ -12,6 +12,7 @@ import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyTable from '@/components/MyTable';
 import PatientSide from '@/pages/lab-module/PatienSide';
+import MyButton from '@/components/MyButton/MyButton';
 const EPrepscriptions = () => {
   const dispatch = useAppDispatch();
   const [order, serOrder] = useState({});
@@ -276,7 +277,7 @@ const EPrepscriptions = () => {
 
   // Filter orders table
   const filters = () => (
-    <Form layout="inline" fluid>
+    <Form layout="inline" fluid className='filter-fields-pharmacey'>
       <MyInput
         column
         fieldType="select"
@@ -316,6 +317,9 @@ const EPrepscriptions = () => {
         record={{}}
         setRecord={{}}
       />
+      <MyButton color="var(--deep-blue)" width="109px">
+        Search
+      </MyButton>
     </Form>
   );
 
@@ -367,7 +371,7 @@ const EPrepscriptions = () => {
       key: 'qtyToDispense',
       title: <Translate>Qty to Dispense</Translate>
     },
-     {
+    {
       key: 'unit',
       title: <Translate>Unit</Translate>
     },
