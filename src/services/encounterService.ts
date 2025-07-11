@@ -1,4 +1,4 @@
-import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound, ApNurseNotes } from './../types/model-types';
+import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound, ApNurseNotes, ApRepositioning } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -778,6 +778,24 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+    saveNewPosition: builder.mutation({
+      query: (position: ApRepositioning) => ({
+        url: `/encounter/save-new-position`,
+        method: 'POST',
+        body: position
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getRepositioningList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/repositioning-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 });
 
@@ -862,5 +880,7 @@ export const {
   useGetDoctorRoundsListQuery,
   useSaveDoctorRoundMutation,
   useGetNurseNotesListQuery,
-  useSaveNurseNotesMutation
+  useSaveNurseNotesMutation,
+  useSaveNewPositionMutation,
+  useGetRepositioningListQuery
 } = encounterService;

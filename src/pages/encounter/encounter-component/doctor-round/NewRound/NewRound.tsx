@@ -156,7 +156,7 @@ const NewRound = ({ patient, encounter, edit,setIsConfirmedRound }) => {
             await saveRound({
                 ...doctorRound,
                 statusLkey: "91109811181900",
-                secondaryDiagnoses: indicationsDescription,
+                secondaryDiagnoses: recordOfIndicationsDescription?.indicationsDescription,
                 updatedBy: authSlice.user.key
             }).unwrap();
 
