@@ -3376,6 +3376,25 @@ export interface ApRelationsMatrix {
 	deletedAt:number;
 } 
 
+export interface ApRepositioning { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	newPositionLkey:string;
+	positionChangeSuccessful:boolean;
+	notes:string;
+	expectedNextRepositioning:number;
+	timeUnitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	statusLkey:string;
+	cancellationReason:string;
+} 
+
 export interface ApResources { 
 	key:string;
 	facilityKey:string;

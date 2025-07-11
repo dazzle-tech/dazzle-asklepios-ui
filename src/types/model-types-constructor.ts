@@ -3377,6 +3377,25 @@ export const newApRelationsMatrix:modelTypes.ApRelationsMatrix = {
 	deletedAt:undefined,
 } 
 
+export const newApRepositioning:modelTypes.ApRepositioning = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	newPositionLkey:undefined,
+	positionChangeSuccessful:undefined,
+	notes:'',
+	expectedNextRepositioning:0,
+	timeUnitLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	statusLkey:undefined,
+	cancellationReason:'',
+} 
+
 export const newApResources:modelTypes.ApResources = { 
 	key:undefined,
 	facilityKey:undefined,
