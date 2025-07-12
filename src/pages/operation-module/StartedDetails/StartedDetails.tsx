@@ -123,7 +123,7 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                           <SurgicalPreparation operation={operation}/>
                         </Tabs.Tab>
                         <Tabs.Tab eventKey="5" title="Intraoperative & Events Tracking" >
-                           <IntraoperativeEventsTracking operation={operation}/>
+                           <IntraoperativeEventsTracking operation={operation} patient={patient} encounter={encounter}/>
                         </Tabs.Tab>
 
                     </Tabs>

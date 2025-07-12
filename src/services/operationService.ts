@@ -247,6 +247,13 @@ export const operationService = createApi({
             }),
             onQueryStarted
         }),
+        getOperationPatientArrivalByOperation: builder.query({
+    query: (operationKey: string) => ({
+        url: `/operation/operation-patient-arrival-by-operation?operationKey=${operationKey}`,
+        method: 'GET'
+    }),
+    onQueryStarted
+}),
 
         // 🟡 POST save pre-medication
         saveOperationPreMedication: builder.mutation({
@@ -341,11 +348,18 @@ export const operationService = createApi({
             }),
             onQueryStarted
         }),
-
+        // 🟢 GET latest surgical preparation by operation key
+getLatestSurgicalPreparationByOperationKey: builder.query({
+    query: (operationKey: string) => ({
+        url: `/operation/surgical-by-operation?operationKey=${operationKey}`,
+        method: 'GET'
+    }),
+    onQueryStarted
+}),
         // 🟡 POST save intraoperative events
         saveIntraoperativeEvents: builder.mutation({
             query: (body) => ({
-                url: `/operation/save-intraoperative-events`,
+                url: `/operation/save-intraoperative-event`,
                 method: 'POST',
                 body
             }),
@@ -438,6 +452,7 @@ export const {
 
     useSaveOperationPatientArrivalMutation,
     useGetOperationPatientArrivalListQuery,
+    useGetOperationPatientArrivalByOperationQuery,
 
     useSaveOperationPreMedicationMutation,
     useGetOperationPreMedicationListQuery,
@@ -452,6 +467,7 @@ export const {
     useSaveOperationAnesthesiaInductionMonitoringMutation,
     useSaveSurgicalPreparationIncisionMutation,
     useGetSurgicalPreparationIncisionListQuery,
+    useGetLatestSurgicalPreparationByOperationKeyQuery,
 
     useSaveIntraoperativeEventsMutation,
     useGetIntraoperativeEventsListQuery,

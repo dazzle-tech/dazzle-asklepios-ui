@@ -179,6 +179,7 @@ const Encounter = () => {
     '/encounter/diagnostics-result': 'Diagnostics Result ',
     '/encounter/operation-request':'Operation Requests',
     '/encounter/multidisciplinary-team-notes':'Multidisciplinary Team Notes',
+
    
   };
 

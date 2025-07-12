@@ -212,7 +212,8 @@ const PatientArrival = ({ operation, patient, encounter, user }) => {
                                     saveMutation={useSaveOperationStaffMutation}
                                     deleteMutation={useDeleteOperationStaffMutation}
                                     newStaffObj={newApOperationStaff}
-                                    filterFieldName="operationRequestKey" />   
+                                    filterFieldName="operationRequestKey" 
+                                    />   
                     </div>
                     </Col>
 

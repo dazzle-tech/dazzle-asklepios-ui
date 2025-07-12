@@ -12,6 +12,7 @@ import { faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 import { IoPersonRemove } from "react-icons/io5";
 import { useAppDispatch } from "@/hooks";
 import { notify } from "@/utils/uiReducerActions";
+import clsx from "clsx";
 
 type StaffAssignmentProps = {
   parentKey: string;
@@ -22,6 +23,8 @@ type StaffAssignmentProps = {
   newStaffObj: any;
   filterFieldName: string;
   disabled?: boolean
+
+
 };
 
 const StaffAssignment: React.FC<StaffAssignmentProps> = ({
@@ -32,7 +35,9 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
   deleteMutation,
   newStaffObj,
   filterFieldName,
+
   disabled=false,
+
 }) => {
   const dispatch = useAppDispatch();
   const [activeRowKey, setActiveRowKey] = useState(null);
@@ -147,7 +152,9 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
   ];
 
   return (
-    <Panel header={label} collapsible defaultExpanded className="panel-border">
+    <Panel header={label} collapsible defaultExpanded  className={clsx('panel-border', {
+                            'disabled-panel':disabled
+                          })}>
       <Row className="rows-gap">
         <Col md={10}>
           <Form fluid>
