@@ -14,6 +14,7 @@ import OperativeTimeOut from "./OperativeTimeOut";
 import AnesthesiaInduction from "./AnesthesiaInduction";
 import SurgicalHistory from "@/pages/encounter/encounter-component/patient-history/SurgicalHistory";
 import SurgicalPreparation from "./SurgicalPreparation";
+import IntraoperativeEventsTracking from "./IntraoperativeEventsTracking";
 const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOperation }) => {
        const authSlice = useAppSelector(state => state.auth);
     const [save, saveMutation] = useSaveOperationRequestsMutation();
@@ -121,8 +122,8 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                         <Tabs.Tab eventKey="4" title="Surgical Preparation & Incision" >
                           <SurgicalPreparation operation={operation}/>
                         </Tabs.Tab>
-                        <Tabs.Tab eventKey="5" title="Equipment and Logistics" >
-                            5
+                        <Tabs.Tab eventKey="5" title="Intraoperative & Events Tracking" >
+                           <IntraoperativeEventsTracking operation={operation} patient={patient} encounter={encounter}/>
                         </Tabs.Tab>
 
                     </Tabs>

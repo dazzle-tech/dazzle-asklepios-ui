@@ -278,6 +278,7 @@ const App = () => {
               <Route path="patient-list" element={<PatientList />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="facility-patient-list" element={<FacilityPatientList />} />
+
               <Route path="encounter" element={<Encounter />}>
                 <Route path="drug-order" element={<DrugOrder />} />
                 <Route index element={<PatientSummary />} />
@@ -305,6 +306,9 @@ const App = () => {
                  <Route path='multidisciplinary-team-notes' element={<MultidisciplinaryTeamNotes/>}/>
               </Route>
               <Route path='/doctor-round/round' element={<ViewRound/>}/>
+
+
+
               <Route path="procedure-module" element={<ProcedureModule />} />
               <Route path="encounter-list" element={<EncounterList />} />
               <Route path='inpatient-encounters-list' element={<InpatientList/>} />
