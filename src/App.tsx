@@ -112,6 +112,7 @@ import Shifts from './pages/setup/shift-setup';
 import EPrepscriptions from './pages/pharmacy/ePrescriptions';
 import MultidisciplinaryTeamNotes from './pages/encounter/encounter-component/multidisciplinary-team-notes';
 import ViewRound from './pages/encounter/encounter-component/doctor-round/NewRound/ViewRound';
+import ControlledMedications from './pages/pharmacy/controlled-medications';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -370,6 +371,7 @@ const App = () => {
               <Route path='operation-setup' element={<OperationSetup />}/>
                <Route path="pharmacy-internal-orders" element={<InternalDrugOrder />} />
                <Route path="pharmacy-ePrescriptions" element={<EPrepscriptions />} />
+               <Route path="pharmacy-controlled-medications" element={<ControlledMedications />} />
 
             </Route>
           </Route>
