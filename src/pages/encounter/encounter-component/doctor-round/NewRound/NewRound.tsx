@@ -400,6 +400,7 @@ const NewRound = ({ patient, encounter, edit,setIsConfirmedRound }) => {
                     deleteMutation={useDeleteDoctorRoundStaffMutation}
                     newStaffObj={newApDoctorRoundStaff}
                     filterFieldName="doctorRoundKey"
+                    width={200}
                 />
 
             </Row>
