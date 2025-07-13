@@ -75,6 +75,7 @@ const PostOperativeNote = ({ operation }) => {
         try {
             await save({
                 ...operativeNote,
+                operationRequestKey:operation?.key,
                 handoverTime: new Date(operativeNote.handoverTime).getTime,
                 completedAt: new Date(operativeNote.completedAt).getTime()
             }).unwrap();

@@ -111,24 +111,32 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                     }} appearance="subtle"
                       style={{ flexGrow: 1, maxHeight: 500, height: '100%' }}
                     >
-                        <Tabs.Tab eventKey="1" title="Operation Registration" >
+                        <Tabs.Tab eventKey="1" title="Patient Arrival & Registration" >
                             <PatientArrival operation={operation} patient={patient} encounter={encounter} user={authSlice.user}/>
                         </Tabs.Tab>
 
-                        <Tabs.Tab eventKey="2" title="Pre-operation Assessment" >
+                        <Tabs.Tab eventKey="2" title="Pre-Operative Time-out" >
                             <OperativeTimeOut operation={operation}/>
                         </Tabs.Tab>
 
-                        <Tabs.Tab eventKey="3" title="Anesthesia Induction" >
+                        <Tabs.Tab 
+                        disabled={operation?.operationStatusLvalue?.valueCode==="PROC_STARTED"}
+                        eventKey="3" title="Anesthesia Induction & Monitoring" >
                             <AnesthesiaInduction  operation={operation}/>
                         </Tabs.Tab>
-                        <Tabs.Tab eventKey="4" title="Surgical Preparation & Incision" >
+                        <Tabs.Tab
+                        disabled={operation?.operationStatusLvalue?.valueCode==="PROC_STARTED"}
+                         eventKey="4" title="Surgical Preparation & Incision" >
                           <SurgicalPreparation operation={operation}/>
                         </Tabs.Tab>
-                        <Tabs.Tab eventKey="5" title="Intraoperative & Events Tracking" >
+                        <Tabs.Tab 
+                        disabled={operation?.operationStatusLvalue?.valueCode==="PROC_STARTED"}
+                        eventKey="5" title="Intraoperative & Events Tracking" >
                            <IntraoperativeEventsTracking operation={operation} patient={patient} encounter={encounter}/>
                         </Tabs.Tab>
-                        <Tabs.Tab eventKey="6" title="Post-Operative Notes & Handover" >
+                        <Tabs.Tab 
+                        disabled={operation?.operationStatusLvalue?.valueCode==="PROC_STARTED"}
+                        eventKey="6" title="Post-Operative Notes & Handover" >
                           <PostOperativeNote operation={operation}  />
                         </Tabs.Tab>
 
