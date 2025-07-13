@@ -1,19 +1,13 @@
 import MyInput from "@/components/MyInput";
 import MyTable from "@/components/MyTable";
 import Translate from "@/components/Translate";
-import { useAppDispatch } from "@/hooks";
 import { useGetOperationRequestsListQuery, useSaveOperationRequestsMutation } from "@/services/operationService";
 import { newApOperationRequests } from "@/types/model-types-constructor";
 import { initialListRequest, ListRequest } from "@/types/types";
 import { formatDateWithoutSeconds } from "@/utils";
-import { faNotesMedical, faPlay } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useState } from "react";
-import { Badge, Form, HStack, Tooltip, Whisper } from "rsuite";
-import StartedDetails from "./StartedDetails/StartedDetails";
-const OngoingOperations = ({ patient, setPatient, encounter, setEncounter }) => {
-    const dispatch = useAppDispatch();
-    const [open,setOpen]=useState(false)
+import { Badge, Form, Tooltip, Whisper } from "rsuite";
+const CompletedOperations = ({ patient, setPatient, encounter, setEncounter }) => {
     const [request, setRequest] = useState<any>({ ...newApOperationRequests });
     const [dateFilter, setDateFilter] = useState({
         fromDate: new Date(),
@@ -27,14 +21,14 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter }) => 
 
             {
                 fieldName: "operation_status_lkey",
-                operator: "in",
-                value: "(3621681578985655) (3622377660614958)"
+                operator: "match",
+                value: "3621707345048408"
             }
 
 
         ],
     });
-   console.log("ListRequest",listRequest?.filters)
+
     const isSelected = rowData => {
         if (rowData && request && rowData.key === request.key) {
             return 'selected-row';
@@ -43,6 +37,8 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter }) => 
 
     //operation Api's
     const { data: operationrequestList, refetch, isLoading } = useGetOperationRequestsListQuery(listRequest);
+
+
 
     useEffect(() => {
 
@@ -59,7 +55,7 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter }) => 
             dateFilter.toDate.setHours(23, 59, 59, 999);
 
             updatedFilters = addOrUpdateFilter(updatedFilters, {
-                fieldName: 'started_at',
+                fieldName: 'created_at',
                 operator: 'between',
                 value: dateFilter.fromDate.getTime() + '-' + dateFilter.toDate.getTime()
             });
@@ -67,7 +63,7 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter }) => 
             dateFilter.fromDate.setHours(0, 0, 0, 0);
 
             updatedFilters = addOrUpdateFilter(updatedFilters, {
-                fieldName: 'started_at',
+                fieldName: 'created_at',
                 operator: 'gte',
                 value: dateFilter.fromDate.getTime()
             });
@@ -75,7 +71,7 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter }) => 
             dateFilter.toDate.setHours(23, 59, 59, 999);
 
             updatedFilters = addOrUpdateFilter(updatedFilters, {
-                fieldName: 'started_at',
+                fieldName: 'created_at',
                 operator: 'lte',
                 value: dateFilter.toDate.getTime()
             });
@@ -86,6 +82,9 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter }) => 
             filters: updatedFilters
         }));
     }, [dateFilter]);
+
+
+
     //table 
     const columns = [
         {
@@ -166,37 +165,6 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter }) => 
             }
         },
 
-
-        {
-            key: "actions",
-            title: <Translate >Stage</Translate>,
-            render: (rowData: any) => {
-
-                return "";
-            }
-        },
-        {
-            key: "actions",
-            title: <Translate >Actions</Translate>,
-            render: (rowData: any) => {
-               
-
-                // const isDisabled =request?.key!==rowData.key;
-                return <HStack spacing={10}>
-                    <Whisper
-                        placement="top"
-                        trigger="hover"
-                        speaker={<Tooltip>{rowData.operationStatusLvalue.valueCode==="PROC_INPROGRESS"?"In Progress":"Start"}</Tooltip>}
-                    >
-                        <FontAwesomeIcon icon={rowData.operationStatusLvalue.valueCode==="PROC_INPROGRESS"?faNotesMedical:faPlay}
-                        onClick={()=>setOpen(true)}
-                        // style={isDisabled ? { cursor: 'not-allowed', opacity: 0.5 } : {}}
-                      
-                        />
-                    </Whisper>
-                </HStack>;
-            }
-        },
         {
             key: "operationStatusLkey",
             title: <Translate>Status</Translate>,
@@ -238,12 +206,13 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter }) => 
             render: (rowData: any) => {
                 return (<>
                     <span>{rowData.deletedBy} </span>
-                    <br /> 
+                    <br />
                     <span className='date-table-style'>{formatDateWithoutSeconds(rowData.deletedAt)}</span>
                 </>)
             }
         },
     ];
+
     const addOrUpdateFilter = (filters, newFilter) => {
         const index = filters.findIndex(f => f.fieldName === newFilter.fieldName);
         if (index > -1) {
@@ -254,31 +223,31 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter }) => 
             return [...filters, newFilter];
         }
     };
+
     const filters = () => (
-        <Form layout="inline" fluid className="container-of-filter-fields-department">
-            <MyInput
-
-                fieldType="date"
-                fieldLabel="From Date"
-                fieldName="fromDate"
-                record={dateFilter}
-                setRecord={setDateFilter}
-                showLabel={false}
-            />
-            <MyInput
-
-                fieldType="date"
-                fieldLabel="To Date"
-                fieldName="toDate"
-                record={dateFilter}
-                setRecord={setDateFilter}
-                showLabel={false}
-            />
-
-        </Form>
-    );
-    return (<>
-        <MyTable
+            <Form layout="inline" fluid className="container-of-filter-fields-department">
+                <MyInput
+    
+                    fieldType="date"
+                    fieldLabel="From Date"
+                    fieldName="fromDate"
+                    record={dateFilter}
+                    setRecord={setDateFilter}
+                    showLabel={false}
+                />
+                <MyInput
+    
+                    fieldType="date"
+                    fieldLabel="To Date"
+                    fieldName="toDate"
+                    record={dateFilter}
+                    setRecord={setDateFilter}
+                    showLabel={false}
+                />
+    
+            </Form>
+        );
+    return (<> <MyTable
             filters={filters()}
             columns={columns}
             data={operationrequestList?.object || []}
@@ -289,8 +258,6 @@ const OngoingOperations = ({ patient, setPatient, encounter, setEncounter }) => 
 
             }}
             
-        />
-        <StartedDetails open={open} setOpen={setOpen} patient={patient} encounter={encounter} operation={request} setOperation={setRequest}/>
-    </>);
+        /></>)
 }
-export default OngoingOperations;
+export default CompletedOperations;

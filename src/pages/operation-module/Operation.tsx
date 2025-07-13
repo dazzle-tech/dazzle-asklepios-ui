@@ -9,6 +9,7 @@ import { Col, Row, Tabs } from "rsuite";
 import MyTable from "@/components/MyTable";
 import RequestList from "./RequestsList";
 import OngoingOperations from "./OngoingOperations";
+import CompletedOperations from "./CompletedOperations";
 
 const Operation = () => {
  const [patient, setPatient] = useState({ ...newApPatient });
@@ -23,8 +24,8 @@ const Operation = () => {
             <OngoingOperations patient={patient}  encounter={encounter} setPatient={setPatient} setEncounter={setEncounter}/>
           
          </Tabs.Tab>
-         <Tabs.Tab eventKey="3" title="Completed Operations"
-    >
+         <Tabs.Tab eventKey="3" title="Completed Operations">
+            <CompletedOperations patient={patient}  encounter={encounter} setPatient={setPatient} setEncounter={setEncounter}/>
           
          </Tabs.Tab>
 
