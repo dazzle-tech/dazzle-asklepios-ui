@@ -31,15 +31,6 @@ const Checklist = () => {
     { key: '3', operationName: 'op2', checkListName: 'ch3', isValid: true },
     { key: '4', operationName: 'op2', checkListName: 'ch4', isValid: false }
   ];
-  // Header page setUp
-  const divContent = (
-    <div className="page-title">
-      <h5>Checklists</h5>
-    </div>
-  );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-  dispatch(setPageCode('Checklists'));
-  dispatch(setDivContent(divContentHTML));
 
   // Effects
   useEffect(() => {
@@ -49,11 +40,21 @@ const Checklist = () => {
   }, []);
 
   useEffect(() => {
-    return () => {
-      dispatch(setPageCode(''));
-      dispatch(setDivContent('  '));
-    };
-  }, [location.pathname, dispatch]);
+      // Header page setUp
+      const divContent = (
+        <div className="page-title">
+          <h5>Checklists</h5>
+        </div>
+      );
+      const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+      dispatch(setPageCode('Checklists'));
+      dispatch(setDivContent(divContentHTML));
+  
+      return () => {
+        dispatch(setPageCode(''));
+        dispatch(setDivContent(''));
+      };
+    }, [dispatch]);
 
   // handling click on Add New Button
   const handleAddNew = () => {
