@@ -115,6 +115,7 @@ import ViewRound from './pages/encounter/encounter-component/doctor-round/NewRou
 import ControlledMedications from './pages/pharmacy/controlled-medications';
 import CarePlanAndGoals from './pages/encounter/encounter-component/care-plan-and-goals';
 import Recovery from './pages/recovery';
+import DischargePlanning from './pages/encounter/encounter-component/discharged-planning';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -308,6 +309,7 @@ const App = () => {
      
                  <Route path='multidisciplinary-team-notes' element={<MultidisciplinaryTeamNotes/>}/>
                  <Route path='care-plan-and-goals' element={<CarePlanAndGoals/>}/>
+                 <Route path='discharge-planning' element={<DischargePlanning/>}/>
               </Route>
               <Route path='/doctor-round/round' element={<ViewRound/>}/>
               <Route path='/recovery-module' element={<Recovery/>}/>

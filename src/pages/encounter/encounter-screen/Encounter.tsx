@@ -5,6 +5,7 @@ import AppointmentModal from '@/pages/Scheduling/scheduling-screen/AppoitmentMod
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService';
 import { faComment } from '@fortawesome/free-solid-svg-icons';
+import { faEject } from '@fortawesome/free-solid-svg-icons';
 import { useCompleteEncounterMutation, useDischargeInpatientEncounterMutation } from '@/services/encounterService';
 import {
   faBedPulse, faCheckDouble, faClockRotateLeft, faFilePrescription, faFileWaveform,
@@ -180,6 +181,7 @@ const Encounter = () => {
     '/encounter/operation-request':'Operation Requests',
     '/encounter/multidisciplinary-team-notes':'Multidisciplinary Team Notes',
     '/encounter/care-plan-and-goals':'Care Plan & Goals',
+    '/encounter/discharge-planning':'Discharge Planning',
 
    
   };
@@ -199,6 +201,7 @@ const Encounter = () => {
     { key: 'consultation', label: 'Consultation', icon: faStethoscope, path: 'consultation' },
     { key: 'multidisciplinaryTeamNotes', label: 'Multidisciplinary Team Notes', icon: faComment, path: 'multidisciplinary-team-notes' },
      { key: 'carePlanAndGoals', label: 'Care Plan & Goals', icon: faNotesMedical, path: 'care-plan-and-goals' },
+     { key: 'dischargePlanning', label: 'Discharge Planning', icon: faEject, path: 'discharge-planning' },
 
     { key: 'procedures', label: 'Procedures', icon: faNotesMedical, path: 'procedures' },
     { key: 'patientHistory', label: 'Patient History', icon: faClockRotateLeft, path: 'patient-history' },
