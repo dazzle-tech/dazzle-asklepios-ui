@@ -2172,7 +2172,7 @@ export const newApOperationPostOpNotesHandover:modelTypes.ApOperationPostOpNotes
 	operativeFindings:'',
 	operationPerformedSummary:'',
 	variationsFromPlan:'',
-	postOpDestination:'',
+	postOpDestinationKey:undefined,
 	oxygenRequired:undefined,
 	oxygenFlowRate:0,
 	specialInstructions:'',

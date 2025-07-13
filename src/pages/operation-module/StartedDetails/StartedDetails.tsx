@@ -15,6 +15,7 @@ import AnesthesiaInduction from "./AnesthesiaInduction";
 import SurgicalHistory from "@/pages/encounter/encounter-component/patient-history/SurgicalHistory";
 import SurgicalPreparation from "./SurgicalPreparation";
 import IntraoperativeEventsTracking from "./IntraoperativeEventsTracking";
+import PostOperativeNote from "./PostOperativeNote";
 const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOperation }) => {
        const authSlice = useAppSelector(state => state.auth);
     const [save, saveMutation] = useSaveOperationRequestsMutation();
@@ -107,8 +108,10 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
 
                     <Tabs activeKey={activeTab} onSelect={(key) => {
                         if (key) setActiveTab(key.toString());
-                    }} appearance="subtle">
-                        <Tabs.Tab eventKey="1" title="operation Registration" >
+                    }} appearance="subtle"
+                      style={{ flexGrow: 1, maxHeight: 500, height: '100%' }}
+                    >
+                        <Tabs.Tab eventKey="1" title="Operation Registration" >
                             <PatientArrival operation={operation} patient={patient} encounter={encounter} user={authSlice.user}/>
                         </Tabs.Tab>
 
@@ -124,6 +127,9 @@ const StartedDetails = ({ open, setOpen, patient, encounter, operation, setOpera
                         </Tabs.Tab>
                         <Tabs.Tab eventKey="5" title="Intraoperative & Events Tracking" >
                            <IntraoperativeEventsTracking operation={operation} patient={patient} encounter={encounter}/>
+                        </Tabs.Tab>
+                        <Tabs.Tab eventKey="6" title="Post-Operative Notes & Handover" >
+                          <PostOperativeNote operation={operation}  />
                         </Tabs.Tab>
 
                     </Tabs>
