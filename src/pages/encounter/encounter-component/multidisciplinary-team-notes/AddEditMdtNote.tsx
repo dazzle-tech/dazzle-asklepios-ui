@@ -67,12 +67,12 @@ const AddEditMdtNote = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      title={mdtNote?.key ? 'Edit MdtNote' : 'New MdtNote'}
+      title={mdtNote?.key ? 'MDT Notes' : 'MDT Notes'}
       position="right"
       content={conjureFormContent}
       actionButtonLabel={mdtNote?.key ? 'Save' : 'Create'}
       actionButtonFunction=""
-      steps={[{ title: 'MdtNote Info', icon:<FontAwesomeIcon icon={faComment} />}]}
+      steps={[{ title: 'MDT Notes', icon:<FontAwesomeIcon icon={faComment} />}]}
       size={width > 600 ? '36vw' : '25vw'}
     />
   );
