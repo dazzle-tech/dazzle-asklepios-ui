@@ -20,6 +20,8 @@ const AddEditResources = ({
   const [isMedicalTest, setIsMedicalTest] = useState(false);
   const [isProcedure, setIsProcedure] = useState(false);
   const [isInpatient, setIsInpatient] = useState(false);
+  const [isDayCase, setIsDayCase] = useState(false);
+  const [isEmergency, setEmergency] = useState(false);
   // Fetch resourceType Lov list response
   const { data: resourceTypeLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_RESOURCE_TYPE');
   // Fetch resourceType list response
@@ -35,6 +37,8 @@ const AddEditResources = ({
         setIsMedicalTest(false);
         setIsProcedure(false);
         setIsInpatient(false);
+        setIsDayCase(false);
+        setEmergency(false);
         break;
       case '2039516279378421':
         setISDepartment(true);
@@ -42,6 +46,8 @@ const AddEditResources = ({
         setIsMedicalTest(false);
         setIsProcedure(false);
         setIsInpatient(false);
+        setIsDayCase(false);
+        setEmergency(false);
         break;
       case '2039620472612029':
         setISDepartment(false);
@@ -49,6 +55,8 @@ const AddEditResources = ({
         setIsMedicalTest(true);
         setIsProcedure(false);
         setIsInpatient(false);
+        setIsDayCase(false);
+        setEmergency(false);
         break;
       case '2039548173192779':
         setISDepartment(false);
@@ -56,6 +64,8 @@ const AddEditResources = ({
         setIsMedicalTest(false);
         setIsProcedure(true);
         setIsInpatient(false);
+        setIsDayCase(false);
+        setEmergency(false);
         break;
       case '4217389643435490':
         setISDepartment(false);
@@ -63,6 +73,26 @@ const AddEditResources = ({
         setIsMedicalTest(false);
         setIsProcedure(false);
         setIsInpatient(true);
+        setIsDayCase(false);
+        setEmergency(false);
+        break;
+      case '5433343011954425':
+        setISDepartment(false);
+        setISPractitioner(false);
+        setIsMedicalTest(false);
+        setIsProcedure(false);
+        setIsInpatient(false);
+        setIsDayCase(true);
+        setEmergency(false);
+        break;
+      case '6743167799449277':
+        setISDepartment(false);
+        setISPractitioner(false);
+        setIsMedicalTest(false);
+        setIsProcedure(false);
+        setIsInpatient(false);
+        setIsDayCase(false);
+        setEmergency(true);
         break;
     }
   }, [resources.resourceTypeLkey]);
@@ -94,7 +124,7 @@ const AddEditResources = ({
               fieldName="resourceKey"
               fieldType="select"
               selectData={resourceTypeListResponse?.data?.object ?? []}
-              selectDataLabel={isPractitioner ? "practitionerFullName" : isDepartment ? "name" : isMedicalTest ? "testName" : isProcedure ? "name" : isInpatient ? "name" : ""}
+              selectDataLabel={isPractitioner ? "practitionerFullName" : isDepartment ? "name" : isMedicalTest ? "testName" : isProcedure ? "name" : isInpatient ? "name" : isDayCase ? "name" : isEmergency?"name":""}
               selectDataValue="key"
               record={resources}
               setRecord={setResources}
