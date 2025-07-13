@@ -113,6 +113,7 @@ import EPrepscriptions from './pages/pharmacy/ePrescriptions';
 import MultidisciplinaryTeamNotes from './pages/encounter/encounter-component/multidisciplinary-team-notes';
 import ViewRound from './pages/encounter/encounter-component/doctor-round/NewRound/ViewRound';
 import ControlledMedications from './pages/pharmacy/controlled-medications';
+import CarePlanAndGoals from './pages/encounter/encounter-component/care-plan-and-goals';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -305,6 +306,7 @@ const App = () => {
                  <Route path='doctor-round' element={<DoctorRound/>}/>
      
                  <Route path='multidisciplinary-team-notes' element={<MultidisciplinaryTeamNotes/>}/>
+                 <Route path='care-plan-and-goals' element={<CarePlanAndGoals/>}/>
               </Route>
               <Route path='/doctor-round/round' element={<ViewRound/>}/>
 
