@@ -23,25 +23,40 @@ const AddEditRoom = ({
     refetch
 }) => {
     const dispatch = useAppDispatch();
+    const [departmentKey, setDepartmentKey] = useState({ key: '' });
     // Fetch age UnitLov list response
     const { data: roomTypesLovQueryResponse } = useGetLovValuesByCodeQuery('ROOM_TYPES');
     const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
     const [saveRoom] = useSaveRoomMutation();
-    const [isGenderSpecific, setGenderSpecific] = useState({ genderSpecific:false});
+    const [isGenderSpecific, setGenderSpecific] = useState({ genderSpecific: false });
     const { data: departmentListResponse } = useGetDepartmentsQuery({
-        ...initialListRequest, filters: [
+        ...initialListRequest,
+        filters: [
             {
                 fieldName: 'department_type_lkey',
                 operator: 'match',
-                value: '5673990729647001'
+                value: departmentKey?.key
+            },
+            {
+                fieldName: 'facility_key',
+                operator: 'match',
+                value: room?.facilityKey
             }
         ]
+    }, {
+        skip: !(departmentKey?.key && room?.facilityKey)
     });
+
     const {
         data: facilityListResponse,
         isLoading: isGettingFacilities,
         isFetching: isFetchingFacilities
     } = useGetFacilitiesQuery({ ...initialListRequest });
+    const { data: resourceTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DEPARTMENT-TYP');
+
+    const selectedList = resourceTypeLovQueryResponse?.object?.filter(item =>
+        ['INPATIENT_WARD', 'EMERGENCY_ROOM', 'DAY_CASE', 'OPERATION_THEATER'].includes(item.valueCode)
+    );
     // Modal Content 
     const content = (
         <Form fluid layout='inline' >
@@ -56,7 +71,21 @@ const AddEditRoom = ({
                 fieldName="facilityKey"
                 record={room}
                 setRecord={setRoom}
-                 />
+            />
+            <MyInput
+               column
+                fieldName="key"
+                fieldLabel="Department Type"
+                fieldType="select"
+                selectData={selectedList ?? []}
+                selectDataLabel="lovDisplayVale"
+                selectDataValue="key"
+                record={departmentKey}
+                setRecord={setDepartmentKey}
+                menuMaxHeight={200}
+                width={250}
+                searchable={false}
+            />
             <MyInput
                 width={250}
                 column
@@ -95,7 +124,7 @@ const AddEditRoom = ({
             />
             <MyInput
                 column
-                 width={250}
+                width={250}
                 fieldLabel="Type"
                 fieldType="select"
                 fieldName="typeLkey"
@@ -116,7 +145,7 @@ const AddEditRoom = ({
             />
             <MyInput
                 column
-                 width={250}
+                width={250}
                 fieldLabel="Gender"
                 fieldType="select"
                 fieldName="genderLkey"
@@ -156,10 +185,10 @@ const AddEditRoom = ({
                 dispatch(notify('Failed to Save Room'));
             });
     };
-      //useEffect
-      useEffect(() => {
-        setGenderSpecific({ genderSpecific: room?.genderLkey ? true :false})
-      }, [room]);
+    //useEffect
+    useEffect(() => {
+        setGenderSpecific({ genderSpecific: room?.genderLkey ? true : false })
+    }, [room]);
     return (
         <MyModal
             open={open}
@@ -167,7 +196,7 @@ const AddEditRoom = ({
             title={room?.key ? 'Edit Room Information' : 'Add New Room'}
             actionButtonFunction={handleSave}
             position='right'
-            size='37vw'
+            size='38vw'
             steps={[{
                 title: "Room",
                 icon: <FontAwesomeIcon icon={faDoorOpen} />,
