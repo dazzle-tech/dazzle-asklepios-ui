@@ -56,15 +56,6 @@ const Questionnaire = () => {
       isValid: false
     }
   ];
-  // Header page setUp
-  const divContent = (
-    <div className="page-title">
-      <h5>Questionnaire</h5>
-    </div>
-  );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-  dispatch(setPageCode('Questionnaire'));
-  dispatch(setDivContent(divContentHTML));
   // class name for selected row
   const isSelected = rowData => {
     if (rowData && questionnaire && questionnaire.key === rowData.key) {
@@ -136,6 +127,23 @@ const Questionnaire = () => {
       render: rowData => iconsForActions(rowData)
     }
   ];
+  // Effects
+   useEffect(() => {
+      // Header page setUp
+      const divContent = (
+        <div className="page-title">
+          <h5>Questionnaire</h5>
+        </div>
+      );
+      const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+      dispatch(setPageCode('Questionnaire'));
+      dispatch(setDivContent(divContentHTML));
+  
+      return () => {
+        dispatch(setPageCode(''));
+        dispatch(setDivContent(''));
+      };
+    }, [dispatch]);
 
   useEffect(() => {
     const handleResize = () => setWidth(window.innerWidth);
