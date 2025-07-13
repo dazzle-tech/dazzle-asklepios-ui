@@ -23,7 +23,7 @@ type StaffAssignmentProps = {
   newStaffObj: any;
   filterFieldName: string;
   disabled?: boolean
-
+  width?:any
 
 };
 
@@ -35,7 +35,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
   deleteMutation,
   newStaffObj,
   filterFieldName,
-
+  width="100%",
   disabled=false,
 
 }) => {
@@ -113,6 +113,7 @@ const StaffAssignment: React.FC<StaffAssignmentProps> = ({
       render: (rowData) =>
         activeRowKey === rowData.key ? (
           <Input
+            style={{ width }}
             onChange={(value) => setStaff({ ...staff, responsibility: value })}
             onPressEnter={async () => {
               try {
