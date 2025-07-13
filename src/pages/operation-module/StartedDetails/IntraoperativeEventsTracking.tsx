@@ -22,7 +22,7 @@ const IntraoperativeEventsTracking = ({ operation, patient,encounter }) => {
     const { data: severitylovqueryresponse } = useGetLovValuesByCodeQuery('SEVERITY');
     const { data: surgical, refetch } = useGetLatestSurgicalPreparationByOperationKeyQuery(operation?.key);
     const [surgicalP,setSurgicalP]=useState({...newApOperationSurgicalPreparationIncision});
-    console.log("SU",surgicalP.timeOfIncision)
+    
     const { data: registration } = useGetOperationPatientArrivalByOperationQuery(operation?.key);
     const { data: practtionerList } = useGetPractitionersQuery({ ...initialListRequest });
     const [save] = useSaveIntraoperativeEventsMutation();
@@ -81,6 +81,7 @@ useEffect(() => {
                 secondCountTime: new Date(intraoperative.secondCountTime).getTime(),
                 skinClosureTime: new Date(intraoperative.skinClosureTime).getTime(),
                 surgeryEndTime: new Date(intraoperative.surgeryEndTime).getTime(),
+                actualOperationPerformed:selectedKeys.join(",")
 
 
             }).unwrap();
@@ -185,7 +186,7 @@ useEffect(() => {
                             <Row>
                                 <Col md={8}>
                                     <MyInput
-                                        fieldType="time"
+                                        // fieldType="time"
                                         disabled={true}
                                         fieldName="timeOfIncision"
                                         record={surgicalP}

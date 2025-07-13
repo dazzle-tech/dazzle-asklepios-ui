@@ -2171,7 +2171,7 @@ export interface ApOperationPostOpNotesHandover {
 	operativeFindings:string;
 	operationPerformedSummary:string;
 	variationsFromPlan:string;
-	postOpDestination:string;
+	postOpDestinationKey:string;
 	oxygenRequired:boolean;
 	oxygenFlowRate:number;
 	specialInstructions:string;

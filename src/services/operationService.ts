@@ -248,12 +248,12 @@ export const operationService = createApi({
             onQueryStarted
         }),
         getOperationPatientArrivalByOperation: builder.query({
-    query: (operationKey: string) => ({
-        url: `/operation/operation-patient-arrival-by-operation?operationKey=${operationKey}`,
-        method: 'GET'
-    }),
-    onQueryStarted
-}),
+            query: (operationKey: string) => ({
+                url: `/operation/operation-patient-arrival-by-operation?operationKey=${operationKey}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
 
         // 🟡 POST save pre-medication
         saveOperationPreMedication: builder.mutation({
@@ -349,13 +349,13 @@ export const operationService = createApi({
             onQueryStarted
         }),
         // 🟢 GET latest surgical preparation by operation key
-getLatestSurgicalPreparationByOperationKey: builder.query({
-    query: (operationKey: string) => ({
-        url: `/operation/surgical-by-operation?operationKey=${operationKey}`,
-        method: 'GET'
-    }),
-    onQueryStarted
-}),
+        getLatestSurgicalPreparationByOperationKey: builder.query({
+            query: (operationKey: string) => ({
+                url: `/operation/surgical-by-operation?operationKey=${operationKey}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
         // 🟡 POST save intraoperative events
         saveIntraoperativeEvents: builder.mutation({
             query: (body) => ({
@@ -375,6 +375,13 @@ getLatestSurgicalPreparationByOperationKey: builder.query({
             onQueryStarted
         }),
 
+        getIntraoperativeEventsByOperationKey: builder.query({
+            query: (operationKey: string) => ({
+                url: `/operation/intraoperative-events-by-operation?operationKey=${operationKey}`,
+                method: 'GET'
+            }),
+            onQueryStarted
+        }),
         // 🟡 POST save antimicrobial prophylaxis given
         saveAntimicrobialProphylaxisGiven: builder.mutation({
             query: (body) => ({
@@ -471,6 +478,7 @@ export const {
 
     useSaveIntraoperativeEventsMutation,
     useGetIntraoperativeEventsListQuery,
+    useGetIntraoperativeEventsByOperationKeyQuery,
 
     useSaveAntimicrobialProphylaxisGivenMutation,
     useGetAntimicrobialProphylaxisGivenListQuery,
