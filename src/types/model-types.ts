@@ -2255,6 +2255,7 @@ export interface ApOperationRequests {
 	startedBy:string;
 	increaseByMinutes:number;
 	monitorSlot:number;
+	recoveryStatusLkey:string;
 } 
 
 export interface ApOperationSetup { 

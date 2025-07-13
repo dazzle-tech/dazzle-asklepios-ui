@@ -2256,6 +2256,7 @@ export const newApOperationRequests:modelTypes.ApOperationRequests = {
 	startedBy:'',
 	increaseByMinutes:0,
 	monitorSlot:0,
+	recoveryStatusLkey:undefined,
 } 
 
 export const newApOperationSetup:modelTypes.ApOperationSetup = { 
