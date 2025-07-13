@@ -289,7 +289,9 @@ const AddGeneralAssessment = ({ open, setOpen, patient, encounter, generalAssess
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
                     disabled={isDisabledField} />
-                <MyTagInput  tags={tags} setTags={setTags} labelText="Supporting Members" />
+                    <div className='repositioning-container'>
+
+                <MyTagInput  tags={tags} setTags={setTags} labelText="Supporting Members"  width='200px' fontSize="13px"/>
 
                 <MyInput
                     column
@@ -305,6 +307,8 @@ const AddGeneralAssessment = ({ open, setOpen, patient, encounter, generalAssess
                     disabled={isDisabledField}
                     searchable={false}
                 />
+        </div>
+
             </Form>
         </div>
     )
