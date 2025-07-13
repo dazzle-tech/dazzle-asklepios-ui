@@ -179,6 +179,7 @@ const Encounter = () => {
     '/encounter/diagnostics-result': 'Diagnostics Result ',
     '/encounter/operation-request':'Operation Requests',
     '/encounter/multidisciplinary-team-notes':'Multidisciplinary Team Notes',
+    '/encounter/care-plan-and-goals':'Care Plan & Goals',
 
    
   };
@@ -197,6 +198,7 @@ const Encounter = () => {
     { key: 'diagnosticsOrder', label: 'Diagnostics Order', icon: faVials, path: 'diagnostics-order' },
     { key: 'consultation', label: 'Consultation', icon: faStethoscope, path: 'consultation' },
     { key: 'multidisciplinaryTeamNotes', label: 'Multidisciplinary Team Notes', icon: faComment, path: 'multidisciplinary-team-notes' },
+     { key: 'carePlanAndGoals', label: 'Care Plan & Goals', icon: faNotesMedical, path: 'care-plan-and-goals' },
 
     { key: 'procedures', label: 'Procedures', icon: faNotesMedical, path: 'procedures' },
     { key: 'patientHistory', label: 'Patient History', icon: faClockRotateLeft, path: 'patient-history' },
