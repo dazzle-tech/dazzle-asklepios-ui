@@ -2,10 +2,8 @@ import * as React from 'react';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
 import Chip from '@mui/material/Chip';
-import { useEffect } from 'react';
-import { red } from '@mui/material/colors';
 import MyLabel from '../MyLabel';
-const MyTagInput=({tags=[] ,setTags,labelText=""})=>{
+const MyTagInput=({tags=[] ,setTags,labelText="" ,width="100%",fontSize="22px"})=>{
  
 const handleDelete = (tagToDelete) => {
   setTags((prevTags) => prevTags.filter((tag) => tag !== tagToDelete));
@@ -35,7 +33,7 @@ const handleDelete = (tagToDelete) => {
                 '.MuiChip-deleteIcon': {
                   margin: '0', // Remove margin for the delete icon
                   color: 'rgba(0, 0, 0, 0.26)', // Color for the delete icon
-                  fontSize: '22px', // Set font size for the delete icon
+                  fontSize: {fontSize}, // Set font size for the delete icon
                 },
               }}
           />
@@ -48,7 +46,7 @@ const handleDelete = (tagToDelete) => {
             '.MuiInputBase-root': {
               height: '40px',  // Control height of input field
               display: 'flex',
-              
+              width:{width},
              // Center content vertically
               flexWrap: 'wrap',  // Allow wrapping of tags
             },
