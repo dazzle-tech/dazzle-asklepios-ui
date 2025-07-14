@@ -116,6 +116,7 @@ import ControlledMedications from './pages/pharmacy/controlled-medications';
 import CarePlanAndGoals from './pages/encounter/encounter-component/care-plan-and-goals';
 import Recovery from './pages/recovery';
 import DischargePlanning from './pages/encounter/encounter-component/discharged-planning';
+import BedsideProceduresRequests from './pages/encounter/encounter-component/bedside-procedures-requests';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -306,10 +307,10 @@ const App = () => {
                 <Route path='diagnostics-result' element={<DiagnosticsResult/>} />
                 <Route path='operation-request' element={<OperationRequest/>}/>
                  <Route path='doctor-round' element={<DoctorRound/>}/>
-     
                  <Route path='multidisciplinary-team-notes' element={<MultidisciplinaryTeamNotes/>}/>
                  <Route path='care-plan-and-goals' element={<CarePlanAndGoals/>}/>
                  <Route path='discharge-planning' element={<DischargePlanning/>}/>
+                 <Route path='bedside-procedures-requests' element={<BedsideProceduresRequests/>}/>
               </Route>
               <Route path='/doctor-round/round' element={<ViewRound/>}/>
               <Route path='/recovery-module' element={<Recovery/>}/>
