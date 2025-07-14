@@ -117,6 +117,7 @@ import CarePlanAndGoals from './pages/encounter/encounter-component/care-plan-an
 import Recovery from './pages/recovery';
 import DischargePlanning from './pages/encounter/encounter-component/discharged-planning';
 import BedsideProceduresRequests from './pages/encounter/encounter-component/bedside-procedures-requests';
+import InventoryTransaction from './pages/inventory-transaction/inventory-transaction';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -349,6 +350,7 @@ const App = () => {
               <Route path="diagnostics-test" element={<Diagnostics />} />
               <Route path="catalog" element={<Catalog />} />
               <Route path="allergens" element={<Allergens />} />
+              <Route path="inventory-transaction" element={<InventoryTransaction />} />
               <Route path='inventory-product-setup' element={<ProductSetup/>} />
               <Route path="warehouse-setup" element={<WarehouseSetup/>} />
               <Route path="warehouse-items-setup" element={<WarehouseItemsSetup/>} />
