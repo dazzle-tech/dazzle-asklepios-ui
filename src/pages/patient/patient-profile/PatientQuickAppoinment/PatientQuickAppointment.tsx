@@ -18,9 +18,10 @@ import '../styles.less'
 import RegistrationEncounter from './RegistrationEncounter';
 import PatientPaymentInfo from './PatientPaymentInfo';
 import AddPayment from './AddPayment';
+
 const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuickAppointmentModel, localVisit, isDisabeld = false }) => {
     const dispatch = useAppDispatch();
-    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter, visitTypeLkey: '2041082245699228', patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob),discharge:false });
+    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter, visitTypeLkey: '2041082245699228', patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob), discharge: false });
     const [validationResult, setValidationResult] = useState({});
     const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
     const [isReadOnly, setIsReadOnly] = useState(isDisabeld);
@@ -33,7 +34,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                 ...localEncounter,
                 patientKey: localPatient.key,
                 plannedStartDate: new Date(),
-                encounterStatusLkey:localEncounter?.resourceTypeLkey ==="4217389643435490" ? "5256965920133084": encounterStatusNew,
+                encounterStatusLkey: ["4217389643435490", "5433343011954425", "2039548173192779"].includes(localEncounter?.resourceTypeLkey) ? "5256965920133084" : encounterStatusNew,
                 patientAge: calculateAgeFormat(localPatient.dob),
                 visitTypeLkey: ['2039534205961578', '2039516279378421'].includes(localEncounter.resourceTypeLkey) ? '2041082245699228' : null
             }).unwrap().then(() => {
@@ -71,14 +72,14 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
             physicianKey: null,
             departmentKey: null,
             reasonLkey: null,
-            discharge:false
+            discharge: false
         })
     };
     // Effects
     useEffect(() => {
         if (saveEncounterMutation && saveEncounterMutation.status === 'fulfilled') {
             setLocalEncounter(saveEncounterMutation.data);;
-            dispatch(notify({ msg: 'Encounter Saved Successfuly', sev: "success" }));
+            dispatch(notify({ msg: 'Encounter Saved Successfuly', sev: "success" }));
         } else if (saveEncounterMutation && saveEncounterMutation.status === 'rejected') {
             setValidationResult(saveEncounterMutation.error);
         }
@@ -110,7 +111,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                 );
         };
     };
-    
+
     return (
         <MyModal
             open={quickAppointmentModel}

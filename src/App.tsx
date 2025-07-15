@@ -118,6 +118,8 @@ import Recovery from './pages/recovery';
 import DischargePlanning from './pages/encounter/encounter-component/discharged-planning';
 import BedsideProceduresRequests from './pages/encounter/encounter-component/bedside-procedures-requests';
 import InventoryTransaction from './pages/inventory-transaction/inventory-transaction';
+import DayCaseList from './pages/encounter/day-case/DayCaseList/DayCaseList';
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -188,7 +190,7 @@ const App = () => {
           eventKey: screen.key,
           icon: (
             <Icon
-               fill="var(--gray-dark)"
+              fill="var(--gray-dark)"
               as={icons[screen?.iconImagePath ?? 'FaCircle']}
             />
           ),
@@ -301,25 +303,26 @@ const App = () => {
                 <Route path='prescription' element={<Prescription />} />
                 <Route path='diagnostics-order' element={<DiagnosticsOrder />} />
                 <Route path='consultation' element={<Consultation />} />
-                <Route path='procedures' element={<Procedure/>} />
-                <Route path='patient-history' element={<PatientHistory/>} />
-                <Route path='medications-record' element={<MedicationsRecord/>} />
-                <Route path='vaccine-record' element={<VaccineReccord/>} />
-                <Route path='diagnostics-result' element={<DiagnosticsResult/>} />
-                <Route path='operation-request' element={<OperationRequest/>}/>
-                 <Route path='doctor-round' element={<DoctorRound/>}/>
-                 <Route path='multidisciplinary-team-notes' element={<MultidisciplinaryTeamNotes/>}/>
-                 <Route path='care-plan-and-goals' element={<CarePlanAndGoals/>}/>
-                 <Route path='discharge-planning' element={<DischargePlanning/>}/>
-                 <Route path='bedside-procedures-requests' element={<BedsideProceduresRequests/>}/>
+                <Route path='procedures' element={<Procedure />} />
+                <Route path='patient-history' element={<PatientHistory />} />
+                <Route path='medications-record' element={<MedicationsRecord />} />
+                <Route path='vaccine-record' element={<VaccineReccord />} />
+                <Route path='diagnostics-result' element={<DiagnosticsResult />} />
+                <Route path='operation-request' element={<OperationRequest />} />
+                <Route path='doctor-round' element={<DoctorRound />} />
+                <Route path='multidisciplinary-team-notes' element={<MultidisciplinaryTeamNotes />} />
+                <Route path='care-plan-and-goals' element={<CarePlanAndGoals />} />
+                <Route path='discharge-planning' element={<DischargePlanning />} />
+                <Route path='bedside-procedures-requests' element={<BedsideProceduresRequests />} />
               </Route>
-              <Route path='/doctor-round/round' element={<ViewRound/>}/>
-              <Route path='/recovery-module' element={<Recovery/>}/>
+              <Route path='/doctor-round/round' element={<ViewRound />} />
+              <Route path='/recovery-module' element={<Recovery />} />
               <Route path="procedure-module" element={<ProcedureModule />} />
               <Route path="encounter-list" element={<EncounterList />} />
-              <Route path='inpatient-encounters-list' element={<InpatientList/>} />
-               <Route path='waiting-encounters-list' element={<InpatientWaitingLists/>}/>
-              <Route path='room' element={<Room/>} />
+              <Route path='inpatient-encounters-list' element={<InpatientList />} />
+              <Route path='waiting-encounters-list' element={<InpatientWaitingLists />} />
+              <Route path='day-case-list' element={<DayCaseList />} />
+              <Route path='room' element={<Room />} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservations />} />
               <Route path="inpatient-nurse-station" element={<InpatientNurseStation />} />
@@ -328,7 +331,7 @@ const App = () => {
               <Route path="access-roles" element={<AccessRoles />} />
               <Route path="lov-setup" element={<Lov />} />
               <Route path="modules-setup" element={<Modules />} />
-               <Route path="shift-setup" element={<Shifts />} />
+              <Route path="shift-setup" element={<Shifts />} />
               <Route
                 path="user-access-patient-private"
                 element={<EncounterPatientPrivateLogin />}
@@ -351,9 +354,9 @@ const App = () => {
               <Route path="catalog" element={<Catalog />} />
               <Route path="allergens" element={<Allergens />} />
               <Route path="inventory-transaction" element={<InventoryTransaction />} />
-              <Route path='inventory-product-setup' element={<ProductSetup/>} />
-              <Route path="warehouse-setup" element={<WarehouseSetup/>} />
-              <Route path="warehouse-items-setup" element={<WarehouseItemsSetup/>} />
+              <Route path='inventory-product-setup' element={<ProductSetup />} />
+              <Route path="warehouse-setup" element={<WarehouseSetup />} />
+              <Route path="warehouse-items-setup" element={<WarehouseItemsSetup />} />
               <Route path="active-ingredients" element={<ActiveIngredientsSetup />} />
               <Route path="age-group" element={<AgeGroup />} />
               <Route path="prescription-instructions" element={<PrescriptionInstructions />} />
@@ -373,11 +376,11 @@ const App = () => {
               <Route path="patient-EMR" element={<PatientEMR />} />
               <Route path="lab-module" element={<Lab />} />
               <Route path="rad-module" element={<Rad />} />
-              <Route path='operation-module' element={<Operation />}/>
-              <Route path='operation-setup' element={<OperationSetup />}/>
-               <Route path="pharmacy-internal-orders" element={<InternalDrugOrder />} />
-               <Route path="pharmacy-ePrescriptions" element={<EPrepscriptions />} />
-               <Route path="pharmacy-controlled-medications" element={<ControlledMedications />} />
+              <Route path='operation-module' element={<Operation />} />
+              <Route path='operation-setup' element={<OperationSetup />} />
+              <Route path="pharmacy-internal-orders" element={<InternalDrugOrder />} />
+              <Route path="pharmacy-ePrescriptions" element={<EPrepscriptions />} />
+              <Route path="pharmacy-controlled-medications" element={<ControlledMedications />} />
 
             </Route>
           </Route>
