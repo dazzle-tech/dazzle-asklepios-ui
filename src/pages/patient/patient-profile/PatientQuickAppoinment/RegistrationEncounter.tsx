@@ -4,6 +4,7 @@ import { Form } from 'rsuite';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useGetResourcesAvailabilityTimeQuery, useGetResourcesQuery } from '@/services/appointmentService';
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { useGetResourceTypeQuery } from '@/services/appointmentService';
 const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly }) => {
     const [validationResult, setValidationResult] = useState({});
     const [uniqueDepartmentKeys, setUniqueDepartmentKeys] = useState([]);
@@ -14,18 +15,17 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly }
     const { data: encounterReasonLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_REASON');
     const { data: visitTypeLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
     const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
-
+    console.log("resourceTypeQueryResponse===>", resourceTypeQueryResponse);
     // Initialize List Request Filters
     const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
     const [filteredResourcesList, setFilteredResourcesList] = useState([]);
     const [resourcesListRequest, setResourcesListRequest] = useState<ListRequest>({ ...initialListRequest, pageSize: 100 });
     const [resourcesAvailabilityTimeListRequest, setResourcesAvailabilityTimeListRequest] = useState<ListRequest>({ ...initialListRequest });
-
+    const dayCaseDepartmentListResponse = useGetResourceTypeQuery("5433343011954425");
     // Fetches the list of resource availability times.
     const { data: resourceAvailabilityTimeListResponse, refetch: availabilityRefetch } = useGetResourcesAvailabilityTimeQuery({ ...resourcesAvailabilityTimeListRequest, pageSize: 10000 });
     // Fetches the list of resources based on the provided request parameters
     const { data: resourcesListResponse } = useGetResourcesQuery(resourcesListRequest);
-    ;
     // Effects
     useEffect(() => {
         if (localEncounter?.resourceTypeLkey) {
@@ -110,6 +110,21 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly }
                             uniqueDepartmentKeys.includes(dept.key)
                         ) ?? []
                     }
+                    selectDataLabel="name"
+                    selectDataValue="key"
+                    record={localEncounter}
+                    setRecord={setLocalEncounter}
+                    disabled={isReadOnly}
+                />
+                : null
+            }
+            {localEncounter?.resourceTypeLkey == '2039548173192779' ?
+                <MyInput
+                    vr={validationResult}
+                    column
+                    fieldType="select"
+                    fieldName="departmentKey"
+                    selectData={dayCaseDepartmentListResponse?.data?.object ?? []}
                     selectDataLabel="name"
                     selectDataValue="key"
                     record={localEncounter}

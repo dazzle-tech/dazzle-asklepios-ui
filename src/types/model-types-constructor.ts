@@ -585,6 +585,21 @@ export const newApCustomeInstructions:modelTypes.ApCustomeInstructions = {
 	isValid:undefined,
 } 
 
+export const newApDayCaseEncounters:modelTypes.ApDayCaseEncounters = { 
+	key:undefined,
+	encounterKey:undefined,
+	patientKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	roomKey:undefined,
+	bedKey:undefined,
+	admissionReason:'',
+} 
+
 export const newApDentalAction:modelTypes.ApDentalAction = { 
 	key:undefined,
 	description:'',
@@ -2030,6 +2045,26 @@ export const newApOperationAnesthesiaInductionMonitoring:modelTypes.ApOperationA
 	intubationDoneNote:'',
 } 
 
+export const newApOperationAnesthesiaRecovery:modelTypes.ApOperationAnesthesiaRecovery = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	airwayTypeOnArrival:'',
+	oxygenGiven:undefined,
+	oxygenFlowLpm:0,
+	extubationTime:0,
+	extubationStatusLkey:undefined,
+	consciousnessLevelLkey:undefined,
+	painLevelLkey:undefined,
+	nauseaVomiting:undefined,
+	createdBy:'',
+	createdAt:undefined,
+	updatedBy:'',
+	updatedAt:undefined,
+	deletedBy:'',
+	deletedAt:undefined,
+	isvalid:undefined,
+} 
+
 export const newApOperationAntimicrobialProphylaxisGiven:modelTypes.ApOperationAntimicrobialProphylaxisGiven = { 
 	key:undefined,
 	operationRequestKey:undefined,
@@ -2045,6 +2080,23 @@ export const newApOperationAntimicrobialProphylaxisGiven:modelTypes.ApOperationA
 	unitLkey:undefined,
 } 
 
+export const newApOperationArrivalToRecoveryRoom:modelTypes.ApOperationArrivalToRecoveryRoom = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	arrivalTime:0,
+	accompaniedBy:'',
+	handoverSummary:'',
+	initialAssessmentTime:0,
+	responsibleNurseKey:undefined,
+	createdBy:'',
+	createdAt:undefined,
+	updatedBy:'',
+	updatedAt:undefined,
+	deletedBy:'',
+	deletedAt:undefined,
+	isvalid:undefined,
+} 
+
 export const newApOperationCoding:modelTypes.ApOperationCoding = { 
 	key:undefined,
 	operationKey:undefined,
@@ -2056,6 +2108,49 @@ export const newApOperationCoding:modelTypes.ApOperationCoding = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
+} 
+
+export const newApOperationDischargeReadiness:modelTypes.ApOperationDischargeReadiness = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	activityScore:0,
+	respirationScore:0,
+	circulationScore:0,
+	consciousnessScore:0,
+	oxygenSaturationScore:0,
+	totalAldreteScore:0,
+	painControlled:undefined,
+	vitalsStable:undefined,
+	fullyAwake:undefined,
+	maintainAirway:undefined,
+	siteDressingIntact:undefined,
+	nauseaControlled:undefined,
+	createdBy:'',
+	createdAt:undefined,
+	updatedBy:'',
+	updatedAt:undefined,
+	deletedBy:'',
+	deletedAt:undefined,
+	isvalid:undefined,
+} 
+
+export const newApOperationDischargeToWard:modelTypes.ApOperationDischargeToWard = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	returnToDifferentWard:undefined,
+	designationLkey:undefined,
+	transferTime:0,
+	receivingNurseKey:undefined,
+	finalNotes:'',
+	patientIdBandRechecked:undefined,
+	transportModeLkey:undefined,
+	createdBy:'',
+	createdAt:undefined,
+	updatedBy:'',
+	updatedAt:undefined,
+	deletedBy:'',
+	deletedAt:undefined,
+	isvalid:undefined,
 } 
 
 export const newApOperationInduction:modelTypes.ApOperationInduction = { 
@@ -2148,6 +2243,23 @@ export const newApOperationNameLog:modelTypes.ApOperationNameLog = {
 	isValid:undefined,
 } 
 
+export const newApOperationNursingCareInterventions:modelTypes.ApOperationNursingCareInterventions = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	ivFluidsGiven:'',
+	analgesicsGiven:'',
+	woundDressingStatus:'',
+	drainsTubes:'',
+	complicationsObserved:'',
+	createdBy:'',
+	createdAt:undefined,
+	updatedBy:'',
+	updatedAt:undefined,
+	deletedBy:'',
+	deletedAt:undefined,
+	isvalid:undefined,
+} 
+
 export const newApOperationPatientArrival:modelTypes.ApOperationPatientArrival = { 
 	key:undefined,
 	operationRequestKey:undefined,
@@ -2218,6 +2330,24 @@ export const newApOperationPriceList:modelTypes.ApOperationPriceList = {
 	createdAt:undefined,
 	updatedAt:undefined,
 	deletedAt:undefined,
+} 
+
+export const newApOperationRecoveryVitalsMonitoring:modelTypes.ApOperationRecoveryVitalsMonitoring = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	recordedTime:0,
+	bloodPressureSystolic:0,
+	bloodPressureDiastolic:0,
+	heartRate:0,
+	temperature:0,
+	oxygenSaturation:0,
+	createdBy:'',
+	createdAt:undefined,
+	updatedBy:'',
+	updatedAt:undefined,
+	deletedBy:'',
+	deletedAt:undefined,
+	isvalid:undefined,
 } 
 
 export const newApOperationRequests:modelTypes.ApOperationRequests = { 

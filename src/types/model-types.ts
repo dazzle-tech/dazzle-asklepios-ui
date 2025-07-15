@@ -584,6 +584,21 @@ export interface ApCustomeInstructions {
 	isValid:boolean;
 } 
 
+export interface ApDayCaseEncounters { 
+	key:string;
+	encounterKey:string;
+	patientKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	roomKey:string;
+	bedKey:string;
+	admissionReason:string;
+} 
+
 export interface ApDentalAction { 
 	key:string;
 	description:string;
@@ -2029,6 +2044,26 @@ export interface ApOperationAnesthesiaInductionMonitoring {
 	intubationDoneNote:string;
 } 
 
+export interface ApOperationAnesthesiaRecovery { 
+	key:string;
+	operationRequestKey:string;
+	airwayTypeOnArrival:string;
+	oxygenGiven:boolean;
+	oxygenFlowLpm:number;
+	extubationTime:number;
+	extubationStatusLkey:string;
+	consciousnessLevelLkey:string;
+	painLevelLkey:string;
+	nauseaVomiting:boolean;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
 export interface ApOperationAntimicrobialProphylaxisGiven { 
 	key:string;
 	operationRequestKey:string;
@@ -2044,6 +2079,23 @@ export interface ApOperationAntimicrobialProphylaxisGiven {
 	unitLkey:string;
 } 
 
+export interface ApOperationArrivalToRecoveryRoom { 
+	key:string;
+	operationRequestKey:string;
+	arrivalTime:number;
+	accompaniedBy:string;
+	handoverSummary:string;
+	initialAssessmentTime:number;
+	responsibleNurseKey:string;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
 export interface ApOperationCoding { 
 	key:string;
 	operationKey:string;
@@ -2055,6 +2107,49 @@ export interface ApOperationCoding {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
+} 
+
+export interface ApOperationDischargeReadiness { 
+	key:string;
+	operationRequestKey:string;
+	activityScore:number;
+	respirationScore:number;
+	circulationScore:number;
+	consciousnessScore:number;
+	oxygenSaturationScore:number;
+	totalAldreteScore:number;
+	painControlled:boolean;
+	vitalsStable:boolean;
+	fullyAwake:boolean;
+	maintainAirway:boolean;
+	siteDressingIntact:boolean;
+	nauseaControlled:boolean;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApOperationDischargeToWard { 
+	key:string;
+	operationRequestKey:string;
+	returnToDifferentWard:boolean;
+	designationLkey:string;
+	transferTime:number;
+	receivingNurseKey:string;
+	finalNotes:string;
+	patientIdBandRechecked:boolean;
+	transportModeLkey:string;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
 } 
 
 export interface ApOperationInduction { 
@@ -2147,6 +2242,23 @@ export interface ApOperationNameLog {
 	isValid:boolean;
 } 
 
+export interface ApOperationNursingCareInterventions { 
+	key:string;
+	operationRequestKey:string;
+	ivFluidsGiven:string;
+	analgesicsGiven:string;
+	woundDressingStatus:string;
+	drainsTubes:string;
+	complicationsObserved:string;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
 export interface ApOperationPatientArrival { 
 	key:string;
 	operationRequestKey:string;
@@ -2217,6 +2329,24 @@ export interface ApOperationPriceList {
 	createdAt:number;
 	updatedAt:number;
 	deletedAt:number;
+} 
+
+export interface ApOperationRecoveryVitalsMonitoring { 
+	key:string;
+	operationRequestKey:string;
+	recordedTime:number;
+	bloodPressureSystolic:number;
+	bloodPressureDiastolic:number;
+	heartRate:number;
+	temperature:number;
+	oxygenSaturation:number;
+	createdBy:string;
+	createdAt:number;
+	updatedBy:string;
+	updatedAt:number;
+	deletedBy:string;
+	deletedAt:number;
+	isvalid:boolean;
 } 
 
 export interface ApOperationRequests { 

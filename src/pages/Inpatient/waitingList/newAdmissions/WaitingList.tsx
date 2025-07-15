@@ -48,6 +48,11 @@ const WaitingList = () => {
                 fieldName: 'discharge',
                 operator: 'match',
                 value: "false"
+            },
+            {
+               fieldName: 'resource_type_lkey',
+                operator: 'match',
+                value: "4217389643435490" 
             }
         ]
     });
