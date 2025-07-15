@@ -15,7 +15,7 @@ type AnesthesiaProps = {
     procedure: any,
     user: any
 };
-const PostProcedureAnesthesia= forwardRef<anesthsiaRef, AnesthesiaProps>(({ procedure, user }, ref) => {
+const PostProcedureAnesthesia= forwardRef<anesthsiaRef, AnesthesiaProps>(({ procedure, user, ...props }, ref) => {
     const dispatch = useAppDispatch();
     // Fetching the LOV values for Aldrete score components
     const { data: oxsatQueryResponse } = useGetLovValuesByCodeQuery('ALDRETE_OXSAT');
@@ -74,11 +74,11 @@ const PostProcedureAnesthesia= forwardRef<anesthsiaRef, AnesthesiaProps>(({ proc
     useImperativeHandle(ref, () => ({
              handleSave
           }));
-    return (  <div className='container-form' ref={ref}>
-            <div className='title-div'>
-                <Text>Post-Procedure Anesthesia</Text>
+    return ( <div style={{ ...((props?.noBorder) && { borderRadius: 'none',boxShadow: "none" })}} className='container-form' ref={ref}>
+            <div style={{ ...((props?.noBorder) && { display: 'none'})}} className='title-div'>
+                <Text>Post-Procedure Anesthesia</Text> 
             </div>
-            <Divider />
+            <Divider style={{ ...((props?.noBorder) && { display: 'none'})}} />
         <Row gutter={15} className="r">
             <Form fluid>
                 <Col md={12}>
