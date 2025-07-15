@@ -17,7 +17,8 @@ const GenericAdministeredMedications = ({
   filterFieldName,
   medicationService,
   newMedicationTemplate,
-  title
+  title,
+  ...props
 }) => {
   const dispatch = useAppDispatch();
   const [activeRowKey, setActiveRowKey] = useState(null);
@@ -151,11 +152,11 @@ const GenericAdministeredMedications = ({
   ];
 
   return (
-    <div className="container-form">
-      <div className="title-div">
+    <div style={{ ...((props?.noBorder) && { borderRadius: 'none',boxShadow: "none" })}} className="container-form">
+      <div style={{ ...((props?.noBorder) && { display: 'none'})}} className="title-div">
         <Text>{title}</Text>
       </div>
-      <Divider />
+      <Divider style={{ ...((props?.noBorder) && { display: 'none'})}} />
       <Row>
         <Col md={24}>
           <Row className="rows-gap">

@@ -119,6 +119,7 @@ import DischargePlanning from './pages/encounter/encounter-component/discharged-
 import BedsideProceduresRequests from './pages/encounter/encounter-component/bedside-procedures-requests';
 import InventoryTransaction from './pages/inventory-transaction/inventory-transaction';
 import DayCaseList from './pages/encounter/day-case/DayCaseList/DayCaseList';
+import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
