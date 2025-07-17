@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useAppDispatch } from '@/hooks';
 import { Checkbox } from 'rsuite';
-import {  useGetPainAssessmentQuery, useSavePainAssessmentMutation } from '@/services/encounterService';
+import { useGetPainAssessmentQuery, useSavePainAssessmentMutation } from '@/services/encounterService';
 import PlusIcon from '@rsuite/icons/Plus';
 import MyButton from '@/components/MyButton/MyButton';
 import Translate from '@/components/Translate';

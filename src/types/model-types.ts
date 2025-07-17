@@ -1670,6 +1670,57 @@ export interface ApInpatientChiefComplain {
 	severityLkey:string;
 } 
 
+export interface ApInventoryTransaction { 
+	key:string;
+	transTypeLkey:string;
+	warehouseKey:string;
+	transReasonLkey:string;
+	remarks:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApInventoryTransactionAttachment { 
+	key:string;
+	attachmentType:string;
+	extraDetails:string;
+	fileName:string;
+	contentType:string;
+	fileContent:uint8array;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	details:string;
+	accessTypeLkey:string;
+} 
+
+export interface ApInventoryTransactionProduct { 
+	key:string;
+	inventoryTransKey:string;
+	productKey:string;
+	oldQuentity:number;
+	newQuentity:number;
+	lotserialnumber:string;
+	oldCost:number;
+	currencyLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
 export interface ApLabResultLog { 
 	key:string;
 	resultKey:string;
@@ -2990,6 +3041,31 @@ export interface ApPhysicalExamArea {
 	isValid:boolean;
 } 
 
+export interface ApPostOperationRecovery { 
+	key:string;
+	encounterKey:string;
+	patientKey:string;
+	arrivalTime:number;
+	painScoreLkey:string;
+	nausea:boolean;
+	vomiting:boolean;
+	recoveryStatus:string;
+	nursingNotes:string;
+	activityLkey:string;
+	respirationLkey:string;
+	circulationLkey:string;
+	consciousnessLkey:string;
+	oxygenSaturationLkey:string;
+	aldreteScore:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
 export interface ApPostProcedureAnesthesia { 
 	key:string;
 	procedureKey:string;
@@ -3093,6 +3169,43 @@ export interface ApPractitioner {
 	secondaryLicenseValidUntil:Date;
 	dob:Date;
 	jobRoleLkey:string;
+} 
+
+export interface ApPreOperationAdministeredMedications { 
+	key:string;
+	preOperationKey:string;
+	activeIngredientKey:string;
+	dose:number;
+	unitLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+} 
+
+export interface ApPreOperationAssessment { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	nopStatusConfirmed:boolean;
+	painScoreLkey:string;
+	allergiesReviewed:boolean;
+	consentForProcedureSigned:boolean;
+	consentForAnesthesiaSigned:boolean;
+	ivAccessStatus:boolean;
+	siteMarkedBySurgeon:boolean;
+	labImagingReviewed:boolean;
+	anesthetistAssessmentDone:boolean;
+	asaClassificationLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
 } 
 
 export interface ApPreOperationChecklist { 
