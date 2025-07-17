@@ -1,4 +1,4 @@
-import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound, ApNurseNotes, ApRepositioning, ApDayCaseEncounters } from './../types/model-types';
+import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound, ApNurseNotes, ApRepositioning, ApDayCaseEncounters, ApPreOperationAdministeredMedications } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -807,6 +807,24 @@ export const encounterService = createApi({
         return response.object;
       }
     }),
+       savePreOperationMedications: builder.mutation({
+      query: (preOperation: ApPreOperationAdministeredMedications) => ({
+        url: `/encounter/save-pre-operation-administered-medications`,
+        method: 'POST',
+        body: preOperation
+      }),
+      onQueryStarted: onQueryStarted,
+      transformResponse: (response: any) => {
+        return response.object;
+      }
+    }),
+    getPreOperationMedicationsList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/pre-operation-administered-medications-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 });
 
@@ -894,5 +912,7 @@ export const {
   useSaveNurseNotesMutation,
   useSaveNewPositionMutation,
   useGetRepositioningListQuery,
-  useSaveNewDayCaseMutation
+  useSaveNewDayCaseMutation,
+  useSavePreOperationMedicationsMutation,
+  useGetPreOperationMedicationsListQuery
 } = encounterService;

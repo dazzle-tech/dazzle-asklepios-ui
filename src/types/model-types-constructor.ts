@@ -1671,6 +1671,57 @@ export const newApInpatientChiefComplain:modelTypes.ApInpatientChiefComplain = {
 	severityLkey:undefined,
 } 
 
+export const newApInventoryTransaction:modelTypes.ApInventoryTransaction = { 
+	key:undefined,
+	transTypeLkey:undefined,
+	warehouseKey:undefined,
+	transReasonLkey:undefined,
+	remarks:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApInventoryTransactionAttachment:modelTypes.ApInventoryTransactionAttachment = { 
+	key:undefined,
+	attachmentType:'',
+	extraDetails:'',
+	fileName:'',
+	contentType:'',
+	fileContent:new Uint8Array(),
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+	details:'',
+	accessTypeLkey:undefined,
+} 
+
+export const newApInventoryTransactionProduct:modelTypes.ApInventoryTransactionProduct = { 
+	key:undefined,
+	inventoryTransKey:undefined,
+	productKey:undefined,
+	oldQuentity:0,
+	newQuentity:0,
+	lotserialnumber:'',
+	oldCost:0,
+	currencyLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
 export const newApLabResultLog:modelTypes.ApLabResultLog = { 
 	key:undefined,
 	resultKey:undefined,
@@ -2991,6 +3042,31 @@ export const newApPhysicalExamArea:modelTypes.ApPhysicalExamArea = {
 	isValid:undefined,
 } 
 
+export const newApPostOperationRecovery:modelTypes.ApPostOperationRecovery = { 
+	key:undefined,
+	encounterKey:undefined,
+	patientKey:undefined,
+	arrivalTime:0,
+	painScoreLkey:undefined,
+	nausea:undefined,
+	vomiting:undefined,
+	recoveryStatus:'',
+	nursingNotes:'',
+	activityLkey:undefined,
+	respirationLkey:undefined,
+	circulationLkey:undefined,
+	consciousnessLkey:undefined,
+	oxygenSaturationLkey:undefined,
+	aldreteScore:0,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isvalid:undefined,
+} 
+
 export const newApPostProcedureAnesthesia:modelTypes.ApPostProcedureAnesthesia = { 
 	key:undefined,
 	procedureKey:undefined,
@@ -3094,6 +3170,43 @@ export const newApPractitioner:modelTypes.ApPractitioner = {
 	secondaryLicenseValidUntil:null,
 	dob:null,
 	jobRoleLkey:undefined,
+} 
+
+export const newApPreOperationAdministeredMedications:modelTypes.ApPreOperationAdministeredMedications = { 
+	key:undefined,
+	preOperationKey:undefined,
+	activeIngredientKey:undefined,
+	dose:0,
+	unitLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isvalid:undefined,
+} 
+
+export const newApPreOperationAssessment:modelTypes.ApPreOperationAssessment = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	nopStatusConfirmed:undefined,
+	painScoreLkey:undefined,
+	allergiesReviewed:undefined,
+	consentForProcedureSigned:undefined,
+	consentForAnesthesiaSigned:undefined,
+	ivAccessStatus:undefined,
+	siteMarkedBySurgeon:undefined,
+	labImagingReviewed:undefined,
+	anesthetistAssessmentDone:undefined,
+	asaClassificationLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
 } 
 
 export const newApPreOperationChecklist:modelTypes.ApPreOperationChecklist = { 

@@ -32,6 +32,7 @@ import AllergiesModal from './AllergiesModal';
 import WarningiesModal from './WarningiesModal';
 import { notify } from '@/utils/uiReducerActions';
 import AdmitToInpatientModal from './AdmitToInpatientModal';
+
 const Encounter = () => {
   const authSlice = useAppSelector(state => state.auth);
   const dispatch = useAppDispatch();
@@ -185,6 +186,7 @@ const Encounter = () => {
     '/encounter/care-plan-and-goals':'Care Plan & Goals',
     '/encounter/discharge-planning':'Discharge Planning',
     '/encounter/bedside-procedures-requests':'Bedside Procedures Requests',
+   '/encounter/day-case':'DayCase',
    
   };
 
@@ -217,6 +219,7 @@ const Encounter = () => {
     { key: 'optometricExam', label: 'Optometric Exam', icon: faEye, path: 'optometric-exam' },
     { key: 'audiometryPuretone', label: 'ENT', icon: faEarListen, path: 'audiometry' },
     { key: 'psychologicalExam', label: 'Psychological Exam', icon: faBrain, path: 'psychological-exam' },
+     { key: 'dayCase', label: 'DayCase', icon: faBed, path: 'day-case' },
 
 
   ];
