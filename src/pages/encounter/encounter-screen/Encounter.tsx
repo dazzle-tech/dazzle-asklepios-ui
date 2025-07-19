@@ -8,6 +8,7 @@ import { faComment } from '@fortawesome/free-solid-svg-icons';
 import { faEject } from '@fortawesome/free-solid-svg-icons';
 import { faSuitcaseMedical } from '@fortawesome/free-solid-svg-icons';
 import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons'; 
+import { faDroplet } from '@fortawesome/free-solid-svg-icons';
 import { useCompleteEncounterMutation, useDischargeInpatientEncounterMutation } from '@/services/encounterService';
 import {
   faBedPulse, faCheckDouble, faClockRotateLeft, faFilePrescription, faFileWaveform,
@@ -187,6 +188,7 @@ const Encounter = () => {
     '/encounter/discharge-planning':'Discharge Planning',
     '/encounter/bedside-procedures-requests':'Bedside Procedures Requests',
    '/encounter/day-case':'DayCase',
+    '/encounter/blood-order':'Blood Order',
    
   };
 
@@ -207,6 +209,7 @@ const Encounter = () => {
      { key: 'carePlanAndGoals', label: 'Care Plan & Goals', icon: faNotesMedical, path: 'care-plan-and-goals' },
      { key: 'dischargePlanning', label: 'Discharge Planning', icon: faRightFromBracket, path: 'discharge-planning' },
      { key: 'bedsideProceduresRequest', label: 'Bedside Procedures Requests', icon: faSuitcaseMedical, path: 'bedside-procedures-requests'},
+    { key: 'bloodOrder', label: 'Blood Order', icon: faDroplet, path: 'blood-order'},
 
     { key: 'procedures', label: 'Procedures', icon: faNotesMedical, path: 'procedures' },
     { key: 'patientHistory', label: 'Patient History', icon: faClockRotateLeft, path: 'patient-history' },
