@@ -15,8 +15,7 @@ import { MdModeEdit } from 'react-icons/md';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { ApFacility } from '@/types/model-types';
 import { newApAddresses, newApFacility, newApDepartment } from '@/types/model-types-constructor';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRotateRight } from '@fortawesome/free-solid-svg-icons';
+import { FaUndo } from 'react-icons/fa';
 import MyInput from '@/components/MyInput';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import { RiInformationFill } from 'react-icons/ri';
@@ -131,7 +130,13 @@ const Facilities = () => {
       />
       {rowData?.deletedAt ?
       // back to this function when update the filter(status) in back end 
-      <FontAwesomeIcon title="Active" icon={faRotateRight} fill="var(--primary-gray)" onClick={handleActive} className='icons-style'/>
+      <FaUndo
+                className="icons-style"
+                title="Activate"
+                size={21}
+                fill="var(--primary-gray)"
+                onClick={handleActive}
+              />
       :
       <MdDelete
        title="Deactivate"
