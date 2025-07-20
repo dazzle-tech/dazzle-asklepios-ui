@@ -122,6 +122,7 @@ import DayCaseList from './pages/encounter/day-case/DayCaseList/DayCaseList';
 import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 import DayCaseContent from './pages/encounter/encounter-component/day-case-content';
 import BloodOrder from './pages/encounter/encounter-component/blood-order';
+import IntakeOutputBalance from './pages/encounter/encounter-component/intake-output-balance';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -319,6 +320,7 @@ const App = () => {
                 <Route path='bedside-procedures-requests' element={<BedsideProceduresRequests />} />
                 <Route path='day-case' element={<DayCaseContent />} />
                 <Route path='blood-order' element={<BloodOrder />} />
+                 <Route path='intake-output-balance' element={<IntakeOutputBalance />} />
               </Route>
               <Route path='/doctor-round/round' element={<ViewRound />} />
               <Route path='/recovery-module' element={<Recovery />} />
