@@ -24,6 +24,7 @@ import { conjureValueBasedOnKeyFromList } from '@/utils';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import AddEditRelation from './AddEditRelation';
 import UomGroup from '../product-setup/UOMGroup';
+import MyLabel from '@/components/MyLabel';
 const AddEditUom = ({
   open,
   setOpen,
@@ -57,9 +58,13 @@ const AddEditUom = ({
       }
     ]
   });
-  const [openConfirmDeleteUOMGroupModal, setOpenConfirmDeleteUOMGroupModal] =
+  const [openConfirmDeleteUnitModal, setOpenConfirmDeleteUnitModal] =
     useState<boolean>(false);
-  const [stateOfDeleteUOMGroupModal, setStateOfDeleteUOMGroupModal] = useState<string>('delete');
+  const [stateOfDeleteUnitModal, setStateOfDeleteUnitModal] = useState<string>('delete');
+
+  const [openConfirmDeleteRelationModal, setOpenConfirmDeleteRelationModal] =
+    useState<boolean>(false);
+  const [stateOfDeleteRelationModal, setStateOfDeleteRelationModal] = useState<string>('delete');
   const [relationListRequest, setRelationListRequest] = useState<ListRequest>({
     ...initialListRequest,
     filters: [
@@ -95,7 +100,7 @@ const AddEditUom = ({
     } else return '';
   };
   // Fetch UOM Lov list response
-  const { data: UOMLovResponseData } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+  const { data: UOMLovResponseData } = useGetLovValuesByCodeQuery('UOM');
   const [filteredResourcesList, setFilteredResourcesList] = useState([]);
   const [openAddEditPopup, setOpenAddEditPopup] = useState<boolean>(false);
   const [openAddEditRelationPopup, setOpenAddEditRelationPopup] = useState<boolean>(false);
@@ -105,7 +110,7 @@ const AddEditUom = ({
   const [removeUomGroupUnits, removeUomGroupUnitsMutation] = useRemoveUomGroupUnitsMutation();
   const [removeUomGroupRelation, removeUomGroupRelationMutation] = useRemoveUomGroupRelationMutation();
   const handleDeactivateUomGroup = async data => {
-    setOpenConfirmDeleteUOMGroupModal(false);
+    setOpenConfirmDeleteUnitModal(false);
     try {
       await removeUomGroupUnits({
         ...uomUnit
@@ -115,7 +120,7 @@ const AddEditUom = ({
           uomUnitRefetch();
           dispatch(
             notify({
-              msg: 'The UOM group unit was successfully ' + stateOfDeleteUOMGroupModal,
+              msg: 'The UOM group unit was successfully ' + stateOfDeleteUnitModal,
               sev: 'success'
             })
           );
@@ -123,7 +128,7 @@ const AddEditUom = ({
     } catch (error) {
       dispatch(
         notify({
-          msg: 'Failed to ' + stateOfDeleteUOMGroupModal + ' this UOM group unit',
+          msg: 'Failed to ' + stateOfDeleteUnitModal + ' this UOM group unit',
           sev: 'error'
         })
       );
@@ -131,17 +136,17 @@ const AddEditUom = ({
   };
   //handle Active uom group unit
   const handleReactiveUom = () => {
-    setOpenConfirmDeleteUOMGroupModal(false);
+    setOpenConfirmDeleteUnitModal(false);
     const updatedUom = { ...uomUnit, deletedAt: null };
     saveUomGroupUnits(updatedUom)
       .unwrap()
       .then(() => {
         // display success message
-        dispatch(notify({ msg: 'The UOM group has been activated successfully', sev: 'success' }));
+        dispatch(notify({ msg: 'The Unit has been activated successfully', sev: 'success' }));
       })
       .catch(() => {
         // display error message
-        dispatch(notify({ msg: 'Failed to activated this UOM group', sev: 'error' }));
+        dispatch(notify({ msg: 'Failed to activated this Unit', sev: 'error' }));
       });
   };
   const iconsForActions = (rowData) => (
@@ -160,8 +165,8 @@ const AddEditUom = ({
           size={24}
           fill="var(--primary-pink)"
            onClick={() => {
-            setStateOfDeleteUOMGroupModal('deactivate');
-            setOpenConfirmDeleteUOMGroupModal(true);
+            setStateOfDeleteRelationModal('deactivate');
+            setOpenConfirmDeleteRelationModal(true);
           }}
         />
       ) : (
@@ -170,8 +175,40 @@ const AddEditUom = ({
           size={20}
           fill="var(--primary-gray)"
           onClick={() => {
-            setStateOfDeleteUOMGroupModal('reactivate');
-            setOpenConfirmDeleteUOMGroupModal(true);
+            setStateOfDeleteRelationModal('reactivate');
+            setOpenConfirmDeleteRelationModal(true);
+          }} 
+        />
+      )}
+    </div>
+  );
+    const iconsForActionsUnit = (rowData) => (
+    <div className="container-of-icons">
+         <MdModeEdit
+        className="icons-style"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => setOpenAddEditPopup(true)}
+      />
+      {!rowData?.deletedAt ? (
+        <MdDelete
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+           onClick={() => {
+            setStateOfDeleteUnitModal('deactivate');
+            setOpenConfirmDeleteUnitModal(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          title="Activate"
+          size={20}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setStateOfDeleteUnitModal('reactivate');
+            setOpenConfirmDeleteUnitModal(true);
           }} 
         />
       )}
@@ -215,11 +252,14 @@ const AddEditUom = ({
       case 1:
         return (
           <Form>
+            <MyLabel label="Note: Order 1 represents the smallest unit "/>
             <div className="container-of-add-new-button">
+              
               <MyButton
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
                 onClick={() => {
+                  setUomUnit({...newApUomGroupsUnits})
                   setOpenAddEditPopup(true);
                   setChildStep(0);
                 }}
@@ -239,15 +279,15 @@ const AddEditUom = ({
               }}
             />
             <DeletionConfirmationModal
-              open={openConfirmDeleteUOMGroupModal}
-              setOpen={setOpenConfirmDeleteUOMGroupModal}
-              itemToDelete="UOM group unit"
+              open={openConfirmDeleteUnitModal}
+              setOpen={setOpenConfirmDeleteUnitModal}
+              itemToDelete="unit"
               actionButtonFunction={
-                stateOfDeleteUOMGroupModal == 'deactivate'
+                stateOfDeleteUnitModal == 'deactivate'
                   ? () => handleDeactivateUomGroup(uomUnit)
                   : handleReactiveUom
               }
-              actionType={stateOfDeleteUOMGroupModal}
+              actionType={stateOfDeleteUnitModal}
             />
           </Form>
         );
@@ -259,6 +299,7 @@ const AddEditUom = ({
                 prefixIcon={() => <AddOutlineIcon />}
                 color="var(--deep-blue)"
                 onClick={() => {
+                  setUomRelation({...newApUomGroupsRelation})
                   setOpenAddEditRelationPopup(true);
                   setChildStep(1);
                 }}
@@ -307,7 +348,7 @@ const AddEditUom = ({
       key: 'icons',
       title: <Translate></Translate>,
       flexGrow: 3,
-      render: rowData => iconsForActions(rowData)
+      render: rowData => iconsForActionsUnit(rowData)
     }
   ];
 
@@ -315,7 +356,7 @@ const AddEditUom = ({
   const tableRelationColumns = [
     {
       key: 'uomUnitFromKey',
-      title: <Translate>From Unit</Translate>,
+      title: <Translate>Each</Translate>,
       flexGrow: 4,
       render: rowData => (
         <span>
@@ -329,7 +370,7 @@ const AddEditUom = ({
     },
     {
       key: 'uomUnitToKey',
-      title: <Translate>To unit</Translate>,
+      title: <Translate>Contain</Translate>,
       flexGrow: 4,
       render: rowData => (
         <span>
@@ -428,11 +469,11 @@ const AddEditUom = ({
 
   // Handle Save Uom Def
   const handleSave = () => {
-    const response = saveUomGroup({
+   saveUomGroup({
       ...uom,
-    }).unwrap().then(() => {
-      console.log(response)
-      setUom(response);
+    }).unwrap().then((result) => {
+      console.log(result)
+      setUom(result);
       uomRefetch();
       dispatch(
         notify({
@@ -461,7 +502,8 @@ const AddEditUom = ({
     }).unwrap().then(() => {
       uomUnitRefetch();
       setUomUnit({
-        ...newApUomGroupsUnits
+        ...newApUomGroupsUnits,
+        uomLkey:null
       });
       dispatch(
         notify({

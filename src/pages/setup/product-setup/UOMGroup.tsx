@@ -10,16 +10,15 @@ import { faBoxesPacking } from '@fortawesome/free-solid-svg-icons';
 const UomGroup = ({ product, setProduct }) => {
 
     const { data: productTypeLovQueryResponse } = useGetLovValuesByCodeQuery('PRODUCTS_TYPES');
-    const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+    const [listRequest, setListRequest] = useState<ListRequest>({ 
+        ...initialListRequest 
+
+    });
     const {
         data: uomGroupsListResponse,
         refetch: refetchUomGroups,
         isFetching
     } = useGetUomGroupsQuery(listRequest);
-    const {
-        data: uomGroupsUnitsListResponse,
-        refetch: refetchUomGroupsUnit,
-    } = useGetUomGroupsUnitsQuery(listRequest);
     const [unitListRequest, setUnitListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -57,6 +56,11 @@ const UomGroup = ({ product, setProduct }) => {
                   }
               );
           }, [product?.uomGroupKey]);
+
+              const {
+        data: uomGroupsUnitsListResponse,
+        refetch: refetchUomGroupsUnit,
+    } = useGetUomGroupsUnitsQuery(unitListRequest);
     return (
         <>
             <Form fluid layout="inline">
