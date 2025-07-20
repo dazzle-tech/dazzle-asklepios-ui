@@ -191,6 +191,7 @@ const Encounter = () => {
    '/encounter/day-case':'DayCase',
     '/encounter/blood-order':'Blood Order',
    '/encounter/intake-output-balance':'Intake Output Balance',
+    '/encounter/referral-request':'Referral Request',
    
   };
 
@@ -207,12 +208,14 @@ const Encounter = () => {
     { key: 'drugOrder', label: 'Drug Order', icon: faPills, path: 'drug-order' },
     { key: 'diagnosticsOrder', label: 'Diagnostics Order', icon: faVials, path: 'diagnostics-order' },
     { key: 'consultation', label: 'Consultation', icon: faStethoscope, path: 'consultation' },
+     { key: 'referralRequest', label: 'Referral Request', icon: faUserDoctor , path: 'referral-request'},
     { key: 'multidisciplinaryTeamNotes', label: 'Multidisciplinary Team Notes', icon: faComment, path: 'multidisciplinary-team-notes' },
      { key: 'carePlanAndGoals', label: 'Care Plan & Goals', icon: faNotesMedical, path: 'care-plan-and-goals' },
      { key: 'dischargePlanning', label: 'Discharge Planning', icon: faRightFromBracket, path: 'discharge-planning' },
      { key: 'bedsideProceduresRequest', label: 'Bedside Procedures Requests', icon: faSuitcaseMedical, path: 'bedside-procedures-requests'},
     { key: 'bloodOrder', label: 'Blood Order', icon: faDroplet, path: 'blood-order'},
     { key: 'intakeOutputBalance', label: 'Intake Output Balance', icon: faSquarePollHorizontal, path: 'intake-output-balance' },
+
 
     { key: 'procedures', label: 'Procedures', icon: faNotesMedical, path: 'procedures' },
     { key: 'patientHistory', label: 'Patient History', icon: faClockRotateLeft, path: 'patient-history' },
