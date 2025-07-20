@@ -1684,6 +1684,8 @@ export const newApInventoryTransaction:modelTypes.ApInventoryTransaction = {
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	transId:'',
+	docNum:0,
 } 
 
 export const newApInventoryTransactionAttachment:modelTypes.ApInventoryTransactionAttachment = { 
@@ -1712,6 +1714,7 @@ export const newApInventoryTransactionProduct:modelTypes.ApInventoryTransactionP
 	newQuentity:0,
 	lotserialnumber:'',
 	oldCost:0,
+	newCost:0,
 	currencyLkey:undefined,
 	createdBy:'',
 	updatedBy:'',
@@ -1720,6 +1723,8 @@ export const newApInventoryTransactionProduct:modelTypes.ApInventoryTransactionP
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+	isEffectedWarehouse:undefined,
+	expiryDate:null,
 } 
 
 export const newApLabResultLog:modelTypes.ApLabResultLog = { 
@@ -4272,6 +4277,7 @@ export const newApWarehouseProduct:modelTypes.ApWarehouseProduct = {
 	deletedAt:undefined,
 	isvalid:undefined,
 	departmentKey:undefined,
+	avgCost:0,
 } 
 
 export const newApWarehouseUser:modelTypes.ApWarehouseUser = { 

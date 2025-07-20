@@ -18,6 +18,7 @@ import { labService } from './services/labService';
 import {radService}from '@/services/radService';
 import { procedureService } from './services/procedureService';
 import {operationService} from './services/operationService';
+import { inventoryService } from './services/inventoryTransactionService';
 export const store = configureStore({
   reducer: {
     // ui
@@ -31,9 +32,12 @@ export const store = configureStore({
     // patient
     [patientSlice.name]: patientSlice.reducer,
     [patientService.reducerPath]: patientService.reducer,
-    
-    //setup
+
+     //setup
     [setupService.reducerPath]: setupService.reducer,
+    
+    //inventory 
+    [inventoryService.reducerPath]: inventoryService.reducer,
 
     //medication
     [medicationsSetupService.reducerPath]: medicationsSetupService.reducer,
@@ -72,6 +76,7 @@ export const store = configureStore({
       uiService.middleware,
       authService.middleware,
       patientService.middleware,
+      inventoryService.middleware,
       setupService.middleware,
       medicationsSetupService.middleware,
       appointmentService.middleware,

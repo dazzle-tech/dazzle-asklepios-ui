@@ -1683,6 +1683,8 @@ export interface ApInventoryTransaction {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	transId:string;
+	docNum:number;
 } 
 
 export interface ApInventoryTransactionAttachment { 
@@ -1711,6 +1713,7 @@ export interface ApInventoryTransactionProduct {
 	newQuentity:number;
 	lotserialnumber:string;
 	oldCost:number;
+	newCost:number;
 	currencyLkey:string;
 	createdBy:string;
 	updatedBy:string;
@@ -1719,6 +1722,8 @@ export interface ApInventoryTransactionProduct {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+	isEffectedWarehouse:boolean;
+	expiryDate:Date;
 } 
 
 export interface ApLabResultLog { 
@@ -4271,6 +4276,7 @@ export interface ApWarehouseProduct {
 	deletedAt:number;
 	isvalid:boolean;
 	departmentKey:string;
+	avgCost:number;
 } 
 
 export interface ApWarehouseUser { 
