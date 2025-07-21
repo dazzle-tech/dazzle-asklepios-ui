@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyInput from '@/components/MyInput';
-import { Form } from 'rsuite';
+import { Col, Form, Row } from 'rsuite';
 import './styles.less';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { MdOutlineMedicationLiquid } from 'react-icons/md';
@@ -370,25 +370,30 @@ const AddEditBrandMedication = ({
       case 0:
         return (
           <Form fluid>
-            <div className="container-of-two-fields-generic-medication">
+              <Row>
+              <Col md={12}>
               <MyInput
-                width={250}
+                width="100%"
                 fieldName="code"
                 record={genericMedication}
                 setRecord={setGenericMedication}
               />
+              </Col>
+              <Col md={12}>
               <MyInput
-                width={250}
+                width="100%"
                 fieldLabel="Brand Name"
                 fieldName="genericName"
                 record={genericMedication}
                 setRecord={setGenericMedication}
               />
-            </div>
+              </Col>
+              </Row>
             <br />
-            <div className="container-of-two-fields-generic-medication">
+            <Row>
+              <Col md={12}>
               <MyInput
-                width={250}
+                width="100%"
                 fieldName="manufacturerLkey"
                 fieldType="select"
                 selectData={GenericMedicationLovQueryResponse?.object ?? []}
@@ -398,8 +403,10 @@ const AddEditBrandMedication = ({
                 setRecord={setGenericMedication}
                 menuMaxHeight={250}
               />
+              </Col>
+              <Col md={12}>
               <MyInput
-                width={250}
+                width="100%"
                 fieldName="dosageFormLkey"
                 fieldType="select"
                 selectData={doseageFormLovQueryResponse?.object ?? []}
@@ -409,11 +416,13 @@ const AddEditBrandMedication = ({
                 setRecord={setGenericMedication}
                 menuMaxHeight={250}
               />
-            </div>
+              </Col>
+              </Row>
             <br />
-            <div className="container-of-two-fields-generic-medication">
+               <Row>
+                <Col md={12}>
               <MyInput
-                width={250}
+                width="100%"
                 fieldLabel="Rout"
                 selectData={medRoutLovQueryResponse?.object ?? []}
                 fieldType="checkPicker"
@@ -423,53 +432,72 @@ const AddEditBrandMedication = ({
                 record={genericMedication}
                 setRecord={setGenericMedication}
               />
+              </Col>
+              <Col md={12}>
               <MyInput
-                width={250}
+                width="100%"
                 fieldName="marketingAuthorizationHolder"
                 record={genericMedication}
                 setRecord={setGenericMedication}
               />
-            </div>
+              </Col>
+              </Row>
             <br />
             <MyInput
-              width={520}
+              width="100%"
               fieldName="usageInstructions"
               fieldType="textarea"
               record={genericMedication}
               setRecord={setGenericMedication}
             />
             <MyInput
-              width={520}
+              width="100%"
               fieldName="storageRequirements"
               fieldType="textarea"
               record={genericMedication}
               setRecord={setGenericMedication}
             />
-            <div className="container-of-two-fields-generic-medication">
+            <Row>
+              <Col md={12}>
               <MyInput
-                width={250}
+                width="100%"
                 fieldName="expiresAfterOpening"
                 fieldType="checkbox"
                 record={genericMedication}
                 setRecord={setGenericMedication}
               />
+              </Col>
               {genericMedication?.expiresAfterOpening && (
+                <Col md={12}>
                 <MyInput
-                  width={250}
+                  width="100%"
                   fieldName="expiresAfterOpeningValue"
                   fieldType="text"
                   record={genericMedication}
                   setRecord={setGenericMedication}
                 />
+                </Col>
               )}
-            </div>
+            </Row>
             <br />
+            <Row>
+              <Col md={12}>
             <MyInput
               fieldName="singlePatientUse"
               fieldType="checkbox"
               record={genericMedication}
               setRecord={setGenericMedication}
             />
+            </Col>
+            <Col md={12}>
+            <MyInput
+              fieldName="highCostMedication"
+              fieldType="checkbox"
+              record={genericMedication}
+              setRecord={setGenericMedication}
+            />
+            </Col>
+            </Row>
           </Form>
         );
       case 1:
@@ -549,7 +577,7 @@ const AddEditBrandMedication = ({
     switch (stepNumber) {
       case 0:
         return (
-          <Form>
+          <Form fluid>
             <MyInput
               placeholder="Select A.I"
               selectDataValue="key"
@@ -561,14 +589,14 @@ const AddEditBrandMedication = ({
               setRecord={setGenericActive}
               searchable={false}
               menuMaxHeight={200}
-              width={350}
+              width="100%"
             />
             <MyInput
               fieldType="number"
               fieldName="strength"
               record={genericActive}
               setRecord={setGenericActive}
-              width={350}
+              width="100%"
             />
             <MyInput
               fieldType="select"
@@ -580,7 +608,7 @@ const AddEditBrandMedication = ({
               placeholder="Unit"
               selectData={UOMLovResponseData?.object ?? []}
               menuMaxHeight={200}
-              width={350}
+              width="100%"
             />
           </Form>
         );
