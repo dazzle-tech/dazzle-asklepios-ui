@@ -47,7 +47,7 @@ const PatientQuickAppointment = ({ quickAppointmentModel, localPatient, setQuick
                     console.log("An unexpected error occurred", e);
                     dispatch(notify({ msg: 'An unexpected error occurred', sev: 'warn' }));
                 }
-            });;
+            });
         } else {
             dispatch(notify({ msg: 'encounter not linked to patient', sev: 'error' }));
         }

@@ -7,10 +7,15 @@ import { ApPatient } from '@/types/model-types';
 import MyModal from '@/components/MyModal/MyModal';
 import { useSavePatientMutation } from '@/services/patientService';
 import { notify } from '@/utils/uiReducerActions';
-import { newApPatient } from '@/types/model-types-constructor';
+import { newApEncounter, newApPatient } from '@/types/model-types-constructor';
 import { faBoltLightning } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useCompleteEncounterRegistrationMutation } from '@/services/encounterService';
+import { calculateAgeFormat } from '@/utils';
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
+import { setRefetchEncounter } from '@/reducers/refetchEncounterState';
 
 const QuickPatient = ({ open, setOpen }) => {
   const navigate = useNavigate();
@@ -19,6 +24,9 @@ const QuickPatient = ({ open, setOpen }) => {
   const [validationResult, setValidationResult] = useState({});
   const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
   const [savePatient, savePatientMutation] = useSavePatientMutation();
+  const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
+  const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter, visitTypeLkey: '2041082245699228', patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob), discharge: false });
+  const pageCode = useSelector((state: RootState) => state.div?.pageCode);
 
   // Fetch LOV data for various fields
   const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
@@ -26,24 +34,37 @@ const QuickPatient = ({ open, setOpen }) => {
   //handle Save Patient 
   const handleSave = async () => {
     try {
+      // 1. Save patient and wait for the result
       const savedPatient = await savePatient({
-        ...localPatient, 
-        skipValidation: isUnknown,   
-        incompletePatient: true,  
+        ...localPatient,
+        skipValidation: isUnknown,
+        incompletePatient: true,
         unknownPatient: isUnknown
       }).unwrap();
 
-      // Update local patient with saved data
+      // 2. Save encounter using saved patient key
+      // 2. Save encounter using saved patient key
+      if (pageCode === 'ER_Triage') {
+        await saveEncounter({
+          ...localEncounter,
+          patientKey: savedPatient.key,
+          plannedStartDate: new Date(),
+          encounterStatusLkey: '91063195286200',
+          patientAge: calculateAgeFormat(savedPatient.dob),
+          visitTypeLkey: '2041082245699228',
+          resourceTypeLkey: '6743167799449277'
+        });
+      dispatch(setRefetchEncounter(true));  
+      }
+
+      // 3. Update state and navigate
       setLocalPatient(savedPatient);
-      
-      // Navigate with the saved patient data
       setOpen(false);
-      const privatePatientPath = '/patient-profile';
-      navigate(privatePatientPath, { state: { patient: savedPatient } });
-      
-      // Clear form and show success message
+      { pageCode !== 'ER_Triage' && navigate('/patient-profile', { state: { patient: savedPatient } }) };
+
+      // 4. Clean up
       handleClearModal();
-      dispatch(notify({msg:'Patient added successfully',sev: 'success'}));
+      dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
       setValidationResult(undefined);
     } catch (error) {
       console.log('rejected');
@@ -52,6 +73,7 @@ const QuickPatient = ({ open, setOpen }) => {
       }
     }
   };
+
 
   // Handle Clear Modal Fields
   const handleClearModal = () => {
@@ -118,7 +140,7 @@ const QuickPatient = ({ open, setOpen }) => {
       open={open}
       setOpen={setOpen}
       title="Quick Patient"
-      steps={[{ title: "Basic Information", icon: <FontAwesomeIcon icon={faBoltLightning }/>}]}
+      steps={[{ title: "Basic Information", icon: <FontAwesomeIcon icon={faBoltLightning} /> }]}
       size="xs"
       position='right'
       actionButtonLabel="Create"

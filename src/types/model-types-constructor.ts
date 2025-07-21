@@ -1404,6 +1404,7 @@ export const newApEncounter:modelTypes.ApEncounter = {
 	resourceKey:undefined,
 	planInstructionsNote:'',
 	discharge:undefined,
+	emergencyLevelLkey:undefined,
 } 
 
 export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService = { 
@@ -1710,7 +1711,6 @@ export const newApInventoryTransactionProduct:modelTypes.ApInventoryTransactionP
 	key:undefined,
 	inventoryTransKey:undefined,
 	productKey:undefined,
-	oldQuentity:0,
 	newQuentity:0,
 	lotserialnumber:'',
 	oldCost:0,
