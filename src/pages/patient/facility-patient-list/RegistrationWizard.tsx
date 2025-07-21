@@ -9,11 +9,12 @@ import QuickPatient from './QuickPatient';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import CreateNewPatient from './CreateNewPatient';
 import MyButton from '@/components/MyButton/MyButton';
-import './styles.less'
+import './styles.less';
 const RegistrationWizard = () => {
   const [open, setOpen] = useState(false);
   const dispatch = useAppDispatch();
   const [quickPatientModalOpen, setQuickPatientModalOpen] = useState(false);
+ 
 
   // Effects
   useEffect(() => {
@@ -54,8 +55,9 @@ const RegistrationWizard = () => {
           Quick Patient
         </MyButton>
       </div>
-      <CreateNewPatient open={open} setOpen={setOpen} />
+      <CreateNewPatient open={open} setOpen={setOpen}  />
       <QuickPatient open={quickPatientModalOpen} setOpen={setQuickPatientModalOpen} />
+      
     </Panel>
   );
 };

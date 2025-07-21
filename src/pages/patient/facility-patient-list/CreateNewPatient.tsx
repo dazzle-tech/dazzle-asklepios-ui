@@ -4,7 +4,7 @@ import { useAppDispatch } from '@/hooks';
 import { faUser, faIdCard, faPhone, faShieldHalved } from '@fortawesome/free-solid-svg-icons';
 import MyInput from '@/components/MyInput';
 import './styles.less';
-import { newApPatientInsurance } from '@/types/model-types-constructor';
+import { newApEncounter, newApPatientInsurance } from '@/types/model-types-constructor';
 import { ApPatientInsurance } from '@/types/model-types';
 import { newApPatient } from '@/types/model-types-constructor';
 import { ApPatient } from '@/types/model-types';
@@ -14,9 +14,16 @@ import { useSavePatientMutation } from '@/services/patientService';
 import { useNavigate } from 'react-router-dom';
 import { useSavePatientInsuranceMutation } from '@/services/patientService';
 import { notify } from '@/utils/uiReducerActions';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import MyButton from '@/components/MyButton/MyButton';
 import './styles.less';
+import { calculateAgeFormat } from '@/utils';
+import { useCompleteEncounterRegistrationMutation } from '@/services/encounterService';
+import { useSelector } from "react-redux";
+import { RootState } from "@/store";
+import { setRefetchEncounter } from '@/reducers/refetchEncounterState';
+
+
 const CreateNewPatient = ({ open, setOpen }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
@@ -25,6 +32,9 @@ const CreateNewPatient = ({ open, setOpen }) => {
     const [patientInsurance, setPatientInsurance] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
     const [savePatient, savePatientMutation] = useSavePatientMutation();
     const [openNextDocument, setOpenNextDocument] = useState(false);
+    const [localEncounter, setLocalEncounter] = useState({ ...newApEncounter, visitTypeLkey: '2041082245699228', patientKey: localPatient.key, plannedStartDate: new Date(), patientAge: calculateAgeFormat(localPatient.dob), discharge: false });
+    const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
+    const pageCode = useSelector((state: RootState) => state.div?.pageCode);
     // Fetch LOV data for various fields
     const { data: genderLovQueryResponse } = useGetLovValuesByCodeQuery('GNDR');
     const { data: docTypeLovQueryResponse } = useGetLovValuesByCodeQuery('DOC_TYPE');
@@ -42,6 +52,42 @@ const CreateNewPatient = ({ open, setOpen }) => {
                 dispatch(notify({ msg: 'Patient Saved Successfully', sev: 'success' }));
             });
     };
+    //handle Save Patient 
+    const handleSavePatientAndQuick = async () => {
+        try {
+            // 1. Save patient and wait for the result
+            const savedPatient = await savePatient({
+                ...localPatient,
+                incompletePatient: false,
+                unknownPatient: false
+            }).unwrap();
+
+            // 2. Save encounter using saved patient key
+            // 2. Save encounter using saved patient key
+            if (pageCode === 'ER_Triage') {
+                await saveEncounter({
+                    ...localEncounter,
+                    patientKey: savedPatient.key,
+                    plannedStartDate: new Date(),
+                    encounterStatusLkey: '91063195286200',
+                    patientAge: calculateAgeFormat(savedPatient.dob),
+                    visitTypeLkey: '2041082245699228',
+                    resourceTypeLkey: '6743167799449277'
+                });
+                dispatch(setRefetchEncounter(true));    
+            }
+
+            // 3. Update state and navigate
+            setLocalPatient(savedPatient);
+            setOpen(false);
+            { pageCode !== 'ER_Triage' && navigate('/patient-profile', { state: { patient: savedPatient } }) };
+
+            // 4. Clean up
+            dispatch(notify({ msg: 'Patient added successfully', sev: 'success' }));
+        } catch (error) {
+            console.log('rejected')
+        }
+    };
     // Handle Go To Patient Profile 
     const goToPatientProfile = () => {
         setOpen(false);
@@ -55,7 +101,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
         savePatientInsurance({ ...patientInsurance, patientKey: localPatient.key })
             .unwrap()
             .then(() => {
-                dispatch(notify({msg:'Patient Insurance Added Successfully',sev: 'success'}));
+                dispatch(notify({ msg: 'Patient Insurance Added Successfully', sev: 'success' }));
                 const privatePatientPath = '/patient-profile';
                 navigate(privatePatientPath, { state: { patient: localPatient } });
                 setOpen(false);
@@ -361,8 +407,8 @@ const CreateNewPatient = ({ open, setOpen }) => {
                         />
                     </Form>
                 );
-        }
-    };
+        };
+    }
 
     // Effects
     useEffect(() => {
@@ -379,7 +425,7 @@ const CreateNewPatient = ({ open, setOpen }) => {
             setOpen={setOpen}
             title="Patient Registration"
             steps={[
-                { title: 'Basic Info', icon: <FontAwesomeIcon icon={faUser} />, disabledNext: !localPatient?.key, footer: <MyButton onClick={handleSave}>Save</MyButton> },
+                { title: 'Basic Info', icon: <FontAwesomeIcon icon={faUser} />, disabledNext: !localPatient?.key, footer: <MyButton onClick={pageCode === 'ER_Triage' ? handleSavePatientAndQuick : handleSave}>{pageCode === 'ER_Triage' ? "Save & Create Quick Appointment" : "Save"}</MyButton> },
                 { title: 'Document', icon: <FontAwesomeIcon icon={faIdCard} />, disabledNext: !openNextDocument, footer: <MyButton onClick={handleSave} >Save</MyButton> },
                 { title: 'Contact', icon: <FontAwesomeIcon icon={faPhone} />, footer: <MyButton onClick={handleSave} >Save</MyButton> },
                 { title: 'Insurance', icon: <FontAwesomeIcon icon={faShieldHalved} />, footer: <MyButton onClick={handleSaveInsurance} >Save Insurance</MyButton> }

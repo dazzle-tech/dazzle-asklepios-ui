@@ -1,74 +1,83 @@
 import MyInput from '@/components/MyInput';
 import Translate from '@/components/Translate';
-import { setEncounter, setPatient } from '@/reducers/patientSlice';
 import { newApEncounter } from '@/types/model-types-constructor';
 import React, { useEffect, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUserDoctor } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
-import * as icons from '@rsuite/icons';
 import { addFilterToListRequest, formatDate } from '@/utils';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useGetEncountersQuery } from '@/services/encounterService';
+import { useLocation } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import BedAssignmentModal from './BedAssignmentModal';
-import { faBed } from "@fortawesome/free-solid-svg-icons";
+import { faBarcode } from '@fortawesome/free-solid-svg-icons';
+import { faCirclePlay } from '@fortawesome/free-solid-svg-icons';
 import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
-const DayCaseList = () => {
+import { useGetLovValuesByCodeQuery } from "@/services/setupService";
+import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
+import { useSelector } from "react-redux";
+
+const ERTriage = () => {
     const location = useLocation();
-    const navigate = useNavigate();
     const dispatch = useDispatch();
-    const divContent = (
-        <div style={{ display: 'flex' }}>
-            <h5> DayCase List</h5>
-        </div>
-    );
-    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-    dispatch(setPageCode('P_DayCaseEncounters'));
-    dispatch(setDivContent(divContentHTML));
     const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
-    const [openBedAssigmentModal, setOpenBedAssigment] = useState(false);
+    const [emergencyLevel, setEmergencyLevel] = useState({ key: '' });
     const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
-    const [startEncounter] = useStartEncounterMutation();
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
+        ignore: true,
         filters: [
             {
                 fieldName: 'resource_type_lkey',
-                operator: 'in',
-                value: ['5433343011954425', '2039548173192779']
-                    .map(key => `(${key})`)
-                    .join(' '),
-            },
-        ],
+                operator: 'match',
+                value: '6743167799449277'
+            }
+        ]
     });
-    // Fetch the encounter list using the current listRequest
+    // State to manage the date filters for the manual search
+    const [dateFilter, setDateFilter] = useState({
+        fromDate: new Date(),
+        toDate: new Date()
+    });
+
+    // Create a JSX element to display as the page header content
+    const divContent = (
+        <div style={{ display: 'flex' }}>
+            <h5>ER Triage</h5>
+        </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+    dispatch(setPageCode('ER_Triage'));
+    dispatch(setDivContent(divContentHTML));
+    // Get the refetchEncounter flag from Redux state
+
+    const refetch = useSelector((state: any) => state?.refetch?.refetchEncounter);
+    // Hook to fetch encounter list based on the current listRequest filters
     const {
         data: encounterListResponse,
         isFetching,
         refetch: refetchEncounter,
         isLoading
     } = useGetEncountersQuery(listRequest);
-    // State to manage date filtering (fromDate and toDate)
-    const [dateFilter, setDateFilter] = useState({
-        fromDate: new Date(),
-        toDate: new Date()
-    });
-    // Function to check if a row in the list is the currently selected encounter
+    // Fetch list of values (LOV) for emergency levels using the provided code
+
+    const { data: emergencyLevellovqueryresponse } = useGetLovValuesByCodeQuery('EMERGENCY_LEVEL');
+
+    // Function to check if a row is currently selected based on encounter key
     const isSelected = rowData => {
         if (rowData && encounter && rowData.key === encounter.key) {
             return 'selected-row';
         } else return '';
     };
-    // Function to manually trigger search by date range
+
+    // Function to handle manual search based on date filters
     const handleManualSearch = () => {
         setManualSearchTriggered(true);
         if (dateFilter.fromDate && dateFilter.toDate) {
@@ -97,49 +106,15 @@ const DayCaseList = () => {
                 ...listRequest, filters: [
                     {
                         fieldName: 'resource_type_lkey',
-                        operator: 'in',
-                        value: ['5433343011954425', '2039548173192779']
-                            .map(key => `(${key})`)
-                            .join(' '),
-
-                    },
+                        operator: 'match',
+                        value: '6743167799449277'
+                    }
                 ]
             });
         }
     };
-    // Function to handle navigation to a visit screen
-    const handleGoToVisit = async (encounterData, patientData) => {
-        await startEncounter(encounterData).unwrap();
-        if (encounterData && encounterData.key) {
-            dispatch(setEncounter(encounterData));
-            dispatch(setPatient(encounterData['patientObject']));
-        }
-        const privatePatientPath = '/user-access-patient-private';
-        const encounterPath = '/encounter';
-        const targetPath = patientData.privatePatient ? privatePatientPath : encounterPath;
-        if (patientData.privatePatient) {
-            navigate(targetPath, {
-                state: {
-                    info: 'toEncounter',
-                    fromPage: 'EncounterList',
-                    patient: patientData,
-                    encounter: encounterData
-                }
-            });
-        } else {
-            navigate(targetPath, {
-                state: {
-                    info: 'toEncounter',
-                    fromPage: 'EncounterList',
-                    patient: patientData,
-                    encounter: encounterData
-                }
-            });
-        }
-        sessionStorage.setItem("encounterPageSource", "EncounterList");
-    };
 
-    //Effects
+    //useEffect
     useEffect(() => {
         dispatch(setPageCode(''));
         dispatch(setDivContent(' '));
@@ -154,9 +129,9 @@ const DayCaseList = () => {
         handleManualSearch();
     }, []);
     useEffect(() => {
-        if (isLoading || (manualSearchTriggered && isFetching)) {
+        if (isLoading || isFetching) {
             dispatch(showSystemLoader());
-        } else if ((isFetching && isLoading)) {
+        } else {
             dispatch(hideSystemLoader());
         }
 
@@ -164,8 +139,76 @@ const DayCaseList = () => {
             dispatch(hideSystemLoader());
         };
     }, [isLoading, isFetching, dispatch]);
+    useEffect(() => {
+        if (refetch) {
+            dispatch(showSystemLoader());
 
-    // table columns 
+            const doRefetch = async () => {
+                try {
+                    await refetchEncounter();
+                } catch (error) {
+                    console.error('Error while refetching encounter:', error);
+                } finally {
+                    dispatch(hideSystemLoader());
+                    dispatch(resetRefetchEncounter());
+                }
+            };
+
+            doRefetch();
+        }
+    }, [refetch, refetchEncounter, dispatch]);
+    useEffect(() => {
+        let filters = [
+            {
+                fieldName: 'resource_type_lkey',
+                operator: 'match',
+                value: '6743167799449277'
+            }
+        ];
+
+        if (dateFilter.fromDate && dateFilter.toDate) {
+            const formattedFromDate = formatDate(dateFilter.fromDate);
+            const formattedToDate = formatDate(dateFilter.toDate);
+            filters.push({
+                fieldName: 'planned_start_date',
+                operator: 'between',
+                value: `${formattedFromDate}_${formattedToDate}`
+            });
+        } else if (dateFilter.fromDate) {
+            const formattedFromDate = formatDate(dateFilter.fromDate);
+            filters.push({
+                fieldName: 'planned_start_date',
+                operator: 'gte',
+                value: formattedFromDate
+            });
+        } else if (dateFilter.toDate) {
+            const formattedToDate = formatDate(dateFilter.toDate);
+            filters.push({
+                fieldName: 'planned_start_date',
+                operator: 'lte',
+                value: formattedToDate
+            });
+        }
+
+        if (emergencyLevel.key) {
+            filters.push({
+                fieldName: 'visit_type_lkey',
+                operator: 'match',
+                value: emergencyLevel.key
+            });
+        }
+
+        setManualSearchTriggered(true);
+        setListRequest(prev => ({
+            ...prev,
+            pageNumber: 1,
+            filters
+        }));
+    }, [dateFilter, emergencyLevel]);
+
+
+
+    // table Columns
     const tableColumns = [
         {
             key: 'queueNumber',
@@ -211,48 +254,20 @@ const DayCaseList = () => {
                 );
             }
         },
-         {
-            key: 'location',
-            title: <Translate>LOCATION</Translate>,
-            render: (row: any) => <span className='location-table-style '>{row?.apRoom?.name}<br />{row?.apBed?.name}</span>
+        {
+            key: 'erLevel',
+            title: <Translate>ER Level</Translate>,
+        },
+        {
+            key: 'erLevel',
+            title: <Translate>Visit Type</Translate>,
+            render: rowData =>
+                rowData.visitTypeLvalue ? rowData.visitTypeLvalue.lovDisplayVale : rowData.visitTypeLkey
         },
         {
             key: 'chiefComplaint',
             title: <Translate>CHIEF COMPLAIN</Translate>,
             render: rowData => rowData.chiefComplaint,
-        },
-        {
-            key: 'diagnosis',
-            title: <Translate>DIAGNOSIS</Translate>,
-            render: rowData => rowData.diagnosis
-        },
-        {
-            key: 'hasPrescription',
-            title: <Translate>PRESCRIPTION</Translate>,
-            render: rowData =>
-                rowData.hasPrescription ? (
-                    <MyBadgeStatus contant="YES" color="#45b887" />
-                ) : (
-                    <MyBadgeStatus contant="NO" color="#969fb0" />
-                )
-        },
-        {
-            key: 'hasOrder',
-            title: <Translate>HAS ORDER</Translate>,
-            render: rowData =>
-                rowData.hasOrder ? (
-                    <MyBadgeStatus contant="YES" color="#45b887" />
-                ) : (
-                    <MyBadgeStatus contant="NO" color="#969fb0" />
-                )
-        },
-        {
-            key: 'encounterPriority',
-            title: <Translate>PRIORITY</Translate>,
-            render: rowData =>
-                rowData.encounterPriorityLvalue
-                    ? rowData.encounterPriorityLvalue.lovDisplayVale
-                    : rowData.encounterPriorityLkey
         },
         {
             key: 'plannedStartDate',
@@ -267,55 +282,50 @@ const DayCaseList = () => {
                 : rowData.encounterStatusLkey} />
         },
         {
-            key: 'hasObservation',
-            title: <Translate>IS OBSERVED</Translate>,
-            render: rowData =>
-                rowData.hasObservation ? (
-                    <MyBadgeStatus contant="YES" color="#45b887" />
-
-                ) : (
-                    <MyBadgeStatus contant="NO" color="#969fb0" />
-                )
-        },
-        {
             key: 'actions',
             title: <Translate> </Translate>,
             render: rowData => {
-                const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
+                const tooltipPrint = <Tooltip>Print wrist band</Tooltip>;
+                const tooltipStart = <Tooltip>Start Triage</Tooltip>;
+                const tooltipSendTo = <Tooltip>Send to</Tooltip>;
                 const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
-                const tooltipBedAssessment = <Tooltip>Assign to Bed</Tooltip>;
                 return (
                     <Form layout="inline" fluid className="nurse-doctor-form">
-                        <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
+                        <Whisper trigger="hover" placement="top" speaker={tooltipPrint}>
                             <div>
                                 <MyButton
                                     size="small"
                                     onClick={() => {
-                                        const patientData = rowData?.patientObject;
                                         setLocalEncounter(rowData);
-                                        handleGoToVisit(rowData, patientData);
                                     }}
                                 >
-                                    <FontAwesomeIcon icon={faUserDoctor} />
+                                    <FontAwesomeIcon icon={faBarcode} />
                                 </MyButton>
                             </div>
                         </Whisper>
-                        {rowData?.encounterStatusLkey === "5256965920133084" && <Whisper trigger="hover" placement="top" speaker={tooltipBedAssessment}>
+                        <Whisper trigger="hover" placement="top" speaker={tooltipStart}>
                             <div>
                                 <MyButton
                                     size="small"
+                                    backgroundColor="black"
                                     onClick={() => {
-                                        const patientData = rowData?.patientObject;
                                         setLocalEncounter(rowData);
-                                        setOpenBedAssigment(true);
                                     }}
-                                    backgroundColor="Black"
                                 >
-                                    <FontAwesomeIcon icon={faBed} />
+                                    <FontAwesomeIcon icon={faCirclePlay} />
                                 </MyButton>
                             </div>
-                        </Whisper>}
-
+                        </Whisper>
+                        <Whisper trigger="hover" placement="top" speaker={tooltipSendTo}>
+                            <div>
+                                <MyButton
+                                    size="small"
+                                    backgroundColor="violet"
+                                >
+                                    <FontAwesomeIcon icon={faPaperPlane} />
+                                </MyButton>
+                            </div>
+                        </Whisper>
                         <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
                             <div>
                                 <MyButton size="small">
@@ -376,21 +386,23 @@ const DayCaseList = () => {
                     record={dateFilter}
                     setRecord={setDateFilter}
                 />
-                <div className="search-btn">
-                    <MyButton onClick={handleManualSearch}>
-                        <icons.Search />
-                    </MyButton>
-                </div>
+                <MyInput
+                    width={200}
+                    column
+                    fieldType='select'
+                    fieldLabel="Emergency Level"
+                    fieldName="key"
+                    selectData={emergencyLevellovqueryresponse?.object ?? []}
+                    selectDataLabel="lovDisplayVale"
+                    selectDataValue="key"
+                    record={emergencyLevel}
+                    setRecord={setEmergencyLevel}
+                />
             </Form>
         );
     };
     return (
         <Panel>
-            <BedAssignmentModal
-                refetchEncounter={refetchEncounter}
-                open={openBedAssigmentModal}
-                setOpen={setOpenBedAssigment}
-                encounter={encounter} />
             <MyTable
                 filters={filters()}
                 height={600}
@@ -416,4 +428,4 @@ const DayCaseList = () => {
     );
 };
 
-export default DayCaseList;
+export default ERTriage;

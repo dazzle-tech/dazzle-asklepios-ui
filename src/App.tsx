@@ -124,6 +124,7 @@ import DayCaseContent from './pages/encounter/encounter-component/day-case-conte
 import BloodOrder from './pages/encounter/encounter-component/blood-order';
 import IntakeOutputBalance from './pages/encounter/encounter-component/intake-output-balance';
 import ReferralRequest from './pages/encounter/encounter-component/add-referral-request';
+import ERTriage from './pages/encounter/ER-triage/ERTriage';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -291,7 +292,7 @@ const App = () => {
               <Route path="patient-list" element={<PatientList />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="facility-patient-list" element={<FacilityPatientList />} />
-
+               <Route path='ER-triage' element={<ERTriage />} />
               <Route path="encounter" element={<Encounter />}>
                 <Route path="drug-order" element={<DrugOrder />} />
                 <Route index element={<PatientSummary />} />

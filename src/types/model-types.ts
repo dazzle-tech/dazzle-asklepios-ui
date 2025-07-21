@@ -1403,6 +1403,7 @@ export interface ApEncounter {
 	resourceKey:string;
 	planInstructionsNote:string;
 	discharge:boolean;
+	emergencyLevelLkey:string;
 } 
 
 export interface ApEncounterAppliedService { 
@@ -1709,7 +1710,6 @@ export interface ApInventoryTransactionProduct {
 	key:string;
 	inventoryTransKey:string;
 	productKey:string;
-	oldQuentity:number;
 	newQuentity:number;
 	lotserialnumber:string;
 	oldCost:number;

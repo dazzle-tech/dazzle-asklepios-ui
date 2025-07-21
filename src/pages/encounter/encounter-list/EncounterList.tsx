@@ -22,6 +22,7 @@ import './styles.less';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 
 const EncounterList = () => {
   const location = useLocation();
@@ -45,9 +46,12 @@ const EncounterList = () => {
     filters: [
       {
         fieldName: 'resource_type_lkey',
-        operator: 'notMatch',
-        value: '4217389643435490'
-      }
+        operator: 'in',
+        value: ['2039534205961578', '2039620472612029', '2039516279378421']
+          .map(key => `(${key})`)
+          .join(' '),
+      },
+
     ]
   });
   const {
@@ -95,9 +99,12 @@ const EncounterList = () => {
         ...listRequest, filters: [
           {
             fieldName: 'resource_type_lkey',
-            operator: 'notMatch',
-            value: '4217389643435490'
-          }
+            operator: 'in',
+            value: ['2039534205961578', '2039620472612029', '2039516279378421']
+              .map(key => `(${key})`)
+              .join(' '),
+          },
+
         ]
       });
     }
@@ -296,6 +303,7 @@ const EncounterList = () => {
         const tooltipNurse = <Tooltip>Nurse Station</Tooltip>;
         const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
         const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
+        const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
         return (
           <Form layout="inline" fluid className="nurse-doctor-form">
             <Whisper trigger="hover" placement="top" speaker={tooltipDoctor}>
@@ -334,6 +342,13 @@ const EncounterList = () => {
                   backgroundColor="violet"
                 >
                   <FontAwesomeIcon icon={faFileWaveform} />
+                </MyButton>
+              </div>
+            </Whisper>
+            <Whisper trigger="hover" placement="top" speaker={tooltipCancel}>
+              <div>
+                <MyButton size="small">
+                  <FontAwesomeIcon icon={faRectangleXmark} />
                 </MyButton>
               </div>
             </Whisper>

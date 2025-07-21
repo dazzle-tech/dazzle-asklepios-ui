@@ -22,7 +22,6 @@ const Repositioning = ({ patient, encounter, edit }) => {
     const [savePosition] = useSaveNewPositionMutation();
     const [popupCancelOpen, setPopupCancelOpen] = useState(false);
     const [positionStatus, setPositionStatus] = useState('');
-    const [allData, setAllData] = useState(false);
     const dispatch = useAppDispatch();
 
     // Initialize list request with default filters
@@ -134,15 +133,6 @@ const Repositioning = ({ patient, encounter, edit }) => {
                             operator: 'match',
                             value: patient?.key,
                         },
-                        ...(allData === false
-                            ? [
-                                {
-                                    fieldName: 'encounter_key',
-                                    operator: 'match',
-                                    value: encounter?.key,
-                                },
-                            ]
-                            : []),
                     ]
                     : [
                         {
@@ -155,23 +145,14 @@ const Repositioning = ({ patient, encounter, edit }) => {
                             operator: 'match',
                             value: patient?.key,
                         },
-                        ...(allData === false
-                            ? [
-                                {
-                                    fieldName: 'encounter_key',
-                                    operator: 'match',
-                                    value: encounter?.key,
-                                },
-                            ]
-                            : []),
                     ]),
             ],
         }));
-    }, [positionStatus, allData]);
+    }, [positionStatus]);
     useEffect(() => {
         setPositionListRequest((prev) => {
             const filters =
-                positionStatus != '' && allData
+                positionStatus != '' 
                     ? [
 
                         {
@@ -180,7 +161,7 @@ const Repositioning = ({ patient, encounter, edit }) => {
                             value: patient?.key
                         },
                     ]
-                    : positionStatus === '' && allData
+                    : positionStatus === '' 
                         ? [
                             {
                                 fieldName: 'deleted_at',
@@ -200,7 +181,7 @@ const Repositioning = ({ patient, encounter, edit }) => {
                 filters,
             };
         });
-    }, [allData, positionStatus]);
+    }, [positionStatus]);
 
     // Pagination values
     const pageIndex = positionListRequest.pageNumber - 1;
@@ -313,16 +294,6 @@ const Repositioning = ({ patient, encounter, edit }) => {
                     }
                 }}>
                     Show Cancelled
-                </Checkbox>
-                <Checkbox onChange={(value, checked) => {
-                    if (checked) {
-                        setAllData(true);
-                    }
-                    else {
-                        setAllData(false);
-                    }
-                }}>
-                    Show All
                 </Checkbox>
                 <div className='bt-right'>
                     <MyButton

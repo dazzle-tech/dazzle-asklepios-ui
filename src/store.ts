@@ -19,6 +19,7 @@ import {radService}from '@/services/radService';
 import { procedureService } from './services/procedureService';
 import {operationService} from './services/operationService';
 import { inventoryService } from './services/inventoryTransactionService';
+import refetchReducer from './reducers/refetchEncounterState'; 
 export const store = configureStore({
   reducer: {
     // ui
@@ -66,6 +67,9 @@ export const store = configureStore({
     [radService.reducerPath]:radService.reducer,
     // div slice 
     [divSlice.name]:divSlice.reducer,
+
+    //refetch Encounters
+     refetch: refetchReducer,
     //procedure 
     [procedureService.reducerPath]:procedureService.reducer,
   

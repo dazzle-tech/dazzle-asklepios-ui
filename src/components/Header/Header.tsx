@@ -190,7 +190,7 @@ const Header = ({ expand, setExpand }) => {
       <Stack className={`header ${expand ? 'expand' : ''}`} spacing={8}>
         <div dangerouslySetInnerHTML={{ __html: divElement }} />
         <div className="headerItem">
-          {pageCode === 'P_Facility' ? <RegistrationWizard /> : <></>}
+          {pageCode === 'P_Facility' || pageCode === 'ER_Triage'? <RegistrationWizard /> : <></>}
 
           <Whisper placement="bottomEnd" trigger="click" ref={trigger} speaker={renderLangSpeaker}>
             <IconButton icon={<FaEarthAmericas style={{ fontSize: 20 }} />} />
