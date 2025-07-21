@@ -136,20 +136,21 @@ const AddEditBloodOrder = ({
                 setRecord={setBloodOrder}
               />
               <Row>
-                <Col md={12}>
-               <MyInput
-                width="100%"
-                fieldName="crossmatchRequired"
-                fieldType='check'
-                record={bloodorder}
-                setRecord={setBloodOrder}
-              />
-              </Col>
               <Col md={12}>
               <MyInput
                 width="100%"
                 fieldName="antibodyScreenDone"
                 fieldType='checkbox'
+                record={bloodorder}
+                setRecord={setBloodOrder}
+              />
+              </Col>
+              <Col md={12}>
+               <MyInput
+                width="100%"
+                fieldName="crossmatchRequired"
+                showLabel={false}
+                fieldType='check'
                 record={bloodorder}
                 setRecord={setBloodOrder}
               />
@@ -186,29 +187,12 @@ const AddEditBloodOrder = ({
                 setRecord={setBloodOrder}
               />
               )}
-              <Row>
-                <Col md={12}>
                <MyInput
                 width="100%"
                 fieldName="additionalNotes"
                 record={bloodorder}
                 setRecord={setBloodOrder}
               />
-              </Col>
-              <Col md={12}>
-               <MyInput
-                fieldName="status"
-                fieldType="select"
-                selectData={productLovQueryResponse?.object ?? []}
-                selectDataLabel="lovDisplayVale"
-                selectDataValue="key"
-                record={bloodorder}
-                setRecord={setBloodOrder}
-                width="100%"
-                menuMaxHeight={200}
-              />
-              </Col>
-              </Row>
           </Form>
         );
     }
