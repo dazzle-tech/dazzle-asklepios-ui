@@ -22,6 +22,7 @@ import MyTable from '@/components/MyTable';
 import { ImCancelCircle } from 'react-icons/im';
 import AddEditPopup from './oepnAddEditPopup';
 import CancellationModal from '@/components/CancellationModal';
+import './styles.less';
 import PostProcedureAnesthesia from '../encounter/encounter-component/procedure/Post-ProcedureCare/PostProcedureAnesthesia';
 const RecoveryRoomFunctionalities = ({ patient, encounter }) => {
   const [iVFluidsGivenTags, setiVFluidsGivenTags] = useState([]);
@@ -30,7 +31,7 @@ const RecoveryRoomFunctionalities = ({ patient, encounter }) => {
   const [complicationsObservedTags, setComplicationsObservedTags] = useState([]);
   const [object, setObject] = useState({ oxygenGiven: false, returnToDifferentWard: false });
   const [departmentListRequest] = useState<ListRequest>({ ...initialListRequest });
-   const [openAddNewPopup, setOpenAddNewPopup] = useState<boolean>(false);
+  const [openAddNewPopup, setOpenAddNewPopup] = useState<boolean>(false);
   const [width, setWidth] = useState<number>(window.innerWidth);
   const [observation, setObservation] = useState({});
   const [popupCancelOpen, setPopupCancelOpen] = useState<boolean>(false);
@@ -113,7 +114,7 @@ const RecoveryRoomFunctionalities = ({ patient, encounter }) => {
       />
     </div>
   );
-  
+
   // Table Columns
   const tableColumns = [
     {
@@ -194,6 +195,7 @@ const RecoveryRoomFunctionalities = ({ patient, encounter }) => {
                     <Col md={12}>
                       <MyInput
                         width="100%"
+                        fieldType="time"
                         fieldName="initialAssessmentTime"
                         record=""
                         setRecord=""
@@ -213,20 +215,13 @@ const RecoveryRoomFunctionalities = ({ patient, encounter }) => {
                       />
                     </Col>
                   </Row>
-                  <br/>
+                  <br />
                   <Row>
-                     <div className="container-of-add-new-button">
-                    <MyButton
-                      color="var(--deep-blue)"
-                      width="90px"
-                      onClick={() => {
-                        setOpenAddNewPopup(true);
-                        setObservation({});
-                      }}
-                    >
-                      Save
-                    </MyButton>
-                  </div>
+                    <div className="container-of-add-new-button">
+                      <MyButton color="var(--deep-blue)" width="90px">
+                        Save
+                      </MyButton>
+                    </div>
                   </Row>
                 </div>
               </Row>
@@ -285,53 +280,46 @@ const RecoveryRoomFunctionalities = ({ patient, encounter }) => {
                     record={object}
                     setRecord={setObject}
                   />
-                  <Row>
-                    <Col md={3}>
+                  <Row className="container-of-radio-recovery">
+                    <Col md={6}>
                       <label>Extubation Status</label>
                     </Col>
-                    <Col md={21}>
-                      <RadioGroup name="extubationStatus">
-                        <Row>
-                          <Col md={7}>
-                            <Radio value="extubated">Extubated</Radio>
-                          </Col>
-                          <Col md={7}>
-                            <Radio value="Not extubated">Not extubated</Radio>
-                          </Col>
-                          <Col md={7}>
-                            <Radio value="na">NA</Radio>
-                          </Col>
-                        </Row>
+                    <Col md={18}>
+                      <RadioGroup name="extubationStatus" inline>
+                        <Radio value="extubated">Extubated</Radio>
+                        <Radio value="Not extubated">Not extubated</Radio>
+                        <Radio value="na">NA</Radio>
                       </RadioGroup>
                     </Col>
                   </Row>
+
                   <Row>
                     <Col md={12}>
-                  <MyInput
-                    fieldLabel="Consciousness Level"
-                    fieldType="select"
-                    fieldName="consciousnessLevel"
-                    selectData={consciousnessLevelLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record=""
-                    setRecord=""
-                    maxHeightMenu={200}
-                  />
-                  </Col>
-                   <Col md={12}>
-                  <MyInput
-                    fieldLabel="Pain Level"
-                    fieldType="select"
-                    fieldName="painLevel"
-                    selectData={painLevelLovQueryResponse?.object ?? []}
-                    selectDataLabel="lovDisplayVale"
-                    selectDataValue="key"
-                    record=""
-                    setRecord=""
-                    maxHeightMenu={200}
-                  />
-                  </Col>
+                      <MyInput
+                        fieldLabel="Consciousness Level"
+                        fieldType="select"
+                        fieldName="consciousnessLevel"
+                        selectData={consciousnessLevelLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record=""
+                        setRecord=""
+                        maxHeightMenu={200}
+                      />
+                    </Col>
+                    <Col md={12}>
+                      <MyInput
+                        fieldLabel="Pain Level"
+                        fieldType="select"
+                        fieldName="painLevel"
+                        selectData={painLevelLovQueryResponse?.object ?? []}
+                        selectDataLabel="lovDisplayVale"
+                        selectDataValue="key"
+                        record=""
+                        setRecord=""
+                        maxHeightMenu={200}
+                      />
+                    </Col>
                   </Row>
                   <MyInput
                     width="100%"
@@ -348,23 +336,16 @@ const RecoveryRoomFunctionalities = ({ patient, encounter }) => {
                       useSaveMutation: useSaveOperationPreMedicationMutation
                     }}
                     newMedicationTemplate=""
-                    title=""
+                    title="Antiemetics Given"
                     noBorder
                   />
-                  <br/>
+                  <br />
                   <Row>
-                     <div className="container-of-add-new-button">
-                    <MyButton
-                      color="var(--deep-blue)"
-                      width="90px"
-                      onClick={() => {
-                        setOpenAddNewPopup(true);
-                        setObservation({});
-                      }}
-                    >
-                      Save
-                    </MyButton>
-                  </div>
+                    <div className="container-of-add-new-button">
+                      <MyButton color="var(--deep-blue)" width="90px">
+                        Save
+                      </MyButton>
+                    </div>
                   </Row>
                 </div>
               </Row>
@@ -406,31 +387,40 @@ const RecoveryRoomFunctionalities = ({ patient, encounter }) => {
                       />
                     </Col>
                   </Row>
-                  <Row>
-                    <Col md={3}>
+                  <Row className="container-of-radio-recovery">
+                    <Col md={8}>
                       <label>Wound/Dressing Checked</label>
                     </Col>
 
-                    <Col md={21}>
-                      <RadioGroup name="extubationStatus">
-                        <Row>
-                          <Col md={7}>
-                            <Radio value="clean">Clean</Radio>
-                          </Col>
-                          <Col md={7}>
-                            <Radio value="Not extubated">Oozing</Radio>
-                          </Col>
-                          <Col md={7}>
-                            <Radio value="na">Reinforced</Radio>
-                          </Col>
-                        </Row>
+                    <Col md={16}>
+                      <RadioGroup name="extubationStatus" inline>
+                        <Radio value="clean">Clean</Radio>
+                        <Radio value="Not extubated">Oozing</Radio>
+                        <Radio value="na">Reinforced</Radio>
                       </RadioGroup>
                     </Col>
                   </Row>
-                  <br/>
+                  <br />
                   <Row>
-                     <div className="container-of-add-new-button">
+                    <div className="container-of-add-new-button">
+                      <MyButton color="var(--deep-blue)" width="90px">
+                        Save
+                      </MyButton>
+                    </div>
+                  </Row>
+                </div>
+              </Row>
+            </Col>
+            <Col md={12}>
+              <Row>
+                <div className="container-form">
+                  <div className="title-div">
+                    <Text>Continuous Vitals Monitoring</Text>
+                  </div>
+                  <Divider />
+                  <div className="container-of-add-new-button">
                     <MyButton
+                      prefixIcon={() => <AddIcon />}
                       color="var(--deep-blue)"
                       width="90px"
                       onClick={() => {
@@ -438,14 +428,37 @@ const RecoveryRoomFunctionalities = ({ patient, encounter }) => {
                         setObservation({});
                       }}
                     >
-                      Save
+                      Add
                     </MyButton>
                   </div>
-                  </Row>
+                  <MyTable
+                    data={data}
+                    columns={tableColumns}
+                    onRowClick={rowData => {
+                      setObservation({ ...rowData });
+                    }}
+                    rowClassName={rowData => isSelected(rowData)}
+                  />
+                  <AddEditPopup
+                    open={openAddNewPopup}
+                    setOpen={setOpenAddNewPopup}
+                    observation={observation}
+                    setObservation={setObservation}
+                    width={width}
+                  />
+                  <CancellationModal
+                    title="Cancel Observation"
+                    fieldLabel="Cancellation Reason"
+                    open={popupCancelOpen}
+                    setOpen={setPopupCancelOpen}
+                    object={observation}
+                    setObject={setObservation}
+                    handleCancle=""
+                    fieldName="cancellationReason"
+                  />
+                  <br />
                 </div>
               </Row>
-            </Col>
-            <Col md={12}>
               <Row>
                 <div className="container-form">
                   <div className="title-div">
@@ -513,20 +526,13 @@ const RecoveryRoomFunctionalities = ({ patient, encounter }) => {
                       />
                     </Col>
                   </Row>
-                  <br/>
+                  <br />
                   <Row>
-                     <div className="container-of-add-new-button">
-                    <MyButton
-                      color="var(--deep-blue)"
-                      width="90px"
-                      onClick={() => {
-                        setOpenAddNewPopup(true);
-                        setObservation({});
-                      }}
-                    >
-                      Save
-                    </MyButton>
-                  </div>
+                    <div className="container-of-add-new-button">
+                      <MyButton color="var(--deep-blue)" width="90px">
+                        Save
+                      </MyButton>
+                    </div>
                   </Row>
                 </div>
               </Row>
@@ -538,168 +544,92 @@ const RecoveryRoomFunctionalities = ({ patient, encounter }) => {
                   <Divider />
                   <Row>
                     <Col md={8}>
-                  <MyInput
-                    width="100%"
-                    fieldType="checkbox"
-                    fieldName="returnToDifferentWard"
-                    record={object}
-                    setRecord={setObject}
-                  />
-                  </Col>
-                  {object.returnToDifferentWard && (
-                      <Col md={8}>
-                    <MyInput
-                      fieldName="departmentKey"
-                      fieldType="select"
-                      fieldLabel="Select Designation"
-                      selectData={departmentListResponse?.object ?? []}
-                      selectDataLabel="name"
-                      selectDataValue="key"
-                      record=""
-                      setRecord=""
-                      width="100%"
-                      menuMaxHeight={150}
-                    />
+                      <MyInput
+                        width="100%"
+                        fieldType="checkbox"
+                        fieldName="returnToDifferentWard"
+                        record={object}
+                        setRecord={setObject}
+                      />
                     </Col>
-                  )}
-                  {object.returnToDifferentWard && (
+                    {object.returnToDifferentWard && (
                       <Col md={8}>
-                    <MyInput
-                      width="100%"
-                      fieldType="time"
-                      fieldName="transferTime"
-                      record={object}
-                      setRecord={setObject}
-                    />
-                    </Col>
-                  )}
+                        <MyInput
+                          fieldName="departmentKey"
+                          fieldType="select"
+                          fieldLabel="Select Designation"
+                          selectData={departmentListResponse?.object ?? []}
+                          selectDataLabel="name"
+                          selectDataValue="key"
+                          record=""
+                          setRecord=""
+                          width="100%"
+                          menuMaxHeight={150}
+                        />
+                      </Col>
+                    )}
+                    {object.returnToDifferentWard && (
+                      <Col md={8}>
+                        <MyInput
+                          width="100%"
+                          fieldType="time"
+                          fieldName="transferTime"
+                          record={object}
+                          setRecord={setObject}
+                        />
+                      </Col>
+                    )}
                   </Row>
                   <Row>
                     <Col md={12}>
-                  <MyInput
-                    width="100%"
-                    fieldType="select"
-                    fieldLabel="Receiving Nurse"
-                    selectData={userList?.object ?? []}
-                    selectDataLabel="username"
-                    selectDataValue="key"
-                    fieldName="receivingNurse"
-                    record=""
-                    setRecord=""
-                  />
-                  </Col>
-                   <Col md={12}>
-                  <MyInput
-                    width="100%"
-                    fieldName="finalNotes"
-                    record={object}
-                    setRecord={setObject}
-                  />
-                  </Col>
+                      <MyInput
+                        width="100%"
+                        fieldType="select"
+                        fieldLabel="Receiving Nurse"
+                        selectData={userList?.object ?? []}
+                        selectDataLabel="username"
+                        selectDataValue="key"
+                        fieldName="receivingNurse"
+                        record=""
+                        setRecord=""
+                      />
+                    </Col>
+                    <Col md={12}>
+                      <MyInput
+                        width="100%"
+                        fieldName="finalNotes"
+                        record={object}
+                        setRecord={setObject}
+                      />
+                    </Col>
                   </Row>
                   <MyInput
                     width="100%"
                     fieldType="checkbox"
+                    fieldLabel="Patient ID Band Rechecked"
                     fieldName="patientIdBandRechecked"
                     record={object}
                     setRecord={setObject}
                   />
-                  <Row>
-                    <Col md={3}>
+                  <Row className="container-of-radio-recovery">
+                    <Col md={6}>
                       <label>Transport Mode</label>
                     </Col>
-
-                    <Col md={21}>
-                      <RadioGroup name="Transport Mode">
-                        <Row>
-                          <Col md={7}>
-                            <Radio value="bed">Bed</Radio>
-                          </Col>
-                          <Col md={7}>
-                            <Radio value="stretcher">Stretcher</Radio>
-                          </Col>
-                          <Col md={7}>
-                            <Radio value="wheelchair">Wheelchair</Radio>
-                          </Col>
-                        </Row>
+                    <Col md={18}>
+                      <RadioGroup name="Transport Mode" inline>
+                        <Radio value="bed">Bed</Radio>
+                        <Radio value="stretcher">Stretcher</Radio>
+                        <Radio value="wheelchair">Wheelchair</Radio>
                       </RadioGroup>
                     </Col>
                   </Row>
-                  <br/>
+                  <br />
                   <Row>
-                     <div className="container-of-add-new-button">
-                    <MyButton
-                      color="var(--deep-blue)"
-                      width="90px"
-                      onClick={() => {
-                        setOpenAddNewPopup(true);
-                        setObservation({});
-                      }}
-                    >
-                      Save
-                    </MyButton>
-                  </div>
-                  </Row>
-                </div>
-              </Row>
-              <Row>
-                <div className="container-form">
-                  <div className="title-div">
-                    <Text>Continuous Vitals Monitoring</Text>
-                  </div>
-                  <Divider />
-                  <div className="container-of-add-new-button">
-                    <MyButton
-                      prefixIcon={() => <AddIcon />}
-                      color="var(--deep-blue)"
-                      width="90px"
-                      onClick={() => {
-                        setOpenAddNewPopup(true);
-                        setObservation({});
-                      }}
-                    >
-                      Add
-                    </MyButton>
-                  </div>
-                  <MyTable
-                    data={data}
-                    columns={tableColumns}
-                    onRowClick={rowData => {
-                      setObservation({ ...rowData });
-                    }}
-                    rowClassName={rowData => isSelected(rowData)}
-                  />
-                  <AddEditPopup
-                    open={openAddNewPopup}
-                    setOpen={setOpenAddNewPopup}
-                    observation={observation}
-                    setObservation={setObservation}
-                    width={width}
-                  />
-                  <CancellationModal
-                    title="Cancel Observation"
-                    fieldLabel="Cancellation Reason"
-                    open={popupCancelOpen}
-                    setOpen={setPopupCancelOpen}
-                    object={observation}
-                    setObject={setObservation}
-                    handleCancle=""
-                    fieldName="cancellationReason"
-                  />
-                  <br/>
-                  <Row>
-                     <div className="container-of-add-new-button">
-                    <MyButton
-                      color="var(--deep-blue)"
-                      width="90px"
-                      onClick={() => {
-                        setOpenAddNewPopup(true);
-                        setObservation({});
-                      }}
-                    >
-                      Save
-                    </MyButton>
-                  </div>
+                    <div className="container-of-add-new-button">
+                      <MyButton color="var(--deep-blue)" width="90px">
+                        Save
+                      </MyButton>
+                    </div>
                   </Row>
                 </div>
               </Row>
