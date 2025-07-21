@@ -187,12 +187,12 @@ const Encounter = () => {
     '/encounter/multidisciplinary-team-notes':'Multidisciplinary Team Notes',
     '/encounter/care-plan-and-goals':'Care Plan & Goals',
     '/encounter/discharge-planning':'Discharge Planning',
-    '/encounter/bedside-procedures-requests':'Bedside Procedures Requests',
+    '/encounter/bedside-procedures-requests':'Bedside Procedures',
    '/encounter/day-case':'DayCase',
     '/encounter/blood-order':'Blood Order',
    '/encounter/intake-output-balance':'Intake Output Balance',
     '/encounter/referral-request':'Referral Request',
-   
+    '/encounter/iv-fluid-order':'IV Fluid Order',
   };
 
   const menuItems = [
@@ -212,7 +212,7 @@ const Encounter = () => {
     { key: 'multidisciplinaryTeamNotes', label: 'Multidisciplinary Team Notes', icon: faComment, path: 'multidisciplinary-team-notes' },
      { key: 'carePlanAndGoals', label: 'Care Plan & Goals', icon: faNotesMedical, path: 'care-plan-and-goals' },
      { key: 'dischargePlanning', label: 'Discharge Planning', icon: faRightFromBracket, path: 'discharge-planning' },
-     { key: 'bedsideProceduresRequest', label: 'Bedside Procedures Requests', icon: faSuitcaseMedical, path: 'bedside-procedures-requests'},
+     { key: 'bedsideProceduresRequest', label: 'Bedside Procedures', icon: faSuitcaseMedical, path: 'bedside-procedures-requests'},
     { key: 'bloodOrder', label: 'Blood Order', icon: faDroplet, path: 'blood-order'},
     { key: 'intakeOutputBalance', label: 'Intake Output Balance', icon: faSquarePollHorizontal, path: 'intake-output-balance' },
 
@@ -228,8 +228,8 @@ const Encounter = () => {
     { key: 'optometricExam', label: 'Optometric Exam', icon: faEye, path: 'optometric-exam' },
     { key: 'audiometryPuretone', label: 'ENT', icon: faEarListen, path: 'audiometry' },
     { key: 'psychologicalExam', label: 'Psychological Exam', icon: faBrain, path: 'psychological-exam' },
-     { key: 'dayCase', label: 'DayCase', icon: faBed, path: 'day-case' },
-
+    { key: 'dayCase', label: 'DayCase', icon: faBed, path: 'day-case' },
+    { key: 'ivFluidOrder', label: 'IV Fluid Order', icon: faSyringe , path: 'iv-fluid-order' },
 
   ];
   const [currentHeader, setCurrentHeader] = useState();

@@ -125,6 +125,7 @@ import BloodOrder from './pages/encounter/encounter-component/blood-order';
 import IntakeOutputBalance from './pages/encounter/encounter-component/intake-output-balance';
 import ReferralRequest from './pages/encounter/encounter-component/add-referral-request';
 import ERTriage from './pages/encounter/ER-triage/ERTriage';
+import IVFluidOrder from './pages/encounter/encounter-component/iv-fluid-order';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -324,6 +325,7 @@ const App = () => {
                 <Route path='blood-order' element={<BloodOrder />} />
                  <Route path='intake-output-balance' element={<IntakeOutputBalance />} />
                 <Route path='referral-request' element={<ReferralRequest />} />
+                <Route path='iv-fluid-order' element={<IVFluidOrder />} />
               </Route>
               <Route path='/doctor-round/round' element={<ViewRound />} />
               <Route path='/recovery-module' element={<Recovery />} />
