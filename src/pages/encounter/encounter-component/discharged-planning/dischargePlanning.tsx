@@ -6,14 +6,15 @@ import Icd10Search from '@/pages/medical-component/Icd10Search';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import MyTagInput from '@/components/MyTagInput/MyTagInput';
 import MyLabel from '@/components/MyLabel';
+import "./styles.less";
 const DischargePlanning = () => {
-    // Fetch readiness Status Lov response
+  // Fetch readiness Status Lov response
   const { data: readinessStatusLovQueryResponse } = useGetLovValuesByCodeQuery('READINESS_STATUS');
-  const [object, setObject] = useState({ homeCareNeeded: false, readinessStatus: "" });
+  const [object, setObject] = useState({ homeCareNeeded: false, readinessStatus: '' });
   const [medicalEquipmentTags, setMedicalEquipmentTags] = useState([]);
   const [homeCareNeedsTags, setHomeCareNeedsTags] = useState([]);
   const [topicsCoveredTags, setTopicsCoveredTags] = useState([]);
-  
+
   return (
     <>
       <Row gutter={15} className="d">
@@ -58,16 +59,11 @@ const DischargePlanning = () => {
                       setRecord={setObject}
                     />
                   </Col>
-                  {object.readinessStatus == "7081919156301225" && (
+                  {object.readinessStatus == '7081919156301225' && (
                     <Col md={12}>
-                    <MyInput
-                      width="100%"
-                      fieldName="ReasonForDelay"
-                      record=""
-                      setRecord=""
-                    />
-                  </Col>
-                )}
+                      <MyInput width="100%" fieldName="ReasonForDelay" record="" setRecord="" />
+                    </Col>
+                  )}
                 </Row>
               </div>
             </Row>
@@ -96,7 +92,7 @@ const DischargePlanning = () => {
                       setRecord={setObject}
                     />
                   </Col>
-                  </Row>    
+                </Row>
                 <Row>
                   <Col md={12}>
                     <MyInput
@@ -121,14 +117,14 @@ const DischargePlanning = () => {
                   </Col>
                 </Row>
                 <Row>
-                    <Col md={12}>
+                  <Col md={12}>
                     <Icd10Search object="" setOpject="" fieldName="diagnosisKey" />
                   </Col>
                 </Row>
               </div>
             </Row>
-                <Row>
-               <div className="container-form">
+            <Row>
+              <div className="container-form">
                 <div className="title-div">
                   <Text>Discharge Checklist</Text>
                 </div>
@@ -144,7 +140,7 @@ const DischargePlanning = () => {
                     />
                   </Col>
                   <Col md={12}>
-                   <MyInput
+                    <MyInput
                       width="100%"
                       fieldType="checkbox"
                       fieldName="dischargeSummaryPrepared"
@@ -152,10 +148,10 @@ const DischargePlanning = () => {
                       setRecord={setObject}
                     />
                   </Col>
-                  </Row>
-                  <Row>
+                </Row>
+                <Row>
                   <Col md={12}>
-                   <MyInput
+                    <MyInput
                       width="100%"
                       fieldType="checkbox"
                       fieldName="dischargeOrdersSigned"
@@ -172,8 +168,8 @@ const DischargePlanning = () => {
                       setRecord={setObject}
                     />
                   </Col>
-                  </Row>
-                  <Row>
+                </Row>
+                <Row>
                   <Col md={12}>
                     <MyInput
                       width="100%"
@@ -192,9 +188,9 @@ const DischargePlanning = () => {
                       setRecord={setObject}
                     />
                   </Col>
-                  </Row>
+                </Row>
               </div>
-              </Row>
+            </Row>
           </Col>
           <Col md={12}>
             <Row>
@@ -204,10 +200,10 @@ const DischargePlanning = () => {
                 </div>
                 <Divider />
                 <Row>
-                   <Col md={12}>
+                  <Col md={12}>
                     <Text>Medications to Continue</Text>
-                  </Col> 
-                   <Col md={12}>
+                  </Col>
+                  <Col md={12}>
                     <MyButton>Prescription</MyButton>
                   </Col>
                 </Row>
@@ -219,8 +215,8 @@ const DischargePlanning = () => {
                       labelText="Medical Equipment"
                     />
                   </Col>
-                  </Row>
-                  <Row>
+                </Row>
+                <Row>
                   <Col md={12}>
                     <MyInput
                       width="100%"
@@ -239,8 +235,8 @@ const DischargePlanning = () => {
                       />
                     </Col>
                   )}
-                  </Row>
-                  <Row>
+                </Row>
+                <Row>
                   <Col md={12}>
                     <MyInput
                       width="100%"
@@ -259,12 +255,12 @@ const DischargePlanning = () => {
                       setRecord={setObject}
                     />
                   </Col>
-                  </Row>
-                  <Row>
-                   <Col md={12}>
+                </Row>
+                <Row>
+                  <Col md={12}>
                     <Text>Follow-up Plan</Text>
-                  </Col> 
-                   <Col md={12}>
+                  </Col>
+                  <Col md={12}>
                     <MyButton>Create follow-up</MyButton>
                   </Col>
                 </Row>
@@ -275,8 +271,8 @@ const DischargePlanning = () => {
                 <div className="title-div">
                   <Text>Patient Education</Text>
                 </div>
-                <Divider />                  
-                  <Row>
+                <Divider />
+                <Row>
                   <Col md={24}>
                     <MyTagInput
                       tags={topicsCoveredTags}
@@ -284,8 +280,8 @@ const DischargePlanning = () => {
                       labelText="Topics Covered"
                     />
                   </Col>
-                  </Row>
-                  <Row>
+                </Row>
+                <Row>
                   <Col md={12}>
                     <MyInput
                       width="100%"
@@ -304,43 +300,43 @@ const DischargePlanning = () => {
                       setRecord={setObject}
                     />
                   </Col>
-                  </Row>
-                  <Row className='container-of-checks'>
-                    <Col md={6}>
-                      <MyLabel label="Material Given"/>
-                    </Col>
-                    <Col md={6}>
-                      <MyInput
-                        width="100%"
-                        fieldType="check"
-                        fieldName="Leaflet"
-                        record={object}
-                        setRecord={setObject}
-                        showLabel={false}
-                      />
-                    </Col>
-                    <Col md={6}>
-                      <MyInput
-                        width="100%"
-                        fieldType="check"
-                        fieldName="Verbal"
-                        record={object}
-                        setRecord={setObject}
-                        showLabel={false}
-                      />
-                    </Col>
-                    <Col md={6}>
-                      <MyInput
-                        width="100%"
-                        fieldType="check"
-                        fieldName="Video"
-                        record={object}
-                        setRecord={setObject}
-                        showLabel={false}
-                      />
-                    </Col>
-                  </Row>
-                  <Row>
+                </Row>
+                <Row className="container-of-checks">
+                  <Col md={6}>
+                    <MyLabel label="Material Given" />
+                  </Col>
+                  <Col md={6}>
+                    <MyInput
+                      width="100%"
+                      fieldType="check"
+                      fieldName="Leaflet"
+                      record={object}
+                      setRecord={setObject}
+                      showLabel={false}
+                    />
+                  </Col>
+                  <Col md={6}>
+                    <MyInput
+                      width="100%"
+                      fieldType="check"
+                      fieldName="Verbal"
+                      record={object}
+                      setRecord={setObject}
+                      showLabel={false}
+                    />
+                  </Col>
+                  <Col md={6}>
+                    <MyInput
+                      width="100%"
+                      fieldType="check"
+                      fieldName="Video"
+                      record={object}
+                      setRecord={setObject}
+                      showLabel={false}
+                    />
+                  </Col>
+                </Row>
+                <Row>
                   <Col md={12}>
                     <MyInput
                       width="100%"
@@ -361,13 +357,37 @@ const DischargePlanning = () => {
                       setRecord={setObject}
                     />
                   </Col>
-                  </Row>
-                   </div>
                 </Row>
+              </div>
+            </Row>
           </Col>
         </Form>
       </Row>
-      
+      <div className='container-of-buttons-discharge'>
+        <MyButton
+          color="var(--deep-blue)"
+          width="80px"
+          height="32px"
+        >
+          Save
+        </MyButton>
+
+        <MyButton
+          color="var(--deep-blue)"
+          width="109px"
+          height="32px"
+        >
+          Sign & Submit
+        </MyButton>
+
+        <MyButton
+          color="var(--deep-blue)"
+          width="150px"
+          height="32px"
+        >
+          Print Discharge Report
+        </MyButton>
+      </div>
     </>
   );
 };
