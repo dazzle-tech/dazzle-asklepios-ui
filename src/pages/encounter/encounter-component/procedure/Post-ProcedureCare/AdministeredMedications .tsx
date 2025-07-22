@@ -153,10 +153,12 @@ const GenericAdministeredMedications = ({
 
   return (
     <div style={{ ...((props?.noBorder) && { borderRadius: 'none',boxShadow: "none" })}} className="container-form">
-      <div style={{ ...((props?.noBorder) && { display: 'none'})}} className="title-div">
+      <div className="title-div">
         <Text>{title}</Text>
       </div>
-      <Divider style={{ ...((props?.noBorder) && { display: 'none'})}} />
+      <Divider
+      //  style={{ ...((props?.noBorder) && { display: 'none'})}}
+        />
       <Row>
         <Col md={24}>
           <Row className="rows-gap">
