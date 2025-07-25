@@ -187,7 +187,7 @@ const EncounterList = () => {
       key: 'queueNumber',
       title: <Translate>#</Translate>,
       dataKey: 'queueNumber',
-      render: rowData => rowData?.patientObject.patientMrn
+      render: rowData => rowData?.patientObject?.patientMrn
     },
     {
       key: 'patientFullName',
@@ -231,17 +231,17 @@ const EncounterList = () => {
       key: 'visitType',
       title: <Translate>VISIT TYPE</Translate>,
       render: rowData =>
-        rowData.visitTypeLvalue ? rowData.visitTypeLvalue.lovDisplayVale : rowData.visitTypeLkey
+        rowData.visitTypeLvalue ? rowData?.visitTypeLvalue?.lovDisplayVale : rowData?.visitTypeLkey
     },
     {
       key: 'chiefComplaint',
       title: <Translate>CHIEF COMPLAIN</Translate>,
-      render: rowData => rowData.chiefComplaint,
+      render: rowData => rowData?.chiefComplaint,
     },
     {
       key: 'diagnosis',
       title: <Translate>DIAGNOSIS</Translate>,
-      render: rowData => rowData.diagnosis
+      render: rowData => rowData?.diagnosis
     },
     {
       key: 'hasPrescription',
@@ -267,9 +267,9 @@ const EncounterList = () => {
       key: 'encounterPriority',
       title: <Translate>PRIORITY</Translate>,
       render: rowData =>
-        rowData.encounterPriorityLvalue
-          ? rowData.encounterPriorityLvalue.lovDisplayVale
-          : rowData.encounterPriorityLkey
+        rowData?.encounterPriorityLvalue
+          ? rowData?.encounterPriorityLvalue?.lovDisplayVale
+          : rowData?.encounterPriorityLkey
     },
     {
       key: 'plannedStartDate',
@@ -280,8 +280,8 @@ const EncounterList = () => {
       key: 'status',
       title: <Translate>STATUS</Translate>,
       render: rowData => <MyBadgeStatus color={rowData?.encounterStatusLvalue?.valueColor} contant={rowData.encounterStatusLvalue
-        ? rowData.encounterStatusLvalue.lovDisplayVale
-        : rowData.encounterStatusLkey} />
+        ? rowData?.encounterStatusLvalue?.lovDisplayVale
+        : rowData?.encounterStatusLkey} />
 
 
     },
