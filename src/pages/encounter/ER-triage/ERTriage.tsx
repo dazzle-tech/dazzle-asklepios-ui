@@ -214,7 +214,7 @@ const ERTriage = () => {
 
         if (emergencyLevel.key) {
             filters.push({
-                fieldName: 'visit_type_lkey',
+                fieldName: 'emergency_level_lkey',
                 operator: 'match',
                 value: emergencyLevel.key
             });
