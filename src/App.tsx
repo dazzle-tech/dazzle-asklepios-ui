@@ -126,7 +126,7 @@ import IntakeOutputBalance from './pages/encounter/encounter-component/intake-ou
 import ReferralRequest from './pages/encounter/encounter-component/add-referral-request';
 import ERTriage from './pages/encounter/ER-triage/ERTriage';
 import IVFluidOrder from './pages/encounter/encounter-component/iv-fluid-order';
-
+import ERStartTriage from './pages/encounter/ER-triage/ERStartTriage';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -293,7 +293,8 @@ const App = () => {
               <Route path="patient-list" element={<PatientList />} />
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="facility-patient-list" element={<FacilityPatientList />} />
-               <Route path='ER-triage' element={<ERTriage />} />
+              <Route path="ER-start-triage" element={<ERStartTriage />} />
+              <Route path='ER-triage' element={<ERTriage />} />
               <Route path="encounter" element={<Encounter />}>
                 <Route path="drug-order" element={<DrugOrder />} />
                 <Route index element={<PatientSummary />} />
@@ -323,7 +324,7 @@ const App = () => {
                 <Route path='bedside-procedures-requests' element={<BedsideProceduresRequests />} />
                 <Route path='day-case' element={<DayCaseContent />} />
                 <Route path='blood-order' element={<BloodOrder />} />
-                 <Route path='intake-output-balance' element={<IntakeOutputBalance />} />
+                <Route path='intake-output-balance' element={<IntakeOutputBalance />} />
                 <Route path='referral-request' element={<ReferralRequest />} />
                 <Route path='iv-fluid-order' element={<IVFluidOrder />} />
               </Route>

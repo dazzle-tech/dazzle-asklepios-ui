@@ -15,6 +15,7 @@ import {
 import MyLabel from '../MyLabel';
 import Translate from '../Translate';
 import clsx from "clsx";
+
 const Textarea = React.forwardRef((props, ref: any) => (
   <Input {...props} as="textarea" ref={ref} />
 ));
@@ -35,6 +36,7 @@ const CustomDateTimePicker = React.forwardRef(
     />
   )
 );
+
 const handleEnterFocusNext = (e) => {
   if (e.key === 'Enter') {
     e.preventDefault();
@@ -74,13 +76,15 @@ const MyInput = ({
   className = "",
   ...props
 }) => {
+  // <<< Added this line here to fix the error
+  const inputColor = props.inputColor || record?.inputColor || '';
+
   const [validationResult, setValidationResult] = useState(undefined);
   useEffect(() => {
     const fieldDbName = fromCamelCaseToDBName(fieldName);
     if (vr && vr.details && vr.details[fieldDbName]) {
       // keep local state updated when props changes
       setValidationResult(preValue => {
-
         return [...vr.details[fieldDbName]];
       });
     } else {
@@ -158,6 +162,7 @@ const MyInput = ({
         return (
           <Form.Control
             style={{ width: styleWidth, height: props?.height ?? 30 }}
+            className={`arrow-number-style my-input ${inputColor ? `input-${inputColor}` : ''}`}
             block
             disabled={props.disabled}
             accepter={SelectPicker}
@@ -171,7 +176,6 @@ const MyInput = ({
             onChange={handleValueChange}
             defaultValue={props.defaultSelectValue}
             placeholder={props.placeholder}
-            className="my-input"
             searchable={props.searchable}
             menuMaxHeight={props?.menuMaxHeight ?? ''}
             onKeyDown={focusNextField}
@@ -248,7 +252,7 @@ const MyInput = ({
 
         const inputControl = (
           <Form.Control
-            className='arrow-number-style'
+            className={`arrow-number-style ${inputColor ? `input-${inputColor}` : ''}`}
             style={{ width: inputWidth, height: props?.height ?? 30 }}
             disabled={props.disabled}
             name={fieldName}

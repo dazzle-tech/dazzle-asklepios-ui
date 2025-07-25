@@ -9,7 +9,7 @@ import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { addFilterToListRequest, formatDate } from '@/utils';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetEncountersQuery } from '@/services/encounterService';
+import {  useGetEncountersQuery, useSaveEncounterChangesMutation} from '@/services/encounterService';
 import { useLocation } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
@@ -23,13 +23,15 @@ import { faRectangleXmark } from '@fortawesome/free-solid-svg-icons';
 import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
 import { useSelector } from "react-redux";
-
+import { useNavigate } from 'react-router-dom';
 const ERTriage = () => {
     const location = useLocation();
     const dispatch = useDispatch();
     const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
     const [emergencyLevel, setEmergencyLevel] = useState({ key: '' });
     const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+    const [startEncounter] = useSaveEncounterChangesMutation();
+    const navigate = useNavigate();
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         ignore: true,
@@ -112,6 +114,26 @@ const ERTriage = () => {
                 ]
             });
         }
+    };
+    const handleGoToVisit = async (encounterData, patientData) => {
+        await startEncounter({
+            ...encounterData,
+            encounterStatusLkey: '6742295599423814'
+        }).unwrap();
+
+        const targetPath = '/ER-start-triage';
+
+        // Save source in sessionStorage before navigating
+        sessionStorage.setItem("encounterPageSource", "EncounterList");
+
+        navigate(targetPath, {
+            state: {
+                info: 'to_Start_Triage',
+                fromPage: 'ER_Triage',
+                patient: patientData,
+                encounter: encounterData
+            }
+        });
     };
 
     //useEffect
@@ -255,8 +277,10 @@ const ERTriage = () => {
             }
         },
         {
-            key: 'erLevel',
+            key: 'emergencyLevelLkey',
             title: <Translate>ER Level</Translate>,
+            render: rowData =>
+                rowData.emergencyLevelLvalue ? rowData.emergencyLevelLvalue.lovDisplayVale : rowData.emergencyLevelLkey
         },
         {
             key: 'erLevel',
@@ -291,6 +315,20 @@ const ERTriage = () => {
                 const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
                 return (
                     <Form layout="inline" fluid className="nurse-doctor-form">
+                          <Whisper trigger="hover" placement="top" speaker={tooltipStart}>
+                            <div>
+                                <MyButton
+                                    size="small"
+                                    backgroundColor="black"
+                                    onClick={() => {
+                                        setLocalEncounter(rowData);
+                                        handleGoToVisit(rowData,rowData?.patientObject)
+                                    }}
+                                >
+                                    <FontAwesomeIcon icon={faCirclePlay} />
+                                </MyButton>
+                            </div>
+                        </Whisper>
                         <Whisper trigger="hover" placement="top" speaker={tooltipPrint}>
                             <div>
                                 <MyButton
@@ -300,19 +338,6 @@ const ERTriage = () => {
                                     }}
                                 >
                                     <FontAwesomeIcon icon={faBarcode} />
-                                </MyButton>
-                            </div>
-                        </Whisper>
-                        <Whisper trigger="hover" placement="top" speaker={tooltipStart}>
-                            <div>
-                                <MyButton
-                                    size="small"
-                                    backgroundColor="black"
-                                    onClick={() => {
-                                        setLocalEncounter(rowData);
-                                    }}
-                                >
-                                    <FontAwesomeIcon icon={faCirclePlay} />
                                 </MyButton>
                             </div>
                         </Whisper>

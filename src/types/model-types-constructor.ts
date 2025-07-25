@@ -1318,6 +1318,37 @@ export const newApElectrocardiogramEcg:modelTypes.ApElectrocardiogramEcg = {
 	deletedAt:undefined,
 } 
 
+export const newApEmergencyTriage:modelTypes.ApEmergencyTriage = { 
+	key:undefined,
+	patientKey:undefined,
+	encounterKey:undefined,
+	emergencyLevelLkey:undefined,
+	rightEyeLightResponse:undefined,
+	rightEyePupilSizeLkey:undefined,
+	leftEyeLightResponse:undefined,
+	leftEyePupilSizeLkey:undefined,
+	isPregnancy:undefined,
+	historyOfPresentIllness:'',
+	additionalNotes:'',
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	lifeSavingLkey:undefined,
+	unresponsiveLkey:undefined,
+	highRiskLkey:undefined,
+	avpuScaleLkey:undefined,
+	painScoreLkey:undefined,
+	labsLkey:undefined,
+	imagingLkey:undefined,
+	ivFluidsLkey:undefined,
+	medicationLkey:undefined,
+	ecgLkey:undefined,
+	consultationLkey:undefined,
+} 
+
 export const newApEncounter:modelTypes.ApEncounter = { 
 	key:undefined,
 	patientKey:undefined,
@@ -1713,7 +1744,6 @@ export const newApInventoryTransactionProduct:modelTypes.ApInventoryTransactionP
 	productKey:undefined,
 	newQuentity:0,
 	lotserialnumber:'',
-	oldCost:0,
 	newCost:0,
 	currencyLkey:undefined,
 	createdBy:'',
@@ -1725,6 +1755,9 @@ export const newApInventoryTransactionProduct:modelTypes.ApInventoryTransactionP
 	isValid:undefined,
 	isEffectedWarehouse:undefined,
 	expiryDate:null,
+	notes:'',
+	transUomKey:undefined,
+	newQuentityBaseUom:0,
 } 
 
 export const newApLabResultLog:modelTypes.ApLabResultLog = { 
@@ -4278,6 +4311,21 @@ export const newApWarehouseProduct:modelTypes.ApWarehouseProduct = {
 	isvalid:undefined,
 	departmentKey:undefined,
 	avgCost:0,
+} 
+
+export const newApWarehouseProductDetails:modelTypes.ApWarehouseProductDetails = { 
+	key:undefined,
+	warehouseProductKey:undefined,
+	lotSerialNum:'',
+	quantity:0,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isvalid:undefined,
+	expiryDate:null,
 } 
 
 export const newApWarehouseUser:modelTypes.ApWarehouseUser = { 
