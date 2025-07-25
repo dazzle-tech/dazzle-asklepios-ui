@@ -1317,6 +1317,37 @@ export interface ApElectrocardiogramEcg {
 	deletedAt:number;
 } 
 
+export interface ApEmergencyTriage { 
+	key:string;
+	patientKey:string;
+	encounterKey:string;
+	emergencyLevelLkey:string;
+	rightEyeLightResponse:boolean;
+	rightEyePupilSizeLkey:string;
+	leftEyeLightResponse:boolean;
+	leftEyePupilSizeLkey:string;
+	isPregnancy:boolean;
+	historyOfPresentIllness:string;
+	additionalNotes:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	lifeSavingLkey:string;
+	unresponsiveLkey:string;
+	highRiskLkey:string;
+	avpuScaleLkey:string;
+	painScoreLkey:string;
+	labsLkey:string;
+	imagingLkey:string;
+	ivFluidsLkey:string;
+	medicationLkey:string;
+	ecgLkey:string;
+	consultationLkey:string;
+} 
+
 export interface ApEncounter { 
 	key:string;
 	patientKey:string;
@@ -1712,7 +1743,6 @@ export interface ApInventoryTransactionProduct {
 	productKey:string;
 	newQuentity:number;
 	lotserialnumber:string;
-	oldCost:number;
 	newCost:number;
 	currencyLkey:string;
 	createdBy:string;
@@ -1724,6 +1754,9 @@ export interface ApInventoryTransactionProduct {
 	isValid:boolean;
 	isEffectedWarehouse:boolean;
 	expiryDate:Date;
+	notes:string;
+	transUomKey:string;
+	newQuentityBaseUom:number;
 } 
 
 export interface ApLabResultLog { 
@@ -4277,6 +4310,21 @@ export interface ApWarehouseProduct {
 	isvalid:boolean;
 	departmentKey:string;
 	avgCost:number;
+} 
+
+export interface ApWarehouseProductDetails { 
+	key:string;
+	warehouseProductKey:string;
+	lotSerialNum:string;
+	quantity:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+	expiryDate:Date;
 } 
 
 export interface ApWarehouseUser { 
