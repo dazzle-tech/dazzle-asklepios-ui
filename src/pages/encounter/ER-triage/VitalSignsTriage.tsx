@@ -17,7 +17,7 @@ import { newApPatientObservationSummary } from '@/types/model-types-constructor'
 import { ApPatientObservationSummary } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 
-const VitalSignsTriage = ({ patient, encounter }) => {
+const VitalSignsTriage = ({ patient, encounter, setRefetchPatientObservations}) => {
     const dispatch = useAppDispatch();
     const [bmi, setBmi] = useState('');
     const [bsa, setBsa] = useState('');
@@ -103,9 +103,7 @@ const VitalSignsTriage = ({ patient, encounter }) => {
                 platestbmi: lastObservationSummary?.latestbmi,
                 page: lastObservationSummary?.age,
             }).unwrap();
-            setTimeout(() => {
-                window.location.reload()
-            }, 500);
+            setRefetchPatientObservations(true);
             dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
         } catch (error) {
             console.error('Error while saving observation summary:', error);

@@ -27,11 +27,11 @@ import { newApEncounter } from '@/types/model-types-constructor';
 import { ApAttachment } from '@/types/model-types';
 import './styles.less'
 import { GiMedicalThermometer } from 'react-icons/gi';
-const PatientSide = ({ patient, encounter }) => {
+const PatientSide = ({ patient, encounter ,refetchList = null }) => {
     const profileImageFileInputRef = useRef(null);
     const [patientImage, setPatientImage] = useState<ApAttachment>(undefined);
 
-    const { data: patirntObservationlist } = useGetObservationSummariesQuery({
+    const { data: patirntObservationlist ,refetch } = useGetObservationSummariesQuery({
         ...initialListRequest,
         sortBy: 'createdAt',
         sortType: 'desc',
@@ -77,6 +77,11 @@ const PatientSide = ({ patient, encounter }) => {
             setPatientImage(undefined);
         }
     }, [fetchPatientImageResponse]);
+      useEffect(() => {
+        if (refetchList){
+            refetch();
+        }
+    }, [refetchList]);
     const handleImageClick = type => {
         // setNewAttachmentType(type); // PATIENT_PROFILE_ATTACHMENT or PATIENT_PROFILE_PICTURE
         if (patient.key) profileImageFileInputRef.current.click();
