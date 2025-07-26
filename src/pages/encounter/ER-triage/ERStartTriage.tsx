@@ -36,6 +36,7 @@ const ERStartTriage = () => {
     const dispatch = useAppDispatch();
     const [isHiddenFields, setIsHiddenFields] = useState(false);
     const [emergencyTriage, setEmergencyTriage] = useState<any>({ ...newApEmergencyTriage });
+    const [refetchPatientObservations ,setRefetchPatientObservations] = useState(false);
     const YES_KEY = '1476229927081534';
     const NO_KEY = '1476240934233400';
 
@@ -82,7 +83,6 @@ const ERStartTriage = () => {
     const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
     dispatch(setPageCode('Start_Triage'));
     dispatch(setDivContent(divContentHTML));
-
 
     // handle Complete Encounter Function
     const handleCompleteEncounter = async () => {
@@ -400,7 +400,7 @@ const ERStartTriage = () => {
                     </Panel>
                 </Row>
                 <Row gutter={30}>
-                    <VitalSignsTriage patient={propsData.patient} encounter={propsData.encounter} />
+                    <VitalSignsTriage patient={propsData.patient} encounter={propsData.encounter} setRefetchPatientObservations={setRefetchPatientObservations}/>
                 </Row>
                 <Row gutter={30}>
                     <GeneralAssessmentTriage patient={propsData.patient} encounter={propsData.encounter} />
@@ -491,7 +491,7 @@ const ERStartTriage = () => {
                             fieldName="additionalNotes"
                             width={400}
                         />
-                        {propsData?.patient?.genderLvalue?.lovCode === "GNDR" &&
+                        {propsData?.patient?.genderLvalue?.valueCode === "F" &&
                             <MyInput
                                 width={150}
                                 column
@@ -513,7 +513,7 @@ const ERStartTriage = () => {
                 </Row>
             </div>
             <div className="right-box">
-                <PatientSide patient={propsData.patient} encounter={propsData.encounter} />
+                <PatientSide patient={propsData.patient} encounter={propsData.encounter} refetchList={refetchPatientObservations}/>
             </div>
         </div>
     );

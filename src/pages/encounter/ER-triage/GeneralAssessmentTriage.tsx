@@ -51,7 +51,7 @@ const GeneralAssessmentTriage = ({ patient, encounter }) => {
     const { data: positionStatusLovQueryResponse } = useGetLovValuesByCodeQuery('POSITION_STATUS');
     const { data: bodyMovementLovQueryResponse } = useGetLovValuesByCodeQuery('BODY_MOVEMENT');
     const { data: levelOfConscLovQueryResponse } = useGetLovValuesByCodeQuery('LEVEL_OF_CONSC');
-    const { data: countryLovQueryResponse } = useGetLovValuesByCodeQuery('CNTRY');
+    const { data: facialLovQueryResponse } = useGetLovValuesByCodeQuery('FACIAL_EXPRESS');
     const { data: speechAssLovQueryResponse } = useGetLovValuesByCodeQuery('SPEECH_ASSESSMENT');
     const { data: moodLovQueryResponse } = useGetLovValuesByCodeQuery('MOOD_BEHAVIOR');
 
@@ -182,7 +182,7 @@ const GeneralAssessmentTriage = ({ patient, encounter }) => {
                     fieldLabel="Facial Expression"
                     fieldType="select"
                     fieldName="facialExpressionLkey"
-                    selectData={levelOfConscLovQueryResponse?.object ?? []}
+                    selectData={facialLovQueryResponse?.object ?? []}
                     selectDataLabel="lovDisplayVale"
                     selectDataValue="key"
                     record={generalAssessment}

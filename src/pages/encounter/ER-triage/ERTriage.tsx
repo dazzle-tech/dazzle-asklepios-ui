@@ -9,7 +9,7 @@ import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { addFilterToListRequest, formatDate } from '@/utils';
 import { initialListRequest, ListRequest } from '@/types/types';
-import {  useGetEncountersQuery, useSaveEncounterChangesMutation} from '@/services/encounterService';
+import { useGetEncountersQuery, useSaveEncounterChangesMutation } from '@/services/encounterService';
 import { useLocation } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
@@ -280,7 +280,9 @@ const ERTriage = () => {
             key: 'emergencyLevelLkey',
             title: <Translate>ER Level</Translate>,
             render: rowData =>
-                rowData.emergencyLevelLvalue ? rowData.emergencyLevelLvalue.lovDisplayVale : rowData.emergencyLevelLkey
+                <MyBadgeStatus color={rowData?.emergencyLevelLvalue?.valueColor} contant={rowData?.emergencyLevelLvalue
+                    ? rowData?.emergencyLevelLvalue?.lovDisplayVale
+                    : rowData?.emergencyLevelLkey} />
         },
         {
             key: 'erLevel',
@@ -315,14 +317,14 @@ const ERTriage = () => {
                 const tooltipCancel = <Tooltip>Cancel Visit</Tooltip>;
                 return (
                     <Form layout="inline" fluid className="nurse-doctor-form">
-                          <Whisper trigger="hover" placement="top" speaker={tooltipStart}>
+                        <Whisper trigger="hover" placement="top" speaker={tooltipStart}>
                             <div>
                                 <MyButton
                                     size="small"
                                     backgroundColor="black"
                                     onClick={() => {
                                         setLocalEncounter(rowData);
-                                        handleGoToVisit(rowData,rowData?.patientObject)
+                                        handleGoToVisit(rowData, rowData?.patientObject)
                                     }}
                                 >
                                     <FontAwesomeIcon icon={faCirclePlay} />
