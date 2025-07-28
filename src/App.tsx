@@ -128,6 +128,7 @@ import ERTriage from './pages/encounter/ER-triage/ERTriage';
 import IVFluidOrder from './pages/encounter/encounter-component/iv-fluid-order';
 import ERStartTriage from './pages/encounter/ER-triage/ERStartTriage';
 import PurchaseApprovalSetup from './pages/setup/purchase-approvals-setup/PurchaseApprovalSetup';
+import PurchasingRequisition from './pages/purchasing-requisition/PurchasingRequisition';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -397,6 +398,7 @@ const App = () => {
               <Route path="pharmacy-ePrescriptions" element={<EPrepscriptions />} />
               <Route path="pharmacy-controlled-medications" element={<ControlledMedications />} />
               <Route path="purchase-approvals-setup" element={<PurchaseApprovalSetup />} />
+              <Route path="purchasing-requisition" element={<PurchasingRequisition />} />
             </Route>
           </Route>
 
