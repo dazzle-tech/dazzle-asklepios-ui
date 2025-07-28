@@ -127,6 +127,8 @@ import ReferralRequest from './pages/encounter/encounter-component/add-referral-
 import ERTriage from './pages/encounter/ER-triage/ERTriage';
 import IVFluidOrder from './pages/encounter/encounter-component/iv-fluid-order';
 import ERStartTriage from './pages/encounter/ER-triage/ERStartTriage';
+import PurchaseApprovalSetup from './pages/setup/purchase-approvals-setup/PurchaseApprovalSetup';
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -394,7 +396,7 @@ const App = () => {
               <Route path="pharmacy-internal-orders" element={<InternalDrugOrder />} />
               <Route path="pharmacy-ePrescriptions" element={<EPrepscriptions />} />
               <Route path="pharmacy-controlled-medications" element={<ControlledMedications />} />
-
+              <Route path="purchase-approvals-setup" element={<PurchaseApprovalSetup />} />
             </Route>
           </Route>
 
