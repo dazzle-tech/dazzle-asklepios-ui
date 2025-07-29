@@ -103,7 +103,7 @@ import OperationSetup from './pages/setup/operation-setup';
 import OperationRequest from './pages/encounter/encounter-component/operation-request/OperationRequest';
 import Questionnaire from './pages/questionnaire-setup/Questionnaire';
 import InternalDrugOrder from './pages/pharmacy/internal-drug-order';
-import Operation from './pages/operation-module'
+import Operation from './pages/operation-module';
 import WarehouseSetup from './pages/setup/warehouse-setup/WarehouseSetup';
 import MedicationMatrix from './pages/setup/med-matrix-setup';
 import DoctorRound from './pages/encounter/encounter-component/doctor-round/DoctorRound';
@@ -133,6 +133,7 @@ import ListOfRequisition from './pages/list-of-requisition';
 import ERWaitingList from './pages/encounter/ER-triage/ERWaitingList';
 import ViewTriage from './pages/encounter/ER-triage/ViewTriage';
 import QuickVisit from './pages/encounter/ER-triage/QuickVisit';
+import SupplierSetup from './pages/setup/supplier-setup/Supplier';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -201,12 +202,7 @@ const App = () => {
       childrenScreens.map(screen => {
         chidlrenNavs.push({
           eventKey: screen.key,
-          icon: (
-            <Icon
-              fill="var(--gray-dark)"
-              as={icons[screen?.iconImagePath ?? 'FaCircle']}
-            />
-          ),
+          icon: <Icon fill="var(--gray-dark)" as={icons[screen?.iconImagePath ?? 'FaCircle']} />,
           title: screen.name,
           to: '/'.concat(screen.navPath)
         });
@@ -216,12 +212,7 @@ const App = () => {
 
       navs.push({
         eventKey: module.key,
-        icon: (
-          <Icon
-            fill="var(--gray-dark)"
-            as={icons[module?.iconImagePath ?? 'FaBox']}
-          />
-        ),
+        icon: <Icon fill="var(--gray-dark)" as={icons[module?.iconImagePath ?? 'FaBox']} />,
         title: module.name,
         children: chidlrenNavs
       });
@@ -304,47 +295,51 @@ const App = () => {
               <Route path='ER-waiting-list' element={<ERWaitingList />} />
               <Route path='view-triage' element={<ViewTriage />} />
               <Route path='quick-visit' element={<QuickVisit />} />
+              <Route path="ER-triage" element={<ERTriage />} />
               <Route path="encounter" element={<Encounter />}>
                 <Route path="drug-order" element={<DrugOrder />} />
                 <Route index element={<PatientSummary />} />
-                <Route path='clinical-visit' element={<SOAP />} />
-                <Route path='observations' element={<Observations />} />
-                <Route path='allergies' element={<Allergies />} />
-                <Route path='medical-warnings' element={<Warning />} />
-                <Route path='cardiology' element={<Cardiology />} />
-                <Route path='dental-care' element={<Dental />} />
-                <Route path='optometric-exam' element={<OptometricExam />} />
-                <Route path='audiometry' element={<AudiometryPuretone />} />
-                <Route path='psychological-exam' element={<PsychologicalExam />} />
-                <Route path='vaccination' element={<VaccinationTab />} />
-                <Route path='prescription' element={<Prescription />} />
-                <Route path='diagnostics-order' element={<DiagnosticsOrder />} />
-                <Route path='consultation' element={<Consultation />} />
-                <Route path='procedures' element={<Procedure />} />
-                <Route path='patient-history' element={<PatientHistory />} />
-                <Route path='medications-record' element={<MedicationsRecord />} />
-                <Route path='vaccine-record' element={<VaccineReccord />} />
-                <Route path='diagnostics-result' element={<DiagnosticsResult />} />
-                <Route path='operation-request' element={<OperationRequest />} />
-                <Route path='doctor-round' element={<DoctorRound />} />
-                <Route path='multidisciplinary-team-notes' element={<MultidisciplinaryTeamNotes />} />
-                <Route path='care-plan-and-goals' element={<CarePlanAndGoals />} />
-                <Route path='discharge-planning' element={<DischargePlanning />} />
-                <Route path='bedside-procedures-requests' element={<BedsideProceduresRequests />} />
-                <Route path='day-case' element={<DayCaseContent />} />
-                <Route path='blood-order' element={<BloodOrder />} />
-                <Route path='intake-output-balance' element={<IntakeOutputBalance />} />
-                <Route path='referral-request' element={<ReferralRequest />} />
-                <Route path='iv-fluid-order' element={<IVFluidOrder />} />
+                <Route path="clinical-visit" element={<SOAP />} />
+                <Route path="observations" element={<Observations />} />
+                <Route path="allergies" element={<Allergies />} />
+                <Route path="medical-warnings" element={<Warning />} />
+                <Route path="cardiology" element={<Cardiology />} />
+                <Route path="dental-care" element={<Dental />} />
+                <Route path="optometric-exam" element={<OptometricExam />} />
+                <Route path="audiometry" element={<AudiometryPuretone />} />
+                <Route path="psychological-exam" element={<PsychologicalExam />} />
+                <Route path="vaccination" element={<VaccinationTab />} />
+                <Route path="prescription" element={<Prescription />} />
+                <Route path="diagnostics-order" element={<DiagnosticsOrder />} />
+                <Route path="consultation" element={<Consultation />} />
+                <Route path="procedures" element={<Procedure />} />
+                <Route path="patient-history" element={<PatientHistory />} />
+                <Route path="medications-record" element={<MedicationsRecord />} />
+                <Route path="vaccine-record" element={<VaccineReccord />} />
+                <Route path="diagnostics-result" element={<DiagnosticsResult />} />
+                <Route path="operation-request" element={<OperationRequest />} />
+                <Route path="doctor-round" element={<DoctorRound />} />
+                <Route
+                  path="multidisciplinary-team-notes"
+                  element={<MultidisciplinaryTeamNotes />}
+                />
+                <Route path="care-plan-and-goals" element={<CarePlanAndGoals />} />
+                <Route path="discharge-planning" element={<DischargePlanning />} />
+                <Route path="bedside-procedures-requests" element={<BedsideProceduresRequests />} />
+                <Route path="day-case" element={<DayCaseContent />} />
+                <Route path="blood-order" element={<BloodOrder />} />
+                <Route path="intake-output-balance" element={<IntakeOutputBalance />} />
+                <Route path="referral-request" element={<ReferralRequest />} />
+                <Route path="iv-fluid-order" element={<IVFluidOrder />} />
               </Route>
-              <Route path='/doctor-round/round' element={<ViewRound />} />
-              <Route path='/recovery-module' element={<Recovery />} />
+              <Route path="/doctor-round/round" element={<ViewRound />} />
+              <Route path="/recovery-module" element={<Recovery />} />
               <Route path="procedure-module" element={<ProcedureModule />} />
               <Route path="encounter-list" element={<EncounterList />} />
-              <Route path='inpatient-encounters-list' element={<InpatientList />} />
-              <Route path='waiting-encounters-list' element={<InpatientWaitingLists />} />
-              <Route path='day-case-list' element={<DayCaseList />} />
-              <Route path='room' element={<Room />} />
+              <Route path="inpatient-encounters-list" element={<InpatientList />} />
+              <Route path="waiting-encounters-list" element={<InpatientWaitingLists />} />
+              <Route path="day-case-list" element={<DayCaseList />} />
+              <Route path="room" element={<Room />} />
               <Route path="merge-patient-files" element={<PatientMergeFiles />} />
               <Route path="nurse-station" element={<EncounterPreObservations />} />
               <Route path="inpatient-nurse-station" element={<InpatientNurseStation />} />
@@ -365,7 +360,7 @@ const App = () => {
               <Route path="potintial-duplicate" element={<PotintialDuplicate />} />
               <Route path="users" element={<Users />} />
               <Route path="uom-group" element={<UOMGroup />} />
-              <Route path='med-matrix-setup' element={<MedicationMatrix />} />
+              <Route path="med-matrix-setup" element={<MedicationMatrix />} />
               <Route path="nurse-station" element={<EncounterPreObservations />} />
               <Route path="metadata" element={<Metadata />} />
               <Route path="dvm" element={<DVM />} />
@@ -376,7 +371,7 @@ const App = () => {
               <Route path="catalog" element={<Catalog />} />
               <Route path="allergens" element={<Allergens />} />
               <Route path="inventory-transaction" element={<InventoryTransaction />} />
-              <Route path='inventory-product-setup' element={<ProductSetup />} />
+              <Route path="inventory-product-setup" element={<ProductSetup />} />
               <Route path="warehouse-setup" element={<WarehouseSetup />} />
               <Route path="warehouse-items-setup" element={<WarehouseItemsSetup />} />
               <Route path="active-ingredients" element={<ActiveIngredientsSetup />} />
@@ -398,15 +393,15 @@ const App = () => {
               <Route path="patient-EMR" element={<PatientEMR />} />
               <Route path="lab-module" element={<Lab />} />
               <Route path="rad-module" element={<Rad />} />
-              <Route path='operation-module' element={<Operation />} />
-              <Route path='operation-setup' element={<OperationSetup />} />
+              <Route path="operation-module" element={<Operation />} />
+              <Route path="operation-setup" element={<OperationSetup />} />
               <Route path="pharmacy-internal-orders" element={<InternalDrugOrder />} />
               <Route path="pharmacy-ePrescriptions" element={<EPrepscriptions />} />
               <Route path="pharmacy-controlled-medications" element={<ControlledMedications />} />
               <Route path="purchase-approvals-setup" element={<PurchaseApprovalSetup />} />
               <Route path="purchasing-requisition" element={<PurchasingRequisition />} />
               <Route path="list-of-requisition" element={<ListOfRequisition />} />
-
+              <Route path="supplier-setup" element={<SupplierSetup />} />
             </Route>
           </Route>
 
