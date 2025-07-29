@@ -97,20 +97,20 @@ const PurchaseApprovalSetup = () => {
   };
   //Table Header Column
   const columns: ColumnConfig[] = [
-    { key: 'typeOfPurchase', title: 'Types of Purchase', dataKey: 'typeOfPurchase', width: 180 },
+    { key: 'typeOfPurchase', title: 'Types of Purchase', dataKey: 'typeOfPurchase', width: 100 },
     {
       key: 'responsibleDepartment',
       title: 'Responsible Department',
       dataKey: 'responsibleDepartment',
-      width: 200,
-      align: 'right'
+      width: 100,
+      align: 'left'
     },
     { key: 'approvalBy', title: 'Approval by', dataKey: 'approvalBy', width: 150 },
     {
       key: 'hierarchyOfApproval',
       title: 'Hierarchy of Approval',
       dataKey: 'hierarchyOfApproval',
-      width: 250
+      width: 150
     },
     { key: 'status', title: 'Status', dataKey: 'status', width: 100 },
     {
