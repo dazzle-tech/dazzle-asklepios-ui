@@ -14,7 +14,7 @@ import { useSaveGeneralAssessmentMutation, useGetGeneralAssessmentsQuery } from 
 import MyInput from '@/components/MyInput';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { initialListRequest, ListRequest } from '@/types/types';
-const GeneralAssessmentTriage = ({ patient, encounter }) => {
+const GeneralAssessmentTriage = ({ patient, encounter ,readOnly=false }) => {
     const authSlice = useAppSelector(state => state.auth);
     const [generalAssessment, setGeneralAssessment] = useState<ApGeneralAssessment>({ ...newApGeneralAssessment });
     const [isDisabledField, setIsDisabledField] = useState(false);
@@ -145,7 +145,7 @@ const GeneralAssessmentTriage = ({ patient, encounter }) => {
                     selectDataValue="key"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
-                    disabled={isDisabledField}
+                    disabled={isDisabledField || readOnly}
                     searchable={false}
                 />
                 <MyInput
@@ -159,7 +159,7 @@ const GeneralAssessmentTriage = ({ patient, encounter }) => {
                     selectDataValue="key"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
-                    disabled={isDisabledField}
+                    disabled={isDisabledField || readOnly}
                     searchable={false}
                 />
                 <MyInput
@@ -173,7 +173,7 @@ const GeneralAssessmentTriage = ({ patient, encounter }) => {
                     selectDataValue="key"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
-                    disabled={isDisabledField}
+                    disabled={isDisabledField || readOnly}
                     searchable={false}
                 />
                 <MyInput
@@ -187,7 +187,7 @@ const GeneralAssessmentTriage = ({ patient, encounter }) => {
                     selectDataValue="key"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
-                    disabled={isDisabledField}
+                    disabled={isDisabledField || readOnly}
                     searchable={false}
                 />
                 <MyInput
@@ -201,7 +201,7 @@ const GeneralAssessmentTriage = ({ patient, encounter }) => {
                     selectDataValue="key"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
-                    disabled={isDisabledField}
+                    disabled={isDisabledField || readOnly}
                     searchable={false} />
                 <MyInput
                     column
@@ -214,7 +214,7 @@ const GeneralAssessmentTriage = ({ patient, encounter }) => {
                     selectDataValue="key"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
-                    disabled={isDisabledField}
+                    disabled={isDisabledField || readOnly}
                     searchable={false} />
                 <MyInput
                     column
@@ -224,7 +224,7 @@ const GeneralAssessmentTriage = ({ patient, encounter }) => {
                     fieldType="checkbox"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
-                    disabled={isDisabledField} />
+                    disabled={isDisabledField || readOnly} />
                 <MyInput
                     column
                     width={200}
@@ -233,7 +233,7 @@ const GeneralAssessmentTriage = ({ patient, encounter }) => {
                     fieldType="checkbox"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
-                    disabled={isDisabledField} />
+                    disabled={isDisabledField || readOnly} />
                 <MyInput
                     column
                     width={200}
@@ -242,7 +242,7 @@ const GeneralAssessmentTriage = ({ patient, encounter }) => {
                     fieldType="checkbox"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
-                    disabled={isDisabledField} />
+                    disabled={isDisabledField || readOnly} />
                 <MyInput
                     column
                     width={200}
@@ -251,7 +251,7 @@ const GeneralAssessmentTriage = ({ patient, encounter }) => {
                     fieldType="checkbox"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
-                    disabled={isDisabledField} />
+                    disabled={isDisabledField || readOnly} />
                 <MyInput
                     column
                     width={200}
@@ -260,7 +260,7 @@ const GeneralAssessmentTriage = ({ patient, encounter }) => {
                     fieldType="checkbox"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
-                    disabled={isDisabledField} />
+                    disabled={isDisabledField || readOnly}/>
                 <MyInput
                     column
                     width={200}
@@ -269,14 +269,14 @@ const GeneralAssessmentTriage = ({ patient, encounter }) => {
                     fieldType="checkbox"
                     record={generalAssessment}
                     setRecord={setGeneralAssessment}
-                    disabled={isDisabledField} />
-                <MyButton
+                    disabled={isDisabledField || readOnly} />
+              {!readOnly &&  <MyButton
                     prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                     onClick={handleSave}
                     className="button-bottom-align"
                 >
                     <Translate>  Save </Translate>
-                </MyButton>
+                </MyButton>}
             </Form>
              
             </Panel>

@@ -5,14 +5,9 @@ import { useLocation } from 'react-router-dom';
 import './styles.less';
 import BackButton from '@/components/BackButton/BackButton';
 import { useNavigate } from 'react-router-dom';
-import MyButton from '@/components/MyButton/MyButton';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import Translate from '@/components/Translate';
-import { useCompleteEncounterMutation, useGetEmergencyTriagesListQuery, useSaveEmergencyTriagesMutation } from '@/services/encounterService';
+import { useGetEmergencyTriagesListQuery, useSaveEmergencyTriagesMutation } from '@/services/encounterService';
 import { useAppDispatch } from '@/hooks';
-import { notify } from '@/utils/uiReducerActions';
-import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import { Row, Col, Form, Divider, Panel } from 'rsuite';
 import GeneralAssessmentTriage from './GeneralAssessmentTriage';
 import ChiefComplainTriage from './ChiefComplainTriage';
@@ -23,24 +18,20 @@ import { newApEmergencyTriage } from '@/types/model-types-constructor';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
-import { useAppSelector } from '@/hooks';
 import { initialListRequest, ListRequest } from '@/types/types';
 import MyLabel from '@/components/MyLabel';
-import SendToModal from './SendToModal';
 import { ApEncounter } from '@/types/model-types';
-const ERStartTriage = () => {
+const ViewTriage = () => {
     const location = useLocation();
     const propsData = location.state;
-    const authSlice = useAppSelector(state => state.auth);
     const navigate = useNavigate();
-    const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
     const [saveTriage, saveTriageMutation] = useSaveEmergencyTriagesMutation();
     const dispatch = useAppDispatch();
     const [isHiddenFields, setIsHiddenFields] = useState(false);
     const [emergencyTriage, setEmergencyTriage] = useState<any>({ ...newApEmergencyTriage });
-    const [refetchPatientObservations ,setRefetchPatientObservations] = useState(false);
-    const [openSendToModal,setOpenSendToModal] = useState(false);
-    const [encounter ,setEncounter] = useState<ApEncounter>({...propsData.encounter});
+    const [refetchPatientObservations, setRefetchPatientObservations] = useState(false);
+    const [openSendToModal, setOpenSendToModal] = useState(false);
+    const [encounter, setEncounter] = useState<ApEncounter>({ ...propsData.encounter });
     const YES_KEY = '1476229927081534';
     const NO_KEY = '1476240934233400';
 
@@ -81,61 +72,20 @@ const ERStartTriage = () => {
     // Header setup
     const divContent = (
         <div style={{ display: 'flex' }}>
-            <h5>ER Start Triage</h5>
+            <h5>ER View Triage</h5>
         </div>
     );
     const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-    dispatch(setPageCode('Start_Triage'));
+    dispatch(setPageCode('ER_View_Triage'));
     dispatch(setDivContent(divContentHTML));
 
-    // handle Complete Encounter Function
-    const handleCompleteEncounter = async () => {
-        try {
-            await completeEncounter(propsData.encounter).unwrap();
-            dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
-        } catch (error) {
-            console.error("Encounter completion error:", error);
-            dispatch(notify({ msg: 'An error occurred while completing the encounter', sev: 'error' }));
-        }
-    };
-    // handle Save Triage Function
-    const handleSave = async () => {
-        //  TODO convert key to code
-        try {
-            if (emergencyTriage.key === undefined) {
-                await saveTriage({
-                    ...emergencyTriage,
-                    patientKey: propsData.patient?.key,
-                    encounterKey: propsData.encounter?.key,
-                    createdBy: authSlice.user.key,
-                }).unwrap();
-                refetch();
-                dispatch(notify({ msg: 'Saved Successfully', sev: 'success' }));
-            } else {
-                await saveTriage({
-                    ...emergencyTriage,
-                    patientKey: propsData.patient?.key,
-                    encounterKey: propsData.encounter?.key,
-                    updatedBy: authSlice.user.key,
-                }).unwrap();
-                dispatch(notify({ msg: ' Updated Successfully', sev: 'success' }));
-                refetch();
-            }
-        } catch (error) {
-            console.error("Error saving ", error);
-            dispatch(notify({ msg: 'Failed to Save ', sev: 'error' }));
-        }
-    };
-
     // Effects
-     // Effects
     useEffect(() => {
         if (saveTriageMutation && saveTriageMutation.status === 'fulfilled') {
             setEmergencyTriage(saveTriageMutation.data);;
-            setEncounter({...encounter,emergencyLevelLkey:emergencyTriage?.emergencyLevelLkey})}
+            setEncounter({ ...encounter, emergencyLevelLkey: emergencyTriage?.emergencyLevelLkey })
+        }
     }, [saveTriageMutation]);
-    // Effects
-   
     useEffect(() => {
         return () => {
             dispatch(setPageCode(''));
@@ -209,7 +159,7 @@ const ERStartTriage = () => {
         emergencyTriage.ecgLkey,
         emergencyTriage.consultationLkey
     ]);
-  useEffect(() => {
+    useEffect(() => {
         setEncounter({ ...propsData?.encounter });
     }, [propsData]);
     return (
@@ -218,22 +168,9 @@ const ERStartTriage = () => {
                 <div className='bt-field-div'>
                     <BackButton
                         onClick={() => {
-                            navigate('/ER-triage');
+                            navigate('/ER-waiting-list');
                         }}
                     />
-                    <MyButton
-                        prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                        onClick={handleCompleteEncounter}
-                        appearance="ghost"
-                    >
-                        <Translate> Complete Visit </Translate>
-                    </MyButton>
-                    <MyButton
-                        prefixIcon={() => <FontAwesomeIcon icon={faPaperPlane} />}
-                        onClick={()=>{setOpenSendToModal(true);}}
-                    >
-                        <Translate>  Send to </Translate>
-                    </MyButton>
                     <div className='bt-right'>
                         <Form fluid layout="inline">
                             <MyLabel label="Emergency Level" />
@@ -261,6 +198,7 @@ const ERStartTriage = () => {
                                 record={emergencyTriage}
                                 setRecord={setEmergencyTriage}
                                 searchable={false}
+                                disabled={true}
                             />
                         </Form>
                         <Form fluid layout="inline">
@@ -278,10 +216,10 @@ const ERStartTriage = () => {
                                         record={emergencyTriage}
                                         setRecord={setEmergencyTriage}
                                         searchable={false}
+                                        disabled={true}
                                     />
                                 </Form>
                             )}
-
                             {emergencyTriage.lifeSavingLkey === NO_KEY && emergencyTriage.unresponsiveLkey === NO_KEY && (
                                 <Form fluid layout="inline">
                                     <MyInput
@@ -296,8 +234,8 @@ const ERStartTriage = () => {
                                         record={emergencyTriage}
                                         setRecord={setEmergencyTriage}
                                         searchable={false}
+                                        disabled={true}
                                     />
-
                                     <MyInput
                                         column
                                         width={200}
@@ -310,6 +248,7 @@ const ERStartTriage = () => {
                                         record={emergencyTriage}
                                         setRecord={setEmergencyTriage}
                                         searchable={false}
+                                        disabled={true}
                                     />
 
                                     <MyInput
@@ -324,6 +263,7 @@ const ERStartTriage = () => {
                                         record={emergencyTriage}
                                         setRecord={setEmergencyTriage}
                                         searchable={false}
+                                        disabled={true}
                                     />
                                 </Form>
                             )}
@@ -342,6 +282,7 @@ const ERStartTriage = () => {
                                         record={emergencyTriage}
                                         setRecord={setEmergencyTriage}
                                         searchable={false}
+                                        disabled={true}
                                     />
                                     <MyInput
                                         column
@@ -355,6 +296,7 @@ const ERStartTriage = () => {
                                         record={emergencyTriage}
                                         setRecord={setEmergencyTriage}
                                         searchable={false}
+                                        disabled={true}
                                     />
                                     <MyInput
                                         column
@@ -368,6 +310,7 @@ const ERStartTriage = () => {
                                         record={emergencyTriage}
                                         setRecord={setEmergencyTriage}
                                         searchable={false}
+                                        disabled={true}
                                     />
                                     <MyInput
                                         column
@@ -381,6 +324,7 @@ const ERStartTriage = () => {
                                         record={emergencyTriage}
                                         setRecord={setEmergencyTriage}
                                         searchable={false}
+                                        disabled={true}
                                     />
                                     <MyInput
                                         column
@@ -394,6 +338,7 @@ const ERStartTriage = () => {
                                         record={emergencyTriage}
                                         setRecord={setEmergencyTriage}
                                         searchable={false}
+                                        disabled={true}
                                     />
                                     <MyInput
                                         column
@@ -407,18 +352,18 @@ const ERStartTriage = () => {
                                         record={emergencyTriage}
                                         setRecord={setEmergencyTriage}
                                         searchable={false}
+                                        disabled={true}
                                     />
                                 </Form>
                             )}
-
                         </Form>
                     </Panel>
                 </Row>
                 <Row gutter={30}>
-                    <VitalSignsTriage patient={propsData.patient} encounter={propsData.encounter} setRefetchPatientObservations={setRefetchPatientObservations}/>
+                    <VitalSignsTriage patient={propsData.patient} encounter={propsData.encounter} setRefetchPatientObservations={setRefetchPatientObservations} readOnly={true} />
                 </Row>
                 <Row gutter={30}>
-                    <GeneralAssessmentTriage patient={propsData.patient} encounter={propsData.encounter} />
+                    <GeneralAssessmentTriage patient={propsData.patient} encounter={propsData.encounter} readOnly={true} />
                 </Row>
                 <Row gutter={30}><Divider /></Row>
                 <Row gutter={30}>
@@ -434,6 +379,7 @@ const ERStartTriage = () => {
                                     fieldName="rightEyeLightResponse"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
+                                    disabled={true}
                                 />
                                 <MyInput
                                     column
@@ -447,6 +393,7 @@ const ERStartTriage = () => {
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
                                     searchable={false}
+                                    disabled={true}
                                 />
                             </Form>
                         </Row>
@@ -463,6 +410,7 @@ const ERStartTriage = () => {
                                     fieldName="leftEyeLightResponse"
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
+                                    disabled={true}
                                 />
                                 <MyInput
                                     column
@@ -476,6 +424,7 @@ const ERStartTriage = () => {
                                     record={emergencyTriage}
                                     setRecord={setEmergencyTriage}
                                     searchable={false}
+                                    disabled={true}
                                 />
                             </Form>
                         </Row>
@@ -483,7 +432,7 @@ const ERStartTriage = () => {
                 </Row>
                 <Row gutter={30}><Divider /></Row>
                 <Row gutter={30}>
-                    <ChiefComplainTriage patient={propsData.patient} encounter={propsData.encounter} />
+                    <ChiefComplainTriage patient={propsData.patient} encounter={propsData.encounter} readOnly={true} />
                 </Row>
                 <Row gutter={30}><Divider /></Row>
                 <Row gutter={30}>
@@ -496,6 +445,7 @@ const ERStartTriage = () => {
                             fieldLabel="History of Present Illness"
                             fieldName="historyOfPresentIllness"
                             width={400}
+                            disabled={true}
                         />
                         <MyInput
                             column
@@ -505,6 +455,7 @@ const ERStartTriage = () => {
                             fieldLabel="Additional Notes"
                             fieldName="additionalNotes"
                             width={400}
+                            disabled={true}
                         />
                         {propsData?.patient?.genderLvalue?.valueCode === "F" &&
                             <MyInput
@@ -515,27 +466,17 @@ const ERStartTriage = () => {
                                 fieldName="isPregnancy"
                                 record={emergencyTriage}
                                 setRecord={setEmergencyTriage}
+                                disabled={true}
                             />
                         }
-                        <MyButton
-                            prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
-                            className="button-bottom-align"
-                            onClick={handleSave}
-                        >
-                            <Translate>  Save </Translate>
-                        </MyButton>
                     </Form>
                 </Row>
             </div>
             <div className="right-box">
-                <PatientSide patient={propsData.patient} encounter={propsData.encounter} refetchList={refetchPatientObservations}/>
+                <PatientSide patient={propsData.patient} encounter={propsData.encounter} refetchList={refetchPatientObservations} />
             </div>
-            <SendToModal
-             open={openSendToModal}
-             setOpen={setOpenSendToModal}
-             encounter={encounter}/>
         </div>
     );
 };
 
-export default ERStartTriage;
+export default ViewTriage;

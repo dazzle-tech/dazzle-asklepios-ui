@@ -32,6 +32,11 @@ const actionConfig = {
     text: 'Reactivate',
     color: 'var(--primary-blue)',
     icon: faArrowRotateLeft
+  },
+  confirm: {
+    text: 'Confirm',
+    color: 'var(--primary-blue)',
+    icon: faArrowRotateLeft
   }
 };
 
@@ -40,9 +45,15 @@ const DeletionConfirmationModal = ({
   setOpen,
   itemToDelete = '',
   actionButtonFunction = null,
-  actionType = 'delete' // delete | deactivate | reactivate
+  actionType = 'delete', // delete | deactivate | reactivate | confirm
+  confirmationQuestion = '' 
 }) => {
   const config = actionConfig[actionType] || actionConfig.delete;
+
+  const defaultMessage =
+    actionType === 'confirm'
+      ? 'Are you sure you want to proceed?'
+      : `Are you sure you want to ${config.text.toLowerCase()} this ${itemToDelete}?`;
 
   return (
     <Modal open={open} onClose={() => setOpen(false)} size="30vw" className="delete-modal">
@@ -55,7 +66,7 @@ const DeletionConfirmationModal = ({
       </Modal.Header>
       <Modal.Body>
         <div className="body-delete-modal">
-          <span>{`Are you sure you want to ${config.text.toLowerCase()} this ${itemToDelete} ?`}</span>
+          <span>{confirmationQuestion || defaultMessage}</span>
         </div>
       </Modal.Body>
       <Modal.Footer className="footer-delete-modal">

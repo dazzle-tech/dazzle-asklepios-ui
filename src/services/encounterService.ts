@@ -843,6 +843,13 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+     getEREncounters: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/er-waiting-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   })
 });
 
@@ -934,5 +941,6 @@ export const {
   useSavePreOperationMedicationsMutation,
   useGetPreOperationMedicationsListQuery,
   useGetEmergencyTriagesListQuery,
-  useSaveEmergencyTriagesMutation
+  useSaveEmergencyTriagesMutation,
+  useGetEREncountersQuery
 } = encounterService;

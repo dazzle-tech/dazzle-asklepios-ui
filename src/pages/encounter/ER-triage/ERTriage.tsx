@@ -24,12 +24,14 @@ import { useGetLovValuesByCodeQuery } from "@/services/setupService";
 import { resetRefetchEncounter } from '@/reducers/refetchEncounterState';
 import { useSelector } from "react-redux";
 import { useNavigate } from 'react-router-dom';
+import SendToModal from './SendToModal';
 const ERTriage = () => {
     const location = useLocation();
     const dispatch = useDispatch();
     const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
     const [emergencyLevel, setEmergencyLevel] = useState({ key: '' });
     const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+    const [openSendToModal, setOpenSendToModal] = useState(false);
     const [startEncounter] = useSaveEncounterChangesMutation();
     const navigate = useNavigate();
     const [listRequest, setListRequest] = useState<ListRequest>({
@@ -279,10 +281,10 @@ const ERTriage = () => {
         {
             key: 'emergencyLevelLkey',
             title: <Translate>ER Level</Translate>,
-            render: rowData =>
+            render: rowData => rowData?.emergencyLevelLkey ?
                 <MyBadgeStatus color={rowData?.emergencyLevelLvalue?.valueColor} contant={rowData?.emergencyLevelLvalue
                     ? rowData?.emergencyLevelLvalue?.lovDisplayVale
-                    : rowData?.emergencyLevelLkey} />
+                    : rowData?.emergencyLevelLkey} /> : ''
         },
         {
             key: 'erLevel',
@@ -348,6 +350,7 @@ const ERTriage = () => {
                                 <MyButton
                                     size="small"
                                     backgroundColor="violet"
+                                    onClick={() => { setLocalEncounter(rowData); setOpenSendToModal(true); }}
                                 >
                                     <FontAwesomeIcon icon={faPaperPlane} />
                                 </MyButton>
@@ -451,6 +454,10 @@ const ERTriage = () => {
                 onPageChange={handlePageChange}
                 onRowsPerPageChange={handleRowsPerPageChange}
             />
+            <SendToModal
+                open={openSendToModal}
+                setOpen={setOpenSendToModal}
+                encounter={encounter} />
         </Panel>
     );
 };
