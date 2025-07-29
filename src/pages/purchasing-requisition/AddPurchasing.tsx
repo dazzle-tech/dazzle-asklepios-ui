@@ -6,8 +6,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCartPlus, faBroom } from '@fortawesome/free-solid-svg-icons';
 import MyModal from '@/components/MyModal/MyModal';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
-
+import './styles.less';
+// Component for adding a purchasing requisition
 const AddPurchasing = ({ open, setOpen }) => {
+  // Fetching LOV values for currency, urgency, and purchase types
   const { data: currencyLovQueryResponse } = useGetLovValuesByCodeQuery('CURRENCY');
   const { data: urgencyLovQueryResponse } = useGetLovValuesByCodeQuery('ORDER_PRIORITY');
   const { data: purchaseLovQueryResponse } = useGetLovValuesByCodeQuery('PURCH_TYPES');
@@ -24,7 +26,7 @@ const AddPurchasing = ({ open, setOpen }) => {
     textarea: '',
     checkPicker: []
   });
-// Model content 
+  // Model content
   const modelContent = (
     <>
       <Form fluid>
@@ -97,6 +99,17 @@ const AddPurchasing = ({ open, setOpen }) => {
             width={250}
           />
           <MyInput
+            fieldName="Urgency Level"
+            fieldLabel="Urgency Level"
+            fieldType="select"
+            selectData={urgencyLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            record={{}}
+            setRecord={''}
+            width={250}
+          />
+          <MyInput
             fieldLabel="Estimated Budget"
             fieldName="Estimated Budget"
             fieldType="number"
@@ -115,17 +128,7 @@ const AddPurchasing = ({ open, setOpen }) => {
             record={{}}
             setRecord={''}
           />
-          <MyInput
-            fieldName="Urgency Level"
-            fieldLabel="Urgency Level"
-            fieldType="select"
-            selectData={urgencyLovQueryResponse?.object ?? []}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={{}}
-            setRecord={''}
-            width={250}
-          />
+
           <MyInput
             fieldLabel="Justification"
             fieldName="Justification"
@@ -173,15 +176,6 @@ const AddPurchasing = ({ open, setOpen }) => {
             width={250}
           />
           <MyInput
-            fieldLabel="Attachments"
-            fieldName="Attachments"
-            fieldType=""
-            disabled={true}
-            record={record}
-            setRecord={setRecord}
-            width={250}
-          />
-          <MyInput
             fieldLabel="Stock Name"
             fieldName="Stock Name"
             fieldType="select"
@@ -196,25 +190,10 @@ const AddPurchasing = ({ open, setOpen }) => {
             width={250}
             required
           />
-          <MyInput
-            fieldLabel="Approval by"
-            fieldName="Approval by"
-            fieldType="select"
-            disabled={true}
-            selectData={[
-              { key: 'mgr1', lovDisplayVale: 'Manager A' },
-              { key: 'mgr2', lovDisplayVale: 'Manager B' }
-            ]}
-            selectDataLabel="lovDisplayVale"
-            selectDataValue="key"
-            record={record}
-            setRecord={setRecord}
-            width={250}
-          />
 
           <MyInput
-            fieldLabel="Order Id"
-            fieldName="Order Id"
+            fieldLabel="Order ID"
+            fieldName="Order ID"
             fieldType="number"
             record={record}
             setRecord={setRecord}
@@ -241,10 +220,10 @@ const AddPurchasing = ({ open, setOpen }) => {
     <MyModal
       open={open}
       setOpen={setOpen}
-      title="purchasing requisition"
+      title="Purchasing Requisition"
       steps={[
         {
-          title: 'purchasing requisition',
+          title: 'Purchasing Requisition',
           icon: <FontAwesomeIcon icon={faCartPlus} />,
           footer: <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}>clear</MyButton>
         }
