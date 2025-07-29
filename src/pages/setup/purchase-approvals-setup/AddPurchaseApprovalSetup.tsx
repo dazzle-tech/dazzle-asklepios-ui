@@ -77,14 +77,14 @@ const AddPurchaseApprovalSetup = ({
     <MyModal
       open={open}
       setOpen={setOpen}
-      title="purchasing requisition"
+      title="Purchasing requisition"
       steps={[
         {
-          title: 'purchasing requisition',
+          title: 'Purchasing requisition',
           icon: <FontAwesomeIcon icon={faBarsProgress} />
         }
       ]}
-      size="38vw"
+      size="28vw"
       position="right"
       actionButtonLabel="Save"
       content={ModalContent}

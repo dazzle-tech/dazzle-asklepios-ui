@@ -4,6 +4,8 @@ import { Modal } from 'rsuite';
 import './styles.less';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash, faArrowRotateLeft } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
+
 
 const actionConfig = {
   delete: {
@@ -15,6 +17,16 @@ const actionConfig = {
     text: 'Deactivate',
     color: 'var(--primary-pink)',
     icon: faTrash
+  },
+    accept: {
+    text: 'Accept',
+    color: 'var(--primary-blue)',
+    icon: faCircleCheck
+  },
+  undoaccept: {
+    text: 'Undoaccept',
+    color: 'var(--primary-pink)',
+    icon: faCircleXmark
   },
   reactivate: {
     text: 'Reactivate',
