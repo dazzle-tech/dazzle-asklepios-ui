@@ -14,7 +14,7 @@ import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { useSaveChiefComplainMutation, useGetChiefComplainQuery } from '@/services/encounterService';
 
-const ChiefComplainTriage = ({ patient, encounter }) => {
+const ChiefComplainTriage = ({ patient, encounter ,readOnly=false}) => {
     const authSlice = useAppSelector(state => state.auth);
     const [chiefComplain, setChiefComplain] = useState<ApInpatientChiefComplain>({ ...newApInpatientChiefComplain });
     const [isDisabledField, setIsDisabledField] = useState(false);
@@ -128,7 +128,7 @@ const ChiefComplainTriage = ({ patient, encounter }) => {
                     fieldName="chiefComplaint"
                     record={chiefComplain}
                     setRecord={setChiefComplain}
-                    disabled={isDisabledField}
+                    disabled={isDisabledField || readOnly}
                     searchable={false}
                 />
                 <MyInput
@@ -138,7 +138,7 @@ const ChiefComplainTriage = ({ patient, encounter }) => {
                     fieldName="provocation"
                     record={chiefComplain}
                     setRecord={setChiefComplain}
-                    disabled={isDisabledField}
+                    disabled={isDisabledField || readOnly}
                     searchable={false}
                 />
                 <MyInput
@@ -148,7 +148,7 @@ const ChiefComplainTriage = ({ patient, encounter }) => {
                     fieldName="palliation"
                     record={chiefComplain}
                     setRecord={setChiefComplain}
-                    disabled={isDisabledField}
+                    disabled={isDisabledField || readOnly}
                     searchable={false}
                 />
                 <MyInput
@@ -162,7 +162,7 @@ const ChiefComplainTriage = ({ patient, encounter }) => {
                     selectDataValue="key"
                     record={chiefComplain}
                     setRecord={setChiefComplain}
-                    disabled={isDisabledField}
+                    disabled={isDisabledField || readOnly}
                     searchable={false}
                 />
                 <MyInput
@@ -176,7 +176,7 @@ const ChiefComplainTriage = ({ patient, encounter }) => {
                     selectDataValue="key"
                     record={chiefComplain}
                     setRecord={setChiefComplain}
-                    disabled={isDisabledField}
+                    disabled={isDisabledField || readOnly}
                     searchable={false}
                 />
                 <MyInput
@@ -190,14 +190,14 @@ const ChiefComplainTriage = ({ patient, encounter }) => {
                     selectDataValue="key"
                     record={chiefComplain}
                     setRecord={setChiefComplain}
-                    disabled={isDisabledField}
+                    disabled={isDisabledField || readOnly}
                     searchable={false}
                 />
                 <MyInput
                     column
                     width={200}
                     fieldLabel="Onset"
-                    disabled={isDisabledField}
+                    disabled={isDisabledField || readOnly}
                     fieldName='onsetDateTime'
                     fieldType='datetime'
                     record={chiefComplain}
@@ -210,15 +210,15 @@ const ChiefComplainTriage = ({ patient, encounter }) => {
                     fieldName="understanding"
                     record={chiefComplain}
                     setRecord={setChiefComplain}
-                    disabled={isDisabledField}
+                    disabled={isDisabledField || readOnly}
                 />
-                <MyButton
+              {!readOnly && <MyButton
                     prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                     onClick={handleSave}
                     className="button-bottom-align"
                 >
                     <Translate>  Save </Translate>
-                </MyButton>
+                </MyButton> } 
             </Form>
         </Panel>
     );

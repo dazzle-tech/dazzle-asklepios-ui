@@ -63,9 +63,12 @@ const handleDownload = attachment => {
     a.click();
     window.URL.revokeObjectURL(url);
 };
-const DiagnosticsOrder = () => {
+const DiagnosticsOrder = ({ patient: propPatient, encounter: propEncounter, edit: propEdit }) => {
     const location = useLocation();
-    const { patient, encounter, edit } = location.state || {};
+    const state = location.state || {};
+    const patient = propPatient || state.patient;
+    const encounter = propEncounter || state.encounter;
+    const edit = propEdit ?? state.edit;
     const dispatch = useAppDispatch();
     const [showCanceled, setShowCanceled] = useState(true);
     const [test, setTest] = useState<ApDiagnosticTest>({ ...newApDiagnosticTest });
@@ -75,7 +78,7 @@ const DiagnosticsOrder = () => {
     const [searchTerm, setSearchTerm] = React.useState('');
     const [attachmentsModalOpen, setAttachmentsModalOpen] = useState(false);
     const [listTestRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest, pageSize: 1000 });
-    const { data: testsList,isFetching } = useGetDiagnosticsTestListQuery(listTestRequest);
+    const { data: testsList, isFetching } = useGetDiagnosticsTestListQuery(listTestRequest);
     const [leftItems, setLeftItems] = useState([]);
     const [selectedTestsList, setSelectedTestsList] = useState([]);
     const [listOrdersRequest, setListOrdersRequest] = useState<ListRequest>({
@@ -129,18 +132,18 @@ const DiagnosticsOrder = () => {
                 operator: 'isNull',
                 value: undefined
             }
-        
+
             ,
             {
-                fieldName:'attachment_type',
+                fieldName: 'attachment_type',
                 operator: "match",
-                value:"ORDER_TEST"
+                value: "ORDER_TEST"
             }
         ]
     });
-    
+
     const { data: fetchPatintAttachmentsResponce, refetch: attachmentRefetch, isLoading: loadAttachment } = useGetPatientAttachmentsListQuery(attachmentsListRequest);
-   
+
     const [selectedRows, setSelectedRows] = useState([]);
     const { data: ordersList, refetch: ordersRefetch } = useGetDiagnosticOrderQuery(listOrdersRequest);
     const { data: orderTestList, refetch: orderTestRefetch, isLoading: loadTests } = useGetDiagnosticOrderTestQuery({ ...listOrdersTestRequest });
@@ -162,13 +165,13 @@ const DiagnosticsOrder = () => {
     ) ?? [];
 
     // Effects
-  useEffect(() => {
-  
-    if ( testsList?.object) {
-        setLeftItems(testsList.object);
-        setSelectedTestsList([]);
-    }
-}, [openTestsModal, testsList]);
+    useEffect(() => {
+
+        if (testsList?.object) {
+            setLeftItems(testsList.object);
+            setSelectedTestsList([]);
+        }
+    }, [openTestsModal, testsList]);
 
     useEffect(() => {
         if (searchTerm.trim() !== "") {
@@ -190,7 +193,7 @@ const DiagnosticsOrder = () => {
         }
     }, [searchTerm]);
 
- 
+
     useEffect(() => {
         const draftOrder = ordersList?.object?.find((order) => order.saveDraft === true);
 
@@ -252,31 +255,32 @@ const DiagnosticsOrder = () => {
 
     }, [orders])
 
-  useEffect(() => {
-   
-  if(!attachmentsModalOpen ){
-   
-    const updatedFilters =  [
-            {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined
-            }
-        
-            ,
-            {
-                fieldName:'attachment_type',
-                operator: "match",
-                value:"ORDER_TEST"
-            }
-        ];
-    setAttachmentsListRequest((prevRequest) => ({
-      ...prevRequest,
-      filters: updatedFilters,
-    }));}
-  attachmentRefetch()
-   
-  }, [attachmentsModalOpen])
+    useEffect(() => {
+
+        if (!attachmentsModalOpen) {
+
+            const updatedFilters = [
+                {
+                    fieldName: 'deleted_at',
+                    operator: 'isNull',
+                    value: undefined
+                }
+
+                ,
+                {
+                    fieldName: 'attachment_type',
+                    operator: "match",
+                    value: "ORDER_TEST"
+                }
+            ];
+            setAttachmentsListRequest((prevRequest) => ({
+                ...prevRequest,
+                filters: updatedFilters,
+            }));
+        }
+        attachmentRefetch()
+
+    }, [attachmentsModalOpen])
 
     const OpenDetailsModel = () => {
         setOpenDetailsModel(true);
@@ -367,10 +371,10 @@ const DiagnosticsOrder = () => {
             dispatch(notify({ msg: 'Save Failed', sev: "error" }));
         }
     };
-  
+
     const handleSaveOrders = async () => {
         if (patient && encounter) {
-            
+
             try {
                 const response = await saveOrders({
                     ...newApDiagnosticOrders,
@@ -381,10 +385,10 @@ const DiagnosticsOrder = () => {
                     radStatusLkey: "6055029972709625",
                 });
 
-                 setOpenTestsModal(true);
+                setOpenTestsModal(true);
                 dispatch(notify('Start New Order whith ID:' + response?.data?.orderId));
                 setOrders(response?.data);
-               
+
 
             } catch (error) {
                 console.error("Error saving prescription:", error);
@@ -765,7 +769,7 @@ const DiagnosticsOrder = () => {
                             disabled={orders.key ? orders?.statusLkey !== '164797574082125' : true}
                             flag={flag} setFlag={setFlag}
                             openTest={openTestsModal} setOpenTests={setOpenTestsModal} /> */}
-                
+
                         <div className='icon-style'>
                             <GrTestDesktop size={18} />
                         </div>
@@ -787,10 +791,10 @@ const DiagnosticsOrder = () => {
                             >
                                 Show canceled test
                             </Checkbox>
-                            <MyButton 
-                            disabled={orders.key == null }
-                            onClick={()=>setOpenTestsModal(true)}
-                             >Add Test </MyButton>
+                            <MyButton
+                                disabled={orders.key == null}
+                                onClick={() => setOpenTestsModal(true)}
+                            >Add Test </MyButton>
                             <MyButton
                                 disabled={orders.key !== null ? selectedRows.length === 0 : true}
                                 prefixIcon={() => <CloseOutlineIcon />}
@@ -835,7 +839,7 @@ const DiagnosticsOrder = () => {
 
                 />
                 <Panel header="Patient Orders Test" collapsible expanded={true} className='panel-style'>
-                <PatientPrevTests patient={patient} /></Panel>
+                    <PatientPrevTests patient={patient} /></Panel>
             </Row>
 
             <DetailsModal
@@ -865,8 +869,8 @@ const DiagnosticsOrder = () => {
                 actionType={'add'}
                 refecthData={attachmentRefetch}
                 attachmentSource={orderTest}
-                attatchmentType="ORDER_TEST" 
-                patientKey={patient?.key}/>
+                attatchmentType="ORDER_TEST"
+                patientKey={patient?.key} />
 
             <MyModal
                 open={openTestsModal}

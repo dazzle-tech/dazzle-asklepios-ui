@@ -17,7 +17,7 @@ import { newApPatientObservationSummary } from '@/types/model-types-constructor'
 import { ApPatientObservationSummary } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 
-const VitalSignsTriage = ({ patient, encounter, setRefetchPatientObservations}) => {
+const VitalSignsTriage = ({ patient, encounter, setRefetchPatientObservations ,readOnly=false}) => {
     const dispatch = useAppDispatch();
     const [bmi, setBmi] = useState('');
     const [bsa, setBsa] = useState('');
@@ -31,7 +31,6 @@ const VitalSignsTriage = ({ patient, encounter, setRefetchPatientObservations}) 
     const [saveObservationSummary, saveObservationsMutation] = useSaveObservationSummaryMutation();
     const [map, setMap] = useState(null);
     const [isEncounterStatusClosed, setIsEncounterStatusClosed] = useState(false);
-    const [readOnly, setReadOnly] = useState(false);
 
     // Define state for the request used to fetch the patient's last observations list
     const [patientLastVisitObservationsListRequest, setPatientLastVisitObservationsListRequest] =
@@ -179,7 +178,8 @@ const VitalSignsTriage = ({ patient, encounter, setRefetchPatientObservations}) 
                             fieldName="bloodPressureSystolic"
                             record={vital}
                             setRecord={setVital}
-                            inputColor={vital?.bloodPressureSystolic < 90 && vital?.bloodPressureSystolic != 0 ? 'danger' : ''} />
+                            inputColor={vital?.bloodPressureSystolic < 90 && vital?.bloodPressureSystolic != 0 ? 'danger' : ''} 
+                             disabled={readOnly}/>
                     </Col>
                     <Col md={1}><div style={{ padding: '5px', paddingTop: '30px' }}>/</div></Col>
                     <Col md={7}>
@@ -188,7 +188,8 @@ const VitalSignsTriage = ({ patient, encounter, setRefetchPatientObservations}) 
                             fieldType="number"
                             fieldName="bloodPressureDiastolic"
                             record={vital}
-                            setRecord={setVital} />
+                            setRecord={setVital}
+                            disabled={readOnly} />
                     </Col>
                     <Col md={8}>
                         <div className='container-Column'>
@@ -211,7 +212,8 @@ const VitalSignsTriage = ({ patient, encounter, setRefetchPatientObservations}) 
                             rightAddonwidth={45}
                             record={vital}
                             setRecord={setVital}
-                            inputColor={(vital?.heartRate < 50 || vital?.heartRate > 120) && vital?.heartRate != 0 ? 'danger' : ''} /></Col>
+                            inputColor={(vital?.heartRate < 50 || vital?.heartRate > 120) && vital?.heartRate != 0 ? 'danger' : ''} 
+                            disabled={readOnly}/></Col>
                     <Col md={8}>
                         <MyInput
                             width={300}
@@ -219,7 +221,8 @@ const VitalSignsTriage = ({ patient, encounter, setRefetchPatientObservations}) 
                             rightAddon="C"
                             fieldName="temperature"
                             record={vital}
-                            setRecord={setVital} /></Col>
+                            setRecord={setVital} 
+                            disabled={readOnly}/></Col>
                 </Row>
                 <Row>
                     <Col md={8}>
@@ -230,16 +233,17 @@ const VitalSignsTriage = ({ patient, encounter, setRefetchPatientObservations}) 
                             fieldName="oxygenSaturation"
                             record={vital}
                             setRecord={setVital}
-                            inputColor={vital?.oxygenSaturation < 92 && vital?.oxygenSaturation != 0 ? 'danger' : ''} /></Col>
-                    <Col md={12} >
-                        <MyButton
+                            inputColor={vital?.oxygenSaturation < 92 && vital?.oxygenSaturation != 0 ? 'danger' : ''} 
+                            disabled={readOnly}/></Col>
+                     {!readOnly &&  <Col md={12} >
+                    <MyButton
                             prefixIcon={() => <FontAwesomeIcon icon={faCheckDouble} />}
                             className="button-bottom-align-btm"
                             onClick={handleSave}
                         >
                             <Translate>  Save </Translate>
                         </MyButton>
-                    </Col>
+                    </Col>} 
                 </Row>
             </Form>
         </div>

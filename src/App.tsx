@@ -130,8 +130,9 @@ import ERStartTriage from './pages/encounter/ER-triage/ERStartTriage';
 import PurchaseApprovalSetup from './pages/setup/purchase-approvals-setup/PurchaseApprovalSetup';
 import PurchasingRequisition from './pages/purchasing-requisition/PurchasingRequisition';
 import ListOfRequisition from './pages/list-of-requisition';
-
-
+import ERWaitingList from './pages/encounter/ER-triage/ERWaitingList';
+import ViewTriage from './pages/encounter/ER-triage/ViewTriage';
+import QuickVisit from './pages/encounter/ER-triage/QuickVisit';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -300,6 +301,9 @@ const App = () => {
               <Route path="facility-patient-list" element={<FacilityPatientList />} />
               <Route path="ER-start-triage" element={<ERStartTriage />} />
               <Route path='ER-triage' element={<ERTriage />} />
+              <Route path='ER-waiting-list' element={<ERWaitingList />} />
+              <Route path='view-triage' element={<ViewTriage />} />
+              <Route path='quick-visit' element={<QuickVisit />} />
               <Route path="encounter" element={<Encounter />}>
                 <Route path="drug-order" element={<DrugOrder />} />
                 <Route index element={<PatientSummary />} />
