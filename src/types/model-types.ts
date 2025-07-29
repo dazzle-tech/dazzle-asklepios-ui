@@ -1759,6 +1759,46 @@ export interface ApInventoryTransactionProduct {
 	newQuentityBaseUom:number;
 } 
 
+export interface ApInventoryTransfer { 
+	key:string;
+	transNo:string;
+	transReason:string;
+	fromWarehouseKey:string;
+	toWarehouseKey:string;
+	note:string;
+	statusLkey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+} 
+
+export interface ApInventoryTransferProduct { 
+	key:string;
+	transferKey:string;
+	productKey:string;
+	quentityRequested:number;
+	quentityApproved:number;
+	lotserialnumber:string;
+	isEffectedWarehouse:boolean;
+	notes:string;
+	transUomKey:string;
+	quentityRequestedBaseUom:number;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
+	quentityApprovedBaseUom:number;
+	statusLkey:string;
+	rejectedReason:string;
+} 
+
 export interface ApLabResultLog { 
 	key:string;
 	resultKey:string;
@@ -1931,6 +1971,10 @@ export interface ApMedicalSheets {
 	carePlanAndGoals:boolean;
 	dischargePlanning:boolean;
 	pregnancyFollowUp:boolean;
+	morseFallScale:boolean;
+	hendrichFallRisk:boolean;
+	stratifyScale:boolean;
+	johnsHopkinsFallRiskAssessmentTool  :boolean;
 } 
 
 export interface ApMedicationCategories { 

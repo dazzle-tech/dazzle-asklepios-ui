@@ -246,6 +246,34 @@ const ChooseDepartment = ({
                       record={showScreen}
                       setRecord={setShowScreen}
                     />
+                     <MyInput
+                      fieldType="check"
+                      fieldName={'johnsHopkinsFallRiskAssessmentTool  '}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
+                     <MyInput
+                      fieldType="check"
+                      fieldName={'morseFallScale'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
+                     <MyInput
+                      fieldType="check"
+                      fieldName={'hendrichFallRisk'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
+                     <MyInput
+                      fieldType="check"
+                      fieldName={'stratifyScale'}
+                      showLabel={false}
+                      record={showScreen}
+                      setRecord={setShowScreen}
+                    />
 
                 </div>
               </div>

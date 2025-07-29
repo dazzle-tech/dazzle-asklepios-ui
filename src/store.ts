@@ -20,6 +20,8 @@ import { procedureService } from './services/procedureService';
 import {operationService} from './services/operationService';
 import { inventoryService } from './services/inventoryTransactionService';
 import refetchReducer from './reducers/refetchEncounterState'; 
+import{recoveryService} from './services/RecoveryService';
+
 export const store = configureStore({
   reducer: {
     // ui
@@ -72,6 +74,9 @@ export const store = configureStore({
      refetch: refetchReducer,
     //procedure 
     [procedureService.reducerPath]:procedureService.reducer,
+
+    //recovery
+    [recoveryService.reducerPath]:recoveryService.reducer
   
   },
   // @ts-ignore
@@ -92,7 +97,8 @@ export const store = configureStore({
       labService.middleware,
       radService.middleware,
       procedureService.middleware,
-      operationService.middleware
+      operationService.middleware,
+      recoveryService.middleware
   
     ])
     

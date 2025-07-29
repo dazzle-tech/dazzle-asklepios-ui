@@ -1760,6 +1760,46 @@ export const newApInventoryTransactionProduct:modelTypes.ApInventoryTransactionP
 	newQuentityBaseUom:0,
 } 
 
+export const newApInventoryTransfer:modelTypes.ApInventoryTransfer = { 
+	key:undefined,
+	transNo:'',
+	transReason:'',
+	fromWarehouseKey:undefined,
+	toWarehouseKey:undefined,
+	note:'',
+	statusLkey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+} 
+
+export const newApInventoryTransferProduct:modelTypes.ApInventoryTransferProduct = { 
+	key:undefined,
+	transferKey:undefined,
+	productKey:undefined,
+	quentityRequested:0,
+	quentityApproved:0,
+	lotserialnumber:'',
+	isEffectedWarehouse:undefined,
+	notes:'',
+	transUomKey:undefined,
+	quentityRequestedBaseUom:0,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
+	quentityApprovedBaseUom:0,
+	statusLkey:undefined,
+	rejectedReason:'',
+} 
+
 export const newApLabResultLog:modelTypes.ApLabResultLog = { 
 	key:undefined,
 	resultKey:undefined,
@@ -1932,6 +1972,10 @@ export const newApMedicalSheets:modelTypes.ApMedicalSheets = {
 	carePlanAndGoals:undefined,
 	dischargePlanning:undefined,
 	pregnancyFollowUp:undefined,
+	morseFallScale:undefined,
+	hendrichFallRisk:undefined,
+	stratifyScale:undefined,
+	johnsHopkinsFallRiskAssessmentTool  :undefined,
 } 
 
 export const newApMedicationCategories:modelTypes.ApMedicationCategories = { 
