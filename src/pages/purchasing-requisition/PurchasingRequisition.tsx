@@ -18,6 +18,8 @@ import AttachmentModal from '@/components/AttachmentUploadModal/AttachmentUpload
 import { faRotate } from '@fortawesome/free-solid-svg-icons';
 import { formatDateWithoutSeconds } from '@/utils';
 import AddPurchasing from './AddPurchasing';
+import AddItem from './AddItem';
+import { faClipboardList } from '@fortawesome/free-solid-svg-icons';
 
 //table data
 const sampleData = [
@@ -80,11 +82,15 @@ const PurchasingRequisition = () => {
   const [tableData, setTableData] = useState(sampleData);
   const [actionType, setActionType] = useState<'deactivate' | 'reactivate'>('deactivate');
   const [addModalOpen, setAddModalOpen] = useState(false);
-
+  // State for Add Item modal
+  const [addItemModelOpen, setAddItemModelOpen] = useState(false);
+  // State for action types and requested patient attachment
   const [actionTypes, setActionTypes] = useState<'view' | 'download' | 'add' | null>(null);
+  // State for requested patient attachment
   const [requestedPatientAttachment, setRequestedPatientAttachment] = useState<
     string | undefined
   >();
+  // State for list request
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     pageSize: 15
@@ -103,7 +109,7 @@ const PurchasingRequisition = () => {
     checkPicker: []
   });
 
-  //columns
+  // Define columns for the table
   const columns: ColumnConfig[] = [
     {
       key: 'InitiatedBy',
@@ -283,6 +289,18 @@ const PurchasingRequisition = () => {
           />
 
           <FontAwesomeIcon
+            icon={faClipboardList}
+            title="Add items"
+            id="add-items"
+            className="icons-style"
+            size="lg"
+            fill="var(--primary-gray)"
+            onClick={() => {
+              setAddItemModelOpen(true);
+            }}
+          />
+
+          <FontAwesomeIcon
             icon={faPen}
             title="Edit"
             id="edit"
@@ -290,7 +308,7 @@ const PurchasingRequisition = () => {
             size="lg"
             fill="var(--primary-blue)"
             onClick={() => {
-              // setOpen(true); // This line is removed as per the edit hint
+              setAddModalOpen(true);
             }}
           />
 
@@ -334,12 +352,20 @@ const PurchasingRequisition = () => {
       <h5>Purchasing Requisition</h5>
     </div>
   );
+  // Render the divContent as HTML string
+  // This is used to set the page code and content in the Redux store
+  // This allows the page to be rendered correctly in the application
+  // and to be displayed in the sidebar navigation
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+  // Set the page code and content in the Redux store
   dispatch(setPageCode('Purchasing_Requisition'));
+  // Set the div content in the Redux store
   dispatch(setDivContent(divContentHTML));
-  // Pagination values
+  // Calculate the page index based on the current page number
   const pageIndex = listRequest.pageNumber - 1;
+  // Calculate the number of rows per page and total count
   const rowsPerPage = listRequest.pageSize;
+  // Calculate the total count of items in the table data
   const totalCount = tableData.length;
   //  paginatedData
   const paginatedData = tableData.slice(pageIndex * rowsPerPage, (pageIndex + 1) * rowsPerPage);
@@ -357,6 +383,7 @@ const PurchasingRequisition = () => {
       pageNumber: 1
     });
   };
+  // delete confirmation handler
   const handleDeleteConfirm = () => {
     if (selectedItemId !== null) {
       setTableData(prev =>
@@ -377,6 +404,7 @@ const PurchasingRequisition = () => {
   };
 
   //  useEffect
+  // This effect runs when the component mounts or when the pathname changes
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
@@ -407,6 +435,7 @@ const PurchasingRequisition = () => {
               <Form fluid className="search">
                 <MyInput
                   fieldName=""
+                  searchable={false}
                   fieldType="select"
                   placeholder="Select Filter"
                   selectData={[
@@ -454,6 +483,7 @@ const PurchasingRequisition = () => {
           requestedPatientAttacment={requestedPatientAttachment}
           patientKey={selectedAttachmentRow?.OrderID ?? ''}
         />
+        <AddItem open={addItemModelOpen} setOpen={setAddItemModelOpen} />
       </Panel>
     </>
   );
