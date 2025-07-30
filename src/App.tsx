@@ -134,6 +134,7 @@ import ERWaitingList from './pages/encounter/ER-triage/ERWaitingList';
 import ViewTriage from './pages/encounter/ER-triage/ViewTriage';
 import QuickVisit from './pages/encounter/ER-triage/QuickVisit';
 import SupplierSetup from './pages/setup/supplier-setup/Supplier';
+import OperationRoomMaterials from './pages/operation-theater/operation-room-materials/OperationRoomMaterials';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -402,6 +403,7 @@ const App = () => {
               <Route path="purchasing-requisition" element={<PurchasingRequisition />} />
               <Route path="list-of-requisition" element={<ListOfRequisition />} />
               <Route path="supplier-setup" element={<SupplierSetup />} />
+              <Route path="operation-room-materials" element={<OperationRoomMaterials />} />
             </Route>
           </Route>
 
