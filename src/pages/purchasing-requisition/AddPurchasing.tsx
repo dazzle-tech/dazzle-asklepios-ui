@@ -147,6 +147,7 @@ const AddPurchasing = ({ open, setOpen }) => {
           <MyInput
             fieldLabel="Created Department"
             fieldName="Created Department"
+            placeholder="IT"
             fieldType="select"
             disabled={true}
             selectData={[
@@ -163,6 +164,7 @@ const AddPurchasing = ({ open, setOpen }) => {
           <MyInput
             fieldLabel="Last Purchase Order"
             fieldName="Last Purchase Order"
+            placeholder="PO-2023-0842"
             fieldType="select"
             disabled={true}
             selectData={[

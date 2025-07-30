@@ -347,7 +347,7 @@ const ListOfRequisition = () => {
               onClick={() => setOpenAttachModal(true)}
             />
             <FontAwesomeIcon icon={faPrint} id="icon5" title="Print Order" />
-            <FontAwesomeIcon icon={faPlug} title="FRP Integration" id="icon6" />
+            <FontAwesomeIcon icon={faPlug} title="ERP Integration" id="icon6" />
             <FontAwesomeIcon icon={faBan} title="Reject Order" id="icon7" />
           </div>
         );
