@@ -135,6 +135,7 @@ import ViewTriage from './pages/encounter/ER-triage/ViewTriage';
 import QuickVisit from './pages/encounter/ER-triage/QuickVisit';
 import SupplierSetup from './pages/setup/supplier-setup/Supplier';
 import OperationRoomMaterials from './pages/operation-theater/operation-room-materials/OperationRoomMaterials';
+import ProgressNotes from './pages/encounter/encounter-component/progress-notes/ProgressNotes';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -292,10 +293,10 @@ const App = () => {
               <Route path="encounter-registration" element={<EncounterRegistration />} />
               <Route path="facility-patient-list" element={<FacilityPatientList />} />
               <Route path="ER-start-triage" element={<ERStartTriage />} />
-              <Route path='ER-triage' element={<ERTriage />} />
-              <Route path='ER-waiting-list' element={<ERWaitingList />} />
-              <Route path='view-triage' element={<ViewTriage />} />
-              <Route path='quick-visit' element={<QuickVisit />} />
+              <Route path="ER-triage" element={<ERTriage />} />
+              <Route path="ER-waiting-list" element={<ERWaitingList />} />
+              <Route path="view-triage" element={<ViewTriage />} />
+              <Route path="quick-visit" element={<QuickVisit />} />
               <Route path="ER-triage" element={<ERTriage />} />
               <Route path="encounter" element={<Encounter />}>
                 <Route path="drug-order" element={<DrugOrder />} />
@@ -404,6 +405,7 @@ const App = () => {
               <Route path="list-of-requisition" element={<ListOfRequisition />} />
               <Route path="supplier-setup" element={<SupplierSetup />} />
               <Route path="operation-room-materials" element={<OperationRoomMaterials />} />
+              <Route path="progress-notes" element={<ProgressNotes />} />
             </Route>
           </Route>
 
