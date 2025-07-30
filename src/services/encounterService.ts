@@ -1,4 +1,4 @@
-import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound, ApNurseNotes, ApRepositioning, ApDayCaseEncounters, ApPreOperationAdministeredMedications, ApEmergencyTriage } from './../types/model-types';
+import { ApAdmitOutpatientInpatient, ApAudiometryPuretone, ApBedTransactions, ApElectrocardiogramEcg, ApOptometricExam, ApProcedureRegistration, ApTreadmillStress, ApPainAssessment, ApInpatientChiefComplain, ApGeneralAssessment, ApFunctionalAssessment, ApMedicationReconciliation, ApTransferPatient, ApDoctorRound, ApNurseNotes, ApRepositioning, ApDayCaseEncounters, ApPreOperationAdministeredMedications, ApEmergencyTriage, ApEncounterAssignToBed } from './../types/model-types';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQuery, onQueryStarted } from '../api';
 import { ListRequest } from '@/types/types';
@@ -796,18 +796,18 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-    saveNewDayCase: builder.mutation({
-      query: (dayCase: ApDayCaseEncounters) => ({
-        url: `/encounter/save-new-day-case`,
+    saveAssignToBed: builder.mutation({
+      query: (encounterAssignToBed: ApEncounterAssignToBed) => ({
+        url: `/encounter/save-assign-to-bed`,
         method: 'POST',
-        body: dayCase
+        body: encounterAssignToBed
       }),
       onQueryStarted: onQueryStarted,
       transformResponse: (response: any) => {
         return response.object;
       }
     }),
-       savePreOperationMedications: builder.mutation({
+    savePreOperationMedications: builder.mutation({
       query: (preOperation: ApPreOperationAdministeredMedications) => ({
         url: `/encounter/save-pre-operation-administered-medications`,
         method: 'POST',
@@ -843,14 +843,43 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-     getEREncounters: builder.query({
+    getEREncounters: builder.query({
       query: (listRequest: ListRequest) => ({
         url: `/encounter/er-waiting-list?${fromListRequestToQueryParams(listRequest)}`
       }),
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
-  })
+    ERCompleteEncounter: builder.mutation({
+      query: (data: { encounter: ApEncounter, triageKey: string, destinationKey: string }) => ({
+        url: `/encounter/er-complete-encounter`,
+        method: 'POST',
+        body: data.encounter,
+        headers: {
+          triage_key: data.triageKey,
+          destination_key: data.destinationKey,
+        }
+      }),
+    }),
+    SentToER: builder.mutation({
+      query: (data: { encounter: ApEncounter, triageKey: string, destinationKey: string }) => ({
+        url: `/encounter/sent-to-er`,
+        method: 'POST',
+        body: data.encounter,
+        headers: {
+          triage_key: data.triageKey,
+          destination_key: data.destinationKey,
+        }
+      }),
+    }),
+    getEREncountersList: builder.query({
+      query: (listRequest: ListRequest) => ({
+        url: `/encounter/er-triage-list?${fromListRequestToQueryParams(listRequest)}`
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
+  }),
 });
 
 export const {
@@ -937,10 +966,13 @@ export const {
   useSaveNurseNotesMutation,
   useSaveNewPositionMutation,
   useGetRepositioningListQuery,
-  useSaveNewDayCaseMutation,
+  useSaveAssignToBedMutation,
   useSavePreOperationMedicationsMutation,
   useGetPreOperationMedicationsListQuery,
   useGetEmergencyTriagesListQuery,
   useSaveEmergencyTriagesMutation,
-  useGetEREncountersQuery
+  useGetEREncountersQuery,
+  useERCompleteEncounterMutation,
+  useSentToERMutation,
+  useGetEREncountersListQuery
 } = encounterService;

@@ -38,9 +38,9 @@ const ERStartTriage = () => {
     const dispatch = useAppDispatch();
     const [isHiddenFields, setIsHiddenFields] = useState(false);
     const [emergencyTriage, setEmergencyTriage] = useState<any>({ ...newApEmergencyTriage });
-    const [refetchPatientObservations ,setRefetchPatientObservations] = useState(false);
-    const [openSendToModal,setOpenSendToModal] = useState(false);
-    const [encounter ,setEncounter] = useState<ApEncounter>({...propsData.encounter});
+    const [refetchPatientObservations, setRefetchPatientObservations] = useState(false);
+    const [openSendToModal, setOpenSendToModal] = useState(false);
+    const [encounter, setEncounter] = useState<ApEncounter>({ ...propsData.encounter });
     const YES_KEY = '1476229927081534';
     const NO_KEY = '1476240934233400';
 
@@ -128,14 +128,15 @@ const ERStartTriage = () => {
     };
 
     // Effects
-     // Effects
+    // Effects
     useEffect(() => {
         if (saveTriageMutation && saveTriageMutation.status === 'fulfilled') {
             setEmergencyTriage(saveTriageMutation.data);;
-            setEncounter({...encounter,emergencyLevelLkey:emergencyTriage?.emergencyLevelLkey})}
+            setEncounter({ ...encounter, emergencyLevelLkey: emergencyTriage?.emergencyLevelLkey })
+        }
     }, [saveTriageMutation]);
     // Effects
-   
+
     useEffect(() => {
         return () => {
             dispatch(setPageCode(''));
@@ -209,7 +210,7 @@ const ERStartTriage = () => {
         emergencyTriage.ecgLkey,
         emergencyTriage.consultationLkey
     ]);
-  useEffect(() => {
+    useEffect(() => {
         setEncounter({ ...propsData?.encounter });
     }, [propsData]);
     return (
@@ -230,7 +231,7 @@ const ERStartTriage = () => {
                     </MyButton>
                     <MyButton
                         prefixIcon={() => <FontAwesomeIcon icon={faPaperPlane} />}
-                        onClick={()=>{setOpenSendToModal(true);}}
+                        onClick={() => { setOpenSendToModal(true); }}
                     >
                         <Translate>  Send to </Translate>
                     </MyButton>
@@ -415,7 +416,7 @@ const ERStartTriage = () => {
                     </Panel>
                 </Row>
                 <Row gutter={30}>
-                    <VitalSignsTriage patient={propsData.patient} encounter={propsData.encounter} setRefetchPatientObservations={setRefetchPatientObservations}/>
+                    <VitalSignsTriage patient={propsData.patient} encounter={propsData.encounter} setRefetchPatientObservations={setRefetchPatientObservations} />
                 </Row>
                 <Row gutter={30}>
                     <GeneralAssessmentTriage patient={propsData.patient} encounter={propsData.encounter} />
@@ -528,12 +529,13 @@ const ERStartTriage = () => {
                 </Row>
             </div>
             <div className="right-box">
-                <PatientSide patient={propsData.patient} encounter={propsData.encounter} refetchList={refetchPatientObservations}/>
+                <PatientSide patient={propsData.patient} encounter={propsData.encounter} refetchList={refetchPatientObservations} />
             </div>
             <SendToModal
-             open={openSendToModal}
-             setOpen={setOpenSendToModal}
-             encounter={encounter}/>
+                open={openSendToModal}
+                setOpen={setOpenSendToModal}
+                encounter={encounter}
+                triage={emergencyTriage} />
         </div>
     );
 };

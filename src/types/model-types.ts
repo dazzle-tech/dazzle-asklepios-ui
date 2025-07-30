@@ -584,21 +584,6 @@ export interface ApCustomeInstructions {
 	isValid:boolean;
 } 
 
-export interface ApDayCaseEncounters { 
-	key:string;
-	encounterKey:string;
-	patientKey:string;
-	createdBy:string;
-	updatedBy:string;
-	deletedBy:string;
-	createdAt:number;
-	updatedAt:number;
-	deletedAt:number;
-	roomKey:string;
-	bedKey:string;
-	admissionReason:string;
-} 
-
 export interface ApDentalAction { 
 	key:string;
 	description:string;
@@ -1346,6 +1331,7 @@ export interface ApEmergencyTriage {
 	medicationLkey:string;
 	ecgLkey:string;
 	consultationLkey:string;
+	destinationLkey:string;
 } 
 
 export interface ApEncounter { 
@@ -1453,6 +1439,22 @@ export interface ApEncounterAppliedService {
 	updatedAt:number;
 	deletedAt:number;
 	isValid:boolean;
+} 
+
+export interface ApEncounterAssignToBed { 
+	key:string;
+	encounterKey:string;
+	patientKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	roomKey:string;
+	bedKey:string;
+	admissionReason:string;
+	departmentKey:string;
 } 
 
 export interface ApEncounterVaccination { 

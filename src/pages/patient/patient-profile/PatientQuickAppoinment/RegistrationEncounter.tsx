@@ -15,7 +15,7 @@ const RegistrationEncounter = ({ localEncounter, setLocalEncounter, isReadOnly }
     const { data: encounterReasonLovQueryResponse } = useGetLovValuesByCodeQuery('ENC_REASON');
     const { data: visitTypeLovQueryResponse } = useGetLovValuesByCodeQuery('BOOK_VISIT_TYPE');
     const { data: patOriginLovQueryResponse } = useGetLovValuesByCodeQuery('PAT_ORIGIN');
-    console.log("resourceTypeQueryResponse===>", resourceTypeQueryResponse);
+
     // Initialize List Request Filters
     const { data: departmentListResponse } = useGetDepartmentsQuery({ ...initialListRequest });
     const [filteredResourcesList, setFilteredResourcesList] = useState([]);

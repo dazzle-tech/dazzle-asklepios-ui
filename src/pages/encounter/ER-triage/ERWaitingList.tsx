@@ -23,20 +23,25 @@ import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { formatDateWithoutSeconds } from "@/utils";
 import { faUserDoctor } from '@fortawesome/free-solid-svg-icons';
+import BedAssignmentModal from '../day-case/DayCaseList/BedAssignmentModal';
 const ERWaitingList = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [openBedAssigmentModal, setOpenBedAssigment] = useState(false);
+  const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
+  const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+  // header setup
   const divContent = (
     <div style={{ display: 'flex' }}>
       <h5>ER Wating List</h5>
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+
   dispatch(setPageCode('ER_Waiting_List'));
   dispatch(setDivContent(divContentHTML));
-  const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
-  const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
+
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
     ignore: true,
@@ -253,6 +258,11 @@ const ERWaitingList = () => {
                 <MyButton
                   size="small"
                   backgroundColor="black"
+                  onClick={() => {
+                    const patientData = rowData?.patientObject;
+                    setLocalEncounter(rowData);
+                    setOpenBedAssigment(true);
+                  }}
                 >
                   <FontAwesomeIcon icon={faBedPulse} />
 
@@ -276,6 +286,7 @@ const ERWaitingList = () => {
                 <MyButton
                   size="small"
                   backgroundColor="violet"
+
                 >
                   <FontAwesomeIcon icon={faFileWaveform} />
                 </MyButton>
@@ -339,6 +350,12 @@ const ERWaitingList = () => {
   };
   return (
     <Panel>
+      <BedAssignmentModal
+        refetchEncounter={refetchEncounter}
+        open={openBedAssigmentModal}
+        setOpen={setOpenBedAssigment}
+        encounter={encounter}
+        departmentKey={encounter?.resourceTypeLkey === "6743167799449277" ? encounter?.resourceObject?.key : encounter?.departmentKey} />
       <MyTable
         filters={filters()}
         height={600}
