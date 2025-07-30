@@ -112,7 +112,8 @@ const SupplierSetup = () => {
     supplierType: '',
     status: '',
     paymentTerms: '',
-    address: '',});
+    address: ''
+  });
 
   // Move columns definition here
   const columns: ColumnConfig[] = [

@@ -174,8 +174,8 @@ const PurchaseApprovalSetup = () => {
 
   return (
     <>
-      <Panel className="Main-Purchase-Approval-Page-Gaps">
-        <div className="Add-New-Purchase-Approval-Button">
+      <Panel className="main-purchase-approval-page-gaps">
+        <div className="add-new-purchase-approval-button">
           <MyButton prefixIcon={() => <AddOutlineIcon />} onClick={() => setOpenModal(true)}>
             Add New
           </MyButton>
@@ -185,7 +185,7 @@ const PurchaseApprovalSetup = () => {
           data={paginatedData}
           columns={columns}
           filters={
-            <Form fluid className="Table-Header-Content">
+            <Form fluid className="table-header-content">
               <MyInput
                 selectDataValue="value"
                 selectDataLabel="label"
