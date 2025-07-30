@@ -80,21 +80,23 @@ const columns: ColumnConfig[] = [
     dataKey: 'itemClassification',
     expandable: true
   },
-  { key: 'acceptBy', title: 'Accepted By', dataKey: 'acceptBy', expandable: true },
   {
     key: 'acceptDateTime',
-    title: 'Accept Date & Time',
+    title: 'Accepted By/At',
     dataKey: 'acceptDateTime',
     expandable: true,
-    render: (row: any) =>
-      row?.acceptDateTime ? (
-        <>
-          <span className="date-table-style">{formatDateWithoutSeconds(row.acceptDateTime)}</span>
-        </>
-      ) : (
-        ' '
-      )
-  },
+      render: (row: any) =>
+            row?.acceptDateTime ? (
+              <>
+                {row?.acceptBy}
+                <br />
+                <span className="date-table-style">
+                  {formatDateWithoutSeconds(row.acceptDateTime)}
+                </span>{' '}
+              </>
+            ) : (
+              ' '
+            )},
   {
     key: 'Approved At/By',
     title: 'Approved At/By',
