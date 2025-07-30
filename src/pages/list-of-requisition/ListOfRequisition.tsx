@@ -1,5 +1,5 @@
 import MyTable from '@/components/MyTable';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import { Form } from 'rsuite';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
@@ -19,6 +19,9 @@ import MyInput from '@/components/MyInput';
 import './Styles.less';
 import { formatDateWithoutSeconds } from '@/utils';
 import AttachmentUploadModal from '@/components/AttachmentUploadModal';
+import ReactDOMServer from 'react-dom/server';
+import { useDispatch } from 'react-redux';
+import { setPageCode, setDivContent } from '@/reducers/divSlice';
 //MainTable Data
 const sampleData = [
   {
@@ -104,6 +107,7 @@ const sampleData = [
 ];
 //Declares
 const ListOfRequisition = () => {
+  const dispatch = useDispatch();
   const [sortColumn, setSortColumn] = useState('name');
   const [sortType, setSortType] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(0);
@@ -114,6 +118,19 @@ const ListOfRequisition = () => {
   const [tableData, setTableData] = useState(sampleData);
   const [openAttachModal, setOpenAttachModal] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
+
+  // Header page setUp - moved to useEffect
+  useEffect(() => {
+    const divContent = (
+      <div className="page-title">
+        <h5>Purchase Order</h5>
+      </div>
+    );
+    const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
+    dispatch(setPageCode('Purchase_Order'));
+    dispatch(setDivContent(divContentHTML));
+  }, [dispatch]);
+
   //Accept/UndoAccept Handle
   const handleDeleteConfirm = () => {
     if (selectedItemId !== null) {
@@ -144,7 +161,7 @@ const ListOfRequisition = () => {
 
   //Fiter Content
   const FilterModel = (
-    <Form fluid className="Table-Header-Content">
+    <Form fluid className="table-header-content">
       <MyInput
         selectDataValue="value"
         selectDataLabel="label"
@@ -337,7 +354,6 @@ const ListOfRequisition = () => {
       }
     }
   ];
-
   return (
     <>
       <MyTable
