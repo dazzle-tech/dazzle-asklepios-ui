@@ -79,7 +79,7 @@ const AddPurchasing = ({ open, setOpen }) => {
           <MyInput
             fieldLabel="Estimated Delivery Date"
             fieldName="Estimated Delivery Date"
-            fieldType="datetime"
+            fieldType="date"
             record={record}
             setRecord={setRecord}
             width={250}
@@ -230,7 +230,7 @@ const AddPurchasing = ({ open, setOpen }) => {
           footer: <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}>clear</MyButton>
         }
       ]}
-      size="38vw"
+      size="35vw"
       position="right"
       actionButtonLabel="Create"
       content={modelContent}

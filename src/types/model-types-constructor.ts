@@ -585,21 +585,6 @@ export const newApCustomeInstructions:modelTypes.ApCustomeInstructions = {
 	isValid:undefined,
 } 
 
-export const newApDayCaseEncounters:modelTypes.ApDayCaseEncounters = { 
-	key:undefined,
-	encounterKey:undefined,
-	patientKey:undefined,
-	createdBy:'',
-	updatedBy:'',
-	deletedBy:'',
-	createdAt:undefined,
-	updatedAt:undefined,
-	deletedAt:undefined,
-	roomKey:undefined,
-	bedKey:undefined,
-	admissionReason:'',
-} 
-
 export const newApDentalAction:modelTypes.ApDentalAction = { 
 	key:undefined,
 	description:'',
@@ -1347,6 +1332,7 @@ export const newApEmergencyTriage:modelTypes.ApEmergencyTriage = {
 	medicationLkey:undefined,
 	ecgLkey:undefined,
 	consultationLkey:undefined,
+	destinationLkey:undefined,
 } 
 
 export const newApEncounter:modelTypes.ApEncounter = { 
@@ -1454,6 +1440,22 @@ export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService =
 	updatedAt:undefined,
 	deletedAt:undefined,
 	isValid:undefined,
+} 
+
+export const newApEncounterAssignToBed:modelTypes.ApEncounterAssignToBed = { 
+	key:undefined,
+	encounterKey:undefined,
+	patientKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	roomKey:undefined,
+	bedKey:undefined,
+	admissionReason:'',
+	departmentKey:undefined,
 } 
 
 export const newApEncounterVaccination:modelTypes.ApEncounterVaccination = { 

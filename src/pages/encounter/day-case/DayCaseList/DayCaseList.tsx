@@ -171,7 +171,7 @@ const DayCaseList = () => {
             key: 'queueNumber',
             title: <Translate>#</Translate>,
             dataKey: 'queueNumber',
-            render: rowData => rowData?.patientObject.patientMrn
+            render: rowData => rowData?.patientObject?.patientMrn
         },
         {
             key: 'patientFullName',
@@ -211,7 +211,7 @@ const DayCaseList = () => {
                 );
             }
         },
-         {
+        {
             key: 'location',
             title: <Translate>LOCATION</Translate>,
             render: (row: any) => <span className='location-table-style '>{row?.apRoom?.name}<br />{row?.apBed?.name}</span>
@@ -390,7 +390,8 @@ const DayCaseList = () => {
                 refetchEncounter={refetchEncounter}
                 open={openBedAssigmentModal}
                 setOpen={setOpenBedAssigment}
-                encounter={encounter} />
+                encounter={encounter}
+                departmentKey={encounter?.resourceTypeLkey === "5433343011954425" ? encounter?.resourceObject?.key : encounter?.departmentKey} />
             <MyTable
                 filters={filters()}
                 height={600}

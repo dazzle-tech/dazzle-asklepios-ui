@@ -9,7 +9,7 @@ import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { addFilterToListRequest, formatDate } from '@/utils';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetEncountersQuery, useSaveEncounterChangesMutation } from '@/services/encounterService';
+import { useGetEREncountersListQuery, useSaveEncounterChangesMutation } from '@/services/encounterService';
 import { useLocation } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
@@ -69,7 +69,7 @@ const ERTriage = () => {
         isFetching,
         refetch: refetchEncounter,
         isLoading
-    } = useGetEncountersQuery(listRequest);
+    } = useGetEREncountersListQuery(listRequest);
     // Fetch list of values (LOV) for emergency levels using the provided code
 
     const { data: emergencyLevellovqueryresponse } = useGetLovValuesByCodeQuery('EMERGENCY_LEVEL');
@@ -137,7 +137,7 @@ const ERTriage = () => {
             }
         });
     };
-
+    console.log("encounterListResponse===>", encounterListResponse)
     //useEffect
     useEffect(() => {
         dispatch(setPageCode(''));
@@ -303,6 +303,14 @@ const ERTriage = () => {
             dataKey: 'plannedStartDate'
         },
         {
+            key: 'destinationLkey',
+            title: 'Destination',
+            render: (row: any) =>
+                row?.emergencyTriage?.destinationLkey
+                    ? row?.emergencyTriage?.destinationLvalue?.lovDisplayVale
+                    : ''
+        },
+        {
             key: 'status',
             title: <Translate>STATUS</Translate>,
             render: rowData => <MyBadgeStatus color={rowData?.encounterStatusLvalue?.valueColor} contant={rowData.encounterStatusLvalue
@@ -457,7 +465,8 @@ const ERTriage = () => {
             <SendToModal
                 open={openSendToModal}
                 setOpen={setOpenSendToModal}
-                encounter={encounter} />
+                encounter={encounter}
+                triage={encounter?.emergencyTriage} />
         </Panel>
     );
 };

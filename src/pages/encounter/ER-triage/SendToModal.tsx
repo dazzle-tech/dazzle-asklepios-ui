@@ -2,29 +2,34 @@ import React, { useEffect, useState } from 'react';
 import { useAppDispatch } from '@/hooks';
 import { Form } from 'rsuite';
 import MyButton from '@/components/MyButton/MyButton';
-import { newApEncounter } from '@/types/model-types-constructor';
+import { newApEmergencyTriage, newApEncounter } from '@/types/model-types-constructor';
 import { ApEncounter } from '@/types/model-types';
 import { notify } from '@/utils/uiReducerActions';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import MyModal from '@/components/MyModal/MyModal';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import './styles.less'
-import { useCompleteEncounterMutation } from '@/services/encounterService';
-import { useCompleteEncounterRegistrationMutation } from '@/services/encounterService';
+import { useERCompleteEncounterMutation } from '@/services/encounterService';
+import { useSentToERMutation } from '@/services/encounterService';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
-const SendToModal = ({ open, setOpen, encounter }) => {
-    const [completeEncounter, completeEncounterMutation] = useCompleteEncounterMutation();
+const SendToModal = ({ open, setOpen, encounter, triage }) => {
+    const [completeEncounter, completeEncounterMutation] = useERCompleteEncounterMutation();
     const dispatch = useAppDispatch();
     const [localEncounter, setLocalEncounter] = useState<ApEncounter>({ ...newApEncounter });
-    const [saveEncounter, saveEncounterMutation] = useCompleteEncounterRegistrationMutation();
+    const [saveEncounter, saveEncounterMutation] = useSentToERMutation();
     const [showModal, setShowModal] = useState(false);
+    const [emergencyTriage, setEmergencyTriage] = useState<any>({ ...newApEmergencyTriage });
 
     // Handle Save Encounter
-    const handleSave = () => {
+    const handleSave = (destinationKey) => {
         if (localEncounter && localEncounter.patientKey) {
             saveEncounter({
-                ...localEncounter,
-                encounterStatusLkey: "6742317684600328",
+                encounter: {
+                    ...localEncounter,
+                    encounterStatusLkey: "6742317684600328"
+                },
+                triageKey: emergencyTriage?.key,
+                destinationKey: destinationKey
             }).unwrap().then(() => {
                 dispatch(notify({ msg: 'Patient has been successfully moved from the ER Waiting List' }));
                 setShowModal(false);
@@ -44,9 +49,15 @@ const SendToModal = ({ open, setOpen, encounter }) => {
         }
     };
     // handle Complete Encounter Function
-    const handleCompleteEncounter = async () => {
+    const handleCompleteEncounter = async (destinationKey) => {
+        console.log(" emergencyTriage?.key ===> ", emergencyTriage?.key);
         try {
-            await completeEncounter(localEncounter).unwrap();
+            await completeEncounter({
+                encounter: localEncounter,
+                triageKey: emergencyTriage?.key,
+                destinationKey: destinationKey
+            }).unwrap();
+
             dispatch(notify({ msg: 'Completed Successfully', sev: 'success' }));
         } catch (error) {
             console.error("Encounter completion error:", error);
@@ -56,10 +67,10 @@ const SendToModal = ({ open, setOpen, encounter }) => {
     // Modal Content 
     const content = (
         <Form fluid layout='inline' className="send-to-options-form">
-            <MyButton width={300} onClick={handleCompleteEncounter}>
+            <MyButton width={300} onClick={() => { handleCompleteEncounter('8454546825442137') }}>
                 Refer to Specialist
             </MyButton>
-            <MyButton width={300} onClick={handleCompleteEncounter}>
+            <MyButton width={300} onClick={() => { handleCompleteEncounter('8454570378575811') }}>
                 Send to Home Care
             </MyButton>
             <MyButton width={300} onClick={() => { setShowModal(true) }}>
@@ -74,6 +85,11 @@ const SendToModal = ({ open, setOpen, encounter }) => {
             setLocalEncounter({ ...encounter });
         }
     }, [encounter]);
+    useEffect(() => {
+        if (triage) {
+            setEmergencyTriage({ ...triage });
+        }
+    }, [triage]);
     return (
         <>
             <MyModal
@@ -96,7 +112,7 @@ const SendToModal = ({ open, setOpen, encounter }) => {
                 open={showModal}
                 setOpen={setShowModal}
                 actionType="confirm"
-                actionButtonFunction={handleSave}
+                actionButtonFunction={() => { handleSave('8454586358847085') }}
                 confirmationQuestion="Do you want to send the patient to the ER Waiting List?"
             />
         </>
