@@ -4,11 +4,20 @@ import MyInput from '@/components/MyInput';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import ChildModal from '@/components/ChildModal/ChildModal';
-import { faPlus, faPen, faTrash, faRotate } from '@fortawesome/free-solid-svg-icons';
+import {
+  faPlus,
+  faPen,
+  faTrash,
+  faRotate,
+  faCartPlus,
+  faBroom
+} from '@fortawesome/free-solid-svg-icons';
 import MyTable from '@/components/MyTable';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { formatDateWithoutSeconds } from '@/utils';
+import { faListAlt } from '@fortawesome/free-solid-svg-icons';
+import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import './styles.less';
 // Component for adding items to a purchasing requisition
 const AddItem = ({ open, setOpen }) => {
@@ -262,6 +271,7 @@ const AddItem = ({ open, setOpen }) => {
         <MyInput
           fieldLabel="Last Purchased Date"
           fieldName="lastPurchasedDate"
+          placeholder="2025-03-03"
           fieldType="date"
           record={editRow || record}
           setRecord={setRecord}
@@ -280,6 +290,7 @@ const AddItem = ({ open, setOpen }) => {
         <MyInput
           fieldLabel="Minimum Quantity"
           fieldName="minQuantity"
+          placeholder="5"
           fieldType="number"
           record={editRow || record}
           setRecord={setRecord}
@@ -338,6 +349,27 @@ const AddItem = ({ open, setOpen }) => {
         showChild={showChild}
         setShowChild={setShowChild}
         title="Order Details"
+        mainStep={[
+          {
+            title: 'Order Details',
+            icon: <FontAwesomeIcon icon={faListAlt} />,
+            footer: <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />}>clear</MyButton>
+          }
+        ]}
+        childStep={[
+          {
+            title: 'Add Item',
+            icon: <FontAwesomeIcon icon={faPlusCircle} />,
+            footer: (
+              <MyButton
+                prefixIcon={() => <FontAwesomeIcon icon={faPlus} />}
+                onClick={() => setShowChild(true)}
+              >
+                Add Item
+              </MyButton>
+            )
+          }
+        ]}
         childTitle="Add Item"
         mainContent={content}
         childContent={childModalContent}
