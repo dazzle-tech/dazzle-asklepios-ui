@@ -1977,7 +1977,7 @@ export const newApMedicalSheets:modelTypes.ApMedicalSheets = {
 	morseFallScale:undefined,
 	hendrichFallRisk:undefined,
 	stratifyScale:undefined,
-	johnsHopkinsFallRiskAssessmentTool  :undefined,
+	johnsHopkinsFallRiskAssessmentTool:undefined,
 } 
 
 export const newApMedicationCategories:modelTypes.ApMedicationCategories = { 
