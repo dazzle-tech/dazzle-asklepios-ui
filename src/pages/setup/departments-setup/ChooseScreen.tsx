@@ -248,7 +248,7 @@ const ChooseDepartment = ({
                     />
                      <MyInput
                       fieldType="check"
-                      fieldName={'johnsHopkinsFallRiskAssessmentTool  '}
+                      fieldName={'johnsHopkinsFallRiskAssessmentTool'}
                       showLabel={false}
                       record={showScreen}
                       setRecord={setShowScreen}

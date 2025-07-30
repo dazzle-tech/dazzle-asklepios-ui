@@ -1976,7 +1976,7 @@ export interface ApMedicalSheets {
 	morseFallScale:boolean;
 	hendrichFallRisk:boolean;
 	stratifyScale:boolean;
-	johnsHopkinsFallRiskAssessmentTool  :boolean;
+	johnsHopkinsFallRiskAssessmentTool:boolean;
 } 
 
 export interface ApMedicationCategories { 
