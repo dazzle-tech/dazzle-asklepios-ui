@@ -12,6 +12,7 @@ import { useDispatch } from 'react-redux';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { setPageCode, setDivContent } from '@/reducers/divSlice';
 import AddPurchaseApprovalSetup from './AddPurchaseApprovalSetup';
+import { MdModeEdit } from 'react-icons/md';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import './styles.less';
 //Table Data
@@ -121,6 +122,9 @@ const PurchaseApprovalSetup = () => {
       render: rowData => {
         return (
           <div className="container-of-icons">
+                        <MdModeEdit
+                          title="Edit"
+                          id="icon0-0"/>
             {rowData.active ? (
               <MdDelete
                 className="icons-style"
@@ -146,6 +150,7 @@ const PurchaseApprovalSetup = () => {
                 }}
               />
             )}
+
           </div>
         );
       }
@@ -165,7 +170,7 @@ const PurchaseApprovalSetup = () => {
   // Header page setUp
   const divContent = (
     <div className="page-title">
-      <h5>Purchase Approval</h5>
+      <h5>Purchase Approval Setup</h5>
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);

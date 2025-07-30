@@ -3,6 +3,7 @@
 import React from 'react';
 import { Tabs } from 'rsuite';
 import Preparation from './Preparation';
+import Reconciliation from './Reconciliation';
 
 const OperationRoomMaterials = () => {
   return (
@@ -12,7 +13,7 @@ const OperationRoomMaterials = () => {
           <Preparation />
         </Tabs.Tab>
         <Tabs.Tab eventKey="2" title="Reconciliation">
-          {/* <Preparation/> */}
+          <Reconciliation></Reconciliation>
         </Tabs.Tab>
       </Tabs>
     </>

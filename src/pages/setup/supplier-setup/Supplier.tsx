@@ -12,6 +12,7 @@ import { useDispatch } from 'react-redux';
 import { setPageCode, setDivContent } from '@/reducers/divSlice';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import AddSupplierSetup from './AddSupplierSetup';
+import { MdModeEdit } from 'react-icons/md';
 import './style.less';
 
 //Table Data
@@ -161,6 +162,9 @@ const SupplierSetup = () => {
       render: rowData => {
         return (
           <div className="container-of-icons">
+             <MdModeEdit
+              title="Edit"
+              id="icon0-0"/>
             {rowData.active ? (
               <MdDelete
                 className="icons-style"

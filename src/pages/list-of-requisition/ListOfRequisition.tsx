@@ -6,6 +6,7 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import OpenDetailsTableModal from './OpenDetailsTableModal';
 import {
+  faDownload,
   faCircleCheck,
   faCircleXmark,
   faCheckDouble,
@@ -204,22 +205,20 @@ const ListOfRequisition = () => {
       dataKey: 'initiatedDepartment',
       width: 180
     },
-    { key: 'createdBy', title: 'Created by', dataKey: 'createdBy', width: 150 },
-    { key: 'categoryName', title: 'Category Name', dataKey: 'categoryName', width: 160 },
-    {
-      key: 'creationDate',
-      title: 'Creation Date',
-      dataKey: 'creationDate',
-      width: 140,
-      render: (row: any) =>
-        row?.creationDate ? (
+    { key: 'createdAtBy', title: 'Created by/at', dataKey: 'createdByAt', width: 150, expandable : true,
+       render: (row: any) =>
+        row?.createdDateTime ? (
           <>
-            <span className="date-table-style">{formatDateWithoutSeconds(row.creationDate)}</span>
+            {row?.createdBy}
+            <br />
+            <span className="date-table-style">
+              {formatDateWithoutSeconds(row.createdDateTime)}
+            </span>{' '}
           </>
         ) : (
           ' '
-        )
-    },
+        )},
+    { key: 'categoryName', title: 'Category Name', dataKey: 'categoryName', width: 160 },
     {
       key: 'estimatedDeliveryDate',
       title: 'Estimated Delivery Date',
@@ -272,7 +271,18 @@ const ListOfRequisition = () => {
       width: 130,
       expandable: true
     },
-    { key: 'attachment', title: 'Attachment', dataKey: 'attachment', width: 130, expandable: true },
+{
+  key: 'download',
+  title: 'Download',
+  dataKey: 'download',
+  width: 130,
+  render: () => (
+    <FontAwesomeIcon
+      icon={faDownload}
+      style={{ cursor: 'pointer', fontSize: '16px', color: '#007bff' }}
+    />
+  )
+},
     { key: 'stockName', title: 'Stock Name', dataKey: 'stockName', width: 140, expandable: true },
     {
       key: 'approvalBy',
@@ -281,24 +291,7 @@ const ListOfRequisition = () => {
       width: 140,
       expandable: true
     },
-    { key: 'orderId', title: 'Order ID', dataKey: 'orderId', width: 100, expandable: true },
-    {
-      key: 'createdDateTime',
-      title: 'Created Date and Time',
-      dataKey: 'createdDateTime',
-      width: 180,
-      expandable: true,
-      render: (row: any) =>
-        row?.createdDateTime ? (
-          <>
-            <span className="date-table-style">
-              {formatDateWithoutSeconds(row.createdDateTime)}
-            </span>
-          </>
-        ) : (
-          ' '
-        )
-    },
+{ key: 'orderId', title: 'Order ID', dataKey: 'orderId', width: 100, expandable: true },
     //Main Table Icons
     {
       key: 'actions',

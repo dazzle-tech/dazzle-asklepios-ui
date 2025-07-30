@@ -2,14 +2,12 @@
 import React, { useState } from 'react';
 import MyInput from '@/components/MyInput';
 import MyTable from '@/components/MyTable';
-import MaterialTable from './MaterialTable';
-import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
-import { formatDateWithoutSeconds } from '@/utils';
 import { useDispatch } from 'react-redux';
 import ReactDOMServer from 'react-dom/server';
 import { setPageCode, setDivContent } from '@/reducers/divSlice';
+import { formatDateWithoutSeconds } from '@/utils';
+import MaterialTableReconciliation from './MaterialTableReconciliation';
 import { Form } from 'rsuite';
-import './styles.less';
 
 //Table Data
 const sampleData = [
@@ -21,7 +19,6 @@ const sampleData = [
     mrn: 'MRN001',
     requestedBy: 'Dr. Ahmad',
     requestedAt: '2025-07-29 08:30 AM',
-    status: 'Pending'
   },
   {
     id: 2,
@@ -31,7 +28,6 @@ const sampleData = [
     mrn: 'MRN002',
     requestedBy: 'Dr. Lina',
     requestedAt: '2025-07-28 02:15 PM',
-    status: 'Ready'
   },
   {
     id: 3,
@@ -41,100 +37,87 @@ const sampleData = [
     mrn: 'MRN001',
     requestedBy: 'Dr. Ahmad',
     requestedAt: '2025-07-29 08:30 AM',
-    status: 'Pending'
   }
 ];
 
 //Declare the Variables
-const Preparation = () => {
+const Reconciliation = () => {
   const dispatch = useDispatch();
   const [record, setRecord] = useState({});
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [sortColumn, setSortColumn] = useState('name');
+  const [sortColumn, setSortColumn] = useState('operationName');
   type SortType = 'asc' | 'desc';
   const [sortType, setSortType] = useState<SortType>('asc');
-
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  const toggleSelection = (id: number) => {
-    setSelectedIds(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
-  };
 
-  //Table coulmns Configure
-  const columns = [
-    {
-      key: 'select',
-      title: '',
-      dataKey: 'id',
-      width: 50,
-      render: row => {
-        const isSelected = selectedIds.includes(row.id);
-        return (
-          <input type="checkbox" checked={isSelected} onChange={() => toggleSelection(row.id)} />
-        );
-      }
-    },
-    {
-      key: 'operationName',
-      title: 'Operation Name',
-      dataKey: 'operationName',
-      width: 250,
-      render: row => <span>{row.operationName}</span>
-    },
-    {
-      key: 'priority',
-      title: 'Priority',
-      dataKey: 'priority',
-      width: 100
-    },
-    {
-      key: 'patientName',
-      title: 'Patient Name',
-      dataKey: 'patientName',
-      width: 180
-    },
-    {
-      key: 'mrn',
-      title: 'MRN',
-      dataKey: 'mrn',
-      width: 120
-    },
-    {
-     key: 'requestedByAt',
-     title: 'Requested By\\At',
-     dataKey: 'requestedBy',
-     width: 220,
-     render: (row: any) =>
-       row?.requestedAt ? (
-         <>
-           {row?.requestedBy}
-           <br />
-           <span className="date-table-style">
-             {formatDateWithoutSeconds(row.requestedAt)}
-           </span>{' '}
-         </>
-       ) : (
-         ' '
-       )
-   },
-    {
-      key: 'status',
-      title: 'Status',
-      dataKey: 'status',
-      width: 100,
-      render: (row: any) => (
-        <MyBadgeStatus
-          backgroundColor={
-            row.status === 'Pending' ? 'var(--background-gray)' : 'var(--light-green)'
-          }
-          color={row.status === 'Pending' ? 'var(--primary-gray)' : 'var(--primary-green)'}
-          contant={row.status}
-        />
-      )
-    }
-  ];
-//sorted Data
+  //Table columns Configure
+const columns = [
+ {
+  key: 'select',
+  title: '',
+  dataKey: 'id',
+  width: 50,
+  render: row => {
+    const isSelected = selectedId === row.id;
+    return (
+      <input
+        type="checkbox"
+        checked={isSelected}
+        onChange={() => setSelectedId(isSelected ? null : row.id)}
+      />
+    );
+  }
+},
+  {
+    key: 'operationName',
+    title: 'Operation Name',
+    dataKey: 'operationName',
+    width: 250,
+    render: row => <span>{row.operationName}</span>
+  },
+  {
+    key: 'priority',
+    title: 'Priority',
+    dataKey: 'priority',
+    width: 100
+  },
+  {
+    key: 'patientName',
+    title: 'Patient Name',
+    dataKey: 'patientName',
+    width: 180
+  },
+  {
+    key: 'mrn',
+    title: 'MRN',
+    dataKey: 'mrn',
+    width: 120
+  },
+{
+  key: 'requestedByAt',
+  title: 'Requested By\At',
+  dataKey: 'requestedBy',
+  width: 220,
+  render: (row: any) =>
+    row?.requestedAt ? (
+      <>
+        {row?.requestedBy}
+        <br />
+        <span className="date-table-style">
+          {formatDateWithoutSeconds(row.requestedAt)}
+        </span>{' '}
+      </>
+    ) : (
+      ' '
+    )
+}
+
+];
+
+
+  //Sort Data
   const sortedData = [...sampleData].sort((a, b) => {
     const aVal = a[sortColumn];
     const bVal = b[sortColumn];
@@ -145,7 +128,7 @@ const Preparation = () => {
   //Table Filters(Header)
   const filterstable = (
     <Form fluid>
-      <h5 className="requested-procedures-table-header">Requested Procedures</h5>
+      <h5 className="requested-procedures-table-header">Requested Opearation</h5>
       <div className="from-to-input-position">
         <MyInput
           width={'100%'}
@@ -163,10 +146,37 @@ const Preparation = () => {
           record={record}
           setRecord={setRecord}
         />
+        <div className='filter-table-header-requested-opearation'>
+          <MyInput
+                className='select-input-requested-operation-filter'
+                width={200}
+                selectDataValue="value"
+                selectDataLabel="label"
+                selectData={[
+                  { label: 'Operation Name', key: 1 },
+                ]}
+                fieldName="filter"
+                fieldType="select"
+                fieldLabel="Select Filter"
+                record={record}
+                setRecord={setRecord}
+                showLabel={false}
+                searchable={false}
+              />
+              <MyInput
+                width={200}
+                fieldName="value"
+                fieldType="text"
+                fieldLabel="Search"
+                record={record}
+                setRecord={setRecord}
+                showLabel={false}
+              /></div>
       </div>
     </Form>
   );
-//Pagination
+
+  //Pagination
   const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   // Header page setUp
@@ -201,8 +211,10 @@ const Preparation = () => {
           setPage(0);
         }}
       />
-      <MaterialTable></MaterialTable>
+
+      <MaterialTableReconciliation></MaterialTableReconciliation>
     </div>
   );
 };
-export default Preparation;
+
+export default Reconciliation;
