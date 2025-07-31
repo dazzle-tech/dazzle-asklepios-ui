@@ -124,11 +124,11 @@ const ListOfRequisition = () => {
   useEffect(() => {
     const divContent = (
       <div className="page-title">
-        <h5>Purchase Order</h5>
+        <h5>List of Requisition</h5>
       </div>
     );
     const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-    dispatch(setPageCode('Purchase_Order'));
+    dispatch(setPageCode('List_of_Requisition'));
     dispatch(setDivContent(divContentHTML));
   }, [dispatch]);
 

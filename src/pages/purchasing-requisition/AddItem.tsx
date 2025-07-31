@@ -373,6 +373,7 @@ const AddItem = ({ open, setOpen }) => {
         childTitle="Add Item"
         mainContent={content}
         childContent={childModalContent}
+        hideActionChildBtn={true}
         mainSize="md"
         childSize="sm"
       />
