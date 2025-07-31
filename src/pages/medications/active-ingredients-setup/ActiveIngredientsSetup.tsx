@@ -1,53 +1,53 @@
 import Translate from '@/components/Translate';
 import { initialListRequest, ListRequest } from '@/types/types';
 import React, { useState, useEffect } from 'react';
-import { Input, Modal, Carousel, Pagination, Panel, Table, Container, Row, Col, Button, ButtonToolbar, IconButton, Accordion } from 'rsuite';
-const { Column, HeaderCell, Cell } = Table;
+import { FaUndo } from 'react-icons/fa';
+import { MdModeEdit } from 'react-icons/md';
+import { MdDelete } from 'react-icons/md';
+import { Carousel, Form, Panel } from 'rsuite';
 import {
   useSaveActiveIngredientMutation,
-  useGetActiveIngredientQuery,
-  useGetActiveIngredientIndicationQuery,
+  useGetActiveIngredientQuery
 } from '@/services/medicationsSetupService';
-import {
-  useGetLovValuesByCodeQuery,
-} from '@/services/setupService';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
-import EditIcon from '@rsuite/icons/Edit';
-import TrashIcon from '@rsuite/icons/Trash';
 import { ApActiveIngredient } from '@/types/model-types';
 import { newApActiveIngredient } from '@/types/model-types-constructor';
 import { addFilterToListRequest, fromCamelCaseToDBName } from '@/utils';
 import NewActiveIngredients from './NewActiveIngredients';
-import Indications from './Indications';
-import Contraindications from './Contraindications';
-import DrugDrugInteractions from './DrugDrugInteractions';
-import DrugFoodInteractions from './DrugFoodInteractions';
-import AdversEffects from './AdversEffects';
-import RecommendedDosage from './RecommendedDosage';
-import MOA from './MOA';
-import Toxicity from './Toxicity';
-import PregnancyLactation from './PregnancyLactation';
-import SpecialPopulation from './SpecialPopulation';
-import DoseAdjustment from './DoseAdjustment';
-import Pharmacokinetics from './Pharmacokinetics';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useAppDispatch } from '@/hooks';
+import MyTable from '@/components/MyTable';
+import MyButton from '@/components/MyButton/MyButton';
+import { notify } from '@/utils/uiReducerActions';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import MyInput from '@/components/MyInput';
 const ActiveIngredientsSetup = () => {
   const dispatch = useAppDispatch();
-  const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({ ...newApActiveIngredient });
-  const [popupOpen, setPopupOpen] = useState(false);
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientMutation();
+  const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({
+    ...newApActiveIngredient
+  });
+  const [openConfirmDeleteActiveIngredient, setOpenConfirmDeleteActiveIngredient] =
+    useState<boolean>(false);
+  const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
   const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
-  const { data: activeIngredientListResponse, refetch: activeIngredientRefetch } = useGetActiveIngredientQuery(listRequest);
-  const { data: MedicationCategorLovQueryResponse } = useGetLovValuesByCodeQuery('MED_CATEGORY');
-  const { data: MedicationClassLovQueryResponse } = useGetLovValuesByCodeQuery('MED_ClASS');
-  const { data: MedicationTypesLovQueryResponse } = useGetLovValuesByCodeQuery('MED_TYPES');
-  const { data: indicationListResponseData } = useGetActiveIngredientIndicationQuery(listRequest);
-  const divElement = useSelector((state: RootState) => state.div?.divElement);
+  const [stateOfDeleteActiveIngredient, setStateOfDeleteActiveIngredient] =
+    useState<string>('delete');
+  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  // Fetch active ingredients list Response
+  const {
+    data: activeIngredientListResponse,
+    refetch: activeIngredientRefetch,
+    isFetching
+  } = useGetActiveIngredientQuery(listRequest);
+  const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientMutation();
+
+  // Pagination values
+  const pageIndex = listRequest.pageNumber - 1;
+  const rowsPerPage = listRequest.pageSize;
+  const totalCount = activeIngredientListResponse?.extraNumeric ?? 0;
+
+  // Header page setUp
   const divContent = (
     <div style={{ display: 'flex' }}>
       <h5>Active Ingredients</h5>
@@ -56,15 +56,146 @@ const ActiveIngredientsSetup = () => {
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
   dispatch(setPageCode('Active_Ingredients'));
   dispatch(setDivContent(divContentHTML));
+
+  // Available fields for filtering
+  const filterFields = [
+    { label: 'Code', value: 'code' },
+    { label: 'Active Ingredients Name', value: 'name' },
+    { label: 'Medical Category', value: 'medicalCategoryLkey' },
+    { label: 'Drug Class', value: 'drugClassLkey' },
+    { label: 'Drug Type', value: 'drugTypeLkey' },
+    { label: 'ATC Code', value: 'atcCode' }
+  ];
+
+  // class name for selected row
+  const isSelected = rowData => {
+    if (rowData && activeIngredient && rowData.key === activeIngredient.key) {
+      return 'selected-row';
+    } else return '';
+  };
+
+  // Icons column (Edit,Does Schedule, reactive/Deactivate)
+  const iconsForActions = (rowData: ApActiveIngredient) => (
+    <div className="container-of-icons">
+      <MdModeEdit
+        className="icons-style"
+        title="Edit"
+        size={24}
+        fill="var(--primary-gray)"
+        onClick={() => setCarouselActiveIndex(1)}
+      />
+      {rowData?.isValid ? (
+        <MdDelete
+          className="icons-style"
+          title="Deactivate"
+          size={24}
+          fill="var(--primary-pink)"
+          onClick={() => {
+            setStateOfDeleteActiveIngredient('deactivate');
+            setOpenConfirmDeleteActiveIngredient(true);
+          }}
+        />
+      ) : (
+        <FaUndo
+          className="icons-style"
+          title="Activate"
+          size={24}
+          fill="var(--primary-gray)"
+          onClick={() => {
+            setStateOfDeleteActiveIngredient('reactivate');
+            setOpenConfirmDeleteActiveIngredient(true);
+          }}
+        />
+      )}
+    </div>
+  );
+
+  // Filter table
+  const filters = () => (
+    <Form layout="inline" fluid>
+      <MyInput
+        selectDataValue="value"
+        selectDataLabel="label"
+        selectData={filterFields}
+        fieldName="filter"
+        fieldType="select"
+        record={recordOfFilter}
+        setRecord={updatedRecord => {
+          setRecordOfFilter({
+            ...recordOfFilter,
+            filter: updatedRecord.filter,
+            value: ''
+          });
+        }}
+        showLabel={false}
+        placeholder="Select Filter"
+        searchable={false}
+      />
+      <MyInput
+        fieldName="value"
+        fieldType="text"
+        record={recordOfFilter}
+        setRecord={setRecordOfFilter}
+        showLabel={false}
+        placeholder="Search"
+      />
+    </Form>
+  );
+
+  //Table columns
+  const tableColumns = [
+    {
+      key: 'code',
+      title: <Translate>Code</Translate>
+    },
+    {
+      key: 'name',
+      title: <Translate>Active Ingredients Name</Translate>
+    },
+    {
+      key: 'medicalCategoryLkey',
+      title: <Translate>Medical Category</Translate>,
+      render: rowData =>
+        rowData.medicalCategoryLvalue
+          ? rowData.medicalCategoryLvalue.lovDisplayVale
+          : rowData.medicalCategoryLkey
+    },
+    {
+      key: 'drugClassLkey',
+      title: <Translate>Drug Class</Translate>,
+      render: rowData =>
+        rowData.drugClassLvalue ? rowData.drugClassLvalue.lovDisplayVale : rowData.drugClassLkey
+    },
+    {
+      key: 'drugTypeLkey',
+      title: <Translate>Drug Type</Translate>,
+      render: rowData =>
+        rowData.drugTypeLvalue ? rowData.drugTypeLvalue.lovDisplayVale : rowData.drugTypeLkey
+    },
+    {
+      key: 'atcCode',
+      title: <Translate>ATC Code</Translate>
+    },
+    {
+      key: '',
+      title: <Translate>Status</Translate>,
+      render: rowData => (rowData.isValid ? 'Active' : 'InActive')
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      render: rowData => iconsForActions(rowData)
+    }
+  ];
+
+  // handle new
   const handleNew = () => {
-    setActiveIngredient({...newApActiveIngredient});
+    setActiveIngredient({ ...newApActiveIngredient });
     setCarouselActiveIndex(1);
   };
-  const handleSave = () => {
-    setPopupOpen(false);
-    saveActiveIngredient(activeIngredient).unwrap();
-  };
- const handleFilterChange = (fieldName, value) => {
+
+  // update list when filter is changed
+  const handleFilterChange = (fieldName, value) => {
     if (value) {
       setListRequest(
         addFilterToListRequest(
@@ -79,239 +210,155 @@ const ActiveIngredientsSetup = () => {
     }
   };
 
-  const isSelected = rowData => {
-    if (rowData && activeIngredient && rowData.key === activeIngredient.key) {
-      return 'selected-row';
-    } else return '';
+  // Handle page change in navigation
+  const handlePageChange = (_: unknown, newPage: number) => {
+    setListRequest({ ...listRequest, pageNumber: newPage + 1 });
   };
 
+  // Handle change rows per page in navigation
+  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setListRequest({
+      ...listRequest,
+      pageSize: parseInt(event.target.value, 10),
+      pageNumber: 1
+    });
+  };
+
+  // handle deactivate
+  const handleDeactivate = () => {
+    setOpenConfirmDeleteActiveIngredient(false);
+    saveActiveIngredient({ ...activeIngredient, isValid: false })
+      .unwrap()
+      .then(() => {
+        activeIngredientRefetch();
+        dispatch(
+          notify({
+            msg: 'The Active Ingredient was successfully Deactivated',
+            sev: 'success'
+          })
+        );
+      })
+      .catch(() => {
+        dispatch(
+          notify({
+            msg: 'Faild to Deactivate this Active Ingredient',
+            sev: 'error'
+          })
+        );
+      });
+  };
+
+  // handle reactivate
+  const handleReactivate = () => {
+    setOpenConfirmDeleteActiveIngredient(false);
+    saveActiveIngredient({ ...activeIngredient, isValid: true })
+      .unwrap()
+      .then(() => {
+        activeIngredientRefetch();
+        dispatch(
+          notify({
+            msg: 'The Active Ingredient was successfully Reactivated',
+            sev: 'success'
+          })
+        );
+      })
+      .catch(() => {
+        dispatch(
+          notify({
+            msg: 'Faild to Reactivate this Active Ingredient',
+            sev: 'error'
+          })
+        );
+      });
+  };
+
+  // Effects
   useEffect(() => {
     return () => {
       dispatch(setPageCode(''));
-      dispatch(setDivContent("  "));
+      dispatch(setDivContent('  '));
     };
-  }, [location.pathname, dispatch])
+  }, [location.pathname, dispatch]);
+
   useEffect(() => {
     if (saveActiveIngredientMutation.data) {
       setListRequest({ ...listRequest, timestamp: new Date().getTime() });
     }
   }, [saveActiveIngredientMutation.data]);
 
+  // update list when filter is changed
+  useEffect(() => {
+    if (recordOfFilter['filter']) {
+      handleFilterChange(recordOfFilter['filter'], recordOfFilter['value']);
+    } else {
+      setListRequest({
+        ...initialListRequest,
+        filters: [
+          {
+            fieldName: 'deleted_at',
+            operator: 'isNull',
+            value: undefined
+          }
+        ],
+        pageSize: listRequest.pageSize,
+        pageNumber: 1
+      });
+    }
+  }, [recordOfFilter]);
 
   useEffect(() => {
     activeIngredientRefetch();
   }, [carouselActiveIndex]);
 
- 
   return (
     <Carousel
-    style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
-    autoplay={false}
-    activeIndex={carouselActiveIndex}
-  >
-    <Panel>
-      <ButtonToolbar>
-        <IconButton appearance="primary" icon={<AddOutlineIcon />} onClick={handleNew}>
-          Add New
-        </IconButton>
-        <IconButton
-          disabled={!activeIngredient.key}
-          appearance="primary"
-          onClick={() => setCarouselActiveIndex(1)}
-          color="green"
-          icon={<EditIcon />}
-        >
-          Edit Selected
-        </IconButton>
-        <IconButton
-          disabled={true || !activeIngredient.key}
-          appearance="primary"
-          color="red"
-          icon={<TrashIcon />}
-        >
-          Active/Deactive
-        </IconButton>
-      </ButtonToolbar>
-      <hr />
-      <Table
-        height={400}
-        sortColumn={listRequest.sortBy}
-        sortType={listRequest.sortType}
-        onSortColumn={(sortBy, sortType) => {
-          if (sortBy)
-            setListRequest({
-              ...listRequest,
-              sortBy,
-              sortType
-            });
-        }}
-        headerHeight={80}
-        rowHeight={60}
-        bordered
-        cellBordered
-        data={activeIngredientListResponse?.object ?? []}
-        onRowClick={rowData => {
-          setActiveIngredient(rowData);
-        }}
-        rowClassName={isSelected}
-      >
-        <Column sortable flexGrow={2}>
-          <HeaderCell align="center">
-            <Input onChange={e => handleFilterChange('code', e)} />
-            <Translate>Code</Translate>
-          </HeaderCell>
-          <Cell dataKey="code" />
-        </Column>
-        <Column sortable flexGrow={2}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('name', e)} />
-            <Translate>Active Ingredients Name</Translate>
-          </HeaderCell>
-          <Cell dataKey="name" />
-        </Column> 
-        <Column sortable flexGrow={2}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('medicalCategoryLkey', e)} />
-            <Translate>Medical Category</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.medicalCategoryLvalue ? rowData.medicalCategoryLvalue.lovDisplayVale : rowData.medicalCategoryLkey
-            }
-          </Cell>
-        </Column>
-        <Column sortable flexGrow={3}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('drugClassLkey', e)} />
-            <Translate>Drug Class</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.drugClassLvalue ? rowData.drugClassLvalue.lovDisplayVale : rowData.drugClassLkey
-            }
-          </Cell>
-        </Column> 
-        <Column sortable flexGrow={3}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('drugTypeLkey', e)} />
-            <Translate>Drug Type</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.drugTypeLvalue ? rowData.drugTypeLvalue.lovDisplayVale : rowData.drugTypeLkey
-            }
-          </Cell>
-        </Column> 
-        <Column sortable flexGrow={2}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('atcCode', e)} />
-            <Translate>ATC Code</Translate>
-          </HeaderCell>
-          <Cell dataKey="atcCode" />
-        </Column> 
-        <Column sortable flexGrow={3}>
-          <HeaderCell  align="center">
-            <Input onChange={e => handleFilterChange('drugTypeLkey', e)} />
-            <Translate>Status</Translate>
-          </HeaderCell>
-          <Cell>
-            {rowData =>
-              rowData.isValid ? 'Active' : 'InActive'
-            }
-          </Cell>
-        </Column> 
-      </Table>
-      <div style={{ padding: 20 }}>
-        <Pagination
-          prev
-          next
-          first
-          last
-          ellipsis
-          boundaryLinks
-          maxButtons={5}
-          size="xs"
-          layout={['limit', '|', 'pager']}
-          limitOptions={[5, 15, 30]}
-          limit={listRequest.pageSize}
-          activePage={listRequest.pageNumber}
-          onChangePage={pageNumber => {
-            setListRequest({ ...listRequest, pageNumber });
+      style={{ height: 'auto', backgroundColor: 'var(--rs-body)' }}
+      autoplay={false}
+      activeIndex={carouselActiveIndex}
+    >
+      <Panel>
+        <div className="container-of-add-new-button">
+          <MyButton
+            prefixIcon={() => <AddOutlineIcon />}
+            color="var(--deep-blue)"
+            onClick={handleNew}
+            width="109px"
+          >
+            Add New
+          </MyButton>
+        </div>
+        <MyTable
+          height={450}
+          data={activeIngredientListResponse?.object ?? []}
+          loading={isFetching}
+          columns={tableColumns}
+          rowClassName={isSelected}
+          filters={filters()}
+          onRowClick={rowData => {
+            setActiveIngredient(rowData);
           }}
-          onChangeLimit={pageSize => {
-            setListRequest({ ...listRequest, pageSize });
+          sortColumn={listRequest.sortBy}
+          sortType={listRequest.sortType}
+          onSortChange={(sortBy, sortType) => {
+            if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
           }}
-          total={activeIngredientListResponse?.extraNumeric ?? 0}
+          page={pageIndex}
+          rowsPerPage={rowsPerPage}
+          totalCount={totalCount}
+          onPageChange={handlePageChange}
+          onRowsPerPageChange={handleRowsPerPageChange}
         />
-      </div>
-
-     { activeIngredient.key && <Panel
-      header={
-        <h3 className="title">
-          <Translate>Details</Translate>
-        </h3>
-      }>
-      <Container>
-            <Row>
-                <Col xs={24} md={12}>
-                <Panel>
-                <Accordion bordered>
-                  <Accordion.Panel header="Indications" >
-                    <Indications selectedActiveIngredients={activeIngredient} isEdit={false}/>
-                  </Accordion.Panel>
-                  <Accordion.Panel header="Contraindications" >
-                 <Contraindications   activeIngredients={activeIngredient} isEdit={false}/>
-                  </Accordion.Panel>
-                  <Accordion.Panel header="Drug-Drug Interactions " >
-                    <DrugDrugInteractions activeIngredients={activeIngredient} isEdit={false}/>
-                  </Accordion.Panel>
-                  <Accordion.Panel header="Drug-Food Interactions " >
-                    <DrugFoodInteractions activeIngredients={activeIngredient} isEdit={false} />
-                  </Accordion.Panel>
-                  <Accordion.Panel header="Advers Effects " >
-                    <AdversEffects activeIngredients={activeIngredient} isEdit={false} />
-                  </Accordion.Panel>
-                  <Accordion.Panel header="Recommended Dosage " >
-                    <RecommendedDosage activeIngredients={activeIngredient} isEdit={false} />
-                  </Accordion.Panel>
-                </Accordion>
-        </Panel>
-                </Col>
-                <Col xs={24} md={12}>
-                <Panel>
-                <Accordion bordered>
-                  <Accordion.Panel header="MOA"  >
-                    <MOA activeIngredients={activeIngredient}  isEdit={false}/>
-                  </Accordion.Panel>
-                  <Accordion.Panel header="Toxicity" >
-                    <Toxicity activeIngredients={activeIngredient} isEdit={false}/>
-                  </Accordion.Panel>
-                  <Accordion.Panel header="Pregnancy & Lactation" >
-                    <PregnancyLactation activeIngredients={activeIngredient} isEdit={false}/>
-                  </Accordion.Panel>
-                  <Accordion.Panel header="Special Population" >
-                    <SpecialPopulation activeIngredients={activeIngredient} isEdit={false}/>
-                  </Accordion.Panel>
-                  <Accordion.Panel header="Dose Adjustment" >
-                    <DoseAdjustment activeIngredients={activeIngredient} isEdit={false}/>
-                  </Accordion.Panel>
-                  <Accordion.Panel header="Pharmacokinetics"  >
-                    <Pharmacokinetics activeIngredients={activeIngredient} isEdit={false}/>
-                  </Accordion.Panel>
-                </Accordion>
-        </Panel>
-                </Col>
-            </Row>
-        </Container>
-    </Panel>}
-    </Panel>  
-   
-
-    
-   
-        
-  
-    <NewActiveIngredients
+        <DeletionConfirmationModal
+          open={openConfirmDeleteActiveIngredient}
+          setOpen={setOpenConfirmDeleteActiveIngredient}
+          itemToDelete="Active Ingredient"
+          actionButtonFunction={
+            stateOfDeleteActiveIngredient == 'deactivate' ? handleDeactivate : handleReactivate
+          }
+          actionType={stateOfDeleteActiveIngredient}
+        />
+      </Panel>
+      <NewActiveIngredients
         selectedactiveIngredient={activeIngredient}
         goBack={() => {
           setCarouselActiveIndex(0);

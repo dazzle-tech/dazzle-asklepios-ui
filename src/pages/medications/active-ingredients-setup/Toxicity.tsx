@@ -1,152 +1,97 @@
 import React, { useEffect, useState } from 'react';
 import {
-    FlexboxGrid,
-    IconButton,
-    Input,
-    Panel,
-    Table,
-    Grid,
-    Row,
-    Col,
-    ButtonToolbar,
-    Text,
-    InputPicker,
-    InputGroup,
-    Checkbox,
-    SelectPicker,
-    DatePicker
-  } from 'rsuite';
-import { Plus, Trash, InfoRound, Reload } from '@rsuite/icons';
+  Form
+} from 'rsuite';
 import { MdSave } from 'react-icons/md';
 import { newApActiveIngredient } from '@/types/model-types-constructor';
-import { useGetActiveIngredientQuery, useSaveActiveIngredientMutation } from '@/services/medicationsSetupService';
-import { initialListRequest, ListRequest } from '@/types/types';
+import {
+  useSaveActiveIngredientMutation
+} from '@/services/medicationsSetupService';
 import { ApActiveIngredient } from '@/types/model-types';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
 
-  const Toxicity = ({activeIngredients, isEdit}) => {
-  
-    const [isActive, setIsActive] = useState(false);
-    const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({ ...newApActiveIngredient });
-    const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-    const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientMutation();
-    const { data: valueUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
-    const dispatch = useAppDispatch();
-    const { data: activeIngredientListResponse } = useGetActiveIngredientQuery(listRequest);
-     const save = () => {
+const Toxicity = ({ activeIngredients }) => {
+  const dispatch = useAppDispatch();
+  const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({
+    ...newApActiveIngredient
+  });
+  // Fetch value unit Lov response
+   const { data: valueUnitLovQueryResponse } = useGetLovValuesByCodeQuery('VALUE_UNIT');
+   // save active ingredient
+  const [saveActiveIngredient] = useSaveActiveIngredientMutation();
+ 
+  // handle save
+  const save = () => {
     saveActiveIngredient({
       ...activeIngredient,
       createdBy: 'Administrator'
-    }).unwrap().then(() => {
-      dispatch(notify("Saved successfully"));
-  });;
-
+    })
+      .unwrap()
+      .then(() => {
+        dispatch(notify('Saved successfully'));
+      });
   };
 
-  const handleNew = () => {
-    setIsActive(true);
-   };
-
-   useEffect(() => {
+  // Effects
+  useEffect(() => {
     if (activeIngredients) {
-      setActiveIngredient(activeIngredients)
+      setActiveIngredient(activeIngredients);
     }
   }, [activeIngredients]);
-  
 
-    return (
-      <>
-          <Grid fluid>
-            <Row gutter={15}>
-            <Col xs={6}>
-              <Text>Maximum Dose</Text>
-              <Input
-                 disabled={!isActive}
-                 style={{ width: '180px' }}
-                  type="text"
-                  value={activeIngredient.toxicityMaximumDose}
-                  onChange={e =>
-                    setActiveIngredient({
-                      ...activeIngredient,
-                      toxicityMaximumDose: String(e)
-                    })
-                  }
-                />
-            </Col>
-            <Col xs={6}>
-              <Text>Per</Text>
-              <InputPicker
-                disabled={!isActive}
-                placeholder="per"
-                data={valueUnitLovQueryResponse?.object ?? []}
-                value={activeIngredient.toxicityMaximumDosePerUnitLkey}
-                onChange={e =>
-                  setActiveIngredient({
-                    ...activeIngredient,
-                    toxicityMaximumDosePerUnitLkey: String(e)
-                  })
-                }
-               labelKey="lovDisplayVale" 
-               valueKey="key"
-                style={{ width: 224 }}
-              />
-            </Col>
-            <Col xs={5}></Col>
-            <Col xs={5}>
-             {isEdit && <ButtonToolbar style={{ margin: '2px' }}>
-              <IconButton
-                  size="xs"
-                  appearance="primary"
-                  color="blue"
-                  onClick={handleNew}
-                  icon={<Plus />}
-                />
-                <IconButton
-                disabled={!isActive}
-                size="xs"
-                appearance="primary"
-                color="green"
-                onClick={save}
-                icon={<MdSave />}
-              />
-              <IconButton
-                disabled={!activeIngredient.key}
-                size="xs"
-                appearance="primary"
-                color="orange"
-                // onClick={handleOpenPopup}
-                icon={<InfoRound />}
-              />
-{/* 
-              <LogDialog
-                ObjectListResponseData={activeIngredientIndication}
-                popupOpen={popupOpen}
-                setPopupOpen={setPopupOpen}
-              /> */}
-                  </ButtonToolbar>}
-              </Col>
-          </Row>
-            <Row gutter={15}>
-              <Col xs={24}>
-              <Text>Toxicity</Text>
-              <Input as="textarea"
-                     disabled={!isActive}
-                     rows={9}  
-                     value={activeIngredient.toxicityDetails}
-                     onChange={e =>
-                       setActiveIngredient({
-                         ...activeIngredient,
-                         toxicityDetails: String(e)
-                       })
-                     }
-                     />
-              </Col>
-            </Row>
-          </Grid>
-      </>
-    );
-  };
-  
-  export default Toxicity;
+  return (
+    <Form fluid >
+      <div className='container-of-actions-header-active'>
+        <div className='container-of-fields-active'>
+          <MyInput
+            fieldLabel="Maximum Dose"
+            fieldName="toxicityMaximumDose"
+            record={activeIngredient}
+            setRecord={setActiveIngredient}
+            required
+            width={150}
+          />
+          <MyInput
+            fieldType="select"
+            selectData={valueUnitLovQueryResponse?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            fieldName="toxicityMaximumDosePerUnitLkey"
+            fieldLabel="Per"
+            record={activeIngredient}
+            setRecord={setActiveIngredient}
+            required
+            width={150}
+            menuMaxHeight={200}
+            height={30}
+          />
+          </div>
+        <div className='container-of-buttons-active'>
+          <MyButton
+            prefixIcon={() => <MdSave />}
+            color="var(--deep-blue)"
+            onClick={save}
+            title="Save"
+          >
+          </MyButton>
+        </div>
+      </div>
+        <MyInput
+            fieldLabel="Toxicity"
+            fieldName="toxicityDetails"
+            record={activeIngredient}
+            setRecord={setActiveIngredient}
+            required
+            width="100%"
+            fieldType='textarea'
+            height={161}
+          />
+    </Form>
+  );
+};
+
+export default Toxicity;

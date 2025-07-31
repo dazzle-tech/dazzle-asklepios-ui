@@ -1,168 +1,119 @@
 import React, { useEffect, useState } from 'react';
-import {
-    FlexboxGrid,
-    IconButton,
-    Input,
-    Panel,
-    Table,
-    Grid,
-    Row,
-    Col,
-    ButtonToolbar,
-    Text,
-    InputGroup,
-    Checkbox,
-    InputPicker,
-    SelectPicker,
-    DatePicker
-  } from 'rsuite';
-  import { Plus, Trash, InfoRound, Reload } from '@rsuite/icons';
-  import { MdSave } from 'react-icons/md';
+import { Row, Col, Form } from 'rsuite';
+import { MdSave } from 'react-icons/md';
 import { ApActiveIngredient } from '@/types/model-types';
 import { newApActiveIngredient } from '@/types/model-types-constructor';
-import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetActiveIngredientQuery, useSaveActiveIngredientMutation } from '@/services/medicationsSetupService';
+import { useSaveActiveIngredientMutation } from '@/services/medicationsSetupService';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
+import './styles.less';
+const PregnancyLactation = ({ activeIngredients }) => {
+  const dispatch = useAppDispatch();
+  const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({
+    ...newApActiveIngredient
+  });
+  // Fetch pregnancy categories Lov response
+  const { data: pregnancyCategoriesLovQueryResponseData } =
+    useGetLovValuesByCodeQuery('PREGNANCY_CATEGORIES');
+  // Fetch breast feeding categories Lov response
+  const { data: breastfeedingCategoriesLovQueryResponseData } =
+    useGetLovValuesByCodeQuery('FR_MED_CATEGORIES');
+  // save active ingredient
+  const [saveActiveIngredient] = useSaveActiveIngredientMutation();
 
-
-  const PregnancyLactation = ({activeIngredients, isEdit}) => {
-  
-    const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({ ...newApActiveIngredient });
-    const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-    const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientMutation();
-    const { data: activeIngredientListResponse } = useGetActiveIngredientQuery(listRequest);
-    const [isActive, setIsActive] = useState(false);
-    const { data: pregnancyCategoriesLovQueryResponseData } = useGetLovValuesByCodeQuery('PREGNANCY_CATEGORIES');
-    const { data: breastfeedingCategoriesLovQueryResponseData } = useGetLovValuesByCodeQuery('FR_MED_CATEGORIES');
-    const dispatch = useAppDispatch();
-    
-    useEffect(() => {
-      if (activeIngredients) {
-        setActiveIngredient(activeIngredients)
-      }
-    }, [activeIngredients]);
-
-    const save = () => {
-      saveActiveIngredient({
-        ...activeIngredient, 
-        createdBy: 'Administrator'
-      }).unwrap().then(() => {
-        dispatch(notify("Saved successfully"));
-    });
-        
-    };
-    
-    const handleNew = () => {
-      setIsActive(true);
-     };
-  
-
-    return (
-      <>
-          <Grid fluid>
-            <Row >
-            <Col xs={6}></Col>
-            <Col xs={6}></Col>
-            <Col xs={6}></Col>
-            <Col xs={6}>
-           { isEdit && <ButtonToolbar style={{ margin: '2px' }}>
-              <IconButton
-                  size="xs"
-                  appearance="primary"
-                  color="blue"
-                  onClick={handleNew}
-                  icon={<Plus />}
-                />
-              <IconButton
-                  disabled={!isActive}
-                  size="xs"
-                  appearance="primary"
-                  color="green"
-                  onClick={save}
-                  icon={<MdSave />}
-                />
-                <IconButton
-                    disabled={!activeIngredient.key}
-                    size="xs"
-                    appearance="primary"
-                    color="orange"
-                    icon={<InfoRound />}
-                  />
-                  </ButtonToolbar> }
-              </Col>
-            </Row>
-            <Row gutter={15}>
-            <Col xs={12}>
-              <Text>Pregnancy Category</Text>
-              <InputPicker
-                disabled={!isActive}
-                placeholder="Pregnancy Catagory"
-                data={pregnancyCategoriesLovQueryResponseData?.object ?? []}
-                value={activeIngredient.pregnancyCategoryLkey}
-                onChange={e =>
-                  setActiveIngredient({
-                    ...activeIngredient,
-                    pregnancyCategoryLkey: String(e)
-                  })
-                }
-                labelKey="lovDisplayVale"
-                valueKey="key"
-                style={{ width: 224 }}
-              />
-            </Col>
-            <Col xs={12}>
-              <Text>Breastfeeding Category</Text>
-              <InputPicker
-                disabled={!isActive}
-                placeholder="Breastfeeding Category"
-                data={breastfeedingCategoriesLovQueryResponseData?.object ?? []}
-                value={activeIngredient.lactationRiskLkey}
-                onChange={e =>
-                  setActiveIngredient({
-                    ...activeIngredient,
-                    lactationRiskLkey: String(e)
-                  })
-                }
-                labelKey="lovDisplayVale"
-                valueKey="key"
-                style={{ width: 224 }}
-              />
-            </Col>
-          </Row>
-          <Row gutter={15}>
-          <Col xs={12}>
-          <Input as="textarea"
-                     disabled={!isActive}
-                     rows={9}  
-                     value={activeIngredient.pregnancyNotes}
-                     onChange={e =>
-                       setActiveIngredient({
-                         ...activeIngredient,
-                         pregnancyNotes: String(e)
-                       })
-                     }
-                     />
-          </Col> 
-          <Col xs={12}>
-          <Input as="textarea"
-                     disabled={!isActive}
-                     rows={9}  
-                     value={activeIngredient.lactationRiskNotes}
-                     onChange={e =>
-                       setActiveIngredient({
-                         ...activeIngredient,
-                         lactationRiskNotes: String(e)
-                       })
-                     }
-                     />
-          </Col> 
-          </Row>
-           
-          </Grid>
-      </>
-    );
+  // handle save
+  const save = () => {
+    saveActiveIngredient({
+      ...activeIngredient,
+      createdBy: 'Administrator'
+    })
+      .unwrap()
+      .then(() => {
+        dispatch(notify('Saved successfully'));
+      });
   };
-  
-  export default PregnancyLactation;
+
+  // Effects
+  useEffect(() => {
+    if (activeIngredients) {
+      setActiveIngredient(activeIngredients);
+    }
+  }, [activeIngredients]);
+  return (
+    <Form fluid>
+      <Row>
+        <div className="container-of-buttons-pregnancy-lactation">
+          <MyButton
+            prefixIcon={() => <MdSave />}
+            color="var(--deep-blue)"
+            onClick={save}
+            title="Save"
+          ></MyButton>
+        </div>
+      </Row>
+      <br />
+      <Row>
+        <Col md={12}>
+          <MyInput
+            fieldType="select"
+            selectData={pregnancyCategoriesLovQueryResponseData?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            width="100%"
+            fieldName="pregnancyCategoryLkey"
+            fieldLabel="Pregnancy Category"
+            record={activeIngredient}
+            setRecord={setActiveIngredient}
+            required
+          />
+        </Col>
+        <Col md={12}>
+          <MyInput
+            fieldType="select"
+            selectData={breastfeedingCategoriesLovQueryResponseData?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            width="100%"
+            fieldName="lactationRiskLkey"
+            fieldLabel="Breastfeeding Category"
+            record={activeIngredient}
+            setRecord={setActiveIngredient}
+            required
+          />
+        </Col>
+      </Row>
+      <br />
+      <Row>
+        <Col md={12}>
+          <MyInput
+            width="100%"
+            fieldName="pregnancyNotes"
+            fieldLabel="Description"
+            fieldType="textarea"
+            record={activeIngredient}
+            setRecord={setActiveIngredient}
+            required
+            height={140}
+          />
+        </Col>
+        <Col md={12}>
+          <MyInput
+            width="100%"
+            fieldName="lactationRiskNotes"
+            fieldLabel="Description"
+            fieldType="textarea"
+            record={activeIngredient}
+            setRecord={setActiveIngredient}
+            required
+            height={140}
+          />
+        </Col>
+      </Row>
+    </Form>
+  );
+};
+
+export default PregnancyLactation;

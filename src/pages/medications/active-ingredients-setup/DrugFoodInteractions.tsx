@@ -1,270 +1,268 @@
 import React, { useEffect, useState } from 'react';
+import { Row, Col, Text, Form } from 'rsuite';
+import { MdDelete } from 'react-icons/md';
+import { Plus } from '@rsuite/icons';
+import { MdSave } from 'react-icons/md';
+import { ApActiveIngredientFoodInteraction } from '@/types/model-types';
+import { newApActiveIngredientFoodInteraction } from '@/types/model-types-constructor';
+import { initialListRequest } from '@/types/types';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import {
-    FlexboxGrid,
-    IconButton,
-    Input,
-    Panel,
-    Table,
-    Grid,
-    Row,
-    Col,
-    ButtonToolbar,
-    Text,
-    InputGroup,
-    Checkbox,
-    SelectPicker,
-    InputPicker,
-    DatePicker
-  } from 'rsuite';
-  import { Plus, Trash, InfoRound, Reload } from '@rsuite/icons';
-  import { MdSave } from 'react-icons/md';
-  import { ApActiveIngredientFoodInteraction } from '@/types/model-types';
-  import { newApActiveIngredientFoodInteraction} from '@/types/model-types-constructor';
-  import { initialListRequest, ListRequest } from '@/types/types';
-  import { useAppDispatch } from '@/hooks';
-  import { notify } from '@/utils/uiReducerActions';
-  import{
-    useGetLovValuesByCodeQuery,
-  } from '@/services/setupService';
-  import {
-    useGetActiveIngredientFoodInteractionQuery,
-    useSaveActiveIngredientFoodInteractionMutation,
-    useRemoveActiveIngredientFoodInteractionMutation
-  } from '@/services/medicationsSetupService';
+  useGetActiveIngredientFoodInteractionQuery,
+  useSaveActiveIngredientFoodInteractionMutation,
+  useRemoveActiveIngredientFoodInteractionMutation
+} from '@/services/medicationsSetupService';
+import Translate from '@/components/Translate';
+import MyTable from '@/components/MyTable';
+import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 
-
-
-  const DrugFoodInteractions = ({activeIngredients , isEdit}) => {
-  
-
-    const [selectedActiveIngredientFoodInteraction, setSelectedActiveIngredientFoodInteraction] = useState<ApActiveIngredientFoodInteraction>({
+const DrugFoodInteractions = ({ activeIngredients }) => {
+  const dispatch = useAppDispatch();
+  const [selectedActiveIngredientFoodInteraction, setSelectedActiveIngredientFoodInteraction] =
+    useState<ApActiveIngredientFoodInteraction>({
       ...newApActiveIngredientFoodInteraction
     });
-  
-    const [activeIngredientFoodInteraction, setActiveIngredientFoodInteraction] = useState<ApActiveIngredientFoodInteraction>({ ...newApActiveIngredientFoodInteraction});
-    const [listRequest, setListRequest] = useState({
-      ...initialListRequest,
-      pageSize: 100,
-      sortBy: 'createdAt',
-      sortType: 'desc',
-      filters: [
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        }
-      ]
-    });
-
-    
-    const [saveActiveIngredientFoodInteraction, saveActiveIngredientFoodInteractionMutation] =  useSaveActiveIngredientFoodInteractionMutation();
-    const [removeActiveIngredientFoodInteraction, removeActiveIngredientFoodInteractionMutation] =useRemoveActiveIngredientFoodInteractionMutation();
-    const [isActive , setIsActive] = useState(false);
-    const dispatch = useAppDispatch();
-    const { data: foodListResponseData} = useGetActiveIngredientFoodInteractionQuery(listRequest);
-    const { data: severityLovQueryResponseData } = useGetLovValuesByCodeQuery('SEVERITY');
-   
-    const isSelected = rowData => {
-      if (rowData && rowData.key === selectedActiveIngredientFoodInteraction.key) {
-        return 'selected-row';
-      } else return '';
-    };
-
-    const save = () => {
-      saveActiveIngredientFoodInteraction({
-        ...selectedActiveIngredientFoodInteraction, 
-        activeIngredientKey: activeIngredients.key , 
-        createdBy: 'Administrator'
-      }).unwrap().then(() => {
-        dispatch(notify("Saved successfully"));
-    });;;
-        
-    };
-
-    const handleFoodsNew = () => {
-      setIsActive(true);
-      setActiveIngredientFoodInteraction({ ...newApActiveIngredientFoodInteraction });
-    };
-
-    const remove = () => {
-      if (selectedActiveIngredientFoodInteraction.key) {
-        removeActiveIngredientFoodInteraction({
-          ...selectedActiveIngredientFoodInteraction,
-        }).unwrap().then(() => {
-          dispatch(notify("Deleted successfully"));
-      });;;
+  const [openConfirmDeleteFoodInteractionModal, setOpenConfirmDeleteFoodInteractionModal] =
+    useState<boolean>(false);
+  const [listRequest, setListRequest] = useState({
+    ...initialListRequest,
+    pageSize: 100,
+    sortBy: 'createdAt',
+    sortType: 'desc',
+    filters: [
+      {
+        fieldName: 'deleted_at',
+        operator: 'isNull',
+        value: undefined
       }
-    };
+    ]
+  });
+  // Fetch food list response
+  const {
+    data: foodListResponseData,
+    refetch,
+    isFetching
+  } = useGetActiveIngredientFoodInteractionQuery(listRequest);
+  // Fetch severity Lov response
+  const { data: severityLovQueryResponseData } = useGetLovValuesByCodeQuery('SEVERITY');
+  // save active ingredient food interaction
+  const [saveActiveIngredientFoodInteraction, saveActiveIngredientFoodInteractionMutation] =
+    useSaveActiveIngredientFoodInteractionMutation();
+  // remove active ingredient food interaction
+  const [removeActiveIngredientFoodInteraction, removeActiveIngredientFoodInteractionMutation] =
+    useRemoveActiveIngredientFoodInteractionMutation();
 
-    useEffect(() => {
-      if (saveActiveIngredientFoodInteractionMutation.isSuccess) {
-        setListRequest({
-          ...listRequest,
-          timestamp: new Date().getTime()
-        });
-  
-        setSelectedActiveIngredientFoodInteraction({ ...newApActiveIngredientFoodInteraction });
-      }
-    }, [saveActiveIngredientFoodInteractionMutation]);
-
-    useEffect(() => {
-      const updatedFilters =[
-        {
-          fieldName: 'active_ingredient_key',
-          operator: 'match',
-          value: activeIngredients.key || undefined
-        },
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        }
-      ];
-      setListRequest((prevRequest) => ({
-        ...prevRequest,
-        filters: updatedFilters,
-      }));
-    }, [activeIngredients.key]);
-
-  
-    useEffect(() => {
-      if (removeActiveIngredientFoodInteractionMutation.isSuccess) {
-        setListRequest({
-          ...listRequest,
-          timestamp: new Date().getTime()
-        });
-  
-        setSelectedActiveIngredientFoodInteraction({ ...newApActiveIngredientFoodInteraction });
-      }
-    }, [removeActiveIngredientFoodInteractionMutation]);
-
-    useEffect(() => {
-      if (activeIngredients) {
-        setActiveIngredientFoodInteraction(prevState => ({
-          ...prevState,
-          activeIngredientKey: activeIngredients.key
-        }));
-      }
-    }, [activeIngredients]);
-
-    return (
-      <>
-          <Grid fluid>
-            <Row gutter={15}>
-            <Col xs={6}>
-              <Text>Severity</Text>
-              < InputPicker
-              disabled={!isActive}
-               data={severityLovQueryResponseData?.object ?? []}
-               value={selectedActiveIngredientFoodInteraction.severityLkey}
-               onChange={e =>
-                 setSelectedActiveIngredientFoodInteraction({
-                   ...selectedActiveIngredientFoodInteraction,
-                   severityLkey: String(e)
-                 })
-               }
-               labelKey="lovDisplayVale" 
-               valueKey="key"
-               style={{ width: 224 }}
-                />
-            </Col>
-            <Col xs={4}>
-             
-             </Col>
-             <Col xs={1}>
-             </Col>
-             <Col xs={4}>
-             </Col>
-             <Col xs={1}>
-             </Col>
-            <Col xs={5}>
-            {isEdit && <ButtonToolbar style={{ margin: '2px' }}>
-              <IconButton
-                  size="xs"
-                  appearance="primary"
-                  color="blue"
-                  onClick={handleFoodsNew}
-                  icon={<Plus />}
-                />
-              <IconButton
-                  disabled={!isActive}
-                  size="xs"
-                  appearance="primary"
-                  color="green"
-                  onClick={save}
-                  icon={<MdSave />}
-                />
-                   <IconButton
-                    disabled={!selectedActiveIngredientFoodInteraction.key}
-                    size="xs"
-                    appearance="primary"
-                    color="red"
-                    onClick={remove}
-                    icon={<Trash />}
-                  />
-                  <IconButton
-                    disabled={!selectedActiveIngredientFoodInteraction.key}
-                    size="xs"
-                    appearance="primary"
-                    color="orange"
-                    icon={<InfoRound />}
-                  />
-                  </ButtonToolbar>}
-              </Col>
-          </Row>
-          <Row gutter={15}>
-          <Col xs={24}>
-          <Text>Description</Text>
-          <Input 
-          disabled={!isActive}
-          as="textarea" 
-          rows={3}  
-          value={selectedActiveIngredientFoodInteraction.description}
-          onChange={e =>
-            setSelectedActiveIngredientFoodInteraction({
-              ...selectedActiveIngredientFoodInteraction,
-              description: String(e)
-            })
-          }
-          />
-          </Col> 
-          </Row>
-            <Row gutter={15}>
-              <Col xs={24}>
-                <Table
-                   bordered
-                   onRowClick={rowData => {
-                     setSelectedActiveIngredientFoodInteraction(rowData);
-                   }}
-                   rowClassName={isSelected}
-                   data={foodListResponseData?.object ?? []}
-                >
-                  <Table.Column flexGrow={1}>
-                    <Table.HeaderCell>food</Table.HeaderCell>
-                    <Table.Cell>
-                    {rowData => <Text>{rowData.foodDescription }</Text>}
-                    </Table.Cell>
-                  </Table.Column>
-                  <Table.Column flexGrow={1}>
-                    <Table.HeaderCell>Severity</Table.HeaderCell>
-                    <Table.Cell>
-                    {rowData =>
-                    rowData.severityLvalue ? rowData.severityLvalue.lovDisplayVale : rowData.severityLkey
-                        }
-                    </Table.Cell>
-                  </Table.Column>
-                  <Table.Column flexGrow={1}>
-                    <Table.HeaderCell>Description</Table.HeaderCell>
-                    <Table.Cell>
-                    {rowData => <Text>{rowData.description}</Text>}
-                    </Table.Cell>
-                  </Table.Column>
-                </Table>
-              </Col>
-            </Row>
-          </Grid>
-      </>
-    );
+  // class name for selected row
+  const isSelected = rowData => {
+    if (rowData && rowData.key === selectedActiveIngredientFoodInteraction.key) {
+      return 'selected-row';
+    } else return '';
   };
-  
-  export default DrugFoodInteractions;
+
+  // Icons column (remove)
+  const iconsForActions = () => (
+    <div className="container-of-icons">
+      <MdDelete
+        className="icons-style"
+        title="Delete"
+        size={24}
+        fill="var(--primary-pink)"
+        onClick={() => setOpenConfirmDeleteFoodInteractionModal(true)}
+      />
+    </div>
+  );
+
+  //Table columns
+  const tableColumns = [
+    {
+      key: 'food',
+      title: <Translate>Food</Translate>,
+      render: rowData => <Text>{rowData.foodDescription}</Text>
+    },
+    {
+      key: 'severity',
+      title: <Translate>Severity</Translate>,
+      render: rowData =>
+        rowData.severityLvalue ? rowData.severityLvalue.lovDisplayVale : rowData.severityLkey
+    },
+    {
+      key: 'description',
+      title: <Translate>Description</Translate>,
+      render: rowData => <Text>{rowData.description}</Text>
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      render: () => iconsForActions()
+    }
+  ];
+
+  // handle save
+  const save = () => {
+    saveActiveIngredientFoodInteraction({
+      ...selectedActiveIngredientFoodInteraction,
+      activeIngredientKey: activeIngredients.key,
+      createdBy: 'Administrator'
+    })
+      .unwrap()
+      .then(() => {
+        dispatch(notify('Saved successfully'));
+        setSelectedActiveIngredientFoodInteraction({
+          ...newApActiveIngredientFoodInteraction,
+          severityLkey: null
+        });
+      });
+  };
+
+  // handle new
+  const handleFoodsNew = () => {
+    setSelectedActiveIngredientFoodInteraction({
+      ...newApActiveIngredientFoodInteraction
+    });
+  };
+
+  // handle remove
+  const remove = () => {
+    setOpenConfirmDeleteFoodInteractionModal(false);
+    if (selectedActiveIngredientFoodInteraction.key) {
+      removeActiveIngredientFoodInteraction({
+        ...selectedActiveIngredientFoodInteraction
+      })
+        .unwrap()
+        .then(() => {
+          refetch();
+          dispatch(notify('Deleted successfully'));
+        });
+    }
+  };
+
+  // Effects
+  useEffect(() => {
+    if (saveActiveIngredientFoodInteractionMutation.isSuccess) {
+      setListRequest({
+        ...listRequest,
+        timestamp: new Date().getTime()
+      });
+
+      setSelectedActiveIngredientFoodInteraction({ ...newApActiveIngredientFoodInteraction });
+    }
+  }, [saveActiveIngredientFoodInteractionMutation]);
+
+  useEffect(() => {
+    const updatedFilters = [
+      {
+        fieldName: 'active_ingredient_key',
+        operator: 'match',
+        value: activeIngredients.key || undefined
+      },
+      {
+        fieldName: 'deleted_at',
+        operator: 'isNull',
+        value: undefined
+      }
+    ];
+    setListRequest(prevRequest => ({
+      ...prevRequest,
+      filters: updatedFilters
+    }));
+  }, [activeIngredients.key]);
+
+  useEffect(() => {
+    if (removeActiveIngredientFoodInteractionMutation.isSuccess) {
+      setListRequest({
+        ...listRequest,
+        timestamp: new Date().getTime()
+      });
+
+      setSelectedActiveIngredientFoodInteraction({ ...newApActiveIngredientFoodInteraction });
+    }
+  }, [removeActiveIngredientFoodInteractionMutation]);
+
+  return (
+    <Form fluid>
+      <div className="container-of-actions-header-active">
+        <div className="container-of-fields-active">
+          <MyInput
+            fieldType="select"
+            selectData={[]}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            width={200}
+            fieldName=""
+            fieldLabel="Food"
+            record={selectedActiveIngredientFoodInteraction}
+            setRecord={setSelectedActiveIngredientFoodInteraction}
+            required
+          />
+          <MyInput
+            fieldType="select"
+            selectData={severityLovQueryResponseData?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            width={200}
+            fieldName="severityLkey"
+            fieldLabel="Severity"
+            record={selectedActiveIngredientFoodInteraction}
+            setRecord={setSelectedActiveIngredientFoodInteraction}
+            required
+          />
+        </div>
+        <div className="container-of-buttons-active">
+          <MyButton
+            prefixIcon={() => <MdSave />}
+            color="var(--deep-blue)"
+            onClick={save}
+            title="Save"
+          ></MyButton>
+          <MyButton
+            prefixIcon={() => <Plus />}
+            color="var(--deep-blue)"
+            onClick={handleFoodsNew}
+            title="New"
+          ></MyButton>
+        </div>
+      </div>
+      <MyInput
+        width="100%"
+        fieldName="description"
+        fieldType="textarea"
+        record={selectedActiveIngredientFoodInteraction}
+        setRecord={setSelectedActiveIngredientFoodInteraction}
+        required
+      />
+      <br />
+      <Row gutter={15}>
+        <Col xs={24}>
+          <MyTable
+            noBorder
+            height={450}
+            data={foodListResponseData?.object ?? []}
+            loading={isFetching}
+            columns={tableColumns}
+            rowClassName={isSelected}
+            onRowClick={rowData => {
+              setSelectedActiveIngredientFoodInteraction(rowData);
+            }}
+            sortColumn={listRequest.sortBy}
+            onSortChange={(sortBy, sortType) => {
+              if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+            }}
+          />
+          <DeletionConfirmationModal
+            open={openConfirmDeleteFoodInteractionModal}
+            setOpen={setOpenConfirmDeleteFoodInteractionModal}
+            itemToDelete="Food Interaction"
+            actionButtonFunction={remove}
+            actionType="Delete"
+          />
+        </Col>
+      </Row>
+    </Form>
+  );
+};
+
+export default DrugFoodInteractions;

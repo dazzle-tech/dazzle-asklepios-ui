@@ -63,7 +63,8 @@ const MyTable: React.FC<MyTableProps> = ({
   rowsPerPage,
   totalCount,
   onPageChange,
-  onRowsPerPageChange
+  onRowsPerPageChange,
+  ...props
 }) => {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
@@ -90,7 +91,7 @@ const MyTable: React.FC<MyTableProps> = ({
   };
 
   return (
-    <Box className="my-table-wrapper">
+    <Box style={{ ...((props?.noBorder) && { borderRadius: 'none',boxShadow: "none", border: "none" })}} className="my-table-wrapper">
       {filters && <Box className="my-table-filters">{filters}</Box>}
       <TableContainer
         component={Paper}
