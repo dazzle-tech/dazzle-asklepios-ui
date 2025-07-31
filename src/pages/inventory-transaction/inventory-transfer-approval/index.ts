@@ -1,4 +1,4 @@
 
-import inventoryTransferApproval from "./inventoryTransferApproval";
+import inventoryTransferApproval from "./InventoryTransferApproval";
 
 export default inventoryTransferApproval;
