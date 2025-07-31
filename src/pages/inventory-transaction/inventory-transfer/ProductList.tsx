@@ -9,15 +9,11 @@ import { useAppDispatch } from '@/hooks';
 import { FaSyringe } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { notify } from '@/utils/uiReducerActions';
-import { ApInventoryTransactionProduct} from '@/types/model-types';
-import { newApInventoryTransactionProduct} from '@/types/model-types-constructor';
-import MyInput from '@/components/MyInput';
+import { ApInventoryTransactionProduct, ApInventoryTransferProduct} from '@/types/model-types';
+import { newApInventoryTransactionProduct, newApInventoryTransferProduct} from '@/types/model-types-constructor';
 import './styles.less';
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList, fromCamelCaseToDBName } from '@/utils';
 import {
-  useGetVaccineListQuery,
-  useDeactiveActivVaccineMutation,
-  useGetDepartmentsQuery,
   useGetProductQuery,
   useGetLovValuesByCodeAndParentQuery,
   useGetUomGroupsUnitsQuery,
@@ -27,26 +23,28 @@ import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import MyTable from '@/components/MyTable';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
-import { FaClock, FaHourglass, FaUser } from 'react-icons/fa6';
-import AddEditProductIn from './AddEditProductIn';
-import { useGetInventoryTransactionsProductQuery, useRemoveInventoryTransactionProductMutation, useSaveInventoryTransactionProductMutation } from '@/services/inventoryTransactionService';
-const ProductListOut = ({
+import {  useGetInventoryTransferProductQuery, useRemoveInventoryTransferProductMutation, useSaveInventoryTransactionProductMutation } from '@/services/inventoryTransactionService';
+const ProductList = ({
 
   open,
   setOpen,
   showSubChildModal,
   setShowSubChildModal,
-  transaction,
-  setTransaction,
-  refetch
+  transfer,
+  setTransfer,
+  transferProductListRequest,
+  setTransferProductListRequest,
+  transferProductListResponseLoading,
+  transferProductIsFetching,
+  transferProductRefetch
 }) => {
   const dispatch = useAppDispatch();
-  const [transactionProduct, setTransactionProduct] = useState<ApInventoryTransactionProduct>({ ...newApInventoryTransactionProduct });
-  const [openConfirmDeleteTransactionProductModal, setOpenConfirmDeleteTransactionProductModal] =
+  const [transferProduct, setTransferProduct] = useState<ApInventoryTransferProduct>({ ...newApInventoryTransferProduct });
+  const [openConfirmDeleteTransferProductModal, setOpenConfirmDeleteTransferProductModal] =
     useState<boolean>(false);
-  const [saveTransactionProduct, saveTransactionProductMutation] = useSaveInventoryTransactionProductMutation();
-  const [removeTransactionProduct, removeTransactionProductMutation] = useRemoveInventoryTransactionProductMutation();
-  const [stateOfDeleteTransactionProductModal, setStateOfDeleteTransactionProductModal] = useState<string>('delete');
+  const [saveTransferProduct, saveTransferProductMutation] = useSaveInventoryTransactionProductMutation();
+  const [removeTransferProduct, removeTransferProductMutation] = useRemoveInventoryTransferProductMutation();
+  const [stateOfDeleteTransferProductModal, setStateOfDeleteTransferProductModal] = useState<string>('delete');
   const [openAddEditPopup, setOpenAddEditPopup] = useState(false);
   const [edit_new, setEdit_new] = useState(false);
   const [recordOfFilter, setRecordOfFilter] = useState({ filter: '', value: '' });
@@ -61,70 +59,52 @@ const ProductListOut = ({
     data: uomGroupsUnitsListResponse,
     refetch: refetchUomGroupsUnit,
   } = useGetUomGroupsUnitsQuery(uomListRequest);
-  const [transactionProductListRequest, setTransactionProductListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    pageSize: 15,
-    filters: [
-      {
-        fieldName: 'inventory_trans_key',
-        operator: 'match',
-        value: transaction?.key
-      }
-    ]
-  });
-
-  // Fetch transaction product list response
-  const {
-    data: transactionProductListResponseLoading,
-    refetch: transactionProductRefetch,
-    isFetching: transactionProductIsFetching
-  } = useGetInventoryTransactionsProductQuery(transactionProductListRequest);
+ 
+   
+      const [productsListRequest, setProductsListRequest] = useState<ListRequest>({
+        ...initialListRequest,
+        filters: [
+          {
+            fieldName: 'deleted_at',
+            operator: 'isNull',
+            value: undefined,
+          }
+        ],
+      });
+      const {
+        data: productListResponseLoading,
+        refetch: refetchProduct
+      } = useGetProductQuery(productsListRequest);
 
   useEffect(() => {
     const updatedFilters = [
          {
-        fieldName: 'inventory_trans_key',
+        fieldName: 'transfer_key',
         operator: 'match',
-        value: transaction?.key
+        value: transfer?.key
       }
     ];
-    setTransactionProductListRequest(prevRequest => ({
+    setTransferProductListRequest(prevRequest => ({
       ...prevRequest,
       filters: updatedFilters
     }));
-    console.log(transactionProductListResponseLoading);
-  }, [transaction?.key]);
+    console.log(transferProductListResponseLoading);
+  }, [transfer?.key]);
 
    useEffect(() => {
-    transactionProductRefetch();
-  }, [refetch]);
+    transferProductRefetch();
+  }, [transferProductRefetch]);
 
-
-  const [productsListRequest, setProductsListRequest] = useState<ListRequest>({
-    ...initialListRequest,
-    filters: [
-      {
-        fieldName: 'deleted_at',
-        operator: 'isNull',
-        value: undefined,
-      }
-    ],
-  });
-  const {
-    data: productListResponseLoading,
-    refetch: refetchProduct,
-    isFetching: productListIsFetching
-  } = useGetProductQuery(productsListRequest);
 
   // Pagination values
-  const pageIndex = transactionProductListRequest.pageNumber - 1;
-  const rowsPerPage = transactionProductListRequest.pageSize;
-  const totalCount = transactionProductListResponseLoading?.extraNumeric ?? 0;
- 
+  const pageIndex = transferProductListRequest.pageNumber - 1;
+  const rowsPerPage = transferProductListRequest.pageSize;
+  const totalCount = transferProductListResponseLoading?.extraNumeric ?? 0;
+
   // Header page setUp
   const divContent = (
     <div className='title'>
-      <h5>Inventory Transaction Products</h5>
+      <h5>Inventory Transfer Products</h5>
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
@@ -133,7 +113,7 @@ const ProductListOut = ({
 
   // class name for selected row
   const isSelected = rowData => {
-    if (rowData && transactionProduct && transactionProduct.key === rowData.key) {
+    if (rowData && transferProduct && transferProduct.key === rowData.key) {
       return 'selected-row';
     } else return '';
   };
@@ -181,21 +161,19 @@ const ProductListOut = ({
       setListRequest({ ...listRequest, filters: [] });
     }
   };
-  // handle deactivate transaction product
-  const handleDeactivateTransactionProduct = async data => {
-    setOpenConfirmDeleteTransactionProductModal(false);
+  // handle deactivate transfer product
+  const handleDeactivateTransferProduct = async data => {
+    setOpenConfirmDeleteTransferProductModal(false);
     try {
-      await removeTransactionProduct({
-        ...transactionProduct
+      await removeTransferProduct({
+        ...transferProduct
       })
         .unwrap()
         .then(() => {
-          refetchProduct();
-          transactionProductRefetch();
-          refetch();
+          transferProductRefetch();
           dispatch(
             notify({
-              msg: 'The product was successfully ' + stateOfDeleteTransactionProductModal,
+              msg: 'The product was successfully ' + stateOfDeleteTransferProductModal,
               sev: 'success'
             })
           );
@@ -203,23 +181,22 @@ const ProductListOut = ({
     } catch (error) {
       dispatch(
         notify({
-          msg: 'Failed to ' + stateOfDeleteTransactionProductModal + ' this product',
+          msg: 'Failed to ' + stateOfDeleteTransferProductModal + ' this product',
           sev: 'error'
         })
       );
     }
   };
-  //handle Reactivate transaction product
-  const handleReactivateTransactionProduct = () => {
-    setOpenConfirmDeleteTransactionProductModal(false);
-    const updatedTransactionProduct = { ...transactionProduct, deletedAt: null };
-    saveTransactionProduct(updatedTransactionProduct)
+  //handle Reactivate transfer product
+  const handleReactivateTransferProduct = () => {
+    setOpenConfirmDeleteTransferProductModal(false);
+    const updatedTransferProduct = { ...transferProduct, deletedAt: null };
+    saveTransferProduct(updatedTransferProduct)
       .unwrap()
       .then(() => {
-        refetch();
-        transactionProductRefetch();
+        transferProductRefetch();
         // display success message
-        dispatch(notify({ msg: 'The transaction Product has been activated successfully', sev: 'success' }));
+        dispatch(notify({ msg: 'The transfer Product has been activated successfully', sev: 'success' }));
       })
       .catch(() => {
         // display error message
@@ -255,8 +232,8 @@ const ProductListOut = ({
           size={24}
           fill="var(--primary-pink)"
           onClick={() => {
-            setStateOfDeleteTransactionProductModal('deactivate');
-            setOpenConfirmDeleteTransactionProductModal(true);
+            setStateOfDeleteTransferProductModal('deactivate');
+            setOpenConfirmDeleteTransferProductModal(true);
           }}
         />
       ) : (
@@ -266,8 +243,8 @@ const ProductListOut = ({
           size={24}
           fill="var(--primary-gray)"
           onClick={() => {
-            setStateOfDeleteTransactionProductModal('reactivate');
-            setOpenConfirmDeleteTransactionProductModal(true);
+            setStateOfDeleteTransferProductModal('reactivate');
+            setOpenConfirmDeleteTransferProductModal(true);
           }}
         />
       )}
@@ -290,50 +267,14 @@ const ProductListOut = ({
       )
     },
     {
-      key: 'productType',
-      title: <Translate>Product Type</Translate>,
+      key: 'quantity',
+      title: <Translate>Transfer Quantity</Translate>,
       flexGrow: 4,
-      render: rowData => (
-        <span>
-          {conjureValueBasedOnKeyFromList(
-            productTypeLovQueryResponse?.object ?? [],
-            rowData.productObj.typeLvalue,
-            'lovDisplayVale'
-          )}
-        </span>
-      )
+      render: rowData => <span>{rowData.quentityRequested}</span>
     },
-    {
-      key: 'productcode',
-      title: <Translate>Product code</Translate>,
-      flexGrow: 4,
-      render: rowData => (
-        <span>
-          {conjureValueBasedOnKeyFromList(
-            productListResponseLoading?.object ?? [],
-            rowData.productKey,
-            'code'
-          )}
-        </span>
-      )
-    },
-    {
-      key: 'productUOM',
-      title: <Translate>Product Base UOM</Translate>,
-      flexGrow: 4,
-      render: rowData => (
-        <span>
-          {conjureValueBasedOnKeyFromList(
-            uomGroupsUnitsListResponse?.object ?? [],
-            rowData.productObj.baseUomKey,
-            'units'
-          )}
-        </span>
-      )
-    },
-      {
-      key: 'productUOM',
-      title: <Translate>Product trans UOM</Translate>,
+     {
+      key: 'transUomKey',
+      title: <Translate>Transfer UOM</Translate>,
       flexGrow: 4,
       render: rowData => (
         <span>
@@ -345,12 +286,33 @@ const ProductListOut = ({
         </span>
       )
     },
-
-    {
-      key: 'quantity',
-      title: <Translate>Quantity</Translate>,
+      {
+      key: 'productUOM',
+      title: <Translate>Available quantity</Translate>,
       flexGrow: 4,
-      render: rowData => <span>{rowData.newQuentity}</span>
+      render: rowData => (
+        <span>
+          {conjureValueBasedOnKeyFromList(
+            uomGroupsUnitsListResponse?.object ?? [],
+            rowData.productObj.baseUomKey,
+            'units'
+          )}
+        </span>
+      )
+    },
+    {
+      key: 'productUOM',
+      title: <Translate>Base UOM</Translate>,
+      flexGrow: 4,
+      render: rowData => (
+        <span>
+          {conjureValueBasedOnKeyFromList(
+            uomGroupsUnitsListResponse?.object ?? [],
+            rowData.productObj.baseUomKey,
+            'units'
+          )}
+        </span>
+      )
     },
     {
       key: 'icons',
@@ -366,7 +328,7 @@ const ProductListOut = ({
                     prefixIcon={() => <AddOutlineIcon />}
                     color="var(--deep-blue)"
                     onClick={() => {
-                      setShowSubChildModal(true), setTransactionProduct({ ...newApInventoryTransactionProduct }), setEdit_new(true);
+                      setShowSubChildModal(true), setTransferProduct({ ...newApInventoryTransferProduct }), setEdit_new(true);
                     }}
                     width="109px"
                   >
@@ -375,17 +337,17 @@ const ProductListOut = ({
                 </div>
       <MyTable
         height={450}
-        data={transactionProductListResponseLoading?.object ?? []}
-        loading={transactionProductIsFetching}
+        data={transferProductListResponseLoading?.object ?? []}
+        loading={transferProductIsFetching}
         columns={tableColumns}
         rowClassName={isSelected}
         onRowClick={rowData => {
-          setTransactionProduct(rowData);
+          setTransferProduct(rowData);
         }}
-        sortColumn={transactionProductListRequest.sortBy}
-        sortType={transactionProductListRequest.sortType}
+        sortColumn={transferProductListRequest.sortBy}
+        sortType={transferProductListRequest.sortType}
         onSortChange={(sortBy, sortType) => {
-          if (sortBy) setTransactionProductListRequest({ ...transactionProductListRequest, sortBy, sortType });
+          if (sortBy) setTransferProductListRequest({ ...transferProductListRequest, sortBy, sortType });
         }}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
@@ -393,28 +355,20 @@ const ProductListOut = ({
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
-      {/* <AddEditProductIn
-        open={showSubChildModal}
-        setOpen={setShowSubChildModal}
-        transactionProduct={transactionProduct}
-        setTransactionProduct={setTransactionProduct}
-        refetch={transactionProductRefetch}
-      /> */}
-
       <DeletionConfirmationModal
-        open={openConfirmDeleteTransactionProductModal}
-        setOpen={setOpenConfirmDeleteTransactionProductModal}
+        open={openConfirmDeleteTransferProductModal}
+        setOpen={setOpenConfirmDeleteTransferProductModal}
         itemToDelete="Product"
         actionButtonFunction={
-          stateOfDeleteTransactionProductModal == 'deactivate'
-            ? () => handleDeactivateTransactionProduct(transactionProduct)
-            : handleReactivateTransactionProduct
+          stateOfDeleteTransferProductModal == 'deactivate'
+            ? () => handleDeactivateTransferProduct(transferProduct)
+            : handleReactivateTransferProduct
         }
-        actionType={stateOfDeleteTransactionProductModal}
+        actionType={stateOfDeleteTransferProductModal}
       />
 
     </Panel>
   );
 };
 
-export default ProductListOut;
+export default ProductList;

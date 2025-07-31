@@ -35,7 +35,6 @@ const BasicInf = ({ product, setProduct }) => {
             name: medName
         }));
     }, [
-        product,
         product.medicationKey 
 
     ]);
@@ -68,13 +67,13 @@ const BasicInf = ({ product, setProduct }) => {
                     record={product}
                     setRecord={setProduct}
                     menuMaxHeight={200}
-                    width={480}
+                    width={400}
                     searchable={false}
                 />
             </Form>
             {product.typeLkey === '5274597115605262' &&
-                <>
-
+                
+               <Form >
                     <MyInput
                         fieldLabel="Brand Medication"
                         fieldName="medicationKey"
@@ -111,12 +110,12 @@ const BasicInf = ({ product, setProduct }) => {
                         setRecord={setProduct}
                         disabled={true}
                     />
-                </>
+               </Form>
             }
-            {product.typeLkey != '5274597115605262' &&
+            {product.typeLkey !== '5274597115605262' &&
+           (
                 <Form fluid layout="inline">
                     <MyInput
-                        column
                         fieldLabel="Name"
                         fieldName="name"
                         record={product}
@@ -124,13 +123,13 @@ const BasicInf = ({ product, setProduct }) => {
                     />
 
                     <MyInput
-                        column
                         fieldLabel="Code"
                         fieldName="code"
                         record={product}
                         setRecord={setProduct}
                     />
                 </Form>
+           )
 
             }
 

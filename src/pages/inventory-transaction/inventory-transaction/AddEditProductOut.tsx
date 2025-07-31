@@ -35,19 +35,19 @@ import { newApInventoryTransactionProduct, newApProducts, newApVaccineBrands } f
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyModal from '@/components/MyModal/MyModal';
-import { FaBabyCarriage, FaWarehouse } from 'react-icons/fa6';
+import { FaBabyCarriage, FaWarehouse, FaWaterLadder } from 'react-icons/fa6';
 import { useLazyGetQtyInBaseUomQuery, useSaveInventoryTransactionProductMutation } from '@/services/inventoryTransactionService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalculator } from '@fortawesome/free-solid-svg-icons';
-const AddEditProductIn = ({ open, setOpen, transProduct, setTransProduct, transaction, setTransaction, refetch }) => {
+import { faCalculator, faClipboardCheck, faListCheck, faWaterLadder } from '@fortawesome/free-solid-svg-icons';
+const AddEditProductOut = ({ open, setOpen, transProduct, setTransProduct, transaction, setTransaction, refetch }) => {
     const dispatch = useAppDispatch();
 
     const [selectedProduct, setSelectedProduct] = useState<ApProducts>({ ...newApProducts });
-    const [triggerGetQty, { data: qtyInBaseUomResponse, isLoading }] = useLazyGetQtyInBaseUomQuery();
     const [generateCode, setGenerateCode] = useState();
     const [totalCost, setTotalCost] = useState(0);
     const [recordOfWarehouseCode, setRecordOfWarehouseCode] = useState({ warehouseId: '' });
     const { data: productTypeLovQueryResponse } = useGetLovValuesByCodeQuery('PRODUCTS_TYPES');
+    const [triggerGetQty, { data: qtyInBaseUomResponse, isLoading }] = useLazyGetQtyInBaseUomQuery();
     const [listRequest, setListRequest] = useState<ListRequest>({
         ...initialListRequest,
         filters: [
@@ -105,24 +105,6 @@ const AddEditProductIn = ({ open, setOpen, transProduct, setTransProduct, transa
         data: productselectListResponseLoading
     } = useGetProductQuery(productselectListRequest);
 
-    
-    const handleConvertQuantity = async () => {
-        if (!selectedProduct || !transProduct) return;
-
-        const result = await triggerGetQty({
-            quantity: transProduct.newQuentityBaseUom,
-            transUnit: transProduct.transUomKey,
-            toBaseUnit: selectedProduct.baseUomKey,
-            uomGroup: selectedProduct.uomGroupKey,
-        });
-
-        if (result?.data?.object !== undefined) {
-            setTransProduct(prev => ({
-                ...prev,
-                quentityRequestedBaseUom: result.data.object
-            }));
-        }
-    };
 
     const [departmentListRequest, setDepartmentListRequest] = useState<ListRequest>({
         ...initialListRequest,
@@ -142,6 +124,23 @@ const AddEditProductIn = ({ open, setOpen, transProduct, setTransProduct, transa
     };
 
 
+     const handleConvertQuantity = async () => {
+        if (!selectedProduct || !transProduct) return;
+
+        const result = await triggerGetQty({
+            quantity: transProduct.newQuentityBaseUom,
+            transUnit: transProduct.transUomKey,
+            toBaseUnit: selectedProduct.baseUomKey,
+            uomGroup: selectedProduct.uomGroupKey,
+        });
+
+        if (result?.data?.object !== undefined) {
+            setTransProduct(prev => ({
+                ...prev,
+                newQuantityBaseUom: result.data.object
+            }));
+        }
+    };
 
     useEffect(() => {
         setListRequest(prev => ({
@@ -290,9 +289,37 @@ const AddEditProductIn = ({ open, setOpen, transProduct, setTransProduct, transa
                     />
                 </div>
                 <div className='container-of-field' >
+                    <br/>
 
-                    <MyInput width="100%" fieldLabel="Lot/Serial Number" fieldType="number" fieldName="lotserialnumber" record={transProduct} setRecord={setTransProduct} />
+                    <MyButton
+                        size="small"
+                    // onClick={() => {
+                    //     const patientData = rowData?.patientObject;
+                    //     setLocalEncounter(rowData);
+                    //     handleGoToVisit(rowData, patientData);
+                    // }}
+                    >
+                        <FontAwesomeIcon icon={faClipboardCheck} />
+                    </MyButton>
+                </div>
+            </div>
+               <div className='container-of-two-fields'>
+                <div className='container-of-field' >
+                    <MyInput
+                        width="100%"
+                        disabled={true}
+                        fieldLabel="Quantity in base UOM"
+                        fieldName="newQuantityBaseUom"
+                        fieldType="number"
+                        record={transProduct}
+                        setRecord={setTransProduct}
+                    />
+                </div>
+                <div className='container-of-field' >
 
+                  
+                    <br />
+                    <MyButton appearance="primary" onClick={handleConvertQuantity}> <FontAwesomeIcon icon={faCalculator} /></MyButton>
                 </div>
             </div>
             <div className='container-of-two-fields'>
@@ -320,61 +347,46 @@ const AddEditProductIn = ({ open, setOpen, transProduct, setTransProduct, transa
             </div>
             <div className='container-of-two-fields'>
                 <div className='container-of-field' >
-                    <MyInput width="100%" fieldLabel="unit cost" fieldType="number" fieldName="newCost" record={transProduct} setRecord={setTransProduct} />
+                    {/* <MyInput width="100%" fieldLabel="unit cost" fieldType="number" fieldName="newCost" record={transProduct} setRecord={setTransProduct} /> */}
 
                 </div>
 
                 <div className='container-of-field' >
-                    <MyInput
+                    {/* <MyInput
                         width="100%"
                         disabled={true}
                         fieldLabel="Total Cost"
                         fieldName="value"
                         record={{ value: totalCost }}
                         setRecord={() => { }}
-                    />
+                    /> */}
 
                 </div>
+
+
             </div>
             <div className='container-of-two-fields'>
                 <div className='container-of-field' >
 
 
 
-                    <MyInput width="100%" disabled={true}
-                        fieldName="currencyLkey" record={transProduct} setRecord={setTransProduct} />
+                    {/* <MyInput width="100%" disabled={true}
+                        fieldName="currencyLkey" record={transProduct} setRecord={setTransProduct} /> */}
                 </div>
                 <div className='container-of-field' >
 
 
-                    <MyInput
+                    {/* <MyInput
                         width="100%"
                         fieldName="expiryDate"
                         fieldType="date"
                         record={transProduct}
                         setRecord={setTransProduct}
-                    />
+                    /> */}
                 </div>
             </div>
-              <div className='container-of-two-fields'>
-                            <div className='container-of-field' >
-                                <MyInput
-                                    width="100%"
-                                    disabled={true}
-                                    fieldLabel="Quantity in base UOM"
-                                    fieldName="quentityRequestedBaseUom"
-                                    fieldType="number"
-                                    record={transProduct}
-                                    setRecord={setTransProduct}
-                                />
-                            </div>
-                            <div className='container-of-field' >
-                                <br />
-                                <MyButton appearance="primary" onClick={handleConvertQuantity}> <FontAwesomeIcon icon={faCalculator} /></MyButton>
-                            </div>
-                        </div>
 
         </Form>
     );
 };
-export default AddEditProductIn;
+export default AddEditProductOut;

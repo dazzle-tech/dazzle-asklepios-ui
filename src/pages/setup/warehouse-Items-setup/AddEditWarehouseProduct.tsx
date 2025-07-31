@@ -321,6 +321,7 @@ const AddEditWarehouseProduct = ({ open, setOpen, warehouseProduct, setWarehouse
             setOpen={setOpen}
             title={warehouseProduct?.key ? 'Edit Warehouse Product' : 'New Warehouse Product'}
             position="right"
+            size="xs"
             content={conjureFormContent}
             actionButtonLabel={warehouseProduct?.key ? 'Save' : 'Create'}
             actionButtonFunction={handleSave}

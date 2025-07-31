@@ -9,8 +9,8 @@ import { useAppDispatch } from '@/hooks';
 import { FaSyringe } from 'react-icons/fa';
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import { notify } from '@/utils/uiReducerActions';
-import { ApVaccine, ApWarehouse, ApWarehouseProduct } from '@/types/model-types';
-import { newApVaccine, newApWarehouse, newApWarehouseProduct } from '@/types/model-types-constructor';
+import { ApVaccine, ApWarehouse, ApWarehouseProduct, ApWarehouseProductDetails } from '@/types/model-types';
+import { newApVaccine, newApWarehouse, newApWarehouseProduct, newApWarehouseProductDetails } from '@/types/model-types-constructor';
 import MyInput from '@/components/MyInput';
 import './styles.less';
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList, fromCamelCaseToDBName } from '@/utils';
@@ -27,6 +27,7 @@ import {
   useGetUomGroupsUnitsQuery,
   useRemoveWarehouseProductsMutation,
   useSaveWarehouseProductsMutation,
+  useGetWarehouseProductsDetailsQuery,
 } from '@/services/setupService';
 import ReactDOMServer from 'react-dom/server';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -35,17 +36,16 @@ import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
 import MyButton from '@/components/MyButton/MyButton';
 import { FaClock, FaHourglass, FaUser } from 'react-icons/fa6';
 import AddEditWarehouseProduct from './AddEditWarehouseProduct';
-import ProductDetails from './ProductDetails';
-const ProductList = ({
+const ProductDetails = ({
 
   open,
   setOpen,
-  warehouse,
-  setWarehouse,
+  warehouseProduct,
+  setWarehouseProduct,
   refetch
 }) => {
   const dispatch = useAppDispatch();
-  const [warehouseProduct, setWarehouseProduct] = useState<ApWarehouseProduct>({ ...newApWarehouseProduct });
+  const [productDetails, setProductDetails] = useState<ApWarehouseProductDetails>({ ...newApWarehouseProductDetails });
   const [openConfirmDeleteWarehouseModal, setOpenConfirmDeleteWarehouseModal] =
     useState<boolean>(false);
   const [saveWarehouseProduct, saveWarehouseProductMutation] = useSaveWarehouseProductsMutation();
@@ -65,39 +65,39 @@ const ProductList = ({
     data: uomGroupsUnitsListResponse,
     refetch: refetchUomGroupsUnit,
   } = useGetUomGroupsUnitsQuery(uomListRequest);
-  const [warehouseProductListRequest, setWarehouseProductListRequest] = useState<ListRequest>({
+  const [warehouseProductDetailsListRequest, setWarehouseProductDetailsListRequest] = useState<ListRequest>({
     ...initialListRequest,
     pageSize: 15,
     filters: [
       {
-        fieldName: 'warehouse_key',
+        fieldName: 'warehouse_product_key',
         operator: 'match',
-        value: warehouse?.key
+        value: warehouseProduct?.key
       }
     ]
   });
 
   // Fetch warehouse product list response
   const {
-    data: warehouseProductListResponseLoading,
+    data: warehouseProductDetailsListResponseLoading,
     refetch: warehouseProductRefetch,
     isFetching: warehouseProductIsFetching
-  } = useGetWarehouseProductsQuery(warehouseProductListRequest);
+  } = useGetWarehouseProductsDetailsQuery(warehouseProductDetailsListRequest);
 
   useEffect(() => {
     const updatedFilters = [
-      {
-        fieldName: 'warehouse_key',
+         {
+        fieldName: 'warehouse_product_key',
         operator: 'match',
-        value: warehouse?.key
+        value: warehouseProduct?.key
       }
     ];
-    setWarehouseProductListRequest(prevRequest => ({
+    setWarehouseProductDetailsListRequest(prevRequest => ({
       ...prevRequest,
       filters: updatedFilters
     }));
-    console.log(warehouseProductListResponseLoading);
-  }, [warehouse?.key]);
+    console.log(warehouseProductDetailsListResponseLoading);
+  }, [warehouseProduct?.key]);
 
   const [productsListRequest, setProductsListRequest] = useState<ListRequest>({
     ...initialListRequest,
@@ -116,14 +116,13 @@ const ProductList = ({
   } = useGetProductQuery(productsListRequest);
 
   // Pagination values
-  const pageIndex = warehouseProductListRequest.pageNumber - 1;
-  const rowsPerPage = warehouseProductListRequest.pageSize;
-  const totalCount = warehouseProductListResponseLoading?.extraNumeric ?? 0;
+  const pageIndex = warehouseProductDetailsListRequest.pageNumber - 1;
+  const rowsPerPage = warehouseProductDetailsListRequest.pageSize;
+  const totalCount = warehouseProductDetailsListResponseLoading?.extraNumeric ?? 0;
   // Available fields for filtering
   const filterFields = [
-    { label: 'Department Name', value: 'departmentName' },
-    { label: 'Warehouse Name', value: 'warehouseName' },
-    { label: 'Warehouse Code', value: 'warehouseCode' },
+    { label: 'Lot/Serial Number', value: 'lotSerialNum' },
+    { label: 'Quantity', value: 'quantity' },
     { label: 'Status', value: 'isValid' }
   ];
   // Header page setUp
@@ -274,147 +273,49 @@ const ProductList = ({
       />
     </Form>
   );
-  // // Icons column (Edit, User, , reactive/Deactivate)
-  const iconsForActions = (rowData: ApWarehouse) => (
-    <div className="container-of-icons">
-      <MdModeEdit
-        className="icons"
-        title="Edit"
-        size={24}
-        fill="var(--primary-gray)"
-        onClick={() => handleEdit()}
-      />
-      {!rowData?.deletedAt ? (
-        <MdDelete
-          className="icons"
-          title="Deactivate"
-          size={24}
-          fill="var(--primary-pink)"
-          onClick={() => {
-            setStateOfDeleteWarehouseModal('deactivate');
-            setOpenConfirmDeleteWarehouseModal(true);
-          }}
-        />
-      ) : (
-        <FaUndo
-          className="icons"
-          title="Activate"
-          size={24}
-          fill="var(--primary-gray)"
-          onClick={() => {
-            setStateOfDeleteWarehouseModal('reactivate');
-            setOpenConfirmDeleteWarehouseModal(true);
-          }}
-        />
-      )}
-    </div>
-  );
   //Table columns
   const tableColumns = [
     {
-      key: 'productKey',
-      title: <Translate>Product Name</Translate>,
+      key: 'lotSerialNum',
+      title: <Translate>Lot Serial Number</Translate>,
       flexGrow: 4,
-      render: rowData => (
-        <span>
-          {conjureValueBasedOnKeyFromList(
-            productListResponseLoading?.object ?? [],
-            rowData.productKey,
-            'name'
-          )}
-        </span>
-      )
+      render: rowData => <span>{rowData.lotSerialNum}</span>
     },
-    {
-      key: 'productType',
-      title: <Translate>Product Type</Translate>,
-      flexGrow: 4,
-      render: rowData => (
-        <span>
-          {conjureValueBasedOnKeyFromList(
-            productTypeLovQueryResponse?.object ?? [],
-            rowData.productObj.typeLkey,
-            'lovDisplayVale'
-          )}
-        </span>
-      )
-    },
-    {
-      key: 'productcode',
-      title: <Translate>Product code</Translate>,
-      flexGrow: 4,
-      render: rowData => (
-        <span>
-          {conjureValueBasedOnKeyFromList(
-            productListResponseLoading?.object ?? [],
-            rowData.productKey,
-            'code'
-          )}
-        </span>
-      )
-    },
-    {
-      key: 'productUOM',
-      title: <Translate>Product Base UOM</Translate>,
-      flexGrow: 4,
-      render: rowData => (
-        <span>
-          {conjureValueBasedOnKeyFromList(
-            uomGroupsUnitsListResponse?.object ?? [],
-            rowData.productObj.baseUomKey,
-            'units'
-          )}
-        </span>
-      )
-    },
-
     {
       key: 'quantity',
       title: <Translate>Quantity</Translate>,
       flexGrow: 4,
       render: rowData => <span>{rowData.quantity}</span>
     },
-    {
-      key: 'reorderquantity',
-      title: <Translate>Reorder Quantity</Translate>,
+      {
+      key: 'expiryDate',
+      title: <Translate>Expiry Date</Translate>,
       flexGrow: 4,
-      render: rowData => <span>{rowData.reOrderQuantity}</span>
-    },
-     {
-      key: 'avgCost',
-      title: <Translate>Avarge Cost</Translate>,
-      flexGrow: 4,
-      render: rowData => <span>{rowData.avgCost}</span>
+      render: rowData => <span>{rowData.expiryDate}</span>
     },
     {
       key: 'status',
       title: <Translate>Status</Translate>,
       flexGrow: 4,
       render: rowData => (rowData.isValid ? 'Inactive' : 'Active')
-    },
-    {
-      key: 'icons',
-      title: <Translate></Translate>,
-      flexGrow: 3,
-      render: rowData => iconsForActions(rowData)
     }
   ];
   return (
     <Panel>
       <MyTable
         height={450}
-        data={warehouseProductListResponseLoading?.object ?? []}
+        data={warehouseProductDetailsListResponseLoading?.object ?? []}
         loading={warehouseProductIsFetching}
         columns={tableColumns}
         rowClassName={isSelected}
         filters={filters()}
         onRowClick={rowData => {
-          setWarehouseProduct(rowData);
+          setProductDetails(rowData);
         }}
-        sortColumn={warehouseProductListRequest.sortBy}
-        sortType={warehouseProductListRequest.sortType}
+        sortColumn={warehouseProductDetailsListRequest.sortBy}
+        sortType={warehouseProductDetailsListRequest.sortType}
         onSortChange={(sortBy, sortType) => {
-          if (sortBy) setWarehouseProductListRequest({ ...warehouseProductListRequest, sortBy, sortType });
+          if (sortBy) setWarehouseProductDetailsListRequest({ ...warehouseProductDetailsListRequest, sortBy, sortType });
         }}
         page={pageIndex}
         rowsPerPage={rowsPerPage}
@@ -422,39 +323,9 @@ const ProductList = ({
         onPageChange={handlePageChange}
         onRowsPerPageChange={handleRowsPerPageChange}
       />
-      <AddEditWarehouseProduct
-        open={openAddEditPopup}
-        setOpen={setOpenAddEditPopup}
-        warehouseProduct={warehouseProduct}
-        setWarehouseProduct={setWarehouseProduct}
-        refetch={warehouseProductRefetch}
-        edit_new={edit_new}
-        setEdit_new={setEdit_new}
-      />
-
-      <DeletionConfirmationModal
-        open={openConfirmDeleteWarehouseModal}
-        setOpen={setOpenConfirmDeleteWarehouseModal}
-        itemToDelete="Product"
-        actionButtonFunction={
-          stateOfDeleteWarehouseModal == 'deactivate'
-            ? () => handleDeactivateWarehouse(warehouseProduct)
-            : handleReactiveWarehouse
-        }
-        actionType={stateOfDeleteWarehouseModal}
-      />
-        {warehouseProduct.key && (
-                <ProductDetails
-                  open={openAddEditPopup}
-                  setOpen={setOpenAddEditPopup}
-                  warehouseProduct={warehouseProduct}
-                  setWarehouseProduct={setWarehouseProduct}
-                  refetch={refetch}
-                />
-              )}
 
     </Panel>
   );
 };
 
-export default ProductList;
+export default ProductDetails;

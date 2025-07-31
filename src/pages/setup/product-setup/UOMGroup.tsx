@@ -97,6 +97,7 @@ const UomGroup = ({ product, setProduct }) => {
                     setRecord={setProduct}
                     searchable={false}
                 />
+                <br />
                 <MyButton
                     prefixIcon={() => <FontAwesomeIcon icon={faBoxesPacking} />}
                     color="var(--deep-blue)"

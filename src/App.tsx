@@ -136,6 +136,9 @@ import QuickVisit from './pages/encounter/ER-triage/QuickVisit';
 import SupplierSetup from './pages/setup/supplier-setup/Supplier';
 import OperationRoomMaterials from './pages/operation-theater/operation-room-materials/OperationRoomMaterials';
 import ProgressNotes from './pages/encounter/encounter-component/progress-notes/ProgressNotes';
+import InventoryTransfer from './pages/inventory-transaction/inventory-transfer';
+import InventoryTransferApproval from './pages/inventory-transaction/inventory-transfer-approval';
+
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -374,6 +377,9 @@ const App = () => {
               <Route path="allergens" element={<Allergens />} />
               <Route path="inventory-transaction" element={<InventoryTransaction />} />
               <Route path="inventory-product-setup" element={<ProductSetup />} />
+              <Route path="inventory-transfer" element={<InventoryTransfer />} />
+              <Route path="inventory-transfer-approval" element={<InventoryTransferApproval />} />
+              <Route path='inventory-product-setup' element={<ProductSetup />} />
               <Route path="warehouse-setup" element={<WarehouseSetup />} />
               <Route path="warehouse-items-setup" element={<WarehouseItemsSetup />} />
               <Route path="active-ingredients" element={<ActiveIngredientsSetup />} />
