@@ -1,8 +1,7 @@
 //Declares
 import React, { useState } from 'react';
 import MyTable from '@/components/MyTable';
-import MyInput from '@/components/MyInput';
-import { useGetLovValuesByCodeQuery } from '@/services/setupService';
+import { Checkbox } from 'rsuite';
 import { formatDateWithoutSeconds } from '@/utils';
 import { Form } from 'rsuite';
 
@@ -18,7 +17,7 @@ const sampleData = [
     difference: '2 pcs',
     serialNumber: 'SN123456',
     usedBy: 'OR Room 3',
-    usedAt: '2025-07-29 08:30 AM',
+    usedAt: '2025-07-29 08:30 AM'
   },
   {
     id: 2,
@@ -30,7 +29,7 @@ const sampleData = [
     difference: '5 meters',
     serialNumber: 'SN654321',
     usedBy: 'OR Room 1',
-    usedAt: '2025-07-28 02:15 PM',
+    usedAt: '2025-07-28 02:15 PM'
   },
   {
     id: 3,
@@ -42,56 +41,49 @@ const sampleData = [
     difference: '0 pcs',
     serialNumber: 'SN998877',
     usedBy: 'OR Room 2',
-    usedAt: '2025-07-27 11:00 AM',
+    usedAt: '2025-07-27 11:00 AM'
   }
 ];
 
-  //Table columns Configure
+//Table columns Configure
 const columns = [
   { key: 'productType', title: 'Product Type', dataKey: 'productType', width: 180 },
   { key: 'name', title: 'Name', dataKey: 'name', width: 150 },
   { key: 'code', title: 'Code', dataKey: 'code', width: 100 },
-  { key: 'plannedQuantity', title: 'Planned Quantity & UOM', dataKey: 'plannedQuantity', width: 180 },
+  {
+    key: 'plannedQuantity',
+    title: 'Planned Quantity & UOM',
+    dataKey: 'plannedQuantity',
+    width: 180
+  },
   { key: 'usedQuantity', title: 'Used Quantity & UOM', dataKey: 'usedQuantity', width: 180 },
   { key: 'difference', title: 'Difference', dataKey: 'difference', width: 100 },
   { key: 'serialNumber', title: 'Serial Number', dataKey: 'serialNumber', width: 150 },
-{
-  key: 'usedByAt',
-  title: 'Used By\\At',
-  dataKey: 'usedByAt',
-  width: 150,
-  render: (row: any) =>
-    row?.usedAt ? (
-      <>
-        {row?.usedBy}
-        <br />
-        <span className="date-table-style">
-          {formatDateWithoutSeconds(row.usedAt)}
-        </span>{' '}
-      </>
-    ) : (
-      ' '
-    )
-}
-
+  {
+    key: 'usedByAt',
+    title: 'Used By\\At',
+    dataKey: 'usedByAt',
+    width: 150,
+    render: (row: any) =>
+      row?.usedAt ? (
+        <>
+          {row?.usedBy}
+          <br />
+          <span className="date-table-style">{formatDateWithoutSeconds(row.usedAt)}</span>{' '}
+        </>
+      ) : (
+        ' '
+      )
+  }
 ];
 
 //Declare the Variables
 const MaterialTableReconciliation = () => {
-  const [record, setRecord] = useState({});
   const [sortColumn, setSortColumn] = useState('operationName');
   type SortType = 'asc' | 'desc';
   const [sortType, setSortType] = useState<SortType>('asc');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-
-  //List Of Values
-  const { data: materialLovQueryResponse } = useGetLovValuesByCodeQuery('OPERATION_MATERIAL_TYPES');
-  const dataOfMaterial =
-    materialLovQueryResponse?.object?.map(item => ({
-      label: item.lovDisplayVale,
-      value: item.valueCode
-    })) || [];
 
   //sorted Data
   const sortedData = [...sampleData].sort((a, b) => {
@@ -105,22 +97,37 @@ const MaterialTableReconciliation = () => {
 
   //Table Filters(Header)
   const filters = (
-    <Form fluid>
-      <h5 className="operation-materials-table-header">Operation Materials</h5>
+    <>
+      <Form fluid>
+        <div
+          className="material-table-filter-table-header"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}
+        >
+          <h5 className="operation-materials-table-header" style={{ margin: 0 }}>
+            Operation Materials
+          </h5>
 
-      <MyInput
-        className="multipicker-select-input"
-        showLabel={false}
-        fieldType="checkPicker"
-        fieldName="selected"
-        selectData={dataOfMaterial}
-        selectDataLabel="label"
-        selectDataValue="value"
-        record={record}
-        setRecord={setRecord}
-        width={250}
-      />
-    </Form>
+          <div
+            className="check-boxes-material-table-positions"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem'
+            }}
+          >
+            <Checkbox>Implant</Checkbox>
+
+            <Checkbox>Consumable</Checkbox>
+
+            <Checkbox>Surgical Instrument</Checkbox>
+          </div>
+        </div>
+      </Form>
+    </>
   );
 
   return (
