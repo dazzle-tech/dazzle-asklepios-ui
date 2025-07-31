@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Form } from 'rsuite';
 import MyInput from '@/components/MyInput';
-import { ApInventoryTransaction, ApPatient, ApPatientInsurance } from '@/types/model-types';
+import { ApInventoryTransaction, ApInventoryTransfer, ApPatient, ApPatientInsurance } from '@/types/model-types';
 import { useGetLovValuesByCodeQuery, useGetProductQuery, useGetUomGroupsUnitsQuery, useGetWarehouseQuery } from '@/services/setupService';
 import MyTable from '@/components/MyTable';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList } from '@/utils';
 import './styles.less'
-import { newApInventoryTransaction, newApPatient, newApPatientInsurance } from '@/types/model-types-constructor';
+import { newApInventoryTransaction, newApInventoryTransfer, newApPatient, newApPatientInsurance } from '@/types/model-types-constructor';
+import { useDispatch } from 'react-redux';
 import { faFileExport, faMagnifyingGlass, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -16,16 +17,14 @@ import { faFileCsv } from '@fortawesome/free-solid-svg-icons';
 import ReactDOMServer from 'react-dom/server';
 import MyButton from '@/components/MyButton/MyButton';
 import { formatDateWithoutSeconds } from '@/utils';
-import AddEditTransaction from './AddEditTransaction';
-import { useGetInventoryTransactionsAttachmentQuery, useGetInventoryTransactionsProductQuery, useGetInventoryTransactionsQuery } from '@/services/inventoryTransactionService';
+import { useGetInventoryTransactionsAttachmentQuery, useGetInventoryTransactionsProductQuery, useGetInventoryTransactionsQuery, useGetInventoryTransferQuery } from '@/services/inventoryTransactionService';
 import Translate from '@/components/Translate';
-import { useAppDispatch } from '@/hooks';
-const InventoryTransaction = () => {
+import AddEditTransfer from './AddEditTransfer';
+const inventoryTransfer = () => {
 
-    const dispatch = useAppDispatch();
     const [open, setOpen] = useState(false);
     const [searchPatient, setSearchPatient] = useState<ApPatient>({ ...newApPatient });
-    const [inventoryTransaction, setInventoryTransaction] = useState<ApInventoryTransaction>({ ...newApInventoryTransaction });
+    const [transfer, setTransfer] = useState<ApInventoryTransfer>({ ...newApInventoryTransfer });
     const [insurancePatient, setInsurancePatient] = useState<ApPatientInsurance>({ ...newApPatientInsurance });
     const [dateFilter, setDateFilter] = useState({ fromDate: '', toDate: '' });
     // Fetch LOV data for various fields
@@ -54,7 +53,7 @@ const InventoryTransaction = () => {
         ],
     });
 
-    const { data: transTypeListResponse, refetch: refetchTransType } = useGetLovValuesByCodeQuery('STOCK_TRANSACTION_TYPES');
+    const { data: transstatusListResponse, refetch: refetchTransStatus } = useGetLovValuesByCodeQuery('LABRAD_ORDER_STATUS');
 
     const { data: transReasonInListResponse } = useGetLovValuesByCodeQuery('STOCK_IN_REASONS');
 
@@ -62,11 +61,11 @@ const InventoryTransaction = () => {
 
     const { data: warehouseListResponse } = useGetWarehouseQuery(transactionListRequest);
 
-    const { data: inventoryTransListResponse } = useGetInventoryTransactionsQuery(transactionListRequest);
+    // const { data: inventoryTransListResponse } = useGetInventoryTransactionsQuery(transactionListRequest);
 
     const { data: inventoryTransAttachmentListResponse, refetch: refetchTransAttachment } = useGetInventoryTransactionsAttachmentQuery(transactionListRequest);
 
-    const { data: inventoryTransProductListResponse, refetch: refetchTransProduct } = useGetInventoryTransactionsProductQuery(transactionProductListRequest);
+    const { data: inventoryTransListResponse, refetch: refetchTransProduct } = useGetInventoryTransferQuery(transactionProductListRequest);
 
     // Initialize list request with default filters
     const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest, filters: [] });
@@ -95,179 +94,70 @@ const InventoryTransaction = () => {
         refetch: refetchUomGroupsUnit,
     } = useGetUomGroupsUnitsQuery(uomListRequest);
 
-      const calculateCost = (totalQuantity, unitCost) => {
+    const calculateCost = (totalQuantity, unitCost) => {
         return totalQuantity * unitCost;
     };
-    // table columns
-    const tableColumns = [
-        { key: 'index', title: '#', render: (rowData, rowIndex) => rowIndex + 1 },
-        { key: 'transactionId', title: 'TRANSACTION ID', dataKey: 'transactionId' },
-        { key: 'transactionType', title: 'Transaction Type', dataKey: 'transactionType' },
-        { key: 'Performed', title: 'Performed By/At', dataKey: 'createdBy' },
-        { key: 'Warehouse', title: 'Warehouse', dataKey: 'Warehouse' },
-        { key: 'ProductCode', title: 'Product Code', dataKey: 'ProductCode' },
-        { key: 'ProductName', title: 'PRODUCT NAME', render: rowData => rowData.productNameLvalue ? rowData.productNameLvalue.lovDisplayVale : rowData.productNameLkey },
-        { key: 'Quantity', title: 'QUANTITY', dataKey: 'Quantity' },
-        { key: 'Base UOM', title: 'BASE UOM', dataKey: 'baseUom' },
-        { key: 'Lot/Serial', title: 'LOT/SERIAL', dataKey: 'lotSerial' },
-        { key: 'ExpiryDate', title: 'EXPIRY DATE', dataKey: 'expiryDate' },
-        { key: 'CostperUnit', title: 'COST PER UNIT', dataKey: 'costPerUnit' },
-        { key: 'TotalCost', title: 'TOTAL COST', dataKey: 'totalCost' },
-        { key: 'AverageCostAfter', title: 'Average Cost After', dataKey: 'AverageCostAfter' },
-        { key: 'Notes', title: 'Notes', dataKey: 'notes' },
-        { key: 'LinkedDocument', title: 'Linked Document', render: () => <span>Actions</span> }
-    ];
 
     const columns = [
         { key: 'index', title: '#', render: (rowData, rowIndex) => rowIndex + 1 },
+        { key: 'transNo', title: 'Transfer No', dataKey: 'transNo' },
+        { key: 'transReason', title: 'Transfer Reason', dataKey: 'transReason' },
         {
-            key: 'transactionId',
-            title: <Translate>Transaction ID</Translate>,
-            flexGrow: 4,
-            render: rowData => (
-                <span>
-                    {conjureValueBasedOnKeyFromList(
-                        inventoryTransListResponse?.object ?? [],
-                        rowData.transactionObj?.transId,
-                        'transId'
-                    )}
-                </span>
-            )
-        },
-        {
-            key: 'transactionType',
-            title: <Translate>Transaction Type</Translate>,
-            flexGrow: 4,
-            render: rowData => (
-                <span>
-                    {conjureValueBasedOnKeyFromList(
-                        transTypeListResponse?.object ?? [],
-                        rowData.transactionObj?.transTypeLkey,
-                        'lovDisplayVale'
-                    )}
-                </span>
-            )
-        },
-                {
-            key: 'transReason',
-            title: <Translate>Transaction Reason</Translate>,
-            flexGrow: 4,
-            render: rowData => (
-                <span>
-                    {conjureValueBasedOnKeyFromList(
-                        rowData.transactionObj?.transTypeLkey === '6509244814441399' ? transReasonInListResponse?.object ?? [] : transReasonOutListResponse?.object ?? [],
-                        rowData.transactionObj?.transReasonLkey,
-                        'lovDisplayVale'
-                    )}
-                </span>
-            )
-        },
-        {
-            key: 'warehouseName',
-            title: <Translate>Warehouse Name</Translate>,
+            key: 'fromWarehouse',
+            title: <Translate>From Warehouse</Translate>,
             flexGrow: 4,
             render: rowData => (
                 <span>
                     {conjureValueBasedOnKeyFromList(
                         warehouseListResponse?.object ?? [],
-                        rowData.warehouseObj?.key,
+                        rowData.fromWarehouseKey,
                         'warehouseName'
                     )}
                 </span>
             )
         },
         {
-            key: 'productName',
-            title: <Translate>Product Name</Translate>,
+            key: 'toWarehouse',
+            title: <Translate>To Warehouse</Translate>,
             flexGrow: 4,
             render: rowData => (
                 <span>
                     {conjureValueBasedOnKeyFromList(
-                        productListResponseLoading?.object ?? [],
-                        rowData.productObj?.key,
-                        'name'
+                        warehouseListResponse?.object ?? [],
+                        rowData.toWarehouseKey,
+                        'warehouseName'
                     )}
                 </span>
             )
         },
         {
-            key: 'productcode',
-            title: <Translate>Product code</Translate>,
+            key: 'statusLkey',
+            title: <Translate>Transfer Status</Translate>,
             flexGrow: 4,
             render: rowData => (
                 <span>
                     {conjureValueBasedOnKeyFromList(
-                        productListResponseLoading?.object ?? [],
-                        rowData.productObj?.key,
-                        'code'
+                        transstatusListResponse?.object ?? [],
+                        rowData.statusLkey,
+                        'lovDisplayVale'
                     )}
                 </span>
             )
         },
-        { key: 'Quantity', title: 'QUANTITY', dataKey: 'newQuentity' },
+        { key: 'note', title: 'NOTE', dataKey: 'note' },
         {
-            key: 'productUOM',
-            title: <Translate>Product Base UOM</Translate>,
+            key: 'createdAt',
+            title: 'Initiated By/At',
             flexGrow: 4,
-            render: rowData => (
-                <span>
-                    {conjureValueBasedOnKeyFromList(
-                        uomGroupsUnitsListResponse?.object ?? [],
-                        rowData.productObj?.baseUomKey,
-                        'units'
-                    )}
-                </span>
-            )
-        },
-          {
-            key: 'productUOM',
-            title: <Translate>Product Transaction UOM</Translate>,
-            flexGrow: 4,
-            render: rowData => (
-                <span>
-                    {conjureValueBasedOnKeyFromList(
-                        uomGroupsUnitsListResponse?.object ?? [],
-                        rowData.transUomKey,
-                        'units'
-                    )}
-                </span>
-            )
-        },
-        { key: 'newCost', title: 'COST PER UNIT', dataKey: 'newCost' },
-        { key: 'expiryDate', title: 'EXPIRY DATE', dataKey: 'expiryDate' },
-        { key: 'lotserialnumber', title: 'LOT/SERIAL Number', dataKey: 'lotserialnumber' },
-        
-        { 
-            key: 'AverageCostAfter', 
-            title: 'Average Cost After', 
-            flexGrow: 4,
-            render: rowData => (
-                <span>
-                    { calculateCost(rowData.newQuentity, rowData.newCost).toFixed(2) }
-                      
-                </span>
-            )
-        },
-          { 
-         key: 'createdAt',
-         title: 'Performed By/At', 
-          flexGrow: 4,
-          render: (row: any) =>
-                         row?.createdAt ? (
-                             <>
-                                 <br/>
-                                 <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
-                             </>
-                         ) : (
-                             ' '
-                         ),
-                        },
-                        
-        {
-            key: 'isvalid',
-            title: <Translate>Status</Translate>,
-            flexGrow: 4,
-            render: rowData => (rowData.isvalid ? 'InValid' : 'Valid')
+            render: (row: any) =>
+                row?.createdAt ? (
+                    <>
+                        <br />
+                        <span className="date-table-style">{formatDateWithoutSeconds(row.createdAt)}</span>
+                    </>
+                ) : (
+                    ' '
+                ),
         }
     ];
     // handle manual search from date to date 
@@ -310,13 +200,6 @@ const InventoryTransaction = () => {
         );
 
     };
-    useEffect(() => {
-            return () => {
-                dispatch(setPageCode(''));
-                dispatch(setDivContent('  '));
-            };
-        }, [location.pathname, dispatch]);
-
     // Effects
     useEffect(() => {
         handleManualSearch();
@@ -356,15 +239,25 @@ const InventoryTransaction = () => {
         handleDOFSearch();
     }, [searchPatient?.dob]);
 
+    const dispatch = useDispatch();
     const divContent = (
         <div style={{ display: 'flex' }}>
-            <h5> Inventory Transaction</h5>
+            <h5> Transfer Product</h5>
         </div>
     );
     // page header setup
     const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-    dispatch(setPageCode('Inventory_Transaction'));
+    dispatch(setPageCode('Inventory_Transfer'));
     dispatch(setDivContent(divContentHTML));
+
+    useEffect(() => {
+        return () => {
+            dispatch(setPageCode(''));
+            dispatch(setDivContent('  '));
+        };
+    }, [location.pathname, dispatch]);
+
+
     return (
         <div className='container-div'>
             <div className='field-btn-div'>
@@ -387,32 +280,7 @@ const InventoryTransaction = () => {
                     />
                     <MyInput
                         column
-                        fieldLabel="Transaction ID"
-                        fieldName="transactionId"
-                        record={searchPatient}
-                        setRecord={setSearchPatient}
-                    />
-                    <MyInput
-                        column
-                        fieldLabel="Product Type"
-                        fieldType="select"
-                        fieldName="productTypeLkey"
-                        selectData={[]}
-                        selectDataLabel="lovDisplayVale"
-                        selectDataValue="key"
-                        record={searchPatient}
-                        setRecord={setSearchPatient}
-                    />
-                    <MyInput
-                        column
-                        fieldLabel="code"
-                        fieldName="transactionId"
-                        record={searchPatient}
-                        setRecord={setSearchPatient}
-                    />
-                    <MyInput
-                        column
-                        fieldLabel="Transaction Type"
+                        fieldLabel="To Warehouse "
                         fieldType="select"
                         fieldName="documentTypeLkey"
                         selectData={[]}
@@ -423,7 +291,7 @@ const InventoryTransaction = () => {
                     />
                     <MyInput
                         column
-                        fieldLabel="Warehouse Name"
+                        fieldLabel="From Warehouse"
                         fieldType="select"
                         fieldName="warehouseLkey"
                         selectData={[]}
@@ -437,21 +305,20 @@ const InventoryTransaction = () => {
                     <div className='btns-group'>
                         <MyButton prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />} ></MyButton>
                         <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} >Clear</MyButton>
-                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={() => setOpen(true)}>Add Transaction</MyButton>
-                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faFileExport} />} >Export to Xsl</MyButton>
+                        <MyButton prefixIcon={() => <FontAwesomeIcon icon={faPlus} />} onClick={() => setOpen(true)}>Initiate Transfer</MyButton>
                     </div>
                 </div>
             </div>
             <MyTable
-                data={inventoryTransProductListResponse?.object ?? []}
+                data={inventoryTransListResponse?.object ?? []}
                 columns={columns}
                 height={800}
                 loading={false}
             />
-            <AddEditTransaction open={open} setOpen={setOpen} transaction={inventoryTransaction} setTransaction={setInventoryTransaction} refetch={refetchTransType} refetchAttachmentList={refetchTransAttachment} />
+            <AddEditTransfer open={open} setOpen={setOpen} transfer={transfer} setTransfer={setTransfer} refetch={refetchTransProduct} />
         </div>
 
     );
 };
 
-export default InventoryTransaction;
+export default inventoryTransfer;

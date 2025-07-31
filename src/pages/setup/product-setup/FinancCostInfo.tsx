@@ -6,7 +6,6 @@ import { useGetResourcesAvailabilityTimeQuery, useGetResourcesQuery } from '@/se
 import { useGetDepartmentsQuery, useGetLovValuesByCodeQuery, useGetUomGroupsQuery } from '@/services/setupService';
 const FinancCostInfo = ({ product, setProduct }) => {
 
-    const { data: productTypeLovQueryResponse } = useGetLovValuesByCodeQuery('PRODUCTS_TYPES');
 
     return (
         <>
@@ -15,14 +14,15 @@ const FinancCostInfo = ({ product, setProduct }) => {
                 <MyInput
                     fieldLabel="Item Average Cost"
                     fieldName="avgCost"
+                    fieldType="number"
                     record={product}
                     setRecord={setProduct}
                 />
 
                 <MyInput
-                    column
                     fieldLabel="Price per Base UOM"
                     fieldName="priceBaseUom"
+                    fieldType="number"
                     record={product}
                     setRecord={setProduct}
                 />

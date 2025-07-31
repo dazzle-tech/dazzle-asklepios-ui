@@ -81,7 +81,7 @@ const AddEditProduct = ({
   
     return (
         <>
-        <Modal size={'xl'} open={open} backdrop="static">
+        <Modal size={'lg'} open={open} backdrop="static">
         <Modal.Header>
             <Modal.Title>Product Setup</Modal.Title>
         </Modal.Header>

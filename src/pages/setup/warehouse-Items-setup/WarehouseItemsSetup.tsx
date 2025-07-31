@@ -100,7 +100,7 @@ const WarehouseItemsSetup = () => {
   // Header page setUp
   const divContent = (
     <div className='title'>
-      <h5>Warehouse Items</h5>
+      <h5>Warehouse Products</h5>
     </div>
   );
   const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);

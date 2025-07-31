@@ -57,7 +57,7 @@ const InventoryAttributes = ({ product, setProduct }) => {
                     record={product}
                     setRecord={setProduct}
                     menuMaxHeight={200}
-                    width={480}
+                    width={400}
                     searchable={false}
                 />
                 <Row className="rows-gap">

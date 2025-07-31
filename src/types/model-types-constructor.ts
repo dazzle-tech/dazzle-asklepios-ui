@@ -1332,7 +1332,7 @@ export const newApEmergencyTriage:modelTypes.ApEmergencyTriage = {
 	medicationLkey:undefined,
 	ecgLkey:undefined,
 	consultationLkey:undefined,
-	destinationLkey:undefined,
+	destinationLkey:undefined, 
 } 
 
 export const newApEncounter:modelTypes.ApEncounter = { 

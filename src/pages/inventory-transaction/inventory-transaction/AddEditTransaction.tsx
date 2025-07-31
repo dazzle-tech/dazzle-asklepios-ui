@@ -40,6 +40,7 @@ import InventoryAttachment from './InventoryAttachment';
 import ProductListIn from './ProductListIn';
 import AddEditProductIn from './AddEditProductIn';
 import ProductListOut from './ProductListOut';
+import AddEditProductOut from './AddEditProductOut';
 
 const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetch, refetchAttachmentList }) => {
     const dispatch = useAppDispatch();
@@ -96,6 +97,14 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
     const [transProduct, setTransProduct] = useState<ApInventoryTransactionProduct>({ ...newApInventoryTransactionProduct });
 
     const now = new Date();
+
+    const [generateCode, setGenerateCode] = useState();
+      const [recordOfWarehouseCode, setRecordOfWarehouseCode] = useState({transId:  '' });
+      // Generate code for transaction
+      const generateFiveDigitCode = () => {
+        const code = Math.floor(10000 + Math.random() * 90000);
+        setTransaction({...transaction, transId: code})
+      };
 
     const { data: warehouseListResponse } = useGetWarehouseQuery(warehouseListRequest);
 
@@ -200,12 +209,33 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
             }));
         }, [transProduct?.productKey]);
 
+        
+  useEffect(() => {
+    if (transaction?.transId){
+      setRecordOfWarehouseCode({ transId: transaction.transId });
+      return;
+    }
+    generateFiveDigitCode();
+    setRecordOfWarehouseCode({ transId: transaction?.transI ?? generateCode });
+       console.log(recordOfWarehouseCode);
+  }, [transaction?.transId?.length]);
+
     // Main modal content
     const conjureFormContent = stepNumber => {
         switch (stepNumber) {
             case 0:
                 return (
                     <Form fluid>
+                         <div className='container-of-three-fields' >
+
+                            <MyInput
+                            fieldLabel="transaction ID"
+                                      fieldName="transId"
+                                      record={recordOfWarehouseCode}
+                                      setRecord={setRecordOfWarehouseCode}
+                                      disabled={true}
+                                    />
+                         </div>
                         <div className='container-of-three-fields' >
                             <div className='container-of-field' >
                                 <MyInput
@@ -253,7 +283,8 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
                             <div className='container-of-field' >
                                 <MyInput
                                     width="100%"
-                                    fieldName="ReferenceDocNo."
+                                    fieldLabel="Reference Doc Num."
+                                    fieldName="docNum"
                                     record={transaction}
                                     setRecord={setTransaction}
                                 />
@@ -281,6 +312,7 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
                             />
 
                         </div>
+                        <br/>
                         <div className="container-of-add-new-button">
                             <MyButton
                                 prefixIcon={() => <AddOutlineIcon />}
@@ -321,9 +353,22 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
         </Form>
       );
 
-      const subChildContent =  () => {
+      const subChildContentIn =  () => {
           return (
       <AddEditProductIn
+              open={showSubChildModal}
+              setOpen={setShowSubChildModal}
+              transProduct={transProduct}
+              setTransProduct={setTransProduct}
+              transaction={transaction}
+              setTransaction={setTransaction}   
+              refetch={refetch}
+            />
+          );
+        };
+         const subChildContentOut =  () => {
+          return (
+      <AddEditProductOut
               open={showSubChildModal}
               setOpen={setShowSubChildModal}
               transProduct={transProduct}
@@ -397,9 +442,9 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
             setShowChild={setOpenChildModal}
             showSubChild={showSubChildModal}
             setShowSubChild={setShowSubChildModal}
-            title={transaction?.key ? 'Edit transaction' : 'New transaction'}
+            title={transaction?.key ? 'Edit Transaction' : 'New Transaction'}
             mainStep={[
-                { title: 'transaction Info', icon: <FontAwesomeIcon icon={faInbox} />, disabledNext: !transaction?.key && !openNextDocument, footer: <MyButton onClick={handleSave}>Save</MyButton> },
+                { title: 'Transaction Info', icon: <FontAwesomeIcon icon={faInbox} />, disabledNext: !transaction?.key && !openNextDocument, footer: <MyButton onClick={handleSave}>Save</MyButton> },
                 { title: 'Attachments', icon: <FontAwesomeIcon icon={faPaperclip} />, footer: <MyButton onClick={handleSave} >Save</MyButton> },
             ]}
 
@@ -407,7 +452,7 @@ const AddEditTransaction = ({ open, setOpen, transaction, setTransaction, refetc
             childTitle="Product transaction"
             childContent={transaction.transTypeLkey === '6509244814441399' ?  childInContent : childOutContent }
             subChildTitle="Add Product Details"
-            subChildContent={subChildContent}
+            subChildContent={transaction.transTypeLkey === '6509244814441399' ? subChildContentIn : subChildContentOut}
             actionSubChildButtonFunction={handleSavesubchild}
             childStep={[{ title: "Product transaction", icon: <FontAwesomeIcon icon={faList} /> }]}
             subChildStep={[{ title: "Add Product Details", icon: <FontAwesomeIcon icon={faListCheck} /> }]}
