@@ -2,51 +2,10 @@ import React, { useState } from 'react';
 import MyTable from '@/components/MyTable';
 import { formatDateWithoutSeconds } from '@/utils';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 //Table Static Data
-const sampleData = [
-  {
-    id: 1,
-    itemName: 'Dell Latitude 5430',
-    itemCode: 'DL5430',
-    unitOfMeasurement: 'Piece',
-    quantity: 10,
-    lastPurchasedDate: '2025-06-15',
-    maxmanQuantity: 50,
-    minimumQuantity: 5,
-    specs: 'Intel i7, 16GB RAM, 512GB SSD',
-    status: 'Available',
-    approvalStatus: 'Approved',
-    note: 'Urgent for new hires',
-    itemClassification: 'Hardware',
-    acceptBy: 'Inventory Manager',
-    acceptDateTime: '2025-07-20 01:00 PM',
-    approvedBy: 'Director A',
-    approvedDate: '2025-07-21',
-    approvalNote: 'Approved with remarks',
-    Accept: true
-  },
-  {
-    id: 2,
-    itemName: 'A4 Paper 80gsm',
-    itemCode: 'PAPER80A4',
-    unitOfMeasurement: 'Box',
-    quantity: 100,
-    lastPurchasedDate: '2025-05-10',
-    maxmanQuantity: 200,
-    minimumQuantity: 50,
-    specs: '500 sheets per box',
-    status: 'Available',
-    approvalStatus: 'Pending',
-    note: 'Need by end of month',
-    itemClassification: 'Stationery',
-    acceptBy: 'Warehouse Supervisor',
-    acceptDateTime: '2025-07-18 11:00 AM',
-    approvedBy: 'Director B',
-    approvedDate: '2025-07-19',
-    approvalNote: 'Waiting for budget approval',
-    Accept: false
-  }
-];
+import { sampleData } from './OpenDetailsTableModal';
+
 //Columns Configure Table
 const columns: ColumnConfig[] = [
   { key: 'itemName', title: 'Item Name', dataKey: 'itemName' },
@@ -71,8 +30,34 @@ const columns: ColumnConfig[] = [
   { key: 'maxmanQuantity', title: 'Max Quantity', dataKey: 'maxmanQuantity' },
   { key: 'minimumQuantity', title: 'Min Quantity', dataKey: 'minimumQuantity' },
   { key: 'specs', title: 'Specs', dataKey: 'specs' },
-  { key: 'status', title: 'Status', dataKey: 'status' },
-  { key: 'approvalStatus', title: 'Approval Status', dataKey: 'approvalStatus' },
+  {
+    key: 'status',
+    title: 'Status',
+    dataKey: 'status',
+    render: (row: any) => (
+      <MyBadgeStatus
+        backgroundColor={
+          row.status === 'Available' ? 'var(--light-green)' : 'var(--background-gray)'
+        }
+        color={row.status === 'Available' ? 'var(--primary-green)' : 'var(--primary-gray)'}
+        contant={row.status}
+      />
+    )
+  },
+  {
+    key: 'approvalStatus',
+    title: 'Approval Status',
+    dataKey: 'approvalStatus',
+    render: (row: any) => (
+      <MyBadgeStatus
+        backgroundColor={
+          row.approvalStatus === 'Approved' ? 'var(--light-green)' : 'var(--background-gray)'
+        }
+        color={row.approvalStatus === 'Approved' ? 'var(--primary-green)' : 'var(--primary-gray)'}
+        contant={row.approvalStatus}
+      />
+    )
+  },
   { key: 'note', title: 'Note', dataKey: 'note', expandable: true },
   {
     key: 'itemClassification',
@@ -85,18 +70,19 @@ const columns: ColumnConfig[] = [
     title: 'Accepted By/At',
     dataKey: 'acceptDateTime',
     expandable: true,
-      render: (row: any) =>
-            row?.acceptDateTime ? (
-              <>
-                {row?.acceptBy}
-                <br />
-                <span className="date-table-style">
-                  {formatDateWithoutSeconds(row.acceptDateTime)}
-                </span>{' '}
-              </>
-            ) : (
-              ' '
-            )},
+    render: (row: any) =>
+      row?.acceptDateTime ? (
+        <>
+          {row?.acceptBy}
+          <br />
+          <span className="date-table-style">
+            {formatDateWithoutSeconds(row.acceptDateTime)}
+          </span>{' '}
+        </>
+      ) : (
+        ' '
+      )
+  },
   {
     key: 'Approved At/By',
     title: 'Approved At/By',
