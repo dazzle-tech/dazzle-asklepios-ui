@@ -13,6 +13,10 @@ import { setPageCode, setDivContent } from '@/reducers/divSlice';
 import { ColumnConfig } from '@/components/MyTable/MyTable';
 import AddSupplierSetup from './AddSupplierSetup';
 import { MdModeEdit } from 'react-icons/md';
+import { FaCreditCard } from 'react-icons/fa';
+import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
+import MyModal from '@/components/MyModal/MyModal';
+import Card from './Card';
 import './style.less';
 
 //Table Data
@@ -101,10 +105,12 @@ const SupplierSetup = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [openModal, setOpenModal] = useState(false);
+  const [openCardModal, setOpenCardModal] = useState(false);
   const [tableData, setTableData] = useState(sampleData);
   const [openConfirmDeleteModal, setOpenConfirmDeleteModal] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [actionType, setActionType] = useState<'deactivate' | 'reactivate'>('deactivate');
+
   const [record, setRecord] = useState({
     supplierName: '',
     supplierCode: '',
@@ -145,8 +151,21 @@ const SupplierSetup = () => {
       expandable: true
     },
     { key: 'address', title: 'Address', dataKey: 'address', width: 200 },
-
-    { key: 'status', title: 'Status', dataKey: 'status', width: 100 },
+    {
+      key: 'status',
+      title: 'Status',
+      dataKey: 'status',
+      width: 100,
+      render: (row: any) => (
+        <MyBadgeStatus
+          backgroundColor={
+            row.status === 'Active' ? 'var(--light-green)' : 'var(--background-gray)'
+          }
+          color={row.status === 'Active' ? 'var(--primary-green)' : 'var(--primary-gray)'}
+          contant={row.status}
+        />
+      )
+    },
     {
       key: 'paymentTerms',
       title: 'Payment Terms',
@@ -162,9 +181,13 @@ const SupplierSetup = () => {
       render: rowData => {
         return (
           <div className="container-of-icons">
-             <MdModeEdit
-              title="Edit"
-              id="icon0-0"/>
+            <MdModeEdit title="Edit" id="icon0-0" size={24} onClick={() => setOpenModal(true)} />
+            <FaCreditCard
+              title="Card"
+              size={24}
+              fill="var(--primary-gray)"
+              onClick={() => setOpenCardModal(true)}
+            />
             {rowData.active ? (
               <MdDelete
                 className="icons-style"
@@ -307,6 +330,16 @@ const SupplierSetup = () => {
           setOpen={setOpenModal}
           record={record}
           setRecord={setRecord}
+        />
+
+        <MyModal
+          open={openCardModal}
+          setOpen={setOpenCardModal}
+          title="Card Details"
+          content={<Card record={record} setRecord={setRecord} />}
+          hideActionBtn={false}
+          actionButtonLabel="Save"
+          size="80vw"
         />
       </Panel>
     </>
