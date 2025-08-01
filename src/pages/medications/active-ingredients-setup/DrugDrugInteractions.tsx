@@ -1,29 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import {
-  FlexboxGrid,
-  IconButton,
-  Input,
-  Panel,
-  Table,
-  Grid,
-  Row,
-  Col,
-  ButtonToolbar,
-  Text,
-  InputGroup,
-  Checkbox,
-  SelectPicker,
-  InputPicker,
-  DatePicker
-} from 'rsuite';
-import { Plus, Trash, InfoRound, Reload } from '@rsuite/icons';
+import { Text, Form } from 'rsuite';
+import { Plus } from '@rsuite/icons';
 import { MdSave } from 'react-icons/md';
+import { MdDelete } from 'react-icons/md';
+import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import {
-  useGetLovValuesByCodeQuery,
-} from '@/services/setupService';
-
-import {
-  useGetActiveIngredientDrugInteractionQuery,
   useGetActiveIngredientQuery,
   useSaveActiveIngredientDrugInteractionMutation,
   useRemoveActiveIngredientDrugInteractionMutation,
@@ -35,14 +16,19 @@ import { ApActiveIngredientDrugInteraction } from '@/types/model-types';
 import { newApActiveIngredientDrugInteraction } from '@/types/model-types-constructor';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { conjureValueBasedOnKeyFromList } from '@/utils';
-
-const DrugDrugInteractions = ({ activeIngredients, isEdit }) => {
-
-  const [selectedActiveIngredientDrugInteraction, setSelectedActiveIngredientDrugInteraction] = useState<ApActiveIngredientDrugInteraction>({
-    ...newApActiveIngredientDrugInteraction
-  });
-
-  const [activeIngredientDrugInteraction, setActiveIngredientDrugInteraction] = useState<ApActiveIngredientDrugInteraction>({ ...newApActiveIngredientDrugInteraction });
+import Translate from '@/components/Translate';
+import MyTable from '@/components/MyTable';
+import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+const DrugDrugInteractions = ({ activeIngredients }) => {
+  const dispatch = useAppDispatch();
+  const [selectedActiveIngredientDrugInteraction, setSelectedActiveIngredientDrugInteraction] =
+    useState<ApActiveIngredientDrugInteraction>({
+      ...newApActiveIngredientDrugInteraction
+    });
+  const [openConfirmDeleteDrugInteractionModal, setOpenConfirmDeleteDrugInteractionModal] =
+    useState<boolean>(false);
   const [listRequest, setListRequest] = useState({
     ...initialListRequest,
     pageSize: 100,
@@ -56,51 +42,120 @@ const DrugDrugInteractions = ({ activeIngredients, isEdit }) => {
       }
     ]
   });
-
-  const [activeIngredientsListRequest, setActiveIngredientsListRequest] = useState<ListRequest>({
+  const [activeIngredientsListRequest] = useState<ListRequest>({
     ...initialListRequest
   });
-
-  const [saveActiveIngredientDrugInteraction, saveActiveIngredientDrugInteractionMutation] = useSaveActiveIngredientDrugInteractionMutation();
-  const [removeActiveIngredientDrugInteraction, removeActiveIngredientDrugInteractionMutation] = useRemoveActiveIngredientDrugInteractionMutation();
-  const [isActive, setIsActive] = useState(false);
-  const dispatch = useAppDispatch();
-  // const { data: drugListResponseData} = useGetActiveIngredientDrugInteractionQuery(listRequest);
-  const { data: activeIngredientListResponseData } = useGetActiveIngredientQuery(activeIngredientsListRequest);
+  // Fetch active ingredients list response
+  const { data: activeIngredientListResponseData } = useGetActiveIngredientQuery(
+    activeIngredientsListRequest
+  );
+  // Fetch severity Lov response
   const { data: severityLovQueryResponseData } = useGetLovValuesByCodeQuery('SEVERITY');
-  const { data: drugListResponseData, refetch: drugRefetch } = useGetActiveIngredientDrugInteractionByKeyQuery(activeIngredients.key || '');
+  // Fetch drug list response
+  const {
+    data: drugListResponseData,
+    refetch: drugRefetch,
+    isFetching
+  } = useGetActiveIngredientDrugInteractionByKeyQuery(activeIngredients.key || '');
+  // save active ingredient drug interaction
+  const [saveActiveIngredientDrugInteraction, saveActiveIngredientDrugInteractionMutation] =
+    useSaveActiveIngredientDrugInteractionMutation();
+  // remove active ingredient drug interaction
+  const [removeActiveIngredientDrugInteraction, removeActiveIngredientDrugInteractionMutation] =
+    useRemoveActiveIngredientDrugInteractionMutation();
+
+  // class name for selected row
   const isSelected = rowData => {
     if (rowData && rowData.key === selectedActiveIngredientDrugInteraction.key) {
       return 'selected-row';
     } else return '';
   };
 
+  // Icons column (remove)
+  const iconsForActions = () => (
+    <div className="container-of-icons">
+      <MdDelete
+        className="icons-style"
+        title="Delete"
+        size={24}
+        fill="var(--primary-pink)"
+        onClick={() => setOpenConfirmDeleteDrugInteractionModal(true)}
+      />
+    </div>
+  );
+
+  //Table columns
+  const tableColumns = [
+    {
+      key: 'activeIngredients',
+      title: <Translate>Active Ingredients</Translate>,
+      render: rowData => (
+        <span>
+          {conjureValueBasedOnKeyFromList(
+            activeIngredientListResponseData?.object ?? [],
+            activeIngredients.key === rowData.activeIngredientKey
+              ? rowData.interactedActiveIngredientKey
+              : rowData.activeIngredientKey,
+            'name'
+          )}
+        </span>
+      )
+    },
+    {
+      key: 'severity',
+      title: <Translate>Severity</Translate>,
+      render: rowData =>
+        rowData.severityLvalue ? rowData.severityLvalue.lovDisplayVale : rowData.severityLkey
+    },
+    {
+      key: 'description',
+      title: <Translate>Description</Translate>,
+      render: rowData => <Text>{rowData.description}</Text>
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      render: () => iconsForActions()
+    }
+  ];
+
+  // handle save
   const save = () => {
     saveActiveIngredientDrugInteraction({
       ...selectedActiveIngredientDrugInteraction,
       activeIngredientKey: activeIngredients.key,
       createdBy: 'Administrator'
-    }).unwrap().then(() => {
-      dispatch(notify("Added successfully"));
-    });
-
+    })
+      .unwrap()
+      .then(() => {
+        dispatch(notify('Added successfully'));
+        drugRefetch();
+      });
   };
 
+  // handle new
   const handleDrugsNew = () => {
-    setIsActive(true);
-    setActiveIngredientDrugInteraction({ ...newApActiveIngredientDrugInteraction });
+    setSelectedActiveIngredientDrugInteraction({
+      ...newApActiveIngredientDrugInteraction
+    });
   };
 
+  // handle remove
   const remove = () => {
+    setOpenConfirmDeleteDrugInteractionModal(false);
     if (selectedActiveIngredientDrugInteraction.key) {
       removeActiveIngredientDrugInteraction({
-        ...selectedActiveIngredientDrugInteraction,
-      }).unwrap().then(() => {
-        dispatch(notify("Deleted successfully"));
-      });;;
+        ...selectedActiveIngredientDrugInteraction
+      })
+        .unwrap()
+        .then(() => {
+          dispatch(notify('Deleted successfully'));
+          drugRefetch();
+        });
     }
   };
 
+  // Effects
   useEffect(() => {
     const updatedFilters = [
       {
@@ -114,9 +169,9 @@ const DrugDrugInteractions = ({ activeIngredients, isEdit }) => {
         value: undefined
       }
     ];
-    setListRequest((prevRequest) => ({
+    setListRequest(prevRequest => ({
       ...prevRequest,
-      filters: updatedFilters,
+      filters: updatedFilters
     }));
     drugRefetch();
   }, [activeIngredients.key]);
@@ -143,146 +198,79 @@ const DrugDrugInteractions = ({ activeIngredients, isEdit }) => {
     }
   }, [removeActiveIngredientDrugInteractionMutation]);
 
-
   return (
-    <>
-      <Grid fluid>
-        <Row gutter={15}>
-          <Col xs={6}>
-            <Text>Active Ingredients</Text>
-            <InputPicker
-              disabled={!isActive}
-              placeholder="Select A.I"
-              data={activeIngredientListResponseData?.object ?? []}
-              value={selectedActiveIngredientDrugInteraction.interactedActiveIngredientKey}
-              onChange={e =>
-                setSelectedActiveIngredientDrugInteraction({
-                  ...selectedActiveIngredientDrugInteraction,
-                  interactedActiveIngredientKey: String(e)
-                })
-              }
-              labelKey="name"
-              valueKey="key"
-              style={{ width: 224 }}
-            />
-          </Col>
-          <Col xs={6}>
-            <Text>Severity</Text>
-            <InputPicker
-              disabled={!isActive}
-              placeholder="Select Severity"
-              data={severityLovQueryResponseData?.object ?? []}
-              value={selectedActiveIngredientDrugInteraction.severityLkey}
-              onChange={e =>
-                setSelectedActiveIngredientDrugInteraction({
-                  ...selectedActiveIngredientDrugInteraction,
-                  severityLkey: String(e)
-                })
-              }
-              labelKey="lovDisplayVale"
-              valueKey="key"
-              style={{ width: 224 }}
-            />
-          </Col>
-          <Col xs={5}></Col>
-          <Col xs={5}>
-            {isEdit && <ButtonToolbar style={{ margin: '2px' }}>
-              <IconButton
-                size="xs"
-                appearance="primary"
-                color="blue"
-                onClick={handleDrugsNew}
-                icon={<Plus />}
-              />
-              <IconButton
-                disabled={!isActive}
-                size="xs"
-                appearance="primary"
-                color="green"
-                onClick={save}
-                icon={<MdSave />}
-              />
-              <IconButton
-                disabled={!selectedActiveIngredientDrugInteraction.key}
-                size="xs"
-                appearance="primary"
-                color="red"
-                onClick={remove}
-                icon={<Trash />}
-              />
-              <IconButton
-                disabled={!selectedActiveIngredientDrugInteraction.key}
-                size="xs"
-                appearance="primary"
-                color="orange"
-                icon={<InfoRound />}
-              />
-            </ButtonToolbar>}
-          </Col>
-        </Row>
-        <Row gutter={15}>
-          <Col xs={24}>
-            <Text>Description</Text>
-            <Input
-              disabled={!isActive}
-              as="textarea"
-              rows={3}
-              value={selectedActiveIngredientDrugInteraction.description}
-              onChange={e =>
-                setSelectedActiveIngredientDrugInteraction({
-                  ...selectedActiveIngredientDrugInteraction,
-                  description: String(e)
-                })
-              }
-
-            />
-          </Col>
-        </Row>
-        <Row gutter={15}>
-          <Col xs={24}>
-            <Table
-              bordered
-              onRowClick={rowData => {
-                setSelectedActiveIngredientDrugInteraction(rowData);
-              }}
-              rowClassName={isSelected}
-              data={drugListResponseData?.object ?? []}
-            >
-              <Table.Column flexGrow={1}>
-                <Table.HeaderCell>Active Ingredients</Table.HeaderCell>
-                <Table.Cell>
-                  {rowData => (
-                    <span>
-                      {conjureValueBasedOnKeyFromList(
-                        activeIngredientListResponseData?.object ?? [],
-                        activeIngredients.key === rowData.activeIngredientKey
-                          ? rowData.interactedActiveIngredientKey
-                          : rowData.activeIngredientKey,
-                        'name'
-                      )}
-                    </span>
-                  )}
-                </Table.Cell>
-              </Table.Column>
-              <Table.Column flexGrow={1}>
-                <Table.HeaderCell>Severity</Table.HeaderCell>
-                <Table.Cell>
-                  {rowData =>
-                    rowData.severityLvalue ? rowData.severityLvalue.lovDisplayVale : rowData.severityLkey
-                  }
-                </Table.Cell>
-              </Table.Column>
-              <Table.Column flexGrow={1}>
-                <Table.HeaderCell>Description</Table.HeaderCell>
-                <Table.Cell>
-                  {rowData => <Text>{rowData.description}</Text>}
-                </Table.Cell>
-              </Table.Column>
-            </Table>
-          </Col>
-        </Row>
-      </Grid>
-    </>
+    <Form fluid>
+      <div className="container-of-actions-header-active">
+        <div className="container-of-fields-active">
+          <MyInput
+            fieldLabel="Active Ingredients"
+            fieldName="interactedActiveIngredientKey"
+            fieldType="select"
+            selectData={activeIngredientListResponseData?.object ?? []}
+            selectDataLabel={'name'}
+            selectDataValue="key"
+            record={selectedActiveIngredientDrugInteraction}
+            setRecord={setSelectedActiveIngredientDrugInteraction}
+            menuMaxHeight={200}
+            width={200}
+            required
+          />
+          <MyInput
+            fieldType="select"
+            selectData={severityLovQueryResponseData?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            width={200}
+            fieldName="severityLkey"
+            fieldLabel="Severity"
+            record={selectedActiveIngredientDrugInteraction}
+            setRecord={setSelectedActiveIngredientDrugInteraction}
+            required
+          />
+        </div>
+        <div className="container-of-buttons-active">
+          <MyButton
+            prefixIcon={() => <MdSave />}
+            color="var(--deep-blue)"
+            onClick={save}
+            title="Save"
+          ></MyButton>
+          <MyButton
+            prefixIcon={() => <Plus />}
+            color="var(--deep-blue)"
+            onClick={handleDrugsNew}
+            title="New"
+          ></MyButton>
+        </div>
+      </div>
+      <MyInput
+        width="100%"
+        fieldName="description"
+        fieldType="textarea"
+        record={selectedActiveIngredientDrugInteraction}
+        setRecord={setSelectedActiveIngredientDrugInteraction}
+        required
+      />
+      <br />
+      <MyTable
+        noBorder
+        height={450}
+        data={drugListResponseData?.object ?? []}
+        loading={isFetching}
+        columns={tableColumns}
+        rowClassName={isSelected}
+        onRowClick={rowData => {
+          setSelectedActiveIngredientDrugInteraction(rowData);
+        }}
+      />
+      <DeletionConfirmationModal
+        open={openConfirmDeleteDrugInteractionModal}
+        setOpen={setOpenConfirmDeleteDrugInteractionModal}
+        itemToDelete="Drug Interaction"
+        actionButtonFunction={remove}
+        actionType="Delete"
+      />
+    </Form>
   );
 };
 

@@ -5,7 +5,7 @@ import SearchIcon from '@rsuite/icons/Search';
 import './styles.less';
 import { Col, Dropdown, Input, InputGroup, Row, Text } from "rsuite";
 
-const Icd10Search = ({ object, setOpject, fieldName }) => {
+const Icd10Search = ({ object, setOpject, fieldName, ...props }) => {
     const [searchKeyword, setSearchKeyword] = useState('');
     const [listIcdRequest,setListIcdRequest] = useState({ ...initialListRequest, pageSize: 1000 });
     const { data: icdListResponseData } = useGetIcdListQuery(listIcdRequest);
@@ -49,6 +49,7 @@ const Icd10Search = ({ object, setOpject, fieldName }) => {
                                 placeholder="Search ICD-10"
                                 value={searchKeyword}
                                 onChange={handleSearch}
+                                disabled={props?.disabled ? props?.disabled : false}
                             />
                             <InputGroup.Button>
                                 <SearchIcon />

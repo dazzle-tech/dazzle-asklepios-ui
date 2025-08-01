@@ -1,231 +1,242 @@
 import React, { useEffect, useState } from 'react';
-import {
-    IconButton,
-    Input,
-    Table,
-    Grid,
-    Row,
-    Col,
-    ButtonToolbar,
-    Text,
-    InputPicker
-  } from 'rsuite';
-import { Plus, Trash, InfoRound, Reload } from '@rsuite/icons';
+import { Text, Form } from 'rsuite';
+import { MdDelete } from 'react-icons/md';
+import { Plus } from '@rsuite/icons';
 import { MdSave } from 'react-icons/md';
 import { useGetLovValuesByCodeQuery } from '@/services/setupService';
 import { newApActiveIngredientSpecialPopulation } from '@/types/model-types-constructor';
 import { ApActiveIngredientSpecialPopulation } from '@/types/model-types';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetActiveIngredientSpecialPopulationQuery, useRemoveActiveIngredientSpecialPopulationMutation, useSaveActiveIngredientSpecialPopulationMutation } from '@/services/medicationsSetupService';
+import {
+  useGetActiveIngredientSpecialPopulationQuery,
+  useRemoveActiveIngredientSpecialPopulationMutation,
+  useSaveActiveIngredientSpecialPopulationMutation
+} from '@/services/medicationsSetupService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
-
-  const SpecialPopulation = ({activeIngredients , isEdit}) => { 
-  
-    const [activeIngredientSpecialPopulation, setActiveIngredientSpecialPopulation] = useState<ApActiveIngredientSpecialPopulation>({ ...newApActiveIngredientSpecialPopulation });
-    const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-    const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientSpecialPopulationMutation();
-    const { data: activeIngredientListResponse } = useGetActiveIngredientSpecialPopulationQuery(listRequest);
-    const [selectedActiveIngredientSpecialPopulation, setSelectedActiveIngredientSpecialPopulation] = useState<ApActiveIngredientSpecialPopulation>({
+import Translate from '@/components/Translate';
+import MyTable from '@/components/MyTable';
+import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
+import DeletionConfirmationModal from '@/components/DeletionConfirmationModal';
+import './styles.less';
+const SpecialPopulation = ({ activeIngredients }) => {
+  const dispatch = useAppDispatch();
+  const [openConfirmDeleteSpecialPopulationnModal, setOpenConfirmDeleteSpecialPopulationModal] =
+    useState<boolean>(false);
+  const [selectedActiveIngredientSpecialPopulation, setSelectedActiveIngredientSpecialPopulation] =
+    useState<ApActiveIngredientSpecialPopulation>({
       ...newApActiveIngredientSpecialPopulation
     });
-    const { data: specialPopulationLovQueryResponseData } = useGetLovValuesByCodeQuery('SPECIAL_POPULATION_GROUPS');
-    const isSelected = rowData => {
-      if (rowData && rowData.key === selectedActiveIngredientSpecialPopulation.key) {
-        return 'selected-row';
-      } else return '';
-    };
-    const [removeActiveIngredientSpecialPopulation, removeActiveIngredientSpecialPopulationMutation] =useRemoveActiveIngredientSpecialPopulationMutation();
-    const [saveActiveIngredientSpecialPopulation, saveActiveIngredientSpecialPopulationMutation] = useSaveActiveIngredientSpecialPopulationMutation();
-    const { data: specialPopulationListResponseData } = useGetActiveIngredientSpecialPopulationQuery(listRequest);
-    const [isActive, setIsActive] = useState(false);
-    const dispatch = useAppDispatch();
-    
-    const handleNew = () => {
-      setIsActive(true);
-      setActiveIngredientSpecialPopulation({ ...newApActiveIngredientSpecialPopulation });
-    };
+  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
+  // Fetch special population Lov response
+  const { data: specialPopulationLovQueryResponseData } = useGetLovValuesByCodeQuery(
+    'SPECIAL_POPULATION_GROUPS'
+  );
+  // Fetch special population list response
+  const {
+    data: specialPopulationListResponseData,
+    refetch,
+    isFetching
+  } = useGetActiveIngredientSpecialPopulationQuery(listRequest);
+  // remove active ingredient special population
+  const [removeActiveIngredientSpecialPopulation, removeActiveIngredientSpecialPopulationMutation] =
+    useRemoveActiveIngredientSpecialPopulationMutation();
+  // save active ingredient special population
+  const [saveActiveIngredientSpecialPopulation, saveActiveIngredientSpecialPopulationMutation] =
+    useSaveActiveIngredientSpecialPopulationMutation();
 
-    const remove = () => {
-      if (selectedActiveIngredientSpecialPopulation.key) {
-        removeActiveIngredientSpecialPopulation({
-          ...selectedActiveIngredientSpecialPopulation,
-        }).unwrap().then(() => {
-          dispatch(notify("Deleted successfully"));
-      });;
-      }
-    };
-
-
-    const save = () => {
-      saveActiveIngredientSpecialPopulation({
-        ...selectedActiveIngredientSpecialPopulation, 
-        activeIngredientKey: activeIngredients.key , 
-        createdBy: 'Administrator'
-      }).unwrap().then(() => {
-        dispatch(notify("Saved successfully"));
-    });
-      setActiveIngredientSpecialPopulation({ ...newApActiveIngredientSpecialPopulation });
-      setIsActive(false);
-    };
-    useEffect(() => {
-      const updatedFilters =[
-        {
-          fieldName: 'active_ingredient_key',
-          operator: 'match',
-          value: activeIngredients.key || undefined
-        },
-        {
-          fieldName: 'deleted_at',
-          operator: 'isNull',
-          value: undefined
-        }
-      ];
-      setListRequest((prevRequest) => ({
-        ...prevRequest,
-        filters: updatedFilters,
-      }));
-    }, [activeIngredients.key]);
-  
-  
-    useEffect(() => {
-      if (activeIngredients) {
-        setActiveIngredientSpecialPopulation(prevState => ({
-          ...prevState,
-          activeIngredientKey: activeIngredients.key
-        }));
-      }
-    }, [activeIngredients]);
-
-    useEffect(() => {
-      if (saveActiveIngredientSpecialPopulationMutation.isSuccess) {
-        setListRequest({
-          ...listRequest,
-          timestamp: new Date().getTime()
-        });
-  
-        setActiveIngredientSpecialPopulation({ ...newApActiveIngredientSpecialPopulation });
-      }
-    }, [saveActiveIngredientSpecialPopulationMutation]);
-  
-    useEffect(() => {
-      if (removeActiveIngredientSpecialPopulationMutation.isSuccess) {
-        setListRequest({
-          ...listRequest,
-          timestamp: new Date().getTime()
-        });
-  
-        setActiveIngredientSpecialPopulation({ ...newApActiveIngredientSpecialPopulation });
-      }
-    }, [removeActiveIngredientSpecialPopulationMutation]);
-
-
-    return (
-      <>
-          <Grid fluid>
-            <Row gutter={15}>
-            <Col xs={6}>
-              <Text>Additional Population</Text>
-              <InputPicker
-               disabled={!isActive}
-                placeholder=""
-                data={specialPopulationLovQueryResponseData?.object ?? []}
-                value={selectedActiveIngredientSpecialPopulation.additionalPopulationLkey}
-                onChange={e =>
-                  setSelectedActiveIngredientSpecialPopulation({
-                    ...selectedActiveIngredientSpecialPopulation,
-                    additionalPopulationLkey: String(e)
-                  })
-                }
-                 labelKey="lovDisplayVale"
-                valueKey="key"
-                style={{ width: 224 }}
-              />
-            </Col>
-            <Col xs={6}>
-            </Col>
-            <Col xs={5}></Col>
-            <Col xs={5}>
-           {isEdit && <ButtonToolbar style={{ margin: '2px' }} >
-              <IconButton
-                  size="xs"
-                  appearance="primary"
-                  color="blue"
-                  onClick={handleNew}
-                  icon={<Plus />}
-                />
-              <IconButton
-                  disabled={!isActive}
-                  size="xs"
-                  appearance="primary"
-                  color="green"
-                  onClick={save}
-                  icon={<MdSave />}
-                />
-                   <IconButton
-                    disabled={!selectedActiveIngredientSpecialPopulation.key}
-                    size="xs"
-                    appearance="primary"
-                    color="red"
-                    onClick={remove}
-                    icon={<Trash />}
-                  />
-                  <IconButton
-                    disabled={!selectedActiveIngredientSpecialPopulation.key}
-                    size="xs"
-                    appearance="primary"
-                    color="orange"
-                    icon={<InfoRound />}
-                  />
-                  </ButtonToolbar>}
-              </Col>
-          </Row>
-          <Row gutter={15}>
-          <Col xs={24}>
-          <Text>Considerations</Text>
-          <Input as="textarea"
-                    disabled={!isActive}
-                     rows={9}  
-                     value={selectedActiveIngredientSpecialPopulation.considerations}
-                     onChange={e =>
-                       setSelectedActiveIngredientSpecialPopulation({
-                         ...selectedActiveIngredientSpecialPopulation,
-                         considerations: String(e)
-                       })
-                     }
-                     
-                     />
-          </Col> 
-          </Row>
-            <Row gutter={15}>
-              <Col xs={24}>
-                <Table
-                 bordered
-                 onRowClick={rowData => {
-                   setSelectedActiveIngredientSpecialPopulation(rowData);
-                 }}
-                 rowClassName={isSelected}
-                 data={specialPopulationListResponseData?.object ?? []}
-                >
-                  <Table.Column flexGrow={1}>
-                    <Table.HeaderCell>Special Population</Table.HeaderCell>
-                    <Table.Cell>
-                    {rowData => <Text>{rowData.additionalPopulationLvalue ? rowData.additionalPopulationLvalue.lovDisplayVale : rowData.additionalPopulationLkey}</Text>}
-             
-                    </Table.Cell>
-                  </Table.Column>
-                  <Table.Column flexGrow={1}>
-                    <Table.HeaderCell>Considerations</Table.HeaderCell>
-                    <Table.Cell>
-                    {rowData => <Text>{rowData.considerations}</Text>}
-                    </Table.Cell>
-                  </Table.Column>
-                </Table>
-              </Col>
-            </Row>
-          </Grid>
-      </>
-    );
+  // class name for selected row
+  const isSelected = rowData => {
+    if (rowData && rowData.key === selectedActiveIngredientSpecialPopulation.key) {
+      return 'selected-row';
+    } else return '';
   };
-  
-  export default SpecialPopulation;
+
+  // Icons column (remove)
+  const iconsForActions = () => (
+    <div className="container-of-icons">
+      <MdDelete
+        className="icons-style"
+        title="Delete"
+        size={24}
+        fill="var(--primary-pink)"
+        onClick={() => setOpenConfirmDeleteSpecialPopulationModal(true)}
+      />
+    </div>
+  );
+
+  //Table columns
+  const tableColumns = [
+    {
+      key: 'specialPopulation',
+      title: <Translate>Special Population</Translate>,
+      render: rowData => (
+        <Text>
+          {rowData.additionalPopulationLvalue
+            ? rowData.additionalPopulationLvalue.lovDisplayVale
+            : rowData.additionalPopulationLkey}
+        </Text>
+      )
+    },
+    {
+      key: 'considerations',
+      title: <Translate>Considerations</Translate>,
+      render: rowData => <Text>{rowData.considerations}</Text>
+    },
+    {
+      key: 'icons',
+      title: <Translate></Translate>,
+      render: () => iconsForActions()
+    }
+  ];
+
+  // handle new
+  const handleNew = () => {
+    setSelectedActiveIngredientSpecialPopulation({
+      ...newApActiveIngredientSpecialPopulation,
+      additionalPopulationLkey: null
+    });
+  };
+
+  // handle remove
+  const remove = () => {
+    setOpenConfirmDeleteSpecialPopulationModal(false);
+    if (selectedActiveIngredientSpecialPopulation.key) {
+      removeActiveIngredientSpecialPopulation({
+        ...selectedActiveIngredientSpecialPopulation
+      })
+        .unwrap()
+        .then(() => {
+          dispatch(notify({ msg: 'Deleted successfully', sev: 'success' }));
+          setSelectedActiveIngredientSpecialPopulation({
+            ...newApActiveIngredientSpecialPopulation,
+            additionalPopulationLkey: null
+          });
+          refetch();
+        });
+    }
+  };
+
+  // handle save
+  const save = () => {
+    saveActiveIngredientSpecialPopulation({
+      ...selectedActiveIngredientSpecialPopulation,
+      activeIngredientKey: activeIngredients.key,
+      createdBy: 'Administrator'
+    })
+      .unwrap()
+      .then(() => {
+        dispatch(notify({ msg: 'Saved successfully', sev: 'success' }));
+        setSelectedActiveIngredientSpecialPopulation({
+          ...newApActiveIngredientSpecialPopulation,
+          additionalPopulationLkey: null
+        });
+        refetch();
+      });
+  };
+  useEffect(() => {
+    const updatedFilters = [
+      {
+        fieldName: 'active_ingredient_key',
+        operator: 'match',
+        value: activeIngredients.key || undefined
+      },
+      {
+        fieldName: 'deleted_at',
+        operator: 'isNull',
+        value: undefined
+      }
+    ];
+    setListRequest(prevRequest => ({
+      ...prevRequest,
+      filters: updatedFilters
+    }));
+  }, [activeIngredients.key]);
+
+  // Effects
+  useEffect(() => {
+    if (saveActiveIngredientSpecialPopulationMutation.isSuccess) {
+      setListRequest({
+        ...listRequest,
+        timestamp: new Date().getTime()
+      });
+    }
+  }, [saveActiveIngredientSpecialPopulationMutation]);
+
+  useEffect(() => {
+    if (removeActiveIngredientSpecialPopulationMutation.isSuccess) {
+      setListRequest({
+        ...listRequest,
+        timestamp: new Date().getTime()
+      });
+    }
+  }, [removeActiveIngredientSpecialPopulationMutation]);
+
+  return (
+    <Form fluid>
+      <div className="container-of-actions-header-active">
+        <div className="container-of-fields-active">
+          <MyInput
+            fieldType="select"
+            selectData={specialPopulationLovQueryResponseData?.object ?? []}
+            selectDataLabel="lovDisplayVale"
+            selectDataValue="key"
+            width={200}
+            fieldName="additionalPopulationLkey"
+            fieldLabel="Additional Population"
+            record={selectedActiveIngredientSpecialPopulation}
+            setRecord={setSelectedActiveIngredientSpecialPopulation}
+            menuMaxHeight={200}
+          />
+        </div>
+        <div className="container-of-buttons-active">
+          <MyButton
+            prefixIcon={() => <MdSave />}
+            color="var(--deep-blue)"
+            onClick={save}
+            title="Save"
+          ></MyButton>
+          <MyButton
+            prefixIcon={() => <Plus />}
+            color="var(--deep-blue)"
+            onClick={handleNew}
+            title="New"
+          ></MyButton>
+        </div>
+      </div>
+      <MyInput
+        width="100%"
+        fieldName="considerations"
+        fieldType="textarea"
+        record={selectedActiveIngredientSpecialPopulation}
+        setRecord={setSelectedActiveIngredientSpecialPopulation}
+        required
+      />
+      <MyTable
+        noBorder
+        height={450}
+        data={specialPopulationListResponseData?.object ?? []}
+        loading={isFetching}
+        columns={tableColumns}
+        rowClassName={isSelected}
+        onRowClick={rowData => {
+          setSelectedActiveIngredientSpecialPopulation(rowData);
+        }}
+        sortColumn={listRequest.sortBy}
+        onSortChange={(sortBy, sortType) => {
+          if (sortBy) setListRequest({ ...listRequest, sortBy, sortType });
+        }}
+      />
+      <DeletionConfirmationModal
+        open={openConfirmDeleteSpecialPopulationnModal}
+        setOpen={setOpenConfirmDeleteSpecialPopulationModal}
+        itemToDelete="Special Population"
+        actionButtonFunction={remove}
+        actionType="Delete"
+      />
+    </Form>
+  );
+};
+
+export default SpecialPopulation;

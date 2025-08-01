@@ -1,110 +1,70 @@
 import React, { useEffect, useState } from 'react';
-import {
-    IconButton,
-    Input,
-    Grid,
-    Row,
-    Col,
-    ButtonToolbar,
-    Text
-  } from 'rsuite';
-  import { Plus, Trash, InfoRound, Reload } from '@rsuite/icons';
-  import { MdSave } from 'react-icons/md';
-  import { initialListRequest, ListRequest } from '@/types/types';
-  import { ApActiveIngredient} from '@/types/model-types';
-  import { newApActiveIngredient } from '@/types/model-types-constructor';
-  import{
-  useGetActiveIngredientQuery,
-  useSaveActiveIngredientMutation
-     } from '@/services/medicationsSetupService';
-  import { useAppDispatch } from '@/hooks';
-  import { notify } from '@/utils/uiReducerActions';
+import { Row, Col, Text, Form } from 'rsuite';
+import { MdSave } from 'react-icons/md';
+import { ApActiveIngredient } from '@/types/model-types';
+import { newApActiveIngredient } from '@/types/model-types-constructor';
+import { useSaveActiveIngredientMutation } from '@/services/medicationsSetupService';
+import { useAppDispatch } from '@/hooks';
+import { notify } from '@/utils/uiReducerActions';
+import MyButton from '@/components/MyButton/MyButton';
+import MyInput from '@/components/MyInput';
+import './styles.less';
+const MOA = ({ activeIngredients }) => {
+  const dispatch = useAppDispatch();
+  const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({
+    ...newApActiveIngredient
+  });
+  // save active ingredient
+  const [saveActiveIngredient] = useSaveActiveIngredientMutation();
 
-  const MOA = ({activeIngredients, isEdit}) => {
-    const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({ ...newApActiveIngredient });
-    const [isActive, setIsActive] = useState(false);
-    const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientMutation();
-    const dispatch = useAppDispatch();
-    
-
-    const handleSave = () => {
-      setIsActive(true); 
-      saveActiveIngredient(activeIngredient).unwrap();
-    };
-
-    const save = () => {
-      saveActiveIngredient({
-        ...activeIngredient,
-        createdBy: 'Administrator'
-      }).unwrap().then(() => {
-        dispatch(notify("Saved successfully"));
-    });
-  
-    };
-
-  
-    useEffect(() => {
-      if (activeIngredients) {
-        setActiveIngredient(activeIngredients)
-      }
-    }, [activeIngredients]);
-  
-
-    return (
-      <>
-          <Grid fluid>
-          <Row gutter={25}>
-          <Col xs={12}>
-          <Text>Mechanism Of Actions</Text>
-          </Col>
-          <Col xs={6}></Col>
-          <Col xs={5}>
-             {isEdit && <ButtonToolbar style={{ margin: '2px' }}>
-              <IconButton
-                size="xs"
-                appearance="primary"
-                color="blue"
-                onClick={handleSave}
-                icon={<Plus />}
-              />
-              <IconButton
-                disabled={!isActive}
-                size="xs"
-                appearance="primary"
-                color="green"
-                onClick={save}
-                icon={<MdSave />}
-              />
-              <IconButton
-                disabled={!activeIngredient.key}
-                size="xs"
-                appearance="primary"
-                color="orange"
-                // onClick={handleOpenPopup}
-                icon={<InfoRound />}
-              />
-                  </ButtonToolbar>}
-              </Col> 
-          </Row>
-          <Row gutter={25}>
-          <Col xs={24}>
-              <Input as="textarea"
-                disabled={!isActive}
-                rows={9}
-                value={activeIngredient.mechanismOfAction}
-                onChange={e =>
-                  setActiveIngredient({
-                    ...activeIngredient,
-                    mechanismOfAction: String(e)
-                  })
-                }
-
-              />
-          </Col>
-          </Row>
-          </Grid>
-      </>
-    );
+  // handle save
+  const save = () => {
+    saveActiveIngredient({
+      ...activeIngredient,
+      createdBy: 'Administrator'
+    })
+      .unwrap()
+      .then(() => {
+        dispatch(notify('Saved successfully'));
+      });
   };
-  
-  export default MOA;
+
+  // Effects
+  useEffect(() => {
+    if (activeIngredients) {
+      setActiveIngredient(activeIngredients);
+    }
+  }, [activeIngredients]);
+
+  return (
+    <Form className="container-active" fluid>
+      <div className="container-of-actions-header-active">
+        <Text>Mechanism Of Actions</Text>
+        <div className="container-of-buttons-active">
+          <MyButton
+            prefixIcon={() => <MdSave />}
+            color="var(--deep-blue)"
+            onClick={save}
+            title="Save"
+          ></MyButton>
+        </div>
+      </div>
+      <br />
+      <Row>
+        <Col md={24}>
+          <MyInput
+            width="100%"
+            fieldName="mechanismOfAction"
+            fieldType="textarea"
+            record={activeIngredient}
+            setRecord={setActiveIngredient}
+            showLabel={false}
+            height={160}
+          />
+        </Col>
+      </Row>
+    </Form>
+  );
+};
+
+export default MOA;

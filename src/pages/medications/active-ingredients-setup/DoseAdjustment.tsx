@@ -1,265 +1,174 @@
 import React, { useEffect, useState } from 'react';
-import {
-    IconButton,
-    Input,
-    Grid,
-    Row,
-    Col,
-    ButtonToolbar,
-    Text,
-    Radio,
-    CheckboxGroup,
-    Checkbox,
-    Panel
-  } from 'rsuite';
-  import { Plus, Trash, InfoRound, Reload } from '@rsuite/icons';
-  import { MdSave } from 'react-icons/md';
-import { initialListRequest, ListRequest } from '@/types/types';
+import { Row, Col, Form } from 'rsuite';
+import { MdSave } from 'react-icons/md';
 import { newApActiveIngredient } from '@/types/model-types-constructor';
 import { ApActiveIngredient } from '@/types/model-types';
-import { useGetActiveIngredientQuery, useSaveActiveIngredientMutation } from '@/services/medicationsSetupService';
-import { Console } from 'console';
+import { useSaveActiveIngredientMutation } from '@/services/medicationsSetupService';
 import { useAppDispatch } from '@/hooks';
 import { notify } from '@/utils/uiReducerActions';
+import MyInput from '@/components/MyInput';
+import MyButton from '@/components/MyButton/MyButton';
 
-
-  const DoseAdjustment = ({activeIngredients, isEdit}) => {
-  
-  const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({ ...newApActiveIngredient });
-  const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest });
-  const [saveActiveIngredient, saveActiveIngredientMutation] = useSaveActiveIngredientMutation();
-  const { data: activeIngredientListResponse } = useGetActiveIngredientQuery(listRequest);
-  const [isActive, setIsActive] = useState(false); 
-  const [renalDetails, setRenalDetails] = useState(false);
-  const [hepaticDetails, setHepaticDetails] = useState(false);
+const DoseAdjustment = ({ activeIngredients }) => {
   const dispatch = useAppDispatch();
-    
-  const handleHepaticAdj = () => {
-    setHepaticDetails(!hepaticDetails),
-    handleChangeHepatic
- };
-  const handleRenalAdj = () => {
-      setRenalDetails(!renalDetails) ,
-      handleChangeRenal
-   };
+  const [activeIngredient, setActiveIngredient] = useState<ApActiveIngredient>({
+    ...newApActiveIngredient
+  });
+  // save active ingredient
+  const [saveActiveIngredient] = useSaveActiveIngredientMutation();
 
-   useEffect(() => {
+  // handle save
+  const save = () => {
+    saveActiveIngredient({
+      ...activeIngredient,
+      createdBy: 'Administrator'
+    })
+      .unwrap()
+      .then(() => {
+        dispatch(notify({ msg: 'Added successfully', sev: 'success' }));
+      });
+  };
+
+  // Effects
+  useEffect(() => {
     if (activeIngredients) {
-      setActiveIngredient(activeIngredients),
-      setRenalDetails(activeIngredient.doseAdjustmentRenal);
-      setHepaticDetails(activeIngredient.doseAdjustmentHepatic)
-
+      setActiveIngredient(activeIngredients);
     }
   }, [activeIngredients]);
 
-  const save = () => {
-    saveActiveIngredient({
-      ...activeIngredient, 
-      createdBy: 'Administrator'
-    }).unwrap().then(() => {
-      dispatch(notify("Added successfully"));
-  });
-      
-  };
+  return (
+    <Form fluid>
+      <div className="container-of-buttons-pregnancy-lactation">
+        <MyButton
+          prefixIcon={() => <MdSave />}
+          color="var(--deep-blue)"
+          onClick={save}
+          title="Save"
+        ></MyButton>
+      </div>
+      <Row>
+        <Col md={12}>
+          <MyInput
+            width={200}
+            column
+            fieldLabel="Renal Adjustment"
+            fieldType="check"
+            showLabel={false}
+            fieldName="doseAdjustmentRenal"
+            record={activeIngredient}
+            setRecord={setActiveIngredient}
+          />
+        </Col>
+        <Col md={12}>
+          <MyInput
+            width={200}
+            column
+            fieldLabel="Hepatic Adjustment"
+            fieldType="check"
+            showLabel={false}
+            fieldName="doseAdjustmentHepatic"
+            record={activeIngredient}
+            setRecord={setActiveIngredient}
+          />
+        </Col>
+      </Row>
+      <Row>
+        <Col md={12}>
+          {activeIngredient?.doseAdjustmentRenal && (
+            <MyInput
+              width="100%"
+              fieldName="doseAdjRenalOne"
+              fieldLabel="CrCl 60-89 mL/min"
+              fieldType="textarea"
+              record={activeIngredient}
+              setRecord={setActiveIngredient}
+            />
+          )}
+        </Col>
+        <Col md={12}>
+          {activeIngredient?.doseAdjustmentHepatic && (
+            <MyInput
+              width="100%"
+              fieldName="doseAdjPugA"
+              fieldLabel="child-Pug A"
+              fieldType="textarea"
+              record={activeIngredient}
+              setRecord={setActiveIngredient}
+            />
+          )}
+        </Col>
+      </Row>
+      <br />
+      <Row>
+        <Col md={12}>
+          {activeIngredient?.doseAdjustmentRenal && (
+            <MyInput
+              width="100%"
+              fieldName="doseAdjRenalTwo"
+              fieldLabel="CrCl 30 to & lt;60 mL/min"
+              fieldType="textarea"
+              record={activeIngredient}
+              setRecord={setActiveIngredient}
+            />
+          )}
+        </Col>
+        <Col md={12}>
+          {activeIngredient?.doseAdjustmentHepatic && (
+            <MyInput
+              width="100%"
+              fieldName="doseAdjPugB"
+              fieldLAbel="child-Pug B"
+              fieldType="textarea"
+              record={activeIngredient}
+              setRecord={setActiveIngredient}
+            />
+          )}
+        </Col>
+      </Row>
+      <br />
+      <Row>
+        <Col md={12}>
+          {activeIngredient?.doseAdjustmentRenal && (
+            <MyInput
+              width="100%"
+              fieldName="doseAdjRenalThree"
+              fieldLabel="CrCl 15 to & lt;30 mL/min"
+              fieldType="textarea"
+              record={activeIngredient}
+              setRecord={setActiveIngredient}
+            />
+          )}
+        </Col>
+        <Col md={12}>
+          {activeIngredient?.doseAdjustmentHepatic && (
+            <MyInput
+              width="100%"
+              fieldName="doseAdjPugC"
+              fieldLabel="child-Pug C"
+              fieldType="textarea"
+              record={activeIngredient}
+              setRecord={setActiveIngredient}
+            />
+          )}
+        </Col>
+      </Row>
+      <br />
+      <Row>
+        <Col md={12}>
+          {activeIngredient?.doseAdjustmentRenal && (
+            <MyInput
+              width="100%"
+              fieldName="doseAdjRenalFour"
+              fieldLabel="CrCl & lt;15 mL/min"
+              fieldType="textarea"
+              record={activeIngredient}
+              setRecord={setActiveIngredient}
+            />
+          )}
+        </Col>
+      </Row>
+    </Form>
+  );
+};
 
-  const handleChangeHepatic = () => {
-    setActiveIngredient({
-      ...activeIngredient,
-      doseAdjustmentHepatic: hepaticDetails,
-    });
-  };
-  const handleChangeRenal = () => {
-    setActiveIngredient({
-      ...activeIngredient,
-      doseAdjustmentRenal:  renalDetails, 
-    });
-    console.log(activeIngredient.doseAdjustmentRenal+ "HELLLLLO")
-  };
-  
-  const handleNew = () => {
-    setIsActive(true);
-   };
- 
-  
-    return (
-      <>
-          <Grid fluid> 
-          <CheckboxGroup  name="checkbox-group">
-            <Row gutter={15}>
-            <Col xs={6}></Col>
-            <Col xs={6}></Col>
-            <Col xs={6}></Col>
-            <Col xs={1}></Col>
-            <Col xs={5}>
-            {isEdit && <ButtonToolbar style={{ margin: '2px' }}>
-              <IconButton
-                  size="xs"
-                  appearance="primary"
-                  color="blue"
-                  onClick={handleNew}
-                  icon={<Plus />}
-                />
-              <IconButton
-                  disabled={!isActive}
-                  size="xs"
-                  appearance="primary"
-                  color="green"
-                  onClick={save}
-                  icon={<MdSave />}
-                />
-                <IconButton
-                    disabled={!activeIngredient.key}
-                    size="xs"
-                    appearance="primary"
-                    color="orange"
-                    icon={<InfoRound />}
-                  />
-                  </ButtonToolbar>}
-
-              </Col>
-            </Row>
-            <Row gutter={15}>
-            <Col xs={12}>
-            
-            <Checkbox disabled={!isActive} 
-            value="A"
-              onChange={handleRenalAdj}
-            >Renal Adjustment</Checkbox>
-            </Col>
-            <Col xs={12}>
-            <Checkbox
-             disabled={!isActive}
-            checked={hepaticDetails}
-            onChange={handleHepaticAdj}
-            >Hepatic Adjustment</Checkbox>
-            </Col>
-          </Row>
-          <Row gutter={15}>
-           <Col xs={12}>
-           {renalDetails && <div>
-            <Text>CrCl 60-89 mL/min</Text>
-            <Input 
-             rows={3}  
-             as="textarea"
-             value={activeIngredient.doseAdjRenalOne}
-             onChange={e =>
-               setActiveIngredient({
-                 ...activeIngredient,
-                 doseAdjRenalOne: String(e)
-               })
-             }
-            /> 
-            </div>
-              }
-              </Col>
-          
-          <Col xs={12}>
-          {hepaticDetails && <div>
-             <Text>child-Pug A</Text>
-          <Input  rows={3}  
-          as="textarea"
-          value={activeIngredient.doseAdjPugA}
-          onChange={e =>
-            setActiveIngredient({
-              ...activeIngredient,
-              doseAdjPugA: String(e)
-            })
-          } />
-          </div>}
-          </Col> 
-          </Row>
-          <Row gutter={15}>
-           
-          <Col xs={12}>
-          {renalDetails && <div>
-             <Text>CrCl 30 to &lt;60 mL/min</Text>
-          <Input  rows={3}  
-          as="textarea"
-          value={activeIngredient.doseAdjRenalTwo}
-          onChange={e =>
-            setActiveIngredient({
-              ...activeIngredient,
-              doseAdjRenalTwo: String(e)
-            })
-          } />
-          </div>}
-          </Col> 
-         
-          <Col xs={12}>
-          {hepaticDetails && <div>
-            <Text>child-Pug B</Text>
-          <Input  rows={3}  
-          as="textarea"
-          value={activeIngredient.doseAdjPugB}
-          onChange={e =>
-            setActiveIngredient({
-              ...activeIngredient,
-              doseAdjPugB: String(e)
-            })
-          } />
-          </div> }
-          </Col> 
-          </Row>
-          <Row gutter={15}>
-          <Col xs={12}>
-          {renalDetails && <div>
-            <Text>CrCl 15 to &lt;30 mL/min</Text>
-          <Input
-           rows={3}  
-           as="textarea"
-           value={activeIngredient.doseAdjRenalThree}
-           onChange={e =>
-             setActiveIngredient({
-               ...activeIngredient,
-               doseAdjRenalThree: String(e)
-             })
-           }
-          />
-          </div>}
-          </Col> 
-          <Col xs={12}>
-           {hepaticDetails && <div>
-            <Text>child-Pug C</Text>
-          <Input 
-           rows={3}  
-           as="textarea"
-           value={activeIngredient.doseAdjPugC}
-           onChange={e =>
-             setActiveIngredient({
-               ...activeIngredient,
-               doseAdjPugC: String(e)
-             })
-           }
-          />
-            </div>
-          }
-          </Col> 
-          </Row>
-          <Row gutter={15}>
-          <Col xs={12}>
-          {renalDetails && <div>
-            <Text>CrCl &lt;15 mL/min</Text>
-          <Input 
-          rows={3}  
-          as="textarea"
-          value={activeIngredient.doseAdjRenalFour}
-          onChange={e =>
-            setActiveIngredient({
-              ...activeIngredient,
-              doseAdjRenalFour: String(e)
-            })
-          }
-          />
-            </div>}
-          </Col> 
-          <Col xs={12}>
-          
-          </Col> 
-          </Row>
-          </CheckboxGroup>
-          </Grid>
-      </>
-    );
-  };
-  
-  export default DoseAdjustment;
+export default DoseAdjustment;
