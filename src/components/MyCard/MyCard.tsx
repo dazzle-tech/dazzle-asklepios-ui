@@ -25,7 +25,7 @@ const MyCard = ({
     ...props 
 }) => {
   return (
-    <Card width={width}  style={{minHeight:'45px' ,height:height}} shaded>
+    <Card width={width}  style={{minHeight:'45px' ,height:height, margin: props.margin ? props.margin : "0px"}} shaded>
     {(avatar || showMore) && (  <Card.Header >
         <HStack  >
      
