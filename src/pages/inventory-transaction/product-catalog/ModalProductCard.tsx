@@ -149,7 +149,7 @@ const ModalProductCard = ({
 
   return (<>
     <AdvancedModal
-      open={false}
+      open={open}
       setOpen={setOpen}
       size="80vw"
       leftWidth="20%"
@@ -157,7 +157,7 @@ const ModalProductCard = ({
       leftTitle={"Product Details"}
       rightTitle="Product Card Details"
       leftContent={<>
-         <ProductDetails selectedGeneric={null} /> 
+         <ProductDetails selectedProduct={product} /> 
       </>}
       actionButtonLabel="AMP"
       actionButtonFunction={() =>

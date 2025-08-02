@@ -1,88 +1,60 @@
 import InfoCardList from "@/components/InfoCardList";
 import { useGetActiveIngredientQuery, useGetGenericMedicationActiveIngredientQuery } from "@/services/medicationsSetupService";
-import { initialListRequest } from "@/types/types";
+import { useGetProductQuery } from "@/services/setupService";
+import { initialListRequest, ListRequest } from "@/types/types";
 import React, { useEffect, useState } from "react";
-const ProductDetails = ({ selectedGeneric }) => {
+const ProductDetails = ({ selectedProduct }) => {
 
-    const [listGinricRequest, setListGinricRequest] = useState({
-        ...initialListRequest,
-        sortType: 'desc'
-        ,
-        filters: [
+const [listRequest, setListRequest] = useState<ListRequest>({
+     ...initialListRequest, 
+       filters: [
             {
-                fieldName: 'deleted_at',
-                operator: 'isNull',
-                value: undefined
+                fieldName: "key",
+                operator: "match",
+                value: selectedProduct?.key,
             }
-            ,
-            {
-                fieldName: 'generic_medication_key',
-                operator: 'match',
-                value: selectedGeneric?.key
 
-            }
-        ]
+        ],
     });
-    const { data: genericMedicationActiveIngredientListResponseData, refetch: refetchGenric } = useGetGenericMedicationActiveIngredientQuery({ ...listGinricRequest });
-    const { data: activeIngredientListResponseData } = useGetActiveIngredientQuery({ ...initialListRequest });
+     const {
+       data: productListResponse,
+       refetch: refetchProduct,
+       isFetching
+     } = useGetProductQuery(listRequest);
+
        useEffect(() => {
-   
-           const updatedFilters = [
-               {
-                   fieldName: 'deleted_at',
-                   operator: 'isNull',
-                   value: undefined
-               }
-               ,
-   
-               {
-                   fieldName: 'generic_medication_key',
-                   operator: 'match',
-                   value: selectedGeneric?.key || null
-               }
-           ];
-       console.log(updatedFilters);
-           setListGinricRequest((prevRequest) => ({
-   
-               ...prevRequest,
-               filters: updatedFilters,
-   
-           }));
-       }, [selectedGeneric]);
-   
+         const updatedFilters = [
+         {
+                fieldName: "key",
+                operator: "match",
+                value: selectedProduct?.key,
+            }
+         ];
+         setListRequest(prevRequest => ({
+           ...prevRequest,
+           filters: updatedFilters
+         }));
+
+       }, [selectedProduct?.key]);
+
 
     return (<>
         <InfoCardList
-            list={genericMedicationActiveIngredientListResponseData?.object || []}
+            list={productListResponse?.object || []}
             fields={[
                 'name',
                 'code',
-                'typeDisplay',
-                'priceBaseUomDisplay',
+                'typeLkey',
                 'barecode',
-                'inventoryTypeDisplay',
+                'inventoryTypeLkey',
             ]}
             titleField="name"
             fieldLabels={{
-                activeIngredientName: 'Active Ingredient',
-                activeIngredientATCCode: 'ATC Code',
-                strengthDisplay: 'Strength',
-                isControlledDisplay: 'Is Controlled',
-                controlledDisplay: 'Controlled',
-            }}
-            computedFields={{
-                activeIngredientName: (item) =>
-                    activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.name || " ",
-                activeIngredientATCCode: (item) =>
-                    activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.atcCode || " ",
-                strengthDisplay: (item) =>
-                    (item?.strength || '') + (item?.unitLvalue?.lovDisplayVale || ''),
-                isControlledDisplay: (item) => {
-                    const isControlled = activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.isControlled;
-                    return isControlled ? "Yes" : "No";
-                },
-                controlledDisplay: (item) =>
-                    activeIngredientListResponseData?.object?.find(i => i.key === item.activeIngredientKey)?.controlledLvalue?.lovDisplayVale || " ",
+                name: 'Product Name',
+                code: 'Code',
+                typeLkey: 'Type',
+                barecode: 'Barcode',
+                inventoryTypeLkey: 'Inventory Type',
             }}
          
         /></>)

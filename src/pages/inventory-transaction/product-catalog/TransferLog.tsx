@@ -48,21 +48,21 @@ const TransferLog = ({ selectedProduct }) => {
           ],
       });
   
-      const [transactionProductListRequest, setTransactionProductListRequest] = useState<ListRequest>({
-          ...initialListRequest,
-          filters: [
-              {
-                  fieldName: 'deleted_at',
-                  operator: 'isNull',
-                  value: undefined,
-              },
-                 {
-                  fieldName: 'product_key',
-                  operator: 'isNull',
-                  value: selectedProduct?.key,
-              },
-          ],
-      });
+    //   const [transactionProductListRequest, setTransactionProductListRequest] = useState<ListRequest>({
+    //       ...initialListRequest,
+    //       filters: [
+    //           {
+    //               fieldName: 'deleted_at',
+    //               operator: 'isNull',
+    //               value: undefined,
+    //           },
+    //              {
+    //               fieldName: 'product_key',
+    //               operator: 'isNull',
+    //               value: selectedProduct?.key,
+    //           },
+    //       ],
+    //   });
   
       const { data: transstatusListResponse, refetch: refetchTransStatus } = useGetLovValuesByCodeQuery('LABRAD_ORDER_STATUS');
   
@@ -70,7 +70,7 @@ const TransferLog = ({ selectedProduct }) => {
   
       // const { data: inventoryTransListResponse } = useGetInventoryTransactionsQuery(transactionListRequest);
   
-      const { data: inventoryTransListResponse, refetch: refetchTransProduct } = useGetInventoryTransferQuery(transactionProductListRequest);
+    //   const { data: inventoryTransListResponse, refetch: refetchTransProduct } = useGetInventoryTransferQuery(transactionProductListRequest);
   
       // Initialize list request with default filters
       const [listRequest, setListRequest] = useState<ListRequest>({ ...initialListRequest, filters: [] });
@@ -201,7 +201,7 @@ const TransferLog = ({ selectedProduct }) => {
       return (
           <div className='container-div'>
               <MyTable
-                  data={inventoryTransListResponse?.object ?? []}
+                  data={[]}
                   columns={columns}
                   height={800}
                   loading={false}

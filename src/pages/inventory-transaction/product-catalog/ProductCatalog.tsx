@@ -7,7 +7,7 @@ import MyTable from '@/components/MyTable';
 import { initialListRequest, ListRequest } from '@/types/types';
 import { addFilterToListRequest, conjureValueBasedOnKeyFromList } from '@/utils';
 import './styles.less'
-import {  newApInventoryTransfer, newApPatient, newApPatientInsurance, newApProducts } from '@/types/model-types-constructor';
+import { newApInventoryTransfer, newApPatient, newApPatientInsurance, newApProducts } from '@/types/model-types-constructor';
 import { useDispatch } from 'react-redux';
 import { faFileExport, faMagnifyingGlass, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
@@ -79,7 +79,7 @@ const ProductCatalog = () => {
 
     const { data: productTypeLovQueryResponse } = useGetLovValuesByCodeQuery('PRODUCTS_TYPES');
     const { data: lotSerialLovQueryResponse } = useGetLovValuesByCodeQuery('LOT_SERIAL');
-    
+
     const calculateCost = (totalQuantity, unitCost) => {
         return totalQuantity * unitCost;
     };
@@ -139,7 +139,7 @@ const ProductCatalog = () => {
         );
 
     };
-    
+
     // Effects
     useEffect(() => {
         handleManualSearch();
@@ -198,49 +198,85 @@ const ProductCatalog = () => {
         };
     }, [location.pathname, dispatch]);
 
-    
+
     return (
-        <>
-        <InfoCardList
-           list={productListResponseLoading?.object || []}
-           fields={[
-               'name',
-               'typeDisplay',
-                       'code',
-                       'inventoryTypeDisplay',
-                   ]}
-                   titleField="name"
-                   fieldLabels={{
-                       name: 'Product Name',
-                       typeDisplay: 'Type',
-                       code: 'Code',
-                       inventoryTypeDisplay: 'Inventory Type',
-                   }}
-                   computedFields={{
-                       name: (item) =>
-                          item.name, 
-                       typeDisplay: (item) =>
-                       (item?.typeLvalue?.lovDisplayVale || ''),
-                       code: (item) =>
-                        item.code || " ",
-                       inventoryTypeDisplay: (item) => {
-                          (item?.inventoryTypeLvalue?.lovDisplayVale || '')
-                       },
-                   }}
-                    variant="product-grid"
-                    showOpenButton={true}
-                    onCardClick={(selectedProduct) => {
-                        setOpen(true);
-                        setProduct(selectedProduct);
-                    }}
-               />
-               <ModalProductCard
-                   open={open}
-                   setOpen={setOpen}
-                   product={product}
-                   setProduct={setProduct}
-               />
-               </>
+         <div className='container-div'>
+           <div className='field-btn-div'>
+                        <Form layout='inline' fluid>
+                            <MyInput
+                                column
+                                fieldLabel="Product Name"
+                                fieldName="transactionId"
+                                record={searchPatient}
+                                setRecord={setSearchPatient}
+                            />
+                            <MyInput
+                                column
+                                fieldLabel="Product Type"
+                                fieldType="select"
+                                fieldName="productTypeLkey"
+                                selectData={[]}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                record={searchPatient}
+                                setRecord={setSearchPatient}
+                            />
+                            <MyInput
+                                column
+                                fieldLabel="code"
+                                fieldName="transactionId"
+                                record={searchPatient}
+                                setRecord={setSearchPatient}
+                            />
+                            <MyInput
+                                column
+                                fieldLabel="Product Inventory Type"
+                                fieldType="select"
+                                fieldName="documentTypeLkey"
+                                selectData={[]}
+                                selectDataLabel="lovDisplayVale"
+                                selectDataValue="key"
+                                record={searchPatient}
+                                setRecord={setSearchPatient}
+                            />
+                        </Form>
+                        <div className='bt-right-group'>
+                            <div className='btns-group'>
+                                <MyButton prefixIcon={() => <FontAwesomeIcon icon={faMagnifyingGlass} />} ></MyButton>
+                                <MyButton prefixIcon={() => <FontAwesomeIcon icon={faBroom} />} >Clear</MyButton>
+                            </div>
+                        </div>
+                    </div>
+            <InfoCardList
+                list={productListResponseLoading?.object || []}
+                fields={[
+                    'name',
+                    'typeLkey',
+                    'code',
+                    'inventoryTypeLkey',
+                ]}
+                titleField="name"
+                fieldLabels={{
+                    name: 'Product Name',
+                    typeDisplay: 'Type',
+                    code: 'Code',
+                    inventoryTypeDisplay: 'Inventory Type',
+                }}
+                variant="product-grid"
+                showOpenButton={true}
+                onCardClick={(selectedProduct) => {
+                     console.log('Clicked product:', selectedProduct);
+                    setOpen(true);
+                    setProduct(selectedProduct);
+                }}
+            />
+            <ModalProductCard
+                open={open}
+                setOpen={setOpen}
+                product={product}
+                setProduct={setProduct}
+            />
+        </div>
 
     );
 };

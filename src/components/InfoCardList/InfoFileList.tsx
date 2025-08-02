@@ -50,7 +50,10 @@ const InfoCardList = ({
           {showOpenButton && (
             <div className="actions">
               <Button
-                onClick={() => onCardClick(item)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCardClick(item);
+                }}
                 className="arrow-button"
               >
                 <FontAwesomeIcon icon={faHandPointUp} />
