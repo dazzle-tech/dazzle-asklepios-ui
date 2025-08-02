@@ -1,6 +1,9 @@
 import React from 'react';
 import './styles.less';
-import { Text, IconButton } from 'rsuite';
+import { Text, IconButton, Button } from 'rsuite';
+import { FaHandBackFist } from 'react-icons/fa6';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFingerprint, faHandPointUp } from '@fortawesome/free-solid-svg-icons';
 // import OthersIcon from '@rsuite/icons/legacy/Others'; 
 
 const InfoCardList = ({
@@ -9,8 +12,11 @@ const InfoCardList = ({
   fieldLabels = {},
   titleField = null,
   computedFields = {},
-  onCardClick = () => {},
+  onCardClick = (item: any) => {},
+  variant = '',
+  showOpenButton = false
 }) => {
+  const containerClass = `div-list ${variant === 'product-grid' ? 'product-card-grid' : ''}`;
   const getFieldValue = (item, field) => {
     if (computedFields[field]) {
       return computedFields[field](item);
@@ -27,9 +33,9 @@ const InfoCardList = ({
   const getLabel = (field) => fieldLabels[field] || field;
 
   return (
-    <div className='div-list'>
+    <div className={containerClass}>
       {list?.map((item, index) => (
-        <div key={index} className='card-style' onClick={() => onCardClick()}>
+        <div key={index} className='card-style' onClick={() => onCardClick(item)}>
           <Text className='title-style'>
             {getFieldValue(item, titleField)}
           </Text>
@@ -41,9 +47,23 @@ const InfoCardList = ({
               </div>
             ))}
           </div>
-         
+          {showOpenButton && (
+            <div className="actions">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCardClick(item);
+                }}
+                className="arrow-button"
+              >
+                <FontAwesomeIcon icon={faHandPointUp} />
+              </Button>
+            </div>
+          )}
         </div>
       ))}
+
+
     </div>
   );
 };

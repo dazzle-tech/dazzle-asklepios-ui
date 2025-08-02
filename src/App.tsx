@@ -138,6 +138,7 @@ import OperationRoomMaterials from './pages/operation-theater/operation-room-mat
 import ProgressNotes from './pages/encounter/encounter-component/progress-notes/ProgressNotes';
 import InventoryTransfer from './pages/inventory-transaction/inventory-transfer';
 import InventoryTransferApproval from './pages/inventory-transaction/inventory-transfer-approval';
+import ProductCatalog from './pages/inventory-transaction/product-catalog';
 
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
@@ -379,6 +380,7 @@ const App = () => {
               <Route path="inventory-product-setup" element={<ProductSetup />} />
               <Route path="inventory-transfer" element={<InventoryTransfer />} />
               <Route path="inventory-transfer-approval" element={<InventoryTransferApproval />} />
+              <Route path="product-catalog" element={<ProductCatalog />} />
               <Route path='inventory-product-setup' element={<ProductSetup />} />
               <Route path="warehouse-setup" element={<WarehouseSetup />} />
               <Route path="warehouse-items-setup" element={<WarehouseItemsSetup />} />
