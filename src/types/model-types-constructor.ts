@@ -1422,6 +1422,7 @@ export const newApEncounter:modelTypes.ApEncounter = {
 	planInstructionsNote:'',
 	discharge:undefined,
 	emergencyLevelLkey:undefined,
+	dischargeAt:0,
 } 
 
 export const newApEncounterAppliedService:modelTypes.ApEncounterAppliedService = { 
@@ -2187,7 +2188,7 @@ export const newApOperationAnesthesiaRecovery:modelTypes.ApOperationAnesthesiaRe
 	oxygenGiven:undefined,
 	oxygenFlowLpm:0,
 	extubationTime:0,
-	extubationStatusLkey:undefined,
+	extubationStatus:'',
 	consciousnessLevelLkey:undefined,
 	painLevelLkey:undefined,
 	nauseaVomiting:undefined,
@@ -2278,7 +2279,7 @@ export const newApOperationDischargeToWard:modelTypes.ApOperationDischargeToWard
 	receivingNurseKey:undefined,
 	finalNotes:'',
 	patientIdBandRechecked:undefined,
-	transportModeLkey:undefined,
+	transportMode:'',
 	createdBy:'',
 	createdAt:undefined,
 	updatedBy:'',
