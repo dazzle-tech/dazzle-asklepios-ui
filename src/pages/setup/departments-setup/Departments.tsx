@@ -233,7 +233,7 @@ const Departments = () => {
       <FontAwesomeIcon
         icon={faSheetPlastic}
         style={{
-          cursor: ['5673990729647001', '5673990729647002', '5673990729647005'].includes(
+          cursor: ['5673990729647001', '5673990729647002', '5673990729647005','5673990729647004'].includes(
             rowData?.departmentTypeLkey
           )
             ? 'pointer'
@@ -243,7 +243,7 @@ const Departments = () => {
         title="Medical Sheets"
         size={'lg'}
         onClick={() => {
-          if(['5673990729647001', '5673990729647002', '5673990729647005'].includes(
+          if(['5673990729647001', '5673990729647002', '5673990729647005','5673990729647004'].includes(
             rowData?.departmentTypeLkey
           ))
           setOpenScreensPopup(true);

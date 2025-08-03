@@ -879,6 +879,16 @@ export const encounterService = createApi({
       onQueryStarted: onQueryStarted,
       keepUnusedDataFor: 5
     }),
+        getEmergencyEncounters: builder.query({
+      query: ({ listRequest, department_key }) => ({
+        url: `/encounter/emergency-encounter-list?${fromListRequestToQueryParams(listRequest)}`,
+        headers: {
+          department_key: department_key
+        }
+      }),
+      onQueryStarted: onQueryStarted,
+      keepUnusedDataFor: 5
+    }),
   }),
 });
 
@@ -974,5 +984,6 @@ export const {
   useGetEREncountersQuery,
   useERCompleteEncounterMutation,
   useSentToERMutation,
-  useGetEREncountersListQuery
+  useGetEREncountersListQuery,
+  useGetEmergencyEncountersQuery
 } = encounterService;
