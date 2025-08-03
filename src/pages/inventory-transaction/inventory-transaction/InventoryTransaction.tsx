@@ -448,7 +448,7 @@ const InventoryTransaction = () => {
                 height={800}
                 loading={false}
             />
-            <AddEditTransaction open={open} setOpen={setOpen} transaction={inventoryTransaction} setTransaction={setInventoryTransaction} refetch={refetchTransType} refetchAttachmentList={refetchTransAttachment} />
+            <AddEditTransaction open={open} setOpen={setOpen} transaction={inventoryTransaction} setTransaction={setInventoryTransaction} refetch={refetchTransProduct} refetchAttachmentList={refetchTransAttachment} />
         </div>
 
     );

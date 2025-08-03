@@ -110,7 +110,7 @@ const AddEditProductIn = ({ open, setOpen, transProduct, setTransProduct, transa
         if (!selectedProduct || !transProduct) return;
 
         const result = await triggerGetQty({
-            quantity: transProduct.newQuentityBaseUom,
+            quantity: transProduct.newQuentity,
             transUnit: transProduct.transUomKey,
             toBaseUnit: selectedProduct.baseUomKey,
             uomGroup: selectedProduct.uomGroupKey,
