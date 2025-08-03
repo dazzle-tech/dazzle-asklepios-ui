@@ -13,9 +13,10 @@ type ScoreCalculationProps = {
   record: any;
   setRecord: React.Dispatch<React.SetStateAction<any>>;
   fields: ScoreFieldConfig[];
+  scoreFieldName?: string;
 };
 
-const ScoreCalculation: React.FC<ScoreCalculationProps> = ({ record, setRecord, fields }) => {
+const ScoreCalculation: React.FC<ScoreCalculationProps> = ({ record, setRecord, fields ,scoreFieldName}) => {
   const [lovMap, setLovMap] = useState<Record<string, any[]>>({});
   // This component calculates a score based on selected fields and their corresponding values from a list of values (lov)
 // Define the fields to be used in the score calculation
@@ -52,7 +53,7 @@ const ScoreCalculation: React.FC<ScoreCalculationProps> = ({ record, setRecord, 
         if (item?.score) score += item.score;
       }
     });
-    setRecord(prev => ({ ...prev, aldreteScore: score }));
+    setRecord(prev => ({ ...prev, [scoreFieldName]: score }));
   }, [fields.map(f => record?.[f.fieldName]).join('|'), JSON.stringify(lovMap)]);
 
   return (
@@ -77,7 +78,7 @@ const ScoreCalculation: React.FC<ScoreCalculationProps> = ({ record, setRecord, 
           <MyInput
             width="100%"
             fieldType="number"
-            fieldName="aldreteScore"
+            fieldName={scoreFieldName ?? 'aldreteScore'}
             record={record}
             setRecord={setRecord}
           />
