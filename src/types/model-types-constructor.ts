@@ -2467,6 +2467,21 @@ export const newApOperationPriceList:modelTypes.ApOperationPriceList = {
 	deletedAt:undefined,
 } 
 
+export const newApOperationRecoveryAntiemeticGiven:modelTypes.ApOperationRecoveryAntiemeticGiven = { 
+	key:undefined,
+	operationRequestKey:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isvalid:undefined,
+	dose:0,
+	activeIngredientKey:undefined,
+	unitLkey:undefined,
+} 
+
 export const newApOperationRecoveryVitalsMonitoring:modelTypes.ApOperationRecoveryVitalsMonitoring = { 
 	key:undefined,
 	operationRequestKey:undefined,

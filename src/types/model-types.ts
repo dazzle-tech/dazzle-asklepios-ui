@@ -2466,6 +2466,21 @@ export interface ApOperationPriceList {
 	deletedAt:number;
 } 
 
+export interface ApOperationRecoveryAntiemeticGiven { 
+	key:string;
+	operationRequestKey:string;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isvalid:boolean;
+	dose:number;
+	activeIngredientKey:string;
+	unitLkey:string;
+} 
+
 export interface ApOperationRecoveryVitalsMonitoring { 
 	key:string;
 	operationRequestKey:string;
