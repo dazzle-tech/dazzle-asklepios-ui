@@ -10,16 +10,16 @@ import MyTable from '@/components/MyTable';
 import { useSaveBedMutation } from '@/services/setupService';
 import { useFetchBedsRelatedToDepartmentQuery } from '@/services/setupService';
 import Translate from '@/components/Translate';
-const BedManagmentFirstTab = ({ encounter }) => {
+const BedManagmentFirstTab = ({ departmentKey }) => {
     const dispatch = useAppDispatch();
     const [saveBed] = useSaveBedMutation();
     // Fetch beds related to the department using the current encounter's resourceKey.
     // The query is skipped if the resourceKey is not yet available.
     const { data: fetchBedsRelatedToDepartmentResponse, refetch, isFetching, isLoading } = useFetchBedsRelatedToDepartmentQuery(
         {
-            resourceKey: encounter?.resourceKey,
+            resourceKey: departmentKey,
         },
-        { skip: !encounter?.resourceKey }
+        { skip: !departmentKey }
     );
 
     // handle change bed status to out service

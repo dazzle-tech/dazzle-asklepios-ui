@@ -3,7 +3,7 @@ import Translate from '@/components/Translate';
 import { newApEncounter } from '@/types/model-types-constructor';
 import React, { useEffect, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
-import {Form, Panel } from 'rsuite';
+import { Form, Panel } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import * as icons from '@rsuite/icons';
 import { formatDateWithoutSeconds } from "@/utils";
@@ -17,25 +17,21 @@ import ReactDOMServer from 'react-dom/server';
 import { hideSystemLoader, showSystemLoader } from '@/utils/uiReducerActions';
 import MyTable from '@/components/MyTable';
 
-const BedTransactionsSecondTab = ({ encounter }) => {
+const BedTransactionsSecondTab = ({ departmentKey }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const divContent = (
-    <div style={{ display: 'flex' }}>
-      <h5>Patients Visit List</h5>
-    </div>
-  );
-  const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-  dispatch(setPageCode('P_Encounters'));
-  dispatch(setDivContent(divContentHTML));
-  const [localencounter, setLocalEncounter] = useState<any>({ ...newApEncounter, discharge: false });
   const [manualSearchTriggered, setManualSearchTriggered] = useState(false);
 
   // State to manage the list request used for filtering and pagination
   const [listRequest, setListRequest] = useState<ListRequest>({
     ...initialListRequest,
-    filters: []
+    filters: [{
+      fieldName: 'department_key',
+      operator: 'match',
+      value: departmentKey
+
+    }]
   });
   // State to store the selected date range for filtering (fromDate and toDate default to today)
   const [dateFilter, setDateFilter] = useState({
@@ -46,12 +42,6 @@ const BedTransactionsSecondTab = ({ encounter }) => {
   const { data: bedTransactionsListResponse, isFetching, isLoading } = useGetBedTransactionsListQuery(listRequest);
 
   //Functions
-  // This function checks if a given row is selected based on matching keys
-  const isSelected = rowData => {
-    if (rowData && localencounter && rowData.key === localencounter.key) {
-      return 'selected-row';
-    } else return '';
-  };
 
   // This function handles manual date-based search for filtering records
   const handleManualSearch = () => {
@@ -86,7 +76,7 @@ const BedTransactionsSecondTab = ({ encounter }) => {
           {
             fieldName: 'department_key',
             operator: 'match',
-            value: encounter?.resourceObject?.key
+            value: departmentKey
 
           }
         ]
@@ -98,10 +88,6 @@ const BedTransactionsSecondTab = ({ encounter }) => {
 
   //useEffect
   useEffect(() => {
-    dispatch(setPageCode(''));
-    dispatch(setDivContent(' '));
-  }, [location.pathname, dispatch, isLoading]);
-  useEffect(() => {
     if (!isFetching && manualSearchTriggered) {
       setManualSearchTriggered(false);
     }
@@ -110,9 +96,6 @@ const BedTransactionsSecondTab = ({ encounter }) => {
     // init list
     handleManualSearch();
   }, []);
-  useEffect(() => {
-    setLocalEncounter({ ...encounter });
-  }, [encounter]);
   useEffect(() => {
     if (isLoading || (manualSearchTriggered && isFetching)) {
       dispatch(showSystemLoader());
@@ -245,11 +228,7 @@ const BedTransactionsSecondTab = ({ encounter }) => {
         height={600}
         data={bedTransactionsListResponse?.object ?? []}
         columns={tableColumns}
-        rowClassName={isSelected}
         loading={isLoading || (manualSearchTriggered && isFetching)}
-        onRowClick={rowData => {
-          setLocalEncounter(rowData);
-        }}
         sortColumn={listRequest.sortBy}
         sortType={listRequest.sortType}
         onSortChange={(sortBy, sortType) => {

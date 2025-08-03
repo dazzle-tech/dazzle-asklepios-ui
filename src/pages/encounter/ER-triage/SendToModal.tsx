@@ -31,7 +31,7 @@ const SendToModal = ({ open, setOpen, encounter, triage }) => {
                 triageKey: emergencyTriage?.key,
                 destinationKey: destinationKey
             }).unwrap().then(() => {
-                dispatch(notify({ msg: 'Patient has been successfully moved from the ER Waiting List' }));
+                dispatch(notify({ msg: 'Patient has been successfully moved to the ER Waiting List' }));
                 setShowModal(false);
                 setOpen(false);
             }).catch((e) => {

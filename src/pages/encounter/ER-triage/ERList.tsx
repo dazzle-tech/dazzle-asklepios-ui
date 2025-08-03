@@ -6,11 +6,11 @@ import React, { useEffect, useState } from 'react';
 import MyButton from '@/components/MyButton/MyButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faRepeat } from '@fortawesome/free-solid-svg-icons';
-import { faUserNurse, faUserDoctor } from '@fortawesome/free-solid-svg-icons';
+import { faUserDoctor } from '@fortawesome/free-solid-svg-icons';
 import { Badge, Form, Panel, Tooltip, Whisper } from 'rsuite';
 import 'react-tabs/style/react-tabs.css';
 import { initialListRequest, ListRequest } from '@/types/types';
-import { useGetInpatientEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
+import { useGetEmergencyEncountersQuery, useStartEncounterMutation } from '@/services/encounterService';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { setDivContent, setPageCode } from '@/reducers/divSlice';
 import { useDispatch } from 'react-redux';
@@ -20,26 +20,26 @@ import MyTable from '@/components/MyTable';
 import MyBadgeStatus from '@/components/MyBadgeStatus/MyBadgeStatus';
 import { faFileWaveform } from '@fortawesome/free-solid-svg-icons';
 import { faBedPulse } from '@fortawesome/free-solid-svg-icons';
-import BedManagementModal from './bedBedManagementModal/BedManagementModal';
+import BedManagementModal from '@/pages/Inpatient/inpatientList/bedBedManagementModal';
 import { faBed } from '@fortawesome/free-solid-svg-icons';
-import ChangeBedModal from './changeBedModal/ChangeBedModal';
+import ChangeBedModal from '@/pages/Inpatient/inpatientList/changeBedModal';
 import { useGetResourceTypeQuery } from '@/services/appointmentService';
 import './styles.less'
 import MyInput from "@/components/MyInput";
 import { faArrowRightArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import TransferPatientModal from './transferPatient/TransferPatientModal';
+import TransferPatientModal from '@/pages/Inpatient/inpatientList/transferPatient';
 
-const InpatientList = () => {
+const ERList = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const divContent = (
         <div style={{ display: 'flex' }}>
-            <h5>Inpatient Visit List</h5>
+            <h5>ER Department</h5>
         </div>
     );
     const divContentHTML = ReactDOMServer.renderToStaticMarkup(divContent);
-    dispatch(setPageCode('In_Patient_Encounters'));
+    dispatch(setPageCode('ER_Patient_Encounters'));
     dispatch(setDivContent(divContentHTML));
     const [localPatient, setLocalPatient] = useState<ApPatient>({ ...newApPatient });
     const [encounter, setLocalEncounter] = useState<any>({ ...newApEncounter });
@@ -56,12 +56,14 @@ const InpatientList = () => {
             {
                 fieldName: 'resource_type_lkey',
                 operator: 'match',
-                value: '4217389643435490'
+                value: '6743167799449277'
             },
             {
                 fieldName: 'encounter_status_lkey',
-                operator: 'notMatch',
-                value: '5256965920133084'
+                operator: 'in',
+                value: ['91084250213000', '91063195286200']
+                    .map(key => `(${key})`)
+                    .join(' '),
             }, {
                 fieldName: 'discharge',
                 operator: 'match',
@@ -69,18 +71,19 @@ const InpatientList = () => {
             }
         ]
     });
+    // Fetch encounter list response based on the list request and department filter
     const {
         data: encounterListResponse,
         isFetching,
         refetch: refetchEncounter,
         isLoading
-    } = useGetInpatientEncountersQuery({
+    } = useGetEmergencyEncountersQuery({
         listRequest,
-        department_key: switchDepartment ? departmentFilter?.key !=null ?  departmentFilter?.key : '':''
+        department_key: switchDepartment ? departmentFilter?.key != null ? departmentFilter?.key : '' : ''
     });
 
     // Fetch department list response
-    const departmentListResponse = useGetResourceTypeQuery("4217389643435490");
+    const departmentListResponse = useGetResourceTypeQuery("6743167799449277");
 
     //Functions
     const isSelected = rowData => {
@@ -120,19 +123,7 @@ const InpatientList = () => {
         }
         sessionStorage.setItem("encounterPageSource", "EncounterList");
     };
-    // handle go to preVisitObservations (nurse station) function
-    const handleGoToPreVisitObservations = async (encounterData, patientData) => {
-        const privatePatientPath = '/user-access-patient-private';
-        const preObservationsPath = '/inpatient-nurse-station';
-        const targetPath = localPatient.privatePatient ? privatePatientPath : preObservationsPath;
-        if (localPatient.privatePatient) {
-            navigate(targetPath, {
-                state: { info: 'toNurse', patient: patientData, encounter: encounterData }
-            });
-        } else {
-            navigate(targetPath, { state: { patient: patientData, encounter: encounterData, edit: encounterData.encounterStatusLvalue.valueCode == "CLOSED" } });
-        }
-    };
+    // Function to search for patients based on the search keyword
     const filters = () => (
         <Form layout="inline" fluid>
             <div className="switch-dep-dev "> <MyInput
@@ -198,10 +189,10 @@ const InpatientList = () => {
     // table columns 
     const tableColumns = [
         {
-            key: 'queueNumber',
+            key: 'visitId',
             title: <Translate>#</Translate>,
-            dataKey: 'queueNumber',
-            render: rowData => rowData?.patientObject.patientMrn
+            dataKey: 'visitId',
+            render: rowData => rowData?.visitId
         },
         {
             key: 'patientFullName',
@@ -319,7 +310,6 @@ const InpatientList = () => {
             key: 'actions',
             title: <Translate> </Translate>,
             render: rowData => {
-                const tooltipNurse = <Tooltip>Nurse Anamnesis</Tooltip>;
                 const tooltipDoctor = <Tooltip>Go to Visit</Tooltip>;
                 const tooltipEMR = <Tooltip>Go to EMR</Tooltip>;
                 const tooltipChangeBed = <Tooltip>Change Bed</Tooltip>;
@@ -341,22 +331,6 @@ const InpatientList = () => {
                                 </MyButton>
                             </div>
                         </Whisper>
-                        <Whisper trigger="hover" placement="top" speaker={tooltipNurse}>
-                            <div>
-                                <MyButton
-                                    size="small"
-                                    backgroundColor="black"
-                                    onClick={() => {
-                                        const patientData = rowData.patientObject;
-                                        setLocalEncounter(rowData);
-                                        setLocalPatient(patientData);
-                                        handleGoToPreVisitObservations(rowData, patientData);
-                                    }}
-                                >
-                                    <FontAwesomeIcon icon={faUserNurse} />
-                                </MyButton>
-                            </div>
-                        </Whisper>
                         <Whisper trigger="hover" placement="top" speaker={tooltipChangeBed}>
                             <div>
                                 <MyButton
@@ -368,7 +342,7 @@ const InpatientList = () => {
                                 </MyButton>
                             </div>
                         </Whisper>
-                         <Whisper trigger="hover" placement="top" speaker={toolTransferPatient}>
+                        <Whisper trigger="hover" placement="top" speaker={toolTransferPatient}>
                             <div>
                                 <MyButton
                                     size="small"
@@ -391,7 +365,7 @@ const InpatientList = () => {
                                     <FontAwesomeIcon icon={faFileWaveform} />
                                 </MyButton>
                             </div>
-                        </Whisper>  
+                        </Whisper>
                     </Form>
                 );
             },
@@ -456,15 +430,15 @@ const InpatientList = () => {
                 onPageChange={handlePageChange}
                 onRowsPerPageChange={handleRowsPerPageChange}
             />
-            <BedManagementModal
-                open={openBedManagementModal}
-                setOpen={setOpenBedManagementModal}
-                departmentKey={departmentFilter?.key} />
             <ChangeBedModal
                 open={openChangeBedModal}
                 setOpen={setOpenChangeBedModal}
                 localEncounter={encounter}
                 refetchInpatientList={refetchEncounter} />
+            <BedManagementModal
+                open={openBedManagementModal}
+                setOpen={setOpenBedManagementModal}
+                departmentKey={departmentFilter?.key} />
             <TransferPatientModal
                 open={openTransferPatientModal}
                 setOpen={setOpenTransferPatientModal}
@@ -475,4 +449,4 @@ const InpatientList = () => {
     );
 };
 
-export default InpatientList;
+export default ERList;

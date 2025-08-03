@@ -140,7 +140,7 @@ import InventoryTransfer from './pages/inventory-transaction/inventory-transfer'
 import InventoryTransferApproval from './pages/inventory-transaction/inventory-transfer-approval';
 import ProductCatalog from './pages/inventory-transaction/product-catalog';
 import MAR from './pages/encounter/mar';
-
+import ERList from './pages/encounter/ER-triage/ERList';
 const App = () => {
   const authSlice = useAppSelector(state => state.auth);
   const uiSlice = useAppSelector(state => state.ui);
@@ -303,6 +303,7 @@ const App = () => {
               <Route path="view-triage" element={<ViewTriage />} />
               <Route path="quick-visit" element={<QuickVisit />} />
               <Route path="ER-triage" element={<ERTriage />} />
+              <Route path="ER-department" element={<ERList />} />
               <Route path="encounter" element={<Encounter />}>
                 <Route path="drug-order" element={<DrugOrder />} />
                 <Route index element={<PatientSummary />} />

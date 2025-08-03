@@ -7,7 +7,7 @@ import { useGetResourcesByResourceIdQuery } from '@/services/appointmentService'
 import { faComment } from '@fortawesome/free-solid-svg-icons';
 import { faEject } from '@fortawesome/free-solid-svg-icons';
 import { faSuitcaseMedical } from '@fortawesome/free-solid-svg-icons';
-import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons'; 
+import { faRightFromBracket } from '@fortawesome/free-solid-svg-icons';
 import { faDroplet } from '@fortawesome/free-solid-svg-icons';
 import { faSquarePollHorizontal } from '@fortawesome/free-solid-svg-icons';
 import { useCompleteEncounterMutation, useDischargeInpatientEncounterMutation } from '@/services/encounterService';
@@ -96,7 +96,7 @@ const Encounter = () => {
     } else {
       setEdit(fromPage === 'PatientEMR' || localEncounter.encounterStatusLvalue.valueCode === "CLOSED");
       //TODO convert key to code
-      if (propsData?.encounter?.resourceTypeLkey === '2039516279378421' || "4217389643435490") {
+      if (propsData?.encounter?.resourceTypeLkey === '2039516279378421' || "4217389643435490" || "6743167799449277") {
         // Clinic, then we need to get its resource details
         setMedicalSheetRowSourceKey(propsData?.encounter?.resourceKey);
         setMedicalSheetSourceKey(undefined);
@@ -107,6 +107,7 @@ const Encounter = () => {
       }
     }
   }, [propsData]);
+
   // Step 3: Set departmentKey from resource "IF Clinic"
   useEffect(() => {
     if (resourcesResponse?.object?.resourceKey) {
@@ -163,7 +164,7 @@ const Encounter = () => {
   };
 
   const headersMap = {
-    '/encounter/doctor-round':'Doctor Round',
+    '/encounter/doctor-round': 'Doctor Round',
     '/encounter/clinical-visit': 'Clinical Visit',
     '/encounter/observations': 'Observation',
     '/encounter/allergies': 'Allergies',
@@ -183,16 +184,16 @@ const Encounter = () => {
     '/encounter/medications-record': 'medications Record ',
     '/encounter/vaccine-record': 'Vaccine Record',
     '/encounter/diagnostics-result': 'Diagnostics Result ',
-    '/encounter/operation-request':'Operation Requests',
-    '/encounter/multidisciplinary-team-notes':'Multidisciplinary Team Notes',
-    '/encounter/care-plan-and-goals':'Care Plan & Goals',
-    '/encounter/discharge-planning':'Discharge Planning',
-    '/encounter/bedside-procedures-requests':'Bedside Procedures',
-   '/encounter/day-case':'DayCase',
-    '/encounter/blood-order':'Blood Order',
-   '/encounter/intake-output-balance':'Intake Output Balance',
-    '/encounter/referral-request':'Referral Request',
-    '/encounter/iv-fluid-order':'IV Fluid Order',
+    '/encounter/operation-request': 'Operation Requests',
+    '/encounter/multidisciplinary-team-notes': 'Multidisciplinary Team Notes',
+    '/encounter/care-plan-and-goals': 'Care Plan & Goals',
+    '/encounter/discharge-planning': 'Discharge Planning',
+    '/encounter/bedside-procedures-requests': 'Bedside Procedures',
+    '/encounter/day-case': 'DayCase',
+    '/encounter/blood-order': 'Blood Order',
+    '/encounter/intake-output-balance': 'Intake Output Balance',
+    '/encounter/referral-request': 'Referral Request',
+    '/encounter/iv-fluid-order': 'IV Fluid Order',
   };
 
   const menuItems = [
@@ -202,18 +203,18 @@ const Encounter = () => {
     { key: 'allergies', label: 'Allergies', icon: faPersonDotsFromLine, path: 'allergies' },
     { key: 'medicalWarnings', label: 'Medical Warnings', icon: faTriangleExclamation, path: 'medical-warnings' },
     { key: 'diagnosticsResult', label: 'Diagnostics Test Result', icon: faFileWaveform, path: 'diagnostics-result' },
-    
+
     { key: 'vaccination', label: 'Vaccination', icon: faSyringe, path: 'vaccination' },
     { key: 'prescription', label: 'Prescription', icon: faFilePrescription, path: 'prescription' },
     { key: 'drugOrder', label: 'Drug Order', icon: faPills, path: 'drug-order' },
     { key: 'diagnosticsOrder', label: 'Diagnostics Order', icon: faVials, path: 'diagnostics-order' },
     { key: 'consultation', label: 'Consultation', icon: faStethoscope, path: 'consultation' },
-     { key: 'referralRequest', label: 'Referral Request', icon: faUserDoctor , path: 'referral-request'},
+    { key: 'referralRequest', label: 'Referral Request', icon: faUserDoctor, path: 'referral-request' },
     { key: 'multidisciplinaryTeamNotes', label: 'Multidisciplinary Team Notes', icon: faComment, path: 'multidisciplinary-team-notes' },
-     { key: 'carePlanAndGoals', label: 'Care Plan & Goals', icon: faNotesMedical, path: 'care-plan-and-goals' },
-     { key: 'dischargePlanning', label: 'Discharge Planning', icon: faRightFromBracket, path: 'discharge-planning' },
-     { key: 'bedsideProceduresRequest', label: 'Bedside Procedures', icon: faSuitcaseMedical, path: 'bedside-procedures-requests'},
-    { key: 'bloodOrder', label: 'Blood Order', icon: faDroplet, path: 'blood-order'},
+    { key: 'carePlanAndGoals', label: 'Care Plan & Goals', icon: faNotesMedical, path: 'care-plan-and-goals' },
+    { key: 'dischargePlanning', label: 'Discharge Planning', icon: faRightFromBracket, path: 'discharge-planning' },
+    { key: 'bedsideProceduresRequest', label: 'Bedside Procedures', icon: faSuitcaseMedical, path: 'bedside-procedures-requests' },
+    { key: 'bloodOrder', label: 'Blood Order', icon: faDroplet, path: 'blood-order' },
     { key: 'intakeOutputBalance', label: 'Intake Output Balance', icon: faSquarePollHorizontal, path: 'intake-output-balance' },
 
 
@@ -221,7 +222,7 @@ const Encounter = () => {
     { key: 'patientHistory', label: 'Patient History', icon: faClockRotateLeft, path: 'patient-history' },
     { key: 'medicationsRecord', label: 'Medications Record', icon: faPills, path: 'medications-record' },
     { key: 'vaccineReccord', label: 'Vaccine Record', icon: faSyringe, path: 'vaccine-record' },
-    { key:'operationRequests',label:'Operation Requests',icon:faBedPulse,path:'operation-request'},
+    { key: 'operationRequests', label: 'Operation Requests', icon: faBedPulse, path: 'operation-request' },
 
     { key: 'cardiology', label: 'Cardiology', icon: faHeartPulse, path: 'cardiology' },
     { key: 'dentalCare', label: 'Dental Care', icon: faTooth, path: 'dental-care' },
@@ -229,7 +230,7 @@ const Encounter = () => {
     { key: 'audiometryPuretone', label: 'ENT', icon: faEarListen, path: 'audiometry' },
     { key: 'psychologicalExam', label: 'Psychological Exam', icon: faBrain, path: 'psychological-exam' },
     { key: 'dayCase', label: 'DayCase', icon: faBed, path: 'day-case' },
-    { key: 'ivFluidOrder', label: 'IV Fluid Order', icon: faSyringe , path: 'iv-fluid-order' },
+    { key: 'ivFluidOrder', label: 'IV Fluid Order', icon: faSyringe, path: 'iv-fluid-order' },
 
   ];
   const [currentHeader, setCurrentHeader] = useState();
@@ -341,7 +342,7 @@ const Encounter = () => {
                   <FontAwesomeIcon icon={faClockRotateLeft} className="icon" />
                   <Translate>Dashboard</Translate>
                 </List.Item>
-               
+
                 {menuItems.map(({ key, label, icon, path }) =>
                   medicalSheet?.object?.[key] ? (
                     <List.Item key={key} className="drawer-item"
