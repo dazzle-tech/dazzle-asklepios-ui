@@ -5,7 +5,7 @@ import { newApOperationDischargeReadiness } from "@/types/model-types-constructo
 import { notify } from "@/utils/uiReducerActions";
 import React, { useEffect, useState } from "react";
 import { Col, Divider, Row, Text } from "rsuite";
-import ScoreCalculation from "../medical-component/ScoreCalculation";
+import ScoreCalculation from "../medical-component/score-calculation";
 import MyButton from "@/components/MyButton/MyButton";
 import OperationRequest from "../encounter/encounter-component/operation-request/OperationRequest";
 const DischargeReadinessAssessment = ({ operation }) => {
