@@ -24,7 +24,9 @@ import AddEditPopup from './oepnAddEditPopup';
 import CancellationModal from '@/components/CancellationModal';
 import './styles.less';
 import PostProcedureAnesthesia from '../encounter/encounter-component/procedure/Post-ProcedureCare/PostProcedureAnesthesia';
-const RecoveryRoomFunctionalities = ({ patient, encounter }) => {
+import ArrivalRecoveryRoom from './ArrivalRecoveryRoom';
+import DischargeReadinessAssessment from './DischargeReadinessAssessment';
+const RecoveryRoomFunctionalities = ({ patient, encounter ,operation }) => {
   const [iVFluidsGivenTags, setiVFluidsGivenTags] = useState([]);
   const [analgesicsGivenTags, setAanalgesicsGivenTags] = useState([]);
   const [drainsAndTubesTags, setDrainsAndTubesTags] = useState([]);
@@ -169,61 +171,7 @@ const RecoveryRoomFunctionalities = ({ patient, encounter }) => {
           <Form fluid>
             <Col md={12}>
               <Row>
-                <div className="container-form">
-                  <div className="title-div">
-                    <Text>Arrival to Recovery Room</Text>
-                  </div>
-                  <Divider />
-                  <Row>
-                    <Col md={8}>
-                      <MyInput
-                        width="100%"
-                        fieldType="time"
-                        fieldName="arrivalTime"
-                        record=""
-                        setRecord=""
-                      />
-                    </Col>
-                    <Col md={8}>
-                      <MyInput width="100%" fieldName="accompaniedBy" record="" setRecord="" />
-                    </Col>
-                    <Col md={8}>
-                      <MyInput width="100%" fieldName="handoverSummary" record="" setRecord="" />
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={12}>
-                      <MyInput
-                        width="100%"
-                        fieldType="time"
-                        fieldName="initialAssessmentTime"
-                        record=""
-                        setRecord=""
-                      />
-                    </Col>
-                    <Col md={12}>
-                      <MyInput
-                        width="100%"
-                        fieldType="select"
-                        fieldLabel="User"
-                        selectData={userList?.object ?? []}
-                        selectDataLabel="username"
-                        selectDataValue="key"
-                        fieldName="initiatedBy"
-                        record=""
-                        setRecord=""
-                      />
-                    </Col>
-                  </Row>
-                  <br />
-                  <Row>
-                    <div className="container-of-add-new-button">
-                      <MyButton color="var(--deep-blue)" width="90px">
-                        Save
-                      </MyButton>
-                    </div>
-                  </Row>
-                </div>
+             <ArrivalRecoveryRoom operation={operation} />
               </Row>
               <Row>
                 <div className="container-form">
@@ -460,81 +408,7 @@ const RecoveryRoomFunctionalities = ({ patient, encounter }) => {
                 </div>
               </Row>
               <Row>
-                <div className="container-form">
-                  <div className="title-div">
-                    <Text>Discharge Readiness Assessment</Text>
-                  </div>
-                  <Divider />
-                  <PostProcedureAnesthesia noBorder ref={anesthesiaRef} procedure="" user="" />
-                  <Row>
-                    <Col md={12}>
-                      <MyInput
-                        width="100%"
-                        fieldType="checkbox"
-                        fieldName="painControlled"
-                        record={object}
-                        setRecord={setObject}
-                      />
-                    </Col>
-                    <Col md={12}>
-                      <MyInput
-                        width="100%"
-                        fieldType="checkbox"
-                        fieldName="vitalsStable"
-                        record={object}
-                        setRecord={setObject}
-                      />
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={12}>
-                      <MyInput
-                        width="100%"
-                        fieldType="checkbox"
-                        fieldName="fullyAwake"
-                        record={object}
-                        setRecord={setObject}
-                      />
-                    </Col>
-                    <Col md={12}>
-                      <MyInput
-                        width="100%"
-                        fieldType="checkbox"
-                        fieldName="ableToMaintainAirway"
-                        record={object}
-                        setRecord={setObject}
-                      />
-                    </Col>
-                  </Row>
-                  <Row>
-                    <Col md={12}>
-                      <MyInput
-                        width="100%"
-                        fieldType="checkbox"
-                        fieldName="site/DressingIntact"
-                        record={object}
-                        setRecord={setObject}
-                      />
-                    </Col>
-                    <Col md={12}>
-                      <MyInput
-                        width="100%"
-                        fieldType="checkbox"
-                        fieldName="Nausea Controlled"
-                        record={object}
-                        setRecord={setObject}
-                      />
-                    </Col>
-                  </Row>
-                  <br />
-                  <Row>
-                    <div className="container-of-add-new-button">
-                      <MyButton color="var(--deep-blue)" width="90px">
-                        Save
-                      </MyButton>
-                    </div>
-                  </Row>
-                </div>
+              <DischargeReadinessAssessment operation={operation}/>
               </Row>
               <Row>
                 <div className="container-form">
