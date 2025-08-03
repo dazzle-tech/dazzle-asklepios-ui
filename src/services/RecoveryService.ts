@@ -96,6 +96,17 @@ export const recoveryService = createApi({
     getDischargeToWardByOperation: builder.query({
       query: (operationKey) => `/recovery/discharge-to-ward-by-operation?operationKey=${operationKey}`,
     }),
+    getRecoveryAntiemeticGivenList: builder.query({
+      query: (params) => `/recovery/antiemetic-given-list?${fromListRequestToQueryParams(params)}`,
+    }),
+    saveRecoveryAntiemeticGiven:
+     builder.mutation({
+      query: (body) => ({
+        url: '/recovery/save-antiemetic-given',
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
 });
 
@@ -123,4 +134,7 @@ export const {
   useSaveDischargeToWardMutation,
   useGetDischargeToWardListQuery,
   useGetDischargeToWardByOperationQuery,
+
+  useGetRecoveryAntiemeticGivenListQuery,
+  useSaveRecoveryAntiemeticGivenMutation,
 } = recoveryService;
