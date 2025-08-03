@@ -50,6 +50,8 @@ const DischargeReadinessAssessment = ({ operation }) => {
         record={readinessAssessment}
         setRecord={setReadinessAssessment}
          scoreFieldName="aldreteScore"
+
+
         fields={[
           { fieldName: "oxygenSaturationLkey", lovCode: "ALDRETE_OXSAT", label: "Oxygen Saturation" },
           { fieldName: "consciousnessLkey", lovCode: "ALDRETE_CONSC", label: "Consciousness" },
