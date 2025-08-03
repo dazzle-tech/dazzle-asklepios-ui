@@ -2247,12 +2247,12 @@ export interface ApOperationCoding {
 export interface ApOperationDischargeReadiness { 
 	key:string;
 	operationRequestKey:string;
-	activityScore:number;
-	respirationScore:number;
-	circulationScore:number;
-	consciousnessScore:number;
-	oxygenSaturationScore:number;
-	totalAldreteScore:number;
+	activityLkey:string;
+	respirationLkey:string;
+	circulationLkey:string;
+	consciousnessLkey:string;
+	oxygenSaturationLkey:string;
+	aldreteScore:string;
 	painControlled:boolean;
 	vitalsStable:boolean;
 	fullyAwake:boolean;
@@ -3721,6 +3721,26 @@ export interface ApRepositioning {
 	deletedAt:number;
 	statusLkey:string;
 	cancellationReason:string;
+} 
+
+export interface ApResourceAvailabilitySlice { 
+	key:string;
+	resourceKey:string;
+	facilityKey:string;
+	departmentKey:string;
+	dayOfWeek:string;
+	startTimeMinutes:string;
+	endTimeMinutes:string;
+	sliceDurationMinutes:string;
+	isbocked:string;
+	isbreak:boolean;
+	createdBy:string;
+	updatedBy:string;
+	deletedBy:string;
+	createdAt:number;
+	updatedAt:number;
+	deletedAt:number;
+	isValid:boolean;
 } 
 
 export interface ApResources { 

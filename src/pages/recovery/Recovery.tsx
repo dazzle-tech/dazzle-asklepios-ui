@@ -321,7 +321,7 @@ const Recovery = () => {
         title="Recovery Room Functionalities"
         hideActionBtn
         size="full"
-        content={<RecoveryRoomFunctionalities encounter={encounter} patient={patient} />}
+        content={<RecoveryRoomFunctionalities encounter={encounter} patient={patient} operation={request} />}
       ></MyModal>
     </div>
   );

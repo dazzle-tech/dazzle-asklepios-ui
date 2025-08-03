@@ -1332,7 +1332,7 @@ export const newApEmergencyTriage:modelTypes.ApEmergencyTriage = {
 	medicationLkey:undefined,
 	ecgLkey:undefined,
 	consultationLkey:undefined,
-	destinationLkey:undefined, 
+	destinationLkey:undefined,
 } 
 
 export const newApEncounter:modelTypes.ApEncounter = { 
@@ -2248,12 +2248,12 @@ export const newApOperationCoding:modelTypes.ApOperationCoding = {
 export const newApOperationDischargeReadiness:modelTypes.ApOperationDischargeReadiness = { 
 	key:undefined,
 	operationRequestKey:undefined,
-	activityScore:0,
-	respirationScore:0,
-	circulationScore:0,
-	consciousnessScore:0,
-	oxygenSaturationScore:0,
-	totalAldreteScore:0,
+	activityLkey:undefined,
+	respirationLkey:undefined,
+	circulationLkey:undefined,
+	consciousnessLkey:undefined,
+	oxygenSaturationLkey:undefined,
+	aldreteScore:'',
 	painControlled:undefined,
 	vitalsStable:undefined,
 	fullyAwake:undefined,
@@ -3722,6 +3722,26 @@ export const newApRepositioning:modelTypes.ApRepositioning = {
 	deletedAt:undefined,
 	statusLkey:undefined,
 	cancellationReason:'',
+} 
+
+export const newApResourceAvailabilitySlice:modelTypes.ApResourceAvailabilitySlice = { 
+	key:undefined,
+	resourceKey:undefined,
+	facilityKey:undefined,
+	departmentKey:undefined,
+	dayOfWeek:'',
+	startTimeMinutes:'',
+	endTimeMinutes:'',
+	sliceDurationMinutes:'',
+	isbocked:'',
+	isbreak:undefined,
+	createdBy:'',
+	updatedBy:'',
+	deletedBy:'',
+	createdAt:undefined,
+	updatedAt:undefined,
+	deletedAt:undefined,
+	isValid:undefined,
 } 
 
 export const newApResources:modelTypes.ApResources = { 
